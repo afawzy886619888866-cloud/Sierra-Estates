@@ -216,12 +216,14 @@ function usePrefersReducedMotion() {
 }
 
 /* ── Main homepage ─────────────────────────────────────────────────────── */
-export default function ClientHome() {
+export default function ClientHome({ initialApiListings }: { initialApiListings?: ApiListing[] }) {
   const { locale, setLocale } = useI18n();
   const isAr = locale === 'ar';
   const t = COPY[isAr ? 'ar' : 'en'];
   const reduce = usePrefersReducedMotion();
-  const [listings, setListings] = useState<Listing[]>(FALLBACK);
+  const [listings, setListings] = useState<Listing[]>(
+    initialApiListings && initialApiListings.length > 0 ? initialApiListings.map(toCardListing) : FALLBACK
+  );
 
   // Real listings via /api/listings (Firestore → live sheet → snapshot → seed
   // fallback chain lives server-side; this just renders whatever comes back).
