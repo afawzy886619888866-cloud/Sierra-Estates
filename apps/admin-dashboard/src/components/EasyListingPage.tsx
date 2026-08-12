@@ -323,24 +323,41 @@ Contact Sierra Estates today to schedule a viewing and embrace the definition of
     if (!extractedData) return;
     setSaveStatus('Saving...');
     try {
-      await addDoc(collection(db, 'properties'), {
+      const listingDoc = {
         code: extractedData.propertyCode,
         compound: extractedData.compound,
+        cmp: extractedData.compound,
+        zone: extractedData.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
+        type: 'Apartment',
         bedrooms: extractedData.bedrooms,
+        beds: extractedData.bedrooms || 3,
         bathrooms: extractedData.bathrooms,
-        area: extractedData.area,
-        price: extractedData.price,
+        baths: extractedData.bathrooms || 2,
+        area: extractedData.area || 150,
+        price: extractedData.price || 0,
+        egpM: extractedData.price ? Number((extractedData.price / 1_000_000).toFixed(2)) : 0,
+        usd: extractedData.price ? Math.round(extractedData.price / 50) : 0,
         currency: extractedData.currency,
         furnished: extractedData.furnished,
         phone: phone,
+        status: 'Available',
+        mode: 'rent',
+        tag: 'EasyListing Direct',
+        aiScore: 9.0,
+        agent: 'Sierra EasyListing Agent',
+        ago: 'Just now',
+        img: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
         whatsappContent: getWhatsAppContent(),
         facebookContent: getFacebookContent(),
         propertyFinderTitle: getPFTitle(),
         propertyFinderContent: getPFBody(),
         images: images,
         createdAt: serverTimestamp()
-      });
-      setSaveStatus('Success!');
+      };
+      await addDoc(collection(db, 'houyez_listings'), listingDoc);
+      await addDoc(collection(db, 'listings'), listingDoc);
+      await addDoc(collection(db, 'properties'), listingDoc);
+      setSaveStatus('Saved!');
       setTimeout(() => setSaveStatus(null), 3000);
     } catch (err) {
       console.error('Save failed', err);
