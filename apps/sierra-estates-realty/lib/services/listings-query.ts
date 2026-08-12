@@ -29,6 +29,31 @@ export function inventoryUnitToListing(u: any): Listing {
   } as Listing;
 }
 
+function normalizeFirestoreListing(id: string, data: any): Listing {
+  const defaultImg = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80';
+  const img = data.img || data.featuredImage || (Array.isArray(data.images) && data.images[0]) || defaultImg;
+
+  return {
+    id,
+    code: data.code || `SE-${id.slice(0, 4).toUpperCase()}`,
+    compound: data.compound || data.cmp || data.location || 'New Cairo',
+    zone: data.zone || '5th Settlement',
+    type: data.type || data.propertyType || 'Apartment',
+    beds: data.beds ?? data.bedrooms ?? 3,
+    bath: data.bath ?? data.bathrooms ?? 2,
+    area: data.area ?? 150,
+    egpM: data.egpM ?? (data.price ? Number((data.price / 1e6).toFixed(2)) : 8),
+    usd: data.usd ?? (data.price && data.currency === 'USD' ? data.price : 1500),
+    aiScore: data.aiScore ?? data.ai ?? 8.5,
+    tag: data.tag ?? data.badge ?? null,
+    mode: data.mode ?? 'sale',
+    agent: data.agent ?? 'Sierra Broker',
+    img,
+    status: data.status ?? (data.active === false ? 'archived' : 'available'),
+    description: data.description ?? '',
+  } as Listing;
+}
+
 /** Filter-mode read: Firebase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
 export async function readListings(): Promise<Listing[]> {
   // Try Firebase Firestore first (reads houyez_listings + listings merged)
@@ -42,32 +67,13 @@ export async function readListings(): Promise<Listing[]> {
       const map = new Map<string, Listing>();
       if (!snap1.empty) {
         snap1.docs.forEach((d) => {
-          const data = d.data();
-          map.set(d.id, {
-            id: d.id,
-            code: data.code || `SE-${d.id.slice(0, 4).toUpperCase()}`,
-            compound: data.compound || data.cmp || data.location || 'New Cairo',
-            zone: data.zone || '5th Settlement',
-            type: data.type || data.propertyType || 'Apartment',
-            beds: data.beds ?? data.bedrooms ?? 3,
-            bath: data.bath ?? data.bathrooms ?? 2,
-            area: data.area ?? 150,
-            egpM: data.egpM ?? (data.price ? data.price / 1e6 : 8),
-            usd: data.usd ?? (data.price && data.currency === 'USD' ? data.price : 1500),
-            aiScore: data.aiScore ?? data.ai ?? 8.5,
-            tag: data.tag ?? data.badge ?? null,
-            mode: data.mode ?? 'sale',
-            agent: data.agent ?? 'Sierra Broker',
-            img: data.img ?? data.featuredImage ?? '',
-            status: data.status ?? (data.active === false ? 'archived' : 'available'),
-            description: data.description ?? '',
-          } as Listing);
+          map.set(d.id, normalizeFirestoreListing(d.id, d.data()));
         });
       }
       if (!snap2.empty) {
         snap2.docs.forEach((d) => {
           if (!map.has(d.id)) {
-            map.set(d.id, { id: d.id, ...(d.data() as any) });
+            map.set(d.id, normalizeFirestoreListing(d.id, d.data()));
           }
         });
       }
