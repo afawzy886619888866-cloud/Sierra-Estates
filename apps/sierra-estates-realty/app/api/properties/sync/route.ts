@@ -145,11 +145,38 @@ export async function POST(request: NextRequest) {
     for (const [index, property] of properties.entries()) {
       try {
         const documentId = getListingId(property, index);
-        batch.set(adminDb.collection('listings').doc(documentId), mapProperty(property), { merge: true });
-        operationsInBatch += 1;
+        const mapped = mapProperty(property);
+        batch.set(adminDb.collection('listings').doc(documentId), mapped, { merge: true });
+
+        // Dual-write to houyez_listings so PF-synced listings appear in the
+        // real-time client portal (subscribeHouyezListings filters on active=true
+        // and orderBy order asc — both fields are required).
+        const priceValue = getPriceValue(property.price);
+        const houyezDoc = {
+          ...mapped,
+          id: documentId,
+          cmp: mapped.location,
+          type: mapped.propertyType,
+          beds: mapped.bedrooms ?? 0,
+          usd: priceValue ?? 0,
+          egpM: priceValue ? Number((priceValue / 1_000_000).toFixed(2)) : 0,
+          mode: property.offering_type === 'rent' ? 'rent' : 'sale',
+          agent: mapped.agentName,
+          ago: 'Synced',
+          img: getImages(property)[0] ?? '',
+          tag: 'Property Finder' as const,
+          ai: 7.5,
+          active: mapped.availability === 'Available',
+          // Required by orderBy('order', 'asc') in subscribeHouyezListings
+          order: Date.now() + index,
+        };
+        batch.set(adminDb.collection('houyez_listings').doc(documentId), houyezDoc, { merge: true });
+
+        // Each listing = 2 batch ops (listings + houyez_listings)
+        operationsInBatch += 2;
         syncedCount += 1;
 
-        if (operationsInBatch === MAX_BATCH_OPERATIONS) {
+        if (operationsInBatch >= MAX_BATCH_OPERATIONS - 1) {
           await batch.commit();
           batch = adminDb.batch();
           operationsInBatch = 0;
