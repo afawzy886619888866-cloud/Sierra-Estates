@@ -17,17 +17,21 @@ export const dynamic = 'force-dynamic';
 
 const submitListingSchema = z.object({
   compound: z.string().min(1, 'Compound / Location is required').max(100),
-  propertyType: z.string().min(1, 'Property type is required').default('Apartment'),
-  mode: z.enum(['sale', 'rent']).default('sale'),
-  beds: z.coerce.number().int().min(0).default(3),
-  baths: z.coerce.number().int().min(0).default(2),
-  area: z.coerce.number().min(0).default(150),
+  propertyType: z.string().optional(),
+  type: z.string().optional(),
+  mode: z.string().optional().transform(m => (m?.toLowerCase() === 'rent' ? 'rent' : 'sale')),
+  beds: z.coerce.number().int().min(0).optional().default(3),
+  baths: z.coerce.number().int().min(0).optional().default(2),
+  area: z.coerce.number().min(0).optional().default(150),
   gardenArea: z.coerce.number().min(0).optional().default(0),
-  price: z.coerce.number().min(0, 'Price must be positive'),
+  price: z.coerce.number().min(0).optional().default(0),
   finishing: z.string().optional().default('Fully Furnished'),
-  ownerName: z.string().min(1, 'Owner name is required').max(100),
-  mobile: z.string().min(6, 'Valid contact mobile is required').max(30),
+  ownerName: z.string().optional(),
+  name: z.string().optional(),
+  mobile: z.string().optional(),
+  phone: z.string().optional(),
   comment: z.string().max(2000).optional().default(''),
+  notes: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -45,37 +49,45 @@ export async function POST(request: Request) {
       );
     }
 
-    const data = parseResult.data;
+    const rawData = parseResult.data;
+    const ownerName = rawData.ownerName || rawData.name || 'Direct Owner';
+    const mobile = rawData.mobile || rawData.phone || '01000000000';
+    const propertyType = rawData.propertyType || rawData.type || 'Apartment';
+    const comment = rawData.comment || rawData.notes || '';
     const now = new Date().toISOString();
     const listingCode = `SE-SUB-${Date.now().toString().slice(-6)}`;
-    const egpM = data.price > 100000 ? Number((data.price / 1_000_000).toFixed(2)) : data.price;
-    const usd = Math.round(data.price / 50);
+    const price = rawData.price || 0;
+    const egpM = price > 100000 ? Number((price / 1_000_000).toFixed(2)) : price;
+    const usd = Math.round(price / 50);
 
     const listingDocument = {
       code: listingCode,
-      ownerName: data.ownerName,
-      mobile: data.mobile,
+      ownerName,
+      mobile,
+      phone: mobile,
       status: 'Available',
-      cmp: data.compound,
-      compound: data.compound,
-      zone: data.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
-      type: data.propertyType,
-      beds: data.beds,
-      baths: data.baths,
-      area: data.area,
-      gardenArea: data.gardenArea,
-      price: data.price,
+      cmp: rawData.compound,
+      compound: rawData.compound,
+      zone: rawData.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
+      type: propertyType,
+      bedrooms: rawData.beds,
+      beds: rawData.beds,
+      bathrooms: rawData.baths,
+      baths: rawData.baths,
+      area: rawData.area,
+      gardenArea: rawData.gardenArea,
+      price,
       egpM,
       usd,
-      mode: data.mode,
-      finishing: data.finishing,
+      mode: rawData.mode,
+      finishing: rawData.finishing,
       ownerType: 'Owner',
       tag: 'Direct Submission',
       aiScore: 9.0,
-      agent: `${data.ownerName} (Owner)`,
+      agent: `${ownerName} (Owner)`,
       ago: 'Just now',
       img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-      comment: data.comment,
+      comment,
       submittedAt: now,
       source: 'web-submission',
     };
