@@ -66,6 +66,10 @@ export async function POST(request: Request) {
       mobile,
       phone: mobile,
       status: 'Available',
+      // Required by subscribeHouyezListings: where('active', '==', true)
+      active: true,
+      // Required by subscribeHouyezListings: orderBy('order', 'asc')
+      order: Date.now(),
       cmp: rawData.compound,
       compound: rawData.compound,
       zone: rawData.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
