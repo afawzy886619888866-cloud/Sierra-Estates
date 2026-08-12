@@ -142,3 +142,7 @@ bin/
 # Turbo build logs in package subdirectories
 functions/.turbo/
 apps/*/.turbo/
+
+# Firebase Service Account Key
+scripts/firebase-sa-key.json
+*.sa-key.json
