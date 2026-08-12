@@ -8,14 +8,24 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
 // Firebase config
 const PROJECT_ID = 'sierra-blu';
-const API_KEY = 'AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs';
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+// Get OAuth2 bearer token from gcloud CLI
+let ACCESS_TOKEN;
+try {
+  ACCESS_TOKEN = execSync('gcloud auth print-access-token', { encoding: 'utf8' }).trim();
+  console.log('🔑 Authenticated via gcloud OAuth2 token');
+} catch {
+  console.error('❌ gcloud auth failed. Run: gcloud auth login');
+  process.exit(1);
+}
 
 // Load clean listings
 const listings = JSON.parse(
@@ -56,14 +66,17 @@ function toFirestoreFields(obj) {
 /** POST a single document to a Firestore collection */
 async function addDocument(collectionId, data, docId) {
   const url = docId
-    ? `${FIRESTORE_BASE}/${collectionId}/${docId}?key=${API_KEY}`
-    : `${FIRESTORE_BASE}/${collectionId}?key=${API_KEY}`;
+    ? `${FIRESTORE_BASE}/${collectionId}/${docId}`
+    : `${FIRESTORE_BASE}/${collectionId}`;
 
   const method = docId ? 'PATCH' : 'POST';
 
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ACCESS_TOKEN}`,
+    },
     body: JSON.stringify({ fields: toFirestoreFields(data) }),
   });
 
