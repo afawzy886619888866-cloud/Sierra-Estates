@@ -53,7 +53,7 @@ jobs:
       # Key on the lockfile + app sources so the cache invalidates when either
       # changes; restore-keys lets an older cache seed a partially-warm build.
       - name: Cache Next.js build output
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: apps/sierra-estates-realty/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/sierra-estates-realty/**/*.ts', 'apps/sierra-estates-realty/**/*.tsx') }}

@@ -37,7 +37,7 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::apps/api directory not found — Python tests skipped."
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: steps.check-api.outputs.skip != 'true'
         with:
           python-version: '3.12'
