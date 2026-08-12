@@ -308,6 +308,8 @@ export async function POST(request: Request) {
         cmp: doc.compound,
         ai: doc.aiScore,
         active: doc.status !== 'archived',
+        // Required by subscribeHouyezListings: orderBy('order', 'asc')
+        order: Date.now(),
       }, { merge: true });
 
       return NextResponse.json({ id: ref.id }, { status: 201 });
