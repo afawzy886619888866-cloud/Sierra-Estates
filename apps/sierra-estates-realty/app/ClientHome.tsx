@@ -13,7 +13,9 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { motion, useReducedMotion } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { useI18n } from '@/lib/I18nContext';
 import { api } from '@/lib/api-client';
 import type { Listing as ApiListing } from '@/lib/types';
@@ -21,6 +23,8 @@ import './client-home.css';
 
 // Leaflet map — SSR-safe, client-only (reuses the existing vanilla-Leaflet map)
 const LiveMap = dynamic<{ mode?: 'dark' | 'light' }>(() => import('@/components/Maps/LiveMap'), { ssr: false });
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const WHATSAPP = 'https://wa.me/201061399688';
 
@@ -175,17 +179,40 @@ function toCardListing(l: ApiListing): Listing {
 
 /* ── Section entrance (opacity always 1 — only translateY eases) ───────── */
 function Reveal({ children, delay = 0, reduce }: { children: React.ReactNode; delay?: number; reduce: boolean }) {
-  if (reduce) return <div>{children}</div>;
-  return (
-    <motion.div
-      initial={{ transform: 'translateY(18px)' }}
-      whileInView={{ transform: 'translateY(0px)' }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
-    >
-      {children}
-    </motion.div>
-  );
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  useGSAP(() => {
+    if (reduce || !containerRef.current) return;
+    
+    gsap.fromTo(containerRef.current, 
+      { y: 24, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        delay: delay,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 85%',
+        }
+      }
+    );
+  }, { scope: containerRef, dependencies: [reduce, delay] });
+
+  return <div ref={containerRef} style={{ willChange: 'transform, opacity' }}>{children}</div>;
+}
+
+function usePrefersReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduce(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+  return reduce;
 }
 
 /* ── Main homepage ─────────────────────────────────────────────────────── */
@@ -193,7 +220,7 @@ export default function ClientHome() {
   const { locale, setLocale } = useI18n();
   const isAr = locale === 'ar';
   const t = COPY[isAr ? 'ar' : 'en'];
-  const reduce = !!useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const [listings, setListings] = useState<Listing[]>(FALLBACK);
 
   // Real listings via /api/listings (Firestore → live sheet → snapshot → seed
@@ -212,7 +239,19 @@ export default function ClientHome() {
     return () => { cancelled = true; };
   }, []);
 
-  const enter = reduce ? {} : { initial: { transform: 'translateY(20px)' }, animate: { transform: 'translateY(0px)' } };
+  const heroRef = React.useRef<HTMLDivElement>(null);
+  
+  useGSAP(() => {
+    if (reduce) return;
+    
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.9 } });
+    
+    tl.fromTo('.hero-eyebrow', { y: 20, opacity: 0 }, { y: 0, opacity: 1 })
+      .fromTo('.hero-title', { y: 25, opacity: 0 }, { y: 0, opacity: 1 }, "-=0.7")
+      .fromTo('.hero-sub', { y: 20, opacity: 0 }, { y: 0, opacity: 1 }, "-=0.7")
+      .fromTo('.hero-cta', { y: 15, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.1 }, "-=0.75");
+      
+  }, { scope: heroRef, dependencies: [reduce] });
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className={isAr ? 'sb-ar' : ''} style={{ minHeight: '100vh', overflowX: 'hidden' }}>
@@ -246,18 +285,18 @@ export default function ClientHome() {
         <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--bd-gold) 1px, transparent 1px), linear-gradient(90deg, var(--bd-gold) 1px, transparent 1px)', backgroundSize: '54px 54px', opacity: 0.25, maskImage: 'radial-gradient(ellipse at 50% 30%, #000, transparent 72%)' }} />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 78% 18%, rgba(230,57,70,.16), transparent 45%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 0%, var(--bg) 94%)' }} />
-        <div style={{ position: 'relative', maxWidth: 'var(--container)', margin: '0 auto', padding: 'clamp(72px,10vw,130px) var(--gutter) 70px', textAlign: 'center' }}>
-          <motion.div {...enter} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
-            <div className="sb-eyebrow" style={{ justifyContent: 'center', marginBottom: 22 }}>{t.eyebrow}</div>
-            <h1 className="sb-display" style={{ margin: 0 }}>
+        <div ref={heroRef} style={{ position: 'relative', maxWidth: 'var(--container)', margin: '0 auto', padding: 'clamp(72px,10vw,130px) var(--gutter) 70px', textAlign: 'center' }}>
+          <div>
+            <div className="sb-eyebrow hero-eyebrow" style={{ justifyContent: 'center', marginBottom: 22 }}>{t.eyebrow}</div>
+            <h1 className="sb-display hero-title" style={{ margin: 0 }}>
               {t.h1a} <span className="gold-text">{t.h1b}</span><br />{t.h1c}
             </h1>
-            <p className="sb-body-lg" style={{ maxWidth: 580, margin: '26px auto 38px', color: 'var(--tx-m)' }}>{t.sub}</p>
+            <p className="sb-body-lg hero-sub" style={{ maxWidth: 580, margin: '26px auto 38px', color: 'var(--tx-m)' }}>{t.sub}</p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/properties" className="btn-gold btn-lg">{t.ctaBrowse}</Link>
-              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-wa btn-lg">{t.ctaWhatsapp}</a>
+              <Link href="/properties" className="btn-gold btn-lg hero-cta">{t.ctaBrowse}</Link>
+              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-wa btn-lg hero-cta">{t.ctaWhatsapp}</a>
             </div>
-          </motion.div>
+          </div>
 
           {/* STATS */}
           <Reveal reduce={reduce} delay={0.15}>
