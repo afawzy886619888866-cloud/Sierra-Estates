@@ -218,17 +218,27 @@ export async function GET(request: Request) {
 
     const { id, limit, mode, compound, type, beds, maxUsd, q } = parseResult.data;
 
+    const CACHE_HEADERS = {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+    };
+
     // ── Legacy envelope mode (?id= / ?limit=) ──────────────────────────────
     if (id) {
       const result = await queryFirestoreRest(COLLECTIONS.units, undefined, id);
       if (result?.doc) {
-        return NextResponse.json({ success: true, listing: transformToListing(result.doc) });
+        return NextResponse.json(
+          { success: true, listing: transformToListing(result.doc) },
+          { headers: CACHE_HEADERS }
+        );
       }
       const seed = SEED_LISTINGS.find((l) => l.id === id);
       if (!seed) {
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
-      return NextResponse.json({ success: true, listing: seedToEnvelope(seed) });
+      return NextResponse.json(
+        { success: true, listing: seedToEnvelope(seed) },
+        { headers: CACHE_HEADERS }
+      );
     }
 
     if (limit != null) {
@@ -236,11 +246,17 @@ export async function GET(request: Request) {
       if (result) {
         let listings = (result.docs || []).map(transformToListing).filter(Boolean);
         listings = listings.filter((l: any) => l.publishToClient === true);
-        return NextResponse.json({ success: true, listings, count: listings.length });
+        return NextResponse.json(
+          { success: true, listings, count: listings.length },
+          { headers: CACHE_HEADERS }
+        );
       }
       // Firestore unreachable / denied / key missing → seed fallback, never 5xx.
       const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
-      return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
+      return NextResponse.json(
+        { success: true, listings, count: listings.length, seeded: true },
+        { headers: CACHE_HEADERS }
+      );
     }
 
     // ── Filter mode (api-client contract): bare Listing[] ──────────────────
@@ -265,7 +281,7 @@ export async function GET(request: Request) {
       return b.aiScore - a.aiScore;
     });
 
-    return NextResponse.json(items);
+    return NextResponse.json(items, { headers: CACHE_HEADERS });
   } catch (error: any) {
     logger.error('[LISTINGS_ERROR] Failed to fetch listings:', error?.message || error);
     return NextResponse.json(
