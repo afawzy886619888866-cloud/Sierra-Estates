@@ -1,0 +1,104 @@
+name: CI
+
+# Gates the app that actually deploys to production (deploy-vercel.yml →
+# apps/sierra-estates-realty) plus the workspace packages it consumes.
+#
+# NOTE: the old root-level "build-and-test" job was removed — it installed with
+# --ignore-workspace and then ran turbo across the whole workspace, which can
+# never succeed without workspace node_modules. The realty app + its packages
+# are the deployable surface and are fully gated below.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PUPPETEER_SKIP_DOWNLOAD: "true"
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+
+jobs:
+  monorepo:
+    name: Realty app + packages · Type-check + Lint + Test + Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+
+      - uses: pnpm/action-setup@v6
+        # version is read automatically from "packageManager" field in root package.json
+        # DO NOT specify version here — that causes "Multiple versions of pnpm" error
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install deps (workspace)
+        run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+
+      # Next.js incremental build cache. setup-node's `cache: pnpm` only caches
+      # the pnpm store (dependencies), not build output — so without this every
+      # run compiles from scratch. Measured locally: cold 59s vs warm 45s.
+      # Key on the lockfile + app sources so the cache invalidates when either
+      # changes; restore-keys lets an older cache seed a partially-warm build.
+      - name: Cache Next.js build output
+        uses: actions/cache@v4
+        with:
+          path: apps/sierra-estates-realty/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/sierra-estates-realty/**/*.ts', 'apps/sierra-estates-realty/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+
+      # Build before type-check: root tsconfig maps @sierra-estates/* to
+      # dist/*.d.ts with a fallback to src/*.ts. On a clean CI checkout dist/
+      # is absent, so the fallback pulls raw source across package boundaries
+      # and trips TS6059 (rootDir violation). pnpm builds in topological order.
+      - name: Build workspace packages (required before type-check)
+        run: pnpm --filter "./packages/*" run build
+
+      - name: Type-check workspace packages
+        run: pnpm --filter "./packages/*" run type-check
+
+      # NOTE: there is deliberately no separate "type-check realty app" step.
+      # next.config.ts sets `typescript.ignoreBuildErrors: false`, so the
+      # "Build realty app" step below already type-checks the app against the
+      # same tsconfig — a standalone `tsc --noEmit` here just repeats it (~19s).
+      # Verified empirically: a type error in a lib/ file that no route imports
+      # still fails `next build` with the identical TS2322 diagnostic, so this
+      # loses no coverage. The `type-check` script itself is unchanged and
+      # remains the fast local check (`pnpm --filter ... type-check`).
+
+      - name: Lint realty app
+        run: pnpm --filter sierra-estates-client-page lint
+
+      - name: Unit tests
+        run: pnpm --filter sierra-estates-client-page test:ci
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+
+      - name: Build realty app
+        run: pnpm --filter sierra-estates-client-page build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"

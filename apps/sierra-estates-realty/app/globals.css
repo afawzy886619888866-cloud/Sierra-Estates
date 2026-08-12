@@ -1,0 +1,20 @@
+/* Minimal global reset. Surface-specific styling lives with each surface
+   (e.g. app/admin/admin-portal.css); keep this file lean so the incoming
+   client page can bring its own design without fighting global rules. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

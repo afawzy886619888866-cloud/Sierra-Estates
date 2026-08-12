@@ -1,0 +1,30 @@
+name: Auto-assign PR
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-assign:
+    name: Auto-assign PR to author
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-assign PR to author
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+
+            // Assign to author
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              assignees: [author]
+            });
+
+            console.log(`Assigned PR #${pr.number} to ${author}`);

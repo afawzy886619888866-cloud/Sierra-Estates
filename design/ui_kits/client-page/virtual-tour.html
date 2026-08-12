@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Virtual 3D Tour · Sierra Estates</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+:root{--gold:#C8961A;--gold-lt:#E9C176;--navy:#0D2035;--bg:#07111E;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+body{background:var(--bg);color:#F0EDE5;font-family:'Inter',sans-serif;overflow:hidden;height:100vh;}
+canvas{display:block;position:fixed;inset:0;width:100%!important;height:100%!important;cursor:grab;}
+canvas.dragging{cursor:grabbing;}
+
+/* LOADING */
+#loading{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s,visibility .6s;}
+#loading.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.load-logo{font-family:'Cormorant Garamond',serif;font-size:36px;color:var(--gold-lt);margin-bottom:6px;}
+.load-sub{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.22em;color:rgba(233,193,118,.45);text-transform:uppercase;margin-bottom:32px;}
+.load-bar-wrap{width:200px;height:2px;background:rgba(200,150,26,.15);border-radius:1px;overflow:hidden;}
+.load-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));border-radius:1px;width:0%;transition:width .2s ease;}
+
+/* HEADER */
+#hdr{position:fixed;top:0;left:0;right:0;z-index:20;height:56px;display:flex;align-items:center;padding:0 20px;gap:12px;background:linear-gradient(to bottom,rgba(7,17,30,.92) 0%,transparent 100%);pointer-events:none;}
+#hdr a,#hdr button{pointer-events:all;}
+.hdr-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-logo{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--navy);}
+.hdr-name{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--gold-lt);text-transform:uppercase;}
+#room-label{margin-left:12px;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#fff;opacity:.9;transition:opacity .3s;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.hdr-btn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);color:rgba(240,237,229,.8);padding:6px 13px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;}
+.hdr-btn:hover{background:rgba(200,150,26,.2);border-color:rgba(200,150,26,.4);color:var(--gold-lt);}
+.hdr-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+
+/* ROOM BAR */
+#room-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;align-items:center;background:rgba(7,17,30,.88);backdrop-filter:blur(18px);border:1px solid rgba(200,150,26,.18);border-radius:22px;padding:8px 12px;}
+.room-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:14px;border:none;cursor:pointer;font-size:11px;font-weight:600;transition:all .25s;background:transparent;color:rgba(240,237,229,.5);font-family:'Inter',sans-serif;}
+.room-btn:hover{color:var(--gold-lt);background:rgba(200,150,26,.1);}
+.room-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);}
+.room-icon{font-size:14px;}
+
+/* CONTROLS */
+#ctrl{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:6px;}
+.ctrl-btn{width:42px;height:42px;border-radius:13px;background:rgba(7,17,30,.88);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:rgba(240,237,229,.7);font-size:17px;transition:all .2s;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;}
+.ctrl-btn:hover{background:rgba(200,150,26,.2);border-color:rgba(200,150,26,.4);color:var(--gold-lt);}
+.ctrl-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+.ctrl-sep{height:1px;background:rgba(255,255,255,.07);margin:3px 8px;}
+
+/* COMPASS */
+#compass{position:fixed;left:20px;bottom:110px;z-index:20;width:56px;height:56px;background:rgba(7,17,30,.88);backdrop-filter:blur(16px);border:1px solid rgba(200,150,26,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;}
+#compass-ring{font-size:24px;transition:transform .1s linear;line-height:1;}
+#compass-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;color:rgba(200,150,26,.7);letter-spacing:.1em;}
+
+/* FOV indicator */
+#fov-lbl{position:fixed;left:20px;bottom:178px;z-index:20;background:rgba(7,17,30,.88);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(233,193,118,.7);}
+
+/* HOTSPOTS */
+#hs-layer{position:fixed;inset:0;z-index:15;pointer-events:none;}
+.hotspot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;pointer-events:all;transition:opacity .3s;}
+.hs-ring{width:50px;height:50px;border-radius:50%;border:2px solid rgba(200,150,26,.85);background:rgba(200,150,26,.12);display:flex;align-items:center;justify-content:center;transition:all .25s;animation:hsPulse 2.8s ease-in-out infinite;}
+.hotspot:hover .hs-ring{background:rgba(200,150,26,.32);border-color:var(--gold-lt);transform:scale(1.18);}
+.hs-icon{font-size:18px;}
+.hs-label{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:600;color:var(--gold-lt);background:rgba(7,17,30,.9);padding:3px 9px;border-radius:6px;opacity:0;transition:opacity .2s;}
+.hotspot:hover .hs-label{opacity:1;}
+@keyframes hsPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,150,26,.45);}50%{box-shadow:0 0 0 12px rgba(200,150,26,0);}}
+
+/* DRAG HINT */
+#drag-hint{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(7,17,30,.8);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:8px 18px;font-size:12px;color:rgba(240,237,229,.7);display:flex;align-items:center;gap:8px;animation:fadeInHint .8s ease both,fadeOutHint 1.2s ease 3.5s forwards;}
+@keyframes fadeInHint{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+@keyframes fadeOutHint{to{opacity:0;visibility:hidden;}}
+
+/* CROSSHAIR */
+#xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:15;width:20px;height:20px;pointer-events:none;opacity:.4;}
+#xhair::before,#xhair::after{content:'';position:absolute;background:rgba(200,150,26,.8);}
+#xhair::before{width:1px;height:100%;left:50%;}
+#xhair::after{height:1px;width:100%;top:50%;}
+
+/* PROPERTY PANEL */
+#prop-panel{position:fixed;left:20px;top:68px;z-index:20;width:236px;background:rgba(7,17,30,.9);backdrop-filter:blur(18px);border:1px solid rgba(200,150,26,.22);border-radius:18px;padding:16px;transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .35s;}
+#prop-panel.hidden{transform:translateX(-260px);opacity:0;pointer-events:none;}
+.prop-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:#fff;margin-bottom:3px;}
+.prop-cpd{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--gold);letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px;}
+.prop-specs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.spec-box{background:rgba(255,255,255,.05);border-radius:9px;padding:8px;text-align:center;}
+.spec-v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--gold-lt);}
+.spec-l{font-size:8px;color:rgba(240,237,229,.38);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.prop-price{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gold);margin-bottom:9px;}
+.prop-ai{font-size:10px;color:rgba(240,237,229,.45);margin-bottom:12px;line-height:1.5;}
+.prop-cta{width:100%;padding:9px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border:none;cursor:pointer;font-weight:700;font-size:11px;transition:opacity .2s;}
+.prop-cta:hover{opacity:.88;}
+
+/* KEYS HINT */
+#keys-hint{position:fixed;left:20px;bottom:24px;z-index:20;font-family:'JetBrains Mono',monospace;font-size:8px;color:rgba(200,150,26,.38);letter-spacing:.06em;line-height:2;}
+
+@media(max-width:768px){
+  #prop-panel,#keys-hint,#fov-lbl,#compass{display:none;}
+  .room-btn .room-text{display:none;}
+  .room-btn{padding:8px 10px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="load-logo">Sierra Estates</div>
+  <div class="load-sub">Virtual Tour · New Cairo</div>
+  <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+</div>
+
+<!-- Three.js canvas -->
+<canvas id="c"></canvas>
+
+<!-- Crosshair -->
+<div id="xhair"></div>
+
+<!-- Header -->
+<div id="hdr">
+  <a href="index.html" class="hdr-brand">
+    <div class="hdr-logo">S</div>
+    <div class="hdr-name">Sierra Estates</div>
+  </a>
+  <div id="room-label">Grand Living</div>
+  <div class="hdr-right">
+    <button class="hdr-btn" id="btn-info" onclick="togglePanel()">ℹ️ Property</button>
+    <button class="hdr-btn" id="btn-auto" onclick="toggleAuto()">▶ Auto</button>
+    <button class="hdr-btn" id="btn-fs" onclick="toggleFS()">⛶ Fullscreen</button>
+    <a href="index.html" class="hdr-btn">✕ Exit</a>
+  </div>
+</div>
+
+<!-- Property Panel -->
+<div id="prop-panel" class="hidden">
+  <div class="prop-name">Villa Émeraude</div>
+  <div class="prop-cpd">Hyde Park · 5th Settlement · New Cairo</div>
+  <div class="prop-specs">
+    <div class="spec-box"><div class="spec-v">6</div><div class="spec-l">Bedrooms</div></div>
+    <div class="spec-box"><div class="spec-v">450m²</div><div class="spec-l">Area</div></div>
+    <div class="spec-box"><div class="spec-v">Private</div><div class="spec-l">Pool</div></div>
+    <div class="spec-box"><div class="spec-v">9.7</div><div class="spec-l">AI Score</div></div>
+  </div>
+  <div class="prop-price">EGP 35,000,000</div>
+  <div class="prop-ai">🤖 AI Match: 97% · Recommended for Gulf investors seeking capital growth</div>
+  <button class="prop-cta">Request Viewing</button>
+</div>
+
+<!-- Controls -->
+<div id="ctrl">
+  <button class="ctrl-btn" id="btn-zi" title="Zoom In (scroll up)">＋</button>
+  <button class="ctrl-btn" id="btn-zo" title="Zoom Out (scroll down)">－</button>
+  <div class="ctrl-sep"></div>
+  <button class="ctrl-btn" title="Look Up" onclick="nudge(0,-20)">↑</button>
+  <button class="ctrl-btn" title="Look Down" onclick="nudge(0,20)">↓</button>
+  <button class="ctrl-btn" title="Look Left" onclick="nudge(-30,0)">←</button>
+  <button class="ctrl-btn" title="Look Right" onclick="nudge(30,0)">→</button>
+  <div class="ctrl-sep"></div>
+  <button class="ctrl-btn" title="Reset View" onclick="resetView()">⊙</button>
+</div>
+
+<!-- Compass -->
+<div id="compass">
+  <div id="compass-ring">🧭</div>
+  <div id="compass-lbl">N</div>
+</div>
+
+<!-- FOV -->
+<div id="fov-lbl">FOV <span id="fov-val">75°</span></div>
+
+<!-- Hotspot layer -->
+<div id="hs-layer"></div>
+
+<!-- Room bar -->
+<div id="room-bar"></div>
+
+<!-- Drag hint -->
+<div id="drag-hint">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M8 14v7M16 14v7"/></svg>
+  Drag to look around · Scroll to zoom · WASD to navigate
+</div>
+
+<!-- Key shortcuts -->
+<div id="keys-hint">
+  WASD / ↑↓←→  navigate<br>
+  SCROLL        zoom<br>
+  SPACE         auto-rotate<br>
+  F             fullscreen<br>
+  [ ]           prev / next room<br>
+  I             property info
+</div>
+
+<script>
+// ── ROOMS ─────────────────────────────────────────────────────────────
+const ROOMS = [
+  { name:'Grand Living', icon:'🛋️', img:'tour/grand-living.jpg',
+    hotspots:[{lon:60,lat:0,label:'→ Fireplace Lounge',room:1},{lon:-90,lat:0,label:'→ White Reception',room:2}] },
+  { name:'Fireplace Lounge', icon:'🔥', img:'tour/fireplace-lounge.jpg',
+    hotspots:[{lon:120,lat:0,label:'→ Grand Living',room:0},{lon:-60,lat:0,label:'→ Boho Living',room:3}] },
+  { name:'White Reception', icon:'🪑', img:'tour/white-reception.jpg',
+    hotspots:[{lon:80,lat:0,label:'→ Home Office',room:5},{lon:-100,lat:0,label:'→ Grand Living',room:0}] },
+  { name:'Boho Living', icon:'🌿', img:'tour/boho-living.jpg',
+    hotspots:[{lon:70,lat:0,label:'→ Attic Retreat',room:4},{lon:-80,lat:0,label:'→ Fireplace Lounge',room:1}] },
+  { name:'Attic Retreat', icon:'🏔️', img:'tour/attic-retreat.jpg',
+    hotspots:[{lon:90,lat:0,label:"→ Kids' Loft",room:8},{lon:-70,lat:0,label:'→ Boho Living',room:3}] },
+  { name:'Home Office', icon:'💻', img:'tour/home-office.jpg',
+    hotspots:[{lon:60,lat:0,label:'→ Botanical Bedroom',room:6},{lon:-90,lat:0,label:'→ White Reception',room:2}] },
+  { name:'Botanical Bedroom', icon:'🛏️', img:'tour/botanical-bedroom.jpg',
+    hotspots:[{lon:80,lat:0,label:'→ Turquoise Suite',room:7},{lon:-80,lat:0,label:'→ Home Office',room:5}] },
+  { name:'Turquoise Suite', icon:'🛌', img:'tour/turquoise-suite.jpg',
+    hotspots:[{lon:70,lat:0,label:"→ Kids' Loft",room:8},{lon:-90,lat:0,label:'→ Botanical Bedroom',room:6}] },
+  { name:"Kids' Loft", icon:'🧸', img:'tour/kids-loft.jpg',
+    hotspots:[{lon:60,lat:0,label:'→ Attic Retreat',room:4},{lon:-100,lat:0,label:'→ Turquoise Suite',room:7}] },
+];
+
+// Build room bar dynamically
+document.getElementById('room-bar').innerHTML = ROOMS.map(function(r,i){
+  return '<button class="room-btn'+(i===0?' on':'')+'" onclick="switchRoom('+i+')"><span class="room-icon">'+r.icon+'</span><span class="room-text">'+r.name+'</span></button>';
+}).join('');
+
+// ── THREE.JS SETUP ────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+let fov = 75;
+const camera = new THREE.PerspectiveCamera(fov, innerWidth/innerHeight, 1, 2000);
+camera.position.set(0, 0, 0.001);
+
+// Inside-out sphere
+const geo = new THREE.SphereGeometry(500, 72, 48);
+geo.scale(-1, 1, 1);
+const mat = new THREE.MeshBasicMaterial({map:null, side:THREE.FrontSide});
+const sphere = new THREE.Mesh(geo, mat);
+scene.add(sphere);
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let lon = 0, lat = 0, tLon = 0, tLat = 0;
+let isDown = false, sx = 0, sy = 0, pLon = 0, pLat = 0;
+let autoRotate = false;
+let currentRoom = 0;
+const loader = new THREE.TextureLoader();
+loader.crossOrigin = 'anonymous';
+const texCache = {};
+const keys = {};
+
+// ── TEXTURE LOAD ──────────────────────────────────────────────────────
+function loadRoom(idx, onDone) {
+  const bar = document.getElementById('load-bar');
+  if (texCache[idx]) {
+    mat.map = texCache[idx];
+    mat.needsUpdate = true;
+    document.getElementById('loading').classList.add('hidden');
+    onDone && onDone();
+    return;
+  }
+  let prog = 0;
+  const iv = setInterval(() => { prog = Math.min(prog + Math.random() * 12 + 3, 88); bar.style.width = prog + '%'; }, 120);
+  loader.load(
+    ROOMS[idx].img,
+    tex => {
+      clearInterval(iv);
+      bar.style.width = '100%';
+      tex.minFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      try { tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); } catch(e){}
+      if ('SRGBColorSpace' in THREE) tex.colorSpace = THREE.SRGBColorSpace;
+      texCache[idx] = tex;
+      mat.map = tex;
+      mat.needsUpdate = true;
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+        onDone && onDone();
+      }, 350);
+    },
+    undefined,
+    () => { clearInterval(iv); document.getElementById('loading').classList.add('hidden'); }
+  );
+}
+
+// ── SWITCH ROOM ───────────────────────────────────────────────────────
+function switchRoom(i) {
+  if (i === currentRoom) return;
+  currentRoom = i;
+  document.getElementById('room-label').textContent = ROOMS[i].name;
+  document.querySelectorAll('.room-btn').forEach((b, j) => b.classList.toggle('on', j === i));
+  tLon = 0; tLat = 0;
+  const ld = document.getElementById('loading');
+  ld.classList.remove('hidden');
+  document.getElementById('load-bar').style.width = '0%';
+  loadRoom(i, buildHotspots);
+}
+
+// ── POINTER / TOUCH CONTROLS ──────────────────────────────────────────
+canvas.addEventListener('pointerdown', e => {
+  isDown = true; sx = e.clientX; sy = e.clientY; pLon = tLon; pLat = tLat;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!isDown) return;
+  tLon = pLon - (e.clientX - sx) * 0.22;
+  tLat = Math.max(-85, Math.min(85, pLat + (e.clientY - sy) * 0.22));
+});
+canvas.addEventListener('pointerup', () => { isDown = false; canvas.classList.remove('dragging'); });
+canvas.addEventListener('pointerleave', () => { isDown = false; canvas.classList.remove('dragging'); });
+
+// Scroll zoom
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  fov = Math.max(35, Math.min(105, fov + e.deltaY * 0.045));
+  camera.fov = fov; camera.updateProjectionMatrix();
+  document.getElementById('fov-val').textContent = Math.round(fov) + '°';
+}, {passive:false});
+
+// Pinch zoom
+let lastPinch = 0;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) lastPinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+});
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    fov = Math.max(35, Math.min(105, fov + (lastPinch - d) * 0.06));
+    camera.fov = fov; camera.updateProjectionMatrix();
+    lastPinch = d;
+  }
+});
+
+// Zoom buttons
+document.getElementById('btn-zi').addEventListener('click', () => {
+  fov = Math.max(35, fov - 12); camera.fov = fov; camera.updateProjectionMatrix();
+  document.getElementById('fov-val').textContent = Math.round(fov) + '°';
+});
+document.getElementById('btn-zo').addEventListener('click', () => {
+  fov = Math.min(105, fov + 12); camera.fov = fov; camera.updateProjectionMatrix();
+  document.getElementById('fov-val').textContent = Math.round(fov) + '°';
+});
+
+// Keyboard
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.code === 'Space') { e.preventDefault(); toggleAuto(); }
+  if (e.key === 'f' || e.key === 'F') toggleFS();
+  if (e.key === 'i' || e.key === 'I') togglePanel();
+  if (e.key === '[') switchRoom(Math.max(0, currentRoom - 1));
+  if (e.key === ']') switchRoom(Math.min(ROOMS.length - 1, currentRoom + 1));
+});
+window.addEventListener('keyup', e => { delete keys[e.key]; });
+
+function processKeys() {
+  const spd = 1.8;
+  if (keys['ArrowLeft']  || keys['a'] || keys['A']) tLon -= spd;
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) tLon += spd;
+  if (keys['ArrowUp']    || keys['w'] || keys['W']) tLat = Math.max(-85, tLat - spd);
+  if (keys['ArrowDown']  || keys['s'] || keys['S']) tLat = Math.min(85, tLat + spd);
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────
+function toggleAuto() {
+  autoRotate = !autoRotate;
+  const b = document.getElementById('btn-auto');
+  b.classList.toggle('on', autoRotate);
+  b.textContent = autoRotate ? '⏸ Auto' : '▶ Auto';
+}
+function resetView() {
+  tLon = 0; tLat = 0;
+  fov = 75; camera.fov = fov; camera.updateProjectionMatrix();
+  document.getElementById('fov-val').textContent = '75°';
+}
+function nudge(dLon, dLat) {
+  tLon += dLon;
+  tLat = Math.max(-85, Math.min(85, tLat + dLat));
+}
+function toggleFS() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+    document.getElementById('btn-fs').textContent = '⛶ Exit Full';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('btn-fs').textContent = '⛶ Fullscreen';
+  }
+}
+function togglePanel() {
+  document.getElementById('prop-panel').classList.toggle('hidden');
+}
+
+// ── HOTSPOTS ──────────────────────────────────────────────────────────
+function buildHotspots() {
+  const layer = document.getElementById('hs-layer');
+  layer.innerHTML = '';
+  ROOMS[currentRoom].hotspots.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'hotspot';
+    el.dataset.lon = h.lon; el.dataset.lat = h.lat; el.dataset.room = h.room;
+    el.innerHTML = `<div class="hs-ring"><span class="hs-icon">🚪</span></div><div class="hs-label">${h.label}</div>`;
+    el.addEventListener('click', () => switchRoom(h.room));
+    layer.appendChild(el);
+  });
+}
+
+function projectHotspots() {
+  document.querySelectorAll('.hotspot').forEach(el => {
+    const hLon = parseFloat(el.dataset.lon);
+    const hLat = parseFloat(el.dataset.lat);
+    const phi   = THREE.MathUtils.degToRad(90 - hLat);
+    const theta = THREE.MathUtils.degToRad(hLon);
+    const v = new THREE.Vector3(
+      500 * Math.sin(phi) * Math.cos(theta),
+      500 * Math.cos(phi),
+      500 * Math.sin(phi) * Math.sin(theta)
+    );
+    const p = v.clone().project(camera);
+    const inFront = p.z < 1.0;
+    el.style.opacity = inFront ? '1' : '0';
+    el.style.pointerEvents = inFront ? 'all' : 'none';
+    if (inFront) {
+      el.style.left = ((p.x + 1) / 2 * innerWidth) + 'px';
+      el.style.top  = (-(p.y - 1) / 2 * innerHeight) + 'px';
+    }
+  });
+}
+
+// ── COMPASS ───────────────────────────────────────────────────────────
+const BEARINGS = ['N','NE','E','SE','S','SW','W','NW'];
+function updateCompass() {
+  const norm = ((lon % 360) + 360) % 360;
+  document.getElementById('compass-ring').style.transform = `rotate(${-norm}deg)`;
+  document.getElementById('compass-lbl').textContent = BEARINGS[Math.round(norm / 45) % 8];
+}
+
+// ── ANIMATION LOOP ─────────────────────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+  processKeys();
+  if (autoRotate && !isDown) tLon += 0.1;
+  // Smooth follow
+  lon += (tLon - lon) * 0.085;
+  lat += (tLat - lat) * 0.085;
+  lat = Math.max(-85, Math.min(85, lat));
+  const phi   = THREE.MathUtils.degToRad(90 - lat);
+  const theta = THREE.MathUtils.degToRad(lon);
+  camera.lookAt(
+    500 * Math.sin(phi) * Math.cos(theta),
+    500 * Math.cos(phi),
+    500 * Math.sin(phi) * Math.sin(theta)
+  );
+  projectHotspots();
+  updateCompass();
+  renderer.render(scene, camera);
+}
+
+// ── RESIZE ────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────
+loadRoom(0, () => { buildHotspots(); animate(); });
+
+// Preload next room after initial load settles
+setTimeout(() => {
+  const preload = new THREE.TextureLoader();
+  preload.crossOrigin = 'anonymous';
+  ROOMS.forEach((r, i) => {
+    if (i > 0 && !texCache[i]) preload.load(r.img, tex => { tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false; texCache[i] = tex; });
+  });
+}, 2000);
+</script>
+</body>
+</html>

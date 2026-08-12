@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Remix: Remix: Sierra Estates Intelligence OS",
+  "description": "Real-time administrator CRM and intelligent property catalog powered by Firebase Authentication and Firestore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

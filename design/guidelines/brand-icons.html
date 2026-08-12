@@ -1,0 +1,30 @@
+<!-- @dsCard group="Brand" viewport="700x200" name="Iconography — Lucide" subtitle="Lucide line icons, 2px stroke, round caps · emoji only in AI tiles" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 26px 28px; display: flex; flex-direction: column; gap: 18px; }
+  .grid { display: flex; gap: 22px; flex-wrap: wrap; }
+  .ic { display: flex; flex-direction: column; align-items: center; gap: 7px; color: var(--tx); }
+  .ic svg { width: 24px; height: 24px; }
+  .ic .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--tx-m); }
+  .gold svg { color: var(--gold); }
+  .emoji-row { display: flex; gap: 16px; align-items: center; }
+  .emoji { font-size: 20px; }
+  .note { font-family: var(--font-ui); font-size: 11px; color: var(--tx-m); }
+</style>
+</head>
+<body>
+  <div class="grid" id="icons"></div>
+  <div class="emoji-row"><span class="emoji">🗺️</span><span class="emoji">📈</span><span class="emoji">🎯</span><span class="emoji">📷</span><span class="emoji">💬</span><span class="note">— emoji reserved for AI-tool tiles &amp; conversational replies, never in core UI</span></div>
+  <script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+  <script>
+    const names = [['search','Search'],['sliders-horizontal','Filter'],['map-pin','Pin'],['bed','Beds'],['bath','Baths'],['sparkles','AI'],['trending-up','ROI'],['heart','Save'],['shield','Verify'],['bot','Sierra']];
+    const wrap = document.getElementById('icons');
+    wrap.innerHTML = names.map(([n,l],i)=>`<div class="ic${i%3===0?' gold':''}"><i data-lucide="${n}"></i><span class="lbl">${l}</span></div>`).join('');
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper functions
+    // ─────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasUserDoc() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // Role can come from a custom claim (set by Admin SDK) OR the users/{uid} doc.
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' ||
+        (hasUserDoc() && userDoc().role == 'admin')
+      );
+    }
+
+    function isClient() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'client' ||
+        (hasUserDoc() && userDoc().role == 'client')
+      );
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function hasEnrollment(programId) {
+      return exists(/databases/$(database)/documents/enrollments/$(request.auth.uid + '_' + programId));
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // CLIENT PORTAL COLLECTIONS  (sierra-estates.net)
+    // These are the collections firebase-data.js actually reads/writes.
+    // ═════════════════════════════════════════════════════════════
+
+    // Property listings — public catalogue. Writes only from admin / server (Admin SDK bypasses rules).
+    match /houyez_listings/{listingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Compound metadata — public.
+    match /houyez_compounds/{compoundId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Lead capture — anyone can submit; only admins can read/manage.
+    match /inquiries/{inquiryId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if
+        request.resource.data.status == 'new' &&
+        request.resource.data.size() <= 40 &&
+        (
+          (request.resource.data.name is string && request.resource.data.name.size() <= 200) ||
+          (request.resource.data.phone is string && request.resource.data.phone.size() <= 40) ||
+          (request.resource.data.email is string && request.resource.data.email.size() <= 320)
+        );
+    }
+
+    // Career applications — anyone can submit; only admins can read/manage.
+    match /careers/{appId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if
+        request.resource.data.status == 'new' &&
+        request.resource.data.size() <= 40;
+    }
+
+    // ═════════════════════════════════════════════════════════════
+    // ADMIN / RBAC MODEL  (admin.sierra-estates.net)
+    // ═════════════════════════════════════════════════════════════
+
+    // Users collection - RBAC foundation
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Create during signup (self), or admin can create.
+      allow create: if isOwner(uid) || isAdmin();
+
+      // Self may update own doc but NOT change their own role; admin may update anything.
+      allow update: if
+        (isOwner(uid) && request.resource.data.role == resource.data.role) ||
+        isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // Programs collection - Admin manages; enrolled clients can read.
+    match /programs/{programId} {
+      allow read: if isAdmin() || (isClient() && hasEnrollment(programId));
+      allow create, update, delete: if isAdmin();
+
+      match /enrollments/{enrollmentId} {
+        allow read: if isAdmin() || (isClient() && isOwner(enrollmentId));
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // Enrollments collection - Links clients to programs.
+    match /enrollments/{enrollmentId} {
+      allow read, create, update, delete: if isAdmin();
+      allow read: if isClient() && enrollmentId.matches('.*' + request.auth.uid + '.*');
+    }
+
+    // Agent sessions - Workflow state tracking.
+    match /agent_sessions/{sessionId} {
+      allow read, create, update, delete: if isAdmin();
+      allow read: if isClient() && isOwner(resource.data.client_uid);
+      allow create: if isClient() && request.resource.data.client_uid == request.auth.uid;
+      allow update: if false; // only admins advance workflow (covered above)
+    }
+
+    match /agent_sessions/{sessionId}/messages/{messageId} {
+      allow read, write: if isAdmin();
+      allow read: if isClient() &&
+        get(/databases/$(database)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid;
+      allow create: if isClient() &&
+        get(/databases/$(database)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid &&
+        request.resource.data.author_uid == request.auth.uid &&
+        request.resource.data.timestamp == request.time;
+      allow update, delete: if false;
+    }
+
+    // Audit logs - append-only.
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    // Settings - Admin only.
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,85 @@
+From 73a96b7031ad72cd87ffbf5943ac924311e64455 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 4 Jul 2026 09:12:03 +0000
+Subject: [PATCH] fix(admin): unblock the login page from the auth guard
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+app/admin/layout.tsx wraps every /admin/* route including /admin/login.
+For any signed-out visitor the guard resolved to `return null`, so the
+login form itself rendered as a blank page — staff could never log in
+(with real Firebase configured, /admin redirected to /admin/login and
+then blanked). The mock-Firebase dev mode had masked this by crashing
+earlier in the flow.
+
+The login route now renders bare (no guard, no admin chrome); all other
+admin routes keep the existing auth + role gate unchanged.
+
+Verified against the real sierra-blu Firebase config (via .env.local,
+not committed): /admin redirects to /admin/login, the Sierra Admin
+login form renders with email/password/Login, and /clients renders
+clean — no page errors.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LCU7ePQvFvPw9Y4TzEgJsB
+---
+ apps/sierra-estates-realty/app/admin/layout.tsx | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/apps/sierra-estates-realty/app/admin/layout.tsx b/apps/sierra-estates-realty/app/admin/layout.tsx
+index 8cd7c4ed..32741920 100644
+--- a/apps/sierra-estates-realty/app/admin/layout.tsx
++++ b/apps/sierra-estates-realty/app/admin/layout.tsx
+@@ -1,7 +1,7 @@
+ 'use client';
+ 
+ import React, { useEffect, useState } from 'react';
+-import { useRouter } from 'next/navigation';
++import { useRouter, usePathname } from 'next/navigation';
+ import { onAuthStateChanged } from 'firebase/auth';
+ import { doc, getDoc } from 'firebase/firestore';
+ import { auth, db } from '@/lib/firebase';
+@@ -12,12 +12,18 @@ export default function AdminLayout({
+   children,
+ }: Readonly<{ children: React.ReactNode }>) {
+   const router = useRouter();
++  const pathname = usePathname();
++  // The login page must render WITHOUT the auth guard: the guard's
++  // `return null` for unauthenticated users would otherwise blank the
++  // login form itself, locking staff out entirely.
++  const isLoginPage = pathname === '/admin/login';
+   const [isAuth, setIsAuth] = useState(false);
+   const [isLoading, setIsLoading] = useState(true);
+   const [_userRole, setUserRole] = useState<string | null>(null);
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+ 
+   useEffect(() => {
++    if (isLoginPage) return;
+     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+       if (!user) {
+         router.replace('/admin/login');
+@@ -45,7 +51,7 @@ export default function AdminLayout({
+     });
+ 
+     return () => unsubscribe();
+-  }, [router]);
++  }, [router, isLoginPage]);
+ 
+   const handleLogout = async () => {
+     try {
+@@ -56,6 +62,11 @@ export default function AdminLayout({
+     }
+   };
+ 
++  // Login page renders bare (no guard, no admin chrome).
++  if (isLoginPage) {
++    return <>{children}</>;
++  }
++
+   if (isLoading) {
+     return (
+       <div className="min-h-screen bg-[#071422] flex items-center justify-center">
+-- 
+2.43.0
+

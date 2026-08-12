@@ -1,0 +1,740 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sierra estates — Beyond Brokerage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/framer-motion@11.18.2/dist/framer-motion.js"></script>
+<style>
+  :root {
+    --navy-deep: #071422;
+    --navy-mid: #0A1628;
+    --navy-soft: #0D1E36;
+    --ivory: #F4F0E8;
+    --ivory-pale: #FAF7F1;
+    --gold: #C8961A;
+    --gold-light: #E9C176;
+    --gold-shimmer: #F5D78E;
+    --gold-deep: #987734;
+    --sierra-estates: #1E88D9;
+  }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html, body { background: var(--ivory); }
+  body { font-family: 'Inter', sans-serif; color: var(--navy-deep); }
+  .font-serif { font-family: 'Cormorant Garamond', serif; }
+  .font-sans { font-family: 'Inter', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .font-arabic { font-family: 'Cairo', sans-serif; }
+  [dir="rtl"] body { font-family: 'Cairo', sans-serif; }
+  [dir="rtl"] .font-serif { font-family: 'Cormorant Garamond', 'Cairo', serif; }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--ivory); }
+  ::-webkit-scrollbar-thumb { background: rgba(7,20,34,0.15); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(7,20,34,0.3); }
+
+  /* Cinematic Apple ease */
+  .ease-silk { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* Gold shimmer text */
+  @keyframes goldShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  .gold-text {
+    background: linear-gradient(90deg, #E9C176 0%, #C8961A 25%, #F5D78E 50%, #C8961A 75%, #E9C176 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: goldShimmer 6s linear infinite;
+  }
+
+  /* Floating stardust glow */
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+    50% { transform: translate(8px, -12px); opacity: 0.6; }
+  }
+  .stardust { animation: drift 4s ease-in-out infinite; }
+
+  /* Hero S backdrop */
+  .hero-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    color: rgba(200,150,26,0.05);
+    letter-spacing: -0.06em;
+    line-height: 0.8;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Pulse */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200,150,26,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(200,150,26,0); }
+  }
+  .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 750ms cubic-bezier(0.16,1,0.3,1), transform 750ms cubic-bezier(0.16,1,0.3,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Hover lift */
+  .lift { transition: transform 400ms cubic-bezier(0.16,1,0.3,1), box-shadow 400ms ease, border-color 400ms ease; }
+  .lift:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(7,20,34,0.12); }
+
+  /* Map dot grid */
+  .map-dots {
+    background-image: radial-gradient(rgba(7,20,34,0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  /* Gold gradient line */
+  .gold-rule {
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* No-arrow number input */
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* Hover gold text */
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+    height: 1px; background: var(--gold);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 300ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+  [dir="rtl"] .nav-link::after { transform-origin: right; }
+
+  /* Property card image bloom */
+  .img-bloom { transition: transform 800ms cubic-bezier(0.16,1,0.3,1); }
+  .group:hover .img-bloom { transform: scale(1.06); }
+
+  /* Backdrop tint */
+  .tint-gold { background: radial-gradient(circle at center, rgba(200,150,26,0.10) 0%, transparent 60%); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+const { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } = window.Motion || window.framerMotion || {};
+
+// ─── ICONS (inline SVG, no external deps) ──────────────────────────────
+const Icon = {
+  Search: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>),
+  Sliders: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>),
+  Sparkles: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>),
+  Pin: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>),
+  Bed: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>),
+  Bath: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4 8 6"/><path d="M17 19v2"/><path d="M2 12h20"/><path d="M7 19v2"/><path d="M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>),
+  Square: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>),
+  ArrowRight: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>),
+  Check: (p) => (<svg {...p} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>),
+};
+
+// ─── DICTIONARY ────────────────────────────────────────────────────────
+const DICT = {
+  en: {
+    dir:'ltr', brand:'sierra estates', sub:'REALTY',
+    nav:['Properties','Intelligence','About','Contact'],
+    cta:'Enter Portal',
+    heroBadge:'First & only website in Egypt designed for New Cairo',
+    heroTitle1:'The First Exclusive Destination for',
+    heroTitle2:'New Cairo Properties.',
+    heroTitle3:'Rent & Resale.',
+    heroSubtag:'Best-in-Class Design · AI-Driven Excellence',
+    heroArabic:'التميز العقاري برؤية ذكية',
+    heroDesc:'We curate the finest opportunities across the New Cairo market. By combining advanced AI intelligence with an exclusive network of over',
+    heroDescAccent:'1,500 elite brokers',
+    heroDesc2:'across New Cairo, Madinaty, and El Shorouk, we deliver unmatched value tailored precisely to your needs.',
+    searchPlaceholder:'Search by compound (Mivida, Eastown, Villette, Taj City…)',
+    searchBtn:'Filter',
+    scroll:'Explore Catalog',
+    stats:[['1,500+','Elite Brokers'],['98%','Match Rate'],['8+','Compounds'],['4s','Response']],
+    secMap:'Market Intelligence',
+    mapH:'New Cairo Investment Map',
+    secListings:'Exclusive Listings',
+    listingsH:'Properties worth your attention.',
+    filters:{ALL:'All',RENT:'Rent',RESALE:'Resale'},
+    cardView:'View Full Property',
+    secWhy:'Why sierra estates',
+    whyH:'The sierra estates Standard',
+    why:[
+      {icon:'◆',title:'Curated by Hand',desc:'Each listing personally reviewed by senior advisors. No noise, no overpricing — only properties that meet our exacting standard.'},
+      {icon:'◈',title:'Grounded in Data',desc:'AI-driven ROI modelling, live market comparisons, and growth corridor analysis. Conviction backed by evidence.'},
+      {icon:'◉',title:'Dedicated Advisory',desc:'From first inquiry to final signature, one advisor who knows your criteria and responds in four seconds.'},
+    ],
+    ctaTag:'Begin Your Search',
+    ctaH:'Find Your Place in New Cairo',
+    ctaSub:'Leave your details. A Sierra advisor reaches out within four seconds.',
+    formName:'Your name',
+    formPhone:'Mobile number',
+    formSubmit:'Get in Touch',
+    formSuccess:'Thank you. A Sierra advisor will be in touch within four seconds.',
+    copyright:'© 2026 sierra estates Realty. All rights reserved.',
+    sysTag:'Node-Sync v12.4 · Operations Ledger Online',
+    beds:'Beds', baths:'Baths',
+  },
+  ar: {
+    dir:'rtl', brand:'سييرا بلو', sub:'للعقارات',
+    nav:['العقارات','الذكاء','عنّا','اتصل'],
+    cta:'الدخول للبوابة',
+    heroBadge:'أول وحيد موقع في مصر مصمم خصيصاً للقاهرة الجديدة',
+    heroTitle1:'الوجهة الحصرية الأولى',
+    heroTitle2:'لعقارات القاهرة الجديدة.',
+    heroTitle3:'إيجار وإعادة بيع.',
+    heroSubtag:'تصميم من الطراز الأول · تميز مدعوم بالذكاء',
+    heroArabic:'Best-in-Class Design · AI-Driven Excellence',
+    heroDesc:'نختار أفضل الفرص في سوق القاهرة الجديدة. بدمج الذكاء الاصطناعي المتقدم مع شبكة حصرية من أكثر من',
+    heroDescAccent:'١,٥٠٠ وسيط عقاري نخبة',
+    heroDesc2:'عبر القاهرة الجديدة ومدينتي والشروق، نقدم قيمة لا مثيل لها مصممة بدقة وفقاً لاحتياجاتك.',
+    searchPlaceholder:'ابحث بالكمباوند (ميفيدا، إيستاون، فيليت، تاج سيتي…)',
+    searchBtn:'تصفية',
+    scroll:'استكشف الكتالوج',
+    stats:[['١٥٠٠+','وسيط نخبة'],['٩٨٪','دقة المطابقة'],['٨+','كمباوند'],['٤ث','الرد']],
+    secMap:'ذكاء السوق',
+    mapH:'خريطة استثمار القاهرة الجديدة',
+    secListings:'قوائم حصرية',
+    listingsH:'عقارات تستحق اهتمامك.',
+    filters:{ALL:'الكل',RENT:'إيجار',RESALE:'بيع'},
+    cardView:'عرض ملف العقار كاملاً',
+    secWhy:'لماذا سييرا بلو',
+    whyH:'معيار سييرا بلو',
+    why:[
+      {icon:'◆',title:'اختيار بعناية',desc:'كل قائمة يراجعها مستشارونا الكبار شخصياً. لا ضجيج، لا مبالغة، فقط عقارات تستوفي معاييرنا الصارمة.'},
+      {icon:'◈',title:'مبني على البيانات',desc:'نمذجة عائد الاستثمار بالذكاء الاصطناعي، مقارنات السوق الحية، وتحليل ممرات النمو. قرارات مبنية على الأدلة.'},
+      {icon:'◉',title:'استشارة متخصصة',desc:'من أول استفسار لآخر توقيع، مستشار واحد يعرف معاييرك ويستجيب في أربع ثوانٍ.'},
+    ],
+    ctaTag:'ابدأ بحثك',
+    ctaH:'ابحث عن مكانك في القاهرة الجديدة',
+    ctaSub:'اترك بياناتك. مستشار سييرا سيتواصل معك خلال أربع ثوانٍ.',
+    formName:'اسمك',
+    formPhone:'رقم الموبايل',
+    formSubmit:'تواصل معنا',
+    formSuccess:'شكراً. مستشار سييرا سيتواصل معك خلال أربع ثوانٍ.',
+    copyright:'© ٢٠٢٦ سييرا بلو للعقارات. جميع الحقوق محفوظة.',
+    sysTag:'حالة النظام: متصل · v12.4',
+    beds:'غرف', baths:'حمامات',
+  }
+};
+
+const INVENTORY = [
+  {id:1,code:'MVD-PD-01',compound:'Madinaty',titleEn:'Aurora Penthouse',titleAr:'بنتهاوس أورورا',locEn:'Madinaty · New Cairo',locAr:'مدينتي · القاهرة الجديدة',priceEn:'EGP 8.5M',priceAr:'٨.٥م ج.م',purpose:'RESALE',beds:4,baths:3,area:'320 m²',badgeEn:'Hidden Gem',badgeAr:'فرصة نادرة',badgeColor:'#7C3AED',img:'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=80',lat:30.0972,lng:31.6314,ai:9.2},
+  {id:2,code:'MV-VL-02',compound:'Mountain View',titleEn:'Villa Lumière',titleAr:'فيلا لوميير',locEn:'Mountain View · 5th Settlement',locAr:'ماونتن فيو · التجمع الخامس',priceEn:'EGP 14.2M',priceAr:'١٤.٢م ج.م',purpose:'RESALE',beds:5,baths:4,area:'480 m²',badgeEn:'Featured Exclusive',badgeAr:'عرض حصري',badgeColor:'#C8961A',img:'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80',lat:30.0320,lng:31.4720,ai:9.6},
+  {id:3,code:'MST-BL-03',compound:'Mostakbal City',titleEn:'The Boulevard',titleAr:'ذا بوليفار',locEn:'Mostakbal City · Future',locAr:'مستقبل سيتي · المستقبل',priceEn:'EGP 3.8M',priceAr:'٣.٨م ج.م',purpose:'RENT',beds:3,baths:2,area:'185 m²',badgeEn:'New Listing',badgeAr:'مضاف حديثاً',badgeColor:'#1E88D9',img:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=80',lat:30.1400,lng:31.7400,ai:8.7},
+  {id:4,code:'FTH-EC-04',compound:'Fifth Settlement',titleEn:'Emirates Crown Mansion',titleAr:'قصر إيميريتس كراون',locEn:'Fifth Settlement · Cairo',locAr:'التجمع الخامس · القاهرة',priceEn:'EGP 22M',priceAr:'٢٢م ج.م',purpose:'RESALE',beds:6,baths:5,area:'650 m²',badgeEn:'Off Market Elite',badgeAr:'خارج السوق',badgeColor:'#059669',img:'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',lat:30.0071,lng:31.4345,ai:9.8},
+];
+
+// ─── PREMIUM SHIELD LOGO ───────────────────────────────────────────────
+function ShieldLogo({size=42}) {
+  return (
+    <svg width={size} height={size*1.14} viewBox="0 0 120 138" fill="none" className="shrink-0">
+      <defs>
+        <linearGradient id="shg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#F5E070"/><stop offset="40%" stopColor="#D4AF37"/><stop offset="100%" stopColor="#A07820"/>
+        </linearGradient>
+        <linearGradient id="shn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0A2545"/><stop offset="100%" stopColor="#000A20"/>
+        </linearGradient>
+        <linearGradient id="shr" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stopColor="#D4AF37"/><stop offset="50%" stopColor="#F0D060"/><stop offset="100%" stopColor="#B8941A"/>
+        </linearGradient>
+        <clipPath id="shc"><path d="M60 8L106 25V78Q106 114 60 130Q14 114 14 78V25Z"/></clipPath>
+      </defs>
+      <path d="M60 2L112 21V79Q112 122 60 138Q8 122 8 79V21Z" fill="url(#shg)"/>
+      <path d="M60 8L106 25V78Q106 114 60 130Q14 114 14 78V25Z" fill="url(#shn)"/>
+      <g clipPath="url(#shc)">
+        <rect x="28" y="42" width="14" height="40" fill="rgba(255,255,255,0.2)" rx="1"/>
+        <rect x="78" y="46" width="14" height="36" fill="rgba(255,255,255,0.15)" rx="1"/>
+        <rect x="50" y="22" width="20" height="58" fill="url(#shg)" rx="1"/>
+        <rect x="53" y="28" width="5" height="6" fill="#071422" opacity="0.8" rx="0.5"/>
+        <rect x="62" y="28" width="5" height="6" fill="#E9C176" opacity="0.6" rx="0.5"/>
+      </g>
+      <path d="M14 100 Q35 84 58 72 Q80 58 108 46" stroke="url(#shr)" strokeWidth="9" fill="none" strokeLinecap="round" opacity="0.9"/>
+      <path d="M14 100 Q35 84 58 72 Q80 58 108 46" stroke="rgba(255,255,255,0.35)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+// ─── STARDUST CANVAS ───────────────────────────────────────────────────
+function StardustCanvas() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const c = ref.current; if (!c) return;
+    const ctx = c.getContext('2d');
+    let w = c.width = c.offsetWidth, h = c.height = c.offsetHeight;
+    const stars = Array.from({length:60},()=>({
+      x: Math.random()*w, y: h + Math.random()*h,
+      r: Math.random()*1.4+0.3,
+      vx: (Math.random()-0.5)*0.2, vy: -Math.random()*0.4-0.1,
+      a: Math.random()*0.45+0.1,
+    }));
+    let id;
+    const tick = () => {
+      ctx.clearRect(0,0,w,h);
+      stars.forEach(s=>{
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(233,193,118,${s.a})`;
+        ctx.fill();
+        s.x+=s.vx; s.y+=s.vy;
+        if (s.y<-10){ s.y=h+10; s.x=Math.random()*w; }
+      });
+      id = requestAnimationFrame(tick);
+    };
+    tick();
+    const onR = () => { w=c.width=c.offsetWidth; h=c.height=c.offsetHeight; };
+    window.addEventListener('resize', onR);
+    return () => { cancelAnimationFrame(id); window.removeEventListener('resize', onR); };
+  }, []);
+  return <canvas ref={ref} className="absolute inset-0 w-full h-full pointer-events-none" />;
+}
+
+// ─── NAV ───────────────────────────────────────────────────────────────
+function Nav({lang, setLang, t}) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(()=>{
+    const onS = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onS);
+    return () => window.removeEventListener('scroll', onS);
+  },[]);
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-silk ${scrolled?'bg-[#0A1628]/92 backdrop-blur-xl border-b border-white/5 py-3':'bg-[#0A1628]/70 backdrop-blur-md py-5'}`}>
+      <div className="max-w-[1500px] mx-auto px-6 md:px-12 flex items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <ShieldLogo size={36}/>
+          <div className="flex flex-col leading-none">
+            <span className="font-serif text-xl font-semibold tracking-[0.12em] text-[#F4F0E8]">{t.brand}</span>
+            <span className="text-[8px] uppercase tracking-[0.36em] font-sans font-medium text-[#C8961A]/80 mt-1">{t.sub}</span>
+          </div>
+        </div>
+
+        <div className="hidden lg:flex items-center gap-9 text-[#F4F0E8]/80">
+          {t.nav.map((n,i)=>(
+            <a key={i} href="#" className="nav-link text-[11px] uppercase tracking-[0.18em] font-medium hover:text-[#C8961A] transition-colors duration-300">{n}</a>
+          ))}
+        </div>
+
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-glow"></span>
+          <span className="text-[9px] uppercase tracking-[0.25em] font-mono font-semibold text-[#F4F0E8]/50">{t.sysTag}</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={()=>setLang(lang==='en'?'ar':'en')} className="px-3 py-1.5 border border-white/15 hover:border-[#C8961A] rounded-md text-[10px] font-bold uppercase tracking-[0.18em] text-[#F4F0E8] hover:text-[#C8961A] transition-all duration-300">
+            {lang==='en'?'AR':'EN'}
+          </button>
+          <button className="hidden md:inline-flex px-5 py-2.5 bg-gradient-to-r from-[#C8961A] to-[#E9C176] hover:from-[#E9C176] hover:to-[#C8961A] text-[#071422] rounded-md text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-[#C8961A]/20 transition-all duration-300">{t.cta}</button>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ─── REFINED CINEMATIC HERO ────────────────────────────────────────────
+function Hero({t, isAr}) {
+  const ref = useRef(null);
+  const [mouse, setMouse] = useState({x:0,y:0});
+  const [query, setQuery] = useState('');
+
+  const onMove = (e) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setMouse({
+      x: ((e.clientX - r.left) / r.width - 0.5) * 2,
+      y: ((e.clientY - r.top) / r.height - 0.5) * 2,
+    });
+  };
+
+  return (
+    <section
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={()=>setMouse({x:0,y:0})}
+      className="relative min-h-screen w-full flex flex-col justify-center items-center text-center px-6 overflow-hidden bg-gradient-to-b from-[#0A1628] via-[#0D1E36] to-[#0A1628]"
+    >
+      {/* Radial gold light */}
+      <div className="absolute inset-0 z-0"
+        style={{
+          background: `radial-gradient(circle at ${50 + mouse.x*8}% ${50 + mouse.y*8}%, rgba(200,150,26,0.10) 0%, transparent 60%)`,
+          transition: 'background 600ms cubic-bezier(0.16,1,0.3,1)'
+        }}
+      />
+      {/* Hairline grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.04]"
+        style={{
+          backgroundImage:'linear-gradient(to right, #C8961A 1px, transparent 1px), linear-gradient(to bottom, #C8961A 1px, transparent 1px)',
+          backgroundSize:'5rem 5rem'
+        }}
+      />
+      {/* Stardust */}
+      <div className="absolute inset-0 z-0"><StardustCanvas /></div>
+
+      {/* Soft top/bottom vignette */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(7,20,34,0.6)_0%,transparent_30%,transparent_70%,rgba(7,20,34,0.8)_100%)]"></div>
+
+      {/* ── Big S backdrop ── */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-[1]"
+        style={{
+          transform: `translate(${mouse.x*-12}px, ${mouse.y*-8}px)`,
+          transition: 'transform 800ms cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        <span className="hero-letter text-[34rem] md:text-[42rem]">S</span>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 max-w-5xl w-full flex flex-col items-center space-y-8 pt-24 pb-12"
+        style={{
+          transform: `translate(${mouse.x*4}px, ${mouse.y*4}px)`,
+          transition: 'transform 1000ms cubic-bezier(0.16,1,0.3,1)',
+        }}
+      >
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 bg-[#C8961A]/5 border border-[#C8961A]/25 backdrop-blur-md px-5 py-2 rounded-full">
+          <Icon.Sparkles className="w-3.5 h-3.5 text-[#C8961A]" />
+          <span className="text-[#C8961A] tracking-[0.22em] uppercase text-[10px] font-mono font-semibold">{t.heroBadge}</span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="font-serif text-[#F4F0E8] leading-[1.04] tracking-tight font-light max-w-4xl">
+          <span className="block text-3xl sm:text-5xl md:text-6xl lg:text-7xl">{t.heroTitle1}</span>
+          <span className="block text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-normal italic gold-text mt-2">
+            {t.heroTitle2}
+          </span>
+          <span className="block text-2xl sm:text-3xl md:text-4xl text-[#F4F0E8]/55 font-light mt-2">{t.heroTitle3}</span>
+        </h1>
+
+        {/* Sub identity rule */}
+        <div className="flex flex-col items-center space-y-3 pt-1">
+          <p className="text-[10px] uppercase tracking-[0.38em] text-[#C8961A]/85 font-mono font-semibold">{t.heroSubtag}</p>
+          <div className="flex justify-center items-center gap-3 w-full">
+            <span className="h-[1px] w-16 gold-rule"></span>
+            <p className={`${isAr?'font-arabic':'font-arabic'} text-lg text-[#F4F0E8]/70 font-light tracking-wide`}>{t.heroArabic}</p>
+            <span className="h-[1px] w-16 gold-rule"></span>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm md:text-base text-[#F4F0E8]/55 max-w-2xl mx-auto leading-relaxed font-light tracking-wide">
+          {t.heroDesc} <span className="text-[#C8961A] font-medium">{t.heroDescAccent}</span> {t.heroDesc2}
+        </p>
+
+        {/* Search bar */}
+        <div className="w-full max-w-xl mx-auto pt-4">
+          <div className="bg-[#071422]/80 border border-[#C8961A]/30 hover:border-[#C8961A]/60 p-2.5 rounded-2xl flex items-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all group">
+            <div className={`p-2 bg-[#C8961A]/8 rounded-xl ${isAr?'ml-0 mr-2':'mr-2'} group-hover:bg-[#C8961A]/15 transition-colors`}>
+              <Icon.Search className="w-4 h-4 text-[#C8961A]" />
+            </div>
+            <input
+              type="text" value={query}
+              onChange={(e)=>setQuery(e.target.value)}
+              placeholder={t.searchPlaceholder}
+              className="w-full bg-transparent outline-none px-2 text-sm text-white placeholder-[#F4F0E8]/35 font-sans tracking-wide"
+            />
+            <button className="bg-gradient-to-r from-[#C8961A] to-[#E9C176] text-[#071422] px-5 py-2.5 rounded-xl text-[11px] font-bold font-sans uppercase tracking-[0.18em] flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform">
+              <Icon.Sliders className="w-3.5 h-3.5" />
+              <span>{t.searchBtn}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Stat strip */}
+        <div className="w-full max-w-3xl mx-auto pt-8 grid grid-cols-2 md:grid-cols-4 gap-0 bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden backdrop-blur-md">
+          {t.stats.map(([v,l],i)=>(
+            <div key={i} className={`text-center py-5 px-4 ${i<3?'md:border-r border-white/5':''} ${i%2===0?'border-r md:border-r':''}border-white/5`}>
+              <div className="font-mono text-2xl font-bold text-[#C8961A] leading-none">{v}</div>
+              <div className="text-[9px] font-sans uppercase tracking-[0.22em] text-[#F4F0E8]/40 mt-2">{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Scroll cue */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">
+        <p className="text-[9px] font-mono tracking-[0.3em] uppercase text-[#F4F0E8]/60">{t.scroll}</p>
+        <div className="w-px h-6 bg-gradient-to-b from-[#C8961A] to-transparent"></div>
+      </div>
+    </section>
+  );
+}
+
+// ─── MAP SECTION ───────────────────────────────────────────────────────
+function MapSection({t, isAr}) {
+  const [filter, setFilter] = useState('ALL');
+  const [selected, setSelected] = useState(INVENTORY[1]);
+  const list = useMemo(()=>INVENTORY.filter(p=>filter==='ALL'||p.purpose===filter),[filter]);
+
+  return (
+    <section className="w-full bg-[#F4F0E8] border-t border-[#071422]/8">
+      <div className="max-w-[1500px] mx-auto px-6 md:px-12 py-12 flex items-center justify-between gap-6">
+        <div>
+          <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono">{t.secMap}</span>
+          <h2 className="font-serif text-3xl md:text-5xl text-[#071422] tracking-tight font-semibold mt-2">{t.mapH}</h2>
+        </div>
+        <div className="hidden md:flex p-1 bg-white border border-[#071422]/8 rounded-full">
+          {['ALL','RENT','RESALE'].map(k=>(
+            <button key={k} onClick={()=>setFilter(k)} className={`px-5 py-2 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase transition-all duration-400 ease-silk ${filter===k?'bg-[#071422] text-[#F4F0E8] shadow-md':'text-[#071422]/50 hover:text-[#071422]'}`}>{t.filters[k]}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-[1500px] mx-auto px-6 md:px-12 pb-20">
+        <div className="flex flex-col lg:flex-row gap-0 rounded-3xl overflow-hidden border border-[#071422]/8 bg-white shadow-[0_20px_60px_rgba(7,20,34,0.06)]">
+
+          {/* Sidebar */}
+          <aside className="w-full lg:w-[380px] flex flex-col bg-white border-b lg:border-b-0 lg:border-r border-[#071422]/8">
+            <div className="p-6 border-b border-[#071422]/6">
+              <p className="text-[9px] uppercase tracking-[0.28em] font-mono font-bold text-[#071422]/40">Listings</p>
+              <p className="font-serif text-base mt-1 text-[#071422]">{list.length} {isAr?'عقار':'properties'}</p>
+            </div>
+            <div className="flex-1 p-4 space-y-3 max-h-[560px] overflow-y-auto">
+              {list.map(p=>{
+                const active = selected.id===p.id;
+                return (
+                  <button key={p.id} onClick={()=>setSelected(p)} className={`w-full text-left p-3 rounded-2xl border transition-all duration-400 ease-silk flex gap-4 ${active?'border-[#1E88D9] bg-[#1E88D9]/5 ring-2 ring-[#1E88D9]/30':'border-[#071422]/8 hover:border-[#071422]/30 bg-white'}`}>
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#F4F0E8]">
+                      <img src={p.img} className="w-full h-full object-cover" alt="" />
+                    </div>
+                    <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                      <div>
+                        <h4 className="text-sm font-bold font-serif text-[#071422] truncate">{isAr?p.priceAr:p.priceEn}</h4>
+                        <p className="text-[11px] text-[#071422]/45 font-medium truncate">{isAr?p.locAr:p.locEn}</p>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold tracking-[0.18em] uppercase text-[#1E88D9]">{p.code}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          {/* Map canvas */}
+          <div className="flex-1 min-h-[600px] bg-[#F4F0E8] relative">
+            <div className="absolute inset-0 map-dots opacity-60"></div>
+            {/* Compound regions */}
+            <div className="absolute inset-0">
+              {[
+                {l:'New Cairo',x:'48%',y:'58%',c:'#7EA8B4'},
+                {l:'Madinaty',x:'70%',y:'30%',c:'#E9C176'},
+                {l:'Mountain View',x:'30%',y:'45%',c:'#4ECDC4'},
+                {l:'Mostakbal',x:'82%',y:'72%',c:'#C084FC'},
+              ].map((z,i)=>(
+                <div key={i} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{left:z.x, top:z.y}}>
+                  <div className="rounded-full" style={{width:120,height:120,background:`radial-gradient(circle, ${z.c}25 0%, transparent 70%)`}}></div>
+                  <span className="block -mt-16 text-[9px] uppercase tracking-[0.25em] font-mono font-bold" style={{color:z.c}}>{z.l}</span>
+                </div>
+              ))}
+            </div>
+            {/* Pins */}
+            {list.map(p=>{
+              const x = 35 + ((p.lng - 31.3) * 90);
+              const y = 50 - ((p.lat - 30.0) * 110);
+              const active = selected.id===p.id;
+              return (
+                <button key={p.id} onClick={()=>setSelected(p)} style={{left:`${x}%`,top:`${y}%`}}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-400 ease-silk">
+                  <div className={`px-3 py-1.5 rounded-full text-[11px] font-mono font-bold shadow-md flex items-center gap-1 transition-all duration-400 ease-silk border ${active?'bg-[#071422] text-white border-[#071422] scale-110':'bg-white text-[#071422] border-[#071422]/15 hover:bg-[#071422] hover:text-white'}`}>
+                    <Icon.Pin className="w-3 h-3"/>
+                    <span>{(isAr?p.priceAr:p.priceEn).replace('EGP ','').replace('ج.م','')}</span>
+                  </div>
+                </button>
+              );
+            })}
+            {/* Popup */}
+            <div className="absolute bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-80 bg-white/96 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-[#071422]/8">
+              <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-3 bg-[#F4F0E8]">
+                <img src={selected.img} className="w-full h-full object-cover" alt=""/>
+                <span className="absolute top-3 left-3 bg-white/96 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-mono font-bold text-[#071422]">{selected.code}</span>
+                <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.18em] text-white" style={{background:selected.badgeColor}}>{isAr?selected.badgeAr:selected.badgeEn}</span>
+              </div>
+              <div className="flex justify-between items-start mb-3 px-1">
+                <div className="min-w-0">
+                  <h4 className="font-serif text-base font-bold truncate">{isAr?selected.priceAr:selected.priceEn}</h4>
+                  <p className="text-xs text-[#071422]/45 font-medium truncate">{selected.compound}</p>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-1 bg-[#F4F0E8] text-[#071422] rounded-full font-mono uppercase tracking-[0.16em] flex-shrink-0">{selected.purpose}</span>
+              </div>
+              <button className="w-full py-3 bg-[#071422] hover:bg-[#1E88D9] text-white rounded-xl font-bold text-[10px] tracking-[0.2em] uppercase transition-colors shadow-sm">
+                {isAr?'عرض ملف العقار':'View Property File'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── LISTINGS ──────────────────────────────────────────────────────────
+function Listings({t, isAr}) {
+  const [filter, setFilter] = useState('ALL');
+  const list = useMemo(()=>INVENTORY.filter(p=>filter==='ALL'||p.purpose===filter),[filter]);
+  return (
+    <section className="py-24 px-6 md:px-12 max-w-[1500px] mx-auto bg-[#F4F0E8]">
+      <div className="flex flex-col items-center mb-16">
+        <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono px-3 py-1 bg-white rounded-full border border-[#071422]/8">{t.secListings}</span>
+        <h2 className="font-serif text-3xl md:text-5xl text-[#071422] tracking-tight font-semibold mt-5 mb-8">{t.listingsH}</h2>
+        <div className="flex p-1.5 bg-white border border-[#071422]/8 rounded-full w-full max-w-xs">
+          {['ALL','RENT','RESALE'].map(k=>(
+            <button key={k} onClick={()=>setFilter(k)} className={`flex-1 py-2 px-4 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase transition-all duration-400 ease-silk ${filter===k?'bg-[#071422] text-white shadow-md':'text-[#071422]/50 hover:text-[#071422]'}`}>{t.filters[k]}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {list.map(p=>(
+          <article key={p.id} className="group bg-white rounded-[2rem] overflow-hidden border border-[#071422]/8 lift cursor-pointer flex flex-col">
+            <div className="relative w-full h-[340px] overflow-hidden bg-[#F4F0E8]">
+              <img src={p.img} alt={p.compound} className="w-full h-full object-cover img-bloom"/>
+              <span className="absolute top-5 left-5 bg-white/96 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-mono font-bold text-[#071422] tracking-[0.18em]">{p.code}</span>
+              <span style={{background:p.badgeColor}} className="absolute top-5 right-5 text-white px-3 py-1 rounded-full text-[9px] font-sans font-bold tracking-[0.18em] uppercase">{isAr?p.badgeAr:p.badgeEn}</span>
+              <span className="absolute bottom-5 right-5 bg-[#071422]/85 backdrop-blur-md px-3 py-1.5 rounded-xl text-white border border-white/10 flex items-center gap-1.5 text-[11px] font-bold font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-glow"></span>
+                AI {p.ai}
+              </span>
+            </div>
+            <div className="p-8 flex flex-col justify-between flex-1">
+              <div>
+                <div className="flex justify-between items-start mb-3 gap-4">
+                  <h3 className="font-serif text-2xl lg:text-3xl font-semibold tracking-tight text-[#071422]">{isAr?p.priceAr:p.priceEn}</h3>
+                  <span className="text-[#071422]/40 text-sm font-light text-right">{p.compound}</span>
+                </div>
+                <h4 className="text-sm font-medium text-[#071422]/65 mb-6">{isAr?p.titleAr:p.titleEn}</h4>
+                <div className="flex items-center gap-4 bg-[#F4F0E8]/60 px-4 py-3 rounded-2xl border border-[#071422]/6">
+                  <div className="flex items-center gap-1.5"><Icon.Bed className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-[#071422]">{p.beds}</span><span className="text-[10px] text-[#071422]/50 uppercase tracking-wider">{t.beds}</span></div>
+                  <div className="w-px h-4 bg-[#071422]/10"></div>
+                  <div className="flex items-center gap-1.5"><Icon.Bath className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-[#071422]">{p.baths}</span><span className="text-[10px] text-[#071422]/50 uppercase tracking-wider">{t.baths}</span></div>
+                  <div className="w-px h-4 bg-[#071422]/10"></div>
+                  <div className="flex items-center gap-1.5"><Icon.Square className="w-4 h-4 text-[#C8961A]"/><span className="text-xs font-bold text-[#071422]">{p.area}</span></div>
+                </div>
+              </div>
+              <button className="w-full mt-6 py-4 bg-[#071422] hover:bg-[#1E88D9] text-white rounded-xl font-bold text-[10px] tracking-[0.22em] uppercase transition-colors flex items-center justify-center gap-2">
+                {t.cardView}
+                <Icon.ArrowRight className={`w-3.5 h-3.5 ${isAr?'rotate-180':''}`}/>
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── WHY ───────────────────────────────────────────────────────────────
+function Why({t}) {
+  return (
+    <section className="bg-white py-24 px-6 border-t border-[#071422]/6">
+      <div className="max-w-[1500px] mx-auto">
+        <div className="text-center mb-16">
+          <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono">{t.secWhy}</span>
+          <h2 className="font-serif text-3xl md:text-5xl text-[#071422] font-semibold tracking-tight mt-3">{t.whyH}</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {t.why.map((it,i)=>(
+            <div key={i} className="p-8 bg-[#F4F0E8]/50 border border-[#071422]/6 rounded-3xl lift">
+              <div className="text-3xl text-[#C8961A] mb-4">{it.icon}</div>
+              <h3 className="font-serif text-xl font-semibold text-[#071422] mb-3">{it.title}</h3>
+              <div className="w-8 h-[2px] bg-[#C8961A] mb-4"></div>
+              <p className="text-[#071422]/55 text-sm leading-relaxed font-light">{it.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── CTA ───────────────────────────────────────────────────────────────
+function CTA({t, isAr}) {
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({name:'', phone:''});
+
+  return (
+    <section className="py-24 px-6 bg-[#071422] relative overflow-hidden text-white border-t border-white/5">
+      {/* Backdrop */}
+      <div className="absolute inset-0 z-0 opacity-40"
+        style={{background:'radial-gradient(circle at 50% 50%, rgba(200,150,26,0.12) 0%, transparent 60%)'}}
+      />
+      <div className="max-w-xl mx-auto relative z-10 text-center">
+        <span className="text-[#C8961A] uppercase tracking-[0.28em] text-[10px] font-bold font-mono">{t.ctaTag}</span>
+        <h2 className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mt-3 mb-4">{t.ctaH}</h2>
+        <p className="text-sm text-white/55 font-light mb-10 leading-relaxed">{t.ctaSub}</p>
+
+        {submitted ? (
+          <div className="p-8 bg-white/5 border border-[#C8961A]/30 rounded-2xl backdrop-blur-md">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#C8961A]/20 flex items-center justify-center">
+              <Icon.Check className="w-6 h-6 text-[#C8961A]"/>
+            </div>
+            <p className="text-base font-serif text-[#C8961A] mb-2">{isAr?'تم الإرسال':'Submission Received'}</p>
+            <p className="text-xs text-white/55 font-sans">{t.formSuccess}</p>
+          </div>
+        ) : (
+          <form onSubmit={(e)=>{e.preventDefault(); setSubmitted(true);}} className="flex flex-col gap-3">
+            <input type="text" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder={t.formName} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#C8961A] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+            <input type="tel" required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder={t.formPhone} className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-[#C8961A] focus:bg-white/10 font-light text-sm transition-all text-white placeholder-white/30"/>
+            <button type="submit" className="w-full py-4 bg-gradient-to-r from-[#C8961A] to-[#E9C176] hover:from-[#E9C176] hover:to-[#C8961A] text-[#071422] rounded-xl font-bold text-[11px] uppercase tracking-[0.22em] transition-all duration-400 ease-silk shadow-lg shadow-[#C8961A]/20 active:scale-[0.98]">
+              {t.formSubmit}
+            </button>
+          </form>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── FOOTER ────────────────────────────────────────────────────────────
+function Footer({t}) {
+  return (
+    <footer className="bg-[#040E1C] text-white/50 py-16 px-6 text-center border-t border-white/5">
+      <div className="max-w-[1500px] mx-auto flex flex-col items-center">
+        <ShieldLogo size={44}/>
+        <h2 className="font-serif text-2xl text-white font-semibold tracking-[0.15em] mt-4">{t.brand}</h2>
+        <p className="text-[10px] tracking-[0.4em] uppercase text-[#C8961A] mt-1 mb-6 font-mono font-semibold">PropTech Intelligence OS · 2026</p>
+        <div className="w-full max-w-md h-px gold-rule opacity-30 my-4"></div>
+        <p className="text-[10px] font-mono text-white/30 tracking-[0.18em]">{t.copyright}</p>
+      </div>
+    </footer>
+  );
+}
+
+// ─── APP ───────────────────────────────────────────────────────────────
+function App() {
+  const [lang, setLang] = useState('en');
+  const isAr = lang === 'ar';
+  const t = DICT[lang];
+
+  useEffect(()=>{
+    document.documentElement.dir = t.dir;
+    document.documentElement.lang = lang;
+  },[lang]);
+
+  return (
+    <div dir={t.dir} className="min-h-screen bg-[#F4F0E8] text-[#071422] antialiased">
+      <Nav lang={lang} setLang={setLang} t={t}/>
+      <Hero t={t} isAr={isAr}/>
+      <MapSection t={t} isAr={isAr}/>
+      <Listings t={t} isAr={isAr}/>
+      <Why t={t}/>
+      <CTA t={t} isAr={isAr}/>
+      <Footer t={t}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

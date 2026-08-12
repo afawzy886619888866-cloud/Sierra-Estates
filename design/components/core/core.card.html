@@ -1,0 +1,78 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Core — Buttons, Badges, Chips" subtitle="Buttons, icon buttons, badges, chips, eyebrow, avatar" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { padding: 26px 28px; }
+  .group { margin-bottom: 22px; }
+  .glabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--tx-f); margin-bottom: 12px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script type="text/babel">
+    const { Button, IconButton, Badge, Chip, Eyebrow, Avatar } = window.SierraEstatesDesignSystem_210542;
+    const Ic = (n) => <i data-lucide={n}></i>;
+    function Demo() {
+      const [purpose, setPurpose] = React.useState('all');
+      return (
+        <div>
+          <div className="group">
+            <div className="glabel">Buttons — variants &amp; sizes</div>
+            <div className="row">
+              <Button variant="primary" iconLeft={Ic('sliders-horizontal')}>Search · 1,500</Button>
+              <Button variant="secondary">Save search</Button>
+              <Button variant="ghost" size="sm">Reset</Button>
+              <Button variant="danger" size="sm">Remove</Button>
+              <Button variant="primary" size="lg">Book viewing</Button>
+              <Button variant="primary" disabled>Disabled</Button>
+            </div>
+          </div>
+          <div className="group">
+            <div className="glabel">Icon buttons</div>
+            <div className="row">
+              <IconButton aria-label="Search">{Ic('search')}</IconButton>
+              <IconButton aria-label="Save" round>{Ic('heart')}</IconButton>
+              <IconButton aria-label="Theme" size="sm">{Ic('moon')}</IconButton>
+              <IconButton aria-label="Play" solid round size="lg">{Ic('play')}</IconButton>
+            </div>
+          </div>
+          <div className="group">
+            <div className="glabel">Badges</div>
+            <div className="row">
+              <Badge tone="gold">Featured</Badge>
+              <Badge tone="red" dot>Live</Badge>
+              <Badge tone="blue">Panoramic</Badge>
+              <Badge tone="emerald">Off-Market</Badge>
+              <Badge tone="violet">Hidden Gem</Badge>
+              <Badge solidColor="#C8961A">Exclusive</Badge>
+            </div>
+          </div>
+          <div className="group">
+            <div className="glabel">Chips (toggle) · Eyebrow · Avatar</div>
+            <div className="row">
+              <Chip active={purpose==='all'} onClick={()=>setPurpose('all')}>All</Chip>
+              <Chip active={purpose==='rent'} onClick={()=>setPurpose('rent')}>Rent</Chip>
+              <Chip active={purpose==='resale'} onClick={()=>setPurpose('resale')}>Resale</Chip>
+              <span style={{width:24}}></span>
+              <Eyebrow>Intelligence OS</Eyebrow>
+              <span style={{width:12}}></span>
+              <Avatar name="Salma Ahmed" ring />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+    setTimeout(()=>window.lucide && lucide.createIcons(), 60);
+  </script>
+</body>
+</html>

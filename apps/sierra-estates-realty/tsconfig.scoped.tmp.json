@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["app/client/**/*.ts", "app/client/**/*.tsx", "app/page.tsx", "app/properties/page.tsx", "app/property/[id]/page.tsx", "app/compounds/page.tsx", "app/virtual-tour/page.tsx"]
+}

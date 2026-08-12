@@ -1,0 +1,33 @@
+<!-- @dsCard group="Brand" viewport="700x220" name="Logo — Shield Emblem" subtitle="Gold shield on light; red line-art shield on dark" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 0; display: flex; }
+  .half { flex: 1; display: flex; align-items: center; gap: 16px; padding: 28px; }
+  .light { background: var(--bg); }
+  .dark { background: #060D18; }
+  .light { --tx-s: #0D2035; }
+  img { height: 96px; width: auto; }
+  .wordmark { display: flex; flex-direction: column; gap: 3px; }
+  .name { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: .12em; }
+  .light .name { color: #0D2035; }
+  .dark .name { color: #F0EDE5; }
+  .sub { font-family: var(--font-mono); font-size: 8px; letter-spacing: .28em; text-transform: uppercase; }
+  .light .sub { color: var(--gold-deep); }
+  .dark .sub { color: var(--red); }
+</style>
+</head>
+<body>
+  <div class="half light">
+    <img src="../assets/logo-gold.png" alt="Sierra Estates gold shield">
+    <div class="wordmark"><div class="name">Sierra Estates</div><div class="sub">Future of Real Estate</div></div>
+  </div>
+  <div class="half dark">
+    <img src="../assets/logo-red.png" alt="Sierra Estates red shield" style="filter:drop-shadow(0 0 22px rgba(230,57,70,.4))">
+    <div class="wordmark"><div class="name">Sierra Estates</div><div class="sub">Future of Real Estate</div></div>
+  </div>
+</body>
+</html>

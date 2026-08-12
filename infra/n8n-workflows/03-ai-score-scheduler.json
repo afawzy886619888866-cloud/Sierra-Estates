@@ -1,0 +1,24 @@
+{
+  "name": "Sierra Estates — AI Listing Score Scheduler",
+  "nodes": [
+    { "parameters": { "rule": { "interval": [{ "field": "hours", "hoursInterval": 4 }] } }, "id": "cron-trigger", "name": "Every 4 Hours", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [240, 300] },
+    { "parameters": { "collection": "listings", "operation": "getAll", "filter": "status==active" }, "id": "fetch-active-listings", "name": "Fetch Active Listings", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [460, 300] },
+    { "parameters": { "batchSize": 10, "options": {} }, "id": "split-batch", "name": "Split in Batches", "type": "n8n-nodes-base.splitInBatches", "typeVersion": 1, "position": [680, 300] },
+    { "parameters": { "model": "gemini-2.0-flash", "prompt": "=You are an AI real estate scoring engine for New Cairo properties.\n\nScore this listing on a scale of 0-10 based on:\n- Location growth potential (compound reputation, area development)\n- Price competitiveness vs market average\n- Property type + size appeal\n- Finishing quality\n- Rental yield potential\n\nListing data:\n- Compound: {{ $json.compound_name }}\n- Sector: {{ $json.location_sector }}\n- Type: {{ $json.property_type }}\n- Bedrooms: {{ $json.bedrooms }}\n- Area: {{ $json.area_sqm }} m²\n- Price: {{ $json.price_egp }} EGP\n- Mode: {{ $json.mode }}\n- Finishing: {{ $json.finishing }}\n- Delivery: {{ $json.delivery_status }}\n\nReply with ONLY a number 0-10 (one decimal place, e.g. 8.5). No text." }, "id": "gemini-score", "name": "Gemini AI Score", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [900, 300] },
+    { "parameters": { "functionCode": "const rawScore = parseFloat($input.first().json.reply || $input.first().json.text || '0');\nconst score = isNaN(rawScore) ? 0 : Math.min(10, Math.max(0, rawScore));\nconst listingId = $('Fetch Active Listings').item.json.id;\nreturn [{ json: { listing_id: listingId, ai_score: score } }];" }, "id": "parse-score", "name": "Parse Score", "type": "n8n-nodes-base.function", "typeVersion": 1, "position": [1120, 300] },
+    { "parameters": { "collection": "listings", "operation": "update", "id": "={{ $json.listing_id }}", "data": "={\n  \"ai_score\": {{ $json.ai_score }},\n  \"updated_at\": \"{{ $now }}\"\n}" }, "id": "update-score", "name": "Update Listing Score", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1340, 300] },
+    { "parameters": { "functionCode": "const total = $input.all().length;\nreturn [{ json: { status: 'completed', listings_scored: total, timestamp: new Date().toISOString() } }];" }, "id": "log-completion", "name": "Log Completion", "type": "n8n-nodes-base.function", "typeVersion": 1, "position": [1560, 300] }
+  ],
+  "connections": {
+    "Every 4 Hours": { "main": [[{ "node": "Fetch Active Listings", "type": "main", "index": 0 }]] },
+    "Fetch Active Listings": { "main": [[{ "node": "Split in Batches", "type": "main", "index": 0 }]] },
+    "Split in Batches": { "main": [[{ "node": "Gemini AI Score", "type": "main", "index": 0 }]] },
+    "Gemini AI Score": { "main": [[{ "node": "Parse Score", "type": "main", "index": 0 }]] },
+    "Parse Score": { "main": [[{ "node": "Update Listing Score", "type": "main", "index": 0 }]] },
+    "Update Listing Score": { "main": [[{ "node": "Split in Batches", "type": "main", "index": 0 }]] },
+    "Split in Batches": { "main": [null, [{ "node": "Log Completion", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "sierra-estates" }, { "name": "ai-scoring" }, { "name": "scheduled" }]
+}

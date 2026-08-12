@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "sierra-estates": {
+      "command": "openclaw",
+      "args": [
+        "mcp",
+        "serve",
+        "--url",
+        "ws://127.0.0.1:18789",
+        "--token",
+        "${OPENCLAW_MCP_TOKEN}"
+      ],
+      "env": {
+        "OPENCLAW_CONFIG_PATH": "${PROJECT_ROOT}/.openclaw/openclaw.json",
+        "OPENCLAW_STATE_DIR": "${PROJECT_ROOT}/.openclaw"
+      }
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory",
+        "--path",
+        "${PROJECT_ROOT}/11_Core_Intelligence/memory/vault.json"
+      ]
+    }
+  }
+}
+

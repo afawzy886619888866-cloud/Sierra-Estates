@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Sierra Estates — Infrastructure .gitignore
+# ═══════════════════════════════════════════════════════════════════════════
+
+# 🔒 Secrets — NEVER commit these
+.env
+.env.local
+.env.production
+secrets/
+*.json
+!package.json
+!tsconfig.json
+!firebase-blueprint.json
+# Don't ignore n8n workflow JSON files (they're source code, not secrets)
+!n8n-workflows/*.json
+
+# 📦 n8n data (workflows + credentials)
+n8n-data/
+
+# 📱 WhatsApp auth session
+whatsapp-auth/
+
+# 🔧 Node
+node_modules/
+*.log
+npm-debug.log*
+
+# 🖥️ OS
+.DS_Store
+Thumbs.db

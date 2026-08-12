@@ -1,0 +1,23 @@
+{
+  "name": "@sierra-estates/agents-core",
+  "version": "1.0.0",
+  "description": "Central registry, core engine, and workflows for all Sierra Estates agents",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@google/generative-ai": "^0.24.1",
+    "@sierra-estates/exchange": "workspace:*",
+    "@sierra-estates/obsidian": "workspace:*",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^5.8.2"
+  }
+}

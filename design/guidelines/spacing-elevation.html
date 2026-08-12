@@ -1,0 +1,23 @@
+<!-- @dsCard group="Spacing" viewport="700x190" name="Elevation" subtitle="Soft shadows + the signature gold lift on hover" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 30px 28px; }
+  .row { display: flex; gap: 26px; align-items: center; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .box { width: 120px; height: 66px; background: var(--bg-e); border: var(--border-hair); border-radius: var(--radius-md); }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--tx-m); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-sm)"></div><div class="tag">shadow-sm</div></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-md)"></div><div class="tag">shadow-md</div></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shd)"></div><div class="tag">shd (card)</div></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shd-gold);border-color:var(--bd-gold)"></div><div class="tag">gold lift</div></div>
+  </div>
+</body>
+</html>

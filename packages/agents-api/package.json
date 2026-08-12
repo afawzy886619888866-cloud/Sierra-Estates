@@ -1,0 +1,23 @@
+{
+  "name": "agents-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.7.5",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^6.7.0",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "tsx": "^4.21.0"
+  }
+}

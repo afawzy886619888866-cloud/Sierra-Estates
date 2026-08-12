@@ -1,0 +1,146 @@
+import path from "node:path";
+import type { NextConfig } from "next";
+
+// Packages that use Node.js native binaries — must never be bundled client-side
+const SERVER_ONLY_PACKAGES = [
+  '@grpc/grpc-js',
+  '@opentelemetry/exporter-trace-otlp-grpc',
+  '@opentelemetry/exporter-trace-otlp-http',
+  '@opentelemetry/exporter-logs-otlp-http',
+  '@opentelemetry/sdk-node',
+  '@opentelemetry/sdk-logs',
+  '@opentelemetry/sdk-trace-node',
+  '@opentelemetry/instrumentation-http',
+  '@opentelemetry/instrumentation-express',
+  'firebase-admin',
+];
+
+
+const nextConfig: NextConfig = {
+  transpilePackages: [
+    '@sierra-estates/memory-engine',
+    '@sierra-estates/agents',
+    '@sierra-estates/agents-core',
+    '@sierra-estates/db',
+    '@sierra-estates/ui',
+    '@sierra-estates/obsidian',
+  ],
+  generateBuildId: async () => {
+    return process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'sierra-estates-build';
+  },
+  experimental: {
+    useTypeScriptCli: true,
+  },
+  serverExternalPackages: [
+    '@grpc/grpc-js',
+    '@opentelemetry/exporter-trace-otlp-grpc',
+    '@opentelemetry/sdk-node',
+    'firebase-admin',
+    'googleapis',
+    'twilio',
+  ],
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.googleusercontent.com' },
+      { protocol: 'https', hostname: '**.firebasestorage.app' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: '**.picsum.photos' },
+      { protocol: 'https', hostname: 'media.istockphoto.com' },
+    ],
+  },
+  reactStrictMode: true,
+  poweredByHeader: false,
+  async rewrites() {
+    return {
+      // NOTE: `/` must NOT be rewritten here. `beforeFiles` runs ahead of Next's
+      // own routing, so pinning `/` to the static prototype in
+      // public/client-page/ made app/page.tsx (ClientHome) unreachable and froze
+      // the homepage against every deploy. The prototype stays reachable at the
+      // explicit /client-page URL for reference.
+      beforeFiles: [
+        { source: '/client-page', destination: '/client-page/index.html' },
+      ],
+      // Static prototype pages that have no App Router equivalent. Real routes
+      // (/properties, /compounds, /property, /virtual-tour) win over these,
+      // because `afterFiles` runs only once filesystem + app routes miss.
+      afterFiles: [
+        { source: '/roi', destination: '/client-page/roi.html' },
+        { source: '/roi.html', destination: '/client-page/roi.html' },
+        { source: '/compounds', destination: '/client-page/compounds.html' },
+        { source: '/compounds.html', destination: '/client-page/compounds.html' },
+        { source: '/properties', destination: '/client-page/properties.html' },
+        { source: '/properties.html', destination: '/client-page/properties.html' },
+        { source: '/property', destination: '/client-page/property.html' },
+        { source: '/property.html', destination: '/client-page/property.html' },
+        { source: '/pricing', destination: '/client-page/pricing.html' },
+        { source: '/pricing.html', destination: '/client-page/pricing.html' },
+        { source: '/advice', destination: '/client-page/advice.html' },
+        { source: '/advice.html', destination: '/client-page/advice.html' },
+        { source: '/ai-engine', destination: '/client-page/ai-engine.html' },
+        { source: '/ai-engine.html', destination: '/client-page/ai-engine.html' },
+        { source: '/matches', destination: '/client-page/matches.html' },
+        { source: '/matches.html', destination: '/client-page/matches.html' },
+        { source: '/career', destination: '/client-page/career.html' },
+        { source: '/career.html', destination: '/client-page/career.html' },
+        { source: '/virtual-tour', destination: '/client-page/virtual-tour.html' },
+        { source: '/virtual-tour.html', destination: '/client-page/virtual-tour.html' },
+      ],
+      // Load-bearing: the static pages above reference their assets relatively
+      // (href="shared.css", src="data.js"), which resolve to /shared.css etc.
+      // This maps those misses onto public/client-page/. Runs last, so a real
+      // 404 still returns Next's 404 page with a 404 status.
+      fallback: [
+        { source: '/:path*', destination: '/client-page/:path*' },
+      ],
+    };
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+    ];
+  },
+  turbopack: {
+    // Pin the monorepo root so Turbopack never infers a different checkout's
+    // lockfile as the workspace root (breaks module resolution in git worktrees)
+    root: path.join(__dirname, '..', '..'),
+    resolveAlias: {
+      '@grpc/grpc-js': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-trace-otlp-grpc': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-trace-otlp-http': './lib/stubs/empty.js',
+      '@opentelemetry/exporter-logs-otlp-http': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-node': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-logs': './lib/stubs/empty.js',
+      '@opentelemetry/sdk-trace-node': './lib/stubs/empty.js',
+      '@opentelemetry/instrumentation-http': './lib/stubs/empty.js',
+      '@opentelemetry/instrumentation-express': './lib/stubs/empty.js',
+      // firebase-admin is intentionally NOT aliased here — it is a real
+      // server-only package handled by serverExternalPackages above.
+    }
+  },
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      // Stub all server-only packages to empty modules in the browser bundle
+      SERVER_ONLY_PACKAGES.forEach(pkg => {
+        config.resolve.alias[pkg] = false;
+      });
+      config.resolve.alias['firebase-admin'] = false;
+      config.resolve.alias['firebase-admin/firestore'] = false;
+      config.resolve.alias['firebase-admin/storage'] = false;
+    }
+    return config;
+  },
+};
+
+export default nextConfig;

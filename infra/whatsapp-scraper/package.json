@@ -1,0 +1,32 @@
+{
+  "name": "sierra-whatsapp-scraper",
+  "version": "1.0.0",
+  "description": "Baileys WhatsApp scraper for Sierra Estates — QR auth, message relay to n8n, bot replies",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "qr": "node src/index.js --qr-only",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [
+    "whatsapp",
+    "baileys",
+    "sierra-estates",
+    "proptech",
+    "bot"
+  ],
+  "author": "Sierra Estates",
+  "license": "MIT",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "firebase-admin": "^14.2.0",
+    "qrcode-terminal": "^0.12.0",
+    "pino": "^9.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

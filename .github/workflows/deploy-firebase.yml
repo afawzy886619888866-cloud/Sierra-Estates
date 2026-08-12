@@ -1,0 +1,46 @@
+name: Deploy · Firebase (admin redirect)
+
+# Deploys the legacy-admin Firebase Hosting REDIRECT (target: sierra-estates-admin
+# → 302 to https://sierra-estates.net/admin), as defined in firebase.json. The
+# real admin + public site run on Vercel (apps/sierra-estates-realty) and are
+# untouched by this workflow. The old Vite `apps/admin-dashboard` second-admin
+# UI this workflow used to deploy has been removed — Firebase hosts only the
+# redirect now, never an app. Manual trigger only — run from the Actions tab;
+# nothing here runs automatically on push, per the "no deploys without explicit
+# approval" project rule.
+#
+# Firestore/Storage rules and Cloud Functions are deployed separately (see
+# DEPLOYMENT.md §6 / GO_LIVE_CHECKLIST.md), not by this workflow.
+#
+# Required repo secret:
+#   FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU — service-account JSON with the
+#   Firebase Hosting Admin role on the sierra-blu project.
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: firebase-deploy-admin-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU — set in: GitHub → Settings → Secrets → Actions
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU }}
+
+      - name: Deploy admin redirect (Firebase Hosting)
+        run: npx firebase-tools@latest deploy --only hosting:sierra-estates-admin --project sierra-blu --non-interactive

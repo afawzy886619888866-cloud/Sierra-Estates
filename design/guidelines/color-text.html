@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Text Ladder" subtitle="Warm-ivory opacity ladder on dark: primary → faint" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .cell { display: flex; flex-direction: column; gap: 6px; }
+  .big { font-family: var(--font-display); font-size: 34px; font-weight: 500; line-height: 1; }
+  .tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; color: var(--tx-m); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="cell"><div class="big" style="color:var(--tx-s)">Aa</div><div class="tag">tx-s · 100%</div></div>
+    <div class="cell"><div class="big" style="color:var(--tx)">Aa</div><div class="tag">tx · ivory</div></div>
+    <div class="cell"><div class="big" style="color:var(--tx-m)">Aa</div><div class="tag">tx-m · 60%</div></div>
+    <div class="cell"><div class="big" style="color:var(--tx-f)">Aa</div><div class="tag">tx-f · 36%</div></div>
+  </div>
+</body>
+</html>

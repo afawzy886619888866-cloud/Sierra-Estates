@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["app/client/maps.tsx", "app/client/portalData.ts", "app/client/CompoundsPortal.tsx", "app/client/PropertyDetail.tsx", "app/client/ui.tsx", "app/client/icons.tsx", "next-env.d.ts"]
+}

@@ -1,0 +1,492 @@
+<!-- @dsCard group="Web App" viewport="1440x1024" name="Portal · Compounds" subtitle="Live Leaflet intelligence map — 29 New Cairo compounds, AI score & growth, theme-aware tiles" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sierra Estates · Compounds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="shared.js"></script>
+<style>
+.map-shell{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:stretch;}
+.cpd-toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px;}
+.cpd-search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:var(--r-btn);padding:11px 15px;min-width:280px;flex:1;transition:border-color .2s;}
+.cpd-search:focus-within{border-color:var(--pri);}
+.cpd-search .i{width:18px;height:18px;color:var(--muted);flex:none;}
+.cpd-search input{flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14.5px;color:var(--ink);min-width:0;}
+.cpd-search .cs-clear{border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0;}
+.zone-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.zchip{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:999px;padding:8px 15px;cursor:pointer;transition:.2s var(--silk);display:inline-flex;align-items:center;gap:7px;}
+.zchip:hover{border-color:var(--pri);color:var(--pri);}
+.zchip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .zchip.on{color:#0d0d0f;}
+.zchip .zc-n{font-family:var(--mono);font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--pri-soft);color:var(--pri);}
+.zchip.on .zc-n{background:rgba(255,255,255,.25);color:#fff;}
+[data-theme="dark"] .zchip.on .zc-n{background:rgba(0,0,0,.2);color:#0d0d0f;}
+.cpd-empty{padding:50px 0;text-align:center;color:var(--muted);font-size:15px;}
+.tb-select{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;outline:none;cursor:pointer;transition:border-color .2s;}
+.tb-select:focus{border-color:var(--pri);}
+.tb-seg{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.tb-seg button{font-family:var(--font);font-weight:700;font-size:12.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;transition:.18s;}
+.tb-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .tb-seg button.on{color:#0d0d0f;}
+#cpd-map{height:540px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);}
+.intel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;display:flex;flex-direction:column;}
+.intel .hint{color:var(--muted);font-size:14px;display:flex;gap:10px;align-items:flex-start;margin:auto 0;text-align:center;flex-direction:column;align-items:center;}
+.intel .hint .i{width:28px;height:28px;color:var(--pri);}
+.intel h3{font-size:21px;margin-bottom:2px;}
+.intel .zone{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--pri);margin-bottom:18px;}
+[dir="rtl"] .intel .zone{letter-spacing:.02em;font-family:var(--font);}
+.intel .metric{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.intel .metric:last-of-type{border-bottom:none;}
+.intel .metric b{font-family:var(--mono);font-size:16px;color:var(--ink);}
+.intel .metric b.up{color:var(--green);}
+.intel .metric b.link{color:var(--pri);cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:6px;}
+.intel .metric b.link:hover{color:var(--pri-d);}
+.intel .btn{margin-top:18px;}
+.cpd-marker{background:var(--pri);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:4px 8px;border-radius:999px;border:2px solid #fff;box-shadow:0 3px 10px rgba(13,33,54,.35);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;transition:transform .2s;cursor:pointer;}
+.cpd-marker .u{background:rgba(255,255,255,.28);border-radius:999px;padding:0 5px;font-size:9.5px;}
+.cpd-marker i.lucide,.cpd-marker svg{opacity:.85;}
+.you-pin{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.4);animation:pulseDot 2s infinite;}
+[data-theme="dark"] .you-pin{background:#c8961a;border-color:#17181b;}
+.you-pin i{width:7px;height:7px;border-radius:50%;background:#fff;}
+[data-theme="dark"] .you-pin i{background:#0d0d0f;}
+.near-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.near-clear{border:1px solid var(--line-2);background:var(--surface);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;border-radius:7px;padding:5px 11px;cursor:pointer;transition:.18s;}
+.near-clear:hover{border-color:var(--red);color:var(--red);}
+.near-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.near-row{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;transition:.18s var(--silk);font-family:var(--font);}
+.near-row:hover{border-color:var(--pri);transform:translateX(2px);}
+[dir="rtl"] .near-row:hover{transform:translateX(-2px);}
+.near-rank{width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px;display:grid;place-items:center;flex:none;}
+[data-theme="dark"] .near-rank{color:#0d0d0f;}
+.near-info{flex:1;min-width:0;}
+.near-info b{display:block;color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.near-info small{color:var(--muted);font-size:12px;}
+.near-dist{font-family:var(--mono);font-weight:700;color:var(--pri);font-size:15px;text-align:end;flex:none;}
+.near-dist i{display:block;font-style:normal;font-size:9.5px;color:var(--muted);font-weight:400;letter-spacing:.06em;}
+.cpd-marker:hover{transform:scale(1.12);}
+.cpd-marker.hot{background:var(--navy);}
+[data-theme="dark"] .cpd-marker{background:#c8961a;color:#0d0d0f;border-color:#17181b;}
+[data-theme="dark"] .cpd-marker.hot{background:#0d0d0f;color:#e9c176;border-color:#c8961a;}
+.leaflet-container{font-family:var(--font);}
+
+.grid-cpds{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px;}
+.cpd-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;display:flex;flex-direction:column;gap:12px;transition:.25s var(--silk);cursor:pointer;}
+.cpd-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-m);border-color:rgba(0,174,255,.4);}
+[data-theme="dark"] .cpd-card:hover{border-color:rgba(200,150,26,.5);}
+.cpd-card .top{display:flex;align-items:flex-start;gap:12px;}
+.cpd-card h4{font-size:16px;flex:1;}
+.cpd-card .ai-pill{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--pri);background:var(--pri-soft);border-radius:6px;padding:4px 9px;white-space:nowrap;}
+.cpd-card .meta{display:flex;gap:16px;font-size:12.5px;color:var(--text);}
+.cpd-card .meta b{color:var(--ink);font-family:var(--mono);font-weight:600;}
+.cpd-card .meta .up{color:var(--green);}
+.cpd-card .zline{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.cpd-card .u-link{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--pri);display:inline-flex;align-items:center;gap:6px;margin-top:2px;}
+.cpd-card .u-link:hover{text-decoration:underline;text-underline-offset:3px;}
+
+/* ── units sheet (excel-style) ── */
+.sheet-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,25,45,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:28px;}
+.sheet-overlay.on{display:flex;animation:ovIn .25s var(--silk);}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--surface);border-radius:14px;box-shadow:var(--shadow-m);width:min(980px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;animation:shIn .35s var(--silk);}
+@keyframes shIn{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.sheet,.sheet-overlay.on{animation:none;}}
+.sheet .sh-head{display:flex;align-items:flex-start;gap:16px;padding:22px 26px;border-bottom:1px solid var(--line);}
+.sheet .sh-head h3{font-size:20px;}
+.sheet .sh-head .sub{font-size:13px;color:var(--muted);margin-top:3px;}
+.sheet .sh-close{margin-inline-start:auto;width:38px;height:38px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:.18s;flex:none;}
+.sheet .sh-close:hover{border-color:var(--red);color:var(--red);}
+.sheet .sh-scroll{overflow:auto;}
+.sheet .sh-filters{display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap;}
+.sheet .shf{display:flex;align-items:center;gap:9px;}
+.sheet .shf label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+[dir="rtl"] .sheet .shf label{letter-spacing:.02em;font-family:var(--font);}
+.sheet .shf select{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:8px 11px;outline:none;cursor:pointer;transition:border-color .2s;}
+.sheet .shf select:focus{border-color:var(--pri);}
+.sheet .shf-seg{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.sheet .shf-seg button{font-family:var(--font);font-weight:700;font-size:12.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:6px 13px;cursor:pointer;transition:.18s;}
+.sheet .shf-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .sheet .shf-seg button.on{color:#0d0d0f;}
+.sheet .shf-count{margin-inline-start:auto;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
+[dir="rtl"] .sheet .shf-count{font-family:var(--font);}
+.sheet .sh-empty{padding:44px;text-align:center;color:var(--muted);font-size:14.5px;}
+.sheet table{width:100%;border-collapse:collapse;font-size:13px;}
+.sheet thead th{position:sticky;top:0;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;text-align:start;padding:12px 16px;border-bottom:1px solid var(--line);z-index:2;white-space:nowrap;}
+[dir="rtl"] .sheet thead th{letter-spacing:.02em;font-family:var(--font);}
+.sheet tbody td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap;}
+.sheet tbody td.mono{font-family:var(--mono);font-weight:600;color:var(--ink);}
+.sheet tbody tr{cursor:pointer;transition:background .15s;}
+.sheet tbody tr:nth-child(even){background:var(--surface-2);}
+.sheet tbody tr:hover{background:var(--pri-soft);}
+.sheet tbody tr.reserved{opacity:.5;cursor:not-allowed;}
+.sheet .st{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:6px;}
+.sheet .st.av{background:rgba(40,167,69,.12);color:var(--green);}
+.sheet .st.rs{background:rgba(230,57,70,.1);color:var(--red);}
+.sheet .go{color:var(--pri);}
+
+[dir="rtl"] .cpd-card .zline{letter-spacing:.02em;font-family:var(--font);}
+@media(max-width:1080px){.map-shell{grid-template-columns:1fr;}.grid-cpds{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:680px){.grid-cpds{grid-template-columns:1fr;}#cpd-map{height:400px;}}
+</style>
+</head>
+<body>
+
+<div id="site-chrome"></div>
+
+<header class="page-hero" data-screen-label="Compounds hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html" data-i18n="crumbHome"></a><span class="sep">/</span><span data-i18n="navCpds"></span></div>
+    <h1 data-i18n="cpdsTit"></h1>
+    <p class="sub" data-i18n="cpdsSub"></p>
+  </div>
+</header>
+
+<section class="block" data-screen-label="Intelligence map">
+  <div class="wrap">
+    <div class="cpd-toolbar rv">
+      <div class="cpd-search">
+        <i data-lucide="search" class="i"></i>
+        <input type="text" id="cpd-search" data-i18n-ph="searchCpdPh"/>
+        <button class="cs-clear" id="cpd-search-clear" type="button" aria-label="Clear" style="display:none;">×</button>
+      </div>
+      <div class="zone-chips" id="zone-chips"></div>
+      <select class="tb-select" id="tb-beds">
+        <option value="0" data-i18n="shAnyBeds"></option>
+        <option value="2">2+</option><option value="3">3+</option>
+        <option value="4">4+</option><option value="5">5+</option>
+      </select>
+      <div class="tb-seg" id="tb-mode">
+        <button class="on" data-m="all" type="button" data-i18n="modeAll"></button>
+        <button data-m="sale" type="button" data-i18n="modeSale"></button>
+        <button data-m="rent" type="button" data-i18n="modeRent"></button>
+      </div>
+      <button class="btn btn-navy" id="browse-map" type="button"><i data-lucide="map" class="i"></i> <span data-i18n="browseMap"></span></button>
+    </div>
+    <div class="map-shell rv">
+      <div id="cpd-map"></div>
+      <aside class="intel" id="intel">
+        <div class="hint"><i data-lucide="mouse-pointer-click" class="i"></i><span data-i18n="mapHint"></span></div>
+      </aside>
+    </div>
+    <div class="grid-cpds" id="cpd-cards"></div>
+    <div class="cpd-empty" id="cpd-empty" style="display:none;" data-i18n="noCpd"></div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<!-- UNITS SHEET -->
+<div class="sheet-overlay" id="sheet-ov">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sh-head">
+      <div>
+        <h3 id="sh-title"></h3>
+        <div class="sub" id="sh-sub"></div>
+      </div>
+      <button class="sh-close" id="sh-close" type="button" aria-label="Close"><i data-lucide="x" class="i"></i></button>
+    </div>
+    <div class="sh-filters">
+      <div class="shf">
+        <label data-i18n="shCompound"></label>
+        <select id="shf-cpd"></select>
+      </div>
+      <div class="shf">
+        <label data-i18n="shBeds"></label>
+        <select id="shf-beds">
+          <option value="0" data-i18n="shAnyBeds"></option>
+          <option value="2">2+</option><option value="3">3+</option>
+          <option value="4">4+</option><option value="5">5+</option>
+        </select>
+      </div>
+      <div class="shf-seg" id="shf-mode">
+        <button class="on" data-m="all" type="button" data-i18n="modeAll"></button>
+        <button data-m="sale" type="button" data-i18n="modeSale"></button>
+        <button data-m="rent" type="button" data-i18n="modeRent"></button>
+      </div>
+      <span class="shf-count" id="shf-count"></span>
+    </div>
+    <div class="sh-scroll">
+      <table>
+        <thead><tr id="sh-thead"></tr></thead>
+        <tbody id="sh-tbody"></tbody>
+      </table>
+      <div class="sh-empty" id="sh-empty" style="display:none;" data-i18n="shNoUnits"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var D = window.HZDATA;
+
+  HZ.mount('cpds');
+
+  /* map */
+  var map = L.map('cpd-map', { scrollWheelZoom: false }).setView([30.05, 31.58], 11);
+  var tiles = {
+    light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  };
+  var layer = L.tileLayer(tiles[HZ.theme()], { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18 }).addTo(map);
+  document.addEventListener('hzp:theme', function (e) {
+    layer.setUrl(tiles[e.detail]);
+  });
+
+  function unitPrice(u) {
+    return u.mode === 'rent' ? '$' + u.usd.toLocaleString() + '/mo' : 'EGP ' + u.egpM.toFixed(1) + 'M';
+  }
+
+  /* excel-style units sheet — filterable + compound switcher */
+  var shState = { cpd: null, beds: 0, mode: 'all' };
+
+  function renderSheet() {
+    var c = shState.cpd;
+    var all = D.unitsFor(c.n);
+    var units = all.filter(function (u) {
+      if (shState.mode !== 'all' && u.mode !== shState.mode) return false;
+      if (shState.beds && u.beds < shState.beds) return false;
+      return true;
+    });
+    document.getElementById('sh-title').textContent = HZ.t('unitsTit') + ' · ' + c.n;
+    document.getElementById('sh-sub').textContent = all.length + ' ' + HZ.t('unitsWord') + ' — ' + HZ.t('unitsSub');
+    document.getElementById('shf-count').textContent = HZ.t('shShowing') + ' ' + units.length + ' ' + HZ.t('shOf') + ' ' + all.length;
+    document.getElementById('sh-thead').innerHTML = ['thCode', 'thType', 'thBeds', 'thBath', 'thArea', 'thFloor', 'thPrice', 'thAI', 'thStatus', ''].map(function (k) {
+      return '<th>' + (k ? HZ.t(k) : '') + '</th>';
+    }).join('');
+    document.getElementById('sh-tbody').innerHTML = units.map(function (u) {
+      var rs = u.status === 'reserved';
+      return '<tr class="' + (rs ? 'reserved' : '') + '" data-u="' + u.code + '">' +
+        '<td class="mono">' + u.code + '</td>' +
+        '<td>' + u.type + '</td>' +
+        '<td class="mono">' + u.beds + '</td>' +
+        '<td class="mono">' + u.bath + '</td>' +
+        '<td class="mono">' + u.area + ' m²</td>' +
+        '<td class="mono">' + u.floor + '</td>' +
+        '<td class="mono">' + unitPrice(u) + '</td>' +
+        '<td class="mono">' + u.ai.toFixed(1) + '</td>' +
+        '<td><span class="st ' + (rs ? 'rs' : 'av') + '">' + HZ.t(rs ? 'stReserved' : 'stAvail') + '</span></td>' +
+        '<td class="go">' + (rs ? '' : '<i data-lucide="arrow-right" class="i" style="width:15px;height:15px"></i>') + '</td></tr>';
+    }).join('');
+    document.getElementById('sh-empty').style.display = units.length ? 'none' : 'block';
+    document.getElementById('sh-tbody').querySelectorAll('tr:not(.reserved)').forEach(function (tr) {
+      tr.addEventListener('click', function () {
+        location.href = 'property.html?cpd=' + encodeURIComponent(c.n) + '&u=' + encodeURIComponent(tr.getAttribute('data-u'));
+      });
+    });
+    HZ.refreshIcons();
+  }
+
+  function openSheet(c) {
+    shState.cpd = c; shState.beds = uf.beds; shState.mode = uf.mode;
+    var sel = document.getElementById('shf-cpd');
+    sel.innerHTML = D.compounds.slice().sort(function (a, b) { return a.n.localeCompare(b.n); })
+      .map(function (x) { return '<option value="' + x.n.replace(/"/g, '') + '"' + (x.n === c.n ? ' selected' : '') + '>' + x.n + ' (' + D.unitsFor(x.n).length + ')</option>'; }).join('');
+    document.getElementById('shf-beds').value = String(uf.beds);
+    document.querySelectorAll('#shf-mode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === uf.mode); });
+    renderSheet();
+    document.getElementById('sheet-ov').classList.add('on');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet() {
+    document.getElementById('sheet-ov').classList.remove('on');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('shf-cpd').addEventListener('change', function () {
+    var val = this.value;
+    var c = D.compounds.find(function (x) { return x.n === val; });
+    if (c) { shState.cpd = c; renderSheet(); }
+  });
+  document.getElementById('shf-beds').addEventListener('change', function () { shState.beds = parseInt(this.value, 10); renderSheet(); });
+  document.querySelectorAll('#shf-mode button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#shf-mode button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); shState.mode = b.getAttribute('data-m'); renderSheet();
+    });
+  });
+  document.getElementById('sh-close').addEventListener('click', closeSheet);
+  document.getElementById('sheet-ov').addEventListener('click', function (e) { if (e.target === this) closeSheet(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+  function showIntel(c) {
+    var el = document.getElementById('intel');
+    var units = D.unitsFor(c.n);
+    el.innerHTML =
+      '<h3>' + c.n + '</h3>' +
+      '<div class="zone">' + c.z + ' · New Cairo</div>' +
+      '<div class="metric"><span>' + HZ.t('unitsAvail') + '</span><b class="link" id="intel-units">' + units.length + ' <i data-lucide="table-2" class="i" style="width:14px;height:14px"></i></b></div>' +
+      '<div class="metric"><span>' + HZ.t('aiScore') + '</span><b>' + c.ai.toFixed(1) + ' / 10</b></div>' +
+      '<div class="metric"><span>' + HZ.t('growth') + '</span><b class="up">' + c.g + '</b></div>' +
+      '<div class="metric"><span>' + HZ.t('avg') + '</span><b>EGP ' + c.priceM + 'M</b></div>' +
+      '<div class="metric"><span>' + HZ.t('rentAvg') + '</span><b>$' + c.rent.toLocaleString() + '/mo</b></div>' +
+      '<button class="btn btn-pri" type="button" id="intel-open"><i data-lucide="table-2" class="i"></i> ' + HZ.t('unitsTit') + ' (' + units.length + ')</button>';
+    el.querySelector('#intel-units').addEventListener('click', function () { openSheet(c); });
+    el.querySelector('#intel-open').addEventListener('click', function () { openSheet(c); });
+    HZ.refreshIcons();
+  }
+
+  /* nearest compounds to a tapped point */
+  function haversine(a, b) {
+    var R = 6371, dLat = (b[0] - a[0]) * Math.PI / 180, dLon = (b[1] - a[1]) * Math.PI / 180;
+    var s = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+  }
+  var pinMarker = null;
+  function showNearest(latlng) {
+    var pt = [latlng.lat, latlng.lng];
+    if (pinMarker) map.removeLayer(pinMarker);
+    pinMarker = L.marker(pt, {
+      icon: L.divIcon({ className: '', html: '<span class="you-pin"><i></i></span>', iconSize: [22, 22], iconAnchor: [11, 11] })
+    }).addTo(map);
+    var near = D.compounds.map(function (c) { return { c: c, d: haversine(pt, c.c) }; })
+      .sort(function (a, b) { return a.d - b.d; }).slice(0, 5);
+    var el = document.getElementById('intel');
+    el.innerHTML =
+      '<div class="near-head"><h3>' + HZ.t('nearTit') + '</h3><button class="near-clear" id="near-clear" type="button">' + HZ.t('clearPin') + '</button></div>' +
+      '<div class="zone">' + HZ.t('nearSub') + '</div>' +
+      '<div class="near-list">' + near.map(function (o, i) {
+        return '<button class="near-row" type="button" data-cpd="' + o.c.n + '">' +
+          '<span class="near-rank">' + (i + 1) + '</span>' +
+          '<span class="near-info"><b>' + o.c.n + '</b><small>' + o.c.z + ' · ' + D.unitsFor(o.c.n).length + ' ' + HZ.t('unitsWord') + '</small></span>' +
+          '<span class="near-dist">' + o.d.toFixed(1) + '<i>' + HZ.t('kmAway') + '</i></span></button>';
+      }).join('') + '</div>';
+    el.querySelector('#near-clear').addEventListener('click', function () {
+      if (pinMarker) { map.removeLayer(pinMarker); pinMarker = null; }
+      el.innerHTML = '<div class="hint"><i data-lucide="mouse-pointer-click" class="i"></i><span data-i18n="mapHint">' + HZ.t('mapHint') + '</span></div>';
+      HZ.refreshIcons();
+    });
+    el.querySelectorAll('.near-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var c = D.compounds.find(function (x) { return x.n === row.getAttribute('data-cpd'); });
+        openSheet(c);
+      });
+    });
+  }
+  map.on('click', function (e) { showNearest(e.latlng); });
+
+  /* outside unit filters (drive markers, cards & sheet) */
+  var uf = { beds: 0, mode: 'all' };
+  function unitsFiltered(c) {
+    return D.unitsFor(c.n).filter(function (u) {
+      if (uf.mode !== 'all' && u.mode !== uf.mode) return false;
+      if (uf.beds && u.beds < uf.beds) return false;
+      return true;
+    });
+  }
+
+  var markers = {};
+  D.compounds.forEach(function (c) {
+    markers[c.n] = L.marker(c.c, { icon: markerIcon(c, D.unitsFor(c.n).length), title: c.n }).on('click', function () {
+      showIntel(c);
+      map.panTo(c.c, { animate: true });
+      openSheet(c);
+    });
+  });
+  function markerIcon(c, count) {
+    var hot = c.ai >= 9.2;
+    return L.divIcon({
+      className: '',
+      html: '<span class="cpd-marker' + (hot ? ' hot' : '') + '" title="' + c.n + '">' + count + '</span>',
+      iconSize: null
+    });
+  }
+
+  /* filter state */
+  var zones = ['5th Settlement', 'Katameya', 'New Cairo', 'Mostakbal', 'Madinaty', 'Shorouk'];
+  var activeZones = new Set();
+  var query = '';
+
+  var zoneChips = document.getElementById('zone-chips');
+  zoneChips.innerHTML = zones.map(function (z, i) {
+    var n = D.compounds.filter(function (c) { return c.z === z; }).length;
+    return '<button class="zchip" type="button" data-zone="' + z + '">' + HZ.t('z' + (i + 1)) + ' <span class="zc-n">' + n + '</span></button>';
+  }).join('');
+  zoneChips.querySelectorAll('.zchip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var z = chip.getAttribute('data-zone');
+      if (activeZones.has(z)) { activeZones.delete(z); chip.classList.remove('on'); }
+      else { activeZones.add(z); chip.classList.add('on'); }
+      render();
+    });
+  });
+
+  var searchInput = document.getElementById('cpd-search');
+  var searchClear = document.getElementById('cpd-search-clear');
+  searchInput.addEventListener('input', function () {
+    query = this.value.trim().toLowerCase();
+    searchClear.style.display = query ? 'block' : 'none';
+    render();
+  });
+  searchClear.addEventListener('click', function () {
+    searchInput.value = ''; query = ''; searchClear.style.display = 'none'; render(); searchInput.focus();
+  });
+  document.getElementById('browse-map').addEventListener('click', function () {
+    window.scrollTo({ top: document.getElementById('cpd-map').getBoundingClientRect().top + window.scrollY - 110, behavior: 'smooth' });
+  });
+  document.getElementById('tb-beds').addEventListener('change', function () {
+    uf.beds = parseInt(this.value, 10); render();
+  });
+  document.querySelectorAll('#tb-mode button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#tb-mode button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); uf.mode = b.getAttribute('data-m'); render();
+    });
+  });
+
+  function matches(c) {
+    if (activeZones.size && !activeZones.has(c.z)) return false;
+    if (query && c.n.toLowerCase().indexOf(query) < 0 && c.z.toLowerCase().indexOf(query) < 0) return false;
+    return true;
+  }
+
+  function render() {
+    var list = D.compounds.filter(function (c) { return matches(c) && unitsFiltered(c).length > 0; })
+      .sort(function (a, b) { return b.ai - a.ai; });
+    var pts = [];
+    D.compounds.forEach(function (c) {
+      var n = unitsFiltered(c).length;
+      if (matches(c) && n > 0) {
+        markers[c.n].setIcon(markerIcon(c, n));
+        markers[c.n].addTo(map); pts.push(c.c);
+      } else { map.removeLayer(markers[c.n]); }
+    });
+    if (pts.length) { try { map.fitBounds(pts, { padding: [40, 40], maxZoom: 13 }); } catch (e) {} }
+    document.getElementById('cpd-cards').innerHTML = list.map(function (c, i) {
+      return '<div class="cpd-card rv in d' + ((i % 3) + 1) + '" data-cpd="' + c.n + '">' +
+        '<div class="zline">' + c.z + '</div>' +
+        '<div class="top"><h4>' + c.n + '</h4><span class="ai-pill">AI ' + c.ai.toFixed(1) + '</span></div>' +
+        '<div class="meta"><span>' + HZ.t('growth') + ' <b class="up">' + c.g + '</b></span>' +
+        '<span>' + HZ.t('avg') + ' <b>EGP ' + c.priceM + 'M</b></span></div>' +
+        '<span class="u-link" data-units="' + c.n + '"><i data-lucide="table-2" class="i" style="width:14px;height:14px"></i>' + unitsFiltered(c).length + ' ' + HZ.t('unitsWord') + '</span>' +
+      '</div>';
+    }).join('');
+    document.getElementById('cpd-empty').style.display = list.length ? 'none' : 'block';
+    document.querySelectorAll('.u-link').forEach(function (l) {
+      l.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openSheet(D.compounds.find(function (x) { return x.n === l.getAttribute('data-units'); }));
+      });
+    });
+    document.querySelectorAll('.cpd-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var c = D.compounds.find(function (x) { return x.n === card.getAttribute('data-cpd'); });
+        showIntel(c);
+        map.setView(c.c, 13, { animate: true });
+        window.scrollTo({ top: document.getElementById('cpd-map').getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+      });
+    });
+    HZ.refreshIcons();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

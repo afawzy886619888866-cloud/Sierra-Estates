@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "home": "Home",
+    "listings": "Listings",
+    "admin": "Admin",
+    "agents": "Agents",
+    "portfolio": "Portfolio",
+    "crm": "CRM",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Luxury Real Estate Intelligence",
+    "subtitle": "AI-powered insights for premium properties",
+    "cta": "Get Started"
+  },
+  "features": {
+    "intelligence": "AI Intelligence",
+    "listings": "Smart Listings",
+    "analytics": "Portfolio Analytics",
+    "crm": "CRM System"
+  },
+  "footer": {
+    "copyright": "© 2026 Sierra Estates. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "sierra-estates-client-page",
+  "github": {
+    "silent": true
+  },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../turbo.json || exit 1"
+}

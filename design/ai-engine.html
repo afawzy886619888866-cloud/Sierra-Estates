@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AI Engine 3.0 — Sierra Estates Intelligence OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+:root{--gold:#C8961A;--gold-lt:#E9C176;--navy:#0D2035;--bg:#09090f;--bg2:#0f0f1a;--bg3:#13131f;--bd:rgba(200,150,26,.18);--tx:rgba(240,237,229,.9);--txm:rgba(240,237,229,.55);--txf:rgba(240,237,229,.32);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;overflow-x:hidden;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+@keyframes barFill{from{width:0}to{width:var(--w)}}
+@keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scanLine{0%{top:-2%}100%{top:102%}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(200,150,26,0)}50%{box-shadow:0 0 30px 4px rgba(200,150,26,.15)}}
+@keyframes lineGrow{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+@keyframes dotAppear{from{opacity:0;r:0}to{opacity:1;r:5}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.fade-up{animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both;}
+.delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}.delay-4{animation-delay:.4s}.delay-5{animation-delay:.5s}.delay-6{animation-delay:.6s}.delay-7{animation-delay:.7s}.delay-8{animation-delay:.8s}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo}=React;
+
+const G='#C8961A',GL='#E9C176';
+
+/* ── DATA ── */
+const PRICE_DATA=[
+  {y:'2020',v:3.2,label:'EGP 3.2M'},
+  {y:'2021',v:4.1,label:'EGP 4.1M'},
+  {y:'2022',v:5.8,label:'EGP 5.8M'},
+  {y:'2023',v:8.4,label:'EGP 8.4M'},
+  {y:'2024',v:11.9,label:'EGP 11.9M'},
+  {y:'2025',v:16.2,label:'EGP 16.2M'},
+];
+
+const ROI_DATA=[
+  {name:'Uptown Cairo',pct:31,ai:9.4},
+  {name:'Mountain View iCity',pct:24,ai:9.6},
+  {name:'Hyde Park',pct:22,ai:9.8},
+  {name:'Palm Hills NC',pct:21,ai:9.2},
+  {name:'Villette',pct:20,ai:9.3},
+  {name:'SODIC East',pct:18,ai:9.1},
+  {name:'Mivida',pct:18,ai:9.1},
+  {name:'Eastown',pct:19,ai:9.0},
+];
+
+const COMPOUND_PRICES=[
+  {name:'Hyde Park',price:'EGP 18.5M',ai:9.8},
+  {name:'Mountain View',price:'EGP 11.2M',ai:9.6},
+  {name:'Mivida',price:'EGP 5.8M',ai:9.1},
+  {name:'Taj City',price:'EGP 35.0M',ai:9.5},
+  {name:'Villette',price:'EGP 24.5M',ai:9.3},
+];
+
+const HERO_SLIDES=[
+  {bg:'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80',eye:'INTELLIGENCE OS PLATFORM',h1:'Powered by',h1g:'AI Engine 3.0',sub:'Our intelligence engine evaluates 40+ data points per property — surfacing the highest-yield opportunities before anyone else.'},
+  {bg:'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',eye:'AVM PREDICTIVE PRICING',h1:'Real-Time',h1g:'Market Valuation',sub:'Egypt-calibrated AVM benchmarks every unit against 25 compounds in real time. No overpaying. No underselling.'},
+  {bg:'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',eye:'ROI COMPOUNDING YIELD',h1:'Smart Matches for',h1g:'Smart Investors',sub:'Uptown Cairo +31% · Mountain View +24% · Hyde Park +22% — compound returns driven by AI signals.'},
+  {bg:'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&q=80',eye:'EXCLUSIVE NETWORK',h1:'Unrivaled Access to',h1g:'Premium Compounds',sub:'Off-market listings and exclusive phases — backed by Sierra\'s relationships with Egypt\'s top developers.'},
+  {bg:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&q=80',eye:'CURATED PORTFOLIO',h1:'Your Journey to',h1g:'Exceptional Homes',sub:'From architectural masterpieces to high-ROI investments — hand-picked New Cairo real estate.'},
+];
+
+const AI_TOOLS=[
+  {ic:'📊',name:'AVM Pricing Engine',status:'LIVE',desc:'Real-time valuation across 25 compounds. 88% confidence interval. Updates every 4h.'},
+  {ic:'🎯',name:'Smart Match v3',status:'LIVE',desc:'40-point property-to-buyer scoring. 98% match accuracy on verified criteria.'},
+  {ic:'📈',name:'ROI Forecaster',status:'LIVE',desc:'5-year appreciation model. Compound-level yield analysis with Q2 2026 signals.'},
+  {ic:'🏡',name:'Dream Home Wizard',status:'ACTIVE',desc:'4-question wizard → compound + unit type recommendation via decision tree.'},
+  {ic:'🗺️',name:'Map Intelligence',status:'LIVE',desc:'25-compound geo-intelligence layer. Unit density, yield heatmap, access index.'},
+  {ic:'🤖',name:'Sierra AI Chat',status:'LIVE',desc:'Bilingual concierge (EN+AR). Gemini 2.0 Flash. Compound-aware responses.'},
+];
+
+/* ── HOOKS ── */
+function useInView(threshold=0.15){
+  const ref=useRef(null);const[vis,setVis]=useState(false);
+  useEffect(()=>{
+    const obs=new IntersectionObserver(([e])=>{if(e.isIntersecting){setVis(true);obs.disconnect();}},{threshold});
+    if(ref.current)obs.observe(ref.current);return()=>obs.disconnect();
+  },[]);
+  return[ref,vis];
+}
+
+/* ── NAV ── */
+function Nav(){
+  const[scroll,setScroll]=useState(false);
+  useEffect(()=>{const h=()=>setScroll(window.scrollY>20);window.addEventListener('scroll',h,{passive:true});return()=>window.removeEventListener('scroll',h);},[]);
+  return(
+    <nav style={{position:'fixed',top:0,left:0,right:0,zIndex:100,padding:'0 40px',height:64,display:'flex',alignItems:'center',justifyContent:'space-between',background:scroll?'rgba(9,9,15,.96)':'transparent',backdropFilter:scroll?'blur(20px)':'none',borderBottom:scroll?'1px solid rgba(200,150,26,.12)':'none',transition:'all .3s'}}>
+      <a href="Sierra Estates Mobile.html" style={{display:'flex',alignItems:'center',gap:10,textDecoration:'none'}}>
+        <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${G},${GL})`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:'#0D2035'}}>S</div>
+        <div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:600,letterSpacing:'.12em',color:G,lineHeight:1}}>SIERRA ESTATES</div>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:7,letterSpacing:'.24em',color:'rgba(200,150,26,.45)',textTransform:'uppercase'}}>FUTURE OF REAL ESTATE</div>
+        </div>
+      </a>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div style={{padding:'4px 10px',borderRadius:20,background:'rgba(52,211,153,.12)',border:'1px solid rgba(52,211,153,.28)',fontSize:10,fontWeight:700,color:'#34d399',display:'flex',alignItems:'center',gap:5}}>
+          <span style={{width:5,height:5,borderRadius:'50%',background:'#34d399',display:'block',animation:'pulse 2s ease infinite'}}/>
+          AI ENGINE 3.0 · LIVE
+        </div>
+        <a href="Sierra Estates Mobile.html" style={{padding:'8px 18px',borderRadius:8,background:`linear-gradient(135deg,${G},${GL})`,color:'#0D2035',fontSize:11,fontWeight:700,textDecoration:'none',letterSpacing:'.06em'}}>
+          ← Mobile App
+        </a>
+      </div>
+    </nav>
+  );
+}
+
+/* ── HERO ── */
+function Hero(){
+  const[idx,setIdx]=useState(0);const[prev,setPrev]=useState(null);const[fading,setFading]=useState(false);
+  useEffect(()=>{
+    const id=setInterval(()=>{
+      setPrev(idx);setFading(true);
+      setTimeout(()=>{setIdx(i=>(i+1)%HERO_SLIDES.length);setFading(false);setPrev(null);},400);
+    },6000);
+    return()=>clearInterval(id);
+  },[idx]);
+  const S=HERO_SLIDES[idx];
+  return(
+    <section style={{position:'relative',minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',overflow:'hidden'}}>
+      {/* BG images */}
+      {HERO_SLIDES.map((s,i)=>(
+        <div key={i} style={{position:'absolute',inset:0,backgroundImage:`url('${s.bg}')`,backgroundSize:'cover',backgroundPosition:'center',opacity:i===idx?1:0,transition:'opacity .8s cubic-bezier(.16,1,.3,1)',zIndex:0}}/>
+      ))}
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,rgba(9,9,15,.96) 0%,rgba(9,9,15,.72) 55%,rgba(9,9,15,.4) 100%)',zIndex:1}}/>
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to top,rgba(9,9,15,.8) 0%,transparent 40%)',zIndex:1}}/>
+      {/* Scan line */}
+      <div style={{position:'absolute',left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,rgba(200,150,26,.35),transparent)`,animation:'scanLine 5s linear infinite',zIndex:2,pointerEvents:'none'}}/>
+      {/* Content */}
+      <div style={{position:'relative',zIndex:3,maxWidth:900,padding:'0 60px',paddingTop:100}}>
+        <div key={`eye-${idx}`} className="fade-up" style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+          <div style={{width:40,height:1,background:G}}/>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:'.28em',color:G}}>{S.eye}</span>
+        </div>
+        <h1 key={`h1-${idx}`} className="fade-up delay-1" style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(44px,5.5vw,80px)',fontWeight:300,lineHeight:1.06,marginBottom:18,color:'#fff'}}>
+          {S.h1}<br/>
+          <span style={{fontStyle:'italic',background:`linear-gradient(90deg,${GL},${G} 40%,${GL})`,backgroundSize:'200%',WebkitBackgroundClip:'text',backgroundClip:'text',WebkitTextFillColor:'transparent',animation:'shimmer 5s linear infinite'}}>{S.h1g}</span>
+        </h1>
+        <p key={`sub-${idx}`} className="fade-up delay-2" style={{fontSize:15,lineHeight:1.7,color:'rgba(240,237,229,.6)',maxWidth:620,marginBottom:40}}>
+          {S.sub}
+        </p>
+        {/* Stats strip */}
+        <div key={`stats-${idx}`} className="fade-up delay-3" style={{display:'inline-flex',gap:0,borderRadius:16,overflow:'hidden',background:'rgba(9,9,15,.8)',backdropFilter:'blur(20px)',border:'1px solid rgba(200,150,26,.18)'}}>
+          {[['1,500+','LISTINGS'],['25','COMPOUNDS'],['9.8','AI SCORE'],['24h','RESPONSE']].map(([v,l],i)=>(
+            <div key={i} style={{padding:'18px 28px',textAlign:'center',borderRight:i<3?'1px solid rgba(200,150,26,.12)':'none'}}>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:24,fontWeight:700,color:G,lineHeight:1}}>{v}</div>
+              <div style={{fontFamily:'Inter',fontSize:8.5,letterSpacing:'.16em',color:'rgba(240,237,229,.35)',marginTop:5,textTransform:'uppercase'}}>{l}</div>
+            </div>
+          ))}
+        </div>
+        {/* Thumbnails */}
+        <div className="fade-up delay-4" style={{display:'flex',gap:8,marginTop:28}}>
+          {HERO_SLIDES.map((s,i)=>(
+            <button key={i} onClick={()=>setIdx(i)} style={{width:64,height:42,borderRadius:7,overflow:'hidden',border:`2px solid ${i===idx?G:'transparent'}`,cursor:'pointer',transition:'all .22s',flexShrink:0,opacity:i===idx?1:.55,padding:0}}>
+              <img src={s.bg.replace('w=1200','w=120')} alt="" loading="lazy" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Scroll hint */}
+      <div style={{position:'absolute',bottom:30,left:'50%',transform:'translateX(-50%)',zIndex:3,display:'flex',flexDirection:'column',alignItems:'center',gap:6,opacity:.4}}>
+        <div style={{width:1,height:40,background:`linear-gradient(to bottom,${G},transparent)`}}/>
+        <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:'.2em',color:G}}>SCROLL</span>
+      </div>
+    </section>
+  );
+}
+
+/* ── AVM CHART ── */
+function AVMChart(){
+  const[ref,vis]=useInView();
+  const W=500,H=220,PAD={t:20,r:20,b:40,l:50};
+  const maxV=Math.max(...PRICE_DATA.map(d=>d.v))*1.1;
+  const pts=PRICE_DATA.map((d,i)=>{
+    const x=PAD.l+(i/(PRICE_DATA.length-1))*(W-PAD.l-PAD.r);
+    const y=H-PAD.b-((d.v/maxV)*(H-PAD.t-PAD.b));
+    return{x,y,...d};
+  });
+  const pathD=`M ${pts.map(p=>`${p.x},${p.y}`).join(' L ')}`;
+  const fillD=`M ${pts[0].x},${H-PAD.b} L ${pts.map(p=>`${p.x},${p.y}`).join(' L ')} L ${pts[pts.length-1].x},${H-PAD.b} Z`;
+  const[hover,setHover]=useState(null);
+  return(
+    <div ref={ref} style={{opacity:vis?1:0,transform:vis?'none':'translateY(24px)',transition:'all .7s .1s cubic-bezier(.16,1,.3,1)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:G,animation:'pulse 2s ease infinite'}}/>
+        <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:'.18em',color:'rgba(240,237,229,.45)',textTransform:'uppercase'}}>AVM PREDICTIVE PRICING ENGINE</span>
+        <span style={{marginLeft:'auto',padding:'2px 8px',borderRadius:4,background:'rgba(52,211,153,.12)',border:'1px solid rgba(52,211,153,.25)',fontFamily:"'JetBrains Mono',monospace",fontSize:8,fontWeight:700,color:'#34d399'}}>LIVE</span>
+      </div>
+      <div style={{fontSize:11,color:'rgba(240,237,229,.35)',marginBottom:16,fontFamily:'Inter'}}>Avg compound price · EGP millions · 2020–2026</div>
+      <div style={{position:'relative'}}>
+        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{overflow:'visible'}}>
+          <defs>
+            <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={G} stopOpacity=".25"/>
+              <stop offset="100%" stopColor={G} stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={GL}/>
+              <stop offset="100%" stopColor={G}/>
+            </linearGradient>
+          </defs>
+          {/* Grid lines */}
+          {[0,.25,.5,.75,1].map((t,i)=>{
+            const y=PAD.t+(1-t)*(H-PAD.t-PAD.b);
+            return(<g key={i}>
+              <line x1={PAD.l} y1={y} x2={W-PAD.r} y2={y} stroke="rgba(255,255,255,.04)" strokeWidth="1"/>
+              <text x={PAD.l-6} y={y+4} fill="rgba(240,237,229,.25)" fontSize="9" textAnchor="end" fontFamily="JetBrains Mono, monospace">{(maxV*t).toFixed(0)}</text>
+            </g>);
+          })}
+          {/* Fill */}
+          {vis&&<path d={fillD} fill="url(#fillGrad)"/>}
+          {/* Line */}
+          {vis&&<path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1000" strokeDashoffset="0" style={{animation:'lineGrow 1.5s .3s cubic-bezier(.16,1,.3,1) both'}}/>}
+          {/* Dots */}
+          {pts.map((p,i)=>(
+            <g key={i} style={{cursor:'pointer'}} onMouseEnter={()=>setHover(i)} onMouseLeave={()=>setHover(null)}>
+              <circle cx={p.x} cy={p.y} r={hover===i?7:5} fill={G} stroke="rgba(9,9,15,.8)" strokeWidth="2" style={{transition:'r .2s',animation:`dotAppear .5s ${.3+i*.12}s both`}}/>
+              {hover===i&&(
+                <g>
+                  <rect x={p.x-36} y={p.y-38} width="72" height="28" rx="6" fill="rgba(9,9,15,.95)" stroke="rgba(200,150,26,.35)" strokeWidth="1"/>
+                  <text x={p.x} y={p.y-20} fill={G} fontSize="10" fontWeight="700" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{p.label}</text>
+                  <text x={p.x} y={p.y-10} fill="rgba(240,237,229,.45)" fontSize="8" textAnchor="middle" fontFamily="Inter">{p.y_}</text>
+                </g>
+              )}
+              <text x={p.x} y={H-8} fill="rgba(240,237,229,.3)" fontSize="9" textAnchor="middle" fontFamily="JetBrains Mono, monospace">{p.y}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+      {/* Compound snapshots */}
+      <div style={{display:'flex',gap:8,marginTop:16}}>
+        {COMPOUND_PRICES.slice(0,3).map((c,i)=>(
+          <div key={i} style={{flex:1,padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,.04)',border:'1px solid rgba(200,150,26,.12)'}}>
+            <div style={{fontFamily:'Inter',fontSize:10,color:'rgba(240,237,229,.45)',marginBottom:4}}>{c.name}</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:G}}>{c.price}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── ROI CHART ── */
+function ROIChart(){
+  const[ref,vis]=useInView();
+  const[hov,setHov]=useState(null);
+  const maxP=35;
+  return(
+    <div ref={ref} style={{opacity:vis?1:0,transform:vis?'none':'translateY(24px)',transition:'all .7s .2s cubic-bezier(.16,1,.3,1)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:'#34d399'}}/>
+        <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:'.18em',color:'rgba(240,237,229,.45)',textTransform:'uppercase'}}>ROI COMPOUNDING YIELD</span>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {ROI_DATA.map((r,i)=>(
+          <div key={i} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)} style={{cursor:'default',transition:'opacity .2s',opacity:hov!==null&&hov!==i?.55:1}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontFamily:'Inter',fontSize:12,fontWeight:500,color:'rgba(240,237,229,.8)'}}>{r.name}</span>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:8,color:'rgba(200,150,26,.6)',padding:'1px 6px',borderRadius:4,border:'1px solid rgba(200,150,26,.18)'}}>AI {r.ai}</span>
+              </div>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:700,color:G}}>+{r.pct}%</span>
+            </div>
+            <div style={{height:6,borderRadius:3,background:'rgba(255,255,255,.06)',overflow:'hidden'}}>
+              <div style={{height:'100%',borderRadius:3,background:`linear-gradient(90deg,${GL},${G})`,width:vis?`${(r.pct/maxP)*100}%`:'0%',transition:`width .9s ${.1+i*.08}s cubic-bezier(.16,1,.3,1)`}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Q2 2026 signal */}
+      <div style={{marginTop:20,padding:'12px 16px',borderRadius:12,background:'rgba(200,150,26,.07)',border:'1px solid rgba(200,150,26,.2)'}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:8.5,letterSpacing:'.14em',color:G,marginBottom:5,textTransform:'uppercase'}}>Q2 2026 SIGNAL</div>
+        <p style={{fontSize:11,color:'rgba(240,237,229,.6)',lineHeight:1.6,fontFamily:'Inter'}}>Strong buy signals across 5th Settlement corridors. Avg 22% YoY growth projected. Hyde Park and Uptown Cairo outperforming baseline by 2.4σ.</p>
+      </div>
+    </div>
+  );
+}
+
+/* ── AI TOOLS GRID ── */
+function AITools(){
+  const[ref,vis]=useInView(.1);
+  return(
+    <section ref={ref} style={{padding:'80px 60px',background:'var(--bg2)'}}>
+      <div className="fade-up" style={{marginBottom:48}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+          <div style={{width:32,height:1,background:G}}/>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:'.24em',color:G,textTransform:'uppercase'}}>6 PROPRIETARY AI TOOLS</span>
+        </div>
+        <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(32px,4vw,56px)',fontWeight:300,color:'#fff',lineHeight:1.1}}>
+          The Intelligence<br/><span style={{fontStyle:'italic',color:GL}}>Stack</span>
+        </h2>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
+        {AI_TOOLS.map((t,i)=>(
+          <div key={i} style={{padding:'24px',borderRadius:16,background:'rgba(255,255,255,.04)',border:'1px solid rgba(200,150,26,.1)',opacity:vis?1:0,transform:vis?'none':'translateY(20px)',transition:`all .6s ${.05+i*.08}s cubic-bezier(.16,1,.3,1)`,cursor:'default'}}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
+              <span style={{fontSize:28}}>{t.ic}</span>
+              <span style={{padding:'2px 8px',borderRadius:4,background:t.status==='LIVE'?'rgba(52,211,153,.12)':'rgba(200,150,26,.12)',border:`1px solid ${t.status==='LIVE'?'rgba(52,211,153,.28)':'rgba(200,150,26,.28)'}`,fontFamily:"'JetBrains Mono',monospace",fontSize:8,fontWeight:700,color:t.status==='LIVE'?'#34d399':G}}>{t.status}</span>
+            </div>
+            <div style={{fontFamily:'Inter',fontSize:15,fontWeight:600,color:'rgba(240,237,229,.9)',marginBottom:8}}>{t.name}</div>
+            <p style={{fontFamily:'Inter',fontSize:12,color:'rgba(240,237,229,.5)',lineHeight:1.6}}>{t.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── GITHUB INTEGRATION ── */
+function GitHubPanel(){
+  const[ref,vis]=useInView();
+  const files=[
+    {path:'apps/sierra-estates-realty/app/ai/page.tsx',desc:'AI Engine page entry point — wire this component here'},
+    {path:'apps/sierra-estates-realty/components/UI/LeilaConcierge.tsx',desc:'AI Chat — connect to Gemini 2.0 Flash via Server Actions'},
+    {path:'apps/sierra-estates-realty/components/Maps/LiveMap.tsx',desc:'Map Intelligence — connect to Firestore live compound data'},
+    {path:'apps/sierra-estates-realty/components/Listings/',desc:'Inventory — wire UNIT_DATA to Firestore listings collection'},
+  ];
+  return(
+    <section ref={ref} style={{padding:'80px 60px',background:'var(--bg)'}}>
+      <div style={{opacity:vis?1:0,transform:vis?'none':'translateY(24px)',transition:'all .7s cubic-bezier(.16,1,.3,1)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+          <div style={{width:32,height:1,background:G}}/>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:'.24em',color:G,textTransform:'uppercase'}}>DEVELOPER INTEGRATION</span>
+        </div>
+        <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(28px,3.5vw,48px)',fontWeight:300,color:'#fff',lineHeight:1.1,marginBottom:8}}>
+          GitHub Repo
+        </h2>
+        <a href="https://github.com/ahmedfawzy8866/Sierra-Estates-Final" target="_blank" rel="noopener noreferrer" style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:G,textDecoration:'none',display:'inline-flex',alignItems:'center',gap:6,marginBottom:32}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          ahmedfawzy8866/Sierra-Estates-Final
+        </a>
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {files.map((f,i)=>(
+            <div key={i} style={{padding:'12px 16px',borderRadius:10,background:'rgba(255,255,255,.04)',border:'1px solid rgba(200,150,26,.1)',display:'flex',gap:14,alignItems:'flex-start'}}>
+              <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:'rgba(200,150,26,.6)',marginTop:1,flexShrink:0}}>📄</span>
+              <div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:GL,marginBottom:3}}>{f.path}</div>
+                <div style={{fontFamily:'Inter',fontSize:11,color:'rgba(240,237,229,.45)'}}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:20,padding:'14px 18px',borderRadius:12,background:'rgba(200,150,26,.07)',border:'1px solid rgba(200,150,26,.18)'}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:G,marginBottom:6,letterSpacing:'.14em'}}>STACK</div>
+          <div style={{fontFamily:'Inter',fontSize:12,color:'rgba(240,237,229,.55)',lineHeight:1.7}}>
+            Next.js 16 (React 19) · Firebase Firestore · Python FastAPI · Gemini 2.0 Flash · n8n · Vercel · Tailwind CSS · Framer Motion
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── FOOTER ── */
+function Footer(){
+  return(
+    <footer style={{padding:'40px 60px',borderTop:'1px solid rgba(200,150,26,.12)',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
+      <div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:600,letterSpacing:'.14em',color:G,marginBottom:4}}>SIERRA ESTATES REALTY</div>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:8.5,color:'rgba(240,237,229,.25)',letterSpacing:'.12em'}}>NEW CAIRO · AI-DRIVEN · 2026</div>
+      </div>
+      <div style={{display:'flex',gap:20,alignItems:'center'}}>
+        <a href="tel:+201092048333" style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:'rgba(200,150,26,.6)',textDecoration:'none'}}>+2 010 9204 8333</a>
+        <a href="mailto:A.Fawzy@SierraEstate.net" style={{fontFamily:'Inter',fontSize:11,color:'rgba(240,237,229,.35)',textDecoration:'none'}}>A.Fawzy@SierraEstate.net</a>
+        <a href="https://github.com/ahmedfawzy8866/Sierra-Estates-Final" target="_blank" rel="noopener noreferrer" style={{color:'rgba(200,150,26,.6)',textDecoration:'none',fontSize:12}}>GitHub</a>
+      </div>
+    </footer>
+  );
+}
+
+/* ── APP ── */
+function App(){
+  return(
+    <div>
+      <Nav/>
+      <Hero/>
+      {/* AVM + ROI section */}
+      <section style={{padding:'80px 60px',background:'var(--bg3)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+          <div style={{width:32,height:1,background:G}}/>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:'.24em',color:G,textTransform:'uppercase'}}>INTELLIGENCE DASHBOARD</span>
+        </div>
+        <h2 className="fade-up" style={{fontFamily:"'Cormorant Garamond',serif",fontSize:'clamp(32px,4vw,56px)',fontWeight:300,color:'#fff',lineHeight:1.1,marginBottom:48}}>
+          Powered by <span style={{fontStyle:'italic',color:GL}}>AI Engine 3.0</span>
+        </h2>
+        <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:40,alignItems:'start'}}>
+          <div style={{padding:'28px',borderRadius:18,background:'rgba(255,255,255,.04)',border:'1px solid rgba(200,150,26,.12)'}}>
+            <AVMChart/>
+          </div>
+          <div style={{padding:'28px',borderRadius:18,background:'rgba(255,255,255,.04)',border:'1px solid rgba(200,150,26,.12)'}}>
+            <ROIChart/>
+          </div>
+        </div>
+      </section>
+      <AITools/>
+      <GitHubPanel/>
+      <Footer/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#09090f"/>
+    <rect x="10" y="30" width="80" height="1.5" fill="rgba(200,150,26,.2)"/>
+    <polyline points="10,70 25,60 40,50 55,38 70,28 90,18" fill="none" stroke="#C8961A" stroke-width="2.5"/>
+    <text x="50" y="88" font-family="JetBrains Mono" font-size="7" fill="rgba(200,150,26,.5)" text-anchor="middle" letter-spacing="3">AI ENGINE 3.0</text>
+  </svg>
+</template>
+</body>
+</html>

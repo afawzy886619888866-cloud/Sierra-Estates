@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// ============================================================================
+// Sierra Estates — Firestore Security Rules (CANONICAL — deployed via firebase.json)
+//
+// Model: "staff" = a signed-in user whose users/{uid} document has
+//   role ∈ {admin, manager, agent}. Mirrors how the app resolves roles
+//   (lib/AuthContext.tsx reads users/{uid}.role) and the backend
+//   verifyAdminRequest. This REPLACES the legacy admins/{uid} model.
+//
+// Privileged server operations use the Firebase Admin SDK, which BYPASSES these
+// rules — so locking the client down here does not affect API routes / cron.
+//
+// Rules use OR semantics: the broad `/{document=**}` staff rule grants staff
+// access everywhere; the specific matches ADD narrower public access on top
+// (public catalog reads, public share-link reads + constrained analytics writes).
+//
+// ⚠️ BEFORE DEPLOYING (firebase deploy --only firestore:rules):
+//   1. Every staff member MUST have a users/{uid} doc with role ∈
+//      {admin,manager,agent}, else they lose dashboard access.
+//   2. Run the emulator rules tests (see PR) — the constrained-update rules
+//      below must be verified against the actual client payloads.
+//   3. Roll back by redeploying the previous file if anything is locked out.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'manager', 'agent'];
+    }
+
+    // --- Public marketplace catalog: anyone may read; only staff may write ---
+    match /listings/{id}    { allow read: if true;  allow write: if isStaff(); }
+    match /units/{id}       { allow read: if true;  allow write: if isStaff(); }
+    match /properties/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /projects/{id}    { allow read: if true;  allow write: if isStaff(); }
+    match /developers/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /mediaAssets/{id} { allow read: if true;  allow write: if isStaff(); }
+    match /media/{id}       { allow read: if true;  allow write: if isStaff(); }
+    match /zones/{id}       { allow read: if true;  allow write: if isStaff(); }
+
+    // --- Client portal collections (sierra-estates.net) ---
+    //     The static client portal (firebase-data.js) reads houyez_listings +
+    //     houyez_compounds publicly, and its contact/career forms create
+    //     inquiries + careers anonymously. Without these, the portal silently
+    //     falls back to static data and leads never reach Firestore / Laila bot.
+    match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
+    match /inquiries/{id} {
+      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.status == 'new'
+        && request.resource.data.size() <= 40;
+    }
+    match /careers/{id} {
+      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.status == 'new'
+        && request.resource.data.size() <= 40;
+    }
+
+    // --- Public share links: recipients open these via a URL (no login). They
+    //     may READ, and record lightweight analytics ONLY. Substantive writes
+    //     are staff (or Admin SDK). Matches the client payloads in
+    //     app/proposals/[id]/page.tsx and app/concierge/[leadId]/page.tsx. ---
+    match /proposals/{id} {
+      allow read: if true;
+      allow update: if isStaff()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt']);
+      allow create, delete: if isStaff();
+    }
+    match /concierge_selections/{id} {
+      allow read: if true;
+      allow update: if isStaff()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement']);
+      allow create, delete: if isStaff();
+    }
+
+    // --- Users: a user may read their own profile; only staff may write ---
+    // (Write is staff-only to prevent self privilege-escalation via the `role`
+    // field. New staff docs are provisioned server-side via the Admin SDK.)
+    match /users/{uid} {
+      allow read:  if isSignedIn() && (request.auth.uid == uid || isStaff());
+      allow write: if isStaff();
+    }
+
+    // --- Everything else (leads, deals, sales, viewings, vouchers, activities,
+    //     intelligence, strategic_pipeline, agents, workflows, syncQueue, … )
+    //     — staff only ---
+    match /{document=**} {
+      allow read, write: if isStaff();
+    }
+  }
+}

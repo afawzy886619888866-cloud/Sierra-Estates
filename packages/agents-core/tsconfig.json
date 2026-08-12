@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@sierra-estates/obsidian": ["../obsidian/dist/index", "../obsidian/src/index.ts"],
+      "@sierra-estates/exchange": ["../exchange/dist/exchange-client"],
+      "@sierra-estates/exchange/*": ["../exchange/dist/*"],
+      "@sierra-estates/agents-core": ["./src/index.ts"],
+      "@sierra-estates/memory-engine": ["../memory-engine/src/index.ts"],
+      "@sierra-estates/db": ["../db/lib/index.ts"],
+      "@sierra-estates/agents": ["../agents/index.ts"],
+      "@sierra-estates/auth": ["../auth"],
+      "@sierra-estates/config": ["../config"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/dev-runner.ts"]
+}

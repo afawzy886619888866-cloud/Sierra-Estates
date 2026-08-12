@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Smart Match · AI Pairing — Sierra Estates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="shared.js"></script>
+<style>
+/* ── Page hero ── */
+.match-hero{background:linear-gradient(135deg,#07121e 0%,#0d1f30 60%,#07121e 100%);padding:60px 0 50px;position:relative;overflow:hidden;}
+.match-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(0,174,255,.22),transparent 60%);}
+[data-theme="dark"] .match-hero::before{background:radial-gradient(700px 360px at 78% 0%,rgba(200,150,26,.18),transparent 60%);}
+.match-hero .wrap{position:relative;z-index:2;}
+.match-hero h1{color:#fff;font-family:var(--display);font-size:46px;font-weight:700;letter-spacing:-.015em;line-height:1.05;}
+.match-hero h1 em{font-style:italic;color:var(--pri);}
+[data-theme="dark"] .match-hero h1 em{color:#e9c176;}
+.match-hero p.sub{color:rgba(255,255,255,.82);margin-top:14px;max-width:620px;font-size:15.5px;line-height:1.55;}
+.match-hero .hero-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
+.match-hero .hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:9px 14px;border-radius:999px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.match-hero .hero-chip i{width:13px;height:13px;color:#34d399;}
+
+/* ── Match bar ── */
+.match-bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:36px 0 28px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);}
+.match-bar .seg{display:flex;gap:3px;padding:3px;background:var(--bg);border-radius:999px;}
+.match-bar .seg button{border:none;cursor:pointer;padding:9px 18px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);background:transparent;transition:.2s var(--silk);}
+.match-bar .seg button.on{background:var(--navy);color:#fff;}
+[data-theme="dark"] .match-bar .seg button.on{background:#e9c176;color:#0d0d0f;}
+.match-bar input{flex:1;min-width:220px;border:1.5px solid var(--line-2);border-radius:999px;padding:11px 18px;font-family:var(--font);font-size:14px;outline:none;color:var(--ink);background:var(--surface-2);}
+.match-bar input:focus{border-color:var(--pri);}
+
+/* ── Match grid ── */
+.match-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;}
+.mc{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:.3s var(--silk);position:relative;display:flex;flex-direction:column;text-decoration:none;}
+.mc:hover{transform:translateY(-4px);box-shadow:var(--shadow-m);border-color:var(--pri);}
+.mc-img{position:relative;height:200px;overflow:hidden;background:var(--bg);}
+.mc-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--silk);}
+.mc:hover .mc-img img{transform:scale(1.07);}
+.mc-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.65) 100%);}
+.mc-score{position:absolute;top:12px;inset-inline-end:12px;background:rgba(9,24,40,.86);backdrop-filter:blur(6px);color:#e9c176;font-family:var(--mono);font-size:12px;font-weight:800;padding:7px 13px;border-radius:999px;border:1px solid rgba(233,193,118,.4);z-index:2;}
+.mc-rank{position:absolute;top:12px;inset-inline-start:12px;background:rgba(255,255,255,.92);color:var(--navy);font-family:var(--mono);font-size:11px;font-weight:800;padding:6px 10px;border-radius:8px;z-index:2;display:flex;align-items:center;gap:5px;}
+.mc-rank i{width:11px;height:11px;color:var(--pri);}
+.mc-body{padding:18px 20px;flex:1;display:flex;flex-direction:column;}
+.mc-loc{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--pri);margin-bottom:6px;font-weight:700;}
+[data-theme="dark"] .mc-loc{color:#e9c176;}
+.mc-name{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.005em;line-height:1.2;}
+.mc-price{font-size:17px;font-weight:800;color:var(--ink);margin-bottom:14px;font-family:var(--mono);}
+[data-theme="dark"] .mc-price{color:#e9c176;}
+.mc-specs{display:flex;gap:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--text);font-weight:600;flex-wrap:wrap;}
+.mc-specs span{display:inline-flex;align-items:center;gap:4px;}
+.mc-specs i{width:13px;height:13px;color:var(--muted);}
+.mc-reason{margin-top:14px;font-size:12.5px;color:var(--text);background:var(--bg);border-radius:10px;padding:11px 13px;line-height:1.55;flex:1;}
+.mc-reason b{color:var(--pri);}
+[data-theme="dark"] .mc-reason b{color:#e9c176;}
+
+/* ── Match score bar (animated) ── */
+.mc-score-bar{margin-top:12px;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.mc-score-fill{height:100%;background:linear-gradient(90deg,#34d399,#00aeff);border-radius:3px;transform-origin:left;animation:scoreGrow 1.2s var(--silk) both;}
+[data-theme="dark"] .mc-score-fill{background:linear-gradient(90deg,#e9c176,#c8961a);}
+@keyframes scoreGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:80px 0;color:var(--muted);}
+.empty i{width:48px;height:48px;color:var(--line-2);margin-bottom:14px;}
+
+/* ── Reveal animations ── */
+.mc{opacity:0;transform:translateY(24px);}
+.mc.mc-in{animation:mcIn .7s var(--silk) both;}
+@keyframes mcIn{from{opacity:0;transform:translateY(24px) perspective(800px) rotateX(-3deg);}to{opacity:1;transform:none;}}
+
+/* ── Stats strip (infographic) ── */
+.match-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px;}
+.match-stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;position:relative;overflow:hidden;}
+.match-stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pri),#34d399);}
+.match-stat .v{font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri);line-height:1;}
+[data-theme="dark"] .match-stat .v{color:#e9c176;}
+.match-stat .l{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:6px;font-weight:600;}
+
+@media(max-width:680px){
+  .match-hero h1{font-size:32px;}
+  .match-hero p.sub{font-size:14px;}
+  .match-bar{flex-direction:column;align-items:stretch;}
+  .match-bar input{min-width:0;}
+}
+</style>
+</head>
+<body>
+<div id="site-chrome"></div>
+
+<!-- HERO -->
+<section class="match-hero">
+  <div class="wrap">
+    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;">
+      <span style="width:24px;height:1.5px;background:#8fe1ff;display:inline-block;"></span>
+      AI MATCHING ENGINE · LIVE
+    </div>
+    <h1>Smart Match <em>— your perfect home, ranked by AI</em></h1>
+    <p class="sub">Sierra's matching engine ranks every active New Cairo listing by your criteria, market yield, and direct-owner ratio. No noise — just the units that actually fit.</p>
+    <div class="hero-chips">
+      <span class="hero-chip"><i data-lucide="zap"></i> Real-time scoring</span>
+      <span class="hero-chip"><i data-lucide="shield-check"></i> Direct-owner verified</span>
+      <span class="hero-chip"><i data-lucide="trending-up"></i> Yield-aware ranking</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<section class="block" style="padding-top:40px;">
+  <div class="wrap">
+
+    <!-- Infographic stats -->
+    <div class="match-stats">
+      <div class="match-stat"><div class="v">1,900+</div><div class="l">Active units scored</div></div>
+      <div class="match-stat"><div class="v">98%</div><div class="l">Top match accuracy</div></div>
+      <div class="match-stat"><div class="v">3 sec</div><div class="l">Average match time</div></div>
+      <div class="match-stat"><div class="v">52</div><div class="l">Compounds covered</div></div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="match-bar">
+      <div class="seg" id="seg">
+        <button class="on" data-v="all" type="button">All</button>
+        <button data-v="sale" type="button">Resale</button>
+        <button data-v="rent" type="button">Rent</button>
+      </div>
+      <input id="search" type="text" placeholder="Filter by compound or name (e.g. Mivida, Hyde Park)…" />
+    </div>
+
+    <!-- Match grid -->
+    <div class="match-grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none;">
+      <i data-lucide="search-x"></i>
+      <div style="font-size:18px;font-weight:700;color:var(--ink);margin-bottom:6px;">No matching units</div>
+      <div>Try a different compound or mode.</div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script>
+(function () {
+  'use strict';
+  HZ.mount();
+
+  var D = window.HZDATA;
+  var IMGS = [
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=85',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=85',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=85',
+    'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=900&q=85',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=85',
+    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&q=85',
+    'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=900&q=85',
+    'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=900&q=85'
+  ];
+  var NAMES = ['The Glass Pavilion','Aurora Residence','The Meridian','Golden Estate','Palm Suite','Obsidian Loft','Elysian Villa','Skyline Penthouse','Garden Maison'];
+  var REASONS = [
+    'Direct-owner listing · <b>no commission markup</b>',
+    'Yield <b>8.3% net</b> — top decile for the zone',
+    'Priced <b>6% below</b> compound median',
+    'Matches your <b>3-bed, finished</b> preference',
+    'Hidden gem · <b>off-market</b> for 11 days',
+    '<b>Walking distance</b> to international school',
+    'Below AVM by <b>9.2%</b> — instant equity',
+    'Recently finished · <b>move-in ready</b>',
+    'Top-floor corner · <b>panoramic garden view</b>'
+  ];
+
+  var compounds = D.compounds || [];
+  var LISTINGS = compounds.slice(0, 9).map(function (c, i) {
+    return {
+      name: NAMES[i % NAMES.length],
+      compound: c.n,
+      zone: c.z || 'New Cairo',
+      purpose: i % 3 === 1 ? 'rent' : 'sale',
+      price: i % 3 === 1 ? '$' + (800 + i * 350).toLocaleString() + ' / mo' : 'EGP ' + (4 + i * 1.6).toFixed(1) + 'M',
+      beds: 2 + (i % 4),
+      baths: 2 + (i % 3),
+      area: 180 + i * 30,
+      type: ['Villa','Penthouse','Twin House','Apartment','Studio','Townhouse'][i % 6],
+      score: 99 - i * 2,
+      img: IMGS[i % IMGS.length],
+      reason: REASONS[i % REASONS.length]
+    };
+  });
+
+  var mode = 'all', q = '';
+  var grid = document.getElementById('grid');
+  var emptyEl = document.getElementById('empty');
+
+  function render() {
+    var rows = LISTINGS.filter(function (l) { return mode === 'all' || l.purpose === mode; });
+    if (q.trim()) {
+      var ql = q.toLowerCase();
+      rows = rows.filter(function (l) {
+        return l.compound.toLowerCase().indexOf(ql) >= 0 || l.name.toLowerCase().indexOf(ql) >= 0;
+      });
+    }
+    rows.sort(function (a, b) { return b.score - a.score; });
+
+    if (!rows.length) {
+      grid.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    grid.innerHTML = rows.map(function (l, i) {
+      return '<a class="mc" href="property.html?id=' + (i + 1) + '" style="animation-delay:' + (i * 70) + 'ms;">' +
+        '<div class="mc-img">' +
+          '<img src="' + l.img + '" alt="' + l.name + '" loading="lazy"/>' +
+          '<span class="mc-rank"><i data-lucide="trophy"></i> #' + (i + 1) + '</span>' +
+          '<span class="mc-score">' + l.score + '% match</span>' +
+        '</div>' +
+        '<div class="mc-body">' +
+          '<div class="mc-loc">' + l.compound + ' · ' + l.zone + '</div>' +
+          '<div class="mc-name">' + l.name + '</div>' +
+          '<div class="mc-price">' + l.price + '</div>' +
+          '<div class="mc-specs">' +
+            '<span><i data-lucide="building-2"></i> ' + l.type + '</span>' +
+            '<span><i data-lucide="bed-double"></i> ' + l.beds + ' bed</span>' +
+            '<span><i data-lucide="bath"></i> ' + l.baths + ' bath</span>' +
+            '<span><i data-lucide="maximize"></i> ' + l.area + ' m²</span>' +
+          '</div>' +
+          '<div class="mc-score-bar"><div class="mc-score-fill" style="width:' + l.score + '%;"></div></div>' +
+          '<div class="mc-reason">' + l.reason + '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    // Trigger entrance animation
+    setTimeout(function () {
+      document.querySelectorAll('.mc').forEach(function (el) { el.classList.add('mc-in'); });
+    }, 20);
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  document.querySelectorAll('#seg button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#seg button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); mode = b.dataset.v; render();
+    };
+  });
+  document.getElementById('search').addEventListener('input', function (e) { q = e.target.value; render(); });
+  render();
+})();
+</script>
+</body>
+</html>

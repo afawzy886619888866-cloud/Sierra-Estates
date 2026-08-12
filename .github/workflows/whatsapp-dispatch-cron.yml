@@ -1,0 +1,37 @@
+name: Cron · WhatsApp dispatch
+
+# Vercel Hobby only allows DAILY crons, so the every-10-minutes WhatsApp queue
+# drain runs from here instead. The Vercel cron for the same path is a daily
+# fallback (see apps/sierra-estates-realty/vercel.json). The route itself
+# enforces operating hours (12pm–8pm Africa/Cairo) and per-number quotas, so an
+# out-of-window ping is a cheap no-op.
+#
+# Required repo secret:
+#   CRON_SECRET — must match the CRON_SECRET env var on the Vercel project.
+
+on:
+  schedule:
+    # Every 10 min, 08:00–18:59 UTC — covers the Cairo operating window in
+    # both UTC+2 (winter) and UTC+3 (summer).
+    - cron: '*/10 8-18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: whatsapp-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger dispatch endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -s -o /tmp/body -w '%{http_code}' \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://sierra-estates.net/api/cron/whatsapp-dispatch")
+          echo "HTTP $code"
+          cat /tmp/body
+          [ "$code" = "200" ]

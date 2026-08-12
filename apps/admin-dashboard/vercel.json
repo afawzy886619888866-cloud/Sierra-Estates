@@ -1,0 +1,21 @@
+{
+  "name": "sierra-estates-admin-page",
+  "version": 2,
+  "github": {
+    "silent": true
+  },
+  "framework": "vite",
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run build",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://sierra-estates.net/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../turbo.json || exit 1"
+}

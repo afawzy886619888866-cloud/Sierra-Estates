@@ -1,0 +1,51 @@
+name: Deploy · Firebase (Firestore + Storage rules)
+
+# Deploys the Firestore + Storage SECURITY RULES to the sierra-blu project, as
+# wired in firebase.json:
+#   firestore.rules => apps/sierra-estates-realty/firestore.rules
+#   storage.rules   => apps/sierra-estates-realty/storage.rules
+#
+# This is intentionally SEPARATE from deploy-firebase.yml (which only deploys the
+# admin hosting redirect). Rules changes are security-sensitive, so this is a
+# manual (workflow_dispatch) job — nothing here runs on push, per the "no deploys
+# without explicit approval" project rule.
+#
+# Required repo secret:
+#   FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU — service-account JSON for sierra-blu.
+#   In addition to Hosting Admin (used by deploy-firebase.yml), this account
+#   needs Firebase Rules Admin (roles/firebaserules.admin) to deploy rules.
+#
+# Before running (see the rules file header + NEXT_STEPS.md):
+#   1. Every staff member must have a users/{uid} doc with role in
+#      {admin, manager, agent}, or they lose dashboard access.
+#   2. Public catalog queries must filter status == 'published'.
+#   3. Roll back by redeploying the previous rules file from git history.
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: firebase-deploy-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU — set in: GitHub → Settings → Secrets → Actions
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU }}
+
+      - name: Deploy Firestore + Storage rules
+        run: npx firebase-tools@latest deploy --only firestore:rules,storage --project sierra-blu --non-interactive

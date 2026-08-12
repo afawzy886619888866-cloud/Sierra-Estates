@@ -1,0 +1,62 @@
+{
+  "name": "Sierra Estates — Property Finder Lead Ingestion",
+  "nodes": [
+    {
+      "parameters": { "path": "property-finder-leads", "responseMode": "responseNode", "options": {} },
+      "id": "webhook-trigger", "name": "Property Finder Webhook",
+      "type": "n8n-nodes-base.webhook", "typeVersion": 1, "position": [240, 300], "webhookId": "sierra-pf-leads"
+    },
+    {
+      "parameters": { "functionCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.phone || !body.name) { throw new Error('Missing required fields: name, phone'); }\nlet phone = body.phone.replace(/[\\s\\-()]/g, '');\nif (!phone.startsWith('+')) { phone = '+2' + phone.replace(/^0/, ''); }\nreturn [{ json: { name: body.name, phone_number: phone, email: body.email || '', compound: body.listing_ref || body.compound || '', message: body.message || 'Lead from Property Finder', source: 'property_finder', raw_payload: body } }];" },
+      "id": "parse-lead", "name": "Parse + Validate Lead",
+      "type": "n8n-nodes-base.function", "typeVersion": 1, "position": [460, 300]
+    },
+    {
+      "parameters": { "collection": "clients", "operation": "get", "fieldToMatch": "phone_number", "valueToMatch": "={{ $json.phone_number }}" },
+      "id": "check-existing-client", "name": "Check Existing Client",
+      "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [680, 300]
+    },
+    {
+      "parameters": { "conditions": { "boolean": [{ "value1": "={{ $json.id }}", "value2": "" }] } },
+      "id": "is-new-client", "name": "Is New Client?",
+      "type": "n8n-nodes-base.if", "typeVersion": 1, "position": [900, 300]
+    },
+    {
+      "parameters": { "collection": "clients", "operation": "create", "data": "={\n  \"name\": \"{{ $json.name }}\",\n  \"phone_number\": \"{{ $json.phone_number }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"lead_source\": \"property_finder\",\n  \"created_at\": \"{{ $now }}\",\n  \"updated_at\": \"{{ $now }}\"\n}" },
+      "id": "create-client", "name": "Create Client",
+      "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1120, 200]
+    },
+    {
+      "parameters": { "collection": "leads", "operation": "create", "data": "={\n  \"source\": \"property_finder\",\n  \"name\": \"{{ $('Parse Lead').item.json.name }}\",\n  \"phone\": \"{{ $('Parse Lead').item.json.phone_number }}\",\n  \"email\": \"{{ $('Parse Lead').item.json.email }}\",\n  \"compound\": \"{{ $('Parse Lead').item.json.compound }}\",\n  \"message\": \"{{ $('Parse Lead').item.json.message }}\",\n  \"status\": \"new\",\n  \"created_at\": \"{{ $now }}\"\n}" },
+      "id": "create-lead", "name": "Create Lead Record",
+      "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1340, 200]
+    },
+    {
+      "parameters": { "collection": "requests", "operation": "create", "data": "={\n  \"client_id\": \"{{ $json.id }}\",\n  \"status\": \"bot_handling\",\n  \"bot_chat_history\": [{\"sender\": \"client\", \"text\": \"{{ $('Parse Lead').item.json.message }}\", \"timestamp\": \"{{ $now }}\"}],\n  \"client_needs\": {\"intent\": \"buy\"},\n  \"matched_listings\": [],\n  \"created_at\": \"{{ $now }}\",\n  \"updated_at\": \"{{ $now }}\"\n}" },
+      "id": "create-request", "name": "Create Request Ticket",
+      "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1560, 200]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Lead ingested successfully\",\n  \"client_id\": \"{{ $('Create Client').item.json.id }}\",\n  \"request_id\": \"{{ $('Create Request').item.json.id }}\"\n}" },
+      "id": "respond-success", "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [1780, 200]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Existing client — lead recorded\",\n  \"client_id\": \"{{ $json.id }}\"\n}" },
+      "id": "respond-existing", "name": "Respond (Existing Client)",
+      "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Property Finder Webhook": { "main": [[{ "node": "Parse + Validate Lead", "type": "main", "index": 0 }]] },
+    "Parse + Validate Lead": { "main": [[{ "node": "Check Existing Client", "type": "main", "index": 0 }]] },
+    "Check Existing Client": { "main": [[{ "node": "Is New Client?", "type": "main", "index": 0 }]] },
+    "Is New Client?": { "main": [[{ "node": "Create Client", "type": "main", "index": 0 }], [{ "node": "Respond (Existing Client)", "type": "main", "index": 0 }]] },
+    "Create Client": { "main": [[{ "node": "Create Lead Record", "type": "main", "index": 0 }]] },
+    "Create Lead Record": { "main": [[{ "node": "Create Request Ticket", "type": "main", "index": 0 }]] },
+    "Create Request Ticket": { "main": [[{ "node": "Respond Success", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "sierra-estates" }, { "name": "lead-ingestion" }]
+}

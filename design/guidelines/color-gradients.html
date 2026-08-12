@@ -1,0 +1,28 @@
+<!-- @dsCard group="Colors" viewport="700x160" name="Gradients & Status" subtitle="Gold & red gradients; semantic status swatches" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 14px; }
+  .grad { flex: 1; height: 46px; border-radius: var(--radius-sm); display: flex; align-items: center; padding: 0 14px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+  .status { flex: 1; display: flex; align-items: center; gap: 8px; font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--tx); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="grad" style="background:var(--grad-gold); color:var(--bg-d)">grad-gold</div>
+    <div class="grad" style="background:var(--grad-red); color:#fff">grad-red</div>
+    <div class="grad" style="background:var(--grad-gold-3); color:var(--bg-d)">grad-gold-3 (shimmer)</div>
+  </div>
+  <div class="row">
+    <div class="status"><span class="dot" style="background:var(--emerald)"></span>Success</div>
+    <div class="status"><span class="dot" style="background:var(--blue)"></span>Info</div>
+    <div class="status"><span class="dot" style="background:var(--gold)"></span>Warning</div>
+    <div class="status"><span class="dot" style="background:var(--red)"></span>Error</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sierra Estates | New Cairo Property Intelligence</title>
+    <meta
+      name="description"
+      content="Sierra Estates pairs cinematic property discovery with AI-backed New Cairo market intelligence."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="page-noise" aria-hidden="true"></div>
+    <div class="motion-field" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <header class="topbar" data-elevate>
+      <a class="brand" href="#home" aria-label="Sierra Estates home">
+        <span class="brand-mark">S</span>
+        <span>
+          <strong>Sierra Estates</strong>
+          <small>New Cairo Intelligence</small>
+        </span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#properties">Properties</a>
+        <a href="#market">Market</a>
+        <a href="#motion">Motion Lab</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="nav-cta" data-open-modal>Get Matched</button>
+    </header>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="hero-bg" aria-hidden="true">
+          <img
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2200&q=85"
+            alt=""
+          />
+        </div>
+        <div class="hero-grid">
+          <div class="hero-copy reveal">
+            <p class="eyebrow">AI matched homes in New Cairo</p>
+            <h1>Find the compound before the market moves.</h1>
+            <p class="hero-lede">
+              Live shortlist, ROI signals, rental projections, and cinematic property previews for Hyde Park,
+              Mountain View iCity, Mivida, Uptown Cairo, and Madinaty.
+            </p>
+            <div class="hero-actions">
+              <button class="primary-btn" data-open-modal>
+                <span>Start Matching</span>
+                <i aria-hidden="true"></i>
+              </button>
+              <a class="ghost-btn" href="#properties">View Listings</a>
+            </div>
+          </div>
+
+          <aside class="hero-panel reveal delay-2" aria-label="Live market snapshot">
+            <div class="panel-head">
+              <span>Live AI score</span>
+              <strong data-counter="98">0</strong>
+            </div>
+            <div class="orbit-card">
+              <div class="orbit-ring"></div>
+              <div class="mini-map">
+                <span class="pin pin-a"></span>
+                <span class="pin pin-b"></span>
+                <span class="pin pin-c"></span>
+              </div>
+              <div>
+                <b>Hyde Park villas</b>
+                <small>3 units flagged below trend price</small>
+              </div>
+            </div>
+            <div class="metric-row">
+              <span><b data-counter="24">0</b>% YoY</span>
+              <span><b data-counter="47">0</b> spots</span>
+              <span><b data-counter="6">0</b> min</span>
+            </div>
+          </aside>
+        </div>
+        <div class="scroll-cue" aria-hidden="true"><span></span></div>
+      </section>
+
+      <section class="ticker" aria-label="Market movement ticker">
+        <div class="ticker-track">
+          <span>Mountain View iCity +24%</span>
+          <span>Uptown Cairo +31%</span>
+          <span>Mivida rentals from $1,700/mo</span>
+          <span>Hyde Park AI score 9.8</span>
+          <span>Al Rehab rental yield 8.1%</span>
+          <span>Madinaty demand rising</span>
+        </div>
+      </section>
+
+      <section class="section" id="properties">
+        <div class="section-head reveal">
+          <p class="eyebrow">Featured inventory</p>
+          <h2>Motion-rich property cards that react while you browse.</h2>
+        </div>
+        <div class="properties">
+          <article class="property-card reveal tilt-card">
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=82" alt="Modern villa exterior" />
+            <div class="card-body">
+              <span>Hyde Park</span>
+              <h3>Garden Villa</h3>
+              <p>5 beds, private pool, handover ready, AI value gap detected.</p>
+              <div><b>EGP 22M</b><small>Score 9.8</small></div>
+            </div>
+          </article>
+          <article class="property-card reveal delay-1 tilt-card">
+            <img src="https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=82" alt="Bright apartment living room" />
+            <div class="card-body">
+              <span>Mivida</span>
+              <h3>Sky Apartment</h3>
+              <p>2 beds, expat rental demand, furnished upgrade option.</p>
+              <div><b>EGP 5.2M</b><small>Score 9.1</small></div>
+            </div>
+          </article>
+          <article class="property-card reveal delay-2 tilt-card">
+            <img src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=82" alt="Luxury home lounge" />
+            <div class="card-body">
+              <span>Uptown Cairo</span>
+              <h3>Golf Residence</h3>
+              <p>Panoramic views, low inventory, strongest appreciation signal.</p>
+              <div><b>EGP 18.5M</b><small>Score 9.5</small></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section split" id="market">
+        <div class="market-copy reveal">
+          <p class="eyebrow">Market engine</p>
+          <h2>More movement, but still useful.</h2>
+          <p>
+            Animated bars, pulsing deal signals, rolling counters, and scroll reveals make the page feel alive
+            without hiding the numbers buyers actually need.
+          </p>
+          <button class="primary-btn dark" data-open-modal><span>Reserve 25% Off</span><i aria-hidden="true"></i></button>
+        </div>
+        <div class="market-board reveal delay-2">
+          <div class="bar" style="--value: 92"><span>Hyde Park</span><b>92</b></div>
+          <div class="bar" style="--value: 84"><span>Mivida</span><b>84</b></div>
+          <div class="bar" style="--value: 97"><span>Uptown Cairo</span><b>97</b></div>
+          <div class="bar" style="--value: 78"><span>Madinaty</span><b>78</b></div>
+          <div class="signal-list">
+            <span>ROI forecast recalculating</span>
+            <span>Rental demand rising</span>
+            <span>47 discounted consult spots</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="motion-lab" id="motion">
+        <div class="section-head reveal">
+          <p class="eyebrow">Motion lab</p>
+          <h2>A lot more motion, layered carefully.</h2>
+        </div>
+        <div class="motion-grid">
+          <div class="motion-tile reveal">
+            <span class="spinner"></span>
+            <h3>Orbiting AI</h3>
+            <p>Persistent orbital motion and pulsing pins make the assistant feel active.</p>
+          </div>
+          <div class="motion-tile reveal delay-1">
+            <span class="wave"></span>
+            <h3>Scroll Reveals</h3>
+            <p>Sections slide, fade, and scale into place when they enter the viewport.</p>
+          </div>
+          <div class="motion-tile reveal delay-2">
+            <span class="scan"></span>
+            <h3>Market Scan</h3>
+            <p>Animated scan lines and bars communicate live analysis without clutter.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact" id="contact">
+        <div class="contact-inner reveal">
+          <p class="eyebrow">Get in touch</p>
+          <h2>Tell Sierra AI your budget. Get a shortlist in 24 hours.</h2>
+          <div class="contact-actions">
+            <a href="tel:+201092048333">Call +20 109 204 8333</a>
+            <a href="https://wa.me/201092048333" target="_blank" rel="noreferrer">WhatsApp 24/7</a>
+            <a href="mailto:info@Sierra-Estates.com">Email Us</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <button class="chat-fab" aria-label="Open Sierra AI chat" data-chat-toggle>AI</button>
+    <aside class="chat-panel" data-chat-panel aria-label="Sierra AI chat">
+      <div class="chat-head">
+        <strong>Sierra AI</strong>
+        <button aria-label="Close chat" data-chat-close>x</button>
+      </div>
+      <div class="chat-log" data-chat-log>
+        <p class="ai">Ask about ROI, rent, Hyde Park, Mivida, or budget matching.</p>
+      </div>
+      <div class="quick-replies">
+        <button data-prompt="Best ROI">Best ROI</button>
+        <button data-prompt="Hyde Park">Hyde Park</button>
+        <button data-prompt="Mivida rentals">Mivida rentals</button>
+      </div>
+      <form class="chat-form" data-chat-form>
+        <input name="message" placeholder="Ask Sierra AI..." autocomplete="off" />
+        <button>Send</button>
+      </form>
+    </aside>
+
+    <dialog class="lead-modal" data-modal>
+      <form method="dialog" class="modal-card">
+        <button class="modal-close" aria-label="Close" value="close">x</button>
+        <p class="eyebrow">25% off service fees</p>
+        <h2>Start your shortlist</h2>
+        <label>
+          Full name
+          <input required placeholder="Your full name" />
+        </label>
+        <label>
+          WhatsApp
+          <input required placeholder="+20 1XX XXX XXXX" />
+        </label>
+        <label>
+          Target compound
+          <select>
+            <option>Hyde Park</option>
+            <option>Mountain View iCity</option>
+            <option>Mivida</option>
+            <option>Uptown Cairo</option>
+            <option>Madinaty</option>
+          </select>
+        </label>
+        <button class="primary-btn dark" value="submit"><span>Reserve Match</span><i aria-hidden="true"></i></button>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": ".",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "lib": ["dom", "esnext"],
+    "noImplicitAny": false
+  },
+  "include": ["exchange-client.ts"],
+  "exclude": ["node_modules", "dist"]
+}

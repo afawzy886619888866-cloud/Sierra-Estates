@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Map Intelligence — Sierra Estates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--gold:#C8961A;--gold-lt:#E9C176;--gold-sh:#F5D78E;--navy:#0D2035;--red:#E63946;--emerald:#34D399;--blue:#1E88D9;}
+[data-theme="light"]{--bg:#F7F4EC;--bg-d:#EFE9DC;--bg-e:#FFFFFF;--bg-e2:#FAFAF7;--surf:rgba(13,32,53,.04);--surf2:rgba(13,32,53,.025);--tx:#0D2035;--tx-m:rgba(13,32,53,.62);--tx-f:rgba(13,32,53,.36);--bd:rgba(13,32,53,.10);--bd-s:rgba(13,32,53,.20);--shd:0 24px 64px rgba(13,32,53,.12);}
+[data-theme="dark"]{--bg:#0B1A2E;--bg-d:#081526;--bg-e:#102238;--bg-e2:#152C48;--surf:rgba(255,255,255,.065);--surf2:rgba(255,255,255,.04);--tx:#F0EDE5;--tx-m:rgba(240,237,229,.60);--tx-f:rgba(240,237,229,.36);--bd:rgba(255,255,255,.09);--bd-s:rgba(255,255,255,.18);--shd:0 24px 64px rgba(0,0,0,.38);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;overflow:hidden;}
+
+/* ── HEADER ── */
+#hdr{position:fixed;top:0;left:0;right:0;z-index:200;height:56px;display:flex;align-items:center;padding:0 18px;gap:12px;background:var(--bg-e);border-bottom:1px solid var(--bd);box-shadow:0 2px 16px rgba(13,32,53,.06);}
+.hdr-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--navy);flex-shrink:0;text-decoration:none;}
+.hdr-name{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;}
+.hdr-sub{font-size:8px;letter-spacing:.12em;color:var(--tx-f);text-transform:uppercase;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:7px;}
+.hdr-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--bd);background:var(--surf);color:var(--tx-m);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;text-decoration:none;}
+.hdr-btn:hover{border-color:rgba(200,150,26,.4);color:var(--gold);}
+.hdr-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+
+/* ── LAYOUT ── */
+#layout{display:flex;height:100vh;padding-top:56px;}
+
+/* ── FILTER PANEL ── */
+#filter{width:300px;flex-shrink:0;height:100%;overflow-y:auto;background:var(--bg-e);border-right:1px solid var(--bd);display:flex;flex-direction:column;}
+#filter::-webkit-scrollbar{width:3px;}
+#filter::-webkit-scrollbar-thumb{background:rgba(200,150,26,.25);border-radius:2px;}
+.f-section{padding:14px 18px;border-bottom:1px solid var(--bd);}
+.f-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;}
+.f-toggle{display:flex;gap:3px;background:var(--surf);border-radius:10px;padding:3px;}
+.f-tog-btn{flex:1;padding:7px 8px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;font-family:'Inter',sans-serif;background:transparent;color:var(--tx-m);}
+.f-tog-btn.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);}
+
+.f-types{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
+.f-type{position:relative;border-radius:9px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;border:2px solid transparent;transition:border-color .2s;}
+.f-type img{width:100%;height:100%;object-fit:cover;display:block;}
+.f-type .f-type-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);display:flex;align-items:flex-end;padding:5px 6px;}
+.f-type .f-type-lbl{font-size:8px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;text-transform:uppercase;line-height:1;}
+.f-type.on{border-color:var(--gold);}
+.f-type.on::after{content:'✓';position:absolute;top:4px;right:4px;width:14px;height:14px;background:var(--gold);border-radius:50%;font-size:8px;color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:900;}
+
+.f-beds{display:flex;flex-wrap:wrap;gap:4px;}
+.f-bed{width:36px;height:36px;border-radius:9px;border:1px solid var(--bd);background:var(--surf);color:var(--tx-m);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;}
+.f-bed.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+
+.f-price-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.f-price-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--bd-s);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(135deg,var(--gold-lt),var(--gold));border-radius:50%;cursor:pointer;box-shadow:0 3px 10px rgba(200,150,26,.4);transition:transform .18s ease;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+
+.match-count{padding:14px 18px 0;}
+.mc{background:linear-gradient(135deg,rgba(200,150,26,.08),rgba(233,193,118,.05));border:1px solid rgba(200,150,26,.2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.mc-dot{width:8px;height:8px;background:var(--emerald);border-radius:50%;flex-shrink:0;animation:mcP 2s ease infinite;}
+@keyframes mcP{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.4)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+.mc-num{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--gold);line-height:1;}
+.mc-lbl{font-size:8px;color:var(--tx-f);text-transform:uppercase;letter-spacing:.12em;}
+
+.f-compounds{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}.f-compounds::-webkit-scrollbar{width:3px;}
+.f-compounds::-webkit-scrollbar-thumb{background:rgba(200,150,26,.2);border-radius:2px;}
+.f-cpd-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;border:1px solid transparent;background:transparent;cursor:pointer;transition:all .2s;text-align:left;width:100%;}
+.f-cpd-btn:hover{background:var(--surf);border-color:var(--bd);}
+.f-cpd-btn.on{background:rgba(200,150,26,.08);border-color:rgba(200,150,26,.3);}
+.f-cpd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.f-cpd-name{font-size:11px;font-weight:600;color:var(--tx);flex:1;}
+.f-cpd-n{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--tx-f);}
+
+.f-reset{margin:12px 18px 18px;padding:9px;border-radius:10px;border:1px solid rgba(200,150,26,.25);background:rgba(200,150,26,.05);color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;font-family:'Inter',sans-serif;width:calc(100% - 36px);}
+.f-reset:hover{background:rgba(200,150,26,.14);}
+
+/* ── compound multi-select dropdown ── */
+.cpd-dd{position:relative;}
+.cpd-dd-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--surf);color:var(--tx);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:border-color .2s;}
+.cpd-dd-btn:hover{border-color:rgba(200,150,26,.4);}
+.cpd-dd.open .cpd-dd-btn{border-color:var(--gold);}
+.cpd-dd-chev{color:var(--tx-f);transition:transform .25s;font-size:10px;}
+.cpd-dd.open .cpd-dd-chev{transform:rotate(180deg);color:var(--gold);}
+.cpd-dd-panel{max-height:0;overflow:hidden;transition:max-height .28s cubic-bezier(.16,1,.3,1);}
+.cpd-dd.open .cpd-dd-panel{max-height:240px;overflow-y:auto;margin-top:8px;}
+.cpd-dd.open .cpd-dd-panel::-webkit-scrollbar{width:3px;}
+.cpd-dd.open .cpd-dd-panel::-webkit-scrollbar-thumb{background:rgba(200,150,26,.2);border-radius:2px;}
+
+/* ── MAP ── */
+#map-wrap{flex:1;position:relative;overflow:hidden;}
+#map{width:100%;height:100%;}
+.leaflet-container{background:var(--bg-e2)!important;}
+.leaflet-control-attribution{display:none!important;}
+.leaflet-control-zoom{border:1px solid rgba(200,150,26,.3)!important;border-radius:12px!important;overflow:hidden;box-shadow:0 4px 20px rgba(13,32,53,.15)!important;}
+.leaflet-control-zoom a{background:var(--bg-e)!important;color:var(--tx)!important;border-color:rgba(200,150,26,.2)!important;font-size:16px!important;width:36px!important;height:36px!important;line-height:36px!important;transition:all .2s!important;}
+.leaflet-control-zoom a:hover{background:rgba(200,150,26,.1)!important;color:var(--gold)!important;}
+.leaflet-control-zoom-in{border-bottom:1px solid rgba(200,150,26,.2)!important;}
+[data-theme="dark"] .leaflet-tile-pane{filter:brightness(.7) saturate(.8) hue-rotate(185deg);}
+
+/* compound markers */
+.cm{display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;}
+.cm-pill{min-width:64px;padding:5px 12px;border-radius:24px;background:var(--bg-e);border:1.5px solid;font-family:'JetBrains Mono',monospace;text-align:center;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:all .25s;position:relative;z-index:2;color:inherit;display:flex;flex-direction:column;align-items:center;line-height:1;gap:2px;}
+.cm-num{font-size:12px;font-weight:700;}
+.cm-lbl{font-size:6.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.7;}
+.cm-pill:hover,.cm-pill.active{transform:scale(1.1);filter:brightness(1.15);}
+.cm-pill.active{box-shadow:0 6px 24px rgba(200,150,26,.35);}
+.cm-ring{position:absolute;inset:-6px;border-radius:28px;border:2px solid;animation:cmRing 2.4s ease-out infinite;pointer-events:none;z-index:1;}
+.cm-ring-2{animation-delay:1.2s;}
+@keyframes cmRing{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+
+/* fullscreen btn */
+#fs-btn{position:absolute;top:12px;right:12px;z-index:30;}
+.fs-b{background:var(--bg-e);border:1px solid var(--bd);border-radius:10px;padding:8px 13px;font-size:11px;font-weight:600;color:var(--tx-m);cursor:pointer;box-shadow:0 4px 16px rgba(13,32,53,.1);transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px;}
+.fs-b:hover{border-color:rgba(200,150,26,.4);color:var(--gold);}
+
+/* ── UNIT PANEL ── */
+#unit-panel{position:fixed;bottom:0;left:300px;right:0;z-index:100;background:var(--bg-e);border-top:1px solid var(--bd);border-radius:20px 20px 0 0;box-shadow:0 -16px 56px rgba(13,32,53,.16);transform:translateY(100%);transition:transform .45s cubic-bezier(.16,1,.3,1);max-height:70vh;display:flex;flex-direction:column;}
+#unit-panel.open{transform:translateY(0);}
+.up-drag{width:36px;height:4px;background:var(--bd-s);border-radius:2px;position:absolute;top:9px;left:50%;transform:translateX(-50%);cursor:pointer;}
+.up-hdr{padding:22px 24px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:16px;flex-shrink:0;}
+.up-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--tx);}
+.up-zone{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;margin-top:2px;}
+.up-meta{margin-left:auto;display:flex;gap:20px;flex-shrink:0;}
+.up-met{text-align:right;}
+.up-met-v{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--gold);}
+.up-met-l{font-size:7px;text-transform:uppercase;letter-spacing:.12em;color:var(--tx-f);margin-top:1px;}
+.up-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--bd);background:var(--surf);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx-m);font-size:14px;flex-shrink:0;transition:all .2s;}
+.up-close:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.up-tabs{display:flex;gap:5px;padding:10px 24px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.up-tab{padding:6px 18px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:var(--surf);color:var(--tx-m);transition:all .2s;font-family:'Inter',sans-serif;}
+.up-tab.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+.up-body{flex:1;overflow-y:auto;padding:18px 24px 28px;}
+.up-body::-webkit-scrollbar{width:4px;}
+.up-body::-webkit-scrollbar-thumb{background:rgba(200,150,26,.3);border-radius:2px;}
+
+/* Unit cards: 3×2 grid */
+.unit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.unit-card{background:var(--bg-e);border:1px solid var(--bd);border-radius:14px;overflow:hidden;transition:all .25s;cursor:pointer;}
+.unit-card:hover{border-color:rgba(200,150,26,.4);box-shadow:0 10px 36px rgba(200,150,26,.12);transform:translateY(-4px);}
+.uc-img{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg-d);}
+.uc-img img{width:100%;height:100%;object-fit:cover;transition:transform .55s ease;}
+.unit-card:hover .uc-img img{transform:scale(1.07);}
+.uc-type{position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:rgba(7,17,30,.72);color:var(--gold-lt);backdrop-filter:blur(6px);}
+.uc-ai{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-lt));display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--navy);}
+.uc-st{position:absolute;bottom:8px;left:8px;padding:3px 9px;border-radius:20px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.uc-st.av{background:rgba(52,211,153,.18);color:#34D399;}
+.uc-st.rs{background:rgba(245,158,11,.18);color:#f59e0b;}
+.uc-st.sd{background:rgba(240,237,229,.1);color:var(--tx-f);}
+.uc-body{padding:10px 12px 12px;}
+.uc-price{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.uc-title{font-size:11px;font-weight:600;color:var(--tx);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.uc-specs{display:flex;gap:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--tx-f);margin-bottom:9px;}
+.uc-view{width:100%;padding:7px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;}
+.uc-view:hover{opacity:.85;}
+
+@media(max-width:900px){#filter{width:260px;}#unit-panel{left:260px;}.unit-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:680px){#filter{position:fixed;left:-300px;transition:left .35s;z-index:150;}#filter.open{left:0;}#unit-panel{left:0;}}
+
+/* ── All Units table (luxury sheet) ── */
+#units-table-view{display:flex;flex-direction:column;gap:12px;}
+.ut-filters{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.ut-fgroup{display:flex;align-items:center;gap:8px;}
+.ut-flbl{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;}
+.ut-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.ut-chip{padding:5px 12px;border-radius:20px;border:1px solid var(--bd);background:var(--surf);color:var(--tx-m);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+.ut-chip:hover{border-color:rgba(200,150,26,.4);}
+.ut-chip.on{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);border-color:var(--gold);}
+.ut-count{margin-inline-start:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-f);}
+.ut-scroll{border:1px solid var(--bd);border-radius:14px;overflow:hidden;}
+.ut-table{width:100%;border-collapse:collapse;}
+.ut-table thead th{position:sticky;top:0;background:var(--bg-e2);text-align:start;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.14em;color:var(--tx-f);text-transform:uppercase;padding:11px 14px;border-bottom:1px solid var(--bd);white-space:nowrap;}
+.ut-table th.sortable{cursor:pointer;user-select:none;transition:color .2s;}
+.ut-table th.sortable:hover{color:var(--gold);}
+.ut-table th.sorted{color:var(--gold);}
+.ut-table th.sortable::after{content:attr(data-dir);margin-inline-start:4px;font-size:9px;}
+.ut-table tbody tr{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .18s;}
+.ut-table tbody tr:last-child{border-bottom:none;}
+.ut-table tbody tr:hover{background:rgba(200,150,26,.06);}
+.ut-table td{padding:10px 14px;font-size:12px;color:var(--tx);vertical-align:middle;}
+.ut-table td.ut-c{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx-m);white-space:nowrap;}
+.ut-unit{display:flex;align-items:center;gap:10px;}
+.ut-unit img{width:44px;height:34px;object-fit:cover;border-radius:7px;flex-shrink:0;}
+.ut-code{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--tx);letter-spacing:.02em;}
+.ut-type{font-size:9px;color:var(--tx-f);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
+.ut-price{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;}
+.ut-ai{display:inline-flex;align-items:center;justify-content:center;min-width:32px;padding:3px 7px;border-radius:20px;background:rgba(200,150,26,.14);color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.ut-empty{text-align:center;padding:32px;color:var(--tx-f);font-size:12px;}
+@media(max-width:680px){.ut-table th:nth-child(3),.ut-table td:nth-child(3){display:none;}}
+</style>
+</head>
+<body>
+<!-- Header -->
+<div id="hdr">
+  <a class="hdr-logo" href="index.html">S</a>
+  <div>
+    <div class="hdr-name">Sierra Estates</div>
+    <div class="hdr-sub">Map Intelligence · New Cairo</div>
+  </div>
+  <div class="hdr-right">
+    <button class="hdr-btn" id="btn-theme" onclick="toggleTheme()">🌙 Dark</button>
+    <a href="index.html" class="hdr-btn">← Back</a>
+  </div>
+</div>
+
+<div id="layout">
+  <!-- Filter Panel -->
+  <div id="filter">
+    <div class="match-count">
+      <div class="mc">
+        <div class="mc-dot"></div>
+        <div>
+          <div class="mc-num" id="match-num">12</div>
+          <div class="mc-lbl">Compounds matched</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="f-section">
+      <div class="f-lbl">Purpose</div>
+      <div class="f-toggle">
+        <button class="f-tog-btn on" id="mode-all" onclick="setMode('ALL')">All</button>
+        <button class="f-tog-btn" id="mode-rent" onclick="setMode('RENT')">Rent</button>
+        <button class="f-tog-btn" id="mode-resale" onclick="setMode('RESALE')">Resale</button>
+      </div>
+    </div>
+
+    <div class="f-section">
+      <div class="f-lbl">Property Type <span id="type-count" style="color:var(--tx-f);font-weight:400"></span></div>
+      <div class="f-types" id="type-grid"></div>
+    </div>
+
+    <div class="f-section">
+      <div class="f-lbl">Bedrooms</div>
+      <div class="f-beds" id="bed-grid"></div>
+    </div>
+
+    <div class="f-section">
+      <div class="f-lbl">Max Price</div>
+      <div class="f-price-row">
+        <span style="font-size:10px;color:var(--tx-f)" id="price-mode-lbl">EGP</span>
+        <span class="f-price-val" id="price-val">25M</span>
+      </div>
+      <input type="range" id="price-range" min="1" max="50" step="0.5" value="50" oninput="onPrice(this.value)"/>
+      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--tx-f);margin-top:4px;"><span>1M</span><span>25M</span><span>50M+</span></div>
+    </div>
+
+    <div class="f-section">
+      <div class="f-lbl">Compound <span id="cpd-count" style="color:var(--tx-f);font-weight:400"></span></div>
+      <div class="cpd-dd" id="cpd-dd">
+        <button class="cpd-dd-btn" type="button" onclick="toggleCpdDropdown(event)">
+          <span id="cpd-dd-label">All compounds</span>
+          <span class="cpd-dd-chev">▾</span>
+        </button>
+        <div class="cpd-dd-panel">
+          <div class="f-compounds" id="cpd-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="f-reset" onclick="resetFilters()">↺ Reset All Filters</button>
+  </div>
+
+  <!-- Map -->
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="fs-btn"><button class="fs-b" onclick="toggleFS()">⛶ Fullscreen</button></div>
+  </div>
+</div>
+
+<!-- Unit Panel (slide up) -->
+<div id="unit-panel">
+  <div class="up-drag" onclick="closePanel()"></div>
+  <div class="up-hdr">
+    <div>
+      <div class="up-name" id="up-name">Hyde Park</div>
+      <div class="up-zone" id="up-zone">5th Settlement · New Cairo</div>
+    </div>
+    <div class="up-meta">
+      <div class="up-met"><div class="up-met-v" id="up-units">2,100</div><div class="up-met-l">Total Units</div></div>
+      <div class="up-met"><div class="up-met-v" id="up-avg">EGP 18.5M</div><div class="up-met-l">Avg Price</div></div>
+      <div class="up-met"><div class="up-met-v" id="up-growth">+22%</div><div class="up-met-l">YoY Growth</div></div>
+    </div>
+    <button class="up-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="up-tabs">
+    <button class="up-tab on" onclick="setTab(0,this)">All Units</button>
+    <button class="up-tab" onclick="setTab(1,this)">AI Best Match</button>
+  </div>
+  <div class="up-body">
+    <div id="units-table-view">
+      <div class="ut-filters">
+        <div class="ut-fgroup"><span class="ut-flbl">Status</span><div id="ut-status" class="ut-chips"></div></div>
+        <div class="ut-fgroup"><span class="ut-flbl">Beds</span><div id="ut-beds" class="ut-chips"></div></div>
+        <div class="ut-count" id="ut-count"></div>
+      </div>
+      <div class="ut-scroll">
+        <table class="ut-table">
+          <thead><tr>
+            <th class="ut-th-unit">Unit</th>
+            <th class="sortable" onclick="sortTable('beds')" data-sort="beds">Beds</th>
+            <th class="sortable" onclick="sortTable('area')" data-sort="area">Area</th>
+            <th class="sortable" onclick="sortTable('priceNum')" data-sort="priceNum">Price</th>
+            <th>Status</th>
+            <th class="sortable" onclick="sortTable('ai')" data-sort="ai">AI</th>
+          </tr></thead>
+          <tbody id="ut-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="unit-grid" id="unit-grid" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const COMPOUNDS = {
+  'Mountain View iCity':{lat:30.0410,lng:31.5860,units:1820,avgM:11.2,growth:'+24%',zone:'5th Settlement',color:'#C8961A'},
+  'Mountain View Hyde Park':{lat:30.0090,lng:31.4930,units:1340,avgM:14.6,growth:'+23%',zone:'5th Settlement',color:'#d97706'},
+  'Mivida':{lat:30.0175,lng:31.5340,units:2400,avgM:5.8,growth:'+18%',zone:'5th Settlement',color:'#059669'},
+  'Madinaty':{lat:30.1040,lng:31.6400,units:8500,avgM:4.5,growth:'+15%',zone:'Madinaty',color:'#7C3AED'},
+  'Hyde Park':{lat:30.0060,lng:31.4780,units:2100,avgM:18.5,growth:'+22%',zone:'5th Settlement',color:'#E63946'},
+  'Eastown':{lat:30.0210,lng:31.4700,units:1600,avgM:8.2,growth:'+19%',zone:'5th Settlement',color:'#0ea5e9'},
+  'El Shorouk':{lat:30.1360,lng:31.6150,units:4200,avgM:3.8,growth:'+12%',zone:'East Cairo',color:'#64748b'},
+  'Palm Hills NC':{lat:30.0240,lng:31.5560,units:1200,avgM:12.4,growth:'+21%',zone:'5th Settlement',color:'#10b981'},
+  'Villette':{lat:30.0225,lng:31.4980,units:880,avgM:9.8,growth:'+20%',zone:'5th Settlement',color:'#8b5cf6'},
+  'Fifth Square':{lat:30.0150,lng:31.4720,units:1050,avgM:10.6,growth:'+20%',zone:'5th Settlement',color:'#0891b2'},
+  'SODIC East':{lat:30.1290,lng:31.6250,units:1480,avgM:11.8,growth:'+22%',zone:'New Heliopolis',color:'#16a34a'},
+  'Taj City':{lat:30.0870,lng:31.4020,units:920,avgM:13.5,growth:'+19%',zone:'New Cairo',color:'#ec4899'},
+  'Bloomfields':{lat:30.0640,lng:31.6620,units:1660,avgM:6.4,growth:'+17%',zone:'Mostakbal City',color:'#a855f7'},
+  'Sarai':{lat:30.0320,lng:31.6280,units:1100,avgM:4.8,growth:'+14%',zone:'New Cairo',color:'#f97316'},
+  'Katameya Heights':{lat:29.9850,lng:31.4010,units:640,avgM:24.0,growth:'+16%',zone:'New Cairo',color:'#f43f5e'},
+  'Al Rehab':{lat:30.0580,lng:31.4910,units:5200,avgM:3.5,growth:'+11%',zone:'New Cairo',color:'#6366f1'},
+  'Zed East':{lat:30.0195,lng:31.5200,units:1240,avgM:15.2,growth:'+26%',zone:'New Cairo',color:'#0e7490'},
+  'La Vista City':{lat:30.0850,lng:31.7050,units:2260,avgM:7.6,growth:'+18%',zone:'New Capital Rd',color:'#84cc16'},
+  'Uptown Cairo':{lat:30.0110,lng:31.2900,units:3200,avgM:9.4,growth:'+31%',zone:'Uptown Cairo',color:'#1E88D9'},
+};
+const TYPE_IMGS={
+  'Villa':'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300&q=70',
+  'Apartment':'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300&q=70',
+  'Penthouse':'https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=300&q=70',
+  'Twin House':'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&q=70',
+  'Townhouse':'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=300&q=70',
+  'Duplex':'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=300&q=70',
+};
+const TYPE_MAP={
+  'Mountain View iCity':['Villa','Apartment','Twin House'],
+  'Madinaty':['Apartment','Townhouse','Duplex'],
+  'Hyde Park':['Villa','Twin House','Apartment'],
+  'Mivida':['Apartment','Duplex','Penthouse'],
+  'Uptown Cairo':['Apartment','Twin House','Penthouse'],
+  'Eastown':['Apartment','Twin House'],
+  'El Shorouk':['Apartment','Villa'],
+};
+const STATUSES=['available','available','available','reserved','reserved','sold'];
+const STATUS_LABELS={available:'Available',reserved:'Reserved',sold:'Sold'};
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let state={mode:'ALL',types:[],beds:0,price:50,compound:null};
+let markers={};
+let activeMarker=null;
+let currentTab=0;
+let currentCompound=null;
+let currentUnits=[];
+let tableFilter={status:'all',beds:0,sort:'ai',dir:-1};
+
+// ── UNIT GENERATOR ─────────────────────────────────────────────────────
+function generateUnits(name,count=6){
+  const cd=COMPOUNDS[name];if(!cd)return[];
+  const types=TYPE_MAP[name]||['Apartment','Villa','Townhouse'];
+  const base=cd.avgM*1e6;
+  return Array.from({length:count},(_,i)=>{
+    const type=types[i%types.length];
+    const beds=type==='Apartment'?[1,2,3][i%3]:type==='Villa'?[4,5,6][i%3]:[3,4][i%2];
+    const area=type==='Apartment'?90+beds*38+(i*11)%50:260+beds*55+(i*17)%100;
+    const price=Math.round(base*(0.7+i*0.09)*(beds/3.2)/500000)*500000;
+    const rent=state.mode==='RENT';
+    const pDisplay=rent?`EGP ${Math.round(price*0.05/10000)*10}K/yr`:`EGP ${(price/1e6).toFixed(1)}M`;
+    const ai=(8.0+Math.random()*1.8).toFixed(1);
+    const status=STATUSES[i%STATUSES.length];
+    const img=TYPE_IMGS[type]||TYPE_IMGS['Apartment'];
+    return{type,beds,baths:Math.ceil(beds*.75),area,price:pDisplay,priceNum:price,ai,status,img,name:name.substring(0,3).toUpperCase()+'-'+type.substring(0,2).toUpperCase()+'-0'+String(i+1).padStart(2,'0')};
+  });
+}
+
+// ── RENDER UNIT CARD ──────────────────────────────────────────────────
+function renderCard(u){
+  const stClass=u.status==='available'?'av':u.status==='reserved'?'rs':'sd';
+  return`<div class="unit-card">
+    <div class="uc-img">
+      <img src="${u.img}" alt="${u.type}" loading="lazy"/>
+      <div class="uc-type">${u.type}</div>
+      <div class="uc-ai">${u.ai}</div>
+      <div class="uc-st ${stClass}">${STATUS_LABELS[u.status]}</div>
+    </div>
+    <div class="uc-body">
+      <div class="uc-price">${u.price}</div>
+      <div class="uc-title">${u.name} · ${u.beds}BR</div>
+      <div class="uc-specs">
+        <span>🛏 ${u.beds}</span>
+        <span>🚿 ${u.baths}</span>
+        <span>📐 ${u.area}m²</span>
+      </div>
+      <button class="uc-view" onclick="alert('Opening property file…')">View Property →</button>
+    </div>
+  </div>`;
+}
+
+// ── OPEN COMPOUND PANEL ───────────────────────────────────────────────
+function openCompound(name){
+  currentCompound=name;
+  currentUnits=generateUnits(name,18);
+  tableFilter={status:'all',beds:0,sort:'ai',dir:-1};
+  document.querySelectorAll('#ut-status .ut-chip').forEach((x,i)=>x.classList.toggle('on',i===0));
+  document.querySelectorAll('#ut-beds .ut-chip').forEach((x,i)=>x.classList.toggle('on',i===0));
+  const cd=COMPOUNDS[name];
+  document.getElementById('up-name').textContent=name;
+  document.getElementById('up-zone').textContent=cd.zone+' · New Cairo';
+  document.getElementById('up-units').textContent=cd.units.toLocaleString();
+  document.getElementById('up-avg').textContent='EGP '+cd.avgM+'M';
+  document.getElementById('up-growth').textContent=cd.growth;
+  // highlight active marker
+  if(activeMarker){
+    const pill=activeMarker.getElement()?.querySelector('.cm-pill');
+    if(pill)pill.classList.remove('active');
+  }
+  const m=markers[name];
+  if(m){
+    const pill=m.getElement()?.querySelector('.cm-pill');
+    if(pill)pill.classList.add('active');
+    activeMarker=m;
+  }
+  setTab(0,document.querySelector('.up-tab.on'));
+  document.getElementById('unit-panel').classList.add('open');
+}
+
+function setTab(i,el){
+  currentTab=i;
+  document.querySelectorAll('.up-tab').forEach((t,j)=>t.classList.toggle('on',j===i));
+  const tableView=document.getElementById('units-table-view');
+  const grid=document.getElementById('unit-grid');
+  if(i===1){
+    tableView.style.display='none';
+    grid.style.display='';
+    const best=currentUnits.slice().sort((a,b)=>parseFloat(b.ai)-parseFloat(a.ai)).slice(0,4);
+    grid.innerHTML=best.map(renderCard).join('');
+  } else {
+    grid.style.display='none';
+    tableView.style.display='';
+    renderTable();
+  }
+}
+
+function sortTable(key){
+  if(tableFilter.sort===key)tableFilter.dir*=-1;
+  else{tableFilter.sort=key;tableFilter.dir=key==='priceNum'||key==='ai'?-1:1;}
+  renderTable();
+}
+
+function renderTable(){
+  const tb=document.getElementById('ut-body');
+  let rows=currentUnits.filter(u=>{
+    if(tableFilter.status!=='all'&&u.status!==tableFilter.status)return false;
+    if(tableFilter.beds){return tableFilter.beds===6?u.beds>=6:u.beds===tableFilter.beds;}
+    return true;
+  });
+  const k=tableFilter.sort,dir=tableFilter.dir;
+  rows.sort((a,b)=>(parseFloat(a[k])-parseFloat(b[k]))*dir);
+  document.getElementById('ut-count').textContent=rows.length+' of '+currentUnits.length+' units';
+  if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="ut-empty">No units match these filters.</td></tr>';}
+  else tb.innerHTML=rows.map(u=>{
+    const stClass=u.status==='available'?'av':u.status==='reserved'?'rs':'sd';
+    return`<tr onclick="alert('Opening ${u.name}…')">
+      <td class="ut-unit"><img src="${u.img}" alt="" loading="lazy"/><div><div class="ut-code">${u.name}</div><div class="ut-type">${u.type}</div></div></td>
+      <td class="ut-c">${u.beds}</td>
+      <td class="ut-c">${u.area}m²</td>
+      <td class="ut-price">${u.price}</td>
+      <td><span class="uc-st ${stClass}" style="position:static">${STATUS_LABELS[u.status]}</span></td>
+      <td class="ut-c"><span class="ut-ai">${u.ai}</span></td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('.ut-table th.sortable').forEach(th=>{
+    const on=th.dataset.sort===k;
+    th.classList.toggle('sorted',on);
+    th.setAttribute('data-dir',on?(dir<0?'▾':'▴'):'');
+  });
+}
+
+function buildUnitFilters(){
+  const sc=document.getElementById('ut-status');
+  [['all','All'],['available','Available'],['reserved','Reserved'],['sold','Sold']].forEach(([v,lbl],i)=>{
+    const b=document.createElement('button');
+    b.className='ut-chip'+(i===0?' on':'');b.textContent=lbl;
+    b.onclick=()=>{tableFilter.status=v;sc.querySelectorAll('.ut-chip').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderTable();};
+    sc.appendChild(b);
+  });
+  const bc=document.getElementById('ut-beds');
+  [0,1,2,3,4,5,6].forEach((n,i)=>{
+    const b=document.createElement('button');
+    b.className='ut-chip'+(i===0?' on':'');b.textContent=n===0?'Any':n+(n===6?'+':'');
+    b.onclick=()=>{tableFilter.beds=n;bc.querySelectorAll('.ut-chip').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderTable();};
+    bc.appendChild(b);
+  });
+}
+
+function closePanel(){
+  document.getElementById('unit-panel').classList.remove('open');
+  if(activeMarker){
+    const pill=activeMarker.getElement()?.querySelector('.cm-pill');
+    if(pill)pill.classList.remove('active');
+    activeMarker=null;
+  }
+}
+
+// ── FILTER LOGIC ──────────────────────────────────────────────────────
+function setMode(m){
+  state.mode=m;
+  ['all','rent','resale'].forEach(id=>document.getElementById('mode-'+id).classList.toggle('on',id.toUpperCase()===m||(m==='ALL'&&id==='all')));
+  updateMatches();
+  updatePriceLabel();
+}
+function onPrice(v){
+  state.price=parseFloat(v);
+  const lbl=state.mode==='RENT'?'$'+Math.round(state.price*300)+'/mo':'EGP '+v+'M';
+  document.getElementById('price-val').textContent=lbl;
+  updateMatches();
+}
+function updatePriceLabel(){
+  document.getElementById('price-mode-lbl').textContent=state.mode==='RENT'?'USD/mo':'EGP';
+  const v=document.getElementById('price-range').value;
+  const lbl=state.mode==='RENT'?'$'+Math.round(v*300)+'/mo':'EGP '+v+'M';
+  document.getElementById('price-val').textContent=lbl;
+}
+function updateMatches(){
+  const filtered=Object.keys(COMPOUNDS).filter(n=>{
+    if(state.compound&&state.compound.length&&!state.compound.includes(n))return false;
+    return true;
+  });
+  document.getElementById('match-num').textContent=filtered.length;
+  Object.entries(markers).forEach(([name,m])=>{
+    const el=m.getElement();
+    if(el)el.style.opacity=filtered.includes(name)?'1':'0.35';
+  });
+}
+function resetFilters(){
+  state={mode:'ALL',types:[],beds:0,price:50,compound:null};
+  ['all','rent','resale'].forEach((id,i)=>document.getElementById('mode-'+id).classList.toggle('on',i===0));
+  document.getElementById('price-range').value=50;
+  document.getElementById('price-val').textContent='25M';
+  document.querySelectorAll('.f-type').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.f-bed').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.f-cpd-btn').forEach(el=>el.classList.remove('on'));
+  document.getElementById('cpd-count').textContent='';
+  document.getElementById('cpd-dd-label').textContent='All compounds';
+  updateMatches();
+}
+function toggleTheme(){
+  const d=document.documentElement;
+  const dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'light':'dark');
+  const btn=document.getElementById('btn-theme');
+  btn.textContent=dark?'🌙 Dark':'☀️ Light';
+}
+function toggleFS(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+// ── BUILD FILTER UI ───────────────────────────────────────────────────
+function buildFilterUI(){
+  // Type grid
+  const tg=document.getElementById('type-grid');
+  Object.entries(TYPE_IMGS).forEach(([type,img])=>{
+    const d=document.createElement('div');
+    d.className='f-type';d.dataset.type=type;
+    d.innerHTML=`<img src="${img}" alt="${type}" loading="lazy"/><div class="f-type-ov"><span class="f-type-lbl">${type}</span></div>`;
+    d.onclick=()=>{
+      d.classList.toggle('on');
+      state.types=Array.from(document.querySelectorAll('.f-type.on')).map(el=>el.dataset.type);
+      document.getElementById('type-count').textContent=state.types.length?'('+state.types.length+')':'';
+      updateMatches();
+    };
+    tg.appendChild(d);
+  });
+  // Beds
+  const bg=document.getElementById('bed-grid');
+  [0,1,2,3,4,5,6].forEach(n=>{
+    const b=document.createElement('button');
+    b.className='f-bed';b.textContent=n===0?'Any':n+(n===6?'+':'');
+    b.onclick=()=>{
+      state.beds=n;
+      document.querySelectorAll('.f-bed').forEach(el=>el.classList.remove('on'));
+      b.classList.add('on');
+    };
+    if(n===0)b.classList.add('on');
+    bg.appendChild(b);
+  });
+  // Compounds
+  const cl=document.getElementById('cpd-list');
+  Object.entries(COMPOUNDS).forEach(([name,cd])=>{
+    const d=document.createElement('button');
+    d.className='f-cpd-btn';
+    d.innerHTML=`<span class="f-cpd-dot" style="background:${cd.color}"></span><span class="f-cpd-name">${name}</span><span class="f-cpd-n">${cd.units.toLocaleString()}</span>`;
+    d.onclick=()=>{
+      d.classList.toggle('on');
+      state.compound=Array.from(document.querySelectorAll('.f-cpd-btn.on')).map(el=>el.querySelector('.f-cpd-name').textContent);
+      document.getElementById('cpd-count').textContent=state.compound.length?'('+state.compound.length+')':'';
+      document.getElementById('cpd-dd-label').textContent=state.compound.length?state.compound.length+' selected':'All compounds';
+      updateMatches();
+    };
+    cl.appendChild(d);
+  });
+}
+
+function toggleCpdDropdown(e){
+  if(e)e.stopPropagation();
+  document.getElementById('cpd-dd').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  const dd=document.getElementById('cpd-dd');
+  if(dd&&!dd.contains(e.target))dd.classList.remove('open');
+});
+
+// ── INIT MAP ──────────────────────────────────────────────────────────
+const map=L.map('map',{center:[30.04,31.52],zoom:11,maxBounds:[[29.80,31.05],[30.35,31.95]],zoomControl:false,scrollWheelZoom:false,touchZoom:false,doubleClickZoom:false,bounceAtZoomLimits:false});
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'}).addTo(map);
+
+Object.entries(COMPOUNDS).forEach(([name,cd])=>{
+  const html=`<div class="cm">
+    <div class="cm-ring" style="border-color:${cd.color}"></div>
+    <div class="cm-ring cm-ring-2" style="border-color:${cd.color}"></div>
+    <div class="cm-pill" style="color:${cd.color};border-color:${cd.color}">
+      <span class="cm-num">${cd.units.toLocaleString()}</span>
+      <span class="cm-lbl">Units</span>
+    </div>
+  </div>`;
+  const icon=L.divIcon({html,className:'',iconSize:[84,46],iconAnchor:[42,23]});
+  const m=L.marker([cd.lat,cd.lng],{icon}).addTo(map);
+  m.on('click',()=>openCompound(name));
+  m.bindTooltip(`<strong>${name}</strong><br/>${cd.units.toLocaleString()} units · avg EGP ${cd.avgM}M · ${cd.growth} YoY`,{className:'leaflet-tooltip',direction:'top',offset:[0,-12]});
+  markers[name]=m;
+});
+
+buildFilterUI();
+buildUnitFilters();
+updateMatches();
+map.fitBounds(Object.values(COMPOUNDS).map(cd=>[cd.lat,cd.lng]),{padding:[60,60],maxZoom:12});
+
+// close panel on map click
+map.on('click',closePanel);
+</script>
+</body>
+</html>

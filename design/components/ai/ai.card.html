@@ -1,0 +1,33 @@
+<!-- @dsCard group="Components" viewport="700x300" name="AI Support Tiles" subtitle="Sierra AI hub modules — the on-brand home for emoji" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { padding: 24px 28px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script type="text/babel">
+    const { AITile } = window.SierraEstatesDesignSystem_210542;
+    const mods = [
+      ['🗺️','Map Intelligent Search','Live map · units per compound'],
+      ['📈','Best ROI Analysis','AI investment yield ranking'],
+      ['🎯','Unit Precise Pricing','Egypt-calibrated estimator'],
+      ['📷','Virtual 360° Tours','S24 Ultra capture & viewer'],
+      ['💬','Ask Sierra','Egypt\u2019s only AI broker'],
+      ['🧠','Dream Home Advisor','AI guides your decision'],
+    ];
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <div className="grid">{mods.map(([i,t,d])=>(<AITile key={t} as="button" icon={i} title={t} desc={d}/>))}</div>
+    );
+  </script>
+</body>
+</html>

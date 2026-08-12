@@ -1,0 +1,36 @@
+{
+  "name": "Sierra Estates — WhatsApp Bot Message Handler",
+  "nodes": [
+    { "parameters": { "path": "whatsapp-incoming", "responseMode": "responseNode", "options": {} }, "id": "whatsapp-webhook", "name": "WhatsApp Webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 1, "position": [240, 300], "webhookId": "sierra-wa-incoming" },
+    { "parameters": { "functionCode": "const body = $input.first().json.body || $input.first().json;\nreturn [{ json: { messageId: body.messageId, phone: body.phone, senderName: body.senderName, text: body.text, timestamp: body.timestamp, jid: body.jid } }];" }, "id": "parse-message", "name": "Parse Message", "type": "n8n-nodes-base.function", "typeVersion": 1, "position": [460, 300] },
+    { "parameters": { "collection": "clients", "operation": "get", "fieldToMatch": "phone_number", "valueToMatch": "={{ $json.phone }}" }, "id": "find-client", "name": "Find Client", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [680, 300] },
+    { "parameters": { "conditions": { "boolean": [{ "value1": "={{ $json.id }}", "value2": "" }] } }, "id": "client-exists", "name": "Client Exists?", "type": "n8n-nodes-base.if", "typeVersion": 1, "position": [900, 300] },
+    { "parameters": { "collection": "clients", "operation": "create", "data": "={\n  \"name\": \"{{ $('Parse Message').item.json.senderName }}\",\n  \"phone_number\": \"{{ $('Parse Message').item.json.phone }}\",\n  \"lead_source\": \"whatsapp_bot\",\n  \"created_at\": \"{{ $now }}\",\n  \"updated_at\": \"{{ $now }}\"\n}" }, "id": "create-client", "name": "Create New Client", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1120, 200] },
+    { "parameters": { "collection": "requests", "operation": "create", "data": "={\n  \"client_id\": \"{{ $json.id }}\",\n  \"status\": \"bot_handling\",\n  \"bot_chat_history\": [{\"sender\": \"client\", \"text\": \"{{ $('Parse Message').item.json.text }}\", \"timestamp\": \"{{ $now }}\"}],\n  \"client_needs\": {},\n  \"matched_listings\": [],\n  \"created_at\": \"{{ $now }}\",\n  \"updated_at\": \"{{ $now }}\"\n}" }, "id": "create-request", "name": "Create Request", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1340, 200] },
+    { "parameters": { "collection": "requests", "operation": "get", "fieldToMatch": "client_id", "valueToMatch": "={{ $json.id }}", "orderBy": "created_at", "limit": 1 }, "id": "find-open-request", "name": "Find Open Request", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1120, 400] },
+    { "parameters": { "functionCode": "const requestData = $input.first().json;\nconst message = $('Parse Message').item.json;\nif (!requestData.id) { return [{ json: { action: 'create_new', client_id: $('Find Client').item.json.id, message: message.text } }]; }\nreturn [{ json: { action: 'append', request_id: requestData.id, message: { sender: 'client', text: message.text, timestamp: new Date().toISOString() } } }];" }, "id": "prepare-append", "name": "Prepare Append", "type": "n8n-nodes-base.function", "typeVersion": 1, "position": [1340, 400] },
+    { "parameters": { "collection": "requests", "operation": "update", "id": "={{ $json.request_id }}", "data": "={\n  \"bot_chat_history\": {{ $json.message }},\n  \"updated_at\": \"{{ $now }}\"\n}", "arrayUnion": true }, "id": "append-message", "name": "Append to Chat", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [1560, 400] },
+    { "parameters": { "model": "gemini-2.0-flash", "prompt": "=You are Sierra, a real estate assistant bot for New Cairo properties.\n\nClient message: {{ $('Parse Message').item.json.text }}\n\nInstructions:\n1. If the client is asking about properties, extract their needs (budget, beds, area, compound, type).\n2. If they want to speak to a human, respond with 'ESCALATE'.\n3. Otherwise, give a helpful short reply (max 2 sentences).\n4. Always be polite and professional.\n5. Respond in the same language as the client message.\n\nReply format: just the bot reply text, no JSON or markdown." }, "id": "gemini-reply", "name": "Gemini AI Reply", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [1780, 300] },
+    { "parameters": { "conditions": { "string": [{ "value1": "={{ $json.reply }}", "operation": "contains", "value2": "ESCALATE" }] } }, "id": "check-escalation", "name": "Should Escalate?", "type": "n8n-nodes-base.if", "typeVersion": 1, "position": [2000, 300] },
+    { "parameters": { "collection": "requests", "operation": "update", "id": "={{ $('Create Request').item.json.id || $('Find Open Request').item.json.id }}", "data": "={\n  \"status\": \"ready_for_agent\",\n  \"updated_at\": \"{{ $now }}\"\n}" }, "id": "escalate", "name": "Escalate to Agent", "type": "n8n-nodes-base.firebaseRealtimeDatabase", "typeVersion": 1, "position": [2220, 200] },
+    { "parameters": { "respondWith": "json", "responseBody": "={\n  \"reply\": \"I'll connect you with one of our agents who will contact you shortly. 🙏\",\n  \"requestId\": \"{{ $('Create Request').item.json.id || $('Find Open Request').item.json.id }}\",\n  \"escalated\": true\n}" }, "id": "respond-escalate", "name": "Respond (Escalate)", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [2440, 200] },
+    { "parameters": { "respondWith": "json", "responseBody": "={\n  \"reply\": \"{{ $json.reply }}\",\n  \"requestId\": \"{{ $('Create Request').item.json.id || $('Find Open Request').item.json.id }}\",\n  \"escalated\": false\n}" }, "id": "respond-bot", "name": "Respond (Bot Reply)", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1, "position": [2220, 400] }
+  ],
+  "connections": {
+    "WhatsApp Webhook": { "main": [[{ "node": "Parse Message", "type": "main", "index": 0 }]] },
+    "Parse Message": { "main": [[{ "node": "Find Client", "type": "main", "index": 0 }]] },
+    "Find Client": { "main": [[{ "node": "Client Exists?", "type": "main", "index": 0 }]] },
+    "Client Exists?": { "main": [[{ "node": "Create New Client", "type": "main", "index": 0 }], [{ "node": "Find Open Request", "type": "main", "index": 0 }]] },
+    "Create New Client": { "main": [[{ "node": "Create Request", "type": "main", "index": 0 }]] },
+    "Create Request": { "main": [[{ "node": "Gemini AI Reply", "type": "main", "index": 0 }]] },
+    "Find Open Request": { "main": [[{ "node": "Prepare Append", "type": "main", "index": 0 }]] },
+    "Prepare Append": { "main": [[{ "node": "Append to Chat", "type": "main", "index": 0 }]] },
+    "Append to Chat": { "main": [[{ "node": "Gemini AI Reply", "type": "main", "index": 0 }]] },
+    "Gemini AI Reply": { "main": [[{ "node": "Should Escalate?", "type": "main", "index": 0 }]] },
+    "Should Escalate?": { "main": [[{ "node": "Escalate to Agent", "type": "main", "index": 0 }], [{ "node": "Respond (Bot Reply)", "type": "main", "index": 0 }]] },
+    "Escalate to Agent": { "main": [[{ "node": "Respond (Escalate)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "sierra-estates" }, { "name": "whatsapp-bot" }]
+}

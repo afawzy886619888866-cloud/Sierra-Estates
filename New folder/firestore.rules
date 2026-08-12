@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// ============================================================================
+// Sierra Estates — Firestore Security Rules (CANONICAL — deployed via firebase.json)
+//
+// Model: "staff" = a signed-in user whose users/{uid} document has
+//   role ∈ {admin, manager, agent}. Mirrors how the app resolves roles
+//   (lib/AuthContext.tsx reads users/{uid}.role) and the backend
+//   verifyAdminRequest. This REPLACES the legacy admins/{uid} model.
+//
+// Privileged server operations use the Firebase Admin SDK, which BYPASSES these
+// rules — so locking the client down here does not affect API routes / cron.
+//
+// Rules use OR semantics: the broad `/{document=**}` staff rule grants staff
+// access everywhere; the specific matches ADD narrower public access on top
+// (public catalog reads, public share-link reads + constrained analytics writes).
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'manager', 'agent'];
+    }
+
+    // --- Public marketplace catalog: anyone may read; only staff may write ---
+    match /listings/{id}    { allow read: if true;  allow write: if isStaff(); }
+    match /units/{id}       { allow read: if true;  allow write: if isStaff(); }
+    match /properties/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /projects/{id}    { allow read: if true;  allow write: if isStaff(); }
+    match /developers/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /mediaAssets/{id} { allow read: if true;  allow write: if isStaff(); }
+    match /media/{id}       { allow read: if true;  allow write: if isStaff(); }
+    match /zones/{id}       { allow read: if true;  allow write: if isStaff(); }
+
+    // --- Client portal collections (sierra-estates.net) ---
+    match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
+    match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
+    match /inquiries/{id} {
+      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.status == 'new'
+        && request.resource.data.size() <= 40;
+    }
+    match /careers/{id} {
+      allow read, update, delete: if isStaff();
+      allow create: if request.resource.data.status == 'new'
+        && request.resource.data.size() <= 40;
+    }
+
+    // --- Public share links ---
+    match /proposals/{id} {
+      allow read: if true;
+      allow update: if isStaff()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt']);
+      allow create, delete: if isStaff();
+    }
+    match /concierge_selections/{id} {
+      allow read: if true;
+      allow update: if isStaff()
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement']);
+      allow create, delete: if isStaff();
+    }
+
+    // --- Users: self profile read or staff write ---
+    match /users/{uid} {
+      allow read:  if isSignedIn() && (request.auth.uid == uid || isStaff());
+      allow write: if isStaff();
+    }
+
+    // --- Default staff only for all internal collections ---
+    match /{document=**} {
+      allow read, write: if isStaff();
+    }
+  }
+}
+

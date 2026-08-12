@@ -1,0 +1,17 @@
+{
+  "name": "@sierra-estates/db",
+  "version": "1.0.0",
+  "description": "Firestore models and database utilities",
+  "main": "lib/index.ts",
+  "types": "lib/index.ts",
+  "private": true,
+  "dependencies": {
+    "firebase": "^12.17",
+    "firebase-admin": "^14.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^5.8.2"
+  }
+}

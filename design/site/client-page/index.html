@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sierra Estates — Luxury Real Estate, New Cairo</title>
+<meta name="description" content="Sierra Estates — AI-powered luxury real estate in New Cairo. 1,240+ verified units across 27 compounds with 94% pricing accuracy and a 4-hour concierge promise."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://unpkg.com/motion@10.18.0/dist/motion.min.js" defer></script>
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   SIERRA ESTATES · CLIENT PAGE — light-first, dark remix
+   Tokens mirror design/tokens/*.css (source of truth).
+   ════════════════════════════════════════════════════════════════════ */
+:root{
+  --gold:#C8961A; --gold-lt:#E9C176; --gold-sh:#F5D78E; --gold-deep:#A87A12;
+  --red:#E63946; --red-deep:#B71C2C; --blue:#1E88D9; --emerald:#34D399; --violet:#7C3AED;
+  --grad-gold:linear-gradient(135deg,var(--gold-lt),var(--gold));
+  --grad-gold-3:linear-gradient(90deg,#E9C176,#C8961A 25%,#F5D78E 50%,#C8961A 75%,#E9C176);
+  --grad-red:linear-gradient(135deg,var(--red),var(--red-deep));
+  --silk:cubic-bezier(.16,1,.3,1);
+  --t-fast:180ms; --t-med:280ms; --t-slow:400ms; --t-glide:700ms;
+  --r-chip:6px; --r-btn:10px; --r-tile:14px; --r-card:16px; --r-panel:24px;
+  --font-display:"Cormorant Garamond",serif;
+  --font-ui:"Inter",system-ui,sans-serif;
+  --font-ar:"Cairo",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",monospace;
+  --wrap:1400px;
+}
+html[data-theme="light"]{
+  --bg:#F7F4EC; --bg-d:#EFE9DC; --bg-e:#FFFFFF; --bg-e2:#FAFAF7;
+  --surf:rgba(13,32,53,.04); --surf-2:rgba(13,32,53,.025); --surf-s:#FFFFFF;
+  --tx:#0D2035; --tx-s:#091828; --tx-m:rgba(13,32,53,.62); --tx-f:rgba(13,32,53,.36);
+  --bd:rgba(13,32,53,.10); --bd-s:rgba(13,32,53,.20); --bd-gold:rgba(200,150,26,.30);
+  --nav:rgba(247,244,236,.88); --nav-s:rgba(247,244,236,.97);
+  --shd:0 24px 64px rgba(13,32,53,.12); --shd-gold:0 20px 56px rgba(200,150,26,.16);
+  --card-edge:0 0 0 1px rgba(13,32,53,.06),0 1px 2px -1px rgba(13,32,53,.06),0 2px 6px rgba(13,32,53,.05);
+  --ov-a:rgba(8,16,28,.28); --ov-b:rgba(8,16,28,.52); --ov-c:rgba(8,16,28,.90);
+  --gold-ink:var(--gold-deep); --map-dot:rgba(13,32,53,.08);
+}
+html[data-theme="dark"]{
+  --bg:#0B1A2E; --bg-d:#081526; --bg-e:#102238; --bg-e2:#152C48;
+  --surf:rgba(255,255,255,.065); --surf-2:rgba(255,255,255,.04); --surf-s:#0F2035;
+  --tx:#F0EDE5; --tx-s:#FFFFFF; --tx-m:rgba(240,237,229,.60); --tx-f:rgba(240,237,229,.36);
+  --bd:rgba(255,255,255,.09); --bd-s:rgba(255,255,255,.18); --bd-gold:rgba(200,150,26,.34);
+  --nav:rgba(11,26,46,.88); --nav-s:rgba(11,26,46,.97);
+  --shd:0 24px 64px rgba(0,0,0,.38); --shd-gold:0 20px 56px rgba(200,150,26,.14);
+  --card-edge:0 0 0 1px rgba(255,255,255,.07);
+  --ov-a:rgba(8,21,38,.28); --ov-b:rgba(8,21,38,.60); --ov-c:rgba(5,11,20,.97);
+  --gold-ink:var(--gold-lt); --map-dot:rgba(240,237,229,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--tx); font-family:var(--font-ui);
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  transition:background var(--t-slow) var(--silk),color var(--t-slow) var(--silk);
+}
+html[dir="rtl"] body{font-family:var(--font-ar)}
+html[dir="rtl"] .display{line-height:1.35}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:rgba(200,150,26,.25)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;top:-48px;left:16px;z-index:200;background:var(--gold);color:#0B1A2E;padding:8px 16px;border-radius:var(--r-btn);font-weight:600}
+.skip:focus{top:12px}
+
+/* ── type ── */
+.display{font-family:var(--font-display);font-weight:500;color:var(--tx-s);line-height:1.12;letter-spacing:-.01em}
+.display em{font-style:italic;color:var(--gold-ink)}
+.display .shimmer{background:var(--grad-gold-3);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 6s linear infinite;font-style:italic}
+@keyframes shimmer{to{background-position:-200% 0}}
+.mono{font-family:var(--font-mono)}
+.eyebrow{display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--gold-ink)}
+.eyebrow::before{content:"";width:36px;height:1px;background:var(--gold);flex:none}
+.lede{color:var(--tx-m);font-size:17px;max-width:58ch}
+
+/* ── layout ── */
+.wrap{max-width:var(--wrap);margin-inline:auto;padding-inline:clamp(20px,4vw,48px)}
+section{padding-block:clamp(72px,9vw,120px)}
+.sec-head{display:grid;gap:18px;margin-bottom:clamp(36px,5vw,56px);max-width:820px}
+.sec-head h2{font-size:clamp(30px,4.2vw,50px)}
+.alt{background:var(--bg-d);transition:background var(--t-slow) var(--silk)}
+
+/* ── reveal: transform-only (DS: opacity stays 1 → print/reduced-motion safe) ── */
+.rv{transform:translateY(18px);transition:transform var(--t-glide) var(--silk)}
+.rv.in{transform:none}
+.rv-d1{transition-delay:70ms}.rv-d2{transition-delay:140ms}.rv-d3{transition-delay:210ms}.rv-d4{transition-delay:280ms}
+
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:var(--r-btn);font-weight:600;font-size:15px;padding:13px 26px;transition:transform var(--t-fast) var(--silk),box-shadow var(--t-med) var(--silk),background var(--t-fast) var(--silk),color var(--t-fast) var(--silk),border-color var(--t-fast) var(--silk);border:1px solid transparent}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn-gold{background:var(--grad-gold);color:#1A1206;box-shadow:0 10px 26px rgba(200,150,26,.28)}
+.btn-gold:hover{box-shadow:0 14px 34px rgba(200,150,26,.4)}
+.btn-ghost{border-color:var(--bd-s);color:var(--tx-s)}
+.btn-ghost:hover{border-color:var(--bd-gold);color:var(--gold-ink)}
+.btn-sm{padding:9px 16px;font-size:13px;border-radius:8px}
+
+/* ── chips / badges ── */
+.chip{font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:1px solid var(--bd);color:var(--tx-m);transition:all var(--t-fast) var(--silk)}
+.chip:hover{border-color:var(--bd-gold);color:var(--gold-ink)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#14100A}
+.badge{font-family:var(--font-mono);font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:var(--r-chip)}
+
+/* ── topbar + nav ── */
+.topbar{background:var(--bg-d);border-bottom:1px solid var(--bd);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--tx-m)}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;padding-block:8px;gap:12px}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--emerald);margin-inline-end:8px;box-shadow:0 0 0 0 rgba(52,211,153,.5);animation:pulse 2.4s var(--silk) infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
+nav.main{position:sticky;top:0;z-index:100;background:var(--nav);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid transparent;transition:background var(--t-med) var(--silk),border-color var(--t-med) var(--silk)}
+nav.main.scrolled{background:var(--nav-s);border-bottom-color:var(--bd)}
+nav.main .wrap{display:flex;align-items:center;gap:28px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--tx-s);letter-spacing:.02em}
+.brand img{width:34px;height:34px;object-fit:contain}
+.brand b{color:var(--gold-ink);font-weight:600}
+.nav-links{display:flex;gap:26px;margin-inline-start:auto}
+.nav-links a{font-size:13.5px;font-weight:500;color:var(--tx-m);letter-spacing:.02em;transition:color var(--t-fast) var(--silk)}
+.nav-links a:hover{color:var(--gold-ink)}
+.nav-tools{display:flex;align-items:center;gap:10px}
+.tool-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--r-btn);border:1px solid var(--bd);color:var(--tx-m);transition:all var(--t-fast) var(--silk)}
+.tool-btn:hover{border-color:var(--bd-gold);color:var(--gold-ink)}
+.tool-btn.lang{width:auto;padding-inline:12px;font-family:var(--font-mono);font-size:12px;font-weight:600;letter-spacing:.08em}
+.tool-btn svg{width:17px;height:17px}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* ── hero (asymmetric split) ── */
+.hero{min-height:min(88dvh,860px);display:grid;align-items:center;padding-block:clamp(48px,7vw,96px);position:relative;overflow:clip}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--map-dot) 1px,transparent 1px),linear-gradient(90deg,var(--map-dot) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(70% 60% at 70% 40%,#000 30%,transparent 75%);pointer-events:none}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,5vw,72px);align-items:center;position:relative}
+.hero h1{font-size:clamp(42px,6vw,78px)}
+.hero-copy{display:grid;gap:26px;justify-items:start}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap}
+.hero-stats{display:grid;grid-template-columns:repeat(4,auto);gap:clamp(20px,3vw,44px);margin-top:18px;padding-top:26px;border-top:1px solid var(--bd)}
+.stat .n{font-family:var(--font-mono);font-size:clamp(20px,2.4vw,28px);font-weight:700;color:var(--gold-ink)}
+.stat .l{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx-f);margin-top:2px}
+.hero-art{position:relative;min-height:420px}
+.hero-art .ph{position:absolute;border-radius:var(--r-card);overflow:hidden;box-shadow:var(--shd)}
+.hero-art .ph img{width:100%;height:100%;object-fit:cover;transition:transform var(--t-glide) var(--silk)}
+.hero-art .ph:hover img{transform:scale(1.04)}
+.ph-a{inset:0 12% 18% 0}
+.ph-b{width:52%;height:46%;right:0;bottom:0;border:1px solid var(--bd-gold);outline:8px solid var(--bg);transition:outline-color var(--t-slow) var(--silk)}
+html[dir="rtl"] .ph-a{inset:0 0 18% 12%}
+html[dir="rtl"] .ph-b{right:auto;left:0}
+.ph-tag{position:absolute;top:14px;inset-inline-start:14px;z-index:2}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr}.hero-art{min-height:320px}.hero-stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ── listings ── */
+.listing-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:34px}
+.demo-flag{margin-inline-start:auto;display:none;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--tx-f);border:1px dashed var(--bd-s);border-radius:999px;padding:6px 14px}
+.demo-flag.show{display:inline-flex}
+.grid-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+@media(max-width:1080px){.grid-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.grid-cards{grid-template-columns:1fr}}
+.pcard{background:var(--bg-e);border-radius:var(--r-card);overflow:hidden;border:1px solid var(--bd);box-shadow:var(--card-edge);transition:transform var(--t-med) var(--silk),box-shadow var(--t-med) var(--silk),border-color var(--t-med) var(--silk);display:flex;flex-direction:column}
+.pcard:hover{transform:translateY(-5px);border-color:var(--bd-gold);box-shadow:var(--shd-gold)}
+.pcard-media{position:relative;aspect-ratio:16/10.5;overflow:hidden}
+.pcard-media img{width:100%;height:100%;object-fit:cover;transition:transform var(--t-glide) var(--silk)}
+.pcard:hover .pcard-media img{transform:scale(1.05)}
+.pcard-media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--ov-a),transparent 38%,transparent 62%,var(--ov-b));pointer-events:none}
+.pcard-top{position:absolute;top:12px;inset-inline:12px;display:flex;justify-content:space-between;z-index:2}
+.badge-status{background:rgba(11,26,46,.72);color:#F5EFDC;backdrop-filter:blur(6px)}
+.badge-sbr{background:rgba(200,150,26,.92);color:#14100A}
+.pcard-body{padding:20px 20px 22px;display:grid;gap:10px;flex:1}
+.pcard-body h3{font-family:var(--font-display);font-size:23px;font-weight:600;color:var(--tx-s)}
+.pcard-loc{font-size:13px;color:var(--tx-m);display:flex;align-items:center;gap:7px}
+.pcard-loc svg{width:14px;height:14px;color:var(--gold-ink)}
+.pcard-specs{display:flex;gap:16px;font-family:var(--font-mono);font-size:12px;color:var(--tx-m);letter-spacing:.02em}
+.pcard-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:14px;border-top:1px solid var(--bd)}
+.price{font-family:var(--font-mono);font-weight:700;font-size:17px;color:var(--gold-ink)}
+.price small{display:block;font-size:10.5px;font-weight:500;color:var(--tx-f);letter-spacing:.04em}
+/* skeleton */
+.skel{position:relative;overflow:hidden;background:var(--surf);border-radius:var(--r-card);border:1px solid var(--bd);aspect-ratio:16/19}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(200,150,26,.09),transparent);animation:sweep 1.4s var(--silk) infinite}
+@keyframes sweep{to{transform:translateX(100%)}}
+.state-note{padding:44px 20px;text-align:center;border:1px dashed var(--bd-s);border-radius:var(--r-card);color:var(--tx-m);display:grid;gap:10px;justify-items:center}
+.state-note .mono{color:var(--tx-f);font-size:12px}
+
+/* ── compounds ── */
+.compound-grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(28px,4vw,64px);align-items:start}
+@media(max-width:900px){.compound-grid{grid-template-columns:1fr}}
+.compound-list{display:grid}
+.compound-row{display:grid;grid-template-columns:64px 1fr auto;gap:18px;align-items:center;padding-block:18px;border-top:1px solid var(--bd);transition:background var(--t-fast) var(--silk),padding var(--t-med) var(--silk)}
+.compound-row:last-child{border-bottom:1px solid var(--bd)}
+.compound-row:hover{background:var(--surf);padding-inline:12px}
+.score{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--gold-ink)}
+.compound-row h4{font-size:16px;font-weight:600;color:var(--tx-s)}
+.compound-row .meta{font-size:12.5px;color:var(--tx-f);font-family:var(--font-mono)}
+.compound-row .from{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--tx-s);text-align:end}
+.compound-row .from span{display:block;font-size:10.5px;font-weight:500;color:var(--tx-f)}
+.compound-side{position:sticky;top:96px;display:grid;gap:20px}
+.compound-side .big{font-family:var(--font-mono);font-size:clamp(48px,6vw,84px);font-weight:700;color:var(--gold-ink);line-height:1}
+
+/* ── map ── */
+#map{height:min(62vh,560px);border-radius:var(--r-panel);border:1px solid var(--bd);box-shadow:var(--shd);overflow:hidden;background:var(--bg-e2)}
+.leaflet-container{font-family:var(--font-ui);background:var(--bg-e2)}
+.se-pin{width:14px;height:14px;border-radius:50%;background:var(--gold);border:2.5px solid #fff;box-shadow:0 0 0 4px rgba(200,150,26,.28),0 4px 10px rgba(0,0,0,.35)}
+.leaflet-popup-content-wrapper{background:var(--bg-e);color:var(--tx);border-radius:12px;box-shadow:var(--shd)}
+.leaflet-popup-tip{background:var(--bg-e)}
+.map-pop b{font-family:var(--font-display);font-size:16px;color:var(--tx-s)}
+.map-pop .mono{font-size:11.5px;color:var(--gold-ink)}
+.map-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:18px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;color:var(--tx-m)}
+.map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-inline-end:7px;background:var(--gold)}
+
+/* ── why (zig-zag, no card boxes) ── */
+.why-list{display:grid;gap:0}
+.why-row{display:grid;grid-template-columns:56px minmax(0,5fr) minmax(0,6fr);gap:clamp(16px,3vw,44px);align-items:baseline;padding-block:26px;border-top:1px solid var(--bd)}
+.why-row:last-child{border-bottom:1px solid var(--bd)}
+.why-row .idx{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--tx-f)}
+.why-row h3{font-family:var(--font-display);font-size:clamp(21px,2.4vw,27px);font-weight:600;color:var(--tx-s);display:flex;gap:12px;align-items:center}
+.why-row h3 svg{width:20px;height:20px;color:var(--gold-ink);flex:none}
+.why-row p{color:var(--tx-m);font-size:15px}
+@media(max-width:760px){.why-row{grid-template-columns:40px 1fr}.why-row p{grid-column:2}}
+
+/* ── AI hub: the dark-remix island ── */
+.ai-hub{background:#0B1A2E;color:#F0EDE5;border-radius:var(--r-panel);padding:clamp(32px,5vw,64px);position:relative;overflow:hidden;box-shadow:var(--shd)}
+.ai-hub::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(240,237,229,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(240,237,229,.05) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(80% 80% at 30% 0%,#000 20%,transparent 70%);pointer-events:none}
+.ai-hub::after{content:"";position:absolute;width:520px;height:520px;top:-260px;inset-inline-end:-160px;background:radial-gradient(circle,rgba(230,57,70,.16),transparent 65%);pointer-events:none}
+.ai-hub .eyebrow{color:var(--gold-lt)}
+.ai-hub h2{color:#fff;font-size:clamp(28px,3.8vw,44px)}
+.ai-hub h2 em{color:var(--gold-lt)}
+.ai-hub .lede{color:rgba(240,237,229,.6)}
+.ai-grid{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:clamp(28px,4vw,56px);position:relative;margin-top:40px}
+@media(max-width:900px){.ai-grid{grid-template-columns:1fr}}
+.ai-chat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:var(--r-card);padding:22px;display:grid;gap:14px;backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.ai-chat-head{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-lt);padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.09)}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 0 rgba(200,150,26,.55);animation:pulse 2.6s var(--silk) infinite}
+.msg{max-width:88%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.55}
+.msg.you{margin-inline-start:auto;background:rgba(200,150,26,.16);border:1px solid rgba(200,150,26,.3);border-end-end-radius:4px}
+.msg.ai{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-end-start-radius:4px;color:rgba(240,237,229,.9)}
+.msg .mono{color:var(--gold-lt);font-size:12.5px}
+.ai-quick{display:flex;gap:8px;flex-wrap:wrap}
+.ai-quick .chip{border-color:rgba(255,255,255,.14);color:rgba(240,237,229,.65)}
+.ai-quick .chip:hover{border-color:rgba(200,150,26,.5);color:var(--gold-lt)}
+.ai-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-content:start}
+@media(max-width:560px){.ai-tiles{grid-template-columns:1fr}}
+.ai-tile{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-tile);padding:18px;display:grid;gap:8px;transition:transform var(--t-med) var(--silk),border-color var(--t-med) var(--silk),background var(--t-med) var(--silk)}
+.ai-tile:hover{transform:translateY(-4px);border-color:rgba(200,150,26,.4);background:rgba(200,150,26,.07)}
+.ai-tile .e{font-size:22px;line-height:1}
+.ai-tile b{font-size:14.5px;color:#fff;font-weight:600}
+.ai-tile span{font-size:12.5px;color:rgba(240,237,229,.55);line-height:1.5}
+
+/* ── virtual tour ── */
+.tour{position:relative;border-radius:var(--r-panel);overflow:hidden;border:1px solid var(--bd-gold);box-shadow:var(--shd);height:min(64vh,580px);background:#07111E;touch-action:pan-y}
+.tour-img{position:absolute;top:50%;height:140%;width:auto;transform:translateY(-50%);user-select:none;pointer-events:none;max-width:none}
+.tour-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,11,20,.45),transparent 30%,transparent 70%,rgba(5,11,20,.72));pointer-events:none}
+.tour-ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:22px;cursor:grab}
+.tour-ui:active{cursor:grabbing}
+.tour-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.tour-360{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--gold-lt);background:rgba(11,26,46,.7);border:1px solid rgba(200,150,26,.4);padding:8px 14px;border-radius:999px;backdrop-filter:blur(8px)}
+.tour-rooms{display:flex;gap:8px;flex-wrap:wrap}
+.tour-rooms .chip{background:rgba(11,26,46,.66);border-color:rgba(255,255,255,.16);color:rgba(240,237,229,.8);backdrop-filter:blur(8px)}
+.tour-rooms .chip.on{background:var(--gold);border-color:var(--gold);color:#14100A}
+.tour-hint{align-self:center;display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,237,229,.75);background:rgba(11,26,46,.6);padding:9px 18px;border-radius:999px;backdrop-filter:blur(8px)}
+.tour-hint svg{width:15px;height:15px;color:var(--gold-lt)}
+
+/* ── pricing table ── */
+.ptable{width:100%;border-collapse:collapse;font-size:14px}
+.ptable th{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-f);text-align:start;padding:12px 14px;border-bottom:1px solid var(--bd-s)}
+.ptable td{padding:15px 14px;border-bottom:1px solid var(--bd);color:var(--tx-m)}
+.ptable td:first-child{color:var(--tx-s);font-weight:600}
+.ptable .mono{color:var(--gold-ink);font-weight:600}
+.ptable .up{color:var(--emerald);font-family:var(--font-mono);font-weight:600}
+.ptable tr{transition:background var(--t-fast) var(--silk)}
+.ptable tbody tr:hover{background:var(--surf)}
+.table-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:var(--r-card);background:var(--bg-e)}
+.table-scroll .ptable td,.table-scroll .ptable th{padding-inline:20px}
+
+/* ── CTA ── */
+.cta{position:relative;text-align:center;display:grid;gap:26px;justify-items:center}
+.cta h2{font-size:clamp(32px,4.6vw,56px);max-width:20ch}
+
+/* ── footer ── */
+footer{background:#081526;color:rgba(240,237,229,.62);padding-block:64px 32px}
+footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;gap:40px;padding-bottom:44px;border-bottom:1px solid rgba(255,255,255,.08)}
+@media(max-width:820px){footer .cols{grid-template-columns:1fr 1fr}}
+footer .brand{color:#fff}
+footer h5{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:16px}
+footer a{display:block;font-size:14px;padding-block:5px;color:rgba(240,237,229,.62);transition:color var(--t-fast) var(--silk)}
+footer a:hover{color:var(--gold-lt)}
+footer .fine{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:22px;font-size:12.5px;color:rgba(240,237,229,.4)}
+
+/* ── modal ── */
+.modal-bg{position:fixed;inset:0;z-index:150;background:rgba(5,11,20,.62);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;opacity:0;pointer-events:none;transition:opacity var(--t-med) var(--silk)}
+.modal-bg.open{opacity:1;pointer-events:auto}
+.modal{width:min(480px,100%);background:var(--bg-e);border-radius:var(--r-panel);border:1px solid var(--bd);box-shadow:var(--shd);padding:30px;transform:translateY(16px) scale(.97);transition:transform var(--t-med) var(--silk);max-height:88dvh;overflow:auto}
+.modal-bg.open .modal{transform:none}
+.modal h3{font-family:var(--font-display);font-size:27px;font-weight:600;color:var(--tx-s)}
+.modal .sub{font-size:13.5px;color:var(--tx-m);margin-top:4px}
+.modal .unit{font-family:var(--font-mono);font-size:12px;color:var(--gold-ink);background:var(--surf);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;margin-top:14px;display:none}
+.modal .unit.show{display:block}
+.field{display:grid;gap:6px;margin-top:16px}
+.field label{font-size:12.5px;font-weight:600;color:var(--tx-s);letter-spacing:.02em}
+.field input,.field textarea{background:var(--bg-e2);border:1px solid var(--bd-s);border-radius:var(--r-btn);padding:12px 14px;font:inherit;font-size:14.5px;color:var(--tx);transition:border-color var(--t-fast) var(--silk),box-shadow var(--t-fast) var(--silk)}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,150,26,.18)}
+.field .err{display:none;font-size:12px;color:var(--red)}
+.field.bad input{border-color:var(--red)}
+.field.bad .err{display:block}
+.modal-actions{display:flex;gap:10px;margin-top:24px}
+.modal-actions .btn{flex:1}
+.form-fail{display:none;margin-top:16px;font-size:13px;color:var(--red);background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.25);padding:10px 14px;border-radius:var(--r-btn)}
+.form-fail.show{display:block}
+.done{display:none;text-align:center;padding:26px 6px 10px}
+.done.show{display:block}
+.done .ok{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:var(--grad-gold);display:grid;place-items:center;color:#14100A}
+.done .ok svg{width:30px;height:30px}
+.done .vid{font-family:var(--font-mono);font-size:12px;color:var(--gold-ink);margin-top:10px;word-break:break-all}
+.x{position:absolute;top:18px;inset-inline-end:18px}
+
+/* ── toast ── */
+.toast{position:fixed;bottom:24px;inset-inline-start:50%;transform:translate(-50%,80px);z-index:180;background:var(--bg-e);color:var(--tx-s);border:1px solid var(--bd-gold);border-radius:999px;box-shadow:var(--shd);padding:12px 22px;font-size:14px;display:flex;gap:10px;align-items:center;transition:transform var(--t-med) var(--silk)}
+html[dir="rtl"] .toast{transform:translate(50%,80px)}
+.toast.show{transform:translate(-50%,0)}
+html[dir="rtl"] .toast.show{transform:translate(50%,0)}
+.toast svg{width:16px;height:16px;color:var(--gold-ink)}
+
+/* ── scroll progress hairline ── */
+.progress{position:fixed;top:0;left:0;height:2px;width:100%;z-index:120;transform-origin:0 50%;transform:scaleX(0);background:var(--grad-gold);pointer-events:none}
+html[dir="rtl"] .progress{transform-origin:100% 50%}
+
+/* ── kinetic marquee ── */
+.marquee{overflow:hidden;border-block:1px solid var(--bd);padding-block:18px;background:var(--bg-d);transition:background var(--t-slow) var(--silk)}
+.marquee-track{display:flex;gap:64px;width:max-content;animation:marq 28s linear infinite;will-change:transform}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee span{font-family:var(--font-display);font-style:italic;font-size:clamp(19px,2.4vw,28px);color:var(--tx-f);white-space:nowrap;display:flex;align-items:center;gap:64px}
+.marquee b{font-family:var(--font-mono);font-style:normal;font-weight:600;font-size:11px;letter-spacing:.3em;color:var(--gold-ink)}
+@keyframes marq{to{transform:translateX(-50%)}}
+html[dir="rtl"] .marquee-track{animation-name:marq-r}
+@keyframes marq-r{to{transform:translateX(50%)}}
+
+/* ── mobile menu ── */
+.burger{display:none}
+@media(max-width:900px){.burger{display:inline-flex}}
+.mnav{position:fixed;inset:0;z-index:140;background:var(--nav-s);backdrop-filter:blur(20px);display:grid;place-content:center;gap:8px;text-align:center;opacity:0;pointer-events:none;transition:opacity var(--t-med) var(--silk)}
+.mnav.open{opacity:1;pointer-events:auto}
+.mnav a{font-family:var(--font-display);font-size:30px;font-weight:500;color:var(--tx-s);padding:10px;transform:translateY(12px);transition:transform var(--t-glide) var(--silk),color var(--t-fast) var(--silk)}
+.mnav.open a{transform:none}
+.mnav a:hover{color:var(--gold-ink)}
+.mnav .x{position:fixed;top:18px;inset-inline-end:18px}
+
+/* ── AI chat input ── */
+.ai-log{display:grid;gap:12px;max-height:300px;overflow-y:auto;scrollbar-width:thin;padding-inline-end:4px}
+.ai-input{display:flex;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.09)}
+.ai-input input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-btn);padding:11px 14px;color:#F0EDE5;font:inherit;font-size:13.5px;transition:border-color var(--t-fast) var(--silk)}
+.ai-input input::placeholder{color:rgba(240,237,229,.35)}
+.ai-input input:focus{outline:none;border-color:rgba(200,150,26,.55)}
+.ai-send{width:44px;flex:none;display:grid;place-items:center;border-radius:var(--r-btn);background:var(--grad-gold);color:#14100A}
+.ai-send svg{width:17px;height:17px}
+.msg .act{display:inline-block;margin-top:8px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;color:var(--gold-lt);border:1px solid rgba(200,150,26,.4);border-radius:999px;padding:5px 12px;cursor:pointer;transition:background var(--t-fast) var(--silk)}
+.msg .act:hover{background:rgba(200,150,26,.15)}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--gold-lt);animation:tp 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tp{50%{opacity:.25;transform:translateY(-2px)}}
+
+/* interactive rows */
+.compound-row,.ptable tbody tr{cursor:pointer}
+.pcard-media{cursor:pointer}
+html[dir="rtl"] .flip-rtl{transform:scaleX(-1)}
+
+/* ── reduced motion: kill it all, keep final states ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .rv{transform:none}
+  .display .shimmer{animation:none;background-position:0 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<!-- topbar -->
+<div class="topbar">
+  <div class="wrap">
+    <span><span class="live-dot" aria-hidden="true"></span><span data-i18n="live">Live market feed — New Cairo · Egypt</span></span>
+    <a class="mono" href="tel:+201001970000">+20 100 197 0000</a>
+  </div>
+</div>
+
+<!-- nav -->
+<nav class="main" id="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img id="brandLogo" src="logo-gold.png" alt="Sierra Estates emblem"/>
+      <span>SIERRA <b>ESTATES</b></span>
+    </a>
+    <div class="nav-links">
+      <a href="#properties" data-i18n="nav.properties">Properties</a>
+      <a href="#compounds" data-i18n="nav.compounds">Compounds</a>
+      <a href="#map" data-i18n="nav.map">Live Map</a>
+      <a href="#why" data-i18n="nav.why">Why Sierra</a>
+      <a href="#ai" data-i18n="nav.ai">AI Hub</a>
+      <a href="#tour" data-i18n="nav.tour">Virtual Tour</a>
+    </div>
+    <div class="nav-tools">
+      <button class="tool-btn lang" id="langBtn" aria-label="Switch language">AR</button>
+      <button class="tool-btn" id="themeBtn" aria-label="Toggle dark mode"><i data-lucide="moon"></i></button>
+      <button class="btn btn-gold btn-sm" data-open-lead data-i18n="nav.cta">Book a Viewing</button>
+      <button class="tool-btn burger" id="burger" aria-label="Open menu" aria-expanded="false"><i data-lucide="menu"></i></button>
+    </div>
+  </div>
+</nav>
+
+<!-- mobile menu -->
+<div class="mnav" id="mnav" aria-hidden="true">
+  <button class="tool-btn x" id="mnavClose" aria-label="Close menu"><i data-lucide="x"></i></button>
+  <a href="#properties" data-i18n="nav.properties">Properties</a>
+  <a href="#compounds" data-i18n="nav.compounds">Compounds</a>
+  <a href="#map" data-i18n="nav.map">Live Map</a>
+  <a href="#why" data-i18n="nav.why">Why Sierra</a>
+  <a href="#ai" data-i18n="nav.ai">AI Hub</a>
+  <a href="#tour" data-i18n="nav.tour">Virtual Tour</a>
+</div>
+
+<main id="main">
+<!-- ═══ HERO ═══ -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="hero-copy">
+      <p class="eyebrow rv" data-i18n="hero.eyebrow">New Cairo · Luxury Residences</p>
+      <h1 class="display rv rv-d1" data-i18n-html="hero.h1">Where intelligence meets <em class="shimmer">extraordinary living.</em></h1>
+      <p class="lede rv rv-d2" data-i18n="hero.sub">Sierra Estates curates the finest 1,240+ verified residences across 27 New Cairo compounds — powered by our Intelligence OS for 94% pricing accuracy and a 4-hour concierge promise.</p>
+      <div class="hero-ctas rv rv-d3">
+        <a class="btn btn-gold" href="#properties"><span data-i18n="hero.cta1">Explore Residences</span><i data-lucide="arrow-right" class="flip-rtl"></i></a>
+        <button class="btn btn-ghost" data-open-lead data-i18n="hero.cta2">Speak to an Advisor</button>
+      </div>
+      <div class="hero-stats rv rv-d4">
+        <div class="stat"><div class="n" data-count="1240" data-suffix="+">0</div><div class="l" data-i18n="stat.units">Verified Units</div></div>
+        <div class="stat"><div class="n" data-count="27">0</div><div class="l" data-i18n="stat.compounds">Compounds</div></div>
+        <div class="stat"><div class="n" data-count="94" data-suffix="%">0</div><div class="l" data-i18n="stat.accuracy">Pricing Accuracy</div></div>
+        <div class="stat"><div class="n" data-count="4" data-suffix="h">0</div><div class="l" data-i18n="stat.response">Response Time</div></div>
+      </div>
+    </div>
+    <div class="hero-art rv rv-d2" aria-hidden="true">
+      <div class="ph ph-a"><img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80" alt="" loading="eager"/>
+        <span class="ph-tag badge badge-sbr mono">MVC-PH-A12</span></div>
+      <div class="ph ph-b"><img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" alt="" loading="lazy"/></div>
+    </div>
+  </div>
+</header>
+
+<!-- kinetic marquee -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marquee">
+    <span>Future of Real Estate <b>·</b> التميز العقاري برؤية ذكية <b>·</b> New Cairo <b>·</b> 27 Compounds <b>·</b> Intelligence OS <b>·</b>&nbsp;</span>
+    <span>Future of Real Estate <b>·</b> التميز العقاري برؤية ذكية <b>·</b> New Cairo <b>·</b> 27 Compounds <b>·</b> Intelligence OS <b>·</b>&nbsp;</span>
+  </div>
+</div>
+
+<!-- ═══ 1 · LISTINGS ═══ -->
+<section id="properties">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="list.eyebrow">Featured Properties</p>
+      <h2 class="display rv rv-d1" data-i18n-html="list.h2">Hand-selected <em>residences</em>, ready to view today.</h2>
+      <p class="lede rv rv-d2" data-i18n="list.sub">Every listing is walked through by our concierge team and cross-checked against live market comps before it reaches you.</p>
+    </div>
+    <div class="listing-tools rv">
+      <button class="chip on" data-filter="all" data-i18n="filter.all">All</button>
+      <button class="chip" data-filter="rent" data-i18n="filter.rent">Rent</button>
+      <button class="chip" data-filter="sale" data-i18n="filter.sale">Resale</button>
+      <span class="demo-flag mono" id="demoFlag"><i data-lucide="flask-conical" style="width:13px;height:13px"></i><span data-i18n="demo">Demo data — API offline</span></span>
+    </div>
+    <div class="grid-cards" id="cards" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ═══ 2 · COMPOUNDS ═══ -->
+<section id="compounds" class="alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="cmp.eyebrow">Browse Compounds</p>
+      <h2 class="display rv rv-d1" data-i18n-html="cmp.h2">27 compounds, ranked by our <em>Intelligence Score.</em></h2>
+    </div>
+    <div class="compound-grid">
+      <aside class="compound-side rv">
+        <div class="big mono">9.4</div>
+        <p class="lede" data-i18n="cmp.side">The Sierra score blends growth trajectory, liquidity, amenity density, and school proximity into one comparable number — refreshed nightly from 18 market feeds.</p>
+        <a class="btn btn-ghost" href="#map" style="justify-self:start"><span data-i18n="cmp.side.cta">See them on the map</span><i data-lucide="map" ></i></a>
+      </aside>
+      <div class="compound-list rv rv-d1" id="compoundList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3 · MAP (directly after compounds) ═══ -->
+<section id="map-sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="map.eyebrow">Live Map</p>
+      <h2 class="display rv rv-d1" data-i18n-html="map.h2">1,240 live units, <em>one map.</em></h2>
+      <p class="lede rv rv-d2" data-i18n="map.sub">Every verified compound, plotted. Tap a marker for score, inventory and entry pricing.</p>
+    </div>
+    <div id="map" class="rv" role="region" aria-label="Map of New Cairo compounds"></div>
+    <div class="map-legend rv rv-d1">
+      <span><i></i><span data-i18n="map.l1">Verified compound</span></span>
+      <span><i style="background:var(--red)"></i><span data-i18n="map.l2">Hot market</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4 · WHY SIERRA BLU ═══ -->
+<section id="why" class="alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="why.eyebrow">Why Sierra Blu</p>
+      <h2 class="display rv rv-d1" data-i18n-html="why.h2">Beyond brokerage — a <em>concierge for life.</em></h2>
+      <p class="lede rv rv-d2" data-i18n="why.sub">We don't just close the deal. We become your family's real-estate desk — for purchases, rentals, resales, and renovations.</p>
+    </div>
+    <div class="why-list" id="whyList"></div>
+  </div>
+</section>
+
+<!-- ═══ 5 · AI HUB (dark remix island) ═══ -->
+<section id="ai">
+  <div class="wrap">
+    <div class="ai-hub rv">
+      <p class="eyebrow" data-i18n="ai.eyebrow">Sierra AI Hub</p>
+      <h2 class="display" style="margin-top:16px" data-i18n-html="ai.h2">Conversational search across <em>every compound.</em></h2>
+      <p class="lede" style="margin-top:12px" data-i18n="ai.sub">Ask in plain English or Arabic. Sierra cross-references 27 compounds, 1,240 units, and live market signals in real time.</p>
+      <div class="ai-grid">
+        <div class="ai-chat">
+          <div class="ai-chat-head"><span class="ai-dot" aria-hidden="true"></span><span data-i18n="ai.chat">Ask Sierra · Live</span></div>
+          <div class="ai-log" id="aiLog">
+            <div class="msg you" data-i18n="ai.q">Show me 4-bedroom villas in Mountain View with a pool under 35M EGP</div>
+            <div class="msg ai"><span data-i18n="ai.a">Found 14 matches. Top pick: Villa 27, Mountain View Chillout Park — 4BR · 480m² · private pool · </span><span class="mono">32.5M EGP</span><span data-i18n="ai.a2">. Estimated resale +12% in 24 months based on 9 recent comps.</span></div>
+          </div>
+          <div class="ai-quick">
+            <button class="chip" data-ask data-i18n="ai.s1">3BR under 20M in Katameya</button>
+            <button class="chip" data-ask data-i18n="ai.s2">Penthouses with city view</button>
+            <button class="chip" data-ask data-i18n="ai.s3">Family villa near AISE</button>
+          </div>
+          <div class="ai-input">
+            <input id="aiField" data-i18n-ph="ai.ph" placeholder="Ask Sierra anything…" autocomplete="off"/>
+            <button class="ai-send" id="aiSend" aria-label="Send"><i data-lucide="send-horizontal" class="flip-rtl"></i></button>
+          </div>
+        </div>
+        <div class="ai-tiles">
+          <div class="ai-tile"><span class="e">🗺️</span><b data-i18n="ai.t1">Map Intelligence</b><span data-i18n="ai.t1d">Live inventory plotted across all 27 compounds.</span></div>
+          <div class="ai-tile"><span class="e">📈</span><b data-i18n="ai.t2">Resale Forecast</b><span data-i18n="ai.t2d">12-month projections with ±8% confidence bands.</span></div>
+          <div class="ai-tile"><span class="e">🎯</span><b data-i18n="ai.t3">Smart Matching</b><span data-i18n="ai.t3d">Your brief, scored against 47 hedonic features.</span></div>
+          <div class="ai-tile"><span class="e">💬</span><b data-i18n="ai.t4">Bilingual Concierge</b><span data-i18n="ai.t4d">EN/AR advisors, viewings arranged within 4 hours.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · VIRTUAL TOUR ═══ -->
+<section id="tour" class="alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="tour.eyebrow">Virtual Tour</p>
+      <h2 class="display rv rv-d1" data-i18n-html="tour.h2">Walk the residence — <em>before the visit.</em></h2>
+      <p class="lede rv rv-d2" data-i18n="tour.sub">Drag to look around. Every Sierra listing ships with a full 360° capture, verified by our concierge team.</p>
+    </div>
+    <div class="tour rv" id="tour360">
+      <img class="tour-img" id="tourImg" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80" alt="Panoramic interior view"/>
+      <div class="tour-scrim"></div>
+      <div class="tour-ui" id="tourUI">
+        <div class="tour-top">
+          <span class="tour-360">360° VERIFIED</span>
+          <div class="tour-rooms" id="tourRooms"></div>
+        </div>
+        <div class="tour-hint"><i data-lucide="move-horizontal"></i><span data-i18n="tour.hint">Drag to look around</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section id="pricing">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow rv" data-i18n="pr.eyebrow">Unit-Precise Pricing</p>
+      <h2 class="display rv rv-d1" data-i18n-html="pr.h2">Valued per unit — never a <em>compound average.</em></h2>
+      <p class="lede rv rv-d2" data-i18n="pr.sub">Floor, orientation, finish level and 44 other features — each priced individually by the Intelligence OS.</p>
+    </div>
+    <div class="table-scroll rv">
+      <table class="ptable">
+        <thead><tr>
+          <th data-i18n="pr.c1">Unit</th><th data-i18n="pr.c2">Compound</th><th data-i18n="pr.c3">Area</th><th data-i18n="pr.c4">Sierra Price</th><th data-i18n="pr.c5">24M Forecast</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Penthouse A-12</td><td>Mountain View</td><td class="mono" style="color:var(--tx-m)">480 m²</td><td class="mono">32.5M EGP</td><td class="up">+12.4%</td></tr>
+          <tr><td>Villa 27</td><td>Mivida</td><td class="mono" style="color:var(--tx-m)">620 m²</td><td class="mono">48.0M EGP</td><td class="up">+9.8%</td></tr>
+          <tr><td>Apt 9B</td><td>Katameya Dunes</td><td class="mono" style="color:var(--tx-m)">210 m²</td><td class="mono">85K / mo</td><td class="up">+5.2%</td></tr>
+          <tr><td>Townhouse 12</td><td>Hyde Park</td><td class="mono" style="color:var(--tx-m)">340 m²</td><td class="mono">26.5M EGP</td><td class="up">+11.0%</td></tr>
+          <tr><td>Twin 04</td><td>Palm Hills</td><td class="mono" style="color:var(--tx-m)">390 m²</td><td class="mono">29.8M EGP</td><td class="up">+8.4%</td></tr>
+          <tr><td>Standalone Aurora</td><td>Stone Residence</td><td class="mono" style="color:var(--tx-m)">780 m²</td><td class="mono">68.0M EGP</td><td class="up">+6.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="alt">
+  <div class="wrap cta">
+    <p class="eyebrow rv" style="justify-content:center" data-i18n="cta.eyebrow">Begin</p>
+    <h2 class="display rv rv-d1" data-i18n-html="cta.h2">Your next address begins with <em>one conversation.</em></h2>
+    <p class="lede rv rv-d2" data-i18n="cta.sub">Book a 30-minute discovery call with a Sierra advisor. We bring the inventory, the comps, and the forecast — you bring the questions.</p>
+    <div class="hero-ctas rv rv-d3" style="justify-content:center">
+      <button class="btn btn-gold" data-open-lead><span data-i18n="cta.b1">Book a Discovery Call</span><i data-lucide="arrow-right" class="flip-rtl"></i></button>
+      <a class="btn btn-ghost" href="https://wa.me/201001970000" target="_blank" rel="noopener"><i data-lucide="message-circle"></i><span data-i18n="cta.b2">WhatsApp an Advisor</span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- footer -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="#top"><img src="logo-red.png" alt="" style="width:36px;height:36px"/><span>SIERRA <b>ESTATES</b></span></a>
+        <p style="margin-top:16px;font-size:14px;max-width:34ch" data-i18n="ft.blurb">Luxury real estate, intelligently curated. New Cairo's first AI-native brokerage for verified residences across 27 compounds.</p>
+      </div>
+      <div>
+        <h5 data-i18n="ft.explore">Explore</h5>
+        <a href="#properties" data-i18n="nav.properties">Properties</a>
+        <a href="#compounds" data-i18n="nav.compounds">Compounds</a>
+        <a href="#map" data-i18n="nav.map">Live Map</a>
+        <a href="#pricing" data-i18n="ft.pricing">Pricing</a>
+      </div>
+      <div>
+        <h5 data-i18n="ft.company">Company</h5>
+        <a href="#why" data-i18n="ft.about">About Sierra</a>
+        <a href="#ai" data-i18n="nav.ai">AI Hub</a>
+        <a href="https://ahmedfawzy8866.github.io/Sierra-Estates-Final/" target="_blank" rel="noopener" data-i18n="ft.press">Press</a>
+        <a href="#" data-open-lead data-i18n="ft.contact">Contact</a>
+      </div>
+      <div>
+        <h5 data-i18n="ft.visit">Visit</h5>
+        <p style="font-size:14px" data-i18n="ft.addr">Mountain View Plaza, 5th Settlement<br/>New Cairo, Egypt</p>
+        <a class="mono" href="tel:+201001970000" style="margin-top:10px">+20 100 197 0000</a>
+      </div>
+    </div>
+    <div class="fine">
+      <span>© <span id="yr">2026</span> Sierra Estates. <span data-i18n="ft.rights">All rights reserved.</span></span>
+      <span class="mono" style="font-size:11px;letter-spacing:.08em">FUTURE OF REAL ESTATE</span>
+    </div>
+  </div>
+</footer>
+
+<!-- lead / viewing modal -->
+<div class="modal-bg" id="leadModal" role="dialog" aria-modal="true" aria-labelledby="leadTitle">
+  <div class="modal" style="position:relative">
+    <button class="tool-btn x" data-close-lead aria-label="Close"><i data-lucide="x"></i></button>
+    <div id="leadFormWrap">
+      <h3 id="leadTitle" data-i18n="fm.title">Speak to a Sierra advisor</h3>
+      <p class="sub" data-i18n="fm.sub">We reply within 4 hours — that's the promise.</p>
+      <div class="unit mono" id="leadUnit"></div>
+      <form id="leadForm" novalidate>
+        <div class="field" data-f="name">
+          <label for="f-name" data-i18n="fm.name">Full name</label>
+          <input id="f-name" name="name" autocomplete="name" required/>
+          <span class="err" data-i18n="fm.name.err">Please add your name</span>
+        </div>
+        <div class="field" data-f="email">
+          <label for="f-email" data-i18n="fm.email">Email</label>
+          <input id="f-email" name="email" type="email" autocomplete="email" required/>
+          <span class="err" data-i18n="fm.email.err">A valid email helps us confirm your viewing</span>
+        </div>
+        <div class="field" data-f="phone">
+          <label for="f-phone" data-i18n="fm.phone">Phone / WhatsApp</label>
+          <input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="+20 1xx xxx xxxx" required/>
+          <span class="err" data-i18n="fm.phone.err">We need a number to arrange the viewing</span>
+        </div>
+        <div class="field">
+          <label for="f-msg" data-i18n="fm.msg">Anything specific? <span style="color:var(--tx-f);font-weight:400" data-i18n="fm.opt">(optional)</span></label>
+          <textarea id="f-msg" name="message" rows="3"></textarea>
+        </div>
+        <div class="form-fail" id="formFail" data-i18n="fm.fail">Something went wrong reaching our team. Please retry, or WhatsApp us directly.</div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-gold" id="leadSubmit"><span data-i18n="fm.send">Send request</span></button>
+        </div>
+      </form>
+    </div>
+    <div class="done" id="leadDone">
+      <div class="ok"><i data-lucide="check"></i></div>
+      <h3 data-i18n="fm.done">Request received</h3>
+      <p class="sub" id="doneMsg" data-i18n="fm.done.sub">A Sierra advisor will contact you within 4 hours.</p>
+      <div class="vid mono" id="doneRef"></div>
+      <div class="modal-actions"><button class="btn btn-ghost" data-close-lead data-i18n="fm.close">Close</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i data-lucide="sparkles"></i><span id="toastMsg"></span></div>
+
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js" defer></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script type="module">
+/* Firebase (project: sierra-blu) — web config is public by design; access is governed by Firebase rules */
+try{
+  const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const {getAnalytics,logEvent,isSupported}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js");
+  const app=initializeApp({
+    apiKey:"AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs",
+    authDomain:"sierra-blu.firebaseapp.com",
+    projectId:"sierra-blu",
+    storageBucket:"sierra-blu.firebasestorage.app",
+    messagingSenderId:"941030513456",
+    appId:"1:941030513456:web:56209a1495d69f217086f5",
+    measurementId:"G-ZP054BPJ8Q"
+  });
+  window.__seFirebase=app;
+  if(await isSupported()){
+    const an=getAnalytics(app);
+    window.__seTrack=(n,p)=>{try{logEvent(an,n,p)}catch(_){}};
+  }
+}catch(_){/* offline / file:// — analytics is optional, page works without it */}
+</script>
+<script>
+"use strict";
+/* ═══ Sierra Estates client page — wiring per docs/API_CONTRACT.md ═══ */
+const API_BASE=(window.SIERRA_API_BASE??new URLSearchParams(location.search).get("api")??"").replace(/\/$/,"");
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+
+/* ── i18n ── */
+const I18N={
+en:{skip:"Skip to content",live:"Live market feed — New Cairo · Egypt","nav.properties":"Properties","nav.compounds":"Compounds","nav.map":"Live Map","nav.why":"Why Sierra","nav.ai":"AI Hub","nav.tour":"Virtual Tour","nav.cta":"Book a Viewing",
+"hero.eyebrow":"New Cairo · Luxury Residences","hero.h1":'Where intelligence meets <em class="shimmer">extraordinary living.</em>',"hero.sub":"Sierra Estates curates the finest 1,240+ verified residences across 27 New Cairo compounds — powered by our Intelligence OS for 94% pricing accuracy and a 4-hour concierge promise.","hero.cta1":"Explore Residences","hero.cta2":"Speak to an Advisor",
+"stat.units":"Verified Units","stat.compounds":"Compounds","stat.accuracy":"Pricing Accuracy","stat.response":"Response Time",
+"list.eyebrow":"Featured Properties","list.h2":"Hand-selected <em>residences</em>, ready to view today.","list.sub":"Every listing is walked through by our concierge team and cross-checked against live market comps before it reaches you.","filter.all":"All","filter.rent":"Rent","filter.sale":"Resale",demo:"Demo data — API offline",view:"Request Viewing",
+"empty.t":"No residences match this filter yet.","empty.s":"Try another category — or ask Sierra directly.","err.t":"We couldn't load live listings.","err.s":"Showing our curated selection instead.",
+"cmp.eyebrow":"Browse Compounds","cmp.h2":"27 compounds, ranked by our <em>Intelligence Score.</em>","cmp.side":"The Sierra score blends growth trajectory, liquidity, amenity density, and school proximity into one comparable number — refreshed nightly from 18 market feeds.","cmp.side.cta":"See them on the map",units:"units",yrs:"yrs active",from:"From",
+"map.eyebrow":"Live Map","map.h2":"1,240 live units, <em>one map.</em>","map.sub":"Every verified compound, plotted. Tap a marker for score, inventory and entry pricing.","map.l1":"Verified compound","map.l2":"Hot market",
+"why.eyebrow":"Why Sierra Blu","why.h2":"Beyond brokerage — a <em>concierge for life.</em>","why.sub":"We don't just close the deal. We become your family's real-estate desk — for purchases, rentals, resales, and renovations.",
+"ai.eyebrow":"Sierra AI Hub","ai.h2":"Conversational search across <em>every compound.</em>","ai.sub":"Ask in plain English or Arabic. Sierra cross-references 27 compounds, 1,240 units, and live market signals in real time.","ai.chat":"Ask Sierra · Live","ai.q":"Show me 4-bedroom villas in Mountain View with a pool under 35M EGP","ai.a":"Found 14 matches. Top pick: Villa 27, Mountain View Chillout Park — 4BR · 480m² · private pool · ","ai.a2":". Estimated resale +12% in 24 months based on 9 recent comps.","ai.s1":"3BR under 20M in Katameya","ai.s2":"Penthouses with city view","ai.s3":"Family villa near AISE",
+"ai.t1":"Map Intelligence","ai.t1d":"Live inventory plotted across all 27 compounds.","ai.t2":"Resale Forecast","ai.t2d":"12-month projections with ±8% confidence bands.","ai.t3":"Smart Matching","ai.t3d":"Your brief, scored against 47 hedonic features.","ai.t4":"Bilingual Concierge","ai.t4d":"EN/AR advisors, viewings arranged within 4 hours.",
+"tour.eyebrow":"Virtual Tour","tour.h2":"Walk the residence — <em>before the visit.</em>","tour.sub":"Drag to look around. Every Sierra listing ships with a full 360° capture, verified by our concierge team.","tour.hint":"Drag to look around","room.living":"Living","room.kitchen":"Kitchen","room.master":"Master Suite","room.garden":"Garden",
+"pr.eyebrow":"Unit-Precise Pricing","pr.h2":"Valued per unit — never a <em>compound average.</em>","pr.sub":"Floor, orientation, finish level and 44 other features — each priced individually by the Intelligence OS.","pr.c1":"Unit","pr.c2":"Compound","pr.c3":"Area","pr.c4":"Sierra Price","pr.c5":"24M Forecast",
+"cta.eyebrow":"Begin","cta.h2":"Your next address begins with <em>one conversation.</em>","cta.sub":"Book a 30-minute discovery call with a Sierra advisor. We bring the inventory, the comps, and the forecast — you bring the questions.","cta.b1":"Book a Discovery Call","cta.b2":"WhatsApp an Advisor",
+"ft.blurb":"Luxury real estate, intelligently curated. New Cairo's first AI-native brokerage for verified residences across 27 compounds.","ft.explore":"Explore","ft.pricing":"Pricing","ft.company":"Company","ft.about":"About Sierra","ft.press":"Press","ft.contact":"Contact","ft.visit":"Visit","ft.addr":"Mountain View Plaza, 5th Settlement<br/>New Cairo, Egypt","ft.rights":"All rights reserved.",
+"fm.title":"Speak to a Sierra advisor","fm.sub":"We reply within 4 hours — that's the promise.","fm.name":"Full name","fm.name.err":"Please add your name","fm.email":"Email","fm.email.err":"A valid email helps us confirm your viewing","fm.phone":"Phone / WhatsApp","fm.phone.err":"We need a number to arrange the viewing","fm.msg":"Anything specific?","fm.opt":"(optional)","fm.fail":"Something went wrong reaching our team. Please retry, or WhatsApp us directly.","fm.send":"Send request","fm.sending":"Sending…","fm.done":"Request received","fm.done.sub":"A Sierra advisor will contact you within 4 hours.","fm.close":"Close","fm.viewing.title":"Request a private viewing","fm.viewing.sub":"Concierge-arranged within 4 hours.",
+"toast.demo":"Demo mode — request simulated locally.","toast.ai":"Sierra AI lives in the full portal — this is a preview.",
+"ai.ph":"Ask Sierra anything…","ai.r1":"Top match right now:","ai.r2":"Estimated resale","ai.r3":"in 24 months.","ai.view":"Request viewing","ai.none":"No exact match in the featured set — a Sierra advisor can source it off-market within 48 hours. Shall I arrange a call?","ai.book":"Book a call"},
+ar:{skip:"تخطَّ إلى المحتوى",live:"بث السوق المباشر — القاهرة الجديدة · مصر","nav.properties":"العقارات","nav.compounds":"الكمبوندات","nav.map":"الخريطة الحية","nav.why":"لماذا سييرا","nav.ai":"مركز الذكاء","nav.tour":"جولة افتراضية","nav.cta":"احجز معاينة",
+"hero.eyebrow":"القاهرة الجديدة · مساكن فاخرة","hero.h1":'حيث يلتقي الذكاء <em class="shimmer">بالسكن الاستثنائي.</em>',"hero.sub":"سييرا استيتس تنتقي أرقى ما يزيد على ١٢٤٠ وحدة موثقة عبر ٢٧ كمبوند في القاهرة الجديدة — مدعومة بنظام الذكاء بدقة تسعير ٩٤٪ ووعد كونسيرج خلال ٤ ساعات.","hero.cta1":"استكشف المساكن","hero.cta2":"تحدث إلى مستشار",
+"stat.units":"وحدة موثقة","stat.compounds":"كمبوند","stat.accuracy":"دقة التسعير","stat.response":"زمن الاستجابة",
+"list.eyebrow":"عقارات مختارة","list.h2":"مساكن منتقاة بعناية — <em>جاهزة للمعاينة اليوم.</em>","list.sub":"كل وحدة تُعايَن ميدانيًا بواسطة فريق الكونسيرج وتُراجَع أسعارها مقابل صفقات السوق الحية قبل أن تصل إليك.","filter.all":"الكل","filter.rent":"إيجار","filter.sale":"إعادة بيع",demo:"بيانات تجريبية — الخادم غير متصل",view:"اطلب معاينة",
+"empty.t":"لا توجد وحدات ضمن هذا التصنيف حاليًا.","empty.s":"جرّب تصنيفًا آخر — أو اسأل سييرا مباشرة.","err.t":"تعذّر تحميل الوحدات المباشرة.","err.s":"نعرض تشكيلتنا المختارة بدلًا منها.",
+"cmp.eyebrow":"تصفح الكمبوندات","cmp.h2":"٢٧ كمبوند مرتبة وفق <em>درجة الذكاء.</em>","cmp.side":"درجة سييرا تمزج مسار النمو والسيولة وكثافة المرافق وقرب المدارس في رقم واحد قابل للمقارنة — يُحدَّث ليليًا من ١٨ مصدر سوق.","cmp.side.cta":"شاهدها على الخريطة",units:"وحدة",yrs:"سنة نشاط",from:"ابتداءً من",
+"map.eyebrow":"الخريطة الحية","map.h2":"١٢٤٠ وحدة حية — <em>على خريطة واحدة.</em>","map.sub":"كل كمبوند موثق على الخريطة. اضغط على العلامة لعرض الدرجة والمخزون وسعر الدخول.","map.l1":"كمبوند موثق","map.l2":"سوق نشط",
+"why.eyebrow":"لماذا سييرا بلو","why.h2":"أبعد من الوساطة — <em>كونسيرج مدى الحياة.</em>","why.sub":"لا نكتفي بإتمام الصفقة؛ نصبح مكتب عائلتك العقاري — للشراء والإيجار وإعادة البيع والتشطيب.",
+"ai.eyebrow":"مركز سييرا للذكاء","ai.h2":"بحث حواري عبر <em>كل الكمبوندات.</em>","ai.sub":"اسأل بالعربية أو الإنجليزية. سييرا تقاطع بيانات ٢٧ كمبوند و١٢٤٠ وحدة وإشارات السوق الحية لحظيًا.","ai.chat":"اسأل سييرا · مباشر","ai.q":"أرني فيلات ٤ غرف في ماونتن فيو بحمام سباحة تحت ٣٥ مليون جنيه","ai.a":"وجدت ١٤ نتيجة. الترشيح الأول: فيلا ٢٧، ماونتن فيو تشيل أوت بارك — ٤ غرف · ٤٨٠ م² · مسبح خاص · ","ai.a2":". إعادة البيع المتوقعة +١٢٪ خلال ٢٤ شهرًا وفق ٩ صفقات مقارنة حديثة.","ai.s1":"٣ غرف تحت ٢٠ مليون في قطامية","ai.s2":"بنتهاوس بإطلالة مدينة","ai.s3":"فيلا عائلية قرب AISE",
+"ai.t1":"ذكاء الخرائط","ai.t1d":"المخزون الحي على خريطة الـ٢٧ كمبوند.","ai.t2":"توقع إعادة البيع","ai.t2d":"إسقاطات ١٢ شهرًا بهامش ثقة ±٨٪.","ai.t3":"مطابقة ذكية","ai.t3d":"طلبك يُقيَّم مقابل ٤٧ خاصية سعرية.","ai.t4":"كونسيرج ثنائي اللغة","ai.t4d":"مستشارون عربي/إنجليزي، ومعاينات خلال ٤ ساعات.",
+"tour.eyebrow":"جولة افتراضية","tour.h2":"تجوّل داخل المسكن — <em>قبل الزيارة.</em>","tour.sub":"اسحب لتنظر حولك. كل وحدة لدى سييرا تأتي بتصوير ٣٦٠° كامل وموثق من فريق الكونسيرج.","tour.hint":"اسحب لتنظر حولك","room.living":"المعيشة","room.kitchen":"المطبخ","room.master":"الجناح الرئيسي","room.garden":"الحديقة",
+"pr.eyebrow":"تسعير دقيق لكل وحدة","pr.h2":"تقييم لكل وحدة — <em>لا متوسط للكمبوند.</em>","pr.sub":"الدور والاتجاه ومستوى التشطيب و٤٤ خاصية أخرى — كلٌّ يُسعَّر منفردًا عبر نظام الذكاء.","pr.c1":"الوحدة","pr.c2":"الكمبوند","pr.c3":"المساحة","pr.c4":"سعر سييرا","pr.c5":"توقع ٢٤ شهرًا",
+"cta.eyebrow":"ابدأ","cta.h2":"عنوانك القادم يبدأ <em>بمحادثة واحدة.</em>","cta.sub":"احجز مكالمة تعارف ٣٠ دقيقة مع مستشار سييرا. نحضر المخزون والمقارنات والتوقعات — وأنت تحضر الأسئلة.","cta.b1":"احجز مكالمة تعارف","cta.b2":"راسلنا واتساب",
+"ft.blurb":"عقارات فاخرة منتقاة بذكاء. أول وساطة عقارية في القاهرة الجديدة مبنية على الذكاء الاصطناعي لوحدات موثقة عبر ٢٧ كمبوند.","ft.explore":"استكشف","ft.pricing":"الأسعار","ft.company":"الشركة","ft.about":"عن سييرا","ft.press":"الأخبار","ft.contact":"تواصل","ft.visit":"زورونا","ft.addr":"ماونتن فيو بلازا، التجمع الخامس<br/>القاهرة الجديدة، مصر","ft.rights":"جميع الحقوق محفوظة.",
+"fm.title":"تحدث إلى مستشار سييرا","fm.sub":"نرد خلال ٤ ساعات — هذا وعدنا.","fm.name":"الاسم بالكامل","fm.name.err":"من فضلك أضف اسمك","fm.email":"البريد الإلكتروني","fm.email.err":"بريد صحيح يساعدنا في تأكيد المعاينة","fm.phone":"الهاتف / واتساب","fm.phone.err":"نحتاج رقمًا لترتيب المعاينة","fm.msg":"طلب محدد؟","fm.opt":"(اختياري)","fm.fail":"تعذّر الوصول لفريقنا. أعد المحاولة أو راسلنا واتساب مباشرة.","fm.send":"أرسل الطلب","fm.sending":"جارٍ الإرسال…","fm.done":"استلمنا طلبك","fm.done.sub":"سيتواصل معك مستشار سييرا خلال ٤ ساعات.","fm.close":"إغلاق","fm.viewing.title":"اطلب معاينة خاصة","fm.viewing.sub":"يرتبها الكونسيرج خلال ٤ ساعات.",
+"toast.demo":"وضع تجريبي — تم محاكاة الطلب محليًا.","toast.ai":"سييرا AI متاحة في البوابة الكاملة — هذه معاينة.",
+"ai.ph":"اسأل سييرا أي شيء…","ai.r1":"أفضل ترشيح الآن:","ai.r2":"إعادة البيع المتوقعة","ai.r3":"خلال ٢٤ شهرًا.","ai.view":"اطلب معاينة","ai.none":"لا يوجد تطابق دقيق ضمن المعروض — يمكن لمستشار سييرا توفيرها خارج السوق خلال ٤٨ ساعة. أرتب لك مكالمة؟","ai.book":"احجز مكالمة"}
+};
+let LANG=store.get("se-lang")||"en";
+function t(k){return (I18N[LANG]&&I18N[LANG][k])??I18N.en[k]??k}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.documentElement.dir=LANG==="ar"?"rtl":"ltr";
+  document.querySelectorAll("[data-i18n]").forEach(el=>{el.textContent=t(el.dataset.i18n)});
+  document.querySelectorAll("[data-i18n-html]").forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml)});
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{el.placeholder=t(el.dataset.i18nPh)});
+  document.getElementById("langBtn").textContent=LANG==="ar"?"EN":"AR";
+  renderCards();renderCompounds();renderWhy();renderRooms();
+}
+document.getElementById("langBtn").addEventListener("click",()=>{LANG=LANG==="en"?"ar":"en";store.set("se-lang",LANG);applyLang()});
+
+/* ── theme (light default per brief) ── */
+const root=document.documentElement;
+let THEME=store.get("se-theme")||"light";
+function applyTheme(){
+  root.dataset.theme=THEME;
+  document.getElementById("brandLogo").src=THEME==="dark"?"logo-red.png":"logo-gold.png";
+  const ic=THEME==="dark"?"sun":"moon";
+  document.getElementById("themeBtn").innerHTML='<i data-lucide="'+ic+'"></i>';
+  if(window.lucide)lucide.createIcons();
+  if(window._setTiles)window._setTiles();
+}
+document.getElementById("themeBtn").addEventListener("click",()=>{THEME=THEME==="dark"?"light":"dark";store.set("se-theme",THEME);applyTheme()});
+
+/* ── nav scroll state ── */
+const nav=document.getElementById("nav");
+addEventListener("scroll",()=>{nav.classList.toggle("scrolled",scrollY>8)},{passive:true});
+
+/* ── mobile menu ── */
+const mnav=document.getElementById("mnav"),burger=document.getElementById("burger");
+function setMenu(open){mnav.classList.toggle("open",open);mnav.setAttribute("aria-hidden",String(!open));burger.setAttribute("aria-expanded",String(open));document.body.style.overflow=open?"hidden":""}
+burger.addEventListener("click",()=>setMenu(true));
+document.getElementById("mnavClose").addEventListener("click",()=>setMenu(false));
+mnav.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>setMenu(false)));
+
+/* ── reveal on scroll: transform-only, silk ── */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:.12,rootMargin:"0px 0px -6% 0px"});
+document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+
+/* ── stat count-up (once, skipped under reduced motion) ── */
+const cio=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;cio.unobserve(e.target);
+  const el=e.target,end=+el.dataset.count,suf=el.dataset.suffix||"";
+  if(REDUCED){el.textContent=end.toLocaleString("en-US")+suf;return}
+  const t0=performance.now(),D=900;
+  (function step(now){const p=Math.min(1,(now-t0)/D),v=Math.round(end*(1-Math.pow(1-p,3)));
+    el.textContent=v.toLocaleString("en-US")+suf;if(p<1)requestAnimationFrame(step)})(t0);
+})},{threshold:.6});
+document.querySelectorAll("[data-count]").forEach(el=>cio.observe(el));
+
+/* ── data: demo fallback (mirrors GET /api/listings shape) ── */
+const DEMO_LISTINGS=[
+ {id:"SE-MVC-PH-A12",title:"Skyline Penthouse A",price:32500000,compound:"Mountain View Chillout",beds:4,baths:4,area:480,propertyType:"penthouse",status:"available",kind:"sale",usd:"≈ 1.05M USD",image:"https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=80"},
+ {id:"SE-MIV-VL-27",title:"Garden Villa 27",price:48000000,compound:"Mivida",beds:5,baths:5,area:620,propertyType:"villa",status:"available",kind:"sale",usd:"≈ 1.55M USD",image:"https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900&q=80"},
+ {id:"SE-KTD-AP-9B",title:"Parkside Apartment 9B",price:85000,compound:"Katameya Dunes",beds:3,baths:3,area:210,propertyType:"apartment",status:"available",kind:"rent",usd:"≈ 2,750 USD/mo",image:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80"},
+ {id:"SE-HYP-TH-12",title:"Lakeview Townhouse 12",price:26500000,compound:"Hyde Park",beds:4,baths:4,area:340,propertyType:"townhouse",status:"available",kind:"sale",usd:"≈ 855K USD",image:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80"},
+ {id:"SE-PHC-TW-04",title:"Twin House Palm 04",price:29800000,compound:"Palm Hills New Cairo",beds:4,baths:4,area:390,propertyType:"twin house",status:"available",kind:"sale",usd:"≈ 962K USD",image:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900&q=80"},
+ {id:"SE-STR-SV-01",title:"Standalone Villa Aurora",price:68000000,compound:"Stone Residence",beds:6,baths:6,area:780,propertyType:"standalone",status:"available",kind:"sale",usd:"≈ 2.19M USD",image:"https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=900&q=80"}
+];
+const COMPOUNDS=[
+ {n:"Mountain View Chillout",score:9.4,units:"1.2K",yrs:12,from:"18.5M",lat:30.036,lng:31.546,hot:true},
+ {n:"Mivida",score:9.2,units:"1.8K",yrs:14,from:"22.0M",lat:30.014,lng:31.510,hot:false},
+ {n:"Hyde Park",score:9.0,units:"2.1K",yrs:11,from:"16.8M",lat:30.004,lng:31.521,hot:true},
+ {n:"Palm Hills New Cairo",score:8.9,units:"1.6K",yrs:10,from:"24.5M",lat:30.023,lng:31.576,hot:false},
+ {n:"Katameya Dunes",score:8.7,units:"980",yrs:16,from:"28.0M",lat:29.996,lng:31.436,hot:false},
+ {n:"Stone Residence",score:8.5,units:"740",yrs:9,from:"32.0M",lat:30.025,lng:31.463,hot:false},
+ {n:"Marakez — Mar Bay",score:8.3,units:"1.1K",yrs:6,from:"14.5M",lat:30.043,lng:31.489,hot:false},
+ {n:"Sodic Eastown",score:8.1,units:"1.4K",yrs:8,from:"19.8M",lat:30.023,lng:31.444,hot:true}
+];
+const WHY=[
+ {ic:"target",en:["94% Pricing Accuracy","Every quote is cross-checked against 47 hedonic features and live transaction comps."],ar:["دقة تسعير ٩٤٪","كل تسعير يُراجَع مقابل ٤٧ خاصية سعرية وصفقات سوق حية."]},
+ {ic:"clock-4",en:["4-Hour Concierge Promise","From first inquiry to first viewing — guaranteed within four hours."],ar:["وعد الكونسيرج ٤ ساعات","من أول استفسار إلى أول معاينة — مضمونة خلال أربع ساعات."]},
+ {ic:"shield-check",en:["Verified Inventory","Every unit walked through by our team. No fake listings, no stale photos, no surprise defects."],ar:["مخزون موثق","كل وحدة عاينها فريقنا ميدانيًا. لا إعلانات وهمية ولا صور قديمة ولا عيوب مفاجئة."]},
+ {ic:"trending-up",en:["Resale Forecasting","12-month projections with ±8% confidence bands, refreshed nightly from 18 market feeds."],ar:["توقعات إعادة البيع","إسقاطات ١٢ شهرًا بهامش ±٨٪ تُحدَّث ليليًا من ١٨ مصدر سوق."]},
+ {ic:"languages",en:["Bilingual Advisors","EN / AR native advisors who understand Egyptian regulatory nuance and international buyer expectations."],ar:["مستشارون ثنائيو اللغة","مستشارون بالعربية والإنجليزية يجمعون فهم اللوائح المصرية وتوقعات المشتري الدولي."]},
+ {ic:"home",en:["Family Concierge","School runs, utility setup, renovation crews — one advisor coordinates everything, for life."],ar:["كونسيرج العائلة","المدارس والمرافق وفرق التشطيب — مستشار واحد ينسق كل شيء، مدى الحياة."]}
+];
+const ROOMS=[
+ {k:"room.living",img:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80"},
+ {k:"room.kitchen",img:"https://images.unsplash.com/photo-1556912167-f556f1f39fdf?w=2000&q=80"},
+ {k:"room.master",img:"https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=2000&q=80"},
+ {k:"room.garden",img:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=2000&q=80"}
+];
+
+/* ── listings: fetch → fallback ── */
+let LISTINGS=[],DEMO=false,FILTER="all",LOADSTATE="loading";
+function fmtPrice(l){
+  if(l.kind==="rent")return{p:(l.price/1000).toFixed(0)+"K EGP/mo",u:l.usd||""};
+  return{p:(l.price/1e6).toFixed(1)+"M EGP",u:l.usd||""};
+}
+function normalize(x){
+  const kind=x.kind||((x.propertyType||"").includes("rent")||x.price<1e6?"rent":"sale");
+  return{id:x.id||"SE-UNIT",title:x.title||"Sierra Residence",price:+x.price||0,compound:x.compound||"New Cairo",
+    beds:x.beds??"—",baths:x.baths??"—",area:x.area??"—",image:x.image||(x.images&&x.images[0])||DEMO_LISTINGS[0].image,
+    propertyType:x.propertyType||"residence",kind,usd:x.usd||""};
+}
+async function loadListings(){
+  renderSkeletons();
+  try{
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(API_BASE+"/api/listings?limit=12",{signal:ctrl.signal});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const j=await r.json();
+    if(!j.success||!Array.isArray(j.listings)||!j.listings.length)throw new Error("empty");
+    LISTINGS=j.listings.map(normalize);DEMO=false;
+  }catch(e){LISTINGS=DEMO_LISTINGS.map(normalize);DEMO=true}
+  LOADSTATE="done";
+  document.getElementById("demoFlag").classList.toggle("show",DEMO);
+  window.__seTrack?.("listings_loaded",{source:DEMO?"demo":"api",count:LISTINGS.length});
+  renderCards();
+}
+function renderSkeletons(){
+  document.getElementById("cards").innerHTML='<div class="skel"></div>'.repeat(6);
+}
+function renderCards(){
+  if(LOADSTATE!=="done")return;
+  const wrap=document.getElementById("cards");
+  const rows=LISTINGS.filter(l=>FILTER==="all"||l.kind===FILTER);
+  if(!rows.length){wrap.innerHTML='<div class="state-note" style="grid-column:1/-1"><i data-lucide="search-x" style="width:26px;height:26px;color:var(--gold)"></i><b>'+t("empty.t")+'</b><span class="mono">'+t("empty.s")+"</span></div>";if(window.lucide)lucide.createIcons();return}
+  wrap.innerHTML=rows.map((l,i)=>{
+    const f=fmtPrice(l);
+    const statusKey=l.kind==="rent"?"filter.rent":"filter.sale";
+    return `<article class="pcard rv in" style="transition-delay:${Math.min(i*70,280)}ms">
+      <div class="pcard-media">
+        <img src="${l.image}" alt="${l.title}" loading="lazy"/>
+        <div class="pcard-top"><span class="badge badge-status mono">${t(statusKey)} · ${l.propertyType}</span><span class="badge badge-sbr mono">${l.id.replace(/^SE-/,"")}</span></div>
+      </div>
+      <div class="pcard-body">
+        <h3>${l.title}</h3>
+        <p class="pcard-loc"><i data-lucide="map-pin"></i>${l.compound} · New Cairo</p>
+        <p class="pcard-specs mono"><span>${l.beds} BR</span><span>${l.area} m²</span><span>${l.baths} BA</span></p>
+        <div class="pcard-foot">
+          <div class="price mono">${f.p}<small>${f.u}</small></div>
+          <button class="btn btn-ghost btn-sm" data-view="${l.id}" data-title="${l.title}">${t("view")}</button>
+        </div>
+      </div>
+    </article>`}).join("");
+  if(window.lucide)lucide.createIcons();
+  wrap.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>openLead({unitId:b.dataset.view,title:b.dataset.title})));
+  wrap.querySelectorAll(".pcard").forEach((card,idx)=>{
+    const l=rows[idx];
+    card.querySelector(".pcard-media").addEventListener("click",()=>openLead({unitId:l.id,title:l.title}));
+  });
+  /* clear entrance stagger so hover transitions aren't delayed */
+  setTimeout(()=>wrap.querySelectorAll(".pcard").forEach(c=>c.style.transitionDelay="0ms"),760);
+}
+document.querySelectorAll("[data-filter]").forEach(c=>c.addEventListener("click",()=>{
+  document.querySelectorAll("[data-filter]").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on");FILTER=c.dataset.filter;renderCards();
+}));
+
+/* ── compounds ── */
+function renderCompounds(){
+  const el=document.getElementById("compoundList");
+  el.innerHTML=COMPOUNDS.map((c,i)=>`
+   <div class="compound-row" data-cmp="${i}" role="button" tabindex="0" aria-label="${c.n} on map">
+     <span class="score mono">${c.score.toFixed(1)}</span>
+     <div><h4>${c.n}</h4><span class="meta">${c.units} ${t("units")} · ${c.yrs} ${t("yrs")}</span></div>
+     <div class="from">${t("from")}<br/><span style="color:var(--gold-ink);font-size:14.5px">${c.from} EGP</span></div>
+   </div>`).join("");
+  el.querySelectorAll("[data-cmp]").forEach(r=>{
+    const go=()=>flyToCompound(+r.dataset.cmp);
+    r.addEventListener("click",go);
+    r.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}});
+  });
+}
+
+/* ── why ── */
+function renderWhy(){
+  document.getElementById("whyList").innerHTML=WHY.map((w,i)=>{
+    const s=LANG==="ar"?w.ar:w.en;
+    return `<div class="why-row">
+      <span class="idx mono">0${i+1}</span>
+      <h3><i data-lucide="${w.ic}"></i>${s[0]}</h3>
+      <p>${s[1]}</p></div>`}).join("");
+  if(window.lucide)lucide.createIcons();
+}
+
+/* ── map (Leaflet, theme-aware Carto basemap) ── */
+let MAP,TILES;const MARKERS=[];
+function initMap(){
+  if(!window.L)return setTimeout(initMap,120);
+  MAP=L.map("map",{scrollWheelZoom:false,zoomControl:true}).setView([30.018,31.50],12);
+  window._setTiles=()=>{
+    if(TILES)MAP.removeLayer(TILES);
+    const style=root.dataset.theme==="dark"?"dark_all":"light_all";
+    TILES=L.tileLayer(`https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,{attribution:'© OpenStreetMap · © CARTO',maxZoom:18}).addTo(MAP);
+  };
+  window._setTiles();
+  COMPOUNDS.forEach(c=>{
+    const icon=L.divIcon({className:"",html:`<div class="se-pin" style="${c.hot?"background:var(--red);box-shadow:0 0 0 4px rgba(230,57,70,.28),0 4px 10px rgba(0,0,0,.35)":""}"></div>`,iconSize:[14,14],iconAnchor:[7,7]});
+    const m=L.marker([c.lat,c.lng],{icon}).addTo(MAP)
+     .bindPopup(`<div class="map-pop"><b>${c.n}</b><br/><span class="mono">SCORE ${c.score.toFixed(1)} · ${t("from")} ${c.from} EGP</span></div>`);
+    MARKERS.push(m);
+  });
+}
+function flyToCompound(i){
+  const c=COMPOUNDS[i];
+  document.getElementById("map").scrollIntoView({behavior:REDUCED?"auto":"smooth",block:"center"});
+  if(!MAP)return;
+  setTimeout(()=>{MAP.flyTo([c.lat,c.lng],14,{duration:REDUCED?0:1.1});if(MARKERS[i])setTimeout(()=>MARKERS[i].openPopup(),REDUCED?0:1150)},350);
+}
+
+/* ── virtual tour: drag-to-pan ── */
+let ROOM=0;
+function renderRooms(){
+  const el=document.getElementById("tourRooms");
+  el.innerHTML=ROOMS.map((r,i)=>`<button class="chip ${i===ROOM?"on":""}" data-room="${i}">${t(r.k)}</button>`).join("");
+  el.querySelectorAll("[data-room]").forEach(b=>b.addEventListener("click",()=>{ROOM=+b.dataset.room;
+    const img=document.getElementById("tourImg");img.src=ROOMS[ROOM].img;panX=50;paint();renderRooms()}));
+}
+let panX=50,dragging=null;
+function paint(){
+  const img=document.getElementById("tourImg"),box=document.getElementById("tour360");
+  const over=Math.max(0,img.offsetWidth-box.offsetWidth);
+  img.style.left=(-over*panX/100)+"px";
+}
+const ui=document.getElementById("tourUI");
+function px(e){return e.touches?e.touches[0].clientX:e.clientX}
+ui.addEventListener("pointerdown",e=>{dragging={x:e.clientX,p:panX};ui.setPointerCapture(e.pointerId)});
+ui.addEventListener("pointermove",e=>{if(!dragging)return;panX=Math.max(0,Math.min(100,dragging.p-(e.clientX-dragging.x)/9));paint()});
+ui.addEventListener("pointerup",()=>dragging=null);
+ui.addEventListener("pointercancel",()=>dragging=null);
+addEventListener("resize",paint);
+document.getElementById("tourImg").addEventListener("load",paint);
+
+/* ── lead / viewing funnel (POST /api/leads → /api/leads/request-viewing) ── */
+const modal=document.getElementById("leadModal");
+let LEAD_CTX=null;
+function openLead(ctx){
+  LEAD_CTX=ctx||null;
+  document.getElementById("leadFormWrap").style.display="";
+  document.getElementById("leadDone").classList.remove("show");
+  document.getElementById("formFail").classList.remove("show");
+  const u=document.getElementById("leadUnit");
+  const title=document.getElementById("leadTitle"),sub=title.nextElementSibling;
+  if(ctx&&ctx.unitId){u.textContent="UNIT · "+ctx.unitId+" — "+ctx.title;u.classList.add("show");
+    title.textContent=t("fm.viewing.title");sub.textContent=t("fm.viewing.sub");}
+  else{u.classList.remove("show");title.textContent=t("fm.title");sub.textContent=t("fm.sub");}
+  modal.classList.add("open");document.body.style.overflow="hidden";
+  setTimeout(()=>document.getElementById("f-name").focus(),260);
+}
+function closeLead(){modal.classList.remove("open");document.body.style.overflow=""}
+document.querySelectorAll("[data-open-lead]").forEach(b=>b.addEventListener("click",()=>openLead(null)));
+document.querySelectorAll("[data-close-lead]").forEach(b=>b.addEventListener("click",closeLead));
+modal.addEventListener("click",e=>{if(e.target===modal)closeLead()});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&modal.classList.contains("open"))closeLead()});
+
+async function postJSON(path,body){
+  const r=await fetch(API_BASE+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.success===false)throw new Error(j.error||j.message||"HTTP "+r.status);
+  return j;
+}
+document.getElementById("leadForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const F=id=>document.getElementById(id).value.trim();
+  const name=F("f-name"),email=F("f-email"),phone=F("f-phone"),message=F("f-msg");
+  let ok=true;
+  const mark=(f,bad)=>{document.querySelector(`[data-f="${f}"]`).classList.toggle("bad",bad);if(bad)ok=false};
+  mark("name",!name);mark("email",!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email));mark("phone",phone.replace(/\D/g,"").length<8);
+  if(!ok)return;
+  const btn=document.getElementById("leadSubmit");btn.disabled=true;btn.firstElementChild.textContent=t("fm.sending");
+  document.getElementById("formFail").classList.remove("show");
+  let refText="";
+  try{
+    if(DEMO)throw{demo:true};
+    const lead=await postJSON("/api/leads",{name,email,phone,message,locale:LANG});
+    refText="LEAD · "+(lead.id||"—");
+    if(LEAD_CTX&&LEAD_CTX.unitId){
+      const v=await postJSON("/api/leads/request-viewing",{leadId:lead.id,unitId:LEAD_CTX.unitId});
+      refText="VIEWING · "+(v.viewingId||"—");
+      if(v.message)document.getElementById("doneMsg").textContent=v.message;
+    }
+  }catch(err){
+    if(err&&err.demo){ // simulated success in demo mode
+      await new Promise(r=>setTimeout(r,700));
+      refText=(LEAD_CTX&&LEAD_CTX.unitId?"VIEWING":"LEAD")+" · DEMO-"+Math.random().toString(36).slice(2,8).toUpperCase();
+      toast(t("toast.demo"));
+    }else{
+      btn.disabled=false;btn.firstElementChild.textContent=t("fm.send");
+      document.getElementById("formFail").classList.add("show");return;
+    }
+  }
+  btn.disabled=false;btn.firstElementChild.textContent=t("fm.send");
+  window.__seTrack?.(LEAD_CTX&&LEAD_CTX.unitId?"viewing_requested":"lead_submitted",{demo:DEMO,unit:LEAD_CTX&&LEAD_CTX.unitId||null,lang:LANG});
+  document.getElementById("leadFormWrap").style.display="none";
+  const done=document.getElementById("leadDone");done.classList.add("show");
+  document.getElementById("doneRef").textContent=refText;
+  if(window.lucide)lucide.createIcons();
+  e.target.reset();
+});
+
+/* ── toast ── */
+let toastT;
+function toast(msg){
+  const el=document.getElementById("toast");
+  document.getElementById("toastMsg").textContent=msg;
+  el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),3400);
+}
+/* ── Sierra chat: live client-side matcher over LISTINGS ── */
+const AR_ALIAS={"قطامية":"katameya","ماونتن":"mountain","ميفيدا":"mivida","هايد":"hyde","بالم":"palm","ستون":"stone","إيستاون":"eastown","ايستاون":"eastown","فيلا":"villa","بنتهاوس":"penthouse","شقة":"apartment","تاون":"townhouse","إيجار":"rent","غرف":"br","غرفة":"br","مليون":"m"};
+function askSierra(q){
+  window.__seTrack?.("ai_ask",{lang:LANG});
+  const log=document.getElementById("aiLog");
+  const you=document.createElement("div");you.className="msg you";you.textContent=q;log.appendChild(you);
+  const think=document.createElement("div");think.className="msg ai";think.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';log.appendChild(think);
+  log.scrollTop=log.scrollHeight;
+  setTimeout(()=>{
+    let s=q.toLowerCase();
+    Object.keys(AR_ALIAS).forEach(k=>{s=s.split(k).join(" "+AR_ALIAS[k]+" ")});
+    const mBudget=s.match(/(\d+(?:\.\d+)?)\s*m\b/);const budget=mBudget?+mBudget[1]*1e6:null;
+    const mBeds=s.match(/(\d+)\s*(?:br|bed)/);const beds=mBeds?+mBeds[1]:null;
+    const wantRent=/rent/.test(s);
+    const types=["villa","penthouse","apartment","townhouse","twin","standalone"].filter(x=>s.includes(x));
+    const scored=LISTINGS.map(l=>{let sc=0;
+      if(l.compound.toLowerCase().split(/\s+/).some(w=>w.length>3&&s.includes(w.toLowerCase())))sc+=3;
+      if(types.length&&types.some(x=>l.propertyType.includes(x)))sc+=2;
+      if(beds&&l.beds>=beds)sc+=1;
+      if(budget&&l.kind==="sale"&&l.price<=budget)sc+=2;
+      if(wantRent===(l.kind==="rent"))sc+=1;
+      return{l,sc}}).sort((a,b)=>b.sc-a.sc);
+    const top=scored[0];
+    if(top&&top.sc>=2){
+      const f=fmtPrice(top.l);
+      think.innerHTML=`${t("ai.r1")} <b>${top.l.title}</b> — ${top.l.beds}BR · ${top.l.area}m² · <span class="mono">${f.p}</span>. ${t("ai.r2")} <span class="mono">+9–12%</span> ${t("ai.r3")} <span class="act" data-act-view="${top.l.id}" data-act-title="${top.l.title}">${t("ai.view")} →</span>`;
+    }else{
+      think.innerHTML=`${t("ai.none")} <span class="act" data-act-book>${t("ai.book")} →</span>`;
+    }
+    log.scrollTop=log.scrollHeight;
+  },REDUCED?60:820);
+}
+document.getElementById("aiLog").addEventListener("click",e=>{
+  const v=e.target.closest("[data-act-view]");if(v)return openLead({unitId:v.dataset.actView,title:v.dataset.actTitle});
+  if(e.target.closest("[data-act-book]"))openLead(null);
+});
+document.querySelectorAll("[data-ask]").forEach(c=>c.addEventListener("click",()=>askSierra(c.textContent)));
+const aiField=document.getElementById("aiField");
+function sendAI(){const q=aiField.value.trim();if(!q)return;aiField.value="";askSierra(q)}
+document.getElementById("aiSend").addEventListener("click",sendAI);
+aiField.addEventListener("keydown",e=>{if(e.key==="Enter")sendAI()});
+
+/* ── pricing rows → prefilled advisor request ── */
+document.querySelectorAll(".ptable tbody tr").forEach(tr=>tr.addEventListener("click",()=>{
+  const unit=tr.cells[0].textContent,cmp=tr.cells[1].textContent;
+  openLead(null);
+  document.getElementById("f-msg").value=(LANG==="ar"?"مهتم بـ ":"Interested in ")+unit+" — "+cmp;
+}));
+
+/* ── boot ── */
+document.getElementById("yr").textContent=new Date().getFullYear();
+applyTheme();applyLang();loadListings();initMap();
+addEventListener("load",()=>{if(window.lucide)lucide.createIcons();paint()});
+
+/* ── GSAP: scroll choreography (transform-only, DS-safe) ── */
+addEventListener("load",()=>{
+  if(REDUCED)return;
+  if(window.gsap&&window.ScrollTrigger){
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.to("#progress",{scaleX:1,ease:"none",scrollTrigger:{start:0,end:"max",scrub:.35}});
+    gsap.fromTo(".ph-a",{yPercent:3.5},{yPercent:-3.5,ease:"none",scrollTrigger:{trigger:".hero",start:"top top",end:"bottom top",scrub:.7}});
+    gsap.fromTo(".ph-b",{yPercent:9},{yPercent:-7,ease:"none",scrollTrigger:{trigger:".hero",start:"top top",end:"bottom top",scrub:.7}});
+    gsap.from(".ai-tile",{y:22,duration:.7,ease:"power3.out",stagger:.09,scrollTrigger:{trigger:".ai-tiles",start:"top 85%"}});
+    gsap.from(".ptable tbody tr",{y:14,duration:.5,ease:"power2.out",stagger:.06,scrollTrigger:{trigger:".ptable",start:"top 82%"}});
+    gsap.from(".why-row",{y:16,duration:.6,ease:"power2.out",stagger:.07,scrollTrigger:{trigger:"#whyList",start:"top 85%"}});
+    gsap.fromTo(".tour-img",{xPercent:0},{xPercent:-2,ease:"none",scrollTrigger:{trigger:".tour",start:"top 90%",end:"bottom 10%",scrub:1}});
+  }
+  /* Motion One (Framer Motion's vanilla engine): magnetic gold CTAs */
+  if(window.Motion){
+    const {animate}=Motion;
+    document.querySelectorAll(".btn-gold,.ai-send").forEach(b=>{
+      b.addEventListener("pointermove",e=>{const r=b.getBoundingClientRect();
+        animate(b,{x:((e.clientX-r.left)/r.width-.5)*8,y:((e.clientY-r.top)/r.height-.5)*6},{duration:.25,easing:"ease-out"})});
+      b.addEventListener("pointerleave",()=>animate(b,{x:0,y:0},{duration:.55,easing:[.16,1,.3,1]}));
+      b.addEventListener("pointerdown",()=>animate(b,{scale:.97},{duration:.12,easing:"ease-out"}));
+      b.addEventListener("pointerup",()=>animate(b,{scale:1},{duration:.35,easing:[.16,1,.3,1]}));
+    });
+  }
+});
+</script>
+</body>
+</html>

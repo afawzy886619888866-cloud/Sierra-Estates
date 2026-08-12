@@ -1,0 +1,125 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { corsHeaders } from '@/lib/server/cors';
+import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+
+/**
+ * Edge proxy (proxy.ts).
+ * Next.js 16 file convention update.
+ * Concerns:
+ * 0. Host split & RBAC Session Protection for /admin routes.
+ * 1. CORS for /api routes.
+ * 2. Shared-secret gate for internal automation routes (/api/orchestrate).
+ */
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const adminHost = process.env.ADMIN_HOST;
+  const requestHost = request.headers.get('host') ?? request.nextUrl.hostname;
+  
+  // Identify admin host: exact match for ADMIN_HOST, or Vercel generated URLs that start with admin/sierra-admin
+  const onAdminHost = 
+    (Boolean(adminHost) && requestHost === adminHost) || 
+    requestHost.startsWith('admin') || 
+    requestHost.startsWith('sierra-admin');
+
+  const isLocal = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
+
+  let targetPath = pathname;
+  let isRewritten = false;
+
+  // 0a) On the admin host, the console IS the site: root target is /admin
+  if (onAdminHost && pathname === '/') {
+    targetPath = '/admin';
+    isRewritten = true;
+  }
+
+  // 0b) Admin route protection & host split
+  if (targetPath.startsWith('/admin')) {
+    if (adminHost && !onAdminHost && !isLocal) {
+      const url = new URL(request.url);
+      url.hostname = adminHost;
+      url.protocol = 'https:';
+      url.port = '';
+      return NextResponse.redirect(url, 307);
+    }
+
+    // Allow /admin/login without session verification
+    if (targetPath === '/admin/login') {
+      return isRewritten
+        ? NextResponse.rewrite(new URL('/admin/login', request.url))
+        : NextResponse.next();
+    }
+
+    // Guard all other /admin routes with RBAC session token
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    const session = await verifySession(token);
+
+    if (!session) {
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('redirect', targetPath);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return isRewritten
+      ? NextResponse.rewrite(new URL(targetPath, request.url))
+      : NextResponse.next();
+  }
+
+  // 1) CORS Preflight Handling for API routes
+  if (pathname.startsWith('/api/')) {
+    const origin = request.headers.get('origin');
+    const headers = corsHeaders(origin);
+
+    // Handle OPTIONS Preflight
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers,
+      });
+    }
+
+    // 2) Internal Security Secret Gate for /api/orchestrate
+    if (pathname.startsWith('/api/orchestrate')) {
+      const secretHeader = request.headers.get('x-sbr-secret-key');
+      const expectedSecret = process.env.SBR_SECRET_KEY;
+
+      // Fail-closed if secret is missing or mismatched
+      if (!expectedSecret || secretHeader !== expectedSecret) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Unauthorized system orchestration request' }),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+          }
+        );
+      }
+    }
+
+    // Standard API response — attach CORS headers
+    const response = NextResponse.next();
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
+  }
+
+  return NextResponse.next();
+}
+
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public assets (.png, .jpg, .svg, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};

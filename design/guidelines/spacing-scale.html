@@ -1,0 +1,29 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Spacing Scale" subtitle="8px base unit — 4 → 96px" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 26px 24px; }
+  .row { display: flex; align-items: flex-end; gap: 18px; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .bar { background: var(--grad-gold); border-radius: 3px; width: 100%; }
+  .cell { display: flex; align-items: flex-end; }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--tx-m); }
+  .val { font-family: var(--font-mono); font-size: 10px; color: var(--tx-s); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="item"><div class="bar" style="height:4px;width:4px"></div><div class="tag">xs</div><div class="val">4</div></div>
+    <div class="item"><div class="bar" style="height:8px;width:8px"></div><div class="tag">sm</div><div class="val">8</div></div>
+    <div class="item"><div class="bar" style="height:12px;width:12px"></div><div class="tag">sm+</div><div class="val">12</div></div>
+    <div class="item"><div class="bar" style="height:16px;width:16px"></div><div class="tag">md</div><div class="val">16</div></div>
+    <div class="item"><div class="bar" style="height:24px;width:24px"></div><div class="tag">lg</div><div class="val">24</div></div>
+    <div class="item"><div class="bar" style="height:32px;width:32px"></div><div class="tag">xl</div><div class="val">32</div></div>
+    <div class="item"><div class="bar" style="height:48px;width:48px"></div><div class="tag">2xl</div><div class="val">48</div></div>
+    <div class="item"><div class="bar" style="height:64px;width:64px"></div><div class="tag">3xl</div><div class="val">64</div></div>
+  </div>
+</body>
+</html>

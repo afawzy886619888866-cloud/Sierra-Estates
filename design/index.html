@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sierra Estates · New Cairo Properties — Rent & Resale</title>
+<meta name="description" content="Sierra Estates — AI-curated rent and resale properties across 50+ New Cairo compounds. Verified listings, live AVM pricing, licensed brokers."/>
+<link rel="canonical" href="https://sierra-estates.net/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Sierra Estates · New Cairo Properties"/>
+<meta property="og:description" content="AI-curated rent and resale properties across 50+ New Cairo compounds. Verified listings, live AVM pricing, licensed brokers."/>
+<meta property="og:url" content="https://sierra-estates.net/"/>
+<meta property="og:image" content="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&q=80"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" type="image/png" href="logo-gold.png"/>
+
+<!-- Apply saved theme + language before first paint (no flash of wrong theme) -->
+<script>
+(function () {
+  var d = document.documentElement;
+  try {
+    var l = localStorage.getItem('hzp-lang') || 'en';
+    d.setAttribute('data-theme', localStorage.getItem('hzp-theme') || 'light');
+    d.lang = l;
+    d.dir = l === 'ar' ? 'rtl' : 'ltr';
+  } catch (e) { d.setAttribute('data-theme', 'light'); }
+})();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link rel="preconnect" href="https://images.unsplash.com"/>
+<link rel="preconnect" href="https://unpkg.com"/>
+<link rel="preload" as="image" href="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1920&q=85"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<link rel="stylesheet" href="home.css"/>
+
+<!-- Firebase JS SDK (Firestore + Auth) — same project as admin panel -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics-compat.js" defer></script>
+<script src="firebase-config.js" defer></script>
+<script src="firebase-data.js" defer></script>
+
+<!-- Leaflet is NOT loaded here — home.js pulls it in only when the map section nears the viewport -->
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js" defer></script>
+<script src="data.js" defer></script>
+<script src="shared.js" defer></script>
+<script src="home.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "Sierra Estates",
+  "url": "https://sierra-estates.net/",
+  "telephone": "+2 01092048333",
+  "email": "Info@sierra-estates.net",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Banafseg 2, Villa 402",
+    "addressLocality": "New Cairo",
+    "addressCountry": "EG"
+  },
+  "areaServed": ["New Cairo", "5th Settlement", "Katameya", "Madinaty", "El Shorouk", "Mostakbal City"]
+}
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#main" data-i18n="skipToContent">Skip to content</a>
+<div id="site-chrome"></div>
+
+<main id="main">
+
+<!-- HERO SLIDER -->
+<header class="hero">
+  <div id="hero-slides" aria-hidden="true"></div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="h-eyebrow" id="hero-pre"></p>
+    <h1 id="hero-main"></h1>
+    <p class="sub" data-i18n="heroSub"></p>
+    <div class="quick">
+      <span><i data-lucide="badge-check" class="i"></i> <span data-i18n="q1"></span></span>
+      <span><i data-lucide="map" class="i"></i> <span data-i18n="q2"></span></span>
+      <span><i data-lucide="shield-check" class="i"></i> <span data-i18n="q3"></span></span>
+    </div>
+  </div>
+  <a class="map-cta" href="compounds.html" title="Explore Map">
+    <span class="mc-ic"><i data-lucide="map" class="i"></i></span>
+    <span data-i18n="exploreMapBtn"></span>
+  </a>
+  <div class="dots" id="hero-dots"></div>
+  <!-- ═══ LASER BEAM — inside hero only, never covers map or 3D ═══ -->
+  <div class="page-laser" aria-hidden="true">
+    <div class="page-laser-beam"></div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true">
+    <span class="scroll-cue-line"></span>
+    <span class="scroll-cue-label">SCROLL</span>
+  </div>
+</header>
+
+<!-- ═══ CALM BELL BAR — Request Now with 25% OFF ════════════════════════════
+     "استكشف أفضل الفرص المتاحة في التجمع الخامس — AI Driven — قدم طلبك الآن
+      خصم 25% على رسوم الخدمة" — calm, slow flashing -->
+<div class="bell-bar" id="bell-bar">
+  <div class="bell-content">
+    <span class="bell-text">The first real estate ecosystem in Egypt · استكشف أفضل الفرص المتاحة في التجمع الخامس <b>AI Driven</b> · قدم طلبك الآن</span>
+    <span class="bell-badge">خصم 25%</span>
+    <a href="#contact" class="bell-btn">اطلب الآن <i data-lucide="arrow-right" class="i i-sm"></i></a>
+  </div>
+</div>
+
+<!-- SEARCH CARD -->
+<div class="wrap searchbar">
+  <div class="search-card rv">
+    <div class="search-tabs">
+      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy" aria-label="Buy properties" title="Buy"></button>
+      <button data-i18n="tabRent" type="button" data-tab="rent" aria-label="Rent properties" title="Rent"></button>
+      <button data-i18n="tabNew" type="button" data-tab="new" aria-label="New properties" title="New"></button>
+    </div>
+    <div class="search-fields">
+      <!-- Compound search with autocomplete -->
+      <div class="field">
+        <label for="hero-compound-search" data-i18n="fLoc"></label>
+        <div class="search-compound-wrap">
+          <input type="text" id="hero-compound-search" class="hero-search-input" data-i18n-ph="searchCpdPh" placeholder="Search compound… (e.g. Mivida)" autocomplete="off" aria-label="Search Compound" />
+          <div id="hero-compound-results" class="compound-dropdown compound-dropdown-hidden"></div>
+        </div>
+      </div>
+      <!-- Property Type dropdown -->
+      <div class="field">
+        <label for="hero-type" data-i18n="fType"></label>
+        <select id="hero-type" class="hero-select" aria-label="Property Type">
+          <option value="">Any Type</option>
+          <option value="Apartment">Apartment</option>
+          <option value="Villa">Villa</option>
+          <option value="Townhouse">Townhouse</option>
+          <option value="Twin House">Twin House</option>
+          <option value="Penthouse">Penthouse</option>
+          <option value="Duplex">Duplex</option>
+        </select>
+      </div>
+      <!-- Bedrooms dropdown -->
+      <div class="field">
+        <label for="hero-beds" data-i18n="fBeds"></label>
+        <select id="hero-beds" class="hero-select" aria-label="Bedrooms">
+          <option value="0">Any</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+          <option value="5">5+</option>
+        </select>
+      </div>
+      <!-- Price dropdown -->
+      <div class="field">
+        <label for="hero-price" data-i18n="fPrice"></label>
+        <select id="hero-price" class="hero-select" aria-label="Price">
+          <option value="0">Any Price</option>
+          <option value="5">Up to 5M EGP</option>
+          <option value="10">Up to 10M EGP</option>
+          <option value="20">Up to 20M EGP</option>
+          <option value="30">Up to 30M EGP</option>
+          <option value="50">Up to 50M EGP</option>
+        </select>
+      </div>
+      <!-- Search button -->
+      <div class="field searchbtn">
+        <button type="button" class="btn btn-pri" id="hero-search-btn" aria-label="Search properties" title="Search"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MARKET TICKER (decorative) -->
+<div class="ticker" aria-hidden="true"><div class="row" id="ticker-row"></div></div>
+
+<!-- FEATURED PROPERTIES -->
+<section class="block" id="properties">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <p class="eyebrow" data-i18n="eyeList"></p>
+        <h2 data-i18n="featTit"></h2>
+        <p data-i18n="featSub"></p>
+      </div>
+      <a href="properties.html" class="sec-link" title="View All Properties"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i"></i></a>
+    </div>
+    <div class="grid-props" id="prop-grid"></div>
+  </div>
+</section>
+
+<!-- ═══ 3D VIRTUAL TOUR — ADVERTISING BANNER ════════════════════════════════
+     Cinematic banner-style hero for our flagship 3D walkthrough feature.
+     Premium luxury villa (with pool, dusk lighting) as cover. Click-to-
+     activate 3D engine keeps the page fast. Strong USP headline +
+     feature pills + floating stats card communicate the unique value. -->
+<section class="block well" id="tour" data-screen-label="Virtual tour">
+  <div class="wrap">
+    <div class="sec-head rv vtv-head">
+      <div>
+        <h2 data-i18n="tourTit" class="vtv-usp-tit"></h2>
+        <p data-i18n="tourSub"></p>
+      </div>
+      <a href="virtual-tour.html" class="vtv-link" title="Open Full Tour">
+        <span data-i18n="tourOpenFull"></span> <i data-lucide="arrow-right" class="i"></i>
+      </a>
+    </div>
+
+    <!-- ── Banner frame: gold gradient border + glow ── -->
+    <div id="vtv-banner" class="vtv-banner-card">
+      <!-- Gold gradient border glow -->
+      <div class="vtv-banner-border"></div>
+
+      <!-- Click-to-activate poster button -->
+      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" class="vtv-poster-btn" title="Launch 3D Tour">
+        <!-- Cinematic gradient scrim (deeper on left for text legibility) -->
+        <span class="vtv-scrim-left"></span>
+        <!-- Subtle bottom scrim for stats card -->
+        <span class="vtv-scrim-bot"></span>
+
+        <!-- ── LEFT: USP headline + feature pills ── -->
+        <span class="vtv-left-content">
+          <span class="vtv-usp-eyebrow">
+            <span class="vtv-usp-line"></span>
+            SIERRA 3D · POWERED BY IMMERSIVE TECH
+          </span>
+          <span class="vtv-usp-tit">
+            Walk Through Your<br/>Next Home
+            <span class="vtv-usp-tit-hl">Before You Visit</span>
+          </span>
+          <span class="vtv-usp-sub">
+            Every Sierra listing is captured in cinematic 4K HDR. Stroll room-by-room, peek into the garden at dusk, gauge the pool from above, all from your screen, all in seconds.
+          </span>
+          <!-- Feature pills -->
+          <span class="vtv-pills">
+            <span class="vtv-pill">
+              <i data-lucide="video" class="i"></i> 4K HDR
+            </span>
+            <span class="vtv-pill">
+              <i data-lucide="door-open" class="i"></i> Room-by-room
+            </span>
+            <span class="vtv-pill">
+              <i data-lucide="glasses" class="i"></i> VR-ready
+            </span>
+            <span class="vtv-pill">
+              <i data-lucide="grid-2x2" class="i"></i> Floor plan
+            </span>
+          </span>
+        </span>
+
+        <!-- ── RIGHT: Big play button + label ── -->
+        <span class="vtv-right-content">
+          <span class="vtv-big-play">
+            <i data-lucide="play" class="i"></i>
+          </span>
+          <span class="vtv-play-lbl">▶ Launch 3D Tour</span>
+        </span>
+
+        <!-- ── BOTTOM-LEFT: property info card ── -->
+        <span class="vtv-bl-info">
+          <span class="vtv-bl-eyebrow">
+            <i data-lucide="map-pin" class="i"></i> Featured · New Cairo
+          </span>
+          <span class="vtv-bl-tit">Sierra Signature Villa · Mivida</span>
+          <span class="vtv-bl-spec">5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
+        </span>
+
+        <!-- ── BOTTOM-RIGHT: floating stats card ── -->
+        <span class="vtv-br-stats">
+          <span class="vtv-stat-col">
+            <span class="vtv-stat-num c1">47</span>
+            <span class="vtv-stat-lbl">tours live</span>
+          </span>
+          <span class="vtv-stat-sep"></span>
+          <span class="vtv-stat-col">
+            <span class="vtv-stat-num c2">12</span>
+            <span class="vtv-stat-lbl">ready to move</span>
+          </span>
+          <span class="vtv-stat-sep"></span>
+          <span class="vtv-stat-col">
+            <span class="vtv-stat-num c3">4K</span>
+            <span class="vtv-stat-lbl">HDR quality</span>
+          </span>
+        </span>
+
+        <!-- ── TOP-RIGHT: LIVE badge ── -->
+        <span class="vtv-live-badge">
+          <span class="vtv-live-dot"></span>
+          LIVE · SIERRA 3D
+        </span>
+      </button>
+
+      <iframe id="vtv-iframe" class="vtv-iframe" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen loading="lazy"></iframe>
+      <div id="vtv-loading" class="vtv-loading">
+        <i data-lucide="loader-2" class="i i-2xl i-spin"></i>
+        <span>Loading immersive 3D tour…</span>
+      </div>
+      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" class="vtv-fs">
+        <i data-lucide="maximize-2" class="i"></i>
+      </button>
+    </div>
+    <div class="vtv-foot">
+      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" class="vtv-foot-link" title="Open in new tab">
+        <i data-lucide="external-link" class="i"></i> Open tour in new tab
+      </a>
+      <span class="vtv-foot-lbl">Cinematic capture · Matterport-grade fidelity</span>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- WHY SIERRA -->
+<section class="block" id="agents">
+  <div class="wrap">
+    <div class="sec-head rv centered">
+      <div>
+        <p class="eyebrow" data-i18n="eyeWhy"></p>
+        <h2 data-i18n="whyTit"></h2>
+        <p data-i18n="whySub"></p>
+      </div>
+    </div>
+    <div class="net-banner rv">
+      <div class="nb-left">
+        <p class="eyebrow" data-i18n="netEye"></p>
+        <h3 data-i18n="netTit"></h3>
+        <p data-i18n="netBody"></p>
+      </div>
+      <div class="nb-stats">
+        <div class="nb-stat"><b data-count="1500" data-suffix="+">0</b><span data-i18n="netS1L"></span></div>
+        <div class="nb-stat"><b data-count="240" data-suffix="+">0</b><span data-i18n="netS2L"></span></div>
+        <div class="nb-stat"><b data-count="100" data-suffix="%">0</b><span data-i18n="netS3L"></span></div>
+      </div>
+    </div>
+    <div class="grid-feat">
+      <div class="feat rv"><div class="ic"><i data-lucide="radar" class="i"></i></div><h4 data-i18n="w1t"></h4><p data-i18n="w1s"></p></div>
+      <div class="feat rv d1"><div class="ic"><i data-lucide="trending-up" class="i"></i></div><h4 data-i18n="w2t"></h4><p data-i18n="w2s"></p></div>
+      <div class="feat rv d2"><div class="ic"><i data-lucide="heart-handshake" class="i"></i></div><h4 data-i18n="w3t"></h4><p data-i18n="w3s"></p></div>
+      <div class="feat rv d3"><div class="ic"><i data-lucide="badge-check" class="i"></i></div><h4 data-i18n="w4t"></h4><p data-i18n="w4s"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- AI HUB / INTELLIGENCE ENGINE -->
+<section class="ai-hub" id="ai">
+  <div class="wrap">
+    <p class="ai-eye rv"><span class="live" aria-hidden="true"></span> <span data-i18n="aiEye"></span></p>
+    <h2 class="rv" data-i18n="aiHubTit"></h2>
+    <p class="ai-lead rv" data-i18n="aiSub"></p>
+    <div class="ai-scan" aria-hidden="true"></div>
+    <div class="ai-grid" id="ai-grid"></div>
+    <div class="ai-previews" id="ai-previews"></div>
+    <div class="mt-lg rv">
+      <button class="tour-launch" id="tour-open" type="button" aria-label="Launch Immersive Global Tour" title="Launch Tour">
+        <span class="t-ic" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
+        <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
+        <span class="t-play" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- COMPOUNDS -->
+<section class="block well" id="compounds">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <p class="eyebrow" data-i18n="eyeCpd"></p>
+        <h2 data-i18n="cpdTit"></h2>
+        <p data-i18n="cpdSub"></p>
+      </div>
+      <a href="compounds.html" class="sec-link" title="View All Compounds"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i"></i></a>
+    </div>
+    <div class="grid-comp" id="comp-grid"></div>
+  </div>
+</section>
+
+
+<!-- ═══ LIVE MAP (SECOND — now below the 3D tour) ═══════════════════════════
+     Interactive Leaflet map with marker clustering. When zoomed out,
+     nearby compounds group into styled clusters. When zoomed in, individual
+     compound markers space out and are clearly visible. -->
+<section class="block" id="map-section" data-screen-label="Smart Map">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <h2 data-i18n="mapTit"></h2>
+        <p data-i18n="mapSub"></p>
+      </div>
+      <a href="compounds.html" class="sec-link" title="View All Compounds"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i"></i></a>
+    </div>
+
+    <!-- ═══ Quick filter bar (compound + bedrooms only) ═══
+         Per user request: the OUTSIDE map (home page) only filters by
+         compound + bedroom count. The inside compounds.html page keeps
+         the full advanced filter set (type, price, delivery, mode). -->
+    <!-- ═══ SMART MAP FILTER — collapsible dropdown ═══
+         Click the filter bar to expand/collapse. Shows active filter count
+         as a badge. Compound search + beds selector inside. -->
+    <div class="hmf-wrap mb-lg">
+      <!-- Filter trigger bar (always visible) -->
+      <button class="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" aria-label="Toggle map filters" title="Filters">
+        <span class="hmf-trigger-left">
+          <i data-lucide="sliders-horizontal" class="i"></i>
+          <span class="hmf-trigger-title" data-i18n="hmfTitle">Smart Filter</span>
+          <span id="hmf-active-badge" class="hmf-active-badge">0</span>
+        </span>
+        <span class="hmf-trigger-right">
+          <span id="home-map-count" class="hmf-map-count">… compounds</span>
+          <i data-lucide="chevron-down" class="i" id="hmf-chevron"></i>
+        </span>
+      </button>
+
+      <!-- Filter panel (collapsible) -->
+      <div class="hmf-panel" id="hmf-panel">
+        <!-- Compound multi-select row -->
+        <div class="hmf-section">
+          <div class="hmf-section-label">
+            <i data-lucide="building-2" class="i"></i>
+            <span data-i18n="hmfCompounds">Compounds</span>
+            <span class="hmf-multi-hint" data-i18n="hmfMultiHint">Click to select multiple</span>
+          </div>
+          <!-- Selected chips area -->
+          <div id="hmf-compound-chips" class="hmf-chips"></div>
+          <!-- Search + dropdown -->
+          <div class="hmf-search-row">
+            <i data-lucide="search" class="i search-icon"></i>
+            <input id="home-map-compound" type="text" class="hmf-search-input" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" autocomplete="off" />
+            <i data-lucide="chevron-down" class="i" id="hmf-compound-chevron"></i>
+            <!-- Dropdown list (absolute positioned) -->
+            <div id="hmf-compound-dropdown" class="hmf-dropdown"></div>
+          </div>
+        </div>
+
+        <!-- Beds selector row (single select, no '+') -->
+        <div class="hmf-beds-row">
+          <span class="hmf-section-label">
+            <i data-lucide="bed-double" class="i"></i>
+            <span data-i18n="hmfBeds">Bedrooms</span>
+          </span>
+          <div id="home-map-beds" class="hmf-bed-group">
+            <button class="hmf-bed-btn on" data-b="0" type="button" aria-label="Any bedrooms" title="Any" data-i18n="hmfAny">Any</button>
+            <button class="hmf-bed-btn" data-b="1" type="button" aria-label="1 bedroom" title="1">1</button>
+            <button class="hmf-bed-btn" data-b="2" type="button" aria-label="2 bedrooms" title="2">2</button>
+            <button class="hmf-bed-btn" data-b="3" type="button" aria-label="3 bedrooms" title="3">3</button>
+            <button class="hmf-bed-btn" data-b="4" type="button" aria-label="4 bedrooms" title="4">4</button>
+            <button class="hmf-bed-btn" data-b="5" type="button" aria-label="5+ bedrooms" title="5+">5</button>
+          </div>
+          <button id="hmf-reset" type="button" class="hmf-reset" aria-label="Reset filters" title="Reset Filters">
+            <i data-lucide="rotate-ccw" class="i"></i>
+            <span data-i18n="hmfReset">Reset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-sticky-wrap" id="map-sticky-wrap">
+      <div id="home-map"></div>
+    </div>
+    <div class="text-center mt-sm">
+      <a href="compounds.html" class="btn btn-navy" title="View Compounds">
+        <i data-lucide="map" class="i"></i>
+        <span data-i18n="openFullMap"></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INSIGHTS — AI-ranked best listings + market analytics ═════════════════
+     This section shows the top 3 AI-ranked properties + market insights.
+     When wired to the backend (Firestore), the admin page can update these
+     insights in real-time. The data structure is ready for Firestore. -->
+<section class="block" id="insights" data-screen-label="AI Insights">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <h2 data-i18n="insTit"></h2>
+        <p data-i18n="insSub"></p>
+      </div>
+    </div>
+    <div id="insights-grid" class="insights-grid"></div>
+    <div id="insights-market" class="insights-market">
+      <div class="ins-stat">
+        <div class="ins-stat-val">+24%</div>
+        <div class="ins-stat-lbl">Top Growth (Mountain View)</div>
+      </div>
+      <div class="ins-stat">
+        <div class="ins-stat-val green">9.8</div>
+        <div class="ins-stat-lbl">Highest AI Score (Hyde Park)</div>
+      </div>
+      <div class="ins-stat">
+        <div class="ins-stat-val">EGP 35M</div>
+        <div class="ins-stat-lbl">Top Price (Taj City)</div>
+      </div>
+      <div class="ins-stat">
+        <div class="ins-stat-val green">798</div>
+        <div class="ins-stat-lbl">Active Units</div>
+      </div>
+    </div>
+    <div class="text-center mt-xl">
+      <a href="properties.html" class="btn btn-navy" title="View Properties">
+        <i data-lucide="trending-up" class="i"></i>
+        <span data-i18n="insBtn"></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stat rv"><b data-count="1900" data-suffix="+">0</b><span data-i18n="stat1"></span></div>
+    <div class="stat rv d1"><b data-count="53">0</b><span data-i18n="stat2"></span></div>
+    <div class="stat rv d2"><b data-count="68">0</b><span data-i18n="stat3"></span></div>
+    <div class="stat rv d3"><b data-count="4.2" data-prefix="EGP " data-suffix="B">0</b><span data-i18n="stat4"></span></div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="block testi-band" id="testimonials">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <p class="eyebrow" data-i18n="eyeTesti"></p>
+        <h2 data-i18n="testiTit"></h2>
+        <p data-i18n="testiSub"></p>
+      </div>
+    </div>
+    <div class="grid-testi" id="testi-grid"></div>
+  </div>
+</section>
+
+<!-- PERFECT CHOICE + INQUIRY -->
+<section class="block" id="inquiry">
+  <div class="wrap">
+    <div class="perfect rv">
+      <div class="pf-left">
+        <p class="eyebrow" data-i18n="eyePerfect"></p>
+        <h2 data-i18n="perfTit"></h2>
+        <p data-i18n="perfSub"></p>
+        <div class="pf-item"><span class="num" aria-hidden="true">01</span><div><h4 data-i18n="pc1t"></h4><p data-i18n="pc1s"></p></div></div>
+        <div class="pf-item"><span class="num" aria-hidden="true">02</span><div><h4 data-i18n="pc2t"></h4><p data-i18n="pc2s"></p></div></div>
+        <div class="pf-item"><span class="num" aria-hidden="true">03</span><div><h4 data-i18n="pc3t"></h4><p data-i18n="pc3s"></p></div></div>
+      </div>
+      <form class="inq" id="inq-form" novalidate>
+        <h3 data-i18n="inqTit"></h3>
+        <p data-i18n="inqSub"></p>
+        <div class="seg" id="inq-seg">
+          <button type="button" class="on" aria-pressed="true" data-i18n="inqBuy" aria-label="Buy inquiry" title="Buy"></button>
+          <button type="button" aria-pressed="false" data-i18n="inqRent" aria-label="Rent inquiry" title="Rent"></button>
+          <button type="button" aria-pressed="false" data-i18n="inqSell" aria-label="Sell inquiry" title="Sell"></button>
+        </div>
+        <div class="frow">
+          <div><label for="inq-name" data-i18n="inqName"></label><input id="inq-name" name="name" type="text" autocomplete="name" placeholder="Name" title="Name" required/></div>
+          <div><label for="inq-phone" data-i18n="inqPhone"></label><input id="inq-phone" name="phone" type="tel" autocomplete="tel" dir="ltr" placeholder="Phone" title="Phone" required/></div>
+        </div>
+        <div class="frow">
+          <div><label for="inq-email" data-i18n="inqEmail"></label><input id="inq-email" name="email" type="email" autocomplete="email" dir="ltr" placeholder="Email" title="Email"/></div>
+          <div><label for="inq-zone" data-i18n="inqZone"></label><select id="inq-zone" name="zone" title="Zone" aria-label="Zone"></select></div>
+        </div>
+        <div class="frow">
+          <div><label for="inq-type" data-i18n="inqType2"></label><select id="inq-type" name="type" title="Type" aria-label="Type"></select></div>
+          <div><label for="inq-budget" data-i18n="inqBudget"></label><input id="inq-budget" name="budget" type="text" inputmode="numeric" placeholder="10,000,000" dir="ltr"/></div>
+        </div>
+        <button class="btn btn-pri" type="submit" aria-label="Send Inquiry" title="Send"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <p class="inq-done" id="inq-done" role="status" data-i18n="inqDone"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="block" id="contact">
+  <div class="wrap">
+    <div class="cta rv">
+      <div class="ct-txt">
+        <h2 data-i18n="ctaTit"></h2>
+        <p data-i18n="ctaSub"></p>
+      </div>
+      <div class="ct-act">
+        <button class="btn btn-white" id="cta-list" type="button" aria-label="List your property" title="List Property"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <a class="btn btn-out" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" title="Contact WhatsApp"><i data-lucide="phone" class="i"></i> <span data-i18n="ctaBtn2"></span></a>
+      </div>
+      <div class="ct-email">
+        <i data-lucide="mail" class="i"></i> <a href="mailto:info@sierra-estates.net">info@sierra-estates.net</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<div class="partners">
+  <div class="wrap">
+    <p class="p-eye rv" data-i18n="partEye"></p>
+    <div class="row rv d1">
+      <span>EMAAR MISR</span><span>SODIC</span><span>MOUNTAIN VIEW</span><span>PALM HILLS</span><span>ORA</span><span>LA VISTA</span><span>HYDE PARK</span><span>MARAKEZ</span>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer id="site-footer"></footer>
+
+<!-- VIRTUAL TOUR MODAL -->
+<div class="tour-modal" id="tour-modal" role="dialog" aria-modal="true" aria-label="Virtual tour">
+  <button class="t-close" id="tour-close" type="button" aria-label="Close">×</button>
+  <iframe id="tour-frame" title="Sierra Estates Virtual Tour" allow="fullscreen"></iframe>
+</div>
+
+<noscript><p style="text-align:center;padding:24px;">This site requires JavaScript to display listings and the interactive map.</p></noscript>
+
+</body>
+</html>

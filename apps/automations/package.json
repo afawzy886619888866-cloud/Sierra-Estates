@@ -1,0 +1,22 @@
+{
+  "name": "@sierra-estates/automations",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scaffolded n8n / Node.js automated workflows",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "firebase-admin": "^14.2.0",
+    "puppeteer": "^25.4.0",
+    "resend": "^6.17.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "typescript": "^5.8.2"
+  }
+}

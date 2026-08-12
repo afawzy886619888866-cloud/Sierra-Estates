@@ -1,0 +1,119 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Sierra Estates — Infrastructure Docker Compose
+# File: SE/infra/docker-compose.yml
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#  Runs on a $10 VPS (4GB RAM, Ubuntu 22.04).
+#  Services:
+#    1. n8n          — workflow automation (Property Finder → Firestore)
+#    2. whatsapp-scraper — Baileys WhatsApp client (QR auth, message relay)
+#
+#  🚀 Quick start:
+#    cd SE/infra
+#    cp .env.example .env    # fill in your values
+#    docker compose up -d
+#    docker compose logs -f whatsapp-scraper   # scan QR code
+#
+#  📦 Data persistence:
+#    - n8n-data/        → n8n workflows + credentials
+#    - whatsapp-auth/   → Baileys session (so you don't re-scan QR on restart)
+# ═══════════════════════════════════════════════════════════════════════════
+
+version: '3.9'
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────
+  #  n8n — Workflow Automation
+  #  Handles: Property Finder webhook → Firestore leads
+  #           Gemini AI matching → request updates
+  #           Scheduled scrapes + notifications
+  # ─────────────────────────────────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: sierra-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # ── Core config ──
+      - N8N_HOST=${N8N_HOST:-0.0.0.0}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL:-http://localhost:5678}
+      # ── Auth (change in production!) ──
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-true}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      # ── Timezone (Egypt) ──
+      - GENERIC_TIMEZONE=${TIMEZONE:-Africa/Cairo}
+      - TZ=${TIMEZONE:-Africa/Cairo}
+      # ── Firebase Admin (for Firestore writes from n8n) ──
+      # Service account JSON mounted as a file — never inline in env.
+      - FIREBASE_CONFIG=/data/firebase-service-account.json
+      # ── Gemini API (for AI matching in workflows) ──
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      # ── Property Finder webhook secret ──
+      - PROPERTY_FINDER_WEBHOOK_SECRET=${PROPERTY_FINDER_WEBHOOK_SECRET:-}
+    volumes:
+      - ./n8n-data:/data
+      # Mount Firebase service account JSON (read-only)
+      - ./secrets/firebase-service-account.json:/data/firebase-service-account.json:ro
+    networks:
+      - sierra-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ─────────────────────────────────────────────────────────────────────────
+  #  WhatsApp Scraper (Baileys)
+  #  Connects to WhatsApp via QR code, listens for incoming messages,
+  #  forwards to n8n webhook, and sends bot replies.
+  # ─────────────────────────────────────────────────────────────────────────
+  whatsapp-scraper:
+    build:
+      context: ./whatsapp-scraper
+      dockerfile: Dockerfile
+    container_name: sierra-whatsapp
+    restart: unless-stopped
+    environment:
+      # ── n8n webhook endpoint (where to forward incoming messages) ──
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://n8n:5678/webhook/whatsapp-incoming}
+      # ── Bot identity (shown in WhatsApp profile) ──
+      - BOT_NAME=${BOT_NAME:-Sierra Estates}
+      # ── Firebase Admin (to write clients + requests directly) ──
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL:-}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY:-}
+      # ── Logging ──
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - NODE_ENV=production
+    volumes:
+      # Baileys auth session (persist QR scan across restarts)
+      - ./whatsapp-auth:/app/auth
+    ports:
+      # QR code terminal output is the primary auth method.
+      # This port is optional — only if you build a web UI for QR.
+      - "${WHATSAPP_QR_PORT:-3000}:3000"
+    networks:
+      - sierra-net
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"process.exit(0)\" || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+networks:
+  sierra-net:
+    driver: bridge
+    name: sierra-network
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  VOLUMES — created on first `docker compose up`
+#  Backed up via: tar -czf backup.tar.gz n8n-data/ whatsapp-auth/
+# ═══════════════════════════════════════════════════════════════════════════

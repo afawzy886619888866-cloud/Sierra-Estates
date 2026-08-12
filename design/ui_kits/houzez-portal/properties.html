@@ -1,0 +1,104 @@
+<!-- @dsCard group="Web App" viewport="1440x1024" name="Portal · Properties" subtitle="Filterable AI-curated listing grid — type & mode filters, EN/AR, light/dark" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sierra Estates · Properties</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="shared.js"></script>
+<style>
+.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.chip{font-family:var(--font);font-weight:600;font-size:13.5px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:999px;padding:9px 18px;cursor:pointer;transition:.2s var(--silk);}
+.chip:hover{border-color:var(--pri);color:var(--pri);}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .chip.on{color:#0d0d0f;}
+.chip-sep{width:1px;height:24px;background:var(--line-2);margin:0 4px;}
+.count{margin-inline-start:auto;font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+[dir="rtl"] .count{letter-spacing:0;font-family:var(--font);}
+.grid-props .pcard{animation:cardIn .5s var(--silk) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.grid-props .pcard{animation:none;}}
+.empty{padding:60px 0;text-align:center;color:var(--muted);font-size:15px;}
+</style>
+</head>
+<body>
+
+<div id="site-chrome"></div>
+
+<header class="page-hero" data-screen-label="Properties hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html" data-i18n="crumbHome"></a><span class="sep">/</span><span data-i18n="navProps"></span></div>
+    <h1 data-i18n="propsTit"></h1>
+    <p class="sub" data-i18n="propsSub"></p>
+  </div>
+</header>
+
+<section class="block" data-screen-label="Listings grid">
+  <div class="wrap">
+    <div class="toolbar rv">
+      <button class="chip on" data-f-type="all" data-i18n="filterAll" type="button"></button>
+      <button class="chip" data-f-type="Villa" data-i18n="filterVilla" type="button"></button>
+      <button class="chip" data-f-type="Apartment" data-i18n="filterApt" type="button"></button>
+      <button class="chip" data-f-type="Town" data-i18n="filterTown" type="button"></button>
+      <button class="chip" data-f-type="Pent" data-i18n="filterPent" type="button"></button>
+      <span class="chip-sep"></span>
+      <button class="chip on" data-f-mode="all" data-i18n="modeAll" type="button"></button>
+      <button class="chip" data-f-mode="sale" data-i18n="modeSale" type="button"></button>
+      <button class="chip" data-f-mode="rent" data-i18n="modeRent" type="button"></button>
+      <span class="count"><b id="res-count">0</b> <span data-i18n="results"></span></span>
+    </div>
+    <div class="grid-props" id="all-grid"></div>
+    <div class="empty" id="empty" style="display:none;">—</div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script>
+(function () {
+  var D = window.HZDATA;
+  var fType = 'all', fMode = 'all';
+
+  function matchType(p) {
+    if (fType === 'all') return true;
+    if (fType === 'Town') return p.type === 'Twin House' || p.type === 'Townhouse';
+    if (fType === 'Pent') return p.type === 'Penthouse' || p.type === 'Duplex';
+    return p.type === fType;
+  }
+  function render() {
+    var list = D.listings.filter(function (p) { return matchType(p) && (fMode === 'all' || p.mode === fMode); })
+      .sort(function (a, b) { return b.ai - a.ai; });
+    document.getElementById('all-grid').innerHTML = list.map(function (p, i) {
+      var html = HZ.pcard(p, i);
+      return html.replace('class="pcard rv', 'style="animation-delay:' + (i * 60) + 'ms" class="pcard in rv');
+    }).join('');
+    document.getElementById('res-count').textContent = list.length;
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+    HZ.refreshIcons();
+  }
+
+  document.querySelectorAll('[data-f-type]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-f-type]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); fType = b.getAttribute('data-f-type'); render();
+    });
+  });
+  document.querySelectorAll('[data-f-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-f-mode]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on'); fMode = b.getAttribute('data-f-mode'); render();
+    });
+  });
+
+  HZ.mount('props');
+  render();
+})();
+</script>
+</body>
+</html>

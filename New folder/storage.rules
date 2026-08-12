@@ -1,0 +1,63 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    function isClient() {
+      return isAuthenticated() && getUserRole() == 'client';
+    }
+
+    // ── Public property media (client portal + marketplace display these) ──
+    //     Anyone may read; only admin may write. Matches the public-catalog
+    //     pattern in Firestore rules (listings/properties/media).
+    match /listings/{allPaths=**}        { allow read: if true; allow write: if isAdmin(); }
+    match /houyez_listings/{allPaths=**} { allow read: if true; allow write: if isAdmin(); }
+    match /properties/{allPaths=**}      { allow read: if true; allow write: if isAdmin(); }
+    match /compounds/{allPaths=**}       { allow read: if true; allow write: if isAdmin(); }
+    match /media/{allPaths=**}           { allow read: if true; allow write: if isAdmin(); }
+    match /public/{allPaths=**}          { allow read: if true; allow write: if isAdmin(); }
+
+    // Admin uploads - Full access
+    match /admin/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Client profiles - Clients can upload their own, read others' if enrolled
+    match /clients/{clientId}/{allPaths=**} {
+      allow read, write: if isAdmin() || (isClient() && request.auth.uid == clientId);
+    }
+
+    // Program assets - Admins write, clients can read if enrolled
+    match /programs/{programId}/{allPaths=**} {
+      allow read: if isAdmin() || (isClient() &&
+                    firestore.exists(/databases/(default)/documents/enrollments/$(request.auth.uid + '_' + programId)));
+      allow write: if isAdmin();
+    }
+
+    // Agent session files
+    match /agent_sessions/{sessionId}/{allPaths=**} {
+      allow read: if isAdmin() || (isClient() &&
+                    firestore.get(/databases/(default)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid);
+      allow write: if isAdmin() || (isClient() &&
+                    firestore.get(/databases/(default)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid &&
+                    request.resource.size < 10 * 1024 * 1024); // 10MB max for clients
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

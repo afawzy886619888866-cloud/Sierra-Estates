@@ -1,0 +1,46 @@
+{
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sierra Estates WhatsApp bot — Liela/Sierra/OpenClaw/Hermes routing pipeline. Standalone agent (NOT in the pnpm workspace graph): install with `npm install` in this directory and run from a full repo checkout so the @sierra-estates/* imports resolve via the root tsconfig paths.",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "import-whitelist": "tsx import-whitelist.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@google/generative-ai": "^0.11.0",
+    "dotenv": "^16.4.0",
+    "firebase": "^12.14.0",
+    "firebase-admin": "^13.0.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "_comment_overrides": "Security overrides for transitive deps. This package is NOT in the pnpm workspace, so the root pnpm overrides do not reach it and Dependabot must patch it independently — it kept failing to, because js-yaml resolves at two different majors here (3.x under @istanbuljs/load-nyc-config via jest, 4.x under cosmiconfig via whatsapp-web.js) and Dependabot conflated them, capping its own bump at 4.3.0. The nested override below pins each major to its own patched release. Regenerate with: npm install --package-lock-only --ignore-scripts",
+  "overrides": {
+    "js-yaml@^3": "3.15.1",
+    "js-yaml@^4": "4.3.1",
+    "brace-expansion@^1": "1.1.18",
+    "brace-expansion@^2": "2.1.4",
+    "fast-xml-parser": "5.10.1",
+    "ip-address": "10.3.1",
+    "protobufjs": "7.6.5"
+  }
+}

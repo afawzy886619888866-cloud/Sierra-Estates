@@ -1,0 +1,26 @@
+{
+  "name": "@sierra-estates/obsidian",
+  "version": "1.0.0",
+  "description": "JSON-backed local long-term memory module for Sierra Estates agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^5.8.2"
+  }
+}

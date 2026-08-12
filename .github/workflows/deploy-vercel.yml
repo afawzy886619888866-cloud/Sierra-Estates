@@ -1,0 +1,303 @@
+name: Deploy · Vercel (client + admin)
+
+# Deploys to TWO separate Vercel projects from this monorepo:
+#
+#   ┌────────────────────────────┬──────────────────────────────────────┬─────────────────────────────┐
+#   │ Job                        │ Vercel project                       │ Domain                      │
+#   ├────────────────────────────┼──────────────────────────────────────┼─────────────────────────────┤
+#   │ deploy (matrix: client)    │ prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E    │ sierra-estates.net          │
+#   │ deploy (matrix: admin)     │ prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA    │ admin.sierra-estates.net    │
+#   └────────────────────────────┴──────────────────────────────────────┴─────────────────────────────┘
+#
+#   CLIENT → apps/sierra-estates-realty  (Next.js · pnpm monorepo)
+#   ADMIN  → apps/admin-dashboard        (Vite SPA · standalone build)
+#
+# Each role configures .vercel/project.json with its OWN project ID before
+# running vercel pull/build/deploy — so client and admin NEVER cross-pollinate.
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
+#   VERCEL_TOKEN               — Vercel token with Projects R/W, Domains
+#   SESSION_SECRET             — App session signing secret
+#
+# Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
+#   VERCEL_ORG_ID              — Vercel team/org ID
+#   CLIENT_VERCEL_PROJECT_ID   — prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E
+#   ADMIN_VERCEL_PROJECT_ID    — prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA
+#   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
+
+# DISABLED 2026-08-08 (PR #165).
+#
+# This workflow has never completed successfully - every recorded run has ended
+# in failure or cancellation. Vercel's native Git integration already deploys
+# BOTH apps correctly (verified on PR #165: "sierra-estates" and
+# "admin-dashboard" both reported "Deployment has completed"), so this workflow
+# is a redundant second deploy path racing the one that works.
+#
+# Fixed here before disabling (keep if re-enabling):
+#   - pull/build/deploy now run from repo root; admin no longer cd's into
+#     app_dir on top of the project rootDirectory (was producing
+#     apps/admin-dashboard/apps/admin-dashboard). Build now succeeds.
+#
+# Remaining blocker if re-enabled: "vercel deploy --prebuilt" fails uploading
+#   ENOENT: lstat .../node_modules/.pnpm/@opentelemetry+api@1.9.1/...
+#   dangling pnpm symlinks. Dropping --archive=tgz did not help.
+#
+# Re-enable by restoring the push trigger below.
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target'
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+concurrency:
+  group: vercel-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_CLI_VERSION: 'latest'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PUPPETEER_SKIP_DOWNLOAD: "true"
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      client: ${{ steps.check.outputs.client }}
+      admin: ${{ steps.check.outputs.admin }}
+    steps:
+      - name: Validate project ids
+        id: check
+        env:
+          CLIENT_ID_RAW: ${{ vars.CLIENT_VERCEL_PROJECT_ID }}
+          ADMIN_ID_RAW: ${{ vars.ADMIN_VERCEL_PROJECT_ID }}
+        run: |
+          CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
+          ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+          for role in CLIENT ADMIN; do
+            eval "id=\$${role}_ID"
+            lc_role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
+            if [ -z "$id" ]; then
+              echo "${lc_role}=false" >> "$GITHUB_OUTPUT"
+              echo "::notice title=${role} deploy skipped::${role}_VERCEL_PROJECT_ID is not set."
+            else
+              echo "${lc_role}=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
+          exit 0
+
+  deploy:
+    needs: guard
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - role: client
+            domain: sierra-estates.net
+            app_dir: apps/sierra-estates-realty
+            framework: nextjs
+            proj_id_secret: CLIENT_VERCEL_PROJECT_ID
+          - role: admin
+            domain: admin.sierra-estates.net
+            app_dir: apps/admin-dashboard
+            framework: vite
+            proj_id_secret: ADMIN_VERCEL_PROJECT_ID
+    name: deploy (${{ matrix.role }})
+    if: needs.guard.outputs.client == 'true' || needs.guard.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Skip if this role is not configured
+        id: gate
+        run: |
+          ok="${{ matrix.role == 'client' && needs.guard.outputs.client || needs.guard.outputs.admin }}"
+          echo "run=$ok" >> "$GITHUB_OUTPUT"
+          [ "$ok" = "true" ] || echo "::notice::${{ matrix.role }} project variable not set — job ends here (green)."
+
+      # ── Resolve correct project ID & token for THIS role only ─────────────
+      # Uses single VERCEL_TOKEN secret (scoped to the Vercel team/org).
+      # If you prefer per-project tokens, add CLIENT_VERCEL_TOKEN / ADMIN_VERCEL_TOKEN
+      # as repo secrets — the shell fallback chain will pick them up automatically.
+      - name: Resolve project ID & Vercel Token
+        if: steps.gate.outputs.run == 'true'
+        id: proj
+        env:
+          CLIENT_PROJ_RAW: ${{ vars.CLIENT_VERCEL_PROJECT_ID }}
+          ADMIN_PROJ_RAW:  ${{ vars.ADMIN_VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN_RAW: ${{ secrets.VERCEL_TOKEN }}
+          ORG_ID_RAW:      ${{ vars.VERCEL_ORG_ID }}
+        run: |
+          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
+          ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+          ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
+          TOKEN="${VERCEL_TOKEN_RAW}"
+          if [ "${{ matrix.role }}" = "client" ]; then
+            PROJ="$CLIENT_PROJ"
+          else
+            PROJ="$ADMIN_PROJ"
+          fi
+          echo "VERCEL_ORG_ID=$ORG_ID"     >> $GITHUB_ENV
+          echo "VERCEL_PROJECT_ID=$PROJ"   >> $GITHUB_ENV
+          echo "ROLE_VERCEL_TOKEN=$TOKEN"  >> $GITHUB_ENV
+          echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
+          echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.run == 'true'
+        with:
+          submodules: false
+
+      - uses: pnpm/action-setup@v6
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine deploy environment
+        if: steps.gate.outputs.run == 'true'
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENV="production"
+          else
+            ENV="preview"
+          fi
+          echo "name=$ENV" >> "$GITHUB_OUTPUT"
+          [ "$ENV" = "production" ] && echo "flag=--prod" >> "$GITHUB_OUTPUT" || echo "flag=" >> "$GITHUB_OUTPUT"
+
+      # ── Set Vercel project settings for THIS role ─────────────────────────
+      - name: Normalize Vercel project settings
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \
+            "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
+            -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"rootDirectory\":\"${{ matrix.app_dir }}\",\"framework\":\"${{ matrix.framework }}\",\"buildCommand\":null,\"installCommand\":\"pnpm install\",\"outputDirectory\":null,\"devCommand\":null}" || echo "000")
+          if [ "$code" = "200" ] || [ "$code" = "204" ]; then
+            echo "✅ Project normalized: rootDirectory=${{ matrix.app_dir }}, framework=${{ matrix.framework }}"
+          else
+            echo "::warning::Could not normalize project settings (HTTP $code). Check VERCEL_TOKEN scope."
+          fi
+
+      - name: Sync env vars to Vercel project
+        if: steps.gate.outputs.run == 'true'
+        env:
+          FB_API_KEY:       ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          FB_AUTH_DOMAIN:   ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          FB_PROJECT_ID:    ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          FB_STORAGE:       ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          FB_SENDER_ID:     ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          FB_APP_ID:        ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          FB_MEASUREMENT:   ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          FB_DATABASE_URL:  ${{ vars.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
+          SESSION_SECRET_VAL: ${{ secrets.SESSION_SECRET }}
+        run: |
+          upsert() {
+            [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
+            code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
+              "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
+              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\"]}" || echo "000")
+            case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json)";; esac
+          }
+          upsert ADMIN_HOST              "admin.sierra-estates.net"
+          upsert CLIENT_HOST             "sierra-estates.net"
+          upsert COOKIE_DOMAIN           ".sierra-estates.net"
+          upsert NEXT_PUBLIC_CLIENT_URL  "https://sierra-estates.net"
+          upsert NEXT_PUBLIC_ADMIN_URL   "https://admin.sierra-estates.net"
+          upsert NEXT_PUBLIC_FIREBASE_API_KEY             "$FB_API_KEY"
+          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN         "$FB_AUTH_DOMAIN"
+          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID          "$FB_PROJECT_ID"
+          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET      "$FB_STORAGE"
+          upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "$FB_SENDER_ID"
+          upsert NEXT_PUBLIC_FIREBASE_APP_ID              "$FB_APP_ID"
+          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID      "$FB_MEASUREMENT"
+          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL        "$FB_DATABASE_URL"
+          upsert SESSION_SECRET                           "$SESSION_SECRET_VAL" encrypted
+
+      - name: Remove crons from admin project (client project owns them)
+        if: steps.gate.outputs.run == 'true' && matrix.role == 'admin'
+        run: |
+          if [ -f "${{ matrix.app_dir }}/vercel.json" ]; then
+            jq 'del(.crons)' "${{ matrix.app_dir }}/vercel.json" > /tmp/vercel.json
+            mv /tmp/vercel.json "${{ matrix.app_dir }}/vercel.json"
+            echo "crons stripped from admin vercel.json"
+          fi
+
+      - name: Install Vercel CLI
+        if: steps.gate.outputs.run == 'true'
+        run: npm install --global vercel@${VERCEL_CLI_VERSION}
+
+      # ── Point vercel CLI at THIS role's project ONLY ──────────────────────
+      - name: Write .vercel/project.json for this role
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          # App-level .vercel/project.json wins over root — ensures vercel commands
+          # target the correct project (client vs admin), never the wrong one.
+          mkdir -p "${{ matrix.app_dir }}/.vercel"
+          printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
+            > "${{ matrix.app_dir }}/.vercel/project.json"
+          # Root fallback (used by vercel build when run from root for client)
+          mkdir -p .vercel
+          printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
+            > .vercel/project.json
+          echo "✅ .vercel/project.json → ${VERCEL_PROJECT_ID}"
+
+      - name: Pull Vercel project settings
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
+
+      # Both roles build from the repo root. Vercel's per-project rootDirectory
+      # (set in "Normalize Vercel project settings") locates the app. Previously
+      # admin also cd'd into app_dir, so Vercel appended rootDirectory on top of
+      # it -> apps/admin-dashboard/apps/admin-dashboard (path does not exist).
+      - name: Build (from repo root; Vercel rootDirectory selects the app)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
+
+      - name: Deploy (prebuilt artifact)
+        if: steps.gate.outputs.run == 'true'
+        id: deploy_step
+        run: |
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "deployed: $url"
+
+      - name: Attach production domain (${{ matrix.domain }})
+        if: steps.gate.outputs.run == 'true' && steps.target.outputs.name == 'production'
+        run: |
+          code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
+            "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
+            -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"${{ matrix.domain }}\"}" || echo "000")
+          body=$(cat /tmp/dom-res.json)
+          if [ "$code" = "200" ] || [ "$code" = "201" ]; then
+            echo "✅ domain ${{ matrix.domain }} attached"
+          elif echo "$body" | grep -q 'already'; then
+            echo "✅ domain ${{ matrix.domain }} already attached"
+          else
+            echo "::warning title=Domain not attached::${{ matrix.domain }} → HTTP $code. Remove domain from its current Vercel project first. Response: $body"
+          fi

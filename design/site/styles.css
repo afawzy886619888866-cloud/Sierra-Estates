@@ -1,0 +1,11 @@
+/* ============================================================================
+   SIERRA ESTATES DESIGN SYSTEM — GLOBAL ENTRY
+   Consumers link THIS one file. It only @imports the token layers, in order.
+   Do not add rules here — edit the token files under tokens/.
+   ============================================================================ */
+
+@import url('tokens/colors.css');       /* brand palette + light/dark themes */
+@import url('tokens/typography.css');    /* fonts, type scale, text classes */
+@import url('tokens/spacing.css');       /* spacing, radius, elevation */
+@import url('tokens/motion.css');        /* durations, easing, keyframes */
+@import url('tokens/base.css');          /* element resets */

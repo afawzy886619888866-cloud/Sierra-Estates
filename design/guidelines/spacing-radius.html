@@ -1,0 +1,26 @@
+<!-- @dsCard group="Spacing" viewport="700x170" name="Radius" subtitle="Generous corners — chips 6 → cards 16 → panels 24 → pill" -->
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 24px; }
+  .row { display: flex; gap: 18px; align-items: flex-start; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .box { width: 76px; height: 62px; background: var(--surf); border: var(--border-gold); border-bottom: 3px solid var(--gold); }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--tx-s); font-weight: 600; }
+  .val { font-family: var(--font-mono); font-size: 9px; color: var(--tx-m); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="item"><div class="box" style="border-radius:var(--radius-xs)"></div><div class="tag">xs</div><div class="val">6px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-sm)"></div><div class="tag">sm</div><div class="val">10px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-md)"></div><div class="tag">md</div><div class="val">14px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-lg)"></div><div class="tag">lg</div><div class="val">16px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-xl)"></div><div class="tag">xl</div><div class="val">24px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-pill);width:62px"></div><div class="tag">pill</div><div class="val">999</div></div>
+  </div>
+</body>
+</html>

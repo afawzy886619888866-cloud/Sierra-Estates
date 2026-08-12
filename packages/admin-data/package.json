@@ -1,0 +1,28 @@
+{
+  "name": "@sierra-estates/admin-data",
+  "version": "1.0.0",
+  "description": "Sierra Estates Admin CRUD data layer — listings/owners/clients/requests/agents (Firestore)",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "private": true,
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase": "^12.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^5.8.2"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./*": {
+      "types": "./*.ts",
+      "default": "./*.ts"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+.agent
+.git
+.github
+node_modules
+.next
+packages/whatsapp-agent/wa_sessions
+packages/whatsapp-agent/*.sw_col.json
+tmp
+*.log

@@ -1,0 +1,96 @@
+name: Retry Copilot Review
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  retry-copilot-review:
+    if: >-
+      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' &&
+      contains(github.event.review.body, 'unable to review this pull request')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Re-request Copilot review once
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+            const reviewerLogin = 'copilot-pull-request-reviewer[bot]';
+            const failureText = 'unable to review this pull request';
+
+            let failureReviewCount = 0;
+            let page = 1;
+            let shouldStop = false;
+
+            while (!shouldStop) {
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner,
+                repo,
+                pull_number,
+                per_page: 100,
+                page,
+              });
+
+              if (reviews.length === 0) {
+                break;
+              }
+
+              for (const review of reviews) {
+                if (
+                  review.user?.login === reviewerLogin &&
+                  (review.body || '').includes(failureText)
+                ) {
+                  failureReviewCount += 1;
+                }
+
+                if (failureReviewCount > 1) {
+                  shouldStop = true;
+                  break;
+                }
+              }
+
+              page += 1;
+            }
+
+            if (failureReviewCount > 1) {
+              core.info('Copilot review was already retried once. Skipping additional retries.');
+              return;
+            }
+
+            // Try known Copilot reviewer handles; accepted values vary by repository setup.
+            const reviewerCandidates = [
+              'copilot',
+              'github-copilot',
+            ];
+
+            for (const reviewer of reviewerCandidates) {
+              try {
+                await github.rest.pulls.requestReviewers({
+                  owner,
+                  repo,
+                  pull_number,
+                  reviewers: [reviewer],
+                });
+                core.info(`Re-requested review from ${reviewer}.`);
+                return;
+              } catch (error) {
+                if (error.status === 422) {
+                  core.info(`Reviewer ${reviewer} was not accepted for this repository.`);
+                  continue;
+                }
+
+                core.error(
+                  `Failed to request reviewer ${reviewer} (status: ${error.status ?? 'unknown'}): ${error.message}`
+                );
+                throw error;
+              }
+            }
+
+            core.warning('Could not find an accepted Copilot reviewer handle to retry.');

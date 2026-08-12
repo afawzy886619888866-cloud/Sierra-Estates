@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Careers — Sierra Estates</title>
+<link rel="icon" type="image/png" href="logo-gold.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#0A1628;color:#F4F0E8;min-height:100vh;}
+
+/* ── Hero ── */
+.hero{text-align:center;padding:80px 24px 60px;background:linear-gradient(160deg,#0A1628 0%,#0d1e36 100%);position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 300px at 50% 0%,rgba(201,162,77,.12),transparent 70%);pointer-events:none;}
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:40px;text-decoration:none;}
+.logo img{width:32px;height:32px;object-fit:contain;}
+.logo span{font-size:18px;font-weight:700;color:#F4F0E8;letter-spacing:-.01em;}
+.eyebrow{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#C9A24D;border:1px solid rgba(201,162,77,.3);border-radius:20px;padding:5px 14px;margin-bottom:20px;}
+.hero h1{font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-.03em;line-height:1.1;color:#F4F0E8;margin-bottom:16px;}
+.hero h1 em{font-style:normal;color:#C9A24D;}
+.hero p{font-size:17px;color:rgba(244,240,232,.55);max-width:480px;margin:0 auto 40px;}
+
+/* ── Jobs ── */
+.jobs{max-width:680px;margin:0 auto;padding:0 24px 80px;}
+.job-card{background:rgba(255,255,255,.04);border:1px solid rgba(201,162,77,.18);border-radius:16px;padding:32px 28px;margin-bottom:20px;transition:.3s cubic-bezier(.16,1,.3,1);}
+.job-card:hover{border-color:rgba(201,162,77,.45);background:rgba(201,162,77,.05);transform:translateY(-2px);}
+.job-tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#C9A24D;margin-bottom:12px;}
+.job-card h2{font-size:22px;font-weight:700;color:#F4F0E8;margin-bottom:8px;letter-spacing:-.015em;}
+.job-card p{font-size:14px;color:rgba(244,240,232,.5);line-height:1.65;margin-bottom:24px;}
+.apply-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;background:#C9A24D;color:#0A1628;font-weight:700;font-size:14px;text-decoration:none;transition:.2s;border:none;cursor:pointer;}
+.apply-btn:hover{background:#E9C176;transform:translateY(-1px);}
+.apply-btn svg{width:14px;height:14px;}
+
+/* ── Footer ── */
+footer{text-align:center;padding:24px;border-top:1px solid rgba(201,162,77,.1);font-size:13px;color:rgba(244,240,232,.3);}
+footer a{color:#C9A24D;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <a class="logo" href="index.html">
+    <img src="logo-gold.png" alt="Sierra Estates"/>
+    <span>Sierra Estates</span>
+  </a>
+  <div class="eyebrow">We're Hiring</div>
+  <h1>Join the Team Behind<br/><em>New Cairo's #1</em> PropTech</h1>
+  <p>We're a fast-moving real estate company powered by AI. Two roles open now.</p>
+</section>
+
+<div class="jobs">
+
+  <div class="job-card">
+    <div class="job-tag">Sales</div>
+    <h2>Real Estate Sales Agent</h2>
+    <p>Work with serious buyers and investors across New Cairo compounds — Mivida, Hyde Park, Eastown & more. AI-matched leads, no cold calling. Commission-based with a strong support system.</p>
+    <a class="apply-btn" href="https://wa.me/201092048333?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20the%20Sales%20Agent%20role%20at%20Sierra%20Estates." target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+      Apply on WhatsApp
+    </a>
+  </div>
+
+  <div class="job-card">
+    <div class="job-tag">Admin</div>
+    <h2>Admin &amp; Operations</h2>
+    <p>Keep the engine running — manage listings, coordinate with agents, handle client paperwork, and support day-to-day operations. Based in New Cairo. Organized, sharp, bilingual EN/AR.</p>
+    <a class="apply-btn" href="https://wa.me/201092048333?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20the%20Admin%20role%20at%20Sierra%20Estates." target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+      Apply on WhatsApp
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 Sierra Estates · <a href="mailto:info@sierra-estates.net">info@sierra-estates.net</a>
+</footer>
+
+</body>
+</html>

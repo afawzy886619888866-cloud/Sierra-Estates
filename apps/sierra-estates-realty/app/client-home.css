@@ -1,0 +1,37 @@
+/* ============================================================================
+   SIERRA ESTATES — CLIENT HOMEPAGE STYLES
+   Consumed by app/ClientHome.tsx. Uses the unified design tokens only.
+   PropertyCard block is ported verbatim from
+   design-system/components/property/PropertyCard.jsx.
+   ============================================================================ */
+
+.nav-link { color: var(--tx-m); text-decoration: none; font-family: var(--font-ui); font-size: 14px; transition: color var(--dur-base) var(--ease-std); }
+.nav-link:hover { color: var(--gold-lt); }
+
+.btn-gold { display: inline-flex; align-items: center; justify-content: center; background: var(--grad-gold); color: var(--bg-d); border-radius: var(--radius-sm); padding: 10px 20px; font-family: var(--font-ui); font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: transform var(--dur-base) var(--ease-silk), box-shadow var(--dur-base) var(--ease-silk); }
+.btn-gold:hover { transform: translateY(-2px); box-shadow: var(--shd-gold); color: var(--bg-d); }
+.btn-lg { padding: 15px 34px; font-size: 15px; border-radius: var(--radius-md); }
+.btn-wa { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid rgba(52,211,153,.55); color: var(--emerald); background: rgba(52,211,153,.08); border-radius: var(--radius-md); font-family: var(--font-ui); font-weight: 700; text-decoration: none; transition: background var(--dur-base) var(--ease-silk); }
+.btn-wa:hover { background: rgba(52,211,153,.16); color: var(--emerald); }
+
+/* PropertyCard — ported verbatim from design-system/components/property/PropertyCard.jsx */
+.se-pcard { position: relative; display: flex; flex-direction: column; text-align: start; cursor: pointer; background: var(--bg-e); border: 1px solid var(--bd); border-radius: var(--radius-lg); overflow: hidden; transition: transform var(--dur-slow) var(--ease-silk), box-shadow var(--dur-slow) var(--ease-silk), border-color var(--dur-slow) var(--ease-silk); }
+.se-pcard:hover { transform: translateY(-5px); border-color: var(--bd-gold); box-shadow: var(--shd-gold); }
+.se-pcard__media { position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--bg-e2); }
+.se-pcard__img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-xslow) var(--ease-silk); }
+.se-pcard:hover .se-pcard__img { transform: scale(1.06); }
+.se-pcard__scrim { position: absolute; inset: 0; background: linear-gradient(to top, var(--ov-c), transparent 55%); }
+.se-pcard__code { position: absolute; top: 11px; inset-inline-start: 11px; font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: .12em; color: var(--gold-lt); background: rgba(8,21,38,.7); backdrop-filter: blur(6px); padding: 5px 9px; border-radius: var(--radius-pill); border: 1px solid rgba(233,193,118,.25); }
+.se-pcard__badge { position: absolute; top: 11px; inset-inline-end: 11px; font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: #fff; padding: 5px 10px; border-radius: var(--radius-pill); }
+.se-pcard__ai { position: absolute; bottom: 11px; inset-inline-start: 11px; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-weight: 700; font-size: 10px; color: var(--emerald); background: rgba(8,21,38,.62); backdrop-filter: blur(6px); padding: 4px 9px; border-radius: var(--radius-pill); }
+.se-pcard__ai .live-dot { background: var(--emerald); animation: pulseGold 2s infinite; }
+.se-pcard__save { position: absolute; bottom: 11px; inset-inline-end: 11px; width: 34px; height: 34px; display: grid; place-items: center; border: none; cursor: pointer; border-radius: 50%; background: rgba(8,21,38,.62); backdrop-filter: blur(6px); color: #fff; transition: all var(--dur-base) var(--ease-silk); }
+.se-pcard__save:hover { background: rgba(8,21,38,.85); }
+.se-pcard__save--on { color: var(--red); }
+.se-pcard__body { padding: 15px 16px 17px; display: flex; flex-direction: column; gap: 9px; }
+.se-pcard__loc { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--tx-f); }
+.se-pcard__title { font-family: var(--font-display); font-weight: 600; font-size: 19px; line-height: 1.15; color: var(--tx-s); }
+.se-pcard__price { font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--gold-lt); }
+.se-pcard__specs { display: flex; gap: 14px; margin-top: 2px; padding-top: 11px; border-top: 1px solid var(--bd); }
+.se-pcard__spec { display: flex; align-items: center; gap: 6px; font-family: var(--font-ui); font-size: 12px; color: var(--tx-m); }
+@media (prefers-reduced-motion: reduce) { .se-pcard__ai .live-dot { animation: none; } }

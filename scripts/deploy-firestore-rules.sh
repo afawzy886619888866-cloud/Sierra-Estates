@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Deploy Firestore rules to sierra-blu project
+echo "Deploying Firestore rules to sierra-blu..."
+echo ""
+echo "Prerequisites:"
+echo "  1. npm install -g firebase-tools"
+echo "  2. firebase login"
+echo ""
+echo "Running: firebase deploy --only firestore:rules --project sierra-blu"
+cd "$(dirname "$0")/../apps/admin"
+firebase deploy --only firestore:rules --project sierra-blu
+echo ""
+echo "✓ Rules deployed!"
+echo ""
+echo "Rules summary:"
+echo "  - compounds/listings/units/agents: PUBLIC READ, admin write"
+echo "  - inquiries/career_applications/leads: PUBLIC CREATE, admin read"
+echo "  - owners/clients/requests: ADMIN ONLY (Zero-Trust PII)"
+echo "  - users: self read, admin write"
+echo "  - everything else: DENY ALL"
