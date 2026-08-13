@@ -272,7 +272,7 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
             <a href="#map" className="nav-link">{t.navMap}</a>
             <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="nav-link">{t.navContact}</a>
             <button onClick={() => setLocale(isAr ? 'en' : 'ar')} aria-label="language"
-              style={{ background: 'var(--surf)', border: '1px solid var(--bd-gold)', color: 'var(--gold-lt)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              style={{ background: 'var(--surf)', border: '1px solid var(--bd-gold)', color: 'var(--gold-lt)', borderRadius: 'var(--radius-sm)', padding: '8px 14px', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
               {isAr ? 'EN' : 'عربي'}
             </button>
             <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-gold">{t.navCta}</a>
@@ -404,7 +404,7 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
         .se-pcard__badge { position: absolute; top: 11px; inset-inline-end: 11px; font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: #fff; padding: 5px 10px; border-radius: var(--radius-pill); }
         .se-pcard__ai { position: absolute; bottom: 11px; inset-inline-start: 11px; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-weight: 700; font-size: 10px; color: var(--emerald); background: rgba(8,21,38,.62); backdrop-filter: blur(6px); padding: 4px 9px; border-radius: var(--radius-pill); }
         .se-pcard__ai .live-dot { background: var(--emerald); animation: pulseGold 2s infinite; }
-        .se-pcard__save { position: absolute; bottom: 11px; inset-inline-end: 11px; width: 34px; height: 34px; display: grid; place-items: center; border: none; cursor: pointer; border-radius: 50%; background: rgba(8,21,38,.62); backdrop-filter: blur(6px); color: #fff; transition: all var(--dur-base) var(--ease-silk); }
+        .se-pcard__save { position: absolute; bottom: 11px; inset-inline-end: 11px; width: 44px; height: 44px; display: grid; place-items: center; border: none; cursor: pointer; border-radius: 50%; background: rgba(8,21,38,.62); backdrop-filter: blur(6px); color: #fff; transition: all var(--dur-base) var(--ease-silk); }
         .se-pcard__save:hover { background: rgba(8,21,38,.85); }
         .se-pcard__save--on { color: var(--red); }
         .se-pcard__body { padding: 15px 16px 17px; display: flex; flex-direction: column; gap: 9px; }
