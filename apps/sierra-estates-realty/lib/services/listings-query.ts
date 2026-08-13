@@ -1,6 +1,7 @@
 import { SEED_LISTINGS } from '@/lib/seed';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
+import realListings from '@/data/real-listings.json';
 import snapshot from '@/lib/inventory/snapshot.json';
 import type { Listing } from '@/lib/types';
 
@@ -54,7 +55,7 @@ function normalizeFirestoreListing(id: string, data: any): Listing {
   } as Listing;
 }
 
-/** Filter-mode read: Firebase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
+/** Filter-mode read: Firebase → Live Sheet → Real Data Cache → Snapshot → Seed fallback (INTEGRATION.md contract). */
 export async function readListings(): Promise<Listing[]> {
   // Try Firebase Firestore first (reads houyez_listings + listings merged)
   const db = await getAdminDb();
@@ -92,7 +93,30 @@ export async function readListings(): Promise<Listing[]> {
       return sheetUnits.map(inventoryUnitToListing);
     }
   } catch (err) {
-    console.warn('[listings] Live sheet fetch failed, using snapshot:', err);
+    console.warn('[listings] Live sheet fetch failed, using real data cache:', err);
+  }
+
+  // Real Data Cache fallback (320+ live ingested Google Sheet owner properties)
+  if (Array.isArray(realListings) && realListings.length > 0) {
+    return (realListings as any[]).map((item) => ({
+      id: String(item.id),
+      code: item.code || `SE-${item.id}`,
+      compound: item.compound || item.cmp || 'New Cairo',
+      zone: item.zone || '5th Settlement',
+      type: item.type || 'Apartment',
+      beds: item.beds ?? 3,
+      bath: item.baths ?? 2,
+      area: item.area ?? 150,
+      egpM: item.egpM ?? 8.5,
+      usd: item.usd ?? 170000,
+      aiScore: item.aiScore ?? 8.8,
+      tag: item.tag ?? 'Verified Owner',
+      mode: item.mode ?? 'sale',
+      agent: item.agent ?? 'Sierra Direct Advisor',
+      img: item.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+      status: item.status || 'available',
+      description: item.comment || '',
+    }));
   }
 
   // Snapshot fallback
