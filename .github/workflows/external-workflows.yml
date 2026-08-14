@@ -29,6 +29,9 @@ on:
           - email-sender
           - unit-adder
 
+permissions:
+  contents: read
+
 jobs:
   # ─────────────────────────────────────────────────────────────
   # JOB 1: Owner Search (Daily at 9am UTC)

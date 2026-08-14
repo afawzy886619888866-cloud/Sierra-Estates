@@ -24,10 +24,14 @@ on:
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
 
+permissions:
+  contents: read
+
 jobs:
   python-backend:
     name: Python (apps/api)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,6 +60,7 @@ jobs:
   functions-backend:
     name: Firebase Functions (functions/)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: functions

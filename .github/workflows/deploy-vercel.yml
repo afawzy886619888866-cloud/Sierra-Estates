@@ -49,9 +49,13 @@ env:
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
   NEXT_TELEMETRY_DISABLED: "1"
 
+permissions:
+  contents: read
+
 jobs:
   guard:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       client: ${{ steps.check.outputs.client }}
       admin: ${{ steps.check.outputs.admin }}
@@ -95,6 +99,7 @@ jobs:
     name: deploy (${{ matrix.role }})
     if: needs.guard.outputs.client == 'true' || needs.guard.outputs.admin == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Skip if this role is not configured

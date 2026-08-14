@@ -20,6 +20,8 @@ concurrency:
   group: whatsapp-dispatch
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest
