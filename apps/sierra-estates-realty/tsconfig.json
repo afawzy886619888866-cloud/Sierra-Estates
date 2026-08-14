@@ -2,11 +2,7 @@
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -17,46 +13,29 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "incremental": false,
+    "incremental": true,
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@agents-core/*": [
-        "../../packages/agents-core/src/*"
-      ],
-      "@obsidian/*": [
-        "../../packages/obsidian/src/*"
-      ],
-      "@sierra-estates/obsidian": [
-        "../../packages/obsidian/src/index.ts"
-      ],
-      "@sierra-estates/obsidian/*": [
-        "../../packages/obsidian/src/*"
-      ],
-      "@sierra-estates/memory-engine": [
-        "../../packages/memory-engine/src/index.ts"
-      ],
-      "@sierra-estates/ui": [
-        "../../packages/ui/src/index.ts"
-      ]
+      "@/*": ["./*"],
+      "@agents-core/*": ["../../packages/agents-core/src/*"],
+      "@obsidian/*": ["../../packages/obsidian/src/*"],
+      "@sierra-estates/obsidian": ["../../packages/obsidian/src/index.ts"],
+      "@sierra-estates/obsidian/*": ["../../packages/obsidian/src/*"],
+      "@sierra-estates/memory-engine": ["../../packages/memory-engine/src/index.ts"],
+      "@sierra-estates/ui": ["../../packages/ui/src/index.ts"]
     }
   },
   "include": [
     "next-env.d.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "components/**/*.ts",
-    "components/**/*.tsx",
-    "lib/**/*.ts",
-    "types/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
   ],
   "exclude": [
     "node_modules",

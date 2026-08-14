@@ -13,18 +13,12 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useI18n } from '@/lib/I18nContext';
-import { api } from '@/lib/api-client';
-import type { Listing as ApiListing } from '@/lib/types';
 import './client-home.css';
 
 // Leaflet map — SSR-safe, client-only (reuses the existing vanilla-Leaflet map)
 const LiveMap = dynamic<{ mode?: 'dark' | 'light' }>(() => import('@/components/Maps/LiveMap'), { ssr: false });
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const WHATSAPP = 'https://wa.me/201061399688';
 
@@ -130,7 +124,7 @@ function SpecIcon({ d }: { d: string }) {
 function PropertyCard({ item, isAr: _isAr }: { item: Listing; isAr: boolean }) {
   const [saved, setSaved] = useState(false);
   return (
-    <Link href="/properties" className="se-pcard" style={{ textDecoration: 'none' }}>
+    <Link href="/listings" className="se-pcard" style={{ textDecoration: 'none' }}>
       <div className="se-pcard__media">
         <img className="se-pcard__img" src={item.img} alt={item.title} loading="lazy" />
         <div className="se-pcard__scrim" />
@@ -159,101 +153,35 @@ function PropertyCard({ item, isAr: _isAr }: { item: Listing; isAr: boolean }) {
   );
 }
 
-/* ── Map an /api/listings result onto the homepage card shape ────────────── */
-function toCardListing(l: ApiListing): Listing {
-  return {
-    id: l.id,
-    title: `${l.type} · ${l.compound}`,
-    location: l.zone ? `${l.compound} · ${l.zone}` : l.compound,
-    code: l.code,
-    type: l.type,
-    beds: l.beds,
-    baths: l.bath,
-    area: l.area,
-    priceLabel: `EGP ${l.egpM.toFixed(1)}M`,
-    aiScore: Math.round(l.aiScore * 10),
-    img: l.img,
-    badge: l.tag ?? null,
-  };
-}
-
 /* ── Section entrance (opacity always 1 — only translateY eases) ───────── */
 function Reveal({ children, delay = 0, reduce }: { children: React.ReactNode; delay?: number; reduce: boolean }) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  
-  useGSAP(() => {
-    if (reduce || !containerRef.current) return;
-    
-    gsap.fromTo(containerRef.current, 
-      { y: 24, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        delay: delay,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: 'top 85%',
-        }
-      }
-    );
-  }, { scope: containerRef, dependencies: [reduce, delay] });
-
-  return <div ref={containerRef} style={{ willChange: 'transform, opacity' }}>{children}</div>;
-}
-
-function usePrefersReducedMotion() {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduce(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-  return reduce;
+  if (reduce) return <div>{children}</div>;
+  return (
+    <motion.div
+      initial={{ transform: 'translateY(18px)' }}
+      whileInView={{ transform: 'translateY(0px)' }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 /* ── Main homepage ─────────────────────────────────────────────────────── */
-export default function ClientHome({ initialApiListings }: { initialApiListings?: ApiListing[] }) {
+export default function ClientHome() {
   const { locale, setLocale } = useI18n();
   const isAr = locale === 'ar';
   const t = COPY[isAr ? 'ar' : 'en'];
-  const reduce = usePrefersReducedMotion();
-  const [listings, setListings] = useState<Listing[]>(
-    initialApiListings && initialApiListings.length > 0 ? initialApiListings.map(toCardListing) : FALLBACK
-  );
+  const reduce = !!useReducedMotion();
+  const [listings] = useState<Listing[]>(FALLBACK);
 
-  // Real listings via /api/listings (Firestore → live sheet → snapshot → seed
-  // fallback chain lives server-side; this just renders whatever comes back).
+  // Real Firestore data (falls back to hardcoded set when empty/unconfigured)
   useEffect(() => {
-    let cancelled = false;
-    api.listings({ mode: 'sale' })
-      .then((items) => {
-        if (cancelled || !items.length) return;
-        setListings(items.slice(0, 6).map(toCardListing));
-      })
-      .catch(() => {
-        // Keep FALLBACK — /api/listings already has its own fallback chain,
-        // so a rejection here means the network call itself failed.
-      });
-    return () => { cancelled = true; };
+    // Disabled Firestore fetch to force mock data
   }, []);
 
-  const heroRef = React.useRef<HTMLDivElement>(null);
-  
-  useGSAP(() => {
-    if (reduce) return;
-    
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.9 } });
-    
-    tl.fromTo('.hero-eyebrow', { y: 20, opacity: 0 }, { y: 0, opacity: 1 })
-      .fromTo('.hero-title', { y: 25, opacity: 0 }, { y: 0, opacity: 1 }, "-=0.7")
-      .fromTo('.hero-sub', { y: 20, opacity: 0 }, { y: 0, opacity: 1 }, "-=0.7")
-      .fromTo('.hero-cta', { y: 15, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.1 }, "-=0.75");
-      
-  }, { scope: heroRef, dependencies: [reduce] });
+  const enter = reduce ? {} : { initial: { transform: 'translateY(20px)' }, animate: { transform: 'translateY(0px)' } };
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className={isAr ? 'sb-ar' : ''} style={{ minHeight: '100vh', overflowX: 'hidden' }}>
@@ -268,11 +196,11 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
             </span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-            <Link href="/properties" className="nav-link">{t.navListings}</Link>
+            <Link href="/listings" className="nav-link">{t.navListings}</Link>
             <a href="#map" className="nav-link">{t.navMap}</a>
             <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="nav-link">{t.navContact}</a>
             <button onClick={() => setLocale(isAr ? 'en' : 'ar')} aria-label="language"
-              style={{ background: 'var(--surf)', border: '1px solid var(--bd-gold)', color: 'var(--gold-lt)', borderRadius: 'var(--radius-sm)', padding: '8px 14px', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+              style={{ background: 'var(--surf)', border: '1px solid var(--bd-gold)', color: 'var(--gold-lt)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
               {isAr ? 'EN' : 'عربي'}
             </button>
             <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-gold">{t.navCta}</a>
@@ -287,18 +215,18 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
         <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--bd-gold) 1px, transparent 1px), linear-gradient(90deg, var(--bd-gold) 1px, transparent 1px)', backgroundSize: '54px 54px', opacity: 0.25, maskImage: 'radial-gradient(ellipse at 50% 30%, #000, transparent 72%)' }} />
         <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 78% 18%, rgba(230,57,70,.16), transparent 45%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 0%, var(--bg) 94%)' }} />
-        <div ref={heroRef} style={{ position: 'relative', maxWidth: 'var(--container)', margin: '0 auto', padding: 'clamp(72px,10vw,130px) var(--gutter) 70px', textAlign: 'center' }}>
-          <div>
-            <div className="sb-eyebrow hero-eyebrow" style={{ justifyContent: 'center', marginBottom: 22 }}>{t.eyebrow}</div>
-            <h1 className="sb-display hero-title" style={{ margin: 0 }}>
+        <div style={{ position: 'relative', maxWidth: 'var(--container)', margin: '0 auto', padding: 'clamp(72px,10vw,130px) var(--gutter) 70px', textAlign: 'center' }}>
+          <motion.div {...enter} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
+            <div className="sb-eyebrow" style={{ justifyContent: 'center', marginBottom: 22 }}>{t.eyebrow}</div>
+            <h1 className="sb-display" style={{ margin: 0 }}>
               {t.h1a} <span className="gold-text">{t.h1b}</span><br />{t.h1c}
             </h1>
-            <p className="sb-body-lg hero-sub" style={{ maxWidth: 580, margin: '26px auto 38px', color: 'var(--tx-m)' }}>{t.sub}</p>
+            <p className="sb-body-lg" style={{ maxWidth: 580, margin: '26px auto 38px', color: 'var(--tx-m)' }}>{t.sub}</p>
             <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/properties" className="btn-gold btn-lg hero-cta">{t.ctaBrowse}</Link>
-              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-wa btn-lg hero-cta">{t.ctaWhatsapp}</a>
+              <Link href="/listings" className="btn-gold btn-lg">{t.ctaBrowse}</Link>
+              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-wa btn-lg">{t.ctaWhatsapp}</a>
             </div>
-          </div>
+          </motion.div>
 
           {/* STATS */}
           <Reveal reduce={reduce} delay={0.15}>
@@ -322,7 +250,7 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
               <div className="sb-eyebrow" style={{ marginBottom: 12 }}>{t.featEyebrow}</div>
               <h2 className="sb-display-l" style={{ margin: 0 }}>{isAr ? t.featTitle : <>Featured <span className="gold-static">Properties</span></>}</h2>
             </div>
-            <Link href="/properties" style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--gold-lt)' }}>{t.viewAll}</Link>
+            <Link href="/listings" style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--gold-lt)' }}>{t.viewAll}</Link>
           </div>
         </Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: 22 }}>
@@ -404,7 +332,7 @@ export default function ClientHome({ initialApiListings }: { initialApiListings?
         .se-pcard__badge { position: absolute; top: 11px; inset-inline-end: 11px; font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: #fff; padding: 5px 10px; border-radius: var(--radius-pill); }
         .se-pcard__ai { position: absolute; bottom: 11px; inset-inline-start: 11px; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-weight: 700; font-size: 10px; color: var(--emerald); background: rgba(8,21,38,.62); backdrop-filter: blur(6px); padding: 4px 9px; border-radius: var(--radius-pill); }
         .se-pcard__ai .live-dot { background: var(--emerald); animation: pulseGold 2s infinite; }
-        .se-pcard__save { position: absolute; bottom: 11px; inset-inline-end: 11px; width: 44px; height: 44px; display: grid; place-items: center; border: none; cursor: pointer; border-radius: 50%; background: rgba(8,21,38,.62); backdrop-filter: blur(6px); color: #fff; transition: all var(--dur-base) var(--ease-silk); }
+        .se-pcard__save { position: absolute; bottom: 11px; inset-inline-end: 11px; width: 34px; height: 34px; display: grid; place-items: center; border: none; cursor: pointer; border-radius: 50%; background: rgba(8,21,38,.62); backdrop-filter: blur(6px); color: #fff; transition: all var(--dur-base) var(--ease-silk); }
         .se-pcard__save:hover { background: rgba(8,21,38,.85); }
         .se-pcard__save--on { color: var(--red); }
         .se-pcard__body { padding: 15px 16px 17px; display: flex; flex-direction: column; gap: 9px; }

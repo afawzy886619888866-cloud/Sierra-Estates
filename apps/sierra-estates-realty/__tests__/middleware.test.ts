@@ -14,7 +14,7 @@
  *   2. Shared-secret gate on /api/orchestrate
  */
 import { NextRequest } from 'next/server';
-import { config, proxy as middleware } from '../proxy';
+import { config, middleware } from '../middleware';
 
 const ORIGINAL_SBR = process.env.SBR_SECRET_KEY;
 const ORIGINAL_ADMIN_HOST = process.env.ADMIN_HOST;
@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe('proxy config', () => {
   it('matches the root, /api and /admin routes', () => {
-    expect(config.matcher).toEqual(['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']);
+    expect(config.matcher).toEqual(['/', '/api/:path*', '/admin/:path*']);
   });
 });
 
@@ -127,11 +127,11 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
     expect(res.status).toBe(200);
   });
 
-  it('rejects /api/orchestrate when SBR_SECRET_KEY is unset (fail-closed)', async () => {
+  it('allows /api/orchestrate when SBR_SECRET_KEY is unset (local dev)', async () => {
     delete process.env.SBR_SECRET_KEY;
     const res = await middleware(
       request('https://sierra-estates.net/api/orchestrate', { method: 'POST' }),
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
   });
 });

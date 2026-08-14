@@ -496,7 +496,7 @@
         compoundDropdown.innerHTML = items.map(function (c) {
           var isSelected = filterState.compounds.indexOf(c.n) >= 0;
           var unitCount = (typeof D.unitsFor === 'function') ? D.unitsFor(c.n).length : 0;
-          return '<div class="hmf-cpd-item' + (isSelected ? ' selected' : '') + '" data-cpd="' + c.n + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:.15s;' + (isSelected ? 'background:rgba(200,150,26,.10);' : '') + '">' +
+          return '<div class="hmf-cpd-item' + (isSelected ? ' selected' : '') + '" data-cpd="' + c.n + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:.15s;' + (isSelected ? 'background:rgba(0,174,255,.08);' : '') + '">' +
             '<span style="width:18px;height:18px;border-radius:5px;border:2px solid ' + (isSelected ? 'var(--pri)' : 'var(--line-2)') + ';background:' + (isSelected ? 'var(--pri)' : 'transparent') + ';display:grid;place-items:center;flex:none;">' + (isSelected ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</span>' +
             '<span style="flex:1;font-size:13.5px;font-weight:600;color:var(--ink);">' + c.n + '</span>' +
             '<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:999px;">' + unitCount + '</span>' +
@@ -753,29 +753,21 @@
     var closeBtn = document.getElementById('tweaks-close');
     if (!trigger || !overlay) return;
 
-    // Only apply an EXPLICIT user tweak. These setters write inline styles onto <html>,
-    // which outrank [data-theme="dark"] in the cascade — applying defaults here froze the
-    // brand palette to the template's cyan and stopped the gold from ever rendering.
-    var savedAccent = localStorage.getItem('se-accent');
-    var savedFont = localStorage.getItem('se-font-color');
-    var savedRadius = localStorage.getItem('se-radius');
-    if (savedAccent) applyAccent(savedAccent);
-    if (savedFont) applyFont(savedFont);
-    if (savedRadius) applyRadius(savedRadius);
-
-    var rootCS = getComputedStyle(document.documentElement);
-    var activeAccent = savedAccent || rootCS.getPropertyValue('--pri').trim();
-    var activeFont = savedFont || rootCS.getPropertyValue('--ink').trim();
-    var activeRadius = savedRadius || '10';
+    var savedAccent = localStorage.getItem('se-accent') || '#00aeff';
+    var savedFont = localStorage.getItem('se-font-color') || '#0d2136';
+    var savedRadius = localStorage.getItem('se-radius') || '10';
+    applyAccent(savedAccent);
+    applyFont(savedFont);
+    applyRadius(savedRadius);
 
     document.querySelectorAll('.tweaks-swatch').forEach(function (s) {
-      s.classList.toggle('on', s.getAttribute('data-color') === activeAccent);
+      s.classList.toggle('on', s.getAttribute('data-color') === savedAccent);
     });
     document.querySelectorAll('.tweaks-font-btn').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-font') === activeFont);
+      b.classList.toggle('on', b.getAttribute('data-font') === savedFont);
     });
     document.querySelectorAll('.tweaks-corner-btn').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-radius') === activeRadius);
+      b.classList.toggle('on', b.getAttribute('data-radius') === savedRadius);
     });
 
     trigger.addEventListener('click', function () { overlay.classList.add('on'); });

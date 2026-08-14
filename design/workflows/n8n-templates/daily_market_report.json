@@ -1,0 +1,174 @@
+{
+  "name": "📊 Sierra Estates — Daily Market Report Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 20
+            }
+          ]
+        }
+      },
+      "id": "119e0758-c0b8-4d57-b08e-17482811a001",
+      "name": "Cron Daily 8 PM Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.propertyfinder.com.eg/v3/properties",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PROPERTY_FINDER_JWT_TOKEN }}"
+            }
+          ]
+        },
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "location_id",
+              "value": "cairo-new-cairo"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "sort_by",
+              "value": "date"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "219e0758-c0b8-4d57-b08e-17482811a002",
+      "name": "Pull PropertyFinder Listings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        380,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const listings = $('Pull PropertyFinder Listings').item.json.data || [];\n\nif (listings.length === 0) {\n  return { json: { total_listings: 0, average_sqm_price: 0, top_roi_compound: \"N/A\" } };\n}\n\nlet totalPricePerSqm = 0;\nlet count = 0;\nconst compounds = {};\n\nlistings.forEach(item => {\n  if (item.price && item.area) {\n    const sqmPrice = item.price / item.area;\n    totalPricePerSqm += sqmPrice;\n    count++;\n    \n    const cmpName = item.location?.name || \"Unknown\";\n    if (!compounds[cmpName]) compounds[cmpName] = { total: 0, items: 0 };\n    compounds[cmpName].total += sqmPrice;\n    compounds[cmpName].items++;\n  }\n});\n\nconst compoundAverages = Object.keys(compounds).map(name => ({\n  compound: name,\n  avg_price_sqm: Math.round(compounds[name].total / compounds[name].items)\n}));\n\ncompoundAverages.sort((a,b) => b.avg_price_sqm - a.avg_price_sqm);\n\nreturn {\n  json: {\n    date: new Date().toISOString().split('T')[0],\n    total_listings_pulled: listings.length,\n    average_sqm_price: count > 0 ? Math.round(totalPricePerSqm / count) : 0,\n    compounds_ranking: compoundAverages.slice(0, 5),\n    top_roi_compound: compoundAverages[0]?.compound || \"N/A\"\n  }\n};"
+      },
+      "id": "319e0758-c0b8-4d57-b08e-17482811a003",
+      "name": "Aggregate Stats Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://firestore.googleapis.com/v1/projects/sierra-estates-prod/databases/(default)/documents/market_insights",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={\"date\":{\"stringValue\":\"{{ $json.date }}\"},\"total_listings\":{\"integerValue\":\"{{ $json.total_listings_pulled }}\"},\"average_price_sqm\":{\"integerValue\":\"{{ $json.average_sqm_price }}\"},\"top_compound\":{\"stringValue\":\"{{ $json.top_roi_compound }}\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "419e0758-c0b8-4d57-b08e-17482811a004",
+      "name": "Update Firestore Database",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        800,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Google OAuth Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "reports@sierraestates.com",
+        "toEmail": "a.fawzy8866@gmail.com",
+        "subject": "=📊 Sierra Estates Executive Daily Market Report — {{ $json.date }}",
+        "html": "=<h2>Daily Real Estate Sourcing Report</h2>\n<p><strong>Date:</strong> {{ $json.date }}</p>\n<p><strong>Total Listings Aggregated:</strong> {{ $json.total_listings_pulled }} items</p>\n<p><strong>Average Price/Sqm (New Cairo):</strong> {{ $json.average_sqm_price }} EGP</p>\n<p><strong>Top Valuation Compound:</strong> {{ $json.top_roi_compound }}</p>\n<h3>Top 5 High-Value Compounds (Sqm Index):</h3>\n<ul>\n  {{#each $json.compounds_ranking}}\n    <li><strong>{{this.compound}}:</strong> {{this.avg_price_sqm}} EGP/sqm</li>\n  {{/each}}\n</ul>\n<br/>\n<p><em>Generated automatically by Sierra Estates self-hosted n8n engine.</em></p>"
+      },
+      "id": "519e0758-c0b8-4d57-b08e-17482811a005",
+      "name": "Send Report to Admin",
+      "type": "n8n-nodes-base.emailSendgrid",
+      "typeVersion": 1,
+      "position": [
+        800,
+        400
+      ],
+      "credentials": {
+        "sendgridApi": {
+          "id": "3",
+          "name": "SendGrid Production Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Daily 8 PM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pull PropertyFinder Listings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull PropertyFinder Listings": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Stats Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Stats Logic": {
+      "main": [
+        [
+          {
+            "node": "Update Firestore Database",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Report to Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

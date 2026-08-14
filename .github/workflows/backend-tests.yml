@@ -29,7 +29,7 @@ jobs:
     name: Python (apps/api)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - name: Check if apps/api exists
         id: check-api
         run: |
@@ -37,7 +37,7 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::apps/api directory not found — Python tests skipped."
           fi
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v5
         if: steps.check-api.outputs.skip != 'true'
         with:
           python-version: '3.12'
@@ -58,8 +58,8 @@ jobs:
       run:
         working-directory: functions
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: npm install --no-save --no-audit --no-fund --no-workspaces --install-strategy=nested

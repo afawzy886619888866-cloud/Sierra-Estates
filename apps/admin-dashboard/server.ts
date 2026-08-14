@@ -3,7 +3,7 @@ import express, { Request, Response } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { createServer as createViteServer } from 'vite';
 import { createServer } from 'http';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
@@ -66,7 +66,7 @@ async function startServer() {
   });
 
   // Socket.io connection handling
-  io.use((socket: Socket, next: (err?: Error) => void) => {
+  io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (token === ANTIGRAVITY_API_KEY) {
       next();
@@ -75,7 +75,7 @@ async function startServer() {
     }
   });
 
-  io.on('connection', (socket: Socket) => {
+  io.on('connection', (socket) => {
     console.log('Client connected to Antigravity Socket:', socket.id);
     socket.on('join_agent', (agentId: string) => {
       socket.join(agentId);

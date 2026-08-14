@@ -4,7 +4,6 @@ import { adminDb } from '@/lib/server/firebase-admin';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
-import { denyUnlessCron } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: MAINTENANCE HYGIENE AUDIT
@@ -12,8 +11,13 @@ import { denyUnlessCron } from '@/lib/server/cron-auth';
  */
 
 export async function GET(req: NextRequest) {
-  const denied = denyUnlessCron(req);
-  if (denied) return denied;
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     logger.info("🔄 [CRON] Starting Portfolio Maintenance Audit...");
 

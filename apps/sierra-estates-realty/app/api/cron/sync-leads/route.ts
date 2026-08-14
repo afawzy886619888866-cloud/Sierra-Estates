@@ -4,7 +4,6 @@ import { adminDb } from '@/lib/server/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
-import { denyUnlessCron } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: PROPERTY FINDER LEAD SYNC
@@ -13,8 +12,14 @@ import { denyUnlessCron } from '@/lib/server/cron-auth';
  */
 
 export async function GET(req: NextRequest) {
-  const denied = denyUnlessCron(req);
-  if (denied) return denied;
+  // Verify cron secret (Vercel sends this header)
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  // In production, verify the cron secret
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     logger.info("🔄 [CRON] Starting Property Finder lead sync...");

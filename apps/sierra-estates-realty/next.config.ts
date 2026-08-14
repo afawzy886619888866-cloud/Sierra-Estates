@@ -56,17 +56,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async rewrites() {
     return {
-      // NOTE: `/` must NOT be rewritten here. `beforeFiles` runs ahead of Next's
-      // own routing, so pinning `/` to the static prototype in
-      // public/client-page/ made app/page.tsx (ClientHome) unreachable and froze
-      // the homepage against every deploy. The prototype stays reachable at the
-      // explicit /client-page URL for reference.
       beforeFiles: [
+        { source: '/', destination: '/client-page/index.html' },
+        { source: '/index.html', destination: '/client-page/index.html' },
         { source: '/client-page', destination: '/client-page/index.html' },
       ],
-      // Static prototype pages that have no App Router equivalent. Real routes
-      // (/properties, /compounds, /property, /virtual-tour) win over these,
-      // because `afterFiles` runs only once filesystem + app routes miss.
       afterFiles: [
         { source: '/roi', destination: '/client-page/roi.html' },
         { source: '/roi.html', destination: '/client-page/roi.html' },
@@ -89,10 +83,6 @@ const nextConfig: NextConfig = {
         { source: '/virtual-tour', destination: '/client-page/virtual-tour.html' },
         { source: '/virtual-tour.html', destination: '/client-page/virtual-tour.html' },
       ],
-      // Load-bearing: the static pages above reference their assets relatively
-      // (href="shared.css", src="data.js"), which resolve to /shared.css etc.
-      // This maps those misses onto public/client-page/. Runs last, so a real
-      // 404 still returns Next's 404 page with a 404 status.
       fallback: [
         { source: '/:path*', destination: '/client-page/:path*' },
       ],

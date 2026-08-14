@@ -197,9 +197,6 @@ function normalizePFListing(raw, idx) {
     mode: mode,
     tag: idx % 4 === 0 ? 'Verified PF' : idx % 3 === 0 ? 'Featured' : 'Hot Deal',
     aiScore: Number((8.9 + (idx % 10) * 0.1).toFixed(1)),
-    // Also emitted as `ai` — the vanilla-JS renderers under public/client-page
-    // (shared.js, home.js, index.html, property.html) read `.ai`, not `.aiScore`.
-    ai: Number((8.9 + (idx % 10) * 0.1).toFixed(1)),
     agent: agentName,
     agentPhoto: agentPhoto,
     ago: 'Live Property Finder Sync',

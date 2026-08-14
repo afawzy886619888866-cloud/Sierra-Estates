@@ -1,15 +1,21 @@
 # NEXT_STEPS — Sierra Estates (pre-deploy)
 
-Updated: 2026-08-10. Trim items as completed.
+Updated: 2026-06-07. Trim items as completed.
 
-> **Deployment architecture lives in [`DEPLOYMENT.md`](./DEPLOYMENT.md)** — the only
-> deployment document in this repo. This file is a to-do list, not a deploy guide.
->
-> Two sections were removed from here on 2026-08-10 because they were wrong and
-> contradicted it: a "Deployment Architecture (RESOLVED)" section claiming ONE Vercel
-> deployment serves everything (there are **two** Vercel projects — the Vite SPA
-> `apps/admin-dashboard` is live at `admin.sierra-estates.net`, not deprecated), and a
-> "Vercel Setup" section describing dashboard build commands that no longer apply.
+---
+
+## Deployment Architecture (RESOLVED ✅)
+
+**ONE Vercel deployment** (`apps/sierra-estates-realty`) serves everything:
+
+- `/` → Public site: listings, search, contact
+- `/admin/*` → Staff admin panel (Firebase Auth gated by `app/admin/layout.tsx`)
+- `/api/*` → All backend APIs (auth-guarded per route)
+
+**Firebase** = infrastructure only: Firestore + Storage + Auth + Cloud Functions.
+No Firebase Hosting needed for the web app.
+
+`apps/admin` (Vite SPA) = **DEPRECATED** (all mock data). Real admin = `apps/sierra-estates-realty/app/admin/`.
 
 ---
 
@@ -19,17 +25,32 @@ Production Firestore currently allows `read, write: if request.auth != null`.
 The hardened rules are ready in the repo — just need deploying.
 
 1. Confirm every staff user has a `users/{uid}` doc with role `admin|manager|agent`.
-2. Deploy: `pnpm deploy:firebase` (= `firebase deploy --only firestore:rules,storage,functions`). There is no `deploy:rules` script — for rules only, run `firebase deploy --only firestore:rules,storage --project sierra-blu`.
+2. Deploy: `pnpm deploy:rules` (= `firebase deploy --only firestore:rules,storage`)
 3. Rollback = redeploy previous rules file from git history.
+
+---
+
+## Vercel Setup (one-time in dashboard)
+
+**Option A — recommended (Root Directory = `apps/sierra-estates-realty`):**
+
+- Set Root Directory = `apps/sierra-estates-realty`
+- Framework = Next.js (auto-detected)
+- Build command = `pnpm build`
+- Output directory = `.next` (auto-detected)
+- Env vars: copy from `apps/sierra-estates-realty/.env.local.example`
+
+**Option B — fallback (Root Directory = repo root):**
+
+- Build command = `pnpm --filter sierra-estates-platform build`
+- Output directory = `apps/sierra-estates-realty/.next`
+- Install command = `pnpm install --frozen-lockfile`
 
 ---
 
 ## Secrets — set before going live
 
-### In the client Vercel project (Next.js web app)
-
-Env vars are per-project — setting these here does **not** set them on the admin project.
-
+### In Vercel dashboard (for the Next.js web app)
 
 ```
 NEXT_PUBLIC_FIREBASE_*          ← from Firebase console
@@ -59,11 +80,10 @@ firebase deploy --only functions
 1. ✅ API auth hardened (all endpoints locked)
 2. ✅ Type-check CI gate (`ignoreBuildErrors: false`)
 3. ✅ 47 tests passing
-4. ⏳ Firestore/Storage rules deployed (see above)
-5. ⏳ Secrets set on both Vercel projects
-6. ⏳ Root Directory verified in the dashboard for both projects (`DEPLOYMENT.md` §12)
-7. ⏳ `apps/admin-dashboard` added to `ci.yml` — it is live with no CI gate (`DEPLOYMENT.md` §9)
-8. ⏳ Vercel plan confirmed to support the 5 crons (`DEPLOYMENT.md` §7)
+4. ✅ Deployment architecture fixed (one Vercel, no broken Firebase hosting)
+5. ⏳ Firestore/Storage rules deployed (see above)
+6. ⏳ Secrets set in Vercel dashboard
+7. ⏳ Vercel project configured (Option A or B above)
 
 ---
 

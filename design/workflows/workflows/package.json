@@ -1,0 +1,27 @@
+{
+  "name": "sierra-estates-workflows",
+  "version": "1.0.0",
+  "description": "External automation workflows for Sierra Estates",
+  "private": true,
+  "scripts": {
+    "whatsapp-scraper": "node 01-whatsapp-scraper/index.js",
+    "owner-search": "node 02-owner-search/search.js",
+    "owner-contact": "node 03-owner-contact/contact.js",
+    "email-sender": "node 04-email-sender/send.js",
+    "unit-adder": "node 05-unit-adder/add.js",
+    "all": "npm run owner-search && npm run owner-contact && npm run email-sender && npm run unit-adder"
+  },
+  "dependencies": {
+    "whatsapp-web.js": "^1.26.0",
+    "googleapis": "^136.0.0",
+    "firebase-admin": "^13.0.0",
+    "@sendgrid/mail": "^8.1.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

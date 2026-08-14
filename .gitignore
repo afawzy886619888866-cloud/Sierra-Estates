@@ -15,7 +15,10 @@ certs/
 # Firebase service accounts
 service-account.json
 *-firebase-adminsdk-*.json
+*sa-key*.json
 google-credentials.json
+*.patch
+*.zip
 
 # Environment files
 .env
@@ -28,7 +31,6 @@ google-credentials.json
 ECC/
 Client page/
 qm/
-copilot-worktrees/
 python-docs-samples/
 python-docs-samples-gcp/
 .archive/
@@ -57,12 +59,7 @@ build/
 .firebase/
 coverage/
 *.tsbuildinfo
-# NOTE: next-env.d.ts is deliberately NOT ignored here. Next's default template
-# ignores it, but apps/sierra-estates-realty/tsconfig.json lists it under `include`,
-# so a fresh CI clone must have it on disk before `tsc --noEmit` runs. It stays
-# tracked. It does re-write itself between dev and prod builds
-# (.next/dev/types/... vs .next/types/...), so an incidental one-line diff on this
-# file after a local build is expected — just check it out again.
+next-env.d.ts
 apps/admin-dashboard/api/server.js
 apps/admin-dashboard/api/server.js.map
 
@@ -138,11 +135,3 @@ obj/
 bin/
 **/obj/
 **/bin/
-
-# Turbo build logs in package subdirectories
-functions/.turbo/
-apps/*/.turbo/
-
-# Firebase Service Account Key
-scripts/firebase-sa-key.json
-*.sa-key.json

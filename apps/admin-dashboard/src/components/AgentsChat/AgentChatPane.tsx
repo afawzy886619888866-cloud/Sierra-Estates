@@ -56,7 +56,7 @@ export default function AgentChatPane({ agentId }: AgentChatPaneProps) {
       }
     });
 
-    socket.on('connect_error', (err: Error) => {
+    socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
     });
 

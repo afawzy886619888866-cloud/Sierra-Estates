@@ -5,8 +5,8 @@ name: Deploy · Vercel (client + admin)
 #   ┌────────────────────────────┬──────────────────────────────────────┬─────────────────────────────┐
 #   │ Job                        │ Vercel project                       │ Domain                      │
 #   ├────────────────────────────┼──────────────────────────────────────┼─────────────────────────────┤
-#   │ deploy (matrix: client)    │ prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E    │ sierra-estates.net          │
-#   │ deploy (matrix: admin)     │ prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA    │ admin.sierra-estates.net    │
+#   │ deploy (matrix: client)    │ prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E    │ sierra-estates.net          │
+#   │ deploy (matrix: admin)     │ prj_NMqZUADX9A5ba22ylMfls2l7I0zX    │ admin.sierra-estates.net    │
 #   └────────────────────────────┴──────────────────────────────────────┴─────────────────────────────┘
 #
 #   CLIENT → apps/sierra-estates-realty  (Next.js · pnpm monorepo)
@@ -21,31 +21,13 @@ name: Deploy · Vercel (client + admin)
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 #   VERCEL_ORG_ID              — Vercel team/org ID
-#   CLIENT_VERCEL_PROJECT_ID   — prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E
-#   ADMIN_VERCEL_PROJECT_ID    — prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA
+#   CLIENT_VERCEL_PROJECT_ID   — prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E
+#   ADMIN_VERCEL_PROJECT_ID    — prj_NMqZUADX9A5ba22ylMfls2l7I0zX
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
-# DISABLED 2026-08-08 (PR #165).
-#
-# This workflow has never completed successfully - every recorded run has ended
-# in failure or cancellation. Vercel's native Git integration already deploys
-# BOTH apps correctly (verified on PR #165: "sierra-estates" and
-# "admin-dashboard" both reported "Deployment has completed"), so this workflow
-# is a redundant second deploy path racing the one that works.
-#
-# Fixed here before disabling (keep if re-enabling):
-#   - pull/build/deploy now run from repo root; admin no longer cd's into
-#     app_dir on top of the project rootDirectory (was producing
-#     apps/admin-dashboard/apps/admin-dashboard). Build now succeeds.
-#
-# Remaining blocker if re-enabled: "vercel deploy --prebuilt" fails uploading
-#   ENOENT: lstat .../node_modules/.pnpm/@opentelemetry+api@1.9.1/...
-#   dangling pnpm symlinks. Dropping --archive=tgz did not help.
-#
-# Re-enable by restoring the push trigger below.
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -80,8 +62,8 @@ jobs:
           CLIENT_ID_RAW: ${{ vars.CLIENT_VERCEL_PROJECT_ID }}
           ADMIN_ID_RAW: ${{ vars.ADMIN_VERCEL_PROJECT_ID }}
         run: |
-          CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
-          ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+          CLIENT_ID="${CLIENT_ID_RAW:-prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E}"
+          ADMIN_ID="${ADMIN_ID_RAW:-prj_NMqZUADX9A5ba22ylMfls2l7I0zX}"
           for role in CLIENT ADMIN; do
             eval "id=\$${role}_ID"
             lc_role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
@@ -135,8 +117,8 @@ jobs:
           VERCEL_TOKEN_RAW: ${{ secrets.VERCEL_TOKEN }}
           ORG_ID_RAW:      ${{ vars.VERCEL_ORG_ID }}
         run: |
-          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
-          ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E}"
+          ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_NMqZUADX9A5ba22ylMfls2l7I0zX}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
           TOKEN="${VERCEL_TOKEN_RAW}"
           if [ "${{ matrix.role }}" = "client" ]; then
@@ -150,15 +132,15 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         if: steps.gate.outputs.run == 'true'
         with:
           submodules: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
         if: steps.gate.outputs.run == 'true'
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         if: steps.gate.outputs.run == 'true'
         with:
           node-version: '24'
@@ -264,23 +246,34 @@ jobs:
 
       - name: Pull Vercel project settings
         if: steps.gate.outputs.run == 'true'
+        working-directory: ${{ matrix.app_dir }}
         run: |
           vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
 
-      # Both roles build from the repo root. Vercel's per-project rootDirectory
-      # (set in "Normalize Vercel project settings") locates the app. Previously
-      # admin also cd'd into app_dir, so Vercel appended rootDirectory on top of
-      # it -> apps/admin-dashboard/apps/admin-dashboard (path does not exist).
-      - name: Build (from repo root; Vercel rootDirectory selects the app)
+      - name: Build (client = monorepo root, admin = standalone)
         if: steps.gate.outputs.run == 'true'
         run: |
-          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
+          if [ "${{ matrix.role }}" = "client" ]; then
+            # Next.js client: build via monorepo root (pnpm workspace filter handles it)
+            vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
+          else
+            # Vite admin SPA: build from admin-dashboard directory
+            cd "${{ matrix.app_dir }}"
+            vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
+          fi
 
       - name: Deploy (prebuilt artifact)
         if: steps.gate.outputs.run == 'true'
         id: deploy_step
         run: |
-          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
+          if [ "${{ matrix.role }}" = "client" ]; then
+            # Client .vercel/output is at monorepo root
+            url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
+          else
+            # Admin .vercel/output is inside the app directory
+            cd "${{ matrix.app_dir }}"
+            url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
+          fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
           echo "deployed: $url"

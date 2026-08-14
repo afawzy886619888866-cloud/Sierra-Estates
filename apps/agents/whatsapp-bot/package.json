@@ -32,15 +32,5 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "_comment_overrides": "Security overrides for transitive deps. This package is NOT in the pnpm workspace, so the root pnpm overrides do not reach it and Dependabot must patch it independently — it kept failing to, because js-yaml resolves at two different majors here (3.x under @istanbuljs/load-nyc-config via jest, 4.x under cosmiconfig via whatsapp-web.js) and Dependabot conflated them, capping its own bump at 4.3.0. The nested override below pins each major to its own patched release. Regenerate with: npm install --package-lock-only --ignore-scripts",
-  "overrides": {
-    "js-yaml@^3": "3.15.1",
-    "js-yaml@^4": "4.3.1",
-    "brace-expansion@^1": "1.1.18",
-    "brace-expansion@^2": "2.1.4",
-    "fast-xml-parser": "5.10.1",
-    "ip-address": "10.3.1",
-    "protobufjs": "7.6.5"
   }
 }

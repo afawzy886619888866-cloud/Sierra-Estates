@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<script>document.documentElement.classList.add('js');</script>
 <title>ROI Analysis · Investment Intelligence — Sierra Estates</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="shared.css"/>
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
 <script src="data.js"></script>
 <script src="shared.js"></script>
 <style>
 .roi-hero{background:linear-gradient(135deg,#07121e 0%,#0d1f30 60%,#07121e 100%);padding:60px 0 50px;position:relative;overflow:hidden;}
-.roi-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(200,150,26,.22),transparent 60%);}
+.roi-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(0,174,255,.22),transparent 60%);}
 [data-theme="dark"] .roi-hero::before{background:radial-gradient(700px 360px at 78% 0%,rgba(200,150,26,.18),transparent 60%);}
 .roi-hero .wrap{position:relative;z-index:2;}
 .roi-hero h1{color:#fff;font-family:var(--display);font-size:46px;font-weight:700;letter-spacing:-.015em;line-height:1.05;}
@@ -40,7 +39,7 @@
 .roi-comp{font-size:14.5px;font-weight:700;color:var(--ink);}
 .roi-zone{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.04em;}
 .roi-bar-wrap{height:8px;border-radius:4px;background:var(--bg);overflow:hidden;position:relative;}
-.roi-bar{height:100%;background:linear-gradient(90deg,#34d399,#c8961a);border-radius:4px;transform-origin:left;animation:roiBarGrow 1.4s var(--silk) both;}
+.roi-bar{height:100%;background:linear-gradient(90deg,#34d399,#00aeff);border-radius:4px;transform-origin:left;animation:roiBarGrow 1.4s var(--silk) both;}
 [data-theme="dark"] .roi-bar{background:linear-gradient(90deg,#e9c176,#c8961a);}
 @keyframes roiBarGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 .roi-yield{text-align:end;font-family:var(--mono);font-weight:800;font-size:16px;color:var(--ink);}
@@ -54,7 +53,7 @@
 .field label b{color:var(--pri);font-size:13px;}
 [data-theme="dark"] .field label b{color:#e9c176;}
 input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--bg);outline:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pri);cursor:pointer;box-shadow:0 2px 10px rgba(200,150,26,.45);transition:transform .2s;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pri);cursor:pointer;box-shadow:0 2px 10px rgba(0,174,255,.45);transition:transform .2s;}
 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15);}
 [data-theme="dark"] input[type=range]::-webkit-slider-thumb{background:#e9c176;box-shadow:0 2px 10px rgba(200,150,26,.45);}
 input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--pri);border:none;cursor:pointer;}
@@ -67,7 +66,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 [data-theme="dark"] .res-box .v{color:#e9c176;}
 .res-box .l{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:6px;font-weight:700;}
 
-.note{max-width:920px;margin:40px auto 0;padding:22px 24px;background:rgba(200,150,26,.05);border:1px solid rgba(200,150,26,.18);border-radius:14px;}
+.note{max-width:920px;margin:40px auto 0;padding:22px 24px;background:rgba(0,174,255,.05);border:1px solid rgba(0,174,255,.18);border-radius:14px;}
 [data-theme="dark"] .note{background:rgba(200,150,26,.06);border-color:rgba(200,150,26,.22);}
 .note b{color:var(--pri);font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
 [data-theme="dark"] .note b{color:#e9c176;}
@@ -82,8 +81,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
 <section class="roi-hero">
   <div class="wrap">
-    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#e9c176;margin-bottom:14px;">
-      <span style="width:24px;height:1.5px;background:#e9c176;display:inline-block;"></span>
+    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;">
+      <span style="width:24px;height:1.5px;background:#8fe1ff;display:inline-block;"></span>
       AI INVESTMENT INTELLIGENCE · LIVE
     </div>
     <h1>ROI Analysis <em>— yield, cap rate, cashflow</em></h1>

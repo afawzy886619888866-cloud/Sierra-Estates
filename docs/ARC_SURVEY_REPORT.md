@@ -18,14 +18,6 @@ firebase/Sierra-Estates-Final/back/sierra-2026/{main, backup-20260602, copilot--
 
 That is why `firebase/` is 296 MB. Six full branch snapshots of the ancestor repos are sitting inside your production monorepo as dead weight.
 
-> **Update (2026-08-08):** these directories have been moved out of this repo.
-> `firebase/Sierra-Estates-Final`, `.archive`, and `_archived_repos` (23,381 files)
-> were extracted **with their full git history** to
-> [sierrablue8866-droid/Sierra-Blu-Systm](https://github.com/sierrablue8866-droid/Sierra-Blu-Systm)
-> on the `archive-import` branch. Paths above are historical and no longer resolve here.
-> `firebase/admin-redirect` was intentionally kept — it is live hosting content
-> referenced by `firebase.json`.
-
 **Consequence:** most of what you wanted to "re-allocate" from arc does not need to come from arc at all. It is already in the repo — just buried in the wrong place.
 
 ---

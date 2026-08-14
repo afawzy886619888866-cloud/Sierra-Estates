@@ -7,10 +7,8 @@
 # MSDO installs, configures and runs the latest versions of static analysis tools
 # (including, but not limited to, SDL/security and compliance tools).
 #
-# The Microsoft Security DevOps action supports both windows-latest and ubuntu-latest runners
-# (see the action's own sample workflow). This job runs on ubuntu-latest because bandit_runner.exe
-# hits a Windows-only command-line-length limit on repos this size ("The filename or extension is
-# too long" — see microsoft/security-devops-action#58); the ubuntu runner doesn't have that limit.
+# The Microsoft Security DevOps action is currently in beta and runs on the windows-latest queue,
+# as well as Windows self hosted agents. ubuntu-latest support coming soon.
 #
 # For more information about the action , check out https://github.com/microsoft/security-devops-action
 #
@@ -23,7 +21,6 @@ name: "Microsoft Defender For Devops"
 permissions:
   contents: read
   security-events: write
-  id-token: write
 
 on:
   push:
@@ -35,7 +32,8 @@ on:
 
 jobs:
   MSDO:
-    runs-on: ubuntu-latest
+    # currently only windows latest is supported
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v7
@@ -45,7 +43,7 @@ jobs:
           5.0.x
           6.0.x
     - name: Run Microsoft Security DevOps
-      uses: microsoft/security-devops-action@v1.12.0
+      uses: microsoft/security-devops-action@v1.6.0
       id: msdo
     - name: Upload results to Security tab
       uses: github/codeql-action/upload-sarif@v4

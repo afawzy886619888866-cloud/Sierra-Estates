@@ -8,7 +8,6 @@ import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { OrchestratorService } from '@/lib/services/orchestrator';
 import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { logger } from '@/lib/logger';
-import { denyUnlessCron } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: INGEST FROM GOOGLE SHEETS BUFFER
@@ -109,8 +108,14 @@ function buildListingDocument(rawMessage: string, sender: string, group: string,
 }
 
 export async function GET(req: NextRequest) {
-  const denied = denyUnlessCron(req);
-  if (denied) return denied;
+  // Verify cron secret (Vercel sends this automatically in production)
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const spreadsheetId = process.env.BROKER_INBOX_SHEET_ID;
   if (!spreadsheetId) {
     return NextResponse.json(
