@@ -79,3 +79,6 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+
+      - name: Build admin dashboard
+        run: pnpm --filter sierra-estates-admin-page build
