@@ -19,7 +19,7 @@ describe('lib/server/n8n-client', () => {
     test('skips when N8N_BASE_URL is not configured', async () => {
       process.env.N8N_BASE_URL = '';
       jest.resetModules();
-      const { triggerN8nWebhook } = await import('@/lib/server/n8n-client');
+      const { triggerN8nWebhook } = await import('../lib/server/n8n-client');
 
       const result = await triggerN8nWebhook('test-webhook', { data: 'payload' });
       expect(result).toBe(false);
@@ -36,7 +36,7 @@ describe('lib/server/n8n-client', () => {
         status: 200,
       });
 
-      const { triggerN8nWebhook } = await import('@/lib/server/n8n-client');
+      const { triggerN8nWebhook } = await import('../lib/server/n8n-client');
       const payload = { senderPhone: '+2010123456', owners: [{ id: '1' }] };
       const result = await triggerN8nWebhook('bulk-owner-outreach', payload);
 
@@ -63,7 +63,7 @@ describe('lib/server/n8n-client', () => {
         text: () => Promise.resolve('Internal Server Error'),
       });
 
-      const { triggerN8nWebhook } = await import('@/lib/server/n8n-client');
+      const { triggerN8nWebhook } = await import('../lib/server/n8n-client');
       const result = await triggerN8nWebhook('broken-webhook', {});
       expect(result).toBe(false);
     });
@@ -76,7 +76,7 @@ describe('lib/server/n8n-client', () => {
         new Error('Connection refused')
       );
 
-      const { triggerN8nWebhook } = await import('@/lib/server/n8n-client');
+      const { triggerN8nWebhook } = await import('../lib/server/n8n-client');
       const result = await triggerN8nWebhook('unreachable', {});
       expect(result).toBe(false);
     });
@@ -87,7 +87,7 @@ describe('lib/server/n8n-client', () => {
       process.env.N8N_BASE_URL = '';
       jest.resetModules();
 
-      const { triggerN8nWebhook } = await import('@/lib/server/n8n-client');
+      const { triggerN8nWebhook } = await import('../lib/server/n8n-client');
       const result = await triggerN8nWebhook('any-path', { data: 'test' });
       expect(result).toBe(false);
       expect(global.fetch).not.toHaveBeenCalled();
