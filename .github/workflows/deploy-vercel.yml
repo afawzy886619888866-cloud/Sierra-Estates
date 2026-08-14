@@ -135,7 +135,7 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.gate.outputs.run == 'true'
         with:
-          submodules: false
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - uses: pnpm/action-setup@v4
         if: steps.gate.outputs.run == 'true'

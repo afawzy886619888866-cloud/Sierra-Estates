@@ -30,6 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
       - name: Check if apps/api exists
         id: check-api
         run: |
@@ -59,6 +61,8 @@ jobs:
         working-directory: functions
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
