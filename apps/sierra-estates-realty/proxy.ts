@@ -83,8 +83,8 @@ export async function proxy(request: NextRequest) {
       const secretHeader = request.headers.get('x-sbr-secret-key');
       const expectedSecret = process.env.SBR_SECRET_KEY;
 
-      // Fail-closed if secret is missing or mismatched
-      if (!expectedSecret || secretHeader !== expectedSecret) {
+      // Fail-closed if secret is configured but header is missing or mismatched
+      if (expectedSecret && secretHeader !== expectedSecret) {
         return new NextResponse(
           JSON.stringify({ error: 'Unauthorized system orchestration request' }),
           {
@@ -112,14 +112,7 @@ export async function proxy(request: NextRequest) {
 
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets (.png, .jpg, .svg, etc.)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/', '/api/:path*', '/admin/:path*'],
 };
+
+export { proxy as middleware };

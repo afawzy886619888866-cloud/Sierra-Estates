@@ -14,7 +14,7 @@
  *   2. Shared-secret gate on /api/orchestrate
  */
 import { NextRequest } from 'next/server';
-import { config, middleware } from '../middleware';
+import { config, middleware } from '../proxy';
 
 const ORIGINAL_SBR = process.env.SBR_SECRET_KEY;
 const ORIGINAL_ADMIN_HOST = process.env.ADMIN_HOST;
