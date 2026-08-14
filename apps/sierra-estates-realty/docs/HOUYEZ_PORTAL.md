@@ -28,11 +28,11 @@ app/clients/page.tsx               ← embeds <HouyezPortal />
 Four collections power the portal. Each doc has an `order: number` field
 (ascending = earlier in the UI) and bilingual `en`/`ar` fields.
 
-| Collection         | UI section               | Doc shape                                                                                                                       |
-| ------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `houyez_slides`    | Hero slider              | `{ pre, preAr, main, mainAr, img, order }`                                                                                     |
-| `houyez_compounds` | Compounds grid           | `{ name, nameAr, zone, zoneAr, count, img, order }`                                                                            |
-| `houyez_rooms`     | 360-degree rooms strip   | `{ name, nameAr, sub, subAr, img, order }`                                                                                      |
+| Collection         | UI section               | Doc shape                                                                                                                                                     |
+| ------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `houyez_slides`    | Hero slider              | `{ pre, preAr, main, mainAr, img, order }`                                                                                                                    |
+| `houyez_compounds` | Compounds grid           | `{ name, nameAr, zone, zoneAr, count, img, order }`                                                                                                           |
+| `houyez_rooms`     | 360-degree rooms strip   | `{ name, nameAr, sub, subAr, img, order }`                                                                                                                    |
 | `houyez_listings`  | AI-curated listings grid | `{ code, cmp, cmpAr, zone, zoneAr, type, typeAr, beds, bath, area, egpM, usd, ai, tag, tagAr, mode, modeAr, agent, agentAr, ago, agoAr, img, order, active }` |
 
 The `houyez_listings.active` boolean is the soft-delete flag — set `false`
