@@ -1,3 +1,10 @@
+// Pin the timezone before any worker spawns. Date-formatting assertions
+// (lib/format.ts and anything asserting on rendered dates) otherwise shift with
+// the host offset — they pass in UTC and Cairo but fail in e.g. UTC+14. Set
+// here rather than in a setup file so it is in place before Node resolves the
+// local zone. CI runs UTC anyway; this makes local runs match it.
+process.env.TZ = 'UTC';
+
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
@@ -13,6 +20,11 @@ const config = {
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
+    // lib/validation/*.test.ts are standalone validation scripts, not jest
+    // suites — they sit outside __tests__/ so `testMatch` never runs them, yet
+    // they were being counted as source and pinned at 0%. Exclude test files
+    // from the denominator generally.
+    '!**/*.test.{ts,tsx}',
   ],
   coverageReporters: ['text-summary', 'lcov', 'json'],
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],

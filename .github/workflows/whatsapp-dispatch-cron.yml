@@ -1,8 +1,10 @@
 name: Cron · WhatsApp dispatch
 
 # Vercel Hobby only allows DAILY crons, so the every-10-minutes WhatsApp queue
-# drain runs from here instead. The Vercel cron for the same path is a daily
-# fallback (see apps/sierra-estates-realty/vercel.json). The route itself
+# drain runs from here instead. NOTE: there is no Vercel cron fallback for this
+# path — apps/sierra-estates-realty/vercel.json declares no crons at all, and it
+# is the only vercel.json Vercel reads (see CLAUDE.md → Vercel Setup). This
+# workflow is the sole schedule for the dispatch endpoint. The route itself
 # enforces operating hours (12pm–8pm Africa/Cairo) and per-number quotas, so an
 # out-of-window ping is a cheap no-op.
 #

@@ -20,6 +20,8 @@
     "@vitejs/plugin-react": "^6.0.4",
     "@xyflow/react": "^12.11.2",
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "firebase": "^12.17.0",
     "html2canvas": "^1.4.1",
     "http-proxy-middleware": "^2.0.10",
@@ -32,6 +34,8 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.0",
     "recharts": "^3.8.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "three": "^0.185.1",
     "vite": "^8.2.0"
   },

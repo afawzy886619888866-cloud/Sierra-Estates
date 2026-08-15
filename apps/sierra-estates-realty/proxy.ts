@@ -83,6 +83,22 @@ export async function proxy(request: NextRequest) {
       const secretHeader = request.headers.get('x-sbr-secret-key');
       const expectedSecret = process.env.SBR_SECRET_KEY;
 
+      // In production the secret is mandatory: a missing/misconfigured
+      // SBR_SECRET_KEY must never leave orchestration open. Outside
+      // production an unset secret keeps the route usable for local dev.
+      if (!expectedSecret && process.env.NODE_ENV === 'production') {
+        return new NextResponse(
+          JSON.stringify({ error: 'Orchestration is not configured' }),
+          {
+            status: 503,
+            headers: {
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+          }
+        );
+      }
+
       // Fail-closed if secret is configured but header is missing or mismatched
       if (expectedSecret && secretHeader !== expectedSecret) {
         return new NextResponse(

@@ -57,7 +57,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        { source: '/', destination: '/client-page/index.html' },
+        // NOTE: there is deliberately no `/` entry here. `beforeFiles` runs
+        // *before* the filesystem step, so rewriting `/` shadowed the App
+        // Router homepage (app/page.tsx → app/ClientHome.tsx) entirely. The
+        // React homepage is now the production homepage; the static portal
+        // remains reachable at /client-page.
         { source: '/index.html', destination: '/client-page/index.html' },
         { source: '/client-page', destination: '/client-page/index.html' },
       ],

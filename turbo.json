@@ -93,7 +93,7 @@
     },
     "dev": { "cache": false, "persistent": true },
     "lint": { "dependsOn": ["^lint"] },
-    "type-check": { "dependsOn": ["^type-check"] },
+    "type-check": { "dependsOn": ["^build"] },
     "test:ci": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
     "clean": { "cache": false }
   }

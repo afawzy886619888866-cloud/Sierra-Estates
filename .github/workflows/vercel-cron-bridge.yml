@@ -1,0 +1,113 @@
+name: Cron · Scheduled sync bridge
+
+# These five endpoints were declared as `crons` in the ROOT vercel.json, which
+# Vercel never reads: deploy-vercel.yml pins the project's Root Directory to
+# apps/sierra-estates-realty, so the config Vercel actually reads is
+# apps/sierra-estates-realty/vercel.json — and that file carries no crons.
+# The routes therefore existed but nothing ever invoked them.
+#
+# Scheduling them from GitHub Actions instead of moving them into the app's
+# vercel.json keeps this working on ANY Vercel plan: Hobby permits daily crons
+# only, and sync-master-sheet needs a 6-hourly cadence. It also matches the
+# pattern already used by whatsapp-dispatch-cron.yml.
+#
+# Each route authenticates with `Authorization: Bearer $CRON_SECRET` and is a
+# GET. Note the routes are fail-open when CRON_SECRET is unset on the Vercel
+# project — set it there, or these become publicly triggerable.
+#
+# Required repo secret:
+#   CRON_SECRET — must match the CRON_SECRET env var on the Vercel project.
+
+on:
+  schedule:
+    # Times mirror the schedules the root vercel.json declared.
+    - cron: '0 0 * * *'    # sync-leads, ingest-from-sheets
+    - cron: '0 6 * * *'    # sync-listings
+    - cron: '0 23 * * *'   # maintenance
+    - cron: '0 */6 * * *'  # sync-master-sheet
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: 'Single endpoint to run (blank = every endpoint due now)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - sync-leads
+          - ingest-from-sheets
+          - sync-listings
+          - maintenance
+          - sync-master-sheet
+
+concurrency:
+  group: vercel-cron-bridge
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Select endpoints for this run
+        id: select
+        env:
+          MANUAL_ENDPOINT: ${{ inputs.endpoint }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          if [ -n "$MANUAL_ENDPOINT" ]; then
+            targets="$MANUAL_ENDPOINT"
+          else
+            case "$SCHEDULE" in
+              '0 0 * * *')   targets="sync-leads ingest-from-sheets" ;;
+              '0 6 * * *')   targets="sync-listings" ;;
+              '0 23 * * *')  targets="maintenance" ;;
+              '0 */6 * * *') targets="sync-master-sheet" ;;
+              # Manual dispatch with no endpoint chosen: run them all.
+              *)             targets="sync-leads ingest-from-sheets sync-listings maintenance sync-master-sheet" ;;
+            esac
+          fi
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+          echo "Endpoints for this run: $targets"
+
+      - name: Trigger endpoints
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          TARGETS: ${{ steps.select.outputs.targets }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repo secret is not set — the endpoints would be called unauthenticated."
+            exit 1
+          fi
+
+          failed=""
+          for endpoint in $TARGETS; do
+            echo "── /api/cron/$endpoint ─────────────────────────────"
+            # Retry transient 5xx/network failures; a cold Vercel function or a
+            # brief upstream blip should not fail the whole scheduled run.
+            code=""
+            for attempt in 1 2 3; do
+              code=$(curl -sS --max-time 120 -o /tmp/body -w '%{http_code}' \
+                -H "Authorization: Bearer $CRON_SECRET" \
+                "https://sierra-estates.net/api/cron/$endpoint" || echo "000")
+              case "$code" in
+                200) break ;;
+                # 4xx is a real error (bad secret, bad route) — do not retry.
+                4*)  break ;;
+                *)   echo "attempt $attempt → HTTP $code, retrying in $((attempt * 5))s"
+                     sleep $((attempt * 5)) ;;
+              esac
+            done
+
+            echo "HTTP $code"
+            cat /tmp/body 2>/dev/null || true
+            echo
+            [ "$code" = "200" ] || failed="$failed $endpoint"
+          done
+
+          if [ -n "$failed" ]; then
+            echo "::error::Failed endpoints:$failed"
+            exit 1
+          fi
+          echo "All endpoints returned 200."
