@@ -119,11 +119,25 @@ describe.each(routes)('/api/cron/%s — auth', (_name, handler) => {
     expect(res.status).toBe(401);
   });
 
-  // ⚠️ Characterisation test — documents current behaviour, not desired.
-  // With CRON_SECRET unset the guard is skipped entirely, so the endpoint is
-  // publicly triggerable. The cron bridge workflow refuses to run without the
-  // secret, but that protects the caller, not the endpoint.
-  it('currently runs UNAUTHENTICATED when CRON_SECRET is unset', async () => {
+  // Regression guard for the fail-open fix. These routes kick off Sheets
+  // syncs, PF imports and portfolio writes, so an unconfigured production
+  // deployment must not leave them anonymously triggerable.
+  it('returns 503 in production when CRON_SECRET is unset, rather than running', async () => {
+    delete process.env.CRON_SECRET;
+    const originalEnv = process.env.NODE_ENV;
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true });
+
+    try {
+      const res = await handler(request());
+
+      expect(res.status).toBe(503);
+      await expect(res.json()).resolves.toEqual({ error: 'Cron is not configured' });
+    } finally {
+      Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, configurable: true });
+    }
+  });
+
+  it('still runs unauthenticated outside production, for local dev', async () => {
     delete process.env.CRON_SECRET;
 
     const res = await handler(request());

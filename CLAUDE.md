@@ -135,7 +135,15 @@ not read by Vercel; `apps/sierra-estates-realty/vercel.json` is the live one.
 
 ## API Auth (hardened)
 
-- Admin-only: `viewing-requests`, `concierge/send-whatsapp`, `telegram/setup`, `wealth/roi` → `verifyAdminRequest`
+- Admin-only: `viewing-requests`, `concierge/send-whatsapp`, `telegram/setup`, `wealth/roi` → `verifyAdminRequest`.
+  This requires a **Firebase identity** with `role` in {admin, superadmin}. The shared
+  `X-SBR-SECRET-KEY` authenticates but carries no `uid`, so it can never satisfy an
+  admin gate — it previously did, which let any holder of the service/cron/webhook
+  credential clear every admin route.
+- Cron: all `/api/cron/*` routes use `verifyCronRequest` (`lib/server/cron-auth.ts`) —
+  `Authorization: Bearer $CRON_SECRET`, 401 on mismatch, and **503 in production when
+  `CRON_SECRET` is unset** so an unconfigured deploy cannot leave them anonymously
+  triggerable. Outside production an unset secret still allows the call, for local dev.
 - Service+token: `admin/ingest` → `verifyRequest` (Firebase token OR X-SBR-SECRET-KEY)
 - Webhook secret: `telegram/webhook`, `whatsapp/webhook`, `ingest/whatsapp` → conditional SBR_SECRET_KEY check
 - Public: `listings`, `leads`, `leads/request-viewing`, `closer/initiate`, `concierge/[leadId]`, `wealth/portfolio`, `whatsapp/heartbeat`

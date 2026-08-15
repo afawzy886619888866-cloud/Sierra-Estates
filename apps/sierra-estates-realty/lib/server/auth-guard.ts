@@ -68,7 +68,15 @@ export function unauthorizedResponse(message = 'Authentication required') {
  */
 export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> {
   const result = await verifyRequest(req);
-  if (!result.authenticated || !result.uid) return result;
+  if (!result.authenticated) return result;
+
+  // A caller authenticated by the shared secret has no identity (no uid), so
+  // there is no Firestore user document to carry a role. Previously this
+  // early-returned the *authenticated* result, which meant any holder of
+  // SBR_SECRET_KEY cleared every admin-only gate without a role check — and
+  // that secret is also the service/cron/webhook credential, so it is shared
+  // far more widely than admin access. Admin requires a real identity.
+  if (!result.uid) return { authenticated: false, method: 'none' };
 
   try {
     const { adminDb } = await import('./firebase-admin');

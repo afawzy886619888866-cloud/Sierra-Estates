@@ -13,16 +13,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncMasterOwnerSheet } from '@/lib/services/master-sheet-sync';
 import { logger } from '@/lib/logger';
+import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyCronRequest(req);
+  if (denied) return denied;
 
   const result = await syncMasterOwnerSheet();
   if (!result.success) {
