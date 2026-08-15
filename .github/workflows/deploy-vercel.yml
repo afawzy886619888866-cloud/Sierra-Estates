@@ -126,6 +126,17 @@ jobs:
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_NMqZUADX9A5ba22ylMfls2l7I0zX}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
           TOKEN="${VERCEL_TOKEN_RAW}"
+
+          # Fail here with an actionable message rather than 5 steps later.
+          # Without this, an unset VERCEL_TOKEN reaches the Vercel CLI as a
+          # bare `--token=` and surfaces only as
+          # `Error: You defined "--token", but it's missing a value`, which
+          # gives no hint that the cause is a missing repo secret.
+          if [ -z "$TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN repo secret is not set — deploys cannot authenticate to Vercel. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
           if [ "${{ matrix.role }}" = "client" ]; then
             PROJ="$CLIENT_PROJ"
           else

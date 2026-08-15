@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/server/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
+import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: PROPERTY FINDER LISTING SYNC
@@ -11,12 +12,8 @@ import { logger } from '@/lib/logger';
  */
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyCronRequest(req);
+  if (denied) return denied;
 
   try {
     logger.info('🔄 [CRON] Starting Property Finder listing sync...');

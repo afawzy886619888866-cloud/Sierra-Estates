@@ -241,25 +241,36 @@ describe('verifyAdminRequest', () => {
     expect(result).toEqual({ authenticated: false, method: 'none' });
   });
 
-  // ⚠️ Characterisation test — documents CURRENT behaviour, not desired
-  // behaviour. `verifyAdminRequest` early-returns on `!result.uid`, so a
-  // secret-key caller (which authenticates but carries no identity) is handed
-  // back `authenticated: true` and never reaches the Firestore role check.
-  //
-  // Effect: any holder of SBR_SECRET_KEY clears the admin guard on every
-  // admin-only route (viewing-requests, concierge/send-whatsapp,
-  // telegram/setup, wealth/roi). That secret is also the service/cron/webhook
-  // credential, so it is shared far more widely than admin access should be.
-  //
-  // Left as-is deliberately: tightening it would break any service caller that
-  // currently relies on it, which is a product decision. If it is fixed, this
-  // test should flip to asserting `{ authenticated: false, method: 'none' }`.
-  it('currently ACCEPTS a secret-key caller as admin, skipping the role check', async () => {
+  // Regression guard for the privilege-escalation fix. A secret-key caller
+  // authenticates but carries no identity (no uid), so there is no Firestore
+  // user document and therefore no role. This used to early-return the
+  // *authenticated* result, letting any holder of SBR_SECRET_KEY clear every
+  // admin-only gate — and that secret is also the service/cron/webhook
+  // credential, shared far more widely than admin access.
+  it('denies a secret-key caller, which has no identity to carry an admin role', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
 
     const result = await verifyAdminRequest(request({ 'x-sbr-secret-key': 's3cret' }));
 
+    expect(result).toEqual({ authenticated: false, method: 'none' });
+  });
+
+  it('does not hit Firestore for a caller with no uid', async () => {
+    const { verifyAdminRequest } = await loadGuard('s3cret');
+
+    await verifyAdminRequest(request({ 'x-sbr-secret-key': 's3cret' }));
+
     expect(collection).not.toHaveBeenCalled();
-    expect(result).toEqual({ authenticated: true, method: 'secret-key' });
+  });
+
+  it('still admits a Firebase-authenticated admin after the tightening', async () => {
+    const { verifyAdminRequest } = await loadGuard('s3cret');
+    verifyIdToken.mockResolvedValueOnce({ uid: 'admin-1', email: 'admin@b.com' });
+    userGet.mockResolvedValueOnce({ data: () => ({ role: 'admin' }) });
+
+    const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
+
+    expect(result.authenticated).toBe(true);
+    expect(result.method).toBe('firebase');
   });
 });

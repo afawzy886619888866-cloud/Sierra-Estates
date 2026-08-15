@@ -76,32 +76,62 @@ describe('POST /api/roi/calculate', () => {
     await expect(res.json()).resolves.toHaveProperty('error');
   });
 
-  // ── characterisation: `|| default` treats 0 as missing ───────────────────
-  it('treats a price of 0 as "unset" and substitutes 10,000,000', async () => {
-    const zero = await (await roiCalculate(post({ price: 0, rent: 100_000 }))).json();
-    const tenM = await (await roiCalculate(post({ price: 10_000_000, rent: 100_000 }))).json();
+  // ── a supplied 0 is honoured, not treated as "missing" ───────────────────
+  it('rejects a price of 0 instead of silently substituting 10,000,000', async () => {
+    const res = await roiCalculate(post({ price: 0, rent: 100_000 }));
 
-    expect(zero.gross).toBeCloseTo(tenM.gross, 10);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: '"price" must be greater than 0' });
   });
 
-  it('treats a rent of 0 as "unset" and substitutes 1,200,000/yr', async () => {
-    const zero = await (await roiCalculate(post({ price: 10_000_000, rent: 0 }))).json();
+  it('rejects a negative price', async () => {
+    const res = await roiCalculate(post({ price: -5, rent: 100_000 }));
 
-    expect(zero.gross).toBeCloseTo(12, 10);
+    expect(res.status).toBe(400);
   });
 
-  it('treats 0% appreciation as "unset" and substitutes 15%', async () => {
+  it('honours a rent of 0 as a genuine zero yield', async () => {
+    const body = await (await roiCalculate(post({ price: 10_000_000, rent: 0 }))).json();
+
+    expect(body.gross).toBe(0);
+    expect(body.net).toBe(0);
+  });
+
+  it('rejects a negative rent', async () => {
+    const res = await roiCalculate(post({ price: 10_000_000, rent: -1 }));
+
+    expect(res.status).toBe(400);
+  });
+
+  it('honours 0% appreciation instead of substituting 15%', async () => {
     const zero = await (await roiCalculate(post({ price: 10_000_000, rent: 100_000, appreciation: 0 }))).json();
     const fifteen = await (await roiCalculate(post({ price: 10_000_000, rent: 100_000, appreciation: 15 }))).json();
 
-    expect(zero.fiveYr).toBeCloseTo(fifteen.fiveYr, 10);
+    // With no appreciation the 5-year return is rent-only: 12% × 5 × 0.82.
+    expect(zero.fiveYr).toBeCloseTo(12 * 5 * 0.82, 10);
+    expect(zero.fiveYr).toBeLessThan(fifteen.fiveYr);
   });
 
-  it('treats a non-numeric price as "unset" rather than producing NaN', async () => {
-    const body = await (await roiCalculate(post({ price: 'abc', rent: 100_000 }))).json();
+  it('supports negative appreciation (depreciation)', async () => {
+    const body = await (
+      await roiCalculate(post({ price: 10_000_000, rent: 100_000, appreciation: -10 }))
+    ).json();
 
-    expect(Number.isNaN(body.gross)).toBe(false);
-    expect(body.gross).toBeCloseTo(12, 10);
+    expect(Number.isFinite(body.fiveYr)).toBe(true);
+    expect(body.fiveYr).toBeLessThan(12 * 5 * 0.82);
+  });
+
+  it('rejects a non-numeric price rather than substituting a default', async () => {
+    const res = await roiCalculate(post({ price: 'abc', rent: 100_000 }));
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: '"price" must be a number' });
+  });
+
+  it('still defaults a genuinely absent field', async () => {
+    const body = await (await roiCalculate(post({ rent: 100_000 }))).json();
+
+    expect(body.gross).toBeCloseTo(12, 10); // price defaulted to 10M
   });
 });
 
@@ -194,5 +224,34 @@ describe('POST /api/pricing/evaluate', () => {
 
     expect(res.status).toBe(400);
     await expect(res.json()).resolves.toHaveProperty('error');
+  });
+
+  // ── invalid numerics are rejected, not silently propagated as NaN ────────
+  it('rejects a non-numeric beds instead of returning a null valuation', async () => {
+    // Previously `Number('abc')` → NaN propagated through bedPrem into value,
+    // and NaN serialises to null — so the caller got `{ value: null }` with a
+    // 200 status rather than an error.
+    const res = await pricingEvaluate(post({ area: 100, beds: 'abc' }));
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: '"beds" must be a number' });
+  });
+
+  it('rejects a non-numeric area', async () => {
+    const res = await pricingEvaluate(post({ area: 'big', beds: 3 }));
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a non-positive finishing or furnishing factor', async () => {
+    expect((await pricingEvaluate(post({ area: 100, beds: 3, fin: 0 }))).status).toBe(400);
+    expect((await pricingEvaluate(post({ area: 100, beds: 3, furn: -1 }))).status).toBe(400);
+  });
+
+  it('never returns a null or NaN valuation for accepted input', async () => {
+    const body = await (await pricingEvaluate(post({ area: 100, beds: 4 }))).json();
+
+    expect(body.value).not.toBeNull();
+    expect(Number.isFinite(body.value)).toBe(true);
   });
 });
