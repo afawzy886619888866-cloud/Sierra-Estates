@@ -63,11 +63,11 @@ jobs:
       - name: Validate project ids
         id: check
         env:
-          CLIENT_ID_RAW: ${{ vars.CLIENT_VERCEL_PROJECT_ID }}
-          ADMIN_ID_RAW: ${{ vars.ADMIN_VERCEL_PROJECT_ID }}
+          CLIENT_ID_RAW: ${{ vars['CLIENT_VERCEL_PROJECT_ID'] || 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E' }}
+          ADMIN_ID_RAW: ${{ vars['ADMIN_VERCEL_PROJECT_ID'] || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
         run: |
-          CLIENT_ID="${CLIENT_ID_RAW:-prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E}"
-          ADMIN_ID="${ADMIN_ID_RAW:-prj_NMqZUADX9A5ba22ylMfls2l7I0zX}"
+          CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
+          ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           for role in CLIENT ADMIN; do
             eval "id=\$${role}_ID"
             lc_role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
@@ -117,10 +117,10 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         id: proj
         env:
-          CLIENT_PROJ_RAW: ${{ vars.CLIENT_VERCEL_PROJECT_ID || secrets.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || secrets.VERCEL_PROJECT_ID_CLIENT }}
-          ADMIN_PROJ_RAW:  ${{ vars.ADMIN_VERCEL_PROJECT_ID || secrets.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || secrets.VERCEL_PROJECT_ID_ADMIN }}
-          VERCEL_TOKEN_RAW: ${{ secrets.VERCEL_TOKEN || secrets.VERCEL_AUTH_TOKEN }}
-          ORG_ID_RAW:      ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
+          CLIENT_PROJ_RAW: ${{ vars['CLIENT_VERCEL_PROJECT_ID'] || 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E' }}
+          ADMIN_PROJ_RAW:  ${{ vars['ADMIN_VERCEL_PROJECT_ID'] || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
+          VERCEL_TOKEN_RAW: ${{ secrets['VERCEL_TOKEN'] }}
+          ORG_ID_RAW:      ${{ vars['VERCEL_ORG_ID'] || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
         run: |
           CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
@@ -194,15 +194,15 @@ jobs:
       - name: Sync env vars to Vercel project
         if: steps.gate.outputs.run == 'true'
         env:
-          FB_API_KEY:       ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
-          FB_AUTH_DOMAIN:   ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-          FB_PROJECT_ID:    ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
-          FB_STORAGE:       ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-          FB_SENDER_ID:     ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
-          FB_APP_ID:        ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
-          FB_MEASUREMENT:   ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
-          FB_DATABASE_URL:  ${{ vars.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
-          SESSION_SECRET_VAL: ${{ secrets.SESSION_SECRET }}
+          FB_API_KEY:       ${{ vars['NEXT_PUBLIC_FIREBASE_API_KEY'] || '' }}
+          FB_AUTH_DOMAIN:   ${{ vars['NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'] || '' }}
+          FB_PROJECT_ID:    ${{ vars['NEXT_PUBLIC_FIREBASE_PROJECT_ID'] || '' }}
+          FB_STORAGE:       ${{ vars['NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'] || '' }}
+          FB_SENDER_ID:     ${{ vars['NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'] || '' }}
+          FB_APP_ID:        ${{ vars['NEXT_PUBLIC_FIREBASE_APP_ID'] || '' }}
+          FB_MEASUREMENT:   ${{ vars['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'] || '' }}
+          FB_DATABASE_URL:  ${{ vars['NEXT_PUBLIC_FIREBASE_DATABASE_URL'] || '' }}
+          SESSION_SECRET_VAL: ${{ secrets['SESSION_SECRET'] || '' }}
         run: |
           upsert() {
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
