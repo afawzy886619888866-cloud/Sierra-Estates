@@ -1,26 +1,26 @@
 {
-  "name": "@sierra-estates/api",
-  "version": "1.0.0",
-  "description": "Shared API types and clients",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./types": "./src/types/index.ts",
-    "./clients": "./src/clients/index.ts"
-  },
-  "dependencies": {
-    "@sierra-estates/agents": "workspace:*",
-    "axios": "^1.19",
-    "express": "^5.2",
-    "pino": "^10.3",
-    "twilio": "^6.0",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0",
-    "@types/node": "^26",
-    "typescript": "^5.8.2"
-  }
+	"name": "@sierra-estates/api",
+	"version": "1.0.0",
+	"description": "Shared API types and clients",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"private": true,
+	"exports": {
+		".": "./src/index.ts",
+		"./types": "./src/types/index.ts",
+		"./clients": "./src/clients/index.ts"
+	},
+	"dependencies": {
+		"@sierra-estates/agents": "workspace:*",
+		"axios": "^1.19",
+		"express": "^5.2",
+		"pino": "^10.3",
+		"twilio": "^6.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0",
+		"@types/node": "^26",
+		"typescript": "^5.8.2"
+	}
 }
