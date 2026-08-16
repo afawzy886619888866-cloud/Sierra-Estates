@@ -197,11 +197,34 @@ async function updateLeadQualification(phone, qualData, clientName = '') {
   }
 }
 
+const getAdminDb = () => {
+  if (!db) db = initFirebase();
+  return db;
+};
+
+const adminDb = new Proxy({}, {
+  get(target, prop) {
+    const database = getAdminDb();
+    if (!database) {
+      return () => ({
+        doc: () => ({ set: async () => {}, update: async () => {}, get: async () => ({ exists: false }) }),
+        add: async () => {},
+        where: () => ({ limit: () => ({ get: async () => ({ empty: true, docs: [] }) }) }),
+      });
+    }
+    const val = database[prop];
+    return typeof val === 'function' ? val.bind(database) : val;
+  }
+});
+
 module.exports = {
   initFirebase,
+  getAdminDb,
+  adminDb,
   getPendingQueueMessages,
   markQueueMessageSent,
   getLeadByPhone,
   updateLeadQualification,
 };
+
 

@@ -92,6 +92,76 @@ client.on('auth_failure', (msg) => {
   console.error('❌ Authentication failed:', msg);
 });
 
+const { adminDb, getPendingQueueMessages, markQueueMessageSent, getLeadByPhone, updateLeadQualification } = require('./firebase-service');
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (e) {}
+
+// Configure Email Transporter
+const transporter = nodemailer ? nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587', 10),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+}) : null;
+
+async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
+  let cleanMessage = rawAiReply;
+  const qualificationMatch = rawAiReply.match(/<lead_qualification>([\s\S]*?)<\/lead_qualification>/i);
+
+  if (qualificationMatch) {
+    // 1. Strip the tag from the text sent to the WhatsApp user
+    cleanMessage = rawAiReply.replace(/<lead_qualification>[\s\S]*?<\/lead_qualification>/gi, '').trim();
+
+    try {
+      const qualificationData = JSON.parse(qualificationMatch[1].trim());
+
+      // 2. Update Firestore Lead Record
+      await adminDb.collection('leads').doc(leadId).set({
+        client_phone: clientPhone,
+        client_name: clientName || qualificationData.client_name || 'Lead',
+        status: 'Qualified / Needs Review',
+        qualification_data: qualificationData,
+        updated_at: new Date().toISOString()
+      }, { merge: true });
+
+      // Also trigger unified updateLeadQualification helper for notifications & stakeholder CRM sync
+      await updateLeadQualification(clientPhone, qualificationData, clientName);
+
+      // 3. Dispatch Email Alert to Admin & Sales
+      if (transporter && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+          await transporter.sendMail({
+            from: `"Sierra Realty AI Pipeline" <${process.env.SMTP_USER}>`,
+            to: process.env.SALES_NOTIFICATION_EMAIL || process.env.ADMIN_ALERT_EMAIL || 'admin@sierra-estates.net',
+            subject: `🚨 Qualified Lead: ${clientName || 'Property Finder Lead'} (${clientPhone})`,
+            html: `
+              <h3>New Lead Ready for Sales Review</h3>
+              <p><strong>Phone:</strong> +${clientPhone}</p>
+              <p><strong>Viewing Preference:</strong> ${qualificationData.preferred_viewing || 'Flexible'}</p>
+              <p><strong>Move-in Date:</strong> ${qualificationData.move_in_date || 'Immediate'}</p>
+              <p><strong>Budget:</strong> ${qualificationData.budget || 'Flexible'} ${qualificationData.currency || 'EGP'}</p>
+              <p><strong>Locations:</strong> ${Array.isArray(qualificationData.locations) ? qualificationData.locations.join(', ') : (qualificationData.locations || 'New Cairo')}</p>
+              <p><strong>Bedrooms:</strong> ${qualificationData.bedrooms || 'Any'} (${qualificationData.furnishing_status || 'Standard'})</p>
+              <hr/>
+              <p><a href="http://localhost:3001/leads/${leadId}">Open in Admin Dashboard</a></p>
+            `
+          });
+        } catch (mailErr) {
+          console.warn('⚠️ [Email Dispatch Warning]:', mailErr.message);
+        }
+      }
+      console.log(`✅ [Lead Handler] Qualified lead ${leadId} persisted and alerts dispatched.`);
+    } catch (err) {
+      console.error('❌ [Lead Handler] Error parsing qualification JSON:', err.message);
+    }
+  }
+
+  return cleanMessage;
+}
+
 client.on('ready', async () => {
   console.log('\n🟢 ════════════════════════════════════════════════');
   console.log('   Sierra Estates WhatsApp Agent is LIVE!');
@@ -104,8 +174,6 @@ client.on('ready', async () => {
   const listing = new ListingManager();
   const report  = new ReportGenerator(client);
   const store   = new SessionStore();
-
-  const { getPendingQueueMessages, markQueueMessageSent, getLeadByPhone, updateLeadQualification } = require('./firebase-service');
 
   // ── Automated Property Finder & CRM Queue Dispatcher ──────────────────────────
   console.log('⚡ [WhatsApp Agent] Automated Property Finder Outreach Queue Worker started.');
@@ -179,21 +247,11 @@ client.on('ready', async () => {
 
       // ── Gemini AI reply ───────────────────────────────────────────────────
       const history = store.getHistory(senderId);
-      let reply   = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
+      const rawAiReply = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
 
-      // ── Check for structured Lead Qualification payload ──
-      const qualMatch = reply.match(/<lead_qualification>([\s\S]*?)<\/lead_qualification>/i);
-      if (qualMatch) {
-        try {
-          const qualJson = JSON.parse(qualMatch[1].trim());
-          console.log(`🎯 [Lead Qualification Extracted] Phone: ${senderNum}:`, qualJson);
-          await updateLeadQualification(senderNum, qualJson);
-        } catch (e) {
-          console.warn('⚠️ Could not parse lead qualification JSON:', e.message);
-        }
-        // Strip the hidden tag before sending to client
-        reply = reply.replace(/<lead_qualification>[\s\S]*?<\/lead_qualification>/gi, '').trim();
-      }
+      // ── Process response through Message Interceptor & Lead Notifier ──
+      const leadId = `lead_${senderNum}`;
+      const reply = await processBotResponse(leadId, senderNum, name, rawAiReply);
 
       store.addMessage(senderId, 'user',  body);
       store.addMessage(senderId, 'model', reply);
@@ -270,3 +328,6 @@ console.log('🚀 Starting Sierra WhatsApp Agent...');
 console.log('   Library: whatsapp-web.js');
 console.log(`   Chrome:  ${chromePath || 'Auto-detected browser'}\n`);
 client.initialize();
+
+module.exports = { client, processBotResponse, isAdminUser, sleep };
+
