@@ -75,7 +75,7 @@ export class ObsidianMemory {
     // Filter by tags if provided
     if (tags.length > 0) {
       entries = entries.filter((entry) =>
-        tags.every((t) => entry.tags.includes(t))
+        tags.every((t) => (entry.tags || []).includes(t))
       );
     }
 
@@ -89,7 +89,7 @@ export class ObsidianMemory {
         return (
           entry.id.toLowerCase().includes(q) ||
           valStr.toLowerCase().includes(q) ||
-          entry.tags.some((t) => t.toLowerCase().includes(q))
+          (entry.tags || []).some((t) => t.toLowerCase().includes(q))
         );
       });
     }
