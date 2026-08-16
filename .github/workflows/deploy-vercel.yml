@@ -271,7 +271,7 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         id: deploy_step
         run: |
-          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
           echo "deployed: $url"
