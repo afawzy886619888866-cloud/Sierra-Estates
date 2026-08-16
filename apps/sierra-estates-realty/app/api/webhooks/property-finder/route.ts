@@ -39,15 +39,20 @@ export async function POST(request: NextRequest) {
           .where('pfLeadId', '==', lead.id)
           .get();
 
+        const clientName = lead.sender?.name || lead.name || 'Client';
+        const clientPhone = lead.sender?.phone || lead.phone || '';
+        const listingRef = lead.listing?.reference || lead.property?.reference || '';
+
         const payload = {
-          name: lead.sender?.name || lead.name || 'PF Lead',
-          phone: lead.sender?.phone || lead.phone || '',
+          name: clientName,
+          phone: clientPhone,
           email: lead.sender?.email || lead.email || '',
           source: 'property_finder',
           status: 'new',
-          mode: 'sale', // default assumption
+          stage: 'inbound',
+          mode: 'sale',
           pfLeadId: lead.id,
-          notes: `PF Listing Ref: ${lead.listing?.reference || ''}`,
+          notes: `PF Listing Ref: ${listingRef}`,
           updatedAt: new Date().toISOString(),
         };
 
@@ -58,6 +63,22 @@ export async function POST(request: NextRequest) {
           });
         } else {
           await existing.docs[0].ref.update(payload);
+        }
+
+        // Automated WhatsApp Response Queue:
+        // When client submits inquiry on Property Finder, queue an immediate tailored greeting
+        if (clientPhone) {
+          const autoMessage = `مرحباً بك يا ${clientName} في سييرا إستيتس! 🌟\nوصلنا استفسارك عبر Property Finder بخصوص العقار (مرجع: ${listingRef || 'المميز'}).\nيسعدنا تزويدك بكافة تفاصيل الوحدة، المخططات الهندسية، وخطط السداد المتاحة.\n\nهل تود التواصل هنا عبر واتساب أو تحديد موعد لزيارة ومعاينة العقار؟\n\n*Sierra Estates — Beyond Brokerage*`;
+
+          await adminDb.collection('whatsapp_queue').add({
+            phone: clientPhone,
+            clientName,
+            source: 'property_finder',
+            propertyRef: listingRef,
+            text: autoMessage,
+            status: 'pending',
+            createdAt: Timestamp.now(),
+          });
         }
         break;
       }
