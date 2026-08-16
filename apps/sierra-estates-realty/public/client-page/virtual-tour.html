@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Sierra Estates · Three.js 3D Virtual Tour</title>
 <link rel="icon" href="logo-mark-96.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -23,30 +23,30 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060d15;color:#fff;f
 .tour-topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:linear-gradient(180deg,rgba(6,13,21,.92) 0%,rgba(6,13,21,.4) 75%,transparent 100%);pointer-events:none;}
 .tour-topbar>*{pointer-events:auto;}
 .tb-brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff;}
-.tb-back{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px;text-decoration:none;transition:all .2s;}
+.tb-back{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px;text-decoration:none;transition:all .2s;}
 .tb-back:hover{background:rgba(255,255,255,.2);border-color:#e9c176;}
 .tb-badge{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#e9c176;letter-spacing:.16em;text-transform:uppercase;background:rgba(200,150,26,.14);border:1px solid rgba(200,150,26,.3);padding:6px 12px;border-radius:999px;}
 .tb-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:pulseDot 2s infinite;}
 @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
 
 .tb-actions{display:flex;align-items:center;gap:10px;}
-.tb-btn{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:#fff;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:all .2s;}
+.tb-btn{background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:#fff;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:all .2s;}
 .tb-btn:hover{background:rgba(200,150,26,.3);border-color:#e9c176;color:#e9c176;}
 
 /* ── Floating 3D Room Info HUD ── */
-.room-hud{position:fixed;top:80px;left:24px;z-index:90;background:rgba(6,13,21,.75);backdrop-filter:blur(14px);border:1px solid rgba(233,193,118,.25);border-radius:14px;padding:16px 20px;max-width:320px;pointer-events:none;transition:opacity .3s,transform .3s;}
+.room-hud{position:fixed;top:80px;left:24px;z-index:90;background:rgba(6,13,21,.75);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(233,193,118,.25);border-radius:14px;padding:16px 20px;max-width:320px;pointer-events:none;transition:opacity .3s,transform .3s;}
 .room-hud-tag{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;color:#e9c176;letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;}
 .room-hud-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:4px;}
 .room-hud-sub{font-size:12px;color:rgba(255,255,255,.75);line-height:1.4;}
 
 /* ── Radar / Compass Minimap ── */
-.radar-box{position:fixed;top:80px;right:24px;z-index:90;width:68px;height:68px;border-radius:50%;background:rgba(6,13,21,.75);backdrop-filter:blur(12px);border:1px solid rgba(200,150,26,.3);display:grid;place-items:center;}
+.radar-box{position:fixed;top:80px;right:24px;z-index:90;width:68px;height:68px;border-radius:50%;background:rgba(6,13,21,.75);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(200,150,26,.3);display:grid;place-items:center;}
 .radar-dial{position:relative;width:52px;height:52px;border-radius:50%;border:1px dashed rgba(233,193,118,.35);}
 .radar-sweep{position:absolute;top:50%;left:50%;width:22px;height:22px;background:conic-gradient(from 0deg,rgba(52,211,153,.5),transparent 60deg);border-radius:50%;transform-origin:0 0;}
 .radar-needle{position:absolute;top:50%;left:50%;width:2px;height:22px;background:#e9c176;transform-origin:50% 0%;transform:translate(-50%,-100%);box-shadow:0 0 6px #e9c176;}
 
 /* ── Bottom Room Switcher Strip ── */
-.tour-bottombar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:8px;background:rgba(6,13,21,.85);backdrop-filter:blur(16px);border:1px solid rgba(233,193,118,.3);padding:8px 12px;border-radius:999px;box-shadow:0 20px 50px rgba(0,0,0,.6);max-width:94vw;overflow-x:auto;}
+.tour-bottombar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:8px;background:rgba(6,13,21,.85);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(233,193,118,.3);padding:8px 12px;border-radius:999px;box-shadow:0 20px 50px rgba(0,0,0,.6);max-width:94vw;overflow-x:auto;}
 .room-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid transparent;background:transparent;color:rgba(255,255,255,.7);font-family:'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;}
 .room-btn:hover{color:#fff;background:rgba(255,255,255,.08);}
 .room-btn.active{background:linear-gradient(135deg,#c8961a,#e9c176);color:#09090f;font-weight:700;border-color:rgba(255,255,255,.4);box-shadow:0 4px 14px rgba(200,150,26,.4);}
@@ -57,7 +57,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060d15;color:#fff;f
 .beacon-pulse{position:absolute;inset:-8px;border-radius:50%;background:rgba(233,193,118,.4);animation:beaconRings 2.2s infinite;}
 @keyframes beaconRings{0%{transform:scale(.7);opacity:.9;}100%{transform:scale(2.4);opacity:0;}}
 .hotspot-beacon:hover .beacon-core{transform:scale(1.2);}
-.hotspot-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(6,13,21,.9);backdrop-filter:blur(10px);border:1px solid rgba(233,193,118,.35);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;}
+.hotspot-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(6,13,21,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(233,193,118,.35);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;}
 .hotspot-beacon:hover .hotspot-tooltip{opacity:1;}
 
 /* ── Tour Loading Cover ── */
