@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/I18nContext';
 import { EN, AR } from '@/app/client/copy';
 import {
-  Search, MapPin, Home, Bed, DollarSign, SlidersHorizontal, ArrowRight, Check
+  Search, MapPin, Home, Bed, DollarSign
 } from 'lucide-react';
 
 interface HeroSearchCardProps {
