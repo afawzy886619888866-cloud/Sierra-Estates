@@ -30,6 +30,7 @@ export function Navbar() {
     { href: "#compounds", label: t("nav.compounds"), icon: Map },
     { href: "#match", label: t("nav.match"), icon: Sparkles },
     { href: "/clients", label: locale === "ar" ? "طلب عقار" : "Request Sourcing", icon: ConciergeBell },
+    { href: "/cairo-plaza", label: locale === "ar" ? "المشروعات الهامة" : "Important Projects", icon: Building2 },
     { href: "#roi", label: t("nav.roi"), icon: Calculator },
   ];
 

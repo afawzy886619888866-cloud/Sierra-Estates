@@ -8,7 +8,7 @@
     en: {
       dir: 'ltr',
       brandSub: 'Future of Real Estate',
-      navHome: 'Home', navProps: 'Properties', navCpds: 'Compounds & Map', navBest: 'Best Listings', navCareer: 'Career', navAgents: 'Agents', navContact: 'Contact', navAI: 'AI Tools',
+      navHome: 'Home', navProps: 'Properties', navCpds: 'Compounds & Map', navBest: 'Best Listings', navProjects: 'Important Projects', navCareer: 'Career', navAgents: 'Agents', navContact: 'Contact', navAI: 'AI Tools',
       addListing: 'Add Listing', signIn: 'Sign In', langBtn: 'العربية',
       themeLight: 'Light', themeDark: 'Dark',
       addr: 'Banafseg 2, Villa 402, New Cairo',
@@ -94,7 +94,7 @@
     ar: {
       dir: 'rtl',
       brandSub: 'مستقبل العقارات',
-      navHome: 'الرئيسية', navProps: 'العقارات', navCpds: 'الكمبوندات والخريطة', navBest: 'أفضل العقارات', navCareer: 'وظائف', navAgents: 'المستشارون', navContact: 'تواصل', navAI: 'أدوات الذكاء',
+      navHome: 'الرئيسية', navProps: 'العقارات', navCpds: 'الكمبوندات والخريطة', navBest: 'أفضل العقارات', navProjects: 'المشروعات الهامة', navCareer: 'وظائف', navAgents: 'المستشارون', navContact: 'تواصل', navAI: 'أدوات الذكاء',
       addListing: 'أضف عقارك', signIn: 'دخول', langBtn: 'English',
       themeLight: 'فاتح', themeDark: 'غامق',
       addr: 'البنفسج 2، فيلا 402، القاهرة الجديدة',
@@ -198,7 +198,8 @@
         '<a href="index.html"' + act('home') + ' data-i18n="navHome">' + t('navHome') + '</a>' +
         '<a href="compounds.html"' + act('cpds') + ' data-i18n="navCpds">' + t('navCpds') + '</a>' +
         '<a href="properties.html"' + act('best') + ' data-i18n="navBest">' + t('navBest') + '</a>' +
-        '<a href="index.html#contact"' + act('contact') + ' data-i18n="navContact">' + t('navContact') + '</a>' +
+      '<a href="/cairo-plaza"' + act('projects') + ' data-i18n="navProjects">' + t('navProjects') + '</a>' +
+      '<a href="index.html#contact"' + act('contact') + ' data-i18n="navContact">' + t('navContact') + '</a>' +
       '</div>' +
       '<div class="nav-right">' +
         '<button class="tb-toggle" id="theme-toggle" type="button"><i data-lucide="' + (theme === 'dark' ? 'sun' : 'moon') + '" class="i"></i></button>' +
@@ -210,6 +211,7 @@
       '<a href="index.html" class="bn-item' + (active === 'home' ? ' active' : '') + '"><i data-lucide="home" class="i"></i><span data-i18n="navHome">' + t('navHome') + '</span></a>' +
       '<a href="properties.html" class="bn-item' + (active === 'best' ? ' active' : '') + '"><i data-lucide="building-2" class="i"></i><span data-i18n="navBest">' + t('navBest') + '</span></a>' +
       '<a href="compounds.html" class="bn-item' + (active === 'cpds' ? ' active' : '') + '"><i data-lucide="map" class="i"></i><span data-i18n="navCpds">' + t('navCpds') + '</span></a>' +
+      '<a href="/cairo-plaza" class="bn-item' + (active === 'projects' ? ' active' : '') + '"><i data-lucide="landmark" class="i"></i><span data-i18n="navProjects">' + t('navProjects') + '</span></a>' +
       '<a href="index.html#ai" class="bn-item"><i data-lucide="sparkles" class="i"></i><span data-i18n="navAI">' + t('navAI') + '</span></a>' +
       '<a href="index.html#contact" class="bn-item' + (active === 'contact' ? ' active' : '') + '"><i data-lucide="phone" class="i"></i><span data-i18n="navContact">' + t('navContact') + '</span></a>' +
     '</nav>';
