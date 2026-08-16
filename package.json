@@ -13,6 +13,7 @@
         "lint": "turbo run lint",
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
+        "test": "turbo run test:ci",
         "test:ci": "turbo run test:ci",
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
