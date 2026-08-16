@@ -77,12 +77,12 @@ function getDb(): Firestore {
   if (db) return db;
 
   const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs',
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'sierra-blu.firebaseapp.com',
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-blu',
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sierra-blu.firebasestorage.app',
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '941030513456',
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || (import.meta.env as Record<string, string | undefined>).NEXT_PUBLIC_FIREBASE_APP_ID || '1:941030513456:web:56209a1495d69f217086f5',
   };
 
   if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
