@@ -32,19 +32,39 @@ const CONFIG = {
 };
 
 // ─── CLIENT ───────────────────────────────────────────────────────────────────
+const fs = require('fs');
+let chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+if (!chromePath) {
+  const candidates = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      chromePath = c;
+      break;
+    }
+  }
+}
+
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId:   'sierra-estates-agent',
     dataPath:   './wa_sessions',
   }),
   puppeteer: {
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    headless:       true,
+    ...(chromePath ? { executablePath: chromePath } : {}),
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-extensions',
     ],
   },
 });
