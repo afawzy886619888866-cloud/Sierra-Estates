@@ -107,9 +107,59 @@ async function getLeadByPhone(phone) {
   }
 }
 
+async function updateLeadQualification(phone, qualData) {
+  if (!db) db = initFirebase();
+  if (!db) return;
+
+  try {
+    const clean = phone.replace(/\D/g, '');
+    
+    // Update matching lead in leads collection
+    const snap = await db.collection('leads')
+      .where('phone', '==', clean)
+      .limit(1)
+      .get();
+
+    if (!snap.empty) {
+      const docRef = snap.docs[0].ref;
+      await docRef.update({
+        qualification: qualData,
+        qualifiedAt: admin.firestore.Timestamp.now(),
+        lead_ready: qualData.lead_ready ?? true,
+        preferred_viewing: qualData.preferred_viewing || '',
+        move_in_date: qualData.move_in_date || '',
+        duration: qualData.duration || '',
+        budget: qualData.budget || '',
+        locations: qualData.locations || [],
+        bedrooms: qualData.bedrooms || '',
+        furnished: qualData.furnished ?? false,
+      });
+      console.log(`🎯 [Lead Qualified in DB]: Updated qualification for phone ${clean}`);
+    }
+
+    // Also update stakeholders collection if present
+    const stakeSnap = await db.collection('stakeholders')
+      .where('phone', '==', clean)
+      .limit(1)
+      .get();
+
+    if (!stakeSnap.empty) {
+      await stakeSnap.docs[0].ref.update({
+        stage: 'S3', // Advanced to Qualification Completed
+        notes: `Qualified via WhatsApp: Viewing: ${qualData.preferred_viewing || 'TBD'}, Move-in: ${qualData.move_in_date || 'TBD'}, Budget: ${qualData.budget || 'TBD'}`,
+        updatedAt: admin.firestore.Timestamp.now(),
+      });
+    }
+  } catch (err) {
+    console.error('Failed to update lead qualification in Firestore:', err.message);
+  }
+}
+
 module.exports = {
   initFirebase,
   getPendingQueueMessages,
   markQueueMessageSent,
   getLeadByPhone,
+  updateLeadQualification,
 };
+

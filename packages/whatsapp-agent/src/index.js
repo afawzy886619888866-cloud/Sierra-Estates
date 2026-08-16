@@ -105,7 +105,7 @@ client.on('ready', async () => {
   const report  = new ReportGenerator(client);
   const store   = new SessionStore();
 
-  const { getPendingQueueMessages, markQueueMessageSent, getLeadByPhone } = require('./firebase-service');
+  const { getPendingQueueMessages, markQueueMessageSent, getLeadByPhone, updateLeadQualification } = require('./firebase-service');
 
   // ── Automated Property Finder & CRM Queue Dispatcher ──────────────────────────
   console.log('⚡ [WhatsApp Agent] Automated Property Finder Outreach Queue Worker started.');
@@ -179,7 +179,21 @@ client.on('ready', async () => {
 
       // ── Gemini AI reply ───────────────────────────────────────────────────
       const history = store.getHistory(senderId);
-      const reply   = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
+      let reply   = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
+
+      // ── Check for structured Lead Qualification payload ──
+      const qualMatch = reply.match(/<lead_qualification>([\s\S]*?)<\/lead_qualification>/i);
+      if (qualMatch) {
+        try {
+          const qualJson = JSON.parse(qualMatch[1].trim());
+          console.log(`🎯 [Lead Qualification Extracted] Phone: ${senderNum}:`, qualJson);
+          await updateLeadQualification(senderNum, qualJson);
+        } catch (e) {
+          console.warn('⚠️ Could not parse lead qualification JSON:', e.message);
+        }
+        // Strip the hidden tag before sending to client
+        reply = reply.replace(/<lead_qualification>[\s\S]*?<\/lead_qualification>/gi, '').trim();
+      }
 
       store.addMessage(senderId, 'user',  body);
       store.addMessage(senderId, 'model', reply);
