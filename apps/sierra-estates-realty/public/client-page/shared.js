@@ -190,16 +190,16 @@
     // Header: brand + nav items (no Career — moved to footer) + Request Now + toggles
     return '' +
     '<nav class="nav" id="main-nav"><div class="wrap">' +
-      '<a href="index.html" class="brand">' +
+      '<a href="/" class="brand">' +
         '<span class="mark logo"><img src="logo-gold.png" alt="Sierra Estates"/></span>' +
         '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
       '</a>' +
       '<div class="menu">' +
-        '<a href="index.html"' + act('home') + ' data-i18n="navHome">' + t('navHome') + '</a>' +
-        '<a href="compounds.html"' + act('cpds') + ' data-i18n="navCpds">' + t('navCpds') + '</a>' +
-        '<a href="properties.html"' + act('best') + ' data-i18n="navBest">' + t('navBest') + '</a>' +
+        '<a href="/"' + act('home') + ' data-i18n="navHome">' + t('navHome') + '</a>' +
+        '<a href="/compounds"' + act('cpds') + ' data-i18n="navCpds">' + t('navCpds') + '</a>' +
+        '<a href="/properties"' + act('best') + ' data-i18n="navBest">' + t('navBest') + '</a>' +
       '<a href="/cairo-plaza"' + act('projects') + ' data-i18n="navProjects">' + t('navProjects') + '</a>' +
-      '<a href="index.html#contact"' + act('contact') + ' data-i18n="navContact">' + t('navContact') + '</a>' +
+      '<a href="/#contact"' + act('contact') + ' data-i18n="navContact">' + t('navContact') + '</a>' +
       '</div>' +
       '<div class="nav-right">' +
         '<button class="tb-toggle" id="theme-toggle" type="button"><i data-lucide="' + (theme === 'dark' ? 'sun' : 'moon') + '" class="i"></i></button>' +
@@ -208,12 +208,12 @@
     '</div></nav>' +
     // ─── Mobile bottom navigation bar (5 buttons) ───
     '<nav class="bottom-nav">' +
-      '<a href="index.html" class="bn-item' + (active === 'home' ? ' active' : '') + '"><i data-lucide="home" class="i"></i><span data-i18n="navHome">' + t('navHome') + '</span></a>' +
-      '<a href="properties.html" class="bn-item' + (active === 'best' ? ' active' : '') + '"><i data-lucide="building-2" class="i"></i><span data-i18n="navBest">' + t('navBest') + '</span></a>' +
-      '<a href="compounds.html" class="bn-item' + (active === 'cpds' ? ' active' : '') + '"><i data-lucide="map" class="i"></i><span data-i18n="navCpds">' + t('navCpds') + '</span></a>' +
+      '<a href="/" class="bn-item' + (active === 'home' ? ' active' : '') + '"><i data-lucide="home" class="i"></i><span data-i18n="navHome">' + t('navHome') + '</span></a>' +
+      '<a href="/properties" class="bn-item' + (active === 'best' ? ' active' : '') + '"><i data-lucide="building-2" class="i"></i><span data-i18n="navBest">' + t('navBest') + '</span></a>' +
+      '<a href="/compounds" class="bn-item' + (active === 'cpds' ? ' active' : '') + '"><i data-lucide="map" class="i"></i><span data-i18n="navCpds">' + t('navCpds') + '</span></a>' +
       '<a href="/cairo-plaza" class="bn-item' + (active === 'projects' ? ' active' : '') + '"><i data-lucide="landmark" class="i"></i><span data-i18n="navProjects">' + t('navProjects') + '</span></a>' +
-      '<a href="index.html#ai" class="bn-item"><i data-lucide="sparkles" class="i"></i><span data-i18n="navAI">' + t('navAI') + '</span></a>' +
-      '<a href="index.html#contact" class="bn-item' + (active === 'contact' ? ' active' : '') + '"><i data-lucide="phone" class="i"></i><span data-i18n="navContact">' + t('navContact') + '</span></a>' +
+      '<a href="/#ai" class="bn-item"><i data-lucide="sparkles" class="i"></i><span data-i18n="navAI">' + t('navAI') + '</span></a>' +
+      '<a href="/#contact" class="bn-item' + (active === 'contact' ? ' active' : '') + '"><i data-lucide="phone" class="i"></i><span data-i18n="navContact">' + t('navContact') + '</span></a>' +
     '</nav>';
   }
 
@@ -222,7 +222,7 @@
     '<div class="wrap">' +
       '<div class="foot-grid">' +
         '<div>' +
-          '<a href="index.html" class="brand">' +
+          '<a href="/" class="brand">' +
             '<span class="mark logo"><img src="logo-gold.png" alt="Sierra Estates"/></span>' +
             '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
           '</a>' +
@@ -230,16 +230,16 @@
           '<div class="news"><input data-i18n-ph="footNews" placeholder="' + t('footNews') + '"/><button type="button"><i data-lucide="arrow-right" class="i"></i></button></div>' +
         '</div>' +
         '<div class="fcol"><h5 data-i18n="fExplore">' + t('fExplore') + '</h5>' +
-          '<a href="properties.html" data-i18n="fBuy">' + t('fBuy') + '</a><a href="properties.html" data-i18n="fRent">' + t('fRent') + '</a>' +
-          '<a href="properties.html" data-i18n="fNew">' + t('fNew') + '</a><a href="compounds.html" data-i18n="fCpds">' + t('fCpds') + '</a>' +
-          '<a href="#" data-i18n="fAgent">' + t('fAgent') + '</a></div>' +
+          '<a href="/properties" data-i18n="fBuy">' + t('fBuy') + '</a><a href="/properties" data-i18n="fRent">' + t('fRent') + '</a>' +
+          '<a href="/properties" data-i18n="fNew">' + t('fNew') + '</a><a href="/compounds" data-i18n="fCpds">' + t('fCpds') + '</a>' +
+          '<a href="/properties" data-i18n="fAgent">' + t('fAgent') + '</a></div>' +
         '<div class="fcol"><h5 data-i18n="fCompany">' + t('fCompany') + '</h5>' +
-          '<a href="#" data-i18n="fAbout">' + t('fAbout') + '</a><a href="#" data-i18n="fBrokers">' + t('fBrokers') + '</a>' +
-          '<a href="#" data-i18n="fJournal">' + t('fJournal') + '</a><a href="career.html" data-i18n="fCareers">' + t('fCareers') + '</a>' +
-          '<a href="#" data-i18n="fContact">' + t('fContact') + '</a></div>' +
+          '<a href="/" data-i18n="fAbout">' + t('fAbout') + '</a><a href="/properties" data-i18n="fBrokers">' + t('fBrokers') + '</a>' +
+          '<a href="/" data-i18n="fJournal">' + t('fJournal') + '</a><a href="/careers" data-i18n="fCareers">' + t('fCareers') + '</a>' +
+          '<a href="/#contact" data-i18n="fContact">' + t('fContact') + '</a></div>' +
         '<div class="fcol"><h5 data-i18n="fDiscover">' + t('fDiscover') + '</h5>' +
-          '<a href="compounds.html" data-i18n="z1">' + t('z1') + '</a><a href="compounds.html" data-i18n="z2">' + t('z2') + '</a>' +
-          '<a href="compounds.html" data-i18n="z3">' + t('z3') + '</a><a href="compounds.html" data-i18n="z4">' + t('z4') + '</a></div>' +
+          '<a href="/compounds" data-i18n="z1">' + t('z1') + '</a><a href="/compounds" data-i18n="z2">' + t('z2') + '</a>' +
+          '<a href="/compounds" data-i18n="z3">' + t('z3') + '</a><a href="/compounds" data-i18n="z4">' + t('z4') + '</a></div>' +
         '<div class="fcol"><h5 data-i18n="fTouch">' + t('fTouch') + '</h5>' +
           '<div class="contact-line"><i data-lucide="map-pin" class="i"></i><span data-i18n="fAddr">' + t('fAddr') + '</span></div>' +
           '<div class="contact-line"><i data-lucide="phone" class="i"></i><span>+2 01092048333</span></div>' +
@@ -362,7 +362,12 @@
     document.getElementById('lang-toggle').addEventListener('click', function () {
       lang = lang === 'en' ? 'ar' : 'en';
       localStorage.setItem('hzp-lang', lang);
-      location.reload();
+      var path = location.pathname;
+      if (path === '/cairo-plaza' || path.indexOf('/cairo-plaza/') === 0 || path === '/ar/cairo-plaza' || path.indexOf('/ar/cairo-plaza/') === 0) {
+        location.href = lang === 'ar' ? '/ar/cairo-plaza' : '/cairo-plaza';
+      } else {
+        location.reload();
+      }
     });
 
     // "Open Map" nav button → go to compounds page
@@ -374,7 +379,7 @@
         if (mapEl) {
           mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
-          location.href = 'compounds.html';
+          location.href = '/compounds';
         }
       });
     }

@@ -1,5 +1,5 @@
-import CairoPlazaPage from '../../cairo-plaza/page';
+import { redirect } from 'next/navigation';
 
-export default function ArabicCairoPlazaPage() {
-  return <CairoPlazaPage />;
+export default function ArabicCairoPlazaEntry() {
+  redirect('/ar/cairo-plaza/overview');
 }

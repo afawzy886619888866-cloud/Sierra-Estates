@@ -22,6 +22,13 @@
 - [x] Validate the client-page asset paths and Important Projects rendering
 - [x] Commit and push the client-page evidence update to GitHub
 
+## Sierra-Estates.net live client navigation repair
+
+- [x] Audit the deployed site entry surface and the static client routing behavior
+- [x] Fix desktop, Arabic, and mobile links so each primary action opens a real page
+- [x] Integrate Cairo Plaza into the existing Important Projects/client information architecture
+- [ ] Verify local and deployed navigation and push the repair to GitHub
+
 ## Multi-page Next.js and Three.js client rebuild
 
 - [x] Audit current client routes, buttons, and dependencies
@@ -30,4 +37,4 @@
 - [x] Add a restrained Three.js visual layer with fallback-safe behavior
 - [x] Preserve real-site evidence and AI-concept disclosures
 - [x] Validate all routes and responsive navigation
-- [ ] Commit and push the multi-page client rebuild
+- [x] Commit and push the multi-page client rebuild
