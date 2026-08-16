@@ -3,6 +3,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "noEmit": true,
     "types": ["node", "jest"]
   },
