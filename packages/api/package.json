@@ -115,6 +115,21 @@
 		},
 		"Queue": {
 			"Type": "AWS::SQS::Queue"
+		},
+		"Skill": {
+			"Type": "Alexa::ASK::Skill",
+			"Properties": {
+				"AuthenticationConfiguration": {
+					"RefreshToken": "<String>",
+					"ClientSecret": "<String>",
+					"ClientId": "<String>"
+				},
+				"VendorId": "<String>",
+				"SkillPackage": {
+					"S3Bucket": "<String>",
+					"S3Key": "<String>"
+				}
+			}
 		}
 	},
 	"Metadata": {
