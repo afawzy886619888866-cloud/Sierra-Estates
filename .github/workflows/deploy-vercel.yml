@@ -26,8 +26,8 @@ name: Deploy · Vercel (client + admin)
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
     inputs:
       environment:
