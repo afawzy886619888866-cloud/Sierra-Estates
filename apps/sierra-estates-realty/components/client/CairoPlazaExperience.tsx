@@ -7,13 +7,13 @@ type Props = { lang?: 'en' | 'ar'; section: 'overview' | 'inventory' | 'investor
 
 const copy = {
   en: {
-    overview: { eyebrow: 'CAIRO PLAZA / OVERVIEW', title: 'A Nile-facing address built for serious business.', body: 'Explore the current project evidence, tower context, and the distinction between real-site photography and AI concept visuals.' },
+    overview: { eyebrow: 'CAIRO PLAZA / OVERVIEW', title: 'A strategic address directly in front of Al-Mataria Metro Station.', body: 'Explore the current project evidence, tower context, and the distinction between real-site photography and AI concept visuals.' },
     inventory: { eyebrow: 'CAIRO PLAZA / AVAILABLE INVENTORY', title: 'Review the units prepared for investor and operator conversations.', body: 'Inventory is presented as an illustrative working schedule and should be confirmed against the latest official availability before any commitment.' },
     investor: { eyebrow: 'CAIRO PLAZA / INVESTOR PACK', title: 'Move from project context to an informed investment conversation.', body: 'Request the bilingual investor pack, illustrative scenario model, and verification checklist.' },
     contact: { eyebrow: 'CAIRO PLAZA / CONTACT', title: 'Choose the right conversation for your mandate.', body: 'Keep investor-pack requests separate from tenant-fit and operator enquiries so each lead receives the right follow-up.' },
   },
   ar: {
-    overview: { eyebrow: 'كايرو بلازا / نظرة عامة', title: 'عنوان مطل على النيل للأعمال الجادة.', body: 'استعرض أدلة الموقع الحالي وسياق الأبراج والفصل الواضح بين الصور الحقيقية وتصوّرات الذكاء الاصطناعي.' },
+    overview: { eyebrow: 'كايرو بلازا / نظرة عامة', title: 'عنوان استراتيجي أمام محطة مترو المطرية.', body: 'استعرض أدلة الموقع الحالي وسياق الأبراج والفصل الواضح بين الصور الحقيقية وتصوّرات الذكاء الاصطناعي.' },
     inventory: { eyebrow: 'كايرو بلازا / الوحدات المتاحة', title: 'استعرض الوحدات المعدة لمحادثات المستثمرين والمشغلين.', body: 'المخزون المعروض جدول عمل توضيحي ويجب تأكيده وفق أحدث توافر رسمي قبل أي التزام.' },
     investor: { eyebrow: 'كايرو بلازا / الملف الاستثماري', title: 'انتقل من فهم المشروع إلى محادثة استثمارية مدروسة.', body: 'اطلب الملف الاستثماري الثنائي اللغة، ونموذج السيناريوهات التوضيحية، وقائمة التحقق.' },
     contact: { eyebrow: 'كايرو بلازا / تواصل', title: 'اختر المسار المناسب لطبيعة طلبك.', body: 'نحافظ على فصل طلبات الملف الاستثماري عن طلبات تأهيل المستأجرين والمشغلين لضمان المتابعة المناسبة.' },
@@ -52,7 +52,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
             <Link href={`${prefix}/investor`} className="cp-btn cp-btn-secondary">{isAr ? 'افتح الملف الاستثماري' : 'Open investor pack'}</Link>
           </div>
         </div>
-        <CairoPlazaScene />
+        <CairoPlazaScene lang={lang} />
       </section>
       <section className="cp-grid">
         <div className="cp-card"><h2 className="">{isAr ? 'صورة حقيقية للموقع' : 'Current-site evidence'}</h2><p className="">{isAr ? 'الصور الحقيقية توضح ما يظهر في اللقطة فقط.' : 'Real photographs document what appears in the frame only.'}</p></div>
