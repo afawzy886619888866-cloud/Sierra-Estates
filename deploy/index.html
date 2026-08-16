@@ -1432,7 +1432,7 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <button class="btn btn-white" type="button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <a href="add-listing.html" class="btn btn-white" style="text-decoration:none;"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></a>
         <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
       <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">
@@ -1745,9 +1745,9 @@ a:hover{color:var(--pri-d);}
       // If compound selected → go to compounds.html?cpd=<name>
       // Otherwise → go to properties.html with filters
       if (cpd) {
-        window.__seNav('#map-section');
+        window.location.href = 'compounds.html?' + qs;
       } else {
-        window.__seNav('#properties');
+        window.location.href = 'properties.html?' + qs;
       }
     });
   }
