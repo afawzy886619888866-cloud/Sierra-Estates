@@ -13,7 +13,7 @@ Without them the build will still pass (it uses `ci-placeholder` fallbacks),
 but the live app will not connect to Firebase.
 
 | Secret Name | Where to get it | Notes |
-|---|---|---|
+| :--- | :--- | :--- |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Console → Project Settings → Web App | Public key, safe to expose |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Console → Project Settings | e.g. `yourproject.firebaseapp.com` |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase Console → Project Settings | e.g. `sierra-estates-12345` |
@@ -26,7 +26,7 @@ but the live app will not connect to Firebase.
 ## 🚀 REQUIRED FOR VERCEL DEPLOY
 
 | Secret Name | Where to get it | Notes |
-|---|---|---|
+| :--- | :--- | :--- |
 | `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens → Create | Personal access token — keep private |
 
 > The `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` are already committed in
@@ -39,7 +39,7 @@ but the live app will not connect to Firebase.
 Only needed if you want the automated data sync workflows to run.
 
 | Secret Name | Description |
-|---|---|
+| :--- | :--- |
 | `GOOGLE_SERVICE_ACCOUNT_KEY` | Full JSON key from GCP → IAM → Service Accounts → Create Key |
 | `BROKER_INBOX_SHEET_ID` | The Google Sheets ID from the URL (between `/d/` and `/edit`) |
 | `FIREBASE_PROJECT_ID` | Same as `NEXT_PUBLIC_FIREBASE_PROJECT_ID` |
@@ -51,7 +51,7 @@ Only needed if you want the automated data sync workflows to run.
 ## 📲 REQUIRED FOR WHATSAPP AUTOMATION
 
 | Secret Name | Description |
-|---|---|
+| :--- | :--- |
 | `WHATSAPP_API_TOKEN` | WhatsApp Business API Bearer token |
 | `WHATSAPP_API_URL` | API base URL (e.g. `REDACTED_WHATSAPP_API_URL/YOUR_PHONE_ID`) |
 
@@ -60,7 +60,7 @@ Only needed if you want the automated data sync workflows to run.
 ## 📧 REQUIRED FOR EMAIL AUTOMATION
 
 | Secret Name | Description |
-|---|---|
+| :--- | :--- |
 | `SENDGRID_API_KEY` | SendGrid → Settings → API Keys → Create |
 | `SENDGRID_FROM_EMAIL` | Verified sender email in SendGrid |
 
@@ -69,7 +69,7 @@ Only needed if you want the automated data sync workflows to run.
 ## 🔑 REQUIRED FOR PROPERTY FINDER SCRAPING
 
 | Secret Name | Description |
-|---|---|
+| :--- | :--- |
 | `PROPERTY_FINDER_JWT_TOKEN` | JWT from PropertyFinder API authentication |
 | `PROPERTY_FINDER_API_BASE` | API base URL e.g. `https://api.propertyfinder.ae` |
 
