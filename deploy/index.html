@@ -875,23 +875,23 @@ a:hover{color:var(--pri-d);}
 <div class="wrap searchbar">
   <div class="search-card rv">
     <div class="search-tabs">
-      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy"></button>
-      <button data-i18n="tabRent" type="button" data-tab="rent"></button>
-      <button data-i18n="tabNew" type="button" data-tab="new"></button>
+      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy" title="Search properties for buy" aria-label="Search properties for buy">Buy</button>
+      <button data-i18n="tabRent" type="button" data-tab="rent" title="Search properties for rent" aria-label="Search properties for rent">Rent</button>
+      <button data-i18n="tabNew" type="button" data-tab="new" title="Search new launches" aria-label="Search new launches">New Launch</button>
     </div>
     <div class="search-fields">
       <!-- Compound search with autocomplete -->
       <div class="field">
-        <label data-i18n="fLoc"></label>
+        <label data-i18n="fLoc" for="hero-compound-search"></label>
         <div class="search-compound-wrap" style="position:relative;">
-          <input type="text" id="hero-compound-search" class="hero-search-input" data-i18n-ph="heroCpdPh" placeholder="Search compound… (e.g. Mivida)" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" />
+          <input type="text" id="hero-compound-search" name="compound" class="hero-search-input" data-i18n-ph="heroCpdPh" placeholder="Search compound… (e.g. Mivida)" title="Search compound by name" aria-label="Search compound by name" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" />
           <div id="hero-compound-results" class="compound-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto;"></div>
         </div>
       </div>
       <!-- Property Type dropdown -->
       <div class="field">
-        <label data-i18n="fType"></label>
-        <select id="hero-type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <label data-i18n="fType" for="hero-type"></label>
+        <select id="hero-type" name="type" title="Filter by property type" aria-label="Filter by property type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="" data-i18n="anyType">Any Type</option>
           <option value="Apartment" data-i18n="tApt">Apartment</option>
           <option value="Villa" data-i18n="tVilla">Villa</option>
@@ -903,8 +903,8 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Bedrooms dropdown -->
       <div class="field">
-        <label data-i18n="fBeds"></label>
-        <select id="hero-beds" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <label data-i18n="fBeds" for="hero-beds"></label>
+        <select id="hero-beds" name="beds" title="Filter by bedrooms" aria-label="Filter by bedrooms" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="0" data-i18n="reqAny">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -915,8 +915,8 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Price dropdown -->
       <div class="field">
-        <label data-i18n="fPrice"></label>
-        <select id="hero-price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <label data-i18n="fPrice" for="hero-price"></label>
+        <select id="hero-price" name="price" title="Filter by maximum price" aria-label="Filter by maximum price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="0" data-i18n="anyPrice">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -927,7 +927,7 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Search button -->
       <div class="field searchbtn">
-        <button type="button" class="btn btn-pri" id="hero-search-btn"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
+        <button type="button" class="btn btn-pri" id="hero-search-btn" title="Search properties" aria-label="Search properties"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
       </div>
     </div>
   </div>
@@ -1350,23 +1350,23 @@ a:hover{color:var(--pri-d);}
         <h3 data-i18n="inqTit"></h3>
         <p data-i18n="inqSub"></p>
         <div class="seg" id="inq-seg">
-          <button type="button" class="on" data-i18n="inqBuy"></button>
-          <button type="button" data-i18n="inqRent"></button>
-          <button type="button" data-i18n="inqSell"></button>
+          <button type="button" class="on" data-i18n="inqBuy" title="Inquire to Buy" aria-label="Inquire to Buy">Buy</button>
+          <button type="button" data-i18n="inqRent" title="Inquire to Rent" aria-label="Inquire to Rent">Rent</button>
+          <button type="button" data-i18n="inqSell" title="Inquire to Sell" aria-label="Inquire to Sell">Sell</button>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/></div>
-          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX"/></div>
+          <div><label data-i18n="inqName" for="inq-name"></label><input type="text" id="inq-name" name="name" placeholder="Your Full Name" title="Your Full Name" aria-label="Your Full Name" required/></div>
+          <div><label data-i18n="inqPhone" for="inq-phone"></label><input type="tel" id="inq-phone" name="phone" dir="ltr" required placeholder="+2 01XXXXXXXXX" title="Phone number" aria-label="Phone number"/></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/></div>
-          <div><label data-i18n="inqZone"></label><select id="inq-zone"></select></div>
+          <div><label data-i18n="inqEmail" for="inq-email"></label><input type="email" id="inq-email" name="email" dir="ltr" placeholder="you@example.com" title="Email address" aria-label="Email address"/></div>
+          <div><label data-i18n="inqZone" for="inq-zone"></label><select id="inq-zone" name="zone" title="Preferred Zone" aria-label="Preferred Zone"></select></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqType2"></label><select id="inq-type"></select></div>
-          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
+          <div><label data-i18n="inqType2" for="inq-type"></label><select id="inq-type" name="type" title="Property Type" aria-label="Property Type"></select></div>
+          <div><label data-i18n="inqBudget" for="inq-budget"></label><input type="text" id="inq-budget" name="budget" placeholder="10,000,000" title="Budget in EGP" aria-label="Budget in EGP" dir="ltr"/></div>
         </div>
-        <button class="btn btn-pri" type="submit"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <button class="btn btn-pri" type="submit" title="Send Inquiry" aria-label="Send Inquiry"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
         <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
           <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
@@ -1414,7 +1414,7 @@ a:hover{color:var(--pri-d);}
       </a>
     </div>
     <div style="margin-top:16px;" class="rv">
-      <button class="tour-launch" id="tour-open" type="button">
+      <button class="tour-launch" id="tour-open" type="button" title="Start 3D Virtual Tour" aria-label="Start 3D Virtual Tour">
         <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
         <span class="t-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
