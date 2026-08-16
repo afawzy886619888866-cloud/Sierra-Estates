@@ -110,7 +110,7 @@ a:hover{color:var(--pri-d);}
 .hero .dots button{width:26px;height:4px;border-radius:2px;border:none;background:rgba(255,255,255,.35);cursor:pointer;padding:0;transition:width .3s var(--ease-out),background-color .3s var(--ease-out);}
 .hero .dots button.on{background:var(--pri);width:44px;}
 [data-theme="dark"] .hero .dots button.on{background:#e9c176;}
-.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background-color var(--d-hover) var(--ease-out),border-color var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
+.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background-color var(--d-hover) var(--ease-out),border-color var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
 .hero .map-cta:active{transform:translateX(-50%) scale(.97);}
 .hero .map-cta:hover{background:rgba(255,255,255,.24);transform:translateX(-50%) translateY(-2px);border-color:rgba(255,255,255,.6);}
 .hero .map-cta .mc-ic{width:28px;height:28px;border-radius:50%;background:var(--pri);display:grid;place-items:center;flex:none;animation:pulseDot 2.4s infinite;}
@@ -164,7 +164,7 @@ a:hover{color:var(--pri-d);}
 .tweaks-trigger:active{transform:scale(.92);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
-.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;}
+.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;}
 .tweaks-overlay.on{display:flex;}
 .tweaks-panel{background:var(--surface);border-radius:18px;padding:28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:tweaksIn .22s var(--ease-out) both;}
 @keyframes tweaksIn{from{opacity:0;transform:scale(.96) translateY(6px);}to{opacity:1;transform:none;}}
@@ -257,7 +257,7 @@ a:hover{color:var(--pri-d);}
 .rq-wa:active{transform:scale(.97);}
 
 /* ── Request modal: compound + bedrooms + rent/resale, opened from the header ── */
-.rq-overlay{position:fixed;inset:0;z-index:1200;background:rgba(4,12,20,.62);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;}
+.rq-overlay{position:fixed;inset:0;z-index:1200;background:rgba(4,12,20,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;}
 .rq-overlay.on{display:flex;}
 .rq-modal{background:var(--surface);border-radius:18px;width:560px;max-width:100%;max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:rqIn .22s var(--ease-out) both;}
 @keyframes rqIn{from{opacity:0;transform:scale(.97) translateY(8px);}to{opacity:1;transform:none;}}
