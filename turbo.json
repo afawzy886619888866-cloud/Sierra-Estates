@@ -94,6 +94,7 @@
     "dev": { "cache": false, "persistent": true },
     "lint": { "dependsOn": ["^lint"] },
     "type-check": { "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
     "test:ci": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
     "clean": { "cache": false }
   }
