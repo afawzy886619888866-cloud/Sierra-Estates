@@ -249,47 +249,29 @@ jobs:
       - name: Write .vercel/project.json for this role
         if: steps.gate.outputs.run == 'true'
         run: |
-          # App-level .vercel/project.json wins over root — ensures vercel commands
-          # target the correct project (client vs admin), never the wrong one.
-          mkdir -p "${{ matrix.app_dir }}/.vercel"
-          printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
-            > "${{ matrix.app_dir }}/.vercel/project.json"
-          # Root fallback (used by vercel build when run from root for client)
-          mkdir -p .vercel
+          mkdir -p .vercel "${{ matrix.app_dir }}/.vercel"
           printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
             > .vercel/project.json
+          printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
+            > "${{ matrix.app_dir }}/.vercel/project.json"
           echo "✅ .vercel/project.json → ${VERCEL_PROJECT_ID}"
 
       - name: Pull Vercel project settings
         if: steps.gate.outputs.run == 'true'
-        working-directory: ${{ matrix.app_dir }}
         run: |
           vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
+          cp -r .vercel "${{ matrix.app_dir }}/" 2>/dev/null || true
 
-      - name: Build (client = monorepo root, admin = standalone)
+      - name: Build
         if: steps.gate.outputs.run == 'true'
         run: |
-          if [ "${{ matrix.role }}" = "client" ]; then
-            # Next.js client: build via monorepo root (pnpm workspace filter handles it)
-            vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
-          else
-            # Vite admin SPA: build from admin-dashboard directory
-            cd "${{ matrix.app_dir }}"
-            vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
-          fi
+          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
 
       - name: Deploy (prebuilt artifact)
         if: steps.gate.outputs.run == 'true'
         id: deploy_step
         run: |
-          if [ "${{ matrix.role }}" = "client" ]; then
-            # Client .vercel/output is at monorepo root
-            url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
-          else
-            # Admin .vercel/output is inside the app directory
-            cd "${{ matrix.app_dir }}"
-            url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
-          fi
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
           echo "deployed: $url"
