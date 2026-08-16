@@ -27,7 +27,7 @@
 - [x] Audit the Cairo Plaza page and existing illustrative scenario language
 - [x] Add bilingual calculator inputs, formulas, and non-guarantee disclosure
 - [x] Validate ROI, NOI, payback, accessibility, and responsive behavior
-- [ ] Commit and push the calculator update to GitHub
+- [x] Commit and push the calculator update to GitHub
 
 ## Cairo Plaza location correction — Al-Mataria Metro Station
 
@@ -59,3 +59,12 @@
 - [x] Preserve real-site evidence and AI-concept disclosures
 - [x] Validate all routes and responsive navigation
 - [x] Commit and push the multi-page client rebuild
+
+## Follow-up validation and investor PDF
+
+- [x] Test the Cairo Plaza calculator on a mobile viewport with Arabic RTL input
+- [x] Repair the missing firebase-functions dependency in the functions workspace
+- [x] Run the full repository test suite successfully
+- [x] Export and visually verify the Cairo Plaza investor pack as a PDF
+- [ ] Commit and push the validation, dependency, and PDF-related updates
+
