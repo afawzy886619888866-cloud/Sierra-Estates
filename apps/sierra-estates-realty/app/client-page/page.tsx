@@ -306,38 +306,7 @@ export default function ClientPage() {
     </div>
   </div>
 </section>
-<style>
-  @keyframes vtv-spin { to { transform: rotate(360deg); } }
-  @keyframes vtvPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45);} 50%{transform:scale(1.07);box-shadow:0 0 0 12px rgba(255,255,255,.22),0 0 0 24px rgba(255,255,255,.06),0 22px 56px rgba(0,0,0,.5);} }
-  @keyframes vtvBlink { 0%,100%{opacity:1;} 50%{opacity:.35;} }
-  #vtv-poster:hover ~ * .vtvPulse,
-  #vtv-poster:hover span:nth-child(3) > span:first-child { transform: scale(1.06); }
-  #vtv-frame:fullscreen, #vtv-banner:fullscreen { border-radius:0; }
-  @media (prefers-reduced-motion: reduce) {
-    #vtv-loading i { animation:none !important; }
-    #vtv-poster .vtvPulse { animation:none !important; }
-  }
-  /* Responsive: stack headline above play button on tablets */
-  @media (max-width: 980px) {
-    #vtv-banner { aspect-ratio: 4/5; min-height: 540px; }
-    #vtv-poster > span:nth-child(3) { width:100%; padding:32px 28px 16px; gap:10px; }
-    #vtv-poster > span:nth-child(3) > span:nth-child(2) { font-size:32px; }
-    #vtv-poster > span:nth-child(4) { width:100%; padding:0 28px 80px; top:auto; bottom:0; height:auto; position:absolute; }
-    #vtv-poster > span:nth-child(5) { inset-inline-start:28px; bottom:140px; }
-    #vtv-poster > span:nth-child(6) { bottom:auto; top:90px; inset-inline-end:20px; padding:10px 14px; gap:14px; }
-  }
-  @media (max-width: 680px) {
-    #vtv-banner { aspect-ratio: 3/4; min-height: 480px; }
-    #vtv-poster > span:nth-child(3) > span:nth-child(2) { font-size:24px; }
-    #vtv-poster > span:nth-child(3) > span:nth-child(3) { font-size:13px; }
-    #vtv-poster > span:nth-child(4) span:first-child { width:78px !important; height:78px !important; }
-    #vtv-poster > span:nth-child(4) span:first-child i { width:30px !important; height:30px !important; }
-    #vtv-poster > span:nth-child(5) { bottom:124px; inset-inline-start:24px; }
-    #vtv-poster > span:nth-child(5) > span:nth-child(2) { font-size:16px; }
-    #vtv-poster > span:nth-child(6) { padding:8px 12px; gap:12px; }
-    #vtv-poster > span:nth-child(6) span:nth-child(odd) > span:first-child { font-size:18px; }
-  }
-</style>
+
 
 
 {/*  ═══ LIVE MAP (SECOND — now below the 3D tour) ═══════════════════════════
