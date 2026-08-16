@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 type Props = { lang?: 'en' | 'ar' };
 
@@ -22,10 +22,11 @@ export default function CairoPlazaCalculator({ lang = 'en' }: Props) {
     return { totalCost, gross, operatingCosts, noi, yield: totalCost ? (noi / totalCost) * 100 : 0, payback: noi > 0 ? totalCost / noi : 0 };
   }, [purchase, fitout, rent, occupancy, opex]);
 
+  const readNumber = (event: FormEvent<HTMLInputElement>) => Number((event.target as HTMLInputElement).value) || 0;
   const field = (label: string, value: number, setValue: (value: number) => void, suffix = '') => (
     <label className="cp-calc-field">
       <span>{label}</span>
-      <div><input type="number" min="0" value={value} onChange={(event) => setValue(Number(event.target.value) || 0)} /><b>{suffix}</b></div>
+      <div><input type="number" min="0" value={value} onInput={(event) => setValue(readNumber(event))} onChange={(event) => setValue(readNumber(event))} onKeyUp={(event) => setValue(readNumber(event))} onBlur={(event) => setValue(readNumber(event))} /><b>{suffix}</b></div>
     </label>
   );
 
