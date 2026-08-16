@@ -2561,6 +2561,30 @@
         "compoundCount": 8
       },
       "timestamp": "2026-08-16T06:17:29.815Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "البيت دا مع مين",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:41:39.039Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "البيت دا مع مين",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:41:54.835Z"
     }
   ]
 }
