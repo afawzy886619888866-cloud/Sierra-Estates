@@ -22,12 +22,26 @@
 - [x] Validate the client-page asset paths and Important Projects rendering
 - [x] Commit and push the client-page evidence update to GitHub
 
+## Cairo Plaza location correction — Al-Mataria Metro Station
+
+- [x] Audit website, investor deck, script, and virtual-tour copy for Nile/Corniche claims
+- [x] Replace incorrect location language with أمام محطة مترو المطرية / in front of Al-Mataria Metro Station
+- [x] Revalidate corrected Arabic and English text across all relevant materials
+- [ ] Commit and push the corrected website and material updates
+
+## Cairo Plaza investor pack and interactive virtual tour
+
+- [ ] Verify the Cairo Plaza investor-pack destination and delivery link
+- [ ] Add interactive Three.js virtual tour inside the Cairo Plaza project page
+- [ ] Add tour controls, hotspots, reduced-motion behavior, and WebGL fallback
+- [ ] Verify the tour and investor-pack navigation locally, then push to GitHub
+
 ## Sierra-Estates.net live client navigation repair
 
 - [x] Audit the deployed site entry surface and the static client routing behavior
 - [x] Fix desktop, Arabic, and mobile links so each primary action opens a real page
 - [x] Integrate Cairo Plaza into the existing Important Projects/client information architecture
-- [ ] Verify local and deployed navigation and push the repair to GitHub
+- [x] Verify local and deployed navigation and push the repair to GitHub
 
 ## Multi-page Next.js and Three.js client rebuild
 
