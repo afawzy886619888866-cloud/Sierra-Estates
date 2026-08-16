@@ -11,11 +11,11 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/(shared.css|shared.js|data.standalone.js)",
+      "source": "/(shared.css|compounds.css|shared.js|data.standalone.js|data.js)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }]
     },
     {
-      "source": "/(index|add-listing).html",
+      "source": "/(.*)\\.html",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
     {
