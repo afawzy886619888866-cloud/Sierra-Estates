@@ -107,6 +107,9 @@ const transporter = nodemailer ? nodemailer.createTransport({
   },
 }) : null;
 
+const brochureManager = require('./brochure-manager');
+const calendarService = require('./calendar-service');
+
 async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
   let cleanMessage = rawAiReply;
   const qualificationMatch = rawAiReply.match(/<lead_qualification>([\s\S]*?)<\/lead_qualification>/i);
@@ -117,6 +120,19 @@ async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
 
     try {
       const qualificationData = JSON.parse(qualificationMatch[1].trim());
+      const locText = Array.isArray(qualificationData.locations) ? qualificationData.locations.join(', ') : (qualificationData.locations || 'New Cairo');
+
+      // Generate 1-click Google Calendar reservation link
+      const calendarUrl = calendarService.generateGoogleCalendarUrl({
+        clientName: clientName || qualificationData.client_name || 'VIP Client',
+        phone: clientPhone,
+        preferred_viewing: qualificationData.preferred_viewing,
+        location: locText,
+        budget: qualificationData.budget,
+        currency: qualificationData.currency,
+        bedrooms: qualificationData.bedrooms,
+        furnishing_status: qualificationData.furnishing_status,
+      });
 
       // 2. Update Firestore Lead Record
       await adminDb.collection('leads').doc(leadId).set({
@@ -124,36 +140,53 @@ async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
         client_name: clientName || qualificationData.client_name || 'Lead',
         status: 'Qualified / Needs Review',
         qualification_data: qualificationData,
+        calendar_invite_url: calendarUrl,
         updated_at: new Date().toISOString()
       }, { merge: true });
 
-      // Also trigger unified updateLeadQualification helper for notifications & stakeholder CRM sync
+      // Also persist to viewing_appointments collection
+      try {
+        await adminDb.collection('viewing_appointments').add({
+          leadId,
+          clientPhone,
+          clientName: clientName || qualificationData.client_name || 'Client',
+          preferred_viewing: qualificationData.preferred_viewing || 'Flexible',
+          location: locText,
+          calendarUrl,
+          createdAt: new Date().toISOString(),
+          status: 'Scheduled',
+        });
+      } catch (appErr) {}
+
+      // Trigger unified updateLeadQualification helper for notifications & stakeholder CRM sync
       await updateLeadQualification(clientPhone, qualificationData, clientName);
 
-      // 3. Dispatch Email Alert to Admin & Sales
+      // 3. Dispatch Email Alert to Admin & Sales with 1-click Calendar button
       if (transporter && process.env.SMTP_USER && process.env.SMTP_PASS) {
         try {
           await transporter.sendMail({
             from: `"Sierra Realty AI Pipeline" <${process.env.SMTP_USER}>`,
             to: process.env.SALES_NOTIFICATION_EMAIL || process.env.ADMIN_ALERT_EMAIL || 'admin@sierra-estates.net',
-            subject: `🚨 Qualified Lead: ${clientName || 'Property Finder Lead'} (${clientPhone})`,
+            subject: `🚨 Qualified Lead & Viewing Request: ${clientName || 'Property Finder Lead'} (${clientPhone})`,
             html: `
-              <h3>New Lead Ready for Sales Review</h3>
+              <h3>New Lead Ready for Sales Review & Viewing</h3>
               <p><strong>Phone:</strong> +${clientPhone}</p>
+              <p><strong>Client Name:</strong> ${clientName || qualificationData.client_name || 'Lead'}</p>
               <p><strong>Viewing Preference:</strong> ${qualificationData.preferred_viewing || 'Flexible'}</p>
               <p><strong>Move-in Date:</strong> ${qualificationData.move_in_date || 'Immediate'}</p>
               <p><strong>Budget:</strong> ${qualificationData.budget || 'Flexible'} ${qualificationData.currency || 'EGP'}</p>
-              <p><strong>Locations:</strong> ${Array.isArray(qualificationData.locations) ? qualificationData.locations.join(', ') : (qualificationData.locations || 'New Cairo')}</p>
+              <p><strong>Locations:</strong> ${locText}</p>
               <p><strong>Bedrooms:</strong> ${qualificationData.bedrooms || 'Any'} (${qualificationData.furnishing_status || 'Standard'})</p>
               <hr/>
-              <p><a href="http://localhost:3001/leads/${leadId}">Open in Admin Dashboard</a></p>
+              <p>📅 <a href="${calendarUrl}" style="background-color:#0284c7;color:#ffffff;padding:8px 14px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold;">Add to Google Calendar</a></p>
+              <p>📊 <a href="http://localhost:3001/leads/${leadId}">Open in Admin Dashboard</a></p>
             `
           });
         } catch (mailErr) {
           console.warn('⚠️ [Email Dispatch Warning]:', mailErr.message);
         }
       }
-      console.log(`✅ [Lead Handler] Qualified lead ${leadId} persisted and alerts dispatched.`);
+      console.log(`✅ [Lead Handler] Qualified lead ${leadId} persisted with 1-click Calendar invite.`);
     } catch (err) {
       console.error('❌ [Lead Handler] Error parsing qualification JSON:', err.message);
     }
@@ -255,9 +288,20 @@ client.on('ready', async () => {
       const history = store.getHistory(senderId);
       const rawAiReply = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
 
+      // ── Detect Brochure & Masterplan Request ──
+      const brochureMatch = brochureManager.detectBrochureIntent(body);
+      let brochureCard = '';
+      if (brochureMatch) {
+        const isArabic = /[\u0600-\u06FF]/.test(body);
+        brochureCard = '\n\n' + brochureManager.formatBrochureCard(brochureMatch.compound, isArabic);
+      }
+
       // ── Process response through Message Interceptor & Lead Notifier ──
       const leadId = `lead_${senderNum}`;
-      const reply = await processBotResponse(leadId, senderNum, name, rawAiReply);
+      let reply = await processBotResponse(leadId, senderNum, name, rawAiReply);
+      if (brochureCard) {
+        reply = reply + brochureCard;
+      }
 
       store.addMessage(senderId, 'user',  body);
       store.addMessage(senderId, 'model', reply);

@@ -7,6 +7,7 @@ import { ComposedChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import DashboardWidgets from './DashboardWidgets';
 import AgentLeaderboard from './AgentLeaderboard';
 import ActivityFeed from './ActivityFeed';
+import PipelineHealthWidget from './PipelineHealthWidget';
 
 const CHART_DATA = [
   { month: 'Jan', deals: 35, revenue: 1.1 },
@@ -244,6 +245,9 @@ export default function OverviewPage({ T }: OverviewPageProps) {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
+      {/* Real-time Pipeline & Ingestion Health Monitor */}
+      <PipelineHealthWidget T={T} />
+
       {/* Cards stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {CARD_STATS.map((k, i) => (
