@@ -12,20 +12,34 @@ jobs:
   auto-assign:
     name: Auto-assign PR to author
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Auto-assign PR to author
         uses: actions/github-script@v9
         with:
           script: |
             const pr = context.payload.pull_request;
-            const author = pr.user.login;
+            const author = pr?.user?.login;
 
-            // Assign to author
-            await github.rest.issues.addAssignees({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              assignees: [author]
-            });
+            if (!author) {
+              console.log('No PR author found, skipping assignment.');
+              return;
+            }
 
-            console.log(`Assigned PR #${pr.number} to ${author}`);
+            if (pr.user.type === 'Bot' || author.endsWith('[bot]') || author.includes('[bot]')) {
+              console.log(`Skipping auto-assign for bot author: ${author}`);
+              return;
+            }
+
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                assignees: [author]
+              });
+              console.log(`Successfully assigned PR #${pr.number} to ${author}`);
+            } catch (error) {
+              console.warn(`Could not assign PR #${pr.number} to ${author}: ${error.message}`);
+            }
+
