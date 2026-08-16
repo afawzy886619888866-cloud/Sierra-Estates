@@ -265,7 +265,7 @@ export default function ClientPage() {
         </span>
 
         {/*  ── BOTTOM-RIGHT: floating stats card ──  */}
-        <span style={{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(14px)", "WebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}>
+        <span style={{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "backdropFilter": "blur(14px)", "WebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}>
           <span style={{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}>
             <span style={{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#e9c176", "lineHeight": "1"}}>47</span>
             <span style={{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}>tours live</span>
@@ -289,7 +289,7 @@ export default function ClientPage() {
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowFullScreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+      <iframe id="vtv-iframe" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowFullScreen referrerPolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
       <div id="vtv-loading" style={{"position": "absolute", "inset": "0", "display": "none", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "14px", "color": "rgba(255,255,255,.85)", "fontSize": "14px", "fontWeight": "600", "background": "linear-gradient(135deg,#0a1622 0%,#002b4b 100%)", "zIndex": "1"}}>
         <i data-lucide="loader-2" className="i" style={{"width": "32px", "height": "32px", "animation": "vtv-spin 1s linear infinite"}}></i>
         <span>Loading immersive 3D tour…</span>
