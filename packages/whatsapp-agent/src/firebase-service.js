@@ -107,12 +107,15 @@ async function getLeadByPhone(phone) {
   }
 }
 
-async function updateLeadQualification(phone, qualData) {
+const emailService = require('./email-service');
+
+async function updateLeadQualification(phone, qualData, clientName = '') {
   if (!db) db = initFirebase();
   if (!db) return;
 
   try {
     const clean = phone.replace(/\D/g, '');
+    let resolvedName = clientName;
     
     // Update matching lead in leads collection
     const snap = await db.collection('leads')
@@ -122,6 +125,9 @@ async function updateLeadQualification(phone, qualData) {
 
     if (!snap.empty) {
       const docRef = snap.docs[0].ref;
+      const data = snap.docs[0].data();
+      resolvedName = resolvedName || data.name || data.clientName || 'Client';
+
       await docRef.update({
         qualification: qualData,
         qualifiedAt: admin.firestore.Timestamp.now(),
@@ -144,12 +150,44 @@ async function updateLeadQualification(phone, qualData) {
       .get();
 
     if (!stakeSnap.empty) {
+      const stakeData = stakeSnap.docs[0].data();
+      resolvedName = resolvedName || stakeData.name || 'Client';
+
       await stakeSnap.docs[0].ref.update({
         stage: 'S3', // Advanced to Qualification Completed
         notes: `Qualified via WhatsApp: Viewing: ${qualData.preferred_viewing || 'TBD'}, Move-in: ${qualData.move_in_date || 'TBD'}, Budget: ${qualData.budget || 'TBD'}`,
         updatedAt: admin.firestore.Timestamp.now(),
       });
     }
+
+    // ── 1. Real-Time Admin Dashboard Alert (Ring bell on localhost:3001) ──
+    try {
+      const locText = Array.isArray(qualData.locations) ? qualData.locations.join(', ') : (qualData.locations || 'New Cairo');
+      await db.collection('notifications').add({
+        type: 'lead',
+        title: '🎯 Hot Lead Ready for Viewing!',
+        titleAr: '🎯 عميل مؤهل جاهز للمعاينة!',
+        message: `Client ${resolvedName || 'Client'} (+${clean}) is ready for viewing: ${qualData.preferred_viewing || 'Flexible'} (${locText})`,
+        messageAr: `العميل ${resolvedName || 'العميل'} جاهز للمعاينة: ${qualData.preferred_viewing || 'مرن'} في ${locText}`,
+        read: false,
+        createdAt: admin.firestore.Timestamp.now(),
+      });
+      console.log('🔔 [Real-Time Admin Alert]: Notification dispatched to Admin Dashboard.');
+    } catch (notifErr) {
+      console.warn('⚠️ Could not insert notification:', notifErr.message);
+    }
+
+    // ── 2. Instant Email Dispatch to Admin & Sales Team ──
+    try {
+      await emailService.sendLeadQualificationAlert({
+        phone: clean,
+        name: resolvedName || 'Valued Client',
+        qualData,
+      });
+    } catch (emailErr) {
+      console.warn('⚠️ Email dispatch warning:', emailErr.message);
+    }
+
   } catch (err) {
     console.error('Failed to update lead qualification in Firestore:', err.message);
   }
