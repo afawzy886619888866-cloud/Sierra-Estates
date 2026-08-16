@@ -5,13 +5,18 @@
  * 2. Admin Project: sierra-estates-admin-page (prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA / prj_NMqZUADX9A5ba22ylMfls2l7I0zX)
  */
 
-const https = require('https');
-const path = require('path');
+import https from 'https';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load local environment files
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
-require('dotenv').config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
-require('dotenv').config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
@@ -20,7 +25,7 @@ const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || 'prj_GRzmgCUqN
 const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA';
 
 // Master list of environment variables for Client and Admin Vercel projects
-const CLIENT_ENV_VARS = {
+export const CLIENT_ENV_VARS = {
   // Public Firebase SDK
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -60,7 +65,7 @@ const CLIENT_ENV_VARS = {
   SESSION_SECRET: process.env.SESSION_SECRET,
 };
 
-const ADMIN_ENV_VARS = {
+export const ADMIN_ENV_VARS = {
   // Vite Firebase Client SDK
   VITE_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   VITE_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -79,7 +84,7 @@ const ADMIN_ENV_VARS = {
   PROPERTY_FINDER_API_SECRET: process.env.PROPERTY_FINDER_API_SECRET,
 };
 
-function vercelRequest(method, path, body = null) {
+function vercelRequest(method, endpoint, body = null) {
   return new Promise((resolve, reject) => {
     if (!VERCEL_TOKEN) {
       return reject(new Error('VERCEL_TOKEN is not set in environment.'));
@@ -89,7 +94,7 @@ function vercelRequest(method, path, body = null) {
     const req = https.request({
       hostname: 'api.vercel.com',
       port: 443,
-      path: `${path}${path.includes('?') ? '&' : '?'}teamId=${VERCEL_ORG_ID}`,
+      path: `${endpoint}${endpoint.includes('?') ? '&' : '?'}teamId=${VERCEL_ORG_ID}`,
       method,
       headers: {
         'Authorization': `Bearer ${VERCEL_TOKEN}`,
@@ -119,7 +124,7 @@ function vercelRequest(method, path, body = null) {
   });
 }
 
-async function syncVarsToProject(projectName, projectId, envVars) {
+export async function syncVarsToProject(projectName, projectId, envVars) {
   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
   
   for (const [key, value] of Object.entries(envVars)) {
@@ -154,8 +159,8 @@ async function main() {
 
   if (!VERCEL_TOKEN) {
     console.log('\nℹ️  VERCEL_TOKEN is not defined in local environment.');
-    console.log('   All environment variables have been pre-configured in .github/workflows/deploy-vercel.yml');
-    console.log('   and will be automatically synchronized on your next GitHub Actions deployment.');
+    console.log('   All environment variables are pre-configured in .github/workflows/deploy-vercel.yml');
+    console.log('   and will be automatically synchronized on every push to main.');
     return;
   }
 
@@ -168,8 +173,4 @@ async function main() {
   }
 }
 
-if (require.main === module) {
-  main();
-}
-
-module.exports = { CLIENT_ENV_VARS, ADMIN_ENV_VARS, syncVarsToProject };
+main();
