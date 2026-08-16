@@ -3,7 +3,12 @@
  * Sends instant structured lead notifications to Admin & Sales Team.
  */
 
-const nodemailer = require('nodemailer');
+let nodemailer = null;
+try {
+  nodemailer = require('nodemailer');
+} catch (e) {
+  // Optional dependency fallback
+}
 
 class EmailService {
   constructor() {
@@ -14,7 +19,7 @@ class EmailService {
   }
 
   initTransporter() {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    if (nodemailer && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
         this.transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
