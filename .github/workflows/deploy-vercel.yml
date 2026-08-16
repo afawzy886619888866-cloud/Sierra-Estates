@@ -303,13 +303,13 @@ jobs:
       - name: Build
         if: steps.gate.outputs.run == 'true'
         run: |
-          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
+          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Deploy (prebuilt artifact)
         if: steps.gate.outputs.run == 'true'
         id: deploy_step
         run: |
-          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN)
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }})
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
           echo "deployed: $url"
