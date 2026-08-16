@@ -110,7 +110,7 @@ a:hover{color:var(--pri-d);}
 .hero .dots button{width:26px;height:4px;border-radius:2px;border:none;background:rgba(255,255,255,.35);cursor:pointer;padding:0;transition:width .3s var(--ease-out),background-color .3s var(--ease-out);}
 .hero .dots button.on{background:var(--pri);width:44px;}
 [data-theme="dark"] .hero .dots button.on{background:#e9c176;}
-.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background-color var(--d-hover) var(--ease-out),border-color var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
+.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:5;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background-color var(--d-hover) var(--ease-out),border-color var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
 .hero .map-cta:active{transform:translateX(-50%) scale(.97);}
 .hero .map-cta:hover{background:rgba(255,255,255,.24);transform:translateX(-50%) translateY(-2px);border-color:rgba(255,255,255,.6);}
 .hero .map-cta .mc-ic{width:28px;height:28px;border-radius:50%;background:var(--pri);display:grid;place-items:center;flex:none;animation:pulseDot 2.4s infinite;}
@@ -164,7 +164,7 @@ a:hover{color:var(--pri-d);}
 .tweaks-trigger:active{transform:scale(.92);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
-.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;}
+.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;}
 .tweaks-overlay.on{display:flex;}
 .tweaks-panel{background:var(--surface);border-radius:18px;padding:28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:tweaksIn .22s var(--ease-out) both;}
 @keyframes tweaksIn{from{opacity:0;transform:scale(.96) translateY(6px);}to{opacity:1;transform:none;}}
@@ -257,7 +257,7 @@ a:hover{color:var(--pri-d);}
 .rq-wa:active{transform:scale(.97);}
 
 /* ── Request modal: compound + bedrooms + rent/resale, opened from the header ── */
-.rq-overlay{position:fixed;inset:0;z-index:1200;background:rgba(4,12,20,.62);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;}
+.rq-overlay{position:fixed;inset:0;z-index:1200;background:rgba(4,12,20,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;}
 .rq-overlay.on{display:flex;}
 .rq-modal{background:var(--surface);border-radius:18px;width:560px;max-width:100%;max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:rqIn .22s var(--ease-out) both;}
 @keyframes rqIn{from{opacity:0;transform:scale(.97) translateY(8px);}to{opacity:1;transform:none;}}
@@ -617,12 +617,12 @@ a:hover{color:var(--pri-d);}
 [data-theme="dark"] .cpd-marker.hot .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
 .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:var(--pri);}
 [data-theme="dark"] .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
-.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:background-color .2s var(--silk),color .2s var(--silk),border-color .2s var(--silk),box-shadow .2s var(--silk),opacity .2s var(--silk),transform .2s var(--silk);white-space:nowrap;backdrop-filter:blur(4px);}
+.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:background-color .2s var(--silk),color .2s var(--silk),border-color .2s var(--silk),box-shadow .2s var(--silk),opacity .2s var(--silk),transform .2s var(--silk);white-space:nowrap;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 [dir="rtl"] .cpd-marker{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
 .cpd-marker:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,174,255,.5);z-index:999;border-color:#34d399;color:#fff;}
 .cpd-marker.hot{background:linear-gradient(135deg,#00aeff,#0098e0);color:#fff;border-color:#00aeff;}
 .cpd-marker.pulse{background:rgba(0,174,255,.85);color:#fff;border-color:#34d399;}
-[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;backdrop-filter:blur(4px);}
+[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 [data-theme="dark"] .cpd-marker.hot{background:linear-gradient(135deg,#e9c176,#c8961a);color:#09090f;}
 [data-theme="dark"] .cpd-marker.pulse{background:rgba(200,150,26,.7);border-color:#34d399;color:#fff;}
 
@@ -707,7 +707,7 @@ a:hover{color:var(--pri-d);}
 [data-theme="dark"] .cpd-pin.tier-featured .cpd-pin-dot{background:#e9c176;border-color:#09090f;}
 
 /* ── Legend ── */
-.map-legend{position:absolute;left:12px;bottom:26px;z-index:650;pointer-events:none;display:flex;flex-direction:column;gap:7px;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border:1px solid var(--line-2);box-shadow:0 6px 20px rgba(0,20,40,.14);font-family:var(--font);}
+.map-legend{position:absolute;left:12px;bottom:26px;z-index:650;pointer-events:none;display:flex;flex-direction:column;gap:7px;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);box-shadow:0 6px 20px rgba(0,20,40,.14);font-family:var(--font);}
 [data-theme="dark"] .map-legend{background:rgba(19,19,31,.92);border-color:#2e2e3c;}
 .map-legend b{font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
 .map-legend span.row{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:650;color:var(--ink);}
@@ -855,7 +855,7 @@ a:hover{color:var(--pri-d);}
     </div>
     </div>
   </div>
-  <a class="map-cta" href="compounds.html">
+  <a class="map-cta" href="compounds.html" title="Explore New Cairo compounds on map" aria-label="Explore New Cairo compounds on map">
     <span class="mc-ic"><i data-lucide="map" class="i"></i></span>
     <span data-i18n="exploreMapBtn"></span>
   </a>
@@ -945,7 +945,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="featTit"></h2>
         <p data-i18n="featSub"></p>
       </div>
-      <a href="properties.html" class="sec-link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="properties.html" class="sec-link" title="View all featured properties" aria-label="View all featured properties"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
     <div class="grid-props" id="prop-grid"></div>
   </div>
@@ -989,7 +989,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="cpdTit"></h2>
         <p data-i18n="cpdSub"></p>
       </div>
-      <a href="compounds.html" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="View all 50+ compounds" aria-label="View all 50+ compounds"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
     <div class="grid-comp" id="comp-grid"></div>
   </div>
@@ -1182,7 +1182,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="mapTit">Discover the Best Opportunities</h2>
         <p data-i18n="mapSub">Explore all New Cairo compounds on the interactive map. Click any marker for details.</p>
       </div>
-      <a href="compounds.html" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="Explore compounds on map" aria-label="Explore compounds on map"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
 
     <!-- ═══ Quick filter bar (compound + bedrooms only) ═══
