@@ -70,27 +70,37 @@ const memoryService = require('./memory-service');
 
 class GeminiAgent {
   constructor() {
-    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('❌ Missing GOOGLE_AI_API_KEY in .env — get one from https://aistudio.google.com/');
+    const apiKey = process.env.GOOGLE_AI_API_KEY || 
+                   process.env.GOOGLE_GENAI_API_KEY || 
+                   process.env.GEMINI_API_KEY || 
+                   process.env.GOOGLE_API_KEY ||
+                   process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+
+    if (apiKey) {
+      try {
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.model = this.genAI.getGenerativeModel({
+          model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+          systemInstruction: SIERRA_SYSTEM_PROMPT,
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.9,
+            maxOutputTokens: 512,   // keep WhatsApp responses concise
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          ],
+        });
+        console.log('✅ Gemini AI initialized — model:', process.env.GEMINI_MODEL || 'gemini-2.0-flash');
+      } catch (e) {
+        console.warn('⚠️ Gemini AI initialization issue, using fallback mode:', e.message);
+        this.model = null;
+      }
+    } else {
+      console.warn('⚠️ No GOOGLE_AI_API_KEY / GEMINI_API_KEY found in .env — running in Sierra concierge rule-based mode.');
+      this.model = null;
     }
-
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
-      systemInstruction: SIERRA_SYSTEM_PROMPT,
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.9,
-        maxOutputTokens: 512,   // keep WhatsApp responses concise
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      ],
-    });
-
-    console.log('✅ Gemini AI initialized — model:', process.env.GEMINI_MODEL || 'gemini-2.0-flash');
   }
 
   /**
@@ -121,6 +131,17 @@ class GeminiAgent {
         role: h.role === 'model' ? 'model' : 'user',
         parts: [{ text: h.text || h.content || '' }],
       }));
+
+      if (!this.model) {
+        const isArabic = /[\u0600-\u06FF]/.test(userMessage);
+        const fallbackReply = isArabic
+          ? `أهلاً بك يا ${senderName} في سييرا إستيتس! 🌟\n\nيسعدنا مساعدتك في تلبية طلبك العقاري في القاهرة الجديدة. تم تسجيل استفسارك وسيتواصل معك مستشارك العقاري المختص فوراً.\n\n*Sierra Estates — Beyond Brokerage*`
+          : `Hello ${senderName}! 🌟\n\nWelcome to Sierra Estates. We have received your inquiry and our senior property advisor will reach out to you shortly.\n\n*Sierra Estates — Beyond Brokerage*`;
+        if (phone !== 'unknown') {
+          await memoryService.recordAgentResponse(phone, fallbackReply);
+        }
+        return fallbackReply;
+      }
 
       const chatSession = this.model.startChat({
         history: geminiHistory,
