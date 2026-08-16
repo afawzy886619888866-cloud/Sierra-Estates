@@ -124,7 +124,7 @@ export default function ClientHomePage() {
               </span>
             </div>
           </div>
-          <a className="map-cta" href="/client-page/compounds.html" title="Explore Map">
+          <a className="map-cta" href="/compounds" title="Explore Map">
             <span className="mc-ic">
               <i data-lucide="map" className="i" />
             </span>
@@ -272,7 +272,7 @@ export default function ClientHomePage() {
                 <p data-i18n="featSub" />
               </div>
               <a
-                href="/client-page/properties.html"
+                href="/properties"
                 className="sec-link"
                 title="View All Properties"
               >
@@ -293,7 +293,7 @@ export default function ClientHomePage() {
                 <p data-i18n="tourSub" />
               </div>
               <a
-                href="/client-page/virtual-tour.html"
+                href="/virtual-tour"
                 className="vtv-link"
                 title="Open Full Tour"
               >
@@ -545,7 +545,7 @@ export default function ClientHomePage() {
                 <p data-i18n="cpdSub" />
               </div>
               <a
-                href="/client-page/compounds.html"
+                href="/compounds"
                 className="sec-link"
                 title="View All Compounds"
               >
@@ -566,7 +566,7 @@ export default function ClientHomePage() {
                 <p data-i18n="mapSub" />
               </div>
               <a
-                href="/client-page/compounds.html"
+                href="/compounds"
                 className="sec-link"
                 title="View All Compounds"
               >
@@ -680,7 +680,7 @@ export default function ClientHomePage() {
             </div>
             <div className="text-center mt-sm">
               <a
-                href="/client-page/compounds.html"
+                href="/compounds"
                 className="btn btn-navy"
                 title="View Compounds"
               >
@@ -721,7 +721,7 @@ export default function ClientHomePage() {
             </div>
             <div className="text-center mt-xl">
               <a
-                href="/client-page/properties.html"
+                href="/properties"
                 className="btn btn-navy"
                 title="View Properties"
               >
