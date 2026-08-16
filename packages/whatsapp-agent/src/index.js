@@ -109,6 +109,8 @@ const transporter = nodemailer ? nodemailer.createTransport({
 
 const brochureManager = require('./brochure-manager');
 const calendarService = require('./calendar-service');
+const voiceService = require('./voice-service');
+const ViewingReminderService = require('./reminder-service');
 
 async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
   let cleanMessage = rawAiReply;
@@ -207,6 +209,8 @@ client.on('ready', async () => {
   const listing = new ListingManager();
   const report  = new ReportGenerator(client);
   const store   = new SessionStore();
+  const reminderService = new ViewingReminderService(client);
+  reminderService.start();
 
   // ── Automated Property Finder & CRM Queue Dispatcher ──────────────────────────
   console.log('⚡ [WhatsApp Agent] Automated Property Finder Outreach Queue Worker started.');
@@ -235,7 +239,7 @@ client.on('ready', async () => {
   // ── Incoming messages ──────────────────────────────────────────────────────
   client.on('message', async (msg) => {
     try {
-      if (!msg.body || msg.isStatus) return;
+      if (msg.isStatus) return;
 
       let chat = null;
       try { chat = await msg.getChat(); } catch (e) {}
@@ -246,8 +250,27 @@ client.on('ready', async () => {
       const senderId  = msg.from;                        // "201234567890@c.us"
       const senderNum = senderId.replace('@c.us', '').replace('@g.us', '');
       const isAdmin   = isAdminUser(senderNum);
-      const body      = msg.body ? msg.body.trim() : '';
+      let body        = msg.body ? msg.body.trim() : '';
       const name      = (contact && (contact.pushname || contact.name)) || msg._data?.notifyName || 'Client';
+
+      // ── Handle WhatsApp Voice Notes (PTT / Audio) via Gemini ──
+      if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
+        try {
+          const media = await msg.downloadMedia();
+          if (media && media.data) {
+            console.log(`🎙️ [WhatsApp Agent] Processing incoming voice note from ${name}...`);
+            const transcript = await voiceService.transcribeAudio(media.data, media.mimetype);
+            if (transcript) {
+              body = transcript;
+              console.log(`🎙️ [WhatsApp Agent] Transcribed voice note: "${body}"`);
+            }
+          }
+        } catch (voiceErr) {
+          console.warn('⚠️ [Voice Note Warning]:', voiceErr.message);
+        }
+      }
+
+      if (!body) return;
 
       console.log(`📩 [${isGroup ? 'GROUP' : 'DM'}][${isAdmin ? 'ADMIN' : 'client'}] ${name}: ${body.slice(0, 80)}`);
 
@@ -255,6 +278,17 @@ client.on('ready', async () => {
       if (isAdmin && body.startsWith('/')) {
         await cmds.handle(msg, body, listing, report);
         return;
+      }
+
+      // ── Check Viewing Appointment Confirmation / Reschedule Reply ──
+      if (!isGroup) {
+        const confirmReply = await reminderService.handleClientConfirmation(senderNum, body);
+        if (confirmReply) {
+          await msg.reply(confirmReply);
+          store.addMessage(senderId, 'user', body);
+          store.addMessage(senderId, 'model', confirmReply);
+          return;
+        }
       }
 
       // ── Group: only reply when mentioned ────────────────────────────────
