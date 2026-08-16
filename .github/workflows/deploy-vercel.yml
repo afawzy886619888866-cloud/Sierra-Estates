@@ -259,8 +259,7 @@ jobs:
       - name: Pull Vercel project settings
         if: steps.gate.outputs.run == 'true'
         run: |
-          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
-          cp -r .vercel "${{ matrix.app_dir }}/" 2>/dev/null || true
+          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Build
         if: steps.gate.outputs.run == 'true'
