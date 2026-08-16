@@ -7,11 +7,20 @@ export default defineConfig({
     environment: 'node',
     include: [
       'packages/shared/src/__tests__/**/*.test.ts',
+      'packages/agents-core/src/__tests__/**/*.test.ts',
       'infra/n8n-workflows/__tests__/**/*.test.ts',
       'infra/whatsapp-scraper/__tests__/**/*.test.ts',
+      'apps/agents/__tests__/**/*.test.ts',
+      'apps/admin-dashboard/src/__tests__/**/*.test.ts',
+      'workflows/__tests__/**/*.test.ts',
+      'deploy/__tests__/**/*.test.ts',
+      '__tests__/**/*.test.ts',
     ],
     alias: {
       '@sierra-estates/types': resolve(__dirname, 'packages/shared/src/types/index.ts'),
+      '@sierra-estates/agents-core': resolve(__dirname, 'packages/agents-core/src/index.ts'),
+      '@sierra-estates/memory-engine': resolve(__dirname, 'packages/memory-engine/src/index.ts'),
+      '@sierra-estates/obsidian': resolve(__dirname, 'packages/obsidian/src/index.ts'),
     },
   },
 });
