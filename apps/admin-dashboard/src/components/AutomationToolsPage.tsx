@@ -44,7 +44,7 @@ export default function AutomationToolsPage() {
               <h4 className="text-cyan-400 font-mono text-xs uppercase mb-3 border-b border-white/10 pb-2">Easy Listing Logic Editor (XML Parser)</h4>
               <textarea 
                 className="w-full h-64 bg-[#0a0f1d] border border-slate-800 text-slate-300 font-mono text-xs p-4 rounded outline-none focus:border-cyan-500/50 resize-y"
-                defaultValue={`// Sierra-Estates-Final/functions/index.js (Property Finder Parser)
+                defaultValue={`// SE-Vercel-deploy-main/functions/index.js (Property Finder Parser)
 const cloudFunctions = require("firebase-functions");
 const firebaseAdmin = require("firebase-admin");
 
@@ -85,7 +85,7 @@ exports.propertyFinderIngestWebhook = cloudFunctions.https.onRequest(async (req,
               <h4 className="text-cyan-400 font-mono text-xs uppercase mb-3 border-b border-white/10 pb-2">WhatsApp Extension Connector</h4>
               <textarea
                 className="w-full h-64 bg-[#0a0f1d] border border-slate-800 text-slate-300 font-mono text-xs p-4 rounded outline-none focus:border-cyan-500/50 resize-y"
-                defaultValue={`// Sierra-Estates-Final/whatsapp-sender.js
+                defaultValue={`// SE-Vercel-deploy-main/whatsapp-sender.js
 // Meta Cloud API Configuration for CRM Sync
 // NOTE: All credentials must be handled server-side via backend API
 

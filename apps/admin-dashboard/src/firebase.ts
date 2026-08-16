@@ -10,7 +10,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Initialize Firestore — uses the (default) database or explicitly set firestoreDatabaseId.
-// Shared with the Sierra-Estates-Final backend (apps/sierra-estates-realty),
+// Shared with the SE-Vercel-deploy-main backend (apps/sierra-estates-realty),
 // so admin writes (notifications, etc.) land in the same Firestore the backend reads from.
 const _dbId = (firebaseConfig as any).firestoreDatabaseId;
 export const db = (_dbId && _dbId !== '(default)')
