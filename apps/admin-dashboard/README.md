@@ -4,7 +4,7 @@
 
 # Sierra Estates — Admin Control Panel
 
-The admin SPA for the Sierra Estates luxury PropTech platform (Egyptian market). Built with Vite + React 19 + Tailwind 4 + Firebase Auth. Talks to the [Sierra-Estates-Final backend](https://github.com/ahmedfawzy8866/Sierra-Estates-Final) via authenticated REST.
+The admin SPA for the Sierra Estates luxury PropTech platform (Egyptian market). Built with Vite + React 19 + Tailwind 4 + Firebase Auth. Talks to the [SE-Vercel-deploy-main backend](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main) via authenticated REST.
 
 View your app in AI Studio: https://ai.studio/apps/cc0f14b8-c38e-4e88-b9b1-5bc8d3e3679d
 
@@ -23,7 +23,7 @@ A bilingual (EN/AR) admin control panel with 13 sections:
 
 ```
 ┌─────────────────────────────┐         ┌──────────────────────────────────┐
-│  -19-6-AI (this repo)       │         │  Sierra-Estates-Final (Backend)  │
+│  SE-Vercel-deploy-main Admin│         │  SE-Vercel-deploy-main Backend   │
 │  Vite + React 19            │         │  Next.js 16 + Turborepo          │
 │                             │  HTTPS  │                                  │
 │  apiClient.ts ──────────────┼────────>│  /api/admin/* (CRUD)             │
@@ -51,8 +51,8 @@ A bilingual (EN/AR) admin control panel with 13 sections:
 ### 1. Start the backend first
 
 ```bash
-git clone https://github.com/ahmedfawzy8866/Sierra-Estates-Final.git
-cd Sierra-Estates-Final/apps/sierra-estates-realty
+git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
+cd SE-Vercel-deploy-main/apps/sierra-estates-realty
 cp .env.local.example .env.local
 # Fill in NEXT_PUBLIC_FIREBASE_* and GOOGLE_AI_API_KEY
 pnpm dev  # starts on :3000
