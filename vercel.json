@@ -1,13 +1,5 @@
 {
   "version": 2,
-  "github": {
-    "silent": true,
-    "enabled": false
-  },
-  "git": {
-    "deploymentEnabled": false
-  },
-  "ignoreCommand": "echo 'Deployments orchestrated via GitHub Actions' && exit 0",
   "buildCommand": "pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
