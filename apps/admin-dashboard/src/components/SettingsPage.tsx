@@ -536,6 +536,57 @@ export default function SettingsPage({ T, isAr = false, currentUser }: SettingsP
               Sync Environment
             </button>
           </div>
+
+          {/* GitHub Actions Deployment Secrets Table */}
+          <div className="mt-4 pt-4 border-t border-slate-800/80">
+            <h4 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+              <span className="text-cyan-400">🔑</span> GitHub Secrets & Variables for Auto-Deployment
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px] font-mono text-left border border-slate-800 rounded-lg overflow-hidden">
+                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="p-2.5">Secret / Variable Name</th>
+                    <th className="p-2.5">Target / Value</th>
+                    <th className="p-2.5">Type</th>
+                    <th className="p-2.5">Purpose</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  <tr className="bg-slate-950/40">
+                    <td className="p-2.5 font-bold text-cyan-400 select-all">VERCEL_TOKEN</td>
+                    <td className="p-2.5 text-slate-400 select-all">Vercel User/Team Token</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">Secret</span></td>
+                    <td className="p-2.5 text-slate-400">Authenticates Vercel CLI deployment</td>
+                  </tr>
+                  <tr className="bg-slate-950/20">
+                    <td className="p-2.5 font-bold text-cyan-400 select-all">VERCEL_ORG_ID</td>
+                    <td className="p-2.5 text-slate-200 select-all">team_UvdJ5ezVTaqEKyhqZ5QVqOKJ</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">Variable</span></td>
+                    <td className="p-2.5 text-slate-400">sierra-estates-projects Vercel team</td>
+                  </tr>
+                  <tr className="bg-slate-950/40">
+                    <td className="p-2.5 font-bold text-cyan-400 select-all">CLIENT_VERCEL_PROJECT_ID</td>
+                    <td className="p-2.5 text-slate-200 select-all">prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">Variable</span></td>
+                    <td className="p-2.5 text-slate-400">sierra-estates.net (Client Portal)</td>
+                  </tr>
+                  <tr className="bg-slate-950/20">
+                    <td className="p-2.5 font-bold text-cyan-400 select-all">ADMIN_VERCEL_PROJECT_ID</td>
+                    <td className="p-2.5 text-slate-200 select-all">prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">Variable</span></td>
+                    <td className="p-2.5 text-slate-400">admin.sierra-estates.net (Admin Dashboard)</td>
+                  </tr>
+                  <tr className="bg-slate-950/40">
+                    <td className="p-2.5 font-bold text-cyan-400 select-all">GOOGLE_AI_API_KEY</td>
+                    <td className="p-2.5 text-slate-400 select-all">Gemini 2.0 Flash API Key</td>
+                    <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">Secret</span></td>
+                    <td className="p-2.5 text-slate-400">Powers WhatsApp & CRM AI Agents</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
         </div>
