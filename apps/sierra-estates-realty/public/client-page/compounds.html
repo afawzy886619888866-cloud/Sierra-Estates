@@ -21,7 +21,7 @@
 .cpd-search:focus-within{border-color:var(--pri);}
 .cpd-search .i{width:18px;height:18px;color:var(--muted);flex:none;}
 .cpd-search input{flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14.5px;color:var(--ink);min-width:0;}
-.cpd-search .cs-clear{border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0;}
+.cpd-search .cs-clear{display:none;border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0;}
 .zone-chips{display:flex;gap:8px;flex-wrap:wrap;}
 .zchip{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:999px;padding:8px 15px;cursor:pointer;transition:.2s var(--silk);display:inline-flex;align-items:center;gap:7px;}
 .zchip:hover{border-color:var(--pri);color:var(--pri);}
@@ -30,7 +30,7 @@
 .zchip .zc-n{font-family:var(--mono);font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--pri-soft);color:var(--pri);}
 .zchip.on .zc-n{background:rgba(255,255,255,.25);color:#fff;}
 [data-theme="dark"] .zchip.on .zc-n{background:rgba(0,0,0,.2);color:#0d0d0f;}
-.cpd-empty{padding:50px 0;text-align:center;color:var(--muted);font-size:15px;}
+.cpd-empty{display:none;padding:50px 0;text-align:center;color:var(--muted);font-size:15px;}
 .tb-select{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;outline:none;cursor:pointer;transition:border-color .2s;}
 .tb-select:focus{border-color:var(--pri);}
 .tb-seg{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
@@ -51,6 +51,7 @@
 .intel .metric b.link{color:var(--pri);cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:6px;}
 .intel .metric b.link:hover{color:var(--pri-d);}
 .intel .btn{margin-top:18px;}
+.intel .intel-tbl-ic{width:14px;height:14px;}
 .cpd-marker{background:var(--pri);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:4px 8px;border-radius:999px;border:2px solid #fff;box-shadow:0 3px 10px rgba(13,33,54,.35);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;transition:transform .2s;cursor:pointer;}
 .cpd-marker .u{background:rgba(255,255,255,.28);border-radius:999px;padding:0 5px;font-size:9.5px;}
 .cpd-marker i.lucide,.cpd-marker svg{opacity:.85;}
@@ -91,9 +92,10 @@
 .cpd-card .zline{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
 .cpd-card .u-link{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--pri);display:inline-flex;align-items:center;gap:6px;margin-top:2px;}
 .cpd-card .u-link:hover{text-decoration:underline;text-underline-offset:3px;}
+.cpd-card .u-link .u-link-ic{width:14px;height:14px;}
 
 /* ── units sheet (excel-style) ── */
-.sheet-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,25,45,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:28px;}
+.sheet-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,25,45,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:28px;}
 .sheet-overlay.on{display:flex;animation:ovIn .25s var(--silk);}
 @keyframes ovIn{from{opacity:0}to{opacity:1}}
 .sheet{background:var(--surface);border-radius:14px;box-shadow:var(--shadow-m);width:min(980px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;animation:shIn .35s var(--silk);}
@@ -117,7 +119,7 @@
 [data-theme="dark"] .sheet .shf-seg button.on{color:#0d0d0f;}
 .sheet .shf-count{margin-inline-start:auto;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
 [dir="rtl"] .sheet .shf-count{font-family:var(--font);}
-.sheet .sh-empty{padding:44px;text-align:center;color:var(--muted);font-size:14.5px;}
+.sheet .sh-empty{display:none;padding:44px;text-align:center;color:var(--muted);font-size:14.5px;}
 .sheet table{width:100%;border-collapse:collapse;font-size:13px;}
 .sheet thead th{position:sticky;top:0;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;text-align:start;padding:12px 16px;border-bottom:1px solid var(--line);z-index:2;white-space:nowrap;}
 [dir="rtl"] .sheet thead th{letter-spacing:.02em;font-family:var(--font);}
@@ -131,6 +133,7 @@
 .sheet .st.av{background:rgba(40,167,69,.12);color:var(--green);}
 .sheet .st.rs{background:rgba(230,57,70,.1);color:var(--red);}
 .sheet .go{color:var(--pri);}
+.sheet .go .sh-go-ic{width:15px;height:15px;}
 
 [dir="rtl"] .cpd-card .zline{letter-spacing:.02em;font-family:var(--font);}
 
@@ -138,6 +141,33 @@
 .af-bar{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:18px 22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-s);margin-bottom:20px;}
 .af-search{position:relative;display:flex;align-items:center;gap:8px;min-width:180px;flex:1;}
 .af-search .i{width:17px;height:17px;color:var(--muted);flex:none;}
+.af-search input{flex:1;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;}
+.af-search input::placeholder{color:var(--muted);}
+.af-group{display:flex;flex-direction:column;gap:6px;}
+.af-label{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-inline-start:2px;}
+[dir="rtl"] .af-label{letter-spacing:.02em;font-family:var(--font);}
+.af-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.af-chip{font-family:var(--font);font-weight:600;font-size:12px;color:var(--text);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.18s var(--silk);white-space:nowrap;}
+.af-chip:hover{border-color:var(--pri);color:var(--pri);}
+.af-chip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .af-chip.on{color:#0d0d0f;}
+.af-price{display:flex;align-items:center;gap:8px;}
+.af-price input{width:72px;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 9px;font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);outline:none;transition:.18s;}
+.af-price input:focus{border-color:var(--pri);}
+.af-price input::placeholder{color:var(--muted);}
+.af-price-sep{color:var(--muted);font-size:13px;}
+.af-seg{display:flex;gap:3px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.af-seg button{font-family:var(--font);font-weight:700;font-size:11.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:6px 11px;cursor:pointer;transition:.18s;}
+.af-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .af-seg button.on{color:#0d0d0f;}
+.af-clear{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-weight:600;font-size:12px;color:var(--muted);background:none;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.18s;align-self:flex-end;}
+.af-clear:hover{color:var(--red);border-color:var(--red);}
+.af-clear .af-rotate-ic{width:13px;height:13px;}
+.af-count{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.04em;align-self:flex-end;padding-bottom:9px;min-width:90px;text-align:end;}
+.zone-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+/* Zero-state: grayed out markers */
+.cpd-marker.zero{opacity:.25;filter:grayscale(1);pointer-events:none;}
+.cpd-marker.zero::after{content:'';}
 .af-search input{flex:1;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;}
 .af-search input::placeholder{color:var(--muted);}
 .af-group{display:flex;flex-direction:column;gap:6px;}
@@ -175,7 +205,7 @@
 
 <header class="page-hero" data-screen-label="Compounds hero">
   <div class="wrap">
-    <div class="crumbs"><a href="index.html" data-i18n="crumbHome"></a><span class="sep">/</span><span data-i18n="navCpds"></span></div>
+    <div class="crumbs"><a href="index.html" title="Home" aria-label="Home" data-i18n="crumbHome">Home</a><span class="sep">/</span><span data-i18n="navCpds"></span></div>
     <h1 data-i18n="cpdsTit"></h1>
     <p class="sub" data-i18n="cpdsSub"></p>
   </div>
@@ -191,19 +221,19 @@
       <!-- Search -->
       <div class="af-search">
         <i data-lucide="search" class="i"></i>
-        <input type="text" id="cpd-search" data-i18n-ph="searchCpdPh"/>
-        <button class="cs-clear" id="cpd-search-clear" type="button" aria-label="Clear" style="display:none;">×</button>
+        <input type="text" id="cpd-search" placeholder="Search compounds..." title="Search compounds" aria-label="Search compounds" data-i18n-ph="searchCpdPh"/>
+        <button class="cs-clear" id="cpd-search-clear" type="button" title="Clear search" aria-label="Clear">×</button>
       </div>
 
       <!-- Property Type -->
       <div class="af-group">
         <label class="af-label" data-i18n="afType">Type</label>
         <div class="af-chips" id="af-type">
-          <button class="af-chip on" data-type="all" type="button">All</button>
-          <button class="af-chip" data-type="Apartment" type="button">Apartment</button>
-          <button class="af-chip" data-type="Villa" type="button">Villa</button>
-          <button class="af-chip" data-type="Townhouse" type="button">Townhouse</button>
-          <button class="af-chip" data-type="Twin House" type="button">Twin House</button>
+          <button class="af-chip on" data-type="all" type="button" title="All types" aria-label="All types">All</button>
+          <button class="af-chip" data-type="Apartment" type="button" title="Apartment" aria-label="Apartment">Apartment</button>
+          <button class="af-chip" data-type="Villa" type="button" title="Villa" aria-label="Villa">Villa</button>
+          <button class="af-chip" data-type="Townhouse" type="button" title="Townhouse" aria-label="Townhouse">Townhouse</button>
+          <button class="af-chip" data-type="Twin House" type="button" title="Twin House" aria-label="Twin House">Twin House</button>
         </div>
       </div>
 
@@ -211,12 +241,12 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afBeds">Bedrooms</label>
         <div class="af-chips" id="af-beds">
-          <button class="af-chip on" data-beds="0" type="button">Any</button>
-          <button class="af-chip" data-beds="1" type="button">1+</button>
-          <button class="af-chip" data-beds="2" type="button">2+</button>
-          <button class="af-chip" data-beds="3" type="button">3+</button>
-          <button class="af-chip" data-beds="4" type="button">4+</button>
-          <button class="af-chip" data-beds="5" type="button">5+</button>
+          <button class="af-chip on" data-beds="0" type="button" title="Any bedrooms" aria-label="Any bedrooms">Any</button>
+          <button class="af-chip" data-beds="1" type="button" title="1 or more bedrooms" aria-label="1 or more bedrooms">1+</button>
+          <button class="af-chip" data-beds="2" type="button" title="2 or more bedrooms" aria-label="2 or more bedrooms">2+</button>
+          <button class="af-chip" data-beds="3" type="button" title="3 or more bedrooms" aria-label="3 or more bedrooms">3+</button>
+          <button class="af-chip" data-beds="4" type="button" title="4 or more bedrooms" aria-label="4 or more bedrooms">4+</button>
+          <button class="af-chip" data-beds="5" type="button" title="5 or more bedrooms" aria-label="5 or more bedrooms">5+</button>
         </div>
       </div>
 
@@ -224,9 +254,9 @@
       <div class="af-group af-price-group">
         <label class="af-label" data-i18n="afPrice">Price (EGP M)</label>
         <div class="af-price">
-          <input type="number" id="af-price-min" placeholder="Min" min="0" step="0.5" />
+          <input type="number" id="af-price-min" placeholder="Min" title="Minimum price in EGP millions" aria-label="Minimum price in EGP millions" min="0" step="0.5" />
           <span class="af-price-sep">—</span>
-          <input type="number" id="af-price-max" placeholder="Max" min="0" step="0.5" />
+          <input type="number" id="af-price-max" placeholder="Max" title="Maximum price in EGP millions" aria-label="Maximum price in EGP millions" min="0" step="0.5" />
         </div>
       </div>
 
@@ -234,9 +264,9 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afDelivery">Delivery</label>
         <div class="af-chips" id="af-delivery">
-          <button class="af-chip on" data-delivery="all" type="button">Any</button>
-          <button class="af-chip" data-delivery="ready" type="button">Ready to Move</button>
-          <button class="af-chip" data-delivery="under_construction" type="button">Under Construction</button>
+          <button class="af-chip on" data-delivery="all" type="button" title="Any delivery status" aria-label="Any delivery status">Any</button>
+          <button class="af-chip" data-delivery="ready" type="button" title="Ready to move" aria-label="Ready to move">Ready to Move</button>
+          <button class="af-chip" data-delivery="under_construction" type="button" title="Under construction" aria-label="Under construction">Under Construction</button>
         </div>
       </div>
 
@@ -244,15 +274,15 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afMode">Mode</label>
         <div class="af-seg" id="af-mode">
-          <button class="on" data-m="all" type="button" data-i18n="modeAll"></button>
-          <button data-m="sale" type="button" data-i18n="modeSale"></button>
-          <button data-m="rent" type="button" data-i18n="modeRent"></button>
+          <button class="on" data-m="all" type="button" title="All modes" aria-label="All modes" data-i18n="modeAll">All</button>
+          <button data-m="sale" type="button" title="For Sale" aria-label="For Sale" data-i18n="modeSale">Sale</button>
+          <button data-m="rent" type="button" title="For Rent" aria-label="For Rent" data-i18n="modeRent">Rent</button>
         </div>
       </div>
 
       <!-- Clear all -->
-      <button class="af-clear" id="af-clear" type="button">
-        <i data-lucide="rotate-ccw" class="i" style="width:13px;height:13px;"></i>
+      <button class="af-clear" id="af-clear" type="button" title="Clear all filters" aria-label="Clear all filters">
+        <i data-lucide="rotate-ccw" class="i af-rotate-ic"></i>
         <span>Clear</span>
       </button>
 
@@ -270,7 +300,7 @@
       </aside>
     </div>
     <div class="grid-cpds" id="cpd-cards"></div>
-    <div class="cpd-empty" id="cpd-empty" style="display:none;" data-i18n="noCpd"></div>
+    <div class="cpd-empty" id="cpd-empty" data-i18n="noCpd"></div>
   </div>
 </section>
 
@@ -284,25 +314,25 @@
         <h3 id="sh-title"></h3>
         <div class="sub" id="sh-sub"></div>
       </div>
-      <button class="sh-close" id="sh-close" type="button" aria-label="Close"><i data-lucide="x" class="i"></i></button>
+      <button class="sh-close" id="sh-close" type="button" title="Close sheet" aria-label="Close"><i data-lucide="x" class="i"></i></button>
     </div>
     <div class="sh-filters">
       <div class="shf">
         <label data-i18n="shCompound"></label>
-        <select id="shf-cpd"></select>
+        <select id="shf-cpd" title="Select compound" aria-label="Select compound"></select>
       </div>
       <div class="shf">
         <label data-i18n="shBeds"></label>
-        <select id="shf-beds">
+        <select id="shf-beds" title="Select bedrooms" aria-label="Select bedrooms">
           <option value="0" data-i18n="shAnyBeds"></option>
           <option value="2">2+</option><option value="3">3+</option>
           <option value="4">4+</option><option value="5">5+</option>
         </select>
       </div>
       <div class="shf-seg" id="shf-mode">
-        <button class="on" data-m="all" type="button" data-i18n="modeAll"></button>
-        <button data-m="sale" type="button" data-i18n="modeSale"></button>
-        <button data-m="rent" type="button" data-i18n="modeRent"></button>
+        <button class="on" data-m="all" type="button" title="All modes" aria-label="All modes" data-i18n="modeAll">All</button>
+        <button data-m="sale" type="button" title="For Sale" aria-label="For Sale" data-i18n="modeSale">Sale</button>
+        <button data-m="rent" type="button" title="For Rent" aria-label="For Rent" data-i18n="modeRent">Rent</button>
       </div>
       <span class="shf-count" id="shf-count"></span>
     </div>
@@ -311,7 +341,7 @@
         <thead><tr id="sh-thead"></tr></thead>
         <tbody id="sh-tbody"></tbody>
       </table>
-      <div class="sh-empty" id="sh-empty" style="display:none;" data-i18n="shNoUnits"></div>
+      <div class="sh-empty" id="sh-empty" data-i18n="shNoUnits"></div>
     </div>
   </div>
 </div>
