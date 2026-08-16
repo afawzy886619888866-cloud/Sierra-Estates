@@ -105,6 +105,32 @@ client.on('ready', async () => {
   const report  = new ReportGenerator(client);
   const store   = new SessionStore();
 
+  const { getPendingQueueMessages, markQueueMessageSent, getLeadByPhone } = require('./firebase-service');
+
+  // ── Automated Property Finder & CRM Queue Dispatcher ──────────────────────────
+  console.log('⚡ [WhatsApp Agent] Automated Property Finder Outreach Queue Worker started.');
+  setInterval(async () => {
+    try {
+      const pendingItems = await getPendingQueueMessages();
+      for (const item of pendingItems) {
+        let cleanPhone = String(item.phone || '').replace(/\D/g, '');
+        if (cleanPhone.startsWith('0') && cleanPhone.length === 11) cleanPhone = '2' + cleanPhone;
+        if (!cleanPhone.startsWith('20') && cleanPhone.length === 10) cleanPhone = '20' + cleanPhone;
+
+        const chatId = `${cleanPhone}@c.us`;
+        console.log(`📤 [PF Outreach] Auto-contacting ${item.clientName || 'Client'} (${chatId}) for ref: ${item.propertyRef || 'N/A'}`);
+
+        await sleep(1500 + Math.random() * 2000);
+        await client.sendMessage(chatId, item.text);
+        await markQueueMessageSent(item.id);
+
+        store.addMessage(chatId, 'model', item.text);
+      }
+    } catch (err) {
+      // Quiet background polling
+    }
+  }, 7000);
+
   // ── Incoming messages ──────────────────────────────────────────────────────
   client.on('message', async (msg) => {
     try {
@@ -142,9 +168,18 @@ client.on('ready', async () => {
       await sleep(1000 + Math.random() * 2000);
       try { await chat.sendSeen(); } catch (e) {}
 
+      // ── Check if client is a Property Finder lead with listing context ──
+      let pfContext = '';
+      try {
+        const lead = await getLeadByPhone(senderNum);
+        if (lead && lead.notes) {
+          pfContext = `\n[CLIENT PROPERTY FINDER CONTEXT: Client previously inquired via Property Finder: "${lead.notes}" — provide precise pricing, payment plans, and offer private viewing booking.]`;
+        }
+      } catch (e) {}
+
       // ── Gemini AI reply ───────────────────────────────────────────────────
       const history = store.getHistory(senderId);
-      const reply   = await gemini.chat(body, history, { isAdmin, senderName: name, senderPhone: senderId });
+      const reply   = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
 
       store.addMessage(senderId, 'user',  body);
       store.addMessage(senderId, 'model', reply);

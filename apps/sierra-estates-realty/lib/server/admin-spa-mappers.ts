@@ -34,16 +34,21 @@ export function labelToLeadStage(label?: string): PipelineStage {
 }
 
 export function mapLeadToSpa(id: string, data: Record<string, any>) {
+  const isPF = data.source === 'property_finder' || !!data.pfLeadId;
   return {
     id,
-    name: data.name || '',
+    name: data.name || (isPF ? `PF Lead (${data.pfLeadId || id.slice(0, 8)})` : 'Inbound Client'),
     phone: data.phone || '',
-    interest: data.preferredPropertyType || data.interestedProjectIds?.[0] || data.source || 'General Inquiry',
-    stage: leadStageToLabel(data.stage),
-    color: data.color,
-    hot: data.hot ?? (typeof data.aiProfiling?.score === 'number' && data.aiProfiling.score >= 7),
+    email: data.email || '',
+    source: data.source || (isPF ? 'property_finder' : 'website'),
+    interest: data.notes || data.preferredPropertyType || data.interestedProjectIds?.[0] || (isPF ? `Property Finder Inquiry (${data.notes || 'Inquiry'})` : 'General Inquiry'),
+    stage: leadStageToLabel(data.stage || (isPF ? 'inbound' : undefined)),
+    color: data.color || (isPF ? '#f97316' : undefined),
+    hot: data.hot ?? (isPF ? true : (typeof data.aiProfiling?.score === 'number' && data.aiProfiling.score >= 7)),
     archived: data.archived ?? false,
     ownerId: data.assignedTo,
+    notes: data.notes || '',
+    pfLeadId: data.pfLeadId || null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
@@ -53,11 +58,14 @@ export function mapSpaToLeadPatch(patch: Record<string, any>) {
   const out: Record<string, any> = {};
   if (patch.name !== undefined) out.name = patch.name;
   if (patch.phone !== undefined) out.phone = patch.phone;
+  if (patch.email !== undefined) out.email = patch.email;
   if (patch.stage !== undefined) out.stage = labelToLeadStage(patch.stage);
   if (patch.color !== undefined) out.color = patch.color;
   if (patch.hot !== undefined) out.hot = patch.hot;
   if (patch.archived !== undefined) out.archived = patch.archived;
   if (patch.ownerId !== undefined) out.assignedTo = patch.ownerId;
+  if (patch.notes !== undefined) out.notes = patch.notes;
+  if (patch.source !== undefined) out.source = patch.source;
   return out;
 }
 
@@ -76,9 +84,10 @@ const LABEL_TO_STATUS: Record<string, PropertyStatus> = {
 };
 
 export function mapListingToSpa(id: string, data: Record<string, any>) {
+  const isPF = data.automation?.isPublishedToPF || data.pfStatus === 'published' || !!data.pfReferenceNumber;
   return {
     id,
-    code: data.code || data.referenceNumber || id,
+    code: data.code || data.referenceNumber || data.pfReferenceNumber || id,
     cmp: data.compound || data.location || '',
     type: data.propertyType || 'apartment',
     beds: data.bedrooms ?? 0,
@@ -89,6 +98,9 @@ export function mapListingToSpa(id: string, data: Record<string, any>) {
     img: data.images?.length ?? 0,
     images: data.images || [],
     publishToClient: data.publishToClient ?? false,
+    isPublishedToPF: isPF,
+    pfReferenceNumber: data.pfReferenceNumber || data.code || null,
+    pfStatus: data.pfStatus || (isPF ? 'published' : 'draft'),
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
