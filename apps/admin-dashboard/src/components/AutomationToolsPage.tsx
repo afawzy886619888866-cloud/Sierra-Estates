@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import { Octokit } from 'octokit';
+
+const octokit = new Octokit({ 
+  auth: 'YOUR-TOKEN'
+});
 
 export default function AutomationToolsPage() {
   const [activeTab, setActiveTab] = useState<'easylisting' | 'whatsapp' | 'none'>('none');
