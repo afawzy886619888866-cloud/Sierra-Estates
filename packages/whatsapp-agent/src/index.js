@@ -214,9 +214,15 @@ client.on('ready', async () => {
   });
 
   // ── Heartbeat ─────────────────────────────────────────────────────────────
-  setInterval(() => {
-    const state = client.getState();
-    if (state && state !== 'CONNECTED') console.warn('⚠️ State:', state);
+  setInterval(async () => {
+    try {
+      if (typeof client.getState === 'function') {
+        const state = await client.getState();
+        if (state && state !== 'CONNECTED') console.warn('⚠️ WhatsApp Client State:', state);
+      }
+    } catch (e) {
+      // Ignored during page context/frame swaps
+    }
   }, 60_000);
 });
 
@@ -224,6 +230,15 @@ client.on('disconnected', (reason) => {
   console.warn('⚠️ Client disconnected:', reason);
   console.log('♻️  Reinitializing in 5 seconds...');
   setTimeout(() => client.initialize(), 5000);
+});
+
+// Process-level safety guards to keep WhatsApp daemon permanently online
+process.on('unhandledRejection', (reason) => {
+  console.warn('⚠️ [WhatsApp Agent Background Catch]:', reason && reason.message ? reason.message : reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.warn('⚠️ [WhatsApp Agent Uncaught Exception]:', err && err.message ? err.message : err);
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -239,5 +254,5 @@ function sleep(ms) {
 // ─── START ────────────────────────────────────────────────────────────────────
 console.log('🚀 Starting Sierra WhatsApp Agent...');
 console.log('   Library: whatsapp-web.js');
-console.log('   Chrome:  C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\n');
+console.log(`   Chrome:  ${chromePath || 'Auto-detected browser'}\n`);
 client.initialize();
