@@ -2472,5 +2472,95 @@
     ],
     "createdAt": "2026-08-16T01:06:46.529Z",
     "updatedAt": "2026-08-16T01:06:46.529Z"
-  }
+  },
+  "events": [
+    {
+      "sourceAgent": "WhatsApp-Senior-Agent",
+      "entityId": "lead_test_001",
+      "role": "user",
+      "text": "Client looking for a 3-bedroom townhouse in Villette SODIC with budget up to 18,000,000 EGP",
+      "metadata": {
+        "compound": "Villette SODIC",
+        "budget": 18000000,
+        "bedrooms": 3
+      },
+      "timestamp": "2026-08-16T06:17:11.529Z"
+    },
+    {
+      "sourceAgent": "OpenClaw-Stage9-Closer",
+      "entityId": "deal_test_002",
+      "role": "assistant",
+      "text": "Negotiated 15% upfront discount on Mivida standalone villa for corporate embassy tenant.",
+      "metadata": {
+        "compound": "Mivida",
+        "discount": 0.15
+      },
+      "timestamp": "2026-08-16T06:17:11.532Z"
+    },
+    {
+      "sourceAgent": "Hermes-Agent",
+      "entityId": "admin-console",
+      "role": "user",
+      "text": "What is the current price per sqm and rental yield for Mivida vs Villette SODIC?",
+      "metadata": {},
+      "timestamp": "2026-08-16T06:17:11.539Z"
+    },
+    {
+      "sourceAgent": "Hermes-Agent",
+      "entityId": "admin-console",
+      "role": "assistant",
+      "text": "🦅 [Hermes Scout]: Analyzed \"What is the current price per sqm and rental yield for Mivida vs Villette SODIC?\". Based on Unified Memory, New Cairo average price/m² is ~65,000 EGP. High demand observed for 3BR Townhouses in Villette SODIC and Mivida.",
+      "metadata": {},
+      "timestamp": "2026-08-16T06:17:11.545Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Senior-Agent",
+      "entityId": "lead_test_001",
+      "role": "user",
+      "text": "Client looking for a 3-bedroom townhouse in Villette SODIC with budget up to 18,000,000 EGP",
+      "metadata": {
+        "compound": "Villette SODIC",
+        "budget": 18000000,
+        "bedrooms": 3
+      },
+      "timestamp": "2026-08-16T06:17:29.794Z"
+    },
+    {
+      "sourceAgent": "OpenClaw-Stage9-Closer",
+      "entityId": "deal_test_002",
+      "role": "assistant",
+      "text": "Negotiated 15% upfront discount on Mivida standalone villa for corporate embassy tenant.",
+      "metadata": {
+        "compound": "Mivida",
+        "discount": 0.15
+      },
+      "timestamp": "2026-08-16T06:17:29.798Z"
+    },
+    {
+      "sourceAgent": "Hermes-Agent",
+      "entityId": "admin-console",
+      "role": "user",
+      "text": "What is the current price per sqm and rental yield for Mivida vs Villette SODIC?",
+      "metadata": {},
+      "timestamp": "2026-08-16T06:17:29.806Z"
+    },
+    {
+      "sourceAgent": "Hermes-Agent",
+      "entityId": "admin-console",
+      "role": "assistant",
+      "text": "🦅 [Hermes Scout]: Analyzed \"What is the current price per sqm and rental yield for Mivida vs Villette SODIC?\". Based on Unified Memory, New Cairo average price/m² is ~65,000 EGP. High demand observed for 3BR Townhouses in Villette SODIC and Mivida.",
+      "metadata": {},
+      "timestamp": "2026-08-16T06:17:29.812Z"
+    },
+    {
+      "sourceAgent": "Hermes-Agent",
+      "entityId": "market-scan",
+      "role": "system",
+      "text": "Scanned 8 New Cairo luxury compounds. Active inventory indexed: Mivida (Emaar), Uptown Cairo (Emaar), Villette / Sky Condos (SODIC), Eastown (SODIC), Mountain View iCity, Hyde Park New Cairo, Madinaty (TMG), Cairo Festival City (CFC). All pricing models synced with Unified Vault.",
+      "metadata": {
+        "compoundCount": 8
+      },
+      "timestamp": "2026-08-16T06:17:29.815Z"
+    }
+  ]
 }

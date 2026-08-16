@@ -5,4 +5,4 @@ export * from './pf-hooks-routes';
 export * from './hooks/use-dsl-view';
 export * from '../openclaw';
 export * from './closer-agent-enhanced';
-
+export * from './hermes-agent';

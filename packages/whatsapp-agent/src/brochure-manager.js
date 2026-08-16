@@ -125,6 +125,20 @@ class BrochureManager {
              `_We can arrange an exclusive private viewing tour at your convenience._`;
     }
   }
+
+  /**
+   * Returns list of all indexed compounds
+   */
+  listCompounds() {
+    return Object.entries(COMPOUND_ASSETS).map(([key, data]) => ({
+      id: key,
+      ...data
+    }));
+  }
+
+  getCompound(key) {
+    return COMPOUND_ASSETS[key.toLowerCase()] || null;
+  }
 }
 
 module.exports = new BrochureManager();
