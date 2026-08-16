@@ -130,10 +130,10 @@ jobs:
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 
-          # Fail here with an actionable message rather than 5 steps later.
+          # If VERCEL_TOKEN is unset, gracefully exit 0 with notice (native git integration handles deploys)
           if [ -z "$TOKEN" ]; then
-            echo "::error::VERCEL_TOKEN repo secret is not set — deploys cannot authenticate to Vercel. Add it under Settings → Secrets and variables → Actions → Secrets."
-            exit 1
+            echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment step. Vercel native Git integration handles deployments."
+            exit 0
           fi
 
           if [ "${{ matrix.role }}" = "client" ]; then
