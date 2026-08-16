@@ -24,7 +24,7 @@
 <script src="firebase.js"></script>
 </head>
 <body>
-<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" style="position:absolute;left:-9999px;top:0;opacity:0;pointer-events:none;"/>
+<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" class="is-inline-1">
 <div id="site-chrome"></div>
 
 <header class="page-hero" data-screen-label="Compounds hero">
@@ -39,7 +39,7 @@
   </div>
 </header>
 
-<section class="block" data-screen-label="Intelligence map" style="padding-top:20px;">
+<section class="block is-inline-2" data-screen-label="Intelligence map">
   <div class="wrap">
     <!-- Advanced Filter Bar -->
     <div class="af-bar rv" id="af-bar">
@@ -73,7 +73,7 @@
       </div>
 
       <button class="af-clear" id="af-reset" type="button">
-        <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> Reset
+        <i data-lucide="rotate-ccw" class="is-inline-3"></i> Reset
       </button>
 
       <span class="af-count"><b id="af-filtered-count">0</b> compounds</span>
@@ -90,12 +90,12 @@
           <i data-lucide="compass" class="i"></i>
           <p data-i18n="mapHint">Choose a compound, or tap a spot on the map, and its available units will appear.</p>
         </div>
-        <div id="intel-content" style="display:none;"></div>
+        <div id="intel-content" class="is-inline-4"></div>
       </div>
     </div>
 
     <!-- Compounds Grid Cards -->
-    <div class="sec-head rv" style="margin-top:56px;margin-bottom:20px;">
+    <div class="sec-head rv is-inline-5">
       <div>
         <h2 data-i18n="cpdTit">Browse New Cairo Compounds</h2>
         <p data-i18n="cpdSub">From gated family communities to waterfront lifestyle districts.</p>
@@ -114,7 +114,7 @@
         <p class="sub" id="sh-sub">Available rent & resale units verified on-site</p>
       </div>
       <button class="sh-close" id="sh-close" type="button" aria-label="Close">
-        <i data-lucide="x" style="width:18px;height:18px;"></i>
+        <i data-lucide="x" class="is-inline-6"></i>
       </button>
     </div>
     <div class="sh-filters">
@@ -155,7 +155,7 @@
         </thead>
         <tbody id="sh-tbody"></tbody>
       </table>
-      <div class="sh-empty" id="sh-empty" style="display:none;">No units match these filters.</div>
+      <div class="sh-empty is-inline-7" id="sh-empty">No units match these filters.</div>
     </div>
   </div>
 </div>
@@ -232,8 +232,8 @@
       '<div class="metric"><span>Avg. Villa Price</span><b>EGP ' + c.priceM + 'M</b></div>' +
       '<div class="metric"><span>Avg. Monthly Rent</span><b>$' + c.rent.toLocaleString() + '</b></div>' +
       '<div class="metric"><span>Available Units</span><b class="link" id="intel-open-units">' + units.length + ' live units ↗</b></div>' +
-      '<button class="btn btn-navy" type="button" id="intel-view-all-btn" style="width:100%;">View ' + units.length + ' Units</button>' +
-      '<a href="virtual-tour.html" class="btn btn-out" style="width:100%;margin-top:8px;text-align:center;text-decoration:none;">Launch 3D Tour</a>';
+      '<button class="btn btn-navy is-inline-8" type="button" id="intel-view-all-btn">View ' + units.length + ' Units</button>' +
+      '<a href="virtual-tour.html" class="btn btn-out is-inline-9">Launch 3D Tour</a>';
 
     var btn = document.getElementById('intel-view-all-btn');
     var link = document.getElementById('intel-open-units');
@@ -332,8 +332,8 @@
           '<td class="mono">' + u.bath + '</td>' +
           '<td class="mono">' + u.area + ' m²</td>' +
           '<td>' + (u.floor || 'Ground/Typical') + '</td>' +
-          '<td class="mono" style="color:var(--pri);"><b>' + (u.mode === 'sale' ? u.egpM + 'M EGP' : '$' + u.usd + '/mo') + '</b></td>' +
-          '<td><span class="ai-pill" style="font-size:10.5px;">AI ' + (u.ai || 9.2).toFixed(1) + '</span></td>' +
+          '<td class="mono is-inline-10"><b>' + (u.mode === 'sale' ? u.egpM + 'M EGP' : '$' + u.usd + '/mo') + '</b></td>' +
+          '<td><span class="ai-pill is-inline-11">AI ' + (u.ai || 9.2).toFixed(1) + '</span></td>' +
           '<td><span class="st av">Available</span></td>' +
           '<td><span class="go">&rarr;</span></td>' +
           '</tr>';

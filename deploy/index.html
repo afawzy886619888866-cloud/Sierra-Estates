@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
 <link rel="preconnect" href="https://images.unsplash.com" crossorigin="anonymous"/>
 <link rel="preconnect" href="https://unpkg.com" crossorigin="anonymous"/>
-<link rel="preload" as="image" href="logo-mark.png" fetchpriority="high"/>
+<link rel="preload" as="image" href="logo-mark.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="shared.css"/>
 <!-- Third-party map/icon libs stay blocking: page scripts call L.map() and
@@ -353,7 +353,7 @@ a:hover{color:var(--pri-d);}
 .comp .co-count{position:absolute;top:14px;inset-inline-end:14px;z-index:3;background:rgba(255,255,255,.92);color:var(--navy);font-family:var(--mono);font-weight:700;font-size:12px;padding:5px 10px;border-radius:6px;white-space:nowrap;}
 
 /* ── 360 rooms strip ── */
-.rooms{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(340px,1fr);gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;scrollbar-width:thin;}
+.rooms{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(340px,1fr);gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;}
 .room{position:relative;height:300px;border-radius:var(--r-card);overflow:hidden;scroll-snap-align:start;}
 .room img{width:100%;height:100%;object-fit:cover;transition:transform .45s var(--ease-out);}
 .room:hover img{transform:scale(1.07);}
@@ -806,10 +806,10 @@ a:hover{color:var(--pri-d);}
 <template id="__bundler_thumbnail">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#0D2035"/><text x="200" y="220" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#C8961A" text-anchor="middle">S</text></svg>
 </template>
-<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" style="position:absolute;left:-9999px;top:0;opacity:0;pointer-events:none;"/>
+<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" class="is-inline-12">
 <div id="se-load" role="status" aria-label="Loading Sierra Estates">
   <div class="sl-in">
-    <div class="sl-mark"><img src="logo-mark.png" alt="" width="104" height="104" fetchpriority="high"/></div>
+    <div class="sl-mark"><img src="logo-mark.png" alt="" width="104" height="104"/></div>
     <div class="sl-word">SIERRA ESTATES</div>
     <div class="sl-tag">Elevated Living</div>
     <div class="sl-rail"><span id="sl-bar"></span></div>
@@ -859,7 +859,7 @@ a:hover{color:var(--pri-d);}
     <span class="mc-ic"><i data-lucide="map" class="i"></i></span>
     <span data-i18n="exploreMapBtn"></span>
   </a>
-  <div class="dots wrap" id="hero-dots" style="left:auto;"></div>
+  <div class="dots wrap is-inline-13" id="hero-dots"></div>
   <!-- ═══ LASER BEAM — inside hero only, never covers map or 3D ═══ -->
   <div class="page-laser" aria-hidden="true">
     <div class="page-laser-beam"></div>
@@ -883,15 +883,15 @@ a:hover{color:var(--pri-d);}
       <!-- Compound search with autocomplete -->
       <div class="field">
         <label data-i18n="fLoc" for="hero-compound-search"></label>
-        <div class="search-compound-wrap" style="position:relative;">
-          <input type="text" id="hero-compound-search" name="compound" class="hero-search-input" data-i18n-ph="heroCpdPh" placeholder="Search compound… (e.g. Mivida)" title="Search compound by name" aria-label="Search compound by name" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" />
-          <div id="hero-compound-results" class="compound-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto;"></div>
+        <div class="search-compound-wrap is-inline-14">
+          <input type="text" id="hero-compound-search" name="compound" class="hero-search-input is-inline-15" data-i18n-ph="heroCpdPh" placeholder="Search compound… (e.g. Mivida)" title="Search compound by name" aria-label="Search compound by name" autocomplete="off" />
+          <div id="hero-compound-results" class="compound-dropdown is-inline-16"></div>
         </div>
       </div>
       <!-- Property Type dropdown -->
       <div class="field">
         <label data-i18n="fType" for="hero-type"></label>
-        <select id="hero-type" name="type" title="Filter by property type" aria-label="Filter by property type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-type" name="type" title="Filter by property type" aria-label="Filter by property type" class="hero-select is-inline-17">
           <option value="" data-i18n="anyType">Any Type</option>
           <option value="Apartment" data-i18n="tApt">Apartment</option>
           <option value="Villa" data-i18n="tVilla">Villa</option>
@@ -904,7 +904,7 @@ a:hover{color:var(--pri-d);}
       <!-- Bedrooms dropdown -->
       <div class="field">
         <label data-i18n="fBeds" for="hero-beds"></label>
-        <select id="hero-beds" name="beds" title="Filter by bedrooms" aria-label="Filter by bedrooms" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-beds" name="beds" title="Filter by bedrooms" aria-label="Filter by bedrooms" class="hero-select is-inline-18">
           <option value="0" data-i18n="reqAny">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -916,7 +916,7 @@ a:hover{color:var(--pri-d);}
       <!-- Price dropdown -->
       <div class="field">
         <label data-i18n="fPrice" for="hero-price"></label>
-        <select id="hero-price" name="price" title="Filter by maximum price" aria-label="Filter by maximum price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-price" name="price" title="Filter by maximum price" aria-label="Filter by maximum price" class="hero-select is-inline-19">
           <option value="0" data-i18n="anyPrice">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -945,7 +945,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="featTit"></h2>
         <p data-i18n="featSub"></p>
       </div>
-      <a href="properties.html" class="sec-link" title="View all featured properties" aria-label="View all featured properties"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="properties.html" class="sec-link" title="View all featured properties" aria-label="View all featured properties"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i is-inline-20"></i></a>
     </div>
     <div class="grid-props" id="prop-grid"></div>
   </div>
@@ -954,10 +954,10 @@ a:hover{color:var(--pri-d);}
 <!-- WHY SIERRA (moved here — right after units/properties) -->
 <section class="block" id="agents" data-screen-label="Why Sierra">
   <div class="wrap">
-    <div class="sec-head rv" style="flex-direction:column;align-items:center;text-align:center;">
+    <div class="sec-head rv is-inline-21">
       <div>
         <h2>Why Sierra<sup>1</sup> Estates<sup>&trade;</sup></h2>
-        <p data-i18n="whySub" style="margin-inline:auto;"></p>
+        <p data-i18n="whySub" class="is-inline-22"></p>
       </div>
     </div>
     <div class="net-banner rv">
@@ -989,7 +989,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="cpdTit"></h2>
         <p data-i18n="cpdSub"></p>
       </div>
-      <a href="compounds.html" class="sec-link" title="View all 50+ compounds" aria-label="View all 50+ compounds"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="View all 50+ compounds" aria-label="View all 50+ compounds"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i is-inline-23"></i></a>
     </div>
     <div class="grid-comp" id="comp-grid"></div>
   </div>
@@ -1002,114 +1002,114 @@ a:hover{color:var(--pri-d);}
      feature pills + floating stats card communicate the unique value. -->
 <section class="block well" id="tour" data-screen-label="Virtual tour">
   <div class="wrap">
-    <div class="sec-head rv" style="display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:24px;">
+    <div class="sec-head rv is-inline-24">
       <div>
-        <h2 data-i18n="tourTit" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-.01em;"></h2>
+        <h2 data-i18n="tourTit" class="is-inline-25"></h2>
         <p data-i18n="tourSub"></p>
       </div>
-      <a href="virtual-tour.html" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:background-color .25s var(--silk),color .25s var(--silk),border-color .25s var(--silk),box-shadow .25s var(--silk),opacity .25s var(--silk),transform .25s var(--silk);">
-        Open full page <i data-lucide="arrow-right" class="i" style="width:14px;height:14px;"></i>
+      <a href="virtual-tour.html" class="is-inline-26">
+        Open full page <i data-lucide="arrow-right" class="i is-inline-27"></i>
       </a>
     </div>
 
     <!-- ── Banner frame: gold gradient border + glow ── -->
-    <div id="vtv-banner" style="position:relative;width:100%;aspect-ratio:21/9;min-height:420px;border-radius:18px;overflow:hidden;background:#0a1622;box-shadow:0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset;margin-top:8px;">
+    <div id="vtv-banner" class="is-inline-28">
       <!-- Gold gradient border glow -->
-      <div style="position:absolute;inset:0;border-radius:18px;padding:1.5px;background:linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:4;"></div>
+      <div class="is-inline-29"></div>
 
       <!-- Click-to-activate poster button -->
-      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" style="position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;cursor:pointer;background-color:#0a1622;background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;">
+      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" class="is-inline-30">
         <!-- Cinematic gradient scrim (deeper on left for text legibility) -->
-        <span style="position:absolute;inset:0;background:linear-gradient(95deg,rgba(0,18,35,.88) 0%,rgba(0,18,35,.62) 38%,rgba(0,18,35,.18) 65%,rgba(0,18,35,.55) 100%);z-index:1;"></span>
+        <span class="is-inline-31"></span>
         <!-- Subtle bottom scrim for stats card -->
-        <span style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,15,30,.65) 0%,transparent 35%);z-index:1;"></span>
+        <span class="is-inline-32"></span>
 
         <!-- ── LEFT: USP headline + feature pills ── -->
-        <span style="position:absolute;top:0;left:0;bottom:0;width:54%;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:48px 56px;text-align:left;gap:14px;">
-          <span style="display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#e9c176;">
-            <span style="width:24px;height:1.5px;background:#e9c176;display:inline-block;"></span>
+        <span class="is-inline-33">
+          <span class="is-inline-34">
+            <span class="is-inline-35"></span>
             SIERRA 3D · POWERED BY IMMERSIVE TECH
           </span>
-          <span style="font-family:var(--display);font-size:46px;font-weight:700;line-height:1.05;letter-spacing:-.015em;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.55);max-width:560px;">
+          <span class="is-inline-36">
             Walk Through Your<br/>Next Home
-            <span style="display:inline-block;font-style:italic;color:#e9c176;font-weight:600;">Before You Visit</span>
+            <span class="is-inline-37">Before You Visit</span>
           </span>
-          <span style="font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.86);max-width:480px;font-weight:500;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.4);">
+          <span class="is-inline-38">
             Every Sierra listing is captured in cinematic 4K HDR. Stroll room-by-room, peek into the garden at dusk, gauge the pool from above, all from your screen, all in seconds.
           </span>
           <!-- Feature pills -->
-          <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="video" class="i" style="width:11px;height:11px;color:#34d399;"></i> 4K HDR
+          <span class="is-inline-39">
+            <span class="is-inline-40">
+              <i data-lucide="video" class="i is-inline-41"></i> 4K HDR
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="door-open" class="i" style="width:11px;height:11px;color:#34d399;"></i> Room-by-room
+            <span class="is-inline-42">
+              <i data-lucide="door-open" class="i is-inline-43"></i> Room-by-room
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="glasses" class="i" style="width:11px;height:11px;color:#34d399;"></i> VR-ready
+            <span class="is-inline-44">
+              <i data-lucide="glasses" class="i is-inline-45"></i> VR-ready
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="grid-2x2" class="i" style="width:11px;height:11px;color:#34d399;"></i> Floor plan
+            <span class="is-inline-46">
+              <i data-lucide="grid-2x2" class="i is-inline-47"></i> Floor plan
             </span>
           </span>
         </span>
 
         <!-- ── RIGHT: Big play button + label ── -->
-        <span style="position:absolute;inset-inline-end:0;top:0;bottom:0;width:46%;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;">
-          <span style="width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;flex:none;box-shadow:0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45);transition:transform .35s var(--silk);animation:vtvPulse 2.6s ease-in-out infinite;">
-            <i data-lucide="play" class="i" style="width:42px;height:42px;color:#0a1622;fill:#0a1622;margin-inline-start:5px;"></i>
+        <span class="is-inline-48">
+          <span class="is-inline-49">
+            <i data-lucide="play" class="i is-inline-50"></i>
           </span>
-          <span style="display:block;font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.32em;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6);">▶ Launch 3D Tour</span>
+          <span class="is-inline-51">▶ Launch 3D Tour</span>
         </span>
 
         <!-- ── BOTTOM-LEFT: property info card ── -->
-        <span style="position:absolute;bottom:26px;inset-inline-start:56px;z-index:3;display:flex;flex-direction:column;gap:5px;">
-          <span style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.16em;color:#e9c176;text-transform:uppercase;">
-            <i data-lucide="map-pin" class="i" style="width:11px;height:11px;"></i> Featured · New Cairo
+        <span class="is-inline-52">
+          <span class="is-inline-53">
+            <i data-lucide="map-pin" class="i is-inline-54"></i> Featured · New Cairo
           </span>
-          <span style="font-family:var(--display);font-size:22px;font-weight:700;line-height:1.2;color:#fff;max-width:480px;letter-spacing:-.005em;">Sierra Signature Villa · Mivida</span>
-          <span style="font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.78);font-weight:600;">5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
+          <span class="is-inline-55">Sierra Signature Villa · Mivida</span>
+          <span class="is-inline-56">5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
         </span>
 
         <!-- ── BOTTOM-RIGHT: floating stats card ── -->
-        <span style="position:absolute;bottom:24px;inset-inline-end:24px;z-index:3;background:rgba(0,18,35,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(200,150,26,.32);border-radius:14px;padding:14px 18px;display:flex;gap:22px;align-items:center;">
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#e9c176;line-height:1;">47</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">tours live</span>
+        <span class="is-inline-57">
+          <span class="is-inline-58">
+            <span class="is-inline-59">47</span>
+            <span class="is-inline-60">tours live</span>
           </span>
-          <span style="width:1px;height:32px;background:rgba(255,255,255,.14);"></span>
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#34d399;line-height:1;">12</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">ready to move</span>
+          <span class="is-inline-61"></span>
+          <span class="is-inline-62">
+            <span class="is-inline-63">12</span>
+            <span class="is-inline-64">ready to move</span>
           </span>
-          <span style="width:1px;height:32px;background:rgba(255,255,255,.14);"></span>
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#8fe1ff;line-height:1;">4K</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">HDR quality</span>
+          <span class="is-inline-65"></span>
+          <span class="is-inline-66">
+            <span class="is-inline-67">4K</span>
+            <span class="is-inline-68">HDR quality</span>
           </span>
         </span>
 
         <!-- ── TOP-RIGHT: LIVE badge ── -->
-        <span style="position:absolute;top:22px;inset-inline-end:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(0,18,35,.6);backdrop-filter:blur(8px);border:1px solid rgba(52,211,153,.35);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">
-          <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:vtvBlink 1.6s ease-in-out infinite;"></span>
+        <span class="is-inline-69">
+          <span class="is-inline-70"></span>
           LIVE · SIERRA 3D
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style="position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s ease;background:#0a1622;" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
-      <div id="vtv-loading" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600;background:linear-gradient(135deg,#0a1622 0%,#002b4b 100%);z-index:1;">
-        <i data-lucide="loader-2" class="i" style="width:32px;height:32px;animation:vtv-spin 1s linear infinite;"></i>
+      <iframe id="vtv-iframe" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen loading="lazy" class="is-inline-71"></iframe>
+      <div id="vtv-loading" class="is-inline-72">
+        <i data-lucide="loader-2" class="i is-inline-73"></i>
         <span>Loading immersive 3D tour…</span>
       </div>
-      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" style="position:absolute;top:12px;inset-inline-end:12px;z-index:3;background:rgba(0,43,75,.78);color:#fff;border:0;border-radius:8px;width:36px;height:36px;cursor:pointer;display:none;place-items:center;">
-        <i data-lucide="maximize-2" class="i" style="width:16px;height:16px;"></i>
+      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" class="is-inline-74">
+        <i data-lucide="maximize-2" class="i is-inline-75"></i>
       </button>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;">
-      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--pri);text-decoration:none;">
-        <i data-lucide="external-link" class="i" style="width:12px;height:12px;"></i> Open tour in new tab
+    <div class="is-inline-76">
+      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" class="is-inline-77">
+        <i data-lucide="external-link" class="i is-inline-78"></i> Open tour in new tab
       </a>
-      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Cinematic capture · Matterport-grade fidelity</span>
+      <span class="is-inline-79">Cinematic capture · Matterport-grade fidelity</span>
     </div>
   </div>
 </section>
@@ -1182,7 +1182,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="mapTit">Discover the Best Opportunities</h2>
         <p data-i18n="mapSub">Explore all New Cairo compounds on the interactive map. Click any marker for details.</p>
       </div>
-      <a href="compounds.html" class="sec-link" title="Explore compounds on map" aria-label="Explore compounds on map"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="Explore compounds on map" aria-label="Explore compounds on map"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i is-inline-80"></i></a>
     </div>
 
     <!-- ═══ Quick filter bar (compound + bedrooms only) ═══
@@ -1195,55 +1195,55 @@ a:hover{color:var(--pri-d);}
     <div class="map-split">
     <div class="hmf-wrap">
       <!-- Filter trigger bar (always visible) -->
-      <button class="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style="display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:14px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);cursor:pointer;transition:background-color .2s var(--silk),color .2s var(--silk),border-color .2s var(--silk),box-shadow .2s var(--silk),opacity .2s var(--silk),transform .2s var(--silk);font-family:var(--font);">
-        <span style="display:flex;align-items:center;gap:10px;">
-          <i data-lucide="sliders-horizontal" class="i" style="width:18px;height:18px;color:var(--pri);flex:none;"></i>
-          <span style="font-size:14.5px;font-weight:700;color:var(--ink);" data-i18n="hmfTitle">Smart Filter</span>
-          <span id="hmf-active-badge" style="display:none;background:var(--pri);color:#fff;font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em;">0</span>
+      <button class="hmf-trigger is-inline-81" id="hmf-trigger" type="button" aria-expanded="false">
+        <span class="is-inline-82">
+          <i data-lucide="sliders-horizontal" class="i is-inline-83"></i>
+          <span data-i18n="hmfTitle" class="is-inline-84">Smart Filter</span>
+          <span id="hmf-active-badge" class="is-inline-85">0</span>
         </span>
-        <span style="display:flex;align-items:center;gap:12px;">
-          <span id="home-map-count" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap;">… compounds</span>
-          <i data-lucide="chevron-down" class="i" id="hmf-chevron" style="width:18px;height:18px;color:var(--muted);transition:transform .3s var(--silk);flex:none;"></i>
+        <span class="is-inline-86">
+          <span id="home-map-count" class="is-inline-87">… compounds</span>
+          <i data-lucide="chevron-down" class="i is-inline-88" id="hmf-chevron"></i>
         </span>
       </button>
 
       <!-- Filter panel (collapsible) -->
-      <div class="hmf-panel" id="hmf-panel" style="margin-top:8px;padding:18px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);animation:hmfSlideDown .3s var(--silk) both;">
+      <div class="hmf-panel is-inline-89" id="hmf-panel">
         <!-- Compound multi-select row -->
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">
-            <i data-lucide="building-2" class="i" style="width:14px;height:14px;"></i>
+        <div class="is-inline-90">
+          <div class="is-inline-91">
+            <i data-lucide="building-2" class="i is-inline-92"></i>
             <span data-i18n="hmfCompounds">Compounds</span>
-            <span style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:none;color:var(--muted);opacity:.7;" data-i18n="hmfMultiHint">Click to select multiple</span>
+            <span data-i18n="hmfMultiHint" class="is-inline-93">Click to select multiple</span>
           </div>
           <!-- Selected chips area -->
-          <div id="hmf-compound-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;min-height:0;"></div>
+          <div id="hmf-compound-chips" class="is-inline-94"></div>
           <!-- Search + dropdown -->
-          <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);position:relative;">
-            <i data-lucide="search" class="i" style="width:17px;height:17px;color:var(--muted);flex:none;"></i>
-            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style="flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--ink);min-width:0;" autocomplete="off" />
-            <i data-lucide="chevron-down" class="i" style="width:16px;height:16px;color:var(--muted);flex:none;transition:transform .2s;" id="hmf-compound-chevron"></i>
+          <div class="is-inline-95">
+            <i data-lucide="search" class="i is-inline-96"></i>
+            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" autocomplete="off"  class="is-inline-97">
+            <i data-lucide="chevron-down" class="i is-inline-98" id="hmf-compound-chevron"></i>
             <!-- Dropdown list (absolute positioned) -->
-            <div id="hmf-compound-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow-m);z-index:200;padding:6px;"></div>
+            <div id="hmf-compound-dropdown" class="is-inline-99"></div>
           </div>
         </div>
 
         <!-- Beds selector row (single select, no '+') -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">
-            <i data-lucide="bed-double" class="i" style="width:14px;height:14px;"></i>
+        <div class="is-inline-100">
+          <span class="is-inline-101">
+            <i data-lucide="bed-double" class="i is-inline-102"></i>
             <span data-i18n="hmfBeds">Bedrooms</span>
           </span>
-          <div id="home-map-beds" style="display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:999px;">
-            <button class="on" data-b="0" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);" data-i18n="hmfAny">Any</button>
-            <button data-b="1" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);">1</button>
-            <button data-b="2" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);">2</button>
-            <button data-b="3" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);">3</button>
-            <button data-b="4" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);">4</button>
-            <button data-b="5" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);">5</button>
+          <div id="home-map-beds" class="is-inline-103">
+            <button class="on is-inline-104" data-b="0" type="button" data-i18n="hmfAny">Any</button>
+            <button data-b="1" type="button" class="is-inline-105">1</button>
+            <button data-b="2" type="button" class="is-inline-106">2</button>
+            <button data-b="3" type="button" class="is-inline-107">3</button>
+            <button data-b="4" type="button" class="is-inline-108">4</button>
+            <button data-b="5" type="button" class="is-inline-109">5</button>
           </div>
-          <button id="hmf-reset" type="button" style="margin-inline-start:auto;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out),opacity .2s var(--ease-out),transform .2s var(--ease-out);display:inline-flex;align-items:center;gap:5px;">
-            <i data-lucide="rotate-ccw" class="i" style="width:12px;height:12px;"></i>
+          <button id="hmf-reset" type="button" class="is-inline-110">
+            <i data-lucide="rotate-ccw" class="i is-inline-111"></i>
             <span data-i18n="hmfReset">Reset</span>
           </button>
         </div>
@@ -1251,20 +1251,20 @@ a:hover{color:var(--pri-d);}
     </div>
 
     <div class="map-sticky-wrap" id="map-sticky-wrap">
-      <div id="home-map" style="height:560px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);margin-bottom:8px;position:relative;">
+      <div id="home-map" class="is-inline-112">
         <div class="map-legend" aria-hidden="true">
           <b data-i18n="legTiers">Compound tiers</b>
           <span class="row"><i class="sw feat"></i><span data-i18n="legFeat">Featured</span></span>
           <span class="row"><i class="sw hot"></i><span data-i18n="legHot">AI score 9.2+</span></span>
           <span class="row"><i class="sw"></i><span data-i18n="legRest">All other compounds</span></span>
-          <span class="row" style="opacity:.75"><i class="sw" style="width:9px;height:9px;border-radius:50%"></i><span data-i18n="legDot">Dot only — zoom in for the name</span></span>
+          <span class="row is-inline-113"><i class="sw is-inline-114"></i><span data-i18n="legDot">Dot only — zoom in for the name</span></span>
         </div>
       </div>
     </div>
     </div>
-    <div style="text-align:center;margin-top:12px;">
-      <a href="compounds.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
-        <i data-lucide="map" class="i" style="width:16px;height:16px;"></i>
+    <div class="is-inline-115">
+      <a href="compounds.html" class="btn btn-navy is-inline-116">
+        <i data-lucide="map" class="i is-inline-117"></i>
         <span data-i18n="openFullMap">Open Full Map</span>
       </a>
     </div>
@@ -1283,28 +1283,28 @@ a:hover{color:var(--pri-d);}
         <p>AI-ranked by match score, ROI potential, and market demand. Updates in real-time.</p>
       </div>
     </div>
-    <div id="insights-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:30px;"></div>
-    <div id="insights-market" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:24px;background:var(--bg);border-radius:14px;border:1px solid var(--line);">
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri);">+24%</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Top Growth (Mountain View)</div>
+    <div id="insights-grid" class="is-inline-118"></div>
+    <div id="insights-market" class="is-inline-119">
+      <div class="is-inline-120">
+        <div class="is-inline-121">+24%</div>
+        <div class="is-inline-122">Top Growth (Mountain View)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:#34d399;">9.8</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Highest AI Score (Hyde Park)</div>
+      <div class="is-inline-123">
+        <div class="is-inline-124">9.8</div>
+        <div class="is-inline-125">Highest AI Score (Hyde Park)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri);">EGP 35M</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Top Price (Taj City)</div>
+      <div class="is-inline-126">
+        <div class="is-inline-127">EGP 35M</div>
+        <div class="is-inline-128">Top Price (Taj City)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:#34d399;">798</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Active Units</div>
+      <div class="is-inline-129">
+        <div class="is-inline-130">798</div>
+        <div class="is-inline-131">Active Units</div>
       </div>
     </div>
-    <div style="text-align:center;margin-top:20px;">
-      <a href="properties.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
-        <i data-lucide="trending-up" class="i" style="width:16px;height:16px;"></i>
+    <div class="is-inline-132">
+      <a href="properties.html" class="btn btn-navy is-inline-133">
+        <i data-lucide="trending-up" class="i is-inline-134"></i>
         <span>View All Best Listings</span>
       </a>
     </div>
@@ -1367,8 +1367,8 @@ a:hover{color:var(--pri-d);}
           <div><label data-i18n="inqBudget" for="inq-budget"></label><input type="text" id="inq-budget" name="budget" placeholder="10,000,000" title="Budget in EGP" aria-label="Budget in EGP" dir="ltr"/></div>
         </div>
         <button class="btn btn-pri" type="submit" title="Send Inquiry" aria-label="Send Inquiry"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
-        <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
-          <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
+        <div id="inq-success" class="is-inline-135">
+          <i data-lucide="check-circle" class="is-inline-136"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
         </div>
       </form>
@@ -1387,33 +1387,33 @@ a:hover{color:var(--pri-d);}
     <div class="ai-scan"></div>
     <div class="ai-grid" id="ai-grid"></div>
     <!-- AI tool preview images -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:28px;">
-      <a href="matches.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
-        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">Smart Match v3</div>
+    <div class="is-inline-137">
+      <a href="matches.html" class="is-inline-138">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" loading="lazy" class="is-inline-139">
+        <div class="is-inline-140"></div>
+        <div class="is-inline-141">
+          <div class="is-inline-142">LIVE</div>
+          <div class="is-inline-143">Smart Match v3</div>
         </div>
       </a>
-      <a href="pricing.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
-        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">AVM Pricing Engine</div>
+      <a href="pricing.html" class="is-inline-144">
+        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" loading="lazy" class="is-inline-145">
+        <div class="is-inline-146"></div>
+        <div class="is-inline-147">
+          <div class="is-inline-148">LIVE</div>
+          <div class="is-inline-149">AVM Pricing Engine</div>
         </div>
       </a>
-      <a href="roi.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
-        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">ROI Forecaster</div>
+      <a href="roi.html" class="is-inline-150">
+        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" loading="lazy" class="is-inline-151">
+        <div class="is-inline-152"></div>
+        <div class="is-inline-153">
+          <div class="is-inline-154">LIVE</div>
+          <div class="is-inline-155">ROI Forecaster</div>
         </div>
       </a>
     </div>
-    <div style="margin-top:16px;" class="rv">
+    <div class="rv is-inline-156">
       <button class="tour-launch" id="tour-open" type="button" title="Start 3D Virtual Tour" aria-label="Start 3D Virtual Tour">
         <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
@@ -1424,7 +1424,7 @@ a:hover{color:var(--pri-d);}
 </section>
 
 <!-- CTA -->
-<section class="block" id="contact" style="padding-top:0;" data-screen-label="CTA band">
+<section class="block is-inline-157" id="contact" data-screen-label="CTA band">
   <div class="wrap">
     <div class="cta rv">
       <div class="ct-txt">
@@ -1432,11 +1432,11 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <a href="add-listing.html" class="btn btn-white" style="text-decoration:none;"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></a>
-        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
+        <a href="add-listing.html" class="btn btn-white is-inline-158"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></a>
+        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out is-inline-159"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
-      <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">
-        <i data-lucide="mail" class="i" style="width:14px;height:14px;vertical-align:-2px;"></i> <a href="mailto:info@Sierra-Estates.net" style="color:rgba(255,255,255,.7);text-decoration:none;">info@Sierra-Estates.net</a>
+      <div class="is-inline-160">
+        <i data-lucide="mail" class="i is-inline-161"></i> <a href="mailto:info@Sierra-Estates.net" class="is-inline-162">info@Sierra-Estates.net</a>
       </div>
     </div>
   </div>
@@ -1487,7 +1487,7 @@ a:hover{color:var(--pri-d);}
         <div class="rq-field">
           <label data-i18n="reqCpdLbl">Compound</label>
           <div class="rq-search">
-            <i data-lucide="search" class="i" style="width:16px;height:16px;color:var(--muted);flex:none;"></i>
+            <i data-lucide="search" class="i is-inline-163"></i>
             <input type="text" id="rq-cpd-search" data-i18n-ph="reqCpdPh" placeholder="Search compounds…" autocomplete="off"/>
           </div>
           <div class="rq-cpds" id="rq-cpds"></div>
@@ -1502,17 +1502,17 @@ a:hover{color:var(--pri-d);}
           </div>
         <div class="rq-foot">
           <span class="rq-count" id="rq-count">&mdash;</span>
-          <button class="rq-submit" id="rq-submit" type="button"><span data-i18n="reqSend">Send request</span> <i data-lucide="arrow-right" class="i" style="width:15px;height:15px;"></i></button>
+          <button class="rq-submit" id="rq-submit" type="button"><span data-i18n="reqSend">Send request</span> <i data-lucide="arrow-right" class="i is-inline-164"></i></button>
         </div>
       </div>
     </div>
-    <div class="rq-done" id="rq-done" style="display:none;">
-      <div class="tick"><i data-lucide="check" class="i" style="width:26px;height:26px;"></i></div>
+    <div class="rq-done is-inline-165" id="rq-done">
+      <div class="tick"><i data-lucide="check" class="i is-inline-166"></i></div>
       <h4 data-i18n="reqDoneTit">Request received</h4>
       <p id="rq-done-msg">An advisor will reach you shortly with matched units.</p>
       <div class="rq-ref" id="rq-ref"></div>
-      <a class="rq-wa" id="rq-wa" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer"><i data-lucide="message-circle" class="i" style="width:17px;height:17px;"></i> <span data-i18n="reqWa">Confirm on WhatsApp</span></a>
-      <div><button class="btn btn-ghost" id="rq-done-close" type="button" style="margin-top:16px;" data-i18n="closeWord">Close</button></div>
+      <a class="rq-wa" id="rq-wa" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer"><i data-lucide="message-circle" class="i is-inline-167"></i> <span data-i18n="reqWa">Confirm on WhatsApp</span></a>
+      <div><button class="btn btn-ghost is-inline-168" id="rq-done-close" type="button" data-i18n="closeWord">Close</button></div>
     </div>
   </div>
 </div>
@@ -1633,7 +1633,7 @@ a:hover{color:var(--pri-d);}
       // Show loading state on button
       var submitBtn = inqForm.querySelector('button[type="submit"]');
       var originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i data-lucide="loader-2" class="i" style="animation:vtv-spin 1s linear infinite;"></i> <span>Sending…</span>'; if (window.lucide) lucide.createIcons(); }
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i data-lucide="loader-2" class="i is-inline-169"></i> <span>Sending…</span>'; if (window.lucide) lucide.createIcons(); }
 
       function showSuccess() {
         var successEl = document.getElementById('inq-success');
@@ -1702,13 +1702,13 @@ a:hover{color:var(--pri-d);}
         return c.n.toLowerCase().indexOf(q) >= 0 || (c.z && c.z.toLowerCase().indexOf(q) >= 0);
       }).slice(0, 8);
       if (matches.length === 0) {
-        heroResults.innerHTML = '<div style="padding:12px 16px;color:var(--muted);font-size:13px;">' + (window.HZ ? HZ.t('noCpdFound') : 'No compounds found') + '</div>';
+        heroResults.innerHTML = '<div class="is-inline-170">' + (window.HZ ? HZ.t('noCpdFound') : 'No compounds found') + '</div>';
         heroResults.style.display = 'block';
         return;
       }
       heroResults.innerHTML = matches.map(function (c) {
-        return '<div class="compound-option" data-cpd="' + c.n + '" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink);transition:background-color .15s var(--ease-out),color .15s var(--ease-out),border-color .15s var(--ease-out),box-shadow .15s var(--ease-out),opacity .15s var(--ease-out),transform .15s var(--ease-out);">' +
-          '<b>' + c.n + '</b> <span style="color:var(--muted);font-size:11px;">&middot; ' + c.z + ' &middot; ' + D.unitsFor(c.n).length + ' units</span>' +
+        return '<div class="compound-option is-inline-171" data-cpd="' + c.n + '">' +
+          '<b>' + c.n + '</b> <span class="is-inline-172">&middot; ' + c.z + ' &middot; ' + D.unitsFor(c.n).length + ' units</span>' +
           '</div>';
       }).join('');
       heroResults.style.display = 'block';
@@ -1768,18 +1768,18 @@ a:hover{color:var(--pri-d);}
   var topListings = D.listings.slice().sort(function (a, b) { return b.ai - a.ai; }).slice(0, 3);
   document.getElementById('insights-grid').innerHTML = topListings.map(function (p, i) {
     var rank = i + 1;
-    return '<a href="property.html?id=' + p.id + '" style="display:block;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:background-color .3s var(--silk),color .3s var(--silk),border-color .3s var(--silk),box-shadow .3s var(--silk),opacity .3s var(--silk),transform .3s var(--silk);position:relative;">' +
-      '<div style="position:relative;height:200px;overflow:hidden;">' +
-        '<img src="' + p.img + '" alt="' + p.code + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy"/>' +
-        '<div style="position:absolute;top:12px;left:12px;background:linear-gradient(135deg,#34d399,#22c55e);color:#fff;font-family:var(--mono);font-weight:800;font-size:12px;padding:5px 12px;border-radius:8px;box-shadow:0 4px 12px rgba(52,211,153,.4);">#' + rank + ' AI ' + p.ai.toFixed(1) + '</div>' +
-        (p.tag ? '<div style="position:absolute;top:12px;right:12px;background:rgba(0,43,75,.88);color:#fff;font-family:var(--mono);font-weight:700;font-size:10px;padding:4px 9px;border-radius:5px;text-transform:uppercase;">' + p.tag + '</div>' : '') +
-        '<div style="position:absolute;bottom:12px;right:12px;background:rgba(0,43,75,.88);color:#fff;font-family:var(--mono);font-weight:700;font-size:13px;padding:6px 12px;border-radius:6px;">' + (p.mode === 'sale' ? p.egpM + 'M EGP' : '$' + p.usd + '/mo') + '</div>' +
+    return '<a href="property.html?id=' + p.id + '" class="is-inline-173">' +
+      '<div class="is-inline-174">' +
+        '<img src="' + p.img + '" alt="' + p.code + '" loading="lazy" class="is-inline-175">' +
+        '<div class="is-inline-176">#' + rank + ' AI ' + p.ai.toFixed(1) + '</div>' +
+        (p.tag ? '<div class="is-inline-177">' + p.tag + '</div>' : '') +
+        '<div class="is-inline-178">' + (p.mode === 'sale' ? p.egpM + 'M EGP' : '$' + p.usd + '/mo') + '</div>' +
       '</div>' +
-      '<div style="padding:18px;">' +
-        '<div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--pri);margin-bottom:6px;">' + p.code + ' · ' + p.type + '</div>' +
-        '<div style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px;">' + p.cmp + '</div>' +
-        '<div style="font-size:13px;color:var(--muted);margin-bottom:12px;">' + p.zone + '</div>' +
-        '<div style="display:flex;gap:14px;font-size:13px;color:var(--text);font-weight:600;">' +
+      '<div class="is-inline-179">' +
+        '<div class="is-inline-180">' + p.code + ' · ' + p.type + '</div>' +
+        '<div class="is-inline-181">' + p.cmp + '</div>' +
+        '<div class="is-inline-182">' + p.zone + '</div>' +
+        '<div class="is-inline-183">' +
           '<span>🛏 ' + p.beds + '</span>' +
           '<span>🚿 ' + p.bath + '</span>' +
           '<span>📐 ' + p.area + ' m²</span>' +
@@ -1938,7 +1938,7 @@ a:hover{color:var(--pri-d);}
         '<div class="st"><u>AI score</u><b class="ai">' + (c.ai || '\u2014') + '</b></div>' +
         '<div class="st"><u>From (resale)</u><b>' + resale + '</b></div>' +
         '<div class="st"><u>Rent / mo</u><b>' + rent + '</b></div>' +
-        '<div class="st" style="grid-column:1/-1"><u>12-mo growth</u><b class="up">' + (c.g || '\u2014') + '</b></div>' +
+        '<div class="st is-inline-184"><u>12-mo growth</u><b class="up">' + (c.g || '\u2014') + '</b></div>' +
       '</div>' +
       '<button class="act" type="button" data-cpd-go="' + c.n + '">View ' + n + ' units</button>' +
     '</div>';
@@ -2066,16 +2066,16 @@ a:hover{color:var(--pri-d);}
       return c.n.toLowerCase().indexOf(q) >= 0;
     });
     if (!items.length) {
-      compoundDropdown.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:13px;text-align:center;">No compounds found</div>';
+      compoundDropdown.innerHTML = '<div class="is-inline-185">No compounds found</div>';
       return;
     }
     compoundDropdown.innerHTML = items.map(function (c) {
       var isSelected = filterState.compounds.indexOf(c.n) >= 0;
       var unitCount = (typeof D.unitsFor === 'function') ? D.unitsFor(c.n).length : 0;
-      return '<div class="hmf-cpd-item' + (isSelected ? ' selected' : '') + '" data-cpd="' + c.n + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background-color .15s var(--ease-out),color .15s var(--ease-out),border-color .15s var(--ease-out),box-shadow .15s var(--ease-out),opacity .15s var(--ease-out),transform .15s var(--ease-out);' + (isSelected ? 'background:rgba(0,174,255,.08);' : '') + '">' +
-        '<span style="width:18px;height:18px;border-radius:5px;border:2px solid ' + (isSelected ? 'var(--pri)' : 'var(--line-2)') + ';background:' + (isSelected ? 'var(--pri)' : 'transparent') + ';display:grid;place-items:center;flex:none;">' + (isSelected ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</span>' +
-        '<span style="flex:1;font-size:13.5px;font-weight:600;color:var(--ink);">' + c.n + '</span>' +
-        '<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:999px;">' + unitCount + '</span>' +
+      return '<div class="hmf-cpd-item' + (isSelected ? ' selected' : '') + ' is-inline-186" data-cpd="' + c.n + '">' +
+        '<span class="is-inline-187">' + (isSelected ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</span>' +
+        '<span class="is-inline-188">' + c.n + '</span>' +
+        '<span class="is-inline-189">' + unitCount + '</span>' +
       '</div>';
     }).join('');
 
@@ -2113,9 +2113,9 @@ a:hover{color:var(--pri-d);}
     }
     compoundChips.style.minHeight = '32px';
     compoundChips.innerHTML = filterState.compounds.map(function (name) {
-      return '<span class="hmf-chip" data-cpd="' + name + '" style="display:inline-flex;align-items:center;gap:6px;background:var(--pri);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;padding:5px 10px 5px 12px;border-radius:999px;gap:6px;">' +
+      return '<span class="hmf-chip is-inline-190" data-cpd="' + name + '">' +
         '<span>' + name + '</span>' +
-        '<button type="button" data-remove="' + name + '" style="border:none;background:rgba(255,255,255,.25);color:#fff;width:16px;height:16px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center;padding:0;" aria-label="Remove ' + name + '">×</button>' +
+        '<button type="button" data-remove="' + name + '" aria-label="Remove ' + name + '" class="is-inline-191">×</button>' +
       '</span>';
     }).join('');
     // Bind remove buttons
@@ -2524,11 +2524,11 @@ a:hover{color:var(--pri-d);}
     <div class="tweaks-section">
       <div class="tweaks-label">Accent Color</div>
       <div class="tweaks-swatches" id="tweaks-swatches">
-        <div class="tweaks-swatch on" data-color="#00aeff" style="background:#00aeff;" title="Cyan"></div>
-        <div class="tweaks-swatch" data-color="#c8961a" style="background:#c8961a;" title="Gold"></div>
-        <div class="tweaks-swatch" data-color="#34d399" style="background:#34d399;" title="Green"></div>
-        <div class="tweaks-swatch" data-color="#e63946" style="background:#e63946;" title="Red"></div>
-        <div class="tweaks-swatch" data-color="#a78bfa" style="background:#a78bfa;" title="Purple"></div>
+        <div class="tweaks-swatch on is-inline-192" data-color="#00aeff" title="Cyan"></div>
+        <div class="tweaks-swatch is-inline-193" data-color="#c8961a" title="Gold"></div>
+        <div class="tweaks-swatch is-inline-194" data-color="#34d399" title="Green"></div>
+        <div class="tweaks-swatch is-inline-195" data-color="#e63946" title="Red"></div>
+        <div class="tweaks-swatch is-inline-196" data-color="#a78bfa" title="Purple"></div>
       </div>
     </div>
     <div class="tweaks-section">
@@ -2847,7 +2847,7 @@ a:hover{color:var(--pri-d);}
         '<span class="box">' + (on ? '✓' : '') + '</span>' +
         '<span class="nm">' + c.n + '</span>' +
         '<span class="ct">' + available(c.n).length + '</span></div>';
-    }).join('') : '<div style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">' + (window.HZ ? HZ.t('reqNoCpd') : 'No compounds match.') + '</div>';
+    }).join('') : '<div class="is-inline-197">' + (window.HZ ? HZ.t('reqNoCpd') : 'No compounds match.') + '</div>';
   }
   function toggleCpd(n) {
     var i = state.cpds.indexOf(n);
