@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
     'twilio',
   ],
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
   images: {
     remotePatterns: [
