@@ -1,19 +1,15 @@
-name: Deploy · Vercel (client + admin)
+name: Deploy · Vercel (admin)
 
-# Deploys to TWO separate Vercel projects from this monorepo:
+# Deploys Admin Dashboard to Vercel (Client portal unwired for upcoming production release):
 #
 #   ┌────────────────────────────┬──────────────────────────────────────┬─────────────────────────────┐
 #   │ Job                        │ Vercel project                       │ Domain                      │
 #   ├────────────────────────────┼──────────────────────────────────────┼─────────────────────────────┤
-#   │ deploy (matrix: client)    │ prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E    │ sierra-estates.net          │
-#   │ deploy (matrix: admin)     │ prj_NMqZUADX9A5ba22ylMfls2l7I0zX    │ admin.sierra-estates.net    │
+#   │ deploy (admin)             │ prj_NMqZUADX9A5ba22ylMfls2l7I0zX    │ admin.sierra-estates.net    │
 #   └────────────────────────────┴──────────────────────────────────────┴─────────────────────────────┘
 #
-#   CLIENT → apps/sierra-estates-realty  (Next.js · pnpm monorepo)
 #   ADMIN  → apps/admin-dashboard        (Vite SPA · standalone build)
-#
-# Each role configures .vercel/project.json with its OWN project ID before
-# running vercel pull/build/deploy — so client and admin NEVER cross-pollinate.
+#   (CLIENT → apps/sierra-estates-realty is unwired — reserved for new production release)
 #
 # Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
 #   VERCEL_TOKEN               — Vercel token with Projects R/W, Domains
@@ -21,7 +17,6 @@ name: Deploy · Vercel (client + admin)
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 #   VERCEL_ORG_ID              — Vercel team/org ID
-#   CLIENT_VERCEL_PROJECT_ID   — prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E
 #   ADMIN_VERCEL_PROJECT_ID    — prj_NMqZUADX9A5ba22ylMfls2l7I0zX
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
@@ -57,7 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      client: ${{ steps.check.outputs.client }}
       admin: ${{ steps.check.outputs.admin }}
     steps:
       - name: Validate project ids
@@ -65,20 +59,14 @@ jobs:
         env:
           VARS_JSON: ${{ toJson(vars) }}
         run: |
-          CLIENT_ID_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
           ADMIN_ID_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
-          CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
           ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
-          for role in CLIENT ADMIN; do
-            eval "id=\$${role}_ID"
-            lc_role=$(echo "$role" | tr '[:upper:]' '[:lower:]')
-            if [ -z "$id" ]; then
-              echo "${lc_role}=false" >> "$GITHUB_OUTPUT"
-              echo "::notice title=${role} deploy skipped::${role}_VERCEL_PROJECT_ID is not set."
-            else
-              echo "${lc_role}=true" >> "$GITHUB_OUTPUT"
-            fi
-          done
+          if [ -z "$ADMIN_ID" ]; then
+            echo "admin=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=ADMIN deploy skipped::ADMIN_VERCEL_PROJECT_ID is not set."
+          else
+            echo "admin=true" >> "$GITHUB_OUTPUT"
+          fi
           exit 0
 
   deploy:
@@ -87,18 +75,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - role: client
-            domain: sierra-estates.net
-            app_dir: apps/sierra-estates-realty
-            framework: nextjs
-            proj_id_secret: CLIENT_VERCEL_PROJECT_ID
           - role: admin
             domain: admin.sierra-estates.net
             app_dir: apps/admin-dashboard
             framework: vite
             proj_id_secret: ADMIN_VERCEL_PROJECT_ID
     name: deploy (${{ matrix.role }})
-    if: needs.guard.outputs.client == 'true' || needs.guard.outputs.admin == 'true'
+    if: needs.guard.outputs.admin == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -106,14 +89,11 @@ jobs:
       - name: Skip if this role is not configured
         id: gate
         run: |
-          ok="${{ matrix.role == 'client' && needs.guard.outputs.client || needs.guard.outputs.admin }}"
+          ok="${{ needs.guard.outputs.admin }}"
           echo "run=$ok" >> "$GITHUB_OUTPUT"
-          [ "$ok" = "true" ] || echo "::notice::${{ matrix.role }} project variable not set — job ends here (green)."
+          [ "$ok" = "true" ] || echo "::notice::Admin project variable not set — job ends here (green)."
 
-      # ── Resolve correct project ID & token for THIS role only ─────────────
-      # Uses single VERCEL_TOKEN secret (scoped to the Vercel team/org).
-      # If you prefer per-project tokens, add CLIENT_VERCEL_TOKEN / ADMIN_VERCEL_TOKEN
-      # as repo secrets — the shell fallback chain will pick them up automatically.
+      # ── Resolve correct project ID & token for Admin ──────────────────────
       - name: Resolve project ID & Vercel Token
         if: steps.gate.outputs.run == 'true'
         id: proj
@@ -121,12 +101,10 @@ jobs:
           VARS_JSON: ${{ toJson(vars) }}
           SECRETS_JSON: ${{ toJson(secrets) }}
         run: |
-          CLIENT_PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
           ADMIN_PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
           ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
           TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
 
-          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 
@@ -136,11 +114,7 @@ jobs:
             exit 0
           fi
 
-          if [ "${{ matrix.role }}" = "client" ]; then
-            PROJ="$CLIENT_PROJ"
-          else
-            PROJ="$ADMIN_PROJ"
-          fi
+          PROJ="$ADMIN_PROJ"
           echo "VERCEL_ORG_ID=$ORG_ID"     >> $GITHUB_ENV
           echo "VERCEL_PROJECT_ID=$PROJ"   >> $GITHUB_ENV
           echo "ROLE_VERCEL_TOKEN=$TOKEN"  >> $GITHUB_ENV

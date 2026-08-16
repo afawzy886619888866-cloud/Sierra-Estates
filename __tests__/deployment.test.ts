@@ -33,13 +33,10 @@ describe('GitHub Actions, Vercel & Deployment Configuration', () => {
       expect(ciCode).toContain('node-version: \'24\'');
     });
 
-    it('deploy-vercel.yml should define client and admin matrix deployment targets', () => {
+    it('deploy-vercel.yml should define admin deployment targets with client unwired', () => {
       const deployCode = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
-      expect(deployCode).toContain('role: client');
       expect(deployCode).toContain('role: admin');
-      expect(deployCode).toContain('domain: sierra-estates.net');
       expect(deployCode).toContain('domain: admin.sierra-estates.net');
-      expect(deployCode).toContain('apps/sierra-estates-realty');
       expect(deployCode).toContain('apps/admin-dashboard');
       expect(deployCode).toContain('Attach production domain');
     });
