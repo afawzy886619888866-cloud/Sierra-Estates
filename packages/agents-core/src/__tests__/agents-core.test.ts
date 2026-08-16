@@ -45,12 +45,12 @@ describe('packages/agents-core', () => {
     let orchestrator: AgentOrchestrator;
 
     beforeEach(() => {
-      mockCompletion = vi.fn(async (agentName, stage, sysPrompt, userPrompt) => {
+      mockCompletion = vi.fn(async (agentName: string, stage: string) => {
         return `[MockOutput by ${agentName}]: Completed stage ${stage}`;
       });
 
       orchestrator = new AgentOrchestrator({
-        runCompletion: mockCompletion,
+        runCompletion: mockCompletion as any,
       });
     });
 
@@ -114,8 +114,8 @@ describe('packages/agents-core', () => {
     let workflows: AgentWorkflows;
 
     beforeEach(() => {
-      mockCompletion = vi.fn(async (agentName) => `Response from ${agentName}`);
-      orchestrator = new AgentOrchestrator({ runCompletion: mockCompletion });
+      mockCompletion = vi.fn(async (agentName: string) => `Response from ${agentName}`);
+      orchestrator = new AgentOrchestrator({ runCompletion: mockCompletion as any });
       workflows = new AgentWorkflows(orchestrator);
     });
 
