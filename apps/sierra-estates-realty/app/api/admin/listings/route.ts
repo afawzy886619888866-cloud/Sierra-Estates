@@ -33,10 +33,30 @@ export async function GET(req: NextRequest) {
 
   try {
     const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
-    const snap = await adminDb.collection(COLLECTIONS.units).limit(limit).get();
-    const listings = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => mapListingToSpa(doc.id, doc.data()));
+    
+    // Fetch from both units (canonical) and properties (legacy/syndicated)
+    const [unitsSnap, propsSnap] = await Promise.all([
+      adminDb.collection(COLLECTIONS.units).limit(limit).get(),
+      adminDb.collection('properties').limit(limit).get(),
+    ]);
 
-    return NextResponse.json({ success: true, listings });
+    const listingMap = new Map<string, any>();
+
+    // Process units
+    for (const doc of unitsSnap.docs) {
+      listingMap.set(doc.id, mapListingToSpa(doc.id, doc.data()));
+    }
+
+    // Process properties (attach if not already present or merge PF publication status)
+    for (const doc of propsSnap.docs) {
+      if (!listingMap.has(doc.id)) {
+        listingMap.set(doc.id, mapListingToSpa(doc.id, doc.data()));
+      }
+    }
+
+    const listings = Array.from(listingMap.values());
+
+    return NextResponse.json({ success: true, listings, count: listings.length });
   } catch (err) {
     logger.error('Error fetching admin listings:', err);
     return NextResponse.json(
