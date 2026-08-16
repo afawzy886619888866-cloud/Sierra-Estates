@@ -1,0 +1,115 @@
+/**
+ * Firebase Admin Service for WhatsApp Agent
+ * Connects to Firestore to pull automated outreach queues (Property Finder leads)
+ * and syncs lead interaction context.
+ */
+
+const admin = require('firebase-admin');
+const path = require('path');
+const fs = require('fs');
+
+let db = null;
+
+function initFirebase() {
+  if (admin.apps.length > 0) {
+    db = admin.firestore();
+    return db;
+  }
+
+  try {
+    const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || 
+                               path.resolve(__dirname, '../../../service-account.json');
+
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      admin.initializeApp({
+        credential: admin.credential.cert(sa),
+        projectId: process.env.FIREBASE_PROJECT_ID || sa.project_id,
+      });
+      db = admin.firestore();
+      console.log('🔥 [WhatsApp Agent] Connected to Firestore via FIREBASE_SERVICE_ACCOUNT_JSON.');
+      return db;
+    } else if (fs.existsSync(serviceAccountPath)) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccountPath),
+        projectId: process.env.FIREBASE_PROJECT_ID || 'sierra-estates-realty',
+      });
+      db = admin.firestore();
+      console.log('🔥 [WhatsApp Agent] Connected to Firestore via service-account.json.');
+      return db;
+    } else if (process.env.FIREBASE_PROJECT_ID) {
+      admin.initializeApp({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      });
+      db = admin.firestore();
+      console.log(`🔥 [WhatsApp Agent] Connected to Firestore project: ${process.env.FIREBASE_PROJECT_ID}`);
+      return db;
+    } else {
+      console.warn('⚠️ [WhatsApp Agent] No Firebase credentials found. Running in standalone queue mode.');
+      return null;
+    }
+  } catch (err) {
+    console.warn('⚠️ [WhatsApp Agent] Firebase initialization warning:', err.message);
+    return null;
+  }
+}
+
+async function getPendingQueueMessages() {
+  if (!db) db = initFirebase();
+  if (!db) return [];
+
+  try {
+    const snap = await db.collection('whatsapp_queue')
+      .where('status', '==', 'pending')
+      .limit(10)
+      .get();
+
+    return snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+    }));
+  } catch (err) {
+    return [];
+  }
+}
+
+async function markQueueMessageSent(id) {
+  if (!db) db = initFirebase();
+  if (!db) return;
+
+  try {
+    await db.collection('whatsapp_queue').doc(id).update({
+      status: 'sent',
+      sentAt: admin.firestore.Timestamp.now(),
+    });
+  } catch (err) {
+    console.error(`Failed to mark queue message ${id} as sent:`, err.message);
+  }
+}
+
+async function getLeadByPhone(phone) {
+  if (!db) db = initFirebase();
+  if (!db) return null;
+
+  try {
+    const clean = phone.replace(/\D/g, '');
+    const snap = await db.collection('leads')
+      .where('phone', '==', clean)
+      .limit(1)
+      .get();
+
+    if (!snap.empty) {
+      return snap.docs[0].data();
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
+module.exports = {
+  initFirebase,
+  getPendingQueueMessages,
+  markQueueMessageSent,
+  getLeadByPhone,
+};

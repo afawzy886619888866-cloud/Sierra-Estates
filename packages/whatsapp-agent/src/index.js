@@ -12,6 +12,8 @@
  */
 
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
@@ -30,19 +32,39 @@ const CONFIG = {
 };
 
 // ─── CLIENT ───────────────────────────────────────────────────────────────────
+const fs = require('fs');
+let chromePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+if (!chromePath) {
+  const candidates = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      chromePath = c;
+      break;
+    }
+  }
+}
+
 const client = new Client({
   authStrategy: new LocalAuth({
     clientId:   'sierra-estates-agent',
     dataPath:   './wa_sessions',
   }),
   puppeteer: {
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    headless:       true,
+    ...(chromePath ? { executablePath: chromePath } : {}),
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-extensions',
     ],
   },
 });
@@ -83,6 +105,32 @@ client.on('ready', async () => {
   const report  = new ReportGenerator(client);
   const store   = new SessionStore();
 
+  const { getPendingQueueMessages, markQueueMessageSent, getLeadByPhone } = require('./firebase-service');
+
+  // ── Automated Property Finder & CRM Queue Dispatcher ──────────────────────────
+  console.log('⚡ [WhatsApp Agent] Automated Property Finder Outreach Queue Worker started.');
+  setInterval(async () => {
+    try {
+      const pendingItems = await getPendingQueueMessages();
+      for (const item of pendingItems) {
+        let cleanPhone = String(item.phone || '').replace(/\D/g, '');
+        if (cleanPhone.startsWith('0') && cleanPhone.length === 11) cleanPhone = '2' + cleanPhone;
+        if (!cleanPhone.startsWith('20') && cleanPhone.length === 10) cleanPhone = '20' + cleanPhone;
+
+        const chatId = `${cleanPhone}@c.us`;
+        console.log(`📤 [PF Outreach] Auto-contacting ${item.clientName || 'Client'} (${chatId}) for ref: ${item.propertyRef || 'N/A'}`);
+
+        await sleep(1500 + Math.random() * 2000);
+        await client.sendMessage(chatId, item.text);
+        await markQueueMessageSent(item.id);
+
+        store.addMessage(chatId, 'model', item.text);
+      }
+    } catch (err) {
+      // Quiet background polling
+    }
+  }, 7000);
+
   // ── Incoming messages ──────────────────────────────────────────────────────
   client.on('message', async (msg) => {
     try {
@@ -120,9 +168,18 @@ client.on('ready', async () => {
       await sleep(1000 + Math.random() * 2000);
       try { await chat.sendSeen(); } catch (e) {}
 
+      // ── Check if client is a Property Finder lead with listing context ──
+      let pfContext = '';
+      try {
+        const lead = await getLeadByPhone(senderNum);
+        if (lead && lead.notes) {
+          pfContext = `\n[CLIENT PROPERTY FINDER CONTEXT: Client previously inquired via Property Finder: "${lead.notes}" — provide precise pricing, payment plans, and offer private viewing booking.]`;
+        }
+      } catch (e) {}
+
       // ── Gemini AI reply ───────────────────────────────────────────────────
       const history = store.getHistory(senderId);
-      const reply   = await gemini.chat(body, history, { isAdmin, senderName: name, senderPhone: senderId });
+      const reply   = await gemini.chat(body + pfContext, history, { isAdmin, senderName: name, senderPhone: senderId });
 
       store.addMessage(senderId, 'user',  body);
       store.addMessage(senderId, 'model', reply);
@@ -157,9 +214,15 @@ client.on('ready', async () => {
   });
 
   // ── Heartbeat ─────────────────────────────────────────────────────────────
-  setInterval(() => {
-    const state = client.getState();
-    if (state && state !== 'CONNECTED') console.warn('⚠️ State:', state);
+  setInterval(async () => {
+    try {
+      if (typeof client.getState === 'function') {
+        const state = await client.getState();
+        if (state && state !== 'CONNECTED') console.warn('⚠️ WhatsApp Client State:', state);
+      }
+    } catch (e) {
+      // Ignored during page context/frame swaps
+    }
   }, 60_000);
 });
 
@@ -167,6 +230,15 @@ client.on('disconnected', (reason) => {
   console.warn('⚠️ Client disconnected:', reason);
   console.log('♻️  Reinitializing in 5 seconds...');
   setTimeout(() => client.initialize(), 5000);
+});
+
+// Process-level safety guards to keep WhatsApp daemon permanently online
+process.on('unhandledRejection', (reason) => {
+  console.warn('⚠️ [WhatsApp Agent Background Catch]:', reason && reason.message ? reason.message : reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.warn('⚠️ [WhatsApp Agent Uncaught Exception]:', err && err.message ? err.message : err);
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -182,5 +254,5 @@ function sleep(ms) {
 // ─── START ────────────────────────────────────────────────────────────────────
 console.log('🚀 Starting Sierra WhatsApp Agent...');
 console.log('   Library: whatsapp-web.js');
-console.log('   Chrome:  C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\n');
+console.log(`   Chrome:  ${chromePath || 'Auto-detected browser'}\n`);
 client.initialize();

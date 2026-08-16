@@ -480,36 +480,60 @@ export default function SettingsPage({ T, isAr = false, currentUser }: SettingsP
         </div>
       </div>
 
-      {/* GitHub project link card */}
+      {/* GitHub & Vercel project link card */}
       <div className="bg-[#0a0f1d] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-        <div className="px-5 py-4 border-b border-slate-800 bg-slate-900/40">
+        <div className="px-5 py-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
           <span className="font-mono text-[10px] uppercase tracking-wider text-cyan-400 font-bold select-none">
-            {T('githubIntegration')}
+            {T('githubIntegration')} & Vercel Deployment
+          </span>
+          <span className="text-[9px] font-bold font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full select-none">
+            PRODUCTION READY ✓
           </span>
         </div>
         <div className="p-5 space-y-4">
-          <div className="flex items-center gap-3.5 p-4 bg-slate-900/40 border border-slate-800 rounded">
-            <span className="text-2xl shrink-0 select-none">⭐</span>
-            <div className="flex-1 min-w-0 font-mono text-xs">
-              <div className="font-bold text-white truncate uppercase select-all">Sierra-Estates-Final</div>
-              <div className="text-slate-550 mt-1 select-all truncate text-[10px]">
-                github.com/ahmedfawzy8866/Sierra-Estates-Final.git
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {/* GitHub Repo Details */}
+            <div className="flex items-center gap-3.5 p-4 bg-slate-900/40 border border-slate-800 rounded">
+              <span className="text-2xl shrink-0 select-none">⭐</span>
+              <div className="flex-1 min-w-0 font-mono text-xs">
+                <div className="font-bold text-white truncate uppercase select-all">SE-Vercel-deploy-main</div>
+                <div className="text-slate-400 mt-1 select-all truncate text-[10px]">
+                  github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
+                </div>
               </div>
             </div>
-            <span className="text-[9px] font-bold font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full shrink-0 select-none">
-              CONNECTED ✓
-            </span>
+
+            {/* Vercel Project Details */}
+            <div className="flex items-center gap-3.5 p-4 bg-slate-900/40 border border-slate-800 rounded">
+              <span className="text-2xl shrink-0 select-none">▲</span>
+              <div className="flex-1 min-w-0 font-mono text-xs">
+                <div className="font-bold text-white truncate uppercase select-all">sierra-estates-admin-page</div>
+                <div className="text-slate-400 mt-1 select-all truncate text-[10px]">
+                  prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA · team_UvdJ5ezVTaqEKyhqZ5QVqOKJ
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2.5 flex-wrap">
-            <button className="px-4 py-2 text-xs font-mono bg-white/5 border border-white/10 text-slate-300 rounded hover:bg-white/10 transition select-none cursor-pointer active:scale-95">
-              Pull Remote
-            </button>
-            <button className="px-4 py-2 text-xs font-mono bg-white/5 border border-white/10 text-slate-300 rounded hover:bg-white/10 transition select-none cursor-pointer active:scale-95">
-              Diff Changes
-            </button>
+            <a
+              href="https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 text-xs font-mono bg-white/5 border border-white/10 text-slate-300 rounded hover:bg-white/10 transition select-none inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              Open GitHub Repo ↗
+            </a>
+            <a
+              href="https://vercel.com/sierra-estates-projects/sierra-estates-admin-page"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 text-xs font-mono bg-white/5 border border-white/10 text-slate-300 rounded hover:bg-white/10 transition select-none inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              Vercel Project Dashboard ↗
+            </a>
             <button className="px-4 py-2 text-xs font-bold bg-cyan-500/10 border border-cyan-500/35 text-cyan-400 rounded hover:bg-cyan-500/20 transition select-none cursor-pointer active:scale-95 uppercase font-mono tracking-wider">
-              Push Repository
+              Sync Environment
             </button>
           </div>
         </div>

@@ -29,10 +29,30 @@ export async function GET(req: NextRequest) {
 
   try {
     const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
-    const snap = await adminDb.collection(COLLECTIONS.stakeholders).limit(limit).get();
-    const leads = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => mapLeadToSpa(doc.id, doc.data()));
+    
+    // Fetch from both stakeholders and raw leads collection (Property Finder / Webhook / Web forms)
+    const [stakeholdersSnap, leadsSnap] = await Promise.all([
+      adminDb.collection(COLLECTIONS.stakeholders).limit(limit).get(),
+      adminDb.collection('leads').limit(limit).get(),
+    ]);
 
-    return NextResponse.json({ success: true, leads });
+    const leadMap = new Map<string, any>();
+
+    // Process canonical stakeholders
+    for (const doc of stakeholdersSnap.docs) {
+      leadMap.set(doc.id, mapLeadToSpa(doc.id, doc.data()));
+    }
+
+    // Process raw leads (Property Finder webhook inbounds)
+    for (const doc of leadsSnap.docs) {
+      if (!leadMap.has(doc.id)) {
+        leadMap.set(doc.id, mapLeadToSpa(doc.id, doc.data()));
+      }
+    }
+
+    const leads = Array.from(leadMap.values());
+
+    return NextResponse.json({ success: true, leads, count: leads.length });
   } catch (err) {
     logger.error('Error fetching leads:', err);
     return NextResponse.json(
