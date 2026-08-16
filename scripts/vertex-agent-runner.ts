@@ -1,10 +1,11 @@
-import { VertexAgent } from '../packages/agents-core/src/vertex-agent';
+import { VertexAgent } from '../packages/agents-core/src/vertex-agent.js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/sierra-estates-realty/.env.local') });
 
 async function main() {
   const prompt = process.argv.slice(2).join(' ') || 'Analyze luxury real estate trends for penthouses in New Cairo.';

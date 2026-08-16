@@ -20,7 +20,7 @@
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
         "deploy:prod": "vercel --prod",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
-        "vertex-agent": "npx ts-node --transpile-only scripts/vertex-agent-runner.ts"
+        "vertex-agent": "tsx scripts/vertex-agent-runner.ts"
     },
     "devDependencies": {
         "@openai/codex-security": "^0.1.4",
