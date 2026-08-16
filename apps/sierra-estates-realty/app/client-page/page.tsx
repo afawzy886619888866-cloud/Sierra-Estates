@@ -77,7 +77,7 @@ export default function ClientPage() {
       <div className="field">
         <label data-i18n="fLoc"></label>
         <div className="search-compound-wrap" style={{"position": "relative"}}>
-          <input type="text" id="hero-compound-search" className="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style={{"width": "100%", "border": "none", "background": "none", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "outline": "none", "padding": "8px 0"}} />
+          <input type="text" id="hero-compound-search" className="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autoComplete="off" style={{"width": "100%", "border": "none", "background": "none", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "outline": "none", "padding": "8px 0"}} />
           <div id="hero-compound-results" className="compound-dropdown" style={{"display": "none", "position": "absolute", "top": "100%", "left": "0", "right": "0", "background": "var(--surface)", "border": "1px solid var(--line)", "borderRadius": "0 0 10px 10px", "boxShadow": "var(--shadow-m)", "zIndex": "100", "maxHeight": "280px", "overflowY": "auto"}}></div>
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function ClientPage() {
         </span>
 
         {/*  ── BOTTOM-RIGHT: floating stats card ──  */}
-        <span style={{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(14px)", "WebkitWebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}>
+        <span style={{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(14px)", "WebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}>
           <span style={{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}>
             <span style={{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#e9c176", "lineHeight": "1"}}>47</span>
             <span style={{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}>tours live</span>
@@ -289,7 +289,7 @@ export default function ClientPage() {
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+      <iframe id="vtv-iframe" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowFullScreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
       <div id="vtv-loading" style={{"position": "absolute", "inset": "0", "display": "none", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "14px", "color": "rgba(255,255,255,.85)", "fontSize": "14px", "fontWeight": "600", "background": "linear-gradient(135deg,#0a1622 0%,#002b4b 100%)", "zIndex": "1"}}>
         <i data-lucide="loader-2" className="i" style={{"width": "32px", "height": "32px", "animation": "vtv-spin 1s linear infinite"}}></i>
         <span>Loading immersive 3D tour…</span>
@@ -358,7 +358,7 @@ export default function ClientPage() {
           {/*  Search + dropdown  */}
           <div style={{"display": "flex", "alignItems": "center", "gap": "9px", "padding": "10px 14px", "background": "var(--surface-2)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "transition": ".2s", "position": "relative"}}>
             <i data-lucide="search" className="i" style={{"width": "17px", "height": "17px", "color": "var(--muted)", "flex": "none"}}></i>
-            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style={{"flex": "1", "border": "none", "outline": "none", "background": "transparent", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "minWidth": "0"}} autocomplete="off" />
+            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style={{"flex": "1", "border": "none", "outline": "none", "background": "transparent", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "minWidth": "0"}} autoComplete="off" />
             <i data-lucide="chevron-down" className="i" style={{"width": "16px", "height": "16px", "color": "var(--muted)", "flex": "none", "transition": "transform .2s"}} id="hmf-compound-chevron"></i>
             {/*  Dropdown list (absolute positioned)  */}
             <div id="hmf-compound-dropdown" style={{"display": "none", "position": "absolute", "top": "calc(100% + 6px)", "left": "0", "right": "0", "maxHeight": "280px", "overflowY": "auto", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "boxShadow": "var(--shadow-m)", "zIndex": "200", "padding": "6px"}}></div>
