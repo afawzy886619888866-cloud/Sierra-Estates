@@ -1,0 +1,127 @@
+# Instincts generated from https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+# Generated: 2026-08-12T11:36:10.476Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: SE-Vercel-deploy-main-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat
+
+## Evidence
+
+- 4 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: add ClientHome component and landing page route for Sierra Estates, feat: implement listings API endpoint with dual-mode fetching and add home page components
+
+---
+id: SE-Vercel-deploy-main-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Commit Length
+
+## Action
+
+Write moderate-length commit messages (~94 characters)
+
+## Evidence
+
+- Average commit message length: 94 chars
+- Based on 4 commits
+
+---
+id: SE-Vercel-deploy-main-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: SE-Vercel-deploy-main-import-alias
+trigger: "when importing modules"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Import Alias
+
+## Action
+
+Use path aliases (@/, ~/) instead of relative imports
+
+## Evidence
+
+- Import analysis shows alias pattern
+- Example: import { x } from '@/lib/x'
+
+---
+id: SE-Vercel-deploy-main-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Export Style
+
+## Action
+
+Prefer mixed exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: mixed
+
+---
+id: SE-Vercel-deploy-main-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main
+---
+
+# SE Vercel Deploy Main Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
