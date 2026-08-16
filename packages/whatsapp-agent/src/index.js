@@ -204,14 +204,17 @@ client.on('ready', async () => {
     try {
       if (!msg.body || msg.isStatus) return;
 
-      const chat     = await msg.getChat();
-      const contact  = await msg.getContact();
-      const isGroup  = chat.isGroup;
-      const senderId = msg.from;                        // "201234567890@c.us"
+      let chat = null;
+      try { chat = await msg.getChat(); } catch (e) {}
+      let contact = null;
+      try { contact = await msg.getContact(); } catch (e) {}
+
+      const isGroup   = chat ? chat.isGroup : (msg.from || '').includes('@g.us');
+      const senderId  = msg.from;                        // "201234567890@c.us"
       const senderNum = senderId.replace('@c.us', '').replace('@g.us', '');
-      const isAdmin  = isAdminUser(senderNum);
-      const body     = msg.body.trim();
-      const name     = contact.pushname || contact.name || 'Client';
+      const isAdmin   = isAdminUser(senderNum);
+      const body      = msg.body ? msg.body.trim() : '';
+      const name      = (contact && (contact.pushname || contact.name)) || msg._data?.notifyName || 'Client';
 
       console.log(`📩 [${isGroup ? 'GROUP' : 'DM'}][${isAdmin ? 'ADMIN' : 'client'}] ${name}: ${body.slice(0, 80)}`);
 
@@ -223,6 +226,7 @@ client.on('ready', async () => {
 
       // ── Group: only reply when mentioned ────────────────────────────────
       if (isGroup) {
+        if (!CONFIG.replyGroups) return;
         const mentioned = body.toLowerCase().startsWith('sierra') ||
                           body.toLowerCase().includes('@sierra') ||
                           (msg.mentionedIds || []).length > 0;
@@ -234,7 +238,9 @@ client.on('ready', async () => {
 
       // ── Simulate Human Read Delay ──
       await sleep(1000 + Math.random() * 2000);
-      try { await chat.sendSeen(); } catch (e) {}
+      if (chat) {
+        try { await chat.sendSeen(); } catch (e) {}
+      }
 
       // ── Check if client is a Property Finder lead with listing context ──
       let pfContext = '';
@@ -257,13 +263,17 @@ client.on('ready', async () => {
       store.addMessage(senderId, 'model', reply);
 
       // Typing indicator for realism
-      await chat.sendStateTyping();
+      if (chat) {
+        try { await chat.sendStateTyping(); } catch (e) {}
+      }
       
       // Dynamic typing duration (approx 40ms per char, max 8 seconds)
-      const typingTime = Math.min(1500 + reply.length * 40, 8000);
+      const typingTime = Math.min(1500 + (reply || '').length * 40, 8000);
       await sleep(typingTime);
       
-      try { await chat.clearState(); } catch (e) {}
+      if (chat) {
+        try { await chat.clearState(); } catch (e) {}
+      }
       
       // Add minor random delay before hitting send
       await sleep(Math.random() * 1000);
