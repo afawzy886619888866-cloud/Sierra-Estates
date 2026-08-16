@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useI18n } from '@/lib/I18nContext';
 import { EN, AR } from '@/app/client/copy';
 import {
-  Menu, X, Globe, Phone, PlusCircle, Sparkles, Building2,
-  Compass, MapPin, Search, ShieldCheck, Sun, Moon
+  Menu, X, Globe, Phone, PlusCircle, Sparkles,
+  Compass, ShieldCheck, Sun, Moon
 } from 'lucide-react';
 
 interface PortalChromeProps {
@@ -15,7 +15,7 @@ interface PortalChromeProps {
   activeSection?: string;
 }
 
-export default function PortalChrome({ onAddListingClick, onSignInClick, activeSection }: PortalChromeProps) {
+export default function PortalChrome({ onAddListingClick, onSignInClick: _onSignInClick, activeSection }: PortalChromeProps) {
   const { locale, setLocale } = useI18n();
   const isAr = locale === 'ar';
   const t = isAr ? AR : EN;
