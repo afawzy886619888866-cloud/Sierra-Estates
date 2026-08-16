@@ -52,6 +52,12 @@ export default function LeadsPage({ T, isAr = false, searchQuery = '' }: LeadsPa
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [viewingModalLead, setViewingModalLead] = useState<Lead | null>(null);
+  const [viewingDate, setViewingDate] = useState<string>('');
+  const [viewingTime, setViewingTime] = useState<string>('15:00');
+  const [viewingLocation, setViewingLocation] = useState<string>('Mivida, New Cairo');
+  const [viewingAdvisor, setViewingAdvisor] = useState<string>('Sierra Estates Executive Team');
+  const [viewingSuccessUrl, setViewingSuccessUrl] = useState<string | null>(null);
 
   // Add lead form state
   const [name, setName] = useState('');
@@ -898,6 +904,20 @@ export default function LeadsPage({ T, isAr = false, searchQuery = '' }: LeadsPa
                       </td>
                       <td className="p-4 text-right">
                         <div className="inline-flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingModalLead(l);
+                              setViewingLocation(l.interest || 'New Cairo Compound');
+                              setViewingSuccessUrl(null);
+                              const tmr = new Date(Date.now() + 24 * 3600 * 1000).toISOString().split('T')[0];
+                              setViewingDate(tmr);
+                            }}
+                            className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-mono text-[10px] uppercase font-bold rounded border border-amber-500/20 transition-all duration-150 shrink-0 select-none cursor-pointer"
+                            title="Schedule Viewing & Google Calendar"
+                          >
+                            📅 Viewing
+                          </button>
                           <a
                             href={`https://wa.me/${l.phone.replace(/[^0-9]/g, '')}`}
                             target="_blank"
@@ -1132,6 +1152,195 @@ export default function LeadsPage({ T, isAr = false, searchQuery = '' }: LeadsPa
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule VIP Property Viewing Modal */}
+      {viewingModalLead && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0a0f1d] border border-cyan-500/30 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up">
+            <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+              <span className="font-mono text-xs uppercase tracking-wider text-amber-400 font-bold select-none flex items-center gap-2">
+                <span>📅</span> {isAr ? 'حجز موعد معاينة وإنشاء رابط التقويم' : 'Schedule VIP Viewing & Calendar Link'}
+              </span>
+              <button
+                onClick={() => setViewingModalLead(null)}
+                className="p-1 text-slate-500 hover:text-white transition duration-150 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Lead Info Banner */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-white text-sm flex items-center gap-2">
+                    {viewingModalLead.name}
+                    {viewingModalLead.hot && <span className="text-xs">🔥</span>}
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono">+{viewingModalLead.phone}</div>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  {viewingModalLead.interest || 'New Cairo'}
+                </span>
+              </div>
+
+              {!viewingSuccessUrl ? (
+                <div className="space-y-3.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                        Viewing Date (تاريخ المعاينة)
+                      </label>
+                      <input
+                        type="date"
+                        value={viewingDate}
+                        onChange={(e) => setViewingDate(e.target.value)}
+                        className="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                        Viewing Time (الوقت)
+                      </label>
+                      <input
+                        type="time"
+                        value={viewingTime}
+                        onChange={(e) => setViewingTime(e.target.value)}
+                        className="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                      Compound / Property Location (مكان الوحدة)
+                    </label>
+                    <input
+                      type="text"
+                      value={viewingLocation}
+                      onChange={(e) => setViewingLocation(e.target.value)}
+                      placeholder="e.g. Mivida (Emaar), Fifth Settlement"
+                      className="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono uppercase tracking-widest text-slate-400 mb-1">
+                      Assigned Advisor (المستشار المرافق)
+                    </label>
+                    <select
+                      value={viewingAdvisor}
+                      onChange={(e) => setViewingAdvisor(e.target.value)}
+                      className="w-full bg-slate-900/60 border border-slate-800 rounded px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50 cursor-pointer"
+                    >
+                      <option value="Sierra Estates Executive Concierge">Sierra Estates Executive Concierge</option>
+                      {agents.map((ag) => (
+                        <option key={ag.id} value={ag.name}>
+                          {ag.emoji} {ag.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-3 flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const startIso = `${viewingDate || new Date().toISOString().split('T')[0]}T${viewingTime || '15:00'}:00`;
+                        const startD = new Date(startIso);
+                        const endD = new Date(startD.getTime() + 60 * 60 * 1000);
+                        const fmt = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+                        const dates = `${fmt(startD)}/${fmt(endD)}`;
+                        const title = encodeURIComponent(`🏡 Sierra Estates Viewing — ${viewingModalLead.name} (${viewingLocation})`);
+                        const details = encodeURIComponent(
+                          `Sierra Estates Realty — Private Property Viewing\n\n` +
+                          `👤 Client: ${viewingModalLead.name} (+${viewingModalLead.phone})\n` +
+                          `📍 Location: ${viewingLocation}\n` +
+                          `📞 Advisor: ${viewingAdvisor}\n\n` +
+                          `Managed via Sierra Intelligence OS.`
+                        );
+                        const loc = encodeURIComponent(viewingLocation);
+                        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${loc}`;
+
+                        try {
+                          await api.patch(`/api/admin/leads/${viewingModalLead.id}`, {
+                            stage: 'Viewing Scheduled',
+                          });
+                          await refreshLeads();
+                          await createSierraNotification(
+                            'lead',
+                            `Viewing Scheduled: ${viewingModalLead.name}`,
+                            `Confirmed viewing at ${viewingLocation} on ${viewingDate} ${viewingTime}.`,
+                            `تم حجز موعد معاينة: ${viewingModalLead.name}`,
+                            `تم تأكيد موعد المعاينة في ${viewingLocation} بتاريخ ${viewingDate} ${viewingTime}.`
+                          );
+                        } catch (e) {}
+
+                        setViewingSuccessUrl(calUrl);
+                      }}
+                      className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded text-xs transition duration-150 cursor-pointer shadow-lg shadow-amber-500/20"
+                    >
+                      🚀 Generate Calendar Invite & Book
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewingModalLead(null)}
+                      className="py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white rounded text-xs font-bold transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-3 bg-emerald-950/30 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs">
+                    🎉 <strong>Viewing Scheduled Successfully!</strong> Lead status transitioned to <em>Viewing Scheduled</em>.
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href={viewingSuccessUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-center font-bold text-xs rounded transition flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
+                    >
+                      <span>📅</span> Open in Google Calendar
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const whatsappMsg = 
+                          `أهلاً بحضرتك أستاذ ${viewingModalLead.name}، يسعدنا تأكيد موعد معاينتنا لوحدة كمبوند ${viewingLocation} يوم ${viewingDate} الساعة ${viewingTime}.\n` +
+                          `المستشار العقاري المرافق: ${viewingAdvisor}.\n` +
+                          `رابط إضافة الموعد لتقويم جوجل: ${viewingSuccessUrl}`;
+                        navigator.clipboard.writeText(whatsappMsg);
+                        alert('✅ Copied WhatsApp confirmation message to clipboard!');
+                      }}
+                      className="w-full py-2.5 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 text-center font-bold text-xs rounded transition flex items-center justify-center gap-2"
+                    >
+                      <span>📋</span> Copy WhatsApp Confirmation Message
+                    </button>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewingModalLead(null);
+                        setViewingSuccessUrl(null);
+                      }}
+                      className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded text-xs font-bold transition"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

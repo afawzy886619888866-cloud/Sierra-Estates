@@ -111,6 +111,7 @@ const brochureManager = require('./brochure-manager');
 const calendarService = require('./calendar-service');
 const voiceService = require('./voice-service');
 const ViewingReminderService = require('./reminder-service');
+const propertyMatcher = require('./property-matcher');
 
 async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
   let cleanMessage = rawAiReply;
@@ -163,7 +164,19 @@ async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
       // Trigger unified updateLeadQualification helper for notifications & stakeholder CRM sync
       await updateLeadQualification(clientPhone, qualificationData, clientName);
 
-      // 3. Dispatch Email Alert to Admin & Sales with 1-click Calendar button
+      // 3. Generate dynamic property recommendation cards
+      try {
+        const matches = await propertyMatcher.findMatches(qualificationData);
+        const isArabic = /[\u0600-\u06FF]/.test(rawAiReply);
+        const recCards = propertyMatcher.formatRecommendationCards(matches, isArabic);
+        if (recCards) {
+          cleanMessage += recCards;
+        }
+      } catch (recErr) {
+        console.warn('⚠️ [Property Matcher Warning]:', recErr.message);
+      }
+
+      // 4. Dispatch Email Alert to Admin & Sales with 1-click Calendar button
       if (transporter && process.env.SMTP_USER && process.env.SMTP_PASS) {
         try {
           await transporter.sendMail({
@@ -188,7 +201,7 @@ async function processBotResponse(leadId, clientPhone, clientName, rawAiReply) {
           console.warn('⚠️ [Email Dispatch Warning]:', mailErr.message);
         }
       }
-      console.log(`✅ [Lead Handler] Qualified lead ${leadId} persisted with 1-click Calendar invite.`);
+      console.log(`✅ [Lead Handler] Qualified lead ${leadId} persisted with 1-click Calendar invite & property matches.`);
     } catch (err) {
       console.error('❌ [Lead Handler] Error parsing qualification JSON:', err.message);
     }
