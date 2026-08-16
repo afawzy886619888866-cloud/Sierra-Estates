@@ -1,6 +1,6 @@
 import { BaseAgent, type AgentResult } from './base-agent';
 import { GoogleGenAI } from '@google/genai';
-import { obsidian } from '@sierra-estates/obsidian';
+import { ObsidianMemory, obsidian as defaultObsidian } from '@sierra-estates/obsidian';
 
 export interface VertexAgentOptions {
   name?: string;
@@ -22,6 +22,7 @@ export class VertexAgent extends BaseAgent {
   private systemInstruction: string;
   private tools: any[];
   private datastoreId?: string;
+  private memory: ObsidianMemory;
 
   constructor(options: VertexAgentOptions = {}) {
     super();
@@ -31,6 +32,7 @@ export class VertexAgent extends BaseAgent {
     this.systemInstruction = options.systemInstruction || 'You are an advanced Vertex AI Agent powered by Gemini on Google Cloud.';
     this.tools = options.tools || [];
     this.datastoreId = options.datastoreId || process.env.VERTEX_SEARCH_DATASTORE_ID;
+    this.memory = defaultObsidian || new ObsidianMemory();
 
     const projectId = options.projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-estates-core';
     const location = options.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
@@ -50,10 +52,13 @@ export class VertexAgent extends BaseAgent {
 
     try {
       // 1. Fetch relevant memory context from Obsidian Memory
-      const memories = await obsidian.search(prompt, [this.name, 'vertex-agent']);
-      const memoryContext = memories.length > 0
-        ? `\n\nRELEVANT MEMORY CONTEXT:\n${memories.map((m: any) => `- ${typeof m.value === 'string' ? m.value : JSON.stringify(m.value)}`).join('\n')}`
-        : '';
+      let memoryContext = '';
+      if (this.memory && typeof this.memory.search === 'function') {
+        const memories = await this.memory.search(prompt, [this.name, 'vertex-agent']);
+        if (memories.length > 0) {
+          memoryContext = `\n\nRELEVANT MEMORY CONTEXT:\n${memories.map((m: any) => `- ${typeof m.value === 'string' ? m.value : JSON.stringify(m.value)}`).join('\n')}`;
+        }
+      }
 
       const fullPrompt = `${prompt}${memoryContext}${context ? `\n\nADDITIONAL CONTEXT:\n${JSON.stringify(context, null, 2)}` : ''}`;
 
@@ -82,12 +87,14 @@ export class VertexAgent extends BaseAgent {
       const responseText = response.text || '';
 
       // 4. Store execution result in Obsidian Memory
-      await obsidian.set(`vertex-task-${this.name}-${Date.now()}`, {
-        prompt,
-        response: responseText,
-        datastoreId: this.datastoreId,
-        timestamp: new Date().toISOString(),
-      }, ['vertex-agent', this.name]);
+      if (this.memory && typeof this.memory.set === 'function') {
+        await this.memory.set(`vertex-task-${this.name}-${Date.now()}`, {
+          prompt,
+          response: responseText,
+          datastoreId: this.datastoreId,
+          timestamp: new Date().toISOString(),
+        }, ['vertex-agent', this.name]);
+      }
 
       return {
         success: true,
