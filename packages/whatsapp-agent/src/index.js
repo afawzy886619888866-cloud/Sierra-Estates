@@ -12,6 +12,8 @@
  */
 
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
