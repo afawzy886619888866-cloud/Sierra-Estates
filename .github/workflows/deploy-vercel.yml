@@ -208,7 +208,14 @@ jobs:
           FB_APP_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_APP_ID // empty')
           FB_MEASUREMENT=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID // empty')
           FB_DATABASE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_DATABASE_URL // empty')
+          
+          AI_KEY=$(echo "$SECRETS_JSON" | jq -r '.GOOGLE_AI_API_KEY // .GEMINI_API_KEY // empty')
+          PF_KEY=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_KEY // .PF_API_KEY // empty')
+          PF_SECRET=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_SECRET // .PF_API_SECRET // empty')
+          AWS_KEY=$(echo "$SECRETS_JSON" | jq -r '.AWS_ACCESS_KEY_ID // empty')
+          AWS_SEC=$(echo "$SECRETS_JSON" | jq -r '.AWS_SECRET_ACCESS_KEY // empty')
           SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
+          SA_JSON=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
 
           upsert() {
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
@@ -216,22 +223,52 @@ jobs:
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\"]}" || echo "000")
-            case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json)";; esac
+              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\",\"preview\"]}" || echo "000")
+            case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)";; esac
           }
+
+          # Routing & Domains
           upsert ADMIN_HOST              "admin.sierra-estates.net"
           upsert CLIENT_HOST             "sierra-estates.net"
           upsert COOKIE_DOMAIN           ".sierra-estates.net"
           upsert NEXT_PUBLIC_CLIENT_URL  "https://sierra-estates.net"
           upsert NEXT_PUBLIC_ADMIN_URL   "https://admin.sierra-estates.net"
-          upsert NEXT_PUBLIC_FIREBASE_API_KEY             "$FB_API_KEY"
-          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN         "$FB_AUTH_DOMAIN"
-          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID          "$FB_PROJECT_ID"
-          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET      "$FB_STORAGE"
-          upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "$FB_SENDER_ID"
-          upsert NEXT_PUBLIC_FIREBASE_APP_ID              "$FB_APP_ID"
-          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID      "$FB_MEASUREMENT"
-          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL        "$FB_DATABASE_URL"
+
+          # Firebase Client SDK (fallback to canonical values if not in vars)
+          upsert NEXT_PUBLIC_FIREBASE_API_KEY             "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
+          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN         "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
+          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID          "${FB_PROJECT_ID:-sierra-blu}"
+          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET      "${FB_STORAGE:-sierra-blu.firebasestorage.app}"
+          upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "${FB_SENDER_ID:-941030513456}"
+          upsert NEXT_PUBLIC_FIREBASE_APP_ID              "${FB_APP_ID:-1:941030513456:web:56209a1495d69f217086f5}"
+          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID      "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
+          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL        "${FB_DATABASE_URL:-https://sierra-blu-default-rtdb.firebaseio.com}"
+
+          # Vite Admin Public Firebase SDK
+          upsert VITE_FIREBASE_API_KEY                    "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
+          upsert VITE_FIREBASE_AUTH_DOMAIN                "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
+          upsert VITE_FIREBASE_PROJECT_ID                 "${FB_PROJECT_ID:-sierra-blu}"
+          upsert VITE_FIREBASE_STORAGE_BUCKET             "${FB_STORAGE:-sierra-blu.firebasestorage.app}"
+          upsert VITE_FIREBASE_MESSAGING_SENDER_ID        "${FB_SENDER_ID:-941030513456}"
+          upsert VITE_FIREBASE_APP_ID                     "${FB_APP_ID:-1:941030513456:web:56209a1495d69f217086f5}"
+          upsert VITE_FIREBASE_MEASUREMENT_ID             "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
+          upsert VITE_BACKEND_API_URL                     "https://sierra-estates.net"
+
+          # AI & LLM
+          upsert GOOGLE_AI_API_KEY                        "$AI_KEY" encrypted
+          upsert GEMINI_API_KEY                           "$AI_KEY" encrypted
+          upsert NEXT_PUBLIC_GEMINI_API_KEY               "$AI_KEY"
+
+          # Property Finder & AWS
+          upsert PROPERTY_FINDER_API_KEY                  "$PF_KEY" encrypted
+          upsert PROPERTY_FINDER_API_SECRET               "$PF_SECRET" encrypted
+          upsert PF_API_KEY                               "$PF_KEY" encrypted
+          upsert PF_API_SECRET                            "$PF_SECRET" encrypted
+          upsert AWS_ACCESS_KEY_ID                        "$AWS_KEY" encrypted
+          upsert AWS_SECRET_ACCESS_KEY                    "$AWS_SEC" encrypted
+          upsert AWS_REGION                               "us-east-1"
+          upsert FIREBASE_PROJECT_ID                      "sierra-blu"
+          upsert FIREBASE_SERVICE_ACCOUNT_JSON            "$SA_JSON" encrypted
           upsert SESSION_SECRET                           "$SESSION_SECRET_VAL" encrypted
 
       - name: Remove crons from admin project (client project owns them)
