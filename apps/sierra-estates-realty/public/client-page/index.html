@@ -55,7 +55,7 @@ a:hover{color:var(--pri-d);}
 .hero .dots button{width:26px;height:4px;border-radius:2px;border:none;background:rgba(255,255,255,.35);cursor:pointer;transition:.3s;padding:0;}
 .hero .dots button.on{background:var(--pri);width:44px;}
 [data-theme="dark"] .hero .dots button.on{background:#e9c176;}
-.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
+.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
 .hero .map-cta:hover{background:rgba(255,255,255,.24);transform:translateX(-50%) translateY(-2px);border-color:rgba(255,255,255,.6);}
 .hero .map-cta .mc-ic{width:28px;height:28px;border-radius:50%;background:var(--pri);display:grid;place-items:center;flex:none;animation:pulseDot 2.4s infinite;}
 [data-theme="dark"] .hero .map-cta .mc-ic{background:#c8961a;color:#0d0d0f;}
@@ -86,7 +86,7 @@ a:hover{color:var(--pri-d);}
 .tweaks-trigger{position:fixed;bottom:20px;right:20px;z-index:9998;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);box-shadow:var(--shadow-m);display:grid;place-items:center;cursor:pointer;transition:.25s var(--silk);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
-.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
+.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
 .tweaks-overlay.on{display:flex;}
 .tweaks-panel{background:var(--surface);border-radius:18px;padding:28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:tweaksIn .3s var(--silk) both;}
 @keyframes tweaksIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:none;}}
@@ -426,12 +426,12 @@ a:hover{color:var(--pri-d);}
 [data-theme="dark"] .cpd-marker.hot .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
 .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:var(--pri);}
 [data-theme="dark"] .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
-.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;backdrop-filter:blur(4px);}
+.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
 [dir="rtl"] .cpd-marker{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
 .cpd-marker:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,174,255,.5);z-index:999;border-color:#34d399;color:#fff;}
 .cpd-marker.hot{background:linear-gradient(135deg,#00aeff,#0098e0);color:#fff;border-color:#00aeff;}
 .cpd-marker.pulse{background:rgba(0,174,255,.85);color:#fff;border-color:#34d399;}
-[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;backdrop-filter:blur(4px);}
+[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
 [data-theme="dark"] .cpd-marker.hot{background:linear-gradient(135deg,#e9c176,#c8961a);color:#09090f;}
 [data-theme="dark"] .cpd-marker.pulse{background:rgba(200,150,26,.7);border-color:#34d399;color:#fff;}
 
@@ -496,7 +496,7 @@ a:hover{color:var(--pri-d);}
       <span><i data-lucide="shield-check" class="i"></i> <span data-i18n="q3"></span></span>
     </div>
   </div>
-  <a class="map-cta" href="compounds.html">
+  <a class="map-cta" href="compounds.html" title="Link">
     <span class="mc-ic"><i data-lucide="map" class="i"></i></span>
     <span data-i18n="exploreMapBtn"></span>
   </a>
@@ -514,7 +514,7 @@ a:hover{color:var(--pri-d);}
   <div class="bell-content">
     <span class="bell-text">Egypt's first AI-driven real estate ecosystem · Explore the best opportunities in New Cairo — <b>AI Driven</b> · Apply now</span>
     <span class="bell-badge">25% OFF</span>
-    <a href="#contact" class="bell-btn">Request Now <i data-lucide="arrow-right" style="width:13px;height:13px;"></i></a>
+    <a href="#contact" class="bell-btn" title="Link">Request Now <i data-lucide="arrow-right" style="width:13px;height:13px;"></i></a>
   </div>
 </div>
 
@@ -522,23 +522,23 @@ a:hover{color:var(--pri-d);}
 <div class="wrap searchbar">
   <div class="search-card rv">
     <div class="search-tabs">
-      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy"></button>
-      <button data-i18n="tabRent" type="button" data-tab="rent"></button>
-      <button data-i18n="tabNew" type="button" data-tab="new"></button>
+      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy" title="Button"></button>
+      <button data-i18n="tabRent" type="button" data-tab="rent" title="Button"></button>
+      <button data-i18n="tabNew" type="button" data-tab="new" title="Button"></button>
     </div>
     <div class="search-fields">
       <!-- Compound search with autocomplete -->
       <div class="field">
         <label data-i18n="fLoc"></label>
         <div class="search-compound-wrap" style="position:relative;">
-          <input type="text" id="hero-compound-search" class="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" />
+          <input type="text" id="hero-compound-search" class="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" / title="Input">
           <div id="hero-compound-results" class="compound-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto;"></div>
         </div>
       </div>
       <!-- Property Type dropdown -->
       <div class="field">
         <label data-i18n="fType"></label>
-        <select id="hero-type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
           <option value="">Any Type</option>
           <option value="Apartment">Apartment</option>
           <option value="Villa">Villa</option>
@@ -551,7 +551,7 @@ a:hover{color:var(--pri-d);}
       <!-- Bedrooms dropdown -->
       <div class="field">
         <label data-i18n="fBeds"></label>
-        <select id="hero-beds" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-beds" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
           <option value="0">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -563,7 +563,7 @@ a:hover{color:var(--pri-d);}
       <!-- Price dropdown -->
       <div class="field">
         <label data-i18n="fPrice"></label>
-        <select id="hero-price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
           <option value="0">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -574,7 +574,7 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Search button -->
       <div class="field searchbtn">
-        <button type="button" class="btn btn-pri" id="hero-search-btn"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
+        <button type="button" class="btn btn-pri" id="hero-search-btn" title="Button"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
       </div>
     </div>
   </div>
@@ -592,7 +592,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="featTit"></h2>
         <p data-i18n="featSub"></p>
       </div>
-      <a href="properties.html" class="sec-link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="properties.html" class="sec-link" title="Link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
     <div class="grid-props" id="prop-grid"></div>
   </div>
@@ -636,7 +636,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="cpdTit"></h2>
         <p data-i18n="cpdSub"></p>
       </div>
-      <a href="compounds.html" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="Link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
     <div class="grid-comp" id="comp-grid"></div>
   </div>
@@ -654,7 +654,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="tourTit" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-.01em;"></h2>
         <p data-i18n="tourSub"></p>
       </div>
-      <a href="virtual-tour.html" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk);">
+      <a href="virtual-tour.html" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk);" title="Link">
         Open full page <i data-lucide="arrow-right" class="i" style="width:14px;height:14px;"></i>
       </a>
     </div>
@@ -686,16 +686,16 @@ a:hover{color:var(--pri-d);}
           </span>
           <!-- Feature pills -->
           <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
               <i data-lucide="video" class="i" style="width:11px;height:11px;color:#34d399;"></i> 4K HDR
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
               <i data-lucide="door-open" class="i" style="width:11px;height:11px;color:#34d399;"></i> Room-by-room
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
               <i data-lucide="glasses" class="i" style="width:11px;height:11px;color:#34d399;"></i> VR-ready
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
               <i data-lucide="grid-2x2" class="i" style="width:11px;height:11px;color:#34d399;"></i> Floor plan
             </span>
           </span>
@@ -737,13 +737,13 @@ a:hover{color:var(--pri-d);}
         </span>
 
         <!-- ── TOP-RIGHT: LIVE badge ── -->
-        <span style="position:absolute;top:22px;inset-inline-end:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(0,18,35,.6);backdrop-filter:blur(8px);border:1px solid rgba(52,211,153,.35);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">
+        <span style="position:absolute;top:22px;inset-inline-end:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(0,18,35,.6);backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);border:1px solid rgba(52,211,153,.35);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">
           <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:vtvBlink 1.6s ease-in-out infinite;"></span>
           LIVE · SIERRA 3D
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style="position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s ease;background:#0a1622;" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+      <iframe id="vtv-iframe" style="position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s ease;background:#0a1622;" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen  loading="lazy"></iframe>
       <div id="vtv-loading" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600;background:linear-gradient(135deg,#0a1622 0%,#002b4b 100%);z-index:1;">
         <i data-lucide="loader-2" class="i" style="width:32px;height:32px;animation:vtv-spin 1s linear infinite;"></i>
         <span>Loading immersive 3D tour…</span>
@@ -753,7 +753,7 @@ a:hover{color:var(--pri-d);}
       </button>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;">
-      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--pri);text-decoration:none;">
+      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--pri);text-decoration:none;" title="Link">
         <i data-lucide="external-link" class="i" style="width:12px;height:12px;"></i> Open tour in new tab
       </a>
       <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Cinematic capture · Matterport-grade fidelity</span>
@@ -829,7 +829,7 @@ a:hover{color:var(--pri-d);}
         <h2>Discover the Best Opportunities</h2>
         <p>Explore all New Cairo compounds on the interactive map. Click any marker for details.</p>
       </div>
-      <a href="compounds.html" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" class="sec-link" title="Link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
     </div>
 
     <!-- ═══ Quick filter bar (compound + bedrooms only) ═══
@@ -841,7 +841,7 @@ a:hover{color:var(--pri-d);}
          as a badge. Compound search + beds selector inside. -->
     <div class="hmf-wrap" style="margin-bottom:18px;">
       <!-- Filter trigger bar (always visible) -->
-      <button class="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style="display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:14px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);cursor:pointer;transition:.2s var(--silk);font-family:var(--font);">
+      <button class="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style="display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:14px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);cursor:pointer;transition:.2s var(--silk);font-family:var(--font);" title="Button">
         <span style="display:flex;align-items:center;gap:10px;">
           <i data-lucide="sliders-horizontal" class="i" style="width:18px;height:18px;color:var(--pri);flex:none;"></i>
           <span style="font-size:14.5px;font-weight:700;color:var(--ink);" data-i18n="hmfTitle">Smart Filter</span>
@@ -867,7 +867,7 @@ a:hover{color:var(--pri-d);}
           <!-- Search + dropdown -->
           <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;transition:.2s;position:relative;">
             <i data-lucide="search" class="i" style="width:17px;height:17px;color:var(--muted);flex:none;"></i>
-            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style="flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--ink);min-width:0;" autocomplete="off" />
+            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style="flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--ink);min-width:0;" autocomplete="off" / title="Input">
             <i data-lucide="chevron-down" class="i" style="width:16px;height:16px;color:var(--muted);flex:none;transition:transform .2s;" id="hmf-compound-chevron"></i>
             <!-- Dropdown list (absolute positioned) -->
             <div id="hmf-compound-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow-m);z-index:200;padding:6px;"></div>
@@ -881,14 +881,14 @@ a:hover{color:var(--pri-d);}
             <span data-i18n="hmfBeds">Bedrooms</span>
           </span>
           <div id="home-map-beds" style="display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:999px;">
-            <button class="on" data-b="0" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" data-i18n="hmfAny">Any</button>
-            <button data-b="1" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;">1</button>
-            <button data-b="2" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;">2</button>
-            <button data-b="3" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;">3</button>
-            <button data-b="4" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;">4</button>
-            <button data-b="5" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;">5</button>
+            <button class="on" data-b="0" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" data-i18n="hmfAny" title="Button">Any</button>
+            <button data-b="1" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">1</button>
+            <button data-b="2" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">2</button>
+            <button data-b="3" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">3</button>
+            <button data-b="4" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">4</button>
+            <button data-b="5" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">5</button>
           </div>
-          <button id="hmf-reset" type="button" style="margin-inline-start:auto;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px;">
+          <button id="hmf-reset" type="button" style="margin-inline-start:auto;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px;" title="Button">
             <i data-lucide="rotate-ccw" class="i" style="width:12px;height:12px;"></i>
             <span data-i18n="hmfReset">Reset</span>
           </button>
@@ -900,7 +900,7 @@ a:hover{color:var(--pri-d);}
       <div id="home-map" style="height:480px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);margin-bottom:8px;"></div>
     </div>
     <div style="text-align:center;margin-top:12px;">
-      <a href="compounds.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+      <a href="compounds.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;" title="Link">
         <i data-lucide="map" class="i" style="width:16px;height:16px;"></i>
         <span>Open Full Map</span>
       </a>
@@ -940,7 +940,7 @@ a:hover{color:var(--pri-d);}
       </div>
     </div>
     <div style="text-align:center;margin-top:20px;">
-      <a href="properties.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
+      <a href="properties.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;" title="Link">
         <i data-lucide="trending-up" class="i" style="width:16px;height:16px;"></i>
         <span>View All Best Listings</span>
       </a>
@@ -987,23 +987,23 @@ a:hover{color:var(--pri-d);}
         <h3 data-i18n="inqTit"></h3>
         <p data-i18n="inqSub"></p>
         <div class="seg" id="inq-seg">
-          <button type="button" class="on" data-i18n="inqBuy"></button>
-          <button type="button" data-i18n="inqRent"></button>
-          <button type="button" data-i18n="inqSell"></button>
+          <button type="button" class="on" data-i18n="inqBuy" title="Button"></button>
+          <button type="button" data-i18n="inqRent" title="Button"></button>
+          <button type="button" data-i18n="inqSell" title="Button"></button>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/></div>
-          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX"/></div>
+          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/ title="Input"></div>
+          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX"/ title="Input"></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/></div>
-          <div><label data-i18n="inqZone"></label><select id="inq-zone"></select></div>
+          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/ title="Input"></div>
+          <div><label data-i18n="inqZone"></label><select id="inq-zone" title="Select"></select></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqType2"></label><select id="inq-type"></select></div>
-          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
+          <div><label data-i18n="inqType2"></label><select id="inq-type" title="Select"></select></div>
+          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/ title="Input"></div>
         </div>
-        <button class="btn btn-pri" type="submit"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <button class="btn btn-pri" type="submit" title="Button"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
         <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
           <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
@@ -1025,7 +1025,7 @@ a:hover{color:var(--pri-d);}
     <div class="ai-grid" id="ai-grid"></div>
     <!-- AI tool preview images -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:28px;">
-      <a href="matches.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
+      <a href="matches.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
         <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
         <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
@@ -1033,7 +1033,7 @@ a:hover{color:var(--pri-d);}
           <div style="font-size:14px;font-weight:700;">Smart Match v3</div>
         </div>
       </a>
-      <a href="pricing.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
+      <a href="pricing.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
         <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
         <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
@@ -1041,7 +1041,7 @@ a:hover{color:var(--pri-d);}
           <div style="font-size:14px;font-weight:700;">AVM Pricing Engine</div>
         </div>
       </a>
-      <a href="roi.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;">
+      <a href="roi.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
         <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
         <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
@@ -1051,7 +1051,7 @@ a:hover{color:var(--pri-d);}
       </a>
     </div>
     <div style="margin-top:16px;" class="rv">
-      <button class="tour-launch" id="tour-open" type="button">
+      <button class="tour-launch" id="tour-open" type="button" title="Button">
         <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
         <span class="t-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
@@ -1069,11 +1069,11 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <button class="btn btn-white" type="button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
-        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
+        <button class="btn btn-white" type="button" title="Button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;" title="Link"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
       <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">
-        <i data-lucide="mail" class="i" style="width:14px;height:14px;vertical-align:-2px;"></i> <a href="mailto:info@Sierra-Estates.net" style="color:rgba(255,255,255,.7);text-decoration:none;">info@Sierra-Estates.net</a>
+        <i data-lucide="mail" class="i" style="width:14px;height:14px;vertical-align:-2px;"></i> <a href="mailto:info@Sierra-Estates.net" style="color:rgba(255,255,255,.7);text-decoration:none;" title="Link">info@Sierra-Estates.net</a>
       </div>
     </div>
   </div>
@@ -1141,7 +1141,7 @@ a:hover{color:var(--pri-d);}
   var picks = ['Hyde Park New Cairo', 'Mivida', 'Mountain View iCity', 'Eastown (SODIC)'];
   document.getElementById('comp-grid').innerHTML = picks.map(function (n, i) {
     var c = D.compounds.find(function (x) { return x.n === n; });
-    return '<a class="comp rv d' + (i + 1) + '" href="compounds.html">' +
+    return '<a class="comp rv d' + (i + 1) + '" href="compounds.html" title="Link">' +
       '<img src="' + D.compoundImgs[n] + '" alt="' + c.n + '" loading="lazy"/>' +
       '<div class="co-scrim"></div>' +
       '<div class="co-count">AI ' + c.ai.toFixed(1) + ' · ' + c.g + '</div>' +
@@ -1327,7 +1327,7 @@ a:hover{color:var(--pri-d);}
   var topListings = D.listings.slice().sort(function (a, b) { return b.ai - a.ai; }).slice(0, 3);
   document.getElementById('insights-grid').innerHTML = topListings.map(function (p, i) {
     var rank = i + 1;
-    return '<a href="property.html?id=' + p.id + '" style="display:block;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:.3s var(--silk);position:relative;">' +
+    return '<a href="property.html?id=' + p.id + '" style="display:block;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:.3s var(--silk);position:relative;" title="Link">' +
       '<div style="position:relative;height:200px;overflow:hidden;">' +
         '<img src="' + p.img + '" alt="' + p.code + '" style="width:100%;height:100%;object-fit:cover;" loading="lazy"/>' +
         '<div style="position:absolute;top:12px;left:12px;background:linear-gradient(135deg,#34d399,#22c55e);color:#fff;font-family:var(--mono);font-weight:800;font-size:12px;padding:5px 12px;border-radius:8px;box-shadow:0 4px 12px rgba(52,211,153,.4);">#' + rank + ' AI ' + p.ai.toFixed(1) + '</div>' +
@@ -2005,18 +2005,18 @@ a:hover{color:var(--pri-d);}
     <div class="tweaks-section">
       <div class="tweaks-label">Font Color</div>
       <div class="tweaks-font-row" id="tweaks-fonts">
-        <button class="tweaks-font-btn on" data-font="#0d2136" type="button">Dark</button>
-        <button class="tweaks-font-btn" data-font="#002b4b" type="button">Navy</button>
-        <button class="tweaks-font-btn" data-font="#4a5568" type="button">Slate</button>
-        <button class="tweaks-font-btn" data-font="#1a1a2e" type="button">Midnight</button>
+        <button class="tweaks-font-btn on" data-font="#0d2136" type="button" title="Button">Dark</button>
+        <button class="tweaks-font-btn" data-font="#002b4b" type="button" title="Button">Navy</button>
+        <button class="tweaks-font-btn" data-font="#4a5568" type="button" title="Button">Slate</button>
+        <button class="tweaks-font-btn" data-font="#1a1a2e" type="button" title="Button">Midnight</button>
       </div>
     </div>
     <div class="tweaks-section">
       <div class="tweaks-label">Corners</div>
       <div class="tweaks-corners" id="tweaks-corners">
-        <button class="tweaks-corner-btn" data-radius="0" type="button">Sharp</button>
-        <button class="tweaks-corner-btn on" data-radius="10" type="button">Balanced</button>
-        <button class="tweaks-corner-btn" data-radius="20" type="button">Soft</button>
+        <button class="tweaks-corner-btn" data-radius="0" type="button" title="Button">Sharp</button>
+        <button class="tweaks-corner-btn on" data-radius="10" type="button" title="Button">Balanced</button>
+        <button class="tweaks-corner-btn" data-radius="20" type="button" title="Button">Soft</button>
       </div>
     </div>
     <div class="tweaks-section">
@@ -2025,8 +2025,8 @@ a:hover{color:var(--pri-d);}
         <span class="tweaks-logo-preview"><img id="tweaks-logo-preview-img" src="logo-gold.png" alt="Logo preview"/></span>
         <div class="tweaks-logo-btns">
           <label class="tweaks-logo-upload" for="tweaks-logo-file">Upload logo</label>
-          <input type="file" id="tweaks-logo-file" accept="image/*" hidden/>
-          <button class="tweaks-logo-reset" id="tweaks-logo-reset" type="button">Reset</button>
+          <input type="file" id="tweaks-logo-file" accept="image/*" hidden/ title="Input">
+          <button class="tweaks-logo-reset" id="tweaks-logo-reset" type="button" title="Button">Reset</button>
         </div>
       </div>
     </div>
