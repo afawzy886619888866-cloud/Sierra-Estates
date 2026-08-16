@@ -1,6 +1,4 @@
 {
   "name": "sierra-estates-client-page",
-  "github": {
-    "silent": true
-  }
+  "framework": "nextjs"
 }

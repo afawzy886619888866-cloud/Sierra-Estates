@@ -1,9 +1,6 @@
 {
   "name": "sierra-estates-admin-page",
   "version": 2,
-  "github": {
-    "silent": true
-  },
   "framework": "vite",
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run build",
