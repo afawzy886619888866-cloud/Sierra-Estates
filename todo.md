@@ -22,19 +22,26 @@
 - [x] Validate the client-page asset paths and Important Projects rendering
 - [x] Commit and push the client-page evidence update to GitHub
 
+## Cairo Plaza interactive investment calculator
+
+- [x] Audit the Cairo Plaza page and existing illustrative scenario language
+- [x] Add bilingual calculator inputs, formulas, and non-guarantee disclosure
+- [x] Validate ROI, NOI, payback, accessibility, and responsive behavior
+- [ ] Commit and push the calculator update to GitHub
+
 ## Cairo Plaza location correction — Al-Mataria Metro Station
 
 - [x] Audit website, investor deck, script, and virtual-tour copy for Nile/Corniche claims
 - [x] Replace incorrect location language with أمام محطة مترو المطرية / in front of Al-Mataria Metro Station
 - [x] Revalidate corrected Arabic and English text across all relevant materials
-- [ ] Commit and push the corrected website and material updates
+- [x] Commit and push the corrected website and material updates
 
 ## Cairo Plaza investor pack and interactive virtual tour
 
-- [ ] Verify the Cairo Plaza investor-pack destination and delivery link
-- [ ] Add interactive Three.js virtual tour inside the Cairo Plaza project page
-- [ ] Add tour controls, hotspots, reduced-motion behavior, and WebGL fallback
-- [ ] Verify the tour and investor-pack navigation locally, then push to GitHub
+- [x] Verify the Cairo Plaza investor-pack destination and delivery link
+- [x] Add interactive Three.js virtual tour inside the Cairo Plaza project page
+- [x] Add tour controls, hotspots, reduced-motion behavior, and WebGL fallback
+- [x] Verify the tour and investor-pack navigation locally, then push to GitHub
 
 ## Sierra-Estates.net live client navigation repair
 
