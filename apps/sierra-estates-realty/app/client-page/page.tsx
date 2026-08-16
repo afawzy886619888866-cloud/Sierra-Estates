@@ -46,7 +46,7 @@ export default function ClientPage() {
     <span className="mc-ic"><i data-lucide="map" className="i"></i></span>
     <span data-i18n="exploreMapBtn"></span>
   </a>
-  <div className="dots wrap" id="hero-dots" style={{{"left": "auto"}}}></div>
+  <div className="dots wrap" id="hero-dots" style={{"left": "auto"}}></div>
   {/*  ═══ LASER BEAM — inside hero only, never covers map or 3D ═══  */}
   <div className="page-laser" aria-hidden="true">
     <div className="page-laser-beam"></div>
@@ -60,7 +60,7 @@ export default function ClientPage() {
   <div className="bell-content">
     <span className="bell-text">Egypt's first AI-driven real estate ecosystem · Explore the best opportunities in New Cairo — <b>AI Driven</b> · Apply now</span>
     <span className="bell-badge">25% OFF</span>
-    <a aria-label="Link" href="#contact" className="bell-btn">Request Now <i data-lucide="arrow-right" style={{{"width": "13px", "height": "13px"}}}></i></a>
+    <a aria-label="Link" href="#contact" className="bell-btn">Request Now <i data-lucide="arrow-right" style={{"width": "13px", "height": "13px"}}></i></a>
   </div>
 </div>
 
@@ -76,15 +76,15 @@ export default function ClientPage() {
       {/*  Compound search with autocomplete  */}
       <div className="field">
         <label data-i18n="fLoc"></label>
-        <div className="search-compound-wrap" style={{{"position": "relative"}}}>
-          <input type="text" id="hero-compound-search" className="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style={{{"width": "100%", "border": "none", "background": "none", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "outline": "none", "padding": "8px 0"}}} />
-          <div id="hero-compound-results" className="compound-dropdown" style={{{"display": "none", "position": "absolute", "top": "100%", "left": "0", "right": "0", "background": "var(--surface)", "border": "1px solid var(--line)", "borderRadius": "0 0 10px 10px", "boxShadow": "var(--shadow-m)", "zIndex": "100", "maxHeight": "280px", "overflowY": "auto"}}}></div>
+        <div className="search-compound-wrap" style={{"position": "relative"}}>
+          <input type="text" id="hero-compound-search" className="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style={{"width": "100%", "border": "none", "background": "none", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "outline": "none", "padding": "8px 0"}} />
+          <div id="hero-compound-results" className="compound-dropdown" style={{"display": "none", "position": "absolute", "top": "100%", "left": "0", "right": "0", "background": "var(--surface)", "border": "1px solid var(--line)", "borderRadius": "0 0 10px 10px", "boxShadow": "var(--shadow-m)", "zIndex": "100", "maxHeight": "280px", "overflowY": "auto"}}></div>
         </div>
       </div>
       {/*  Property Type dropdown  */}
       <div className="field">
         <label data-i18n="fType"></label>
-        <select aria-label="Select" id="hero-type" className="hero-select" style={{{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}}>
+        <select aria-label="Select" id="hero-type" className="hero-select" style={{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}>
           <option value="">Any Type</option>
           <option value="Apartment">Apartment</option>
           <option value="Villa">Villa</option>
@@ -97,7 +97,7 @@ export default function ClientPage() {
       {/*  Bedrooms dropdown  */}
       <div className="field">
         <label data-i18n="fBeds"></label>
-        <select aria-label="Select" id="hero-beds" className="hero-select" style={{{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}}>
+        <select aria-label="Select" id="hero-beds" className="hero-select" style={{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}>
           <option value="0">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -109,7 +109,7 @@ export default function ClientPage() {
       {/*  Price dropdown  */}
       <div className="field">
         <label data-i18n="fPrice"></label>
-        <select aria-label="Select" id="hero-price" className="hero-select" style={{{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}}>
+        <select aria-label="Select" id="hero-price" className="hero-select" style={{"width": "100%", "border": "1.5px solid var(--line-2)", "borderRadius": "8px", "padding": "9px 12px", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "background": "var(--surface-2)", "outline": "none", "cursor": "pointer"}}>
           <option value="0">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -138,7 +138,7 @@ export default function ClientPage() {
         <h2 data-i18n="featTit"></h2>
         <p data-i18n="featSub"></p>
       </div>
-      <a aria-label="Link" href="properties.html" className="sec-link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" className="i" style={{{"width": "16px", "height": "16px"}}}></i></a>
+      <a aria-label="Link" href="properties.html" className="sec-link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" className="i" style={{"width": "16px", "height": "16px"}}></i></a>
     </div>
     <div className="grid-props" id="prop-grid"></div>
   </div>
@@ -147,10 +147,10 @@ export default function ClientPage() {
 {/*  WHY SIERRA (moved here — right after units/properties)  */}
 <section className="block" id="agents" data-screen-label="Why Sierra">
   <div className="wrap">
-    <div className="sec-head rv" style={{{"flexDirection": "column", "alignItems": "center", "textAlign": "center"}}}>
+    <div className="sec-head rv" style={{"flexDirection": "column", "alignItems": "center", "textAlign": "center"}}>
       <div>
         <h2>Why Sierra<sup>1</sup> Estates<sup>&trade;</sup></h2>
-        <p data-i18n="whySub" style={{{"marginInline": "auto"}}}></p>
+        <p data-i18n="whySub" style={{"marginInline": "auto"}}></p>
       </div>
     </div>
     <div className="net-banner rv">
@@ -182,7 +182,7 @@ export default function ClientPage() {
         <h2 data-i18n="cpdTit"></h2>
         <p data-i18n="cpdSub"></p>
       </div>
-      <a aria-label="Link" href="compounds.html" className="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" className="i" style={{{"width": "16px", "height": "16px"}}}></i></a>
+      <a aria-label="Link" href="compounds.html" className="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" className="i" style={{"width": "16px", "height": "16px"}}></i></a>
     </div>
     <div className="grid-comp" id="comp-grid"></div>
   </div>
@@ -195,114 +195,114 @@ export default function ClientPage() {
      feature pills + floating stats card communicate the unique value.  */}
 <section className="block well" id="tour" data-screen-label="Virtual tour">
   <div className="wrap">
-    <div className="sec-head rv" style={{{"display": "flex", "justifyContent": "space-between", "alignItems": "flex-end", "gap": "18px", "flexWrap": "wrap", "marginBottom": "24px"}}}>
+    <div className="sec-head rv" style={{"display": "flex", "justifyContent": "space-between", "alignItems": "flex-end", "gap": "18px", "flexWrap": "wrap", "marginBottom": "24px"}}>
       <div>
-        <h2 data-i18n="tourTit" style={{{"fontFamily": "var(--display)", "fontSize": "34px", "fontWeight": "700", "letterSpacing": "-.01em"}}}></h2>
+        <h2 data-i18n="tourTit" style={{"fontFamily": "var(--display)", "fontSize": "34px", "fontWeight": "700", "letterSpacing": "-.01em"}}></h2>
         <p data-i18n="tourSub"></p>
       </div>
-      <a aria-label="Link" href="virtual-tour.html" style={{{"color": "var(--pri)", "fontWeight": "700", "fontSize": "14px", "textDecoration": "none", "display": "inline-flex", "alignItems": "center", "gap": "8px", "whiteSpace": "nowrap", "padding": "10px 18px", "border": "1.5px solid var(--pri)", "borderRadius": "999px", "transition": ".25s var(--silk)"}}}>
-        Open full page <i data-lucide="arrow-right" className="i" style={{{"width": "14px", "height": "14px"}}}></i>
+      <a aria-label="Link" href="virtual-tour.html" style={{"color": "var(--pri)", "fontWeight": "700", "fontSize": "14px", "textDecoration": "none", "display": "inline-flex", "alignItems": "center", "gap": "8px", "whiteSpace": "nowrap", "padding": "10px 18px", "border": "1.5px solid var(--pri)", "borderRadius": "999px", "transition": ".25s var(--silk)"}}>
+        Open full page <i data-lucide="arrow-right" className="i" style={{"width": "14px", "height": "14px"}}></i>
       </a>
     </div>
 
     {/*  ── Banner frame: gold gradient border + glow ──  */}
-    <div id="vtv-banner" style={{{"position": "relative", "width": "100%", "aspectRatio": "21/9", "minHeight": "420px", "borderRadius": "18px", "overflow": "hidden", "background": "#0a1622", "boxShadow": "0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset", "marginTop": "8px"}}}>
+    <div id="vtv-banner" style={{"position": "relative", "width": "100%", "aspectRatio": "21/9", "minHeight": "420px", "borderRadius": "18px", "overflow": "hidden", "background": "#0a1622", "boxShadow": "0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset", "marginTop": "8px"}}>
       {/*  Gold gradient border glow  */}
-      <div style={{{"position": "absolute", "inset": "0", "borderRadius": "18px", "padding": "1.5px", "background": "linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%)", "WebkitMask": "linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0)", "WebkitMaskComposite": "xor", "maskComposite": "exclude", "pointerEvents": "none", "zIndex": "4"}}}></div>
+      <div style={{"position": "absolute", "inset": "0", "borderRadius": "18px", "padding": "1.5px", "background": "linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%)", "WebkitMask": "linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0)", "WebkitMaskComposite": "xor", "maskComposite": "exclude", "pointerEvents": "none", "zIndex": "4"}}></div>
 
       {/*  Click-to-activate poster button  */}
-      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" style={{{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "padding": "0", "cursor": "pointer", "backgroundColor": "#0a1622", "backgroundImage": "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90')", "backgroundSize": "cover", "backgroundPosition": "center", "display": "flex", "alignItems": "center", "justifyContent": "center"}}}>
+      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "padding": "0", "cursor": "pointer", "backgroundColor": "#0a1622", "backgroundImage": "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90')", "backgroundSize": "cover", "backgroundPosition": "center", "display": "flex", "alignItems": "center", "justifyContent": "center"}}>
         {/*  Cinematic gradient scrim (deeper on left for text legibility)  */}
-        <span style={{{"position": "absolute", "inset": "0", "background": "linear-gradient(95deg,rgba(0,18,35,.88) 0%,rgba(0,18,35,.62) 38%,rgba(0,18,35,.18) 65%,rgba(0,18,35,.55) 100%)", "zIndex": "1"}}}></span>
+        <span style={{"position": "absolute", "inset": "0", "background": "linear-gradient(95deg,rgba(0,18,35,.88) 0%,rgba(0,18,35,.62) 38%,rgba(0,18,35,.18) 65%,rgba(0,18,35,.55) 100%)", "zIndex": "1"}}></span>
         {/*  Subtle bottom scrim for stats card  */}
-        <span style={{{"position": "absolute", "inset": "0", "background": "linear-gradient(0deg,rgba(0,15,30,.65) 0%,transparent 35%)", "zIndex": "1"}}}></span>
+        <span style={{"position": "absolute", "inset": "0", "background": "linear-gradient(0deg,rgba(0,15,30,.65) 0%,transparent 35%)", "zIndex": "1"}}></span>
 
         {/*  ── LEFT: USP headline + feature pills ──  */}
-        <span style={{{"position": "absolute", "top": "0", "left": "0", "bottom": "0", "width": "54%", "zIndex": "2", "display": "flex", "flexDirection": "column", "justifyContent": "center", "padding": "48px 56px", "textAlign": "left", "gap": "14px"}}}>
-          <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "10px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".22em", "textTransform": "uppercase", "color": "#e9c176"}}}>
-            <span style={{{"width": "24px", "height": "1.5px", "background": "#e9c176", "display": "inline-block"}}}></span>
+        <span style={{"position": "absolute", "top": "0", "left": "0", "bottom": "0", "width": "54%", "zIndex": "2", "display": "flex", "flexDirection": "column", "justifyContent": "center", "padding": "48px 56px", "textAlign": "left", "gap": "14px"}}>
+          <span style={{"display": "inline-flex", "alignItems": "center", "gap": "10px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".22em", "textTransform": "uppercase", "color": "#e9c176"}}>
+            <span style={{"width": "24px", "height": "1.5px", "background": "#e9c176", "display": "inline-block"}}></span>
             SIERRA 3D · POWERED BY IMMERSIVE TECH
           </span>
-          <span style={{{"fontFamily": "var(--display)", "fontSize": "46px", "fontWeight": "700", "lineHeight": "1.05", "letterSpacing": "-.015em", "color": "#fff", "textShadow": "0 4px 24px rgba(0,0,0,.55)", "maxWidth": "560px"}}}>
+          <span style={{"fontFamily": "var(--display)", "fontSize": "46px", "fontWeight": "700", "lineHeight": "1.05", "letterSpacing": "-.015em", "color": "#fff", "textShadow": "0 4px 24px rgba(0,0,0,.55)", "maxWidth": "560px"}}>
             Walk Through Your<br/>Next Home
-            <span style={{{"display": "inline-block", "fontStyle": "italic", "color": "#e9c176", "fontWeight": "600"}}}>Before You Visit</span>
+            <span style={{"display": "inline-block", "fontStyle": "italic", "color": "#e9c176", "fontWeight": "600"}}>Before You Visit</span>
           </span>
-          <span style={{{"fontSize": "14.5px", "lineHeight": "1.55", "color": "rgba(255,255,255,.86)", "maxWidth": "480px", "fontWeight": "500", "marginTop": "4px", "textShadow": "0 1px 8px rgba(0,0,0,.4)"}}}>
+          <span style={{"fontSize": "14.5px", "lineHeight": "1.55", "color": "rgba(255,255,255,.86)", "maxWidth": "480px", "fontWeight": "500", "marginTop": "4px", "textShadow": "0 1px 8px rgba(0,0,0,.4)"}}>
             Every Sierra listing is captured in cinematic 4K HDR. Stroll room-by-room, peek into the garden at dusk, gauge the pool from above, all from your screen, all in seconds.
           </span>
           {/*  Feature pills  */}
-          <span style={{{"display": "flex", "gap": "8px", "flexWrap": "wrap", "marginTop": "8px"}}}>
-            <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}}>
-              <i data-lucide="video" className="i" style={{{"width": "11px", "height": "11px", "color": "#34d399"}}}></i> 4K HDR
+          <span style={{"display": "flex", "gap": "8px", "flexWrap": "wrap", "marginTop": "8px"}}>
+            <span style={{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}>
+              <i data-lucide="video" className="i" style={{"width": "11px", "height": "11px", "color": "#34d399"}}></i> 4K HDR
             </span>
-            <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}}>
-              <i data-lucide="door-open" className="i" style={{{"width": "11px", "height": "11px", "color": "#34d399"}}}></i> Room-by-room
+            <span style={{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}>
+              <i data-lucide="door-open" className="i" style={{"width": "11px", "height": "11px", "color": "#34d399"}}></i> Room-by-room
             </span>
-            <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}}>
-              <i data-lucide="glasses" className="i" style={{{"width": "11px", "height": "11px", "color": "#34d399"}}}></i> VR-ready
+            <span style={{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}>
+              <i data-lucide="glasses" className="i" style={{"width": "11px", "height": "11px", "color": "#34d399"}}></i> VR-ready
             </span>
-            <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}}>
-              <i data-lucide="grid-2x2" className="i" style={{{"width": "11px", "height": "11px", "color": "#34d399"}}}></i> Floor plan
+            <span style={{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "#fff", "background": "rgba(255,255,255,.08)", "border": "1px solid rgba(255,255,255,.18)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(6px)", "padding": "6px 11px", "borderRadius": "999px"}}>
+              <i data-lucide="grid-2x2" className="i" style={{"width": "11px", "height": "11px", "color": "#34d399"}}></i> Floor plan
             </span>
           </span>
         </span>
 
         {/*  ── RIGHT: Big play button + label ──  */}
-        <span style={{{"position": "absolute", "insetInlineEnd": "0", "top": "0", "bottom": "0", "width": "46%", "zIndex": "2", "display": "flex", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "18px", "pointerEvents": "none"}}}>
-          <span style={{{"width": "104px", "height": "104px", "borderRadius": "50%", "background": "rgba(255,255,255,.94)", "display": "grid", "placeItems": "center", "flex": "none", "boxShadow": "0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45)", "transition": "transform .35s var(--silk)", "animation": "vtvPulse 2.6s ease-in-out infinite"}}}>
-            <i data-lucide="play" className="i" style={{{"width": "42px", "height": "42px", "color": "#0a1622", "fill": "#0a1622", "marginInlineStart": "5px"}}}></i>
+        <span style={{"position": "absolute", "insetInlineEnd": "0", "top": "0", "bottom": "0", "width": "46%", "zIndex": "2", "display": "flex", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "18px", "pointerEvents": "none"}}>
+          <span style={{"width": "104px", "height": "104px", "borderRadius": "50%", "background": "rgba(255,255,255,.94)", "display": "grid", "placeItems": "center", "flex": "none", "boxShadow": "0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45)", "transition": "transform .35s var(--silk)", "animation": "vtvPulse 2.6s ease-in-out infinite"}}>
+            <i data-lucide="play" className="i" style={{"width": "42px", "height": "42px", "color": "#0a1622", "fill": "#0a1622", "marginInlineStart": "5px"}}></i>
           </span>
-          <span style={{{"display": "block", "fontFamily": "var(--mono)", "fontSize": "12.5px", "fontWeight": "800", "letterSpacing": ".32em", "color": "#fff", "textTransform": "uppercase", "textShadow": "0 2px 12px rgba(0,0,0,.6)"}}}>▶ Launch 3D Tour</span>
+          <span style={{"display": "block", "fontFamily": "var(--mono)", "fontSize": "12.5px", "fontWeight": "800", "letterSpacing": ".32em", "color": "#fff", "textTransform": "uppercase", "textShadow": "0 2px 12px rgba(0,0,0,.6)"}}>▶ Launch 3D Tour</span>
         </span>
 
         {/*  ── BOTTOM-LEFT: property info card ──  */}
-        <span style={{{"position": "absolute", "bottom": "26px", "insetInlineStart": "56px", "zIndex": "3", "display": "flex", "flexDirection": "column", "gap": "5px"}}}>
-          <span style={{{"display": "inline-flex", "alignItems": "center", "gap": "8px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".16em", "color": "#e9c176", "textTransform": "uppercase"}}}>
-            <i data-lucide="map-pin" className="i" style={{{"width": "11px", "height": "11px"}}}></i> Featured · New Cairo
+        <span style={{"position": "absolute", "bottom": "26px", "insetInlineStart": "56px", "zIndex": "3", "display": "flex", "flexDirection": "column", "gap": "5px"}}>
+          <span style={{"display": "inline-flex", "alignItems": "center", "gap": "8px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".16em", "color": "#e9c176", "textTransform": "uppercase"}}>
+            <i data-lucide="map-pin" className="i" style={{"width": "11px", "height": "11px"}}></i> Featured · New Cairo
           </span>
-          <span style={{{"fontFamily": "var(--display)", "fontSize": "22px", "fontWeight": "700", "lineHeight": "1.2", "color": "#fff", "maxWidth": "480px", "letterSpacing": "-.005em"}}}>Sierra Signature Villa · Mivida</span>
-          <span style={{{"fontFamily": "var(--mono)", "fontSize": "11.5px", "color": "rgba(255,255,255,.78)", "fontWeight": "600"}}}>5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
+          <span style={{"fontFamily": "var(--display)", "fontSize": "22px", "fontWeight": "700", "lineHeight": "1.2", "color": "#fff", "maxWidth": "480px", "letterSpacing": "-.005em"}}>Sierra Signature Villa · Mivida</span>
+          <span style={{"fontFamily": "var(--mono)", "fontSize": "11.5px", "color": "rgba(255,255,255,.78)", "fontWeight": "600"}}>5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
         </span>
 
         {/*  ── BOTTOM-RIGHT: floating stats card ──  */}
-        <span style={{{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(14px)", "WebkitWebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}}>
-          <span style={{{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}}>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#e9c176", "lineHeight": "1"}}}>47</span>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}}>tours live</span>
+        <span style={{"position": "absolute", "bottom": "24px", "insetInlineEnd": "24px", "zIndex": "3", "background": "rgba(0,18,35,.62)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(14px)", "WebkitWebkitBackdropFilter": "blur(8px)", "border": "1px solid rgba(200,150,26,.32)", "borderRadius": "14px", "padding": "14px 18px", "display": "flex", "gap": "22px", "alignItems": "center"}}>
+          <span style={{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#e9c176", "lineHeight": "1"}}>47</span>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}>tours live</span>
           </span>
-          <span style={{{"width": "1px", "height": "32px", "background": "rgba(255,255,255,.14)"}}}></span>
-          <span style={{{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}}>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#34d399", "lineHeight": "1"}}}>12</span>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}}>ready to move</span>
+          <span style={{"width": "1px", "height": "32px", "background": "rgba(255,255,255,.14)"}}></span>
+          <span style={{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#34d399", "lineHeight": "1"}}>12</span>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}>ready to move</span>
           </span>
-          <span style={{{"width": "1px", "height": "32px", "background": "rgba(255,255,255,.14)"}}}></span>
-          <span style={{{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}}>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#8fe1ff", "lineHeight": "1"}}}>4K</span>
-            <span style={{{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}}>HDR quality</span>
+          <span style={{"width": "1px", "height": "32px", "background": "rgba(255,255,255,.14)"}}></span>
+          <span style={{"display": "flex", "flexDirection": "column", "alignItems": "center", "gap": "1px"}}>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "22px", "fontWeight": "800", "color": "#8fe1ff", "lineHeight": "1"}}>4K</span>
+            <span style={{"fontFamily": "var(--mono)", "fontSize": "8.5px", "fontWeight": "700", "letterSpacing": ".12em", "textTransform": "uppercase", "color": "rgba(255,255,255,.72)"}}>HDR quality</span>
           </span>
         </span>
 
         {/*  ── TOP-RIGHT: LIVE badge ──  */}
-        <span style={{{"position": "absolute", "top": "22px", "insetInlineEnd": "24px", "zIndex": "3", "display": "inline-flex", "alignItems": "center", "gap": "7px", "background": "rgba(0,18,35,.6)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(8px)", "border": "1px solid rgba(52,211,153,.35)", "borderRadius": "999px", "padding": "6px 12px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}}>
-          <span style={{{"width": "7px", "height": "7px", "borderRadius": "50%", "background": "#34d399", "boxShadow": "0 0 8px #34d399", "animation": "vtvBlink 1.6s ease-in-out infinite"}}}></span>
+        <span style={{"position": "absolute", "top": "22px", "insetInlineEnd": "24px", "zIndex": "3", "display": "inline-flex", "alignItems": "center", "gap": "7px", "background": "rgba(0,18,35,.6)", "WebkitBackdropFilter": "blur(8px)", "backdropFilter": "blur(8px)", "border": "1px solid rgba(52,211,153,.35)", "borderRadius": "999px", "padding": "6px 12px", "fontFamily": "var(--mono)", "fontSize": "10.5px", "fontWeight": "700", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}>
+          <span style={{"width": "7px", "height": "7px", "borderRadius": "50%", "background": "#34d399", "boxShadow": "0 0 8px #34d399", "animation": "vtvBlink 1.6s ease-in-out infinite"}}></span>
           LIVE · SIERRA 3D
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style={{{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
-      <div id="vtv-loading" style={{{"position": "absolute", "inset": "0", "display": "none", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "14px", "color": "rgba(255,255,255,.85)", "fontSize": "14px", "fontWeight": "600", "background": "linear-gradient(135deg,#0a1622 0%,#002b4b 100%)", "zIndex": "1"}}}>
-        <i data-lucide="loader-2" className="i" style={{{"width": "32px", "height": "32px", "animation": "vtv-spin 1s linear infinite"}}}></i>
+      <iframe id="vtv-iframe" style={{"position": "absolute", "inset": "0", "width": "100%", "height": "100%", "border": "0", "opacity": "0", "transition": "opacity .4s ease", "background": "#0a1622"}} title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen referrerpolicy="no-referrer-when-downgrade" loading="lazy"></iframe>
+      <div id="vtv-loading" style={{"position": "absolute", "inset": "0", "display": "none", "flexDirection": "column", "alignItems": "center", "justifyContent": "center", "gap": "14px", "color": "rgba(255,255,255,.85)", "fontSize": "14px", "fontWeight": "600", "background": "linear-gradient(135deg,#0a1622 0%,#002b4b 100%)", "zIndex": "1"}}>
+        <i data-lucide="loader-2" className="i" style={{"width": "32px", "height": "32px", "animation": "vtv-spin 1s linear infinite"}}></i>
         <span>Loading immersive 3D tour…</span>
       </div>
-      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" style={{{"position": "absolute", "top": "12px", "insetInlineEnd": "12px", "zIndex": "3", "background": "rgba(0,43,75,.78)", "color": "#fff", "border": "0", "borderRadius": "8px", "width": "36px", "height": "36px", "cursor": "pointer", "display": "none", "placeItems": "center"}}}>
-        <i data-lucide="maximize-2" className="i" style={{{"width": "16px", "height": "16px"}}}></i>
+      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" style={{"position": "absolute", "top": "12px", "insetInlineEnd": "12px", "zIndex": "3", "background": "rgba(0,43,75,.78)", "color": "#fff", "border": "0", "borderRadius": "8px", "width": "36px", "height": "36px", "cursor": "pointer", "display": "none", "placeItems": "center"}}>
+        <i data-lucide="maximize-2" className="i" style={{"width": "16px", "height": "16px"}}></i>
       </button>
     </div>
-    <div style={{{"display": "flex", "justifyContent": "space-between", "alignItems": "center", "flexWrap": "wrap", "gap": "12px", "marginTop": "14px"}}}>
-      <a aria-label="Link" href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style={{{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontSize": "12.5px", "fontWeight": "600", "color": "var(--pri)", "textDecoration": "none"}}}>
-        <i data-lucide="external-link" className="i" style={{{"width": "12px", "height": "12px"}}}></i> Open tour in new tab
+    <div style={{"display": "flex", "justifyContent": "space-between", "alignItems": "center", "flexWrap": "wrap", "gap": "12px", "marginTop": "14px"}}>
+      <a aria-label="Link" href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style={{"display": "inline-flex", "alignItems": "center", "gap": "6px", "fontSize": "12.5px", "fontWeight": "600", "color": "var(--pri)", "textDecoration": "none"}}>
+        <i data-lucide="external-link" className="i" style={{"width": "12px", "height": "12px"}}></i> Open tour in new tab
       </a>
-      <span style={{{"fontFamily": "var(--mono)", "fontSize": "11px", "color": "var(--muted)", "letterSpacing": ".06em", "textTransform": "uppercase"}}}>Cinematic capture · Matterport-grade fidelity</span>
+      <span style={{"fontFamily": "var(--mono)", "fontSize": "11px", "color": "var(--muted)", "letterSpacing": ".06em", "textTransform": "uppercase"}}>Cinematic capture · Matterport-grade fidelity</span>
     </div>
   </div>
 </section>
@@ -351,7 +351,7 @@ export default function ClientPage() {
         <h2>Discover the Best Opportunities</h2>
         <p>Explore all New Cairo compounds on the interactive map. Click any marker for details.</p>
       </div>
-      <a aria-label="Link" href="compounds.html" className="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" className="i" style={{{"width": "16px", "height": "16px"}}}></i></a>
+      <a aria-label="Link" href="compounds.html" className="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" className="i" style={{"width": "16px", "height": "16px"}}></i></a>
     </div>
 
     {/*  ═══ Quick filter bar (compound + bedrooms only) ═══
@@ -361,57 +361,57 @@ export default function ClientPage() {
     {/*  ═══ SMART MAP FILTER — collapsible dropdown ═══
          Click the filter bar to expand/collapse. Shows active filter count
          as a badge. Compound search + beds selector inside.  */}
-    <div className="hmf-wrap" style={{{"marginBottom": "18px"}}}>
+    <div className="hmf-wrap" style={{"marginBottom": "18px"}}>
       {/*  Filter trigger bar (always visible)  */}
-      <button aria-label="Button" className="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style={{{"display": "flex", "alignItems": "center", "justifyContent": "space-between", "gap": "14px", "width": "100%", "padding": "14px 20px", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "14px", "boxShadow": "var(--shadow-s)", "cursor": "pointer", "transition": ".2s var(--silk)", "fontFamily": "var(--font)"}}}>
-        <span style={{{"display": "flex", "alignItems": "center", "gap": "10px"}}}>
-          <i data-lucide="sliders-horizontal" className="i" style={{{"width": "18px", "height": "18px", "color": "var(--pri)", "flex": "none"}}}></i>
-          <span style={{{"fontSize": "14.5px", "fontWeight": "700", "color": "var(--ink)"}}} data-i18n="hmfTitle">Smart Filter</span>
-          <span id="hmf-active-badge" style={{{"display": "none", "background": "var(--pri)", "color": "#fff", "fontFamily": "var(--mono)", "fontSize": "10px", "fontWeight": "800", "padding": "2px 8px", "borderRadius": "999px", "letterSpacing": ".04em"}}}>0</span>
+      <button aria-label="Button" className="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style={{"display": "flex", "alignItems": "center", "justifyContent": "space-between", "gap": "14px", "width": "100%", "padding": "14px 20px", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "14px", "boxShadow": "var(--shadow-s)", "cursor": "pointer", "transition": ".2s var(--silk)", "fontFamily": "var(--font)"}}>
+        <span style={{"display": "flex", "alignItems": "center", "gap": "10px"}}>
+          <i data-lucide="sliders-horizontal" className="i" style={{"width": "18px", "height": "18px", "color": "var(--pri)", "flex": "none"}}></i>
+          <span style={{"fontSize": "14.5px", "fontWeight": "700", "color": "var(--ink)"}} data-i18n="hmfTitle">Smart Filter</span>
+          <span id="hmf-active-badge" style={{"display": "none", "background": "var(--pri)", "color": "#fff", "fontFamily": "var(--mono)", "fontSize": "10px", "fontWeight": "800", "padding": "2px 8px", "borderRadius": "999px", "letterSpacing": ".04em"}}>0</span>
         </span>
-        <span style={{{"display": "flex", "alignItems": "center", "gap": "12px"}}}>
-          <span id="home-map-count" style={{{"fontFamily": "var(--mono)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "letterSpacing": ".04em", "whiteSpace": "nowrap"}}}>… compounds</span>
-          <i data-lucide="chevron-down" className="i" id="hmf-chevron" style={{{"width": "18px", "height": "18px", "color": "var(--muted)", "transition": "transform .3s var(--silk)", "flex": "none"}}}></i>
+        <span style={{"display": "flex", "alignItems": "center", "gap": "12px"}}>
+          <span id="home-map-count" style={{"fontFamily": "var(--mono)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "letterSpacing": ".04em", "whiteSpace": "nowrap"}}>… compounds</span>
+          <i data-lucide="chevron-down" className="i" id="hmf-chevron" style={{"width": "18px", "height": "18px", "color": "var(--muted)", "transition": "transform .3s var(--silk)", "flex": "none"}}></i>
         </span>
       </button>
 
       {/*  Filter panel (collapsible)  */}
-      <div className="hmf-panel" id="hmf-panel" style={{{"display": "none", "marginTop": "8px", "padding": "18px 20px", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "14px", "boxShadow": "var(--shadow-s)", "animation": "hmfSlideDown .3s var(--silk) both"}}}>
+      <div className="hmf-panel" id="hmf-panel" style={{"display": "none", "marginTop": "8px", "padding": "18px 20px", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "14px", "boxShadow": "var(--shadow-s)", "animation": "hmfSlideDown .3s var(--silk) both"}}>
         {/*  Compound multi-select row  */}
-        <div style={{{"marginBottom": "16px"}}}>
-          <div style={{{"display": "flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "var(--muted)", "marginBottom": "8px"}}}>
-            <i data-lucide="building-2" className="i" style={{{"width": "14px", "height": "14px"}}}></i>
+        <div style={{"marginBottom": "16px"}}>
+          <div style={{"display": "flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "var(--muted)", "marginBottom": "8px"}}>
+            <i data-lucide="building-2" className="i" style={{"width": "14px", "height": "14px"}}></i>
             <span data-i18n="hmfCompounds">Compounds</span>
-            <span style={{{"fontSize": "10px", "fontWeight": "600", "letterSpacing": ".04em", "textTransform": "none", "color": "var(--muted)", "opacity": ".7"}}} data-i18n="hmfMultiHint">Click to select multiple</span>
+            <span style={{"fontSize": "10px", "fontWeight": "600", "letterSpacing": ".04em", "textTransform": "none", "color": "var(--muted)", "opacity": ".7"}} data-i18n="hmfMultiHint">Click to select multiple</span>
           </div>
           {/*  Selected chips area  */}
-          <div id="hmf-compound-chips" style={{{"display": "flex", "gap": "6px", "flexWrap": "wrap", "marginBottom": "8px", "minHeight": "0"}}}></div>
+          <div id="hmf-compound-chips" style={{"display": "flex", "gap": "6px", "flexWrap": "wrap", "marginBottom": "8px", "minHeight": "0"}}></div>
           {/*  Search + dropdown  */}
-          <div style={{{"display": "flex", "alignItems": "center", "gap": "9px", "padding": "10px 14px", "background": "var(--surface-2)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "transition": ".2s", "position": "relative"}}}>
-            <i data-lucide="search" className="i" style={{{"width": "17px", "height": "17px", "color": "var(--muted)", "flex": "none"}}}></i>
-            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style={{{"flex": "1", "border": "none", "outline": "none", "background": "transparent", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "minWidth": "0"}}} autocomplete="off" />
-            <i data-lucide="chevron-down" className="i" style={{{"width": "16px", "height": "16px", "color": "var(--muted)", "flex": "none", "transition": "transform .2s"}}} id="hmf-compound-chevron"></i>
+          <div style={{"display": "flex", "alignItems": "center", "gap": "9px", "padding": "10px 14px", "background": "var(--surface-2)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "transition": ".2s", "position": "relative"}}>
+            <i data-lucide="search" className="i" style={{"width": "17px", "height": "17px", "color": "var(--muted)", "flex": "none"}}></i>
+            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style={{"flex": "1", "border": "none", "outline": "none", "background": "transparent", "fontFamily": "var(--font)", "fontSize": "14px", "color": "var(--ink)", "minWidth": "0"}} autocomplete="off" />
+            <i data-lucide="chevron-down" className="i" style={{"width": "16px", "height": "16px", "color": "var(--muted)", "flex": "none", "transition": "transform .2s"}} id="hmf-compound-chevron"></i>
             {/*  Dropdown list (absolute positioned)  */}
-            <div id="hmf-compound-dropdown" style={{{"display": "none", "position": "absolute", "top": "calc(100% + 6px)", "left": "0", "right": "0", "maxHeight": "280px", "overflowY": "auto", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "boxShadow": "var(--shadow-m)", "zIndex": "200", "padding": "6px"}}}></div>
+            <div id="hmf-compound-dropdown" style={{"display": "none", "position": "absolute", "top": "calc(100% + 6px)", "left": "0", "right": "0", "maxHeight": "280px", "overflowY": "auto", "background": "var(--surface)", "border": "1.5px solid var(--line-2)", "borderRadius": "10px", "boxShadow": "var(--shadow-m)", "zIndex": "200", "padding": "6px"}}></div>
           </div>
         </div>
 
         {/*  Beds selector row (single select, no '+')  */}
-        <div style={{{"display": "flex", "alignItems": "center", "gap": "10px", "flexWrap": "wrap"}}}>
-          <span style={{{"display": "flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "var(--muted)"}}}>
-            <i data-lucide="bed-double" className="i" style={{{"width": "14px", "height": "14px"}}}></i>
+        <div style={{"display": "flex", "alignItems": "center", "gap": "10px", "flexWrap": "wrap"}}>
+          <span style={{"display": "flex", "alignItems": "center", "gap": "6px", "fontFamily": "var(--mono)", "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".1em", "textTransform": "uppercase", "color": "var(--muted)"}}>
+            <i data-lucide="bed-double" className="i" style={{"width": "14px", "height": "14px"}}></i>
             <span data-i18n="hmfBeds">Bedrooms</span>
           </span>
-          <div id="home-map-beds" style={{{"display": "flex", "gap": "4px", "padding": "3px", "background": "var(--bg)", "borderRadius": "999px"}}}>
-            <button aria-label="Button" className="on" data-b="0" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}} data-i18n="hmfAny">Any</button>
-            <button aria-label="Button" data-b="1" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}}>1</button>
-            <button aria-label="Button" data-b="2" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}}>2</button>
-            <button aria-label="Button" data-b="3" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}}>3</button>
-            <button aria-label="Button" data-b="4" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}}>4</button>
-            <button aria-label="Button" data-b="5" type="button" style={{{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}}>5</button>
+          <div id="home-map-beds" style={{"display": "flex", "gap": "4px", "padding": "3px", "background": "var(--bg)", "borderRadius": "999px"}}>
+            <button aria-label="Button" className="on" data-b="0" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}} data-i18n="hmfAny">Any</button>
+            <button aria-label="Button" data-b="1" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}>1</button>
+            <button aria-label="Button" data-b="2" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}>2</button>
+            <button aria-label="Button" data-b="3" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}>3</button>
+            <button aria-label="Button" data-b="4" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}>4</button>
+            <button aria-label="Button" data-b="5" type="button" style={{"border": "none", "cursor": "pointer", "padding": "7px 14px", "borderRadius": "999px", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "color": "var(--muted)", "background": "transparent", "transition": ".2s"}}>5</button>
           </div>
-          <button aria-label="Button" id="hmf-reset" type="button" style={{{"marginInlineStart": "auto", "border": "1.5px solid var(--line-2)", "background": "var(--surface-2)", "color": "var(--text)", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "padding": "7px 14px", "borderRadius": "999px", "cursor": "pointer", "transition": ".2s", "display": "inline-flex", "alignItems": "center", "gap": "5px"}}}>
-            <i data-lucide="rotate-ccw" className="i" style={{{"width": "12px", "height": "12px"}}}></i>
+          <button aria-label="Button" id="hmf-reset" type="button" style={{"marginInlineStart": "auto", "border": "1.5px solid var(--line-2)", "background": "var(--surface-2)", "color": "var(--text)", "fontFamily": "var(--font)", "fontSize": "12px", "fontWeight": "700", "padding": "7px 14px", "borderRadius": "999px", "cursor": "pointer", "transition": ".2s", "display": "inline-flex", "alignItems": "center", "gap": "5px"}}>
+            <i data-lucide="rotate-ccw" className="i" style={{"width": "12px", "height": "12px"}}></i>
             <span data-i18n="hmfReset">Reset</span>
           </button>
         </div>
@@ -419,11 +419,11 @@ export default function ClientPage() {
     </div>
 
     <div className="map-sticky-wrap" id="map-sticky-wrap">
-      <div id="home-map" style={{{"height": "480px", "borderRadius": "var(--r-card)", "border": "1px solid var(--line)", "zIndex": "1", "background": "var(--bg)", "marginBottom": "8px"}}}></div>
+      <div id="home-map" style={{"height": "480px", "borderRadius": "var(--r-card)", "border": "1px solid var(--line)", "zIndex": "1", "background": "var(--bg)", "marginBottom": "8px"}}></div>
     </div>
-    <div style={{{"textAlign": "center", "marginTop": "12px"}}}>
-      <a aria-label="Link" href="compounds.html" className="btn btn-navy" style={{{"display": "inline-flex", "alignItems": "center", "gap": "8px", "textDecoration": "none"}}}>
-        <i data-lucide="map" className="i" style={{{"width": "16px", "height": "16px"}}}></i>
+    <div style={{"textAlign": "center", "marginTop": "12px"}}>
+      <a aria-label="Link" href="compounds.html" className="btn btn-navy" style={{"display": "inline-flex", "alignItems": "center", "gap": "8px", "textDecoration": "none"}}>
+        <i data-lucide="map" className="i" style={{"width": "16px", "height": "16px"}}></i>
         <span>Open Full Map</span>
       </a>
     </div>
@@ -442,28 +442,28 @@ export default function ClientPage() {
         <p>AI-ranked by match score, ROI potential, and market demand. Updates in real-time.</p>
       </div>
     </div>
-    <div id="insights-grid" style={{{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(300px,1fr))", "gap": "20px", "marginBottom": "30px"}}}></div>
-    <div id="insights-market" style={{{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(220px,1fr))", "gap": "16px", "padding": "24px", "background": "var(--bg)", "borderRadius": "14px", "border": "1px solid var(--line)"}}}>
-      <div style={{{"textAlign": "center"}}}>
-        <div style={{{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "var(--pri)"}}}>+24%</div>
-        <div style={{{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}}>Top Growth (Mountain View)</div>
+    <div id="insights-grid" style={{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(300px,1fr))", "gap": "20px", "marginBottom": "30px"}}></div>
+    <div id="insights-market" style={{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(220px,1fr))", "gap": "16px", "padding": "24px", "background": "var(--bg)", "borderRadius": "14px", "border": "1px solid var(--line)"}}>
+      <div style={{"textAlign": "center"}}>
+        <div style={{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "var(--pri)"}}>+24%</div>
+        <div style={{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}>Top Growth (Mountain View)</div>
       </div>
-      <div style={{{"textAlign": "center"}}}>
-        <div style={{{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "#34d399"}}}>9.8</div>
-        <div style={{{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}}>Highest AI Score (Hyde Park)</div>
+      <div style={{"textAlign": "center"}}>
+        <div style={{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "#34d399"}}>9.8</div>
+        <div style={{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}>Highest AI Score (Hyde Park)</div>
       </div>
-      <div style={{{"textAlign": "center"}}}>
-        <div style={{{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "var(--pri)"}}}>EGP 35M</div>
-        <div style={{{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}}>Top Price (Taj City)</div>
+      <div style={{"textAlign": "center"}}>
+        <div style={{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "var(--pri)"}}>EGP 35M</div>
+        <div style={{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}>Top Price (Taj City)</div>
       </div>
-      <div style={{{"textAlign": "center"}}}>
-        <div style={{{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "#34d399"}}}>798</div>
-        <div style={{{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}}>Active Units</div>
+      <div style={{"textAlign": "center"}}>
+        <div style={{"fontFamily": "var(--mono)", "fontSize": "32px", "fontWeight": "800", "color": "#34d399"}}>798</div>
+        <div style={{"fontSize": "12px", "color": "var(--muted)", "textTransform": "uppercase", "letterSpacing": ".08em"}}>Active Units</div>
       </div>
     </div>
-    <div style={{{"textAlign": "center", "marginTop": "20px"}}}>
-      <a aria-label="Link" href="properties.html" className="btn btn-navy" style={{{"display": "inline-flex", "alignItems": "center", "gap": "8px", "textDecoration": "none"}}}>
-        <i data-lucide="trending-up" className="i" style={{{"width": "16px", "height": "16px"}}}></i>
+    <div style={{"textAlign": "center", "marginTop": "20px"}}>
+      <a aria-label="Link" href="properties.html" className="btn btn-navy" style={{"display": "inline-flex", "alignItems": "center", "gap": "8px", "textDecoration": "none"}}>
+        <i data-lucide="trending-up" className="i" style={{"width": "16px", "height": "16px"}}></i>
         <span>View All Best Listings</span>
       </a>
     </div>
@@ -526,8 +526,8 @@ export default function ClientPage() {
           <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
         </div>
         <button aria-label="Button" className="btn btn-pri" type="submit"><i data-lucide="send" className="i"></i> <span data-i18n="inqSend"></span></button>
-        <div id="inq-success" style={{{"display": "none", "marginTop": "14px", "padding": "14px 18px", "background": "rgba(52,211,153,.08)", "border": "1px solid rgba(52,211,153,.35)", "borderRadius": "10px", "color": "#16a34a", "fontWeight": "600", "fontSize": "13.5px"}}}>
-          <i data-lucide="check-circle" style={{{"width": "16px", "height": "16px", "verticalAlign": "middle", "marginInlineEnd": "6px"}}}></i>
+        <div id="inq-success" style={{"display": "none", "marginTop": "14px", "padding": "14px 18px", "background": "rgba(52,211,153,.08)", "border": "1px solid rgba(52,211,153,.35)", "borderRadius": "10px", "color": "#16a34a", "fontWeight": "600", "fontSize": "13.5px"}}>
+          <i data-lucide="check-circle" style={{"width": "16px", "height": "16px", "verticalAlign": "middle", "marginInlineEnd": "6px"}}></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
         </div>
       </form>
@@ -546,33 +546,33 @@ export default function ClientPage() {
     <div className="ai-scan"></div>
     <div className="ai-grid" id="ai-grid"></div>
     {/*  AI tool preview images  */}
-    <div style={{{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(280px,1fr))", "gap": "16px", "marginTop": "28px"}}}>
-      <a aria-label="Link" href="matches.html" style={{{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}}>
-        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" style={{{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}}} loading="lazy"/>
-        <div style={{{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}}></div>
-        <div style={{{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}}>
-          <div style={{{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}}>LIVE</div>
-          <div style={{{"fontSize": "14px", "fontWeight": "700"}}}>Smart Match v3</div>
+    <div style={{"display": "grid", "gridTemplateColumns": "repeat(auto-fit,minmax(280px,1fr))", "gap": "16px", "marginTop": "28px"}}>
+      <a aria-label="Link" href="matches.html" style={{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}>
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" style={{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}} loading="lazy"/>
+        <div style={{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}></div>
+        <div style={{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}>
+          <div style={{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}>LIVE</div>
+          <div style={{"fontSize": "14px", "fontWeight": "700"}}>Smart Match v3</div>
         </div>
       </a>
-      <a aria-label="Link" href="pricing.html" style={{{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}}>
-        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" style={{{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}}} loading="lazy"/>
-        <div style={{{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}}></div>
-        <div style={{{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}}>
-          <div style={{{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}}>LIVE</div>
-          <div style={{{"fontSize": "14px", "fontWeight": "700"}}}>AVM Pricing Engine</div>
+      <a aria-label="Link" href="pricing.html" style={{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}>
+        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" style={{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}} loading="lazy"/>
+        <div style={{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}></div>
+        <div style={{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}>
+          <div style={{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}>LIVE</div>
+          <div style={{"fontSize": "14px", "fontWeight": "700"}}>AVM Pricing Engine</div>
         </div>
       </a>
-      <a aria-label="Link" href="roi.html" style={{{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}}>
-        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" style={{{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}}} loading="lazy"/>
-        <div style={{{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}}></div>
-        <div style={{{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}}>
-          <div style={{{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}}>LIVE</div>
-          <div style={{{"fontSize": "14px", "fontWeight": "700"}}}>ROI Forecaster</div>
+      <a aria-label="Link" href="roi.html" style={{"display": "block", "borderRadius": "14px", "overflow": "hidden", "position": "relative", "textDecoration": "none"}}>
+        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" style={{"width": "100%", "height": "180px", "objectFit": "cover", "transition": "transform .4s var(--silk)"}} loading="lazy"/>
+        <div style={{"position": "absolute", "inset": "0", "background": "linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%)"}}></div>
+        <div style={{"position": "absolute", "bottom": "12px", "left": "16px", "color": "#fff"}}>
+          <div style={{"fontFamily": "var(--mono)", "fontSize": "9px", "letterSpacing": ".14em", "textTransform": "uppercase", "color": "#34d399"}}>LIVE</div>
+          <div style={{"fontSize": "14px", "fontWeight": "700"}}>ROI Forecaster</div>
         </div>
       </a>
     </div>
-    <div style={{{"marginTop": "16px"}}} className="rv">
+    <div style={{"marginTop": "16px"}} className="rv">
       <button aria-label="Button" className="tour-launch" id="tour-open" type="button">
         <span className="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span className="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
@@ -583,7 +583,7 @@ export default function ClientPage() {
 </section>
 
 {/*  CTA  */}
-<section className="block" id="contact" style={{{"paddingTop": "0"}}} data-screen-label="CTA band">
+<section className="block" id="contact" style={{"paddingTop": "0"}} data-screen-label="CTA band">
   <div className="wrap">
     <div className="cta rv">
       <div className="ct-txt">
@@ -592,10 +592,10 @@ export default function ClientPage() {
       </div>
       <div className="ct-act">
         <button aria-label="Button" className="btn btn-white" type="button"><i data-lucide="plus" className="i"></i> <span data-i18n="ctaBtn1"></span></button>
-        <a aria-label="Link" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out" style={{{"textDecoration": "none"}}}><i data-lucide="phone" className="i"></i> <span>+2 01092048333</span></a>
+        <a aria-label="Link" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out" style={{"textDecoration": "none"}}><i data-lucide="phone" className="i"></i> <span>+2 01092048333</span></a>
       </div>
-      <div style={{{"marginTop": "14px", "fontFamily": "var(--mono)", "fontSize": "13px", "color": "rgba(255,255,255,.6)"}}}>
-        <i data-lucide="mail" className="i" style={{{"width": "14px", "height": "14px", "verticalAlign": "-2px"}}}></i> <a aria-label="Link" href="mailto:info@Sierra-Estates.net" style={{{"color": "rgba(255,255,255,.7)", "textDecoration": "none"}}}>info@Sierra-Estates.net</a>
+      <div style={{"marginTop": "14px", "fontFamily": "var(--mono)", "fontSize": "13px", "color": "rgba(255,255,255,.6)"}}>
+        <i data-lucide="mail" className="i" style={{"width": "14px", "height": "14px", "verticalAlign": "-2px"}}></i> <a aria-label="Link" href="mailto:info@Sierra-Estates.net" style={{"color": "rgba(255,255,255,.7)", "textDecoration": "none"}}>info@Sierra-Estates.net</a>
       </div>
     </div>
   </div>
@@ -645,11 +645,11 @@ export default function ClientPage() {
     <div className="tweaks-section">
       <div className="tweaks-label">Accent Color</div>
       <div className="tweaks-swatches" id="tweaks-swatches">
-        <div className="tweaks-swatch on" data-color="#00aeff" style={{{"background": "#00aeff"}}} title="Cyan"></div>
-        <div className="tweaks-swatch" data-color="#c8961a" style={{{"background": "#c8961a"}}} title="Gold"></div>
-        <div className="tweaks-swatch" data-color="#34d399" style={{{"background": "#34d399"}}} title="Green"></div>
-        <div className="tweaks-swatch" data-color="#e63946" style={{{"background": "#e63946"}}} title="Red"></div>
-        <div className="tweaks-swatch" data-color="#a78bfa" style={{{"background": "#a78bfa"}}} title="Purple"></div>
+        <div className="tweaks-swatch on" data-color="#00aeff" style={{"background": "#00aeff"}} title="Cyan"></div>
+        <div className="tweaks-swatch" data-color="#c8961a" style={{"background": "#c8961a"}} title="Gold"></div>
+        <div className="tweaks-swatch" data-color="#34d399" style={{"background": "#34d399"}} title="Green"></div>
+        <div className="tweaks-swatch" data-color="#e63946" style={{"background": "#e63946"}} title="Red"></div>
+        <div className="tweaks-swatch" data-color="#a78bfa" style={{"background": "#a78bfa"}} title="Purple"></div>
       </div>
     </div>
     <div className="tweaks-section">
