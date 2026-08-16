@@ -2458,5 +2458,19 @@
     ],
     "createdAt": "2026-08-02T12:38:51.992Z",
     "updatedAt": "2026-08-02T12:38:51.992Z"
+  },
+  "vertex-task-titan-runner-1786842406523": {
+    "id": "vertex-task-titan-runner-1786842406523",
+    "value": {
+      "prompt": "Provide a 3-bullet summary of luxury real estate trends in New Cairo",
+      "response": "Of course. Here is a 3-bullet summary of luxury real estate trends in New Cairo:\n\n*   **Shift to Integrated Lifestyle Communities:** The dominant trend is a move away from standalone properties towards large-scale, master-planned gated communities. Developers are selling a complete lifestyle, not just a home, by integrating a comprehensive suite of amenities such as international schools, commercial retail districts, exclusive clubhouses, and vast green spaces, prioritizing security and convenience.\n\n*   **Strong Demand as an Asset Class:** Due to economic factors, including the devaluation of the Egyptian Pound, luxury real estate has become a prime vehicle for capital preservation. For high-net-worth domestic buyers, it serves as a secure hedge against inflation, while for international and expatriate investors, it represents a significant value proposition, driving strong foreign demand.\n\n*   **Focus on Experiential Luxury and Sustainability:** The definition of luxury is evolving beyond size and finishes. New projects increasingly emphasize the integration of smart-home technology, wellness facilities, and sustainable design (green architecture, energy efficiency). Furthermore, the emergence of branded residences, which associate properties with global luxury hospitality brands, is a growing niche that offers hotel-level services and a new tier of exclusivity.",
+      "timestamp": "2026-08-16T01:06:46.523Z"
+    },
+    "tags": [
+      "vertex-agent",
+      "titan-runner"
+    ],
+    "createdAt": "2026-08-16T01:06:46.529Z",
+    "updatedAt": "2026-08-16T01:06:46.529Z"
   }
 }
