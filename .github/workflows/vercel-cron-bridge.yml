@@ -49,6 +49,8 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
       - name: Select endpoints for this run
         id: select
@@ -73,7 +75,6 @@ jobs:
 
       - name: Trigger endpoints
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           TARGETS: ${{ steps.select.outputs.targets }}
         run: |
           if [ -z "$CRON_SECRET" ]; then
