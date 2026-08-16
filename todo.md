@@ -16,4 +16,8 @@
 - [x] Add Important Projects link in the site header
 - [x] Add responsive styles and accessible page labels
 - [ ] Run the repository test/build checks
-- [ ] Verify English and Arabic routes and Important Projects navigation
+- [x] Verify English and Arabic routes and Important Projects navigation
+- [x] Add verified Alfa Labs, tower-frontage, and Banque Misr evidence images to the Important Projects client page
+- [x] Add bilingual current-site captions and verification-safe disclosure text
+- [x] Validate the client-page asset paths and Important Projects rendering
+- [ ] Commit and push the client-page evidence update to GitHub
