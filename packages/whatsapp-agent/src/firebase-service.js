@@ -11,7 +11,7 @@ const fs = require('fs');
 let db = null;
 
 function initFirebase() {
-  if (admin.apps.length > 0) {
+  if (admin.apps && admin.apps.length > 0) {
     db = admin.firestore();
     return db;
   }
@@ -202,15 +202,30 @@ const getAdminDb = () => {
   return db;
 };
 
+const createMockCollection = () => {
+  const chain = {
+    doc: () => ({
+      set: async () => {},
+      update: async () => {},
+      get: async () => ({ exists: false, data: () => ({}) })
+    }),
+    add: async () => ({ id: 'mock_' + Date.now() }),
+    where: () => chain,
+    orderBy: () => chain,
+    limit: () => chain,
+    get: async () => ({ empty: true, docs: [] }),
+  };
+  return chain;
+};
+
 const adminDb = new Proxy({}, {
   get(target, prop) {
     const database = getAdminDb();
     if (!database) {
-      return () => ({
-        doc: () => ({ set: async () => {}, update: async () => {}, get: async () => ({ exists: false }) }),
-        add: async () => {},
-        where: () => ({ limit: () => ({ get: async () => ({ empty: true, docs: [] }) }) }),
-      });
+      if (prop === 'collection') {
+        return () => createMockCollection();
+      }
+      return () => createMockCollection();
     }
     const val = database[prop];
     return typeof val === 'function' ? val.bind(database) : val;
