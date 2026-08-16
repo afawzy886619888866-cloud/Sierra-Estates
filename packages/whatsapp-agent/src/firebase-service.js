@@ -126,19 +126,23 @@ async function updateLeadQualification(phone, qualData, clientName = '') {
     if (!snap.empty) {
       const docRef = snap.docs[0].ref;
       const data = snap.docs[0].data();
-      resolvedName = resolvedName || data.name || data.clientName || 'Client';
+      resolvedName = resolvedName || qualData.client_name || data.name || data.clientName || 'Client';
 
       await docRef.update({
         qualification: qualData,
         qualifiedAt: admin.firestore.Timestamp.now(),
         lead_ready: qualData.lead_ready ?? true,
+        client_name: qualData.client_name || resolvedName,
         preferred_viewing: qualData.preferred_viewing || '',
         move_in_date: qualData.move_in_date || '',
-        duration: qualData.duration || '',
+        lease_duration: qualData.lease_duration || qualData.duration || '',
+        duration: qualData.lease_duration || qualData.duration || '',
         budget: qualData.budget || '',
+        currency: qualData.currency || 'EGP',
         locations: qualData.locations || [],
         bedrooms: qualData.bedrooms || '',
-        furnished: qualData.furnished ?? false,
+        furnishing_status: qualData.furnishing_status || (qualData.furnished ? 'Furnished' : 'Unfurnished'),
+        special_notes: qualData.special_notes || '',
       });
       console.log(`🎯 [Lead Qualified in DB]: Updated qualification for phone ${clean}`);
     }
@@ -151,11 +155,11 @@ async function updateLeadQualification(phone, qualData, clientName = '') {
 
     if (!stakeSnap.empty) {
       const stakeData = stakeSnap.docs[0].data();
-      resolvedName = resolvedName || stakeData.name || 'Client';
+      resolvedName = resolvedName || qualData.client_name || stakeData.name || 'Client';
 
       await stakeSnap.docs[0].ref.update({
         stage: 'S3', // Advanced to Qualification Completed
-        notes: `Qualified via WhatsApp: Viewing: ${qualData.preferred_viewing || 'TBD'}, Move-in: ${qualData.move_in_date || 'TBD'}, Budget: ${qualData.budget || 'TBD'}`,
+        notes: `Qualified via WhatsApp: Viewing: ${qualData.preferred_viewing || 'TBD'}, Move-in: ${qualData.move_in_date || 'TBD'}, Budget: ${qualData.budget || 'TBD'} ${qualData.currency || 'EGP'}, Status: ${qualData.furnishing_status || 'Standard'}`,
         updatedAt: admin.firestore.Timestamp.now(),
       });
     }
