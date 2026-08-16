@@ -20,4 +20,14 @@
 - [x] Add verified Alfa Labs, tower-frontage, and Banque Misr evidence images to the Important Projects client page
 - [x] Add bilingual current-site captions and verification-safe disclosure text
 - [x] Validate the client-page asset paths and Important Projects rendering
-- [ ] Commit and push the client-page evidence update to GitHub
+- [x] Commit and push the client-page evidence update to GitHub
+
+## Multi-page Next.js and Three.js client rebuild
+
+- [x] Audit current client routes, buttons, and dependencies
+- [x] Define dedicated English and Arabic route architecture
+- [x] Make primary buttons navigate to dedicated pages
+- [x] Add a restrained Three.js visual layer with fallback-safe behavior
+- [x] Preserve real-site evidence and AI-concept disclosures
+- [x] Validate all routes and responsive navigation
+- [ ] Commit and push the multi-page client rebuild

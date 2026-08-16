@@ -37,7 +37,7 @@ export default function CairoPlazaPage() {
               {lang === 'ar' ? 'English' : 'العربية'}
             </button>
             <Link
-              href="/properties"
+              href="/cairo-plaza/inventory"
               className="px-4 py-2 text-xs font-semibold rounded bg-amber-500 text-slate-950 hover:bg-amber-400 transition"
             >
               {lang === 'ar' ? 'استعراض العقارات' : 'View Properties'}
@@ -63,13 +63,13 @@ export default function CairoPlazaPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="#inventory"
+                href="/cairo-plaza/inventory"
                 className="px-6 py-3 rounded-lg bg-amber-500 text-slate-950 font-semibold hover:bg-amber-400 transition shadow-lg shadow-amber-500/10"
               >
                 {lang === 'ar' ? 'استعراض الوحدات المتاحة' : 'Explore Available Units'}
               </a>
               <a
-                href="#investor"
+                href="/cairo-plaza/investor"
                 className="px-6 py-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-200 font-semibold hover:bg-slate-800 transition"
               >
                 {lang === 'ar' ? 'اطلب الملف الاستثماري' : 'Request Investor Pack'}
@@ -245,7 +245,7 @@ export default function CairoPlazaPage() {
                 </p>
               </div>
               <Link
-                href="/properties"
+                href="/cairo-plaza/inventory"
                 className="px-4 py-2 text-xs font-semibold rounded bg-amber-500 text-slate-950 hover:bg-amber-400 transition"
               >
                 {lang === 'ar' ? 'عرض كافة عقارات الشركة' : 'View All Properties'}
@@ -270,7 +270,7 @@ export default function CairoPlazaPage() {
                   <div>
                     <div className="text-xl font-bold text-amber-400 mb-4">{item.price}</div>
                     <Link
-                      href="/properties"
+                      href="/cairo-plaza/inventory"
                       className="block w-full py-2.5 text-center text-xs font-semibold rounded bg-slate-800 text-slate-200 hover:bg-slate-700 transition"
                     >
                       {lang === 'ar' ? 'طلب التفاصيل والبروشور' : 'Request Details'}
