@@ -64,6 +64,9 @@ const nextConfig: NextConfig = {
         // remains reachable at /client-page.
         { source: '/index.html', destination: '/client-page/index.html' },
         { source: '/client-page', destination: '/client-page/index.html' },
+        { source: '/index_standalone.html', destination: '/client-page/index_standalone.html' },
+        { source: '/index_standalone', destination: '/client-page/index_standalone.html' },
+        { source: '/client-page/index_standalone', destination: '/client-page/index_standalone.html' },
       ],
       afterFiles: [
         { source: '/roi', destination: '/client-page/roi.html' },
