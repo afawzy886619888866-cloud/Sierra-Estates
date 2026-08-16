@@ -63,9 +63,10 @@ jobs:
       - name: Validate project ids
         id: check
         env:
-          CLIENT_ID_RAW: ${{ vars['CLIENT_VERCEL_PROJECT_ID'] || 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E' }}
-          ADMIN_ID_RAW: ${{ vars['ADMIN_VERCEL_PROJECT_ID'] || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
+          VARS_JSON: ${{ toJson(vars) }}
         run: |
+          CLIENT_ID_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
+          ADMIN_ID_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
           CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
           ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           for role in CLIENT ADMIN; do
@@ -117,15 +118,17 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         id: proj
         env:
-          CLIENT_PROJ_RAW: ${{ vars['CLIENT_VERCEL_PROJECT_ID'] || 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E' }}
-          ADMIN_PROJ_RAW:  ${{ vars['ADMIN_VERCEL_PROJECT_ID'] || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
-          VERCEL_TOKEN_RAW: ${{ secrets['VERCEL_TOKEN'] }}
-          ORG_ID_RAW:      ${{ vars['VERCEL_ORG_ID'] || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
+          VARS_JSON: ${{ toJson(vars) }}
+          SECRETS_JSON: ${{ toJson(secrets) }}
         run: |
+          CLIENT_PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
+          ADMIN_PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
+          ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
+          TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
+
           CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
-          TOKEN="${VERCEL_TOKEN_RAW}"
 
           # Fail here with an actionable message rather than 5 steps later.
           if [ -z "$TOKEN" ]; then
@@ -194,16 +197,19 @@ jobs:
       - name: Sync env vars to Vercel project
         if: steps.gate.outputs.run == 'true'
         env:
-          FB_API_KEY:       ${{ vars['NEXT_PUBLIC_FIREBASE_API_KEY'] || '' }}
-          FB_AUTH_DOMAIN:   ${{ vars['NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'] || '' }}
-          FB_PROJECT_ID:    ${{ vars['NEXT_PUBLIC_FIREBASE_PROJECT_ID'] || '' }}
-          FB_STORAGE:       ${{ vars['NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'] || '' }}
-          FB_SENDER_ID:     ${{ vars['NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'] || '' }}
-          FB_APP_ID:        ${{ vars['NEXT_PUBLIC_FIREBASE_APP_ID'] || '' }}
-          FB_MEASUREMENT:   ${{ vars['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'] || '' }}
-          FB_DATABASE_URL:  ${{ vars['NEXT_PUBLIC_FIREBASE_DATABASE_URL'] || '' }}
-          SESSION_SECRET_VAL: ${{ secrets['SESSION_SECRET'] || '' }}
+          VARS_JSON: ${{ toJson(vars) }}
+          SECRETS_JSON: ${{ toJson(secrets) }}
         run: |
+          FB_API_KEY=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_API_KEY // empty')
+          FB_AUTH_DOMAIN=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN // empty')
+          FB_PROJECT_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_PROJECT_ID // empty')
+          FB_STORAGE=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET // empty')
+          FB_SENDER_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID // empty')
+          FB_APP_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_APP_ID // empty')
+          FB_MEASUREMENT=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID // empty')
+          FB_DATABASE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_DATABASE_URL // empty')
+          SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
+
           upsert() {
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
             code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
