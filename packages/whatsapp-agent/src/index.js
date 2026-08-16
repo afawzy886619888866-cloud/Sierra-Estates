@@ -251,10 +251,31 @@ client.on('ready', async () => {
     }
   }, 7000);
 
-  // ── Incoming messages ──────────────────────────────────────────────────────
-  client.on('message', async (msg) => {
+  // ── Incoming & Self-Chat messages ─────────────────────────────────────────
+  client.on('message_create', async (msg) => {
     try {
       if (msg.isStatus) return;
+
+      const myId = (client.info && client.info.wid) ? client.info.wid._serialized : '';
+      const isSelfChat = Boolean(myId && (msg.to === myId || msg.from === myId));
+
+      // Skip outbound bot messages to other clients to prevent duplicate triggers
+      if (msg.fromMe && !isSelfChat) return;
+
+      // In self-chat, ignore bot's own generated replies to avoid infinite loops
+      if (isSelfChat && msg.fromMe) {
+        if (
+          msg.body.startsWith('🦅 *[Hermes') ||
+          msg.body.startsWith('⚙️ *[OpenClaw') ||
+          msg.body.startsWith('📄 *') ||
+          msg.body.startsWith('🏡 *') ||
+          msg.body.startsWith('✨ *') ||
+          msg.body.startsWith('🟢 *') ||
+          msg.body.startsWith('[Lead Notification]')
+        ) {
+          return;
+        }
+      }
 
       let chat = null;
       try { chat = await msg.getChat(); } catch (e) {}
@@ -262,11 +283,11 @@ client.on('ready', async () => {
       try { contact = await msg.getContact(); } catch (e) {}
 
       const isGroup   = chat ? chat.isGroup : (msg.from || '').includes('@g.us');
-      const senderId  = msg.from;                        // "201234567890@c.us"
+      const senderId  = isSelfChat ? myId : msg.from;                        // "201234567890@c.us"
       const senderNum = senderId.replace('@c.us', '').replace('@g.us', '');
-      const isAdmin   = isAdminUser(senderNum);
+      const isAdmin   = isSelfChat || isAdminUser(senderNum);
       let body        = msg.body ? msg.body.trim() : '';
-      const name      = (contact && (contact.pushname || contact.name)) || msg._data?.notifyName || 'Client';
+      const name      = isSelfChat ? 'Master Developer (Self)' : ((contact && (contact.pushname || contact.name)) || msg._data?.notifyName || 'Client');
 
       // ── Handle WhatsApp Voice Notes (PTT / Audio) via Gemini ──
       if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
