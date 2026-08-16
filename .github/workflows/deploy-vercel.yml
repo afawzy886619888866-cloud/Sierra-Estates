@@ -26,10 +26,8 @@ name: Deploy · Vercel (client + admin)
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
 on:
-  # Native Vercel Git integration handles automatic deployment on push to main.
-  # deploy-vercel.yml is kept for manual/emergency workflow_dispatch triggers.
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:

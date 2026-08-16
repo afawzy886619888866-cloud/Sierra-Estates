@@ -2585,6 +2585,54 @@
         "isAdmin": true
       },
       "timestamp": "2026-08-16T06:41:54.835Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "Urgent Request 🚨🚨🚨\nvilla 3 bedrooms + nanny's room \nMivida \nSemi Furnished \n150k",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:48:19.713Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "Urgent Request 🚨🚨🚨\n3 bedrooms\nEastown \nFurnished \n3000$\n+\n2 bedrooms\nEastown \nFurnished \n2400$\n1 month (from 18/8)\nيفضل يكونوا قريبين من بعض 📍",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:48:20.892Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "Urgent Request 🚨🚨🚨\nvilla 3 bedrooms + nanny's room \nMivida \nSemi Furnished \n150k",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:48:27.700Z"
+    },
+    {
+      "sourceAgent": "WhatsApp-Inbound",
+      "entityId": "201061399688",
+      "role": "user",
+      "text": "Urgent Request 🚨🚨🚨\n3 bedrooms\nEastown \nFurnished \n3000$\n+\n2 bedrooms\nEastown \nFurnished \n2400$\n1 month (from 18/8)\nيفضل يكونوا قريبين من بعض 📍",
+      "metadata": {
+        "senderName": "Master Developer (Self)",
+        "isGroup": true,
+        "isAdmin": true
+      },
+      "timestamp": "2026-08-16T06:48:32.547Z"
     }
   ]
 }

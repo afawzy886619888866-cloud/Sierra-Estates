@@ -73,7 +73,7 @@ jobs:
 
       - name: Trigger endpoints
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET || '' }}
           TARGETS: ${{ steps.select.outputs.targets }}
         run: |
           if [ -z "$CRON_SECRET" ]; then
