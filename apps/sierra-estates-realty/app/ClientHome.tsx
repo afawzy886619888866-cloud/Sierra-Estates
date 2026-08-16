@@ -4,13 +4,14 @@
 /* ============================================================================
    SIERRA ESTATES — CLIENT HOMEPAGE
    Production React component tree with full Arabic & English support,
+   full-page header navigation, interactive listing detail modals,
    mobile navigation drawer, GSAP-enhanced buttons, and WhatsApp FAB.
    ============================================================================ */
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '@/lib/I18nContext';
 import './client-home.css';
 
@@ -30,27 +31,152 @@ interface Listing {
   baths: number;
   area: number;
   priceLabel: string;
+  usdEstimate?: string;
   aiScore: number;
   img: string;
   isOwner?: boolean;
   badge?: string | null;
   badgeColor?: string;
+  description?: string;
+  finishing?: string;
+  delivery?: string;
 }
 
 /* ── Fallback listings (New Cairo luxury compounds) ─────────────────────── */
 const FALLBACK: Listing[] = [
-  { id: 1, title: 'Grand Villa', location: 'Hyde Park · New Cairo', code: 'HP-VL-04', type: 'Villa', beds: 5, baths: 5, area: 480, priceLabel: 'EGP 28.5M', aiScore: 96, isOwner: true, badge: 'Direct Owner', badgeColor: '#C8961A', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85' },
-  { id: 2, title: 'Twin House', location: 'Mountain View iCity', code: 'MV-TH-02', type: 'Twin House', beds: 4, baths: 3, area: 280, priceLabel: 'EGP 15.5M', aiScore: 92, isOwner: true, badge: 'Direct Owner', badgeColor: '#1E88D9', img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900&q=85' },
-  { id: 3, title: 'Garden Apartment', location: 'Mivida · Emaar', code: 'MVD-AP-11', type: 'Apartment', beds: 3, baths: 2, area: 145, priceLabel: 'EGP 6.8M', aiScore: 94, isOwner: true, badge: 'Direct Owner', badgeColor: '#34D399', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=85' },
-  { id: 4, title: 'Sky Penthouse', location: 'Uptown Cairo', code: 'UPT-PH-01', type: 'Penthouse', beds: 4, baths: 3, area: 300, priceLabel: 'EGP 18.5M', aiScore: 95, isOwner: true, badge: 'Exclusive', badgeColor: '#7C3AED', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=85' },
-  { id: 5, title: 'Signature Villa', location: 'Taj City', code: 'TJC-VL-07', type: 'Villa', beds: 5, baths: 5, area: 500, priceLabel: 'EGP 35.0M', aiScore: 98, isOwner: false, badge: 'Premium', badgeColor: '#C8961A', img: 'https://images.unsplash.com/photo-1613977257592-4a9a32f9141a?w=900&q=85' },
-  { id: 6, title: 'Corner Villa', location: 'Villette · SODIC', code: 'VLT-VL-03', type: 'Villa', beds: 4, baths: 4, area: 390, priceLabel: 'EGP 24.5M', aiScore: 94, isOwner: true, badge: 'Direct Owner', badgeColor: '#34D399', img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=900&q=85' },
+  {
+    id: 1,
+    title: 'Grand Villa',
+    location: 'Hyde Park · New Cairo',
+    code: 'HP-VL-04',
+    type: 'Villa',
+    beds: 5,
+    baths: 5,
+    area: 480,
+    priceLabel: 'EGP 28.5M',
+    usdEstimate: '$570,000',
+    aiScore: 96,
+    isOwner: true,
+    badge: 'Direct Owner',
+    badgeColor: '#C8961A',
+    description: 'Prime standalone luxury villa overlooking the central park in Hyde Park, New Cairo. Features expansive private garden, private swimming pool, and smart home automation.',
+    finishing: 'Core & Shell',
+    delivery: 'Ready to Move',
+    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85'
+  },
+  {
+    id: 2,
+    title: 'Twin House',
+    location: 'Mountain View iCity',
+    code: 'MV-TH-02',
+    type: 'Twin House',
+    beds: 4,
+    baths: 3,
+    area: 280,
+    priceLabel: 'EGP 15.5M',
+    usdEstimate: '$310,000',
+    aiScore: 92,
+    isOwner: true,
+    badge: 'Direct Owner',
+    badgeColor: '#1E88D9',
+    description: 'Modern twin house in Mountain View iCity with private rooftop terrace, landscaped garden, and direct access to the central lagoon and club.',
+    finishing: 'Semi Finished',
+    delivery: 'Immediate',
+    img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900&q=85'
+  },
+  {
+    id: 3,
+    title: 'Garden Apartment',
+    location: 'Mivida · Emaar',
+    code: 'MVD-AP-11',
+    type: 'Apartment',
+    beds: 3,
+    baths: 2,
+    area: 145,
+    priceLabel: 'EGP 6.8M',
+    usdEstimate: '$136,000',
+    aiScore: 94,
+    isOwner: true,
+    badge: 'Direct Owner',
+    badgeColor: '#34D399',
+    description: 'Ultra-finished ground floor apartment with a 90 m² private garden in Mivida by Emaar. Walk to the clubhouse and international schools.',
+    finishing: 'Fully Finished Ultra Lux',
+    delivery: 'Ready to Move',
+    img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=85'
+  },
+  {
+    id: 4,
+    title: 'Sky Penthouse',
+    location: 'Uptown Cairo',
+    code: 'UPT-PH-01',
+    type: 'Penthouse',
+    beds: 4,
+    baths: 3,
+    area: 300,
+    priceLabel: 'EGP 18.5M',
+    usdEstimate: '$370,000',
+    aiScore: 95,
+    isOwner: true,
+    badge: 'Exclusive',
+    badgeColor: '#7C3AED',
+    description: 'Panoramic skyline penthouse atop Uptown Cairo with private infinity jacuzzi, double-height ceilings, and golf course views.',
+    finishing: 'Fully Finished',
+    delivery: 'Ready to Move',
+    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=85'
+  },
+  {
+    id: 5,
+    title: 'Signature Villa',
+    location: 'Taj City',
+    code: 'TJC-VL-07',
+    type: 'Villa',
+    beds: 5,
+    baths: 5,
+    area: 500,
+    priceLabel: 'EGP 35.0M',
+    usdEstimate: '$700,000',
+    aiScore: 98,
+    isOwner: false,
+    badge: 'Premium',
+    badgeColor: '#C8961A',
+    description: 'Spacious bespoke villa located on the Ring Road corridor in Taj City, moments from Cairo International Airport and New Heliopolis.',
+    finishing: 'Core & Shell',
+    delivery: '6 Months',
+    img: 'https://images.unsplash.com/photo-1613977257592-4a9a32f9141a?w=900&q=85'
+  },
+  {
+    id: 6,
+    title: 'Corner Villa',
+    location: 'Villette · SODIC',
+    code: 'VLT-VL-03',
+    type: 'Villa',
+    beds: 4,
+    baths: 4,
+    area: 390,
+    priceLabel: 'EGP 24.5M',
+    usdEstimate: '$490,000',
+    aiScore: 94,
+    isOwner: true,
+    badge: 'Direct Owner',
+    badgeColor: '#34D399',
+    description: 'Corner standalone villa in Villette SODIC Golden Square. Features four pocket parks in surrounding clusters and prime orientation.',
+    finishing: 'Semi Finished',
+    delivery: 'Ready to Move',
+    img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=900&q=85'
+  },
 ];
 
 /* ── Bilingual copy ────────────────────────────────────────────────────── */
 const COPY = {
   en: {
-    navListings: 'Listings', navMap: 'Live Map', navContact: 'Contact', navCta: 'Request a Property',
+    navHome: 'Home',
+    navProperties: 'Properties',
+    navCompounds: 'Compounds & Map',
+    navCairoPlaza: 'Cairo Plaza',
+    navCareers: 'Careers',
+    navVirtualTour: '3D Tour',
+    navContact: 'Contact',
+    navCta: 'Request a Property',
     adminLogin: 'Admin Portal',
     eyebrow: 'AI-DRIVEN · NEW CAIRO LUXURY',
     h1a: 'Find Your', h1b: 'Dream Home', h1c: 'in New Cairo.',
@@ -66,9 +192,26 @@ const COPY = {
     bandTitle: 'Ready to secure your prime property?', bandSub: 'Tell us your exact requirements — our team and AI match engine respond within minutes.',
     bandCta: 'Connect on WhatsApp',
     footer: '© Sierra Estates · New Cairo, Egypt', footerSub: 'Future of Real Estate',
+    modalDetails: 'Property Details',
+    modalDirectOwner: 'Direct Owner Verified (+20% Priority)',
+    modalPrice: 'Valuation Price',
+    modalSpecs: 'Specifications',
+    modalFinishing: 'Finishing',
+    modalDelivery: 'Delivery',
+    modalBookWa: 'Book Viewing on WhatsApp',
+    modalRequestDeck: 'Request Full Investment Deck',
+    modalViewPage: 'Open Full Property Page',
+    modalClose: 'Close'
   },
   ar: {
-    navListings: 'العقارات المتاحة', navMap: 'الخريطة الحية', navContact: 'تواصل معنا', navCta: 'اطلب عقارك الآن',
+    navHome: 'الرئيسية',
+    navProperties: 'العقارات',
+    navCompounds: 'الكمبوندات والخريطة',
+    navCairoPlaza: 'مشروع كايرو بلازا',
+    navCareers: 'وظائف',
+    navVirtualTour: 'جولة 3D',
+    navContact: 'تواصل معنا',
+    navCta: 'اطلب عقارك الآن',
     adminLogin: 'لوحة التحكم',
     eyebrow: 'ذكاء اصطناعي · عقارات القاهرة الجديدة الفاخرة',
     h1a: 'اعثر على', h1b: 'منزل أحلامك', h1c: 'في القاهرة الجديدة.',
@@ -84,6 +227,16 @@ const COPY = {
     bandTitle: 'جاهز لاختيار وحدتك المثالية؟', bandSub: 'شاركنا متطلباتك وسيقوم محرك الذكاء وفريقنا بالرد الفوري وترشيح أفضل الخيارات.',
     bandCta: 'ابدأ المحادثة على واتساب',
     footer: '© سيرا إستيتس · القاهرة الجديدة، مصر', footerSub: 'مستقبل الاستثمار العقاري',
+    modalDetails: 'تفاصيل العقار',
+    modalDirectOwner: 'مالك مباشر موثّق (أولوية +20%)',
+    modalPrice: 'السعر المقيم',
+    modalSpecs: 'المواصفات الفنية',
+    modalFinishing: 'نوع التشطيب',
+    modalDelivery: 'ميعاد الاستلام',
+    modalBookWa: 'احجز معاينة فورية عبر واتساب',
+    modalRequestDeck: 'اطلب ملف الفرصة والعائد الاستثماري',
+    modalViewPage: 'فتح صفحة العقار المستقلة',
+    modalClose: 'إغلاق'
   },
 };
 
@@ -144,11 +297,18 @@ function LanguageSwitch({ isAr, setLocale }: { isAr: boolean; setLocale: (loc: '
   );
 }
 
-/* ── Property card ─────────────────────────────────────────────────────── */
-function PropertyCard({ item, isAr: _isAr }: { item: Listing; isAr: boolean }) {
+/* ── Property Card with Click-to-Open Modal ─────────────────────────────── */
+function PropertyCard({ item, isAr: _isAr, onSelect }: { item: Listing; isAr: boolean; onSelect: (l: Listing) => void }) {
   const [saved, setSaved] = useState(false);
   return (
-    <Link href="/listings" className="se-pcard" style={{ textDecoration: 'none' }}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(item)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(item); } }}
+      className="se-pcard"
+      style={{ textDecoration: 'none', cursor: 'pointer', textAlign: 'inherit' }}
+    >
       <div className="se-pcard__media">
         <img className="se-pcard__img" src={item.img} alt={item.title} loading="lazy" />
         <div className="se-pcard__scrim" />
@@ -173,7 +333,186 @@ function PropertyCard({ item, isAr: _isAr }: { item: Listing; isAr: boolean }) {
           <span className="se-pcard__spec"><SpecIcon d={SPEC_ICONS.area} />{item.area} m²</span>
         </div>
       </div>
-    </Link>
+    </div>
+  );
+}
+
+/* ── Interactive Property Detail Modal ─────────────────────────────────── */
+function PropertyModal({ item, onClose, isAr, t }: { item: Listing; onClose: () => void; isAr: boolean; t: typeof COPY['en'] }) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  const waMsg = encodeURIComponent(
+    isAr
+      ? `مرحباً سيرا إستيتس، أود الاستفسار وحجز معاينة للوحدة كود: ${item.code} (${item.title} في ${item.location}) بسعر ${item.priceLabel}.`
+      : `Hello Sierra Estates, I would like to book a viewing for unit: ${item.code} (${item.title} in ${item.location}) priced at ${item.priceLabel}.`
+  );
+  const waUrl = `https://wa.me/201061399688?text=${waMsg}`;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(3, 10, 18, 0.85)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 16 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          width: '100%',
+          maxWidth: '680px',
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          background: 'var(--bg-e, #0c1c2e)',
+          border: '1px solid var(--bd-gold, rgba(200, 150, 26, 0.35))',
+          borderRadius: 'var(--radius-xl, 20px)',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+          color: '#fff',
+          position: 'relative'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header Media */}
+        <div style={{ position: 'relative', height: '280px', overflow: 'hidden' }}>
+          <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(12,28,46,0.95) 100%)' }} />
+          
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              [isAr ? 'left' : 'right']: '16px',
+              background: 'rgba(0,0,0,0.6)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#fff',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: '18px'
+            }}
+            aria-label={t.modalClose}
+          >
+            ✕
+          </button>
+
+          <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
+                <span style={{ background: 'var(--gold, #c8961a)', color: '#000', fontWeight: 800, fontSize: '11px', padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                  {item.code}
+                </span>
+                {item.badge && (
+                  <span style={{ background: item.badgeColor || '#34D399', color: '#000', fontWeight: 700, fontSize: '11px', padding: '3px 8px', borderRadius: '4px' }}>
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#fff' }}>{item.title}</h2>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--gold-lt, #e9c176)' }}>{item.location}</p>
+            </div>
+            <div style={{ textAlign: isAr ? 'left' : 'right' }}>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--gold-lt, #e9c176)' }}>{item.priceLabel}</div>
+              {item.usdEstimate && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>≈ {item.usdEstimate}</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Body Info */}
+        <div style={{ padding: '24px' }}>
+          {/* Key Metrics Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--bd, rgba(255,255,255,0.1))', borderRadius: '12px', padding: '12px', marginBottom: '20px', textAlign: 'center' }}>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--gold-lt, #e9c176)' }}>{item.beds}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{isAr ? 'غرف' : 'Beds'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--gold-lt, #e9c176)' }}>{item.baths}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{isAr ? 'حمامات' : 'Baths'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--gold-lt, #e9c176)' }}>{item.area} m²</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>{isAr ? 'المساحة' : 'Area'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: '#34D399' }}>{item.aiScore}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>AI Score</div>
+            </div>
+          </div>
+
+          {/* Description & Technical Specs */}
+          {item.description && (
+            <div style={{ marginBottom: '18px' }}>
+              <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--gold-lt, #e9c176)' }}>{t.modalDetails}</h4>
+              <p style={{ margin: 0, fontSize: '13px', lineHeight: '1.6', color: 'rgba(255,255,255,0.85)' }}>{item.description}</p>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px', fontSize: '12px' }}>
+            <div style={{ padding: '10px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)' }}>{t.modalFinishing}: </span>
+              <strong style={{ color: '#fff' }}>{item.finishing || 'Semi Finished'}</strong>
+            </div>
+            <div style={{ padding: '10px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)' }}>{t.modalDelivery}: </span>
+              <strong style={{ color: '#fff' }}>{item.delivery || 'Immediate'}</strong>
+            </div>
+          </div>
+
+          {/* Action CTAs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-wa btn-lg"
+              style={{ width: '100%', justifyContent: 'center', textAlign: 'center' }}
+            >
+              💬 {t.modalBookWa}
+            </a>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <Link
+                href={`/clients?ref=${item.code}`}
+                className="btn-gold"
+                style={{ flex: 1, textAlign: 'center', justifyContent: 'center', minWidth: '160px' }}
+                onClick={onClose}
+              >
+                📋 {t.modalRequestDeck}
+              </Link>
+              <Link
+                href={`/property/${item.id}`}
+                className="nav-link"
+                style={{ flex: 1, textAlign: 'center', padding: '10px', border: '1px solid var(--bd-gold)', borderRadius: 'var(--radius)', minWidth: '160px' }}
+                onClick={onClose}
+              >
+                🔗 {t.modalViewPage}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -200,6 +539,7 @@ export default function ClientHome() {
   const reduce = !!useReducedMotion();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [listings] = useState<Listing[]>(FALLBACK);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   // Close mobile drawer on resize
   useEffect(() => {
@@ -214,7 +554,19 @@ export default function ClientHome() {
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className={isAr ? 'sb-ar' : ''} style={{ minHeight: '100vh', overflowX: 'hidden' }}>
-      {/* NAV */}
+      {/* Interactive Property Detail Modal Overlay */}
+      <AnimatePresence>
+        {selectedListing && (
+          <PropertyModal
+            item={selectedListing}
+            onClose={() => setSelectedListing(null)}
+            isAr={isAr}
+            t={t}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* HEADER NAV */}
       <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(6, 17, 30, 0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--bd)' }}>
         <nav style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '12px var(--gutter)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'var(--tx)' }}>
@@ -226,13 +578,15 @@ export default function ClientHome() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <Link href="/listings" className="nav-link">{t.navListings}</Link>
-            <a href="#map" className="nav-link">{t.navMap}</a>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="nav-link">{t.navContact}</a>
+          <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <Link href="/properties" className="nav-link">{t.navProperties}</Link>
+            <Link href="/compounds" className="nav-link">{t.navCompounds}</Link>
+            <Link href="/cairo-plaza" className="nav-link">{t.navCairoPlaza}</Link>
+            <Link href="/careers" className="nav-link">{t.navCareers}</Link>
+            <Link href="/virtual-tour" className="nav-link">{t.navVirtualTour}</Link>
             <Link href="/admin/login" className="nav-link" style={{ fontSize: 13, opacity: 0.8 }}>🔐 {t.adminLogin}</Link>
             <LanguageSwitch isAr={isAr} setLocale={setLocale} />
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-gold">{t.navCta}</a>
+            <Link href="/clients" className="btn-gold">{t.navCta}</Link>
           </div>
 
           {/* Mobile Hamburger Button */}
@@ -266,11 +620,13 @@ export default function ClientHome() {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
               <LanguageSwitch isAr={isAr} setLocale={setLocale} />
             </div>
-            <Link href="/listings" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navListings}</Link>
-            <a href="#map" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navMap}</a>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="nav-link" style={{ fontSize: 16, textAlign: 'center' }}>{t.navContact}</a>
+            <Link href="/properties" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navProperties}</Link>
+            <Link href="/compounds" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navCompounds}</Link>
+            <Link href="/cairo-plaza" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navCairoPlaza}</Link>
+            <Link href="/careers" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navCareers}</Link>
+            <Link href="/virtual-tour" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 16, textAlign: 'center' }}>{t.navVirtualTour}</Link>
             <Link href="/admin/login" className="nav-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 14, textAlign: 'center', opacity: 0.85 }}>🔐 {t.adminLogin}</Link>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-gold" style={{ width: '100%', minHeight: 46 }}>{t.navCta}</a>
+            <Link href="/clients" className="btn-gold" onClick={() => setMobileMenuOpen(false)} style={{ width: '100%', minHeight: 46, textAlign: 'center', justifyContent: 'center' }}>{t.navCta}</Link>
           </div>
         )}
       </header>
@@ -291,7 +647,7 @@ export default function ClientHome() {
             <p className="sb-body-lg" style={{ maxWidth: 620, margin: '22px auto 34px', color: 'var(--tx-m)', fontSize: 'clamp(15px, 2vw, 18px)' }}>{t.sub}</p>
 
             <div className="hero-btn-group" style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', maxWidth: 480, margin: '0 auto' }}>
-              <Link href="/listings" className="btn-gold btn-lg">{t.ctaBrowse}</Link>
+              <Link href="/properties" className="btn-gold btn-lg">{t.ctaBrowse}</Link>
               <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-wa btn-lg">{t.ctaWhatsapp}</a>
             </div>
           </motion.div>
@@ -318,13 +674,13 @@ export default function ClientHome() {
               <div className="sb-eyebrow" style={{ marginBottom: 10 }}>{t.featEyebrow}</div>
               <h2 className="sb-display-l" style={{ margin: 0 }}>{t.featTitle}</h2>
             </div>
-            <Link href="/listings" style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--gold-lt)' }}>{t.viewAll}</Link>
+            <Link href="/properties" style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--gold-lt)' }}>{t.viewAll}</Link>
           </div>
         </Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: 20 }}>
           {listings.map((item, i) => (
             <Reveal key={item.id} reduce={reduce} delay={Math.min(i * 0.05, 0.25)}>
-              <PropertyCard item={item} isAr={isAr} />
+              <PropertyCard item={item} isAr={isAr} onSelect={setSelectedListing} />
             </Reveal>
           ))}
         </div>
