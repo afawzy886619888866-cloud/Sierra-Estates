@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import CairoPlazaScene from './CairoPlazaScene';
+import CairoPlazaCalculator from './CairoPlazaCalculator';
 
 type Props = { lang?: 'en' | 'ar'; section: 'overview' | 'inventory' | 'investor' | 'contact' };
 
@@ -59,6 +60,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
         <div className="cp-card"><h2 className="">{isAr ? 'تصوّر مستقبلي' : 'Future concept'}</h2><p className="">{isAr ? 'أي تصور مستقبلي موسوم بوضوح بأنه AI Concept.' : 'Any future visual is clearly labeled as an AI concept.'}</p></div>
         <div className="cp-card"><h2 className="">{isAr ? 'سيناريو توضيحي' : 'Illustrative scenario'}</h2><p className="">{isAr ? 'الأرقام والنتائج المحتملة ليست ضمانات.' : 'Financial figures and outcomes are not guarantees.'}</p></div>
       </section>
+      <CairoPlazaCalculator lang={lang} />
     </main>
   );
 }
