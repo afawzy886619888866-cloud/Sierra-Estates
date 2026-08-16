@@ -7,3 +7,13 @@
 - [x] Wire WhatsApp / EasyListing bot intake workflow for adding units automatically
 - [x] Validate client/admin builds and production integration
 - [x] Deliver inventory and WhatsApp integration report
+
+## Cairo Plaza bilingual commercial-site update
+
+- [x] Inspect current header, routes, and page layout
+- [x] Add matching Arabic page with RTL layout and language navigation
+- [x] Add Cairo Plaza commercial page using real-site and clearly labeled AI-concept visuals
+- [x] Add Important Projects link in the site header
+- [x] Add responsive styles and accessible page labels
+- [ ] Run the repository test/build checks
+- [ ] Verify English and Arabic routes and Important Projects navigation

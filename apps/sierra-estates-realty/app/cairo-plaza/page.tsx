@@ -77,6 +77,8 @@ export default function CairoPlazaPage() {
             </div>
           </div>
           <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl p-6">
+            <img src="/cairo-plaza/real-tower-enhanced.png" alt={lang === 'ar' ? 'صورة حقيقية محسنة لبرج كايرو بلازا' : 'Enhanced real Cairo Plaza tower photograph'} className="w-full h-56 object-cover rounded-xl mb-6 border border-slate-700" />
+            <div className="text-[11px] text-slate-400 mb-5">{lang === 'ar' ? 'الموقع الحالي — صورة حقيقية محسّنة بصريًا' : 'Current site — enhanced real photograph'}</div>
             <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/10 to-transparent pointer-events-none"></div>
             <h3 className="text-xl font-bold text-white mb-4">
               {lang === 'ar' ? 'مؤشرات المشروع الرسمية' : 'Official Project Metrics'}
@@ -100,6 +102,21 @@ export default function CairoPlazaPage() {
               </li>
             </ul>
           </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex items-end justify-between gap-6 mb-8 flex-wrap">
+          <div>
+            <div className="text-amber-400 text-xs font-semibold tracking-[0.18em] mb-3">{lang === 'ar' ? 'صور المشروع' : 'PROJECT IMAGERY'}</div>
+            <h2 className="text-2xl lg:text-3xl font-bold text-white">{lang === 'ar' ? 'الموقع الحالي والتصور المستقبلي' : 'Current site and future concept'}</h2>
+            <p className="text-slate-400 mt-3 max-w-2xl">{lang === 'ar' ? 'الصور الحالية أدناه هي صور حقيقية محسّنة. الصور المستقبلية منفصلة وموسومة بوضوح بأنها تصورات بالذكاء الاصطناعي.' : 'Current-site images are enhanced real photographs. Future visuals are separate and clearly labeled as AI concepts.'}</p>
+          </div>
+          <Link href="/ar/cairo-plaza" className="text-amber-400 text-sm hover:text-amber-300">{lang === 'ar' ? 'فتح النسخة العربية ←' : 'Open Arabic version →'}</Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <figure className="md:col-span-2 rounded-2xl overflow-hidden border border-slate-800 bg-slate-900"><img src="/cairo-plaza/real-frontage-enhanced.png" alt={lang === 'ar' ? 'واجهة كايرو بلازا الحالية — صورة حقيقية محسنة' : 'Current Cairo Plaza frontage — enhanced real photograph'} className="w-full h-72 object-cover" /><figcaption className="p-4 text-sm text-slate-300">{lang === 'ar' ? 'واجهة الموقع الحالي — صورة حقيقية محسّنة' : 'Current frontage — enhanced real photograph'}</figcaption></figure>
+          <figure className="rounded-2xl overflow-hidden border border-amber-500/30 bg-slate-900"><img src="/cairo-plaza/ai-concept-aerial-labeled.png" alt={lang === 'ar' ? 'تصور بالذكاء الاصطناعي للمجمع المستقبلي' : 'AI concept for the future compound'} className="w-full h-72 object-cover" /><figcaption className="p-4 text-sm text-amber-300">{lang === 'ar' ? 'تصور بالذكاء الاصطناعي — ليس صورة للموقع الحالي' : 'AI concept — not current-site photography'}</figcaption></figure>
         </div>
       </section>
 
