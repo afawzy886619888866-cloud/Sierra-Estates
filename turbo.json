@@ -89,7 +89,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "apps/**/.next/**", "!.next/cache/**", "!apps/**/.next/cache/**", "dist/**", "packages/**/dist/**"]
+      "outputs": [".next/**", "apps/**/.next/**", "!.next/cache/**", "!apps/**/.next/cache/**", "dist/**", "packages/**/dist/**", "lib/**", "functions/lib/**"]
     },
     "dev": { "cache": false, "persistent": true },
     "lint": { "dependsOn": ["^lint"] },
