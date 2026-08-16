@@ -65,6 +65,9 @@ const client = new Client({
       '--no-first-run',
       '--no-default-browser-check',
       '--disable-extensions',
+      '--disable-blink-features=AutomationControlled',
+      '--window-size=1280,800',
+      '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
     ],
   },
 });
@@ -370,20 +373,52 @@ client.on('ready', async () => {
         return;
       }
 
-      // ── Group: only reply when mentioned ────────────────────────────────
+      // ── Opt-Out / Anti-Spam Unsubscribe Handler ──
+      const optOutKeywords = ['stop', 'إلغاء', 'الغاء', 'مش مهتم', 'unsubscribe', 'لا ترسل', 'كفاية'];
+      if (!isGroup && optOutKeywords.some(kw => lowerBody === kw || lowerBody.startsWith(kw))) {
+        console.log(`🛑 [Opt-Out Protection] Client ${senderNum} requested unsubscribe.`);
+        const optOutReply = /[\u0600-\u06FF]/.test(body)
+          ? 'تم إلغاء استلام الرسائل التلقائية بنجاح. يسعدنا دائماً خدمتكم في حال احتجتم أي مساعدة مستقبلاً.'
+          : 'You have been successfully unsubscribed from automated messages. Thank you.';
+        await msg.reply(optOutReply);
+        store.addMessage(senderId, 'user', body);
+        store.addMessage(senderId, 'model', optOutReply);
+        return;
+      }
+
+      // ── Group Anti-Ban & Mention Rules ────────────────────────────────────
       if (isGroup) {
         if (!CONFIG.replyGroups) return;
-        const mentioned = body.toLowerCase().startsWith('sierra') ||
-                          body.toLowerCase().includes('@sierra') ||
-                          (msg.mentionedIds || []).length > 0;
-        if (!mentioned) return;
+
+        // Strict Mention Check: only respond when explicitly summoned
+        const isMentioned = lowerBody.startsWith('sierra') ||
+                            lowerBody.startsWith('@sierra') ||
+                            lowerBody.startsWith('#sierra') ||
+                            lowerBody.startsWith('/sierra') ||
+                            lowerBody.includes('سييرا') ||
+                            lowerBody.startsWith('@hermes') ||
+                            lowerBody.startsWith('@openclaw') ||
+                            (msg.mentionedIds || []).some(id => id === myId);
+
+        if (!isMentioned) return;
+
+        // Group Anti-Flood Cooldown (Minimum 6 seconds between replies in the same group)
+        const now = Date.now();
+        const lastGroupReply = global.groupCooldownMap ? (global.groupCooldownMap.get(senderId) || 0) : 0;
+        if (now - lastGroupReply < 6000) {
+          console.log(`⏱️ [Anti-Spam] Group ${senderId} reply skipped due to 6s cooldown.`);
+          return;
+        }
+        if (!global.groupCooldownMap) global.groupCooldownMap = new Map();
+        global.groupCooldownMap.set(senderId, now);
       }
 
       // ── Skip DMs if disabled ─────────────────────────────────────────────
-      if (!isGroup && !CONFIG.replyInDMs) return;
+      if (!isGroup && !CONFIG.replyInDMs && !isSelfChat) return;
 
-      // ── Simulate Human Read Delay ──
-      await sleep(1000 + Math.random() * 2000);
+      // ── Adaptive Human Read Delay (Anti-Detection Jitter) ──
+      const readJitter = 1200 + Math.random() * 2400;
+      await sleep(readJitter);
       if (chat) {
         try { await chat.sendSeen(); } catch (e) {}
       }
