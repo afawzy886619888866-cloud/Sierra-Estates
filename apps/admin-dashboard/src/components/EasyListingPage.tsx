@@ -321,8 +321,9 @@ Contact Sierra Estates today to schedule a viewing and embrace the definition of
 
   const saveToFirebase = async () => {
     if (!extractedData) return;
-    setSaveStatus('Saving...');
+    setSaveStatus('Saving to CRM & Inventory...');
     try {
+      // 1. Save to properties legacy collection
       await addDoc(collection(db, 'properties'), {
         code: extractedData.propertyCode,
         compound: extractedData.compound,
@@ -340,7 +341,35 @@ Contact Sierra Estates today to schedule a viewing and embrace the definition of
         images: images,
         createdAt: serverTimestamp()
       });
-      setSaveStatus('Success!');
+
+      // 2. Save to canonical units collection for CRM, Property Finder feeds, and Live Inventory
+      await addDoc(collection(db, 'units'), {
+        title: getPFTitle(),
+        titleAr: `وحدة فاخرة في ${extractedData.compound}`,
+        code: extractedData.propertyCode,
+        referenceNumber: extractedData.propertyCode,
+        compound: extractedData.compound,
+        propertyType: 'apartment',
+        category: 'residential',
+        status: 'available',
+        price: extractedData.price || 0,
+        currency: extractedData.currency || 'EGP',
+        bedrooms: extractedData.bedrooms || 0,
+        bathrooms: extractedData.bathrooms || 0,
+        area: extractedData.area || 0,
+        description: getPFBody(),
+        images: images,
+        phone: phone,
+        automation: {
+          isPublishedToPF: true,
+          isSyncedToCRM: true,
+          source: 'easylisting-engine'
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      setSaveStatus('✓ Saved to CRM & Live Inventory!');
       setTimeout(() => setSaveStatus(null), 3000);
     } catch (err) {
       console.error('Save failed', err);
