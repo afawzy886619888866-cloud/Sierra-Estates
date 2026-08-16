@@ -18,8 +18,7 @@
 <!-- Supabase JS SDK (PostgreSQL + Realtime + Auth) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>
-<script>window.SR=function(u){return (window.__urlmap&&window.__urlmap[u])||u;};(function(){window.__urlmap={};var ms=document.querySelectorAll('meta[name="ext-resource-dependency"]');for(var i=0;i<ms.length;i++){var c=ms[i].getAttribute("content"),id=ms[i].getAttribute("data-resource-id");if(window.__resources&&window.__resources[id])window.__urlmap[c]=window.__resources[id];}})();</script>
-<script src="data.standalone.js"></script>
+<script src="data.js"></script>
 <script src="shared.js"></script>
 <script src="supabase.js"></script>
 <style>
@@ -84,27 +83,6 @@ a:hover{color:var(--pri-d);}
 @media(prefers-reduced-motion:reduce){.page-laser-beam{animation:none;opacity:.4;top:50%;}}
 
 /* ── TWEAKS PANEL — accent color + corner style customization ── */
-/* ── expressive feel controls (Atmosphere / Depth / Motion) ── */
-[data-mood="cinematic"] .hero .scrim{background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.22) 40%,rgba(0,0,0,.72) 100%)!important;}
-[data-mood="cinematic"] .hero img,[data-mood="cinematic"] .pcard .photo img{filter:contrast(1.09) saturate(1.14) brightness(.97);}
-[data-mood="cinematic"] .hero h1{text-shadow:0 3px 26px rgba(0,0,0,.7),0 0 60px rgba(0,0,0,.4);}
-[data-mood="airy"] .hero .scrim{background:linear-gradient(180deg,rgba(0,0,0,.14) 0%,rgba(0,0,0,0) 42%,rgba(0,0,0,.26) 100%)!important;}
-[data-mood="airy"] .hero img,[data-mood="airy"] .pcard .photo img{filter:saturate(.93) brightness(1.05);}
-[data-depth="flat"]{--shadow-s:0 1px 3px rgba(13,33,54,.05);--shadow-m:0 3px 10px rgba(13,33,54,.07);}
-[data-depth="flat"] .pcard:hover{transform:none;}
-[data-depth="dramatic"]{--shadow-s:0 4px 16px rgba(13,33,54,.12);--shadow-m:0 26px 60px rgba(13,33,54,.22);}
-[data-depth="dramatic"] .pcard:hover{transform:translateY(-10px) scale(1.012);}
-[data-depth="dramatic"][data-theme="dark"]{--shadow-m:0 28px 70px rgba(0,0,0,.8);}
-[data-motion="calm"] .page-laser,[data-motion="calm"] .hero .map-cta .mc-ic{animation:none!important;}
-[data-motion="calm"] .page-laser-beam{opacity:0;}
-[data-motion="calm"] .rv{transition-duration:.35s;}
-[data-motion="calm"] .pcard .photo img{transition:transform .3s var(--silk);}
-[data-motion="lively"] .pcard:hover .photo img{transform:scale(1.1);}
-[data-motion="lively"] .rv{transition-duration:1s;}
-.tweaks-seg{display:flex;gap:8px;}
-.tweaks-seg-btn{flex:1;padding:9px 6px;border-radius:10px;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-weight:600;font-size:12.5px;cursor:pointer;transition:.2s var(--silk);text-align:center;}
-.tweaks-seg-btn.on{background:var(--accent,#00aeff);color:#fff;border-color:var(--accent,#00aeff);}
-[data-theme="dark"] .tweaks-seg-btn.on{color:#09090f;}
 .tweaks-trigger{position:fixed;bottom:20px;right:20px;z-index:9998;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);box-shadow:var(--shadow-m);display:grid;place-items:center;cursor:pointer;transition:.25s var(--silk);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
@@ -270,7 +248,7 @@ a:hover{color:var(--pri-d);}
 .perfect{display:grid;grid-template-columns:1.15fr 1fr;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-m);}
 .perfect .pf-left{position:relative;background:var(--navy);padding:52px 48px;color:#fff;overflow:hidden;}
 .perfect .pf-left::before{content:"";position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200&q=70') center/cover;opacity:.14;}
-.perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(0,174,255,.25),transparent 60%);}
+.perfect .pf-left::after{content:"absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(0,174,255,.25),transparent 60%);}
 [data-theme="dark"] .perfect .pf-left::after{background:radial-gradient(600px 300px at 10% 0%,rgba(200,150,26,.2),transparent 60%);}
 .perfect .pf-left>*{position:relative;z-index:2;}
 .perfect .pf-left h2{color:#fff;font-size:30px;margin-bottom:10px;}
@@ -496,38 +474,6 @@ a:hover{color:var(--pri-d);}
   .se-fade{opacity:1 !important;transform:none !important;transition:none !important;}
 }
 </style>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1920&q=85" data-resource-id="img0"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85" data-resource-id="img1"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85" data-resource-id="img2"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1920&q=85" data-resource-id="img3"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&q=85" data-resource-id="img4"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85" data-resource-id="img5"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=85" data-resource-id="img6"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=85" data-resource-id="img7"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=85" data-resource-id="img8"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=85" data-resource-id="img9"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=85" data-resource-id="img10"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=85" data-resource-id="img11"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=85" data-resource-id="img12"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1400&q=85" data-resource-id="img13"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1400&q=85" data-resource-id="img14"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=85" data-resource-id="img15"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1400&q=85" data-resource-id="img16"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=1400&q=85" data-resource-id="img17"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=85" data-resource-id="img18"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=85" data-resource-id="img19"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85" data-resource-id="img20"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200&q=85" data-resource-id="img21"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=85" data-resource-id="img22"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=80" data-resource-id="img23"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" data-resource-id="img24"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" data-resource-id="img25"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80" data-resource-id="img26"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80" data-resource-id="img27"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80" data-resource-id="img28"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80" data-resource-id="img29"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80" data-resource-id="img30"/>
-<meta name="ext-resource-dependency" content="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80" data-resource-id="img31"/>
 </head>
 <body>
 <template id="__bundler_thumbnail">
@@ -2074,29 +2020,6 @@ a:hover{color:var(--pri-d);}
       </div>
     </div>
     <div class="tweaks-section">
-      <div class="tweaks-label">Atmosphere</div>
-      <div class="tweaks-seg" id="tw-mood">
-        <button class="tweaks-seg-btn" data-mood="airy" type="button">Airy</button>
-        <button class="tweaks-seg-btn on" data-mood="refined" type="button">Refined</button>
-        <button class="tweaks-seg-btn" data-mood="cinematic" type="button">Cinematic</button>
-      </div>
-    </div>
-    <div class="tweaks-section">
-      <div class="tweaks-label">Depth</div>
-      <div class="tweaks-seg" id="tw-depth">
-        <button class="tweaks-seg-btn" data-depth="flat" type="button">Flat</button>
-        <button class="tweaks-seg-btn on" data-depth="balanced" type="button">Balanced</button>
-        <button class="tweaks-seg-btn" data-depth="dramatic" type="button">Dramatic</button>
-      </div>
-    </div>
-    <div class="tweaks-section">
-      <div class="tweaks-label">Motion</div>
-      <div class="tweaks-seg" id="tw-motion">
-        <button class="tweaks-seg-btn" data-motion="calm" type="button">Calm</button>
-        <button class="tweaks-seg-btn on" data-motion="lively" type="button">Lively</button>
-      </div>
-    </div>
-    <div class="tweaks-section">
       <div class="tweaks-label">Logo</div>
       <div class="tweaks-logo-row">
         <span class="tweaks-logo-preview"><img id="tweaks-logo-preview-img" src="logo-gold.png" alt="Logo preview"/></span>
@@ -2174,28 +2097,6 @@ a:hover{color:var(--pri-d);}
       localStorage.setItem('se-radius', r);
     });
   });
-
-  // ── expressive feel controls ──
-  function wireSeg(groupId, attr, storeKey, def){
-    var saved = localStorage.getItem(storeKey) || def;
-    document.documentElement.setAttribute(attr, saved);
-    var group = document.getElementById(groupId);
-    if(!group) return;
-    group.querySelectorAll('.tweaks-seg-btn').forEach(function(b){
-      var v=b.getAttribute(attr.replace('data-',''))||b.getAttribute(attr);
-      b.classList.toggle('on', v===saved);
-      b.addEventListener('click', function(){
-        var val=this.getAttribute(attr);
-        group.querySelectorAll('.tweaks-seg-btn').forEach(function(x){x.classList.remove('on');});
-        this.classList.add('on');
-        document.documentElement.setAttribute(attr, val);
-        localStorage.setItem(storeKey, val);
-      });
-    });
-  }
-  wireSeg('tw-mood','data-mood','se-mood','refined');
-  wireSeg('tw-depth','data-depth','se-depth','balanced');
-  wireSeg('tw-motion','data-motion','se-motion','lively');
 
   var logoFile = document.getElementById('tweaks-logo-file');
   var logoReset = document.getElementById('tweaks-logo-reset');

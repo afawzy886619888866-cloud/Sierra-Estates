@@ -19398,3 +19398,19 @@ snapshots:
       immer: 11.1.15
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
+Resources:
+  Skill:
+    Type: Alexa::ASK::Skill
+    Properties:
+      AuthenticationConfiguration:
+        RefreshToken: <String>
+        ClientSecret: <String>
+        ClientId: <String>
+      VendorId: <String>
+      SkillPackage:
+        S3Bucket: <String>
+        S3Key: <String>
+  App:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: <String>
