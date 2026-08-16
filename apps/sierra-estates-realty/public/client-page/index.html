@@ -2,17 +2,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>Sierra Estates · New Cairo Properties</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="shared.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="shared.css" />
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <!-- Supabase JS SDK (PostgreSQL + Realtime + Auth) -->
@@ -55,7 +55,7 @@ a:hover{color:var(--pri-d);}
 .hero .dots button{width:26px;height:4px;border-radius:2px;border:none;background:rgba(255,255,255,.35);cursor:pointer;transition:.3s;padding:0;}
 .hero .dots button.on{background:var(--pri);width:44px;}
 [data-theme="dark"] .hero .dots button.on{background:#e9c176;}
-.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
+.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(8px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
 .hero .map-cta:hover{background:rgba(255,255,255,.24);transform:translateX(-50%) translateY(-2px);border-color:rgba(255,255,255,.6);}
 .hero .map-cta .mc-ic{width:28px;height:28px;border-radius:50%;background:var(--pri);display:grid;place-items:center;flex:none;animation:pulseDot 2.4s infinite;}
 [data-theme="dark"] .hero .map-cta .mc-ic{background:#c8961a;color:#0d0d0f;}
@@ -86,7 +86,7 @@ a:hover{color:var(--pri-d);}
 .tweaks-trigger{position:fixed;bottom:20px;right:20px;z-index:9998;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);box-shadow:var(--shadow-m);display:grid;place-items:center;cursor:pointer;transition:.25s var(--silk);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
-.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
+.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(2px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
 .tweaks-overlay.on{display:flex;}
 .tweaks-panel{background:var(--surface);border-radius:18px;padding:28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:tweaksIn .3s var(--silk) both;}
 @keyframes tweaksIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:none;}}
@@ -426,12 +426,12 @@ a:hover{color:var(--pri-d);}
 [data-theme="dark"] .cpd-marker.hot .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
 .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:var(--pri);}
 [data-theme="dark"] .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
-.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
+.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(4px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(4px);}
 [dir="rtl"] .cpd-marker{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
 .cpd-marker:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,174,255,.5);z-index:999;border-color:#34d399;color:#fff;}
 .cpd-marker.hot{background:linear-gradient(135deg,#00aeff,#0098e0);color:#fff;border-color:#00aeff;}
 .cpd-marker.pulse{background:rgba(0,174,255,.85);color:#fff;border-color:#34d399;}
-[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);}
+[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(4px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(4px);}
 [data-theme="dark"] .cpd-marker.hot{background:linear-gradient(135deg,#e9c176,#c8961a);color:#09090f;}
 [data-theme="dark"] .cpd-marker.pulse{background:rgba(200,150,26,.7);border-color:#34d399;color:#fff;}
 
@@ -474,35 +474,145 @@ a:hover{color:var(--pri-d);}
   .se-fade{opacity:1 !important;transform:none !important;transition:none !important;}
 }
 </style>
+<style>
+.auto-style-1 { left:auto; }
+.auto-style-2 { width:13px;height:13px; }
+.auto-style-3 { position:relative; }
+.auto-style-4 { width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0; }
+.auto-style-5 { display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto; }
+.auto-style-6 { width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer; }
+.auto-style-7 { width:16px;height:16px }
+.auto-style-8 { flex-direction:column;align-items:center;text-align:center; }
+.auto-style-9 { margin-inline:auto; }
+.auto-style-10 { display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:24px; }
+.auto-style-11 { font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-.01em; }
+.auto-style-12 { color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk); }
+.auto-style-13 { width:14px;height:14px; }
+.auto-style-14 { position:relative;width:100%;aspect-ratio:21/9;min-height:420px;border-radius:18px;overflow:hidden;background:#0a1622;box-shadow:0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset;margin-top:8px; }
+.auto-style-15 { position:absolute;inset:0;border-radius:18px;padding:1.5px;background:linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:4; }
+.auto-style-16 { position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;cursor:pointer;background-color:#0a1622;background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center; }
+.auto-style-17 { position:absolute;inset:0;background:linear-gradient(95deg,rgba(0,18,35,.88) 0%,rgba(0,18,35,.62) 38%,rgba(0,18,35,.18) 65%,rgba(0,18,35,.55) 100%);z-index:1; }
+.auto-style-18 { position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,15,30,.65) 0%,transparent 35%);z-index:1; }
+.auto-style-19 { position:absolute;top:0;left:0;bottom:0;width:54%;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:48px 56px;text-align:left;gap:14px; }
+.auto-style-20 { display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#e9c176; }
+.auto-style-21 { width:24px;height:1.5px;background:#e9c176;display:inline-block; }
+.auto-style-22 { font-family:var(--display);font-size:46px;font-weight:700;line-height:1.05;letter-spacing:-.015em;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.55);max-width:560px; }
+.auto-style-23 { display:inline-block;font-style:italic;color:#e9c176;font-weight:600; }
+.auto-style-24 { font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.86);max-width:480px;font-weight:500;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.4); }
+.auto-style-25 { display:flex;gap:8px;flex-wrap:wrap;margin-top:8px; }
+.auto-style-26 { display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(6px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px; }
+.auto-style-27 { width:11px;height:11px;color:#34d399; }
+.auto-style-28 { position:absolute;inset-inline-end:0;top:0;bottom:0;width:46%;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none; }
+.auto-style-29 { width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;flex:none;box-shadow:0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45);transition:transform .35s var(--silk);animation:vtvPulse 2.6s ease-in-out infinite; }
+.auto-style-30 { width:42px;height:42px;color:#0a1622;fill:#0a1622;margin-inline-start:5px; }
+.auto-style-31 { display:block;font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.32em;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6); }
+.auto-style-32 { position:absolute;bottom:26px;inset-inline-start:56px;z-index:3;display:flex;flex-direction:column;gap:5px; }
+.auto-style-33 { display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.16em;color:#e9c176;text-transform:uppercase; }
+.auto-style-34 { width:11px;height:11px; }
+.auto-style-35 { font-family:var(--display);font-size:22px;font-weight:700;line-height:1.2;color:#fff;max-width:480px;letter-spacing:-.005em; }
+.auto-style-36 { font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.78);font-weight:600; }
+.auto-style-37 { position:absolute;bottom:24px;inset-inline-end:24px;z-index:3;background:rgba(0,18,35,.62);-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(14px);-webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(14px);border:1px solid rgba(200,150,26,.32);border-radius:14px;padding:14px 18px;display:flex;gap:22px;align-items:center; }
+.auto-style-38 { display:flex;flex-direction:column;align-items:center;gap:1px; }
+.auto-style-39 { font-family:var(--mono);font-size:22px;font-weight:800;color:#e9c176;line-height:1; }
+.auto-style-40 { font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72); }
+.auto-style-41 { width:1px;height:32px;background:rgba(255,255,255,.14); }
+.auto-style-42 { font-family:var(--mono);font-size:22px;font-weight:800;color:#34d399;line-height:1; }
+.auto-style-43 { font-family:var(--mono);font-size:22px;font-weight:800;color:#8fe1ff;line-height:1; }
+.auto-style-44 { position:absolute;top:22px;inset-inline-end:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(0,18,35,.6);-webkit-backdrop-filter: blur(10px); backdrop-filter:blur(8px); -webkit--webkit-backdrop-filter: blur(10px); backdrop-filter:blur(8px);border:1px solid rgba(52,211,153,.35);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#34d399; }
+.auto-style-45 { width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:vtvBlink 1.6s ease-in-out infinite; }
+.auto-style-46 { position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s ease;background:#0a1622; }
+.auto-style-47 { position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600;background:linear-gradient(135deg,#0a1622 0%,#002b4b 100%);z-index:1; }
+.auto-style-48 { width:32px;height:32px;animation:vtv-spin 1s linear infinite; }
+.auto-style-49 { position:absolute;top:12px;inset-inline-end:12px;z-index:3;background:rgba(0,43,75,.78);color:#fff;border:0;border-radius:8px;width:36px;height:36px;cursor:pointer;display:none;place-items:center; }
+.auto-style-50 { width:16px;height:16px; }
+.auto-style-51 { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px; }
+.auto-style-52 { display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--pri);text-decoration:none; }
+.auto-style-53 { width:12px;height:12px; }
+.auto-style-54 { font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase; }
+.auto-style-55 { margin-bottom:18px; }
+.auto-style-56 { display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:14px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);cursor:pointer;transition:.2s var(--silk);font-family:var(--font); }
+.auto-style-57 { display:flex;align-items:center;gap:10px; }
+.auto-style-58 { width:18px;height:18px;color:var(--pri);flex:none; }
+.auto-style-59 { font-size:14.5px;font-weight:700;color:var(--ink); }
+.auto-style-60 { display:none;background:var(--pri);color:#fff;font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em; }
+.auto-style-61 { display:flex;align-items:center;gap:12px; }
+.auto-style-62 { font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap; }
+.auto-style-63 { width:18px;height:18px;color:var(--muted);transition:transform .3s var(--silk);flex:none; }
+.auto-style-64 { display:none;margin-top:8px;padding:18px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);animation:hmfSlideDown .3s var(--silk) both; }
+.auto-style-65 { margin-bottom:16px; }
+.auto-style-66 { display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px; }
+.auto-style-67 { font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:none;color:var(--muted);opacity:.7; }
+.auto-style-68 { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;min-height:0; }
+.auto-style-69 { display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;transition:.2s;position:relative; }
+.auto-style-70 { width:17px;height:17px;color:var(--muted);flex:none; }
+.auto-style-71 { flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--ink);min-width:0; }
+.auto-style-72 { width:16px;height:16px;color:var(--muted);flex:none;transition:transform .2s; }
+.auto-style-73 { display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow-m);z-index:200;padding:6px; }
+.auto-style-74 { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+.auto-style-75 { display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted); }
+.auto-style-76 { display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:999px; }
+.auto-style-77 { border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s; }
+.auto-style-78 { margin-inline-start:auto;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px; }
+.auto-style-79 { height:480px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);margin-bottom:8px; }
+.auto-style-80 { text-align:center;margin-top:12px; }
+.auto-style-81 { display:inline-flex;align-items:center;gap:8px;text-decoration:none; }
+.auto-style-82 { display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:30px; }
+.auto-style-83 { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:24px;background:var(--bg);border-radius:14px;border:1px solid var(--line); }
+.auto-style-84 { text-align:center; }
+.auto-style-85 { font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri); }
+.auto-style-86 { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em; }
+.auto-style-87 { font-family:var(--mono);font-size:32px;font-weight:800;color:#34d399; }
+.auto-style-88 { text-align:center;margin-top:20px; }
+.auto-style-89 { display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none; }
+.auto-style-90 { width:16px;height:16px;vertical-align:middle;margin-inline-end:6px; }
+.auto-style-91 { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:28px; }
+.auto-style-92 { display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none; }
+.auto-style-93 { width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk); }
+.auto-style-94 { position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%); }
+.auto-style-95 { position:absolute;bottom:12px;left:16px;color:#fff; }
+.auto-style-96 { font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399; }
+.auto-style-97 { font-size:14px;font-weight:700; }
+.auto-style-98 { margin-top:16px; }
+.auto-style-99 { padding-top:0; }
+.auto-style-100 { text-decoration:none; }
+.auto-style-101 { margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6); }
+.auto-style-102 { width:14px;height:14px;vertical-align:-2px; }
+.auto-style-103 { color:rgba(255,255,255,.7);text-decoration:none; }
+.auto-style-104 { background:#00aeff; }
+.auto-style-105 { background:#c8961a; }
+.auto-style-106 { background:#34d399; }
+.auto-style-107 { background:#e63946; }
+.auto-style-108 { background:#a78bfa; }
+</style>
 </head>
 <body>
 <template id="__bundler_thumbnail">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#0D2035"/><text x="200" y="220" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#C8961A" text-anchor="middle">S</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 400 400"><rect width="400" height="400" fill="#0D2035" /><text x="200" y="220" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#C8961A" text-anchor="middle">S</text></svg>
 </template>
 
 <div id="site-chrome"></div>
 
 <!-- HERO SLIDER -->
-<header class="hero" data-screen-label="Home hero">
+<header data-screen-label="Home hero" class="hero">
   <div id="hero-slides"></div>
   <div class="scrim"></div>
   <div class="wrap">
-    <div class="h-eyebrow" id="hero-pre"></div>
+    <div id="hero-pre" class="h-eyebrow"></div>
     <h1 id="hero-main"></h1>
-    <p class="sub" data-i18n="heroSub"></p>
+    <p data-i18n="heroSub" class="sub"></p>
     <div class="quick">
       <span><i data-lucide="badge-check" class="i"></i> <span data-i18n="q1"></span></span>
       <span><i data-lucide="map" class="i"></i> <span data-i18n="q2"></span></span>
       <span><i data-lucide="shield-check" class="i"></i> <span data-i18n="q3"></span></span>
     </div>
   </div>
-  <a class="map-cta" href="compounds.html" title="Link">
+  <a href="compounds.html" title="Link" class="map-cta">
     <span class="mc-ic"><i data-lucide="map" class="i"></i></span>
     <span data-i18n="exploreMapBtn"></span>
   </a>
-  <div class="dots wrap" id="hero-dots" style="left:auto;"></div>
+  <div id="hero-dots" class="dots wrap auto-style-1"></div>
   <!-- ═══ LASER BEAM — inside hero only, never covers map or 3D ═══ -->
-  <div class="page-laser" aria-hidden="true">
+  <div aria-hidden="true" class="page-laser">
     <div class="page-laser-beam"></div>
   </div>
 </header>
@@ -510,11 +620,11 @@ a:hover{color:var(--pri-d);}
 <!-- ═══ CALM BELL BAR — Request Now with 25% OFF ════════════════════════════
      "استكشف أفضل الفرص المتاحة في التجمع الخامس — AI Driven — قدم طلبك الآن
       خصم 25% على رسوم الخدمة" — calm, slow flashing -->
-<div class="bell-bar" id="bell-bar">
+<div id="bell-bar" class="bell-bar">
   <div class="bell-content">
     <span class="bell-text">Egypt's first AI-driven real estate ecosystem · Explore the best opportunities in New Cairo — <b>AI Driven</b> · Apply now</span>
     <span class="bell-badge">25% OFF</span>
-    <a href="#contact" class="bell-btn" title="Link">Request Now <i data-lucide="arrow-right" style="width:13px;height:13px;"></i></a>
+    <a href="#contact" title="Link" class="bell-btn">Request Now <i data-lucide="arrow-right" class="auto-style-2"></i></a>
   </div>
 </div>
 
@@ -522,7 +632,7 @@ a:hover{color:var(--pri-d);}
 <div class="wrap searchbar">
   <div class="search-card rv">
     <div class="search-tabs">
-      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy" title="Button"></button>
+      <button data-i18n="tabBuy" type="button" data-tab="buy" title="Button" class="active"></button>
       <button data-i18n="tabRent" type="button" data-tab="rent" title="Button"></button>
       <button data-i18n="tabNew" type="button" data-tab="new" title="Button"></button>
     </div>
@@ -530,15 +640,15 @@ a:hover{color:var(--pri-d);}
       <!-- Compound search with autocomplete -->
       <div class="field">
         <label data-i18n="fLoc"></label>
-        <div class="search-compound-wrap" style="position:relative;">
-          <input type="text" id="hero-compound-search" class="hero-search-input" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" style="width:100%;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;" / title="Input">
-          <div id="hero-compound-results" class="compound-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:0 0 10px 10px;box-shadow:var(--shadow-m);z-index:100;max-height:280px;overflow-y:auto;"></div>
+        <div class="search-compound-wrap auto-style-3">
+          <input type="text" id="hero-compound-search" placeholder="Search compound... (e.g. Mivida)" autocomplete="off" title="Input" class="hero-search-input auto-style-4">
+          <div id="hero-compound-results" class="compound-dropdown auto-style-5"></div>
         </div>
       </div>
       <!-- Property Type dropdown -->
       <div class="field">
         <label data-i18n="fType"></label>
-        <select id="hero-type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
+        <select id="hero-type" title="Select" class="hero-select auto-style-6">
           <option value="">Any Type</option>
           <option value="Apartment">Apartment</option>
           <option value="Villa">Villa</option>
@@ -551,7 +661,7 @@ a:hover{color:var(--pri-d);}
       <!-- Bedrooms dropdown -->
       <div class="field">
         <label data-i18n="fBeds"></label>
-        <select id="hero-beds" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
+        <select id="hero-beds" title="Select" class="hero-select auto-style-6">
           <option value="0">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -563,7 +673,7 @@ a:hover{color:var(--pri-d);}
       <!-- Price dropdown -->
       <div class="field">
         <label data-i18n="fPrice"></label>
-        <select id="hero-price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;" title="Select">
+        <select id="hero-price" title="Select" class="hero-select auto-style-6">
           <option value="0">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -574,37 +684,37 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Search button -->
       <div class="field searchbtn">
-        <button type="button" class="btn btn-pri" id="hero-search-btn" title="Button"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
+        <button type="button" id="hero-search-btn" title="Button" class="btn btn-pri"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- MARKET TICKER -->
-<div class="ticker" data-screen-label="Market ticker"><div class="row" id="ticker-row"></div></div>
+<div data-screen-label="Market ticker" class="ticker"><div id="ticker-row" class="row"></div></div>
 
 <!-- FEATURED PROPERTIES -->
-<section class="block" id="properties" data-screen-label="Featured properties">
+<section id="properties" data-screen-label="Featured properties" class="block">
   <div class="wrap">
     <div class="sec-head rv">
       <div>
-        <div class="eyebrow" data-i18n="eyeList"></div>
+        <div data-i18n="eyeList" class="eyebrow"></div>
         <h2 data-i18n="featTit"></h2>
         <p data-i18n="featSub"></p>
       </div>
-      <a href="properties.html" class="sec-link" title="Link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="properties.html" title="Link" class="sec-link"><span data-i18n="viewAll"></span> <i data-lucide="arrow-right" class="i auto-style-7"></i></a>
     </div>
-    <div class="grid-props" id="prop-grid"></div>
+    <div id="prop-grid" class="grid-props"></div>
   </div>
 </section>
 
 <!-- WHY SIERRA (moved here — right after units/properties) -->
-<section class="block" id="agents" data-screen-label="Why Sierra">
+<section id="agents" data-screen-label="Why Sierra" class="block">
   <div class="wrap">
-    <div class="sec-head rv" style="flex-direction:column;align-items:center;text-align:center;">
+    <div class="sec-head rv auto-style-8">
       <div>
-        <h2>Why Sierra<sup>1</sup> Estates<sup>&trade;</sup></h2>
-        <p data-i18n="whySub" style="margin-inline:auto;"></p>
+        <h2>Why Sierra<sup>1</sup> Estates<sup>™</sup></h2>
+        <p data-i18n="whySub" class="auto-style-9"></p>
       </div>
     </div>
     <div class="net-banner rv">
@@ -628,17 +738,17 @@ a:hover{color:var(--pri-d);}
 </section>
 
 <!-- COMPOUNDS -->
-<section class="block well" id="compounds" data-screen-label="Compounds preview">
+<section id="compounds" data-screen-label="Compounds preview" class="block well">
   <div class="wrap">
     <div class="sec-head rv">
       <div>
-        <div class="eyebrow" data-i18n="eyeCpd"></div>
+        <div data-i18n="eyeCpd" class="eyebrow"></div>
         <h2 data-i18n="cpdTit"></h2>
         <p data-i18n="cpdSub"></p>
       </div>
-      <a href="compounds.html" class="sec-link" title="Link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" title="Link" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i auto-style-7"></i></a>
     </div>
-    <div class="grid-comp" id="comp-grid"></div>
+    <div id="comp-grid" class="grid-comp"></div>
   </div>
 </section>
 
@@ -647,116 +757,116 @@ a:hover{color:var(--pri-d);}
      Premium luxury villa (with pool, dusk lighting) as cover. Click-to-
      activate 3D engine keeps the page fast. Strong USP headline +
      feature pills + floating stats card communicate the unique value. -->
-<section class="block well" id="tour" data-screen-label="Virtual tour">
+<section id="tour" data-screen-label="Virtual tour" class="block well">
   <div class="wrap">
-    <div class="sec-head rv" style="display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:24px;">
+    <div class="sec-head rv auto-style-10">
       <div>
-        <h2 data-i18n="tourTit" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-.01em;"></h2>
+        <h2 data-i18n="tourTit" class="auto-style-11"></h2>
         <p data-i18n="tourSub"></p>
       </div>
-      <a href="virtual-tour.html" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk);" title="Link">
-        Open full page <i data-lucide="arrow-right" class="i" style="width:14px;height:14px;"></i>
+      <a href="virtual-tour.html" title="Link" class="auto-style-12">
+        Open full page <i data-lucide="arrow-right" class="i auto-style-13"></i>
       </a>
     </div>
 
     <!-- ── Banner frame: gold gradient border + glow ── -->
-    <div id="vtv-banner" style="position:relative;width:100%;aspect-ratio:21/9;min-height:420px;border-radius:18px;overflow:hidden;background:#0a1622;box-shadow:0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset;margin-top:8px;">
+    <div id="vtv-banner" class="auto-style-14">
       <!-- Gold gradient border glow -->
-      <div style="position:absolute;inset:0;border-radius:18px;padding:1.5px;background:linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:4;"></div>
+      <div class="auto-style-15"></div>
 
       <!-- Click-to-activate poster button -->
-      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" style="position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;cursor:pointer;background-color:#0a1622;background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;">
+      <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" class="auto-style-16">
         <!-- Cinematic gradient scrim (deeper on left for text legibility) -->
-        <span style="position:absolute;inset:0;background:linear-gradient(95deg,rgba(0,18,35,.88) 0%,rgba(0,18,35,.62) 38%,rgba(0,18,35,.18) 65%,rgba(0,18,35,.55) 100%);z-index:1;"></span>
+        <span class="auto-style-17"></span>
         <!-- Subtle bottom scrim for stats card -->
-        <span style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,15,30,.65) 0%,transparent 35%);z-index:1;"></span>
+        <span class="auto-style-18"></span>
 
         <!-- ── LEFT: USP headline + feature pills ── -->
-        <span style="position:absolute;top:0;left:0;bottom:0;width:54%;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:48px 56px;text-align:left;gap:14px;">
-          <span style="display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#e9c176;">
-            <span style="width:24px;height:1.5px;background:#e9c176;display:inline-block;"></span>
+        <span class="auto-style-19">
+          <span class="auto-style-20">
+            <span class="auto-style-21"></span>
             SIERRA 3D · POWERED BY IMMERSIVE TECH
           </span>
-          <span style="font-family:var(--display);font-size:46px;font-weight:700;line-height:1.05;letter-spacing:-.015em;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.55);max-width:560px;">
-            Walk Through Your<br/>Next Home
-            <span style="display:inline-block;font-style:italic;color:#e9c176;font-weight:600;">Before You Visit</span>
+          <span class="auto-style-22">
+            Walk Through Your<br />Next Home
+            <span class="auto-style-23">Before You Visit</span>
           </span>
-          <span style="font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.86);max-width:480px;font-weight:500;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.4);">
+          <span class="auto-style-24">
             Every Sierra listing is captured in cinematic 4K HDR. Stroll room-by-room, peek into the garden at dusk, gauge the pool from above, all from your screen, all in seconds.
           </span>
           <!-- Feature pills -->
-          <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="video" class="i" style="width:11px;height:11px;color:#34d399;"></i> 4K HDR
+          <span class="auto-style-25">
+            <span class="auto-style-26">
+              <i data-lucide="video" class="i auto-style-27"></i> 4K HDR
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="door-open" class="i" style="width:11px;height:11px;color:#34d399;"></i> Room-by-room
+            <span class="auto-style-26">
+              <i data-lucide="door-open" class="i auto-style-27"></i> Room-by-room
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="glasses" class="i" style="width:11px;height:11px;color:#34d399;"></i> VR-ready
+            <span class="auto-style-26">
+              <i data-lucide="glasses" class="i auto-style-27"></i> VR-ready
             </span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);padding:6px 11px;border-radius:999px;">
-              <i data-lucide="grid-2x2" class="i" style="width:11px;height:11px;color:#34d399;"></i> Floor plan
+            <span class="auto-style-26">
+              <i data-lucide="grid-2x2" class="i auto-style-27"></i> Floor plan
             </span>
           </span>
         </span>
 
         <!-- ── RIGHT: Big play button + label ── -->
-        <span style="position:absolute;inset-inline-end:0;top:0;bottom:0;width:46%;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;">
-          <span style="width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;flex:none;box-shadow:0 0 0 8px rgba(255,255,255,.18),0 0 0 18px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45);transition:transform .35s var(--silk);animation:vtvPulse 2.6s ease-in-out infinite;">
-            <i data-lucide="play" class="i" style="width:42px;height:42px;color:#0a1622;fill:#0a1622;margin-inline-start:5px;"></i>
+        <span class="auto-style-28">
+          <span class="auto-style-29">
+            <i data-lucide="play" class="i auto-style-30"></i>
           </span>
-          <span style="display:block;font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.32em;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6);">▶ Launch 3D Tour</span>
+          <span class="auto-style-31">▶ Launch 3D Tour</span>
         </span>
 
         <!-- ── BOTTOM-LEFT: property info card ── -->
-        <span style="position:absolute;bottom:26px;inset-inline-start:56px;z-index:3;display:flex;flex-direction:column;gap:5px;">
-          <span style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.16em;color:#e9c176;text-transform:uppercase;">
-            <i data-lucide="map-pin" class="i" style="width:11px;height:11px;"></i> Featured · New Cairo
+        <span class="auto-style-32">
+          <span class="auto-style-33">
+            <i data-lucide="map-pin" class="i auto-style-34"></i> Featured · New Cairo
           </span>
-          <span style="font-family:var(--display);font-size:22px;font-weight:700;line-height:1.2;color:#fff;max-width:480px;letter-spacing:-.005em;">Sierra Signature Villa · Mivida</span>
-          <span style="font-family:var(--mono);font-size:11.5px;color:rgba(255,255,255,.78);font-weight:600;">5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
+          <span class="auto-style-35">Sierra Signature Villa · Mivida</span>
+          <span class="auto-style-36">5 Bed · 6 Bath · 480 m² · Pool · Garden</span>
         </span>
 
         <!-- ── BOTTOM-RIGHT: floating stats card ── -->
-        <span style="position:absolute;bottom:24px;inset-inline-end:24px;z-index:3;background:rgba(0,18,35,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(200,150,26,.32);border-radius:14px;padding:14px 18px;display:flex;gap:22px;align-items:center;">
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#e9c176;line-height:1;">47</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">tours live</span>
+        <span class="auto-style-37">
+          <span class="auto-style-38">
+            <span class="auto-style-39">47</span>
+            <span class="auto-style-40">tours live</span>
           </span>
-          <span style="width:1px;height:32px;background:rgba(255,255,255,.14);"></span>
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#34d399;line-height:1;">12</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">ready to move</span>
+          <span class="auto-style-41"></span>
+          <span class="auto-style-38">
+            <span class="auto-style-42">12</span>
+            <span class="auto-style-40">ready to move</span>
           </span>
-          <span style="width:1px;height:32px;background:rgba(255,255,255,.14);"></span>
-          <span style="display:flex;flex-direction:column;align-items:center;gap:1px;">
-            <span style="font-family:var(--mono);font-size:22px;font-weight:800;color:#8fe1ff;line-height:1;">4K</span>
-            <span style="font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);">HDR quality</span>
+          <span class="auto-style-41"></span>
+          <span class="auto-style-38">
+            <span class="auto-style-43">4K</span>
+            <span class="auto-style-40">HDR quality</span>
           </span>
         </span>
 
         <!-- ── TOP-RIGHT: LIVE badge ── -->
-        <span style="position:absolute;top:22px;inset-inline-end:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(0,18,35,.6);backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);border:1px solid rgba(52,211,153,.35);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">
-          <span style="width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:vtvBlink 1.6s ease-in-out infinite;"></span>
+        <span class="auto-style-44">
+          <span class="auto-style-45"></span>
           LIVE · SIERRA 3D
         </span>
       </button>
 
-      <iframe id="vtv-iframe" style="position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s ease;background:#0a1622;" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen  loading="lazy"></iframe>
-      <div id="vtv-loading" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600;background:linear-gradient(135deg,#0a1622 0%,#002b4b 100%);z-index:1;">
-        <i data-lucide="loader-2" class="i" style="width:32px;height:32px;animation:vtv-spin 1s linear infinite;"></i>
+      <iframe id="vtv-iframe" title="3D Virtual Tour" allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking" allowfullscreen loading="lazy" class="auto-style-46"></iframe>
+      <div id="vtv-loading" class="auto-style-47">
+        <i data-lucide="loader-2" class="i auto-style-48"></i>
         <span>Loading immersive 3D tour…</span>
       </div>
-      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" style="position:absolute;top:12px;inset-inline-end:12px;z-index:3;background:rgba(0,43,75,.78);color:#fff;border:0;border-radius:8px;width:36px;height:36px;cursor:pointer;display:none;place-items:center;">
-        <i data-lucide="maximize-2" class="i" style="width:16px;height:16px;"></i>
+      <button id="vtv-fs" type="button" aria-label="Enter fullscreen" title="Fullscreen" class="auto-style-49">
+        <i data-lucide="maximize-2" class="i auto-style-50"></i>
       </button>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;">
-      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--pri);text-decoration:none;" title="Link">
-        <i data-lucide="external-link" class="i" style="width:12px;height:12px;"></i> Open tour in new tab
+    <div class="auto-style-51">
+      <a href="https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896" target="_blank" rel="noopener noreferrer" title="Link" class="auto-style-52">
+        <i data-lucide="external-link" class="i auto-style-53"></i> Open tour in new tab
       </a>
-      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Cinematic capture · Matterport-grade fidelity</span>
+      <span class="auto-style-54">Cinematic capture · Matterport-grade fidelity</span>
     </div>
   </div>
 </section>
@@ -822,14 +932,14 @@ a:hover{color:var(--pri-d);}
      Interactive Leaflet map with marker clustering. When zoomed out,
      nearby compounds group into styled clusters. When zoomed in, individual
      compound markers space out and are clearly visible. -->
-<section class="block" id="map-section" data-screen-label="Smart Map">
+<section id="map-section" data-screen-label="Smart Map" class="block">
   <div class="wrap">
     <div class="sec-head rv">
       <div>
         <h2>Discover the Best Opportunities</h2>
         <p>Explore all New Cairo compounds on the interactive map. Click any marker for details.</p>
       </div>
-      <a href="compounds.html" class="sec-link" title="Link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i" style="width:16px;height:16px"></i></a>
+      <a href="compounds.html" title="Link" class="sec-link"><span data-i18n="allCpds"></span> <i data-lucide="arrow-right" class="i auto-style-7"></i></a>
     </div>
 
     <!-- ═══ Quick filter bar (compound + bedrooms only) ═══
@@ -839,69 +949,69 @@ a:hover{color:var(--pri-d);}
     <!-- ═══ SMART MAP FILTER — collapsible dropdown ═══
          Click the filter bar to expand/collapse. Shows active filter count
          as a badge. Compound search + beds selector inside. -->
-    <div class="hmf-wrap" style="margin-bottom:18px;">
+    <div class="hmf-wrap auto-style-55">
       <!-- Filter trigger bar (always visible) -->
-      <button class="hmf-trigger" id="hmf-trigger" type="button" aria-expanded="false" style="display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:14px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);cursor:pointer;transition:.2s var(--silk);font-family:var(--font);" title="Button">
-        <span style="display:flex;align-items:center;gap:10px;">
-          <i data-lucide="sliders-horizontal" class="i" style="width:18px;height:18px;color:var(--pri);flex:none;"></i>
-          <span style="font-size:14.5px;font-weight:700;color:var(--ink);" data-i18n="hmfTitle">Smart Filter</span>
-          <span id="hmf-active-badge" style="display:none;background:var(--pri);color:#fff;font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em;">0</span>
+      <button id="hmf-trigger" type="button" aria-expanded="false" title="Button" class="hmf-trigger auto-style-56">
+        <span class="auto-style-57">
+          <i data-lucide="sliders-horizontal" class="i auto-style-58"></i>
+          <span data-i18n="hmfTitle" class="auto-style-59">Smart Filter</span>
+          <span id="hmf-active-badge" class="auto-style-60">0</span>
         </span>
-        <span style="display:flex;align-items:center;gap:12px;">
-          <span id="home-map-count" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap;">… compounds</span>
-          <i data-lucide="chevron-down" class="i" id="hmf-chevron" style="width:18px;height:18px;color:var(--muted);transition:transform .3s var(--silk);flex:none;"></i>
+        <span class="auto-style-61">
+          <span id="home-map-count" class="auto-style-62">… compounds</span>
+          <i data-lucide="chevron-down" id="hmf-chevron" class="i auto-style-63"></i>
         </span>
       </button>
 
       <!-- Filter panel (collapsible) -->
-      <div class="hmf-panel" id="hmf-panel" style="display:none;margin-top:8px;padding:18px 20px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-s);animation:hmfSlideDown .3s var(--silk) both;">
+      <div id="hmf-panel" class="hmf-panel auto-style-64">
         <!-- Compound multi-select row -->
-        <div style="margin-bottom:16px;">
-          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">
-            <i data-lucide="building-2" class="i" style="width:14px;height:14px;"></i>
+        <div class="auto-style-65">
+          <div class="auto-style-66">
+            <i data-lucide="building-2" class="i auto-style-13"></i>
             <span data-i18n="hmfCompounds">Compounds</span>
-            <span style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:none;color:var(--muted);opacity:.7;" data-i18n="hmfMultiHint">Click to select multiple</span>
+            <span data-i18n="hmfMultiHint" class="auto-style-67">Click to select multiple</span>
           </div>
           <!-- Selected chips area -->
-          <div id="hmf-compound-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;min-height:0;"></div>
+          <div id="hmf-compound-chips" class="auto-style-68"></div>
           <!-- Search + dropdown -->
-          <div style="display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;transition:.2s;position:relative;">
-            <i data-lucide="search" class="i" style="width:17px;height:17px;color:var(--muted);flex:none;"></i>
-            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" style="flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--ink);min-width:0;" autocomplete="off" / title="Input">
-            <i data-lucide="chevron-down" class="i" style="width:16px;height:16px;color:var(--muted);flex:none;transition:transform .2s;" id="hmf-compound-chevron"></i>
+          <div class="auto-style-69">
+            <i data-lucide="search" class="i auto-style-70"></i>
+            <input id="home-map-compound" type="text" data-i18n-ph="hmfPlaceholder" placeholder="Search compounds (e.g. Mivida, Hyde Park)…" autocomplete="off" title="Input" class="auto-style-71">
+            <i data-lucide="chevron-down" id="hmf-compound-chevron" class="i auto-style-72"></i>
             <!-- Dropdown list (absolute positioned) -->
-            <div id="hmf-compound-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:280px;overflow-y:auto;background:var(--surface);border:1.5px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow-m);z-index:200;padding:6px;"></div>
+            <div id="hmf-compound-dropdown" class="auto-style-73"></div>
           </div>
         </div>
 
         <!-- Beds selector row (single select, no '+') -->
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">
-            <i data-lucide="bed-double" class="i" style="width:14px;height:14px;"></i>
+        <div class="auto-style-74">
+          <span class="auto-style-75">
+            <i data-lucide="bed-double" class="i auto-style-13"></i>
             <span data-i18n="hmfBeds">Bedrooms</span>
           </span>
-          <div id="home-map-beds" style="display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:999px;">
-            <button class="on" data-b="0" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" data-i18n="hmfAny" title="Button">Any</button>
-            <button data-b="1" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">1</button>
-            <button data-b="2" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">2</button>
-            <button data-b="3" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">3</button>
-            <button data-b="4" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">4</button>
-            <button data-b="5" type="button" style="border:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-family:var(--font);font-size:12px;font-weight:700;color:var(--muted);background:transparent;transition:.2s;" title="Button">5</button>
+          <div id="home-map-beds" class="auto-style-76">
+            <button data-b="0" type="button" data-i18n="hmfAny" title="Button" class="on auto-style-77">Any</button>
+            <button data-b="1" type="button" title="Button" class="auto-style-77">1</button>
+            <button data-b="2" type="button" title="Button" class="auto-style-77">2</button>
+            <button data-b="3" type="button" title="Button" class="auto-style-77">3</button>
+            <button data-b="4" type="button" title="Button" class="auto-style-77">4</button>
+            <button data-b="5" type="button" title="Button" class="auto-style-77">5</button>
           </div>
-          <button id="hmf-reset" type="button" style="margin-inline-start:auto;border:1.5px solid var(--line-2);background:var(--surface-2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px;" title="Button">
-            <i data-lucide="rotate-ccw" class="i" style="width:12px;height:12px;"></i>
+          <button id="hmf-reset" type="button" title="Button" class="auto-style-78">
+            <i data-lucide="rotate-ccw" class="i auto-style-53"></i>
             <span data-i18n="hmfReset">Reset</span>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="map-sticky-wrap" id="map-sticky-wrap">
-      <div id="home-map" style="height:480px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);margin-bottom:8px;"></div>
+    <div id="map-sticky-wrap" class="map-sticky-wrap">
+      <div id="home-map" class="auto-style-79"></div>
     </div>
-    <div style="text-align:center;margin-top:12px;">
-      <a href="compounds.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;" title="Link">
-        <i data-lucide="map" class="i" style="width:16px;height:16px;"></i>
+    <div class="auto-style-80">
+      <a href="compounds.html" title="Link" class="btn btn-navy auto-style-81">
+        <i data-lucide="map" class="i auto-style-50"></i>
         <span>Open Full Map</span>
       </a>
     </div>
@@ -912,7 +1022,7 @@ a:hover{color:var(--pri-d);}
      This section shows the top 3 AI-ranked properties + market insights.
      When wired to the backend (Firestore), the admin page can update these
      insights in real-time. The data structure is ready for Firestore. -->
-<section class="block" id="insights" data-screen-label="AI Insights">
+<section id="insights" data-screen-label="AI Insights" class="block">
   <div class="wrap">
     <div class="sec-head rv">
       <div>
@@ -920,28 +1030,28 @@ a:hover{color:var(--pri-d);}
         <p>AI-ranked by match score, ROI potential, and market demand. Updates in real-time.</p>
       </div>
     </div>
-    <div id="insights-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:30px;"></div>
-    <div id="insights-market" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;padding:24px;background:var(--bg);border-radius:14px;border:1px solid var(--line);">
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri);">+24%</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Top Growth (Mountain View)</div>
+    <div id="insights-grid" class="auto-style-82"></div>
+    <div id="insights-market" class="auto-style-83">
+      <div class="auto-style-84">
+        <div class="auto-style-85">+24%</div>
+        <div class="auto-style-86">Top Growth (Mountain View)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:#34d399;">9.8</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Highest AI Score (Hyde Park)</div>
+      <div class="auto-style-84">
+        <div class="auto-style-87">9.8</div>
+        <div class="auto-style-86">Highest AI Score (Hyde Park)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:var(--pri);">EGP 35M</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Top Price (Taj City)</div>
+      <div class="auto-style-84">
+        <div class="auto-style-85">EGP 35M</div>
+        <div class="auto-style-86">Top Price (Taj City)</div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--mono);font-size:32px;font-weight:800;color:#34d399;">798</div>
-        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">Active Units</div>
+      <div class="auto-style-84">
+        <div class="auto-style-87">798</div>
+        <div class="auto-style-86">Active Units</div>
       </div>
     </div>
-    <div style="text-align:center;margin-top:20px;">
-      <a href="properties.html" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;" title="Link">
-        <i data-lucide="trending-up" class="i" style="width:16px;height:16px;"></i>
+    <div class="auto-style-88">
+      <a href="properties.html" title="Link" class="btn btn-navy auto-style-81">
+        <i data-lucide="trending-up" class="i auto-style-50"></i>
         <span>View All Best Listings</span>
       </a>
     </div>
@@ -949,7 +1059,7 @@ a:hover{color:var(--pri-d);}
 </section>
 
 <!-- STATS -->
-<section class="stats" data-screen-label="Stats strip">
+<section data-screen-label="Stats strip" class="stats">
   <div class="wrap">
     <div class="stat rv"><b data-count="1900" data-suffix="+">0</b><span data-i18n="stat1"></span></div>
     <div class="stat rv d1"><b data-count="53">0</b><span data-i18n="stat2"></span></div>
@@ -959,21 +1069,21 @@ a:hover{color:var(--pri-d);}
 </section>
 
 <!-- TESTIMONIALS -->
-<section class="block testi-band" id="testimonials" data-screen-label="Testimonials">
+<section id="testimonials" data-screen-label="Testimonials" class="block testi-band">
   <div class="wrap">
     <div class="sec-head rv">
       <div>
-        <div class="eyebrow" data-i18n="eyeTesti"></div>
+        <div data-i18n="eyeTesti" class="eyebrow"></div>
         <h2 data-i18n="testiTit"></h2>
         <p data-i18n="testiSub"></p>
       </div>
     </div>
-    <div class="grid-testi" id="testi-grid"></div>
+    <div id="testi-grid" class="grid-testi"></div>
   </div>
 </section>
 
 <!-- PERFECT CHOICE + INQUIRY -->
-<section class="block" id="inquiry" data-screen-label="Why Sierra + inquiry form">
+<section id="inquiry" data-screen-label="Why Sierra + inquiry form" class="block">
   <div class="wrap">
     <div class="perfect rv">
       <div class="pf-left">
@@ -983,29 +1093,29 @@ a:hover{color:var(--pri-d);}
         <div class="pf-item"><span class="num">02</span><div><h4 data-i18n="pc2t"></h4><p data-i18n="pc2s"></p></div></div>
         <div class="pf-item"><span class="num">03</span><div><h4 data-i18n="pc3t"></h4><p data-i18n="pc3s"></p></div></div>
       </div>
-      <form class="inq" id="inq-form">
+      <form id="inq-form" class="inq">
         <h3 data-i18n="inqTit"></h3>
         <p data-i18n="inqSub"></p>
-        <div class="seg" id="inq-seg">
-          <button type="button" class="on" data-i18n="inqBuy" title="Button"></button>
+        <div id="inq-seg" class="seg">
+          <button type="button" data-i18n="inqBuy" title="Button" class="on"></button>
           <button type="button" data-i18n="inqRent" title="Button"></button>
           <button type="button" data-i18n="inqSell" title="Button"></button>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/ title="Input"></div>
-          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX"/ title="Input"></div>
+          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required title="Input"></div>
+          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX" title="Input"></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/ title="Input"></div>
+          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com" title="Input"></div>
           <div><label data-i18n="inqZone"></label><select id="inq-zone" title="Select"></select></div>
         </div>
         <div class="frow">
           <div><label data-i18n="inqType2"></label><select id="inq-type" title="Select"></select></div>
-          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/ title="Input"></div>
+          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr" title="Input"></div>
         </div>
-        <button class="btn btn-pri" type="submit" title="Button"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
-        <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
-          <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
+        <button type="submit" title="Button" class="btn btn-pri"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <div id="inq-success" class="auto-style-89">
+          <i data-lucide="check-circle" class="auto-style-90"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
         </div>
       </form>
@@ -1014,54 +1124,54 @@ a:hover{color:var(--pri-d);}
 </section>
 
 <!-- AI HUB / Intelligence Engine (moved below Why Sierra) -->
-<section class="ai-hub" id="ai" data-screen-label="AI hub">
-  <div class="ai-gridlines" aria-hidden="true"></div>
-  <div class="ai-watermark" id="ai-watermark" aria-hidden="true"></div>
+<section id="ai" data-screen-label="AI hub" class="ai-hub">
+  <div aria-hidden="true" class="ai-gridlines"></div>
+  <div id="ai-watermark" aria-hidden="true" class="ai-watermark"></div>
   <div class="wrap">
     <div class="ai-eye rv"><span class="live"></span> <span data-i18n="aiEye"></span></div>
-    <h2 class="rv">Intelligence<sup>1</sup> Engine<sup>&trade;</sup></h2>
-    <p class="ai-lead rv" data-i18n="aiSub"></p>
+    <h2 class="rv">Intelligence<sup>1</sup> Engine<sup>™</sup></h2>
+    <p data-i18n="aiSub" class="ai-lead rv"></p>
     <div class="ai-scan"></div>
-    <div class="ai-grid" id="ai-grid"></div>
+    <div id="ai-grid" class="ai-grid"></div>
     <!-- AI tool preview images -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:28px;">
-      <a href="matches.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
-        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">Smart Match v3</div>
+    <div class="auto-style-91">
+      <a href="matches.html" title="Link" class="auto-style-92">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="Smart Match" loading="lazy" class="auto-style-93" />
+        <div class="auto-style-94"></div>
+        <div class="auto-style-95">
+          <div class="auto-style-96">LIVE</div>
+          <div class="auto-style-97">Smart Match v3</div>
         </div>
       </a>
-      <a href="pricing.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
-        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">AVM Pricing Engine</div>
+      <a href="pricing.html" title="Link" class="auto-style-92">
+        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="AVM Pricing" loading="lazy" class="auto-style-93" />
+        <div class="auto-style-94"></div>
+        <div class="auto-style-95">
+          <div class="auto-style-96">LIVE</div>
+          <div class="auto-style-97">AVM Pricing Engine</div>
         </div>
       </a>
-      <a href="roi.html" style="display:block;border-radius:14px;overflow:hidden;position:relative;text-decoration:none;" title="Link">
-        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" style="width:100%;height:180px;object-fit:cover;transition:transform .4s var(--silk);" loading="lazy"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(7,18,30,.9) 100%);"></div>
-        <div style="position:absolute;bottom:12px;left:16px;color:#fff;">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#34d399;">LIVE</div>
-          <div style="font-size:14px;font-weight:700;">ROI Forecaster</div>
+      <a href="roi.html" title="Link" class="auto-style-92">
+        <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="ROI Forecaster" loading="lazy" class="auto-style-93" />
+        <div class="auto-style-94"></div>
+        <div class="auto-style-95">
+          <div class="auto-style-96">LIVE</div>
+          <div class="auto-style-97">ROI Forecaster</div>
         </div>
       </a>
     </div>
-    <div style="margin-top:16px;" class="rv">
-      <button class="tour-launch" id="tour-open" type="button" title="Button">
-        <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
+    <div class="rv auto-style-98">
+      <button id="tour-open" type="button" title="Button" class="tour-launch">
+        <span class="t-ic"><svg width="30" height="30" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /><path d="M2 12h20" /></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
-        <span class="t-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
+        <span class="t-play"><svg width="16" height="16" viewbox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg></span>
       </button>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="block" id="contact" style="padding-top:0;" data-screen-label="CTA band">
+<section id="contact" data-screen-label="CTA band" class="block auto-style-99">
   <div class="wrap">
     <div class="cta rv">
       <div class="ct-txt">
@@ -1069,20 +1179,20 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <button class="btn btn-white" type="button" title="Button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
-        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;" title="Link"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
+        <button type="button" title="Button" class="btn btn-white"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" title="Link" class="btn btn-out auto-style-100"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
-      <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">
-        <i data-lucide="mail" class="i" style="width:14px;height:14px;vertical-align:-2px;"></i> <a href="mailto:info@Sierra-Estates.net" style="color:rgba(255,255,255,.7);text-decoration:none;" title="Link">info@Sierra-Estates.net</a>
+      <div class="auto-style-101">
+        <i data-lucide="mail" class="i auto-style-102"></i> <a href="mailto:info@Sierra-Estates.net" title="Link" class="auto-style-103">info@Sierra-Estates.net</a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- PARTNERS -->
-<div class="partners" data-screen-label="Developer partners">
+<div data-screen-label="Developer partners" class="partners">
   <div class="wrap">
-    <div class="p-eye rv" data-i18n="partEye"></div>
+    <div data-i18n="partEye" class="p-eye rv"></div>
     <div class="row rv d1">
       <span>EMAAR MISR</span><span>SODIC</span><span>MOUNTAIN VIEW</span><span>PALM HILLS</span><span>ORA</span><span>LA VISTA</span><span>HYDE PARK</span><span>MARAKEZ</span>
     </div>
@@ -1092,8 +1202,8 @@ a:hover{color:var(--pri-d);}
 <footer id="site-footer" data-screen-label="Footer"></footer>
 
 <!-- VIRTUAL TOUR MODAL -->
-<div class="tour-modal" id="tour-modal">
-  <button class="t-close" id="tour-close" type="button" aria-label="Close">×</button>
+<div id="tour-modal" class="tour-modal">
+  <button id="tour-close" type="button" aria-label="Close" class="t-close">×</button>
   <iframe id="tour-frame" title="Sierra Estates Virtual Tour" allow="fullscreen"></iframe>
 </div>
 
@@ -1983,50 +2093,50 @@ a:hover{color:var(--pri-d);}
 })();
 </script>
 <!-- ═══ TWEAKS PANEL — accent color + corner style + font color customization ═══ -->
-<button class="tweaks-trigger" id="tweaks-trigger" type="button" title="Customize" aria-label="Open customization panel">
+<button id="tweaks-trigger" type="button" title="Customize" aria-label="Open customization panel" class="tweaks-trigger">
   <i data-lucide="palette" class="i"></i>
 </button>
-<div class="tweaks-overlay" id="tweaks-overlay">
+<div id="tweaks-overlay" class="tweaks-overlay">
   <div class="tweaks-panel">
     <div class="tweaks-head">
       <h3>Tweaks</h3>
-      <button class="tweaks-close" id="tweaks-close" type="button" aria-label="Close customization panel">×</button>
+      <button id="tweaks-close" type="button" aria-label="Close customization panel" class="tweaks-close">×</button>
     </div>
     <div class="tweaks-section">
       <div class="tweaks-label">Accent Color</div>
-      <div class="tweaks-swatches" id="tweaks-swatches">
-        <div class="tweaks-swatch on" data-color="#00aeff" style="background:#00aeff;" title="Cyan"></div>
-        <div class="tweaks-swatch" data-color="#c8961a" style="background:#c8961a;" title="Gold"></div>
-        <div class="tweaks-swatch" data-color="#34d399" style="background:#34d399;" title="Green"></div>
-        <div class="tweaks-swatch" data-color="#e63946" style="background:#e63946;" title="Red"></div>
-        <div class="tweaks-swatch" data-color="#a78bfa" style="background:#a78bfa;" title="Purple"></div>
+      <div id="tweaks-swatches" class="tweaks-swatches">
+        <div data-color="#00aeff" title="Cyan" class="tweaks-swatch on auto-style-104"></div>
+        <div data-color="#c8961a" title="Gold" class="tweaks-swatch auto-style-105"></div>
+        <div data-color="#34d399" title="Green" class="tweaks-swatch auto-style-106"></div>
+        <div data-color="#e63946" title="Red" class="tweaks-swatch auto-style-107"></div>
+        <div data-color="#a78bfa" title="Purple" class="tweaks-swatch auto-style-108"></div>
       </div>
     </div>
     <div class="tweaks-section">
       <div class="tweaks-label">Font Color</div>
-      <div class="tweaks-font-row" id="tweaks-fonts">
-        <button class="tweaks-font-btn on" data-font="#0d2136" type="button" title="Button">Dark</button>
-        <button class="tweaks-font-btn" data-font="#002b4b" type="button" title="Button">Navy</button>
-        <button class="tweaks-font-btn" data-font="#4a5568" type="button" title="Button">Slate</button>
-        <button class="tweaks-font-btn" data-font="#1a1a2e" type="button" title="Button">Midnight</button>
+      <div id="tweaks-fonts" class="tweaks-font-row">
+        <button data-font="#0d2136" type="button" title="Button" class="tweaks-font-btn on">Dark</button>
+        <button data-font="#002b4b" type="button" title="Button" class="tweaks-font-btn">Navy</button>
+        <button data-font="#4a5568" type="button" title="Button" class="tweaks-font-btn">Slate</button>
+        <button data-font="#1a1a2e" type="button" title="Button" class="tweaks-font-btn">Midnight</button>
       </div>
     </div>
     <div class="tweaks-section">
       <div class="tweaks-label">Corners</div>
-      <div class="tweaks-corners" id="tweaks-corners">
-        <button class="tweaks-corner-btn" data-radius="0" type="button" title="Button">Sharp</button>
-        <button class="tweaks-corner-btn on" data-radius="10" type="button" title="Button">Balanced</button>
-        <button class="tweaks-corner-btn" data-radius="20" type="button" title="Button">Soft</button>
+      <div id="tweaks-corners" class="tweaks-corners">
+        <button data-radius="0" type="button" title="Button" class="tweaks-corner-btn">Sharp</button>
+        <button data-radius="10" type="button" title="Button" class="tweaks-corner-btn on">Balanced</button>
+        <button data-radius="20" type="button" title="Button" class="tweaks-corner-btn">Soft</button>
       </div>
     </div>
     <div class="tweaks-section">
       <div class="tweaks-label">Logo</div>
       <div class="tweaks-logo-row">
-        <span class="tweaks-logo-preview"><img id="tweaks-logo-preview-img" src="logo-gold.png" alt="Logo preview"/></span>
+        <span class="tweaks-logo-preview"><img id="tweaks-logo-preview-img" src="logo-gold.png" alt="Logo preview" /></span>
         <div class="tweaks-logo-btns">
-          <label class="tweaks-logo-upload" for="tweaks-logo-file">Upload logo</label>
-          <input type="file" id="tweaks-logo-file" accept="image/*" hidden/ title="Input">
-          <button class="tweaks-logo-reset" id="tweaks-logo-reset" type="button" title="Button">Reset</button>
+          <label for="tweaks-logo-file" class="tweaks-logo-upload">Upload logo</label>
+          <input type="file" id="tweaks-logo-file" accept="image/*" hidden title="Input">
+          <button id="tweaks-logo-reset" type="button" title="Button" class="tweaks-logo-reset">Reset</button>
         </div>
       </div>
     </div>
