@@ -184,8 +184,8 @@ describe('Message flow logic', () => {
 describe('Dockerfile', () => {
   const dockerfile = readFileSync(join(SCRAPER_DIR, 'Dockerfile'), 'utf-8');
 
-  it('uses Node 20 slim base image', () => {
-    expect(dockerfile).toContain('node:20-slim');
+  it('uses Node 24 slim base image', () => {
+    expect(dockerfile).toContain('node:24-slim');
   });
 
   it('sets working directory to /app', () => {
