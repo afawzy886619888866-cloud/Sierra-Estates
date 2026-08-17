@@ -21,6 +21,8 @@ export default function CareersPageShell() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedRole) return;
+
     setLoading(true);
     setErrorMessage(null);
 
@@ -28,13 +30,10 @@ export default function CareersPageShell() {
       const res = await fetch('/api/careers/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: selectedRole,
-          ...answers
-        })
+        body: JSON.stringify({ role: selectedRole, ...answers }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setSubmitted(true);
       } else {
@@ -46,6 +45,12 @@ export default function CareersPageShell() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRoleSelect = (role: 'sales' | 'admin') => {
+    setSelectedRole(role);
+    setSubmitted(false);
+    setErrorMessage(null);
   };
 
   return (
@@ -131,7 +136,7 @@ export default function CareersPageShell() {
               </div>
             </div>
             <button
-              onClick={() => setSelectedRole('sales')}
+              onClick={() => handleRoleSelect('sales')}
               className={`w-full py-3.5 rounded font-bold text-xs transition ${
                 selectedRole === 'sales'
                   ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
@@ -173,7 +178,7 @@ export default function CareersPageShell() {
               </div>
             </div>
             <button
-              onClick={() => setSelectedRole('admin')}
+              onClick={() => handleRoleSelect('admin')}
               className={`w-full py-3.5 rounded font-bold text-xs transition ${
                 selectedRole === 'admin'
                   ? 'bg-blue-500 text-slate-950 shadow-lg shadow-blue-500/20'
@@ -248,7 +253,9 @@ export default function CareersPageShell() {
                     </label>
                     <input
                       required
-                      type="text"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       className="w-full px-4 py-2.5 rounded bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-amber-500"
                       placeholder="+20 100 000 0000"
                       value={answers.phone}
@@ -265,6 +272,7 @@ export default function CareersPageShell() {
                     <input
                       required
                       type="email"
+                      autoComplete="email"
                       className="w-full px-4 py-2.5 rounded bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-amber-500"
                       placeholder="name@example.com"
                       value={answers.email}
@@ -336,6 +344,7 @@ export default function CareersPageShell() {
                   <button
                     type="submit"
                     disabled={loading}
+                    aria-busy={loading}
                     className="flex-1 py-3.5 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition shadow-lg shadow-amber-500/10 text-sm disabled:opacity-50"
                   >
                     {loading
