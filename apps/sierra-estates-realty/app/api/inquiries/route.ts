@@ -1,52 +1,61 @@
-/**
- * POST /api/inquiries  (public — site contact form)
- *   { mode, name, phone, email, zone, type, budget, notes }
- *   → { id }
- * Writes to Firestore /leads with status="new", source="website".
- * Falls back to local-only when Firebase Admin is not configured.
- */
-import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
-import type { Inquiry } from "@/lib/types";
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getAdminDb } from '@/lib/firebase-admin';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const { mode, name, phone, email, zone, type, budget, notes } = body;
+const inquirySchema = z.object({
+  mode: z.enum(['sale', 'rent']).default('sale'),
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().trim().min(7).max(40),
+  email: z.string().trim().email().max(200).optional().or(z.literal('')),
+  zone: z.string().trim().max(120).optional().default(''),
+  type: z.string().trim().max(80).optional().default(''),
+  budget: z.string().trim().max(120).optional().default(''),
+  notes: z.string().trim().max(2000).optional().default(''),
+});
 
-  // Minimal server-side validation
-  if (!name || !phone) {
+export async function POST(request: Request) {
+  if (request.headers.get('content-length') && Number(request.headers.get('content-length')) > 24_000) {
+    return NextResponse.json({ error: 'Request is too large.' }, { status: 413 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsed = inquirySchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Name and phone are required" },
+      { error: 'Please provide a valid name and phone number.' },
       { status: 400 }
     );
   }
 
-  const payload: Omit<Inquiry, "id"> = {
-    mode: mode === "rent" ? "rent" : "sale",
-    name: String(name).slice(0, 200),
-    phone: String(phone).slice(0, 50),
-    email: email ? String(email).slice(0, 200) : undefined,
-    zone: zone || undefined,
-    type: type || undefined,
-    budget: budget || undefined,
-    notes: notes ? String(notes).slice(0, 2000) : undefined,
-    status: "new",
-    source: "website",
-    createdAt: new Date().toISOString(),
+  const payload = {
+    ...parsed.data,
+    source: 'clients_request_portal',
+    status: 'S1_NEW_LEAD',
+    createdAt: new Date(),
   };
 
-  const db = await getAdminDb();
-  if (db) {
-    try {
-      const ref = await db.collection("leads").add(payload);
-      return NextResponse.json({ id: ref.id });
-    } catch (err) {
-      console.warn("[inquiries] Firestore write failed:", err);
+  try {
+    const db = await getAdminDb();
+    if (!db) {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json(
+          { error: 'The request service is temporarily unavailable. Please try again shortly.' },
+          { status: 503 }
+        );
+      }
+      return NextResponse.json({ id: `local-${crypto.randomUUID()}`, fallback: true });
     }
+
+    const reference = await db.collection('leads').add(payload);
+    return NextResponse.json({ id: reference.id, status: 'received' });
+  } catch (error) {
+    console.error('[inquiries] Firestore write failed:', error);
+    return NextResponse.json(
+      { error: 'Unable to save your request right now. Please try again shortly.' },
+      { status: 503 }
+    );
   }
-  // Sandbox fallback
-  return NextResponse.json({ id: `local-${Date.now()}`, fallback: true });
 }

@@ -340,12 +340,12 @@ export default function HomePortal() {
   );
 }
 
-/* ── Inquiry form → real POST /api/leads ─────────────────────────────────── */
+/* ── Inquiry form → real POST /api/inquiries ─────────────────────────────── */
 function InquiryForm() {
   const { t, locale } = useT();
   const [seg, setSeg] = useState(0);
   const [form, setForm] = useState({ name: '', phone: '', email: '', zone: '', type: '', budget: '', });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'err' | 'name'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'err' | 'name' | 'phone'>('idle');
 
   const zones = useMemo(() => [t('z1'), t('z2'), t('z3'), t('z4')], [t]);
   const types = useMemo(() => [t('lVilla'), t('lApt'), t('lTwin'), t('lPent')], [t]);
@@ -358,28 +358,25 @@ function InquiryForm() {
     e.preventDefault();
     if (!form.name.trim()) { setStatus('name'); return; }
     setStatus('sending');
-    // Compose a rich message the admin S1 pipeline can read.
-    const message = [
-      `Intent: ${intents[seg]}`,
-      form.zone && `Preferred zone: ${form.zone}`,
-      form.type && `Property type: ${form.type}`,
-      form.budget && `Budget (EGP): ${form.budget}`,
-    ].filter(Boolean).join(' · ');
+    if (!form.phone.trim()) { setStatus('phone'); return; }
     try {
-      const res = await fetch('/api/leads', {
+      const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          mode: seg === 1 ? 'rent' : 'sale',
           name: form.name.trim(),
-          email: form.email.trim() || undefined,
-          phone: form.phone.trim() || undefined,
-          message,
-          locale,
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          zone: form.zone,
+          type: form.type,
+          budget: form.budget,
+          notes: `Intent: ${intents[seg]} · Language: ${locale}`,
         }),
       });
       const data = await res.json().catch(() => ({}));
-      setStatus(res.ok && data?.success ? 'ok' : 'err');
-      if (res.ok && data?.success) setForm({ name: '', phone: '', email: '', zone: '', type: '', budget: '' });
+      setStatus(res.ok && data?.id ? 'ok' : 'err');
+      if (res.ok && data?.id) setForm({ name: '', phone: '', email: '', zone: '', type: '', budget: '' });
     } catch {
       setStatus('err');
     }
@@ -395,23 +392,24 @@ function InquiryForm() {
         ))}
       </div>
       <div className="frow">
-        <div><label>{t('inqName')}</label><input value={form.name} onChange={(e) => set('name', e.target.value)} type="text" /></div>
-        <div><label>{t('inqPhone')}</label><input value={form.phone} onChange={(e) => set('phone', e.target.value)} type="tel" dir="ltr" /></div>
+        <div><label htmlFor="client-inquiry-name">{t('inqName')}</label><input id="client-inquiry-name" required value={form.name} onChange={(e) => set('name', e.target.value)} type="text" autoComplete="name" /></div>
+        <div><label htmlFor="client-inquiry-phone">{t('inqPhone')}</label><input id="client-inquiry-phone" required value={form.phone} onChange={(e) => set('phone', e.target.value)} type="tel" autoComplete="tel" dir="ltr" /></div>
       </div>
       <div className="frow">
-        <div><label>{t('inqEmail')}</label><input value={form.email} onChange={(e) => set('email', e.target.value)} type="email" dir="ltr" /></div>
-        <div><label>{t('inqZone')}</label><select value={form.zone} onChange={(e) => set('zone', e.target.value)}><option value="">—</option>{zones.map((z) => <option key={z} value={z}>{z}</option>)}</select></div>
+        <div><label htmlFor="client-inquiry-email">{t('inqEmail')}</label><input id="client-inquiry-email" value={form.email} onChange={(e) => set('email', e.target.value)} type="email" autoComplete="email" dir="ltr" /></div>
+        <div><label htmlFor="client-inquiry-zone">{t('inqZone')}</label><select id="client-inquiry-zone" value={form.zone} onChange={(e) => set('zone', e.target.value)}><option value="">—</option>{zones.map((z) => <option key={z} value={z}>{z}</option>)}</select></div>
       </div>
       <div className="frow">
-        <div><label>{t('inqType2')}</label><select value={form.type} onChange={(e) => set('type', e.target.value)}><option value="">—</option>{types.map((z) => <option key={z} value={z}>{z}</option>)}</select></div>
-        <div><label>{t('inqBudget')}</label><input value={form.budget} onChange={(e) => set('budget', e.target.value)} type="text" placeholder="10,000,000" dir="ltr" /></div>
+        <div><label htmlFor="client-inquiry-type">{t('inqType2')}</label><select id="client-inquiry-type" value={form.type} onChange={(e) => set('type', e.target.value)}><option value="">—</option>{types.map((z) => <option key={z} value={z}>{z}</option>)}</select></div>
+        <div><label htmlFor="client-inquiry-budget">{t('inqBudget')}</label><input id="client-inquiry-budget" value={form.budget} onChange={(e) => set('budget', e.target.value)} type="text" inputMode="numeric" placeholder="10,000,000" dir="ltr" /></div>
       </div>
       <button className="btn btn-pri" type="submit" disabled={status === 'sending'}>
         <IconSend size={16} /> <span>{status === 'sending' ? t('inqSending') : t('inqSend')}</span>
       </button>
       {status === 'ok' && <div className="form-note ok">{t('inqOk')}</div>}
       {status === 'err' && <div className="form-note err">{t('inqErr')}</div>}
-      {status === 'name' && <div className="form-note err">{t('inqNameReq')}</div>}
+      {status === 'name' && <div className="form-note err" aria-live="polite">{t('inqNameReq')}</div>}
+      {status === 'phone' && <div className="form-note err" aria-live="polite">{locale === 'ar' ? 'رقم الهاتف مطلوب' : 'Phone number is required'}</div>}
     </form>
   );
 }
