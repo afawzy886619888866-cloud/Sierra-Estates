@@ -987,9 +987,9 @@ a:hover{color:var(--pri-d);}
         <h3 data-i18n="inqTit"></h3>
         <p data-i18n="inqSub"></p>
         <div class="seg" id="inq-seg">
-          <button type="button" class="on" data-i18n="inqBuy"></button>
-          <button type="button" data-i18n="inqRent"></button>
-          <button type="button" data-i18n="inqSell"></button>
+          <button type="button" class="on" data-i18n="inqBuy" title="Buy"></button>
+          <button type="button" data-i18n="inqRent" title="Rent"></button>
+          <button type="button" data-i18n="inqSell" title="Sell"></button>
         </div>
         <div class="frow">
           <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/></div>
@@ -997,13 +997,13 @@ a:hover{color:var(--pri-d);}
         </div>
         <div class="frow">
           <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/></div>
-          <div><label data-i18n="inqZone"></label><select id="inq-zone"></select></div>
+          <div><label data-i18n="inqZone"></label><select id="inq-zone" title="Select zone"></select></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqType2"></label><select id="inq-type"></select></div>
+          <div><label data-i18n="inqType2"></label><select id="inq-type" title="Select property type"></select></div>
           <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
         </div>
-        <button class="btn btn-pri" type="submit"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <button class="btn btn-pri" type="submit" title="Send inquiry"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
         <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
           <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
@@ -1051,7 +1051,7 @@ a:hover{color:var(--pri-d);}
       </a>
     </div>
     <div style="margin-top:16px;" class="rv">
-      <button class="tour-launch" id="tour-open" type="button">
+      <button class="tour-launch" id="tour-open" type="button" title="Launch virtual tour">
         <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
         <span class="t-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
@@ -1069,7 +1069,7 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <button class="btn btn-white" type="button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <button class="btn btn-white" type="button" title="List your property"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
         <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
       <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">
