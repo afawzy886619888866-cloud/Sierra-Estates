@@ -270,8 +270,8 @@ a:hover{color:var(--pri-d);}
 .perfect{display:grid;grid-template-columns:1.15fr 1fr;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-m);}
 .perfect .pf-left{position:relative;background:var(--navy);padding:52px 48px;color:#fff;overflow:hidden;}
 .perfect .pf-left::before{content:"";position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200&q=70') center/cover;opacity:.14;}
-.perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 600px 300px at 10% 0%, rgba(0, 174, 255, 0.25), transparent 60%);}
-[data-theme="dark"] .perfect .pf-left::after{background:radial-gradient(ellipse 600px 300px at 10% 0%, rgba(200, 150, 26, 0.2), transparent 60%);}
+.perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%, rgba(0, 174, 255, 0.25), transparent 60%);}
+[data-theme="dark"] .perfect .pf-left::after{background:radial-gradient(600px 300px at 10% 0%, rgba(200, 150, 26, 0.2), transparent 60%);}
 .perfect .pf-left>*{position:relative;z-index:2;}
 .perfect .pf-left h2{color:#fff;font-size:30px;margin-bottom:10px;}
 .perfect .pf-left>p{color:rgba(255,255,255,.75);margin-bottom:30px;}
@@ -708,7 +708,7 @@ a:hover{color:var(--pri-d);}
         <h2 data-i18n="tourTit" style="font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-.01em;"></h2>
         <p data-i18n="tourSub"></p>
       </div>
-      <a href="virtual-tour.html" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk);">
+      <a href="virtual-tour.html" title="Open full 3D tour page" style="color:var(--pri);font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 18px;border:1.5px solid var(--pri);border-radius:999px;transition:.25s var(--silk);">
         Open full page <i data-lucide="arrow-right" class="i" style="width:14px;height:14px;"></i>
       </a>
     </div>
@@ -1046,16 +1046,16 @@ a:hover{color:var(--pri-d);}
           <button type="button" data-i18n="inqSell" title="Sell"></button>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/></div>
-          <div><label data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX"/></div>
+          <div><label for="inq-name" data-i18n="inqName"></label><input type="text" id="inq-name" required title="Name" placeholder="Name"/></div>
+          <div><label for="inq-phone" data-i18n="inqPhone"></label><input type="tel" id="inq-phone" dir="ltr" required placeholder="+2 01XXXXXXXXX" title="Phone number"/></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/></div>
-          <div><label data-i18n="inqZone"></label><select id="inq-zone" title="Select zone"></select></div>
+          <div><label for="inq-email" data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com" title="Email address"/></div>
+          <div><label for="inq-zone" data-i18n="inqZone"></label><select id="inq-zone" title="Select zone"></select></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqType2"></label><select id="inq-type" title="Select property type"></select></div>
-          <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
+          <div><label for="inq-type" data-i18n="inqType2"></label><select id="inq-type" title="Select property type"></select></div>
+          <div><label for="inq-budget" data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr" title="Budget"/></div>
         </div>
         <button class="btn btn-pri" type="submit" title="Send inquiry"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
         <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
