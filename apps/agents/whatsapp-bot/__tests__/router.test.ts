@@ -61,6 +61,12 @@ describe('WhatsApp Bot Router', () => {
       expect(classifyIntent('hello')).toBe('greeting')
     })
 
+    it('should classify owner offering intent', () => {
+      expect(classifyIntent('أنا مالك شقة في التجمع وعايز ابيع')).toBe('owner_offering')
+      expect(classifyIntent('عندي فيلا للبيع في مدينتي')).toBe('owner_offering')
+      expect(classifyIntent('عايز أأجر شقتي')).toBe('owner_offering')
+    })
+
     it('should return unknown for unclear messages', () => {
       expect(classifyIntent('شكراً')).toBe('unknown')
       expect(classifyIntent('ok')).toBe('unknown')
@@ -99,6 +105,12 @@ describe('WhatsApp Bot Router', () => {
   // ── Routing Decision ────────────────────────────────────────────────────────
 
   describe('routeMessage()', () => {
+    it('should route owner offering to openclaw', () => {
+      const route = routeMessage('owner_offering', 'high', false)
+      expect(route.primaryAgent).toBe('openclaw')
+      expect(route.urgency).toBe('high')
+    })
+
     it('should route closing to closer agent', () => {
       const route = routeMessage('closing', 'critical', false)
       expect(route.primaryAgent).toBe('closer')

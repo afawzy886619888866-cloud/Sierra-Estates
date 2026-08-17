@@ -55,7 +55,7 @@ a:hover{color:var(--pri-d);}
 .hero .dots button{width:26px;height:4px;border-radius:2px;border:none;background:rgba(255,255,255,.35);cursor:pointer;transition:.3s;padding:0;}
 .hero .dots button.on{background:var(--pri);width:44px;}
 [data-theme="dark"] .hero .dots button.on{background:#e9c176;}
-.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
+.hero .map-cta{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:4;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font);font-weight:700;font-size:12px;border-radius:999px;padding:9px 18px;cursor:pointer;transition:.25s var(--silk);white-space:nowrap;text-decoration:none;}
 .hero .map-cta:hover{background:rgba(255,255,255,.24);transform:translateX(-50%) translateY(-2px);border-color:rgba(255,255,255,.6);}
 .hero .map-cta .mc-ic{width:28px;height:28px;border-radius:50%;background:var(--pri);display:grid;place-items:center;flex:none;animation:pulseDot 2.4s infinite;}
 [data-theme="dark"] .hero .map-cta .mc-ic{background:#c8961a;color:#0d0d0f;}
@@ -86,7 +86,7 @@ a:hover{color:var(--pri-d);}
 .tweaks-trigger{position:fixed;bottom:20px;right:20px;z-index:9998;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);box-shadow:var(--shadow-m);display:grid;place-items:center;cursor:pointer;transition:.25s var(--silk);}
 .tweaks-trigger:hover{transform:scale(1.08);border-color:var(--accent,#00aeff);}
 .tweaks-trigger .i{width:20px;height:20px;color:var(--accent,#00aeff);}
-.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
+.tweaks-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.3);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
 .tweaks-overlay.on{display:flex;}
 .tweaks-panel{background:var(--surface);border-radius:18px;padding:28px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:tweaksIn .3s var(--silk) both;}
 @keyframes tweaksIn{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:none;}}
@@ -216,7 +216,7 @@ a:hover{color:var(--pri-d);}
 /* ── cta ── */
 .cta{position:relative;border-radius:16px;overflow:hidden;padding:56px 60px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;}
 [data-theme="dark"] .cta{background:linear-gradient(135deg,#c8961a,#8f6a0f);}
-.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(500px 260px at 90% -20%,rgba(255,255,255,.25),transparent 60%);}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 500px 260px at 90% -20%, rgba(255, 255, 255, 0.25), transparent 60%);}
 .cta .ct-txt{position:relative;z-index:2;}
 .cta h2{color:#fff;font-size:30px;}
 .cta p{color:rgba(255,255,255,.9);margin-top:8px;font-size:16px;}
@@ -248,8 +248,8 @@ a:hover{color:var(--pri-d);}
 .perfect{display:grid;grid-template-columns:1.15fr 1fr;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-m);}
 .perfect .pf-left{position:relative;background:var(--navy);padding:52px 48px;color:#fff;overflow:hidden;}
 .perfect .pf-left::before{content:"";position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200&q=70') center/cover;opacity:.14;}
-.perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(0,174,255,.25),transparent 60%);}
-[data-theme="dark"] .perfect .pf-left::after{background:radial-gradient(600px 300px at 10% 0%,rgba(200,150,26,.2),transparent 60%);}
+.perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%, rgba(0, 174, 255, 0.25), transparent 60%);}
+[data-theme="dark"] .perfect .pf-left::after{background:radial-gradient(600px 300px at 10% 0%, rgba(200, 150, 26, 0.2), transparent 60%);}
 .perfect .pf-left>*{position:relative;z-index:2;}
 .perfect .pf-left h2{color:#fff;font-size:30px;margin-bottom:10px;}
 .perfect .pf-left>p{color:rgba(255,255,255,.75);margin-bottom:30px;}
@@ -426,12 +426,12 @@ a:hover{color:var(--pri-d);}
 [data-theme="dark"] .cpd-marker.hot .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
 .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:var(--pri);}
 [data-theme="dark"] .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
-.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;backdrop-filter:blur(4px);}
+.cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:.2s var(--silk);white-space:nowrap;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 [dir="rtl"] .cpd-marker{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
 .cpd-marker:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,174,255,.5);z-index:999;border-color:#34d399;color:#fff;}
 .cpd-marker.hot{background:linear-gradient(135deg,#00aeff,#0098e0);color:#fff;border-color:#00aeff;}
 .cpd-marker.pulse{background:rgba(0,174,255,.85);color:#fff;border-color:#34d399;}
-[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;backdrop-filter:blur(4px);}
+[data-theme="dark"] .cpd-marker{background:rgba(15,15,26,.85);border-color:#c8961a;color:#e9c176;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 [data-theme="dark"] .cpd-marker.hot{background:linear-gradient(135deg,#e9c176,#c8961a);color:#09090f;}
 [data-theme="dark"] .cpd-marker.pulse{background:rgba(200,150,26,.7);border-color:#34d399;color:#fff;}
 
@@ -522,9 +522,9 @@ a:hover{color:var(--pri-d);}
 <div class="wrap searchbar">
   <div class="search-card rv">
     <div class="search-tabs">
-      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy"></button>
-      <button data-i18n="tabRent" type="button" data-tab="rent"></button>
-      <button data-i18n="tabNew" type="button" data-tab="new"></button>
+      <button class="active" data-i18n="tabBuy" type="button" data-tab="buy" title="Buy"></button>
+      <button data-i18n="tabRent" type="button" data-tab="rent" title="Rent"></button>
+      <button data-i18n="tabNew" type="button" data-tab="new" title="New"></button>
     </div>
     <div class="search-fields">
       <!-- Compound search with autocomplete -->
@@ -538,7 +538,7 @@ a:hover{color:var(--pri-d);}
       <!-- Property Type dropdown -->
       <div class="field">
         <label data-i18n="fType"></label>
-        <select id="hero-type" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-type" class="hero-select" title="Select property type" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="">Any Type</option>
           <option value="Apartment">Apartment</option>
           <option value="Villa">Villa</option>
@@ -551,7 +551,7 @@ a:hover{color:var(--pri-d);}
       <!-- Bedrooms dropdown -->
       <div class="field">
         <label data-i18n="fBeds"></label>
-        <select id="hero-beds" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-beds" class="hero-select" title="Select number of bedrooms" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="0">Any</option>
           <option value="1">1+</option>
           <option value="2">2+</option>
@@ -563,7 +563,7 @@ a:hover{color:var(--pri-d);}
       <!-- Price dropdown -->
       <div class="field">
         <label data-i18n="fPrice"></label>
-        <select id="hero-price" class="hero-select" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
+        <select id="hero-price" class="hero-select" title="Select price range" style="width:100%;border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--surface-2);outline:none;cursor:pointer;">
           <option value="0">Any Price</option>
           <option value="5">Up to 5M EGP</option>
           <option value="10">Up to 10M EGP</option>
@@ -574,7 +574,7 @@ a:hover{color:var(--pri-d);}
       </div>
       <!-- Search button -->
       <div class="field searchbtn">
-        <button type="button" class="btn btn-pri" id="hero-search-btn"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
+        <button type="button" class="btn btn-pri" id="hero-search-btn" title="Search properties"><i data-lucide="search" class="i"></i> <span data-i18n="search"></span></button>
       </div>
     </div>
   </div>
@@ -662,7 +662,7 @@ a:hover{color:var(--pri-d);}
     <!-- ── Banner frame: gold gradient border + glow ── -->
     <div id="vtv-banner" style="position:relative;width:100%;aspect-ratio:21/9;min-height:420px;border-radius:18px;overflow:hidden;background:#0a1622;box-shadow:0 24px 70px rgba(13,33,54,.18),0 0 0 1px rgba(200,150,26,.18) inset;margin-top:8px;">
       <!-- Gold gradient border glow -->
-      <div style="position:absolute;inset:0;border-radius:18px;padding:1.5px;background:linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:4;"></div>
+      <div style="position:absolute;inset:0;border-radius:18px;padding:1.5px;background:linear-gradient(135deg,rgba(200,150,26,.65) 0%,rgba(233,193,118,.25) 25%,transparent 50%,rgba(0,174,255,.18) 75%,rgba(200,150,26,.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:4;"></div>
 
       <!-- Click-to-activate poster button -->
       <button id="vtv-poster" type="button" aria-label="Launch 3D virtual tour" style="position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;cursor:pointer;background-color:#0a1622;background-image:url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=90');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;">
@@ -987,9 +987,9 @@ a:hover{color:var(--pri-d);}
         <h3 data-i18n="inqTit"></h3>
         <p data-i18n="inqSub"></p>
         <div class="seg" id="inq-seg">
-          <button type="button" class="on" data-i18n="inqBuy"></button>
-          <button type="button" data-i18n="inqRent"></button>
-          <button type="button" data-i18n="inqSell"></button>
+          <button type="button" class="on" data-i18n="inqBuy" title="Buy"></button>
+          <button type="button" data-i18n="inqRent" title="Rent"></button>
+          <button type="button" data-i18n="inqSell" title="Sell"></button>
         </div>
         <div class="frow">
           <div><label data-i18n="inqName"></label><input type="text" id="inq-name" required/></div>
@@ -997,13 +997,13 @@ a:hover{color:var(--pri-d);}
         </div>
         <div class="frow">
           <div><label data-i18n="inqEmail"></label><input type="email" id="inq-email" dir="ltr" placeholder="you@example.com"/></div>
-          <div><label data-i18n="inqZone"></label><select id="inq-zone"></select></div>
+          <div><label data-i18n="inqZone"></label><select id="inq-zone" title="Select zone"></select></div>
         </div>
         <div class="frow">
-          <div><label data-i18n="inqType2"></label><select id="inq-type"></select></div>
+          <div><label data-i18n="inqType2"></label><select id="inq-type" title="Select property type"></select></div>
           <div><label data-i18n="inqBudget"></label><input type="text" id="inq-budget" placeholder="10,000,000" dir="ltr"/></div>
         </div>
-        <button class="btn btn-pri" type="submit"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
+        <button class="btn btn-pri" type="submit" title="Send inquiry"><i data-lucide="send" class="i"></i> <span data-i18n="inqSend"></span></button>
         <div id="inq-success" style="display:none;margin-top:14px;padding:14px 18px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:10px;color:#16a34a;font-weight:600;font-size:13.5px;display:none;">
           <i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle;margin-inline-end:6px;"></i>
           <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
@@ -1051,7 +1051,7 @@ a:hover{color:var(--pri-d);}
       </a>
     </div>
     <div style="margin-top:16px;" class="rv">
-      <button class="tour-launch" id="tour-open" type="button">
+      <button class="tour-launch" id="tour-open" type="button" title="Launch virtual tour">
         <span class="t-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>
         <span class="t-txt"><b data-i18n="tourLaunchTit"></b><span data-i18n="tourLaunchSub"></span></span>
         <span class="t-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg></span>
@@ -1069,7 +1069,7 @@ a:hover{color:var(--pri-d);}
         <p data-i18n="ctaSub"></p>
       </div>
       <div class="ct-act">
-        <button class="btn btn-white" type="button"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
+        <button class="btn btn-white" type="button" title="List your property"><i data-lucide="plus" class="i"></i> <span data-i18n="ctaBtn1"></span></button>
         <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-out" style="text-decoration:none;"><i data-lucide="phone" class="i"></i> <span>+2 01092048333</span></a>
       </div>
       <div style="margin-top:14px;font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);">

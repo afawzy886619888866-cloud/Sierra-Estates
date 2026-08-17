@@ -50,18 +50,19 @@ const adminPhones = (process.env.ADMIN_PHONES || '')
   .filter(Boolean);
 
 // Initialize Firebase Admin SDK for Firestore Lead Verification
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (admin.apps.length === 0) {
+if (getApps().length === 0) {
   try {
-    admin.initializeApp();
+    initializeApp();
     console.log('🔥 Firebase Admin SDK initialized in WhatsApp Bot.');
   } catch (err) {
     console.warn('⚠️ Failed to initialize Firebase Admin SDK. Firestore lead check will be bypassed:', err instanceof Error ? err.message : err);
   }
 }
 
-const db = admin.apps.length > 0 ? admin.firestore() : null;
+const db = getApps().length > 0 ? getFirestore() : null;
 
 async function checkFirestoreLead(phoneStr: string): Promise<boolean> {
   if (!db) return false;

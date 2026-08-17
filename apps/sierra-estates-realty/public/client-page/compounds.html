@@ -14,8 +14,190 @@
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
 <script src="data.js"></script>
 <script src="shared.js"></script>
-<link rel="stylesheet" href="compounds.css">
-  <link rel="stylesheet" href="inline-extracted.css">
+<style>
+.map-shell{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:stretch;}
+.cpd-toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px;}
+.cpd-search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:var(--r-btn);padding:11px 15px;min-width:280px;flex:1;transition:border-color .2s;}
+.cpd-search:focus-within{border-color:var(--pri);}
+.cpd-search .i{width:18px;height:18px;color:var(--muted);flex:none;}
+.cpd-search input{flex:1;border:none;outline:none;background:transparent;font-family:var(--font);font-size:14.5px;color:var(--ink);min-width:0;}
+.cpd-search .cs-clear{display:none;border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0;}
+.zone-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.zchip{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:999px;padding:8px 15px;cursor:pointer;transition:.2s var(--silk);display:inline-flex;align-items:center;gap:7px;}
+.zchip:hover{border-color:var(--pri);color:var(--pri);}
+.zchip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .zchip.on{color:#0d0d0f;}
+.zchip .zc-n{font-family:var(--mono);font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--pri-soft);color:var(--pri);}
+.zchip.on .zc-n{background:rgba(255,255,255,.25);color:#fff;}
+[data-theme="dark"] .zchip.on .zc-n{background:rgba(0,0,0,.2);color:#0d0d0f;}
+.cpd-empty{display:none;padding:50px 0;text-align:center;color:var(--muted);font-size:15px;}
+.tb-select{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:9px 12px;outline:none;cursor:pointer;transition:border-color .2s;}
+.tb-select:focus{border-color:var(--pri);}
+.tb-seg{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.tb-seg button{font-family:var(--font);font-weight:700;font-size:12.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;transition:.18s;}
+.tb-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .tb-seg button.on{color:#0d0d0f;}
+#cpd-map{height:580px;border-radius:var(--r-card);border:1px solid var(--line);z-index:1;background:var(--bg);}
+.intel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;display:flex;flex-direction:column;}
+.intel .hint{color:var(--muted);font-size:14px;display:flex;gap:10px;align-items:flex-start;margin:auto 0;text-align:center;flex-direction:column;align-items:center;}
+.intel .hint .i{width:28px;height:28px;color:var(--pri);}
+.intel h3{font-size:21px;margin-bottom:2px;}
+.intel .zone{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--pri);margin-bottom:18px;}
+[dir="rtl"] .intel .zone{letter-spacing:.02em;font-family:var(--font);}
+.intel .metric{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.intel .metric:last-of-type{border-bottom:none;}
+.intel .metric b{font-family:var(--mono);font-size:16px;color:var(--ink);}
+.intel .metric b.up{color:var(--green);}
+.intel .metric b.link{color:var(--pri);cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;gap:6px;}
+.intel .metric b.link:hover{color:var(--pri-d);}
+.intel .btn{margin-top:18px;}
+.intel .intel-tbl-ic{width:14px;height:14px;}
+.cpd-marker{background:var(--pri);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;padding:4px 8px;border-radius:999px;border:2px solid #fff;box-shadow:0 3px 10px rgba(13,33,54,.35);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;transition:transform .2s;cursor:pointer;}
+.cpd-marker .u{background:rgba(255,255,255,.28);border-radius:999px;padding:0 5px;font-size:9.5px;}
+.cpd-marker i.lucide,.cpd-marker svg{opacity:.85;}
+.you-pin{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--navy);border:3px solid #fff;box-shadow:0 3px 12px rgba(0,0,0,.4);animation:pulseDot 2s infinite;}
+[data-theme="dark"] .you-pin{background:#c8961a;border-color:#17181b;}
+.you-pin i{width:7px;height:7px;border-radius:50%;background:#fff;}
+[data-theme="dark"] .you-pin i{background:#0d0d0f;}
+.near-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.near-clear{border:1px solid var(--line-2);background:var(--surface);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;border-radius:7px;padding:5px 11px;cursor:pointer;transition:.18s;}
+.near-clear:hover{border-color:var(--red);color:var(--red);}
+.near-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.near-row{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;transition:.18s var(--silk);font-family:var(--font);}
+.near-row:hover{border-color:var(--pri);transform:translateX(2px);}
+[dir="rtl"] .near-row:hover{transform:translateX(-2px);}
+.near-rank{width:24px;height:24px;border-radius:50%;background:var(--pri);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px;display:grid;place-items:center;flex:none;}
+[data-theme="dark"] .near-rank{color:#0d0d0f;}
+.near-info{flex:1;min-width:0;}
+.near-info b{display:block;color:var(--ink);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.near-info small{color:var(--muted);font-size:12px;}
+.near-dist{font-family:var(--mono);font-weight:700;color:var(--pri);font-size:15px;text-align:end;flex:none;}
+.near-dist i{display:block;font-style:normal;font-size:9.5px;color:var(--muted);font-weight:400;letter-spacing:.06em;}
+.cpd-marker:hover{transform:scale(1.12);}
+.cpd-marker.hot{background:var(--navy);}
+[data-theme="dark"] .cpd-marker{background:#c8961a;color:#0d0d0f;border-color:#17181b;}
+[data-theme="dark"] .cpd-marker.hot{background:#0d0d0f;color:#e9c176;border-color:#c8961a;}
+.leaflet-container{font-family:var(--font);}
+
+.grid-cpds{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px;}
+.cpd-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;display:flex;flex-direction:column;gap:12px;transition:.25s var(--silk);cursor:pointer;}
+.cpd-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-m);border-color:rgba(0,174,255,.4);}
+[data-theme="dark"] .cpd-card:hover{border-color:rgba(200,150,26,.5);}
+.cpd-card .top{display:flex;align-items:flex-start;gap:12px;}
+.cpd-card h4{font-size:16px;flex:1;}
+.cpd-card .ai-pill{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--pri);background:var(--pri-soft);border-radius:6px;padding:4px 9px;white-space:nowrap;}
+.cpd-card .meta{display:flex;gap:16px;font-size:12.5px;color:var(--text);}
+.cpd-card .meta b{color:var(--ink);font-family:var(--mono);font-weight:600;}
+.cpd-card .meta .up{color:var(--green);}
+.cpd-card .zline{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.cpd-card .u-link{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--pri);display:inline-flex;align-items:center;gap:6px;margin-top:2px;}
+.cpd-card .u-link:hover{text-decoration:underline;text-underline-offset:3px;}
+.cpd-card .u-link .u-link-ic{width:14px;height:14px;}
+
+/* ── units sheet (excel-style) ── */
+.sheet-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,25,45,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:28px;}
+.sheet-overlay.on{display:flex;animation:ovIn .25s var(--silk);}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--surface);border-radius:14px;box-shadow:var(--shadow-m);width:min(980px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;animation:shIn .35s var(--silk);}
+@keyframes shIn{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.sheet,.sheet-overlay.on{animation:none;}}
+.sheet .sh-head{display:flex;align-items:flex-start;gap:16px;padding:22px 26px;border-bottom:1px solid var(--line);}
+.sheet .sh-head h3{font-size:20px;}
+.sheet .sh-head .sub{font-size:13px;color:var(--muted);margin-top:3px;}
+.sheet .sh-close{margin-inline-start:auto;width:38px;height:38px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:.18s;flex:none;}
+.sheet .sh-close:hover{border-color:var(--red);color:var(--red);}
+.sheet .sh-scroll{overflow:auto;}
+.sheet .sh-filters{display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap;}
+.sheet .shf{display:flex;align-items:center;gap:9px;}
+.sheet .shf label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+[dir="rtl"] .sheet .shf label{letter-spacing:.02em;font-family:var(--font);}
+.sheet .shf select{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:8px 11px;outline:none;cursor:pointer;transition:border-color .2s;}
+.sheet .shf select:focus{border-color:var(--pri);}
+.sheet .shf-seg{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.sheet .shf-seg button{font-family:var(--font);font-weight:700;font-size:12.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:6px 13px;cursor:pointer;transition:.18s;}
+.sheet .shf-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .sheet .shf-seg button.on{color:#0d0d0f;}
+.sheet .shf-count{margin-inline-start:auto;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
+[dir="rtl"] .sheet .shf-count{font-family:var(--font);}
+.sheet .sh-empty{display:none;padding:44px;text-align:center;color:var(--muted);font-size:14.5px;}
+.sheet table{width:100%;border-collapse:collapse;font-size:13px;}
+.sheet thead th{position:sticky;top:0;background:var(--surface-2);color:var(--muted);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;text-align:start;padding:12px 16px;border-bottom:1px solid var(--line);z-index:2;white-space:nowrap;}
+[dir="rtl"] .sheet thead th{letter-spacing:.02em;font-family:var(--font);}
+.sheet tbody td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap;}
+.sheet tbody td.mono{font-family:var(--mono);font-weight:600;color:var(--ink);}
+.sheet tbody tr{cursor:pointer;transition:background .15s;}
+.sheet tbody tr:nth-child(even){background:var(--surface-2);}
+.sheet tbody tr:hover{background:var(--pri-soft);}
+.sheet tbody tr.reserved{opacity:.5;cursor:not-allowed;}
+.sheet .st{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:6px;}
+.sheet .st.av{background:rgba(40,167,69,.12);color:var(--green);}
+.sheet .st.rs{background:rgba(230,57,70,.1);color:var(--red);}
+.sheet .go{color:var(--pri);}
+.sheet .go .sh-go-ic{width:15px;height:15px;}
+
+[dir="rtl"] .cpd-card .zline{letter-spacing:.02em;font-family:var(--font);}
+
+/* ─── Advanced Filter Bar ─── */
+.af-bar{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:18px 22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-s);margin-bottom:20px;}
+.af-search{position:relative;display:flex;align-items:center;gap:8px;min-width:180px;flex:1;}
+.af-search .i{width:17px;height:17px;color:var(--muted);flex:none;}
+.af-search input{flex:1;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;}
+.af-search input::placeholder{color:var(--muted);}
+.af-group{display:flex;flex-direction:column;gap:6px;}
+.af-label{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-inline-start:2px;}
+[dir="rtl"] .af-label{letter-spacing:.02em;font-family:var(--font);}
+.af-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.af-chip{font-family:var(--font);font-weight:600;font-size:12px;color:var(--text);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.18s var(--silk);white-space:nowrap;}
+.af-chip:hover{border-color:var(--pri);color:var(--pri);}
+.af-chip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .af-chip.on{color:#0d0d0f;}
+.af-price{display:flex;align-items:center;gap:8px;}
+.af-price input{width:72px;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 9px;font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);outline:none;transition:.18s;}
+.af-price input:focus{border-color:var(--pri);}
+.af-price input::placeholder{color:var(--muted);}
+.af-price-sep{color:var(--muted);font-size:13px;}
+.af-seg{display:flex;gap:3px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.af-seg button{font-family:var(--font);font-weight:700;font-size:11.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:6px 11px;cursor:pointer;transition:.18s;}
+.af-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .af-seg button.on{color:#0d0d0f;}
+.af-clear{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-weight:600;font-size:12px;color:var(--muted);background:none;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.18s;align-self:flex-end;}
+.af-clear:hover{color:var(--red);border-color:var(--red);}
+.af-clear .af-rotate-ic{width:13px;height:13px;}
+.af-count{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.04em;align-self:flex-end;padding-bottom:9px;min-width:90px;text-align:end;}
+.zone-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+/* Zero-state: grayed out markers */
+.cpd-marker.zero{opacity:.25;filter:grayscale(1);pointer-events:none;}
+.cpd-marker.zero::after{content:'';}
+.af-search input{flex:1;border:none;background:none;font-family:var(--font);font-size:14px;color:var(--ink);outline:none;padding:8px 0;}
+.af-search input::placeholder{color:var(--muted);}
+.af-group{display:flex;flex-direction:column;gap:6px;}
+.af-label{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-inline-start:2px;}
+[dir="rtl"] .af-label{letter-spacing:.02em;font-family:var(--font);}
+.af-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.af-chip{font-family:var(--font);font-weight:600;font-size:12px;color:var(--text);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.18s var(--silk);white-space:nowrap;}
+.af-chip:hover{border-color:var(--pri);color:var(--pri);}
+.af-chip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+[data-theme="dark"] .af-chip.on{color:#0d0d0f;}
+.af-price{display:flex;align-items:center;gap:8px;}
+.af-price input{width:72px;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 9px;font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);outline:none;transition:.18s;}
+.af-price input:focus{border-color:var(--pri);}
+.af-price input::placeholder{color:var(--muted);}
+.af-price-sep{color:var(--muted);font-size:13px;}
+.af-seg{display:flex;gap:3px;background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:8px;padding:3px;}
+.af-seg button{font-family:var(--font);font-weight:700;font-size:11.5px;color:var(--text);background:none;border:none;border-radius:6px;padding:6px 11px;cursor:pointer;transition:.18s;}
+.af-seg button.on{background:var(--pri);color:#fff;}
+[data-theme="dark"] .af-seg button.on{color:#0d0d0f;}
+.af-clear{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-weight:600;font-size:12px;color:var(--muted);background:none;border:1.5px solid var(--line-2);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.18s;align-self:flex-end;}
+.af-clear:hover{color:var(--red);border-color:var(--red);}
+.af-count{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.04em;align-self:flex-end;padding-bottom:9px;min-width:90px;text-align:end;}
+.zone-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+/* Zero-state: grayed out markers */
+.cpd-marker.zero{opacity:.25;filter:grayscale(1);pointer-events:none;}
+.cpd-marker.zero::after{content:'';}
+
+@media(max-width:1080px){.map-shell{grid-template-columns:1fr;}.grid-cpds{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:680px){.grid-cpds{grid-template-columns:1fr;}#cpd-map{height:420px;}.af-bar{gap:12px;padding:14px;}.af-search{min-width:140px;}}
+</style>
 </head>
 <body>
 
@@ -23,7 +205,7 @@
 
 <header class="page-hero" data-screen-label="Compounds hero">
   <div class="wrap">
-    <div class="crumbs"><a href="index.html" data-i18n="crumbHome" aria-label="Home" title="Home"></a><span class="sep">/</span><span data-i18n="navCpds"></span></div>
+    <div class="crumbs"><a href="index.html" title="Home" aria-label="Home" data-i18n="crumbHome">Home</a><span class="sep">/</span><span data-i18n="navCpds"></span></div>
     <h1 data-i18n="cpdsTit"></h1>
     <p class="sub" data-i18n="cpdsSub"></p>
   </div>
@@ -39,19 +221,19 @@
       <!-- Search -->
       <div class="af-search">
         <i data-lucide="search" class="i"></i>
-        <input type="text" id="cpd-search" data-i18n-ph="searchCpdPh" aria-label="Search compounds" title="Search compounds" placeholder="Search compounds..."/>
-        <button class="cs-clear extracted-style-206" id="cpd-search-clear" type="button" aria-label="Clear" >×</button>
+        <input type="text" id="cpd-search" placeholder="Search compounds..." title="Search compounds" aria-label="Search compounds" data-i18n-ph="searchCpdPh"/>
+        <button class="cs-clear" id="cpd-search-clear" type="button" title="Clear search" aria-label="Clear">×</button>
       </div>
 
       <!-- Property Type -->
       <div class="af-group">
         <label class="af-label" data-i18n="afType">Type</label>
         <div class="af-chips" id="af-type">
-          <button class="af-chip on" data-type="all" type="button">All</button>
-          <button class="af-chip" data-type="Apartment" type="button">Apartment</button>
-          <button class="af-chip" data-type="Villa" type="button">Villa</button>
-          <button class="af-chip" data-type="Townhouse" type="button">Townhouse</button>
-          <button class="af-chip" data-type="Twin House" type="button">Twin House</button>
+          <button class="af-chip on" data-type="all" type="button" title="All types" aria-label="All types">All</button>
+          <button class="af-chip" data-type="Apartment" type="button" title="Apartment" aria-label="Apartment">Apartment</button>
+          <button class="af-chip" data-type="Villa" type="button" title="Villa" aria-label="Villa">Villa</button>
+          <button class="af-chip" data-type="Townhouse" type="button" title="Townhouse" aria-label="Townhouse">Townhouse</button>
+          <button class="af-chip" data-type="Twin House" type="button" title="Twin House" aria-label="Twin House">Twin House</button>
         </div>
       </div>
 
@@ -59,12 +241,12 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afBeds">Bedrooms</label>
         <div class="af-chips" id="af-beds">
-          <button class="af-chip on" data-beds="0" type="button">Any</button>
-          <button class="af-chip" data-beds="1" type="button">1+</button>
-          <button class="af-chip" data-beds="2" type="button">2+</button>
-          <button class="af-chip" data-beds="3" type="button">3+</button>
-          <button class="af-chip" data-beds="4" type="button">4+</button>
-          <button class="af-chip" data-beds="5" type="button">5+</button>
+          <button class="af-chip on" data-beds="0" type="button" title="Any bedrooms" aria-label="Any bedrooms">Any</button>
+          <button class="af-chip" data-beds="1" type="button" title="1 or more bedrooms" aria-label="1 or more bedrooms">1+</button>
+          <button class="af-chip" data-beds="2" type="button" title="2 or more bedrooms" aria-label="2 or more bedrooms">2+</button>
+          <button class="af-chip" data-beds="3" type="button" title="3 or more bedrooms" aria-label="3 or more bedrooms">3+</button>
+          <button class="af-chip" data-beds="4" type="button" title="4 or more bedrooms" aria-label="4 or more bedrooms">4+</button>
+          <button class="af-chip" data-beds="5" type="button" title="5 or more bedrooms" aria-label="5 or more bedrooms">5+</button>
         </div>
       </div>
 
@@ -72,9 +254,9 @@
       <div class="af-group af-price-group">
         <label class="af-label" data-i18n="afPrice">Price (EGP M)</label>
         <div class="af-price">
-          <input type="number" id="af-price-min" placeholder="Min" min="0" step="0.5" />
+          <input type="number" id="af-price-min" placeholder="Min" title="Minimum price in EGP millions" aria-label="Minimum price in EGP millions" min="0" step="0.5" />
           <span class="af-price-sep">—</span>
-          <input type="number" id="af-price-max" placeholder="Max" min="0" step="0.5" />
+          <input type="number" id="af-price-max" placeholder="Max" title="Maximum price in EGP millions" aria-label="Maximum price in EGP millions" min="0" step="0.5" />
         </div>
       </div>
 
@@ -82,9 +264,9 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afDelivery">Delivery</label>
         <div class="af-chips" id="af-delivery">
-          <button class="af-chip on" data-delivery="all" type="button">Any</button>
-          <button class="af-chip" data-delivery="ready" type="button">Ready to Move</button>
-          <button class="af-chip" data-delivery="under_construction" type="button">Under Construction</button>
+          <button class="af-chip on" data-delivery="all" type="button" title="Any delivery status" aria-label="Any delivery status">Any</button>
+          <button class="af-chip" data-delivery="ready" type="button" title="Ready to move" aria-label="Ready to move">Ready to Move</button>
+          <button class="af-chip" data-delivery="under_construction" type="button" title="Under construction" aria-label="Under construction">Under Construction</button>
         </div>
       </div>
 
@@ -92,15 +274,15 @@
       <div class="af-group">
         <label class="af-label" data-i18n="afMode">Mode</label>
         <div class="af-seg" id="af-mode">
-          <button class="on" data-m="all" type="button" data-i18n="modeAll" aria-label="All Modes" title="All Modes"></button>
-          <button data-m="sale" type="button" data-i18n="modeSale" aria-label="Sale" title="Sale"></button>
-          <button data-m="rent" type="button" data-i18n="modeRent" aria-label="Rent" title="Rent"></button>
+          <button class="on" data-m="all" type="button" title="All modes" aria-label="All modes" data-i18n="modeAll">All</button>
+          <button data-m="sale" type="button" title="For Sale" aria-label="For Sale" data-i18n="modeSale">Sale</button>
+          <button data-m="rent" type="button" title="For Rent" aria-label="For Rent" data-i18n="modeRent">Rent</button>
         </div>
       </div>
 
       <!-- Clear all -->
-      <button class="af-clear" id="af-clear" type="button">
-        <i data-lucide="rotate-ccw" class="i extracted-style-207" ></i>
+      <button class="af-clear" id="af-clear" type="button" title="Clear all filters" aria-label="Clear all filters">
+        <i data-lucide="rotate-ccw" class="i af-rotate-ic"></i>
         <span>Clear</span>
       </button>
 
@@ -118,7 +300,7 @@
       </aside>
     </div>
     <div class="grid-cpds" id="cpd-cards"></div>
-    <div class="cpd-empty extracted-style-208" id="cpd-empty"  data-i18n="noCpd"></div>
+    <div class="cpd-empty" id="cpd-empty" data-i18n="noCpd"></div>
   </div>
 </section>
 
@@ -132,25 +314,25 @@
         <h3 id="sh-title"></h3>
         <div class="sub" id="sh-sub"></div>
       </div>
-      <button class="sh-close" id="sh-close" type="button" aria-label="Close"><i data-lucide="x" class="i"></i></button>
+      <button class="sh-close" id="sh-close" type="button" title="Close sheet" aria-label="Close"><i data-lucide="x" class="i"></i></button>
     </div>
     <div class="sh-filters">
       <div class="shf">
-        <label for="shf-cpd" data-i18n="shCompound"></label>
-        <select id="shf-cpd" aria-label="Select compound" title="Select compound"></select>
+        <label data-i18n="shCompound"></label>
+        <select id="shf-cpd" title="Select compound" aria-label="Select compound"></select>
       </div>
       <div class="shf">
-        <label for="shf-beds" data-i18n="shBeds"></label>
-        <select id="shf-beds" aria-label="Select bedrooms" title="Select bedrooms">
+        <label data-i18n="shBeds"></label>
+        <select id="shf-beds" title="Select bedrooms" aria-label="Select bedrooms">
           <option value="0" data-i18n="shAnyBeds"></option>
           <option value="2">2+</option><option value="3">3+</option>
           <option value="4">4+</option><option value="5">5+</option>
         </select>
       </div>
       <div class="shf-seg" id="shf-mode">
-        <button class="on" data-m="all" type="button" data-i18n="modeAll" aria-label="All modes" title="All modes"></button>
-        <button data-m="sale" type="button" data-i18n="modeSale" aria-label="For sale" title="For sale"></button>
-        <button data-m="rent" type="button" data-i18n="modeRent" aria-label="For rent" title="For rent"></button>
+        <button class="on" data-m="all" type="button" title="All modes" aria-label="All modes" data-i18n="modeAll">All</button>
+        <button data-m="sale" type="button" title="For Sale" aria-label="For Sale" data-i18n="modeSale">Sale</button>
+        <button data-m="rent" type="button" title="For Rent" aria-label="For Rent" data-i18n="modeRent">Rent</button>
       </div>
       <span class="shf-count" id="shf-count"></span>
     </div>
@@ -159,7 +341,7 @@
         <thead><tr id="sh-thead"></tr></thead>
         <tbody id="sh-tbody"></tbody>
       </table>
-      <div class="sh-empty extracted-style-209" id="sh-empty"  data-i18n="shNoUnits"></div>
+      <div class="sh-empty" id="sh-empty" data-i18n="shNoUnits"></div>
     </div>
   </div>
 </div>
@@ -228,11 +410,9 @@
         '<td class="mono">' + u.ai.toFixed(1) + '</td>' +
         '<td><span class="st ' + (u.delivery === 'ready' ? 'av' : 'rs') + '">' + dl + '</span></td>' +
         '<td><span class="st ' + (rs ? 'rs' : 'av') + '">' + HZ.t(rs ? 'stReserved' : 'stAvail') + '</span></td>' +
-        '<td class="go">' + (rs ? '' : '<i data-lucide="arrow-right" class="i extracted-style-210" ></i>') + '</td></tr>';
+        '<td class="go">' + (rs ? '' : '<i data-lucide="arrow-right" class="i" style="width:15px;height:15px"></i>') + '</td></tr>';
     }).join('');
-    var isEmpty = units.length === 0;
-    document.getElementById('sh-empty').classList.toggle('is-hidden', !isEmpty);
-    document.getElementById('sh-empty').classList.toggle('is-block', isEmpty);
+    document.getElementById('sh-empty').style.display = units.length ? 'none' : 'block';
     document.getElementById('sh-tbody').querySelectorAll('tr:not(.reserved)').forEach(function (tr) {
       tr.addEventListener('click', function () {
         location.href = 'property.html?cpd=' + encodeURIComponent(c.n) + '&u=' + encodeURIComponent(tr.getAttribute('data-u'));
@@ -257,11 +437,11 @@
     document.querySelectorAll('#shf-mode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === uf.mode); });
     renderSheet();
     document.getElementById('sheet-ov').classList.add('on');
-    document.body.classList.add('no-scroll');
+    document.body.style.overflow = 'hidden';
   }
   function closeSheet() {
     document.getElementById('sheet-ov').classList.remove('on');
-    document.body.classList.remove('no-scroll');
+    document.body.style.overflow = '';
   }
   document.getElementById('shf-cpd').addEventListener('change', function () {
     var val = this.value;
@@ -285,7 +465,7 @@
     el.innerHTML =
       '<h3>' + c.n + '</h3>' +
       '<div class="zone">' + c.z + ' · New Cairo</div>' +
-      '<div class="metric"><span>' + HZ.t('unitsAvail') + '</span><b class="link" id="intel-units">' + units.length + ' <i data-lucide="table-2" class="i extracted-style-211" ></i></b></div>' +
+      '<div class="metric"><span>' + HZ.t('unitsAvail') + '</span><b class="link" id="intel-units">' + units.length + ' <i data-lucide="table-2" class="i" style="width:14px;height:14px"></i></b></div>' +
       '<div class="metric"><span>' + HZ.t('aiScore') + '</span><b>' + c.ai.toFixed(1) + ' / 10</b></div>' +
       '<div class="metric"><span>' + HZ.t('growth') + '</span><b class="up">' + c.g + '</b></div>' +
       '<div class="metric"><span>' + HZ.t('avg') + '</span><b>EGP ' + c.priceM + 'M</b></div>' +
@@ -377,11 +557,9 @@
   function markerIcon(c, count, isZero) {
     var hot = c.ai >= 9.2;
     var cls = 'cpd-marker' + (hot ? ' hot' : '') + (isZero ? ' zero' : '');
-    var curLang = (window.HZ && HZ.lang) ? HZ.lang() : 'en';
-    var displayName = (D.compoundName) ? D.compoundName(c.n, curLang) : c.n;
     return L.divIcon({
       className: '',
-      html: '<span class="' + cls + '" title="' + displayName + '">' + displayName + '</span>',
+      html: '<span class="' + cls + '" title="' + c.n + '">' + count + '</span>',
       iconSize: null
     });
   }
@@ -409,12 +587,11 @@
   var searchClear = document.getElementById('cpd-search-clear');
   searchInput.addEventListener('input', function () {
     query = this.value.trim().toLowerCase();
-    searchClear.classList.toggle('is-hidden', !query);
-    searchClear.classList.toggle('is-block', !!query);
+    searchClear.style.display = query ? 'block' : 'none';
     render();
   });
   searchClear.addEventListener('click', function () {
-    searchInput.value = ''; query = ''; searchClear.classList.remove('is-block'); searchClear.classList.add('is-hidden'); render(); searchInput.focus();
+    searchInput.value = ''; query = ''; searchClear.style.display = 'none'; render(); searchInput.focus();
   });
   document.getElementById('browse-map')?.addEventListener('click', function () {
     window.scrollTo({ top: document.getElementById('cpd-map').getBoundingClientRect().top + window.scrollY - 110, behavior: 'smooth' });
@@ -525,12 +702,10 @@
         '<div class="top"><h4>' + c.n + '</h4><span class="ai-pill">AI ' + c.ai.toFixed(1) + '</span></div>' +
         '<div class="meta"><span>' + HZ.t('growth') + ' <b class="up">' + c.g + '</b></span>' +
         '<span>' + HZ.t('avg') + ' <b>EGP ' + c.priceM + 'M</b></span></div>' +
-        '<span class="u-link" data-units="' + c.n + '"><i data-lucide="table-2" class="i extracted-style-212" ></i>' + unitsFiltered(c).length + ' ' + HZ.t('unitsWord') + '</span>' +
+        '<span class="u-link" data-units="' + c.n + '"><i data-lucide="table-2" class="i" style="width:14px;height:14px"></i>' + unitsFiltered(c).length + ' ' + HZ.t('unitsWord') + '</span>' +
       '</div>';
     }).join('');
-    var noResults = list.length === 0;
-    document.getElementById('cpd-empty').classList.toggle('is-hidden', !noResults);
-    document.getElementById('cpd-empty').classList.toggle('is-block', noResults);
+    document.getElementById('cpd-empty').style.display = list.length ? 'none' : 'block';
     document.querySelectorAll('.u-link').forEach(function (l) {
       l.addEventListener('click', function (e) {
         e.stopPropagation();

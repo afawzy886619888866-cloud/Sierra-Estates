@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sierra Estates · Property Details</title>
+<link rel="icon" href="logo-mark-96.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="firebase-config.js"></script>
+<script>window.SR=function(u){return (window.__urlmap&&window.__urlmap[u])||u;};</script>
+<script src="data.standalone.js"></script>
+<script src="shared.js"></script>
+<script src="supabase.js"></script>
+<script src="firebase.js"></script>
+<style>
+/* ── Property Detail Specific Styles ── */
+.pdetail-head{margin-bottom:28px;}
+.pdetail-title{font-family:var(--display);font-size:clamp(1.75rem,1.2rem + 1.8vw,2.5rem);font-weight:700;color:var(--ink);letter-spacing:-.02em;line-height:1.15;}
+.pdetail-loc{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14.5px;margin-top:6px;font-weight:500;}
+.pdetail-layout{display:grid;grid-template-columns:1fr 380px;gap:36px;align-items:start;}
+
+/* Gallery */
+.gallery-main{position:relative;width:100%;height:480px;border-radius:18px;overflow:hidden;background:#0a1622;border:1px solid var(--line);box-shadow:var(--shadow-m);}
+.gallery-main img{width:100%;height:100%;object-fit:cover;transition:transform .4s var(--silk);}
+.gallery-thumbs{display:flex;gap:12px;margin-top:14px;overflow-x:auto;padding-bottom:6px;}
+.gallery-thumb{width:100px;height:70px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;opacity:.7;transition:all .2s;}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;}
+.gallery-thumb.active,.gallery-thumb:hover{opacity:1;border-color:var(--pri);transform:translateY(-2px);}
+.gallery-badges{position:absolute;top:18px;left:18px;display:flex;gap:8px;z-index:2;}
+.gallery-3d-btn{position:absolute;bottom:20px;right:20px;z-index:3;background:rgba(0,43,75,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.08em;padding:10px 18px;border-radius:999px;border:1px solid rgba(233,193,118,.4);display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:all .2s;}
+.gallery-3d-btn:hover{background:linear-gradient(135deg,#c8961a,#e9c176);color:#09090f;transform:scale(1.04);}
+
+/* Specs Grid */
+.specs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;margin:28px 0;}
+.spec-box{display:flex;flex-direction:column;gap:4px;}
+.spec-box span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.spec-box b{font-size:16px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+
+/* Detail Sections */
+.detail-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:24px;}
+.detail-card h3{font-size:19px;font-weight:700;margin-bottom:14px;color:var(--ink);}
+.detail-card p{font-size:14.5px;line-height:1.7;color:var(--text);}
+
+/* AVM Valuation Box */
+.avm-box{background:linear-gradient(135deg,rgba(0,43,75,.08),rgba(200,150,26,.08));border:1.5px solid rgba(200,150,26,.3);border-radius:16px;padding:22px;margin-bottom:24px;}
+.avm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.avm-val{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--pri);}
+[data-theme="dark"] .avm-val{color:#e9c176;}
+
+/* Sticky Right Booking Card */
+.booking-card{position:sticky;top:88px;background:var(--surface);border:1.5px solid var(--line-2);border-radius:18px;padding:28px;box-shadow:var(--shadow-m);}
+.price-display{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+.price-tag{font-family:var(--mono);font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
+.price-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.agent-banner{display:flex;align-items:center;gap:14px;background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-bottom:22px;}
+.agent-banner .av{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;}
+[data-theme="dark"] .agent-banner .av{background:#c8961a;color:#09090f;}
+
+@media(max-width:980px){.pdetail-layout{grid-template-columns:1fr;}.booking-card{position:static;}.specs-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" class="is-inline-203">
+<div id="site-chrome"></div>
+
+<header class="page-hero is-inline-204">
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="index.html" data-i18n="crumbHome">Home</a>
+      <span class="sep">/</span>
+      <a href="properties.html" data-i18n="navProps">Properties</a>
+      <span class="sep">/</span>
+      <span id="crumb-prop-title">Listing</span>
+    </div>
+  </div>
+</header>
+
+<section class="block is-inline-205">
+  <div class="wrap">
+    <!-- Header info -->
+    <div class="pdetail-head rv">
+      <h1 class="pdetail-title" id="prop-title">Luxury Villa in Hyde Park</h1>
+      <div class="pdetail-loc">
+        <i data-lucide="map-pin" class="is-inline-206"></i>
+        <span id="prop-address">Hyde Park · 5th Settlement, New Cairo</span>
+        <span>·</span>
+        <span id="prop-code" class="is-inline-207">HP-VL-01</span>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="pdetail-layout">
+      <!-- Left column: Gallery + Specs + Details -->
+      <div>
+        <!-- 4K Gallery -->
+        <div class="gallery-main rv">
+          <img id="main-photo" src="" alt="Property"/>
+          <div class="gallery-badges" id="gallery-badges"></div>
+          <a href="virtual-tour.html" class="gallery-3d-btn">
+            <i data-lucide="scan" class="is-inline-208"></i>
+            Launch 3D Virtual Tour
+          </a>
+        </div>
+
+        <div class="gallery-thumbs" id="gallery-thumbs"></div>
+
+        <!-- Key Specs Grid -->
+        <div class="specs-grid rv">
+          <div class="spec-box">
+            <span>Bedrooms</span>
+            <b><i data-lucide="bed-double" class="is-inline-209"></i> <span id="prop-beds">5</span> Beds</b>
+          </div>
+          <div class="spec-box">
+            <span>Bathrooms</span>
+            <b><i data-lucide="bath" class="is-inline-210"></i> <span id="prop-baths">5</span> Baths</b>
+          </div>
+          <div class="spec-box">
+            <span>Built Area</span>
+            <b><i data-lucide="scaling" class="is-inline-211"></i> <span id="prop-area">480</span> m²</b>
+          </div>
+          <div class="spec-box">
+            <span>AI Valuation</span>
+            <b><i data-lucide="sparkles" class="is-inline-212"></i> <span id="prop-ai-score">9.8</span> / 10</b>
+          </div>
+        </div>
+
+        <!-- AVM Valuation Insight -->
+        <div class="avm-box rv">
+          <div class="avm-head">
+            <div>
+              <span class="is-inline-213">AVM Pricing Engine 3.0</span>
+              <h4 class="is-inline-214">Fair Market Valuation</h4>
+            </div>
+            <span class="tag featured is-inline-215">Confidence 96%</span>
+          </div>
+          <div class="avm-val" id="avm-price">EGP 28.5M</div>
+          <p class="is-inline-216">
+            Benchmarked against 25 comparable verified transactions in <span id="avm-compound">Hyde Park</span>. 
+            Estimated capital appreciation for Q3/Q4 2026: <b>+18% to +22% YoY</b>.
+          </p>
+        </div>
+
+        <!-- Description Card -->
+        <div class="detail-card rv">
+          <h3>Property Overview</h3>
+          <p id="prop-description">
+            Prime standalone luxury villa overlooking the central park in Hyde Park, New Cairo. 
+            Designed with grand double-height ceilings, expansive floor-to-ceiling panoramic windows, and seamless indoor-outdoor living. 
+            Features private landscaped gardens, heated infinity swimming pool, smart home automation, private elevator, and dedicated staff quarters.
+          </p>
+        </div>
+
+        <!-- Amenities -->
+        <div class="detail-card rv">
+          <h3>Compound Amenities</h3>
+          <div class="is-inline-217">
+            <div class="is-inline-218"><i data-lucide="shield-check" class="is-inline-219"></i> 24/7 Gated Security</div>
+            <div class="is-inline-220"><i data-lucide="trees" class="is-inline-221"></i> Central Park & Lakes</div>
+            <div class="is-inline-222"><i data-lucide="waves" class="is-inline-223"></i> Private Swimming Pool</div>
+            <div class="is-inline-224"><i data-lucide="dumbbell" class="is-inline-225"></i> Clubhouse & Gym</div>
+            <div class="is-inline-226"><i data-lucide="car" class="is-inline-227"></i> Underground Parking</div>
+            <div class="is-inline-228"><i data-lucide="sparkles" class="is-inline-229"></i> Smart Home Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: Booking Card -->
+      <div>
+        <div class="booking-card rv">
+          <div class="price-display">
+            <span class="is-inline-230">Price</span>
+            <div class="price-tag" id="prop-price">EGP 28.5M</div>
+            <div class="price-sub" id="prop-price-sub">Est. $5,200 / month on long lease</div>
+          </div>
+
+          <div class="agent-banner">
+            <div class="av" id="agent-av">LM</div>
+            <div>
+              <b id="agent-name" class="is-inline-231">Layla Mansour</b>
+              <small class="is-inline-232">Licensed Compound Advisor · 5th Settl.</small>
+            </div>
+          </div>
+
+          <div class="is-inline-233">
+            <a id="wa-btn" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" class="btn btn-pri is-inline-234">
+              <i data-lucide="message-circle" class="is-inline-235"></i>
+              Chat on WhatsApp
+            </a>
+            <a href="tel:+201092048333" class="btn btn-navy is-inline-236">
+              <i data-lucide="phone" class="is-inline-237"></i>
+              Call Advisor
+            </a>
+            <a href="virtual-tour.html" class="btn btn-out is-inline-238">
+              <i data-lucide="scan" class="is-inline-239"></i>
+              3D Virtual Tour
+            </a>
+          </div>
+
+          <div class="is-inline-240">
+            <span class="is-inline-241">
+              <i data-lucide="shield-check" class="is-inline-242"></i>
+              100% Verified on-site by Sierra Estates
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Similar Properties Section -->
+    <div class="sec-head rv is-inline-243">
+      <div>
+        <div class="eyebrow">More in New Cairo</div>
+        <h2>Similar Properties</h2>
+      </div>
+      <a href="properties.html" class="sec-link">View all <i data-lucide="arrow-right" class="is-inline-244"></i></a>
+    </div>
+    <div class="grid-props" id="similar-grid"></div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script>
+(function () {
+  'use strict';
+  var D = window.HZDATA;
+  var urlParams = new URLSearchParams(window.location.search);
+  var propId = parseInt(urlParams.get('id'), 10) || 1;
+
+  var p = D.listings.find(function (x) { return x.id === propId; }) || D.listings[0];
+
+  // Populate basic info
+  document.title = 'Sierra Estates · ' + p.type + ' in ' + p.cmp;
+  document.getElementById('crumb-prop-title').textContent = p.type + ' (' + p.code + ')';
+  document.getElementById('prop-title').textContent = p.type + ' in ' + p.cmp;
+  document.getElementById('prop-address').textContent = p.cmp + ' · ' + p.zone + ', New Cairo';
+  document.getElementById('prop-code').textContent = p.code;
+  document.getElementById('prop-beds').textContent = p.beds;
+  document.getElementById('prop-baths').textContent = p.bath;
+  document.getElementById('prop-area').textContent = p.area;
+  document.getElementById('prop-ai-score').textContent = p.ai.toFixed(1);
+
+  var priceText = p.mode === 'sale' ? p.egpM + 'M EGP' : '$' + p.usd.toLocaleString() + ' / month';
+  document.getElementById('prop-price').textContent = priceText;
+  document.getElementById('avm-price').textContent = priceText;
+  document.getElementById('avm-compound').textContent = p.cmp;
+  document.getElementById('prop-price-sub').textContent = p.mode === 'sale' ? 'Est. $' + p.usd.toLocaleString() + ' / mo rental income' : 'Resale value approx. ' + p.egpM + 'M EGP';
+
+  // Agent
+  document.getElementById('agent-name').textContent = p.agent;
+  var initials = p.agent.split(' ').map(function (w) { return w[0]; }).join('');
+  document.getElementById('agent-av').textContent = initials;
+
+  // WhatsApp Link prefill
+  var waMsg = encodeURIComponent('Hello Sierra Estates, I am interested in ' + p.type + ' (' + p.code + ') in ' + p.cmp + '. Please share more details.');
+  document.getElementById('wa-btn').href = 'https://wa.me/201092048333?text=' + waMsg;
+
+  // Gallery
+  var galleryImages = [
+    p.img,
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=80',
+    'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=900&q=80'
+  ];
+
+  var mainPhoto = document.getElementById('main-photo');
+  mainPhoto.src = galleryImages[0];
+
+  var thumbsContainer = document.getElementById('gallery-thumbs');
+  thumbsContainer.innerHTML = galleryImages.map(function (src, i) {
+    return '<div class="gallery-thumb' + (i === 0 ? ' active' : '') + '" data-src="' + src + '">' +
+      '<img src="' + src + '" alt="Thumb ' + (i + 1) + '"/>' +
+      '</div>';
+  }).join('');
+
+  thumbsContainer.querySelectorAll('.gallery-thumb').forEach(function (thumb) {
+    thumb.addEventListener('click', function () {
+      thumbsContainer.querySelectorAll('.gallery-thumb').forEach(function (t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      mainPhoto.src = this.getAttribute('data-src');
+    });
+  });
+
+  // Badges
+  var badgesHtml = '';
+  if (p.tag) badgesHtml += '<span class="tag featured">' + p.tag + '</span>';
+  badgesHtml += '<span class="tag ' + p.mode + '">' + (p.mode === 'sale' ? 'Resale' : 'Rent') + '</span>';
+  document.getElementById('gallery-badges').innerHTML = badgesHtml;
+
+  // Similar properties
+  var similar = D.listings.filter(function (x) { return x.id !== p.id; }).slice(0, 3);
+  document.getElementById('similar-grid').innerHTML = similar.map(HZ.pcard).join('');
+
+  HZ.mount('props');
+})();
+</script>
+</body>
+</html>
