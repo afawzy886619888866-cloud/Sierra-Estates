@@ -1,2 +1,7 @@
-import CairoPlazaExperience from '@/components/client/CairoPlazaExperience';
-export default function ArabicCairoPlazaContactPage() { return <CairoPlazaExperience section="contact" lang="ar" />; }
+export const dynamic = 'force-dynamic';
+
+import CairoPlazaRouteShell from '@/components/client/CairoPlazaRouteShell';
+
+export default function ArabicCairoPlazaContactPage() {
+  return <CairoPlazaRouteShell section="contact" lang="ar" />;
+}

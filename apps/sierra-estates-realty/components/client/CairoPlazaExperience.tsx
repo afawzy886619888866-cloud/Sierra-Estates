@@ -1,8 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import CairoPlazaScene from './CairoPlazaScene';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
+
+const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
+  ssr: false,
+  loading: () => <div className="cp-tour-fallback">Loading interactive tour…</div>,
+});
 
 type Props = { lang?: 'en' | 'ar'; section: 'overview' | 'inventory' | 'investor' | 'contact' };
 

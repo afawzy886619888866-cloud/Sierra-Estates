@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     useTypeScriptCli: true,
+    cpus: 1,
   },
   serverExternalPackages: [
     '@grpc/grpc-js',
