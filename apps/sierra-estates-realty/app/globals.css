@@ -2,6 +2,8 @@
    (e.g. app/admin/admin-portal.css); keep this file lean so the incoming
    client page can bring its own design without fighting global rules. */
 
+@import "tailwindcss";
+
 *,
 *::before,
 *::after {
