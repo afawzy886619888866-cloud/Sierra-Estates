@@ -91,9 +91,8 @@ const nextConfig: NextConfig = {
         { source: '/virtual-tour', destination: '/client-page/virtual-tour.html' },
         { source: '/virtual-tour.html', destination: '/client-page/virtual-tour.html' },
       ],
-      fallback: [
-        { source: '/:path*', destination: '/client-page/:path*' },
-      ],
+      // Do not use a catch-all fallback here. It captures /_next assets and
+      // makes the App Router HTML load without its CSS/JS in production.
     };
   },
   async headers() {
