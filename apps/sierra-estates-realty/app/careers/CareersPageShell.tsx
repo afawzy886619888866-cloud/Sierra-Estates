@@ -13,14 +13,39 @@ export default function CareersPageShell() {
     experience: '3-5 years',
     realEstateKnowledge: 'expert',
     availability: 'immediate',
-    expectedSalary: '',
     notes: '',
   });
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch('/api/careers/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: selectedRole,
+          ...answers
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMessage(data.error || 'Failed to submit application. Please try again.');
+      }
+    } catch (err) {
+      console.error('Submission error:', err);
+      setErrorMessage('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,7 +114,7 @@ export default function CareersPageShell() {
               </h2>
               <p className="text-slate-300 text-sm leading-relaxed mb-6">
                 {lang === 'ar'
-                  ? 'قيادة علاقات المستثمرين وكبار العملاء في المشروعات التجارية والإدارية والسكنية الكبرى (مثل كايرو بلازا والتجمع الخامس). تتضمن المسؤوليات إجراء جولات المعاينة الميدانية، تقديم تحليلات العائد الاستثماري (ROI)، وإغلاق الصفقات.'
+                  ? 'قيادة علاقات المستثمرين وكبار العملاء في المشروعات التجارية والإدارية والسكنية الكبرى (مثل كايرو بلازا والتجمع الخامس). تتضمن المسؤوليات إجراء جولات المعاينة الميدانية، تقديم تحليلات العائد الاستثماري (ROI), وإغلاق الصفقات.'
                   : 'Lead VIP client advisory in premier commercial and residential developments (such as Cairo Plaza and New Cairo). Responsibilities include site tours, ROI analysis, and deal closing.'}
               </p>
               <div className="space-y-3 mb-8 text-sm text-slate-300 border-t border-b border-slate-800 py-4">
@@ -185,8 +210,8 @@ export default function CareersPageShell() {
                 </h4>
                 <p className="text-slate-300 text-sm max-w-lg mx-auto leading-relaxed">
                   {lang === 'ar'
-                    ? 'نشكر لك اهتمامك بالانضمام إلى فريق Sierra Estates. سيقوم فريق الموارد البشرية بمراجعة ملفك وإجاباتك والتواصل معك عبر الهاتف والبريد الإلكتروني خلال 48 ساعة.'
-                    : 'Thank you for your interest in joining Sierra Estates. Our HR team will review your application and contact you within 48 hours.'}
+                    ? 'نشكر لك اهتمامك بالانضمام إلى فريق Sierra Estates. تم حفظ طلبك وإرساله إلى فريق الموارد البشرية، وسنتواصل معك خلال 48 ساعة.'
+                    : 'Thank you for your interest in joining Sierra Estates. Your application has been logged and sent to HR. We will contact you within 48 hours.'}
                 </p>
                 <button
                   onClick={() => { setSubmitted(false); setSelectedRole(null); }}
@@ -197,6 +222,12 @@ export default function CareersPageShell() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {errorMessage && (
+                  <div className="p-4 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+                    {errorMessage}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1">
@@ -304,9 +335,12 @@ export default function CareersPageShell() {
                 <div className="flex gap-4 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 py-3.5 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition shadow-lg shadow-amber-500/10 text-sm"
+                    disabled={loading}
+                    className="flex-1 py-3.5 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition shadow-lg shadow-amber-500/10 text-sm disabled:opacity-50"
                   >
-                    {lang === 'ar' ? 'إرسال طلب الترشح الآن' : 'Submit Candidate Application'}
+                    {loading
+                      ? (lang === 'ar' ? 'جاري إرسال الطلب...' : 'Submitting Application...')
+                      : (lang === 'ar' ? 'إرسال طلب الترشح الآن' : 'Submit Candidate Application')}
                   </button>
                   <button
                     type="button"
