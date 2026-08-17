@@ -165,6 +165,18 @@ jobs:
           SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
           SA_JSON=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
 
+          SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
+          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN // empty')
+          TG_BOT_USERNAME=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME // empty')
+          SENDGRID_KEY=$(echo "$SECRETS_JSON" | jq -r '.SENDGRID_API_KEY // empty')
+          SENDER_EMAIL_VAL=$(echo "$VARS_JSON" | jq -r '.SENDER_EMAIL // empty')
+          DEFAULT_LOCALE=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_DEFAULT_LOCALE // empty')
+          APP_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_APP_URL // empty')
+          ORIGINS=$(echo "$VARS_JSON" | jq -r '.ALLOWED_ORIGINS // empty')
+          INT_OS_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_INTELLIGENCE_OS_URL // empty')
+          TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
+          LEAD_WHATSAPP=$(echo "$SECRETS_JSON" | jq -r '.LEAD_NOTIFY_WHATSAPP_NUMBER // empty')
+
           upsert() {
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
             code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
@@ -208,6 +220,19 @@ jobs:
           upsert FIREBASE_PROJECT_ID                      "sierra-blu"
           upsert FIREBASE_SERVICE_ACCOUNT_JSON            "$SA_JSON" encrypted
           upsert SESSION_SECRET                           "$SESSION_SECRET_VAL" encrypted
+
+          # Other integrations and App Settings
+          upsert SBR_SECRET_KEY                           "$SBR_SECRET" encrypted
+          upsert NEXT_PUBLIC_TELEGRAM_BOT_TOKEN           "$TG_BOT_TOKEN" encrypted
+          upsert NEXT_PUBLIC_TELEGRAM_BOT_USERNAME        "$TG_BOT_USERNAME"
+          upsert SENDGRID_API_KEY                         "$SENDGRID_KEY" encrypted
+          upsert SENDER_EMAIL                             "$SENDER_EMAIL_VAL"
+          upsert NEXT_PUBLIC_DEFAULT_LOCALE               "${DEFAULT_LOCALE:-en}"
+          upsert NEXT_PUBLIC_APP_URL                      "$APP_URL"
+          upsert ALLOWED_ORIGINS                          "$ORIGINS"
+          upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL          "$INT_OS_URL"
+          upsert TELEGRAM_WEBHOOK_SECRET                  "$TG_WEBHOOK_SECRET" encrypted
+          upsert LEAD_NOTIFY_WHATSAPP_NUMBER              "$LEAD_WHATSAPP" encrypted
 
       - name: Remove crons from admin project (client project owns them)
         if: matrix.role == 'admin'
