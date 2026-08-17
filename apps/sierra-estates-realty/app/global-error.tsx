@@ -1,25 +1,14 @@
 'use client';
 
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function GlobalError() {
   return (
-    <html>
-      <body className="bg-slate-950 text-white min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md">
-          <h2 className="text-2xl font-bold text-red-400">Something went wrong</h2>
-          <p className="text-slate-400 text-sm">{error.message || 'An unexpected application error occurred.'}</p>
-          <button
-            onClick={() => reset()}
-            className="px-4 py-2 bg-amber-500 text-slate-950 font-semibold rounded-lg hover:bg-amber-400 transition-colors"
-          >
-            Try again
-          </button>
-        </div>
+    <html lang="en">
+      <body>
+        <main style={{ minHeight: '100vh', padding: '4rem', background: '#0b1118', color: '#f6f1e8', fontFamily: 'Arial, sans-serif' }}>
+          <h1>Sierra Estates</h1>
+          <p>Something went wrong. Please refresh the page or return home.</p>
+          <a href="/" style={{ color: '#d6b46a' }}>Return home</a>
+        </main>
       </body>
     </html>
   );

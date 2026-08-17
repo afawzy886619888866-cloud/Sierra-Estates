@@ -1,2 +1,7 @@
-import CairoPlazaExperience from '@/components/client/CairoPlazaExperience';
-export default function ArabicCairoPlazaInventoryPage() { return <CairoPlazaExperience section="inventory" lang="ar" />; }
+export const dynamic = 'force-dynamic';
+
+import CairoPlazaRouteShell from '@/components/client/CairoPlazaRouteShell';
+
+export default function ArabicCairoPlazaInventoryPage() {
+  return <CairoPlazaRouteShell section="inventory" lang="ar" />;
+}

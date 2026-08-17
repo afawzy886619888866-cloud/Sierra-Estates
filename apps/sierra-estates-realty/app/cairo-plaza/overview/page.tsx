@@ -1,2 +1,5 @@
-import CairoPlazaExperience from '@/components/client/CairoPlazaExperience';
-export default function CairoPlazaOverviewPage() { return <CairoPlazaExperience section="overview" lang="en" />; }
+import CairoPlazaRouteShell from '@/components/client/CairoPlazaRouteShell';
+
+export default function CairoPlazaOverviewPage() {
+  return <CairoPlazaRouteShell section="overview" lang="en" />;
+}

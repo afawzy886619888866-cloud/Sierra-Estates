@@ -1,9 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { I18nProvider } from '@/lib/i18n-client';
-import { ToastProvider } from '@/components/client/Toast';
-import { AuthProvider } from '@/components/client/AuthModal';
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import ClientProviders from '@/components/client/ClientProviders';
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';
 
@@ -38,30 +35,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
+export default function ClientRouteLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    // suppressHydrationWarning: the admin portal stamps data-theme/dir on <html>
-    // from localStorage after hydration.
-    <html lang="en" data-theme="light" dir="ltr" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
-        <I18nProvider>
-          <ToastProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </ToastProvider>
-        </I18nProvider>
-        <SpeedInsights />
-      </body>
-    </html>
-  );
+  return <ClientProviders>{children}</ClientProviders>;
 }
