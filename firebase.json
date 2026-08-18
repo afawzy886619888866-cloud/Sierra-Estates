@@ -6,7 +6,7 @@
       "runtime": "nodejs22",
       "timeoutSeconds": 540,
       "memory": 512,
-      "region": ["europe-west1"],
+      "region": ["us-central1"],
       "predeploy": ["pnpm -C \"$RESOURCE_DIR\" run build"]
     }
   ],

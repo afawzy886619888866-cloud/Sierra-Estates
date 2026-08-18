@@ -374,6 +374,9 @@ describe('processDataForApp Firestore trigger (processData.js)', () => {
 // `maybeDescribe` must be evaluated at module load (jest registers describe
 // blocks synchronously, before beforeAll runs). So we set up the mocks at
 // module scope here.
+jest.doMock('firebase-functions/v2', () => ({
+  setGlobalOptions: jest.fn(),
+}));
 jest.doMock('firebase-functions/v2/https', () => ({
   onRequest: (handler) => {
     handlerRegistry.httpsOnRequest.push({ name: 'ts-v2', handler });
