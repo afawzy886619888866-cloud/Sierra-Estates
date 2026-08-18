@@ -191,6 +191,9 @@ a:hover{color:var(--pri-d);}
 
 /* ── 360 rooms strip ── */
 .rooms{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(340px,1fr);gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;scrollbar-width:thin;}
+.rooms::-webkit-scrollbar{height:4px;}
+.rooms::-webkit-scrollbar-track{background:transparent;}
+.rooms::-webkit-scrollbar-thumb{background:rgba(0,174,255,.35);border-radius:2px;}
 .room{position:relative;height:300px;border-radius:var(--r-card);overflow:hidden;scroll-snap-align:start;}
 .room img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--silk);}
 .room:hover img{transform:scale(1.07);}
