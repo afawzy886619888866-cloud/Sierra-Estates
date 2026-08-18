@@ -20,7 +20,7 @@ jobs:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - name: Label PR based on changed files
-        uses: actions/labeler@v7
+        uses: actions/labeler@v5
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml

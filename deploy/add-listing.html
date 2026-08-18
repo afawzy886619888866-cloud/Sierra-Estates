@@ -104,8 +104,8 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
       <span><b>Sierra Estates</b><small id="brand-sub">AI Real Estate · New Cairo</small></span>
     </a>
     <div class="top-act">
-      <button class="tb" id="theme-toggle" type="button"><i data-lucide="moon" class="i"></i></button>
-      <button class="tb" id="lang-toggle" type="button"><i data-lucide="languages" class="i"></i><span id="lang-label">عربي</span></button>
+      <button class="tb" id="theme-toggle" type="button" title="Toggle theme" aria-label="Toggle theme"><i data-lucide="moon" class="i"></i></button>
+      <button class="tb" id="lang-toggle" type="button" title="Toggle language" aria-label="Toggle language"><i data-lucide="languages" class="i"></i><span id="lang-label">عربي</span></button>
     </div>
   </div>
 </header>
@@ -129,20 +129,20 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
       <div class="sect" id="t-s1">The unit</div>
       <div class="grid">
         <div class="f wide">
-          <label id="t-purpose">Listing for</label>
+          <label id="t-purpose" for="purpose">Listing for</label>
           <div class="seg" id="purpose">
             <button type="button" data-v="sale" class="on" id="t-sale">Resale</button>
             <button type="button" data-v="rent" id="t-rent">Rent</button>
           </div>
         </div>
         <div class="f">
-          <label id="t-cpd">Compound</label>
-          <input type="text" id="cpd" list="cpd-list" placeholder="e.g. Mivida" autocomplete="off"/>
+          <label id="t-cpd" for="cpd">Compound</label>
+          <input type="text" id="cpd" list="cpd-list" placeholder="e.g. Mivida" autocomplete="off" title="Compound"/>
           <datalist id="cpd-list"></datalist>
         </div>
         <div class="f">
-          <label id="t-type">Property type</label>
-          <select id="ptype">
+          <label id="t-type" for="ptype">Property type</label>
+          <select id="ptype" title="Property type" aria-label="Property type">
             <option value="Apartment">Apartment</option>
             <option value="Villa">Villa</option>
             <option value="Townhouse">Townhouse</option>
@@ -154,7 +154,7 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
           </select>
         </div>
         <div class="f wide">
-          <label id="t-beds">Bedrooms</label>
+          <label id="t-beds" for="beds">Bedrooms</label>
           <div class="chips" id="beds">
             <button type="button" data-v="1">1</button>
             <button type="button" data-v="2">2</button>
@@ -165,20 +165,20 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
           </div>
         </div>
         <div class="f">
-          <label id="t-baths">Bathrooms</label>
-          <input type="number" id="baths" min="1" max="9" value="2"/>
+          <label id="t-baths" for="baths">Bathrooms</label>
+          <input type="number" id="baths" min="1" max="9" value="2" title="Bathrooms" placeholder="2"/>
         </div>
         <div class="f">
-          <label id="t-area">Area (m²)</label>
-          <input type="number" id="area" min="40" placeholder="220"/>
+          <label id="t-area" for="area">Area (m²)</label>
+          <input type="number" id="area" min="40" placeholder="220" title="Area in square meters"/>
         </div>
         <div class="f">
-          <label id="t-price">Asking price (EGP)</label>
-          <input type="text" id="price" inputmode="numeric" placeholder="12,500,000"/>
+          <label id="t-price" for="price">Asking price (EGP)</label>
+          <input type="text" id="price" inputmode="numeric" placeholder="12,500,000" title="Asking price"/>
         </div>
         <div class="f">
-          <label id="t-finish">Finishing</label>
-          <select id="finish">
+          <label id="t-finish" for="finish">Finishing</label>
+          <select id="finish" title="Finishing" aria-label="Finishing">
             <option value="Fully finished">Fully finished</option>
             <option value="Semi-finished">Semi-finished</option>
             <option value="Core &amp; shell">Core &amp; shell</option>

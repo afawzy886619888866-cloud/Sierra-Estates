@@ -176,6 +176,8 @@ jobs:
           INT_OS_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_INTELLIGENCE_OS_URL // empty')
           TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
           LEAD_WHATSAPP=$(echo "$SECRETS_JSON" | jq -r '.LEAD_NOTIFY_WHATSAPP_NUMBER // empty')
+          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
+          OPENMEM_URL=$(echo "$VARS_JSON" | jq -r '.OPENMEMORY_URL // empty')
 
           upsert() {
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
@@ -204,10 +206,11 @@ jobs:
           upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID      "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
           upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL        "${FB_DATABASE_URL:-https://sierra-blu-default-rtdb.firebaseio.com}"
 
-          # AI & LLM
+          # AI & LLM & Memory
           upsert GOOGLE_AI_API_KEY                        "$AI_KEY" encrypted
           upsert GEMINI_API_KEY                           "$AI_KEY" encrypted
           upsert NEXT_PUBLIC_GEMINI_API_KEY               "$AI_KEY"
+          upsert OPENMEMORY_URL                           "${OPENMEM_URL:-http://localhost:8080}"
 
           # Property Finder & AWS
           upsert PROPERTY_FINDER_API_KEY                  "$PF_KEY" encrypted
@@ -220,6 +223,7 @@ jobs:
           upsert FIREBASE_PROJECT_ID                      "sierra-blu"
           upsert FIREBASE_SERVICE_ACCOUNT_JSON            "$SA_JSON" encrypted
           upsert SESSION_SECRET                           "$SESSION_SECRET_VAL" encrypted
+          upsert CRON_SECRET                              "$CRON_SECRET_VAL" encrypted
 
           # Other integrations and App Settings
           upsert SBR_SECRET_KEY                           "$SBR_SECRET" encrypted
