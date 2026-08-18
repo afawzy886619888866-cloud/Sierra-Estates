@@ -37,7 +37,7 @@ describe('GitHub Actions, Vercel & Deployment Configuration', () => {
       const deployCode = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
       expect(deployCode).toContain('role: admin');
       expect(deployCode).toContain('domain: admin.sierra-estates.net');
-      expect(deployCode).toContain('apps/admin-dashboard');
+      expect(deployCode).toContain('apps/sierra-estates-realty');
       expect(deployCode).toContain('Attach production domain');
     });
 

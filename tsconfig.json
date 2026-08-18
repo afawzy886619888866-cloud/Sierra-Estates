@@ -18,7 +18,7 @@
       "@sierra-estates/config": ["./packages/config"]
     }
   },
-  "exclude": ["node_modules", "dist", ".next", "**/__tests__/**"],
+  "exclude": ["node_modules", "dist", ".next"],
   "references": [
     {
       "path": "./lib/db"

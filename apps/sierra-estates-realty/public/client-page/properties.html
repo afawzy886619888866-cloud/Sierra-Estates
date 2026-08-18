@@ -1,60 +1,103 @@
-<!-- @dsCard group="Web App" viewport="1440x1024" name="Portal · Properties" subtitle="Filterable AI-curated listing grid — type & mode filters, EN/AR, light/dark" -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Sierra Estates · Properties</title>
+<title>Sierra Estates · Properties Catalog</title>
+<link rel="icon" href="logo-mark-96.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="shared.css"/>
 <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
-<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="firebase-config.js"></script>
+<script>window.SR=function(u){return (window.__urlmap&&window.__urlmap[u])||u;};</script>
+<script src="data.standalone.js"></script>
 <script src="shared.js"></script>
+<script src="supabase.js"></script>
+<script src="firebase.js"></script>
 <style>
-.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
-.chip{font-family:var(--font);font-weight:600;font-size:13.5px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line-2);border-radius:999px;padding:9px 18px;cursor:pointer;transition:.2s var(--silk);}
-.chip:hover{border-color:var(--pri);color:var(--pri);}
-.chip.on{background:var(--pri);border-color:var(--pri);color:#fff;}
-[data-theme="dark"] .chip.on{color:#0d0d0f;}
+/* ── Properties Page Specific Styles ── */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:32px;background:var(--surface);padding:14px 18px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow-s);}
+.chip-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.chip{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:999px;padding:8px 16px;cursor:pointer;transition:all var(--d-hover) var(--ease-out);}
+.chip:hover{border-color:var(--pri);color:var(--pri);transform:translateY(-1px);}
+.chip:active{transform:scale(0.97);}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,0.15);}
+[data-theme="dark"] .chip.on{background:linear-gradient(135deg,#e9c176,#c8961a);border-color:#e9c176;color:#09090f;}
 .chip-sep{width:1px;height:24px;background:var(--line-2);margin:0 4px;}
-.count{margin-inline-start:auto;font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
-[dir="rtl"] .count{letter-spacing:0;font-family:var(--font);}
-.grid-props .pcard{animation:cardIn .5s var(--silk) both;}
-@keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.toolbar-right{margin-inline-start:auto;display:flex;align-items:center;gap:14px;}
+.count-badge{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
+.count-badge b{color:var(--pri);font-size:14px;}
+[data-theme="dark"] .count-badge b{color:#e9c176;}
+.sort-select{font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;padding:7px 12px;outline:none;cursor:pointer;}
+.grid-props .pcard{animation:cardIn .45s var(--silk) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
 @media(prefers-reduced-motion:reduce){.grid-props .pcard{animation:none;}}
-.empty{padding:60px 0;text-align:center;color:var(--muted);font-size:15px;}
+.empty-state{padding:80px 20px;text-align:center;color:var(--muted);background:var(--surface);border-radius:18px;border:1px dashed var(--line-2);margin:20px 0;}
+.empty-state h3{font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:8px;}
 </style>
 </head>
 <body>
-
+<img id="se-logo-src" src="logo-mark.png" alt="" width="1" height="1" class="is-inline-198">
 <div id="site-chrome"></div>
 
 <header class="page-hero" data-screen-label="Properties hero">
   <div class="wrap">
-    <div class="crumbs"><a href="index.html" data-i18n="crumbHome"></a><span class="sep">/</span><span data-i18n="navProps"></span></div>
-    <h1 data-i18n="propsTit"></h1>
-    <p class="sub" data-i18n="propsSub"></p>
+    <div class="crumbs">
+      <a href="index.html" data-i18n="crumbHome">Home</a>
+      <span class="sep">/</span>
+      <span data-i18n="navProps">Properties</span>
+    </div>
+    <h1 data-i18n="propsTit">Properties</h1>
+    <p class="sub" data-i18n="propsSub">AI-curated rent & resale inventory across New Cairo, every unit verified on-site.</p>
   </div>
 </header>
 
-<section class="block" data-screen-label="Listings grid">
+<section class="block is-inline-199" data-screen-label="Listings grid">
   <div class="wrap">
+    <!-- Filter Toolbar -->
     <div class="toolbar rv">
-      <button class="chip on" data-f-type="all" data-i18n="filterAll" type="button"></button>
-      <button class="chip" data-f-type="Villa" data-i18n="filterVilla" type="button"></button>
-      <button class="chip" data-f-type="Apartment" data-i18n="filterApt" type="button"></button>
-      <button class="chip" data-f-type="Town" data-i18n="filterTown" type="button"></button>
-      <button class="chip" data-f-type="Pent" data-i18n="filterPent" type="button"></button>
+      <div class="chip-group" id="type-chips">
+        <button class="chip on" data-f-type="all" data-i18n="filterAll" type="button">All</button>
+        <button class="chip" data-f-type="Villa" data-i18n="filterVilla" type="button">Villas</button>
+        <button class="chip" data-f-type="Apartment" data-i18n="filterApt" type="button">Apartments</button>
+        <button class="chip" data-f-type="Town" data-i18n="filterTown" type="button">Town & Twin</button>
+        <button class="chip" data-f-type="Pent" data-i18n="filterPent" type="button">Penthouses & Duplex</button>
+      </div>
+
       <span class="chip-sep"></span>
-      <button class="chip on" data-f-mode="all" data-i18n="modeAll" type="button"></button>
-      <button class="chip" data-f-mode="sale" data-i18n="modeSale" type="button"></button>
-      <button class="chip" data-f-mode="rent" data-i18n="modeRent" type="button"></button>
-      <span class="count"><b id="res-count">0</b> <span data-i18n="results"></span></span>
+
+      <div class="chip-group" id="mode-chips">
+        <button class="chip on" data-f-mode="all" data-i18n="modeAll" type="button">All</button>
+        <button class="chip" data-f-mode="sale" data-i18n="modeSale" type="button">Resale</button>
+        <button class="chip" data-f-mode="rent" data-i18n="modeRent" type="button">Rent</button>
+      </div>
+
+      <div class="toolbar-right">
+        <select class="sort-select" id="sort-select" aria-label="Sort listings">
+          <option value="ai">Sort: AI Score ↓</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="area-desc">Area: Largest First</option>
+        </select>
+        <span class="count-badge"><b id="res-count">0</b> <span data-i18n="results">results</span></span>
+      </div>
     </div>
+
+    <!-- Properties Grid -->
     <div class="grid-props" id="all-grid"></div>
-    <div class="empty" id="empty" style="display:none;">—</div>
+
+    <!-- Empty State -->
+    <div class="empty-state is-inline-200" id="empty-state">
+      <i data-lucide="building" class="is-inline-201"></i>
+      <h3>No properties match your current filters</h3>
+      <p>Try selecting a different property type or clearing mode filters.</p>
+      <button class="btn btn-navy is-inline-202" type="button" id="reset-filters">Reset Filters</button>
+    </div>
   </div>
 </section>
 
@@ -64,7 +107,7 @@
 (function () {
   'use strict';
   var D = window.HZDATA;
-  var fType = 'all', fMode = 'all';
+  var fType = 'all', fMode = 'all', sortBy = 'ai';
 
   function matchType(p) {
     if (fType === 'all') return true;
@@ -72,32 +115,88 @@
     if (fType === 'Pent') return p.type === 'Penthouse' || p.type === 'Duplex';
     return p.type === fType;
   }
-  function render() {
-    var list = D.listings.filter(function (p) { return matchType(p) && (fMode === 'all' || p.mode === fMode); })
-      .sort(function (a, b) { return b.ai - a.ai; });
-    document.getElementById('all-grid').innerHTML = list.map(function (p, i) {
-      var html = HZ.pcard(p, i);
-      return html.replace('class="pcard rv', 'style="animation-delay:' + (i * 60) + 'ms" class="pcard in rv');
-    }).join('');
-    document.getElementById('res-count').textContent = list.length;
-    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
-    HZ.refreshIcons();
+
+  function sortList(list) {
+    return list.slice().sort(function (a, b) {
+      if (sortBy === 'ai') return b.ai - a.ai;
+      if (sortBy === 'price-asc') return (a.egpM || a.usd) - (b.egpM || b.usd);
+      if (sortBy === 'price-desc') return (b.egpM || b.usd) - (a.egpM || a.usd);
+      if (sortBy === 'area-desc') return b.area - a.area;
+      return 0;
+    });
   }
 
+  function render() {
+    var filtered = D.listings.filter(function (p) {
+      return matchType(p) && (fMode === 'all' || p.mode === fMode);
+    });
+    var sorted = sortList(filtered);
+    var grid = document.getElementById('all-grid');
+    var empty = document.getElementById('empty-state');
+    var count = document.getElementById('res-count');
+
+    if (sorted.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = sorted.map(function (p, i) {
+        var html = HZ.pcard(p, i);
+        return html.replace('class="pcard rv', 'style="animation-delay:' + (i * 45) + 'ms" class="pcard in rv');
+      }).join('');
+    }
+
+    count.textContent = sorted.length;
+    HZ.refreshIcons();
+
+    // GSAP micro-animation for cards
+    if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.fromTo('.grid-props .pcard', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out' });
+    }
+  }
+
+  // Type filter clicks
   document.querySelectorAll('[data-f-type]').forEach(function (b) {
     b.addEventListener('click', function () {
       document.querySelectorAll('[data-f-type]').forEach(function (x) { x.classList.remove('on'); });
-      b.classList.add('on'); fType = b.getAttribute('data-f-type'); render();
-    });
-  });
-  document.querySelectorAll('[data-f-mode]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      document.querySelectorAll('[data-f-mode]').forEach(function (x) { x.classList.remove('on'); });
-      b.classList.add('on'); fMode = b.getAttribute('data-f-mode'); render();
+      b.classList.add('on');
+      fType = b.getAttribute('data-f-type');
+      render();
     });
   });
 
-  HZ.mount('props');
+  // Mode filter clicks
+  document.querySelectorAll('[data-f-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-f-mode]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      fMode = b.getAttribute('data-f-mode');
+      render();
+    });
+  });
+
+  // Sort dropdown change
+  var sortEl = document.getElementById('sort-select');
+  if (sortEl) {
+    sortEl.addEventListener('change', function () {
+      sortBy = this.value;
+      render();
+    });
+  }
+
+  // Reset button in empty state
+  var resetBtn = document.getElementById('reset-filters');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      fType = 'all';
+      fMode = 'all';
+      document.querySelectorAll('[data-f-type]').forEach(function (x, i) { x.classList.toggle('on', i === 0); });
+      document.querySelectorAll('[data-f-mode]').forEach(function (x, i) { x.classList.toggle('on', i === 0); });
+      render();
+    });
+  }
+
+  HZ.mount('best');
   render();
 })();
 </script>

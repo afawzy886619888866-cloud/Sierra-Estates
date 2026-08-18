@@ -3,45 +3,45 @@ window.HZDATA = {
   slides: [
     { pre: 'FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO', preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
       main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.', mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-      img: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1920&q=85' },
+      img: SR('https://images.unsplash.com/photo-1613977257363-707ba9348227?w=900&q=55') },
     { pre: 'BEST-IN-CLASS DESIGN', preAr: 'تصميم من الطراز الأول',
       main: 'Redefining Luxury Living with AI-Driven Excellence', mainAr: 'نعيد تعريف الفخامة بتميّز الذكاء الاصطناعي',
-      img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85' },
+      img: SR('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55') },
     { pre: 'AI-DRIVEN EXCELLENCE', preAr: 'تميّز بالذكاء الاصطناعي',
       main: 'Smart Matches for Smart Investors', mainAr: 'توافق ذكي لمستثمرين أذكياء',
-      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85' },
+      img: SR('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=55') },
     { pre: 'EXCLUSIVE NETWORK', preAr: 'شبكة حصرية',
       main: 'Unrivaled Access to Premium Compounds', mainAr: 'وصول لا يُضاهى لأرقى الكمبوندات',
-      img: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1920&q=85' },
+      img: SR('https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=900&q=55') },
     { pre: 'CURATED PORTFOLIO', preAr: 'محفظة منتقاة',
       main: 'Your Journey to Exceptional Homes Begins Here', mainAr: 'رحلتك نحو منزل استثنائي تبدأ هنا',
-      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&q=85' }
+      img: SR('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=55') }
   ],
   listings: [
-    { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85' },
-    { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=85' },
-    { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=85' },
-    { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=85' },
-    { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=85' },
-    { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=85' },
-    { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=85' },
-    { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=85' }
+    { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: SR('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55') },
+    { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: SR('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55') },
+    { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: SR('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55') },
+    { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: SR('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55') },
+    { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: SR('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55') },
+    { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: SR('https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55') },
+    { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: SR('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55') },
+    { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: SR('https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55') }
   ],
   rooms: [
-    { name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1400&q=85' },
-    { name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1400&q=85' },
-    { name: 'Garden Courtyard', sub: 'Villette · Villa G-Type', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=85' },
-    { name: 'Infinity Pool & Deck', sub: 'Taj City · Signature Villa', img: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1400&q=85' },
-    { name: 'Rooftop Sky Terrace', sub: 'Uptown Cairo · Penthouse Level', img: 'https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=1400&q=85' }
+    { name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: SR('https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=900&q=55') },
+    { name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: SR('https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=55') },
+    { name: 'Garden Courtyard', sub: 'Villette · Villa G-Type', img: SR('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=55') },
+    { name: 'Infinity Pool & Deck', sub: 'Taj City · Signature Villa', img: SR('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=900&q=55') },
+    { name: 'Rooftop Sky Terrace', sub: 'Uptown Cairo · Penthouse Level', img: SR('https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=900&q=55') }
   ],
   interiors: [
-    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=85',
-    'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=85',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=85',
-    'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200&q=85',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=85'
+    SR('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=55'),
+    SR('https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=900&q=55'),
+    SR('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=55'),
+    SR('https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=900&q=55'),
+    SR('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55')
   ],
-  agentImg: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=80',
+  agentImg: SR('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=55'),
   compounds: [
     { n: 'Katameya Heights', c: [29.99, 31.48], g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000 },
     { n: 'Katameya Dunes', c: [29.985, 31.492], g: '+12%', ai: 8.8, z: 'Katameya', priceM: 18, rent: 3400 },
@@ -162,14 +162,14 @@ window.HZDATA = {
   // ═══ Featured compounds — these pulse/glow on the home page map ═══
   featured: ['Mivida', 'Hyde Park New Cairo', 'Mountain View iCity', 'Villette (SODIC)', 'Madinaty District 1', 'Taj City'],
   compoundImgs: {
-    'Hyde Park New Cairo': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-    'Mivida': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
-    'Mountain View iCity': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
-    'Eastown (SODIC)': 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80',
-    'Taj City': 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
-    'Villette (SODIC)': 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80',
-    'Palm Hills New Cairo': 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80',
-    'Katameya Heights': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'
+    'Hyde Park New Cairo': SR('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55'),
+    'Mivida': SR('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55'),
+    'Mountain View iCity': SR('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55'),
+    'Eastown (SODIC)': SR('https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55'),
+    'Taj City': SR('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55'),
+    'Villette (SODIC)': SR('https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55'),
+    'Palm Hills New Cairo': SR('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55'),
+    'Katameya Heights': SR('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55')
   },
   price: function (p) {
     return p.mode === 'rent' ? '$' + p.usd.toLocaleString() + '/mo' : 'EGP ' + p.egpM.toFixed(1) + 'M';
@@ -183,14 +183,14 @@ window.HZDATA = {
   var TYPES = ['Apartment', 'Apartment', 'Apartment', 'Duplex', 'Twin House', 'Townhouse', 'Penthouse', 'Villa', 'Villa'];
   var AGENTS = ['Layla Mansour', 'Karim Fahmy', 'Nour Saleh', 'Omar Magdy', 'Yara Hakim', 'Rana Adel'];
   var IMGS = [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85',
-    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=85',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=85',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=85',
-    'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=85',
-    'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=85',
-    'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=85',
-    'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=85'
+    SR('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55'),
+    SR('https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55')
   ];
   function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
   function rng(seed) { var x = seed || 1; return function () { x = (x * 1103515245 + 12345) >>> 0; return (x >>> 8) / 16777216; }; }

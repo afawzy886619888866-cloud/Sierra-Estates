@@ -1,76 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
-        {
-            "type": "aws-sam",
-            "request": "direct-invoke",
-            "name": "Invoke Lambda",
-            "invokeTarget": {
-                "target": "code",
-                "lambdaHandler": "Function Handler",
-                "projectRoot": "${workspaceFolder}"
-            },
-            "lambda": {
-                "runtime": "Lambda Runtime",
-                "payload": {
-                    "json": {}
-                }
-            }
-        },
-
-        {
-            "type": "cmake",
-            "request": "launch",
-            "name": "CMake: Configure project",
-            "cmakeDebugType": "configure",
-            "clean": false,
-            "configureAll": false
-        },
-        {
-            "type": "aws-sam",
-            "request": "direct-invoke",
-            "name": "Invoke Lambda with API Gateway",
-            "invokeTarget": {
-                "target": "api",
-                "templatePath": "Template Location",
-                "logicalId": "Function Logical ID"
-            },
-            "api": {
-                "path": "Path",
-                "httpMethod": "Method",
-                "payload": {
-                    "json": {}
-                }
-            }
-        },
-        {
-            "name": "Debug program / Interactive GUI",
-            "type": "abl",
-            "request": "launch",
-            "program": "${file}",
-            "cwd": "${workspaceFolder}",
-            "graphicalMode": true,
-            "pause": false,
-            "refProjects": []
-        },
-        
-        
-        {
-            "name": "Python Debugger: Current File with Arguments",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "args": "${command:pickArgs}"
-        },
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
         {
             "name": "Next.js: Debug Server",
             "type": "node",
@@ -84,12 +14,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: Attach using Process Id",
-            "type": "debugpy",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        },
-        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
@@ -97,54 +21,10 @@
             "console": "integratedTerminal"
         },
         {
-            "type": "msedge",
-            "name": "Launch Microsoft Edge",
-            "request": "launch",
-            "runtimeArgs": [
-                "--remote-debugging-port=9222"
-            ],
-            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html", // Provide your project's url to finish configuring
-            "presentation": {
-                "hidden": true
-            }
-        },
-        {
-            "type": "msedge",
-            "name": "Launch Microsoft Edge in headless mode",
-            "request": "launch",
-            "runtimeArgs": [
-                "--headless",
-                "--remote-debugging-port=9222"
-            ],
-            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html", // Provide your project's url to finish configuring
-            "presentation": {
-                "hidden": true
-            }
-        },
-        {
-            "type": "vscode-edge-devtools.debug",
-            "name": "Open Edge DevTools",
+            "name": "Python Debugger: Attach using Process Id",
+            "type": "debugpy",
             "request": "attach",
-            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html", // Provide your project's url to finish configuring
-            "presentation": {
-                "hidden": true
-            }
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Launch Edge Headless and attach DevTools",
-            "configurations": [
-                "Launch Microsoft Edge in headless mode",
-                "Open Edge DevTools"
-            ]
-        },
-        {
-            "name": "Launch Edge and attach DevTools",
-            "configurations": [
-                "Launch Microsoft Edge",
-                "Open Edge DevTools"
-            ]
+            "processId": "${command:pickProcess}"
         }
     ]
 }
