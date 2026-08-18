@@ -147,6 +147,13 @@ export default function PortalChrome({ onAddListingClick, onSignInClick: _onSign
               {t.navAI}
             </Link>
             <Link
+              href={isAr ? '/ar/cairo-plaza/overview' : '/cairo-plaza/overview'}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 border border-amber-500/20 transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</span>
+            </Link>
+            <Link
               href="/careers"
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-200 hover:text-white hover:bg-white/5 transition-all"
             >
@@ -269,6 +276,14 @@ export default function PortalChrome({ onAddListingClick, onSignInClick: _onSign
             >
               <span>{t.navAI}</span>
               <Sparkles className="w-5 h-5 text-amber-400" />
+            </Link>
+            <Link
+              href={isAr ? '/ar/cairo-plaza/overview' : '/cairo-plaza/overview'}
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2 border-b border-white/10 flex items-center justify-between text-amber-300 font-semibold"
+            >
+              <span>{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</span>
+              <Sparkles className="w-4 h-4 text-amber-400" />
             </Link>
             <Link
               href="/careers"
