@@ -21,7 +21,7 @@
 [data-theme="dark"] .price-hero h1 em{color:#e9c176;}
 .price-hero p.sub{color:rgba(255,255,255,.82);margin-top:14px;max-width:620px;font-size:15.5px;line-height:1.55;}
 .price-hero .hero-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
-.price-hero .hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:9px 14px;border-radius:999px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.price-hero .hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:9px 14px;border-radius:999px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
 .price-hero .hero-chip i{width:13px;height:13px;color:#34d399;}
 
 .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:40px;align-items:start;}
@@ -59,6 +59,15 @@ select:focus, .num:focus{border-color:var(--pri);}
 
 @media(max-width:880px){.price-grid{grid-template-columns:1fr;}.estimate{position:static;}}
 @media(max-width:680px){.price-hero h1{font-size:32px;}.estimate .big{font-size:42px;}}
+
+.ai-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;}
+.ai-eyebrow-bar{width:24px;height:1.5px;background:#8fe1ff;display:inline-block;}
+.block-pt40{padding-top:40px;}
+.field-mb0{margin-bottom:0;}
+.conf-row{padding:0;}
+.conf-label{color:rgba(239,248,247,.62);font-size:13.5px;}
+.conf-val{color:#e9c176;font-weight:800;font-family:var(--mono);}
+.cta-icon{width:16px;height:16px;}
 </style>
 </head>
 <body>
@@ -66,8 +75,8 @@ select:focus, .num:focus{border-color:var(--pri);}
 
 <section class="price-hero">
   <div class="wrap">
-    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;">
-      <span style="width:24px;height:1.5px;background:#8fe1ff;display:inline-block;"></span>
+    <div class="ai-eyebrow">
+      <span class="ai-eyebrow-bar"></span>
       AI VALUATION · AVM ENGINE
     </div>
     <h1>Precise Pricing <em>— fair-market value, instantly</em></h1>
@@ -80,18 +89,18 @@ select:focus, .num:focus{border-color:var(--pri);}
   </div>
 </section>
 
-<section class="block" style="padding-top:40px;">
+<section class="block block-pt40">
   <div class="wrap">
     <div class="price-grid">
       <div class="panel">
         <h3>Unit details</h3>
         <div class="field">
-          <label>Compound</label>
-          <select id="compound"></select>
+          <label for="compound">Compound</label>
+          <select id="compound" title="Compound" aria-label="Compound"></select>
         </div>
         <div class="field">
-          <label>Built-up area (m²)</label>
-          <input class="num" id="area" type="number" value="180" min="50" max="900"/>
+          <label for="area">Built-up area (m²)</label>
+          <input class="num" id="area" type="number" value="180" min="50" max="900" title="Built-up area in square meters" placeholder="180"/>
         </div>
         <div class="field">
           <label>Bedrooms</label>
@@ -112,7 +121,7 @@ select:focus, .num:focus{border-color:var(--pri);}
             <button data-v="1.12" type="button">Ultra Lux</button>
           </div>
         </div>
-        <div class="field" style="margin-bottom:0;">
+        <div class="field field-mb0">
           <label>Furnishing</label>
           <div class="seg" id="furnish">
             <button data-v="1" class="on" type="button">Unfurnished</button>
@@ -132,10 +141,10 @@ select:focus, .num:focus{border-color:var(--pri);}
           <div class="br-row"><span>Bedroom premium</span><span id="brBed">—</span></div>
         </div>
         <div class="conf">
-          <div class="br-row" style="padding:0;"><span style="color:rgba(239,248,247,.62);font-size:13.5px;">Model confidence</span><span style="color:#e9c176;font-weight:800;font-family:var(--mono);">88%</span></div>
+          <div class="br-row conf-row"><span class="conf-label">Model confidence</span><span class="conf-val">88%</span></div>
           <div class="conf-bar"><div class="conf-fill"></div></div>
         </div>
-        <a class="cta-btn" href="index.html#inquiry"><i data-lucide="phone-call" style="width:16px;height:16px;"></i> Request a valuation call</a>
+        <a class="cta-btn" href="index.html#inquiry"><i data-lucide="phone-call" class="cta-icon"></i> Request a valuation call</a>
       </div>
     </div>
 

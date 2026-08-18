@@ -51,6 +51,10 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
 .export-note{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);font-family:var(--mono);}
 .success-msg{display:none;text-align:center;padding:20px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:10px;color:#34d399;font-weight:600;margin-top:16px;}
 .success-msg.show{display:block;}
+.apply-title{text-align:center;margin-bottom:30px;}
+.file-input{padding:10px;}
+.send-icon{width:16px;height:16px;}
+.apply-btn .i{width:14px;height:14px;}
 </style>
 </head>
 <body>
@@ -74,7 +78,7 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
 
 <section class="form-section" id="apply">
   <div class="wrap">
-    <h2 style="text-align:center;margin-bottom:30px;">Apply Now</h2>
+    <h2 class="apply-title">Apply Now</h2>
     <div class="form-card">
       <form id="career-form">
         <div class="form-row">
@@ -83,18 +87,18 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
             <input type="text" id="f-name" required placeholder="Ahmed Fawzy"/>
           </div>
           <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" id="f-phone" required placeholder="+2 01XXXXXXXXX"/>
+            <label for="f-phone">Phone</label>
+            <input type="tel" id="f-phone" required placeholder="+2 01XXXXXXXXX" title="Phone number"/>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="f-email" required placeholder="you@example.com"/>
+            <label for="f-email">Email</label>
+            <input type="email" id="f-email" required placeholder="you@example.com" title="Email address"/>
           </div>
           <div class="form-group">
-            <label>Position</label>
-            <select id="f-position" required>
+            <label for="f-position">Position</label>
+            <select id="f-position" required title="Position applied for" aria-label="Position applied for">
               <option value="">Select a position...</option>
               <option>Real Estate Agent</option>
               <option>AI/ML Engineer</option>
@@ -107,19 +111,19 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
           </div>
         </div>
         <div class="form-group">
-          <label>Years of Experience</label>
-          <input type="number" id="f-experience" min="0" max="30" placeholder="3"/>
+          <label for="f-experience">Years of Experience</label>
+          <input type="number" id="f-experience" min="0" max="30" placeholder="3" title="Years of experience"/>
         </div>
         <div class="form-group">
-          <label>Why Sierra? (Brief motivation)</label>
-          <textarea id="f-message" rows="4" placeholder="Tell us why you want to join Sierra Estates..."></textarea>
+          <label for="f-message">Why Sierra? (Brief motivation)</label>
+          <textarea id="f-message" rows="4" placeholder="Tell us why you want to join Sierra Estates..." title="Brief motivation"></textarea>
         </div>
         <div class="form-group">
-          <label>CV / Resume (PDF, DOCX)</label>
-          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" style="padding:10px;"/>
+          <label for="f-cv">CV / Resume (PDF, DOCX)</label>
+          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" title="CV or Resume" placeholder="Select CV or Resume" class="file-input"/>
         </div>
         <button type="submit" class="form-submit">
-          <i data-lucide="send" style="width:16px;height:16px;"></i>
+          <i data-lucide="send" class="send-icon"></i>
           Submit Application
         </button>
         <div class="success-msg" id="success-msg">
@@ -164,7 +168,8 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
         '<span><i data-lucide="map-pin" class="i"></i> ' + j.loc + '</span>' +
       '</div>' +
       '<p>' + j.desc + '</p>' +
-      '<a href="#apply" class="apply-btn" onclick="document.getElementById(\'f-position\').value=\'' + j.title + '\'"><i data-lucide="arrow-right" style="width:14px;height:14px;"></i> Apply Now</a>' +
+      '<a href="#apply" class="apply-btn" onclick="document.getElementById(\'f-position\').value=\'' + j.title + '\'">' +
+        '<i data-lucide="arrow-right" class="i"></i> Apply Now</a>' +
     '</div>';
   }).join('');
 

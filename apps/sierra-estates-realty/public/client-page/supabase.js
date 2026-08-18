@@ -27,13 +27,17 @@
   var sb = null;
   var connected = false;
 
-  // ── Initialize Supabase client ──
-  function init() {
+  // ── Initialize Supabase client (SDK fetched on demand, never on a cold site) ──
+  var SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  function configured() {
     if (!window.SIERRA_SUPABASE_ENABLED) return false;
-    if (!window.supabase || !window.SIERRA_SUPABASE_CONFIG) return false;
     var cfg = window.SIERRA_SUPABASE_CONFIG;
-    if (!cfg.url || cfg.url.indexOf('YOUR-PROJECT-ID') !== -1) return false;
+    if (!cfg || !cfg.url || cfg.url.indexOf('YOUR-PROJECT-ID') !== -1) return false;
     if (!cfg.anonKey || cfg.anonKey.indexOf('PASTE-YOUR') === 0) return false;
+    return true;
+  }
+  function connect() {
+    var cfg = window.SIERRA_SUPABASE_CONFIG;
     try {
       sb = window.supabase.createClient(cfg.url, cfg.anonKey);
       connected = true;
@@ -43,6 +47,16 @@
       if (window.console) console.warn('[Sierra] Supabase init failed, using static fallback:', e.message);
       return false;
     }
+  }
+  function init() {
+    if (!configured()) return false;
+    if (window.supabase) return connect();
+    var s = document.createElement('script');
+    s.src = SDK_URL; s.async = true;
+    s.onload = connect;
+    s.onerror = function () { if (window.console) console.warn('[Sierra] Supabase SDK failed to load; static data only.'); };
+    document.head.appendChild(s);
+    return false;
   }
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -149,6 +163,36 @@
     });
   }
 
+  // ── Add a broker/owner listing submission (pending review) ──
+  function addListingSubmission(data) {
+    var payload = {
+      created_at: new Date().toISOString(),
+      ref: data.ref || '', status: 'pending', source: data.source || 'website',
+      submitted_name: (data.submittedBy && data.submittedBy.name) || '',
+      submitted_phone: (data.submittedBy && data.submittedBy.phone) || '',
+      submitted_role: (data.submittedBy && data.submittedBy.role) || 'owner',
+      mode: data.mode || 'sale', compound: data.compound || '', type: data.type || '',
+      beds: data.beds || null, bath: data.bath || null, area: data.area || null,
+      price_egp: data.priceEGP || null, finishing: data.finishing || '', notes: data.notes || ''
+    };
+    function local() {
+      try {
+        var log = JSON.parse(localStorage.getItem('sierra_broker_listings') || '[]');
+        log.push(Object.assign({ id: payload.ref || 'local-' + Date.now() }, payload));
+        localStorage.setItem('sierra_broker_listings', JSON.stringify(log));
+      } catch (e) {}
+      return { id: payload.ref || 'local-' + Date.now(), fallback: true };
+    }
+    if (!connected) return Promise.resolve(local());
+    return sb.from('listing_submissions').insert(payload).select().single().then(function (res) {
+      if (res.error) throw res.error;
+      return { id: res.data.id, fallback: false };
+    }).catch(function (err) {
+      console.warn('[Sierra] addListingSubmission failed, localStorage fallback:', err.message);
+      return local();
+    });
+  }
+
   // ── Add career application ──
   function addCareerApp(data) {
     var payload = {
@@ -243,9 +287,10 @@
     getUnitsFor: getUnitsFor,
     getListings: getListings,
     addInquiry: addInquiry,
+    addListingSubmission: addListingSubmission,
     addCareerApp: addCareerApp,
     subscribe: subscribe,
     seedFromDataJS: seedFromDataJS,
-    tables: ['compounds', 'listings', 'units', 'inquiries', 'career_applications', 'agents', 'leads']
+    tables: ['compounds', 'listings', 'units', 'inquiries', 'listing_submissions', 'career_applications', 'agents', 'leads']
   };
 })();

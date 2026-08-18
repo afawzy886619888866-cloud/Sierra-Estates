@@ -39,8 +39,25 @@
       footBlurb: 'Curated luxury rentals and resale across New Cairo\u2019s premier compounds. Verified listings, licensed brokers, real market data.',
       footNews: 'Get new listings by email',
       fExplore: 'Explore', fBuy: 'Buy a home', fRent: 'Rent a home', fNew: 'New projects', fCpds: 'Compounds', fAgent: 'Find an agent',
-      fCompany: 'Company', fAbout: 'About Sierra', fBrokers: 'Our brokers', fJournal: 'Journal', fCareers: 'Careers', fContact: 'Contact',
+      fCompany: 'Company', fAbout: 'About Sierra', fBrokers: 'List your unit', fJournal: 'Journal', fCareers: 'Careers', fContact: 'Contact',
       fTouch: 'Get in touch', fAddr: 'Banafseg 2, Villa 402, New Cairo, Egypt',
+      reqNow: 'Request Now', reqNote: '25% off service',
+      reqTitle: 'Request a Home', reqLead: "Tell us what you're after — we'll come back with matched units.",
+      reqOff: '25% off service fee', reqModeLbl: 'Rent or resale', reqEither: 'Either',
+      reqBedsLbl: 'Bedrooms', reqAny: 'Any', reqCpdLbl: 'Compound', reqCpdPh: 'Search compounds…',
+      reqReach: 'How we reach you', reqNamePh: 'Your name', reqPhonePh: 'Phone or WhatsApp',
+      reqSend: 'Send request', reqDoneTit: 'Request received', reqNoCpd: 'No compounds match.',
+      reqNeedName: 'Please add your name.', reqNeedPhone: 'Add a valid WhatsApp number so an advisor can reach you.',
+      reqWa: 'Confirm on WhatsApp', reqRef: 'Reference',
+      addListing: 'Add Listing', addListingNote: 'Brokers & owners',
+      mapTit: 'Discover the Best Opportunities',
+      mapSub: 'Explore all New Cairo compounds on the interactive map. Click any marker for details.',
+      openFullMap: 'Open Full Map',
+      legTiers: 'Compound tiers', legFeat: 'Featured', legHot: 'AI score 9.2+',
+      legRest: 'All other compounds', legDot: 'Dot only — zoom in for the name',
+      tApt: 'Apartment', tVilla: 'Villa', tTown: 'Townhouse', tTwinH: 'Twin House', tPent: 'Penthouse', tDuplex: 'Duplex',
+      heroCpdPh: 'Search compound… (e.g. Mivida)', anyType: 'Any Type', anyPrice: 'Any Price',
+      noCpdFound: 'No compounds found',
       rights: '© 2026 Sierra Estates. All rights reserved.',
       crumbHome: 'Home',
       propsTit: 'Properties', propsSub: 'AI-curated rent & resale inventory across New Cairo, every unit verified on-site.',
@@ -125,13 +142,30 @@
       footBlurb: 'إيجار وبيع فاخر منتقى في أرقى كمبوندات القاهرة الجديدة. عقارات موثّقة، وسطاء مرخّصون، بيانات سوق حقيقية.',
       footNews: 'استقبل العقارات الجديدة بالبريد',
       fExplore: 'استكشف', fBuy: 'اشترِ منزلاً', fRent: 'استأجر منزلاً', fNew: 'مشروعات جديدة', fCpds: 'الكمبوندات', fAgent: 'ابحث عن مستشار',
-      fCompany: 'الشركة', fAbout: 'عن سيرا', fBrokers: 'مستشارونا', fJournal: 'المدونة', fCareers: 'وظائف', fContact: 'تواصل',
+      fCompany: 'الشركة', fAbout: 'عن سيرا', fBrokers: 'أضف عقارك', fJournal: 'المدونة', fCareers: 'وظائف', fContact: 'تواصل',
       fTouch: 'تواصل معنا', fAddr: 'البنفسج 2، فيلا 402، القاهرة الجديدة، مصر',
       rights: '© 2026 سيرا إستيتس. جميع الحقوق محفوظة.',
       crumbHome: 'الرئيسية',
       propsTit: 'العقارات', propsSub: 'مخزون إيجار وبيع منتقى بالذكاء الاصطناعي في القاهرة الجديدة، كل وحدة موثّقة ميدانياً.',
       cpdsTit: 'خريطة الذكاء العقاري', cpdsSub: 'مباشر، +50 كمبوند في القاهرة الجديدة ومدينتي والشروق، مقيّمة بالذكاء الاصطناعي والنمو والسعر.',
       searchCpdPh: 'ابحث باسم الكمبوند…', filterByZone: 'تصفية حسب المنطقة', allZones: 'كل المناطق', browseMap: 'تصفح الخريطة', noCpd: 'لا توجد كمبوندات مطابقة.', cpdCount: 'كمبوند',
+      reqNow: 'اطلب الآن', reqNote: 'خصم 25% على الخدمة',
+      reqTitle: 'اطلب منزلك', reqLead: 'قل لنا عن اللي بتدوّر عليه، وهنرجعلك بوحدات مطابقة.',
+      reqOff: 'خصم 25% على رسوم الخدمة', reqModeLbl: 'إيجار أم بيع', reqEither: 'الاثنين',
+      reqBedsLbl: 'غرف النوم', reqAny: 'الكل', reqCpdLbl: 'الكمبوند', reqCpdPh: 'ابحث عن كمبوند…',
+      reqReach: 'كيف نتواصل معك', reqNamePh: 'اسمك', reqPhonePh: 'تليفون أو واتساب',
+      reqSend: 'أرسل الطلب', reqDoneTit: 'تم استلام طلبك', reqNoCpd: 'لا توجد كمبوندات مطابقة.',
+      reqNeedName: 'من فضلك اكتب اسمك.', reqNeedPhone: 'اكتب رقم واتساب صحيح حتى يتواصل معك المستشار.',
+      reqWa: 'تأكيد على واتساب', reqRef: 'رقم الطلب',
+      addListing: 'أضف عقارك', addListingNote: 'للوسطاء والمالكين',
+      mapTit: 'اكتشف أفضل الفرص',
+      mapSub: 'استكشف كل كمبوندات القاهرة الجديدة على الخريطة التفاعلية. اضغط أي علامة للتفاصيل.',
+      openFullMap: 'افتح الخريطة كاملة',
+      legTiers: 'تصنيف الكمبوندات', legFeat: 'مميّز', legHot: 'تقييم ذكاء +9.2',
+      legRest: 'باقي الكمبوندات', legDot: 'نقطة فقط — قرّب لرؤية الاسم',
+      tApt: 'شقة', tVilla: 'فيلا', tTown: 'تاون هاوس', tTwinH: 'توين هاوس', tPent: 'بنتهاوس', tDuplex: 'دوبلكس',
+      heroCpdPh: 'ابحث عن كمبوند… (مثال: ميفيدا)', anyType: 'كل الأنواع', anyPrice: 'أي سعر',
+      noCpdFound: 'لا توجد كمبوندات',
       filterAll: 'الكل', filterVilla: 'فيلات', filterApt: 'شقق', filterTown: 'تاون هاوس وتوين', filterPent: 'بنتهاوس ودوبلكس',
       modeAll: 'الكل', modeSale: 'بيع', modeRent: 'إيجار',
       results: 'نتيجة', sortBy: 'ترتيب: تقييم الذكاء',
@@ -184,6 +218,14 @@
 
   function t(k) { return (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k; }
 
+  /* The nav/footer marks are built at runtime, so a bundler can't see them.
+     A hidden static <img id="se-logo-src"> in the page IS inlined, and we read
+     its resolved src here — keeps the logo alive in the single-file build. */
+  function logoSrc() {
+    var el = document.getElementById('se-logo-src');
+    return (el && (el.currentSrc || el.src)) || 'logo-gold.png';
+  }
+
   /* ── chrome templates ── */
   function chromeHTML(active) {
     function act(k) { return active === k ? ' class="active"' : ''; }
@@ -191,7 +233,7 @@
     return '' +
     '<nav class="nav" id="main-nav"><div class="wrap">' +
       '<a href="index.html" class="brand">' +
-        '<span class="mark logo"><img src="logo-gold.png" alt="Sierra Estates"/></span>' +
+        '<span class="mark logo"><img src="' + logoSrc() + '" alt="Sierra Estates"/></span>' +
         '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
       '</a>' +
       '<div class="menu">' +
@@ -201,6 +243,14 @@
         '<a href="index.html#contact"' + act('contact') + ' data-i18n="navContact">' + t('navContact') + '</a>' +
       '</div>' +
       '<div class="nav-right">' +
+        '<a href="' + (window.SIERRA_ADD_LISTING_URL || 'add-listing.html') + '" target="_blank" rel="noopener noreferrer" class="add-listing-btn">' +
+          '<span class="al-text" data-i18n="addListing">' + t('addListing') + '</span>' +
+          '<span class="al-note" data-i18n="addListingNote">' + t('addListingNote') + '</span>' +
+        '</a>' +
+        '<a href="index.html#contact" class="req-now-btn">' +
+          '<span class="req-text" data-i18n="reqNow">' + t('reqNow') + '</span>' +
+          '<span class="req-note" data-i18n="reqNote">' + t('reqNote') + '</span>' +
+        '</a>' +
         '<button class="tb-toggle" id="theme-toggle" type="button"><i data-lucide="' + (theme === 'dark' ? 'sun' : 'moon') + '" class="i"></i></button>' +
         '<button class="tb-toggle" id="lang-toggle" type="button"><i data-lucide="languages" class="i"></i><span>' + t('langBtn') + '</span></button>' +
       '</div>' +
@@ -221,7 +271,7 @@
       '<div class="foot-grid">' +
         '<div>' +
           '<a href="index.html" class="brand">' +
-            '<span class="mark logo"><img src="logo-gold.png" alt="Sierra Estates"/></span>' +
+            '<span class="mark logo"><img src="' + logoSrc() + '" alt="Sierra Estates"/></span>' +
             '<span><b>Sierra Estates</b><small data-i18n="brandSub">' + t('brandSub') + '</small></span>' +
           '</a>' +
           '<p class="blurb" data-i18n="footBlurb">' + t('footBlurb') + '</p>' +
@@ -232,7 +282,7 @@
           '<a href="properties.html" data-i18n="fNew">' + t('fNew') + '</a><a href="compounds.html" data-i18n="fCpds">' + t('fCpds') + '</a>' +
           '<a href="#" data-i18n="fAgent">' + t('fAgent') + '</a></div>' +
         '<div class="fcol"><h5 data-i18n="fCompany">' + t('fCompany') + '</h5>' +
-          '<a href="#" data-i18n="fAbout">' + t('fAbout') + '</a><a href="#" data-i18n="fBrokers">' + t('fBrokers') + '</a>' +
+          '<a href="#" data-i18n="fAbout">' + t('fAbout') + '</a><a href="' + (window.SIERRA_ADD_LISTING_URL || 'add-listing.html') + '" target="_blank" rel="noopener noreferrer" data-i18n="fBrokers">' + t('fBrokers') + '</a>' +
           '<a href="#" data-i18n="fJournal">' + t('fJournal') + '</a><a href="career.html" data-i18n="fCareers">' + t('fCareers') + '</a>' +
           '<a href="#" data-i18n="fContact">' + t('fContact') + '</a></div>' +
         '<div class="fcol"><h5 data-i18n="fDiscover">' + t('fDiscover') + '</h5>' +
@@ -300,6 +350,20 @@
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.rv:not(.in)').forEach(function (el) { io.observe(el); });
     window.HZ._io = io;
+    /* Safety net: transitions don't run on hidden tabs or in headless renderers,
+       so a reveal can never fire and the section ships blank. Reveal above-the-fold
+       content unconditionally, and everything else if the observer stayed silent. */
+    function revealAll() {
+      document.querySelectorAll('.rv:not(.in)').forEach(function (el) { el.classList.add('in'); });
+    }
+    if (document.visibilityState !== 'visible') revealAll();
+    setTimeout(function () {
+      document.querySelectorAll('.rv:not(.in)').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) el.classList.add('in');
+      });
+    }, 1200);
+    window.addEventListener('beforeprint', revealAll);
   }
 
   /* ── animated counters ── */
