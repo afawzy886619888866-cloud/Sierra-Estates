@@ -2,14 +2,14 @@
     "version": 2,
     "builds": [
         {
-            "src": "packages/openmemory-js/dist/index.js",
+            "src": "packages/openmemory-js/dist/server/handler.js",
             "use": "@vercel/node"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "packages/openmemory-js/dist/index.js"
+            "dest": "packages/openmemory-js/dist/server/handler.js"
         }
     ],
     "buildCommand": "cd packages/openmemory-js && npm install && npm run build",

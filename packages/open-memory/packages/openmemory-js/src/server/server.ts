@@ -126,6 +126,8 @@ export interface App {
     options: (path: string, handler: RouteHandler) => void;
     head: (path: string, handler: RouteHandler) => void;
     ws: (path: string, handler: WsHandler) => void;
+    handleRequest: (rawReq: IncomingMessage, rawRes: ServerResponse) => void;
+    httpServer: http.Server;
 }
 
 export function server(config: ServerConfig = {}): App {
@@ -159,10 +161,9 @@ export function server(config: ServerConfig = {}): App {
         return null;
     };
 
-    const SERVER = http.createServer(
-        (rawReq: IncomingMessage, rawRes: ServerResponse) => {
-            const req = rawReq as AppRequest;
-            const res = rawRes as AppResponse;
+    const handleRequest = (rawReq: IncomingMessage, rawRes: ServerResponse) => {
+        const req = rawReq as AppRequest;
+        const res = rawRes as AppResponse;
 
             const u = parse(req.url || "", true);
             req.query = u.query || {};
@@ -217,8 +218,8 @@ export function server(config: ServerConfig = {}): App {
                 }
             };
             next();
-        },
-    );
+        };
+        const SERVER = http.createServer(handleRequest);
 
     SERVER.on(
         "upgrade",
@@ -395,6 +396,8 @@ export function server(config: ServerConfig = {}): App {
         head: (p: string, handler: RouteHandler) => add("HEAD", p, handler),
         ws: (p: string, handler: WsHandler) =>
             WS_ROUTES.push({ path: p, handler }),
+        handleRequest,
+        httpServer: SERVER,
     };
 }
 
