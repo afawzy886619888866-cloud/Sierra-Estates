@@ -78,13 +78,16 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
 .submit:hover{box-shadow:0 10px 26px rgba(200,150,26,.4);}
 .submit:active{transform:scale(.97);}
 .submit .i{width:16px;height:16px;}
+.card.done{display:none;}
 .done{text-align:center;padding:26px 10px 12px;}
 .done .tick{width:60px;height:60px;border-radius:50%;background:rgba(52,211,153,.15);color:#1e8b7a;display:grid;place-items:center;margin:0 auto 20px;}
+.done .tick .i{width:28px;height:28px;}
 .done h2{font-family:var(--display);font-size:26px;margin-bottom:10px;}
 [dir="rtl"] .done h2{font-family:'Cairo',sans-serif;font-weight:800;}
 .done p{color:var(--muted);max-width:44ch;margin:0 auto;font-size:14.5px;}
 .ref{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:16px;}
 .wa{display:inline-flex;align-items:center;gap:9px;margin-top:22px;padding:13px 24px;border-radius:11px;background:#1f9d55;color:#fff;font-weight:800;font-size:14.5px;transition:box-shadow .2s var(--silk),transform .12s var(--silk);}
+.wa .i{width:17px;height:17px;}
 .wa:hover{color:#fff;box-shadow:0 10px 24px rgba(31,157,85,.34);}
 .wa:active{transform:scale(.97);}
 .again{display:block;margin:18px auto 0;background:none;border:none;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;}
@@ -219,12 +222,12 @@ hr{border:none;border-top:1px solid var(--line);margin:28px 0;}
       </div>
     </div>
 
-    <div class="card done" id="done-card" style="display:none;">
-      <div class="tick"><i data-lucide="check" class="i" style="width:28px;height:28px;"></i></div>
+    <div class="card done" id="done-card">
+      <div class="tick"><i data-lucide="check" class="i"></i></div>
       <h2 id="t-doneTit">Listing received</h2>
       <p id="done-msg">Our inventory team reviews it within 24 hours and comes back to you on WhatsApp.</p>
       <div class="ref" id="done-ref"></div>
-      <a class="wa" id="done-wa" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer"><i data-lucide="message-circle" class="i" style="width:17px;height:17px;"></i><span id="t-sendPhotos">Send photos on WhatsApp</span></a>
+      <a class="wa" id="done-wa" href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer"><i data-lucide="message-circle" class="i"></i><span id="t-sendPhotos">Send photos on WhatsApp</span></a>
       <button class="again" id="again" type="button">Add another listing</button>
     </div>
 
