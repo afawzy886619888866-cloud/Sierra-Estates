@@ -7,10 +7,12 @@ const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const pubsub_1 = require("firebase-functions/v2/pubsub");
 const firestore_2 = require("firebase-functions/v2/firestore");
-if (!(0, app_1.getApps)().length) {
-    (0, app_1.initializeApp)();
+function getDb() {
+    if (!(0, app_1.getApps)().length) {
+        (0, app_1.initializeApp)();
+    }
+    return (0, firestore_1.getFirestore)();
 }
-const db = (0, firestore_1.getFirestore)();
 // ── Health check (HTTP) ────────────────────────────────────
 // `_req` is intentionally unused — Firebase's onRequest signature requires
 // (req, res), but the health-check endpoint doesn't read the request.
@@ -37,7 +39,7 @@ exports.collectData = (0, https_1.onRequest)(async (req, res) => {
             res.status(400).send('Invalid payload');
             return;
         }
-        const docRef = await db.collection('rawScrapeData').add({
+        const docRef = await getDb().collection('rawScrapeData').add({
             ...payload,
             collectedAt: firestore_1.FieldValue.serverTimestamp(),
             status: 'raw_unprocessed',
@@ -67,7 +69,7 @@ exports.processDataForApp = (0, firestore_2.onDocumentCreated)('rawScrapeData/{d
             processedAt: firestore_1.FieldValue.serverTimestamp(),
             isAvailable: true,
         };
-        await db.collection('processedData').doc(docId).set(processedData);
+        await getDb().collection('processedData').doc(docId).set(processedData);
         await snap.ref.update({ status: 'processed_success' });
         console.log(`Document ${docId} processed and saved.`);
     }

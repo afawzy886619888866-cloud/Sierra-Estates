@@ -5,11 +5,12 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onMessagePublished } from 'firebase-functions/v2/pubsub';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 
-if (!getApps().length) {
-  initializeApp();
+function getDb() {
+  if (!getApps().length) {
+    initializeApp();
+  }
+  return getFirestore();
 }
-
-const db = getFirestore();
 
 // ── Health check (HTTP) ────────────────────────────────────
 // `_req` is intentionally unused — Firebase's onRequest signature requires
@@ -40,7 +41,7 @@ export const collectData = onRequest(async (req, res) => {
       res.status(400).send('Invalid payload');
       return;
     }
-    const docRef = await db.collection('rawScrapeData').add({
+    const docRef = await getDb().collection('rawScrapeData').add({
       ...payload,
       collectedAt: FieldValue.serverTimestamp(),
       status: 'raw_unprocessed',
@@ -71,7 +72,7 @@ export const processDataForApp = onDocumentCreated('rawScrapeData/{docId}', asyn
       processedAt: FieldValue.serverTimestamp(),
       isAvailable: true,
     };
-    await db.collection('processedData').doc(docId).set(processedData);
+    await getDb().collection('processedData').doc(docId).set(processedData);
     await snap.ref.update({ status: 'processed_success' });
     console.log(`Document ${docId} processed and saved.`);
   } catch (error) {
