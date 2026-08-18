@@ -170,7 +170,7 @@ Output: Return ONLY a JSON array of objects:
 
   try {
     const globalTrends = await MemoryService.getGlobalTrends();
-    const trendsString = globalTrends ? JSON.stringify(globalTrends.rejectionStats) : 'No significant trends recorded yet.';
+    const trendsString = globalTrends ? JSON.stringify((globalTrends as any).rejectionStats || globalTrends) : 'No significant trends recorded yet.';
 
     const data = await GoogleAIService.chatCompletions(
       'matching-engine', 'score-matches',
