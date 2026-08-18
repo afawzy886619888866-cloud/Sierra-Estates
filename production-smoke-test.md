@@ -64,3 +64,45 @@ The validation requests were intentionally incomplete and therefore safe; no pro
 Headless mobile captures were taken at a 390×844 viewport with an Android mobile user agent. The homepage capture shows a compact branded header with a hamburger menu, readable hero typography, stacked search controls, full-width input fields, and horizontally contained trust metrics without visible horizontal overflow. The Careers capture shows the bilingual header, readable Arabic hero copy, responsive heading wrapping, and a job-card layout that begins within the viewport without clipping.
 
 The Cairo Plaza capture was separately attempted, but its active WebGL/3D animation kept the headless browser process alive beyond the capture window. The page itself was already verified in the interactive browser at desktop size; its mobile interactive-tour render remains a manual follow-up for a device/browser with WebGL support rather than evidence of a layout failure.
+
+## Clients regression check after fix
+
+After deployment `dpl_4nra5fUNd5nAD3TvUufWhSwZcNLz`, `https://sierra-estates.net/clients` loads successfully with the RTL navigation, advisory request form, property-type controls, compound quick choices, personal contact fields, direct 3D-experience card, WhatsApp CTA, and footer. The previous generic browser error is no longer present. The fragile client-side `ModelViewer`/GLB mount was removed and the form now posts to `/api/inquiries`.
+
+## Compounds regression check
+
+The production `/compounds` route loads successfully with the branded utility bar, navigation, breadcrumb, Compound Intelligence hero, search field, region filters, compound data cards, and footer. The initial intel panel displays the intentional empty state “Select a compound to see its intel here”; it is not a browser error or unstyled page.
+
+## Live map regression check
+
+The production `/map` route loads with the branded header, bilingual control, compound list, Leaflet map tiles, zoom controls, selected-compound panel, and unit data. The browser screenshot showed the intended dark map surface and styled controls rather than raw HTML. The selected-compound panel briefly displayed its loading state while the unit request resolved; the extracted page content then contained the selected Hyde Park units.
+
+## Virtual tour regression check
+
+The production `/virtual-tour` route loads with its full branded header, hero, dark 360° viewing frame, footer, and a working “Open Full Screen ↗” link to the Listing3D embed. The page explicitly says the full Three.js virtual tour is coming soon; the existing direct external tour link is visible and is not hidden behind a brochure. The earlier headless-capture timeout was caused by the interactive/WebGL page lifecycle, not by a page-load error.
+
+## Additional route audit
+
+The additional production checks returned the following: `/properties`, `/inventory`, `/cairo-plaza/inventory`, `/cairo-plaza/investor`, `/cairo-plaza/contact`, and all tested `/ar/cairo-plaza/*` routes returned `200 text/html`. `/admin/login` returned `307 text/plain`, which is an intentional authentication redirect rather than a missing page. All tested routes completed within the observed 3.0–7.1 second server timing window.
+
+## Clients mobile verification — 390×844
+
+The repaired `/clients` page was captured at 390×844 with the Android mobile user agent. The screenshot shows the compact header, RTL hero typography, readable Arabic copy, wrapped metrics, and the request form card entering the viewport with stacked property choices. No horizontal clipping or raw HTML failure was observed.
+
+## Performance audit
+
+Lighthouse 12.8.2 was run against the live homepage. Desktop-form-factor results were: performance score `0.74`, First Contentful Paint `2.9 s`, Largest Contentful Paint `3.4 s`, Speed Index `7.2 s`, Total Blocking Time `280 ms`, Cumulative Layout Shift `0.008`, and total transfer size `791 KiB`. The mobile-form-factor results were: performance score `0.50`, First Contentful Paint `5.0 s`, Largest Contentful Paint `5.0 s`, Speed Index `6.9 s`, Total Blocking Time `640 ms`, Cumulative Layout Shift `0.008`, and total transfer size `752 KiB`.
+
+The LCP element is the hero background image. Lighthouse identified image delivery and offscreen image sizing as the main actionable opportunities, plus the root-document response time and main-thread work. The Careers mobile-form-factor run returned performance score `0.60`, FCP/LCP `6.1 s`, Speed Index `6.2 s`, TBT `190 ms`, CLS `0`, and total size `245 KiB`. These results confirm that the pages load and render correctly, but the homepage and Careers route have meaningful mobile performance headroom rather than a broken asset pipeline.
+
+## Properties regression check
+
+The production `/properties` route loads with the branded navigation, breadcrumb, hero, category and rent/resale filters, result count, property cards, pricing, AI scores, owner/source labels, action controls, and footer. The browser render confirms the CSS and remote property images load correctly; no raw HTML or missing-style state was observed.
+
+## Inventory regression check
+
+The production `/inventory` route initially shows a loading state while its inventory request resolves. After waiting for the client data load, the page displays location counts, 65 available units, Leaflet map tiles, map markers, status filters, location selector, and unit cards with live prices and codes. The apparent blank/loading state was transient and resolved in-browser.
+
+## Admin route regression check
+
+`https://sierra-estates.net/admin/login` correctly redirects to `https://admin.sierra-estates.net/admin/login`, and the admin hostname returns the expected “Sierra Estates 3.0 · Intelligence OS · Admin” title. However, the current browser render remains a blank dark screen with no detected controls after waiting. This is a separate admin-host/runtime issue and requires source/deployment inspection; it is not the public-site CSS failure.
