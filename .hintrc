@@ -8,9 +8,25 @@
       {
         "ignore": [
           "text-wrap",
-          "text-wrap: balance"
+          "text-wrap: balance",
+          "scrollbar-width",
+          "scrollbar-color"
         ]
       }
-    ]
-  }
+    ],
+    "compat-api/html": [
+      "default",
+      {
+        "ignore": [
+          "iframe[referrerpolicy=no-referrer-when-downgrade]",
+          "iframe[referrerpolicy]"
+        ]
+      }
+    ],
+    "no-inline-styles": "off"
+  },
+  "ignoredUrls": [
+    "**/public/client-page/.min/**",
+    "**/.min/**"
+  ]
 }

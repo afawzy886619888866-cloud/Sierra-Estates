@@ -99,6 +99,11 @@
 .btn-restart{display:inline-flex;align-items:center;gap:6px;margin-inline-start:14px;padding:14px 22px;border:1.5px solid var(--line-2);border-radius:12px;background:var(--surface-2);color:var(--text);font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer;transition:.2s;text-decoration:none;}
 .btn-restart:hover{border-color:var(--ink);color:var(--ink);}
 
+.ai-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;}
+.ai-eyebrow-bar{width:24px;height:1.5px;background:#8fe1ff;display:inline-block;}
+.block-pt40{padding-top:40px;}
+.btn-back-icon{width:14px;height:14px;}
+
 @media(max-width:680px){
   .dream-hero h1{font-size:32px;}
   .quiz-card{padding:28px 22px;}
@@ -113,8 +118,8 @@
 
 <section class="dream-hero">
   <div class="wrap">
-    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;">
-      <span style="width:24px;height:1.5px;background:#8fe1ff;display:inline-block;"></span>
+    <div class="ai-eyebrow">
+      <span class="ai-eyebrow-bar"></span>
       AI DREAM HOME FINDER · 4-QUESTION MATCH
     </div>
     <h1>Dream Home Finder <em>— your perfect compound, in 4 questions</em></h1>
@@ -127,7 +132,7 @@
   </div>
 </section>
 
-<section class="block" style="padding-top:40px;">
+<section class="block block-pt40">
   <div class="wrap">
     <div class="quiz-wrap">
       <div class="quiz-card" id="quiz-card">
@@ -147,7 +152,7 @@
 
         <!-- Nav -->
         <div class="quiz-nav" id="quiz-nav">
-          <button class="btn-back" id="btn-back" type="button" disabled><i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Back</button>
+          <button class="btn-back" id="btn-back" type="button" disabled><i data-lucide="arrow-left" class="btn-back-icon"></i> Back</button>
           <button class="btn-next" id="btn-next" type="button" disabled>Next <i data-lucide="arrow-right"></i></button>
         </div>
 
