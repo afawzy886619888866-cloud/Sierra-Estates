@@ -45,3 +45,22 @@ The current deployment serves `/cairo-plaza/overview` with the intended dark pro
 ## Final homepage verification
 
 The natural URL `https://sierra-estates.net/` now renders the complete designed homepage in the new production deployment. The verified surface includes the branded header, hero background image, search controls, featured listing cards, compound directory, interactive Leaflet map, 3D tour control, AI tools, request form, footer, and concierge button. The browser also reported generated `/_next/image` asset URLs rather than the unstyled legacy HTML surface.
+
+## Final HTTP smoke tests
+
+From the production domain after the latest READY deployment:
+
+| Check | Result |
+| --- | --- |
+| `GET /` | `200` |
+| First generated stylesheet under `/_next/static/css/` | `200 text/css; charset=utf-8` |
+| `POST /api/careers/apply` with `{}` | `400 application/json`; rejected missing required fields without creating an application |
+| `POST /api/inquiries` with `{}` | `400 application/json`; rejected missing name/phone without creating a lead |
+
+The validation requests were intentionally incomplete and therefore safe; no production record or real email was created by the test.
+
+## Mobile responsive audit — 390×844
+
+Headless mobile captures were taken at a 390×844 viewport with an Android mobile user agent. The homepage capture shows a compact branded header with a hamburger menu, readable hero typography, stacked search controls, full-width input fields, and horizontally contained trust metrics without visible horizontal overflow. The Careers capture shows the bilingual header, readable Arabic hero copy, responsive heading wrapping, and a job-card layout that begins within the viewport without clipping.
+
+The Cairo Plaza capture was separately attempted, but its active WebGL/3D animation kept the headless browser process alive beyond the capture window. The page itself was already verified in the interactive browser at desktop size; its mobile interactive-tour render remains a manual follow-up for a device/browser with WebGL support rather than evidence of a layout failure.

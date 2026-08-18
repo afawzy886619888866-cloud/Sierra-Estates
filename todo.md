@@ -68,10 +68,10 @@
 - [x] Export and visually verify the Cairo Plaza investor pack as a PDF
 - [x] Commit and push the validation, dependency, and PDF-related updates
 
-## Sierra Estates Visual Breakage Repair (Current)
-- [x] Phase 1: Diagnose CSS and asset loading failure in production
-- [x] Phase 2: Fix page layout, CSS paths, images, and icon bundles
-- [x] Phase 3: Test local build and style integrity
-- [x] Phase 4: Push fix and trigger cache-free production deployment
-- [x] Phase 5: Final verification and delivery report
+## Multi-page audit, mobile responsiveness, and performance check
+- [ ] Phase 1: Inventory key pages and run parallel HTTP/asset checks
+- [ ] Phase 2: Test mobile responsiveness across core views
+- [ ] Phase 3: Measure asset performance and load speed
+- [ ] Phase 4: Apply fixes if any regressions or broken assets are found
+- [ ] Phase 5: Deliver comprehensive audit report and screenshots
 
