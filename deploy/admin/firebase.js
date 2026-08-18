@@ -111,6 +111,24 @@
     addListingSubmission: function (rec) { return write('listing_submissions', SUBS, rec); },
     onLeads: function (cb) { return subscribe('leads', 'leads', LEADS, cb); },
     onListingSubmissions: function (cb) { return subscribe('subs', 'listing_submissions', SUBS, cb); },
+    onProperties: function (cb) {
+      if (!connected) return function () {};
+      return db.collection('houyez_listings').orderBy('ai', 'desc').limit(100)
+        .onSnapshot(function (snap) {
+          var items = [];
+          snap.forEach(function (doc) { items.push(Object.assign({ id: doc.id }, doc.data())); });
+          if (cb) cb(items);
+        });
+    },
+    onCompounds: function (cb) {
+      if (!connected) return function () {};
+      return db.collection('compounds').orderBy('ai', 'desc').limit(50)
+        .onSnapshot(function (snap) {
+          var items = [];
+          snap.forEach(function (doc) { items.push(Object.assign({ id: doc.id }, doc.data())); });
+          if (cb) cb(items);
+        });
+    },
     localLeads: function () { return newest(LEADS); },
     localSubmissions: function () { return newest(SUBS); }
   };
