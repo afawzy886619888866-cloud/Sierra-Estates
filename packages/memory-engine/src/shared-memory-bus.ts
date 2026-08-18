@@ -44,7 +44,7 @@ export interface MemoryEvent {
 
 export type MemorySubscriber = (event: MemoryEvent) => void
 
-const AGENT_NAMES = ['liela', 'sierra', 'hermes', 'openclaw', 'closer', 'super-broker', 'system'] as const
+const AGENT_NAMES = ['liela', 'sierra', 'hermes', 'openclaw', 'closer', 'super-broker', 'system', 'admin'] as const
 
 function isAgentName(value: unknown): value is AgentName {
   return typeof value === 'string' && AGENT_NAMES.includes(value as AgentName)
@@ -67,23 +67,24 @@ export class SharedMemoryBus {
   // ── Write ──────────────────────────────────────────────────────────────────
 
   async write(id: string, value: unknown, options: MemoryWriteOptions): Promise<SharedMemoryEntry> {
+    const effectiveTtl = options.ttl ?? (options.ttlSeconds ? options.ttlSeconds * 1000 : undefined)
     const allTags = ['shared', options.author, ...(options.tags ?? [])]
     const entry = this.hydrateEntry(await this.store.set(id, {
       _meta: {
         author: options.author,
-        expiresAt: options.ttl ? new Date(Date.now() + options.ttl).toISOString() : undefined,
+        expiresAt: effectiveTtl ? new Date(Date.now() + effectiveTtl).toISOString() : undefined,
       },
       data: value,
     }, allTags))
 
     // Handle TTL expiry
-    if (options.ttl) {
+    if (effectiveTtl) {
       this.clearExpiryTimer(id)
       const timer = setTimeout(() => {
         void this.expire(id).catch((error) => {
           console.error(`[SharedMemoryBus] Failed to expire memory: ${id}`, error)
         })
-      }, options.ttl)
+      }, effectiveTtl)
       this.expiryTimers.set(id, timer)
     }
 
