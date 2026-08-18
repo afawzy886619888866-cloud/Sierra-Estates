@@ -3,12 +3,13 @@ import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guar
 import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { GravityRecall } from '@/lib/server/gravity';
+import { openMemoryClient, memoryEngine } from '@sierra-estates/memory-engine';
 
 /**
  * Agent Hub — multi-agent orchestration entry point.
  *
  * Routes an inbound message to one of the Stage-9 personas (Scribe / Curator /
- * Matchmaker / Closer) based on agentId, grounding responses in Gravity Memory.
+ * Matchmaker / Closer) based on agentId, grounding responses in Gravity Memory and OpenMemory.
  */
 export async function POST(req: NextRequest) {
   const auth = await verifyAdminRequest(req);
@@ -19,6 +20,15 @@ export async function POST(req: NextRequest) {
     if (!message) {
       return NextResponse.json({ success: false, error: 'No message provided.' });
     }
+
+    // Log execution to MemoryEngine
+    memoryEngine.logExecution({
+      agentId: agentId || 'SIERRA_CORE',
+      action: 'orchestrate_inbound',
+      timestamp: new Date(),
+      success: true,
+      context: { messageLength: message.length }
+    });
 
     // Role-based logic
     switch (agentId) {
@@ -42,21 +52,31 @@ export async function POST(req: NextRequest) {
 
 async function handleScribe(message: string) {
   try {
-    // Stage 2 Integration: Pull context from Gravity Memory
+    // Stage 2 Integration: Pull context from Gravity Memory & OpenMemory
     const marketContext = GravityRecall.getContextSnippet('market_trends', undefined, 3);
     const complexContext = GravityRecall.getContextSnippet('compounds', undefined, 3);
+    
+    let openMemContext = '';
+    try {
+      const omResults = await openMemoryClient.query(message, { limit: 2 });
+      if (omResults && omResults.length > 0) {
+        openMemContext = `OpenMemory Context:\n${omResults.map(r => `- ${r.content}`).join('\n')}`;
+      }
+    } catch {}
 
     const enrichedSystemPrompt = `
       ${LEILA_PROMPT.system}
 
       CRITICAL SYSTEM UPDATE:
       Your persona is now 'Sierra', the Master Intelligence.
-      You have access to the 'Gravity Memory' below which contains real-time facts about the project.
+      You have access to the 'Gravity Memory' and 'OpenMemory' below which contains real-time facts about the project.
       Use this data to ground your answers in reality.
 
       ${marketContext}
       ${complexContext}
+      ${openMemContext}
     `;
+
 
     const responseText = await GoogleAIService.generateContent(
       'SIERRA', 'S1-Intake',
