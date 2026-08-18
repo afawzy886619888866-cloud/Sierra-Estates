@@ -8,7 +8,7 @@ This document outlines the architecture, branch structure, deployments, and inte
 
 The codebase is organized under a single GitHub repository (`ahmedfawzy8866/SE.git`) using two main active branches:
 
-```
+```text
 ahmedfawzy8866/SE (GitHub Repository)
 ├── 🌿 main (Branch) ── Deployed to: https://admin.sierra-estates.net
 │   └── Next.js App Router workspace containing the Admin dashboard, API webhooks,
@@ -40,7 +40,7 @@ Both projects are hosted under the Vercel scope `sierra-estates-projects`:
 
 Both the Client Portal and the Admin/AI backend are wired directly to the same Firestore database instance (**`sierra-blu`**), keeping listings, compounds, and inquiries completely in sync.
 
-```
+```text
 ┌──────────────────────────────────────┐
 │  Scrapers & Duplicators (Automations) │
 └──────────────────┬───────────────────┘
