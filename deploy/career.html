@@ -54,6 +54,7 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
 .apply-title{text-align:center;margin-bottom:30px;}
 .file-input{padding:10px;}
 .send-icon{width:16px;height:16px;}
+.apply-btn .i{width:14px;height:14px;}
 </style>
 </head>
 <body>
@@ -167,7 +168,8 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
         '<span><i data-lucide="map-pin" class="i"></i> ' + j.loc + '</span>' +
       '</div>' +
       '<p>' + j.desc + '</p>' +
-      '<a href="#apply" class="apply-btn" onclick="document.getElementById(\'f-position\').value=\'' + j.title + '\'"><i data-lucide="arrow-right" style="width:14px;height:14px;"></i> Apply Now</a>' +
+      '<a href="#apply" class="apply-btn" onclick="document.getElementById(\'f-position\').value=\'' + j.title + '\'">' +
+        '<i data-lucide="arrow-right" class="i"></i> Apply Now</a>' +
     '</div>';
   }).join('');
 
