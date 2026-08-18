@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processDataForApp = exports.collectData = exports.processBatch = exports.healthCheck = exports.api = void 0;
+exports.processScrapedData = exports.collectData = exports.processBatch = exports.healthCheck = exports.api = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
+const v2_1 = require("firebase-functions/v2");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const pubsub_1 = require("firebase-functions/v2/pubsub");
 const firestore_2 = require("firebase-functions/v2/firestore");
+(0, v2_1.setGlobalOptions)({ region: 'us-central1', maxInstances: 10 });
 function getDb() {
     if (!(0, app_1.getApps)().length) {
         (0, app_1.initializeApp)();
@@ -53,7 +55,7 @@ exports.collectData = (0, https_1.onRequest)(async (req, res) => {
     }
 });
 // ── Data Processing Workflow ───────────────────────────────
-exports.processDataForApp = (0, firestore_2.onDocumentCreated)('rawScrapeData/{docId}', async (event) => {
+exports.processScrapedData = (0, firestore_2.onDocumentCreated)('rawScrapeData/{docId}', async (event) => {
     const snap = event.data;
     if (!snap)
         return;
