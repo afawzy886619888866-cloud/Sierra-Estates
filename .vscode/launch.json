@@ -3,6 +3,43 @@
     "configurations": [
         
         {
+            "type": "cmake",
+            "request": "launch",
+            "name": "CMake: Configure project",
+            "cmakeDebugType": "configure",
+            "clean": false,
+            "configureAll": false
+        },
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "Invoke Lambda with API Gateway",
+            "invokeTarget": {
+                "target": "api",
+                "templatePath": "Template Location",
+                "logicalId": "Function Logical ID"
+            },
+            "api": {
+                "path": "Path",
+                "httpMethod": "Method",
+                "payload": {
+                    "json": {}
+                }
+            }
+        },
+        {
+            "name": "Debug program / Interactive GUI",
+            "type": "abl",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "graphicalMode": true,
+            "pause": false,
+            "refProjects": []
+        },
+        
+        
+        {
             "name": "Python Debugger: Current File with Arguments",
             "type": "debugpy",
             "request": "launch",
