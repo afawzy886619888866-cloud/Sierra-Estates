@@ -1,6 +1,6 @@
 # Sierra Estates — Phase 4: Intelligence OS Blueprint
 
-**Architecture, Multi-Agent Orchestration, and Predictive Analytics Foundation**
+Architecture, Multi-Agent Orchestration, and Predictive Analytics Foundation.
 
 ---
 
@@ -51,7 +51,7 @@ Phase 4 delivers the **Intelligence OS** for Sierra Estates. It transforms the a
 | Agent Persona | Role & Domain | Engine / Model | Trigger / Endpoint |
 | :--- | :--- | :--- | :--- |
 | **`orchestrator`** | Intent parsing & task decomposition | Gemini 2.5 Pro / Vertex AI | `/api/orchestrate` |
-| **`backend-specialist`**| ML scoring & segmentation | Python API / Scikit-learn | `/api/wealth/roi` |
+| **`backend-specialist`** | ML scoring & segmentation | Python API / Scikit-learn | `/api/wealth/roi` |
 | **`quality-inspector`** | Safety verification & RBAC guard | Deterministic Rule Guard | `firestore.rules` |
 | **`documentation-writer`** | Bilingual notification generation | Gemini 2.0 Flash | `/api/admin/whatsapp/send` |
 | **`liela-bot`** | Conversational real estate concierge | Gemini 2.0 Flash + Memory | `/api/chat` |

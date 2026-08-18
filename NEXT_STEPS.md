@@ -99,4 +99,3 @@ firebase deploy --only functions
 - Real AI agent multi-agent workflows added in `@sierra-estates/agents-core` (Gemini 2.5/2.0 + Vertex AI)
 - Rate-limiting active on public endpoints (listings, leads, inquiries)
 - All 79 Next.js routes verified with full bilingual Arabic (RTL) and English support
-
