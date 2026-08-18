@@ -15,7 +15,7 @@ import { ObsidianMemory, MemoryEntry } from '@sierra-estates/obsidian'
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type AgentName = 'liela' | 'sierra' | 'hermes' | 'openclaw' | 'closer' | 'super-broker' | 'system'
+export type AgentName = 'liela' | 'sierra' | 'hermes' | 'openclaw' | 'closer' | 'super-broker' | 'system' | 'admin'
 
 export interface MemoryWriteOptions {
   /** Agent writing this memory */
@@ -24,6 +24,8 @@ export interface MemoryWriteOptions {
   tags?: string[]
   /** TTL in milliseconds. If set, memory auto-expires. */
   ttl?: number
+  /** TTL in seconds (convenience alias). */
+  ttlSeconds?: number
 }
 
 export interface SharedMemoryEntry extends MemoryEntry {
