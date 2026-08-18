@@ -143,4 +143,33 @@ export class AgentWorkflows {
       taskDescription
     );
   }
+
+  /**
+   * Phase 4: Intelligence OS AI Admin & Predictive Analytics Workflow
+   */
+  async runIntelligenceWorkflow(taskDescription: string): Promise<TaskResult[]> {
+    return this.orchestrator.orchestratePipeline(
+      'Intelligence OS Workflow',
+      [
+        {
+          agentName: 'orchestrator',
+          taskDescription: `Interpret NLP admin command, parse intent, and identify data entities for: ${taskDescription}`,
+        },
+        {
+          agentName: 'backend-specialist',
+          taskDescription: `Execute predictive modeling, ML confidence scoring, and smart segmentation for: ${taskDescription}`,
+        },
+        {
+          agentName: 'quality-inspector',
+          taskDescription: `Verify rule thresholds, safety guardrails, and auto-approval compliance.`,
+        },
+        {
+          agentName: 'documentation-writer',
+          taskDescription: `Generate bilingual personalized notifications, explanation rationale, and audit logs.`,
+        },
+      ],
+      taskDescription
+    );
+  }
 }
+
