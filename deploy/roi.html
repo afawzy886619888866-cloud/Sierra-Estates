@@ -74,6 +74,10 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
 @media(max-width:880px){.roi-grid{grid-template-columns:1fr;}.calc{position:static;}}
 @media(max-width:680px){.roi-hero h1{font-size:32px;}.roi-table-head,.roi-row{padding:14px 16px;}.roi-row{grid-template-columns:24px 1fr 1fr;}.roi-bar-wrap{display:none;}}
+
+.ai-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;}
+.ai-eyebrow-bar{width:24px;height:1.5px;background:#8fe1ff;display:inline-block;}
+.block-pt40{padding-top:40px;}
 </style>
 </head>
 <body>
@@ -81,8 +85,8 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
 <section class="roi-hero">
   <div class="wrap">
-    <div style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#8fe1ff;margin-bottom:14px;">
-      <span style="width:24px;height:1.5px;background:#8fe1ff;display:inline-block;"></span>
+    <div class="ai-eyebrow">
+      <span class="ai-eyebrow-bar"></span>
       AI INVESTMENT INTELLIGENCE · LIVE
     </div>
     <h1>ROI Analysis <em>— yield, cap rate, cashflow</em></h1>
@@ -95,7 +99,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   </div>
 </section>
 
-<section class="block" style="padding-top:40px;">
+<section class="block block-pt40">
   <div class="wrap">
     <div class="roi-grid">
       <div class="roi-table">

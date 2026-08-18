@@ -51,6 +51,9 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
 .export-note{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);font-family:var(--mono);}
 .success-msg{display:none;text-align:center;padding:20px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:10px;color:#34d399;font-weight:600;margin-top:16px;}
 .success-msg.show{display:block;}
+.apply-title{text-align:center;margin-bottom:30px;}
+.file-input{padding:10px;}
+.send-icon{width:16px;height:16px;}
 </style>
 </head>
 <body>
@@ -74,7 +77,7 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
 
 <section class="form-section" id="apply">
   <div class="wrap">
-    <h2 style="text-align:center;margin-bottom:30px;">Apply Now</h2>
+    <h2 class="apply-title">Apply Now</h2>
     <div class="form-card">
       <form id="career-form">
         <div class="form-row">
@@ -116,10 +119,10 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
         </div>
         <div class="form-group">
           <label for="f-cv">CV / Resume (PDF, DOCX)</label>
-          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" title="CV or Resume" placeholder="Select CV or Resume" style="padding:10px;"/>
+          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" title="CV or Resume" placeholder="Select CV or Resume" class="file-input"/>
         </div>
         <button type="submit" class="form-submit">
-          <i data-lucide="send" style="width:16px;height:16px;"></i>
+          <i data-lucide="send" class="send-icon"></i>
           Submit Application
         </button>
         <div class="success-msg" id="success-msg">
