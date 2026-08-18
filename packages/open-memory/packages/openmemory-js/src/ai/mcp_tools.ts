@@ -40,7 +40,7 @@ export class ToolRegistry {
         srv.setRequestHandler(ListToolsRequestSchema, async () => {
             return {
                 tools: Array.from(this.tools.values()).map((t) => {
-                    const jsonSchema = zodToJsonSchema(t.inputSchema, {
+                    const jsonSchema = zodToJsonSchema(t.inputSchema as any, {
                         target: "jsonSchema2019-09",
                     }) as Record<string, unknown>;
 
