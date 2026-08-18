@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import {
   Building2,
   MapPin,
@@ -22,7 +20,6 @@ import {
 import Link from 'next/link';
 import { Navbar } from '@/components/client/Navbar';
 import { Footer } from '@/components/client/Footer';
-import ModelViewer from '@/components/client/ModelViewer';
 import { useI18n } from '@/lib/i18n-client';
 
 const PROPERTY_TYPES = [
@@ -80,16 +77,22 @@ export default function ClientRequestPage() {
     setError('');
 
     try {
-      if (db) {
-        await addDoc(collection(db, 'inquiries'), {
-          ...formData,
-          source: 'clients_request_portal',
-          status: 'S1_NEW_LEAD',
-          createdAt: serverTimestamp(),
-        });
-      } else {
-        // Fallback simulate success if db uninitialized
-        await new Promise((res) => setTimeout(res, 800));
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'sale',
+          name: formData.name,
+          phone: formData.phone,
+          zone: formData.area,
+          type: formData.type,
+          budget: formData.budget,
+          notes: [formData.notes, `Rooms: ${formData.rooms}`].filter(Boolean).join('\n'),
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || 'Unable to save your request.');
       }
       setSuccess(true);
     } catch (err: any) {
@@ -418,7 +421,28 @@ export default function ClientRequestPage() {
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono">Three.js / GLTF</span>
               </div>
-              <ModelViewer className="h-[260px] w-full" />
+              <Link
+                href="/virtual-tour"
+                className="group relative block h-[260px] w-full overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-slate-950 via-[#111b32] to-[#1d2a45] p-6 shadow-2xl transition hover:border-amber-400/50 hover:shadow-amber-500/10"
+                aria-label={isAr ? 'فتح الجولة الافتراضية ثلاثية الأبعاد' : 'Open the direct 3D virtual tour'}
+              >
+                <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl transition group-hover:bg-amber-400/20" />
+                <div className="relative flex h-full flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-[0.18em] text-amber-300/80">360° Experience</p>
+                      <h3 className="mt-3 max-w-xs text-2xl font-bold text-white font-display">
+                        {isAr ? 'استكشف الجولة ثلاثية الأبعاد مباشرة' : 'Explore the 3D experience directly'}
+                      </h3>
+                    </div>
+                    <span className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xl text-amber-300">↗</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span>{isAr ? 'بدون كتيب — افتح التجربة الآن' : 'No brochure — open the experience now'}</span>
+                    <ArrowRight className="h-4 w-4 text-amber-300 transition group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </Link>
             </div>
 
             {/* Sierra Advantage Card */}
