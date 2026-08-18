@@ -52,8 +52,8 @@
 .field label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:700;}
 .field label b{color:var(--pri);font-size:13px;}
 [data-theme="dark"] .field label b{color:#e9c176;}
-input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--bg);outline:none;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pri);cursor:pointer;box-shadow:0 2px 10px rgba(0,174,255,.45);transition:transform .2s;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:var(--bg);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pri);cursor:pointer;box-shadow:0 2px 10px rgba(0,174,255,.45);transition:transform .2s;}
 input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15);}
 [data-theme="dark"] input[type=range]::-webkit-slider-thumb{background:#e9c176;box-shadow:0 2px 10px rgba(200,150,26,.45);}
 input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--pri);border:none;cursor:pointer;}
@@ -110,16 +110,16 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
         <h3>Yield Calculator</h3>
         <div class="sub">Estimate returns on a New Cairo unit.</div>
         <div class="field">
-          <label>Purchase price <b id="lp">EGP 6.0M</b></label>
-          <input type="range" id="price" min="1500000" max="30000000" step="100000" value="6000000"/>
+          <label for="price">Purchase price <b id="lp">EGP 6.0M</b></label>
+          <input type="range" id="price" min="1500000" max="30000000" step="100000" value="6000000" title="Purchase price" placeholder="6000000" aria-label="Purchase price"/>
         </div>
         <div class="field">
-          <label>Monthly rent <b id="lr">EGP 38,000</b></label>
-          <input type="range" id="rent" min="5000" max="250000" step="1000" value="38000"/>
+          <label for="rent">Monthly rent <b id="lr">EGP 38,000</b></label>
+          <input type="range" id="rent" min="5000" max="250000" step="1000" value="38000" title="Monthly rent" placeholder="38000" aria-label="Monthly rent"/>
         </div>
         <div class="field">
-          <label>Annual appreciation <b id="la">9%</b></label>
-          <input type="range" id="appr" min="0" max="20" step="0.5" value="9"/>
+          <label for="appr">Annual appreciation <b id="la">9%</b></label>
+          <input type="range" id="appr" min="0" max="20" step="0.5" value="9" title="Annual appreciation" placeholder="9" aria-label="Annual appreciation"/>
         </div>
         <div class="results">
           <div class="res-box"><div class="v" id="rGross">—</div><div class="l">Gross Yield</div></div>

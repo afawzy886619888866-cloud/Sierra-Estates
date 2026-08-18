@@ -86,12 +86,12 @@ select:focus, .num:focus{border-color:var(--pri);}
       <div class="panel">
         <h3>Unit details</h3>
         <div class="field">
-          <label>Compound</label>
-          <select id="compound"></select>
+          <label for="compound">Compound</label>
+          <select id="compound" title="Compound" aria-label="Compound"></select>
         </div>
         <div class="field">
-          <label>Built-up area (m²)</label>
-          <input class="num" id="area" type="number" value="180" min="50" max="900"/>
+          <label for="area">Built-up area (m²)</label>
+          <input class="num" id="area" type="number" value="180" min="50" max="900" title="Built-up area in square meters" placeholder="180"/>
         </div>
         <div class="field">
           <label>Bedrooms</label>

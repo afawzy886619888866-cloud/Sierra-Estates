@@ -83,18 +83,18 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
             <input type="text" id="f-name" required placeholder="Ahmed Fawzy"/>
           </div>
           <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" id="f-phone" required placeholder="+2 01XXXXXXXXX"/>
+            <label for="f-phone">Phone</label>
+            <input type="tel" id="f-phone" required placeholder="+2 01XXXXXXXXX" title="Phone number"/>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="f-email" required placeholder="you@example.com"/>
+            <label for="f-email">Email</label>
+            <input type="email" id="f-email" required placeholder="you@example.com" title="Email address"/>
           </div>
           <div class="form-group">
-            <label>Position</label>
-            <select id="f-position" required>
+            <label for="f-position">Position</label>
+            <select id="f-position" required title="Position applied for" aria-label="Position applied for">
               <option value="">Select a position...</option>
               <option>Real Estate Agent</option>
               <option>AI/ML Engineer</option>
@@ -107,16 +107,16 @@ body{font-family:var(--font);color:var(--text);background:var(--surface);font-si
           </div>
         </div>
         <div class="form-group">
-          <label>Years of Experience</label>
-          <input type="number" id="f-experience" min="0" max="30" placeholder="3"/>
+          <label for="f-experience">Years of Experience</label>
+          <input type="number" id="f-experience" min="0" max="30" placeholder="3" title="Years of experience"/>
         </div>
         <div class="form-group">
-          <label>Why Sierra? (Brief motivation)</label>
-          <textarea id="f-message" rows="4" placeholder="Tell us why you want to join Sierra Estates..."></textarea>
+          <label for="f-message">Why Sierra? (Brief motivation)</label>
+          <textarea id="f-message" rows="4" placeholder="Tell us why you want to join Sierra Estates..." title="Brief motivation"></textarea>
         </div>
         <div class="form-group">
-          <label>CV / Resume (PDF, DOCX)</label>
-          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" style="padding:10px;"/>
+          <label for="f-cv">CV / Resume (PDF, DOCX)</label>
+          <input type="file" id="f-cv" accept=".pdf,.doc,.docx" title="CV or Resume" placeholder="Select CV or Resume" style="padding:10px;"/>
         </div>
         <button type="submit" class="form-submit">
           <i data-lucide="send" style="width:16px;height:16px;"></i>

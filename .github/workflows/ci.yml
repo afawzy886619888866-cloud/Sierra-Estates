@@ -51,17 +51,23 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: "true"
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
+      - name: Build workspace packages
+        run: pnpm --filter "./packages/*" run build
+
       - name: Type-check workspace packages
-        run: pnpm --filter "./packages/*" run type-check || true
+        run: pnpm --filter "./packages/*" run type-check
 
       - name: Type-check realty app
-        run: pnpm --filter sierra-estates-client-page type-check || true
+        run: pnpm --filter sierra-estates-client-page type-check
 
       - name: Lint realty app
         run: pnpm --filter sierra-estates-client-page lint || true
 
-      - name: Unit tests
-        run: pnpm --filter sierra-estates-client-page test:ci || true
+      - name: Unit tests (functions)
+        run: pnpm --filter sierra-estates-functions test
+
+      - name: Unit tests (realty app)
+        run: pnpm --filter sierra-estates-client-page test:ci
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: dummy
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
@@ -79,6 +85,3 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
-
-      - name: Build admin dashboard
-        run: pnpm --filter sierra-estates-admin-page build
