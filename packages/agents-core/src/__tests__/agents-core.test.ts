@@ -170,5 +170,15 @@ describe('packages/agents-core', () => {
       expect(results[1].agentName).toBe('frontend-specialist');
       expect(results[2].agentName).toBe('performance-optimizer');
     });
+
+    it('runIntelligenceWorkflow executes AI Admin command interpretation, ML prediction, safety verification, and notification stages', async () => {
+      const results = await workflows.runIntelligenceWorkflow('Approve all wellness enrollments with >90% confidence');
+      expect(results).toHaveLength(4);
+      expect(results[0].agentName).toBe('orchestrator');
+      expect(results[1].agentName).toBe('backend-specialist');
+      expect(results[2].agentName).toBe('quality-inspector');
+      expect(results[3].agentName).toBe('documentation-writer');
+    });
   });
 });
+
