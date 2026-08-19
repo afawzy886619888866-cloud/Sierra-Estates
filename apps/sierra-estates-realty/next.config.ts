@@ -57,40 +57,14 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async rewrites() {
     return {
-      beforeFiles: [
-        // NOTE: there is deliberately no `/` entry here. `beforeFiles` runs
-        // *before* the filesystem step, so rewriting `/` shadowed the App
-        // Router homepage (app/page.tsx → app/ClientHome.tsx) entirely. The
-        // React homepage is now the production homepage; the static portal
-        // remains reachable at /client-page.
-        { source: '/index.html', destination: '/client-page/index.html' },
-        { source: '/client-page', destination: '/client-page/index.html' },
-        { source: '/index_standalone.html', destination: '/client-page/index_standalone.html' },
-        { source: '/index_standalone', destination: '/client-page/index_standalone.html' },
-        { source: '/client-page/index_standalone', destination: '/client-page/index_standalone.html' },
-      ],
-      afterFiles: [
-        { source: '/roi', destination: '/client-page/roi.html' },
-        { source: '/roi.html', destination: '/client-page/roi.html' },
-        { source: '/compounds', destination: '/client-page/compounds.html' },
-        { source: '/compounds.html', destination: '/client-page/compounds.html' },
-        { source: '/properties', destination: '/client-page/properties.html' },
-        { source: '/properties.html', destination: '/client-page/properties.html' },
-        { source: '/property', destination: '/client-page/property.html' },
-        { source: '/property.html', destination: '/client-page/property.html' },
-        { source: '/pricing', destination: '/client-page/pricing.html' },
-        { source: '/pricing.html', destination: '/client-page/pricing.html' },
-        { source: '/advice', destination: '/client-page/advice.html' },
-        { source: '/advice.html', destination: '/client-page/advice.html' },
-        { source: '/ai-engine', destination: '/client-page/ai-engine.html' },
-        { source: '/ai-engine.html', destination: '/client-page/ai-engine.html' },
-        { source: '/matches', destination: '/client-page/matches.html' },
-        { source: '/matches.html', destination: '/client-page/matches.html' },
-        { source: '/career', destination: '/client-page/career.html' },
-        { source: '/career.html', destination: '/client-page/career.html' },
-        { source: '/virtual-tour', destination: '/client-page/virtual-tour.html' },
-        { source: '/virtual-tour.html', destination: '/client-page/virtual-tour.html' },
-      ],
+      // The static HTML portal under public/client-page/ has been retired in
+      // favor of the App Router React homepage (app/(client)/ClientHome.tsx).
+      // All prior rewrites here pointed at those now-deleted static files —
+      // removed rather than left dangling. Every route below now has a real
+      // App Router page (see app/compounds, app/properties, app/property,
+      // app/virtual-tour, app/(client)/page.tsx).
+      beforeFiles: [],
+      afterFiles: [],
       // Do not use a catch-all fallback here. It captures /_next assets and
       // makes the App Router HTML load without its CSS/JS in production.
     };
