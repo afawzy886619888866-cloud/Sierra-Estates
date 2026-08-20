@@ -45,9 +45,14 @@ function CompoundBuilding({
           e.stopPropagation();
           onSelect(compound.n);
         }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        cursor="pointer"
+        onPointerOver={() => {
+          setHovered(true);
+          if (typeof document !== 'undefined') document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          setHovered(false);
+          if (typeof document !== 'undefined') document.body.style.cursor = 'auto';
+        }}
       >
         <boxGeometry args={[0.7, height, 0.7]} />
         <meshStandardMaterial
