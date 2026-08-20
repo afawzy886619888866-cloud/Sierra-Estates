@@ -11,6 +11,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import './admin-portal.css';
+import AgentIntelligence from './intelligence/AgentIntelligence';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -20,7 +21,7 @@ const LANG = {
     overview:'Intelligence OS', agents:'Agents & Bots', workflows:'Workflows',
     openclaw:'OpenClaw Terminal', nexus:'Nexus-AI Telemetry', leads:'CRM · Leads',
     listings:'Listings Hub', curator:'The Curator', scribe:'The Scribe',
-    closer:'Stage-9 Closer', reports:'Reports', settings:'System Config',
+    closer:'Stage-9 Closer', reports:'Reports', intelligence:'Fleet Intelligence', settings:'System Config',
     main:'Main', operations:'Operations', analytics:'Analytics', system:'System',
     collapse:'Collapse', livesite:'Live Site', theme:'Theme', lang:'Language',
     addLead:'+ Add Lead', exportCSV:'Export CSV', importCSV:'Import CSV',
@@ -50,7 +51,7 @@ const LANG = {
     overview:'لوحة التحكم', agents:'الوكلاء والبوتات', workflows:'سير العمل',
     openclaw:'طرفية أوبن كلو', nexus:'نيكسوس · البث المباشر', leads:'إدارة العملاء',
     listings:'قاعدة العقارات', curator:'المنظم', scribe:'الكاتب',
-    closer:'المغلق · المرحلة 9', reports:'التقارير', settings:'الإعدادات',
+    closer:'المغلق · المرحلة 9', reports:'التقارير', intelligence:'ذكاء أسطول الوكلاء', settings:'الإعدادات',
     main:'رئيسي', operations:'العمليات', analytics:'التحليلات', system:'النظام',
     collapse:'طي', livesite:'الموقع المباشر', theme:'المظهر', lang:'اللغة',
     addLead:'+ إضافة عميل', exportCSV:'تصدير CSV', importCSV:'استيراد CSV',
@@ -144,6 +145,7 @@ const NAV_ITEMS = (T) => [
   {id:'scribe',label:T('scribe'),icon:'✍️',section:T('operations')},
   {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
   {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
+  {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
   {id:'settings',label:T('settings'),icon:'🔧',section:T('system')},
 ];
 
@@ -1507,6 +1509,7 @@ function AdminApp() {
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
       case 'reports':return <ReportsPage T={T}/>;
+      case 'intelligence':return <AgentIntelligence />;
       case 'settings':return <SettingsPage T={T}/>;
       default:return <OverviewPage T={T}/>;
     }
