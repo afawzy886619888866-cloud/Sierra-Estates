@@ -23,8 +23,9 @@ const ZONE_RATE: Record<string, number> = {
   'Swan Lake': 115000,
   'Madinaty': 48000,
   'El Shorouk': 38000,
-  'Mostakbal': 45000,
-  'Sheikh Zayed': 55000,
+  'Mostakbal': 42000,
+  'Fifth Settlement': 65000,
+  'Sheikh Zayed': 45000,
   'New Administrative Capital': 42000,
 };
 
