@@ -11,15 +11,37 @@ import type { Session, Role } from "./types";
 
 const COOKIE_NAME = "sierra_sess";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
-const DEMO_ADMIN_EMAIL = "admin@sierra-estates.net";
-const DEMO_ADMIN_PASSWORD = "sierra-admin";
+
+const IS_PROD = process.env.NODE_ENV === "production";
+
+/**
+ * Bootstrap admin. There is deliberately NO default password: a committed
+ * credential is a published credential. The account exists only when
+ * ADMIN_BOOTSTRAP_PASSWORD is explicitly set, so production fails closed
+ * unless an operator opts in.
+ */
+const BOOTSTRAP_ADMIN_EMAIL =
+  process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net";
+const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+
+/** Dev-only fallback signing key. Never reachable in production — see getKey(). */
+const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
 
 function getKey(): string {
-  return (
-    process.env.SESSION_SECRET ||
-    process.env.VERCEL_AUTOMATION_BYPASS_TOKEN ||
-    "sierra-dev-secret-change-me"
-  );
+  const secret =
+    process.env.SESSION_SECRET || process.env.VERCEL_AUTOMATION_BYPASS_TOKEN;
+
+  if (secret) return secret;
+
+  // Falling back to a hard-coded key in production would let anyone who can
+  // read this repo forge an admin session. Fail loudly instead.
+  if (IS_PROD) {
+    throw new Error(
+      "SESSION_SECRET is not set. Refusing to sign sessions with the public development key."
+    );
+  }
+
+  return DEV_FALLBACK_KEY;
 }
 
 async function hmacSha256(data: string, key: string): Promise<string> {
@@ -71,20 +93,37 @@ export function cookieOpts() {
   };
 }
 
-/** Demo admin login — only used when Firebase Admin is not configured. */
+/**
+ * Bootstrap admin login — the way in before Firebase Admin is configured.
+ *
+ * Disabled unless ADMIN_BOOTSTRAP_PASSWORD is set, and disabled outright once
+ * real Firebase credentials exist. Timing-safe comparison so the password is
+ * not recoverable by measuring response times.
+ */
 export function tryDemoLogin(email: string, password: string): Session | null {
   if (
     process.env.FIREBASE_SERVICE_ACCOUNT ||
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
     process.env.GOOGLE_APPLICATION_CREDENTIALS
   ) {
-    return null; // Real Firebase is configured; don't allow demo login.
+    return null; // Real Firebase is configured; don't allow bootstrap login.
   }
-  if (email === DEMO_ADMIN_EMAIL && password === DEMO_ADMIN_PASSWORD) {
+
+  // No configured password means no bootstrap account. This is what makes
+  // production fail closed rather than shipping a known credential.
+  if (!BOOTSTRAP_ADMIN_PASSWORD) return null;
+
+  const emailOk = safeEqual(
+    email.trim().toLowerCase(),
+    BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase()
+  );
+  const passwordOk = safeEqual(password, BOOTSTRAP_ADMIN_PASSWORD);
+
+  if (emailOk && passwordOk) {
     return {
-      uid: "demo-admin",
-      email,
-      name: "Demo Admin",
+      uid: "bootstrap-admin",
+      email: BOOTSTRAP_ADMIN_EMAIL,
+      name: "Bootstrap Admin",
       role: "admin" as Role,
       exp: Date.now() + SESSION_TTL_MS,
     };
@@ -92,7 +131,25 @@ export function tryDemoLogin(email: string, password: string): Session | null {
   return null;
 }
 
-export const DEMO_ADMIN = { email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD };
+/** Constant-time string comparison. */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** True when a bootstrap admin account is available to sign in with. */
+export function bootstrapLoginAvailable(): boolean {
+  if (
+    process.env.FIREBASE_SERVICE_ACCOUNT ||
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS
+  ) {
+    return false;
+  }
+  return Boolean(BOOTSTRAP_ADMIN_PASSWORD);
+}
 
 /** Parse cookie header into a map. */
 export function parseCookies(header: string | null): Record<string, string> {

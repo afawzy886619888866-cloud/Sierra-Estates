@@ -6,7 +6,7 @@
 
 import * as admin from 'firebase-admin';
 import { Anthropic } from '@anthropic-ai/sdk';
-import { sharedMemory } from '@sierra-estates/memory-engine';
+import { sharedMemory, instrument } from '@sierra-estates/memory-engine';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -65,14 +65,33 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
 
 Create a compelling proposal that closes this deal.`;
 
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-4-1',
-      max_tokens: 1500,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    });
+    return instrument(
+      {
+        agentId: 'closer',
+        action: 'generateProposal',
+        skillsUsed: ['proposal-writing', 'pricing'],
+        context: { propertyCode: context.propertyCode },
+      },
+      async () => {
+        const message = await anthropic.messages.create({
+          model: 'claude-opus-5',
+          max_tokens: 16000,
+          // Adaptive thinking: proposals weigh buyer profile, offer history and
+          // pricing together, which is exactly the kind of reasoning it helps.
+          thinking: { type: 'adaptive' },
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }],
+        });
 
-    return message.content[0].type === 'text' ? message.content[0].text : '';
+        const text = message.content.find((b) => b.type === 'text');
+        if (!text || text.type !== 'text' || !text.text.trim()) {
+          // Treated as a failure so the learning loop sees it — an empty
+          // proposal returned as success would look like a win.
+          throw new Error('Proposal generation returned no text');
+        }
+        return text.text;
+      }
+    );
   }
 
   /**
@@ -83,7 +102,7 @@ Create a compelling proposal that closes this deal.`;
     counterOffer: { amount: number; terms: string }
   ): Promise<{ recommendation: string; suggestedResponse: string }> {
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-1',
+      model: 'claude-opus-5',
       max_tokens: 800,
       messages: [
         {
@@ -179,7 +198,7 @@ Format as JSON: { recommendation: "accept|counter|walk", suggestedAmount?: 0, su
     const leadProfile = await sharedMemory.getLeadProfile(leadPhone);
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-1',
+      model: 'claude-opus-5',
       max_tokens: 400,
       messages: [
         {
