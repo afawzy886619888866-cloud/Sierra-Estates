@@ -17,16 +17,36 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!isFirebaseClientConfigured) {
-      setError('Firebase is not configured in this environment.');
-      return;
-    }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      let token: string | undefined;
+
+      if (isFirebaseClientConfigured) {
+        const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        token = await credential.user.getIdToken();
+      }
+
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          action: 'signin',
+          email: email.trim(),
+          password: isFirebaseClientConfigured ? undefined : password,
+          token,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Unable to create an admin session.');
+      }
+
       router.replace('/admin');
+      router.refresh();
     } catch (_err) {
-      setError('Invalid credentials. Staff access only.');
+      setError('Invalid credentials or unavailable admin session.');
     } finally {
       setLoading(false);
     }
