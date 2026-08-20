@@ -1,0 +1,312 @@
+/* Refinements layered on top of the ported design.
+   Loaded after shared.css / index.css so these win on source order.
+   Keep the ported files verbatim; every deliberate change lives here. */
+
+/* ── Hero legibility ──────────────────────────────────────────────────
+   The hero copy sits in the left column, so the scrim carries most of its
+   weight on that side and clears the photograph on the right. The ported
+   ramp topped out at .82 and left the sub-copy short of 4.5:1 over bright
+   slides, so the left third is deepened and the falloff pushed further
+   right. Direction flips for RTL, where the column flips with it. */
+.hero .scrim {
+  background:
+    linear-gradient(100deg,
+      rgba(10, 22, 34, .95) 0%,
+      rgba(10, 22, 34, .90) 22%,
+      rgba(10, 22, 34, .70) 44%,
+      rgba(10, 22, 34, .34) 64%,
+      rgba(10, 22, 34, .08) 82%,
+      rgba(10, 22, 34, 0) 92%),
+    linear-gradient(180deg,
+      rgba(4, 12, 20, .18) 0%,
+      rgba(4, 12, 20, 0) 34%,
+      rgba(4, 12, 20, .42) 100%);
+}
+
+[dir="rtl"] .hero .scrim {
+  background:
+    linear-gradient(260deg,
+      rgba(10, 22, 34, .95) 0%,
+      rgba(10, 22, 34, .90) 22%,
+      rgba(10, 22, 34, .70) 44%,
+      rgba(10, 22, 34, .34) 64%,
+      rgba(10, 22, 34, .08) 82%,
+      rgba(10, 22, 34, 0) 92%),
+    linear-gradient(180deg,
+      rgba(4, 12, 20, .18) 0%,
+      rgba(4, 12, 20, 0) 34%,
+      rgba(4, 12, 20, .42) 100%);
+}
+
+[data-theme="dark"] .hero .scrim {
+  background:
+    linear-gradient(100deg,
+      rgba(8, 8, 10, .97) 0%,
+      rgba(8, 8, 10, .92) 22%,
+      rgba(8, 8, 10, .74) 44%,
+      rgba(8, 8, 10, .38) 64%,
+      rgba(8, 8, 10, .1) 82%,
+      rgba(8, 8, 10, 0) 92%),
+    linear-gradient(180deg,
+      rgba(8, 8, 10, .32) 0%,
+      rgba(8, 8, 10, .06) 34%,
+      rgba(8, 8, 10, .74) 100%);
+}
+
+[data-theme="dark"][dir="rtl"] .hero .scrim {
+  background:
+    linear-gradient(260deg,
+      rgba(8, 8, 10, .97) 0%,
+      rgba(8, 8, 10, .92) 22%,
+      rgba(8, 8, 10, .74) 44%,
+      rgba(8, 8, 10, .38) 64%,
+      rgba(8, 8, 10, .1) 82%,
+      rgba(8, 8, 10, 0) 92%),
+    linear-gradient(180deg,
+      rgba(8, 8, 10, .32) 0%,
+      rgba(8, 8, 10, .06) 34%,
+      rgba(8, 8, 10, .74) 100%);
+}
+
+/* Below 860px the column spans the full width, so the scrim goes vertical
+   rather than directional — deepened to match the copy's new contrast. */
+@media (max-width: 860px) {
+  .hero .scrim,
+  [dir="rtl"] .hero .scrim {
+    background: linear-gradient(180deg,
+      rgba(10, 22, 34, .82) 0%,
+      rgba(10, 22, 34, .62) 45%,
+      rgba(10, 22, 34, .84) 100%);
+  }
+  [data-theme="dark"] .hero .scrim,
+  [data-theme="dark"][dir="rtl"] .hero .scrim {
+    background: linear-gradient(180deg,
+      rgba(8, 8, 10, .92) 0%,
+      rgba(8, 8, 10, .78) 45%,
+      rgba(8, 8, 10, .92) 100%);
+  }
+}
+
+/* The hero column is the measure for the copy: cap it so the headline keeps
+   an even rag against the deepest part of the scrim. */
+.hero-col {
+  max-width: 620px;
+}
+.hero h1 {
+  text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .34);
+}
+.hero .sub {
+  text-wrap: pretty;
+  max-width: 54ch;
+}
+
+/* ── 3D tour banner ───────────────────────────────────────────────────
+   Click-to-activate keeps the embed off the critical path; the poster is
+   the visible default and the iframe only mounts on intent. */
+.vt-banner {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  min-height: 420px;
+  background: #0a1622;
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 70px rgba(10, 22, 34, .22);
+}
+[data-theme="dark"] .vt-banner {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .55);
+}
+
+.vt-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  background: none;
+  text-align: start;
+}
+.vt-poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vt-poster .vt-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(8, 12, 18, .92) 0%, rgba(8, 12, 18, .72) 38%, rgba(8, 12, 18, .28) 62%, rgba(8, 12, 18, .05) 84%),
+    linear-gradient(180deg, rgba(8, 12, 18, .2) 0%, rgba(8, 12, 18, 0) 40%, rgba(8, 12, 18, .6) 100%);
+}
+[dir="rtl"] .vt-poster .vt-scrim {
+  background:
+    linear-gradient(260deg, rgba(8, 12, 18, .92) 0%, rgba(8, 12, 18, .72) 38%, rgba(8, 12, 18, .28) 62%, rgba(8, 12, 18, .05) 84%),
+    linear-gradient(180deg, rgba(8, 12, 18, .2) 0%, rgba(8, 12, 18, 0) 40%, rgba(8, 12, 18, .6) 100%);
+}
+
+.vt-copy {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  height: 100%;
+  width: min(560px, 62%);
+  padding: clamp(24px, 4vw, 46px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  color: #fff;
+  z-index: 2;
+}
+.vt-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #e9c176;
+}
+.vt-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+  animation: vtBlink 1.8s ease-in-out infinite;
+}
+@keyframes vtBlink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+.vt-copy h3 {
+  font-family: var(--display);
+  font-size: clamp(26px, 3.2vw, 44px);
+  line-height: 1.08;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-wrap: balance;
+}
+.vt-copy h3 em { font-style: normal; color: #e9c176; }
+.vt-copy p {
+  color: rgba(255, 255, 255, .82);
+  font-size: 14.5px;
+  max-width: 46ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+.vt-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.vt-pills span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: rgba(255, 255, 255, .09);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.vt-pills span svg { width: 13px; height: 13px; color: #e9c176; }
+
+.vt-play {
+  position: absolute;
+  inset-inline-end: clamp(24px, 6vw, 88px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.vt-play .disc {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, .96);
+  color: #0a1622;
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, .16), 0 0 0 22px rgba(255, 255, 255, .07), 0 20px 50px rgba(0, 0, 0, .45);
+  transition: transform .4s cubic-bezier(.22, 1, .36, 1), box-shadow .4s cubic-bezier(.22, 1, .36, 1);
+}
+.vt-poster:hover .vt-play .disc { transform: scale(1.07); }
+.vt-play .disc svg { width: 34px; height: 34px; margin-inline-start: 4px; }
+.vt-play .label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .6);
+}
+
+.vt-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  opacity: 0;
+  transition: opacity .5s cubic-bezier(.22, 1, .36, 1);
+}
+.vt-frame.on { opacity: 1; }
+.vt-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 13px;
+  background: #0a1622;
+  z-index: 1;
+}
+.vt-loading svg { width: 28px; height: 28px; animation: vtSpin 1s linear infinite; }
+@keyframes vtSpin { to { transform: rotate(360deg); } }
+
+.vt-below {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.vt-below a { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; }
+.vt-below a svg { width: 14px; height: 14px; }
+
+@media (max-width: 980px) {
+  .vt-banner { aspect-ratio: 4 / 5; min-height: 540px; }
+  .vt-copy { width: 100%; height: auto; top: 0; padding-bottom: 0; justify-content: flex-start; padding-top: 32px; }
+  .vt-play { inset-inline-end: 50%; top: auto; bottom: 42px; transform: translateX(50%); }
+  [dir="rtl"] .vt-play { transform: translateX(-50%); }
+  .vt-play .disc { width: 78px; height: 78px; }
+  .vt-play .disc svg { width: 28px; height: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-live::before,
+  .vt-loading svg { animation: none; }
+  .vt-poster:hover .vt-play .disc { transform: none; }
+}

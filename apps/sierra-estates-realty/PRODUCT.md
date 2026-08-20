@@ -16,21 +16,26 @@ desktop at work. Trust and quiet luxury matter more than density. Staff use a se
 console is product register.
 
 ## Brand
-- Aesthetic: quiet luxury · editorial serif · deep-navy-and-gold · bilingual EN/AR (RTL).
-- Color: gold `#C8961A`/`#E9C176` primary accent; red `#E63946` secondary (hot/live, emblem glow);
-  navy `#0B1A2E`/`#071422` dark surfaces; ivory `#F7F4EC` light surfaces.
-- Type: Cormorant Garamond (display, medium/italic), Inter (UI), Cairo (Arabic), JetBrains Mono
-  (prices, SBR codes, eyebrows, data).
-- Motion: silk easing `cubic-bezier(.16,1,.3,1)`, durations 180/280/400/700ms, no bounce
-  (exception: bottom-nav icon spring), reduced-motion respected.
-- Logos: `assets/logo-gold.png` (on light), `assets/logo-red.png` (red neon shield, on dark).
+
+> ⛔ **This section does NOT govern the client site.** The client site
+> (`app/(site)/`, `components/site/`, `app/site-styles/`) takes design direction
+> **only from the operator in the active conversation**. Do not apply the values
+> below to it — they describe an earlier iframe-based kit that is no longer shipped.
+> The live client design is defined by `app/site-styles/shared.css` plus the
+> per-page stylesheets, ported from `deploy/*.html`.
+
+Applies to the **admin console only**:
+- Type: Inter (UI), Cairo (Arabic), JetBrains Mono (prices, SBR codes, data).
+- Motion: silk easing `cubic-bezier(.16,1,.3,1)`, durations 180/280/400/700ms, no bounce,
+  reduced-motion respected.
 - Tagline: "Future of Real Estate".
 
 ## Surfaces
-- **Client portal** (`public/design/ui_kits/web-app/`, served at `/` via iframe host
-  `app/ClientPage.tsx`): mobile-first responsive — hero, AI listings, live Leaflet map,
-  360° tour, AI hub + 12 sheets, EN/AR + dark/light.
-- **Admin Intelligence OS** (`app/admin/`): KPIs, pipeline, agent fleet, CRM.
+- **Client portal** (`app/(site)/`, styles in `app/site-styles/`): a native Next.js App Router
+  site ported from `deploy/*.html`. Hero, AI listings, compounds, live 3D tour, AI hub,
+  EN/AR + dark/light. No iframe.
+- **Admin Intelligence OS** (`app/admin/`): KPIs, pipeline, agent fleet, CRM. The only surface
+  using Tailwind (imported by `app/admin/admin-portal.css`).
 
 ## Constraints
 - Kit is browser-Babel React 18 UMD inside an iframe (isolated from Next.js React 19 host).
