@@ -1,8 +1,12 @@
 /* Minimal global reset. Surface-specific styling lives with each surface
-   (e.g. app/admin/admin-portal.css); keep this file lean so the incoming
-   client page can bring its own design without fighting global rules. */
+   (e.g. app/admin/admin-portal.css); keep this file lean so the client site
+   can bring its own design without fighting global rules.
 
-@import "tailwindcss";
+   Tailwind is deliberately NOT imported here. Its preflight zeroes margins,
+   padding and borders on every element and flattens heading sizes, which
+   fights deploy/shared.css — the canonical design for the client site.
+   Tailwind is imported by app/admin/admin-portal.css, the only surface
+   that uses its utilities. */
 
 *,
 *::before,
@@ -17,7 +21,6 @@ body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

@@ -10,12 +10,11 @@ import {
 } from 'lucide-react';
 
 interface PortalChromeProps {
-  onAddListingClick?: () => void;
   onSignInClick?: () => void;
   activeSection?: string;
 }
 
-export default function PortalChrome({ onAddListingClick, onSignInClick: _onSignInClick, activeSection }: PortalChromeProps) {
+export default function PortalChrome({ onSignInClick: _onSignInClick, activeSection }: PortalChromeProps) {
   const { locale, setLocale } = useI18n();
   const isAr = locale === 'ar';
   const t = isAr ? AR : EN;
@@ -183,13 +182,17 @@ export default function PortalChrome({ onAddListingClick, onSignInClick: _onSign
             </button>
 
             {/* Add Listing CTA */}
-            <button
-              onClick={onAddListingClick}
-              className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white hover:bg-white/15 border border-white/20 transition-all active:scale-95"
+            <Link
+              href="/add-listing"
+              className={`hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all active:scale-95 ${
+                activeSection === 'add-listing'
+                  ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                  : 'bg-white/10 text-white hover:bg-white/15 border-white/20'
+              }`}
             >
               <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
               <span>{t.addListing}</span>
-            </button>
+            </Link>
 
             {/* Sign In / WhatsApp Link */}
             <a
@@ -291,6 +294,14 @@ export default function PortalChrome({ onAddListingClick, onSignInClick: _onSign
               className="py-2 border-b border-white/10"
             >
               {isAr ? 'الوظائف' : 'Careers'}
+            </Link>
+            <Link
+              href="/add-listing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-2 border-b border-white/10 flex items-center justify-between text-amber-300 font-semibold"
+            >
+              <span>{t.addListing}</span>
+              <PlusCircle className="w-4 h-4 text-amber-400" />
             </Link>
           </div>
 
