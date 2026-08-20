@@ -13,11 +13,19 @@ import { NextResponse } from 'next/server';
 
 const ZONE_RATE: Record<string, number> = {
   'New Cairo': 62000,
+  'Fifth Settlement': 65000,
+  'Mivida': 92000,
+  'Hyde Park': 78000,
+  'Mountain View iCity': 74000,
+  'Katameya Dunes': 110000,
+  'Palm Hills New Cairo': 88000,
+  'Villette': 84000,
+  'Swan Lake': 115000,
   'Madinaty': 48000,
   'El Shorouk': 38000,
-  'Mostakbal': 42000,
-  'Fifth Settlement': 65000,
-  'Sheikh Zayed': 45000,
+  'Mostakbal': 45000,
+  'Sheikh Zayed': 55000,
+  'New Administrative Capital': 42000,
 };
 
 const FALLBACK_RATE = 50000;
