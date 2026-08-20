@@ -7,6 +7,7 @@ import { BadgeCheck, Map, ShieldCheck } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { GsapMagnetic } from './GsapAnimations';
+import Hero3D from './Hero3D';
 
 interface Slide { pre: string; preAr: string; main: string; mainAr: string; img: string }
 
@@ -72,6 +73,9 @@ export default function HomeHero() {
             <img src={sl.img} alt="" />
           </div>
         ))}
+      </div>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.85 }}>
+        <Hero3D />
       </div>
       <div className="scrim" />
       <div className="grain" aria-hidden="true" />
