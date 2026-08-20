@@ -4,11 +4,13 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Search, RotateCcw, Compass } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { motionTokens } from '@/lib/site/motionTokens';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
@@ -25,6 +27,7 @@ const BEDS = [0, 1, 2, 3, 4, 5];
 
 export default function CompoundsPage() {
   const { t, isAr } = useSite();
+  const reduce = useReducedMotion();
   const all = HZDATA.compounds as MapCompound[];
   const featured = HZDATA.featured as string[];
   const imgs = HZDATA.compoundImgs as Record<string, string>;
@@ -156,6 +159,19 @@ export default function CompoundsPage() {
               <CompoundsMap compounds={filtered} featured={featured} onSelect={setSelected} />
             </div>
             <div className="intel" id="intel-panel">
+              {/* mode="wait" so the outgoing compound clears before the next one
+                  arrives — overlapping two unit lists reads as a glitch. */}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={selected ?? '__hint__'}
+                  initial={reduce ? false : { opacity: 0, y: motionTokens.distance.sm }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduce ? { opacity: 1 } : { opacity: 0, y: -motionTokens.distance.sm }}
+                  transition={{
+                    duration: reduce ? 0 : motionTokens.duration.fast,
+                    ease: motionTokens.easing.smooth,
+                  }}
+                >
               {!selected ? (
                 <div className="hint" id="intel-hint">
                   <Compass className="i" />
@@ -193,6 +209,8 @@ export default function CompoundsPage() {
                   </div>
                 </div>
               )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
 
