@@ -21,7 +21,8 @@
         "deploy:prod": "vercel --prod",
         "deploy:rules": "firebase deploy --only firestore:rules,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
-        "vertex-agent": "tsx scripts/vertex-agent-runner.ts"
+        "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
+        "openclaw:task": "tsx scripts/openclaw-task-runner.ts"
     },
     "devDependencies": {
         "@openai/codex-security": "^0.1.4",
