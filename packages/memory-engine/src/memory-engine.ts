@@ -4,11 +4,19 @@
  */
 
 import type { Agent, Skill, Context, ExecutionLog, Pattern } from './types'
+import type { MemoryStore, ExecutionLogQuery } from './stores/types'
+import { InMemoryStore } from './stores/memory-store'
+import { FirestoreMemoryStore } from './stores/firestore-store'
 
 export interface MemoryEngineConfig {
   persistenceLayer?: 'file' | 'memory' | 'database'
   learningEnabled?: boolean
   auditTrail?: boolean
+  /**
+   * Durable backing store. Without one the engine is a cache that dies with
+   * the process — on serverless, that is every single request.
+   */
+  store?: MemoryStore
 }
 
 export class MemoryEngine {
@@ -17,6 +25,8 @@ export class MemoryEngine {
   private agentProfiles: Map<string, Agent> = new Map()
   private executionLogs: ExecutionLog[] = []
   private subscribers: Map<string, Set<Function>> = new Map()
+  private pendingWrites = 0
+  private lastStoreError: string | null = null
 
   private config: MemoryEngineConfig = {
     persistenceLayer: 'memory',
@@ -75,11 +85,81 @@ export class MemoryEngine {
       console.log(`[Memory] Logged execution: ${execution.agentId}:${execution.action}`)
     }
     this.publish('execution:logged', execution)
+
+    // Mirror to the durable store. Deliberately not awaited: logging must never
+    // slow down or fail an agent run. Failures are swallowed and surfaced via
+    // storeHealthy() instead of thrown into the caller's control flow.
+    const store = this.config.store
+    if (store) {
+      this.pendingWrites++
+      store
+        .appendExecution(execution)
+        .catch(err => {
+          this.lastStoreError = err instanceof Error ? err.message : String(err)
+          console.error('[Memory] execution persist failed:', this.lastStoreError)
+        })
+        .finally(() => {
+          this.pendingWrites--
+        })
+    }
   }
 
+  /** Patterns from the in-process cache only (synchronous, may be cold). */
   getPatterns(filter?: (log: ExecutionLog) => boolean): Pattern[] {
     const logs = filter ? this.executionLogs.filter(filter) : this.executionLogs
     return this.analyzePatterns(logs)
+  }
+
+  /**
+   * Patterns computed over durable history. This is the one to use for any
+   * real decision — getPatterns() sees only what this process happened to
+   * handle, which on serverless is close to nothing.
+   */
+  async getPatternsFromStore(query: ExecutionLogQuery = {}): Promise<Pattern[]> {
+    const store = this.config.store
+    if (!store) return this.getPatterns()
+    const logs = await store.queryExecutions({ limit: 1000, ...query })
+    return this.analyzePatterns(logs)
+  }
+
+  /** Durable execution history, newest first. */
+  async getExecutions(query: ExecutionLogQuery = {}): Promise<ExecutionLog[]> {
+    const store = this.config.store
+    if (!store) {
+      return [...this.executionLogs].reverse().slice(0, query.limit ?? 500)
+    }
+    return store.queryExecutions(query)
+  }
+
+  /** Flush outstanding persistence writes — call before a serverless handler returns. */
+  async flush(timeoutMs = 2000): Promise<void> {
+    const started = Date.now()
+    while (this.pendingWrites > 0 && Date.now() - started < timeoutMs) {
+      await new Promise(r => setTimeout(r, 25))
+    }
+  }
+
+  async storeHealthy(): Promise<boolean> {
+    const store = this.config.store
+    if (!store) return false
+    try {
+      return await store.healthy()
+    } catch {
+      return false
+    }
+  }
+
+  get storeName(): string {
+    return this.config.store?.name ?? 'none'
+  }
+
+  get storeError(): string | null {
+    return this.lastStoreError
+  }
+
+  /** Attach or swap the durable store at runtime. */
+  setStore(store: MemoryStore): void {
+    this.config.store = store
   }
 
   /**
@@ -120,31 +200,45 @@ export class MemoryEngine {
       return []
     }
 
-    const patterns: Map<string, Pattern> = new Map()
+    // Count successes explicitly and divide at the end. The previous version
+    // only touched successRate on success while still incrementing
+    // occurrences, so failures never moved the rate and it drifted toward 1.0
+    // — an agent learning from that would conclude everything works.
+    const acc = new Map<string, { pattern: Pattern; successes: number }>()
 
     logs.forEach(log => {
       const patternKey = `${log.agentId}:${log.action}`
-      const existing = patterns.get(patternKey) || {
-        name: patternKey,
-        occurrences: 0,
-        successRate: 0,
-        lastUsed: new Date(),
-        skills: []
+      const entry = acc.get(patternKey) || {
+        pattern: {
+          name: patternKey,
+          occurrences: 0,
+          successRate: 0,
+          lastUsed: new Date(0),
+          skills: [] as string[]
+        },
+        successes: 0
       }
 
-      existing.occurrences++
-      if (log.success) {
-        existing.successRate = (existing.successRate * (existing.occurrences - 1) + 1) / existing.occurrences
+      entry.pattern.occurrences++
+      if (log.success) entry.successes++
+
+      // Track when the pattern actually ran, not when it was analysed.
+      const at = log.timestamp instanceof Date ? log.timestamp : new Date(log.timestamp)
+      if (at.getTime() > entry.pattern.lastUsed.getTime()) {
+        entry.pattern.lastUsed = at
       }
-      existing.lastUsed = new Date()
+
       if (log.skillsUsed) {
-        existing.skills = [...new Set([...existing.skills, ...log.skillsUsed])]
+        entry.pattern.skills = [...new Set([...entry.pattern.skills, ...log.skillsUsed])]
       }
 
-      patterns.set(patternKey, existing)
+      acc.set(patternKey, entry)
     })
 
-    return Array.from(patterns.values())
+    return Array.from(acc.values()).map(({ pattern, successes }) => ({
+      ...pattern,
+      successRate: pattern.occurrences ? successes / pattern.occurrences : 0
+    }))
   }
 
   /**
@@ -188,11 +282,27 @@ export class MemoryEngine {
   }
 }
 
+/**
+ * Resolve the durable store from MEMORY_PERSISTENCE.
+ *
+ * This flag existed before but nothing ever branched on it, so every
+ * deployment silently ran memory-only. It is honoured now.
+ */
+function resolveStore(layer: string): MemoryStore {
+  if (layer === 'database' || layer === 'firestore') {
+    return new FirestoreMemoryStore({ namespace: process.env.MEMORY_NAMESPACE })
+  }
+  return new InMemoryStore()
+}
+
+const PERSISTENCE = process.env.MEMORY_PERSISTENCE || 'memory'
+
 // Global singleton instance
 export const memoryEngine = new MemoryEngine({
-  persistenceLayer: process.env.MEMORY_PERSISTENCE as any || 'memory',
+  persistenceLayer: PERSISTENCE as any,
   learningEnabled: process.env.MEMORY_LEARNING !== 'false',
-  auditTrail: process.env.MEMORY_AUDIT !== 'false'
+  auditTrail: process.env.MEMORY_AUDIT !== 'false',
+  store: resolveStore(PERSISTENCE)
 })
 
 export default memoryEngine

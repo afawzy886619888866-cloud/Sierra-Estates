@@ -8,3 +8,33 @@ export { SharedMemoryBus, sharedMemory, getSharedMemory, type SharedMemoryEntry,
 export { MemoryPalace, mempalace, type MemoryPalaceEntry, type MemoryPalaceQueryResult } from './mempalace'
 export { OpenMemoryAdapter, openMemoryClient, type OpenMemoryConfig, type OpenMemoryStoreOptions, type OpenMemoryQueryResult } from './openmemory-adapter'
 
+/* Durable persistence — the layer that makes learning survive a cold start. */
+export type { MemoryStore, ExecutionLogQuery } from './stores/types'
+export { InMemoryStore } from './stores/memory-store'
+export { FirestoreMemoryStore, type FirestoreStoreConfig } from './stores/firestore-store'
+
+/* Learning loop: measured skill selection. */
+export {
+  wilsonLowerBound,
+  scoreSkills,
+  rankSkills,
+  chooseSkills,
+  summarisePatterns,
+  type SkillScore,
+  type RankOptions
+} from './learning'
+
+/* Eval harness: makes "it improved" a falsifiable claim. */
+export {
+  runEval,
+  compareRuns,
+  scenariosFromHistory,
+  type EvalScenario,
+  type EvalCaseResult,
+  type EvalRunResult,
+  type RegressionVerdict,
+  type ScenarioRunner
+} from './eval-harness'
+
+/* Agent instrumentation. */
+export { instrument, recordRun, type InstrumentedResult } from './instrument'
