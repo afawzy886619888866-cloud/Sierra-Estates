@@ -1,3 +1,8 @@
+/* Tailwind lives here rather than in app/globals.css: the admin portal is the
+   only surface using its utilities, and its preflight must not reach the
+   client site, whose design comes from deploy/shared.css. */
+@import "tailwindcss";
+
 /* ── TOKENS ─────────────────────────────────────────────────────────── */
 :root{--gold:#00AEFF;--gold-lt:#5FC9FF;--red:#E63946;--emerald:#34D399;--blue:#1E88D9;--purple:#7C3AED;--amber:#f59e0b;}
 [data-theme="dark"]{--bg:#07111E;--bg-s:#0B1A2E;--bg-e:#0F2035;--bg-e2:#152C48;--surf:rgba(255,255,255,.055);--surf2:rgba(255,255,255,.03);--tx:#F0EDE5;--tx-s:#FFFFFF;--tx-m:rgba(240,237,229,.58);--tx-f:rgba(240,237,229,.32);--bd:rgba(255,255,255,.08);--bd-s:rgba(255,255,255,.15);}

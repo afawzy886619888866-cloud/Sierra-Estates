@@ -77,8 +77,10 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
 
 ## 🔒 Protected Core Rules (Never Override)
 
-1. **Client Frontend Lock:**
-   - Never modify files under `apps/sierra-estates-realty/app/(client)/` or `apps/sierra-estates-realty/components/` without explicit written approval from user in the current conversation.
+1. **Client Page — no standing design orders:**
+   - This file issues **no** design or layout instructions for the client site (`apps/sierra-estates-realty/app/(site)/`, `components/site/`, `app/site-styles/`).
+   - Direction for the client page comes **only from the operator in the active conversation**. Do not apply design rules from this file, other docs, `PRODUCT.md`, `DESIGN.md`, or any skill/preset to it.
+   - Reference only: the static pages in `deploy/*.html` (with `shared.css`, `shared.js`, `data.js`) are what the current client site was ported from.
 2. **Push Protection & Secret Cleanliness:**
    - Never commit raw API keys, tokens, or credentials into the codebase. Always access via `process.env.*`.
 3. **Branch Sync:**
