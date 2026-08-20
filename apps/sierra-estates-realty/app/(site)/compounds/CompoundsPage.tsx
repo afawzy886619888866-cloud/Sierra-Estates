@@ -22,6 +22,15 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
+const Compound3DViewer = dynamic(() => import('@/components/site/Compound3DViewer'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 420, color: 'var(--muted)', fontSize: 13 }}>
+      Loading 3D scene…
+    </div>
+  ),
+});
+
 const TYPES = ['all', 'Apartment', 'Villa', 'Townhouse', 'Twin House'];
 const BEDS = [0, 1, 2, 3, 4, 5];
 
@@ -37,6 +46,7 @@ export default function CompoundsPage() {
   const [type, setType] = useState('all');
   const [beds, setBeds] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
 
   const zones = useMemo(
     () => ['all', ...Array.from(new Set(all.map((c) => c.z)))],
@@ -139,24 +149,49 @@ export default function CompoundsPage() {
             </span>
           </div>
 
-          {/* Zone chips */}
-          <div className="zone-chips" id="zone-chips">
-            {zones.map((z) => (
+          {/* Zone chips + View mode toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            <div className="zone-chips" id="zone-chips">
+              {zones.map((z) => (
+                <button
+                  key={z}
+                  type="button"
+                  className={`af-chip${zone === z ? ' on' : ''}`}
+                  onClick={() => setZone(z)}
+                >
+                  {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'inline-flex', background: 'var(--surface-2, rgba(255,255,255,0.06))', padding: 4, borderRadius: 10, border: '1px solid var(--line, rgba(255,255,255,0.1))' }}>
               <button
-                key={z}
                 type="button"
-                className={`af-chip${zone === z ? ' on' : ''}`}
-                onClick={() => setZone(z)}
+                className={`af-chip${viewMode === '2d' ? ' on' : ''}`}
+                onClick={() => setViewMode('2d')}
+                style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600 }}
               >
-                {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
+                🗺️ {isAr ? 'خريطة 2D' : '2D Map'}
               </button>
-            ))}
+              <button
+                type="button"
+                className={`af-chip${viewMode === '3d' ? ' on' : ''}`}
+                onClick={() => setViewMode('3d')}
+                style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600 }}
+              >
+                🌐 {isAr ? 'مجسم ثلاثي الأبعاد 3D' : '3D Masterplan'}
+              </button>
+            </div>
           </div>
 
           {/* Map + intel panel */}
           <div className="map-shell rv">
             <div id="cpd-map">
-              <CompoundsMap compounds={filtered} featured={featured} onSelect={setSelected} />
+              {viewMode === '3d' ? (
+                <Compound3DViewer compounds={filtered} selectedName={selected ?? undefined} onSelect={setSelected} />
+              ) : (
+                <CompoundsMap compounds={filtered} featured={featured} onSelect={setSelected} />
+              )}
             </div>
             <div className="intel" id="intel-panel">
               {/* mode="wait" so the outgoing compound clears before the next one
