@@ -4,15 +4,16 @@
  * Uses Claude Opus for complex negotiation logic
  */
 
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { sharedMemory, instrument } from '@sierra-estates/memory-engine';
 
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -83,7 +84,7 @@ Create a compelling proposal that closes this deal.`;
           messages: [{ role: 'user', content: userMessage }],
         });
 
-        const text = message.content.find((b) => b.type === 'text');
+        const text = message.content.find((b: any) => b.type === 'text') as { type: 'text'; text: string } | undefined;
         if (!text || text.type !== 'text' || !text.text.trim()) {
           // Treated as a failure so the learning loop sees it — an empty
           // proposal returned as success would look like a win.

@@ -1,11 +1,13 @@
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore, DocumentData } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (!getApps().length) {
+  initializeApp();
 }
 
-const db      = admin.firestore();
-const storage = admin.storage();
+const db      = getFirestore();
+const storage = getStorage();
 
 export class ProposalGenerator {
   async generate(
@@ -52,8 +54,8 @@ export class ProposalGenerator {
   }
 
   private buildProposalTemplate(
-    lead: admin.firestore.DocumentData,
-    asset: admin.firestore.DocumentData
+    lead: DocumentData,
+    asset: DocumentData
   ): string {
     return `
 SIERRA ESTATES
