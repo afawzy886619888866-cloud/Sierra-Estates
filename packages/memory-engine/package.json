@@ -8,6 +8,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:ci": "jest --ci --passWithNoTests",
     "clean": "rm -rf dist"
   },
   "keywords": [

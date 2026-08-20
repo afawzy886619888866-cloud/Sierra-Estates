@@ -23,7 +23,7 @@
  */
 
 import { AgentOrchestrator } from '@sierra-estates/agents-core'
-import { sharedMemory } from '@sierra-estates/memory-engine'
+import { sharedMemory, memoryEngine } from '@sierra-estates/memory-engine'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -239,14 +239,41 @@ export class WhatsAppBotRouter {
       await sharedMemory.recordConversationTurn(phone, route.primaryAgent, 'outbound', response)
 
       const elapsed = Date.now() - startedAt
+
+      // Feed the shared memory so this run counts toward what the fleet knows.
+      memoryEngine.logExecution({
+        agentId: route.primaryAgent,
+        action: `whatsapp:${intent}`,
+        timestamp: new Date(),
+        success: true,
+        skillsUsed: [route.primaryAgent, ...route.supportingAgents],
+        context: { phone, urgency, isNewClient, durationMs: elapsed },
+      })
+
       console.log(`[Router] Response delivered in ${elapsed}ms`)
 
       return response
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('[WhatsAppBotRouter] Error handling message:', message)
+
+      // The caller gets a graceful fallback, but the failure must still be
+      // recorded — a learning loop fed only successes concludes nothing breaks.
+      memoryEngine.logExecution({
+        agentId: 'router',
+        action: 'whatsapp:handle',
+        timestamp: new Date(),
+        success: false,
+        error: message,
+        context: { phone, durationMs: Date.now() - startedAt },
+      })
+
       // Fallback response
       return 'عذراً، حدث خطأ مؤقت. سيتواصل معك فريقنا قريباً.'
+    } finally {
+      // Serverless can freeze the process the moment the handler returns;
+      // give the durable write a chance to land.
+      await memoryEngine.flush(1500)
     }
   }
 
