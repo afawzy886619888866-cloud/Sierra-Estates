@@ -1,0 +1,21 @@
+/* Page styles ported verbatim from deploy/properties.html */
+
+/* ── Properties Page Specific Styles ── */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:32px;background:var(--surface);padding:14px 18px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow-s);}
+.chip-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.chip{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:999px;padding:8px 16px;cursor:pointer;transition:all var(--d-hover) var(--ease-out);}
+.chip:hover{border-color:var(--pri);color:var(--pri);transform:translateY(-1px);}
+.chip:active{transform:scale(0.97);}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,0.15);}
+[data-theme="dark"] .chip.on{background:linear-gradient(135deg,#e9c176,#c8961a);border-color:#e9c176;color:#09090f;}
+.chip-sep{width:1px;height:24px;background:var(--line-2);margin:0 4px;}
+.toolbar-right{margin-inline-start:auto;display:flex;align-items:center;gap:14px;}
+.count-badge{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
+.count-badge b{color:var(--pri);font-size:14px;}
+[data-theme="dark"] .count-badge b{color:#e9c176;}
+.sort-select{font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line-2);border-radius:10px;padding:7px 12px;outline:none;cursor:pointer;}
+.grid-props .pcard{animation:cardIn .45s var(--silk) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+@media(prefers-reduced-motion:reduce){.grid-props .pcard{animation:none;}}
+.empty-state{padding:80px 20px;text-align:center;color:var(--muted);background:var(--surface);border-radius:18px;border:1px dashed var(--line-2);margin:20px 0;}
+.empty-state h3{font-family:var(--display);font-size:22px;color:var(--ink);margin-bottom:8px;}
