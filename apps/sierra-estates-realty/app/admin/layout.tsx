@@ -29,9 +29,12 @@ export default function AdminLayout({
       return;
     }
 
+    let refreshInterval: NodeJS.Timeout | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setIsAuth(false);
+        if (refreshInterval) clearInterval(refreshInterval);
         // The login page renders without the guard — don't redirect it to itself
         if (!isLoginPage) router.replace('/admin/login');
         setIsLoading(false);
@@ -44,6 +47,11 @@ export default function AdminLayout({
 
         if (role === 'admin' || role === 'manager') {
           setIsAuth(true);
+          // Proactive background token refresh every 10 minutes
+          if (refreshInterval) clearInterval(refreshInterval);
+          refreshInterval = setInterval(() => {
+            user.getIdToken(true).catch(() => {});
+          }, 10 * 60 * 1000);
         } else {
           router.replace('/admin/login');
         }
@@ -55,7 +63,10 @@ export default function AdminLayout({
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+      unsubscribe();
+    };
   }, [router, isLoginPage]);
 
   if (isLoginPage) return <>{children}</>;
