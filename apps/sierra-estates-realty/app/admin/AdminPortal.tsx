@@ -256,8 +256,31 @@ function SidebarContent({ T, tab, setTab, collapsed, setCollapsed, onClose }) {
 
 /* ── OVERVIEW PAGE ────────────────────────────────────────────────────── */
 function OverviewPage({ T }) {
-  const kpis = KPI_DATA(T);
+  const [liveKpis, setLiveKpis] = useState(null);
   const ar = T('lang')==='ar';
+
+  useEffect(() => {
+    fetch('/api/admin/dashboard')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setLiveKpis(d); })
+      .catch(() => {});
+  }, []);
+
+  const kpis = useMemo(() => {
+    const base = KPI_DATA(T);
+    if (!liveKpis) return base;
+    return [
+      { ...base[0], val: liveKpis.totalListings ? liveKpis.totalListings.toLocaleString() : base[0].val },
+      { ...base[1], val: liveKpis.activeListings ? liveKpis.activeListings.toLocaleString() : base[1].val },
+      base[2],
+      { ...base[3], val: liveKpis.newInquiries7d !== undefined ? liveKpis.newInquiries7d.toLocaleString() : base[3].val },
+      base[4],
+      { ...base[5], val: liveKpis.conversionRate ? `${liveKpis.conversionRate.toFixed(1)}%` : base[5].val },
+      { ...base[6], val: liveKpis.pendingApprovals !== undefined ? liveKpis.pendingApprovals.toString() : base[6].val },
+      base[7],
+    ];
+  }, [T, liveKpis]);
+
   const chips = ar?['لخّص الصفقات الجارية','ما أولويات اليوم؟','اكتب رسالة متابعة','الصفقات المعرّضة للخطر']:['Summarize my pipeline','What should I focus on today?','Draft a follow-up (AR/EN)','Find deals at risk'];
   return (
     <div className="fade-up">
@@ -271,7 +294,7 @@ function OverviewPage({ T }) {
         <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
           <button style={{padding:'10px 20px',border:'none',borderRadius:11,background:'linear-gradient(135deg,var(--gold),var(--gold-lt))',color:'#071422',fontSize:12,fontWeight:800,cursor:'pointer'}}>✦ {ar?'تحدث مع سييرا':'Chat with Sierra'} →</button>
           <button style={{padding:'10px 18px',borderRadius:11,border:'1px solid var(--bd-s)',background:'var(--bg-e)',color:'var(--tx)',fontSize:12,fontWeight:600,cursor:'pointer'}}>⚡ {ar?'تصرّف الآن':'Act Now'}</button>
-          <span style={{alignSelf:'center',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)'}}>● 23 {ar?'عميل جديد اليوم':'new leads today'}</span>
+          <span style={{alignSelf:'center',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)'}}>● {liveKpis?.newInquiries7d ?? 23} {ar?'عميل جديد اليوم':'new leads today'}</span>
         </div>
       </div>
       <div className="kpi-grid">
@@ -622,7 +645,23 @@ function OpenClawPage({ T }) {
 function LeadsPage({ T }) {
   const [q,setQ]=useState('');
   const [importModal,setImportModal]=useState(false);
-  const filtered=useMemo(()=>LEADS_DATA.filter(l=>!q||l.name.toLowerCase().includes(q.toLowerCase())||l.interest.toLowerCase().includes(q.toLowerCase())),[q]);
+  const [leads,setLeads]=useState(LEADS_DATA);
+  const [loading,setLoading]=useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/leads?limit=100')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.leads && data.leads.length > 0) {
+          setLeads(data.leads);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered=useMemo(()=>leads.filter(l=>!q||(l.name && l.name.toLowerCase().includes(q.toLowerCase()))||(l.interest && l.interest.toLowerCase().includes(q.toLowerCase()))),[q, leads]);
   const stageChip=s=>({
     'Viewing Scheduled':'chip-blue','AI Matched':'chip-green','Contract Draft':'chip-green',
     'Initial Contact':'chip-amber','Negotiating':'chip-red',
