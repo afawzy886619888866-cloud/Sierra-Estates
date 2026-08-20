@@ -2,7 +2,7 @@
 
 Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase project: **`sierra-blu`**. Full policy: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
-> **Current status**: the frontend (public site + admin console UI) was intentionally removed to make way for a new design — see `NEXT_STEPS.md`. The backend below is fully intact and deployed: all 82 API routes, Firebase Functions, the Python service, and the WhatsApp/PropertyFinder workers keep running unaffected.
+> **Current status**: the main Next.js application includes the public site, admin console UI, and API routes. The admin sign-in uses Firebase Authentication in the browser and exchanges the resulting Firebase ID token with `/api/auth` to mint the secure `sierra_sess` server session cookie before opening `/admin`.
 
 > **Migration history**: code and history from several legacy repositories were consolidated here under the Sierra Estates brand. See [docs/MIGRATION.md](./docs/MIGRATION.md) for details.
 
@@ -11,8 +11,9 @@ Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase p
 ```
 Sierra-Estates-Final/
 ├── apps/
-│   ├── sierra-estates-realty/  # Main Next.js 16 app — API routes + (soon) frontend
-│   │   ├── app/api/            # REST API endpoints (82 routes) — the only app/ content today
+│   ├── sierra-estates-realty/  # Main Next.js 16 app — public site, admin console, and API routes
+│   │   ├── app/admin/          # Staff login and protected admin console
+│   │   ├── app/api/            # REST API endpoints and server session auth
 │   │   ├── lib/                # Services, models, agents, server-only utilities
 │   │   ├── proxy.ts            # Edge CORS + /api/orchestrate secret gate
 │   │   └── data/                # Seed data consumed by API routes
@@ -49,6 +50,23 @@ cp .env.example apps/sierra-estates-realty/.env.local   # fill in your credentia
 pnpm dev               # Next.js app on :3000
 docker-compose -f docker-compose.n8n.yml up -d  # n8n on :5678
 ```
+
+## Admin Authentication
+
+Open `/admin/login` to sign in with a Firebase Auth email/password account. The browser first authenticates with Firebase, obtains a short-lived ID token, and sends that token to `POST /api/auth`. The server verifies the token, resolves the user role from Firestore, and sets the `httpOnly` `sierra_sess` cookie used by the protected admin routes. Signing in with Firebase alone is not sufficient because the server session cookie must also be created.
+
+For local development without Firebase Admin credentials, an explicit bootstrap account can be enabled with `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`, and `SESSION_SECRET`. The bootstrap password has no repository default and must never be committed. In production, configure Firebase Admin credentials and `SESSION_SECRET`; do not rely on a development fallback.
+
+The minimum authentication-related variables are:
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase browser SDK configuration |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project used by the browser SDK |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT` | Server-side Firebase Admin credentials |
+| `SESSION_SECRET` | Signs and verifies the `sierra_sess` cookie |
+| `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` | Optional local-only fallback account |
 
 ## API Routes
 
@@ -100,7 +118,19 @@ pnpm deploy:functions
 
 ## 📋 Environment Variables
 
-See `.env.example` for the full, canonical list (kept in sync with a CI sweep of `process.env.*`). Copy it to `apps/sierra-estates-realty/.env.local` and fill in real values — never commit that file.
+See `.env.example` for the full, canonical list (kept in sync with a CI sweep of `process.env.*`). Copy it to `apps/sierra-estates-realty/.env.local` and fill in real values — never commit that file. For Vercel, add the same variables to the project’s Production, Preview, and Development environments as appropriate; keep all server-only credentials out of `NEXT_PUBLIC_*` variables.
+
+## Verification
+
+From the repository root, run the following checks before deploying:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter sierra-estates-client-page type-check
+pnpm --filter sierra-estates-client-page build
+```
+
+Then verify the admin flow in a deployed environment: open `/admin/login`, sign in, confirm that `/api/auth` returns `ok: true`, and confirm that the browser reaches `/admin` with the `sierra_sess` cookie present. Never test with real credentials in committed files, screenshots, or issue reports.
 
 ## 🔐 Security
 
