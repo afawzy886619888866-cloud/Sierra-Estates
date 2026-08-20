@@ -1,11 +1,12 @@
 'use client';
 
-/** Port of deploy/index.html. */
+/** Port of deploy/index.html with direct 3D virtual tour and embedded interactive masterplan map. */
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail, Map as MapIcon,
+  Star, Send, CheckCircle, Plus, Phone, Mail, Map as MapIcon, Compass
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -15,6 +16,16 @@ import VirtualTourBanner from '@/components/site/VirtualTourBanner';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import type { MapCompound } from '@/components/site/CompoundsMap';
+
+const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
+      Loading interactive map…
+    </div>
+  ),
+});
 
 const COMPOUND_PICKS = ['Hyde Park New Cairo', 'Mivida', 'Mountain View iCity', 'Eastown (SODIC)'];
 
@@ -40,10 +51,14 @@ const TICKER_AR = [
 export default function HomePage() {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
+  const allCompounds = HZDATA.compounds as MapCompound[];
+  const featuredCompounds = HZDATA.featured as string[];
 
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
+  const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
+  const [mapZone, setMapZone] = useState('all');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -53,6 +68,21 @@ export default function HomePage() {
     const items = isAr ? TICKER_AR : TICKER_EN;
     return items.concat(items);
   }, [isAr]);
+
+  const mapZones = useMemo(
+    () => ['all', ...Array.from(new Set(allCompounds.map((c) => c.z)))],
+    [allCompounds]
+  );
+
+  const filteredMapCompounds = useMemo(() => {
+    if (mapZone === 'all') return allCompounds;
+    return allCompounds.filter((c) => c.z === mapZone);
+  }, [allCompounds, mapZone]);
+
+  const selectedDetails = useMemo(() => {
+    if (!selectedMapCompound) return null;
+    return allCompounds.find((c) => c.n === selectedMapCompound) || null;
+  }, [allCompounds, selectedMapCompound]);
 
   const searchHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -168,6 +198,140 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* INTERACTIVE MASTERPLAN MAP SECTION */}
+      <section className="block well" id="interactive-map">
+        <div className="wrap">
+          <div className="sec-head rv">
+            <div>
+              <div className="eyebrow">{isAr ? 'الخريطة التفاعلية' : 'Interactive Map'}</div>
+              <h2>{isAr ? 'خريطة كمبوندات القاهرة الجديدة' : 'New Cairo Masterplan & Compound Map'}</h2>
+              <p>{isAr ? 'استكشف مواقع أفضل الكمبوندات، الأسعار اللحظية، ومعدلات النمو السنوي على الخريطة مباشرة.' : 'Explore prime compound locations, real-time average pricing, and investment yields directly on the interactive map.'}</p>
+            </div>
+            <Link href="/compounds" className="sec-link">
+              <span>{t('allCpds')}</span> <ArrowRight className="i" />
+            </Link>
+          </div>
+
+          {/* Map Zone Selector Chips */}
+          <div className="zone-chips" style={{ marginBottom: 16 }}>
+            {mapZones.map((z) => (
+              <button
+                key={z}
+                type="button"
+                className={`af-chip${mapZone === z ? ' on' : ''}`}
+                onClick={() => setMapZone(z)}
+              >
+                {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
+              </button>
+            ))}
+          </div>
+
+          {/* Map + Side Live Intel Card */}
+          <div className="map-shell rv" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
+            <div id="cpd-map" style={{ height: 500, minHeight: 450 }}>
+              <CompoundsMap
+                compounds={filteredMapCompounds}
+                featured={featuredCompounds}
+                selectedName={selectedMapCompound}
+                onSelect={setSelectedMapCompound}
+              />
+            </div>
+
+            <div className="intel" style={{
+              background: 'var(--surface, #0b1929)',
+              border: '1px solid var(--line, rgba(233, 193, 118, 0.18))',
+              borderRadius: 16,
+              padding: 22,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}>
+              {selectedDetails ? (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <span style={{
+                      fontFamily: 'var(--mono)',
+                      fontSize: 11,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.15em',
+                      color: 'var(--pri, #e9c176)',
+                    }}>
+                      {selectedDetails.z}
+                    </span>
+                    <span style={{
+                      background: 'linear-gradient(135deg, #f5c96e, #d4af37)',
+                      color: '#071523',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                    }}>
+                      AI {selectedDetails.ai.toFixed(1)}
+                    </span>
+                  </div>
+
+                  <h3 style={{ fontFamily: 'var(--display)', fontSize: 24, margin: '0 0 8px', color: 'var(--ink, #fff)' }}>
+                    {selectedDetails.n}
+                  </h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '16px 0' }}>
+                    <div style={{
+                      background: 'var(--surface-2, #0f2236)',
+                      padding: '12px',
+                      borderRadius: 10,
+                      border: '1px solid var(--line, rgba(255,255,255,0.08))',
+                    }}>
+                      <span style={{ fontSize: 11, color: 'var(--muted, #94a3b8)', display: 'block' }}>
+                        {isAr ? 'متوسط السعر' : 'Average Price'}
+                      </span>
+                      <strong style={{ fontSize: 16, color: '#e9c176' }}>
+                        EGP {selectedDetails.priceM}M
+                      </strong>
+                    </div>
+
+                    <div style={{
+                      background: 'var(--surface-2, #0f2236)',
+                      padding: '12px',
+                      borderRadius: 10,
+                      border: '1px solid var(--line, rgba(255,255,255,0.08))',
+                    }}>
+                      <span style={{ fontSize: 11, color: 'var(--muted, #94a3b8)', display: 'block' }}>
+                        {isAr ? 'معدل النمو' : 'Annual Growth'}
+                      </span>
+                      <strong style={{ fontSize: 16, color: '#10b981' }}>
+                        {selectedDetails.g}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: 13, color: 'var(--muted, #94a3b8)', lineHeight: 1.6 }}>
+                    {isAr
+                      ? 'موقع متميز بالقاهرة الجديدة مع وحدات سكنية واستثمارية معتمدة وتقييم استثماري فوري.'
+                      : 'Prime location in New Cairo featuring verified luxury inventory, clubhouse amenities, and high ROI yield.'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', margin: 'auto' }}>
+                  <Compass style={{ width: 36, height: 36, color: 'var(--pri, #e9c176)', margin: '0 auto 12px' }} />
+                  <p style={{ color: 'var(--muted, #94a3b8)', fontSize: 13 }}>
+                    {isAr ? 'انقر على أي نقطة على الخريطة لعرض تفاصيل الكمبوند' : 'Click any marker on the map to inspect compound intelligence.'}
+                  </p>
+                </div>
+              )}
+
+              <Link
+                href={selectedDetails ? `/properties?compound=${encodeURIComponent(selectedDetails.n)}` : '/compounds'}
+                className="btn btn-pri"
+                style={{ width: '100%', marginTop: 16 }}
+              >
+                <span>{isAr ? 'تصفح الوحدات المتاحة' : 'View Available Units'}</span>
+                <ArrowRight style={{ width: 16, height: 16 }} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FEATURED PROPERTIES */}
       <section className="block" id="properties">
         <div className="wrap">
@@ -216,7 +380,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* COMPOUNDS */}
+      {/* COMPOUNDS GRID */}
       <section className="block well" id="compounds">
         <div className="wrap">
           <div className="sec-head rv">
@@ -247,15 +411,30 @@ export default function HomePage() {
       </section>
 
       {/* PROPERTY SHOWCASE VIDEO */}
-      <section className="block" id="showcase"><div className="wrap"><div className="sec-head rv"><div><div className="eyebrow">{isAr ? 'اختيارات هذا الأسبوع' : 'This week’s edit'}</div><h2>{isAr ? 'شاهد العقارات الأقرب لك' : 'See the homes worth your time'}</h2><p>{isAr ? 'جولة سريعة في أفضل العقارات المنتقاة من شبكة Sierra.' : 'A fast, cinematic pass through the strongest homes in the Sierra network.'}</p></div><Link href="/properties" className="sec-link"><span>{isAr ? 'كل العقارات' : 'Browse all homes'}</span> <ArrowRight className="i" /></Link></div><PropertyShowcaseVideo /></div></section>
+      <section className="block" id="showcase">
+        <div className="wrap">
+          <div className="sec-head rv">
+            <div>
+              <div className="eyebrow">{isAr ? 'اختيارات هذا الأسبوع' : 'This week’s edit'}</div>
+              <h2>{isAr ? 'شاهد العقارات الأقرب لك' : 'See the homes worth your time'}</h2>
+              <p>{isAr ? 'جولة سريعة في أفضل العقارات المنتقاة من شبكة Sierra.' : 'A fast, cinematic pass through the strongest homes in the Sierra network.'}</p>
+            </div>
+            <Link href="/properties" className="sec-link">
+              <span>{isAr ? 'كل العقارات' : 'Browse all homes'}</span> <ArrowRight className="i" />
+            </Link>
+          </div>
+          <PropertyShowcaseVideo />
+        </div>
+      </section>
 
-      {/* 3D VIRTUAL TOUR */}
+      {/* DIRECT LIVE 3D VIRTUAL TOUR */}
       <section className="block well" id="tour">
         <div className="wrap">
           <div className="sec-head rv">
             <div>
-              <h2>{t('tourTit')}</h2>
-              <p>{t('tourSub')}</p>
+              <div className="eyebrow">{isAr ? 'جولة افتراضية مباشرة' : 'Direct Live Walkthrough'}</div>
+              <h2>{isAr ? 'تجوّل في وحدتك ثلاثية الأبعاد الآن' : 'Walk Through Your Next Home in Full 3D'}</h2>
+              <p>{isAr ? 'تجربة تفاعلية مباشرة بدقة سينمائية 4K للتنقل بين الغرف ومطالعة المخطط والتفاصيل فورا.' : 'Direct interactive 4K cinema experience to navigate room-by-room, inspect floor plans, and view finishes.'}</p>
             </div>
             <Link href="/virtual-tour" className="sec-link">
               <span>{isAr ? 'افتح الصفحة كاملة' : 'Open full page'}</span> <ArrowRight className="i" />
@@ -377,7 +556,7 @@ export default function HomePage() {
                 <Send className="i" /> <span>{t('inqSend')}</span>
               </button>
               {sent && (
-                <div id="inq-success" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#1e8b7a' }}>
+                <div id="inq-success" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#10b981' }}>
                   <CheckCircle style={{ width: 18, height: 18 }} />
                   <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
                 </div>

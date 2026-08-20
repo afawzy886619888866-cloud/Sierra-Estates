@@ -1,34 +1,30 @@
 'use client';
 
 /**
- * 3D tour banner — the real listing3d.com walkthrough.
- * The poster is the visible default; the iframe only mounts once the visitor
- * asks for it, so the embed stays off the initial critical path.
+ * Direct Live 3D Virtual Tour Viewer.
+ * Embeds the real listing3d.com walkthrough directly with interactive controls.
  */
 import React, { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
-  Play, Video, DoorOpen, Glasses, Grid2x2, Loader2, ExternalLink, Maximize2,
+  Video, DoorOpen, Glasses, Grid2x2, Loader2, ExternalLink, Maximize2, RotateCcw
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
 export const TOUR_SRC = 'https://listing3d.com/embed/r39d0bd4dde0a4fe693c7fe5fd230a896';
 
-const POSTER =
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80';
-
 export default function VirtualTourBanner() {
   const { isAr } = useSite();
   const reduce = useReducedMotion();
-  const [active, setActive] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [key, setKey] = useState(0);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   const pills = [
-    { icon: Video, en: '4K HDR', ar: 'دقة 4K' },
-    { icon: DoorOpen, en: 'Room-by-room', ar: 'غرفة بغرفة' },
-    { icon: Glasses, en: 'VR-ready', ar: 'جاهز للنظارات' },
-    { icon: Grid2x2, en: 'Floor plan', ar: 'مخطط الوحدة' },
+    { icon: Video, en: '4K HDR Cinema', ar: 'دقة 4K سينمائية' },
+    { icon: DoorOpen, en: 'Room-by-Room Walk', ar: 'تنقل كامل بين الغرف' },
+    { icon: Glasses, en: 'VR Compatible', ar: 'متوافق مع نظارات VR' },
+    { icon: Grid2x2, en: 'Interactive Floor Plan', ar: 'مخطط تفاعلي' },
   ];
 
   function goFullscreen() {
@@ -38,94 +34,171 @@ export default function VirtualTourBanner() {
     else el.requestFullscreen?.();
   }
 
+  function reloadTour() {
+    setLoaded(false);
+    setKey((k) => k + 1);
+  }
+
   return (
-    <>
-      <motion.div
-        ref={bannerRef}
-        className="vt-banner"
-        initial={reduce ? false : { opacity: 0, y: 24 }}
-        whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.25 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {!active ? (
+    <div style={{ width: '100%' }}>
+      {/* Feature pill bar */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginBottom: 16,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {pills.map((p) => (
+            <span
+              key={p.en}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 600,
+                background: 'rgba(233, 193, 118, 0.08)',
+                border: '1px solid rgba(233, 193, 118, 0.25)',
+                color: '#E9C176',
+              }}
+            >
+              <p.icon style={{ width: 14, height: 14 }} />
+              <span>{isAr ? p.ar : p.en}</span>
+            </span>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="button"
-            className="vt-poster"
-            onClick={() => setActive(true)}
-            aria-label={isAr ? 'تشغيل الجولة ثلاثية الأبعاد' : 'Launch the 3D virtual tour'}
+            onClick={reloadTour}
+            title={isAr ? 'إعادة تحميل' : 'Reset view'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              background: 'var(--surface-2, rgba(255,255,255,0.06))',
+              border: '1px solid var(--line, rgba(255,255,255,0.15))',
+              color: 'var(--ink, #fff)',
+              cursor: 'pointer',
+            }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={POSTER} alt="" />
-            <span className="vt-scrim" />
-
-            <span className="vt-copy">
-              <span className="vt-live">{isAr ? 'مباشر · سييرا 3D' : 'Live · Sierra 3D'}</span>
-              <h3>
-                {isAr ? (
-                  <>تجوّل في منزلك القادم <em>قبل أن تزوره</em></>
-                ) : (
-                  <>Walk through your next home <em>before you visit</em></>
-                )}
-              </h3>
-              <p>
-                {isAr
-                  ? 'كل وحدة عند سييرا مصوّرة بدقة سينمائية. تنقّل بين الغرف، أطل على الحديقة، وقيّم المساحة من شاشتك في ثوانٍ.'
-                  : 'Every Sierra listing is captured in cinematic 4K. Move room to room, look out over the garden, and judge the space from your screen in seconds.'}
-              </p>
-              <span className="vt-pills">
-                {pills.map((p) => (
-                  <span key={p.en}><p.icon /> {isAr ? p.ar : p.en}</span>
-                ))}
-              </span>
-            </span>
-
-            <span className="vt-play">
-              <span className="disc"><Play fill="currentColor" /></span>
-              <span className="label">{isAr ? 'ابدأ الجولة' : 'Launch tour'}</span>
-            </span>
+            <RotateCcw style={{ width: 13, height: 13 }} />
+            <span>{isAr ? 'إعادة ضبط' : 'Reset'}</span>
           </button>
-        ) : (
-          <>
-            {!loaded && (
-              <div className="vt-loading">
-                <Loader2 />
-                <span>{isAr ? 'جارٍ تحميل الجولة…' : 'Loading immersive 3D tour…'}</span>
-              </div>
-            )}
-            <iframe
-              className={`vt-frame${loaded ? ' on' : ''}`}
-              title={isAr ? 'جولة ثلاثية الأبعاد' : '3D Virtual Tour'}
-              src={TOUR_SRC}
-              allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking"
-              allowFullScreen
-              onLoad={() => setLoaded(true)}
-            />
-            {loaded && (
-              <button
-                type="button"
-                onClick={goFullscreen}
-                aria-label={isAr ? 'ملء الشاشة' : 'Enter fullscreen'}
-                style={{
-                  position: 'absolute', insetInlineEnd: 14, top: 14, zIndex: 3,
-                  display: 'grid', placeItems: 'center', width: 38, height: 38,
-                  borderRadius: 10, border: '1px solid rgba(255,255,255,.24)',
-                  background: 'rgba(10,22,34,.72)', color: '#fff', cursor: 'pointer',
-                }}
-              >
-                <Maximize2 style={{ width: 16, height: 16 }} />
-              </button>
-            )}
-          </>
+          <a
+            href={TOUR_SRC}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #e9c176, #c8961a)',
+              color: '#071523',
+              boxShadow: '0 4px 14px rgba(200, 150, 26, 0.25)',
+            }}
+          >
+            <ExternalLink style={{ width: 13, height: 13 }} />
+            <span>{isAr ? 'افتح بملء الشاشة' : 'Open in New Tab'}</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Main Direct Interactive 3D Frame */}
+      <motion.div
+        ref={bannerRef}
+        initial={reduce ? false : { opacity: 0, y: 16 }}
+        whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '620px',
+          minHeight: '480px',
+          borderRadius: 18,
+          overflow: 'hidden',
+          border: '1px solid rgba(233, 193, 118, 0.2)',
+          boxShadow: '0 12px 48px rgba(0,0,0,0.4)',
+          background: '#071523',
+        }}
+      >
+        {!loaded && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            background: 'linear-gradient(180deg, #0a1b2d 0%, #06111d 100%)',
+            color: '#E9C176',
+            zIndex: 2,
+          }}>
+            <Loader2 style={{ width: 36, height: 36, animation: 'spin 1s linear infinite' }} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#CBD5E1' }}>
+              {isAr ? 'جارٍ تحميل الجولة ثلاثية الأبعاد…' : 'Loading direct 3D virtual tour…'}
+            </span>
+          </div>
+        )}
+
+        <iframe
+          key={key}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 0,
+            display: 'block',
+          }}
+          title={isAr ? 'جولة ثلاثية الأبعاد' : '3D Virtual Tour'}
+          src={TOUR_SRC}
+          allow="fullscreen; accelerometer; gyroscope; magnetometer; vr; xr-spatial-tracking"
+          allowFullScreen
+          onLoad={() => setLoaded(true)}
+        />
+
+        {loaded && (
+          <button
+            type="button"
+            onClick={goFullscreen}
+            aria-label={isAr ? 'ملء الشاشة' : 'Enter fullscreen'}
+            style={{
+              position: 'absolute',
+              insetInlineEnd: 16,
+              top: 16,
+              zIndex: 10,
+              display: 'grid',
+              placeItems: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.25)',
+              background: 'rgba(7, 21, 35, 0.85)',
+              backdropFilter: 'blur(8px)',
+              color: '#fff',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+            }}
+          >
+            <Maximize2 style={{ width: 18, height: 18 }} />
+          </button>
         )}
       </motion.div>
-
-      <div className="vt-below">
-        <a href={TOUR_SRC} target="_blank" rel="noopener noreferrer">
-          <ExternalLink /> {isAr ? 'افتح الجولة في تبويب جديد' : 'Open tour in a new tab'}
-        </a>
-        <span>{isAr ? 'تصوير سينمائي · بدقة Matterport' : 'Cinematic capture · Matterport-grade fidelity'}</span>
-      </div>
-    </>
+    </div>
   );
 }
