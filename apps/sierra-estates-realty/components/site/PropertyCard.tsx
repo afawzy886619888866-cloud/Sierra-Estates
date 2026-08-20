@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { GsapMagnetic } from './GsapAnimations';
 
 export interface CardListing {
   id: number; code: string; cmp: string; zone: string; type: string;
@@ -35,16 +36,18 @@ export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number 
             {p.mode === 'rent' ? t('modeRent') : t('modeSale')}
           </span>
         </div>
-        <div
-          className={`heart${liked ? ' on' : ''}`}
-          onClick={() => setLiked((v) => !v)}
-          role="button"
-          tabIndex={0}
-          aria-label="Save"
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLiked((v) => !v); }}
-        >
-          <Heart className="i" style={{ width: 18, height: 18 }} />
-        </div>
+        <GsapMagnetic strength={0.3} className="heart-mag">
+          <div
+            className={`heart${liked ? ' on' : ''}`}
+            onClick={() => setLiked((v) => !v)}
+            role="button"
+            tabIndex={0}
+            aria-label="Save"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLiked((v) => !v); }}
+          >
+            <Heart className="i" style={{ width: 18, height: 18 }} />
+          </div>
+        </GsapMagnetic>
         <div className="price-float">{HZDATA.price(p)}</div>
         <div className="ai-score">AI {p.ai.toFixed(1)}</div>
       </div>
