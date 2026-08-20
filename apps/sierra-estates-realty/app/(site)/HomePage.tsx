@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail, Map as MapIcon, Compass
+  Star, Send, CheckCircle, Plus, Phone, Mail, Compass
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
