@@ -41,6 +41,8 @@ export default function HomePage() {
   const listings = HZDATA.listings as CardListing[];
 
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
+  const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
+  const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -50,6 +52,17 @@ export default function HomePage() {
     const items = isAr ? TICKER_AR : TICKER_EN;
     return items.concat(items);
   }, [isAr]);
+
+  const searchHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (searchMode !== 'buy') params.set('mode', searchMode === 'rent' ? 'rent' : 'sale');
+    if (search.compound.trim()) params.set('compound', search.compound.trim());
+    if (search.type) params.set('type', search.type);
+    if (search.beds !== '0') params.set('beds', search.beds);
+    if (search.price !== '0') params.set('price', search.price);
+    const query = params.toString();
+    return query ? `/properties?${query}` : '/properties';
+  }, [search, searchMode]);
 
   const compoundTiles = useMemo(
     () =>
@@ -82,10 +95,19 @@ export default function HomePage() {
       {/* SEARCH CARD */}
       <div className="wrap searchbar">
         <div className="search-card rv">
-          <div className="search-tabs">
-            <button className="active" type="button" data-tab="buy">{t('tabBuy')}</button>
-            <button type="button" data-tab="rent">{t('tabRent')}</button>
-            <button type="button" data-tab="new">{t('tabNew')}</button>
+          <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'}>
+            {(['buy', 'rent', 'new'] as const).map((mode) => (
+              <button
+                key={mode}
+                className={searchMode === mode ? 'active' : undefined}
+                type="button"
+                role="tab"
+                aria-selected={searchMode === mode}
+                onClick={() => setSearchMode(mode)}
+              >
+                {t(mode === 'buy' ? 'tabBuy' : mode === 'rent' ? 'tabRent' : 'tabNew')}
+              </button>
+            ))}
           </div>
           <div className="search-fields">
             <div className="field">
@@ -96,12 +118,14 @@ export default function HomePage() {
                 name="compound"
                 className="hero-search-input"
                 placeholder={t('heroCpdPh')}
+                value={search.compound}
+                onChange={(e) => setSearch({ ...search, compound: e.target.value })}
                 autoComplete="off"
               />
             </div>
             <div className="field">
               <label htmlFor="hero-type">{t('fType')}</label>
-              <select id="hero-type" name="type" className="hero-select" defaultValue="">
+              <select id="hero-type" name="type" className="hero-select" value={search.type} onChange={(e) => setSearch({ ...search, type: e.target.value })}>
                 <option value="">{t('anyType')}</option>
                 <option value="Apartment">{t('tApt')}</option>
                 <option value="Villa">{t('tVilla')}</option>
@@ -113,14 +137,14 @@ export default function HomePage() {
             </div>
             <div className="field">
               <label htmlFor="hero-beds">{t('fBeds')}</label>
-              <select id="hero-beds" name="beds" className="hero-select" defaultValue="0">
+              <select id="hero-beds" name="beds" className="hero-select" value={search.beds} onChange={(e) => setSearch({ ...search, beds: e.target.value })}>
                 <option value="0">{t('reqAny')}</option>
                 {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}+</option>)}
               </select>
             </div>
             <div className="field">
               <label htmlFor="hero-price">{t('fPrice')}</label>
-              <select id="hero-price" name="price" className="hero-select" defaultValue="0">
+              <select id="hero-price" name="price" className="hero-select" value={search.price} onChange={(e) => setSearch({ ...search, price: e.target.value })}>
                 <option value="0">{t('anyPrice')}</option>
                 {[5, 10, 20, 30, 50].map((n) => (
                   <option key={n} value={n}>Up to {n}M EGP</option>
@@ -128,7 +152,7 @@ export default function HomePage() {
               </select>
             </div>
             <div className="field searchbtn">
-              <Link href="/properties" className="btn btn-pri" id="hero-search-btn">
+              <Link href={searchHref} className="btn btn-pri" id="hero-search-btn">
                 <Search className="i" /> <span>{t('search')}</span>
               </Link>
             </div>
