@@ -39,7 +39,13 @@ export function Reveal({
   const reduce = useReducedMotion();
   const MotionTag = motion[as] as typeof motion.div;
 
-  if (reduce) return <div className={className}>{children}</div>;
+  // Render the same element either way — falling back to a plain <div> would
+  // silently change the tag (and any CSS or semantics riding on it) for
+  // reduced-motion users.
+  if (reduce) {
+    const Tag = as;
+    return <Tag className={className}>{children}</Tag>;
+  }
 
   return (
     <MotionTag
@@ -62,6 +68,7 @@ export function RevealGroup({
 }: {
   children: React.ReactNode;
   className?: string;
+  /** Kept at or below 0.1s — longer and a list reads as sluggish rather than staggered. */
   stagger?: number;
 }) {
   const reduce = useReducedMotion();
@@ -69,7 +76,7 @@ export function RevealGroup({
 
   const parent: Variants = {
     hidden: {},
-    show: { transition: { staggerChildren: stagger } },
+    show: { transition: { staggerChildren: Math.min(stagger, 0.1) } },
   };
 
   return (
