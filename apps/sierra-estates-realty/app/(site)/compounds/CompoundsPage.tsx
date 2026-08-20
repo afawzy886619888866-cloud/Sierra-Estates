@@ -16,17 +16,8 @@ import type { MapCompound } from '@/components/site/CompoundsMap';
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ssr: false,
   loading: () => (
-    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 420, color: 'var(--muted)', fontSize: 13 }}>
+    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 460, color: 'var(--muted)', fontSize: 13 }}>
       Loading map…
-    </div>
-  ),
-});
-
-const Compound3DViewer = dynamic(() => import('@/components/site/Compound3DViewer'), {
-  ssr: false,
-  loading: () => (
-    <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: 420, color: 'var(--muted)', fontSize: 13 }}>
-      Loading 3D scene…
     </div>
   ),
 });
@@ -46,7 +37,6 @@ export default function CompoundsPage() {
   const [type, setType] = useState('all');
   const [beds, setBeds] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
 
   const zones = useMemo(
     () => ['all', ...Array.from(new Set(all.map((c) => c.z)))],
@@ -149,53 +139,31 @@ export default function CompoundsPage() {
             </span>
           </div>
 
-          {/* Zone chips + View mode toggle */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-            <div className="zone-chips" id="zone-chips">
-              {zones.map((z) => (
-                <button
-                  key={z}
-                  type="button"
-                  className={`af-chip${zone === z ? ' on' : ''}`}
-                  onClick={() => setZone(z)}
-                >
-                  {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ display: 'inline-flex', background: 'var(--surface-2, rgba(255,255,255,0.06))', padding: 4, borderRadius: 10, border: '1px solid var(--line, rgba(255,255,255,0.1))' }}>
+          {/* Zone chips */}
+          <div className="zone-chips" id="zone-chips">
+            {zones.map((z) => (
               <button
+                key={z}
                 type="button"
-                className={`af-chip${viewMode === '2d' ? ' on' : ''}`}
-                onClick={() => setViewMode('2d')}
-                style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600 }}
+                className={`af-chip${zone === z ? ' on' : ''}`}
+                onClick={() => setZone(z)}
               >
-                🗺️ {isAr ? 'خريطة 2D' : '2D Map'}
+                {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
               </button>
-              <button
-                type="button"
-                className={`af-chip${viewMode === '3d' ? ' on' : ''}`}
-                onClick={() => setViewMode('3d')}
-                style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600 }}
-              >
-                🌐 {isAr ? 'مجسم ثلاثي الأبعاد 3D' : '3D Masterplan'}
-              </button>
-            </div>
+            ))}
           </div>
 
           {/* Map + intel panel */}
           <div className="map-shell rv">
             <div id="cpd-map">
-              {viewMode === '3d' ? (
-                <Compound3DViewer compounds={filtered} selectedName={selected ?? undefined} onSelect={setSelected} />
-              ) : (
-                <CompoundsMap compounds={filtered} featured={featured} onSelect={setSelected} />
-              )}
+              <CompoundsMap
+                compounds={filtered}
+                featured={featured}
+                selectedName={selected}
+                onSelect={setSelected}
+              />
             </div>
             <div className="intel" id="intel-panel">
-              {/* mode="wait" so the outgoing compound clears before the next one
-                  arrives — overlapping two unit lists reads as a glitch. */}
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={selected ?? '__hint__'}
@@ -207,50 +175,50 @@ export default function CompoundsPage() {
                     ease: motionTokens.easing.smooth,
                   }}
                 >
-              {!selected ? (
-                <div className="hint" id="intel-hint">
-                  <Compass className="i" />
-                  <p>{t('mapHint')}</p>
-                </div>
-              ) : (
-                <div id="intel-content">
-                  <h3 style={{ fontFamily: 'var(--display)', fontSize: 20, marginBottom: 4 }}>{selected}</h3>
-                  <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
-                    {units.length} {isAr ? 'وحدة متاحة' : 'units available'}
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {units.slice(0, 12).map((u) => (
-                      <div
-                        key={u.code}
-                        style={{
-                          display: 'flex', justifyContent: 'space-between', gap: 10,
-                          padding: '10px 12px', borderRadius: 10,
-                          border: '1px solid var(--line)', background: 'var(--surface-2, var(--bg))',
-                          fontSize: 12.5,
-                        }}
-                      >
-                        <span>
-                          <b style={{ fontFamily: 'var(--mono)' }}>{u.code}</b>
-                          <span style={{ color: 'var(--muted)' }}> · {u.type} · {u.beds}🛏 · {u.area} m²</span>
-                        </span>
-                        <b>{u.mode === 'rent' ? `$${u.usd?.toLocaleString?.() ?? u.usd}/mo` : `EGP ${u.egpM}M`}</b>
-                      </div>
-                    ))}
-                    {!units.length && (
-                      <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>
-                        {isAr ? 'لا توجد وحدات مطابقة للفلاتر.' : 'No units match the current filters.'}
+                  {!selected ? (
+                    <div className="hint" id="intel-hint">
+                      <Compass className="i" />
+                      <p>{t('mapHint')}</p>
+                    </div>
+                  ) : (
+                    <div id="intel-content">
+                      <h3 style={{ fontFamily: 'var(--display)', fontSize: 20, marginBottom: 4 }}>{selected}</h3>
+                      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
+                        {units.length} {isAr ? 'وحدة متاحة' : 'units available'}
                       </p>
-                    )}
-                  </div>
-                </div>
-              )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {units.slice(0, 12).map((u) => (
+                          <div
+                            key={u.code}
+                            style={{
+                              display: 'flex', justifyContent: 'space-between', gap: 10,
+                              padding: '10px 12px', borderRadius: 10,
+                              border: '1px solid var(--line)', background: 'var(--surface-2, var(--bg))',
+                              fontSize: 12.5,
+                            }}
+                          >
+                            <span>
+                              <b style={{ fontFamily: 'var(--mono)' }}>{u.code}</b>
+                              <span style={{ color: 'var(--muted)' }}> · {u.type} · {u.beds}🛏 · {u.area} m²</span>
+                            </span>
+                            <b>{u.mode === 'rent' ? `$${u.usd?.toLocaleString?.() ?? u.usd}/mo` : `EGP ${u.egpM}M`}</b>
+                          </div>
+                        ))}
+                        {!units.length && (
+                          <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>
+                            {isAr ? 'لا توجد وحدات مطابقة للفلاتر.' : 'No units match the current filters.'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
 
           {/* Compound cards */}
-          <Reveal className="sec-head" >
+          <Reveal className="sec-head">
             <div>
               <h2>{t('cpdTit')}</h2>
               <p>{t('cpdSub')}</p>
@@ -262,7 +230,7 @@ export default function CompoundsPage() {
               <button
                 key={c.n}
                 type="button"
-                className={`comp rv d${(i % 4) + 1}`}
+                className={`comp rv d${(i % 4) + 1} ${selected === c.n ? 'is-active' : ''}`}
                 onClick={() => setSelected(c.n)}
                 style={{ border: 0, padding: 0, cursor: 'pointer', textAlign: 'start' }}
               >

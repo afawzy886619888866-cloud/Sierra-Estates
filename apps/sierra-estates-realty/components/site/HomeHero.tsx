@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { BadgeCheck, Map, ShieldCheck } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
-import { GsapMagnetic } from './GsapAnimations';
-import Hero3D from './Hero3D';
 
 interface Slide { pre: string; preAr: string; main: string; mainAr: string; img: string }
 
@@ -74,9 +72,6 @@ export default function HomeHero() {
           </div>
         ))}
       </div>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', opacity: 0.85 }}>
-        <Hero3D />
-      </div>
       <div className="scrim" />
       <div className="grain" aria-hidden="true" />
 
@@ -97,12 +92,10 @@ export default function HomeHero() {
         </div>
       </div>
 
-      <GsapMagnetic className="map-cta-wrap">
-        <Link className="map-cta" href="/compounds" title="Explore New Cairo compounds on map">
-          <span className="mc-ic"><Map className="i" /></span>
-          <span>{t('exploreMapBtn')}</span>
-        </Link>
-      </GsapMagnetic>
+      <Link className="map-cta" href="/compounds" title="Explore New Cairo compounds on map">
+        <span className="mc-ic"><Map className="i" /></span>
+        <span>{t('exploreMapBtn')}</span>
+      </Link>
 
       <div className="dots wrap" id="hero-dots">
         {slides.map((_, i) => (
