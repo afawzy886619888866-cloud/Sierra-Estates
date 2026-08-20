@@ -10,6 +10,7 @@ import {
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
 import HomeHero from '@/components/site/HomeHero';
+import PropertyShowcaseVideo from '@/components/site/PropertyShowcaseVideo';
 import VirtualTourBanner from '@/components/site/VirtualTourBanner';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
@@ -244,6 +245,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* PROPERTY SHOWCASE VIDEO */}
+      <section className="block" id="showcase"><div className="wrap"><div className="sec-head rv"><div><div className="eyebrow">{isAr ? 'اختيارات هذا الأسبوع' : 'This week’s edit'}</div><h2>{isAr ? 'شاهد العقارات الأقرب لك' : 'See the homes worth your time'}</h2><p>{isAr ? 'جولة سريعة في أفضل العقارات المنتقاة من شبكة Sierra.' : 'A fast, cinematic pass through the strongest homes in the Sierra network.'}</p></div><Link href="/properties" className="sec-link"><span>{isAr ? 'كل العقارات' : 'Browse all homes'}</span> <ArrowRight className="i" /></Link></div><PropertyShowcaseVideo /></div></section>
 
       {/* 3D VIRTUAL TOUR */}
       <section className="block well" id="tour">
