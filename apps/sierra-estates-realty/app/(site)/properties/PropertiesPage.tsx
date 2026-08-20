@@ -1,7 +1,7 @@
 'use client';
 
 /** Port of deploy/properties.html. */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Building } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
@@ -42,6 +42,14 @@ export default function PropertiesPage() {
   const [sortBy, setSortBy] = useState<SortBy>('ai');
 
   const listings = HZDATA.listings as CardListing[];
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const type = params.get('type');
+    if (mode === 'sale' || mode === 'rent') setFMode(mode);
+    if (type === 'Villa' || type === 'Apartment' || type === 'Town' || type === 'Pent') setFType(type);
+  }, []);
 
   const sorted = useMemo(() => {
     const filtered = listings.filter(
