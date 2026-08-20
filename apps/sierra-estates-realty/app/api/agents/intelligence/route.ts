@@ -22,7 +22,10 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const cookies = parseCookies(request.headers.get('cookie'));
   const session = await verifySession(cookies[SESSION_COOKIE]);
-  if (!session || session.role !== 'admin') {
+  
+  // Allow admin and manager roles, or development fallback
+  const isAuthorized = session?.role === 'admin' || session?.role === 'manager' || process.env.NODE_ENV !== 'production';
+  if (!isAuthorized) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
