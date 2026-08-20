@@ -26,6 +26,7 @@
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts"
     },
     "devDependencies": {
+        "@anthropic-ai/sdk": "^0.120.0",
         "@openai/codex-security": "^0.1.4",
         "hint": "^7.1.13",
         "turbo": "^2.3.3",
