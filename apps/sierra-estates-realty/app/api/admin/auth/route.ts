@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
     const userDoc = await db.collection('users').doc(uid).get();
     const userRole = userDoc.data()?.role;
 
-    // Only admin and manager can access admin console
-    if (!['admin', 'manager'].includes(userRole)) {
+    // Only admin, manager, and superadmin can access admin console
+    if (!['admin', 'manager', 'superadmin'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     const userDoc = await db.collection('users').doc(uid).get();
     const userRole = userDoc.data()?.role;
 
-    const authorized = ['admin', 'manager'].includes(userRole);
+    const authorized = ['admin', 'manager', 'superadmin'].includes(userRole);
 
     return NextResponse.json({
       authorized,

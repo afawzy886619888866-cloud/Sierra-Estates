@@ -45,7 +45,7 @@ export default function AdminLayout({
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         const role = userDoc.data()?.role;
 
-        if (role === 'admin' || role === 'manager') {
+        if (role === 'admin' || role === 'manager' || role === 'superadmin') {
           setIsAuth(true);
           // Proactive background token refresh every 10 minutes
           if (refreshInterval) clearInterval(refreshInterval);
