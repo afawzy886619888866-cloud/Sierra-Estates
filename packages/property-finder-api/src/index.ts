@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+export * from './connector.js';
+
 const API_BASE = process.env.PROPERTY_FINDER_API_GATEWAY || '';
 const API_KEY = process.env.PROPERTY_FINDER_API_KEY || '';
 const CLIENT_ID = process.env.PROPERTY_FINDER_CLIENT_ID || '';
@@ -7,7 +9,6 @@ const CLIENT_SECRET = process.env.PROPERTY_FINDER_CLIENT_SECRET || '';
 
 /** Simple wrapper with token handling (placeholder) */
 async function getAuthToken() {
-  // In a real implementation you would exchange client_id/secret for a token.
   return API_KEY;
 }
 
