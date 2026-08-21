@@ -1,7 +1,7 @@
 /**
  * Automated Vercel Environment Variables Synchronizer
  * Syncs all GitHub/Local environment variables directly to Sierra Estates Vercel projects:
- * 1. Client Project: sierra-estates-client-page (prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E / prj_zOF7omFCSr3I7e5jJJtVQnJg5o6E)
+ * 1. Client Project: sierra-estates-client-portal (prj_ieVcIcoeTtHndspXMzlE0cwLl89c)
  * 2. Admin Project: sierra-estates-admin-page (prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA / prj_NMqZUADX9A5ba22ylMfls2l7I0zX)
  */
 
@@ -21,7 +21,7 @@ dotenv.config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.loca
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
 
-const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E';
+const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c';
 const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA';
 
 // Master list of environment variables for Client and Admin Vercel projects

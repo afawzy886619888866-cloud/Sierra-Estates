@@ -9,7 +9,7 @@ const REPO = 'sierrablue8866-droid/SE-Vercel-deploy-main';
 
 const VARIABLES = {
   MAINTAINER_EMAIL: 'a.fawzy8866@gmail.com',
-  CLIENT_VERCEL_PROJECT_ID: 'prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E',
+  CLIENT_VERCEL_PROJECT_ID: 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c',
   ADMIN_VERCEL_PROJECT_ID: 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA',
   VERCEL_ORG_ID: 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ',
   FIREBASE_PROJECT_ID: 'sierra-blu',
