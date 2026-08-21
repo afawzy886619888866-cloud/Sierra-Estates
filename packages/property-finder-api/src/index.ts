@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-export * from './connector.js';
+export * from './connector';
 
 const API_BASE = process.env.PROPERTY_FINDER_API_GATEWAY || '';
 const API_KEY = process.env.PROPERTY_FINDER_API_KEY || '';

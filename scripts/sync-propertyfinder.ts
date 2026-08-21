@@ -1,4 +1,4 @@
-import { propertyFinderConnector } from '../packages/property-finder-api/src/index.js';
+import { propertyFinderConnector } from '../packages/property-finder-api/src/connector';
 import pino from 'pino';
 
 const logger = pino({ name: 'sync-propertyfinder-script' });
@@ -18,7 +18,7 @@ async function main() {
     });
 
     console.log(`\n[✓] PropertyFinder sync completed in ${Date.now() - start}ms.`);
-    console.log(`[✓] Synced ${result.totalSynced} luxury listings into catalog.`);
+    console.log(`[✓] Synced ${result.totalSynced} luxury listings into catalog.\n`);
   } catch (error) {
     logger.error({ err: error, msg: 'PropertyFinder catalog sync failed' });
     process.exit(1);
