@@ -15,7 +15,7 @@ Sierra Estates enforces strict Role-Based Access Control across all client porta
 | **`manager`** | 60 | Sales & Operations Managers | Catalog write/edit access, lead routing approvals, high-value deal review, and broker assignment. |
 | **`agent`** | 40 | Licensed Brokers & Sales Agents | Assigned lead interaction, viewing scheduling, property note creation, and contract drafting requests. |
 | **`auditor`** | 20 | Compliance & Legal Officers | Read-only access to transaction logs, AVM valuation models, KYC records, and security audit collections. |
-| **`service_account`**| 10 | Automated Agents & Cron Bots | Machine-to-machine operations (OpenClaw, VertexOmni, WhatsApp Bot, PropertyFinder sync) using scoped API tokens. |
+| **`service_account`** | 10 | Automated Agents & Cron Bots | Machine-to-machine operations (OpenClaw, VertexOmni, WhatsApp Bot, PropertyFinder sync) using scoped API tokens. |
 
 ---
 

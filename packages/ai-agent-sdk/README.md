@@ -3,6 +3,7 @@
 Unified TypeScript SDK for interacting with Sierra Estates agents, memory engines, and Pub/Sub pipelines.
 
 ## Features
+
 - Standard `BaseAgent` class with built-in telemetry, timeouts, and error handling.
 - `MemoryClient` for querying and writing episodic/semantic project memory.
 - `SierraAgentClient` for orchestrating ad-hoc tasks and receiving structured responses.
