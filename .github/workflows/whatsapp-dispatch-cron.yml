@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Trigger dispatch endpoint
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_SECRET: ${{ secrets['CRON_SECRET'] }}
         run: |
           code=$(curl -s -o /tmp/body -w '%{http_code}' \
             -H "Authorization: Bearer $CRON_SECRET" \
