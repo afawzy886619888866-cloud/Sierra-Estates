@@ -1,4 +1,4 @@
-import { obsidian } from '@sierra-estates/obsidian';
+import { obsidian } from '../packages/obsidian/src/index.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'write-memory-script' });
