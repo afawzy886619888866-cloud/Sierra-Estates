@@ -1,4 +1,4 @@
-import { propertyFinderConnector } from '@sierra-estates/property-finder-api';
+import { propertyFinderConnector } from '../packages/property-finder-api/src/index.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'sync-propertyfinder-script' });
