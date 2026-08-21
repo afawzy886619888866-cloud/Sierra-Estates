@@ -567,7 +567,7 @@ export default function SettingsPage({ T, isAr = false, currentUser }: SettingsP
                   </tr>
                   <tr className="bg-slate-950/40">
                     <td className="p-2.5 font-bold text-cyan-400 select-all">CLIENT_VERCEL_PROJECT_ID</td>
-                    <td className="p-2.5 text-slate-200 select-all">prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E</td>
+                    <td className="p-2.5 text-slate-200 select-all">prj_ieVcIcoeTtHndspXMzlE0cwLl89c</td>
                     <td className="p-2.5"><span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">Variable</span></td>
                     <td className="p-2.5 text-slate-400">sierra-estates.net (Client Portal)</td>
                   </tr>

@@ -67,7 +67,7 @@ jobs:
         run: |
           CLIENT_ID_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
           ADMIN_ID_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
-          CLIENT_ID="${CLIENT_ID_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
+          CLIENT_ID="${CLIENT_ID_RAW:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
           ADMIN_ID="${ADMIN_ID_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           for role in CLIENT ADMIN; do
             eval "id=\$${role}_ID"
@@ -126,7 +126,7 @@ jobs:
           ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
           TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
 
-          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E}"
+          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
           ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 

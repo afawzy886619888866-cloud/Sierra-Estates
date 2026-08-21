@@ -6,7 +6,7 @@
 > **Primary Repository:** [`sierrablue8866-droid/SE-Vercel-deploy-main`](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)  
 > **Production URLs:**
 >
-> - Client Portal: `https://sierra-estates.net` (Vercel Project: `prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E`)
+> - Client Portal: `https://sierra-estates.net` (Vercel Project: `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` — `sierra-estates-client-portal`)
 > - Admin Dashboard: `https://admin.sierra-estates.net` (Vercel Project: `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA`)
 > - Team ID: `team_UvdJ5ezVTaqEKyhqZ5QVqOKJ`
 
@@ -62,7 +62,7 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
 | Variable Name | Value | Purpose |
 | :--- | :--- | :--- |
 | `MAINTAINER_EMAIL` | `a.fawzy8866@gmail.com` | Lead notification & commit attribution |
-| `CLIENT_VERCEL_PROJECT_ID` | `prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E` | Client Vercel project ID (`sierra-estates.net`) |
+| `CLIENT_VERCEL_PROJECT_ID` | `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` | Client Vercel project ID (`sierra-estates.net`) |
 | `ADMIN_VERCEL_PROJECT_ID` | `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` | Admin Vercel project ID (`admin.sierra-estates.net`) |
 | `VERCEL_ORG_ID` | `team_UvdJ5ezVTaqEKyhqZ5QVqOKJ` | Vercel Team Org ID |
 | `FIREBASE_PROJECT_ID` | `sierra-blu` | Canonical Firebase Project ID |
@@ -84,7 +84,7 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
 3. **Branch Sync:**
    - Keep all working branches (`main`, `feature/admin-page`, `feature/agents-and-bots`, `feature/workflow`, `feature/client-page`) in sync without trailing commits.
 4. **Vercel Project Routing:**
-   - `sierra-estates.net` ➔ `prj_GRzmgCUqNwqvjdqtfl84pzBUKD1E` (Next.js client)
+   - `sierra-estates.net` ➔ `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` (Next.js client)
    - `admin.sierra-estates.net` ➔ `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` (Vite Admin Dashboard)
 
 ---
