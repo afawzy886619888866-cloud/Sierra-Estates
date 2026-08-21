@@ -75,6 +75,14 @@ Only needed if you want the automated data sync workflows to run.
 
 ---
 
+## 🧠 REQUIRED FOR DEEPSEEK HARNESS EVALUATION
+
+| Secret Name | Description |
+| :--- | :--- |
+| `DEEPSEEK_API_KEY` | DeepSeek API key for running automated reasoning & AVM harness evaluations in CI (`harness-eval.yml`) |
+
+---
+
 ## How to add secrets
 
 1. Go to your repo on GitHub
