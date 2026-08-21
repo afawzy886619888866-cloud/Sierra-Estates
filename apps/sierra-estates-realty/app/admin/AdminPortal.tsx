@@ -12,6 +12,19 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import './admin-portal.css';
 import AgentIntelligence from './intelligence/AgentIntelligence';
+import {
+  DashboardView,
+  HealthView,
+  SecurityView,
+  MonitoringView,
+  RecommendationsView,
+  AlertsView,
+  ListingsView,
+  AgentsView,
+  RoleManagerView,
+  DeepInsightsView,
+  ReportsView,
+} from './views';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -132,6 +145,10 @@ const COMPOUNDS_DATA = {
 
 const NAV_ITEMS = (T) => [
   {id:'overview',label:T('overview'),icon:'🏠',section:T('main')},
+  {id:'health',label:T('lang')==='ar'?'صحة النظام':'System Health',icon:'🩺',section:T('main'),badge:'OK',badgeCls:'nb-green'},
+  {id:'monitoring',label:T('lang')==='ar'?'المراقبة المباشرة':'Live Monitoring',icon:'📡',section:T('main'),badge:'LIVE',badgeCls:'nb-blue'},
+  {id:'recommendations',label:T('lang')==='ar'?'التوصيات الذكية':'Recommendations',icon:'✨',section:T('main'),badge:'AI',badgeCls:'nb-green'},
+  {id:'alerts',label:T('lang')==='ar'?'التنبيهات':'Alerts',icon:'🔔',section:T('main'),badge:'2',badgeCls:'nb-red'},
   {id:'agents',label:T('agents'),icon:'🤖',section:T('main'),badge:'6',badgeCls:'nb-green'},
   {id:'workflows',label:T('workflows'),icon:'⚡',section:T('main'),badge:'8',badgeCls:'nb-blue'},
   {id:'automations',label:T('lang')==='ar'?'الأتمتة':'Automations',icon:'🪄',section:T('main'),badge:'3',badgeCls:'nb-green'},
@@ -144,6 +161,9 @@ const NAV_ITEMS = (T) => [
   {id:'curator',label:T('curator'),icon:'🎨',section:T('operations')},
   {id:'scribe',label:T('scribe'),icon:'✍️',section:T('operations')},
   {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
+  {id:'roles',label:T('lang')==='ar'?'الصلاحيات':'Role Manager',icon:'🛡️',section:T('system')},
+  {id:'security',label:T('lang')==='ar'?'الأمان والتدقيق':'Security & Audit',icon:'🔒',section:T('system')},
+  {id:'deep_insights',label:T('lang')==='ar'?'الرؤى العميقة':'Deep Insights',icon:'📈',section:T('analytics')},
   {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
   {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
   {id:'settings',label:T('settings'),icon:'🔧',section:T('system')},
@@ -1535,6 +1555,10 @@ function AdminApp() {
   const renderPage=()=>{
     switch(tab){
       case 'overview':return <OverviewPage T={T}/>;
+      case 'health':return <HealthView lang={langKey}/>;
+      case 'monitoring':return <MonitoringView lang={langKey}/>;
+      case 'recommendations':return <RecommendationsView lang={langKey}/>;
+      case 'alerts':return <AlertsView lang={langKey}/>;
       case 'agents':return <AgentsPage T={T}/>;
       case 'workflows':return <WorkflowsPage T={T}/>;
       case 'openclaw':return <OpenClawPage T={T}/>;
@@ -1547,6 +1571,9 @@ function AdminApp() {
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
+      case 'roles':return <RoleManagerView lang={langKey}/>;
+      case 'security':return <SecurityView lang={langKey}/>;
+      case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsPage T={T}/>;
       case 'intelligence':return <AgentIntelligence />;
       case 'settings':return <SettingsPage T={T}/>;
