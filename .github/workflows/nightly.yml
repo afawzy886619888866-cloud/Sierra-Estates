@@ -1,0 +1,47 @@
+name: Nightly Intelligence Fleet Regression
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 2:00 AM UTC every night
+  workflow_dispatch:
+
+jobs:
+  nightly-regression:
+    name: Nightly Multi-Agent & Operational Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Run Threshold Checks
+        run: pnpm run check-thresholds
+
+      - name: Run DeepSeek Harness Benchmarks
+        run: pnpm run run-harness
+
+      - name: Run PropertyFinder Sync Simulation
+        run: pnpm run sync-propertyfinder
+
+      - name: Test Pub/Sub Dispatch
+        run: pnpm run publish-recommendation
+
+      - name: Write Nightly Checkpoint Memory
+        run: pnpm run write-memory
