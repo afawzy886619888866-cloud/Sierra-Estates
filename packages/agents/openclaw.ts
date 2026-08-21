@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import pino from 'pino';
 import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
-import { obsidian } from '@sierra-estates/obsidian';
+import { obsidian, ObsidianMemory } from '@sierra-estates/obsidian';
 import { VertexAgent } from '@sierra-estates/agents-core';
 import { addListing, editInventory, AirtableConfig } from './tools/inventoryTools';
 import { generateInventoryReport } from './tools/reportTools';
@@ -12,6 +12,7 @@ export class OpenClawAgent {
   private airtableConfig: AirtableConfig;
   private ai: GoogleGenAI;
   public readonly vertexAgent: VertexAgent;
+  private memoryStore: ObsidianMemory;
 
   constructor(config: { airtableApiKey: string; airtableBaseId: string; airtableTableName: string; aiApiKey: string }) {
     this.airtableConfig = {
@@ -20,6 +21,7 @@ export class OpenClawAgent {
       tableName: config.airtableTableName,
     };
     this.ai = new GoogleGenAI({ apiKey: config.aiApiKey });
+    this.memoryStore = obsidian || new ObsidianMemory();
     this.vertexAgent = new VertexAgent({
       name: 'openclaw-vertex-agent',
       description: 'OpenClaw Enterprise Vertex AI Agent wired with Gemini multi-modal reasoning and project memory',
@@ -32,7 +34,7 @@ export class OpenClawAgent {
    */
   async getProjectMemory(query: string = ''): Promise<string> {
     try {
-      const memories = await obsidian.search(query, []);
+      const memories = await this.memoryStore.search(query, []);
       if (!memories || memories.length === 0) return '';
 
       const formatted = memories
@@ -52,7 +54,7 @@ export class OpenClawAgent {
    */
   async saveProjectMemory(id: string, value: any, tags: string[] = ['whatsapp-log']): Promise<void> {
     try {
-      await obsidian.set(id, value, tags);
+      await this.memoryStore.set(id, value, tags);
     } catch (err) {
       logger.error({ err, msg: 'Failed to save project memory' });
     }

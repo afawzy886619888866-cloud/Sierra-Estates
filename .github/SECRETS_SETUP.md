@@ -83,6 +83,14 @@ Only needed if you want the automated data sync workflows to run.
 
 ---
 
+## ⏱️ REQUIRED FOR CRON & DISPATCH WORKFLOWS
+
+| Secret Name | Description |
+| :--- | :--- |
+| `CRON_SECRET` | Secret token guarding `/api/cron/*` endpoints, used by `vercel-cron-bridge.yml` and `whatsapp-dispatch-cron.yml` |
+
+---
+
 ## How to add secrets
 
 1. Go to your repo on GitHub
