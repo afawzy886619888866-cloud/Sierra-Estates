@@ -89,6 +89,22 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // --- AI Engine & Multi-Agent Orchestrator (engine_memory, engine_memory_audit, ai_workflow_results, propertyfinder_sync) ---
+    match /engine_memory/{id} {
+      allow read, write: if isStaff();
+    }
+    match /engine_memory_audit/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if false; // Immutable audit log
+    }
+    match /ai_workflow_results/{id} {
+      allow read, write: if isStaff();
+    }
+    match /propertyfinder_sync/{id} {
+      allow read, write: if isStaff();
+    }
+
     // --- Everything else (leads, deals, sales, viewings, vouchers, activities,
     //     intelligence, strategic_pipeline, agents, workflows, syncQueue, … )
     //     — staff only ---
