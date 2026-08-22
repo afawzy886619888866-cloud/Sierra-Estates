@@ -125,7 +125,7 @@ Runs on every Pull Request and push to `main`:
 
 ## 6. Release Flow (Production Path)
 
-```
+```text
 ┌─────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
 │ Feature Branch  │ ────▶ │ Pull Request & Review  │ ────▶ │ CI Gates Pass (Hard)   │
 └─────────────────┘       └────────────────────────┘       └────────────────────────┘
