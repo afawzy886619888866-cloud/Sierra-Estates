@@ -78,21 +78,15 @@ jobs:
         run: |
           ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
           TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
-<<<<<<< HEAD
           
           if [ "${{ matrix.role }}" = "admin" ]; then
             PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
             PROJ="${PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           else
             PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
-            PROJ="${PROJ_RAW:-prj_theA731k4WdFVhgd6DJUP6pAry6n}"
+            PROJ="${PROJ_RAW:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
           fi
           
-=======
-
-          CLIENT_PROJ="${CLIENT_PROJ_RAW:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
-          ADMIN_PROJ="${ADMIN_PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
->>>>>>> 70ae311 (fix(deploy): correct stale client Vercel project ID across config)
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 
           # If VERCEL_TOKEN is unset, gracefully exit 0 with notice (native git integration handles deploys)
