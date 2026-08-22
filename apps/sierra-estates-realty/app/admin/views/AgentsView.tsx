@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 
 interface AgentData {
   id: string;
@@ -29,6 +30,7 @@ interface InsightsSummary {
 
 export default function AgentsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
+  const [agentViewTab, setAgentViewTab] = useState<'telemetry' | 'scheduler'>('telemetry');
   const [agents, setAgents] = useState<AgentData[]>([]);
   const [systemNeeds, setSystemNeeds] = useState<SystemNeed[]>([]);
   const [insights, setInsights] = useState<InsightsSummary | null>(null);
@@ -139,35 +141,61 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span>🤖</span> {isAr ? 'أسطول الوكلاء الأذكياء وحالة التشغيل' : 'Agent Fleet Status & Needs'}
+            <span>🤖</span> {isAr ? 'أسطول الوكلاء والعمليات المجدولة' : 'Agent Fleet & Outreach Operations'}
           </h2>
           <p className="text-sm text-slate-400">
             {isAr
-              ? 'مراقبة فورية لنبضات الوكلاء، تقييم الاحتياجات التشغيلية، ومطابقة الصلاحيات والمفاتيح'
-              : 'Real-time agent heartbeats, missing secrets diagnostics, and direct execution controls.'}
+              ? 'مراقبة فورية لنبضات الوكلاء، تقييم الاحتياجات، وإدارة حملات ورسائل واتساب المجدولة'
+              : 'Real-time agent telemetry, neural fleet diagnostics, and scheduled WhatsApp outreach campaigns.'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={triggerAgentSimulator}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow flex items-center gap-1.5"
-          >
-            <span>⚡</span> {isAr ? 'تشغيل محاكي النبضات' : 'Run Agent Simulator'}
-          </button>
-          <button
-            onClick={fetchAgentTelemetry}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700"
-          >
-            ↻ {isAr ? 'تحديث' : 'Refresh'}
-          </button>
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800">
+            <button
+              onClick={() => setAgentViewTab('telemetry')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                agentViewTab === 'telemetry' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {isAr ? 'مراقبة الأسطول' : 'Fleet Telemetry'}
+            </button>
+            <button
+              onClick={() => setAgentViewTab('scheduler')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                agentViewTab === 'scheduler' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {isAr ? 'جدولة الواتساب' : 'WhatsApp Scheduler'}
+            </button>
+          </div>
+          {agentViewTab === 'telemetry' && (
+            <>
+              <button
+                onClick={triggerAgentSimulator}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow flex items-center gap-1.5"
+              >
+                <span>⚡</span> {isAr ? 'تشغيل المحاكي' : 'Simulator'}
+              </button>
+              <button
+                onClick={fetchAgentTelemetry}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700"
+              >
+                ↻
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {simulatorStatus && (
-        <div className="p-3 rounded-lg bg-emerald-950/70 border border-emerald-800 text-emerald-300 text-xs font-medium flex items-center gap-2">
-          <span>●</span> {simulatorStatus}
-        </div>
-      )}
+      {agentViewTab === 'scheduler' ? (
+        <WhatsAppScheduledSender lang={lang} />
+      ) : (
+        <>
+          {simulatorStatus && (
+            <div className="p-3 rounded-lg bg-emerald-950/70 border border-emerald-800 text-emerald-300 text-xs font-medium flex items-center gap-2">
+              <span>●</span> {simulatorStatus}
+            </div>
+          )}
 
       {/* Fleet Grid */}
       <div>
@@ -358,6 +386,8 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
