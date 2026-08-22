@@ -25,6 +25,8 @@ import {
   DeepInsightsView,
   ReportsView,
 } from './views';
+import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -491,6 +493,11 @@ function AgentsPage({ T }) {
         </div>
       </div>
 
+      {/* Scheduled WhatsApp Campaign Studio */}
+      <div style={{marginBottom:24}}>
+        <WhatsAppScheduledSender />
+      </div>
+
       {loading && <div style={{fontSize:12,color:'var(--tx-m)',marginBottom:16}}>Loading live agent telemetry…</div>}
 
       <div className="agent-grid" style={{marginBottom:20}}>
@@ -849,107 +856,9 @@ function CuratorPage({ T }) {
 
 /* ── SCRIBE PAGE (S1-S2) ──────────────────────────────────────────────── */
 function ScribePage({ T }) {
-  const [raw, setRaw] = useState('');
-  const [parsed, setParsed] = useState(null);
-  const [parsing, setParsing] = useState(false);
-
-  const EXAMPLES = [
-    "شقة 3 غرف ميفيدا · دور 3 · مفروشة · 95م² · 14,500/شهر",
-    "Villa Hyde Park · 5+1 BHK · 450m² · private pool · EGP 35M negotiable",
-    "Penthouse Uptown Cairo · last floor · 320m · 4bed+maid · lake view · EGP 18.5M",
-  ];
-
-  const parseRaw = () => {
-    if (!raw.trim()) return;
-    setParsing(true);
-    setTimeout(() => {
-      const isArabic = /[\u0600-\u06FF]/.test(raw);
-      const areaMatch = raw.match(/(\d+)\s*م²?|(\d+)\s*m²?/i);
-      const priceMatch = raw.match(/EGP\s*([\d,.]+M?)|(\d+[\d,]*)\s*\/شهر|(\d+[\d,]*)\s*\/mo/i);
-      const bedsMatch = raw.match(/(\d+)\s*(?:bed|غرف|BHK)/i);
-      const typeKws = {Villa:['villa','فيلا'],Apartment:['apartment','شقة','apt'],Penthouse:['penthouse'],Duplex:['duplex','دوبلكس'],'Twin House':['twin','توين']};
-      let type = 'Apartment';
-      for(const [t,kws] of Object.entries(typeKws)){if(kws.some(k=>raw.toLowerCase().includes(k))){type=t;break;}}
-      const cpds=['Mivida','Hyde Park','Mountain View iCity','Uptown Cairo','Madinaty','Eastown','Villette'];
-      const cpd = cpds.find(c=>raw.toLowerCase().includes(c.toLowerCase()))||'Unknown';
-      const rent = /شهر|\/mo|\/month|rent/i.test(raw);
-      setParsed([
-        {k:'Compound',v:cpd},
-        {k:'Type',v:type},
-        {k:'Area',v:areaMatch?`${areaMatch[1]||areaMatch[2]}m²`:'—'},
-        {k:'Bedrooms',v:bedsMatch?bedsMatch[1]:'—'},
-        {k:'Price',v:priceMatch?priceMatch[0]:'—'},
-        {k:'Purpose',v:rent?'Rent':'Resale'},
-        {k:'Language',v:isArabic?'Arabic':'English'},
-        {k:'SBR Code',v:`SE-${cpd.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,3)}-${type.slice(0,3).toUpperCase()}-${String(Math.floor(Math.random()*9000)+1000)}-2026`},
-      ]);
-      setParsing(false);
-    }, 900);
-  };
-
   return (
     <div className="fade-up">
-      <div style={{marginBottom:16}}>
-        <h2 style={{fontFamily:'Cormorant Garamond',fontSize:'1.3rem',fontWeight:500,color:'var(--tx)',marginBottom:4}}>{T('scribe_title')}</h2>
-        <p style={{fontSize:12,color:'var(--tx-m)'}}>Paste raw WhatsApp / Property Finder text and the AI parser will extract structured data.</p>
-      </div>
-      <div className="grid-2">
-        <div className="card">
-          <div className="card-hd"><span className="card-title">📥 {T('rawInput')}</span></div>
-          <div style={{padding:'14px 16px',display:'flex',flexDirection:'column',gap:12}}>
-            <textarea className="parse-box" value={raw} onChange={e=>setRaw(e.target.value)} placeholder="Paste raw listing text here…&#10;&#10;E.g.: Villa Hyde Park · 5+1 BHK · 450m² · pool · EGP 35M"/>
-            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-              <button className="btn btn-gold" onClick={parseRaw} disabled={parsing||!raw.trim()} style={{opacity:!raw.trim()?0.5:1}}>
-                {parsing?'Parsing…':'🧠 '+T('parseBtn')}
-              </button>
-              <button className="btn btn-ghost" onClick={()=>{setRaw('');setParsed(null);}}>Clear</button>
-            </div>
-            <div>
-              <div style={{fontSize:9,color:'var(--tx-f)',textTransform:'uppercase',letterSpacing:'.12em',marginBottom:6}}>Quick Examples</div>
-              {EXAMPLES.map((ex,i)=>(
-                <button key={i} onClick={()=>setRaw(ex)} style={{display:'block',width:'100%',textAlign:'start',background:'var(--surf)',border:'1px solid var(--bd)',borderRadius:8,padding:'8px 10px',fontSize:10.5,color:'var(--tx-m)',cursor:'pointer',marginBottom:5,lineHeight:1.5}}>
-                  {ex}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-hd"><span className="card-title">✅ {T('parsedOutput')}</span>{parsed&&<span className="chip chip-green">Parsed</span>}</div>
-          <div style={{padding:'14px 16px'}}>
-            {!parsed&&!parsing&&<div style={{textAlign:'center',padding:'40px 0',color:'var(--tx-f)',fontSize:12}}>Paste raw text → click Parse</div>}
-            {parsing&&<div style={{textAlign:'center',padding:'40px 0'}}>
-              <div style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--gold)'}}>Parsing with AI…</div>
-              <div style={{marginTop:12,display:'flex',gap:4,justifyContent:'center'}}>
-                {[0,1,2].map(i=><span key={i} style={{width:6,height:6,borderRadius:'50%',background:'var(--gold)',display:'block',animation:`pulse ${.4+i*.15}s ease-in-out infinite`}}/>)}
-              </div>
-            </div>}
-            {parsed&&parsed.map((f,i)=>(
-              <div key={i} className="parsed-field">
-                <span className="parsed-key">{f.k}</span>
-                <span className="parsed-val">{f.v}</span>
-                <span style={{marginInlineStart:'auto',color:'var(--emerald)',fontSize:10}}>✓</span>
-              </div>
-            ))}
-            {parsed&&(
-              <div style={{marginTop:14,display:'flex',gap:8}}>
-                <button className="btn btn-gold" style={{flex:1}}>💾 Save to Firestore</button>
-                <button className="btn btn-ghost" onClick={()=>exportCSV([Object.fromEntries(parsed.map(f=>[f.k,f.v]))],'parsed_listing.csv')}>⬇ CSV</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Ingestion Stats */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10,marginTop:20}}>
-        {[['Ingested Today','41','#00AEFF'],['Parsed','38','#34D399'],['Processing','2','#f59e0b'],['Failed','1','#E63946'],['Queue','0','#1E88D9']].map(([l,v,c],i)=>(
-          <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',textAlign:'center'}}>
-            <div style={{fontFamily:'JetBrains Mono',fontSize:18,fontWeight:700,color:c}}>{v}</div>
-            <div style={{fontSize:9,color:'var(--tx-f)',marginTop:4,textTransform:'uppercase',letterSpacing:'.1em'}}>{l}</div>
-          </div>
-        ))}
-      </div>
+      <EasyListingStudio />
     </div>
   );
 }
@@ -1192,11 +1101,12 @@ function ListingsHubPage({T}){
   const [sortCol,setSortCol]=useState('ai');
   const [sortDir,setSortDir]=useState('desc');
   const [statusF,setStatusF]=useState('All');
+  const [showEasyStudio, setShowEasyStudio]=useState(false);
   
   const [liveListings, setLiveListings]=useState(HUB_LISTINGS);
   const [loading, setLoading]=useState(true);
 
-  useEffect(() => {
+  const fetchListings = useCallback(() => {
     fetch('/api/admin/listings')
       .then(res => res.json())
       .then(data => {
@@ -1207,6 +1117,10 @@ function ListingsHubPage({T}){
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchListings();
+  }, [fetchListings]);
 
   const cmps=['All',...new Set(liveListings.map(l=>l.cmp))];
   const filtered=useMemo(()=>{
@@ -1224,6 +1138,15 @@ function ListingsHubPage({T}){
   const SH=({col})=><span style={{cursor:'pointer',marginLeft:4,opacity:sortCol===col?1:.3}} onClick={()=>doSort(col)}>{sortDir==='asc'&&sortCol===col?'▲':'▼'}</span>;
   return(
     <div className="fade-up">
+      {showEasyStudio && (
+        <div style={{marginBottom:24}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{fontSize:16,fontWeight:600,color:'var(--gold)'}}>✦ Easy Listing AI Intake</h3>
+            <button className="btn btn-ghost" onClick={()=>{setShowEasyStudio(false);fetchListings();}}>✕ Close Studio</button>
+          </div>
+          <EasyListingStudio onListingCreated={()=>{fetchListings();setShowEasyStudio(false);}} />
+        </div>
+      )}
       <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
         <input className="f-in" placeholder={T('search')} value={q} onChange={e=>setQ(e.target.value)} style={{maxWidth:220}}/>
         <select className="f-in" value={cmpF} onChange={e=>setCmpF(e.target.value)} style={{maxWidth:180}}>
@@ -1235,7 +1158,9 @@ function ListingsHubPage({T}){
         <span style={{fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)'}}>{filtered.length} / {liveListings.length}</span>
         <div style={{marginLeft:'auto',display:'flex',gap:8}}>
           <button className="btn btn-ghost" onClick={()=>exportCSV(filtered.map(l=>({Code:l.code,Compound:l.cmp,Type:l.type,Beds:l.beds,Area:l.area,Price:l.price,AI:l.ai,Status:l.status})),'listings.csv')}>⬇ {T('exportCSV')}</button>
-          <button className="btn btn-gold">+ Add Listing</button>
+          <button className="btn btn-gold" onClick={()=>setShowEasyStudio(s=>!s)}>
+            {showEasyStudio ? 'Hide Studio' : '✦ Easy Listing AI'}
+          </button>
         </div>
       </div>
       <div className="card"><div style={{overflowX:'auto'}}>
