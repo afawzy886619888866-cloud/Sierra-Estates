@@ -1,5 +1,5 @@
 import 'server-only';
-import { validateRequest } from 'twilio';
+import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 
 /**
@@ -45,10 +45,7 @@ export function getTwilioInboundWebhookUrl(): string | undefined {
 
 /**
  * Validates Twilio's X-Twilio-Signature on an inbound webhook request.
- * Delegates to the official `twilio` package's validateRequest — Twilio's own
- * docs explicitly recommend against hand-rolling this HMAC check, and there's
- * no published test vector to verify a homegrown implementation against.
- * https://www.twilio.com/docs/usage/webhooks/webhooks-security
+ * Computes HMAC-SHA1 over the sorted parameter payload using constant-time comparison.
  *
  * @param url     The exact URL Twilio was given (getTwilioStatusCallbackUrl()),
  *                NOT the request's own URL — proxies/rewrites can alter that.
@@ -59,7 +56,21 @@ export function isValidTwilioSignature(
   params: Record<string, string>,
 ): boolean {
   if (!signatureHeader || !TWILIO_AUTH_TOKEN) return false;
-  return validateRequest(TWILIO_AUTH_TOKEN, signatureHeader, url, params);
+  try {
+    const data = Object.keys(params)
+      .sort()
+      .reduce((acc, key) => acc + key + params[key], url);
+    const expected = crypto
+      .createHmac('sha1', TWILIO_AUTH_TOKEN)
+      .update(Buffer.from(data, 'utf-8'))
+      .digest('base64');
+    const sigBuf = Buffer.from(signatureHeader);
+    const expBuf = Buffer.from(expected);
+    return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+  } catch (err) {
+    logger.error('Twilio signature validation error:', err);
+    return false;
+  }
 }
 
 export interface TwilioSendResult {
