@@ -9,6 +9,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   harness-eval:
@@ -41,3 +44,6 @@ jobs:
         env:
           NODE_ENV: test
           DEEPSEEK_API_KEY: ${{ secrets['DEEPSEEK_API_KEY'] }}
+
+      - name: Check Performance & Accuracy Thresholds (Merge Gate)
+        run: pnpm run check-thresholds
