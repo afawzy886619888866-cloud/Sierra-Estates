@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "paths": {
       "@sierra-estates/exchange": ["../exchange/dist/exchange-client"],
       "@sierra-estates/exchange/*": ["../exchange/dist/*"],
