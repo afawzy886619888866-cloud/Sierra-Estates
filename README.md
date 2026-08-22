@@ -3,7 +3,7 @@
 Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase project: **`sierra-blu`**. Authoritative deployment policy: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 > **Current status**: The platform delivers high-end real estate intelligence and client experiences. The primary web surface is built with Next.js 16 (App Router), deployed across isolated Vercel projects for the public client portal (`sierra-estates.net`) and the staff admin console (`admin.sierra-estates.net`). Authentication uses Firebase Auth with custom server session cookies (`sierra_sess`). Backend workers, scrapers, and Python microservices run on Cloud Run, n8n, and scheduled GitHub Actions.
-
+>
 > **Migration history**: Code and architectural history from legacy repositories were unified under the Sierra Estates monorepo. See [docs/MIGRATION.md](./docs/MIGRATION.md) and [docs/ADMIN_MIGRATION_PLAN.md](./docs/ADMIN_MIGRATION_PLAN.md) for details.
 
 ---
