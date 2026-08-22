@@ -7,7 +7,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon --ignore wa_sessions/ src/index.js",
+    "dev": "node --watch src/index.js",
     "qr": "node src/index.js --qr-only",
     "status": "node src/status.js"
   },
