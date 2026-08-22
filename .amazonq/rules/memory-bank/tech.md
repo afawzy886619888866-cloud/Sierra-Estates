@@ -32,6 +32,7 @@
 
 ### AI & LLM
 
+- **ai** & **@ai-sdk/gateway** — Vercel AI SDK for Easy Listing parsing & generative workflows
 - **@google/generative-ai** ^0.24.1 — Gemini (primary LLM)
 - **Google Vertex AI** — agent reasoning via `packages/agents-core/src/vertex-agent.ts`
 - **OpenTelemetry** (full SDK) — tracing + logs
@@ -48,7 +49,8 @@
 
 ### Integrations
 
-- **Twilio** ^6 — WhatsApp/SMS messaging
+- **Twilio** ^6 — WhatsApp/SMS messaging & multi-sender WABA round-robin
+- **Scheduled WhatsApp Dispatcher** — 12:00 PM – 8:00 PM Africa/Cairo queue worker
 - **googleapis** ^173 — Google Sheets, Drive
 - **Upstash Redis** — rate limiting, queuing
 - **Airtable** — CRM data sync
@@ -56,10 +58,10 @@
 - **ElevenLabs** — voice synthesis (Leila agent)
 - **Pino** ^10 — structured logging
 
-### Admin Dashboard (`apps/admin-dashboard`)
+### Admin Dashboard (`apps/admin-dashboard` & `/admin`)
 
+- **Next.js Admin Console** (`/admin`) — full Intelligence OS portal with Scribe AI studio, WhatsApp scheduler, and live agent telemetry
 - **Vite** — build tool (standalone SPA, not part of Next.js monorepo build)
-- Deployed separately to `admin.sierra-estates.net`
 
 ---
 
@@ -81,7 +83,7 @@
 
 ### TypeScript
 
-- Root: `tsconfig.base.json` (strict mode)
+- Root: `tsconfig.base.json` (strict mode, ^5.8.2)
 - App: `apps/sierra-estates-realty/tsconfig.json`
 - `ignoreBuildErrors: false` in next.config.ts
 
@@ -89,7 +91,7 @@
 
 - **Jest** ^30 — unit/integration tests (`apps/sierra-estates-realty/__tests__/`)
 - **Vitest** ^4 — workspace-level (root `vitest.config.ts`)
-- 22 test files covering: API routes, services, agents, middleware, pipeline
+- **46 test suites (464 tests passing)** covering: API routes, services, easy-listing-parser, whatsapp-scheduler, agents, middleware, pipeline, and security guards
 
 ---
 
