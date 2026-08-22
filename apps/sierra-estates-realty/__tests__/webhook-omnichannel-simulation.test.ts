@@ -25,10 +25,10 @@ describe('Webhook & Omnichannel Intelligence Live Simulation', () => {
       .update(Buffer.from(data, 'utf-8'))
       .digest('base64');
 
-    const isValid = isValidTwilioSignature(authToken, validSignature, url, params);
+    const isValid = isValidTwilioSignature(validSignature, url, params, authToken);
     expect(isValid).toBe(true);
 
-    const isInvalid = isValidTwilioSignature(authToken, 'invalid_sig_abc', url, params);
+    const isInvalid = isValidTwilioSignature('invalid_sig_abc', url, params, authToken);
     expect(isInvalid).toBe(false);
   });
 
