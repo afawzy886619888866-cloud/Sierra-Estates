@@ -2,9 +2,8 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "cmake",
-            "request": "launch",
-            "type": "extensionHost"
+            "type": "extensionHost",
+            "request": "launch"
         },
         
         {
@@ -16,20 +15,6 @@
             "graphicalMode": true,
             "pause": false,
             "refProjects": []
-        },
-        {
-            "name": "Launch Chrome",
-            "request": "launch",
-            "type": "chrome",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}"
-        },
-        {
-            "name": "Attach to Chrome",
-            "port": 9222,
-            "request": "attach",
-            "type": "chrome",
-            "webRoot": "${workspaceFolder}"
         },
         {
             "name": "Launch Chrome",
@@ -78,20 +63,6 @@
             "ssl": false,
             "refProjects": []
         },
-        {
-            "name": "Attach to process",
-            "type": "abl",
-            "request": "attach",
-            "hostname": "Host name or IP address of process to be debugged",
-            "mode": "legacy",
-            "port": 3099,
-            "localRoot": "${workspaceFolder}",
-            "pause": true,
-            "refProjects": []
-        },
-        
-
-
         {
             "name": "Attach to process",
             "type": "abl",
