@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
             reply = data[0].generated_text;
           }
         }
-      } catch (err) {
+      } catch (_err) {
         // Fallback gracefully
       }
     }
