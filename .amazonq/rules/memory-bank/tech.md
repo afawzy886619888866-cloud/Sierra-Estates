@@ -92,7 +92,7 @@
 
 - **Jest** ^30 — unit/integration tests (`apps/sierra-estates-realty/__tests__/`)
 - **Vitest** ^4 — workspace-level (root `vitest.config.ts`)
-- **46 test suites (464 tests passing)** covering: API routes, services, easy-listing-parser, whatsapp-scheduler, agents, middleware, pipeline, and security guards
+- **47 test suites (467 tests passing)** covering: API routes, services, easy-listing-parser, whatsapp-scheduler, webhook-omnichannel-simulation, agents, middleware, pipeline, and security guards
 
 ---
 
