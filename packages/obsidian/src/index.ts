@@ -37,17 +37,11 @@ export class ObsidianMemory {
     }
   }
 
-  /**
-   * Retrieves a memory entry by ID.
-   */
   async get(id: string): Promise<MemoryEntry | null> {
     const store = this.readStore();
     return store[id] || null;
   }
 
-  /**
-   * Sets or updates a memory entry.
-   */
   async set(id: string, value: any, tags: string[] = []): Promise<MemoryEntry> {
     const store = this.readStore();
     const now = new Date().toISOString();
@@ -65,41 +59,25 @@ export class ObsidianMemory {
     return entry;
   }
 
-  /**
-   * Searches memories by query string and/or tags.
-   */
-  async search(queryText: string, tags: string[] = []): Promise<MemoryEntry[]> {
+  async search(query: string): Promise<MemoryEntry[]> {
     const store = this.readStore();
-    let entries = Object.values(store);
-
-    // Filter by tags if provided
-    if (tags.length > 0) {
-      entries = entries.filter((entry) =>
-        tags.every((t) => (entry.tags || []).includes(t))
-      );
-    }
-
-    // Filter by queryText if provided
-    if (queryText.trim()) {
-      const q = queryText.toLowerCase();
-      entries = entries.filter((entry) => {
-        const valStr = typeof entry.value === 'string' 
-          ? entry.value 
-          : JSON.stringify(entry.value);
-        return (
-          entry.id.toLowerCase().includes(q) ||
-          valStr.toLowerCase().includes(q) ||
-          (entry.tags || []).some((t) => t.toLowerCase().includes(q))
-        );
-      });
-    }
-
-    return entries;
+    const q = (query || '').toLowerCase();
+    return Object.values(store).filter(
+      (entry) =>
+        (typeof entry.id === 'string' && entry.id.toLowerCase().includes(q)) ||
+        (entry.value && JSON.stringify(entry.value).toLowerCase().includes(q)) ||
+        (Array.isArray(entry.tags) && entry.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(q)))
+    );
   }
 
-  /**
-   * Deletes a memory entry by ID.
-   */
+  async searchByTag(tag: string): Promise<MemoryEntry[]> {
+    const store = this.readStore();
+    const t = (tag || '').toLowerCase();
+    return Object.values(store).filter((entry) =>
+      Array.isArray(entry.tags) && entry.tags.some((entryTag) => typeof entryTag === 'string' && entryTag.toLowerCase() === t)
+    );
+  }
+
   async delete(id: string): Promise<boolean> {
     const store = this.readStore();
     if (store[id]) {
@@ -110,21 +88,15 @@ export class ObsidianMemory {
     return false;
   }
 
-  /**
-   * Lists all memories in the store.
-   */
   async list(): Promise<MemoryEntry[]> {
     const store = this.readStore();
     return Object.values(store);
   }
 
-  /**
-   * Clears all memories.
-   */
   async clear(): Promise<void> {
     this.writeStore({});
   }
 }
 
-// Export default shared instances and backward-compatible aliases
 export const obsidian = new ObsidianMemory();
+export default obsidian;
