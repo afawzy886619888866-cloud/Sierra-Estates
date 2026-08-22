@@ -4,7 +4,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@sierra-estates/obsidian": ["../obsidian/dist/index", "../obsidian/src/index.ts"],
       "@sierra-estates/exchange": ["../exchange/dist/exchange-client"],
       "@sierra-estates/exchange/*": ["../exchange/dist/*"],
       "@sierra-estates/agents-core": ["./src/index.ts"],
