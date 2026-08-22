@@ -5,4 +5,5 @@ export * from './orchestrator';
 export * from './workflows';
 export * from './property-matcher';
 export * from './installment-calculator';
+export * from './negotiation-engine';
 
