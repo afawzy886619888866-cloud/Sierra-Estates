@@ -14,6 +14,17 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    fetch('/api/auth')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.signedIn && ['admin', 'manager', 'superadmin', 'agent'].includes(data.role)) {
+          router.replace('/admin');
+        }
+      })
+      .catch(() => {});
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -22,8 +33,12 @@ export default function AdminLoginPage() {
       let token: string | undefined;
 
       if (isFirebaseClientConfigured) {
-        const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-        token = await credential.user.getIdToken();
+        try {
+          const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+          token = await credential.user.getIdToken();
+        } catch (fbErr: any) {
+          console.warn('[login] Firebase client sign-in failed, trying server auth:', fbErr?.message);
+        }
       }
 
       const response = await fetch('/api/auth', {
@@ -33,7 +48,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({
           action: 'signin',
           email: email.trim(),
-          password: isFirebaseClientConfigured ? undefined : password,
+          password,
           token,
         }),
       });
@@ -45,8 +60,8 @@ export default function AdminLoginPage() {
 
       router.replace('/admin');
       router.refresh();
-    } catch (_err) {
-      setError('Invalid credentials or unavailable admin session.');
+    } catch (err: any) {
+      setError(err?.message || 'Invalid credentials or unavailable admin session.');
     } finally {
       setLoading(false);
     }

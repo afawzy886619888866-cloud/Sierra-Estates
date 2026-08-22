@@ -21,51 +21,69 @@ export default function AdminLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isFirebaseClientConfigured) {
-      // No Firebase config (local dev without .env.local): keep the guard
-      // closed rather than open.
-      if (!isLoginPage) router.replace('/admin/login');
-      setIsLoading(false);
-      return;
-    }
-
     let refreshInterval: NodeJS.Timeout | null = null;
+    let unsubAuth: (() => void) | null = null;
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
+    const verifyAccess = async () => {
+      // 1. Check server-side session cookie via /api/auth
+      try {
+        const res = await fetch('/api/auth', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.signedIn && ['admin', 'manager', 'superadmin', 'agent'].includes(data.role)) {
+            setIsAuth(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[AdminLayout] Session cookie verification failed:', err);
+      }
+
+      // 2. Check Firebase client auth if configured
+      if (isFirebaseClientConfigured) {
+        unsubAuth = onAuthStateChanged(auth, async (user) => {
+          if (!user) {
+            setIsAuth(false);
+            if (!isLoginPage) router.replace('/admin/login');
+            setIsLoading(false);
+            return;
+          }
+
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const role = userDoc.data()?.role;
+
+            if (role === 'admin' || role === 'manager' || role === 'superadmin' || role === 'agent') {
+              setIsAuth(true);
+              if (refreshInterval) clearInterval(refreshInterval);
+              refreshInterval = setInterval(() => {
+                user.getIdToken(true).catch(() => {});
+              }, 10 * 60 * 1000);
+            } else {
+              setIsAuth(false);
+              router.replace('/admin/login');
+            }
+          } catch (error) {
+            console.error('Error checking admin role:', error);
+            setIsAuth(false);
+            router.replace('/admin/login');
+          } finally {
+            setIsLoading(false);
+          }
+        });
+      } else {
         setIsAuth(false);
-        if (refreshInterval) clearInterval(refreshInterval);
-        // The login page renders without the guard — don't redirect it to itself
         if (!isLoginPage) router.replace('/admin/login');
         setIsLoading(false);
-        return;
       }
+    };
 
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.data()?.role;
-
-        if (role === 'admin' || role === 'manager' || role === 'superadmin') {
-          setIsAuth(true);
-          // Proactive background token refresh every 10 minutes
-          if (refreshInterval) clearInterval(refreshInterval);
-          refreshInterval = setInterval(() => {
-            user.getIdToken(true).catch(() => {});
-          }, 10 * 60 * 1000);
-        } else {
-          router.replace('/admin/login');
-        }
-      } catch (error) {
-        console.error('Error checking admin role:', error);
-        router.replace('/admin/login');
-      } finally {
-        setIsLoading(false);
-      }
-    });
+    verifyAccess();
 
     return () => {
       if (refreshInterval) clearInterval(refreshInterval);
-      unsubscribe();
+      if (unsubAuth) unsubAuth();
     };
   }, [router, isLoginPage]);
 
