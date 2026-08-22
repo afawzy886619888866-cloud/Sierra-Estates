@@ -32,7 +32,7 @@
         "write-memory": "tsx scripts/write-memory.ts",
         "check-thresholds": "tsx scripts/check-thresholds.ts",
         "sync-propertyfinder": "tsx scripts/sync-propertyfinder.ts",
-        "estimate-costs": "bash scripts/estimate-costs.sh"
+        "estimate-costs": "tsx scripts/estimate-costs.ts"
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
