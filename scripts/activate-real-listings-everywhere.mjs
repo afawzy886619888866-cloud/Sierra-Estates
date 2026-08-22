@@ -101,7 +101,11 @@ if (!fs.existsSync(SNAPSHOT_DIR)) {
   fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
 }
 const SNAPSHOT_PATH = path.join(SNAPSHOT_DIR, 'snapshot.json');
-fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(seedListings, null, 2), 'utf8');
+const snapshotPayload = {
+  generatedAt: new Date().toISOString(),
+  units: seedListings
+};
+fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshotPayload, null, 2), 'utf8');
 console.log(`✅ Updated ${SNAPSHOT_PATH} with ${seedListings.length} real listings.`);
 
 // 3. Update data.js if exists
