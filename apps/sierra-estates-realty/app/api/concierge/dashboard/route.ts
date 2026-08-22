@@ -5,7 +5,7 @@ import {
   VipNegotiationSummary,
 } from '@sierra-estates/agents-core';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const profile: VipInvestorProfile = {
       investorId: 'vip_inv_8892',
