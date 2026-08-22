@@ -17023,5 +17023,25 @@
     ],
     "createdAt": "2026-08-22T04:09:28.958Z",
     "updatedAt": "2026-08-22T04:09:28.958Z"
+  },
+  "mem-test-1787439348791": {
+    "id": "mem-test-1787439348791",
+    "value": {
+      "event": "manual_operator_memory_sync",
+      "agent": "openclaw",
+      "compoundPreferences": [
+        "Mivida",
+        "Hyde Park",
+        "Mountain View iCity"
+      ],
+      "note": "System-wide unified memory checkpoint created successfully.",
+      "recordedAt": "2026-08-22T22:55:48.791Z"
+    },
+    "tags": [
+      "system-checkpoint",
+      "harness-coordinator"
+    ],
+    "createdAt": "2026-08-22T22:55:48.815Z",
+    "updatedAt": "2026-08-22T22:55:48.815Z"
   }
 }
