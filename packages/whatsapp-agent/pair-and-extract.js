@@ -279,8 +279,26 @@ client.on('disconnected', () => {
 async function extractGroups() {
   clientStatus = 'EXTRACTING';
   try {
-    const chats = await client.getChats();
-    console.log(`📋 Found total ${chats.length} chats in account.`);
+    console.log('⏳ Waiting for WhatsApp Chat Store to finish synchronizing...');
+    await new Promise(r => setTimeout(r, 8000));
+
+    let chats = [];
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      try {
+        chats = await client.getChats();
+        if (chats && chats.length > 0) {
+          console.log(`✅ Chat Store hydrated successfully! Found ${chats.length} chats.`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`⏳ Store not ready yet (attempt ${attempt}/6): ${err.message}. Retrying in 5s...`);
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    }
+
+    if (!chats || chats.length === 0) {
+      throw new Error('Failed to retrieve chats after multiple attempts.');
+    }
 
     const ownerChats = chats.filter(c => 
       c.isGroup && (
@@ -288,7 +306,9 @@ async function extractGroups() {
         c.name.toLowerCase().includes('unit') ||
         c.name.toLowerCase().includes('inventory') ||
         c.name.includes('أغسطس') ||
-        c.name.includes('ملاك')
+        c.name.includes('ملاك') ||
+        c.name.includes('شقق') ||
+        c.name.includes('عقارات')
       )
     );
 
@@ -300,8 +320,14 @@ async function extractGroups() {
 
     for (const group of ownerChats) {
       console.log(`\n🔍 Fetching messages from group: "${group.name}"...`);
-      const messages = await group.fetchMessages({ limit: 150 });
-      console.log(`   Read ${messages.length} messages.`);
+      let messages = [];
+      try {
+        messages = await group.fetchMessages({ limit: 200 });
+        console.log(`   Read ${messages.length} messages from "${group.name}".`);
+      } catch (msgErr) {
+        console.warn(`   ⚠️ Error fetching messages for "${group.name}":`, msgErr.message);
+        continue;
+      }
 
       for (const msg of messages) {
         if (!msg.body && !msg.hasMedia) continue;
@@ -312,18 +338,22 @@ async function extractGroups() {
             const media = await msg.downloadMedia();
             if (media && media.data) {
               const ext = media.mimetype ? media.mimetype.split('/')[1]?.split(';')[0] || 'jpg' : 'jpg';
-              const filename = `unit_${msg.id.id}_${Date.now()}.${ext}`;
+              const filename = `unit_${msg.id.id.replace(/[^a-zA-Z0-9]/g, '')}_${Date.now()}.${ext}`;
               const fullPath = path.join(photosDir, filename);
               fs.writeFileSync(fullPath, Buffer.from(media.data, 'base64'));
               photoPath = `packages/whatsapp-agent/extracted_photos/${filename}`;
             }
           } catch (e) {
-            console.warn(`   ⚠️ Media download error for msg ${msg.id.id}:`, e.message);
+            console.warn(`   ⚠️ Media download skipped for message ${msg.id.id}:`, e.message);
           }
         }
 
         const dateAdded = new Date(msg.timestamp * 1000).toISOString();
-        const isListing = msg.body && (
+        const dateFormatted = new Date(msg.timestamp * 1000).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        const isListing = (msg.body && (
           msg.body.includes('متاح') ||
           msg.body.includes('ايجار') ||
           msg.body.includes('للبيع') ||
@@ -336,8 +366,15 @@ async function extractGroups() {
           msg.body.includes('Madinaty') ||
           msg.body.includes('Rent') ||
           msg.body.includes('Sale') ||
-          photoPath !== null
-        );
+          msg.body.includes('بحديقة') ||
+          msg.body.includes('مفروش') ||
+          msg.body.includes('دور') ||
+          msg.body.includes('فيو') ||
+          msg.body.includes('view') ||
+          msg.body.includes('EGP') ||
+          msg.body.includes('الف') ||
+          msg.body.includes('ألف')
+        )) || photoPath !== null;
 
         if (isListing && (msg.body || photoPath)) {
           extractedResults.push({
@@ -345,6 +382,7 @@ async function extractGroups() {
             groupName: group.name,
             groupId: group.id._serialized,
             dateAdded: dateAdded,
+            dateFormatted: dateFormatted,
             timestamp: msg.timestamp,
             sender: msg.author || msg.from,
             text: msg.body || '',
@@ -358,11 +396,35 @@ async function extractGroups() {
     const outputFile = path.join(__dirname, 'inventory_extracted_units.json');
     fs.writeFileSync(outputFile, JSON.stringify(extractedResults, null, 2), 'utf8');
 
+    // Also generate a markdown report for the inventory
+    const mdReportFile = path.join(__dirname, '../../INVENTORY_WHATSAPP_REPORT.md');
+    let md = `# Sierra Estates — WhatsApp Groups Inventory Extraction Report\n\n`;
+    md += `**Extraction Completed At:** ${new Date().toISOString()}\n`;
+    md += `**Total Extracted Units:** ${extractedResults.length}\n`;
+    md += `**Source Groups:** ${ownerChats.map(g => g.name).join(', ')}\n\n`;
+    md += `---\n\n`;
+    md += `## Extracted Inventory Units\n\n`;
+
+    extractedResults.forEach((unit, idx) => {
+      md += `### Unit #${idx + 1} — ${unit.groupName}\n`;
+      md += `- **Date Added:** ${unit.dateFormatted} (${unit.dateAdded})\n`;
+      md += `- **Source Group:** \`${unit.groupName}\`\n`;
+      md += `- **Sender ID:** \`${unit.sender}\`\n`;
+      md += `- **Has Photo:** ${unit.hasPhoto ? '✅ Yes' : '❌ No'}\n`;
+      if (unit.photoPath) {
+        md += `- **Photo File:** [\`${path.basename(unit.photoPath)}\`](file:///${path.resolve(unit.photoPath).replace(/\\\\/g, '/')})\n`;
+      }
+      md += `\n**Listing Description:**\n\`\`\`text\n${unit.text.trim() || '(Photo only)'}\n\`\`\`\n\n---\n\n`;
+    });
+
+    fs.writeFileSync(mdReportFile, md, 'utf8');
+
     console.log(`\n🎉 EXTRACTION COMPLETE!`);
     console.log(`📦 Saved ${extractedResults.length} listings to: ${outputFile}`);
+    console.log(`📄 Generated Report: ${mdReportFile}`);
     clientStatus = 'COMPLETED';
   } catch (err) {
-    console.error('❌ Extraction error:', err);
+    console.error('❌ Extraction error:', err.message);
     clientStatus = 'ERROR';
   }
 }
