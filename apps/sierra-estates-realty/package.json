@@ -7,7 +7,7 @@
         "build": "pnpm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
         "start": "next start",
         "lint": "eslint . && node scripts/validate-configs.mjs",
-        "type-check": "node --max-old-space-size=8192 ./node_modules/typescript/bin/tsc --noEmit",
+        "type-check": "pnpm exec tsc --noEmit",
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
         "test": "jest --testPathPatterns=__tests__",
