@@ -26,7 +26,7 @@
 
 ## 1. Architecture
 
-```
+```text
                       ┌────────────────────────────────────────────────────────┐
                       │                   Vercel (Region iad1)                 │
                       │                                                        │
@@ -75,6 +75,7 @@
 | **Shared packages** | `packages/*` | Monorepo internal | **Not deployed independently** — built into consuming apps | n/a |
 
 > **Identifiers (committed & non-secret)**:
+>
 > - Vercel Org ID: `team_UvdJ5ezVTaqEKyhqZ5QVqOKJ` (or repo var `VERCEL_ORG_ID`)
 > - Client Vercel Project: `prj_theA731k4WdFVhgd6DJUP6pAry6n` (repo var `CLIENT_VERCEL_PROJECT_ID`)
 > - Admin Vercel Project: `prj_NMqZUADX9A5ba22ylMfls2l7I0zX` (repo var `ADMIN_VERCEL_PROJECT_ID`)
