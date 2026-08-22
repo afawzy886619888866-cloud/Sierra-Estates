@@ -45,9 +45,23 @@ export async function GET(req: NextRequest) {
     let sent = 0;
     let failed = 0;
     let skippedQuota = 0;
+    let deferredScheduled = 0;
+    const nowMs = Date.now();
 
     for (const jobDoc of queued.docs) {
       const job = jobDoc.data() as Record<string, any>;
+
+      // If job is scheduled for a future time/date, leave it queued for later dispatch
+      if (job.scheduledFor) {
+        const scheduledTimeMs = typeof job.scheduledFor.toMillis === 'function'
+          ? job.scheduledFor.toMillis()
+          : new Date(job.scheduledFor).getTime();
+
+        if (!isNaN(scheduledTimeMs) && scheduledTimeMs > nowMs) {
+          deferredScheduled++;
+          continue;
+        }
+      }
 
       const claim = await claimEligibleNumber(config);
       if (!claim) {
@@ -90,6 +104,7 @@ export async function GET(req: NextRequest) {
       sent,
       failed,
       skippedQuota,
+      deferredScheduled,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
