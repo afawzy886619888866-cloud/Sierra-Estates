@@ -3,7 +3,7 @@
 ## Languages & Runtimes
 
 | Language | Version | Usage |
-|----------|---------|-------|
+| --- | --- | --- |
 | TypeScript | ^5.8.2 | Primary language — strict mode, all apps and packages |
 | JavaScript | ES2022+ | Legacy scripts, Firebase Functions (compiled from TS) |
 | Python | 3.x | `apps/api` (Cloud Run service), PropertyFinder sync, bot integration |
@@ -16,6 +16,7 @@
 ## Core Frameworks & Libraries
 
 ### Next.js App (`apps/sierra-estates-realty`)
+
 - **Next.js** ^16.2.6 — App Router, React Server Components, API routes
 - **React** 19.2.8 (exact — Expo compatibility pin)
 - **Tailwind CSS** ^4 — utility-first styling
@@ -30,12 +31,14 @@
 - **Lucide React** — icon library
 
 ### AI & LLM
+
 - **@google/generative-ai** ^0.24.1 — Gemini (primary LLM)
 - **Google Vertex AI** — agent reasoning via `packages/agents-core/src/vertex-agent.ts`
 - **OpenTelemetry** (full SDK) — tracing + logs
 - **Arize Phoenix** (`@arizeai/openinference-semantic-conventions`) — LLM observability
 
 ### Firebase
+
 - **firebase** ^12.16.0 — client SDK (Auth, Firestore, Storage)
 - **firebase-admin** ^14.2.0 — server SDK (API routes, Cloud Functions)
 - **Firebase Cloud Functions** — `functions/` (Node.js, compiled TS)
@@ -44,6 +47,7 @@
 - **Firebase Auth** — authentication
 
 ### Integrations
+
 - **Twilio** ^6 — WhatsApp/SMS messaging
 - **googleapis** ^173 — Google Sheets, Drive
 - **Upstash Redis** — rate limiting, queuing
@@ -53,6 +57,7 @@
 - **Pino** ^10 — structured logging
 
 ### Admin Dashboard (`apps/admin-dashboard`)
+
 - **Vite** — build tool (standalone SPA, not part of Next.js monorepo build)
 - Deployed separately to `admin.sierra-estates.net`
 
@@ -61,23 +66,27 @@
 ## Build System
 
 ### Turborepo
+
 - Config: `turbo.json`
 - Tasks: `build`, `dev`, `lint`, `type-check`, `test:ci`, `clean`
 - Build outputs cached: `.next/**`, `dist/**`, `packages/**/dist/**`
 - Global env vars: 80+ variables declared in `turbo.json` `globalEnv`
 
 ### pnpm
+
 - Version: 9.15.4 (packageManager field)
 - Workspace: `pnpm-workspace.yaml`
 - Supply-chain defense: `minimumReleaseAge` configured
 - Catalog: shared version pins for React, Tailwind, Vite, Zod, etc.
 
 ### TypeScript
+
 - Root: `tsconfig.base.json` (strict mode)
 - App: `apps/sierra-estates-realty/tsconfig.json`
 - `ignoreBuildErrors: false` in next.config.ts
 
 ### Testing
+
 - **Jest** ^30 — unit/integration tests (`apps/sierra-estates-realty/__tests__/`)
 - **Vitest** ^4 — workspace-level (root `vitest.config.ts`)
 - 22 test files covering: API routes, services, agents, middleware, pipeline
@@ -87,6 +96,7 @@
 ## Deployment
 
 ### Vercel (Primary)
+
 - **Client:** `apps/sierra-estates-realty` → `sierra-estates.net` (Next.js)
 - **Admin:** `apps/admin-dashboard` → `admin.sierra-estates.net` (Vite SPA)
 - Trigger: GitHub Actions `deploy-vercel.yml` on push to `main`
@@ -94,11 +104,13 @@
 - Vercel native git auto-deploy is **DISABLED** — use GitHub Actions only
 
 ### Firebase (`sierra-blu` project)
+
 - Firestore, Storage, Auth, Cloud Functions
 - Hosting: redirect-only (302 → legacy admin URL)
 - Deploy: `pnpm deploy:firebase` or `firebase deploy --only firestore:rules,storage,functions`
 
 ### Docker / Cloud Run
+
 - `apps/api` (Python service) — PropertyFinder sync + bot integration
 - `infra/docker-compose.yml` — local n8n + services
 - `docker-compose.n8n.yml` — n8n workflow engine
@@ -143,6 +155,7 @@ Canonical list in `.env.example` (root) and `apps/sierra-estates-realty/.env.exa
 Copy to `apps/sierra-estates-realty/.env.local` — never commit.
 
 Key variable groups:
+
 - `NEXT_PUBLIC_FIREBASE_*` — Firebase client SDK config
 - `FIREBASE_*` — Firebase Admin SDK (server-only)
 - `GOOGLE_AI_API_KEY` / `GOOGLE_GENAI_API_KEY` — Gemini
