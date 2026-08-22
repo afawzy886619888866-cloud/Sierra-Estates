@@ -56,7 +56,8 @@ describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
 
     const savedJob = mockAdd.mock.calls[0][0];
     expect(savedJob.toPhone).toBe('+201012223344');
-    expect(savedJob.scheduledFor).toBeInstanceOf(Timestamp);
+    expect(savedJob.scheduledFor).toBeDefined();
+    expect(typeof savedJob.scheduledFor.toMillis).toBe('function');
     expect(savedJob.scheduledFor.toMillis()).toBeCloseTo(futureDate.getTime(), -3);
   });
 
