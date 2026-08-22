@@ -59,15 +59,24 @@ export class ObsidianMemory {
     return entry;
   }
 
-  async search(query: string): Promise<MemoryEntry[]> {
+  async search(query: string, tags?: string[]): Promise<MemoryEntry[]> {
     const store = this.readStore();
     const q = (query || '').toLowerCase();
-    return Object.values(store).filter(
-      (entry) =>
+    const targetTags = Array.isArray(tags) ? tags.map((t) => t.toLowerCase()) : [];
+
+    return Object.values(store).filter((entry) => {
+      const matchesQuery =
         (typeof entry.id === 'string' && entry.id.toLowerCase().includes(q)) ||
         (entry.value && JSON.stringify(entry.value).toLowerCase().includes(q)) ||
-        (Array.isArray(entry.tags) && entry.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(q)))
-    );
+        (Array.isArray(entry.tags) && entry.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(q)));
+
+      if (targetTags.length === 0) return matchesQuery;
+
+      const hasTag =
+        Array.isArray(entry.tags) &&
+        entry.tags.some((t) => typeof t === 'string' && targetTags.includes(t.toLowerCase()));
+      return matchesQuery || hasTag;
+    });
   }
 
   async searchByTag(tag: string): Promise<MemoryEntry[]> {
