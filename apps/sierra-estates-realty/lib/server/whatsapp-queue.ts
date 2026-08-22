@@ -51,8 +51,8 @@ export function isWithinOperatingHours(config: WhatsAppOutreachConfig, now: Date
 
 /**
  * Enqueues an outbound WhatsApp job. The dispatch worker (cron) sends it later,
- * subject to operating hours + per-number quota. Single write — safe to call from
- * request handlers.
+ * subject to operating hours + per-number quota and scheduled date/time.
+ * Single write — safe to call from request handlers.
  */
 export async function enqueueWhatsAppJob(params: {
   purpose: WhatsAppMessagePurpose;
@@ -63,7 +63,22 @@ export async function enqueueWhatsAppJob(params: {
   ownerNegotiationId?: string;
   templateName?: string;
   templateParams?: Record<string, string>;
+  scheduledFor?: Timestamp | Date | string | null;
 }): Promise<string> {
+  let scheduledTimestamp: Timestamp | undefined;
+  if (params.scheduledFor) {
+    if (params.scheduledFor instanceof Timestamp) {
+      scheduledTimestamp = params.scheduledFor;
+    } else if (params.scheduledFor instanceof Date) {
+      scheduledTimestamp = Timestamp.fromDate(params.scheduledFor);
+    } else if (typeof params.scheduledFor === 'string') {
+      const parsedDate = new Date(params.scheduledFor);
+      if (!isNaN(parsedDate.getTime())) {
+        scheduledTimestamp = Timestamp.fromDate(parsedDate);
+      }
+    }
+  }
+
   const job: Omit<WhatsAppMessageJob, 'id'> = {
     direction: 'outbound',
     purpose: params.purpose,
@@ -73,6 +88,7 @@ export async function enqueueWhatsAppJob(params: {
     attempts: 0,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
+    ...(scheduledTimestamp ? { scheduledFor: scheduledTimestamp } : {}),
     ...(params.leadId ? { leadId: params.leadId } : {}),
     ...(params.unitId ? { unitId: params.unitId } : {}),
     ...(params.ownerNegotiationId ? { ownerNegotiationId: params.ownerNegotiationId } : {}),
