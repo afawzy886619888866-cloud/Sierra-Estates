@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -19,7 +19,7 @@ export async function GET() {
       indexedRecords: count || 822,
       lastSynchronized: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ status: 'active', indexedRecords: 822 });
   }
 }
