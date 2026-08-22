@@ -10,7 +10,7 @@ Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase p
 
 ## 📦 Repository Structure
 
-```
+```text
 SE-Vercel-deploy-main/
 ├── apps/
 │   ├── sierra-estates-realty/  # Main Next.js 16 app (public site, admin portal, API routes)
@@ -104,7 +104,7 @@ pnpm test
 
 ## 🔐 Admin Authentication
 
-The admin portal is accessible at `admin.sierra-estates.net/admin` (or `/admin` in local development). 
+The admin portal is accessible at `admin.sierra-estates.net/admin` (or `/admin` in local development).
 
 1. **Browser Authentication**: The browser signs in using the Firebase Auth Client SDK with email/password credentials and obtains a short-lived ID token.
 2. **Session Minting**: The ID token is transmitted to `POST /api/auth`.
@@ -128,7 +128,7 @@ The admin portal is accessible at `admin.sierra-estates.net/admin` (or `/admin` 
 
 Sierra Estates operates a multi-stage autonomous agent pipeline (S1–S10):
 
-```
+```text
 ┌─────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
 │ WhatsApp Groups │ ────▶ │ /api/webhooks/whatsapp │ ────▶ │  Firestore Raw Scrape  │
 └─────────────────┘       │    (Scribe Agent S1)   │       │     rawScrapeData      │
@@ -169,7 +169,7 @@ Sierra Estates operates a multi-stage autonomous agent pipeline (S1–S10):
 | `/api/sync` | GET / POST | Master inventory synchronization control |
 | `/api/sync/publish` | POST | Publish verified property listings to external portals |
 | `/api/telegram/webhook` | POST | Telegram bot notification & command handler |
-| `/api/webhooks/property-finder`| POST | PropertyFinder incoming webhook (HMAC verified) |
+| `/api/webhooks/property-finder` | POST | PropertyFinder incoming webhook (HMAC verified) |
 | `/api/webhooks/whatsapp` | GET / POST | WhatsApp webhook verification and payload ingestion |
 | `/api/whatsapp/heartbeat` | POST | WhatsApp scraper worker healthcheck heartbeat |
 
@@ -180,16 +180,19 @@ Sierra Estates operates a multi-stage autonomous agent pipeline (S1–S10):
 Sierra Estates follows a decoupled, resilient multi-cloud deployment strategy. Full details are documented in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ### 1. Web Applications (Vercel)
+
 - **Client Public Site**: `sierra-estates.net` deployed via Vercel Project `sierra-estates` (`CLIENT_VERCEL_PROJECT_ID`).
 - **Admin Console**: `admin.sierra-estates.net` deployed via Vercel Project `sierra-admin-dashboard` (`ADMIN_VERCEL_PROJECT_ID`).
 - **CI/CD Action**: `.github/workflows/deploy-vercel.yml` builds and deploys both projects in parallel upon merge to `main`.
 
 ### 2. Backend Infrastructure (Firebase `sierra-blu`)
+
 - **Firestore & Storage Rules**: Deployed via `.github/workflows/deploy-firebase-rules.yml` or manual `pnpm deploy:rules`.
 - **Cloud Functions**: Node.js 20 functions deployed via `pnpm deploy:functions`.
 - **Legacy Admin Redirect**: Firebase Hosting site `admin-sierra-blu` issues a 302 redirect to `https://admin.sierra-estates.net/admin`.
 
 ### 3. Background Workers & Integrations
+
 - **Python FastAPI Service** (`apps/api`): Containerized and hosted on Google Cloud Run (`:8000`).
 - **Automation Workflows**: n8n instance hosted on VPS/Docker (`:5678`) triggered via webhook.
 - **Scheduled Sync Tasks**: Executed via `.github/workflows/external-workflows.yml`, `whatsapp-dispatch-cron.yml`, and `vercel-cron-bridge.yml`.
