@@ -27,6 +27,7 @@ import {
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
+import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -1313,6 +1314,9 @@ function Stage9CloserPage({T}){
   const pipelineVal=DEALS_DATA.reduce((s,d)=>s+parseFloat(d.value.replace(/[^\d.]/g,'')),0);
   return(
     <div className="fade-up">
+      {/* Live AI Negotiation Simulator */}
+      <NegotiationSimulator />
+
       {/* Pipeline KPIs */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
         {STAGES.slice(1).map(s=>(
