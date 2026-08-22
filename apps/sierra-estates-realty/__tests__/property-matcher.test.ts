@@ -1,4 +1,4 @@
-import { PropertyMatchmaker, type PropertyListing, type ClientProfile } from '@sierra-estates/agents-core';
+import { PropertyMatchmaker, type PropertyListing, type ClientProfile } from '../../packages/agents-core/src/property-matcher';
 
 describe('PropertyMatchmaker Vector & Heuristic Engine', () => {
   const listings: PropertyListing[] = [

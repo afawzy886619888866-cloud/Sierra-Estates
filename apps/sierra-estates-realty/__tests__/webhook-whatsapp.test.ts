@@ -1,3 +1,15 @@
+jest.mock('../lib/services/WhatsAppStatusService', () => ({
+  WhatsAppStatusService: {
+    recordHeartbeat: jest.fn().mockResolvedValue(true),
+  },
+}));
+
+jest.mock('../lib/services/WhatsAppParserService', () => ({
+  WhatsAppParserService: {
+    processIncomingMessage: jest.fn().mockResolvedValue({ id: 'mock-123' }),
+  },
+}));
+
 import { GET } from '../app/api/webhooks/whatsapp/route';
 import { NextRequest } from 'next/server';
 

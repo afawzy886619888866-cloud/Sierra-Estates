@@ -1,4 +1,4 @@
-import { BaseAgent, type AgentResult } from './base-agent.js';
+import { BaseAgent, type AgentResult } from './base-agent';
 import { GoogleGenAI } from '@google/genai';
 import { ObsidianMemory, obsidian } from '@sierra-estates/obsidian';
 
