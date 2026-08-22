@@ -2,11 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Containers .NET Attach (Preview)",
+            "type": "docker",
+            "request": "attach",
+            "platform": "netCore",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Launch Extension",
             "type": "extensionHost",
             "request": "launch"
         },
-        
         {
             "name": "Debug program / Interactive GUI",
             "type": "abl",
@@ -41,22 +49,12 @@
             "pause": false,
             "refProjects": []
         },
-
-
-
-
-
-        
-
-
-        
-
         {
-            "name": "Attach to process",
+            "name": "Attach to PASOE",
             "type": "abl",
             "request": "attach",
             "mode": "pasoe",
-            "hostname": "Host name or IP address of PASOE instance",
+            "hostname": "localhost",
             "port": 8810,
             "localRoot": "${workspaceFolder}",
             "appName": "pasoe1",
@@ -65,10 +63,10 @@
             "refProjects": []
         },
         {
-            "name": "Attach to process",
+            "name": "Attach to legacy process",
             "type": "abl",
             "request": "attach",
-            "hostname": "Host name or IP address of process to be debugged",
+            "hostname": "localhost",
             "mode": "legacy",
             "port": 3099,
             "localRoot": "${workspaceFolder}",
@@ -90,7 +88,6 @@
                 }
             }
         },
-        
         {
             "name": "Next.js: Debug Server",
             "type": "node",
@@ -115,7 +112,7 @@
             "type": "debugpy",
             "request": "attach",
             "processId": "${command:pickProcess}"
-        }
+        },
         {
             "type": "msedge",
             "name": "Launch Microsoft Edge",
@@ -145,7 +142,7 @@
             "type": "vscode-edge-devtools.debug",
             "name": "Open Edge DevTools",
             "request": "attach",
-            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html"
+            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html",
             "presentation": {
                 "hidden": true
             }
