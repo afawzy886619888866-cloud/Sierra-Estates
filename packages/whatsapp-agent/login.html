@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sierra Estates - Secure WhatsApp Agent Login</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px; padding: 40px; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); max-width: 440px; width: 100%;
+    }
+    .shield { font-size: 42px; margin-bottom: 12px; }
+    h1 {
+      font-size: 22px; font-weight: 700;
+      color: #38bdf8; margin-bottom: 6px;
+    }
+    .desc { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
+    .qr-box {
+      background: #ffffff; border-radius: 16px; display: inline-flex;
+      align-items: center; justify-content: center;
+      padding: 16px; margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .steps {
+      text-align: left; background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; padding: 14px 18px; font-size: 13px; color: #cbd5e1; line-height: 1.7;
+    }
+    .steps ol { padding-left: 20px; }
+    .security-badge {
+      margin-top: 20px; font-size: 11px; color: #10b981;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="shield">🔒</div>
+    <h1>Secure WhatsApp Login</h1>
+    <p class="desc">Sierra Estates Multi-Agent Vault</p>
+    <div class="qr-box" id="qrcode"></div>
+    <div class="steps">
+      <ol>
+        <li>Open <b>WhatsApp</b> on your mobile device.</li>
+        <li>Navigate to <b>Settings → Linked Devices</b>.</li>
+        <li>Tap <b>Link a Device</b> and point camera at this QR code.</li>
+      </ol>
+    </div>
+    <div class="security-badge">
+      🛡️ <span>End-to-End Encrypted Session Saved Locally</span>
+    </div>
+  </div>
+  <script>
+    const qrData = "2@znavYFobRetCcFxqK/LsdXzzUtx/I/dI7rP1SbXjFuPfEFbjjM/BRPEGHKnx8pG0ty/gF8ZTB+LZlUjQfLU+zOMfKQ1gNB1KR6M=,WWCH+62Wxhi6qQJKj7KXjv0iGFak9rJ7eI2edAKSMGQ=,VZutV3qiRBXSAlWA89SD7NPe2urGEgZQ4von3KD7f1k=,/xP8kHLaWECjp3NEzSKFu+V1KlNMkxa0xTkuCWQxT6E=,1";
+    new QRCode(document.getElementById("qrcode"), {
+      text: qrData,
+      width: 256,
+      height: 256,
+      colorDark : "#0f172a",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.H
+    });
+  </script>
+</body>
+</html>
