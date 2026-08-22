@@ -33,6 +33,7 @@
         "check-thresholds": "tsx scripts/check-thresholds.ts",
         "sync-propertyfinder": "tsx scripts/sync-propertyfinder.ts",
         "estimate-costs": "tsx scripts/estimate-costs.ts",
+        "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
     },
     "devDependencies": {
