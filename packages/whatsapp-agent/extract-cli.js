@@ -56,188 +56,245 @@ client.on('ready', async () => {
   console.log('════════════════════════════════════════════════\n');
 
   try {
-    console.log('⏳ Synchronizing with WhatsApp Web...');
+    console.log('⏳ Waiting for DOM to settle...');
     await new Promise(r => setTimeout(r, 6000));
-
-    let targetChats = [];
-
-    // TIER 1: Evaluate Store directly with safe serialization
-    try {
-      const rawGroups = await client.pupPage.evaluate(() => {
-        const results = [];
-        try {
-          if (window.Store && window.Store.Chat) {
-            const models = window.Store.Chat.models || (window.Store.Chat._models) || [];
-            for (const m of models) {
-              const gid = (m.id && m.id._serialized) ? m.id._serialized : (typeof m.id === 'string' ? m.id : '');
-              const gname = m.name || m.formattedTitle || (m.contact ? m.contact.name : '') || '';
-              const isGrp = m.isGroup || gid.includes('@g.us');
-              if (isGrp && gname) {
-                results.push({ id: gid, name: gname });
-              }
-            }
-          }
-        } catch (e) {}
-        return results;
-      });
-
-      if (rawGroups && rawGroups.length > 0) {
-        console.log(`✅ Retrieved ${rawGroups.length} groups directly from WhatsApp Store!`);
-        for (const rg of rawGroups) {
-          try {
-            const c = await client.getChatById(rg.id);
-            if (c) targetChats.push(c);
-          } catch (e) {
-            targetChats.push(rg);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('⚠️ Direct Store evaluation note:', e.message);
-    }
-
-    // TIER 2: Fallback to standard client.getChats if needed
-    if (targetChats.length === 0) {
-      try {
-        const allChats = await client.getChats();
-        targetChats = allChats.filter(c => c.isGroup);
-        console.log(`✅ Loaded ${targetChats.length} groups via standard client.getChats()`);
-      } catch (err) {
-        console.warn('⚠️ Standard getChats note:', err.message);
-      }
-    }
-
-    // Filter relevant Owner / Inventory groups
-    const matchedGroups = targetChats.filter(c => {
-      const n = (c.name || '').toLowerCase();
-      return (
-        n.includes('owner') ||
-        n.includes('unit') ||
-        n.includes('inventory') ||
-        n.includes('أغسطس') ||
-        n.includes('ملاك') ||
-        n.includes('شقق') ||
-        n.includes('عقارات') ||
-        n.includes('مشروع')
-      );
-    });
-
-    console.log(`\n🎯 Matched ${matchedGroups.length} Target Groups for Extraction:`);
-    matchedGroups.forEach((g, idx) => console.log(`   ${idx + 1}. "${g.name}"`));
 
     const photosDir = path.join(__dirname, 'extracted_photos');
     if (!fs.existsSync(photosDir)) fs.mkdirSync(photosDir, { recursive: true });
 
+    const KNOWN_GROUPS = [
+      'Owners August 2026',
+      'Owners Units',
+      'New units from owner',
+      'Group Data Owner',
+      'Owners Project inventory',
+      'Owners Inventory project'
+    ];
+
+    console.log(`🎯 Searching for ${KNOWN_GROUPS.length} Owner / Inventory groups in WhatsApp Web...`);
+
     const extractedUnits = [];
 
-    for (const group of targetGroups) {
+    // DOM-based high reliability search & extract
+    const page = client.pupPage;
+
+    // Scroll chat list to populate all groups
+    await page.evaluate(async () => {
+      const pane = document.querySelector('#pane-side') || document.querySelector('div[role="grid"]');
+      if (pane) {
+        for (let i = 0; i < 5; i++) {
+          pane.scrollTop = i * 400;
+          await new Promise(r => setTimeout(r, 600));
+        }
+        pane.scrollTop = 0;
+      }
+    });
+
+    // Extract list of all visible chats in sidebar
+    const sidebarChats = await page.evaluate(() => {
+      const spans = document.querySelectorAll('#pane-side span[title], div[role="grid"] span[title]');
+      const names = [];
+      spans.forEach(s => {
+        const t = s.getAttribute('title') || s.innerText;
+        if (t && t.trim().length > 0) names.push(t.trim());
+      });
+      return [...new Set(names)];
+    });
+
+    console.log(`📋 Found ${sidebarChats.length} chats in active sidebar.`);
+
+    // Find all groups matching keywords or exact names
+    const targetGroupNames = sidebarChats.filter(name => {
+      const low = name.toLowerCase();
+      return (
+        KNOWN_GROUPS.some(kg => kg.toLowerCase() === low || low.includes(kg.toLowerCase())) ||
+        low.includes('owner') ||
+        low.includes('unit') ||
+        low.includes('inventory') ||
+        name.includes('أغسطس') ||
+        name.includes('ملاك') ||
+        name.includes('شقق')
+      );
+    });
+
+    // If none found in initial scroll, search for each known group directly
+    const finalGroupList = targetGroupNames.length > 0 ? targetGroupNames : KNOWN_GROUPS;
+
+    console.log(`\n🔍 Scanning ${finalGroupList.length} groups:`);
+    finalGroupList.forEach((name, i) => console.log(`   ${i + 1}. "${name}"`));
+
+    for (const groupName of finalGroupList) {
       console.log(`\n======================================================`);
-      console.log(`📥 Processing Group: "${group.name}"`);
+      console.log(`📥 Ingesting Group: "${groupName}"`);
       console.log(`======================================================`);
 
-      let messages = [];
       try {
-        let chatInstance = group;
-        if (typeof group.fetchMessages !== 'function') {
-          chatInstance = await client.getChatById(group.id);
-        }
-        messages = await chatInstance.fetchMessages({ limit: 300 });
-        console.log(`   Fetched ${messages.length} recent messages.`);
-      } catch (err) {
-        console.warn(`   ⚠️ Fetch error for "${group.name}":`, err.message);
-        continue;
-      }
-
-      let countInGroup = 0;
-
-      for (const msg of messages) {
-        if (!msg.body && !msg.hasMedia) continue;
-
-        let photoPath = null;
-        if (msg.hasMedia && (msg.type === 'image' || msg.type === 'document')) {
-          try {
-            const media = await msg.downloadMedia();
-            if (media && media.data) {
-              const ext = media.mimetype ? media.mimetype.split('/')[1]?.split(';')[0] || 'jpg' : 'jpg';
-              const safeId = msg.id.id.replace(/[^a-zA-Z0-9_-]/g, '');
-              const filename = `unit_${safeId}_${Date.now()}.${ext}`;
-              const fullPath = path.join(photosDir, filename);
-              fs.writeFileSync(fullPath, Buffer.from(media.data, 'base64'));
-              photoPath = `packages/whatsapp-agent/extracted_photos/${filename}`;
+        // Search and click chat in WhatsApp Web UI
+        const clicked = await page.evaluate(async (searchTitle) => {
+          // Find direct title span
+          const allSpans = Array.from(document.querySelectorAll('span[title]'));
+          let target = allSpans.find(s => (s.getAttribute('title') || '').toLowerCase().includes(searchTitle.toLowerCase()));
+          
+          if (!target) {
+            // Try searching via search box
+            const searchInput = document.querySelector('div[contenteditable="true"][data-tab="3"]') || document.querySelector('input[type="text"]');
+            if (searchInput) {
+              searchInput.focus();
+              document.execCommand('insertText', false, searchTitle);
+              await new Promise(r => setTimeout(r, 1200));
+              const results = Array.from(document.querySelectorAll('span[title]'));
+              target = results.find(s => (s.getAttribute('title') || '').toLowerCase().includes(searchTitle.toLowerCase()));
             }
-          } catch (e) {
-            // Silently continue on media fetch skip
+          }
+
+          if (target) {
+            target.closest('div[role="listitem"], div[role="row"], div[tabindex="-1"]')?.click();
+            return true;
+          }
+          return false;
+        }, groupName);
+
+        if (!clicked) {
+          console.log(`   ⚠️ Group "${groupName}" not currently visible in sidebar. Checking next...`);
+          continue;
+        }
+
+        // Wait for chat panel to open and load messages
+        await new Promise(r => setTimeout(r, 2500));
+
+        // Scroll up in conversation to load previous history
+        await page.evaluate(async () => {
+          const msgContainer = document.querySelector('div[data-tab="8"]') || document.querySelector('div[role="application"]');
+          if (msgContainer) {
+            for (let s = 0; s < 4; s++) {
+              msgContainer.scrollTop = 0;
+              await new Promise(r => setTimeout(r, 800));
+            }
+          }
+        });
+
+        // Extract message bubbles from active chat window
+        const groupMessages = await page.evaluate(() => {
+          const rows = document.querySelectorAll('div[data-id]');
+          const messages = [];
+          
+          rows.forEach(r => {
+            const dataId = r.getAttribute('data-id') || '';
+            const textEl = r.querySelector('.selectable-text, span.selectable-text, div[data-pre-plain-text]');
+            const text = textEl ? textEl.innerText.trim() : '';
+            
+            // Extract timestamp & sender if available
+            const prePlainText = r.querySelector('div[data-pre-plain-text]')?.getAttribute('data-pre-plain-text') || '';
+            // Example prePlainText: "[1:47 PM, 8/22/2026] +20 100 123 4567: "
+            let sender = 'Owner';
+            let timeStr = new Date().toLocaleTimeString();
+            if (prePlainText) {
+              const match = prePlainText.match(/\[(.*?)\]\s*(.*?):/);
+              if (match) {
+                timeStr = match[1];
+                sender = match[2];
+              }
+            }
+
+            // Check for image
+            const imgEl = r.querySelector('img[src^="blob:"], img[src^="data:"], img[src*="whatsapp"]');
+            const hasImage = Boolean(imgEl);
+            let imgSrc = imgEl ? imgEl.src : null;
+
+            if (text || hasImage) {
+              messages.push({
+                dataId,
+                text,
+                sender,
+                timeStr,
+                hasImage,
+                imgSrc
+              });
+            }
+          });
+
+          return messages;
+        });
+
+        console.log(`   Extracted ${groupMessages.length} total messages from "${groupName}".`);
+
+        let countAdded = 0;
+
+        for (let i = 0; i < groupMessages.length; i++) {
+          const gm = groupMessages[i];
+          const text = gm.text || '';
+
+          // Determine date
+          const dateAdded = new Date().toISOString();
+          const dateFormatted = `${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} (${gm.timeStr})`;
+
+          let localPhotoPath = null;
+          if (gm.hasImage && gm.imgSrc && gm.imgSrc.startsWith('data:image')) {
+            try {
+              const base64Data = gm.imgSrc.replace(/^data:image\/\w+;base64,/, '');
+              const filename = `unit_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}_${i}.jpg`;
+              const fullPath = path.join(photosDir, filename);
+              fs.writeFileSync(fullPath, Buffer.from(base64Data, 'base64'));
+              localPhotoPath = `packages/whatsapp-agent/extracted_photos/${filename}`;
+            } catch (e) {}
+          }
+
+          const isListing = (
+            text.includes('متاح') ||
+            text.includes('ايجار') ||
+            text.includes('إيجار') ||
+            text.includes('للبيع') ||
+            text.includes('شقه') ||
+            text.includes('شقة') ||
+            text.includes('فيلا') ||
+            text.includes('مدينتي') ||
+            text.includes('التجمع') ||
+            text.includes('الرحاب') ||
+            text.includes('مفروش') ||
+            text.includes('بحديقة') ||
+            text.includes('فيو') ||
+            text.includes('دور') ||
+            text.includes('مطلوب') ||
+            text.includes('Rent') ||
+            text.includes('Sale') ||
+            text.includes('EGP') ||
+            text.includes('الف') ||
+            text.includes('ألف') ||
+            gm.hasImage
+          );
+
+          if (isListing && (text.length > 5 || gm.hasImage)) {
+            countAdded++;
+            extractedUnits.push({
+              id: gm.dataId || `unit_${Date.now()}_${i}`,
+              groupName: groupName,
+              dateAdded: dateAdded,
+              dateFormatted: dateFormatted,
+              sender: gm.sender,
+              text: text,
+              photoPath: localPhotoPath,
+              hasPhoto: gm.hasImage
+            });
           }
         }
 
-        const dateAdded = new Date(msg.timestamp * 1000).toISOString();
-        const dateFormatted = new Date(msg.timestamp * 1000).toLocaleDateString('en-US', {
-          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
+        console.log(`   ✅ Extracted ${countAdded} verified property units from "${groupName}".`);
 
-        const body = (msg.body || '').trim();
-
-        // Listing detection heuristics
-        const isListing = (
-          body.includes('متاح') ||
-          body.includes('ايجار') ||
-          body.includes('إيجار') ||
-          body.includes('للبيع') ||
-          body.includes('شقه') ||
-          body.includes('شقة') ||
-          body.includes('فيلا') ||
-          body.includes('دوبلكس') ||
-          body.includes('استوديو') ||
-          body.includes('مدينتي') ||
-          body.includes('التجمع') ||
-          body.includes('الرحاب') ||
-          body.includes('مفروش') ||
-          body.includes('بحديقة') ||
-          body.includes('فيو') ||
-          body.includes('دور') ||
-          body.includes('مطلوب') ||
-          body.includes('السعر') ||
-          body.includes('بمقدم') ||
-          body.includes('اقساط') ||
-          body.includes('أقساط') ||
-          body.includes('Rent') ||
-          body.includes('Sale') ||
-          body.includes('Apartment') ||
-          body.includes('Villa') ||
-          body.includes('EGP') ||
-          photoPath !== null
-        );
-
-        if (isListing && (body.length > 5 || photoPath)) {
-          countInGroup++;
-          extractedUnits.push({
-            id: msg.id.id,
-            groupName: group.name,
-            groupId: group.id._serialized,
-            dateAdded: dateAdded,
-            dateFormatted: dateFormatted,
-            timestamp: msg.timestamp,
-            sender: msg.author || msg.from,
-            text: body,
-            photoPath: photoPath,
-            hasPhoto: Boolean(photoPath)
-          });
-        }
+      } catch (groupErr) {
+        console.warn(`   ⚠️ Processing warning for "${groupName}":`, groupErr.message);
       }
-
-      console.log(`   ✅ Extracted ${countInGroup} property listings from "${group.name}".`);
     }
 
-    // Save JSON database
+    // Save JSON output
     const outputFile = path.join(__dirname, 'inventory_extracted_units.json');
     fs.writeFileSync(outputFile, JSON.stringify(extractedUnits, null, 2), 'utf8');
 
-    // Save Markdown report
+    // Save Markdown report for root documentation
     const mdReportFile = path.join(__dirname, '../../INVENTORY_WHATSAPP_REPORT.md');
     let md = `# Sierra Estates — WhatsApp Groups Inventory Extraction Report\n\n`;
     md += `**Extraction Date:** ${new Date().toISOString()}\n`;
     md += `**Total Extracted Units:** ${extractedUnits.length}\n`;
-    md += `**Groups Scanned:** ${targetGroups.map(g => g.name).join(', ')}\n\n`;
+    md += `**Target Groups:** ${finalGroupList.join(', ')}\n\n`;
     md += `---\n\n`;
     md += `## 📋 Extracted Inventory Units\n\n`;
 
