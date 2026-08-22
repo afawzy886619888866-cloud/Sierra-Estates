@@ -4,6 +4,7 @@
 import React from 'react';
 import SiteChrome, { type ActiveNav } from './SiteChrome';
 import SiteFooter from './SiteFooter';
+import WhatsAppConciergeFloating from './WhatsAppConciergeFloating';
 import { useReveal, useCounters } from '@/lib/site/useReveal';
 
 export default function SiteShell({
@@ -20,6 +21,7 @@ export default function SiteShell({
     <>
       <SiteChrome active={active} />
       {children}
+      <WhatsAppConciergeFloating />
       <SiteFooter />
     </>
   );
