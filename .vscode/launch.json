@@ -143,6 +143,7 @@
             "type": "msedge",
             "name": "Launch Microsoft Edge",
             "request": "launch",
+            "version": "stable",
             "runtimeArgs": [
                 "--remote-debugging-port=9222"
             ],
@@ -155,6 +156,7 @@
             "type": "msedge",
             "name": "Launch Microsoft Edge in headless mode",
             "request": "launch",
+            "version": "stable",
             "runtimeArgs": [
                 "--headless",
                 "--remote-debugging-port=9222"
