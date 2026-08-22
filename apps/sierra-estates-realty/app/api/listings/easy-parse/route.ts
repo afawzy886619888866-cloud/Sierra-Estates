@@ -99,18 +99,19 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Price
   let price = 10000000;
-  const priceMillionMatch = rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|m|مليون|م)/i);
-  const priceNumberMatch = rawText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(\d{6,10})/);
+  const priceNumberMatch = rawText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d[\d,\.]{4,})/i) || rawText.match(/(\d{1,3}(?:,\d{3})+)/);
+  const priceMillionMatch = rawText.match(/(?:price|السعر|مطلوب)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:million|مليون)/i)
+    || rawText.match(/(\d+(?:\.\d+)?)\s*(?:million|مليون)/i);
 
-  if (priceMillionMatch) {
-    const millions = parseFloat(priceMillionMatch[1]);
-    if (millions > 0 && millions < 500) {
-      price = Math.round(millions * 1_000_000);
-    }
-  } else if (priceNumberMatch) {
+  if (priceNumberMatch) {
     const cleanNum = parseInt(priceNumberMatch[1].replace(/,/g, ''), 10);
     if (!isNaN(cleanNum) && cleanNum > 50000) {
       price = cleanNum;
+    }
+  } else if (priceMillionMatch) {
+    const millions = parseFloat(priceMillionMatch[1]);
+    if (millions > 0 && millions < 500) {
+      price = Math.round(millions * 1_000_000);
     }
   }
 

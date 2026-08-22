@@ -67,14 +67,14 @@ export async function enqueueWhatsAppJob(params: {
 }): Promise<string> {
   let scheduledTimestamp: Timestamp | undefined;
   if (params.scheduledFor) {
-    if (params.scheduledFor instanceof Timestamp) {
-      scheduledTimestamp = params.scheduledFor;
+    if (typeof (params.scheduledFor as any)?.toMillis === 'function') {
+      scheduledTimestamp = params.scheduledFor as Timestamp;
     } else if (params.scheduledFor instanceof Date) {
-      scheduledTimestamp = Timestamp.fromDate(params.scheduledFor);
+      scheduledTimestamp = typeof Timestamp?.fromDate === 'function' ? Timestamp.fromDate(params.scheduledFor) : (params.scheduledFor as any);
     } else if (typeof params.scheduledFor === 'string') {
       const parsedDate = new Date(params.scheduledFor);
       if (!isNaN(parsedDate.getTime())) {
-        scheduledTimestamp = Timestamp.fromDate(parsedDate);
+        scheduledTimestamp = typeof Timestamp?.fromDate === 'function' ? Timestamp.fromDate(parsedDate) : (parsedDate as any);
       }
     }
   }
