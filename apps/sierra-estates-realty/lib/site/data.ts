@@ -1,5 +1,5 @@
 /* Ported from deploy/data.js — regenerate from source rather than hand-editing. */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const DATA: any = {
   slides: [
@@ -180,10 +180,10 @@ const DATA: any = {
 
 (function (D: any) {
   'use strict';
-  var cache: any = {};
-  var TYPES = ['Apartment', 'Apartment', 'Apartment', 'Duplex', 'Twin House', 'Townhouse', 'Penthouse', 'Villa', 'Villa'];
-  var AGENTS = ['Layla Mansour', 'Karim Fahmy', 'Nour Saleh', 'Omar Magdy', 'Yara Hakim', 'Rana Adel'];
-  var IMGS = [
+  const cache: any = {};
+  const TYPES = ['Apartment', 'Apartment', 'Apartment', 'Duplex', 'Twin House', 'Townhouse', 'Penthouse', 'Villa', 'Villa'];
+  const AGENTS = ['Layla Mansour', 'Karim Fahmy', 'Nour Saleh', 'Omar Magdy', 'Yara Hakim', 'Rana Adel'];
+  const IMGS = [
     'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
     'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55',
     'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55',
@@ -193,30 +193,30 @@ const DATA: any = {
     'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55',
     'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55'
   ];
-  function hash(s: any) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
-  function rng(seed: any) { var x = seed || 1; return function () { x = (x * 1103515245 + 12345) >>> 0; return (x >>> 8) / 16777216; }; }
-  var AREAS: any = { 'Apartment': [110, 220], 'Duplex': [200, 320], 'Twin House': [250, 340], 'Townhouse': [220, 300], 'Penthouse': [240, 380], 'Villa': [350, 620] };
-  var MULT: any = { 'Apartment': 0.32, 'Duplex': 0.5, 'Twin House': 0.62, 'Townhouse': 0.55, 'Penthouse': 0.75, 'Villa': 1 };
+  function hash(s: any) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
+  function rng(seed: any) { let x = seed || 1; return function () { x = (x * 1103515245 + 12345) >>> 0; return (x >>> 8) / 16777216; }; }
+  const AREAS: any = { 'Apartment': [110, 220], 'Duplex': [200, 320], 'Twin House': [250, 340], 'Townhouse': [220, 300], 'Penthouse': [240, 380], 'Villa': [350, 620] };
+  const MULT: any = { 'Apartment': 0.32, 'Duplex': 0.5, 'Twin House': 0.62, 'Townhouse': 0.55, 'Penthouse': 0.75, 'Villa': 1 };
 
   D.unitsFor = function (name: any) {
     if (cache[name]) return cache[name];
-    var c = D.compounds.find(function (x: any) { return x.n === name; });
+    const c = D.compounds.find(function (x: any) { return x.n === name; });
     if (!c) return [];
-    var r = rng(hash(name));
-    var count = 8 + Math.floor(r() * 17); // 8–24 units
-    var abbr = name.replace(/\(.*\)/, '').trim().split(/\s+/).map(function (w: any) { return w[0]; }).join('').toUpperCase().slice(0, 3);
-    var units: any[] = [];
-    for (var i = 0; i < count; i++) {
-      var type = TYPES[Math.floor(r() * TYPES.length)];
-      var span = AREAS[type];
-      var area = Math.round((span[0] + r() * (span[1] - span[0])) / 5) * 5;
-      var mode = r() < 0.3 ? 'rent' : 'sale';
-      var beds = type === 'Villa' ? 4 + Math.floor(r() * 2) : type === 'Apartment' ? 2 + Math.floor(r() * 2) : 3 + Math.floor(r() * 2);
-      var bath = Math.max(2, beds - Math.floor(r() * 2));
-      var egpM = Math.round(c.priceM * MULT[type] * (0.85 + r() * 0.5) * 10) / 10;
-      var usd = Math.round(c.rent * MULT[type] * (0.85 + r() * 0.5) / 50) * 50;
-      var ai = Math.round(Math.min(9.9, Math.max(7.8, c.ai + (r() - 0.5) * 0.8)) * 10) / 10;
-      var floor = type === 'Villa' || type === 'Twin House' || type === 'Townhouse' ? 'G+2' : (1 + Math.floor(r() * 8)) + '';
+    const r = rng(hash(name));
+    const count = 8 + Math.floor(r() * 17); // 8–24 units
+    const abbr = name.replace(/\(.*\)/, '').trim().split(/\s+/).map(function (w: any) { return w[0]; }).join('').toUpperCase().slice(0, 3);
+    const units: any[] = [];
+    for (let i = 0; i < count; i++) {
+      const type = TYPES[Math.floor(r() * TYPES.length)];
+      const span = AREAS[type];
+      const area = Math.round((span[0] + r() * (span[1] - span[0])) / 5) * 5;
+      const mode = r() < 0.3 ? 'rent' : 'sale';
+      const beds = type === 'Villa' ? 4 + Math.floor(r() * 2) : type === 'Apartment' ? 2 + Math.floor(r() * 2) : 3 + Math.floor(r() * 2);
+      const bath = Math.max(2, beds - Math.floor(r() * 2));
+      const egpM = Math.round(c.priceM * MULT[type] * (0.85 + r() * 0.5) * 10) / 10;
+      const usd = Math.round(c.rent * MULT[type] * (0.85 + r() * 0.5) / 50) * 50;
+      const ai = Math.round(Math.min(9.9, Math.max(7.8, c.ai + (r() - 0.5) * 0.8)) * 10) / 10;
+      const floor = type === 'Villa' || type === 'Twin House' || type === 'Townhouse' ? 'G+2' : (1 + Math.floor(r() * 8)) + '';
       units.push({
         code: abbr + '-' + type.charAt(0) + (101 + i),
         type: type, beds: beds, bath: bath, area: area, floor: floor,

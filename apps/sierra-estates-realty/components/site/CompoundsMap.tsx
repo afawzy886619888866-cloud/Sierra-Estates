@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
-import { Compass, Filter, Search, RotateCcw, MapPin, Sparkles, Building2 } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 import { HZDATA } from '@/lib/site/data';
 
 export interface MapCompound {
