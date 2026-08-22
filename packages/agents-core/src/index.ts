@@ -11,4 +11,7 @@ export * from './wealth-engine';
 export * from './memo-generator';
 export * from './voice-transcriber';
 export * from './fx-gold-engine';
+export * from './contract-engine';
+export * from './arbitrage-scanner';
+export * from './vip-concierge';
 
