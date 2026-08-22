@@ -57,6 +57,7 @@ To invoke a slash command, read the corresponding workflow file:
 **ALL board writes MUST use the Command Deck API. Direct SQLite writes, Python scripts, and filesystem substitutes are non-canonical and violate GUARDRAILS write-boundary policy.**
 
 Resolve API location:
+
 1. Read `port` from `.amphion/config.json`.
 2. If `port` is missing or config.json does not exist, run `/amphion` to configure the workspace.
 3. Base URL is `http://127.0.0.1:{resolvedPort}`.
@@ -66,7 +67,7 @@ All write operations use MCP bridge tools when available. Tool schemas carry ful
 If MCP tools are unavailable, fall back to the REST API:
 
 | Action | Method | Route | Required Fields |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Read state | GET | `/api/state` | — |
 | Find (board map) | GET | `/api/find` | — (optional: `?q=`, `?milestoneId=`, `?list=`) |
 | Create chart | POST | `/api/charts` | `boardId`, `title`; opt: `markdown`, `description` |
@@ -85,6 +86,7 @@ If MCP tools are unavailable, fall back to the REST API:
 Each MCD contract card is a discrete context window. Treat each card as an isolated task.
 
 **Task start (fresh session):**
+
 1. `GET /api/find` (or `GET /api/state`) to resolve active board + milestone.
 2. `GET /api/memory/query?key=task.{issueNumber}.handoff` to load prior handoff state if it exists.
 
