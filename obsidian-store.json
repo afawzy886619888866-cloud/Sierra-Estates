@@ -16309,5 +16309,219 @@
     ],
     "createdAt": "2026-08-21T23:57:23.304Z",
     "updatedAt": "2026-08-21T23:57:23.304Z"
+  },
+  "listing-1787364749655-bwjb1": {
+    "id": "listing-1787364749655-bwjb1",
+    "value": {
+      "id": "listing-1787364749655-bwjb1",
+      "sierraCode": "MI-S-4F-38M+G+P",
+      "type": "Standalone Villa",
+      "location": "Mivida",
+      "compound": "Mivida",
+      "price": 38000000,
+      "currency": "EGP",
+      "area_sqm": 450,
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "finishing": "fully_finished",
+      "features": [
+        "G",
+        "P"
+      ],
+      "urgencyScore": 95,
+      "valuationScore": 90,
+      "contact_info": "+201001234567 (Broker Karim)",
+      "sourceGroup": "New Cairo Elite Brokers (VIP)",
+      "notes": "🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري.",
+      "status": "available",
+      "createdAt": "2026-08-22T02:12:29.655Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "broker-listing",
+      "mivida",
+      "standalone villa"
+    ],
+    "createdAt": "2026-08-22T02:12:29.662Z",
+    "updatedAt": "2026-08-22T02:12:29.662Z"
+  },
+  "whatsapp-ingest-1787364749667": {
+    "id": "whatsapp-ingest-1787364749667",
+    "value": {
+      "rawMessage": "🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري.",
+      "extracted": {
+        "type": "Standalone Villa",
+        "location": "Mivida",
+        "compound": "Mivida",
+        "price": 38000000,
+        "currency": "EGP",
+        "area_sqm": 450,
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "finishing": "fully_finished",
+        "features": [
+          "G",
+          "P"
+        ],
+        "urgencyScore": 95,
+        "valuationScore": 90,
+        "sierraCode": "MI-S-4F-38M+G+P",
+        "contact_info": "+201001234567 (Broker Karim)",
+        "sourceGroup": "New Cairo Elite Brokers (VIP)",
+        "notes": "🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري."
+      },
+      "source": "New Cairo Elite Brokers (VIP)",
+      "sender": "+201001234567 (Broker Karim)",
+      "ingestedAt": "2026-08-22T02:12:29.667Z"
+    },
+    "tags": [
+      "whatsapp-ingest",
+      "inventory-created",
+      "mivida"
+    ],
+    "createdAt": "2026-08-22T02:12:29.671Z",
+    "updatedAt": "2026-08-22T02:12:29.671Z"
+  },
+  "listing-1787364749688-asy7b": {
+    "id": "listing-1787364749688-asy7b",
+    "value": {
+      "id": "listing-1787364749688-asy7b",
+      "sierraCode": "HY-P-3S-16.5M+R+L",
+      "type": "Penthouse",
+      "location": "Hyde Park",
+      "compound": "Hyde Park",
+      "price": 16500000,
+      "currency": "EGP",
+      "area_sqm": 200,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "finishing": "semi_finished",
+      "features": [
+        "R",
+        "L"
+      ],
+      "urgencyScore": 60,
+      "valuationScore": 75,
+      "contact_info": "+201119876543 (Advisor Mostafa)",
+      "sourceGroup": "East Cairo Commercial & Luxury Network",
+      "notes": "للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات.",
+      "status": "available",
+      "createdAt": "2026-08-22T02:12:29.688Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "broker-listing",
+      "hyde-park",
+      "penthouse"
+    ],
+    "createdAt": "2026-08-22T02:12:29.693Z",
+    "updatedAt": "2026-08-22T02:12:29.693Z"
+  },
+  "whatsapp-ingest-1787364749697": {
+    "id": "whatsapp-ingest-1787364749697",
+    "value": {
+      "rawMessage": "للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات.",
+      "extracted": {
+        "type": "Penthouse",
+        "location": "Hyde Park",
+        "compound": "Hyde Park",
+        "price": 16500000,
+        "currency": "EGP",
+        "area_sqm": 200,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "finishing": "semi_finished",
+        "features": [
+          "R",
+          "L"
+        ],
+        "urgencyScore": 60,
+        "valuationScore": 75,
+        "sierraCode": "HY-P-3S-16.5M+R+L",
+        "contact_info": "+201119876543 (Advisor Mostafa)",
+        "sourceGroup": "East Cairo Commercial & Luxury Network",
+        "notes": "للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات."
+      },
+      "source": "East Cairo Commercial & Luxury Network",
+      "sender": "+201119876543 (Advisor Mostafa)",
+      "ingestedAt": "2026-08-22T02:12:29.697Z"
+    },
+    "tags": [
+      "whatsapp-ingest",
+      "inventory-created",
+      "hyde-park"
+    ],
+    "createdAt": "2026-08-22T02:12:29.703Z",
+    "updatedAt": "2026-08-22T02:12:29.703Z"
+  },
+  "listing-1787364749708-ibkbs": {
+    "id": "listing-1787364749708-ibkbs",
+    "value": {
+      "id": "listing-1787364749708-ibkbs",
+      "sierraCode": "PA-A-3F-11.8M+C",
+      "type": "Apartment",
+      "location": "Palm Hills",
+      "compound": "Palm Hills",
+      "price": 11800000,
+      "currency": "EGP",
+      "area_sqm": 195,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "finishing": "fully_finished",
+      "features": [
+        "C"
+      ],
+      "urgencyScore": 60,
+      "valuationScore": 75,
+      "contact_info": "+201223456789 (Broker Sherif)",
+      "sourceGroup": "Palm Hills & Golden Square Direct Owners",
+      "notes": "شقة فاخرة في بالم هيلز Palm Hills New Cairo مساحة 195 متر، 3 غرف نوم، تشطيب كامل Fully Finished، دور أول كورنر بحري. المطلوب 11.8 مليون كاش. جاهزة للمعاينة واستلام فوري.",
+      "status": "available",
+      "createdAt": "2026-08-22T02:12:29.708Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "broker-listing",
+      "palm-hills",
+      "apartment"
+    ],
+    "createdAt": "2026-08-22T02:12:29.712Z",
+    "updatedAt": "2026-08-22T02:12:29.712Z"
+  },
+  "whatsapp-ingest-1787364749716": {
+    "id": "whatsapp-ingest-1787364749716",
+    "value": {
+      "rawMessage": "شقة فاخرة في بالم هيلز Palm Hills New Cairo مساحة 195 متر، 3 غرف نوم، تشطيب كامل Fully Finished، دور أول كورنر بحري. المطلوب 11.8 مليون كاش. جاهزة للمعاينة واستلام فوري.",
+      "extracted": {
+        "type": "Apartment",
+        "location": "Palm Hills",
+        "compound": "Palm Hills",
+        "price": 11800000,
+        "currency": "EGP",
+        "area_sqm": 195,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "finishing": "fully_finished",
+        "features": [
+          "C"
+        ],
+        "urgencyScore": 60,
+        "valuationScore": 75,
+        "sierraCode": "PA-A-3F-11.8M+C",
+        "contact_info": "+201223456789 (Broker Sherif)",
+        "sourceGroup": "Palm Hills & Golden Square Direct Owners",
+        "notes": "شقة فاخرة في بالم هيلز Palm Hills New Cairo مساحة 195 متر، 3 غرف نوم، تشطيب كامل Fully Finished، دور أول كورنر بحري. المطلوب 11.8 مليون كاش. جاهزة للمعاينة واستلام فوري."
+      },
+      "source": "Palm Hills & Golden Square Direct Owners",
+      "sender": "+201223456789 (Broker Sherif)",
+      "ingestedAt": "2026-08-22T02:12:29.716Z"
+    },
+    "tags": [
+      "whatsapp-ingest",
+      "inventory-created",
+      "palm-hills"
+    ],
+    "createdAt": "2026-08-22T02:12:29.721Z",
+    "updatedAt": "2026-08-22T02:12:29.721Z"
   }
 }
