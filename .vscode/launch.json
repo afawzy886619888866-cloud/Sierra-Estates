@@ -1,6 +1,49 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
+
+
+        
+
+        {
+            "name": "Attach to process",
+            "type": "abl",
+            "request": "attach",
+            "mode": "pasoe",
+            "hostname": "Host name or IP address of PASOE instance",
+            "port": 8810,
+            "localRoot": "${workspaceFolder}",
+            "appName": "pasoe1",
+            "password": "",
+            "ssl": false,
+            "refProjects": []
+        },
+        {
+            "name": "Attach to process",
+            "type": "abl",
+            "request": "attach",
+            "hostname": "Host name or IP address of process to be debugged",
+            "mode": "legacy",
+            "port": 3099,
+            "localRoot": "${workspaceFolder}",
+            "pause": true,
+            "refProjects": []
+        },
+        
+
+
+        {
+            "name": "Attach to process",
+            "type": "abl",
+            "request": "attach",
+            "hostname": "Host name or IP address of process to be debugged",
+            "mode": "legacy",
+            "port": 3099,
+            "localRoot": "${workspaceFolder}",
+            "pause": true,
+            "refProjects": []
+        },
         {
             "type": "aws-sam",
             "request": "direct-invoke",
