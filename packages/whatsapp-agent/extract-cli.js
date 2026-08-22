@@ -56,46 +56,74 @@ client.on('ready', async () => {
   console.log('════════════════════════════════════════════════\n');
 
   try {
-    console.log('⏳ Allowing 10s for WhatsApp DOM chat models to hydrate...');
-    await new Promise(r => setTimeout(r, 10000));
+    console.log('⏳ Synchronizing with WhatsApp Web...');
+    await new Promise(r => setTimeout(r, 6000));
 
-    let chats = [];
-    for (let attempt = 1; attempt <= 8; attempt++) {
-      try {
-        chats = await client.getChats();
-        if (chats && chats.length > 0) {
-          console.log(`✅ Loaded ${chats.length} total chats from WhatsApp!`);
-          break;
+    let targetChats = [];
+
+    // TIER 1: Evaluate Store directly with safe serialization
+    try {
+      const rawGroups = await client.pupPage.evaluate(() => {
+        const results = [];
+        try {
+          if (window.Store && window.Store.Chat) {
+            const models = window.Store.Chat.models || (window.Store.Chat._models) || [];
+            for (const m of models) {
+              const gid = (m.id && m.id._serialized) ? m.id._serialized : (typeof m.id === 'string' ? m.id : '');
+              const gname = m.name || m.formattedTitle || (m.contact ? m.contact.name : '') || '';
+              const isGrp = m.isGroup || gid.includes('@g.us');
+              if (isGrp && gname) {
+                results.push({ id: gid, name: gname });
+              }
+            }
+          }
+        } catch (e) {}
+        return results;
+      });
+
+      if (rawGroups && rawGroups.length > 0) {
+        console.log(`✅ Retrieved ${rawGroups.length} groups directly from WhatsApp Store!`);
+        for (const rg of rawGroups) {
+          try {
+            const c = await client.getChatById(rg.id);
+            if (c) targetChats.push(c);
+          } catch (e) {
+            targetChats.push(rg);
+          }
         }
+      }
+    } catch (e) {
+      console.warn('⚠️ Direct Store evaluation note:', e.message);
+    }
+
+    // TIER 2: Fallback to standard client.getChats if needed
+    if (targetChats.length === 0) {
+      try {
+        const allChats = await client.getChats();
+        targetChats = allChats.filter(c => c.isGroup);
+        console.log(`✅ Loaded ${targetChats.length} groups via standard client.getChats()`);
       } catch (err) {
-        console.warn(`⏳ Store sync attempt ${attempt}/8 failed: ${err.message}. Retrying in 4s...`);
-        await new Promise(r => setTimeout(r, 4000));
+        console.warn('⚠️ Standard getChats note:', err.message);
       }
     }
 
-    if (!chats || chats.length === 0) {
-      console.error('❌ Could not retrieve chats list.');
-      process.exit(1);
-    }
-
-    // Filter target groups
-    const targetGroups = chats.filter(c => 
-      c.isGroup && (
-        c.name.toLowerCase().includes('owner') ||
-        c.name.toLowerCase().includes('unit') ||
-        c.name.toLowerCase().includes('inventory') ||
-        c.name.includes('أغسطس') ||
-        c.name.includes('ملاك') ||
-        c.name.includes('شقق') ||
-        c.name.includes('عقارات') ||
-        c.name.includes('مشروع')
-      )
-    );
-
-    console.log(`\n🎯 Found ${targetGroups.length} Matching Owner / Inventory Groups:`);
-    targetGroups.forEach((g, i) => {
-      console.log(`   ${i + 1}. "${g.name}" (Unread: ${g.unreadCount || 0})`);
+    // Filter relevant Owner / Inventory groups
+    const matchedGroups = targetChats.filter(c => {
+      const n = (c.name || '').toLowerCase();
+      return (
+        n.includes('owner') ||
+        n.includes('unit') ||
+        n.includes('inventory') ||
+        n.includes('أغسطس') ||
+        n.includes('ملاك') ||
+        n.includes('شقق') ||
+        n.includes('عقارات') ||
+        n.includes('مشروع')
+      );
     });
+
+    console.log(`\n🎯 Matched ${matchedGroups.length} Target Groups for Extraction:`);
+    matchedGroups.forEach((g, idx) => console.log(`   ${idx + 1}. "${g.name}"`));
 
     const photosDir = path.join(__dirname, 'extracted_photos');
     if (!fs.existsSync(photosDir)) fs.mkdirSync(photosDir, { recursive: true });
@@ -109,7 +137,11 @@ client.on('ready', async () => {
 
       let messages = [];
       try {
-        messages = await group.fetchMessages({ limit: 300 });
+        let chatInstance = group;
+        if (typeof group.fetchMessages !== 'function') {
+          chatInstance = await client.getChatById(group.id);
+        }
+        messages = await chatInstance.fetchMessages({ limit: 300 });
         console.log(`   Fetched ${messages.length} recent messages.`);
       } catch (err) {
         console.warn(`   ⚠️ Fetch error for "${group.name}":`, err.message);
