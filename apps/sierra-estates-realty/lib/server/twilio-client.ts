@@ -54,14 +54,16 @@ export function isValidTwilioSignature(
   signatureHeader: string | null,
   url: string,
   params: Record<string, string>,
+  authTokenOverride?: string,
 ): boolean {
-  if (!signatureHeader || !TWILIO_AUTH_TOKEN) return false;
+  const token = authTokenOverride || process.env.TWILIO_AUTH_TOKEN;
+  if (!signatureHeader || !token) return false;
   try {
     const data = Object.keys(params)
       .sort()
       .reduce((acc, key) => acc + key + params[key], url);
     const expected = crypto
-      .createHmac('sha1', TWILIO_AUTH_TOKEN)
+      .createHmac('sha1', token)
       .update(Buffer.from(data, 'utf-8'))
       .digest('base64');
     const sigBuf = Buffer.from(signatureHeader);
