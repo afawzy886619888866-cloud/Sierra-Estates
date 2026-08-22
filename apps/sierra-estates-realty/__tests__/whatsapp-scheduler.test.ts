@@ -1,11 +1,10 @@
-import { Timestamp } from 'firebase-admin/firestore';
-import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { enqueueWhatsAppJob } from '../lib/server/whatsapp-queue';
 
 // Minimal fake Firestore collection for test isolation
 const mockCollection = jest.fn();
 const mockAdd = jest.fn();
 
-jest.mock('@/lib/server/firebase-admin', () => ({
+jest.mock('../lib/server/firebase-admin', () => ({
   adminDb: {
     collection: (name: string) => {
       mockCollection(name);
