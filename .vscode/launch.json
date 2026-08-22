@@ -1,6 +1,17 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
+        {
+            "name": "Debug program / Interactive GUI",
+            "type": "abl",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "graphicalMode": true,
+            "pause": false,
+            "refProjects": []
+        },
         {
             "name": "Containers .NET Attach (Preview)",
             "type": "docker",
