@@ -122,7 +122,7 @@
             "processId": "${command:pickProcess}"
         },
         {
-            "type": "msedge",
+            "type": "pwa-msedge",
             "name": "Launch Microsoft Edge",
             "request": "launch",
             "runtimeArgs": [
@@ -134,7 +134,7 @@
             }
         },
         {
-            "type": "msedge",
+            "type": "pwa-msedge",
             "name": "Launch Microsoft Edge in headless mode",
             "request": "launch",
             "runtimeArgs": [
