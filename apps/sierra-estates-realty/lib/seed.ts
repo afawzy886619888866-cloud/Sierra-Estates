@@ -154,30 +154,9 @@ export const SEED_LISTINGS: Listing[] = [
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
-    "area": 150,
-    "egpM": 8,
-    "usd": 1500,
-    "aiScore": 8.5,
-    "tag": null,
-    "mode": "sale",
-    "agent": "أحمد بدر (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    "status": "available",
-    "description": "undefined in New Cairo - undefined Bedrooms, undefinedm²",
-    "featured": false
-  },
-  {
-    "id": "OMA517",
-    "code": "OMA517",
-    "compound": "Madinaty",
-    "zone": "Madinaty",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
     "area": 200,
-    "egpM": 35000,
-    "usd": 700,
+    "egpM": 34000,
+    "usd": 680,
     "aiScore": 9.2,
     "tag": "Direct Drop",
     "mode": "rent",
@@ -185,8 +164,8 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
-    "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": true
+    "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
+    "featured": false
   },
   {
     "id": "OFM706",
@@ -207,54 +186,12 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
     "description": "متاح اكثر من وحده",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OFN708",
     "code": "OFN708",
     "compound": "Fifth square",
-    "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
-    "area": 150,
-    "egpM": 8,
-    "usd": 1500,
-    "aiScore": 8.5,
-    "tag": null,
-    "mode": "sale",
-    "agent": "احمد (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-    "status": "available",
-    "description": "undefined in Fifth square - undefined Bedrooms, undefinedm²",
-    "featured": false
-  },
-  {
-    "id": "OR2-5R-2M$",
-    "code": "OR2-5R-2M$",
-    "compound": "CFC",
-    "zone": "5th Settlement",
-    "type": "Villa",
-    "beds": 6,
-    "bath": 5,
-    "area": 690,
-    "egpM": 2,
-    "usd": 40000,
-    "aiScore": 9.3,
-    "tag": "Featured",
-    "mode": "sale",
-    "agent": "L (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    "status": "available",
-    "description": "Villa in CFC - 6 Bedrooms, 690m²",
-    "featured": false
-  },
-  {
-    "id": "GRD-520-35K",
-    "code": "GRD-520-35K",
-    "compound": "gardina city",
     "zone": "5th Settlement",
     "type": "Apartment",
     "beds": 3,
@@ -269,7 +206,7 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
-    "description": "Apartment in gardina city - 3 Bedrooms, 200m²",
+    "description": "Apartment in Fifth square - 3 Bedrooms, 200m²",
     "featured": false
   },
   {
@@ -291,7 +228,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OZH429",
@@ -354,7 +291,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OSA540",
@@ -396,7 +333,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "MT-HTH-4R-260K",
@@ -459,7 +396,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
     "status": "available",
     "description": "Apartment in CFC - 2 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM739",
@@ -501,7 +438,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
     "status": "available",
     "description": "Villa in CFC - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OFM755",
@@ -564,7 +501,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Town House in Hyde Park - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OMM561",
@@ -606,7 +543,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OMA160",
@@ -669,7 +606,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OMM001",
@@ -711,7 +648,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OML552",
@@ -774,7 +711,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     "status": "available",
     "description": "Town House in Up Town Cairo - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "O422",
@@ -816,7 +753,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Floor With Garden in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OMD952",
@@ -879,7 +816,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM469",
@@ -921,7 +858,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "GRD-520-35K",
@@ -973,27 +910,6 @@ export const SEED_LISTINGS: Listing[] = [
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
-    "area": 185,
-    "egpM": 30000,
-    "usd": 600,
-    "aiScore": 9.1,
-    "tag": "Verified Owner",
-    "mode": "rent",
-    "agent": "mostafa younis (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
-    "status": "available",
-    "description": "undefined in Fifth square - undefined Bedrooms, 185m²",
-    "featured": false
-  },
-  {
-    "id": "NC-3F-7.6M",
-    "code": "NC-3F-7.6M",
-    "compound": "other",
-    "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
     "area": 200,
     "egpM": 35000,
     "usd": 700,
@@ -1005,34 +921,13 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
     "description": "دور رابع +2 اسانسير+3نوم+3 حمام+2ريشبيسن",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM999",
     "code": "OGM999",
     "compound": "New Cairo",
     "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
-    "area": 150,
-    "egpM": 7.5,
-    "usd": 150000,
-    "aiScore": 9.2,
-    "tag": "Featured",
-    "mode": "sale",
-    "agent": "محمد غريب (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
-    "status": "available",
-    "description": "undefined in New Cairo - undefined Bedrooms, undefinedm²",
-    "featured": true
-  },
-  {
-    "id": "RERH-3F-40K",
-    "code": "RERH-3F-40K",
-    "compound": "rehab",
-    "zone": "Rehab",
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
@@ -1046,7 +941,7 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
-    "description": "Apartment in rehab - 3 Bedrooms, 200m²",
+    "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
   },
   {
