@@ -115,7 +115,7 @@
             "type": "debugpy",
             "request": "attach",
             "processId": "${command:pickProcess}"
-        },
+        }
         {
             "type": "msedge",
             "name": "Launch Microsoft Edge",
@@ -145,7 +145,7 @@
             "type": "vscode-edge-devtools.debug",
             "name": "Open Edge DevTools",
             "request": "attach",
-            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html", // Provide your project's url to finish configuring
+            "url": "c:\\Users\\sierr\\.antigravity-ide\\extensions\\ms-edgedevtools.vscode-edge-devtools-2.1.10-universal\\out\\startpage\\index.html"
             "presentation": {
                 "hidden": true
             }
