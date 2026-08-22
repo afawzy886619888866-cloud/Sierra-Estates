@@ -5,7 +5,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { COLLECTIONS, type WhatsAppMessagePurpose } from '@/lib/models/schema';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
-import { verifyAuthToken } from '@/lib/server/auth-guard';
+import { verifyRequest } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,7 @@ const scheduleMessageSchema = z.object({
     'closer-handshake',
     'campaign-broadcast',
     'custom-outreach',
-  ]).default('custom-outreach'),
+  ] as const).default('custom-outreach'),
   templateName: z.string().optional(),
   templateParams: z.record(z.string(), z.string()).optional(),
   campaignName: z.string().max(100).optional(),
@@ -42,7 +42,7 @@ const scheduleMessageSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = await verifyAuthToken(req);
+    const auth = await verifyRequest(req);
     // Allow service/internal or authenticated admin requests
     if (!auth.authenticated && process.env.NODE_ENV === 'production') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .get();
 
-    const jobs = snap.docs.map((doc) => {
+    const jobs = snap.docs.map((doc: any) => {
       const data = doc.data();
       return {
         id: doc.id,
