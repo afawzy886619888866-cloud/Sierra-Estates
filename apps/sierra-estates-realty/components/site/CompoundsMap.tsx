@@ -54,7 +54,7 @@ export default function CompoundsMap({
   const [activeDistrict, setActiveDistrict] = useState<string>('all');
   const [activeTier, setActiveTier] = useState<string>('all');
   const [mapSearch, setMapSearch] = useState<string>('');
-  const [currentZoom, setCurrentZoom] = useState<number>(12);
+  const [_currentZoom, setCurrentZoom] = useState<number>(12);
 
   // Extract unique zones/districts
   const districts = useMemo(() => {
@@ -80,6 +80,7 @@ export default function CompoundsMap({
   // Initialize Leaflet Map
   useEffect(() => {
     let cancelled = false;
+    const currentMarkers = markersMapRef.current;
     (async () => {
       const L = (await import('leaflet')).default;
       await import('leaflet/dist/leaflet.css');
@@ -118,7 +119,7 @@ export default function CompoundsMap({
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
-      markersMapRef.current.clear();
+      currentMarkers.clear();
     };
   }, []);
 
