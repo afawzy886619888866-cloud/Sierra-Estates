@@ -1506,6 +1506,23 @@ function AdminApp() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'signout' }),
+      });
+      const { auth } = await import('@/lib/firebase');
+      const { signOut } = await import('firebase/auth');
+      await signOut(auth).catch(() => {});
+    } catch (e) {
+      console.warn('Signout error:', e);
+    } finally {
+      window.location.href = '/admin/login';
+    }
+  };
+
   return (
     <>
       {/* Mobile overlay */}
@@ -1534,6 +1551,9 @@ function AdminApp() {
             </button>
             <a href="/" className="topbar-pill" style={{textDecoration:'none'}}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+            <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>
+              {isAr ? 'خروج' : 'Sign Out'}
+            </button>
           </div>
         </div>
         <div id="content">{renderPage()}</div>
