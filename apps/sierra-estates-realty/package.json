@@ -14,6 +14,8 @@
         "test:ci": "jest --ci --coverage --testPathPatterns=__tests__"
     },
     "dependencies": {
+        "@ai-sdk/gateway": "^4.0.62",
+        "ai": "^4.1.60",
         "@arizeai/openinference-semantic-conventions": "^2.2.0",
         "@google-cloud/storage": "^8.0.1",
         "@google/generative-ai": "^0.24.1",
