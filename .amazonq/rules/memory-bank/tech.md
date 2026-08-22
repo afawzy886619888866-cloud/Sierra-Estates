@@ -17,10 +17,11 @@
 
 ### Next.js App (`apps/sierra-estates-realty`)
 
-- **Next.js** ^16.2.6 — App Router, React Server Components, API routes
+- **Next.js** ^16.3.1 — App Router, React Server Components, API routes
 - **React** 19.2.8 (exact — Expo compatibility pin)
 - **Tailwind CSS** ^4 — utility-first styling
-- **Framer Motion** ^12 — animations
+- **Framer Motion** ^13 — animations
+- **GSAP & @gsap/react** ^3.15 — high-performance smooth animations & spatial motion
 - **Three.js / @react-three/fiber / @react-three/drei** — 3D property visualization
 - **Spline** (@splinetool/react-spline) — 3D scene embedding
 - **Leaflet / react-leaflet** — interactive property maps
