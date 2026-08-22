@@ -614,8 +614,8 @@ export interface WhatsAppMessageJob extends BaseDocument {
 
   assignedNumberId?: string;    // FK -> whatsapp_numbers, set once claimed
   status: WhatsAppMessageQueueStatus;
-  scheduledFor?: Timestamp;     // earliest send time; used to defer outside operating hours
-  sentAt?: Timestamp;
+  scheduledFor?: Timestamp | any;     // earliest send time; used to defer outside operating hours
+  sentAt?: Timestamp | any;
 
   twilioMessageSid?: string;
   twilioStatus?: string;        // raw status string from Twilio's callback

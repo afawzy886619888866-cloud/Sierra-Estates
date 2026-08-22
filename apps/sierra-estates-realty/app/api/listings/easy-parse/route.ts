@@ -132,11 +132,10 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
   // SBR Code
   const codeMeta = buildSierraCodeMetadata({
     compound: detectedCompound,
-    propertyType,
-    bedrooms: beds,
-    finishing: finishing === 'Core & Shell' ? 'core_and_shell' : finishing === 'Semi Finished' ? 'semi_finished' : 'fully_finished',
+    rooms: beds,
+    furnishingStatus: finishing === 'Core & Shell' ? 'core_and_shell' : finishing === 'Semi Finished' ? 'semi_finished' : 'fully_finished',
     price,
-    features: gardenArea > 0 ? ['garden'] : [],
+    features: gardenArea > 0 ? ['GD'] : ['PR'],
   });
 
   return {
@@ -152,7 +151,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
     ownerName: 'Direct Client Intake',
     mobile,
     features: gardenArea > 0 ? ['Garden', 'Prime Location'] : ['Prime Location'],
-    sierraCode: codeMeta.sierraCode || `SE-${detectedCompound.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-4)}`,
+    sierraCode: codeMeta?.code || `SE-${detectedCompound.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-4)}`,
     aiScore: 9.4,
     aiSummary: `${propertyType} in ${detectedCompound} featuring ${beds} bedrooms, ${baths} bathrooms, with ${finishing} finishing.`,
     confidence: 0.85,
@@ -214,11 +213,10 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
 
         const codeMeta = buildSierraCodeMetadata({
           compound: extracted.compound || 'New Cairo',
-          propertyType: extracted.propertyType || 'Apartment',
-          bedrooms: extracted.beds || 3,
-          finishing: extracted.finishing === 'Core & Shell' ? 'core_and_shell' : extracted.finishing === 'Semi Finished' ? 'semi_finished' : 'fully_finished',
-          price: extracted.price || 10000000,
-          features: extracted.features || [],
+          rooms: Number(extracted.beds) || 3,
+          furnishingStatus: extracted.finishing === 'Core & Shell' ? 'core_and_shell' : extracted.finishing === 'Semi Finished' ? 'semi_finished' : 'fully_finished',
+          price: Number(extracted.price) || 10000000,
+          features: ['PR'],
         });
 
         const result: ParsedListingResult = {
@@ -235,7 +233,7 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
           ownerName: extracted.ownerName || 'Verified Owner',
           mobile: extracted.mobile || '+201000000000',
           features: Array.isArray(extracted.features) ? extracted.features : ['Prime Location'],
-          sierraCode: codeMeta.sierraCode || `SE-AIR-${Date.now().toString().slice(-4)}`,
+          sierraCode: codeMeta?.code || `SE-AIR-${Date.now().toString().slice(-4)}`,
           aiScore: 9.6,
           aiSummary: extracted.aiSummary || `Exclusive ${extracted.propertyType} in ${extracted.compound}.`,
           confidence: extracted.confidence || 0.95,
