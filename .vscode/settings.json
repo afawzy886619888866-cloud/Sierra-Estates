@@ -1,0 +1,7 @@
+{
+    "compilets.autoStart": true,
+    "sql.defaultDatabaseType": "postgres",
+    "files.associations": {
+        "*.sql": "postgres"
+    }
+}
