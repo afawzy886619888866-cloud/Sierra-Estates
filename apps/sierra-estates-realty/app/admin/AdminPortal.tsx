@@ -1559,7 +1559,7 @@ function AdminApp() {
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
       case 'alerts':return <AlertsView lang={langKey}/>;
-      case 'agents':return <AgentsPage T={T}/>;
+      case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T}/>;
       case 'openclaw':return <OpenClawPage T={T}/>;
       case 'nexus':return <NexusAIPage T={T}/>;
