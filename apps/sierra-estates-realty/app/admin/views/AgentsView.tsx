@@ -32,7 +32,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
   const [agents, setAgents] = useState<AgentData[]>([]);
   const [systemNeeds, setSystemNeeds] = useState<SystemNeed[]>([]);
   const [insights, setInsights] = useState<InsightsSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [simulatorStatus, setSimulatorStatus] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; text: string; time: string }>>([
@@ -92,7 +92,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
       setSimulatorStatus(isAr ? '✓ تم إرسال نبضات الأسطول بنجاح' : '✓ All agent heartbeats registered successfully!');
       setTimeout(() => setSimulatorStatus(''), 4000);
       fetchAgentTelemetry();
-    } catch (e) {
+    } catch (_e) {
       setSimulatorStatus(isAr ? 'حدث خطأ أثناء المحاكاة' : 'Simulator error');
     }
   };
@@ -123,7 +123,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
           { role: 'ai', text: 'Proxy received inquiry. Inventory and pricing verified for New Cairo.', time: nowTime },
         ]);
       }
-    } catch (e) {
+    } catch (_e) {
       setChatMessages((prev) => [
         ...prev,
         { role: 'ai', text: 'Local agent engine: Request received and routed to Mivida/Hyde Park portfolio.', time: nowTime },
