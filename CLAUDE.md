@@ -162,7 +162,11 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
    - Keep all working branches (`main`, `feature/admin-page`, `feature/agents-and-bots`, `feature/workflow`, `feature/client-page`) in sync without trailing commits.
 4. **Vercel Project Routing:**
    - `sierra-estates.net` ➔ `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` (Next.js client)
+<<<<<<< HEAD
    - `admin.sierra-estates.net` ➔ `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` (Next.js Admin / Proxy)
+=======
+   - `admin.sierra-estates.net` ➔ `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` (Vite Admin Dashboard)
+>>>>>>> origin/claude/client-page-react-three-woi3k8
 
 ---
 
