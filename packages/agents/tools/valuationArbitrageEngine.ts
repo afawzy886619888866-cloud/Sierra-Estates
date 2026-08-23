@@ -186,7 +186,7 @@ export class RealEstateValuationAgent {
       investment_metrics: {
         payback_period_years: paybackYears,
         target_cap_rate_range: capBaseline.label,
-        total_premium_lift_pct: totalBoost * 100,
+        total_premium_lift_pct: Math.round(totalBoost * 100),
         value_add_premiums_detected: detectedPremiums,
         arbitrage_alert: arbitrageAlert,
         is_arbitrage_play: isArbitragePlay,
