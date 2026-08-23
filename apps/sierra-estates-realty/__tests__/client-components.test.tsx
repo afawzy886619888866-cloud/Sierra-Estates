@@ -28,28 +28,29 @@ describe('Client Components Suite', () => {
 
   describe('AddListingForm', () => {
     it('renders without throwing in English', () => {
-      expect(() => render(<AddListingForm lang="en" />)).not.toThrow();
+      expect(() => render(<AddListingForm defaultLang="en" />)).not.toThrow();
     });
 
     it('renders without throwing in Arabic', () => {
-      expect(() => render(<AddListingForm lang="ar" />)).not.toThrow();
+      expect(() => render(<AddListingForm defaultLang="ar" />)).not.toThrow();
     });
 
     it('renders with default props', () => {
       expect(() => render(<AddListingForm />)).not.toThrow();
     });
 
-    it('contains listing submission fields', () => {
-      const html = render(<AddListingForm lang="en" />);
+    it('contains listing submission fields in English', () => {
+      const html = render(<AddListingForm defaultLang="en" />);
       expect(html).toContain('List your unit with');
       expect(html).toContain('Sierra Estates');
       expect(html).toContain('Compound');
       expect(html).toContain('Submit listing');
     });
 
-    it('contains Arabic copy when lang=ar', () => {
-      const html = render(<AddListingForm lang="ar" />);
-      expect(html).toContain('سجّل عقارك مع');
+    it('contains Arabic copy when defaultLang=ar', () => {
+      const html = render(<AddListingForm defaultLang="ar" />);
+      expect(html).toContain('أضف وحدتك مع');
+      expect(html).toContain('سييرا إستيتس');
     });
   });
 

@@ -97,8 +97,8 @@ type Role = 'owner' | 'broker';
 
 const digits = (v: string) => String(v || '').replace(/[^\d]/g, '');
 
-export default function AddListingForm() {
-  const [lang, setLang] = useState<Lang>('en');
+export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: Lang } = {}) {
+  const [lang, setLang] = useState<Lang>(defaultLang);
   const [theme, setTheme] = useState<Theme>('light');
 
   const [purpose, setPurpose] = useState<Purpose>('sale');
