@@ -200,6 +200,12 @@ describe('Regression & Configuration Hardening Suite', () => {
           'feature/workflow',
           'feature/admin-page',
           'feature/client-page',
+          'feature/agents-and-bots',
+          'feat/agent-memory-learning',
+          'feat/client-site-port',
+          'harness-coordinator-full',
+          'harness-coordinator-prod-ready',
+          'mcd/init',
         ];
 
         for (const b of branchesToCheck) {
