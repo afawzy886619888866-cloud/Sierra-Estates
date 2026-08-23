@@ -45,7 +45,9 @@ function initFirebase() {
       console.log(`🔥 [WhatsApp Agent] Connected to Firestore project: ${process.env.FIREBASE_PROJECT_ID}`);
       return db;
     } else {
-      console.warn('⚠️ [WhatsApp Agent] No Firebase credentials found. Running in standalone queue mode.');
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('⚠️ [WhatsApp Agent] No Firebase credentials found. Running in standalone queue mode.');
+      }
       return null;
     }
   } catch (err) {

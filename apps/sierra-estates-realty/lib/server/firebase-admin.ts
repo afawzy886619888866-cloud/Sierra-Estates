@@ -44,6 +44,11 @@ async function loadAndInitializeAdmin() {
   if (isAdminInitialized) return;
   if (initPromise) return initPromise;
 
+  // In test environment without credentials, use resilient mock fallback silently
+  if (process.env.NODE_ENV === 'test' && !process.env.FIREBASE_SERVICE_ACCOUNT_JSON && !process.env.FIREBASE_CLIENT_EMAIL) {
+    return;
+  }
+
   initPromise = (async () => {
     try {
       let getApps: any, getApp: any, initializeApp: any, cert: any;
