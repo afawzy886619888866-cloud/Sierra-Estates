@@ -27,12 +27,11 @@ google-credentials.json
 *.env
 !.env.example
 
-# Cloned Sub-repositories
-ECC/
-Client page/
-qm/
-python-docs-samples/
-python-docs-samples-gcp/
+/ECC/
+/Client page/
+/qm/
+/python-docs-samples/
+/python-docs-samples-gcp/
 .archive/
 
 # Leaked / one-off credential helpers — never commit auth helper scripts
