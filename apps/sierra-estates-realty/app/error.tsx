@@ -7,17 +7,19 @@
  * site does not load Tailwind, so utility classes would render unstyled here,
  * which is exactly when you cannot afford a broken-looking page.
  */
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 export default function ErrorPage({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error?: Error & { digest?: string };
+  reset?: () => void;
 }) {
   useEffect(() => {
-    console.error('[route-error]', error);
+    if (error) {
+      console.error('[route-error]', error);
+    }
   }, [error]);
 
   return (
