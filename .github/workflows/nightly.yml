@@ -5,6 +5,10 @@ on:
     - cron: '0 2 * * *' # 2:00 AM UTC every night
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+
 jobs:
   nightly-regression:
     name: Nightly Multi-Agent & Operational Verification
