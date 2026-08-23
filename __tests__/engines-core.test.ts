@@ -64,6 +64,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
       const result = agent.analyze({
         property_type: 'commercial',
         offered_purchase_price: 15_000_000,
+        offered_rent: 200_000, // 2.4M EGP annual rental yield on 15M purchase (6.25 years payback)
         size_sqm: 200, // 75,000 EGP/m²
         area_residential_avg_sqm_price: 80_000, // Residential avg is 80k/m²
         location: 'North 90th, New Cairo',
@@ -74,4 +75,5 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
       expect(result.investment_metrics.arbitrage_alert).toBeDefined();
     });
   });
+
 });
