@@ -72,10 +72,10 @@ describe('Admin Components Suite', () => {
       expect(() => render(<NegotiationSimulator />)).not.toThrow();
     });
 
-    it('contains Negotiation Engine title', () => {
+    it('contains Autonomous Negotiation Simulator title', () => {
       const html = render(<NegotiationSimulator />);
-      expect(html).toContain('Negotiation Engine');
-      expect(html).toContain('Simulate Multi-Round Deal');
+      expect(html).toContain('Stage-9 Autonomous Negotiation Simulator');
+      expect(html).toContain('AI Closer Leila');
     });
   });
 
