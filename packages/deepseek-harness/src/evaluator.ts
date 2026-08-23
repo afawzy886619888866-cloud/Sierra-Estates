@@ -1,4 +1,4 @@
-import { EvalScenario, EvalResult } from './types.js';
+import { EvalScenario, EvalResult } from './types';
 
 export class HarnessEvaluator {
   /**
