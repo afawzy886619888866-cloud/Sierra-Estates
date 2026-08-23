@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { evaluatePropertyValuation, ValuationInput } from '../../../../../packages/agents/tools/valuationArbitrageEngine';
+import { evaluatePropertyValuation, ValuationInput } from '@/lib/valuationArbitrageEngine';
 
 export async function POST(req: NextRequest) {
   try {
