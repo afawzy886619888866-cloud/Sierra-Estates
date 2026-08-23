@@ -13,6 +13,17 @@ interface ActivityFeedItem {
 
 const RECENT_ACTIVITIES: ActivityFeedItem[] = [
   {
+    id: 'act-0',
+    timestamp: 'Just now',
+    agent: 'openclaw_architect',
+    event: {
+      en: 'Consolidated master inventory reconciled 460 units across 19 WhatsApp & master channels',
+      ar: 'المخزون الموحد دمج 460 عقاراً عبر 19 مجموعة واتساب وشيت المخزون الرئيسي'
+    },
+    compound: 'New Cairo & Madinaty',
+    badge: 'INVENTORY_SYNC',
+  },
+  {
     id: 'act-1',
     timestamp: '2m ago',
     agent: 'vertex_omni',

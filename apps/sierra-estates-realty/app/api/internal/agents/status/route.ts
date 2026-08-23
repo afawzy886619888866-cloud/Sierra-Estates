@@ -170,9 +170,9 @@ export async function GET() {
     },
     insightsSummary: {
       latestInsight: 'Strong Secondary Resale Demand Detected in New Cairo General (Mivida & Hyde Park)',
-      confidence: 0.94,
-      action: 'Target direct-owner cash buyers with high urgency listings.',
-      monitoredUnits: 306,
+      confidence: 0.96,
+      action: 'Target direct-owner cash buyers with high urgency listings from 460 consolidated properties.',
+      monitoredUnits: 460,
     },
     timestamp: new Date().toISOString(),
   });
