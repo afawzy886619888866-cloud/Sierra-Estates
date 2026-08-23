@@ -98,7 +98,7 @@ export default function ErrorPage({
           </a>
         </div>
 
-        {error.digest && (
+        {error?.digest && (
           <p
             style={{
               fontFamily: "'JetBrains Mono', monospace",
@@ -107,7 +107,7 @@ export default function ErrorPage({
               marginTop: 26,
             }}
           >
-            Reference {error.digest}
+            Reference {error?.digest}
           </p>
         )}
       </div>
