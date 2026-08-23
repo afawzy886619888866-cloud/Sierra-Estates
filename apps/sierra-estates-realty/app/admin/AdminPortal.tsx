@@ -1249,7 +1249,7 @@ function ListingsHubPage({T}){
             <h3 style={{fontSize:16,fontWeight:600,color:'var(--gold)'}}>✦ Easy Listing AI Intake</h3>
             <button className="btn btn-ghost" onClick={()=>{setShowEasyStudio(false);fetchListings();}}>✕ Close Studio</button>
           </div>
-          <EasyListingStudio onListingCreated={()=>{fetchListings();setShowEasyStudio(false);}} />
+          <EasyListingStudio onListingPublished={()=>{fetchListings();setShowEasyStudio(false);}} />
         </div>
       )}
       <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
