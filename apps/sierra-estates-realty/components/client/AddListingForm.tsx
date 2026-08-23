@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Moon, Sun, Languages, BadgeCheck, Users, Percent,
-  ArrowRight, Check, MessageCircle, UploadCloud, X, Image as ImageIcon,
+  ArrowRight, Check, MessageCircle, UploadCloud, X,
 } from 'lucide-react';
 import s from './AddListingForm.module.css';
 

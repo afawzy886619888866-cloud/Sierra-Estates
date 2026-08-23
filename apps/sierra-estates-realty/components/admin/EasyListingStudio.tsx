@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Upload, CheckCircle2, AlertCircle, Building2, DollarSign, Home, Phone, Image as ImageIcon, Send, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
+import { Sparkles, CheckCircle2, AlertCircle, Building2, DollarSign, Phone, Image as ImageIcon, Send, RefreshCw } from 'lucide-react';
 
 interface ParsedListingData {
   compound: string;
@@ -269,7 +270,7 @@ export default function EasyListingStudio({ onListingPublished, lang = 'en' }: {
             <div className="grid grid-cols-3 gap-2 mt-2">
               {imageUrls.map((url, idx) => (
                 <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-800 aspect-video bg-slate-950">
-                  <img src={url} alt="Listing preview" className="w-full h-full object-cover" />
+                  <Image src={url} alt="Listing preview" fill unoptimized className="object-cover" />
                   <button
                     type="button"
                     onClick={() => removeImage(idx)}

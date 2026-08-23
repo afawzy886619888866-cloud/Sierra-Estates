@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Send, Users, Sparkles, CheckCircle2, AlertCircle, RefreshCw, MessageSquare, ShieldCheck, ListFilter } from 'lucide-react';
+import { Calendar, Clock, Send, Users, CheckCircle2, AlertCircle, RefreshCw, MessageSquare, ListFilter } from 'lucide-react';
 
 interface ScheduledJobItem {
   id: string;

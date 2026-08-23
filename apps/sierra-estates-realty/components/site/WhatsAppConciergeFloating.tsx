@@ -7,7 +7,7 @@ import { useSite } from '@/lib/site/SiteContext';
 const DEFAULT_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+201032206443';
 
 export default function WhatsAppConciergeFloating() {
-  const { t, isAr } = useSite();
+  const { isAr } = useSite();
   const [isOpen, setIsOpen] = useState(false);
   const [customMsg, setCustomMsg] = useState('');
 
