@@ -2841,7 +2841,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-08-16T19:40:43.194Z",
-    "updatedAt": "2026-08-23T14:37:15.657Z"
+    "updatedAt": "2026-08-23T23:34:12.970Z"
   },
   "Debug Workflow-initial-context": {
     "id": "Debug Workflow-initial-context",
@@ -2851,7 +2851,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-08-16T19:40:43.238Z",
-    "updatedAt": "2026-08-23T14:37:15.927Z"
+    "updatedAt": "2026-08-23T23:34:13.725Z"
   },
   "Plan Workflow-initial-context": {
     "id": "Plan Workflow-initial-context",
@@ -2861,7 +2861,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-08-16T19:40:43.281Z",
-    "updatedAt": "2026-08-23T14:37:16.149Z"
+    "updatedAt": "2026-08-23T23:34:14.206Z"
   },
   "Security Workflow-initial-context": {
     "id": "Security Workflow-initial-context",
@@ -2871,7 +2871,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-08-16T19:40:43.319Z",
-    "updatedAt": "2026-08-23T14:37:16.312Z"
+    "updatedAt": "2026-08-23T23:34:14.544Z"
   },
   "Audit Workflow-initial-context": {
     "id": "Audit Workflow-initial-context",
@@ -100157,5 +100157,215 @@
     ],
     "createdAt": "2026-08-23T21:48:40.622Z",
     "updatedAt": "2026-08-23T21:48:40.622Z"
+  },
+  "agent-task-backend-specialist-1787528051983": {
+    "id": "agent-task-backend-specialist-1787528051983",
+    "value": {
+      "taskDescription": "Create a REST API for listings",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:12.051Z",
+    "updatedAt": "2026-08-23T23:34:12.051Z"
+  },
+  "agent-task-project-planner-1787528052176": {
+    "id": "agent-task-project-planner-1787528052176",
+    "value": {
+      "taskDescription": "Plan architecture",
+      "output": "[MockOutput by project-planner]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:12.228Z",
+    "updatedAt": "2026-08-23T23:34:12.228Z"
+  },
+  "agent-task-backend-specialist-1787528052415": {
+    "id": "agent-task-backend-specialist-1787528052415",
+    "value": {
+      "taskDescription": "Implement models",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:12.508Z",
+    "updatedAt": "2026-08-23T23:34:12.508Z"
+  },
+  "agent-task-security-auditor-1787528052675": {
+    "id": "agent-task-security-auditor-1787528052675",
+    "value": {
+      "taskDescription": "Perform security review",
+      "output": "[MockOutput by security-auditor]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:12.735Z",
+    "updatedAt": "2026-08-23T23:34:12.735Z"
+  },
+  "agent-task-backend-specialist-1787528052824": {
+    "id": "agent-task-backend-specialist-1787528052824",
+    "value": {
+      "taskDescription": "Valid step",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:12.867Z",
+    "updatedAt": "2026-08-23T23:34:12.867Z"
+  },
+  "agent-task-database-architect-1787528053133": {
+    "id": "agent-task-database-architect-1787528053133",
+    "value": {
+      "taskDescription": "Analyze requirements and design schema/models for: Listing CRUD endpoints",
+      "output": "Response from database-architect"
+    },
+    "tags": [
+      "shared-knowledge",
+      "database-architect",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.165Z",
+    "updatedAt": "2026-08-23T23:34:13.165Z"
+  },
+  "agent-task-backend-specialist-1787528053323": {
+    "id": "agent-task-backend-specialist-1787528053323",
+    "value": {
+      "taskDescription": "Implement endpoints and business logic based on the schema design for: Listing CRUD endpoints",
+      "output": "Response from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.359Z",
+    "updatedAt": "2026-08-23T23:34:13.359Z"
+  },
+  "agent-task-security-auditor-1787528053484": {
+    "id": "agent-task-security-auditor-1787528053484",
+    "value": {
+      "taskDescription": "Audit the implemented endpoints for SQL injection, auth issues, and vulnerability checks.",
+      "output": "Response from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.539Z",
+    "updatedAt": "2026-08-23T23:34:13.539Z"
+  },
+  "agent-task-documentation-writer-1787528053623": {
+    "id": "agent-task-documentation-writer-1787528053623",
+    "value": {
+      "taskDescription": "Generate API reference docs and update status.",
+      "output": "Response from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.655Z",
+    "updatedAt": "2026-08-23T23:34:13.655Z"
+  },
+  "agent-task-code-archaeologist-1787528053832": {
+    "id": "agent-task-code-archaeologist-1787528053832",
+    "value": {
+      "taskDescription": "Trace logs, search codebase, and isolate root cause for: Fix CORS issue in API",
+      "output": "Response from code-archaeologist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "code-archaeologist",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.863Z",
+    "updatedAt": "2026-08-23T23:34:13.863Z"
+  },
+  "agent-task-debugger-1787528053942": {
+    "id": "agent-task-debugger-1787528053942",
+    "value": {
+      "taskDescription": "Develop fix, address syntax/logic issues, and refactor code.",
+      "output": "Response from debugger"
+    },
+    "tags": [
+      "shared-knowledge",
+      "debugger",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:13.977Z",
+    "updatedAt": "2026-08-23T23:34:13.977Z"
+  },
+  "agent-task-test-engineer-1787528054069": {
+    "id": "agent-task-test-engineer-1787528054069",
+    "value": {
+      "taskDescription": "Verify changes by running/generating test cases.",
+      "output": "Response from test-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "test-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:14.103Z",
+    "updatedAt": "2026-08-23T23:34:14.103Z"
+  },
+  "agent-task-project-planner-1787528054288": {
+    "id": "agent-task-project-planner-1787528054288",
+    "value": {
+      "taskDescription": "Decompose task into atomic list of subtasks, estimate constraints: New CRM Feature",
+      "output": "Response from project-planner"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:14.320Z",
+    "updatedAt": "2026-08-23T23:34:14.320Z"
+  },
+  "agent-task-orchestrator-1787528054399": {
+    "id": "agent-task-orchestrator-1787528054399",
+    "value": {
+      "taskDescription": "Review project architecture, dependencies, and verify alignment.",
+      "output": "Response from orchestrator"
+    },
+    "tags": [
+      "shared-knowledge",
+      "orchestrator",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:14.446Z",
+    "updatedAt": "2026-08-23T23:34:14.446Z"
+  },
+  "agent-task-penetration-tester-1787528054667": {
+    "id": "agent-task-penetration-tester-1787528054667",
+    "value": {
+      "taskDescription": "Identify attack vectors and check dependencies for CVEs: Audit auth tokens",
+      "output": "Response from penetration-tester"
+    },
+    "tags": [
+      "shared-knowledge",
+      "penetration-tester",
+      "task-execution"
+    ],
+    "createdAt": "2026-08-23T23:34:14.708Z",
+    "updatedAt": "2026-08-23T23:34:14.708Z"
   }
 }
