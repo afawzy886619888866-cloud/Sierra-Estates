@@ -3,22 +3,42 @@
 import React, { useState, useMemo } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
-import { Sparkles, ListFilter, PlusCircle, FileText, Search, UserCheck, ShieldCheck } from 'lucide-react';
+import ValuationArbitrageStudio from '@/components/admin/ValuationArbitrageStudio';
+import {
+  Sparkles,
+  ListFilter,
+  PlusCircle,
+  FileText,
+  Search,
+  UserCheck,
+  ShieldCheck,
+  Calculator,
+  Download,
+  Zap,
+  TrendingUp,
+} from 'lucide-react';
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
+import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 
 // Use consolidated inventory when available, with fallback to realListingsRaw
-const allListingsData = (consolidatedRaw && Array.isArray(consolidatedRaw) && consolidatedRaw.length > 0)
-  ? consolidatedRaw
-  : realListingsRaw;
+const allListingsData =
+  consolidatedRaw && Array.isArray(consolidatedRaw) && consolidatedRaw.length > 0
+    ? consolidatedRaw
+    : realListingsRaw;
 
 export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure' | 'valuation'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'month' | 'villa' | 'apartment'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<
+    'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'month' | 'villa' | 'apartment'
+  >('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
+
+  // Quick valuation preview state
+  const [activeValuationUnit, setActiveValuationUnit] = useState<any | null>(null);
 
   // Filter listings
   const filteredListings = useMemo(() => {
@@ -135,9 +155,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-listings-view">
       {/* Top Header & Subnav */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between pb-4 border-b border-slate-800 gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <span>{isAr ? 'قاعدة بيانات العقارات والمخزون الحصري' : 'Luxury Inventory & Listings Hub'}</span>
@@ -145,65 +165,93 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               {stats.total} {isAr ? 'وحدة نشطة' : 'Live Units'}
             </span>
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-400 mt-1">
             {isAr
               ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر واتساب، الملاك المباشرين وشيت المخزون'
               : 'Unified architectural portfolio with verified direct owners, live WhatsApp ingestion, and master inventory.'}
           </p>
         </div>
 
-        {/* Tab Controls */}
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900 border border-slate-800">
-          <button
-            type="button"
-            onClick={() => setActiveTab('inventory')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'inventory'
-                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
+        {/* Action Controls & Tab Switcher */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Master Excel Download Button */}
+          <a
+            href="https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/apps/sierra-estates-realty/data/sierra-estates-master-inventory.csv"
+            target="_blank"
+            rel="noopener noreferrer"
+            download="sierra-estates-master-inventory.csv"
+            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
           >
-            <ListFilter className="w-3.5 h-3.5" />
-            <span>{isAr ? 'جميع العقارات والمخزون' : 'All Listings'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('easy-listing')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'easy-listing'
-                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isAr ? 'الإدراج السريع الذكي' : 'Easy Listing Studio'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('brochure')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              activeTab === 'brochure'
-                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>{isAr ? 'بروشور استثماري PDF' : 'PDF Teaser & Brochure'}</span>
-          </button>
+            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{isAr ? 'تحميل الشيت الرئيسي (CSV/Excel)' : 'Master Sheet (Excel)'}</span>
+          </a>
+
+          {/* Tab Controls */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab('inventory')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                activeTab === 'inventory'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <ListFilter className="w-3.5 h-3.5" />
+              <span>{isAr ? 'المخزون' : 'All Listings'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('valuation')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                activeTab === 'valuation'
+                  ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Calculator className="w-3.5 h-3.5 text-emerald-300" />
+              <span>{isAr ? 'التقييم والمراجحة' : 'Valuation & Arbitrage'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('easy-listing')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                activeTab === 'easy-listing'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAr ? 'الإدراج الذكي' : 'Easy Add'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('brochure')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                activeTab === 'brochure'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{isAr ? 'بروشور PDF' : 'PDF Teaser'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Tab 1: Easy Listing Studio */}
+      {/* Tab 1: Valuation & Arbitrage Studio */}
+      {activeTab === 'valuation' && <ValuationArbitrageStudio lang={lang} />}
+
+      {/* Tab 2: Easy Listing Studio */}
       {activeTab === 'easy-listing' && (
         <EasyListingStudio lang={lang} onListingPublished={() => setActiveTab('inventory')} />
       )}
 
-      {/* Tab 2: PDF Brochure & Teaser */}
-      {activeTab === 'brochure' && (
-        <PropertyTeaserBrochure />
-      )}
+      {/* Tab 3: PDF Brochure & Teaser */}
+      {activeTab === 'brochure' && <PropertyTeaserBrochure />}
 
-      {/* Tab 3: Unified Inventory Table */}
+      {/* Tab 4: Unified Inventory Table */}
       {activeTab === 'inventory' && (
         <div className="space-y-5">
           {/* Quick Metrics Bar */}
@@ -217,7 +265,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                 <UserCheck className="w-3.5 h-3.5" />
                 <span>{isAr ? 'ملاك مباشرين' : 'Direct Owners'}</span>
               </div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">{stats.owners} {isAr ? 'ملاك' : 'Units'}</div>
+              <div className="text-xl font-bold text-emerald-400 mt-1">
+                {stats.owners} {isAr ? 'ملاك' : 'Units'}
+              </div>
             </div>
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-cyan-400">{isAr ? 'عقارات للبيع' : 'Units For Sale'}</div>
@@ -248,7 +298,11 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder={isAr ? 'بحث بالكود، الكمبوند، النوع، أو المالك...' : 'Search by code, compound, type, owner, keyword...'}
+                placeholder={
+                  isAr
+                    ? 'بحث بالكود، الكمبوند، النوع، أو المالك...'
+                    : 'Search by code, compound, type, owner, keyword...'
+                }
                 className="w-full pl-9 pr-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
@@ -257,8 +311,14 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             <div className="flex flex-wrap items-center gap-1.5">
               {[
                 { id: 'all', label: isAr ? `الكل (${stats.total})` : `All (${stats.total})` },
-                { id: 'month', label: isAr ? `📅 آخر شهر (${stats.month})` : `📅 Last 30 Days (${stats.month})` },
-                { id: 'owners', label: isAr ? `🟢 ملاك مباشرين (${stats.owners})` : `🟢 Direct Owners (${stats.owners})` },
+                {
+                  id: 'month',
+                  label: isAr ? `📅 آخر شهر (${stats.month})` : `📅 Last 30 Days (${stats.month})`,
+                },
+                {
+                  id: 'owners',
+                  label: isAr ? `🟢 ملاك مباشرين (${stats.owners})` : `🟢 Direct Owners (${stats.owners})`,
+                },
                 { id: 'sale', label: isAr ? `للبيع (${stats.sale})` : `For Sale (${stats.sale})` },
                 { id: 'rent', label: isAr ? `للإيجار (${stats.rent})` : `For Rent (${stats.rent})` },
                 { id: 'new', label: isAr ? `🆕 حديث (${stats.new})` : `🆕 New (<48h)` },
@@ -308,6 +368,70 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             )}
           </div>
 
+          {/* Valuation Quick Modal / Drawer when a row is evaluated */}
+          {activeValuationUnit && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/40 space-y-3 animate-fadeIn shadow-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
+                  <span className="text-xs font-bold text-white font-mono uppercase">
+                    VALUATION & ARBITRAGE ASSESSMENT: {activeValuationUnit.sierraCode || activeValuationUnit.code}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveValuationUnit(null)}
+                  className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              {(() => {
+                const evalRes = evaluatePropertyValuation({
+                  property_type: activeValuationUnit.type || 'apartment',
+                  size_sqm: activeValuationUnit.area_sqm || activeValuationUnit.area,
+                  location: activeValuationUnit.compound || activeValuationUnit.location,
+                  offered_purchase_price: activeValuationUnit.price || undefined,
+                  offered_rent: activeValuationUnit.operation === 'Rent' ? activeValuationUnit.price : undefined,
+                  amenities: ['underground parking'],
+                });
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 font-mono">AI VERDICT</span>
+                      <div className="text-emerald-300 font-bold mt-0.5">{evalRes.verdict}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 font-mono">PAYBACK PERIOD</span>
+                      <div className="text-white font-bold font-mono mt-0.5">
+                        {evalRes.investment_metrics.payback_period_years
+                          ? `${evalRes.investment_metrics.payback_period_years} Yrs`
+                          : 'N/A'}
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 font-mono">IMPLIED CAP RATE</span>
+                      <div className="text-cyan-300 font-bold font-mono mt-0.5">
+                        {evalRes.offered_price_assessment.implied_cap_rate_pct
+                          ? `${evalRes.offered_price_assessment.implied_cap_rate_pct}%`
+                          : '8.5% Base'}
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                      <span className="text-slate-400 font-mono">FAIR VALUE SPECTRUM</span>
+                      <div className="text-amber-300 font-bold font-mono mt-0.5">
+                        {(evalRes.calculated_fair_value_range.conservative_cap_value / 1000000).toFixed(1)}M -{' '}
+                        {(evalRes.calculated_fair_value_range.premium_adjusted_optimistic / 1000000).toFixed(1)}M EGP
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Table */}
           <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-xl">
             <table className="w-full text-left text-xs text-slate-300">
@@ -319,20 +443,18 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                   <th className="p-3.5">Price & Mode</th>
                   <th className="p-3.5">Source & Owner</th>
                   <th className="p-3.5">Status</th>
-                  <th className="p-3.5 text-center">AI Match Score</th>
+                  <th className="p-3.5 text-center">AI Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {paginatedListings.map((item, idx) => {
-                  const isOwner = item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
+                  const isOwner =
+                    item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
                   const isRent = item.operation === 'Rent' || item.mode === 'rent';
                   const code = item.sierraCode || item.code || `SE-${item.id}`;
 
                   return (
-                    <tr
-                      key={code || item.id || idx}
-                      className="hover:bg-slate-800/40 transition-colors"
-                    >
+                    <tr key={code || item.id || idx} className="hover:bg-slate-800/40 transition-colors">
                       <td className="p-3.5">
                         <div className="font-mono font-bold text-cyan-400">{code}</div>
                         {item.isNewListing && (
@@ -342,19 +464,25 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                         )}
                       </td>
                       <td className="p-3.5">
-                        <div className="font-semibold text-white">{item.compound || item.location || 'New Cairo'}</div>
-                        <div className="text-[11px] text-slate-400">{item.location || item.zone || '5th Settlement'}</div>
+                        <div className="font-semibold text-white">
+                          {item.compound || item.location || 'New Cairo'}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {item.location || item.zone || '5th Settlement'}
+                        </div>
                       </td>
                       <td className="p-3.5">
                         <div className="text-slate-200 font-medium">{item.type || 'Apartment'}</div>
                         <div className="text-[11px] text-slate-400">
-                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths · {item.area_sqm || item.area || 200} m²
+                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths ·{' '}
+                          {item.area_sqm || item.area || 200} m²
                           {item.gardenArea ? ` (+${item.gardenArea}m² gdn)` : ''}
                         </div>
                       </td>
                       <td className="p-3.5">
                         <div className="font-bold text-white">
-                          {item.priceFormatted || (item.price > 0 ? `${item.price.toLocaleString()} EGP` : 'Price on Call')}
+                          {item.priceFormatted ||
+                            (item.price > 0 ? `${item.price.toLocaleString()} EGP` : 'Price on Call')}
                         </div>
                         <span
                           className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
@@ -363,7 +491,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                               : 'bg-cyan-950 text-cyan-300 border border-cyan-800/60'
                           }`}
                         >
-                          {isRent ? (isAr ? 'إيجار' : 'Rent') : (isAr ? 'للبيع' : 'Sale')}
+                          {isRent ? (isAr ? 'إيجار' : 'Rent') : isAr ? 'للبيع' : 'Sale'}
                         </span>
                       </td>
                       <td className="p-3.5">
@@ -378,7 +506,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                               {isAr ? 'وسيط' : 'Broker'}
                             </span>
                           )}
-                          <span className="font-medium text-xs truncate max-w-[120px]">{item.ownerName || item.contact_info || 'Direct Client'}</span>
+                          <span className="font-medium text-xs truncate max-w-[120px]">
+                            {item.ownerName || item.contact_info || 'Direct Client'}
+                          </span>
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
                           {item.sourceGroup || item.ago || 'Verified Sync'}
@@ -395,9 +525,14 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                         )}
                       </td>
                       <td className="p-3.5 text-center">
-                        <span className="text-purple-400 font-bold text-xs bg-purple-950/50 px-2 py-1 rounded border border-purple-800/50">
-                          {item.aiScore || 9.2} / 10
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveValuationUnit(item)}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 mx-auto transition-colors"
+                        >
+                          <Zap className="w-3 h-3 text-emerald-400" />
+                          <span>Valuate</span>
+                        </button>
                       </td>
                     </tr>
                   );
