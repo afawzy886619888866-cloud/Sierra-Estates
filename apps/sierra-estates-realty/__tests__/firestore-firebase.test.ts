@@ -6,9 +6,14 @@
  * 2. Firestore collection schema definitions and field validations
  * 3. Offline limited mode and graceful error handling
  * 4. Document mutation integrity, timestamp stamping, and query filters
+ * 5. firestore.indexes.json composite index schema compliance
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import { adminApp, adminDb, adminAuth, adminStorage, isAdminInitialized, loadAndInitializeAdmin } from '@/lib/server/firebase-admin';
+
+const ROOT = path.resolve(__dirname, '../../..');
 
 describe('Firebase & Firestore Infrastructure Suite', () => {
 
@@ -121,6 +126,33 @@ describe('Firebase & Firestore Infrastructure Suite', () => {
 
       expect(filter.minPrice).toBeLessThan(filter.maxPrice);
       expect(filter.status).toBe('available');
+    });
+  });
+
+  describe('4. Firestore Indexes Configuration Guard', () => {
+    const indexesPath = path.join(ROOT, 'firestore.indexes.json');
+
+    it('firestore.indexes.json exists and is valid JSON', () => {
+      expect(fs.existsSync(indexesPath)).toBe(true);
+      const content = fs.readFileSync(indexesPath, 'utf8');
+      expect(() => JSON.parse(content)).not.toThrow();
+    });
+
+    it('defines valid composite indexes for core collection groups', () => {
+      const config = JSON.parse(fs.readFileSync(indexesPath, 'utf8'));
+      expect(Array.isArray(config.indexes)).toBe(true);
+      expect(config.indexes.length).toBeGreaterThanOrEqual(5);
+
+      for (const idx of config.indexes) {
+        expect(idx.collectionGroup).toBeDefined();
+        expect(idx.queryScope).toBe('COLLECTION');
+        expect(Array.isArray(idx.fields)).toBe(true);
+        expect(idx.fields.length).toBeGreaterThanOrEqual(2);
+        for (const f of idx.fields) {
+          expect(f.fieldPath).toBeDefined();
+          expect(['ASCENDING', 'DESCENDING']).toContain(f.order);
+        }
+      }
     });
   });
 

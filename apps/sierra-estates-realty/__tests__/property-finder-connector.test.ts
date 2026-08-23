@@ -109,4 +109,13 @@ describe('PropertyFinderConnector', () => {
     expect(mivida).toBeDefined();
     expect(mivida!.type).toBe('apartment');
   });
+
+  it('scripts/sync-propertyfinder.ts exists and imports propertyFinderConnector', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const scriptPath = path.resolve(__dirname, '../../../scripts/sync-propertyfinder.ts');
+    expect(fs.existsSync(scriptPath)).toBe(true);
+    const content = fs.readFileSync(scriptPath, 'utf8');
+    expect(content).toContain('propertyFinderConnector.syncCatalog');
+  });
 });
