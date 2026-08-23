@@ -45,7 +45,7 @@ describe('Duplicates & Inventory Deduplication Engine Test Suite', () => {
     function normalizeEgyptianPhone(rawPhone: string): string | null {
       if (!rawPhone) return null;
       // Strip all non-digits
-      let digits = rawPhone.replace(/\D/g, '');
+      const digits = rawPhone.replace(/\D/g, '');
       
       // Handle local 01xxxxxxxxx
       if (digits.startsWith('01') && digits.length === 11) {

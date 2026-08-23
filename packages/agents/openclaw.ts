@@ -619,15 +619,16 @@ export class OpenClawAgent {
         let toolResponseStr = '';
 
         if (call.name === 'addListing') {
-          const args = call.args as UnitListingData & { contact_info?: string };
+          const args = (call.args || {}) as unknown as UnitListingData & { contact_info?: string };
           if (!args.contact_info) args.contact_info = sender;
           toolResponseStr = await addListing(this.airtableConfig, args);
         } else if (call.name === 'editInventory') {
-          const args = call.args as { location: string; newPrice: number };
+          const args = (call.args || {}) as unknown as { location: string; newPrice: number };
           toolResponseStr = await editInventory(this.airtableConfig, args.location, args.newPrice);
         } else if (call.name === 'generateInventoryReport') {
           toolResponseStr = await generateInventoryReport(this.airtableConfig);
         }
+
 
         response = await this.ai.models.generateContent({
           model: 'gemini-2.5-flash',
