@@ -218,6 +218,11 @@ describe('Regression & Configuration Hardening Suite', () => {
           'harness-coordinator-full',
           'harness-coordinator-prod-ready',
           'mcd/init',
+          'claude/client-page-multi-page-l525r1',
+          'claude/client-page-react-three-woi3k8',
+          'claude/repo-analysis-production-180u7i',
+          'deploy/firestore-storage-rules-hardening',
+          'ao/se-vercel-de-orchestrator',
         ];
 
         for (const b of branchesToCheck) {
