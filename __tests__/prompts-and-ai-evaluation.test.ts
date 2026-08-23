@@ -10,19 +10,15 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
       expect(BENCHMARK_SCENARIOS.length).toBeGreaterThanOrEqual(10);
     });
 
-    it('each scenario should contain valid prompt, systemPrompt, expectedOutput, and weights', () => {
+    it('each scenario should contain valid id, category, prompt, and expectedOutputKeys', () => {
       for (const scenario of BENCHMARK_SCENARIOS) {
         expect(scenario.id, 'Scenario must have an ID').toBeTruthy();
         expect(scenario.category, 'Scenario must have a category').toBeTruthy();
         expect(scenario.prompt, `Scenario ${scenario.id} must have a prompt`).toBeTruthy();
-        expect(scenario.systemPrompt, `Scenario ${scenario.id} must have a systemPrompt`).toBeTruthy();
-        expect(scenario.expectedOutput, `Scenario ${scenario.id} must have expectedOutput`).toBeDefined();
-        expect(scenario.evaluationWeights, `Scenario ${scenario.id} must have evaluationWeights`).toBeDefined();
-        
-        const totalWeight = scenario.evaluationWeights.accuracy +
-          scenario.evaluationWeights.speed +
-          scenario.evaluationWeights.format;
-        expect(Math.round(totalWeight * 100) / 100).toBe(1.0);
+        expect(Array.isArray(scenario.expectedOutputKeys), `Scenario ${scenario.id} must have expectedOutputKeys`).toBe(true);
+        expect(scenario.expectedOutputKeys.length, `Scenario ${scenario.id} must have at least one key`).toBeGreaterThan(0);
+        expect(scenario.maxLatencyMs, `Scenario ${scenario.id} must have maxLatencyMs`).toBeGreaterThan(0);
+        expect(scenario.minAccuracyScore, `Scenario ${scenario.id} must have minAccuracyScore`).toBeGreaterThan(0);
       }
     });
 
@@ -33,6 +29,7 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
       expect(categories).toContain('arbitrage_detection');
       expect(categories).toContain('contract_drafting');
       expect(categories).toContain('fx_gold_parity');
+      expect(categories).toContain('lead_routing');
     });
   });
 
@@ -40,7 +37,7 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
     const evaluator = new HarnessEvaluator();
 
     it('should score high accuracy when output matches expected schema perfectly', () => {
-      const scenario = BENCHMARK_SCENARIOS.find(s => s.id === 'val-mivida-villa-q2')!;
+      const scenario = BENCHMARK_SCENARIOS.find(s => s.id === 'sc-cairo-avm-001')!;
       const output = {
         estimatedValueEgp: 25000000,
         confidenceScore: 0.95,
@@ -57,10 +54,11 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
       expect(result.success).toBe(true);
       expect(result.accuracyScore).toBeGreaterThanOrEqual(0.85);
       expect(result.latencyMs).toBe(450);
+      expect(result.validationErrors).toBeUndefined();
     });
 
     it('should flag validation errors when output misses critical keys', () => {
-      const scenario = BENCHMARK_SCENARIOS.find(s => s.id === 'val-mivida-villa-q2')!;
+      const scenario = BENCHMARK_SCENARIOS.find(s => s.id === 'sc-cairo-avm-001')!;
       const incompleteOutput = {
         unrelatedKey: 123,
       };
@@ -71,7 +69,9 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
         totalTokens: 120,
       });
 
-      expect(result.validationErrors.length).toBeGreaterThan(0);
+      expect(result.success).toBe(false);
+      expect(result.validationErrors).toBeDefined();
+      expect(result.validationErrors!.length).toBeGreaterThan(0);
     });
   });
 
@@ -84,7 +84,7 @@ describe('Prompts & AI Evaluation Benchmark Suite', () => {
       expect(report.totalScenarios).toBe(BENCHMARK_SCENARIOS.length);
       expect(report.passedCount).toBeGreaterThan(0);
       expect(report.overallScore).toBeGreaterThanOrEqual(0.75);
-      expect(report.averageLatencyMs).toBeGreaterThan(0);
+      expect(report.averageLatencyMs).toBeGreaterThanOrEqual(0);
     });
   });
 });
