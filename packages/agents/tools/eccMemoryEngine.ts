@@ -71,7 +71,7 @@ export class EpisodicContextCache {
   public setWorkingSession(session: WorkingMemorySession): void {
     this.workingMemory.set(session.sessionId, {
       ...session,
-      lastInteraction: Date.now(),
+      lastInteraction: session.lastInteraction ?? Date.now(),
     });
   }
 
