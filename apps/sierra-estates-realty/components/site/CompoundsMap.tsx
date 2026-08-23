@@ -88,19 +88,24 @@ const COMPOUND_UNITS_COUNT: Record<string, number> = {
   'Katameya Dunes': 8,
 };
 
+export interface CompoundsMapProps {
+  compounds: MapCompound[];
+  featured?: string[];
+  selectedName?: string | null;
+  onSelectAction?: (name: string) => void;
+  onSelect?: (name: string) => void;
+  showControls?: boolean;
+}
+
 export default function CompoundsMap({
   compounds,
   featured = [],
   selectedName,
+  onSelectAction,
   onSelect,
   showControls = true,
-}: {
-  compounds: MapCompound[];
-  featured?: string[];
-  selectedName?: string | null;
-  onSelect?: (name: string) => void;
-  showControls?: boolean;
-}) {
+}: CompoundsMapProps) {
+  const handleSelect = onSelectAction || onSelect;
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerRef = useRef<any>(null);
@@ -375,7 +380,7 @@ export default function CompoundsMap({
         });
 
         marker.on('click', () => {
-          onSelect?.(c.n);
+          handleSelect?.(c.n);
         });
 
         marker.addTo(layer);
@@ -386,7 +391,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, onSelect]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect]);
 
   // Handle external selection
   useEffect(() => {

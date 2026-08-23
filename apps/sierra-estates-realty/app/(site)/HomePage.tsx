@@ -207,7 +207,7 @@ export default function HomePage() {
               compounds={allCompounds}
               featured={featuredCompounds}
               selectedName={selectedMapCompound}
-              onSelect={setSelectedMapCompound}
+              onSelectAction={setSelectedMapCompound}
               showControls={true}
             />
           </div>
