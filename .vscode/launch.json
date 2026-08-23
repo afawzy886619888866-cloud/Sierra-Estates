@@ -1,6 +1,8 @@
 {
   "version": "0.2.0",
   "configurations": [
+    
+
     {
       "name": "🚀 Next.js: Dev Server (sierra-estates-realty)",
       "type": "node",
