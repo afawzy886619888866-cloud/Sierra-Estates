@@ -4,13 +4,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  MapPin, BedDouble, Bath, Scaling, Scan, Sparkles, Phone, Calendar, ArrowRight,
+  MapPin, BedDouble, Bath, Scaling, Scan, Sparkles, Phone, Calendar, ArrowRight, FileText,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
 import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
 
 export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
@@ -148,8 +149,12 @@ export default function PropertyDetail({ id }: { id: string }) {
             <aside>
               <div className="pdetail-cta rv">
                 <div className="pd-price">{HZDATA.price(p)}</div>
-                <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 16 }}>
+                <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
                   {p.mode === 'rent' ? (isAr ? 'إيجار شهري' : 'Monthly rent') : (isAr ? 'سعر البيع' : 'Asking price')}
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
                 </div>
 
                 <a
@@ -166,12 +171,21 @@ export default function PropertyDetail({ id }: { id: string }) {
                 </a>
                 <a
                   className="btn btn-navy"
-                  style={{ width: '100%', justifyContent: 'center' }}
+                  style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
                   href="tel:+201092048333"
                 >
                   <Phone className="i" />
                   <span>{isAr ? 'اتصل بالمستشار' : 'Call an advisor'}</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-ghost"
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
+                >
+                  <FileText className="i" style={{ width: 14, height: 14 }} />
+                  <span>{isAr ? 'تحميل البروشور (PDF)' : 'Download PDF Brochure'}</span>
+                </button>
 
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span className="av" style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', borderRadius: '50%', background: 'var(--navy)', color: '#fff', fontSize: 12, fontWeight: 700 }}>
