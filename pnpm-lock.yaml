@@ -190,9 +190,6 @@ importers:
       '@types/papaparse':
         specifier: ^5.5.2
         version: 5.5.2
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
       '@vercel/analytics':
         specifier: ^2.0.1
         version: 2.0.1(next@16.3.1(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
@@ -323,6 +320,9 @@ importers:
       '@types/three':
         specifier: ^0.185.1
         version: 0.185.1
+      '@types/uuid':
+        specifier: ^11.0.0
+        version: 11.0.0
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
