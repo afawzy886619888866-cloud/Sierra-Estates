@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import CairoPlazaRouteShell from '@/components/client/CairoPlazaRouteShell';
 
 export default function CairoPlazaEntry() {
-  redirect('/cairo-plaza/overview');
+  return <CairoPlazaRouteShell section="overview" lang="en" />;
 }
