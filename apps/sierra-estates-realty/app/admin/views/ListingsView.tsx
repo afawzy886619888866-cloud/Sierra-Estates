@@ -15,8 +15,8 @@ import {
   Calculator,
   Download,
   Zap,
-  TrendingUp,
 } from 'lucide-react';
+
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
 import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
