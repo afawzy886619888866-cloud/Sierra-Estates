@@ -76,8 +76,8 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
   describe('Fleet Orchestration & Check Scripts', () => {
     it('check-thresholds.ts should define metric acceptance thresholds', () => {
       const content = fs.readFileSync(path.join(SCRIPTS_DIR, 'check-thresholds.ts'), 'utf-8');
-      expect(content).toContain('THRESHOLD');
-      expect(content).toContain('accuracy');
+      expect(content).toContain('thresholdMax');
+      expect(content).toContain('SystemMetricThreshold');
     });
 
     it('run-harness.ts should initialize DeepSeekHarness and evaluate results', () => {
@@ -92,9 +92,12 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
       expect(content).toContain('inventory:audit');
     });
 
-    it('deploy-smoke-test.ts should test health endpoints', () => {
+    it('deploy-smoke-test.ts should define probes for live and local endpoints', () => {
       const content = fs.readFileSync(path.join(SCRIPTS_DIR, 'deploy-smoke-test.ts'), 'utf-8');
-      expect(content).toContain('sierra-estates.net');
+      expect(content).toContain('SMOKE_TARGET_URL');
+      expect(content).toContain('PROBES');
+      expect(content).toContain('/api/health');
     });
   });
+
 });
