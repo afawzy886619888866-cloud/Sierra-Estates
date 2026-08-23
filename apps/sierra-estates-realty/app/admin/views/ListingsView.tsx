@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
-import { Sparkles, ListFilter, PlusCircle } from 'lucide-react';
+import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
+import { Sparkles, ListFilter, PlusCircle, FileText } from 'lucide-react';
 
 export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing'>('easy-listing');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure'>('easy-listing');
 
   return (
     <div className="space-y-6">
@@ -39,6 +40,18 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab('brochure')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              activeTab === 'brochure'
+                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>{isAr ? 'بروشور استثماري PDF' : 'PDF Teaser & Brochure'}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('inventory')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
               activeTab === 'inventory'
@@ -55,6 +68,11 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       {/* Tab 1: Easy Listing Studio */}
       {activeTab === 'easy-listing' && (
         <EasyListingStudio lang={lang} onListingPublished={() => setActiveTab('inventory')} />
+      )}
+
+      {/* Tab 2: PDF Brochure & Teaser */}
+      {activeTab === 'brochure' && (
+        <PropertyTeaserBrochure />
       )}
 
       {/* Tab 2: Inventory Table */}
