@@ -136,6 +136,7 @@ pnpm test:ci                # Jest + Vitest CI run with coverage
 # Data & scripts
 pnpm fetch:real-data        # Fetch real property data from PropertyFinder
 pnpm vertex-agent           # Run Vertex AI agent runner
+pnpm harness:run            # Execute 10-scenario DeepSeek Reasoning & Benchmark Harness
 
 # Deployment
 pnpm deploy:preview         # Vercel preview deploy
