@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { ExecutiveTearSheet } from '@sierra-estates/agents-core/src/memo-generator';
 
 interface PropertyTeaserBrochureProps {
   initialData?: Partial<ExecutiveTearSheet>;
-  onClose?: () => void;
 }
 
-export function PropertyTeaserBrochure({ initialData, onClose }: PropertyTeaserBrochureProps) {
+export function PropertyTeaserBrochure({ initialData }: PropertyTeaserBrochureProps) {
   const [formData, setFormData] = useState({
     referenceId: initialData?.referenceId || 'REF-HYD-042',
     title: initialData?.headline || 'Luxury Signature Villa · Prime Lake View',
@@ -169,7 +169,7 @@ export function PropertyTeaserBrochure({ initialData, onClose }: PropertyTeaserB
 
             {/* QR Code */}
             <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', padding: 8, borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <img src={qrUrl} alt="WhatsApp QR Code" style={{ width: 80, height: 80, borderRadius: 6, display: 'block' }} />
+              <Image src={qrUrl} alt="WhatsApp QR Code" width={80} height={80} unoptimized style={{ borderRadius: 6, display: 'block' }} />
               <div style={{ fontSize: 8, fontFamily: 'JetBrains Mono', color: 'var(--tx-f)', marginTop: 4 }}>SCAN FOR VIP DESK</div>
             </div>
           </div>
