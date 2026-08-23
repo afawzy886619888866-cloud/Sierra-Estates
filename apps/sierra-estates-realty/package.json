@@ -11,7 +11,7 @@
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
         "test": "jest --testPathPatterns=__tests__",
-        "test:ci": "jest --ci --coverage --testPathPatterns=__tests__"
+        "test:ci": "jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
     },
     "dependencies": {
         "@ai-sdk/gateway": "^4.0.62",
