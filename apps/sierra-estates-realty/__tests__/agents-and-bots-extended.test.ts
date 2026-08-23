@@ -20,7 +20,7 @@ describe('Agents & Bots Orchestration Suite', () => {
         domain: 'LeadQualification',
         description: 'WhatsApp multilingual concierge for buyer and investor leads',
         systemPrompt: 'You are Sierra Estates AI Concierge.',
-        tools: ['evaluateUnit', 'findMatches', 'formatWhatsAppCard'],
+        tools: ['evaluateUnit', 'findMatches', 'formatRecommendationCards'],
       };
 
       expect(agentProfile.name).toBe('LeadConciergeAgent');
@@ -44,50 +44,54 @@ describe('Agents & Bots Orchestration Suite', () => {
   describe('2. WhatsApp Concierge Lead Qualification & Matching', () => {
     it('evaluates unit score based on compound tier, price, and direct owner status', () => {
       const directOwnerUnit = {
-        id: 'u-swan-01',
-        title: 'Swan Lake Penthouse',
-        compound: 'Swan Lake',
-        price: 22000000,
-        area: 280,
-        type: 'Penthouse',
-        direct_owner: true,
+        compound: 'Mivida',
+        price: 52000,
+        areaSqm: 195,
+        isOwner: true,
+        isRental: true,
       };
 
       const result = propertyEvaluator.evaluateUnit(directOwnerUnit);
-      expect(result.score).toBeGreaterThan(70);
-      expect(result.isHotDeal).toBe(true);
+      expect(result.evaluationScore).toBeGreaterThan(70);
+      expect(result.ownerBoostApplied).toBe(true);
+      expect(result.tier).toBe(1);
     });
 
-    it('finds top matching units for qualified buyer budget', () => {
-      const units = [
-        { id: 'u1', title: 'Swan Lake Villa A', compound: 'Swan Lake', price: 24000000, area: 320, type: 'Villa', direct_owner: true },
-        { id: 'u2', title: 'Swan Lake Apt B', compound: 'Swan Lake', price: 18000000, area: 210, type: 'Apartment', direct_owner: false },
-        { id: 'u3', title: 'Mivida Villa C', compound: 'Mivida', price: 29000000, area: 340, type: 'Villa', direct_owner: true },
-      ];
+    it('finds top matching units for qualified buyer budget', async () => {
+      const matches = await propertyMatcher.findMatches({
+        locations: ['Mivida'],
+        bedrooms: 3,
+        budget: 60000,
+      });
 
-      const matches = propertyMatcher.findMatches(
-        { budget: 25000000, compound: 'Swan Lake' },
-        units
-      );
-      expect(matches.length).toBeGreaterThanOrEqual(1);
+      expect(matches).toBeDefined();
+      expect(Array.isArray(matches)).toBe(true);
+      expect(matches.length).toBeGreaterThan(0);
     });
 
     it('generates bilingual WhatsApp engagement cards', () => {
-      const unit = {
-        id: 'u-mivida-01',
-        title: 'Mivida Twinhouse',
-        compound: 'Mivida',
-        price: 19500000,
-        area: 260,
-        type: 'Twinhouse',
-        direct_owner: true,
-      };
+      const sample = [
+        {
+          id: 'SE-MIV-301',
+          title: 'Modern 3BR Apartment with Green Valley View',
+          compound: 'Mivida (Emaar)',
+          price: 52000,
+          currency: 'EGP',
+          bedrooms: 3,
+          bathrooms: 3,
+          bua: 195,
+          furnishing: 'Ultra Super Lux',
+          url: 'https://sierra-estates.net/property/SE-MIV-301',
+        },
+      ];
 
-      const arCard = propertyMatcher.formatWhatsAppCard(unit, 'ar');
-      const enCard = propertyMatcher.formatWhatsAppCard(unit, 'en');
+      const enCard = propertyMatcher.formatRecommendationCards(sample, false);
+      const arCard = propertyMatcher.formatRecommendationCards(sample, true);
 
-      expect(arCard).toContain('Mivida');
       expect(enCard).toContain('Mivida');
+      expect(enCard).toContain('52,000');
+      expect(arCard).toContain('Mivida');
+      expect(arCard).toContain('52,000');
     });
   });
 
