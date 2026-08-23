@@ -28,6 +28,7 @@ import {
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
+import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -881,6 +882,9 @@ function CuratorPage({ T }) {
         </div>
       )}
 
+      {/* Luxury Brochure & Teaser Generator */}
+      <PropertyTeaserBrochure />
+
       {/* AVM Price Adjustment */}
       <div className="grid-2" style={{marginBottom:20}}>
         <div className="card">
@@ -1281,8 +1285,11 @@ function ListingsHubPage({T}){
               <td style={{fontFamily:'JetBrains Mono',fontWeight:700,color:l.ai>=9.5?'var(--emerald)':l.ai>=9?'var(--gold)':'var(--tx-m)'}}>{l.ai}</td>
               <td><span className={`chip ${l.status==='Active'?'chip-green':l.status==='Review'?'chip-amber':'chip-red'}`}>{l.status}</span></td>
               <td><div style={{display:'flex',gap:5}}>
-                <button className="btn btn-ghost" style={{padding:'4px 9px',fontSize:10}}>Edit</button>
-                <button className="btn btn-green" style={{padding:'4px 9px',fontSize:10}}>WA</button>
+                <button className="btn btn-ghost" onClick={()=>window.open(`/property/${l.code}`, '_blank')} style={{padding:'4px 9px',fontSize:10}}>View</button>
+                <button className="btn btn-green" onClick={()=>{
+                  const msg = encodeURIComponent(`مرحباً، تفاصيل الوحدة ${l.code} في ${l.cmp} (${l.type} - ${l.price}): متاحة للمعاينة الآن.`);
+                  window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
+                }} style={{padding:'4px 9px',fontSize:10}}>WA</button>
               </div></td>
             </tr>
           ))}</tbody>
