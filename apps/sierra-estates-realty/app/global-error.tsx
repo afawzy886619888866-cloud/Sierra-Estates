@@ -7,17 +7,19 @@
  * own <html> and <body>. No stylesheet is guaranteed to have loaded at this
  * point, so every style is inline.
  */
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error?: Error & { digest?: string };
+  reset?: () => void;
 }) {
   useEffect(() => {
-    console.error('[global-error]', error);
+    if (error) {
+      console.error('[global-error]', error);
+    }
   }, [error]);
 
   return (
