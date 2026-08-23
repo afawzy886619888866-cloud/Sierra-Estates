@@ -144,6 +144,42 @@ export class DeepSeekHarness {
           appreciationPct: '+28.4% YoY',
           memorySources: ['firestore:listings', 'obsidian-store:q2_transactions'],
         };
+      case 'arbitrage_detection':
+        return {
+          arbitrageMarginPercent: 20.5,
+          recommendation: 'STRONG_BUY_UNDERVALUED_RESALE',
+          riskAssessment: 'LOW_RISK_PRIME_COMPOUND',
+          developerSpreadEgp: 16000,
+        };
+      case 'fx_gold_parity':
+        return {
+          usdEquivalent: 1000000,
+          aedEquivalent: 3671698,
+          gold21kGramsEquivalent: 14101.4,
+          formattedGoldWeight: '14.1 kg 21K Gold',
+        };
+      case 'scribe_extraction':
+        return {
+          compound: 'Mivida',
+          unitType: 'Standalone Villa',
+          buaSqm: 380,
+          priceEGP: 36000000,
+          sbrPropertyCode: 'SBR-EGY-NC-MVD-VLA-380M-36M-2026',
+        };
+      case 'multi_party_negotiation':
+        return {
+          negotiationStatus: 'agreement_reached',
+          agreedPriceEGP: 35500000,
+          commissionFeeEGP: 887500,
+          counterRoundsCount: 3,
+        };
+      case 'voice_intent':
+        return {
+          primaryLocation: '5th Settlement (Near AUC)',
+          propertyTypePreference: 'Townhouse',
+          deliveryTimeline: 'Immediate Delivery (Ready to Move)',
+          followUpScript: 'مساء الخير يا فندم، تم العثور على وحدتين تاون هاوس استلام فوري في هايد بارك والباتيو 7 بالقرب من الـ AUC.',
+        };
       default:
         return {};
     }
