@@ -3,59 +3,76 @@
 import React, { useState, useMemo } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
-import { Sparkles, ListFilter, PlusCircle, FileText, Search, MessageSquare, Tag } from 'lucide-react';
+import { Sparkles, ListFilter, PlusCircle, FileText, Search, MessageSquare, Tag, UserCheck, ShieldCheck } from 'lucide-react';
+import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
+
+// Use consolidated inventory when available, with fallback to realListingsRaw
+const allListingsData = (consolidatedRaw && Array.isArray(consolidatedRaw) && consolidatedRaw.length > 0)
+  ? consolidatedRaw
+  : realListingsRaw;
 
 export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'whatsapp' | 'sale' | 'rent' | 'villa' | 'apartment'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'villa' | 'apartment'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
   // Filter listings
   const filteredListings = useMemo(() => {
-    return (realListingsRaw as any[]).filter((item) => {
+    return (allListingsData as any[]).filter((item) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
+        item.sierraCode?.toLowerCase().includes(q) ||
         item.code?.toLowerCase().includes(q) ||
         item.compound?.toLowerCase().includes(q) ||
         item.cmp?.toLowerCase().includes(q) ||
         item.zone?.toLowerCase().includes(q) ||
+        item.location?.toLowerCase().includes(q) ||
         item.type?.toLowerCase().includes(q) ||
         item.comment?.toLowerCase().includes(q) ||
-        item.ownerName?.toLowerCase().includes(q);
+        item.description?.toLowerCase().includes(q) ||
+        item.ownerName?.toLowerCase().includes(q) ||
+        item.contact_info?.toLowerCase().includes(q);
 
       if (!matchesSearch) return false;
 
+      if (selectedFilter === 'owners') {
+        return item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
+      }
       if (selectedFilter === 'whatsapp') {
         return (
+          item.origin === 'whatsapp_group' ||
+          item.sourceGroup?.toLowerCase().includes('whatsapp') ||
           item.ago?.toLowerCase().includes('whatsapp') ||
           item.agent?.toLowerCase().includes('whatsapp') ||
           item.code?.startsWith('UNIT-WA') ||
-          item.code?.startsWith('MD-B10') ||
-          item.code?.startsWith('RH-P4') ||
-          item.code?.startsWith('MV-GS') ||
-          item.code?.startsWith('ET-R90') ||
-          item.code?.startsWith('HP-GR') ||
-          item.code?.startsWith('SL-HAF') ||
-          item.code?.startsWith('BD-PH') ||
-          item.code?.startsWith('VS-3A') ||
-          item.code?.startsWith('MV-POOL') ||
-          item.code?.startsWith('HP-LAKE')
+          item.sierraCode?.startsWith('UNIT-WA') ||
+          item.sierraCode?.startsWith('MD-B10') ||
+          item.sierraCode?.startsWith('RH-P4') ||
+          item.sierraCode?.startsWith('MV-GS') ||
+          item.sierraCode?.startsWith('ET-R90') ||
+          item.sierraCode?.startsWith('HP-GR') ||
+          item.sierraCode?.startsWith('SL-HAF') ||
+          item.sierraCode?.startsWith('BD-PH') ||
+          item.sierraCode?.startsWith('VS-3A') ||
+          item.sierraCode?.startsWith('MV-POOL') ||
+          item.sierraCode?.startsWith('HP-LAKE')
         );
       }
-      if (selectedFilter === 'sale') return item.mode === 'sale';
-      if (selectedFilter === 'rent') return item.mode === 'rent';
+      if (selectedFilter === 'sale') return item.operation === 'Sale' || item.mode === 'sale';
+      if (selectedFilter === 'rent') return item.operation === 'Rent' || item.mode === 'rent';
+      if (selectedFilter === 'new') return Boolean(item.isNewListing);
       if (selectedFilter === 'villa') {
         const t = (item.type || '').toLowerCase();
         return t.includes('villa') || t.includes('twin') || t.includes('town');
       }
       if (selectedFilter === 'apartment') {
         const t = (item.type || '').toLowerCase();
-        return t.includes('apartment') || t.includes('duplex') || t.includes('penthouse');
+        return t.includes('apartment') || t.includes('duplex') || t.includes('penthouse') || t.includes('garden');
       }
 
       return true;
@@ -70,31 +87,38 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const totalPages = Math.ceil(filteredListings.length / pageSize);
 
   const stats = useMemo(() => {
-    const all = realListingsRaw as any[];
+    const all = allListingsData as any[];
+    const ownersCount = all.filter((x) => x.sourceType === 'owner' || (x.ownerType || '').toLowerCase() === 'owner').length;
     const whatsappCount = all.filter(
       (item) =>
+        item.origin === 'whatsapp_group' ||
+        item.sourceGroup?.toLowerCase().includes('whatsapp') ||
         item.ago?.toLowerCase().includes('whatsapp') ||
         item.agent?.toLowerCase().includes('whatsapp') ||
         item.code?.startsWith('UNIT-WA') ||
-        item.code?.startsWith('MD-B10') ||
-        item.code?.startsWith('RH-P4') ||
-        item.code?.startsWith('MV-GS') ||
-        item.code?.startsWith('ET-R90') ||
-        item.code?.startsWith('HP-GR') ||
-        item.code?.startsWith('SL-HAF') ||
-        item.code?.startsWith('BD-PH') ||
-        item.code?.startsWith('VS-3A') ||
-        item.code?.startsWith('MV-POOL') ||
-        item.code?.startsWith('HP-LAKE')
+        item.sierraCode?.startsWith('UNIT-WA') ||
+        item.sierraCode?.startsWith('MD-B10') ||
+        item.sierraCode?.startsWith('RH-P4') ||
+        item.sierraCode?.startsWith('MV-GS') ||
+        item.sierraCode?.startsWith('ET-R90') ||
+        item.sierraCode?.startsWith('HP-GR') ||
+        item.sierraCode?.startsWith('SL-HAF') ||
+        item.sierraCode?.startsWith('BD-PH') ||
+        item.sierraCode?.startsWith('VS-3A') ||
+        item.sierraCode?.startsWith('MV-POOL') ||
+        item.sierraCode?.startsWith('HP-LAKE')
     ).length;
-    const saleCount = all.filter((x) => x.mode === 'sale').length;
-    const rentCount = all.filter((x) => x.mode === 'rent').length;
+    const saleCount = all.filter((x) => x.operation === 'Sale' || x.mode === 'sale').length;
+    const rentCount = all.filter((x) => x.operation === 'Rent' || x.mode === 'rent').length;
+    const newCount = all.filter((x) => Boolean(x.isNewListing)).length;
 
     return {
       total: all.length,
+      owners: ownersCount,
       whatsapp: whatsappCount,
       sale: saleCount,
       rent: rentCount,
+      new: newCount,
     };
   }, []);
 
@@ -106,13 +130,13 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             <span>{isAr ? 'قاعدة بيانات العقارات والمخزون الحصري' : 'Luxury Inventory & Listings Hub'}</span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-950 text-cyan-400 border border-cyan-800">
-              {realListingsRaw.length} {isAr ? 'وحدة متاحة' : 'Live Units'}
+              {stats.total} {isAr ? 'وحدة نشطة' : 'Live Units'}
             </span>
           </h2>
           <p className="text-sm text-slate-400">
             {isAr
-              ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر واتساب والذكاء الاصطناعي'
-              : 'Complete unified inventory with live WhatsApp ingested units, direct owner resales, and verified rentals.'}
+              ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر واتساب، الملاك المباشرين وشيت المخزون'
+              : 'Unified architectural portfolio with verified direct owners, live WhatsApp ingestion, and master inventory.'}
           </p>
         </div>
 
@@ -171,17 +195,17 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       {activeTab === 'inventory' && (
         <div className="space-y-5">
           {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-slate-400">{isAr ? 'إجمالي المخزون النشط' : 'Total Active Units'}</div>
               <div className="text-xl font-bold text-white mt-1">{stats.total}</div>
             </div>
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-emerald-400 flex items-center gap-1">
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>{isAr ? 'وارد الواتساب المباشر' : 'WhatsApp Ingested'}</span>
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>{isAr ? 'ملاك مباشرين' : 'Direct Owners'}</span>
               </div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">{stats.whatsapp} {isAr ? 'وحدات' : 'Units'}</div>
+              <div className="text-xl font-bold text-emerald-400 mt-1">{stats.owners} {isAr ? 'ملاك' : 'Units'}</div>
             </div>
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-cyan-400">{isAr ? 'عقارات للبيع' : 'Units For Sale'}</div>
@@ -190,6 +214,13 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-amber-400">{isAr ? 'عقارات للإيجار' : 'Units For Rent'}</div>
               <div className="text-xl font-bold text-amber-400 mt-1">{stats.rent}</div>
+            </div>
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="text-xs text-purple-400 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>{isAr ? 'مدرج حديثاً (48س)' : 'New Listings'}</span>
+              </div>
+              <div className="text-xl font-bold text-purple-400 mt-1">{stats.new}</div>
             </div>
           </div>
 
@@ -213,10 +244,11 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             {/* Filter Pills */}
             <div className="flex flex-wrap items-center gap-1.5">
               {[
-                { id: 'all', label: isAr ? 'الكل' : 'All' },
-                { id: 'whatsapp', label: isAr ? '📲 وارد واتساب' : '📲 WhatsApp Import' },
-                { id: 'sale', label: isAr ? 'للبيع' : 'For Sale' },
-                { id: 'rent', label: isAr ? 'للإيجار' : 'For Rent' },
+                { id: 'all', label: isAr ? `الكل (${stats.total})` : `All (${stats.total})` },
+                { id: 'owners', label: isAr ? `🟢 ملاك مباشرين (${stats.owners})` : `🟢 Direct Owners (${stats.owners})` },
+                { id: 'sale', label: isAr ? `للبيع (${stats.sale})` : `For Sale (${stats.sale})` },
+                { id: 'rent', label: isAr ? `للإيجار (${stats.rent})` : `For Rent (${stats.rent})` },
+                { id: 'new', label: isAr ? `🆕 حديث (${stats.new})` : `🆕 New (<48h)` },
                 { id: 'villa', label: isAr ? 'فيلات وتوين' : 'Villas & Twins' },
                 { id: 'apartment', label: isAr ? 'شقق ودوبلكس' : 'Apartments' },
               ].map((f) => (
@@ -250,7 +282,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           <div className="flex justify-between items-center text-xs text-slate-400 px-1">
             <span>
               {isAr
-                ? `عرض ${filteredListings.length} عقار من إجمالي ${realListingsRaw.length}`
+                ? `عرض ${filteredListings.length} عقار من إجمالي ${stats.total}`
                 : `Showing ${filteredListings.length} matching units (Page ${currentPage} of ${totalPages || 1})`}
             </span>
             {searchQuery && (
@@ -274,87 +306,84 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                   <th className="p-3.5">Price & Mode</th>
                   <th className="p-3.5">Source & Owner</th>
                   <th className="p-3.5">Status</th>
-                  <th className="p-3.5 text-center">AI Score</th>
+                  <th className="p-3.5 text-center">AI Match Score</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {paginatedListings.map((item, idx) => {
-                  const isWhatsApp =
-                    item.ago?.toLowerCase().includes('whatsapp') ||
-                    item.agent?.toLowerCase().includes('whatsapp') ||
-                    item.code?.startsWith('UNIT-WA') ||
-                    item.code?.startsWith('MD-B10') ||
-                    item.code?.startsWith('RH-P4') ||
-                    item.code?.startsWith('MV-GS') ||
-                    item.code?.startsWith('ET-R90') ||
-                    item.code?.startsWith('HP-GR') ||
-                    item.code?.startsWith('SL-HAF') ||
-                    item.code?.startsWith('BD-PH') ||
-                    item.code?.startsWith('VS-3A') ||
-                    item.code?.startsWith('MV-POOL') ||
-                    item.code?.startsWith('HP-LAKE');
+                  const isOwner = item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
+                  const isRent = item.operation === 'Rent' || item.mode === 'rent';
+                  const code = item.sierraCode || item.code || `SE-${item.id}`;
 
                   return (
                     <tr
-                      key={item.code || item.id || idx}
+                      key={code || item.id || idx}
                       className="hover:bg-slate-800/40 transition-colors"
                     >
                       <td className="p-3.5">
-                        <div className="font-mono font-bold text-cyan-400">{item.code || `SE-${item.id}`}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">#{item.id}</div>
+                        <div className="font-mono font-bold text-cyan-400">{code}</div>
+                        {item.isNewListing && (
+                          <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-950 text-purple-300 border border-purple-800/60">
+                            NEW
+                          </span>
+                        )}
                       </td>
                       <td className="p-3.5">
-                        <div className="font-semibold text-white">{item.compound || item.cmp || 'New Cairo'}</div>
-                        <div className="text-[11px] text-slate-400">{item.zone || '5th Settlement'}</div>
+                        <div className="font-semibold text-white">{item.compound || item.location || 'New Cairo'}</div>
+                        <div className="text-[11px] text-slate-400">{item.location || item.zone || '5th Settlement'}</div>
                       </td>
                       <td className="p-3.5">
                         <div className="text-slate-200 font-medium">{item.type || 'Apartment'}</div>
                         <div className="text-[11px] text-slate-400">
-                          {item.beds} Beds · {item.baths || item.bath || 2} Baths · {item.area} m²
-                          {item.gardenArea ? ` (+${item.gardenArea}m² gdn/rf)` : ''}
+                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths · {item.area_sqm || item.area || 200} m²
+                          {item.gardenArea ? ` (+${item.gardenArea}m² gdn)` : ''}
                         </div>
                       </td>
                       <td className="p-3.5">
                         <div className="font-bold text-white">
-                          {item.mode === 'rent'
-                            ? `${(item.price || item.egpM || 0).toLocaleString()} EGP / mo`
-                            : typeof item.egpM === 'number'
-                            ? `${item.egpM}M EGP`
-                            : `${item.price?.toLocaleString()} EGP`}
+                          {item.priceFormatted || (item.price > 0 ? `${item.price.toLocaleString()} EGP` : 'Price on Call')}
                         </div>
                         <span
                           className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                            item.mode === 'rent'
+                            isRent
                               ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
                               : 'bg-cyan-950 text-cyan-300 border border-cyan-800/60'
                           }`}
                         >
-                          {item.mode === 'rent' ? (isAr ? 'إيجار' : 'Rent') : (isAr ? 'للبيع' : 'Sale')}
+                          {isRent ? (isAr ? 'إيجار' : 'Rent') : (isAr ? 'للبيع' : 'Sale')}
                         </span>
                       </td>
                       <td className="p-3.5">
                         <div className="flex items-center gap-1 text-slate-300">
-                          {isWhatsApp && <span className="text-emerald-400 font-bold">📲</span>}
-                          <span>{item.ownerName || item.agent || 'Owner Direct'}</span>
+                          {isOwner ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-0.5">
+                              <UserCheck className="w-2.5 h-2.5" />
+                              <span>{isAr ? 'مالك مباشر' : 'Owner'}</span>
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-950 text-blue-400 border border-blue-800/60">
+                              {isAr ? 'وسيط' : 'Broker'}
+                            </span>
+                          )}
+                          <span className="font-medium text-xs truncate max-w-[120px]">{item.ownerName || item.contact_info || 'Direct Client'}</span>
                         </div>
                         <div className="text-[10px] text-slate-500 mt-0.5">
-                          {isWhatsApp ? 'WhatsApp Multi-Device Gateway' : item.ago || 'Master Sheet Sync'}
+                          {item.sourceGroup || item.ago || 'Verified Sync'}
                         </div>
                       </td>
                       <td className="p-3.5">
                         <span className="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-[11px] font-medium inline-block">
                           {item.status || 'Available'}
                         </span>
-                        {item.tag && (
-                          <div className="text-[10px] text-purple-400 mt-1 flex items-center gap-1">
-                            <Tag className="w-2.5 h-2.5" />
-                            <span>{item.tag}</span>
+                        {item.finishing && (
+                          <div className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[100px]">
+                            {item.finishing}
                           </div>
                         )}
                       </td>
                       <td className="p-3.5 text-center">
                         <span className="text-purple-400 font-bold text-xs bg-purple-950/50 px-2 py-1 rounded border border-purple-800/50">
-                          {item.aiScore || 9.0} / 10
+                          {item.aiScore || 9.2} / 10
                         </span>
                       </td>
                     </tr>
