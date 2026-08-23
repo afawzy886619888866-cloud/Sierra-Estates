@@ -27,6 +27,22 @@ describe('Regression & Configuration Hardening Suite', () => {
       expect(() => JSON.parse(content)).not.toThrow();
     });
 
+    it('.vscode/tasks.json exists and is valid JSON', () => {
+      expect(fs.existsSync(tasksJsonPath)).toBe(true);
+      const content = fs.readFileSync(tasksJsonPath, 'utf8');
+      expect(() => JSON.parse(content)).not.toThrow();
+    });
+
+    it('.vscode/settings.json exists and is valid JSON with proper formatting', () => {
+      const settingsJsonPath = path.join(ROOT, '.vscode/settings.json');
+      expect(fs.existsSync(settingsJsonPath)).toBe(true);
+      const content = fs.readFileSync(settingsJsonPath, 'utf8');
+      expect(() => JSON.parse(content)).not.toThrow();
+      const settings = JSON.parse(content);
+      expect(settings['sql.defaultDatabaseType']).toBe('postgres');
+      expect(settings['editor.formatOnSave']).toBe(true);
+    });
+
     it('.vscode/launch.json strictly adheres to debug schema', () => {
       const config = JSON.parse(fs.readFileSync(launchJsonPath, 'utf8'));
       expect(config.version).toBe('0.2.0');

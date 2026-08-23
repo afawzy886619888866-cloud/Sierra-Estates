@@ -1,7 +1,21 @@
 {
-    "compilets.autoStart": true,
-    "sql.defaultDatabaseType": "postgres",
-    "files.associations": {
-        "*.sql": "postgres"
-    }
+  "sql.defaultDatabaseType": "postgres",
+  "files.associations": {
+    "*.sql": "postgres"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.turbo": true
+  }
 }
