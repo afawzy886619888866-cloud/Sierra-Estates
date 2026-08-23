@@ -1594,7 +1594,8 @@ function AdminApp() {
 
   const renderPage=()=>{
     switch(tab){
-      case 'overview':return <OverviewPage T={T}/>;
+      case 'overview':
+      case 'dashboard':return <DashboardView lang={langKey}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1614,10 +1615,10 @@ function AdminApp() {
       case 'roles':return <RoleManagerView lang={langKey}/>;
       case 'security':return <SecurityView lang={langKey}/>;
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
-      case 'reports':return <ReportsPage T={T}/>;
+      case 'reports':return <ReportsView lang={langKey}/>;
       case 'intelligence':return <AgentIntelligence />;
       case 'settings':return <SettingsPage T={T}/>;
-      default:return <OverviewPage T={T}/>;
+      default:return <DashboardView lang={langKey}/>;
     }
   };
 
