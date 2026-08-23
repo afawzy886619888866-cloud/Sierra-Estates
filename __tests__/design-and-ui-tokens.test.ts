@@ -31,12 +31,14 @@ describe('Design System, UI Tokens & Aesthetics Test Suite', () => {
   });
 
   describe('Design System CSS Variables & Glassmorphism Tokens', () => {
-    it('globals.css should define root CSS variables and dark theme overrides if present', () => {
+    it('globals.css should define client shell styling, backdrop filters, and design rules', () => {
       if (fs.existsSync(CSS_GLOBALS_PATH)) {
         const css = fs.readFileSync(CSS_GLOBALS_PATH, 'utf-8');
-        expect(css).toContain(':root');
+        expect(css).toContain('.cp-shell');
+        expect(css).toContain('backdrop-filter');
       }
     });
+
 
     it('should enforce consistent responsive breakpoints for luxury real estate layout', () => {
       const breakpoints = {

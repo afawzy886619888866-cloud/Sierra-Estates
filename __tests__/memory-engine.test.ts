@@ -96,15 +96,20 @@ describe('Memory Engine & Episodic Context Cache (ECC) Test Suite', () => {
       const engine = new MemoryEngine({ persistenceLayer: 'memory' });
 
       engine.registerSkill({
-        name: 'valuation-arbitrage-analyzer',
+        id: 'valuation-arbitrage-analyzer',
+        name: 'Valuation Arbitrage Analyzer',
         description: 'Computes real estate cap rates and spread arbitrage in Cairo',
-        parameters: { price: 'number', sqm: 'number' },
-        handler: async (args: any) => ({ fairValue: args.price * 1.1 }),
+        applicableWhen: (ctx) => Boolean(ctx.propertyPrice),
       });
 
-      const skills = engine.listSkills();
-      expect(skills.some(s => s.name === 'valuation-arbitrage-analyzer')).toBe(true);
+      const skill = engine.loadSkill('valuation-arbitrage-analyzer');
+      expect(skill).toBeDefined();
+      expect(skill?.id).toBe('valuation-arbitrage-analyzer');
+
+      const applicable = engine.getApplicableSkills({ propertyPrice: 30000000 });
+      expect(applicable.some((s) => s.id === 'valuation-arbitrage-analyzer')).toBe(true);
     });
+
 
     it('should merge multiple context dictionaries accurately', () => {
       const engine = new MemoryEngine();
