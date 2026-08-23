@@ -3,6 +3,7 @@
  * load Tailwind, and this page must look right regardless of which route group
  * the miss came from.
  */
+import React from 'react';
 import Link from 'next/link';
 
 const LINKS = [
