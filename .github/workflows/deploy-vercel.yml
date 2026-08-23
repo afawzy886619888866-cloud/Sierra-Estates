@@ -52,6 +52,7 @@ jobs:
   deploy:
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - role: client
@@ -66,7 +67,7 @@ jobs:
             proj_id_secret: ADMIN_VERCEL_PROJECT_ID
     name: deploy (${{ matrix.role }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       # ── Resolve correct project ID & token for the role ──────────────────────
@@ -132,16 +133,26 @@ jobs:
       - name: Normalize Vercel project settings
         run: |
           # Vercel needs to know to build from apps/sierra-estates-realty
-          code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \
-            "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
-            -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"rootDirectory\":\"${{ matrix.app_dir }}\",\"framework\":\"${{ matrix.framework }}\",\"buildCommand\":null,\"installCommand\":\"pnpm install\",\"outputDirectory\":null,\"devCommand\":null}" || echo "000")
-          if [ "$code" = "200" ] || [ "$code" = "204" ]; then
-            echo "✅ Project normalized: rootDirectory=${{ matrix.app_dir }}, framework=${{ matrix.framework }}"
-          else
-            echo "::warning::Could not normalize project settings (HTTP $code). Check VERCEL_TOKEN scope."
-          fi
+          # Include retry logic on HTTP 429 rate limit
+          success=false
+          for attempt in 1 2 3; do
+            code=$(curl -sS -o /tmp/norm-res.json -w '%{http_code}' -X PATCH \
+              "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
+              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"rootDirectory\":\"${{ matrix.app_dir }}\",\"framework\":\"${{ matrix.framework }}\",\"buildCommand\":null,\"installCommand\":\"pnpm install\",\"outputDirectory\":null,\"devCommand\":null}" || echo "000")
+            if [ "$code" = "200" ] || [ "$code" = "204" ]; then
+              echo "✅ Project normalized: rootDirectory=${{ matrix.app_dir }}, framework=${{ matrix.framework }}"
+              success=true
+              break
+            elif [ "$code" = "429" ]; then
+              echo "⏳ Rate limited on project normalize, retrying in $((attempt * 3))s..."
+              sleep $((attempt * 3))
+            else
+              echo "::warning::Could not normalize project settings (HTTP $code). Response: $(cat /tmp/norm-res.json 2>/dev/null || true)"
+              break
+            fi
+          done
 
       - name: Sync env vars to Vercel project
         env:
@@ -158,85 +169,205 @@ jobs:
           FB_DATABASE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_DATABASE_URL // empty')
           
           AI_KEY=$(echo "$SECRETS_JSON" | jq -r '.GOOGLE_AI_API_KEY // .GEMINI_API_KEY // empty')
+          GENAI_KEY=$(echo "$SECRETS_JSON" | jq -r '.GOOGLE_GENAI_API_KEY // .GOOGLE_AI_API_KEY // empty')
+          AI_PROV=$(echo "$VARS_JSON" | jq -r '.AI_PROVIDER // empty')
+          GC_LOC=$(echo "$VARS_JSON" | jq -r '.GOOGLE_CLOUD_LOCATION // empty')
+          DEEPSEEK_KEY=$(echo "$SECRETS_JSON" | jq -r '.DEEPSEEK_API_KEY // empty')
+          DEEPSEEK_URL=$(echo "$VARS_JSON" | jq -r '.DEEPSEEK_API_URL // empty')
+
           PF_KEY=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_KEY // .PF_API_KEY // empty')
           PF_SECRET=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_SECRET // .PF_API_SECRET // empty')
+          PF_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_AUTH_TOKEN // .PF_JWT_TOKEN // .PROPERTY_FINDER_JWT_TOKEN // empty')
+          PF_COMP_ID=$(echo "$VARS_JSON" | jq -r '.PF_COMPANY_ID // empty')
+          PF_WEBHOOK=$(echo "$SECRETS_JSON" | jq -r '.PF_WEBHOOK_SECRET // empty')
+
           AWS_KEY=$(echo "$SECRETS_JSON" | jq -r '.AWS_ACCESS_KEY_ID // empty')
           AWS_SEC=$(echo "$SECRETS_JSON" | jq -r '.AWS_SECRET_ACCESS_KEY // empty')
+          AWS_REG=$(echo "$VARS_JSON" | jq -r '.AWS_REGION // empty')
+
           SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
+          ADMIN_API_KEY_VAL=$(echo "$SECRETS_JSON" | jq -r '.ADMIN_API_KEY // empty')
+          ANTIGRAVITY_API_KEY_VAL=$(echo "$SECRETS_JSON" | jq -r '.ANTIGRAVITY_API_KEY // empty')
           SA_JSON=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
+          FB_PRIV_KEY=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_PRIVATE_KEY // empty')
+          FB_CLIENT_EM=$(echo "$VARS_JSON" | jq -r '.FIREBASE_CLIENT_EMAIL // empty')
 
           SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
-          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN // empty')
+          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
+
+          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_BOT_TOKEN // .NEXT_PUBLIC_TELEGRAM_BOT_TOKEN // empty')
           TG_BOT_USERNAME=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME // empty')
+          TG_CHAT_ID_VAL=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_CHAT_ID // empty')
+          TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
+
+          WA_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.WHATSAPP_API_TOKEN // .WHATSAPP_META_TOKEN // empty')
+          WA_PHONE_ID=$(echo "$VARS_JSON" | jq -r '.WHATSAPP_PHONE_NUMBER_ID // empty')
+          WA_VERIFY=$(echo "$SECRETS_JSON" | jq -r '.WHATSAPP_VERIFY_TOKEN // empty')
+          LEAD_WHATSAPP=$(echo "$SECRETS_JSON" | jq -r '.LEAD_NOTIFY_WHATSAPP_NUMBER // empty')
+          BRAND_TAG=$(echo "$VARS_JSON" | jq -r '.BRANDING_TAG // empty')
+          WABA_1=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_1 // empty')
+          WABA_2=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_2 // empty')
+          WABA_3=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_3 // empty')
+          WABA_4=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_4 // empty')
+
+          TW_SID=$(echo "$SECRETS_JSON" | jq -r '.TWILIO_ACCOUNT_SID // empty')
+          TW_AUTH=$(echo "$SECRETS_JSON" | jq -r '.TWILIO_AUTH_TOKEN // empty')
+          TW_MSG_SID=$(echo "$VARS_JSON" | jq -r '.TWILIO_MESSAGING_SERVICE_SID // empty')
+
           SENDGRID_KEY=$(echo "$SECRETS_JSON" | jq -r '.SENDGRID_API_KEY // empty')
-          SENDER_EMAIL_VAL=$(echo "$VARS_JSON" | jq -r '.SENDER_EMAIL // empty')
+          SENDER_EMAIL_VAL=$(echo "$VARS_JSON" | jq -r '.SENDER_EMAIL // .SENDGRID_FROM_EMAIL // empty')
+
           DEFAULT_LOCALE=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_DEFAULT_LOCALE // empty')
           APP_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_APP_URL // empty')
+          SITE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_SITE_URL // empty')
           ORIGINS=$(echo "$VARS_JSON" | jq -r '.ALLOWED_ORIGINS // empty')
           INT_OS_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_INTELLIGENCE_OS_URL // empty')
-          TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
-          LEAD_WHATSAPP=$(echo "$SECRETS_JSON" | jq -r '.LEAD_NOTIFY_WHATSAPP_NUMBER // empty')
-          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
           OPENMEM_URL=$(echo "$VARS_JSON" | jq -r '.OPENMEMORY_URL // empty')
 
+          REDIS_URL=$(echo "$SECRETS_JSON" | jq -r '.UPSTASH_REDIS_REST_URL // empty')
+          REDIS_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.UPSTASH_REDIS_REST_TOKEN // empty')
+
+          INV_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.INVENTORY_SHEET_ID // empty')
+          INV_SHEET_GID=$(echo "$VARS_JSON" | jq -r '.INVENTORY_SHEET_GID // empty')
+          MST_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.MASTER_SHEET_ID // empty')
+          BRK_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.BROKER_INBOX_SHEET_ID // empty')
+
+          N8N_URL=$(echo "$VARS_JSON" | jq -r '.N8N_BASE_URL // empty')
+          N8N_KEY=$(echo "$SECRETS_JSON" | jq -r '.N8N_API_KEY // empty')
+
+          # Rate-limited upsert helper with exponential backoff & pacing
           upsert() {
-            [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
-            code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
-              "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\",\"preview\"]}" || echo "000")
-            case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)";; esac
+            [ -n "$2" ] || { return 0; }
+            local key="$1"
+            local val="$2"
+            local type="${3:-plain}"
+            
+            for attempt in 1 2 3 4; do
+              code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
+                "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
+                -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"key\":\"$key\",\"value\":\"$val\",\"type\":\"$type\",\"target\":[\"production\",\"preview\"]}" || echo "000")
+              
+              if [ "$code" = "200" ] || [ "$code" = "201" ]; then
+                echo "  $key ✓"
+                sleep 0.15 # Small delay to stay under Vercel API rate limits
+                return 0
+              elif [ "$code" = "429" ]; then
+                echo "  ⏳ Rate limited on $key, retrying in $((attempt * 2))s..."
+                sleep $((attempt * 2))
+              else
+                echo "::warning::env $key → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)"
+                return 0
+              fi
+            done
           }
 
+          echo "Syncing environment variables to Vercel (${{ matrix.role }})..."
+
           # Routing & Domains
-          upsert ADMIN_HOST              "admin.sierra-estates.net"
-          upsert CLIENT_HOST             "sierra-estates.net"
-          upsert COOKIE_DOMAIN           ".sierra-estates.net"
-          upsert NEXT_PUBLIC_CLIENT_URL  "https://sierra-estates.net"
-          upsert NEXT_PUBLIC_ADMIN_URL   "https://admin.sierra-estates.net"
+          upsert ADMIN_HOST                            "admin.sierra-estates.net"
+          upsert CLIENT_HOST                           "sierra-estates.net"
+          upsert COOKIE_DOMAIN                         ".sierra-estates.net"
+          upsert NEXT_PUBLIC_CLIENT_URL                "https://sierra-estates.net"
+          upsert NEXT_PUBLIC_ADMIN_URL                 "https://admin.sierra-estates.net"
+          upsert NEXT_PUBLIC_SITE_URL                  "${SITE_URL:-https://sierra-estates.net}"
+          upsert NEXT_PUBLIC_APP_URL                   "${APP_URL:-https://sierra-estates.net}"
+          upsert ALLOWED_ORIGINS                        "$ORIGINS"
+          upsert NEXT_PUBLIC_DEFAULT_LOCALE            "${DEFAULT_LOCALE:-en}"
+          upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL       "$INT_OS_URL"
+          upsert OPENMEMORY_URL                        "${OPENMEM_URL:-http://localhost:8080}"
 
-          # Firebase Client SDK (fallback to canonical values if not in vars)
-          upsert NEXT_PUBLIC_FIREBASE_API_KEY             "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
-          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN         "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
-          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID          "${FB_PROJECT_ID:-sierra-blu}"
-          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET      "${FB_STORAGE:-sierra-blu.firebasestorage.app}"
+          # Firebase Client SDK
+          upsert NEXT_PUBLIC_FIREBASE_API_KEY          "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
+          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN      "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
+          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID       "${FB_PROJECT_ID:-sierra-blu}"
+          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET   "${FB_STORAGE:-sierra-blu.firebasestorage.app}"
           upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "${FB_SENDER_ID:-941030513456}"
-          upsert NEXT_PUBLIC_FIREBASE_APP_ID              "${FB_APP_ID:-1:941030513456:web:56209a1495d69f217086f5}"
-          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID      "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
-          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL        "${FB_DATABASE_URL:-https://sierra-blu-default-rtdb.firebaseio.com}"
+          upsert NEXT_PUBLIC_FIREBASE_APP_ID           "${FB_APP_ID:-1:941030513456:web:56209a1495d69f217086f5}"
+          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID   "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
+          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL     "${FB_DATABASE_URL:-https://sierra-blu-default-rtdb.firebaseio.com}"
 
-          # AI & LLM & Memory
-          upsert GOOGLE_AI_API_KEY                        "$AI_KEY" encrypted
-          upsert GEMINI_API_KEY                           "$AI_KEY" encrypted
-          upsert NEXT_PUBLIC_GEMINI_API_KEY               "$AI_KEY"
-          upsert OPENMEMORY_URL                           "${OPENMEM_URL:-http://localhost:8080}"
+          # Firebase Admin & Service Account
+          upsert FIREBASE_PROJECT_ID                   "sierra-blu"
+          upsert FIREBASE_SERVICE_ACCOUNT_JSON         "$SA_JSON" encrypted
+          upsert FIREBASE_PRIVATE_KEY                  "$FB_PRIV_KEY" encrypted
+          upsert FIREBASE_CLIENT_EMAIL                 "$FB_CLIENT_EM"
 
-          # Property Finder & AWS
-          upsert PROPERTY_FINDER_API_KEY                  "$PF_KEY" encrypted
-          upsert PROPERTY_FINDER_API_SECRET               "$PF_SECRET" encrypted
-          upsert PF_API_KEY                               "$PF_KEY" encrypted
-          upsert PF_API_SECRET                            "$PF_SECRET" encrypted
-          upsert AWS_ACCESS_KEY_ID                        "$AWS_KEY" encrypted
-          upsert AWS_SECRET_ACCESS_KEY                    "$AWS_SEC" encrypted
-          upsert AWS_REGION                               "us-east-1"
-          upsert FIREBASE_PROJECT_ID                      "sierra-blu"
-          upsert FIREBASE_SERVICE_ACCOUNT_JSON            "$SA_JSON" encrypted
-          upsert SESSION_SECRET                           "$SESSION_SECRET_VAL" encrypted
-          upsert CRON_SECRET                              "$CRON_SECRET_VAL" encrypted
+          # AI & LLM Providers
+          upsert GOOGLE_AI_API_KEY                     "$AI_KEY" encrypted
+          upsert GEMINI_API_KEY                        "$AI_KEY" encrypted
+          upsert NEXT_PUBLIC_GEMINI_API_KEY            "$AI_KEY"
+          upsert GOOGLE_GENAI_API_KEY                  "$GENAI_KEY" encrypted
+          upsert AI_PROVIDER                           "$AI_PROV"
+          upsert GOOGLE_CLOUD_LOCATION                 "${GC_LOC:-europe-west1}"
+          upsert DEEPSEEK_API_KEY                      "$DEEPSEEK_KEY" encrypted
+          upsert DEEPSEEK_API_URL                      "$DEEPSEEK_URL"
 
-          # Other integrations and App Settings
-          upsert SBR_SECRET_KEY                           "$SBR_SECRET" encrypted
-          upsert NEXT_PUBLIC_TELEGRAM_BOT_TOKEN           "$TG_BOT_TOKEN" encrypted
-          upsert NEXT_PUBLIC_TELEGRAM_BOT_USERNAME        "$TG_BOT_USERNAME"
-          upsert SENDGRID_API_KEY                         "$SENDGRID_KEY" encrypted
-          upsert SENDER_EMAIL                             "$SENDER_EMAIL_VAL"
-          upsert NEXT_PUBLIC_DEFAULT_LOCALE               "${DEFAULT_LOCALE:-en}"
-          upsert NEXT_PUBLIC_APP_URL                      "$APP_URL"
-          upsert ALLOWED_ORIGINS                          "$ORIGINS"
-          upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL          "$INT_OS_URL"
-          upsert TELEGRAM_WEBHOOK_SECRET                  "$TG_WEBHOOK_SECRET" encrypted
-          upsert LEAD_NOTIFY_WHATSAPP_NUMBER              "$LEAD_WHATSAPP" encrypted
+          # Property Finder Integration
+          upsert PROPERTY_FINDER_API_KEY               "$PF_KEY" encrypted
+          upsert PROPERTY_FINDER_API_SECRET            "$PF_SECRET" encrypted
+          upsert PF_API_KEY                            "$PF_KEY" encrypted
+          upsert PF_API_SECRET                         "$PF_SECRET" encrypted
+          upsert PROPERTY_FINDER_AUTH_TOKEN            "$PF_TOKEN" encrypted
+          upsert PF_COMPANY_ID                         "$PF_COMP_ID"
+          upsert PF_WEBHOOK_SECRET                     "$PF_WEBHOOK" encrypted
+
+          # AWS & Infrastructure
+          upsert AWS_ACCESS_KEY_ID                     "$AWS_KEY" encrypted
+          upsert AWS_SECRET_ACCESS_KEY                 "$AWS_SEC" encrypted
+          upsert AWS_REGION                            "${AWS_REG:-us-east-1}"
+
+          # Security & Application Secrets
+          upsert SESSION_SECRET                        "$SESSION_SECRET_VAL" encrypted
+          upsert SBR_SECRET_KEY                        "$SBR_SECRET" encrypted
+          upsert CRON_SECRET                           "$CRON_SECRET_VAL" encrypted
+          upsert ADMIN_API_KEY                         "$ADMIN_API_KEY_VAL" encrypted
+          upsert ANTIGRAVITY_API_KEY                   "$ANTIGRAVITY_API_KEY_VAL" encrypted
+
+          # Telegram Integration
+          upsert TELEGRAM_BOT_TOKEN                    "$TG_BOT_TOKEN" encrypted
+          upsert NEXT_PUBLIC_TELEGRAM_BOT_TOKEN        "$TG_BOT_TOKEN" encrypted
+          upsert NEXT_PUBLIC_TELEGRAM_BOT_USERNAME     "$TG_BOT_USERNAME"
+          upsert TELEGRAM_CHAT_ID                      "$TG_CHAT_ID_VAL" encrypted
+          upsert TELEGRAM_WEBHOOK_SECRET               "$TG_WEBHOOK_SECRET" encrypted
+
+          # WhatsApp Integration & Cloud API
+          upsert WHATSAPP_API_TOKEN                    "$WA_TOKEN" encrypted
+          upsert WHATSAPP_META_TOKEN                   "$WA_TOKEN" encrypted
+          upsert WHATSAPP_PHONE_NUMBER_ID              "$WA_PHONE_ID"
+          upsert WHATSAPP_VERIFY_TOKEN                 "$WA_VERIFY" encrypted
+          upsert LEAD_NOTIFY_WHATSAPP_NUMBER           "$LEAD_WHATSAPP" encrypted
+          upsert BRANDING_TAG                          "$BRAND_TAG"
+          upsert WABA_NUMBER_1                         "$WABA_1"
+          upsert WABA_NUMBER_2                         "$WABA_2"
+          upsert WABA_NUMBER_3                         "$WABA_3"
+          upsert WABA_NUMBER_4                         "$WABA_4"
+
+          # Twilio Fallback
+          upsert TWILIO_ACCOUNT_SID                    "$TW_SID" encrypted
+          upsert TWILIO_AUTH_TOKEN                     "$TW_AUTH" encrypted
+          upsert TWILIO_MESSAGING_SERVICE_SID          "$TW_MSG_SID"
+
+          # Email (SendGrid)
+          upsert SENDGRID_API_KEY                      "$SENDGRID_KEY" encrypted
+          upsert SENDER_EMAIL                          "$SENDER_EMAIL_VAL"
+
+          # Upstash Redis
+          upsert UPSTASH_REDIS_REST_URL                "$REDIS_URL" encrypted
+          upsert UPSTASH_REDIS_REST_TOKEN              "$REDIS_TOKEN" encrypted
+
+          # Google Sheets & Inventory
+          upsert INVENTORY_SHEET_ID                    "$INV_SHEET_ID"
+          upsert INVENTORY_SHEET_GID                   "$INV_SHEET_GID"
+          upsert MASTER_SHEET_ID                       "$MST_SHEET_ID"
+          upsert BROKER_INBOX_SHEET_ID                 "$BRK_SHEET_ID"
+
+          # n8n
+          upsert N8N_BASE_URL                          "$N8N_URL"
+          upsert N8N_API_KEY                           "$N8N_KEY" encrypted
+
+          echo "✅ Environment variables synchronization complete for ${{ matrix.role }}."
 
       - name: Remove crons from admin project (client project owns them)
         if: matrix.role == 'admin'
@@ -251,10 +382,6 @@ jobs:
         run: npm install --global vercel@${VERCEL_CLI_VERSION}
 
       # ── Point vercel CLI at THIS role's project ONLY ──────────────────────
-      # Written at the repo root only: the project's rootDirectory (set above)
-      # already tells Vercel to build from matrix.app_dir, so pull/build/deploy
-      # run un-cwd'd from root — passing --cwd=matrix.app_dir here as well would
-      # double-apply the subdirectory (root + rootDirectory + --cwd).
       - name: Write .vercel/project.json for this role
         run: |
           mkdir -p .vercel
@@ -264,7 +391,15 @@ jobs:
 
       - name: Pull Vercel project settings
         run: |
-          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
+          # Pull settings with retry backoff
+          for attempt in 1 2 3; do
+            if vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN; then
+              break
+            else
+              echo "⏳ Pull failed (attempt $attempt), retrying in $((attempt * 5))s..."
+              sleep $((attempt * 5))
+            fi
+          done
 
       - name: Build
         run: |
@@ -273,24 +408,46 @@ jobs:
       - name: Deploy (prebuilt artifact)
         id: deploy_step
         run: |
-          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
-          echo "deployed: $url"
+          # Deploy prebuilt artifact with retry for transient 429 rate limit or upload issues
+          url=""
+          for attempt in 1 2 3; do
+            echo "Running vercel deploy (attempt $attempt)..."
+            if url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN); then
+              echo "url=$url" >> "$GITHUB_OUTPUT"
+              echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
+              echo "deployed: $url"
+              break
+            else
+              echo "⏳ Deploy failed (attempt $attempt), retrying in $((attempt * 10))s..."
+              sleep $((attempt * 10))
+            fi
+          done
+          if [ -z "$url" ]; then
+            echo "::error::Deployment failed after 3 attempts."
+            exit 1
+          fi
 
       - name: Attach production domain (${{ matrix.domain }})
         if: steps.target.outputs.name == 'production'
         run: |
-          code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
-            "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
-            -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"name\":\"${{ matrix.domain }}\"}" || echo "000")
-          body=$(cat /tmp/dom-res.json)
-          if [ "$code" = "200" ] || [ "$code" = "201" ]; then
-            echo "✅ domain ${{ matrix.domain }} attached"
-          elif echo "$body" | grep -q 'already'; then
-            echo "✅ domain ${{ matrix.domain }} already attached"
-          else
-            echo "::warning title=Domain not attached::${{ matrix.domain }} → HTTP $code. Remove domain from its current Vercel project first. Response: $body"
-          fi
+          for attempt in 1 2 3; do
+            code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
+              "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
+              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"${{ matrix.domain }}\"}" || echo "000")
+            body=$(cat /tmp/dom-res.json 2>/dev/null || true)
+            if [ "$code" = "200" ] || [ "$code" = "201" ]; then
+              echo "✅ domain ${{ matrix.domain }} attached"
+              break
+            elif echo "$body" | grep -q 'already'; then
+              echo "✅ domain ${{ matrix.domain }} already attached"
+              break
+            elif [ "$code" = "429" ]; then
+              echo "⏳ Rate limited on attaching domain, retrying in $((attempt * 3))s..."
+              sleep $((attempt * 3))
+            else
+              echo "::warning title=Domain not attached::${{ matrix.domain }} → HTTP $code. Response: $body"
+              break
+            fi
+          done
