@@ -29,6 +29,7 @@ import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
+import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
@@ -993,6 +994,9 @@ function NexusAIPage({ T }) {
 
   return (
     <div className="fade-up">
+      {/* Live DeepSeek Reasoning Harness Benchmark Suite */}
+      <HarnessBenchmarkCard />
+
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
         {[[ctr,'Ingested Today','#00AEFF'],[Math.round(ctr*.93),'Parsed','#34D399'],[Math.max(0,Math.round(ctr*.06)),'Processing','#f59e0b'],[Math.max(0,Math.round(ctr*.01)),'Failed','#E63946']].map(([v,l,c],i)=>(
           <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',borderTop:`3px solid ${c}`}}>
