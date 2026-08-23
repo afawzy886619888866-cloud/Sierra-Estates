@@ -62,6 +62,7 @@ import {
   BROKER_GROUPS,
   classifySourceType,
   isNewListing,
+  isWithinOneMonth,
   findGroup,
 } from '../../../packages/agents/tools/whatsappGroupRegistry';
 import { batchIngestListings, UnitListingData } from '../../../packages/agents/tools/inventoryTools';
@@ -362,6 +363,12 @@ describe('New Listing Detection', () => {
   it('handles Date objects', () => {
     expect(isNewListing(new Date())).toBe(true);
     expect(isNewListing(new Date(2020, 0, 1))).toBe(false);
+  });
+
+  it('detects listings within the last 30 days (1 month)', () => {
+    expect(isWithinOneMonth(new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString())).toBe(true);
+    expect(isWithinOneMonth(new Date(Date.now() - 29 * 24 * 3600 * 1000).toISOString())).toBe(true);
+    expect(isWithinOneMonth(new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString())).toBe(false);
   });
 });
 

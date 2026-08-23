@@ -214,3 +214,12 @@ export function isNewListing(listedAt: string | Date): boolean {
   const diffMs = Date.now() - ts.getTime();
   return diffMs < 48 * 60 * 60 * 1000;
 }
+
+/** Determine if a listing timestamp is within the last 30 days (1 month) */
+export function isWithinOneMonth(listedAt: string | Date): boolean {
+  const ts = typeof listedAt === 'string' ? new Date(listedAt) : listedAt;
+  if (isNaN(ts.getTime())) return true;
+  const diffMs = Date.now() - ts.getTime();
+  return diffMs <= 30 * 24 * 60 * 60 * 1000;
+}
+

@@ -16,7 +16,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'villa' | 'apartment'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'month' | 'villa' | 'apartment'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
@@ -66,6 +66,12 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       if (selectedFilter === 'sale') return item.operation === 'Sale' || item.mode === 'sale';
       if (selectedFilter === 'rent') return item.operation === 'Rent' || item.mode === 'rent';
       if (selectedFilter === 'new') return Boolean(item.isNewListing);
+      if (selectedFilter === 'month') {
+        if (!item.listedAt) return true;
+        const ts = new Date(item.listedAt).getTime();
+        if (isNaN(ts)) return true;
+        return Date.now() - ts <= 30 * 24 * 60 * 60 * 1000;
+      }
       if (selectedFilter === 'villa') {
         const t = (item.type || '').toLowerCase();
         return t.includes('villa') || t.includes('twin') || t.includes('town');
@@ -111,6 +117,11 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
     const saleCount = all.filter((x) => x.operation === 'Sale' || x.mode === 'sale').length;
     const rentCount = all.filter((x) => x.operation === 'Rent' || x.mode === 'rent').length;
     const newCount = all.filter((x) => Boolean(x.isNewListing)).length;
+    const monthCount = all.filter((x) => {
+      if (!x.listedAt) return true;
+      const ts = new Date(x.listedAt).getTime();
+      return isNaN(ts) || Date.now() - ts <= 30 * 24 * 60 * 60 * 1000;
+    }).length;
 
     return {
       total: all.length,
@@ -119,6 +130,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       sale: saleCount,
       rent: rentCount,
       new: newCount,
+      month: monthCount,
     };
   }, []);
 
@@ -245,6 +257,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             <div className="flex flex-wrap items-center gap-1.5">
               {[
                 { id: 'all', label: isAr ? `الكل (${stats.total})` : `All (${stats.total})` },
+                { id: 'month', label: isAr ? `📅 آخر شهر (${stats.month})` : `📅 Last 30 Days (${stats.month})` },
                 { id: 'owners', label: isAr ? `🟢 ملاك مباشرين (${stats.owners})` : `🟢 Direct Owners (${stats.owners})` },
                 { id: 'sale', label: isAr ? `للبيع (${stats.sale})` : `For Sale (${stats.sale})` },
                 { id: 'rent', label: isAr ? `للإيجار (${stats.rent})` : `For Rent (${stats.rent})` },
