@@ -5,6 +5,11 @@
  * 1. RecommendationsView rendering, filtering, search, and WhatsApp queue actions
  * 2. AlertsView rendering, severity badges, and status transitions
  * 3. SecurityView rendering, RBAC health indicators, and immutable log filters
+ * 4. DashboardView rendering, time-range metrics, and deal funnel
+ * 5. DeepInsightsView rendering, region filters, and compound analytics
+ * 6. ReportsView rendering, category filters, and simulated export triggers
+ * 7. MonitoringView rendering, omnichannel SLA metrics, and log filters
+ * 8. HealthView rendering, subsystem status, and diagnostic controls
  */
 
 import React from 'react';
@@ -12,6 +17,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import RecommendationsView from '../app/admin/views/RecommendationsView';
 import AlertsView from '../app/admin/views/AlertsView';
 import SecurityView from '../app/admin/views/SecurityView';
+import DashboardView from '../app/admin/views/DashboardView';
+import DeepInsightsView from '../app/admin/views/DeepInsightsView';
+import ReportsView from '../app/admin/views/ReportsView';
+import MonitoringView from '../app/admin/views/MonitoringView';
+import HealthView from '../app/admin/views/HealthView';
 
 function render(el: React.ReactElement): string {
   return renderToStaticMarkup(el);
@@ -92,6 +102,65 @@ describe('Enhanced Admin Views Test Suite', () => {
       expect(html).toContain('ALLOW');
       expect(html).toContain('Role escalation attempt to super_admin blocked');
       expect(html).toContain('DENY');
+    });
+  });
+
+  describe('DashboardView', () => {
+    it('renders correctly in English with funnel and telemetry', () => {
+      const html = render(<DashboardView lang="en" />);
+      expect(html).toContain('Executive Dashboard · Intelligence OS');
+      expect(html).toContain('Deal Conversion Pipeline');
+      expect(html).toContain('Live Agent Fleet Telemetry');
+      expect(html).toContain('1,547');
+      expect(html).toContain('98.4%');
+    });
+
+    it('renders correctly in Arabic', () => {
+      const html = render(<DashboardView lang="ar" />);
+      expect(html).toContain('لوحة القيادة الرئيسية · نظام الذكاء');
+      expect(html).toContain('النظام متصل ومتكامل');
+    });
+  });
+
+  describe('DeepInsightsView', () => {
+    it('renders region tabs and compound analytics', () => {
+      const html = render(<DeepInsightsView lang="en" />);
+      expect(html).toContain('Deep Market Insights &amp; AVM Trends');
+      expect(html).toContain('Mountain View iCity');
+      expect(html).toContain('Hyde Park New Cairo');
+      expect(html).toContain('All Regions');
+      expect(html).toContain('New Cairo');
+    });
+  });
+
+  describe('ReportsView', () => {
+    it('renders reports list and action triggers', () => {
+      const html = render(<ReportsView lang="en" />);
+      expect(html).toContain('Executive Reports &amp; Analytics');
+      expect(html).toContain('Q2 2026 Fleet Intelligence &amp; Valuation Audit');
+      expect(html).toContain('Export CSV');
+      expect(html).toContain('Generate PDF');
+    });
+  });
+
+  describe('MonitoringView', () => {
+    it('renders telemetry logs and SLA trackers', () => {
+      const html = render(<MonitoringView lang="en" />);
+      expect(html).toContain('Live Operations Monitoring');
+      expect(html).toContain('WHATSAPP BOT SLA');
+      expect(html).toContain('PUBSUB DISPATCH');
+      expect(html).toContain('AI Orchestrator running workflow');
+    });
+  });
+
+  describe('HealthView', () => {
+    it('renders subsystems and diagnostic controls', () => {
+      const html = render(<HealthView lang="en" />);
+      expect(html).toContain('System Health &amp; Telemetry');
+      expect(html).toContain('Firestore Database');
+      expect(html).toContain('Pub/Sub Message Bus');
+      expect(html).toContain('AI Reasoning API');
+      expect(html).toContain('Run Diagnostic Ping');
     });
   });
 });
