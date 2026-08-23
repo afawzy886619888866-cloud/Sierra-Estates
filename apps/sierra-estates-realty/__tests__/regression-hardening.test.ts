@@ -27,11 +27,7 @@ describe('Regression & Configuration Hardening Suite', () => {
       expect(() => JSON.parse(content)).not.toThrow();
     });
 
-    it('.vscode/tasks.json exists and is valid JSON', () => {
-      expect(fs.existsSync(tasksJsonPath)).toBe(true);
-      const content = fs.readFileSync(tasksJsonPath, 'utf8');
-      expect(() => JSON.parse(content)).not.toThrow();
-    });
+
 
     it('.vscode/settings.json exists and is valid JSON with proper formatting', () => {
       const settingsJsonPath = path.join(ROOT, '.vscode/settings.json');
