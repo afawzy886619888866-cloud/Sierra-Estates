@@ -8,7 +8,7 @@
  * 4. Multi-Agent SharedMemoryBus Pub/Sub coordination
  */
 
-import { AgentRegistry } from '@sierra-estates/agents-core';
+import { AgentRegistry } from '../../packages/agents-core/src/registry';
 import { PropertyEvaluator, PropertyMatcher } from '@/lib/whatsapp-agent/property-evaluator';
 
 describe('Agents & Bots Orchestration Suite', () => {
