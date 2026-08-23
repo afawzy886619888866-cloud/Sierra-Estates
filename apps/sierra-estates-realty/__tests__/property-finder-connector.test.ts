@@ -2,7 +2,7 @@
  * PropertyFinderConnector — Unit Tests
  * Covers: syncCatalog result shape, limit enforcement, singleton export.
  */
-import { PropertyFinderConnector, propertyFinderConnector, PropertyFinderSyncResult } from '../../../packages/property-finder-api/src/connector';
+import { PropertyFinderConnector, propertyFinderConnector } from '../../../packages/property-finder-api/src/connector';
 
 describe('PropertyFinderConnector', () => {
   let connector: PropertyFinderConnector;
