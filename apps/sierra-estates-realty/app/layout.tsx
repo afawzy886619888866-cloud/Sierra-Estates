@@ -2,6 +2,8 @@ import React from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Sierra Estates - Luxury Real Estate New Cairo',
   description: 'Discover premium properties in New Cairo with Sierra Estates',
