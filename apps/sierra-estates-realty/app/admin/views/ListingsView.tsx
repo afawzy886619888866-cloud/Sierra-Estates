@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
-import { Sparkles, ListFilter, PlusCircle, FileText, Search, MessageSquare, Tag, UserCheck, ShieldCheck } from 'lucide-react';
+import { Sparkles, ListFilter, PlusCircle, FileText, Search, UserCheck, ShieldCheck } from 'lucide-react';
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
 
