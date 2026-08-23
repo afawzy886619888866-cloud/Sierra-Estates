@@ -1,8 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
-
     {
       "name": "🚀 Next.js: Dev Server (sierra-estates-realty)",
       "type": "node",
@@ -34,8 +32,8 @@
       "name": "🧪 Jest: Debug Current Test File",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/jest",
-      "runtimeArgs": [
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+      "args": [
         "--runInBand",
         "--no-cache",
         "${file}"
@@ -43,22 +41,21 @@
       "cwd": "${workspaceFolder}/apps/sierra-estates-realty",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "windows": {
-        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/jest.cmd"
-      }
+      "sourceMaps": true
     },
     {
       "name": "🧪 Jest: Run All Tests",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "--filter",
-        "sierra-estates-client-page",
-        "test"
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+      "args": [
+        "--runInBand",
+        "--forceExit"
       ],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
+      "cwd": "${workspaceFolder}/apps/sierra-estates-realty",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true
     },
     {
       "name": "📜 TSX / Node: Run Current Script",
