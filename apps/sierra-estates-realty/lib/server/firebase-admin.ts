@@ -46,11 +46,37 @@ async function loadAndInitializeAdmin() {
 
   initPromise = (async () => {
     try {
-      const { getApps, getApp, initializeApp, cert } = await import('firebase-admin/app');
-      const { getAuth } = await import('firebase-admin/auth');
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { getAppCheck } = await import('firebase-admin/app-check');
-      const { getStorage } = await import('firebase-admin/storage');
+      let appMod: any;
+      let authMod: any;
+      let firestoreMod: any;
+      let appCheckMod: any;
+      let storageMod: any;
+
+      try {
+        // CJS-friendly require for Node/Jest runtime
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        appMod = require('firebase-admin/app');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        authMod = require('firebase-admin/auth');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        firestoreMod = require('firebase-admin/firestore');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        appCheckMod = require('firebase-admin/app-check');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        storageMod = require('firebase-admin/storage');
+      } catch {
+        appMod = await import('firebase-admin/app');
+        authMod = await import('firebase-admin/auth');
+        firestoreMod = await import('firebase-admin/firestore');
+        appCheckMod = await import('firebase-admin/app-check');
+        storageMod = await import('firebase-admin/storage');
+      }
+
+      const { getApps, getApp, initializeApp, cert } = appMod;
+      const { getAuth } = authMod;
+      const { getFirestore } = firestoreMod;
+      const { getAppCheck } = appCheckMod;
+      const { getStorage } = storageMod;
 
       let apps = getApps();
 
