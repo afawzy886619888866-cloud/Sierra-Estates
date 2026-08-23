@@ -8,31 +8,29 @@
  * 4. Document mutation integrity, timestamp stamping, and query filters
  */
 
-import { getFirebaseAdmin, isFirebaseConfigured } from '@/lib/server/firebase-admin';
+import { adminApp, adminDb, adminAuth, adminStorage, isAdminInitialized, loadAndInitializeAdmin } from '@/lib/server/firebase-admin';
 
 describe('Firebase & Firestore Infrastructure Suite', () => {
 
   describe('1. Firebase Admin Initialization & Fallback', () => {
-    it('initializes safely without crashing in test/ci environment', () => {
-      const admin = getFirebaseAdmin();
-      expect(admin).toBeDefined();
-      expect(admin?.isLimitedMode).toBe(true);
+    it('initializes safely without crashing in test/ci environment', async () => {
+      await loadAndInitializeAdmin();
+      expect(adminApp).toBeDefined();
+      expect(adminDb).toBeDefined();
+      expect(adminAuth).toBeDefined();
+      expect(adminStorage).toBeDefined();
     });
 
-    it('identifies configuration state correctly', () => {
-      const configured = isFirebaseConfigured();
-      expect(typeof configured).toBe('boolean');
+    it('identifies initialization state boolean', () => {
+      expect(typeof isAdminInitialized).toBe('boolean');
     });
 
-    it('exposes firestore, auth, and storage mock or real interfaces', () => {
-      const admin = getFirebaseAdmin();
-      if (admin && !admin.isLimitedMode) {
-        expect(admin.firestore).toBeDefined();
-        expect(admin.auth).toBeDefined();
-        expect(admin.storage).toBeDefined();
-      } else {
-        expect(admin?.isLimitedMode).toBe(true);
-      }
+    it('exposes resilient mock methods when running without remote credentials', async () => {
+      const mockDoc = adminDb.collection('properties').doc('test-doc');
+      expect(mockDoc).toBeDefined();
+      expect(typeof mockDoc.get).toBe('function');
+      const docSnap = await mockDoc.get();
+      expect(docSnap.exists).toBe(false);
     });
   });
 
