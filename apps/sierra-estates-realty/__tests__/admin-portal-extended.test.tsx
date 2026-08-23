@@ -11,8 +11,8 @@
 
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import HarnessBenchmarkCard from '@/components/admin/HarnessBenchmarkCard';
-import NegotiationSimulator from '@/components/admin/NegotiationSimulator';
+import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
+import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 
 function render(el: React.ReactElement): string {
   return renderToStaticMarkup(el);
@@ -21,45 +21,19 @@ function render(el: React.ReactElement): string {
 describe('Admin Portal Extended Suite', () => {
 
   describe('1. HarnessBenchmarkCard Component', () => {
-    const mockReport = {
-      timestamp: new Date().toISOString(),
-      model: 'DeepSeek-V3 / R1 (Reasoning)',
-      totalScenarios: 10,
-      passedScenarios: 10,
-      overallScorePercent: 100,
-      averageLatencyMs: 240,
-      divergenceRatePercent: 2.1,
-      results: [
-        {
-          scenarioId: 'avm_divergence_01',
-          name: 'AVM Divergence Threshold Check',
-          score: 1.0,
-          pass: true,
-          details: 'Divergence within acceptable limits',
-          durationMs: 180,
-        },
-      ],
-    };
-
-    it('renders benchmark card header and summary scores', () => {
-      const html = render(<HarnessBenchmarkCard report={mockReport} />);
-      expect(html).toContain('DeepSeek-V3 / R1');
-      expect(html).toContain('100%');
-      expect(html).toContain('10/10');
-    });
-
-    it('displays scenario list items correctly', () => {
-      const html = render(<HarnessBenchmarkCard report={mockReport} />);
-      expect(html).toContain('AVM Divergence Threshold Check');
-      expect(html).toContain('PASS');
+    it('renders benchmark card header and trigger controls', () => {
+      const html = render(<HarnessBenchmarkCard />);
+      expect(html).toContain('DeepSeek Reasoning');
+      expect(html).toContain('Run Full Benchmark');
     });
   });
 
   describe('2. NegotiationSimulator Component', () => {
     it('renders simulator inputs and initial state', () => {
       const html = render(<NegotiationSimulator />);
-      expect(html).toContain('Live Counter-Offer Simulator');
-      expect(html).toContain('Simulate Negotiation');
+      expect(html).toContain('Stage-9 Autonomous Negotiation Simulator');
+      expect(html).toContain('Run Stage-9 Multi-Party Simulation');
+      expect(html).toContain('38000000');
     });
   });
 
