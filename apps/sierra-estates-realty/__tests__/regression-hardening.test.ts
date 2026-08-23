@@ -104,10 +104,15 @@ describe('Regression & Configuration Hardening Suite', () => {
       }
 
       // Check WhatsApp units exist and have positive prices
-      const waUnits = listings.filter((l: any) => l.source === 'whatsapp' || (l.code && l.code.includes('WA')));
+      const waUnits = listings.filter((l: any) =>
+        l.ago === 'WhatsApp Import' ||
+        (l.agent && l.agent.includes('WhatsApp')) ||
+        (l.ownerName && l.ownerName.includes('WhatsApp'))
+      );
       expect(waUnits.length).toBeGreaterThanOrEqual(10);
       for (const wu of waUnits) {
         expect(wu.price).toBeGreaterThan(0);
+        expect(wu.status).toBe('Available');
       }
     });
 
