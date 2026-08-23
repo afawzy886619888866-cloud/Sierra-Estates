@@ -1,0 +1,111 @@
+{
+  "ecc_memory": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-08-23T22:48:57.431Z",
+    "total_episodes": 4,
+    "total_entities": 2,
+    "recent_episodes": [
+      {
+        "id": "ep-1787525308898-61pwr",
+        "timestamp": "2026-08-23T22:48:28.898Z",
+        "decayWeight": 1,
+        "type": "negotiation_offer",
+        "entityId": "SE-MV-401",
+        "actor": "Buyer Karim",
+        "summary": "Offered 32M cash with 10% down payment",
+        "data": {
+          "offeredAmount": 32000000,
+          "paymentTerms": "cash"
+        }
+      },
+      {
+        "id": "ep-1787525309087-0ywpc",
+        "timestamp": "2026-08-23T22:48:29.087Z",
+        "decayWeight": 1,
+        "type": "price_drop",
+        "entityId": "SE-MV-401",
+        "actor": "Owner Ahmed",
+        "summary": "Price reduction of 10% from 40,000,000 EGP to 36,000,000 EGP (WhatsApp Group #4 (Owners Direct))",
+        "data": {
+          "sierraCode": "SE-MV-401",
+          "oldPrice": 40000000,
+          "newPrice": 36000000,
+          "dropAmount": 4000000,
+          "dropPct": 10,
+          "source": "WhatsApp Group #4 (Owners Direct)",
+          "isHotDeal": true
+        }
+      },
+      {
+        "id": "ep-1787525337003-501an",
+        "timestamp": "2026-08-23T22:48:57.003Z",
+        "decayWeight": 1,
+        "type": "negotiation_offer",
+        "entityId": "SE-MV-401",
+        "actor": "Buyer Karim",
+        "summary": "Offered 32M cash with 10% down payment",
+        "data": {
+          "offeredAmount": 32000000,
+          "paymentTerms": "cash"
+        }
+      },
+      {
+        "id": "ep-1787525337268-samfl",
+        "timestamp": "2026-08-23T22:48:57.268Z",
+        "decayWeight": 1,
+        "type": "price_drop",
+        "entityId": "SE-MV-401",
+        "actor": "Owner Ahmed",
+        "summary": "Price reduction of 10% from 40,000,000 EGP to 36,000,000 EGP (WhatsApp Group #4 (Owners Direct))",
+        "data": {
+          "sierraCode": "SE-MV-401",
+          "oldPrice": 40000000,
+          "newPrice": 36000000,
+          "dropAmount": 4000000,
+          "dropPct": 10,
+          "source": "WhatsApp Group #4 (Owners Direct)",
+          "isHotDeal": true
+        }
+      }
+    ],
+    "entities": {
+      "SE-MV-401": {
+        "id": "SE-MV-401",
+        "type": "property",
+        "tags": [
+          "HOT_DISTRESSED_DEAL",
+          "HOT_DISTRESSED_DEAL"
+        ],
+        "lastUpdated": "2026-08-23T22:48:57.268Z",
+        "historicalPrices": [
+          {
+            "price": 36000000,
+            "timestamp": "2026-08-23T22:48:29.087Z",
+            "source": "WhatsApp Group #4 (Owners Direct)"
+          },
+          {
+            "price": 36000000,
+            "timestamp": "2026-08-23T22:48:57.268Z",
+            "source": "WhatsApp Group #4 (Owners Direct)"
+          }
+        ]
+      },
+      "buyer-01032206443": {
+        "id": "buyer-01032206443",
+        "type": "buyer",
+        "name": "Tarek Al-Sayed",
+        "compound": "Mivida",
+        "targetPropertyType": "Villa",
+        "budgetRange": {
+          "min": 25000000,
+          "max": 40000000
+        },
+        "tags": [
+          "VIP_CASH_BUYER"
+        ],
+        "lastUpdated": "2026-08-23T22:48:57.411Z",
+        "historicalPrices": []
+      }
+    }
+  }
+}
