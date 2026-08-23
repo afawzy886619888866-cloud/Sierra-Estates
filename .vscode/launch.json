@@ -1,7 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
     {
       "name": "🚀 Next.js: Dev Server (sierra-estates-realty)",
       "type": "node",
@@ -42,7 +41,6 @@
       "cwd": "${workspaceFolder}/apps/sierra-estates-realty",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true,
       "windows": {
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/jest.cmd"
       }
@@ -84,6 +82,7 @@
       "name": "🌐 Edge: Launch (localhost:3000)",
       "type": "msedge",
       "request": "launch",
+      "version": "stable",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/apps/sierra-estates-realty"
     }
