@@ -58,6 +58,45 @@
       "sourceMaps": true
     },
     {
+      "name": "🎯 DeepSeek: Run Benchmark Harness",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "tsx",
+        "${workspaceFolder}/scripts/run-harness.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "🚀 Deploy: Verify Deployment Readiness",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "tsx",
+        "${workspaceFolder}/scripts/verify-deploy-readiness.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "🏠 Sync: PropertyFinder Catalog",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "tsx",
+        "${workspaceFolder}/scripts/sync-propertyfinder.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
       "name": "📜 TSX / Node: Run Current Script",
       "type": "node",
       "request": "launch",
@@ -92,6 +131,13 @@
       "configurations": [
         "🚀 Next.js: Dev Server (sierra-estates-realty)",
         "🌐 Chrome: Launch (localhost:3000)"
+      ]
+    },
+    {
+      "name": "🌟 Next.js: Full-Stack (Server + Edge)",
+      "configurations": [
+        "🚀 Next.js: Dev Server (sierra-estates-realty)",
+        "🌐 Edge: Launch (localhost:3000)"
       ]
     }
   ]
