@@ -251,27 +251,29 @@ jobs:
         run: npm install --global vercel@${VERCEL_CLI_VERSION}
 
       # ── Point vercel CLI at THIS role's project ONLY ──────────────────────
+      # Written at the repo root only: the project's rootDirectory (set above)
+      # already tells Vercel to build from matrix.app_dir, so pull/build/deploy
+      # run un-cwd'd from root — passing --cwd=matrix.app_dir here as well would
+      # double-apply the subdirectory (root + rootDirectory + --cwd).
       - name: Write .vercel/project.json for this role
         run: |
-          mkdir -p .vercel "${{ matrix.app_dir }}/.vercel"
+          mkdir -p .vercel
           printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
             > .vercel/project.json
-          printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
-            > "${{ matrix.app_dir }}/.vercel/project.json"
           echo "✅ .vercel/project.json → ${VERCEL_PROJECT_ID}"
 
       - name: Pull Vercel project settings
         run: |
-          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
+          vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN
 
       - name: Build
         run: |
-          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
+          vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN
 
       - name: Deploy (prebuilt artifact)
         id: deploy_step
         run: |
-          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }})
+          url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
           echo "deployed: $url"
