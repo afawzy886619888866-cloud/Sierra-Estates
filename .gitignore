@@ -73,9 +73,9 @@ _archived_repos/
 .vercel-old/
 temp3
 
-# ─── AI tooling scaffolding — not part of the deployable app ───────────────
 .agent/
 .agents/
+!.agents/skills/
 .claude/
 .codex/
 .replit
