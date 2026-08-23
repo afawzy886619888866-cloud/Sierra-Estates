@@ -187,18 +187,46 @@ export default function CompoundsMap({
         const devName = COMPOUND_DEVELOPERS[c.n] || '';
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
 
-        // Custom Pill Pin HTML
+        const isPendingGps =
+          c.n.toLowerCase().includes('unspecified') ||
+          c.n.toLowerCase().includes('pending') ||
+          c.n.toLowerCase().includes('narges') ||
+          c.z.toLowerCase().includes('unspecified');
+
+        // Custom Pill Pin HTML with GPS status distinction
         const markerHtml = `
           <div class="sierra-compound-pin ${isSelected ? 'is-selected' : ''} ${isFeat ? 'is-featured' : ''}" style="
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: ${isSelected ? '#0369a1' : isFeat ? '#071b2f' : '#0a1d30'};
+            background: ${
+              isPendingGps
+                ? 'linear-gradient(135deg, #451a03, #78350f)'
+                : isSelected
+                ? '#0369a1'
+                : isFeat
+                ? '#071b2f'
+                : '#0a1d30'
+            };
             color: #ffffff;
             padding: 4px 6px 4px 10px;
             border-radius: 999px;
-            border: ${isSelected ? '2px solid #38bdf8' : isHot ? '1.5px solid #38bdf8' : '1px solid rgba(255,255,255,0.25)'};
-            box-shadow: ${isSelected ? '0 0 16px rgba(56,189,248,0.8), 0 4px 14px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.3)'};
+            border: ${
+              isPendingGps
+                ? '2px solid #f59e0b'
+                : isSelected
+                ? '2px solid #38bdf8'
+                : isHot
+                ? '1.5px solid #38bdf8'
+                : '1px solid rgba(255,255,255,0.25)'
+            };
+            box-shadow: ${
+              isPendingGps
+                ? '0 0 14px rgba(245,158,11,0.6), 0 4px 14px rgba(0,0,0,0.5)'
+                : isSelected
+                ? '0 0 16px rgba(56,189,248,0.8), 0 4px 14px rgba(0,0,0,0.5)'
+                : '0 2px 8px rgba(0,0,0,0.3)'
+            };
             cursor: pointer;
             white-space: nowrap;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -208,9 +236,10 @@ export default function CompoundsMap({
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
           ">
+            ${isPendingGps ? '<span style="font-size:12px;">⚠️</span>' : ''}
             <span>${displayName}</span>
             <span style="
-              background: #0284c7;
+              background: ${isPendingGps ? '#d97706' : '#0284c7'};
               color: #ffffff;
               font-size: 10px;
               font-weight: 800;
@@ -231,7 +260,7 @@ export default function CompoundsMap({
             iconSize: [140, 28],
             iconAnchor: [70, 14],
           }),
-          zIndexOffset: isSelected ? 1000 : isFeat ? 600 : 100,
+          zIndexOffset: isPendingGps ? 800 : isSelected ? 1000 : isFeat ? 600 : 100,
         });
 
         // Rich interactive popup matching screenshot 2
@@ -294,6 +323,27 @@ export default function CompoundsMap({
                 <span style="font-size: 13px; font-weight: 800; color: #16a34a;">${c.g}</span>
               </div>
             </div>
+
+            ${
+              isPendingGps
+                ? `<div style="
+                    background: #fffbeb;
+                    border: 1px solid #fde68a;
+                    color: #92400e;
+                    border-radius: 6px;
+                    padding: 6px 8px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                  ">
+                    <span>⚠️</span>
+                    <span>Direction / GPS Pending Review — Editable in Admin</span>
+                  </div>`
+                : ''
+            }
 
             <a
               href="/properties?compound=${encodeURIComponent(c.n)}"
