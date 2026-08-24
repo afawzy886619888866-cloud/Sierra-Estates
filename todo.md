@@ -94,3 +94,12 @@
 - [x] Preserve bilingual RTL/LTR, light/dark theme, lightbox, contact form, directions CTA, and AI-concept disclosures
 - [x] Verify the existing English and Arabic Cairo Plaza routes and current main-site preservation
 - [x] Commit and push the non-destructive integration to GitHub (`cabf0f6`)
+
+
+## Cairo Plaza native broker-site restyling and real imagery
+
+- [ ] Audit the existing Sierra Estates visual identity and available verified Cairo Plaza real-site assets
+- [ ] Restyle the Cairo Plaza page to use the broker site's native shell, typography, colors, spacing, buttons, and section treatment
+- [ ] Add verified real-site images with clear current-site captions and preserve AI-concept disclosures
+- [ ] Verify desktop/mobile visual continuity, image loading, and navigation
+- [ ] Commit and deliver the branded page update

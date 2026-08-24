@@ -12,6 +12,46 @@ const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
 
 type Props = { lang?: 'en' | 'ar'; section: 'overview' | 'inventory' | 'investor' | 'contact' };
 
+type EvidenceImage = {
+  src: string;
+  altEn: string;
+  altAr: string;
+  titleEn: string;
+  titleAr: string;
+  captionEn: string;
+  captionAr: string;
+};
+
+const realEvidence: EvidenceImage[] = [
+  {
+    src: '/cairo-plaza/real-entrance-enhanced.png',
+    altEn: 'Enhanced current-site photograph of the Cairo Plaza entrance',
+    altAr: 'صورة محسّنة من الموقع الحالي لمدخل كايرو بلازا',
+    titleEn: 'Entrance context',
+    titleAr: 'سياق المدخل',
+    captionEn: 'Current-site evidence · enhanced photograph',
+    captionAr: 'دليل من الموقع الحالي · صورة محسّنة',
+  },
+  {
+    src: '/cairo-plaza/real-frontage-enhanced.png',
+    altEn: 'Enhanced current-site photograph of the Cairo Plaza frontage',
+    altAr: 'صورة محسّنة من الموقع الحالي لواجهة كايرو بلازا',
+    titleEn: 'Street frontage',
+    titleAr: 'واجهة الشارع',
+    captionEn: 'Current-site evidence · enhanced photograph',
+    captionAr: 'دليل من الموقع الحالي · صورة محسّنة',
+  },
+  {
+    src: '/cairo-plaza/alfa-banque-misr-frontage.png',
+    altEn: 'Current-site evidence showing Alfa Labs and Banque Misr frontage context',
+    altAr: 'دليل من الموقع الحالي يوضح سياق واجهة معامل ألفا وبنك مصر',
+    titleEn: 'Active frontage context',
+    titleAr: 'سياق الواجهة العاملة',
+    captionEn: 'Current-site evidence · business frontage context',
+    captionAr: 'دليل من الموقع الحالي · سياق الواجهة التجارية',
+  },
+];
+
 const copy = {
   en: {
     overview: { eyebrow: 'CAIRO PLAZA / OVERVIEW', title: 'A strategic address directly in front of Al-Mataria Metro Station.', body: 'Explore the current project evidence, tower context, and the distinction between real-site photography and AI concept visuals.' },
@@ -42,7 +82,10 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
     <main dir={isAr ? 'rtl' : 'ltr'} className="cp-shell">
       <header className="cp-header">
         <div className="cp-header-inner">
-          <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand">SIERRA ESTATES</Link>
+          <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
+            <img src="/assets/logo-gold.png" alt="" aria-hidden="true" />
+            <span>SIERRA ESTATES</span>
+          </Link>
           <nav className="cp-nav" aria-label={isAr ? 'تنقل كايرو بلازا' : 'Cairo Plaza navigation'}>
             {nav.map(([key, label]) => <Link key={key} href={`${prefix}/${key}`} className={section === key ? 'active' : ''}>{label}</Link>)}
           </nav>
@@ -61,10 +104,33 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
         </div>
         <CairoPlazaScene lang={lang} />
       </section>
-      <section className="cp-grid">
-        <div className="cp-card"><h2 className="">{isAr ? 'صورة حقيقية للموقع' : 'Current-site evidence'}</h2><p className="">{isAr ? 'الصور الحقيقية توضح ما يظهر في اللقطة فقط.' : 'Real photographs document what appears in the frame only.'}</p></div>
-        <div className="cp-card"><h2 className="">{isAr ? 'تصوّر مستقبلي' : 'Future concept'}</h2><p className="">{isAr ? 'أي تصور مستقبلي موسوم بوضوح بأنه AI Concept.' : 'Any future visual is clearly labeled as an AI concept.'}</p></div>
-        <div className="cp-card"><h2 className="">{isAr ? 'سيناريو توضيحي' : 'Illustrative scenario'}</h2><p className="">{isAr ? 'الأرقام والنتائج المحتملة ليست ضمانات.' : 'Financial figures and outcomes are not guarantees.'}</p></div>
+      <section className="cp-evidence" aria-labelledby="cp-evidence-title">
+        <div className="cp-section-heading">
+          <div>
+            <p className="cp-eyebrow">{isAr ? 'أدلة المشروع / صور من الواقع' : 'PROJECT EVIDENCE / REAL SITE'}</p>
+            <h2 id="cp-evidence-title" className="cp-section-title">{isAr ? 'شاهد الموقع كما هو اليوم' : 'See the site as it stands today'}</h2>
+          </div>
+          <p className="cp-section-note">{isAr ? 'صور حقيقية محسّنة توضح ما يظهر داخل كل لقطة فقط.' : 'Enhanced real-site photographs document only what appears in each frame.'}</p>
+        </div>
+        <div className="cp-evidence-grid">
+          {realEvidence.map((image) => (
+            <figure className="cp-evidence-card" key={image.src}>
+              <div className="cp-evidence-media">
+                <img src={image.src} alt={isAr ? image.altAr : image.altEn} loading="lazy" />
+                <span className="cp-evidence-badge">{isAr ? 'صورة حقيقية للموقع' : 'CURRENT-SITE EVIDENCE'}</span>
+              </div>
+              <figcaption>
+                <strong>{isAr ? image.titleAr : image.titleEn}</strong>
+                <span>{isAr ? image.captionAr : image.captionEn}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+      <section className="cp-grid" aria-label={isAr ? 'مبادئ العرض' : 'Presentation principles'}>
+        <div className="cp-card"><h2>{isAr ? 'صورة حقيقية للموقع' : 'Current-site evidence'}</h2><p>{isAr ? 'الصور الحقيقية توضح ما يظهر في اللقطة فقط.' : 'Real photographs document what appears in the frame only.'}</p></div>
+        <div className="cp-card"><h2>{isAr ? 'تصوّر مستقبلي' : 'Future concept'}</h2><p>{isAr ? 'أي تصور مستقبلي موسوم بوضوح بأنه AI Concept.' : 'Any future visual is clearly labeled as an AI concept.'}</p></div>
+        <div className="cp-card"><h2>{isAr ? 'سيناريو توضيحي' : 'Illustrative scenario'}</h2><p>{isAr ? 'الأرقام والنتائج المحتملة ليست ضمانات.' : 'Financial figures and outcomes are not guarantees.'}</p></div>
       </section>
       <CairoPlazaCalculator lang={lang} />
     </main>
