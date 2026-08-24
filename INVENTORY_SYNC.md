@@ -1,6 +1,6 @@
 # Sierra Estates inventory synchronization
 
-Airtable base `appN96kHujXsLkc0h` is the operational source of truth. The `All Inventory Units` table is exported by `scripts/sync_airtable_inventory.py` into `Inventory_with_Photos_Airtable.csv` and `Inventory_with_Photos.xlsx`.
+Airtable base `appN96kHujXsLkc0h` is the operational source of truth. New WhatsApp archive imports are inventory-only: they write to `All Inventory Units` and do not create or modify Agent Roster, agent assignments, or follow-up records. The `All Inventory Units` table is exported by `scripts/sync_airtable_inventory.py` into `Inventory_with_Photos_Airtable.csv` and `Inventory_with_Photos.xlsx`.
 
 The GitHub Actions workflow `.github/workflows/sync-airtable-inventory.yml` supports manual execution and runs daily at 02:17 UTC. It requires the repository secret `AIRTABLE_PAT` with read access to the target base. Each run also writes `Inventory_sync_change_log.json`, which contains the unique RecordID count and added, removed, and changed RecordIDs compared with the prior CSV.
 
