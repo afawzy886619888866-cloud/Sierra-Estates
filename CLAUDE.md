@@ -164,11 +164,6 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
    - Never modify files under `apps/sierra-estates-realty/app/(client)/` or `apps/sierra-estates-realty/components/` without explicit written approval from user in the current conversation.
 2. **Push Protection & Secret Cleanliness:**
    - Never commit raw API keys, tokens, or credentials into the codebase. Always access via `process.env.*`.
-3. **Branch Sync:**
-   - Keep all working branches (`main`, `feature/admin-page`, `feature/agents-and-bots`, `feature/workflow`, `feature/client-page`) in sync without trailing commits.
-4. **Vercel Project Routing:**
-   - `sierra-estates.net` ➔ `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` (Next.js client)
-   - `admin.sierra-estates.net` ➔ `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` (Next.js Admin / Proxy)
 
 ---
 
