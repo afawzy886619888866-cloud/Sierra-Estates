@@ -38,13 +38,17 @@ google-credentials.json
 askpass.bat
 askpass.sh
 
-# ─── Dependencies ───────────────────────────────────────────────────────────
+# ─── Dependencies & Python ───────────────────────────────────────────────────
 libs/
 node_modules/
 .pnp
 .pnp.js
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 # ─── Build outputs ───────────────────────────────────────────────────────────
 dist/
