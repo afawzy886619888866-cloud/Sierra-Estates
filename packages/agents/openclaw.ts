@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import pino from 'pino';
 import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
+import * as XLSX from 'xlsx';
 import { obsidian } from '../obsidian/src/index';
 import { VertexAgent } from '@sierra-estates/agents-core';
 import {
