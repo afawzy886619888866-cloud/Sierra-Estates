@@ -1,13 +1,9 @@
-/* Refinements layered on top of the ported design.
-   Loaded after shared.css / index.css so these win on source order.
-   Keep the ported files verbatim; every deliberate change lives here. */
+/* ==========================================================================
+   Sierra Estates · High-End Visual Design & Mobile Architecture Refinements
+   Layered cleanly on top of shared.css.
+   ========================================================================== */
 
-/* ── Hero legibility ──────────────────────────────────────────────────
-   The hero copy sits in the left column, so the scrim carries most of its
-   weight on that side and clears the photograph on the right. The ported
-   ramp topped out at .82 and left the sub-copy short of 4.5:1 over bright
-   slides, so the left third is deepened and the falloff pushed further
-   right. Direction flips for RTL, where the column flips with it. */
+/* ── 1. Hero Legibility & Scrim Ramps ──────────────────────────────── */
 .hero .scrim {
   background:
     linear-gradient(100deg,
@@ -68,27 +64,23 @@
       rgba(8, 8, 10, .74) 100%);
 }
 
-/* Below 860px the column spans the full width, so the scrim goes vertical
-   rather than directional — deepened to match the copy's new contrast. */
 @media (max-width: 860px) {
   .hero .scrim,
   [dir="rtl"] .hero .scrim {
     background: linear-gradient(180deg,
-      rgba(10, 22, 34, .82) 0%,
-      rgba(10, 22, 34, .62) 45%,
-      rgba(10, 22, 34, .84) 100%);
+      rgba(10, 22, 34, .85) 0%,
+      rgba(10, 22, 34, .65) 45%,
+      rgba(10, 22, 34, .88) 100%);
   }
   [data-theme="dark"] .hero .scrim,
   [data-theme="dark"][dir="rtl"] .hero .scrim {
     background: linear-gradient(180deg,
-      rgba(8, 8, 10, .92) 0%,
-      rgba(8, 8, 10, .78) 45%,
-      rgba(8, 8, 10, .92) 100%);
+      rgba(8, 8, 10, .94) 0%,
+      rgba(8, 8, 10, .82) 45%,
+      rgba(8, 8, 10, .94) 100%);
   }
 }
 
-/* The hero column is the measure for the copy: cap it so the headline keeps
-   an even rag against the deepest part of the scrim. */
 .hero-col {
   max-width: 620px;
 }
@@ -101,13 +93,271 @@
   max-width: 54ch;
 }
 
-/* ── 3D tour banner ───────────────────────────────────────────────────
-   VirtualTourBanner styles itself inline, so the only thing it needs from
-   CSS is this keyframe. It lives here rather than in virtual-tour.css
-   because the banner also renders on the home page, which does not load
-   that stylesheet — there the spinner would otherwise sit frozen. */
+/* ── 2. Floating Island Navigation & Glassmorphism ─────────────────── */
+.nav {
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav.scrolled {
+  background: rgba(0, 43, 75, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .nav.scrolled {
+  background: rgba(5, 12, 20, 0.90);
+  border-bottom: 1px solid rgba(233, 193, 118, 0.15);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(233, 193, 118, 0.18);
+}
+
+.nav .menu a {
+  position: relative;
+  transition: color 200ms ease, transform 200ms ease;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.nav .menu a:hover {
+  color: var(--pri);
+  transform: translateY(-1px);
+}
+
+.nav .menu a.active {
+  color: var(--pri);
+  font-weight: 700;
+  background: rgba(0, 174, 255, 0.1);
+}
+
+[data-theme="dark"] .nav .menu a.active {
+  color: #f5c96e;
+  background: rgba(233, 193, 118, 0.12);
+}
+
+/* ── 3. Double-Bezel (Doppelrand) Property Card Architecture ─────────── */
+.pcard {
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid rgba(0, 43, 75, 0.08);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px -4px rgba(0, 43, 75, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1), border-color 320ms;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 174, 255, 0.4);
+  box-shadow: 
+    0 16px 36px -8px rgba(0, 174, 255, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] .pcard {
+  background: var(--surface);
+  border: 1px solid rgba(233, 193, 118, 0.14);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .pcard:hover {
+  border-color: rgba(233, 193, 118, 0.45);
+  box-shadow: 
+    0 20px 42px -10px rgba(0, 0, 0, 0.8),
+    0 4px 16px rgba(233, 193, 118, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.pcard .photo {
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcard .photo img {
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.pcard:hover .photo img {
+  transform: scale(1.05);
+}
+
+/* Micro-Badges & Floating Tags */
+.pcard .price-float {
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 6px 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pcard .ai-score {
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, rgba(0, 174, 255, 0.9), rgba(0, 120, 215, 0.9));
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 174, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .pcard .ai-score {
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.95), rgba(212, 175, 55, 0.95));
+  color: #071523;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(233, 193, 118, 0.3);
+}
+
+.pcard .heart {
+  border-radius: 50%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms;
+}
+
+.pcard .heart:hover {
+  transform: scale(1.12);
+  background: #fff;
+}
+
+.pcard .heart.on {
+  background: #ff4757;
+  color: #fff;
+  border-color: #ff4757;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+}
+
+/* ── 4. Compound Tiles & Interactive Hub ────────────────────────────── */
+.c-tile {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 350ms;
+}
+
+.c-tile:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0, 174, 255, 0.2);
+}
+
+/* ── 5. AI Tool Cards & Holographic Surface ────────────────────────── */
+.ai-tool-card {
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-s);
+}
+
+.ai-tool-card:hover {
+  border-color: var(--pri);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -6px rgba(0, 174, 255, 0.2), var(--shadow-s);
+}
+
+[data-theme="dark"] .ai-tool-card {
+  border: 1px solid rgba(233, 193, 118, 0.15);
+  background: linear-gradient(135deg, rgba(15, 34, 54, 0.6), rgba(11, 25, 41, 0.9));
+}
+
+[data-theme="dark"] .ai-tool-card:hover {
+  border-color: rgba(233, 193, 118, 0.45);
+  box-shadow: 0 14px 32px -6px rgba(233, 193, 118, 0.15), var(--shadow-s);
+}
+
+/* ── 6. Mobile Touch Optimization & Thumb Friendly Bottom Nav ──────── */
+.bottom-nav {
+  min-height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  background: rgba(0, 43, 75, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+}
+
+[data-theme="dark"] .bottom-nav {
+  background: rgba(5, 12, 20, 0.95);
+  border-top: 1px solid rgba(233, 193, 118, 0.18);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.bn-item {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  transition: all 180ms ease;
+  position: relative;
+}
+
+.bn-item:active {
+  transform: scale(0.92);
+}
+
+.bn-item.active {
+  color: #5fc9ff;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .bn-item.active {
+  color: #f5c96e;
+}
+
+.bn-item.active::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 20px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 2px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* Global button touch target compliance */
+button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+/* ── 7. Reduced Motion & Animations ─────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  [style*="spin"] { animation: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
