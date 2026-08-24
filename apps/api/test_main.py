@@ -253,3 +253,41 @@ class TestPortfolioAssetModel:
         """Test that price accepts int or float."""
         PortfolioAsset(id="X", price=100)
         PortfolioAsset(id="X", price=99.99)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Episodic Context Cache (ECC) Memory Engine
+# ──────────────────────────────────────────────────────────────────────────────
+class TestEpisodicContextCache:
+    """Test suite for EpisodicContextCache and entity graph memory."""
+
+    def test_record_episode_initialization(self):
+        """Ensure recording an episode stores it in the episodic journal."""
+        ecc = EpisodicContextCache()
+        ep = ecc.record_episode({
+            "type": "lead_inquiry",
+            "entityId": "lead-001",
+            "actor": "Client Concierge",
+            "summary": "Buyer requested viewing for Mivida villa",
+            "data": {"compound": "Mivida", "budget": 35000000}
+        })
+        assert ep["entityId"] == "lead-001"
+        assert len(ecc.episodic_journal) == 1
+        assert "lead-001" in ecc.entity_graph
+
+    def test_track_price_reduction_hot_deal(self):
+        """Ensure price reduction >= 8% triggers hot deal tag."""
+        ecc = EpisodicContextCache()
+        res = ecc.track_price_reduction("SE-MV-101", 40000000, 36000000, "Group A")
+        assert res["dropPct"] == 10.0
+        assert res["isHotDeal"] is True
+        assert "HOT_DISTRESSED_DEAL" in ecc.entity_graph["SE-MV-101"]["tags"]
+        assert len(ecc.entity_graph["SE-MV-101"]["historicalPrices"]) == 1
+
+    def test_track_price_reduction_regular_deal(self):
+        """Ensure minor price reduction < 8% does not trigger hot deal tag."""
+        ecc = EpisodicContextCache()
+        res = ecc.track_price_reduction("SE-MV-102", 40000000, 39000000, "Broker Channel")
+        assert res["dropPct"] == 2.5
+        assert res["isHotDeal"] is False
+        assert "HOT_DISTRESSED_DEAL" not in ecc.entity_graph["SE-MV-102"]["tags"]
