@@ -27,7 +27,8 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
           entry.name === 'coverage' ||
           entry.name === '__pycache__' ||
           entry.name === '.pytest_cache' ||
-          entry.name === '.wwebjs_cache'
+          entry.name === '.wwebjs_cache' ||
+          entry.name === 'wa_sessions'
         ) {
           continue;
         }
