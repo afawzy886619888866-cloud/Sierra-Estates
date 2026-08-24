@@ -361,3 +361,103 @@ button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-bt
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* ── Cairo Plaza Important Project entry ─────────────────────────────── */
+.cairo-project-feature {
+  background: linear-gradient(135deg, rgba(0, 43, 75, .04), rgba(0, 174, 255, .045));
+}
+
+.cairo-project-feature .sec-head {
+  margin-bottom: 22px;
+}
+
+.cairo-project-feature__link {
+  display: grid;
+  grid-template-columns: auto 1fr auto 22px;
+  align-items: center;
+  gap: 18px;
+  min-height: 86px;
+  padding: 20px 24px;
+  color: var(--ink, #0f172a);
+  text-decoration: none;
+  background: var(--surface, #fff);
+  border: 1px solid rgba(0, 43, 75, .14);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 43, 75, .07);
+  transition: transform 220ms cubic-bezier(.23, 1, .32, 1), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.cairo-project-feature__link:hover,
+.cairo-project-feature__link:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(0, 174, 255, .55);
+  box-shadow: 0 18px 38px rgba(0, 43, 75, .13);
+  outline: none;
+}
+
+.cairo-project-feature__index {
+  color: var(--pri, #00aef0);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.cairo-project-feature__name {
+  font-family: var(--display, Georgia, serif);
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 700;
+}
+
+.cairo-project-feature__place {
+  color: var(--muted, #64748b);
+  font-size: 14px;
+}
+
+.cairo-project-feature__link > .i {
+  color: var(--pri, #00aef0);
+}
+
+[data-theme="dark"] .cairo-project-feature {
+  background: linear-gradient(135deg, rgba(0, 174, 255, .06), rgba(233, 193, 118, .05));
+}
+
+[data-theme="dark"] .cairo-project-feature__link {
+  background: var(--surface, #111b27);
+  border-color: rgba(233, 193, 118, .22);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .28);
+}
+
+[data-theme="dark"] .cairo-project-feature__link:hover,
+[data-theme="dark"] .cairo-project-feature__link:focus-visible {
+  border-color: rgba(233, 193, 118, .62);
+}
+
+[dir="rtl"] .cairo-project-feature__link {
+  grid-template-columns: 22px auto 1fr auto;
+}
+
+@media (max-width: 720px) {
+  .cairo-project-feature__link,
+  [dir="rtl"] .cairo-project-feature__link {
+    grid-template-columns: auto 1fr 22px;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .cairo-project-feature__index {
+    grid-row: span 2;
+  }
+
+  .cairo-project-feature__place {
+    grid-column: 2;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cairo-project-feature__link {
+    transition: none;
+  }
+}
