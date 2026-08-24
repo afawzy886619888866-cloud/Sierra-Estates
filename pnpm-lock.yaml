@@ -289,6 +289,9 @@ importers:
       uuid:
         specifier: ^14.0.2
         version: 14.0.2
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
       zod:
         specifier: ^4.4.3
         version: 4.4.3
