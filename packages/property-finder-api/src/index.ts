@@ -6,8 +6,16 @@ const API_KEY = process.env.PROPERTY_FINDER_API_KEY || '';
 const CLIENT_ID = process.env.PROPERTY_FINDER_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.PROPERTY_FINDER_CLIENT_SECRET || '';
 
-/** Simple wrapper with token handling (placeholder) */
+/**
+ * Placeholder — returns the raw API key with no OAuth/JWT exchange, even though
+ * CLAUDE.md documents PROPERTY_FINDER_JWT_TOKEN as the real bearer token flow.
+ * listProperties/getProperty/etc below will send this as-is; against the real
+ * Property Finder API that will fail auth until a proper token exchange is wired in.
+ */
 async function getAuthToken() {
+  if (!API_KEY) {
+    console.warn('[property-finder-api] PROPERTY_FINDER_API_KEY is unset — requests will fail auth.');
+  }
   return API_KEY;
 }
 

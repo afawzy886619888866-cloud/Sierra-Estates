@@ -76,6 +76,10 @@ jobs:
         env:
           VARS_JSON: ${{ toJson(vars) }}
           SECRETS_JSON: ${{ toJson(secrets) }}
+        # The prj_/team_ fallback literals below are NOT secrets — they're the same
+        # public IDs already recorded in CLAUDE.md's Repository Variables table.
+        # They only kick in if those GitHub Variables haven't been configured yet,
+        # so the pipeline degrades gracefully instead of failing outright.
         run: |
           ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
           TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
@@ -278,7 +282,9 @@ jobs:
           upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL       "$INT_OS_URL"
           upsert OPENMEMORY_URL                        "${OPENMEM_URL:-http://localhost:8080}"
 
-          # Firebase Client SDK
+          # Firebase Client SDK — fallback literals below match CLAUDE.md's Repository
+          # Variables table exactly. NEXT_PUBLIC_* Firebase client keys identify the
+          # project, not a user; they're safe to default here, not a leaked secret.
           upsert NEXT_PUBLIC_FIREBASE_API_KEY          "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
           upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN      "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
           upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID       "${FB_PROJECT_ID:-sierra-blu}"
