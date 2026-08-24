@@ -19,7 +19,7 @@ jobs:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: always

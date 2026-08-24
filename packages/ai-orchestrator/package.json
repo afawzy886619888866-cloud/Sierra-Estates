@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^4.10.0",
+    "@google-cloud/pubsub": "^6.0.1",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
