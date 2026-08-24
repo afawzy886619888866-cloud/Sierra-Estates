@@ -98,8 +98,8 @@
 
 ## Cairo Plaza native broker-site restyling and real imagery
 
-- [ ] Audit the existing Sierra Estates visual identity and available verified Cairo Plaza real-site assets
-- [ ] Restyle the Cairo Plaza page to use the broker site's native shell, typography, colors, spacing, buttons, and section treatment
-- [ ] Add verified real-site images with clear current-site captions and preserve AI-concept disclosures
-- [ ] Verify desktop/mobile visual continuity, image loading, and navigation
+- [x] Audit the existing Sierra Estates visual identity and available verified Cairo Plaza real-site assets
+- [x] Restyle the Cairo Plaza page to use the broker site's native shell, typography, colors, spacing, buttons, and section treatment
+- [x] Add verified real-site images with clear current-site captions and preserve AI-concept disclosures
+- [ ] Verify desktop/mobile visual continuity, image loading, and navigation (source/build checks passed; production visual verification pending Vercel deployment)
 - [ ] Commit and deliver the branded page update
