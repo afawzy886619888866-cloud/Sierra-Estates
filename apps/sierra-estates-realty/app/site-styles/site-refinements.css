@@ -490,3 +490,27 @@ button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-bt
   .cp-evidence-card figcaption{padding:13px 14px 15px;}
 }
 @media (prefers-reduced-motion:reduce){.cp-evidence-media img{transition:none;}.cp-evidence-card:hover .cp-evidence-media img{transform:none;}}
+
+
+/* ── Cairo Plaza AI-enhanced real-site image set ─────────────────────── */
+.cp-hero-photo{margin:0;min-width:0;background:var(--surface,#fff);border:1px solid var(--line,rgba(15,34,54,.14));padding:10px;box-shadow:var(--shadow-m,0 14px 36px rgba(13,33,54,.12));}
+.cp-hero-photo img{display:block;width:100%;height:clamp(360px,46vw,620px);object-fit:cover;object-position:center 35%;}
+.cp-hero-photo figcaption{padding:12px 4px 3px;color:var(--muted,#64748b);font-size:12px;line-height:1.55;}
+.cp-evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+.cp-evidence-card{background:var(--surface,#fff);}
+.cp-evidence-media img{object-position:center center;}
+.cp-tour{max-width:1200px;margin:clamp(42px,7vw,88px) auto 0;padding:0 24px;}
+.cp-tour .cp-section-heading{margin-bottom:24px;}
+.cp-tour .cp-tour-canvas,.cp-tour canvas{max-width:100%;}
+[data-theme="dark"] .cp-hero-photo{background:var(--surface,#111b27);border-color:rgba(233,193,118,.2);}
+[data-theme="dark"] .cp-hero-photo figcaption{color:var(--muted,#a8b4c2);}
+@media (max-width:900px){
+  .cp-evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .cp-hero-photo img{height:clamp(320px,70vw,500px);}
+}
+@media (max-width:620px){
+  .cp-evidence-grid{grid-template-columns:1fr;}
+  .cp-hero-photo{padding:7px;}
+  .cp-hero-photo img{height:clamp(300px,105vw,480px);}
+  .cp-evidence,.cp-tour{padding-left:16px;padding-right:16px;}
+}

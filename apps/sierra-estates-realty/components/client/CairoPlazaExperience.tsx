@@ -24,31 +24,58 @@ type EvidenceImage = {
 
 const realEvidence: EvidenceImage[] = [
   {
-    src: '/cairo-plaza/real-entrance-enhanced.png',
-    altEn: 'Enhanced current-site photograph of the Cairo Plaza entrance',
-    altAr: 'صورة محسّنة من الموقع الحالي لمدخل كايرو بلازا',
-    titleEn: 'Entrance context',
-    titleAr: 'سياق المدخل',
-    captionEn: 'Current-site evidence · enhanced photograph',
-    captionAr: 'دليل من الموقع الحالي · صورة محسّنة',
+    src: '/cairo-plaza/real-facade-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza façade with Banque Misr frontage',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لواجهة كايرو بلازا مع واجهة بنك مصر',
+    titleEn: 'Main façade',
+    titleAr: 'الواجهة الرئيسية',
+    captionEn: 'AI-enhanced current-site evidence · façade and visible businesses preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على الواجهة والأنشطة الظاهرة',
   },
   {
-    src: '/cairo-plaza/real-frontage-enhanced.png',
-    altEn: 'Enhanced current-site photograph of the Cairo Plaza frontage',
-    altAr: 'صورة محسّنة من الموقع الحالي لواجهة كايرو بلازا',
-    titleEn: 'Street frontage',
-    titleAr: 'واجهة الشارع',
-    captionEn: 'Current-site evidence · enhanced photograph',
-    captionAr: 'دليل من الموقع الحالي · صورة محسّنة',
+    src: '/cairo-plaza/real-tower-frontage-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza tower frontage',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لواجهة برج كايرو بلازا',
+    titleEn: 'Tower frontage',
+    titleAr: 'واجهة البرج',
+    captionEn: 'AI-enhanced current-site evidence · building geometry preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على تكوين المبنى',
   },
   {
-    src: '/cairo-plaza/alfa-banque-misr-frontage.png',
-    altEn: 'Current-site evidence showing Alfa Labs and Banque Misr frontage context',
-    altAr: 'دليل من الموقع الحالي يوضح سياق واجهة معامل ألفا وبنك مصر',
-    titleEn: 'Active frontage context',
-    titleAr: 'سياق الواجهة العاملة',
-    captionEn: 'Current-site evidence · business frontage context',
-    captionAr: 'دليل من الموقع الحالي · سياق الواجهة التجارية',
+    src: '/cairo-plaza/real-entrance-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza entrance and active frontage',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لمدخل كايرو بلازا والواجهة العاملة',
+    titleEn: 'Entrance and frontage',
+    titleAr: 'المدخل والواجهة',
+    captionEn: 'AI-enhanced current-site evidence · visible signage and street context preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على اللافتات وسياق الشارع',
+  },
+  {
+    src: '/cairo-plaza/real-interior-context-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza construction context',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لسياق أعمال الإنشاء في كايرو بلازا',
+    titleEn: 'Construction context',
+    titleAr: 'سياق الإنشاء',
+    captionEn: 'AI-enhanced current-site evidence · current construction state preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على حالة الإنشاء الحالية',
+  },
+  {
+    src: '/cairo-plaza/real-site-context-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of Cairo Plaza site context',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لسياق موقع كايرو بلازا',
+    titleEn: 'Site context',
+    titleAr: 'سياق الموقع',
+    captionEn: 'AI-enhanced current-site evidence · current conditions preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على الظروف الحالية',
+  },
+  {
+    src: '/cairo-plaza/real-frontage-context-ai-enhanced.jpg',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza frontage context',
+    altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لسياق واجهة كايرو بلازا',
+    titleEn: 'Frontage context',
+    titleAr: 'سياق الواجهة',
+    captionEn: 'AI-enhanced current-site evidence · source details preserved',
+    captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على تفاصيل المصدر',
   },
 ];
 
@@ -102,7 +129,10 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
             <Link href={`${prefix}/investor`} className="cp-btn cp-btn-secondary">{isAr ? 'افتح الملف الاستثماري' : 'Open investor pack'}</Link>
           </div>
         </div>
-        <CairoPlazaScene lang={lang} />
+        <figure className="cp-hero-photo">
+          <img src="/cairo-plaza/real-facade-ai-enhanced.jpg" alt={isAr ? 'صورة حقيقية محسّنة لواجهة كايرو بلازا وبنك مصر' : 'AI-enhanced current-site photograph of the Cairo Plaza façade and Banque Misr frontage'} />
+          <figcaption>{isAr ? 'صورة حقيقية محسّنة بالذكاء الاصطناعي · الواجهة الحالية' : 'AI-enhanced current-site evidence · current façade'}</figcaption>
+        </figure>
       </section>
       <section className="cp-evidence" aria-labelledby="cp-evidence-title">
         <div className="cp-section-heading">
@@ -126,6 +156,16 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
             </figure>
           ))}
         </div>
+      </section>
+      <section className="cp-tour" aria-labelledby="cp-tour-title">
+        <div className="cp-section-heading">
+          <div>
+            <p className="cp-eyebrow">{isAr ? 'جولة توضيحية' : 'ILLUSTRATIVE TOUR'}</p>
+            <h2 id="cp-tour-title" className="cp-section-title">{isAr ? 'استكشف الكتلة العمرانية المقترحة' : 'Explore the illustrative massing'}</h2>
+          </div>
+          <p className="cp-section-note">{isAr ? 'تصور تفاعلي توضيحي، وليس نموذج تنفيذ أو صورة للموقع الحالي.' : 'An interactive illustration, not an execution model or current-site photograph.'}</p>
+        </div>
+        <CairoPlazaScene lang={lang} />
       </section>
       <section className="cp-grid" aria-label={isAr ? 'مبادئ العرض' : 'Presentation principles'}>
         <div className="cp-card"><h2>{isAr ? 'صورة حقيقية للموقع' : 'Current-site evidence'}</h2><p>{isAr ? 'الصور الحقيقية توضح ما يظهر في اللقطة فقط.' : 'Real photographs document what appears in the frame only.'}</p></div>
