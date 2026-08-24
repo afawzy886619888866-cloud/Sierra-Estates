@@ -10,9 +10,10 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     'auto-assign.yml',
     'backend-tests.yml',
     'ci.yml',
-    'codeql.yml',
+    // codeql.yml was intentionally removed — it caused false-positive blocks on valid PRs.
     'defender-for-devops.yml',
     'dependency-review.yml',
+    'deploy-cloud-run.yml',
     'deploy-firebase-rules.yml',
     'deploy-firebase.yml',
     'deploy-vercel.yml',

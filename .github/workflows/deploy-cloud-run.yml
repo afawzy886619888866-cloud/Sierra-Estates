@@ -8,6 +8,10 @@ on:
       - '.github/workflows/deploy-cloud-run.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   PROJECT_ID: sierra-blu
   REGION: europe-west1
@@ -24,6 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
