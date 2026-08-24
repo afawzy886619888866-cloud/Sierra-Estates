@@ -135,6 +135,14 @@ onlyBuiltDependencies:
 # Before upgrading to pnpm 10, diff the two blocks and regenerate the lockfile.
 # ---------------------------------------------------------------------------
 overrides:
+  # --- security overrides (kept in sync with package.json pnpm.overrides) ---
+  "tar@<7.5.21": ">=7.5.21"
+  "tar-fs@>=2.0.0 <2.1.4": ">=2.1.4 <3"
+  "undici@<6.28.0": ">=6.28.0 <7"
+  "ws@>=8.0.0 <8.21.0": ">=8.21.0"
+  "fast-xml-parser@<5.7.0": ">=5.7.0"
+  "got@<11.8.5": ">=11.8.5"
+  # --- end security overrides ---
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"
