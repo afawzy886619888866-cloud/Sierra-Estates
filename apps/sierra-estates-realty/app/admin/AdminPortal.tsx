@@ -24,6 +24,7 @@ import {
   RoleManagerView,
   DeepInsightsView,
   ReportsView,
+  ExcelMergerView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -61,6 +62,7 @@ const LANG = {
     client:'Client', view:'View', whatsapp:'WhatsApp',
     monthlyDeals:'📊 Monthly Deals Closed', revPipeline:'💰 Revenue Pipeline',
     perfByCompound:'🗺️ Performance by Compound',
+    excelMerger:'Excel Merger',
     saveConfig:'Save Configuration', saved:'✓ Saved!', githubIntegration:'🔗 GitHub Integration',
     pullLatest:'Pull Latest', openRepo:'Open Repo', pushChanges:'Push Changes',
   },
@@ -91,6 +93,7 @@ const LANG = {
     client:'العميل', view:'عرض', whatsapp:'واتساب',
     monthlyDeals:'📊 الصفقات الشهرية', revPipeline:'💰 خط الإيرادات',
     perfByCompound:'🗺️ الأداء حسب المجمع',
+    excelMerger:'دمج الإكسل',
     saveConfig:'حفظ الإعدادات', saved:'✓ تم الحفظ!', githubIntegration:'🔗 تكامل GitHub',
     pullLatest:'سحب آخر التحديثات', openRepo:'فتح المستودع', pushChanges:'رفع التغييرات',
   }
@@ -163,6 +166,7 @@ const NAV_ITEMS = (T) => [
   {id:'pipeline',label:T('lang')==='ar'?'الصفقات':'Pipeline',icon:'💼',section:T('operations')},
   {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+  {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'curator',label:T('curator'),icon:'🎨',section:T('operations')},
   {id:'scribe',label:T('scribe'),icon:'✍️',section:T('operations')},
   {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
@@ -1609,6 +1613,7 @@ function AdminApp() {
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
       case 'listings':return <ListingsHubPage T={T}/>;
+      case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
