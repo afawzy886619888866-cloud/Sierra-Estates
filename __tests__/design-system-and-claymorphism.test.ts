@@ -18,14 +18,16 @@ describe('Design System, Claymorphism & Visual Tokens Test Suite', () => {
       const css = fs.readFileSync(ADMIN_CSS_PATH, 'utf-8');
 
       const requiredClayTokens = [
-        '--clay-bg-start',
-        '--clay-card-bg',
         '--clay-card-shadow',
         '--clay-card-inset',
         '--clay-btn-shadow',
-        '--clay-btn-inset',
-        '--clay-gold',
-        '--clay-gold-glow',
+        '--clay-input-inset',
+        '--clay-rad-lg',
+        '--clay-rad-md',
+        '--clay-rad-sm',
+        '--clay-trans',
+        '--gold',
+        '--gold-lt',
       ];
 
       for (const token of requiredClayTokens) {
