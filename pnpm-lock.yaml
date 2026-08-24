@@ -104,8 +104,8 @@ importers:
         specifier: ^4.0.62
         version: 4.0.62(zod@4.4.3)
       '@arizeai/openinference-semantic-conventions':
-        specifier: ^2.2.0
-        version: 2.5.0
+        specifier: ^2.7.0
+        version: 2.7.0
       '@google-cloud/storage':
         specifier: ^8.0.1
         version: 8.0.1(encoding@0.1.13)
@@ -861,8 +861,8 @@ packages:
       zod:
         optional: true
 
-  '@arizeai/openinference-semantic-conventions@2.5.0':
-    resolution: {integrity: sha512-4ZeSwiFX3YxB0WSE6x568wM4PVHiYmz3yiOxic6WGKVrE/KIGggMFP/eqUNQhikBKP68IDV0qiILlZAIYnheAQ==}
+  '@arizeai/openinference-semantic-conventions@2.7.0':
+    resolution: {integrity: sha512-POJ0LN6akXRsZnx5KPOyYY19zzOeBUlKx4Sg8zQCgmL12uCPxygagjfa+xGWf76NvIqwZ0bYzDxjICk5JbxHMw==}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -9790,7 +9790,7 @@ snapshots:
     optionalDependencies:
       zod: 4.4.3
 
-  '@arizeai/openinference-semantic-conventions@2.5.0': {}
+  '@arizeai/openinference-semantic-conventions@2.7.0': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:
