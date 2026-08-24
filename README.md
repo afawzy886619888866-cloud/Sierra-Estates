@@ -125,7 +125,7 @@ The admin console is at `admin.sierra-estates.net/admin` (or `/admin` locally).
 
 1. **Sign-in**: Browser authenticates via Firebase Auth (email/password) and receives a short-lived ID token.
 2. **Session Minting**: ID token sent to `POST /api/auth`.
-3. **Verification**: Firebase Admin SDK validates the token, checks Firestore `users/{uid}` for an `admin|manager|agent` role, and signs an `httpOnly SameSite=Lax` session cookie (`sierra_sess`).
+3. **Verification**: Firebase Admin SDK validates the token, checks Firestore `users/{uid}` for an approved `owner|admin|manager|agent|superadmin` role, and signs an `httpOnly SameSite=Lax` session cookie (`sierra_sess`).
 4. **Route Guard**: `middleware.ts` and server layouts enforce `sierra_sess` validation on every `/admin/*` request.
 
 ### Key Auth Environment Variables

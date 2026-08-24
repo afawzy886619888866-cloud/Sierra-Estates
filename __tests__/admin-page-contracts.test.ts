@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isAdminPortalRole } from '../apps/sierra-estates-realty/lib/types';
 
 describe('Admin Page & Portal Architecture Test Suite', () => {
   const ROOT_DIR = path.resolve(__dirname, '..');
@@ -34,6 +35,13 @@ describe('Admin Page & Portal Architecture Test Suite', () => {
   });
 
   describe('Admin Role-Based Access Control (RBAC)', () => {
+    it('allows an owner role into the staff portal but not an unapproved role', () => {
+      expect(isAdminPortalRole('owner')).toBe(true);
+      expect(isAdminPortalRole('Owner')).toBe(true);
+      expect(isAdminPortalRole('viewer')).toBe(false);
+      expect(isAdminPortalRole('customer')).toBe(false);
+    });
+
     type UserRole = 'super_admin' | 'broker_manager' | 'sales_agent' | 'viewer';
 
     interface RoutePermission {
