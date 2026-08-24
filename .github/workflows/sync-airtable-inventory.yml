@@ -32,8 +32,8 @@ jobs:
 
       - name: Commit changed inventory artifacts
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Ahmed Fawzy"
+          git config user.email "sierrablue8866@gmail.com"
           git add Inventory_with_Photos.xlsx Inventory_with_Photos_Airtable.csv Inventory_sync_change_log.json
           git diff --cached --quiet && exit 0
           git commit -m "chore: sync inventory from Airtable"
