@@ -16,7 +16,12 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on pull requests, but NEVER on main. Cancelling a
+  # main run leaves that commit with no CI verdict at all, which is exactly how
+  # the TypeScript 7 bump landed unverified and broke every ts-jest suite: its
+  # run (9b793cb6) was cancelled by the next push, and the failure only surfaced
+  # one commit later. Rapid successive merges must each get a real verdict.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
