@@ -134,6 +134,12 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
 | `SESSION_SECRET` | Admin session signing secret for edge middleware RBAC |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Service Account JSON for server-side Firebase Admin SDK |
 
+> `deploy-vercel.yml` mirrors `GEMINI_API_KEY` into both the `GEMINI_API_KEY` and
+> `GOOGLE_AI_API_KEY` Vercel env vars — the WhatsApp bot code reads the latter name.
+> This table lists CI/CD-level GitHub secrets only. For the full set of variables
+> the app reads at runtime (Airtable, SMTP, Resend, DeepSeek, WhatsApp admin routing,
+> etc.), see `.env.example`, which is the canonical list.
+
 ### 🌐 Repository Variables (`Variables` Tab)
 
 | Variable Name | Value | Purpose |

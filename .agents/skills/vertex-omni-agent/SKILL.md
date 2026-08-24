@@ -11,7 +11,7 @@ The Vertex Omni Agent provides enterprise AI capabilities to Sierra Estates usin
 
 ## Architecture
 
-- **Location**: `packages/agents-core/src/vertexAgent.ts`, `apps/agents/vertex-omni-agent/`
+- **Location**: `packages/agents-core/src/vertex-agent.ts`, `apps/agents/vertex-omni-agent/`
 - **Memory Store**: Integrates with `obsidian-store.json` via `@sierra-estates/obsidian`.
 - **Reasoning**: Evaluates multi-modal inputs (property images, PDFs, compound blueprints, financial spreadsheets).
 
