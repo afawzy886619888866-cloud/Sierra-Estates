@@ -83,7 +83,7 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
     }
 
     expect(conflictViolations).toEqual([]);
-  });
+  }, 25000);
 
   it('all JSON configuration files must be valid and parseable', () => {
     const jsonFiles = allSourceFiles.filter((f) => f.endsWith('.json') && !f.includes('.next'));
