@@ -59,6 +59,61 @@ jobs:
           fi
           echo "Author address is well-formed."
 
+  # package.json's pnpm.overrides is read by pnpm 9 (the pinned major);
+  # pnpm-workspace.yaml's overrides: block is read by pnpm 10+. Both copies must
+  # carry the same security pins, or a pnpm bump silently drops whichever set is
+  # inert. Dependabot only ever edits package.json, so drift is the default
+  # outcome unless something checks. This is that check.
+  override-sync:
+    name: Security overrides in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Compare the two override sets
+        run: |
+          python3 - <<'PY'
+          import json, re, sys
+
+          pkg  = json.load(open("package.json"))
+          want = pkg.get("pnpm", {}).get("overrides", {})
+
+          # Scan the WHOLE overrides map, not just the security block: some pins
+          # (js-yaml) legitimately live elsewhere in it, and a key present
+          # anywhere is a key pnpm 10+ will honour.
+          text = open("pnpm-workspace.yaml", encoding="utf-8").read()
+          body = re.search(r"^overrides:\n(.*?)(?=^\S|\Z)", text, re.S | re.M)
+          if not body:
+              sys.exit("::error::no overrides: block found in pnpm-workspace.yaml")
+
+          have = {}
+          for line in body.group(1).splitlines():
+              m = re.match(r'\s*"?([^"#:][^"]*?)"?:\s*"?([^"]+?)"?\s*$', line)
+              if m and m.group(2) != "-":      # "-" entries are platform exclusions
+                  have[m.group(1)] = m.group(2)
+
+          missing = {k: v for k, v in want.items() if k not in have}
+          differ  = {k: (v, have[k]) for k, v in want.items()
+                     if k in have and have[k] != v}
+
+          for k, v in missing.items():
+              print(f'::error::override missing from pnpm-workspace.yaml: "{k}": "{v}"')
+          for k, (a, b) in differ.items():
+              print(f'::error::override value differs for "{k}" -- package.json={a} pnpm-workspace.yaml={b}')
+
+          if missing or differ:
+              print("")
+              print("package.json pnpm.overrides is read by pnpm 9; pnpm-workspace.yaml")
+              print("overrides is read by pnpm 10+. Both must carry the same pins or a")
+              print("pnpm bump silently drops whichever set is inert.")
+              sys.exit(1)
+
+          print(f"all {len(want)} package.json overrides are mirrored in pnpm-workspace.yaml")
+          PY
+
   monorepo:
     name: Realty app + packages · Type-check + Lint + Test + Build
     runs-on: ubuntu-latest
