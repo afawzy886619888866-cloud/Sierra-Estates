@@ -24,6 +24,15 @@ name: Deploy · Vercel
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/sierra-estates-realty/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'tsconfig*.json'
+      - '.github/workflows/deploy-vercel.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -414,11 +423,11 @@ jobs:
       - name: Deploy (prebuilt artifact)
         id: deploy_step
         run: |
-          # Deploy prebuilt artifact with retry for transient 429 rate limit or upload issues
+          # Deploy prebuilt artifact as a tar archive with retry for transient rate limits or upload issues
           url=""
           for attempt in 1 2 3; do
             echo "Running vercel deploy (attempt $attempt)..."
-            if url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN); then
+            if url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --archive=tgz --token=$ROLE_VERCEL_TOKEN); then
               echo "url=$url" >> "$GITHUB_OUTPUT"
               echo "### ✅ ${{ matrix.role }} deployed → $url" >> "$GITHUB_STEP_SUMMARY"
               echo "deployed: $url"
