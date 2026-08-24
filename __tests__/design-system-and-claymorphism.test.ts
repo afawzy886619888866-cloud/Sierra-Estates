@@ -52,12 +52,13 @@ describe('Design System, Claymorphism & Visual Tokens Test Suite', () => {
   });
 
   describe('Client Portal — Double-Bezel & Luxury Glass Navigation', () => {
-    it('site-refinements.css exists and defines Double-Bezel styles', () => {
+    it('site-refinements.css exists and defines Double-Bezel card and glassmorphic styles', () => {
       expect(fs.existsSync(SITE_REFINEMENTS_CSS_PATH)).toBe(true);
       const css = fs.readFileSync(SITE_REFINEMENTS_CSS_PATH, 'utf-8');
 
-      expect(css).toContain('double-bezel');
-      expect(css).toContain('glass-nav');
+      expect(css).toContain('.pcard');
+      expect(css).toContain('backdrop-filter');
+      expect(css).toContain('.nav.scrolled');
     });
 
     it('defines smooth spring timing functions for interactive cards', () => {
