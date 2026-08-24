@@ -24,6 +24,7 @@ sys.path.insert(0, str(HERE))
 
 from main import PortfolioAsset, app  # noqa: E402
 from property_finder_sync import PropertyFinderSyncHub  # noqa: E402
+from ecc_memory_engine import EpisodicContextCache  # noqa: E402
 
 
 @pytest.fixture
