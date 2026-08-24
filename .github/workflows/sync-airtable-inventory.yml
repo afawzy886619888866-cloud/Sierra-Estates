@@ -1,0 +1,40 @@
+name: Sync Airtable inventory
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install workbook dependencies
+        run: python -m pip install --upgrade requests openpyxl
+
+      - name: Pull Airtable and regenerate inventory artifacts
+        env:
+          AIRTABLE_PAT: ${{ secrets.AIRTABLE_PAT }}
+          AIRTABLE_BASE_ID: appN96kHujXsLkc0h
+          AIRTABLE_TABLE_ID: tbli8jUq42wBb8AQa
+        run: python scripts/sync_airtable_inventory.py
+
+      - name: Commit changed inventory artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Inventory_with_Photos.xlsx Inventory_with_Photos_Airtable.csv
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: sync inventory from Airtable"
+          git push
