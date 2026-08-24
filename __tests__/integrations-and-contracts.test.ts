@@ -157,4 +157,62 @@ describe('Integrations, Security Guards & API Contracts Test Suite', () => {
       expect(parsed?.text).toContain('مهتم بشراء تاون هاوس');
     });
   });
+
+  describe('Excel & Spreadsheet Ingestion Contracts', () => {
+    it('should map bilingual Arabic and English spreadsheet headers into canonical listing fields', () => {
+      const rawRows = [
+        {
+          'الكمبوند': 'Mivida',
+          'السعر': 32000000,
+          'نوع الوحدة': 'Townhouse',
+          'المساحة': 280,
+          'غرف': 4,
+          'حمامات': 3,
+          'تشطيب': 'Ultra Super Lux',
+          'المالك / وسيط': 'owner',
+          'رقم الهاتف': '01001234567',
+        },
+        {
+          'Compound': 'Hyde Park',
+          'Price': '18,500,000',
+          'Type': 'Apartment',
+          'BUA': '200',
+          'Bedrooms': '3',
+          'Bathrooms': '2',
+          'Finishing': 'Core & Shell',
+          'OwnerType': 'broker',
+          'Mobile': '+201112345678',
+        },
+      ];
+
+      const mapped = rawRows.map((row: Record<string, any>, idx) => {
+        const getVal = (keys: string[]) => {
+          for (const k of keys) {
+            if (row[k] !== undefined && row[k] !== '') return row[k];
+          }
+          return undefined;
+        };
+
+        const compound = getVal(['Compound', 'الكمبوند']) || 'New Cairo';
+        const priceRaw = getVal(['Price', 'السعر']) || 0;
+        const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw).replace(/[^0-9.]/g, '')) || 0;
+        const type = getVal(['Type', 'نوع الوحدة']) || 'Apartment';
+        const areaRaw = getVal(['BUA', 'المساحة']) || 0;
+        const area = typeof areaRaw === 'number' ? areaRaw : parseFloat(String(areaRaw).replace(/[^0-9.]/g, '')) || 0;
+        const bedsRaw = getVal(['Bedrooms', 'غرف']) || 3;
+        const beds = typeof bedsRaw === 'number' ? bedsRaw : parseInt(String(bedsRaw).replace(/[^0-9]/g, ''), 10) || 3;
+
+        return { id: idx + 1, compound, price, type, area, beds };
+      });
+
+      expect(mapped[0].compound).toBe('Mivida');
+      expect(mapped[0].price).toBe(32000000);
+      expect(mapped[0].beds).toBe(4);
+
+      expect(mapped[1].compound).toBe('Hyde Park');
+      expect(mapped[1].price).toBe(18500000);
+      expect(mapped[1].area).toBe(200);
+      expect(mapped[1].beds).toBe(3);
+    });
+  });
 });
