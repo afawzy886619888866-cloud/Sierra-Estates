@@ -1,5 +1,7 @@
 import csv
+import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +16,7 @@ TOKEN = os.environ["AIRTABLE_PAT"]
 ROOT = Path(__file__).resolve().parents[1]
 CSV_OUT = ROOT / "Inventory_with_Photos_Airtable.csv"
 XLSX_OUT = ROOT / "Inventory_with_Photos.xlsx"
+CHANGE_LOG_OUT = ROOT / "Inventory_sync_change_log.json"
 
 
 def fetch_records() -> list[dict[str, Any]]:
@@ -49,6 +52,8 @@ def normalize(records: list[dict[str, Any]]) -> tuple[list[str], list[dict[str, 
         attachments = fields.get("Photos") or fields.get("Photo Attachments") or []
         if isinstance(attachments, list):
             fields["PhotoURLs"] = "\n".join(str(item.get("url", "")) for item in attachments if isinstance(item, dict) and item.get("url"))
+        elif fields.get("Media URLs"):
+            fields["PhotoURLs"] = str(fields["Media URLs"])
         fields["PhotoStatus"] = "Matched media" if fields.get("PhotoURLs") else "No media attached"
         by_record_id[record_id] = fields
     rows = list(by_record_id.values())
@@ -64,6 +69,31 @@ def normalize(records: list[dict[str, Any]]) -> tuple[list[str], list[dict[str, 
     ordered = [field for field in preferred if field in field_names]
     ordered.extend(field for field in field_names if field not in ordered)
     return ordered, rows
+
+
+def write_change_log(rows: list[dict[str, Any]]) -> None:
+    previous: dict[str, dict[str, str]] = {}
+    if CSV_OUT.exists():
+        with CSV_OUT.open(encoding="utf-8-sig", newline="") as handle:
+            for old in csv.DictReader(handle):
+                rid = str(old.get("RecordID") or "")
+                if rid:
+                    previous[rid] = {key: str(value or "") for key, value in old.items()}
+    current = {str(row.get("RecordID") or ""): {key: str(value or "") for key, value in row.items()} for row in rows}
+    added = sorted(set(current) - set(previous))
+    removed = sorted(set(previous) - set(current))
+    changed = sorted(rid for rid in set(current) & set(previous) if current[rid] != previous[rid])
+    payload = {
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "baseId": BASE_ID,
+        "tableId": TABLE_ID,
+        "currentUniqueRecords": len(current),
+        "addedRecordIDs": added,
+        "removedRecordIDs": removed,
+        "changedRecordIDs": changed,
+        "summary": {"added": len(added), "removed": len(removed), "changed": len(changed)},
+    }
+    CHANGE_LOG_OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def write_csv(fields: list[str], rows: list[dict[str, Any]]) -> None:
@@ -106,6 +136,7 @@ def write_xlsx(fields: list[str], rows: list[dict[str, Any]]) -> None:
 
 if __name__ == "__main__":
     fields, rows = normalize(fetch_records())
+    write_change_log(rows)
     write_csv(fields, rows)
     write_xlsx(fields, rows)
     print(f"Synced {len(rows)} unique Airtable records to {CSV_OUT.name} and {XLSX_OUT.name}")
