@@ -24,6 +24,15 @@ name: Deploy · Vercel
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/sierra-estates-realty/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'tsconfig*.json'
+      - '.github/workflows/deploy-vercel.yml'
   workflow_dispatch:
     inputs:
       environment:
