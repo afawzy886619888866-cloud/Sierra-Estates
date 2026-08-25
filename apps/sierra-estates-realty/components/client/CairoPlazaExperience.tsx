@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { Sun, Moon, Languages } from 'lucide-react';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
 
 const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
