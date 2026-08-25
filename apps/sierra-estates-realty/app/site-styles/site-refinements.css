@@ -511,6 +511,6 @@ button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-bt
 @media (max-width:620px){
   .cp-evidence-grid{grid-template-columns:1fr;}
   .cp-hero-photo{padding:7px;}
-  .cp-hero-photo img{height:clamp(300px,105vw,480px);}
+  .cp-hero-photo-inner{height:clamp(300px,105vw,480px);}
   .cp-evidence,.cp-tour{padding-left:16px;padding-right:16px;}
 }
