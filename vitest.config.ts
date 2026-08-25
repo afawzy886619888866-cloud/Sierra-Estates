@@ -17,6 +17,7 @@ export default defineConfig({
       '__tests__/**/*.test.ts',
     ],
     alias: {
+      '@': resolve(__dirname, 'apps/sierra-estates-realty'),
       '@sierra-estates/types': resolve(__dirname, 'packages/shared/src/types/index.ts'),
       '@sierra-estates/agents-core': resolve(__dirname, 'packages/agents-core/src/index.ts'),
       '@sierra-estates/memory-engine': resolve(__dirname, 'packages/memory-engine/src/index.ts'),
