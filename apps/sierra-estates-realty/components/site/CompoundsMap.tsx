@@ -62,31 +62,42 @@ const COMPOUND_DEVELOPERS: Record<string, string> = {
   'El Patio 5 East (La Vista)': 'La Vista',
 };
 
-// Units count lookup table
-const COMPOUND_UNITS_COUNT: Record<string, number> = {
-  'Al Burouj (Capital Group)': 21,
-  'Dar Misr El Shorouk': 23,
-  'Madinaty District 1': 12,
-  'Madinaty District 3': 16,
-  'Madinaty District 7': 19,
-  'Madinaty District 8': 14,
-  'Madinaty Executive Villas': 9,
-  'Azad & Azad Views': 10,
-  'Villette (SODIC)': 14,
-  'Eastown (SODIC)': 16,
-  'Mountain View iCity': 11,
-  'Hyde Park New Cairo': 28,
-  'Mivida': 24,
-  'Palm Hills New Cairo': 18,
-  'Taj City': 22,
-  'Cairo Festival City Residences': 8,
-  'The Waterway': 15,
-  'Swan Lake Residence': 15,
-  'Fifth Square (Al Marasem)': 14,
-  'Zed East (Ora)': 12,
-  'Katameya Heights': 10,
-  'Katameya Dunes': 8,
-};
+/**
+ * Live per-compound available-unit counts from /api/inventory, matched by
+ * compound name. Used as a fallback for any compound /api/inventory has no
+ * units for yet (mirrors the previous static-table's estimate fallback so a
+ * compound with no live data doesn't show "0").
+ */
+function estimateUnitsCount(aiScore: number): number {
+  return Math.max(8, Math.round(aiScore * 2.2));
+}
+
+function useLiveUnitCounts(): Record<string, number> {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { units?: Array<{ location?: string; status?: string }> } | null) => {
+        if (cancelled || !data?.units) return;
+        const next: Record<string, number> = {};
+        for (const unit of data.units) {
+          if (unit.status && unit.status !== 'available') continue;
+          const key = (unit.location || '').trim().toLowerCase();
+          if (!key) continue;
+          next[key] = (next[key] || 0) + 1;
+        }
+        setCounts(next);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return counts;
+}
 
 export interface CompoundsMapProps {
   compounds: MapCompound[];
@@ -114,6 +125,7 @@ export default function CompoundsMap({
   const [ready, setReady] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
+  const liveUnitCounts = useLiveUnitCounts();
 
   // Filtered compounds based on smart filter
   const filteredCompounds = useMemo(() => {
@@ -188,7 +200,7 @@ export default function CompoundsMap({
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
         const isHot = c.ai >= 9.2;
-        const unitsCount = COMPOUND_UNITS_COUNT[c.n] || Math.max(8, Math.round(c.ai * 2.2));
+        const unitsCount = liveUnitCounts[c.n.trim().toLowerCase()] ?? c.units ?? estimateUnitsCount(c.ai);
         const devName = COMPOUND_DEVELOPERS[c.n] || '';
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
 
@@ -242,7 +254,7 @@ export default function CompoundsMap({
             user-select: none;
           ">
             ${isPendingGps ? '<span style="font-size:12px;">⚠️</span>' : ''}
-            <span>${displayName}</span>
+            <span>${c.n}</span>
             <span style="
               background: ${isPendingGps ? '#d97706' : '#0284c7'};
               color: #ffffff;
@@ -391,7 +403,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, liveUnitCounts]);
 
   // Handle external selection
   useEffect(() => {
