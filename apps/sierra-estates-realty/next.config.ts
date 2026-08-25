@@ -17,6 +17,13 @@ const SERVER_ONLY_PACKAGES = [
 
 
 const nextConfig: NextConfig = {
+  // Pin the monorepo root so output file tracing (which produces the
+  // serverless function file list for `vercel build`) resolves pnpm's
+  // symlinked node_modules structure from the true workspace root instead
+  // of inferring one from this app's subdirectory — mismatched from
+  // turbopack.root below otherwise, which caused deployed middleware to
+  // fail with "Cannot find module 'next/dist/build/adapter/setup-node-env.external'".
+  outputFileTracingRoot: path.join(__dirname, '..', '..'),
   transpilePackages: [
     '@sierra-estates/memory-engine',
     '@sierra-estates/agents',
