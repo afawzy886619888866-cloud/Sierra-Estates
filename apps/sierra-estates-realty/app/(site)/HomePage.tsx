@@ -184,6 +184,28 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* IMPORTANT PROJECTS */}
+      <section className="block cairo-project-feature" id="important-projects" aria-labelledby="important-projects-title">
+        <div className="wrap">
+          <div className="sec-head rv">
+            <div>
+              <div className="eyebrow">{t('cairoProjectEyebrow')}</div>
+              <h2 id="important-projects-title">{t('cairoProjectTitle')}</h2>
+              <p>{t('cairoProjectBody')}</p>
+            </div>
+            <Link href="/cairo-plaza" className="sec-link">
+              <span>{t('cairoProjectLink')}</span> <ArrowRight className="i" />
+            </Link>
+          </div>
+          <Link href="/cairo-plaza" className="cairo-project-feature__link rv" aria-label={t('cairoProjectLink')}>
+            <span className="cairo-project-feature__index">01</span>
+            <span className="cairo-project-feature__name">{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</span>
+            <span className="cairo-project-feature__place">{isAr ? 'أمام محطة مترو المطرية' : 'In front of Al-Mataria Metro Station'}</span>
+            <ArrowRight className="i" aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
+
       {/* INTERACTIVE MASTERPLAN MAP SECTION */}
       <section className="block well" id="interactive-map">
         <div className="wrap">
@@ -207,7 +229,7 @@ export default function HomePage() {
               compounds={allCompounds}
               featured={featuredCompounds}
               selectedName={selectedMapCompound}
-              onSelect={setSelectedMapCompound}
+              onSelectAction={setSelectedMapCompound}
               showControls={true}
             />
           </div>
