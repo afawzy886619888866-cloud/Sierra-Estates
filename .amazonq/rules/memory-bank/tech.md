@@ -2,7 +2,7 @@
 
 ## Languages & Runtimes
 
-| Language | Version | Usage |
+| Language | Version | Usain /e |
 | --- | --- | --- |
 | TypeScript | ^5.8.2 | Primary language — strict mode, all apps and packages |
 | JavaScript | ES2022+ | Legacy scripts, Firebase Functions (compiled from TS) |

@@ -9,7 +9,7 @@ import fs from 'node:fs';
 async function syncPropertyFinder() {
   const args = process.argv.slice(2);
   let keyIndex = args.indexOf('--key');
-  const apiKey = keyIndex !== -1 && args[keyIndex + 1] ? args[keyIndex + 1] : (process.env.PROPERTYFINDER_KEY || process.env.PROPERTY_FINDER_API_KEY || 'pf_demo_live_key');
+  const apiKey = keyIndex !== -1 && args[keyIndex + 1] ? args[keyIndex + 1] : (process.env.PROPERTY_FINDER_API_KEY || 'pf_demo_live_key');
 
   console.log('🔄 ══════════════════════════════════════════════════════════════');
   console.log('   SIERRA ESTATES · PROPERTYFINDER CATALOG SYNCHRONIZATION');
