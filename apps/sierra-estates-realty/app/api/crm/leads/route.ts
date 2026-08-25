@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/server/firebase-admin';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
+/**
+ * NOTE: this route writes to the Firestore collection 'Leads' (capital L) —
+ * every other lead-touching route in this app (app/api/admin/leads,
+ * app/api/inquiries, app/api/webhooks/property-finder, etc.) reads/writes
+ * 'leads' (lowercase, = COLLECTIONS.stakeholders). A document created here
+ * is invisible to the admin lead list and every other lead read path.
+ * Unclear whether that's deliberate (a separate VIP-scoring/routing
+ * sub-pipeline, given the distinct sierra_ai_score/pipeline_stage/
+ * assigned_specialist shape below, which doesn't match the Lead/Stakeholder
+ * schema in lib/models/schema.ts) or a casing bug. Left as-is rather than
+ * guessing — flagging here so the next person doesn't have to rediscover it.
+ */
+
 export async function POST(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
