@@ -1,10 +1,16 @@
+import 'server-only';
+
 /**
  * SIERRA ESTATES — STAGE 8: VIEWING ENGINE
  * Automates the scheduling and reminding for site inspections.
+ *
+ * Previously used the client `firebase/firestore` SDK (import { db } from
+ * '../firebase') despite being server-only orchestration logic — the same
+ * anti-pattern fixed in InventoryService.ts. Ported to the Admin SDK so it
+ * can actually be called from an API route.
  */
-
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, Timestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { adminDb } from '../server/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { COLLECTIONS, type Viewing } from '../models/schema';
 import { sendTelegramMessage } from './telegram-controller';
 
@@ -12,28 +18,28 @@ import { sendTelegramMessage } from './telegram-controller';
  * Schedule a new viewing.
  */
 export async function scheduleViewing(
-  leadId: string, 
-  unitId: string, 
-  agentId: string, 
+  leadId: string,
+  unitId: string,
+  agentId: string,
   scheduledAt: Date
 ): Promise<string> {
-  const viewingData: Partial<Viewing> = {
+  const viewingData = {
     leadId,
     unitId,
     agentId,
-    scheduledAt: Timestamp.fromDate(scheduledAt),
-    status: 'scheduled',
-    location: "Site Office / Project Location", // Default
+    scheduledAt,
+    status: 'scheduled' as const,
+    location: 'Site Office / Project Location', // Default
     reminderSent: false,
-    createdAt: serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   };
 
-  const docRef = await addDoc(collection(db, COLLECTIONS.viewings), viewingData);
-  
+  const docRef = await adminDb.collection(COLLECTIONS.viewings).add(viewingData);
+
   // Update Lead Stage
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
+  await adminDb.collection(COLLECTIONS.stakeholders).doc(leadId).update({
     'orchestrationState.stage': 'S8_VIEWING_SCHEDULED',
-    'status': 'negotiating'
+    status: 'negotiating',
   });
 
   // Notify Agent via Telegram
@@ -48,21 +54,21 @@ export async function scheduleViewing(
  * Marks a viewing as completed and potentially moves lead to 'negotiate' stage.
  */
 export async function completeViewing(viewingId: string, notes?: string) {
-  const viewingRef = doc(db, COLLECTIONS.viewings, viewingId);
-  const viewingSnap = await getDoc(viewingRef);
-  
-  if (!viewingSnap.exists()) return;
+  const viewingRef = adminDb.collection(COLLECTIONS.viewings).doc(viewingId);
+  const viewingSnap = await viewingRef.get();
+
+  if (!viewingSnap.exists) return;
   const viewing = viewingSnap.data() as Viewing;
 
-  await updateDoc(viewingRef, {
+  await viewingRef.update({
     status: 'completed',
     notes: notes || '',
-    updatedAt: serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
-  
+
   // Transition to Closing Ready
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, viewing.leadId), {
-    'orchestrationState.stage': 'S9_CLOSING_READY'
+  await adminDb.collection(COLLECTIONS.stakeholders).doc(viewing.leadId).update({
+    'orchestrationState.stage': 'S9_CLOSING_READY',
   });
 
   await sendTelegramMessage(`✅ <b>Viewing Completed</b>\nStakeholder has inspected the asset. Transitioning to Stage 9: Closing.`);

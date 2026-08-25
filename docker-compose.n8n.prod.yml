@@ -1,0 +1,56 @@
+version: "3.9"
+
+# Sierra Estates — Production n8n workflow automation instance
+# Usage: docker-compose -f docker-compose.n8n.prod.yml up -d
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: sierra-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # ── Base URL (update to your VPS public IP or domain) ──
+      N8N_PROTOCOL: "https"
+      N8N_HOST: "${N8N_HOST:-n8n.sierra-estates.net}"
+      N8N_PORT: "5678"
+      WEBHOOK_URL: "https://${N8N_HOST:-n8n.sierra-estates.net}"
+
+      # ── Auth ──
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: "${N8N_USER:-admin}"
+      N8N_BASIC_AUTH_PASSWORD: "${N8N_PASSWORD:?Set N8N_PASSWORD in .env}"
+
+      # ── Data ──
+      DB_TYPE: "sqlite"
+      N8N_USER_FOLDER: "/home/node/.n8n"
+
+      # ── Sierra Estates integrations ──
+      SIERRA_API_BASE: "${SIERRA_API_BASE:-https://sierra-estates.net}"
+      CRON_SECRET: "${CRON_SECRET:?Set CRON_SECRET}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      WHATSAPP_TOKEN: "${WHATSAPP_TOKEN:-}"
+
+      # ── Timezone ──
+      GENERIC_TIMEZONE: "Africa/Cairo"
+      TZ: "Africa/Cairo"
+
+      # ── Execution ──
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"     # 7 days
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows/n8n-templates:/workflows:ro
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  n8n_data:
+    driver: local
