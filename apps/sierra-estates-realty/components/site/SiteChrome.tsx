@@ -7,11 +7,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Sun, Moon, Languages, Home, Building2, Map, Sparkles, Phone,
+  Sun, Moon, Languages, Home, Building2, Map, Sparkles, Phone, BriefcaseBusiness,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
-export type ActiveNav = 'home' | 'cpds' | 'best' | 'contact' | null;
+export type ActiveNav = 'home' | 'cpds' | 'best' | 'contact' | 'projects' | null;
 
 export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
   const { t, theme, toggleTheme, toggleLang } = useSite();
@@ -45,6 +45,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             <Link href="/" className={act('home')}>{t('navHome')}</Link>
             <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
             <Link href="/properties" className={act('best')}>{t('navBest')}</Link>
+            <Link href="/cairo-plaza" className={act('projects')}>{t('navProjects')}</Link>
             <Link href="/#contact" className={act('contact')}>{t('navContact')}</Link>
           </div>
 
@@ -77,6 +78,9 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
         </Link>
         <Link href="/compounds" className={`bn-item${active === 'cpds' ? ' active' : ''}`}>
           <Map className="i" /><span>{t('navCpds')}</span>
+        </Link>
+        <Link href="/cairo-plaza" className={`bn-item${active === 'projects' ? ' active' : ''}`}>
+          <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
         </Link>
         <Link href="/#ai" className="bn-item">
           <Sparkles className="i" /><span>{t('navAI')}</span>
