@@ -166,8 +166,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
       <header className="cp-header">
         <div className="cp-header-inner">
           <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
-            <Image src="/assets/logo-gold.png" alt="" aria-hidden="true" width={34} height={34} />
-            <span>SIERRA ESTATES</span>
+            <Image src="/assets/sierra-estates-official-logo.png" alt="Sierra Estates" width={52} height={52} className="cp-official-logo" />
           </Link>
           <nav className="cp-nav" aria-label={isAr ? 'تنقل كايرو بلازا' : 'Cairo Plaza navigation'}>
             {nav.map(([key, label]) => <Link key={key} href={`${prefix}/${key}`} className={section === key ? 'active' : ''}>{label}</Link>)}
