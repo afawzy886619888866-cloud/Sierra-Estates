@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Sun, Moon, Languages } from 'lucide-react';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
@@ -165,7 +166,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
       <header className="cp-header">
         <div className="cp-header-inner">
           <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
-            <img src="/assets/logo-gold.png" alt="" aria-hidden="true" />
+            <Image src="/assets/logo-gold.png" alt="" aria-hidden="true" width={34} height={34} />
             <span>SIERRA ESTATES</span>
           </Link>
           <nav className="cp-nav" aria-label={isAr ? 'تنقل كايرو بلازا' : 'Cairo Plaza navigation'}>
@@ -193,7 +194,16 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
           </div>
         </div>
         <figure className="cp-hero-photo">
-          <img src="/cairo-plaza/real-facade-ai-enhanced.jpg" alt={isAr ? 'صورة حقيقية محسّنة لواجهة كايرو بلازا وبنك مصر' : 'AI-enhanced current-site photograph of the Cairo Plaza façade and Banque Misr frontage'} />
+          <div className="cp-hero-photo-inner">
+            <Image
+              src="/cairo-plaza/real-facade-ai-enhanced.jpg"
+              alt={isAr ? 'صورة حقيقية محسّنة لواجهة كايرو بلازا وبنك مصر' : 'AI-enhanced current-site photograph of the Cairo Plaza façade and Banque Misr frontage'}
+              fill
+              priority
+              sizes="(max-width: 900px) 100vw, 50vw"
+              style={{ objectFit: 'cover', objectPosition: 'center 35%' }}
+            />
+          </div>
           <figcaption>{isAr ? 'صورة حقيقية محسّنة بالذكاء الاصطناعي · الواجهة الحالية' : 'AI-enhanced current-site evidence · current façade'}</figcaption>
         </figure>
       </section>
@@ -219,7 +229,14 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
           {realEvidence.map((image) => (
             <figure className="cp-evidence-card" key={image.src}>
               <div className="cp-evidence-media">
-                <img src={image.src} alt={isAr ? image.altAr : image.altEn} loading="lazy" />
+                <Image
+                  src={image.src}
+                  alt={isAr ? image.altAr : image.altEn}
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 620px) 100vw, (max-width: 900px) 50vw, 33vw"
+                  style={{ objectFit: 'cover' }}
+                />
                 <span className="cp-evidence-badge">{isAr ? 'صورة حقيقية للموقع' : 'CURRENT-SITE EVIDENCE'}</span>
               </div>
               <figcaption>
