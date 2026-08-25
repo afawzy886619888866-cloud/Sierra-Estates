@@ -6,33 +6,28 @@ describe('apps/agents (Bots & Agent Implementations)', () => {
   const AGENTS_ROOT = path.resolve(__dirname, '..');
 
   describe('Stage-9 Closer Agent', () => {
-    const closerDir = path.join(AGENTS_ROOT, 'stage-9-closer');
+    // The Stage-9 closer used to be forked here (apps/agents/stage-9-closer),
+    // never wired into the pnpm workspace graph and never called from
+    // production. The live implementation is packages/agents/src/closer-agent-enhanced.ts,
+    // imported by lib/intelligence.ts and by the WhatsApp bot router's
+    // 'closer' route. The fork was deleted rather than kept in sync by hand.
+    const closerAgentEnhancedPath = path.resolve(
+      AGENTS_ROOT,
+      '..',
+      '..',
+      'packages',
+      'agents',
+      'src',
+      'closer-agent-enhanced.ts'
+    );
 
-    it('should have stage-9-closer directory structure and tsconfig', () => {
-      expect(fs.existsSync(closerDir)).toBe(true);
-      expect(fs.existsSync(path.join(closerDir, 'package.json'))).toBe(true);
-      expect(fs.existsSync(path.join(closerDir, 'tsconfig.json'))).toBe(true);
-    });
+    it('has exactly one CloserAgentEnhanced implementation, and it is live', () => {
+      expect(fs.existsSync(path.join(AGENTS_ROOT, 'stage-9-closer'))).toBe(false);
+      expect(fs.existsSync(closerAgentEnhancedPath)).toBe(true);
 
-    it('should contain CloserAgent and CloserAgentEnhanced implementations', () => {
-      const closerAgentPath = path.join(closerDir, 'CloserAgent.ts');
-      const enhancedPath = path.join(closerDir, 'CloserAgentEnhanced.ts');
-      expect(fs.existsSync(closerAgentPath)).toBe(true);
-      expect(fs.existsSync(enhancedPath)).toBe(true);
-
-      const closerCode = fs.readFileSync(closerAgentPath, 'utf-8');
-      expect(closerCode).toContain('CloserAgent');
-      expect(closerCode).toContain('export');
-
-      const enhancedCode = fs.readFileSync(enhancedPath, 'utf-8');
-      expect(enhancedCode).toContain('CloserAgentEnhanced');
-    });
-
-    it('should contain proposal generator', () => {
-      const propGenPath = path.join(closerDir, 'proposal-generator.ts');
-      expect(fs.existsSync(propGenPath)).toBe(true);
-      const code = fs.readFileSync(propGenPath, 'utf-8');
-      expect(code).toContain('ProposalGenerator');
+      const code = fs.readFileSync(closerAgentEnhancedPath, 'utf-8');
+      expect(code).toContain('export class CloserAgentEnhanced');
+      expect(code).toContain('export const closerAgent');
     });
   });
 
