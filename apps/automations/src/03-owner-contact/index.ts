@@ -1,19 +1,11 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getDb } from '../lib/firebase';
 
 /**
  * 03-owner-contact
- * 
+ *
  * Automates WhatsApp outreach to owners (Liela Bot's "Hook" phase).
  */
-
-if (!getApps().length) {
-  try {
-    initializeApp();
-  } catch (error) {
-    console.warn('[Owner Contact] Firebase admin could not be initialized.');
-  }
-}
 
 export async function runOwnerContact(ownerPhone: string, propertyContext: any) {
   console.log(`[Owner Contact] Initiating outreach to ${ownerPhone}`);
@@ -47,7 +39,7 @@ export async function runOwnerContact(ownerPhone: string, propertyContext: any) 
     console.log(`[Owner Contact] Hook sent via API. Receiver: ${ownerPhone}, Msg: ${message}`);
 
     // 2. Log interaction in Firestore CRM
-    const db = getFirestore();
+    const db = getDb('Owner Contact');
     await db.collection('communications').add({
       targetPhone: ownerPhone,
       direction: 'outbound',
