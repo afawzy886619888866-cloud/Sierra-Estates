@@ -7,6 +7,8 @@ import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
 import { isAdminPortalRole } from '@/lib/types';
 import '../admin-portal.css';
 
+export const dynamic = 'force-dynamic';
+
 
 export default function AdminLoginPage() {
   const router = useRouter();
