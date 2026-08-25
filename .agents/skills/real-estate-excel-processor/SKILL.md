@@ -29,7 +29,7 @@ The canonical script lives at:
 
 ## Architecture Overview
 
-```
+```text
 real_estate_processor.py
 ├── CONFIG          – Constants: USD_TO_EGP, ID_PREFIX, SKIP_FILES/SHEETS
 ├── COLUMN_SYNONYMS – Bi-lingual header→field mapping dict (Arabic + English)
@@ -49,7 +49,7 @@ real_estate_processor.py
 ## Key Configuration Constants
 
 | Constant | Default | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `USD_TO_EGP` | `48.0` | Currency conversion rate |
 | `ID_PREFIX` | `"SB"` | Prefix for generated Unit IDs (e.g. SB-0001) |
 | `SKIP_FILES` | `("Final_", "~$", "Missing_")` | File name prefixes to ignore |
@@ -122,7 +122,7 @@ First run: click **📦 Install Deps** to auto-install `numpy`, `pandas`,
 ## Dependencies
 
 | Package | Purpose |
-|---|---|
+| --- | --- |
 | `pandas` | DataFrame engine |
 | `numpy` | Numeric helpers |
 | `openpyxl` | Excel read/write + styling |
@@ -133,7 +133,7 @@ First run: click **📦 Install Deps** to auto-install `numpy`, `pandas`,
 ## Output Schema (All_Units sheet)
 
 | Column | Source Field | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `Unit_ID` | Generated | `SB-XXXX` sequential |
 | `Phone` | `Phone_Clean` | Normalised 11-digit |
 | `Phone_Last7` | Derived | Dedup suffix |
@@ -168,21 +168,25 @@ First run: click **📦 Install Deps** to auto-install `numpy`, `pandas`,
 ## Common Modifications
 
 ### Change exchange rate
+
 ```python
 USD_TO_EGP = 50.0  # top of file
 ```
 
 ### Change output ID prefix
+
 ```python
 ID_PREFIX = "SE"  # top of file
 ```
 
 ### Skip an additional sheet name
+
 ```python
 SKIP_SHEETS = ("dashboard", "summary", "pivot", "تعليمات", "my_sheet")
 ```
 
 ### Extend WhatsApp phone regex
+
 Edit `WA_PHONE` at the top of the WHATSAPP section to add more number formats.
 
 ---
@@ -190,8 +194,10 @@ Edit `WA_PHONE` at the top of the WHATSAPP section to add more number formats.
 ## Verification
 
 After running, check the **Summary** sheet in the output Excel for:
+
 - `Total` — raw rows loaded
 - `Dropped (no phone)` — filter effectiveness
 - `Unique` — final record count
 - `Duplicates removed` — dedup effectiveness
 - `Duration (s)` — performance baseline
+
