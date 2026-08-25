@@ -14,9 +14,10 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 /**
  * CRON: WhatsApp dispatch worker.
- * Drains the whatsapp_message_queue subject to operating hours (12pm–8pm
- * Africa/Cairo) and per-number quota (30/2hr, 480/day across 4 senders).
- * Schedule it every ~10 min within the operating window via Vercel Cron.
+ * Drains the whatsapp_message_queue subject to operating hours (10:00–10:59
+ * Africa/Cairo, see DEFAULT_OUTREACH_CONFIG) and per-number quota (30/2hr,
+ * 480/day across 4 senders). Fired once daily by
+ * .github/workflows/whatsapp-dispatch-cron.yml.
  */
 
 const MAX_PER_RUN = 80;
