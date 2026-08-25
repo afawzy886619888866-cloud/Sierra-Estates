@@ -12,6 +12,10 @@ Implements:
 from typing import Dict, Any, List, Optional
 
 class RealEstateValuationAgent:
+    # Mirrors CAP_RATE_BASELINES / AMENITY_MULTIPLIERS in
+    # packages/agents/tools/valuationArbitrageEngine.ts. The two are not
+    # wired together (Python microservice vs. TS monorepo package), so these
+    # must be changed in both places if cap-rate or premium policy changes.
     CAP_RATE_BASELINES = {
         "residential": {"min": 0.08, "max": 0.10, "label": "8% - 10%"},
         "administrative": {"min": 0.10, "max": 0.12, "label": "10% - 12%"},
