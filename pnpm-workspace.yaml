@@ -265,10 +265,8 @@ overrides:
   "pdfjs-dist": ">=6.2.108"
   dompurify: ">=3.4.13"
   nanoid: ">=3.3.17"
-  # Kept equal to package.json pnpm.overrides.typescript. This read "5.8.2"
-  # while package.json had been bumped to ^7.0.2, so a pnpm 10 upgrade would
-  # have silently dragged TypeScript back two majors.
-  typescript: "^5.8.2"
+  # Kept equal to package.json pnpm.overrides.typescript.
+  typescript: "^7.0.2"
 
 allowBuilds:
   '@firebase/util': true
