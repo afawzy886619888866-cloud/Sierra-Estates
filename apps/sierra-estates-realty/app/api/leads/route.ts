@@ -8,8 +8,6 @@ import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { leadCreateSchema, parseRequestBody, isParseFailure } from '@/lib/server/schemas';
 import { logger } from '@/lib/logger';
 
-export { leadCreateSchema as leadSchema, leadCreateSchema };
-
 export async function POST(req: Request) {
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
