@@ -373,7 +373,12 @@ export class WhatsAppBotRouter {
       if (dealSnap.empty) {
         // Nothing on record for this phone at closing stage — a human needs
         // to open/verify the deal before any terms are quoted.
-        await this.escalateToHuman(phone, { from: phone, body: userMessage, timestamp: Date.now() }, 'closing-intent, no open deal on record')
+        await this.escalateToHuman(
+          phone,
+          { from: phone, body: userMessage, timestamp: Date.now() },
+          `Client signaled readiness to close, no open deal on record. Message: "${userMessage}"`,
+          'closing-intent-no-deal'
+        )
         return 'ممتاز! سأقوم بتحويلك فوراً لأحد مستشارينا لإتمام إجراءات التعاقد والتوقيع.'
       }
 
@@ -395,8 +400,14 @@ export class WhatsAppBotRouter {
       const proposal = await closerAgent.generateIntelligentProposal(context)
       return proposal
     } catch (err) {
-      console.error('[Router] Closer agent handoff failed:', err instanceof Error ? err.message : err)
-      await this.escalateToHuman(phone, { from: phone, body: userMessage, timestamp: Date.now() }, 'closing-intent, closer handoff error')
+      const errMsg = err instanceof Error ? err.message : String(err)
+      console.error('[Router] Closer agent handoff failed:', errMsg)
+      await this.escalateToHuman(
+        phone,
+        { from: phone, body: userMessage, timestamp: Date.now() },
+        `Client signaled readiness to close, closer handoff failed: ${errMsg}. Message: "${userMessage}"`,
+        'closing-intent-handoff-error'
+      )
       return 'ممتاز! سأقوم بتحويلك فوراً لأحد مستشارينا لإتمام إجراءات التعاقد والتوقيع.'
     }
   }
@@ -431,15 +442,20 @@ ${history.slice(-5).map((h: unknown) => JSON.stringify(h)).join('\n') || 'None'}
   /**
    * Escalate to human agent - send alert to team WhatsApp group
    */
-  private async escalateToHuman(phone: string, msg: IncomingMessage, context: string): Promise<void> {
-    console.warn(`[Router] ESCALATING TO HUMAN: ${phone} | Reason: complaint/critical`)
+  private async escalateToHuman(
+    phone: string,
+    msg: IncomingMessage,
+    context: string,
+    reason: string = 'complaint-or-critical'
+  ): Promise<void> {
+    console.warn(`[Router] ESCALATING TO HUMAN: ${phone} | Reason: ${reason}`)
 
     await sharedMemory.write(`escalation-${phone}-${Date.now()}`, {
       phone,
       message: msg.body,
       context,
       escalatedAt: new Date().toISOString(),
-      reason: 'complaint-or-critical',
+      reason,
     }, {
       author: 'system',
       tags: ['human-escalation', 'urgent', `phone-${phone}`],

@@ -73,7 +73,7 @@ function getDefaultFleet(): AgentHeartbeat[] {
       load: '68%',
       heartbeat: now,
       needs: ['PropertyFinder Syndication', 'AVM Historical Weights'],
-      missingSecrets: process.env.PROPERTYFINDER_KEY ? [] : ['PROPERTYFINDER_KEY (required for live syndication)'],
+      missingSecrets: process.env.PROPERTY_FINDER_API_KEY ? [] : ['PROPERTY_FINDER_API_KEY (required for live syndication)'],
       docLink: '/docs/roles.md#2-the-curator--scribe',
     },
     {
@@ -150,8 +150,8 @@ export async function GET() {
     },
     {
       name: 'PropertyFinder Connector',
-      status: process.env.PROPERTYFINDER_KEY ? 'READY' : 'SIMULATION',
-      value: process.env.PROPERTYFINDER_KEY ? 'API Key Active' : 'Fallback / Mock Sync Available',
+      status: process.env.PROPERTY_FINDER_API_KEY ? 'READY' : 'SIMULATION',
+      value: process.env.PROPERTY_FINDER_API_KEY ? 'API Key Active' : 'Fallback / Mock Sync Available',
       description: 'Syndication sync engine for property listings',
     },
     {

@@ -24,14 +24,14 @@ export async function runOwnerContact(ownerPhone: string, propertyContext: any) 
   
   try {
     // 1. Mock sending message via WhatsApp Cloud API
-    const waApiUrl = `https://graph.facebook.com/v17.0/${process.env.WA_PHONE_NUMBER_ID}/messages`;
-    
+    const waApiUrl = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
     // In a real scenario, you'd use fetch/axios:
     /*
     const response = await fetch(waApiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.WA_ACCESS_TOKEN}`,
+        'Authorization': `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
