@@ -29,28 +29,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
-    
-    // Fetch from both stakeholders and raw leads collection (Property Finder / Webhook / Web forms)
-    const [stakeholdersSnap, leadsSnap] = await Promise.all([
-      adminDb.collection(COLLECTIONS.stakeholders).limit(limit).get(),
-      adminDb.collection('leads').limit(limit).get(),
-    ]);
 
-    const leadMap = new Map<string, any>();
+    // COLLECTIONS.stakeholders resolves to the Firestore collection 'leads' -
+    // this used to also fetch adminDb.collection('leads') as if it were a
+    // second, separate collection (Property Finder webhook / web forms) and
+    // merge the results, but that was the exact same collection fetched
+    // twice: every intake path (website, Property Finder, WhatsApp, ...)
+    // already writes into COLLECTIONS.stakeholders, distinguished by `source`.
+    const stakeholdersSnap = await adminDb.collection(COLLECTIONS.stakeholders).limit(limit).get();
 
-    // Process canonical stakeholders
-    for (const doc of stakeholdersSnap.docs) {
-      leadMap.set(doc.id, mapLeadToSpa(doc.id, doc.data()));
-    }
-
-    // Process raw leads (Property Finder webhook inbounds)
-    for (const doc of leadsSnap.docs) {
-      if (!leadMap.has(doc.id)) {
-        leadMap.set(doc.id, mapLeadToSpa(doc.id, doc.data()));
-      }
-    }
-
-    const leads = Array.from(leadMap.values());
+    const leads = stakeholdersSnap.docs.map((doc) => mapLeadToSpa(doc.id, doc.data()));
 
     return NextResponse.json({ success: true, leads, count: leads.length });
   } catch (err) {
