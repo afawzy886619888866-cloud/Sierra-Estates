@@ -1,8 +1,8 @@
 {
   "ecc_memory": {
     "version": "1.0.0",
-    "lastUpdated": "2026-08-24T20:37:14.599Z",
-    "total_episodes": 36,
+    "lastUpdated": "2026-08-25T01:49:20.795Z",
+    "total_episodes": 38,
     "total_entities": 2,
     "recent_episodes": [
       {
@@ -562,6 +562,37 @@
           "source": "WhatsApp Group #4 (Owners Direct)",
           "isHotDeal": true
         }
+      },
+      {
+        "id": "ep-1787622560779-z82z9",
+        "timestamp": "2026-08-25T01:49:20.779Z",
+        "decayWeight": 1,
+        "type": "negotiation_offer",
+        "entityId": "SE-MV-401",
+        "actor": "Buyer Karim",
+        "summary": "Offered 32M cash with 10% down payment",
+        "data": {
+          "offeredAmount": 32000000,
+          "paymentTerms": "cash"
+        }
+      },
+      {
+        "id": "ep-1787622560784-bw37u",
+        "timestamp": "2026-08-25T01:49:20.784Z",
+        "decayWeight": 1,
+        "type": "price_drop",
+        "entityId": "SE-MV-401",
+        "actor": "Owner Ahmed",
+        "summary": "Price reduction of 10% from 40,000,000 EGP to 36,000,000 EGP (WhatsApp Group #4 (Owners Direct))",
+        "data": {
+          "sierraCode": "SE-MV-401",
+          "oldPrice": 40000000,
+          "newPrice": 36000000,
+          "dropAmount": 4000000,
+          "dropPct": 10,
+          "source": "WhatsApp Group #4 (Owners Direct)",
+          "isHotDeal": true
+        }
       }
     ],
     "entities": {
@@ -586,9 +617,10 @@
           "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL",
+          "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL"
         ],
-        "lastUpdated": "2026-08-24T20:37:14.574Z",
+        "lastUpdated": "2026-08-25T01:49:20.784Z",
         "historicalPrices": [
           {
             "price": 36000000,
@@ -679,6 +711,11 @@
             "price": 36000000,
             "timestamp": "2026-08-24T20:37:14.574Z",
             "source": "WhatsApp Group #4 (Owners Direct)"
+          },
+          {
+            "price": 36000000,
+            "timestamp": "2026-08-25T01:49:20.784Z",
+            "source": "WhatsApp Group #4 (Owners Direct)"
           }
         ]
       },
@@ -695,7 +732,7 @@
         "tags": [
           "VIP_CASH_BUYER"
         ],
-        "lastUpdated": "2026-08-24T20:37:14.593Z",
+        "lastUpdated": "2026-08-25T01:49:20.793Z",
         "historicalPrices": []
       }
     }
