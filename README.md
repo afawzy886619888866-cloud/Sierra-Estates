@@ -130,7 +130,7 @@ Without Firebase Admin creds, the public client portal still runs — only `/adm
 
 CI/CD-only tokens (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`) belong in **GitHub Actions secrets**, not `.env.local` — see the [🔑 GitHub Secrets & Variables Configuration](./CLAUDE.md) table in `CLAUDE.md`.
 
-> ⚠️ `.env.example` also flags a handful of **naming-drift** variables (e.g. `WA_PHONE_NUMBER_ID` vs `WHATSAPP_PHONE_NUMBER_ID`, `PROPERTYFINDER_KEY` vs `PROPERTY_FINDER_API_KEY`, `REDIS_URL`/`KV_URL` vs `UPSTASH_REDIS_REST_*`) where different code paths read differently-named vars for what looks like the same secret. Set both names until an operator decision consolidates them — don't rename either side unilaterally.
+> `REDIS_URL` / `KV_URL` are a separate concern from `UPSTASH_REDIS_REST_URL`/`_TOKEN` above, not another naming-drift pair — `packages/ai-orchestrator/src/pubsub-broker.ts` needs a long-lived Redis connection for pub/sub, which Upstash's stateless REST client can't provide.
 
 ### Verifying setup
 
