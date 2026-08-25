@@ -9,6 +9,7 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 // A price drop at or above this percentage is tagged as a hot/distressed
@@ -68,7 +69,10 @@ export class EpisodicContextCache {
   constructor(customStoragePath?: string) {
     this.storagePath =
       customStoragePath ||
-      path.resolve(process.cwd(), 'obsidian-store.json');
+      process.env.ECC_MEMORY_STORAGE_PATH ||
+      (process.env.NODE_ENV === 'test'
+        ? path.join(os.tmpdir(), `sierra-estates-ecc-${process.pid}.json`)
+        : path.resolve(process.cwd(), 'obsidian-store.json'));
     this.loadFromStorage();
   }
 
