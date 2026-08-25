@@ -69,8 +69,16 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const defaultSiteState: SiteState = {
+  lang: 'en',
+  theme: 'light',
+  isAr: false,
+  t: (key: string) => (I18N.en as Record<string, string>)?.[key] ?? key,
+  toggleLang: () => {},
+  toggleTheme: () => {},
+};
+
 export function useSite() {
   const ctx = useContext(SiteCtx);
-  if (!ctx) throw new Error('useSite must be used inside SiteProvider');
-  return ctx;
+  return ctx ?? defaultSiteState;
 }
