@@ -24,6 +24,7 @@
 
 import { AgentOrchestrator } from '@sierra-estates/agents-core'
 import { sharedMemory, memoryEngine } from '@sierra-estates/memory-engine'
+import { stripWhatsAppSuffix } from './phone'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -204,7 +205,7 @@ export class WhatsAppBotRouter {
    * Returns the response text to send back to the client.
    */
   async handle(msg: IncomingMessage): Promise<string> {
-    const phone = msg.from.replace('@c.us', '').replace('@g.us', '')
+    const phone = stripWhatsAppSuffix(msg.from)
     const startedAt = Date.now()
 
     try {

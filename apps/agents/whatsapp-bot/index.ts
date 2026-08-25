@@ -67,23 +67,12 @@ async function checkFirestoreLead(phoneStr: string): Promise<boolean> {
     const cleanPhone = normalizePhone(phoneStr);
     const leadsRef = db.collection('inquiries');
 
-    // 1. Check exact match
-    const q1 = await leadsRef.where('phone', '==', phoneStr).get();
-    if (!q1.empty) return true;
-
-    // 2. Check normalized clean phone
-    const q2 = await leadsRef.where('phone', '==', cleanPhone).get();
-    if (!q2.empty) return true;
-
-    // 3. Check clean phone with leading +
-    const q3 = await leadsRef.where('phone', '==', `+${cleanPhone}`).get();
-    if (!q3.empty) return true;
-
-    // 4. Check local Egypt format (replace country code 20 with leading 0)
-    if (cleanPhone.startsWith('20')) {
-      const localPhone = '0' + cleanPhone.slice(2);
-      const q4 = await leadsRef.where('phone', '==', localPhone).get();
-      if (!q4.empty) return true;
+    // Check every stored-phone form a lead might have been saved under:
+    // the raw string as received, plus the canonical variants.
+    const candidates = [phoneStr, ...phoneLookupVariants(cleanPhone)];
+    for (const candidate of candidates) {
+      const q = await leadsRef.where('phone', '==', candidate).get();
+      if (!q.empty) return true;
     }
 
     return false;
@@ -243,7 +232,7 @@ client.on('message', async (msg: any) => {
       return;
     }
 
-    const phone = msg.from.replace('@c.us', '').replace('@g.us', '');
+    const phone = stripWhatsAppSuffix(msg.from);
     const clientName = chat.name || phone;
     const cleanSender = normalizePhone(phone);
     const isAdmin = adminPhones.includes(cleanSender);
