@@ -4,7 +4,7 @@ Copy everything inside the block below into a new Claude session.
 
 ---
 
-```
+```text
 Sierra Estates monorepo — continuing work from a previous session.
 
 REPO: H:\last\Main\SE-Vercel-deploy-main  (connect this folder first)
@@ -81,18 +81,18 @@ count, then tell me what you find before changing anything.
 ## Reference — where things live
 
 | Thing | Location |
-|---|---|
+| --- | --- |
 | Safety tag (pre-cleanup state) | `safety/pre-cleanup-20260824` on origin -> `c318361a` |
 | Salvaged dangling commits | 20 x `refs/salvage/*` (local only) |
 | Full repo bundles + local data | `H:\last\Main\_repo-safety-backup-20260824` |
-| Written report | https://claude.ai/code/artifact/4a5bf32f-dcd1-4f20-9e2f-4f2cc6d420c9 |
+| Written report | <https://claude.ai/code/artifact/4a5bf32f-dcd1-4f20-9e2f-4f2cc6d420c9> |
 | Command Deck memory | `incident.commit-attribution.handoff`, `task.security-remediation.handoff` |
 | Last green commit | `7e643496` — CI success on all three jobs |
 
 ## Commits shipped this session
 
 | SHA | Change |
-|---|---|
+| --- | --- |
 | `da02f8e0` | Remove ghost submodule entry |
 | `94e24df7` | Fix inventory-sync commit identity |
 | `1021d82a` | Six pnpm security overrides — 1 critical + 16 high |
