@@ -287,6 +287,11 @@ export class WhatsAppBotRouter {
     userMessage: string,
     phone: string
   ): Promise<string> {
+    // If the primary agent is Closer (client signaled they're ready to sign/close)
+    if (route.primaryAgent === 'closer') {
+      return this.runCloserAgent(phone, userMessage)
+    }
+
     // If the primary agent is OpenClaw (handling owners directly)
     if (route.primaryAgent === 'openclaw') {
       const openclawResult = await this.orchestrator.runAgentTask(
@@ -337,6 +342,63 @@ export class WhatsAppBotRouter {
     }
 
     return 'أهلاً! سيتواصل معك أحد مستشارينا في أقرب وقت.'
+  }
+
+  /**
+   * Handle a "ready to close" message by handing off to the live Stage-9
+   * Closer Agent (packages/agents/src/closer-agent-enhanced.ts) instead of
+   * letting it fall through to a generic Hermes reply. Looks up whether this
+   * phone has an open deal on record; without one there's nothing for the
+   * closer to act on, so it escalates to a human rather than guessing terms
+   * for a deal that was never opened.
+   */
+  private async runCloserAgent(phone: string, userMessage: string): Promise<string> {
+    try {
+      const { getApps, initializeApp } = await import('firebase-admin/app')
+      const { getFirestore } = await import('firebase-admin/firestore')
+      if (!getApps().length) initializeApp()
+      const db = getFirestore()
+
+      const dealSnap = await db
+        .collection('deals')
+        .where('leadPhone', '==', phone)
+        .where('stage', 'in', [
+          'S9_proposal_ready',
+          'S9_proposal_finalized',
+          'S9_signing_initiated',
+        ])
+        .limit(1)
+        .get()
+
+      if (dealSnap.empty) {
+        // Nothing on record for this phone at closing stage — a human needs
+        // to open/verify the deal before any terms are quoted.
+        await this.escalateToHuman(phone, { from: phone, body: userMessage, timestamp: Date.now() }, 'closing-intent, no open deal on record')
+        return 'ممتاز! سأقوم بتحويلك فوراً لأحد مستشارينا لإتمام إجراءات التعاقد والتوقيع.'
+      }
+
+      const deal = dealSnap.docs[0]
+      const dealData = deal.data() as Record<string, unknown>
+
+      const { closerAgent } = await import('@sierra-estates/agents/src/closer-agent-enhanced')
+
+      const context = {
+        dealId: deal.id,
+        leadPhone: phone,
+        propertyCode: (dealData.propertyCode as string) || (dealData.assetId as string) || 'N/A',
+        buyerProfile: (dealData.buyerProfile as Record<string, unknown>) || {},
+        propertyData: (dealData.propertyData as Record<string, unknown>) || {},
+        previousOffers: (dealData.previousOffers as Array<{ amount: number; date: string }>) || [],
+        negotiationHistory: (dealData.negotiationHistory as string[]) || [],
+      }
+
+      const proposal = await closerAgent.generateIntelligentProposal(context)
+      return proposal
+    } catch (err) {
+      console.error('[Router] Closer agent handoff failed:', err instanceof Error ? err.message : err)
+      await this.escalateToHuman(phone, { from: phone, body: userMessage, timestamp: Date.now() }, 'closing-intent, closer handoff error')
+      return 'ممتاز! سأقوم بتحويلك فوراً لأحد مستشارينا لإتمام إجراءات التعاقد والتوقيع.'
+    }
   }
 
   /**
