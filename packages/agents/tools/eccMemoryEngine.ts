@@ -125,8 +125,8 @@ export class EpisodicContextCache {
     ownerName?: string
   ): { episode: Episode; dropPct: number; isHotDeal: boolean } {
     const dropAmount = oldPrice - newPrice;
-    const dropPct = Number(((dropAmount / oldPrice) * 100).toFixed(1));
-    const isHotDeal = dropPct >= 8.0;
+    const dropPct = oldPrice ? Number(((dropAmount / oldPrice) * 100).toFixed(1)) : 0;
+    const isHotDeal = dropPct >= HOT_DEAL_THRESHOLD_PCT;
 
     const episode = this.recordEpisode({
       type: 'price_drop',
