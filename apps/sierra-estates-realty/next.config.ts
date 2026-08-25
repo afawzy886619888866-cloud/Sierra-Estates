@@ -28,10 +28,7 @@ const nextConfig: NextConfig = {
   generateBuildId: async () => {
     return process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'sierra-estates-build';
   },
-  experimental: {
-    useTypeScriptCli: true,
-    cpus: 1,
-  },
+
   serverExternalPackages: [
     '@grpc/grpc-js',
     '@opentelemetry/exporter-trace-otlp-grpc',

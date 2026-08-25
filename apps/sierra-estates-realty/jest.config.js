@@ -13,6 +13,7 @@ const config = {
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx', '**/__tests__/**/*.test.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
   },
   collectCoverageFrom: [
     'lib/**/*.{ts,tsx}',

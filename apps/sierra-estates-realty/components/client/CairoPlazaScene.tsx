@@ -1,8 +1,8 @@
 'use client';
 
+import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Float, OrbitControls } from '@react-three/drei';
-import { useRef, useState } from 'react';
 import * as THREE from 'three';
 
 type ViewKey = 'courtyard' | 'tower' | 'station';

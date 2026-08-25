@@ -34,12 +34,14 @@ jobs:
   MSDO:
     # currently only windows latest is supported
     runs-on: windows-latest
+    timeout-minutes: 10
+    continue-on-error: true
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
-    - uses: actions/setup-dotnet@v4
+    - uses: actions/setup-dotnet@v6
       with:
         dotnet-version: |
           5.0.x

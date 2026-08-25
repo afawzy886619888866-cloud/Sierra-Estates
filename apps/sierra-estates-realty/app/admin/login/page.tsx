@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
+import { isAdminPortalRole } from '@/lib/types';
 import '../admin-portal.css';
 
 
@@ -18,7 +19,7 @@ export default function AdminLoginPage() {
     fetch('/api/auth')
       .then((res) => res.json())
       .then((data) => {
-        if (data?.signedIn && ['admin', 'manager', 'superadmin', 'agent'].includes(data.role)) {
+          if (data?.signedIn && isAdminPortalRole(data.role)) {
           router.replace('/admin');
         }
       })
