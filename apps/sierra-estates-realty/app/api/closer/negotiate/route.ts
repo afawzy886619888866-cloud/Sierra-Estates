@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NegotiationEngine } from '@sierra-estates/agents-core';
+import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
+import { simulateNegotiationFromBody } from '@/lib/services/negotiation-simulate';
 
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json().catch(() => ({}));
-    const askingPrice = Number(body.askingPrice) || 38000000;
-    const buyerOfferPrice = Number(body.buyerOfferPrice) || Math.round(askingPrice * 0.92);
-    const sellerFloorPrice = body.sellerFloorPrice ? Number(body.sellerFloorPrice) : undefined;
-    const buyerMaxYears = Number(body.buyerMaxYears) || 7;
-
-    const outcome = NegotiationEngine.simulateNegotiation(
-      askingPrice,
-      buyerOfferPrice,
-      sellerFloorPrice,
-      buyerMaxYears
-    );
+    const outcome = simulateNegotiationFromBody(body);
 
     return NextResponse.json({
       success: true,
