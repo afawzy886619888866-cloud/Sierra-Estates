@@ -20,6 +20,13 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
  * .github/workflows/whatsapp-dispatch-cron.yml.
  */
 
+// Now a single daily invocation instead of one of many every-10-min runs, so
+// it needs room to drain a full day's backlog of up to MAX_PER_RUN jobs in
+// one go. 60s is the Vercel Hobby plan ceiling (higher values are silently
+// capped there); anything left unsent when time runs out simply stays
+// 'queued' and rolls into tomorrow's run.
+export const maxDuration = 60;
+
 const MAX_PER_RUN = 80;
 
 export async function GET(req: NextRequest) {
