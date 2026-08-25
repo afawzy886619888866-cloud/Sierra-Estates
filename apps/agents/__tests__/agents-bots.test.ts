@@ -57,11 +57,25 @@ describe('apps/agents (Bots & Agent Implementations)', () => {
   describe('Sierra Estates Bot (Python Service)', () => {
     const botDir = path.join(AGENTS_ROOT, 'sierra-estates-bot');
 
-    it('should contain python bot implementations and system prompts', () => {
+    it('has one canonical bot implementation, not a duplicate pair', () => {
+      // sierra_blue_bot_implementation.py was a byte-identical duplicate of
+      // sierra_estates_bot_implementation.py — merged away rather than kept
+      // in sync by hand. Same for the API integration pair: the surviving
+      // file uses the corrected graph.facebook.com endpoint and the v12+
+      // HubSpot SDK that only one of the two copies had.
       expect(fs.existsSync(path.join(botDir, 'sierra_estates_bot_implementation.py'))).toBe(true);
-      expect(fs.existsSync(path.join(botDir, 'sierra_blue_bot_implementation.py'))).toBe(true);
+      expect(fs.existsSync(path.join(botDir, 'sierra_blue_bot_implementation.py'))).toBe(false);
+      expect(fs.existsSync(path.join(botDir, 'sierra_estates_api_integration.py'))).toBe(true);
+      expect(fs.existsSync(path.join(botDir, 'sierra_blue_api_integration.py'))).toBe(false);
       expect(fs.existsSync(path.join(botDir, 'system_prompt_and_deployment.py'))).toBe(true);
       expect(fs.existsSync(path.join(botDir, 'requirements.txt'))).toBe(true);
+
+      const apiIntegrationCode = fs.readFileSync(
+        path.join(botDir, 'sierra_estates_api_integration.py'),
+        'utf-8'
+      );
+      expect(apiIntegrationCode).toContain('graph.facebook.com');
+      expect(apiIntegrationCode).not.toContain('graph.instagram.com');
     });
 
     it('should contain luxury real estate prompt definitions', () => {
