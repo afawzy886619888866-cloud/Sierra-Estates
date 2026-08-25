@@ -9,6 +9,7 @@ import qrcode from 'qrcode-terminal';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import { WhatsAppBotRouter } from './router';
+import { normalizePhone, stripWhatsAppSuffix, phoneLookupVariants } from './phone';
 
 // Create router AFTER dotenv is loaded so GOOGLE_AI_API_KEY is available
 const router = new WhatsAppBotRouter(process.env.GOOGLE_AI_API_KEY);
@@ -19,10 +20,6 @@ const whitelistPath = path.resolve(__dirname, 'whitelist.json');
 interface WhitelistConfig {
   enabled: boolean;
   numbers: string[];
-}
-
-function normalizePhone(phoneStr: string): string {
-  return phoneStr.replace(/\D/g, '');
 }
 
 function loadWhitelist(): WhitelistConfig {
