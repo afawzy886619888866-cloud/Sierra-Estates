@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-from agent_core import get_titan_agent
+from agent_core import run_agent_turn
 
 app = FastAPI(title="Vertex Omni-Agent (Titan)")
 logger = logging.getLogger("uvicorn.error")
