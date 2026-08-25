@@ -9,15 +9,16 @@
     "@google/genai": "^2.17.1",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
-    "firebase": "^12.17",
-    "firebase-admin": "^14.2.0",
+    "firebase": "^12.18",
+    "firebase-admin": "^14.3.0",
     "pino": "^10.3",
     "react": "19.2.8",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26",
     "@types/react": "^19",
-    "typescript": "^5.8.2"
+    "typescript": "^7.0.2"
   }
 }

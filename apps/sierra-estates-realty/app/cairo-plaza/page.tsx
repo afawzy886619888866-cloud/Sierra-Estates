@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+export const dynamic = 'force-dynamic';
+
+import CairoPlazaRouteShell from '@/components/client/CairoPlazaRouteShell';
 
 export default function CairoPlazaEntry() {
-  redirect('/cairo-plaza/overview');
+  return <CairoPlazaRouteShell section="overview" lang="en" />;
 }
