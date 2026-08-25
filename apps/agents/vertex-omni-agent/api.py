@@ -29,12 +29,11 @@ async def run_agent(payload: AgentRunPayload):
     """
     logger.info("Running agent in mode '%s' with prompt: %s...", payload.mode, payload.prompt[:80])
     try:
-        agent = get_titan_agent()
         full_prompt = f"Mode: {payload.mode}\nPrompt: {payload.prompt}"
         if payload.context:
             full_prompt += f"\nContext: {payload.context}"
 
-        response = agent.generate_content(full_prompt)
+        response = run_agent_turn(full_prompt)
 
         candidates = []
         if hasattr(response, 'candidates'):
