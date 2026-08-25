@@ -1,13 +1,9 @@
-/* Refinements layered on top of the ported design.
-   Loaded after shared.css / index.css so these win on source order.
-   Keep the ported files verbatim; every deliberate change lives here. */
+/* ==========================================================================
+   Sierra Estates · High-End Visual Design & Mobile Architecture Refinements
+   Layered cleanly on top of shared.css.
+   ========================================================================== */
 
-/* ── Hero legibility ──────────────────────────────────────────────────
-   The hero copy sits in the left column, so the scrim carries most of its
-   weight on that side and clears the photograph on the right. The ported
-   ramp topped out at .82 and left the sub-copy short of 4.5:1 over bright
-   slides, so the left third is deepened and the falloff pushed further
-   right. Direction flips for RTL, where the column flips with it. */
+/* ── 1. Hero Legibility & Scrim Ramps ──────────────────────────────── */
 .hero .scrim {
   background:
     linear-gradient(100deg,
@@ -68,27 +64,23 @@
       rgba(8, 8, 10, .74) 100%);
 }
 
-/* Below 860px the column spans the full width, so the scrim goes vertical
-   rather than directional — deepened to match the copy's new contrast. */
 @media (max-width: 860px) {
   .hero .scrim,
   [dir="rtl"] .hero .scrim {
     background: linear-gradient(180deg,
-      rgba(10, 22, 34, .82) 0%,
-      rgba(10, 22, 34, .62) 45%,
-      rgba(10, 22, 34, .84) 100%);
+      rgba(10, 22, 34, .85) 0%,
+      rgba(10, 22, 34, .65) 45%,
+      rgba(10, 22, 34, .88) 100%);
   }
   [data-theme="dark"] .hero .scrim,
   [data-theme="dark"][dir="rtl"] .hero .scrim {
     background: linear-gradient(180deg,
-      rgba(8, 8, 10, .92) 0%,
-      rgba(8, 8, 10, .78) 45%,
-      rgba(8, 8, 10, .92) 100%);
+      rgba(8, 8, 10, .94) 0%,
+      rgba(8, 8, 10, .82) 45%,
+      rgba(8, 8, 10, .94) 100%);
   }
 }
 
-/* The hero column is the measure for the copy: cap it so the headline keeps
-   an even rag against the deepest part of the scrim. */
 .hero-col {
   max-width: 620px;
 }
@@ -101,13 +93,425 @@
   max-width: 54ch;
 }
 
-/* ── 3D tour banner ───────────────────────────────────────────────────
-   VirtualTourBanner styles itself inline, so the only thing it needs from
-   CSS is this keyframe. It lives here rather than in virtual-tour.css
-   because the banner also renders on the home page, which does not load
-   that stylesheet — there the spinner would otherwise sit frozen. */
+/* ── 2. Floating Island Navigation & Glassmorphism ─────────────────── */
+.nav {
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav.scrolled {
+  background: rgba(0, 43, 75, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .nav.scrolled {
+  background: rgba(5, 12, 20, 0.90);
+  border-bottom: 1px solid rgba(233, 193, 118, 0.15);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(233, 193, 118, 0.18);
+}
+
+.nav .menu a {
+  position: relative;
+  transition: color 200ms ease, transform 200ms ease;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.nav .menu a:hover {
+  color: var(--pri);
+  transform: translateY(-1px);
+}
+
+.nav .menu a.active {
+  color: var(--pri);
+  font-weight: 700;
+  background: rgba(0, 174, 255, 0.1);
+}
+
+[data-theme="dark"] .nav .menu a.active {
+  color: #f5c96e;
+  background: rgba(233, 193, 118, 0.12);
+}
+
+/* ── 3. Double-Bezel (Doppelrand) Property Card Architecture ─────────── */
+.pcard {
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid rgba(0, 43, 75, 0.08);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px -4px rgba(0, 43, 75, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1), border-color 320ms;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 174, 255, 0.4);
+  box-shadow: 
+    0 16px 36px -8px rgba(0, 174, 255, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] .pcard {
+  background: var(--surface);
+  border: 1px solid rgba(233, 193, 118, 0.14);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .pcard:hover {
+  border-color: rgba(233, 193, 118, 0.45);
+  box-shadow: 
+    0 20px 42px -10px rgba(0, 0, 0, 0.8),
+    0 4px 16px rgba(233, 193, 118, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.pcard .photo {
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.pcard .photo img {
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.pcard:hover .photo img {
+  transform: scale(1.05);
+}
+
+/* Micro-Badges & Floating Tags */
+.pcard .price-float {
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 6px 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pcard .ai-score {
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, rgba(0, 174, 255, 0.9), rgba(0, 120, 215, 0.9));
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 174, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .pcard .ai-score {
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.95), rgba(212, 175, 55, 0.95));
+  color: #071523;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(233, 193, 118, 0.3);
+}
+
+.pcard .heart {
+  border-radius: 50%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background 200ms;
+}
+
+.pcard .heart:hover {
+  transform: scale(1.12);
+  background: #fff;
+}
+
+.pcard .heart.on {
+  background: #ff4757;
+  color: #fff;
+  border-color: #ff4757;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+}
+
+/* ── 4. Compound Tiles & Interactive Hub ────────────────────────────── */
+.c-tile {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 350ms;
+}
+
+.c-tile:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 36px rgba(0, 174, 255, 0.2);
+}
+
+/* ── 5. AI Tool Cards & Holographic Surface ────────────────────────── */
+.ai-tool-card {
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-s);
+}
+
+.ai-tool-card:hover {
+  border-color: var(--pri);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -6px rgba(0, 174, 255, 0.2), var(--shadow-s);
+}
+
+[data-theme="dark"] .ai-tool-card {
+  border: 1px solid rgba(233, 193, 118, 0.15);
+  background: linear-gradient(135deg, rgba(15, 34, 54, 0.6), rgba(11, 25, 41, 0.9));
+}
+
+[data-theme="dark"] .ai-tool-card:hover {
+  border-color: rgba(233, 193, 118, 0.45);
+  box-shadow: 0 14px 32px -6px rgba(233, 193, 118, 0.15), var(--shadow-s);
+}
+
+/* ── 6. Mobile Touch Optimization & Thumb Friendly Bottom Nav ──────── */
+.bottom-nav {
+  min-height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  background: rgba(0, 43, 75, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+}
+
+[data-theme="dark"] .bottom-nav {
+  background: rgba(5, 12, 20, 0.95);
+  border-top: 1px solid rgba(233, 193, 118, 0.18);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.bn-item {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  transition: all 180ms ease;
+  position: relative;
+}
+
+.bn-item:active {
+  transform: scale(0.92);
+}
+
+.bn-item.active {
+  color: #5fc9ff;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .bn-item.active {
+  color: #f5c96e;
+}
+
+.bn-item.active::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 20px;
+  height: 3px;
+  background: currentColor;
+  border-radius: 2px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* Global button touch target compliance */
+button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+/* ── 7. Reduced Motion & Animations ─────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  [style*="spin"] { animation: none !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ── Cairo Plaza Important Project entry ─────────────────────────────── */
+.cairo-project-feature {
+  background: linear-gradient(135deg, rgba(0, 43, 75, .04), rgba(0, 174, 255, .045));
+}
+
+.cairo-project-feature .sec-head {
+  margin-bottom: 22px;
+}
+
+.cairo-project-feature__link {
+  display: grid;
+  grid-template-columns: auto 1fr auto 22px;
+  align-items: center;
+  gap: 18px;
+  min-height: 86px;
+  padding: 20px 24px;
+  color: var(--ink, #0f172a);
+  text-decoration: none;
+  background: var(--surface, #fff);
+  border: 1px solid rgba(0, 43, 75, .14);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 43, 75, .07);
+  transition: transform 220ms cubic-bezier(.23, 1, .32, 1), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.cairo-project-feature__link:hover,
+.cairo-project-feature__link:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(0, 174, 255, .55);
+  box-shadow: 0 18px 38px rgba(0, 43, 75, .13);
+  outline: none;
+}
+
+.cairo-project-feature__index {
+  color: var(--pri, #00aef0);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.cairo-project-feature__name {
+  font-family: var(--display, Georgia, serif);
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 700;
+}
+
+.cairo-project-feature__place {
+  color: var(--muted, #64748b);
+  font-size: 14px;
+}
+
+.cairo-project-feature__link > .i {
+  color: var(--pri, #00aef0);
+}
+
+[data-theme="dark"] .cairo-project-feature {
+  background: linear-gradient(135deg, rgba(0, 174, 255, .06), rgba(233, 193, 118, .05));
+}
+
+[data-theme="dark"] .cairo-project-feature__link {
+  background: var(--surface, #111b27);
+  border-color: rgba(233, 193, 118, .22);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .28);
+}
+
+[data-theme="dark"] .cairo-project-feature__link:hover,
+[data-theme="dark"] .cairo-project-feature__link:focus-visible {
+  border-color: rgba(233, 193, 118, .62);
+}
+
+[dir="rtl"] .cairo-project-feature__link {
+  grid-template-columns: 22px auto 1fr auto;
+}
+
+@media (max-width: 720px) {
+  .cairo-project-feature__link,
+  [dir="rtl"] .cairo-project-feature__link {
+    grid-template-columns: auto 1fr 22px;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .cairo-project-feature__index {
+    grid-row: span 2;
+  }
+
+  .cairo-project-feature__place {
+    grid-column: 2;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cairo-project-feature__link {
+    transition: none;
+  }
+}
+
+
+/* ── Cairo Plaza native evidence gallery ─────────────────────────────── */
+.cp-brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display,Georgia,serif);font-size:15px;letter-spacing:.08em;color:var(--ink);}
+.cp-brand img{width:52px;height:52px;object-fit:contain;flex:none;border-radius:10px;background:#f8f7f2;box-shadow:0 4px 14px rgba(8,20,35,.12);}
+@media (max-width:700px){.cp-brand img{width:44px;height:44px;border-radius:8px;}}
+[dir="rtl"] .cp-brand{letter-spacing:0;}
+.cp-evidence{max-width:1200px;margin:clamp(34px,6vw,76px) auto 0;padding:0 24px;}
+.cp-section-heading{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:18px;}
+.cp-section-title{margin-top:8px;font-family:var(--display,Georgia,serif);font-size:clamp(28px,4vw,48px);color:var(--ink);}
+.cp-section-note{max-width:360px;color:var(--muted);font-size:13px;line-height:1.7;}
+.cp-evidence-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+.cp-evidence-card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card,10px);overflow:hidden;box-shadow:var(--shadow-s,0 2px 10px rgba(13,33,54,.06));}
+.cp-evidence-media{position:relative;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden;}
+.cp-evidence-media img{width:100%;height:100%;object-fit:cover;transition:transform 260ms var(--ease-out,.23,1,.32,1);}
+.cp-evidence-card:hover .cp-evidence-media img{transform:scale(1.035);}
+.cp-evidence-badge{position:absolute;left:12px;bottom:12px;padding:6px 9px;border-radius:var(--r-chip,6px);background:rgba(0,43,75,.9);color:#fff;font-family:var(--mono,monospace);font-size:9px;letter-spacing:.08em;}
+[dir="rtl"] .cp-evidence-badge{left:auto;right:12px;letter-spacing:0;}
+.cp-evidence-card figcaption{display:grid;gap:4px;padding:15px 16px 17px;}
+.cp-evidence-card figcaption strong{font-family:var(--display,Georgia,serif);font-size:20px;color:var(--ink);}
+.cp-evidence-card figcaption span{color:var(--muted);font-size:12px;}
+[data-theme="dark"] .cp-evidence-card{background:var(--surface);border-color:var(--line);}
+[data-theme="dark"] .cp-evidence-badge{background:rgba(5,12,20,.92);color:var(--pri);}
+@media (max-width:760px){
+  .cp-section-heading{display:grid;gap:10px;align-items:start;}
+  .cp-section-note{max-width:none;}
+  .cp-evidence-grid{grid-template-columns:1fr;gap:16px;}
+  .cp-evidence-card figcaption{padding:13px 14px 15px;}
+}
+@media (prefers-reduced-motion:reduce){.cp-evidence-media img{transition:none;}.cp-evidence-card:hover .cp-evidence-media img{transform:none;}}
+
+
+/* ── Cairo Plaza AI-enhanced real-site image set ─────────────────────── */
+.cp-hero-photo{margin:0;min-width:0;background:var(--surface,#fff);border:1px solid var(--line,rgba(15,34,54,.14));padding:10px;box-shadow:var(--shadow-m,0 14px 36px rgba(13,33,54,.12));}
+.cp-hero-photo-inner{position:relative;width:100%;height:clamp(360px,46vw,620px);}
+.cp-hero-photo figcaption{padding:12px 4px 3px;color:var(--muted,#64748b);font-size:12px;line-height:1.55;}
+.cp-evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+.cp-evidence-card{background:var(--surface,#fff);}
+.cp-evidence-media img{object-position:center center;}
+.cp-tour{max-width:1200px;margin:clamp(42px,7vw,88px) auto 0;padding:0 24px;}
+.cp-tour .cp-section-heading{margin-bottom:24px;}
+.cp-tour .cp-tour-canvas,.cp-tour canvas{max-width:100%;}
+[data-theme="dark"] .cp-hero-photo{background:var(--surface,#111b27);border-color:rgba(233,193,118,.2);}
+[data-theme="dark"] .cp-hero-photo figcaption{color:var(--muted,#a8b4c2);}
+@media (max-width:900px){
+  .cp-evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .cp-hero-photo-inner{height:clamp(320px,70vw,500px);}
+}
+@media (max-width:620px){
+  .cp-evidence-grid{grid-template-columns:1fr;}
+  .cp-hero-photo{padding:7px;}
+  .cp-hero-photo-inner{height:clamp(300px,105vw,480px);}
+  .cp-evidence,.cp-tour{padding-left:16px;padding-right:16px;}
 }

@@ -9,6 +9,9 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
+  "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "python.languageServer": "Jedi",
+  "python.analysis.typeCheckingMode": "basic",
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -17,5 +20,6 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "**/.turbo": true
-  }
+  },
+  "compilets.autoStart": true
 }

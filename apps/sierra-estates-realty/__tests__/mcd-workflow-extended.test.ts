@@ -69,8 +69,6 @@ describe('MCD Protocol & Workflow Automation Suite', () => {
   });
 
   describe('3. Workflow Files & Agent Routing Guard', () => {
-    const agentWorkflowsDir = path.join(ROOT, '.agents/workflows');
-
     it('verifies all MCD slash commands have corresponding workflow files', () => {
       const expectedWorkflows = [
         'evaluate.md',
@@ -83,9 +81,15 @@ describe('MCD Protocol & Workflow Automation Suite', () => {
         'bug.md',
       ];
 
-      // If .agents/workflows or .agent/workflows exists, check it
-      const fallbackWorkflowsDir = path.join(ROOT, '.agent/workflows');
-      const targetDir = fs.existsSync(agentWorkflowsDir) ? agentWorkflowsDir : fallbackWorkflowsDir;
+      const candidateDirs = [
+        path.join(ROOT, '.agents', 'workflows'),
+        path.join(ROOT, '.agents/workflows'),
+        path.resolve(process.cwd(), '../../.agents/workflows'),
+        path.resolve(process.cwd(), '../..', '.agents', 'workflows'),
+        path.resolve(process.cwd(), '.agents', 'workflows'),
+      ];
+
+      const targetDir = candidateDirs.find((d) => fs.existsSync(d)) || candidateDirs[0];
 
       expect(fs.existsSync(targetDir)).toBe(true);
       for (const wf of expectedWorkflows) {
@@ -94,7 +98,13 @@ describe('MCD Protocol & Workflow Automation Suite', () => {
     });
 
     it('verifies AGENTS.md references core governance guardrails', () => {
-      const agentsMdPath = path.join(ROOT, 'AGENTS.md');
+      const candidatePaths = [
+        path.join(ROOT, 'AGENTS.md'),
+        path.resolve(process.cwd(), '../../AGENTS.md'),
+        path.resolve(process.cwd(), '..', '..', 'AGENTS.md'),
+      ];
+      const agentsMdPath = candidatePaths.find((p) => fs.existsSync(p)) || candidatePaths[0];
+
       expect(fs.existsSync(agentsMdPath)).toBe(true);
       const content = fs.readFileSync(agentsMdPath, 'utf8');
       expect(content).toContain('MCD protocol');

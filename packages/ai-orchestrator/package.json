@@ -11,18 +11,18 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^4.10.0",
+    "@google-cloud/pubsub": "^6.0.1",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
     "dotenv": "^17.4.2",
-    "ioredis": "^5.6.0",
+    "ioredis": "^6.0.0",
     "pino": "^9.6.0",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "typescript": "^5.8.2",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   }
 }
