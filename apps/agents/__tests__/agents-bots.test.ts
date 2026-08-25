@@ -52,6 +52,27 @@ describe('apps/agents (Bots & Agent Implementations)', () => {
       const toolsDir = path.join(vertexDir, 'tools');
       expect(fs.existsSync(toolsDir)).toBe(true);
     });
+
+    it('has an executor implementing every declared tool, and agent_core dispatches to it', () => {
+      // registry.py used to declare save_listing / send_whatsapp_message /
+      // query_crm_listings to the model with nothing that ever executed a
+      // call — api.py only ever read response.text. executor.py is the
+      // implementation; agent_core.py's run_agent_turn is the dispatch loop
+      // that calls it and feeds results back for a final reply.
+      const registryCode = fs.readFileSync(path.join(vertexDir, 'tools', 'registry.py'), 'utf-8');
+      const executorCode = fs.readFileSync(path.join(vertexDir, 'tools', 'executor.py'), 'utf-8');
+      const coreCode = fs.readFileSync(path.join(vertexDir, 'agent_core.py'), 'utf-8');
+
+      const declaredNames = [...registryCode.matchAll(/name="(\w+)"/g)].map((m) => m[1]);
+      expect(declaredNames.length).toBeGreaterThan(0);
+      for (const name of declaredNames) {
+        expect(executorCode).toContain(`def ${name}(`);
+        expect(executorCode).toContain(`"${name}": ${name}`);
+      }
+
+      expect(coreCode).toContain('def run_agent_turn');
+      expect(coreCode).toContain('execute_tool_call');
+    });
   });
 
   describe('Sierra Estates Bot (Python Service)', () => {
