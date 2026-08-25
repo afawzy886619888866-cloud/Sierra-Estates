@@ -34,13 +34,13 @@ export function labelToLeadStage(label?: string): PipelineStage {
 }
 
 export function mapLeadToSpa(id: string, data: Record<string, any>) {
-  const isPF = data.source === 'property_finder' || !!data.pfLeadId;
+  const isPF = data.source === 'property-finder' || !!data.pfLeadId;
   return {
     id,
     name: data.name || (isPF ? `PF Lead (${data.pfLeadId || id.slice(0, 8)})` : 'Inbound Client'),
     phone: data.phone || '',
     email: data.email || '',
-    source: data.source || (isPF ? 'property_finder' : 'website'),
+    source: data.source || (isPF ? 'property-finder' : 'website'),
     interest: data.notes || data.preferredPropertyType || data.interestedProjectIds?.[0] || (isPF ? `Property Finder Inquiry (${data.notes || 'Inquiry'})` : 'General Inquiry'),
     stage: leadStageToLabel(data.stage || (isPF ? 'inbound' : undefined)),
     color: data.color || (isPF ? '#f97316' : undefined),

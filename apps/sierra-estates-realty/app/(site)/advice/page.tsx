@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import '../../site-styles/advice.css';
 import '../../site-styles/site-refinements.css';

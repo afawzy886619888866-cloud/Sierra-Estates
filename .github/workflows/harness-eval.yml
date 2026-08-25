@@ -13,6 +13,10 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+
 jobs:
   harness-eval:
     name: Run DeepSeek Reasoning & AVM Harness
@@ -31,17 +35,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
       - name: Execute DeepSeek Harness Evaluation
         run: pnpm run harness:eval
         env:
           NODE_ENV: test
-          DEEPSEEK_API_KEY: ${{ secrets['DEEPSEEK_API_KEY'] }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
 
       - name: Check Performance & Accuracy Thresholds (Merge Gate)
         run: pnpm run check-thresholds
+
