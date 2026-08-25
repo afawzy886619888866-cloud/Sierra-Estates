@@ -25,7 +25,7 @@
 #     - typescript
 #
 # ============================================================================
-minimumReleaseAge: 0
+minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   # Exclude @replit scoped packages from the minimum release age check.
@@ -135,6 +135,32 @@ onlyBuiltDependencies:
 # Before upgrading to pnpm 10, diff the two blocks and regenerate the lockfile.
 # ---------------------------------------------------------------------------
 overrides:
+  # --- security overrides (kept in sync with package.json pnpm.overrides) ---
+  "tar@<7.5.21": ">=7.5.21"
+  "tar-fs@>=2.0.0 <2.1.4": ">=2.1.4 <3"
+  "undici@<6.28.0": ">=6.28.0 <7"
+  "ws@>=8.0.0 <8.21.0": ">=8.21.0"
+  "fast-xml-parser@<5.7.0": ">=5.7.0"
+  "got@<11.8.5": ">=11.8.5"
+  "esbuild@<=0.24.2": ">=0.25.0"
+  "postcss@<8.5.10": ">=8.5.10"
+  "postcss@<=8.5.11": ">=8.5.12"
+  "postcss@<=8.5.17": ">=8.5.18"
+  "postcss@<=8.5.22": ">=8.5.23"
+  "uuid@<11.1.1": ">=11.1.1"
+  "sharp@<0.35.0": ">=0.35.0"
+  "fast-uri@>=3.0.0 <3.1.5": ">=3.1.5"
+  # js-yaml is deliberately NOT repeated here - it is already pinned further
+  # down in this same overrides map (the "js-yaml@^4.x" entries plus the exact
+  # >=4.0.0 <4.3.1 range). Re-adding it produces a duplicate YAML mapping key,
+  # which pnpm rejects outright.
+  "pdfjs-dist@>=5.6.83 <6.2.108": ">=6.2.108"
+  "react-router@>=7.12.0 <7.18.2": ">=7.18.2"
+  "file-type@>=13.0.0 <21.3.1": ">=21.3.1"
+  # typescript is pinned by the bare "typescript:" key further down in this same
+  # map; repeating it here would be a duplicate YAML mapping key, which pnpm
+  # rejects. That entry is kept equal to package.json pnpm.overrides.typescript.
+  # --- end security overrides ---
   # replit uses linux-x64 only, we can exclude all other platforms
   "esbuild>@esbuild/darwin-arm64": "-"
   "esbuild>@esbuild/darwin-x64": "-"
@@ -221,7 +247,7 @@ overrides:
   "js-yaml@^4.0.0": "4.3.1"
   "js-yaml@^4.1.0": "4.3.1"
   "js-yaml@^4.3.0": "4.3.1"
-  "js-yaml@>=4.0.0 <4.3.1": "4.3.1"
+  "js-yaml@>=4.0.0 <4.3.1": ">=4.3.1"
   markdown-it: "^14.2.0"
   "@babel/core": "^7.29.6"
   postcss: ">=8.5.23"
@@ -239,7 +265,10 @@ overrides:
   "pdfjs-dist": ">=6.2.108"
   dompurify: ">=3.4.13"
   nanoid: ">=3.3.17"
-  typescript: "5.8.2"
+  # Kept equal to package.json pnpm.overrides.typescript. This read "5.8.2"
+  # while package.json had been bumped to ^7.0.2, so a pnpm 10 upgrade would
+  # have silently dragged TypeScript back two majors.
+  typescript: "^5.8.2"
 
 allowBuilds:
   '@firebase/util': true

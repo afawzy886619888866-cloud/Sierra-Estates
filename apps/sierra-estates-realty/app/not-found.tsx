@@ -4,7 +4,6 @@
  * the miss came from.
  */
 import React from 'react';
-import Link from 'next/link';
 
 const LINKS = [
   { href: '/properties', label: 'Browse listings' },
@@ -56,7 +55,7 @@ export default function NotFound() {
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link
+          <a
             href="/"
             style={{
               padding: '13px 26px',
@@ -69,9 +68,9 @@ export default function NotFound() {
             }}
           >
             Back to home
-          </Link>
+          </a>
           {LINKS.map((l) => (
-            <Link
+            <a
               key={l.href}
               href={l.href}
               style={{
@@ -85,7 +84,7 @@ export default function NotFound() {
               }}
             >
               {l.label}
-            </Link>
+            </a>
           ))}
         </div>
       </div>

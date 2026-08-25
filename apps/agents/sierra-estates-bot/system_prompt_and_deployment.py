@@ -308,7 +308,7 @@ IMPLEMENTATION_CHECKLIST = {
     ],
     
     "Phase 2: Development": [
-        "✓ Implement bot core logic (sierra_blue_bot_implementation.py)",
+        "✓ Implement bot core logic (sierra_estates_bot_implementation.py)",
         "✓ Integrate Property Finder API",
         "✓ Integrate HubSpot CRM",
         "✓ Integrate WhatsApp API",
