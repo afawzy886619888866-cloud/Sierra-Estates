@@ -677,12 +677,12 @@ export interface OwnerNegotiation extends BaseDocument {
 // ─── Outreach Operating Config (singleton doc) ───────────────────────
 
 export interface WhatsAppOutreachConfig {
-  operatingHourStart: number;    // 12 (24hr, local timezone)
-  operatingHourEnd: number;      // 20
+  operatingHourStart: number;    // 10 (24hr, local timezone)
+  operatingHourEnd: number;      // 11 — a 1hr window since dispatch now runs once/day at 10am
   timezone: string;              // 'Africa/Cairo'
   batchSizePerNumber: number;    // 30
   windowMinutes: number;         // 120
-  dailyCapPerNumber: number;     // 120 (30 * 4 windows between 12pm-8pm)
+  dailyCapPerNumber: number;     // 120 (30 * 4 windows) — per-run ceiling now that there's 1 run/day
   dailyCapTotal: number;         // 480 across all 4 numbers
 }
 
