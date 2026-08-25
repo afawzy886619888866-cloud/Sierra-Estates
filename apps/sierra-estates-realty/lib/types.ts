@@ -5,7 +5,14 @@
  * schema.sql + the Phase 2/3 blueprints.
  */
 
-export type Role = "viewer" | "manager" | "admin";
+export type Role = "viewer" | "owner" | "agent" | "manager" | "admin" | "superadmin";
+
+/** Roles that may enter the staff admin portal after Firebase authentication. */
+export const ADMIN_PORTAL_ROLES = ["owner", "agent", "manager", "admin", "superadmin"] as const;
+
+export function isAdminPortalRole(role: unknown): boolean {
+  return typeof role === "string" && ADMIN_PORTAL_ROLES.includes(role.trim().toLowerCase() as (typeof ADMIN_PORTAL_ROLES)[number]);
+}
 export type UserStatus = "active" | "suspended" | "deleted";
 export type ListingMode = "sale" | "rent";
 export type ListingStatus = "available" | "reserved" | "sold" | "archived";

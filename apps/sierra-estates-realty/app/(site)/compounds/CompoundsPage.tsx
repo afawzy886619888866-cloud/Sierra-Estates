@@ -160,7 +160,7 @@ export default function CompoundsPage() {
                 compounds={filtered}
                 featured={featured}
                 selectedName={selected}
-                onSelect={setSelected}
+                onSelectAction={setSelected}
               />
             </div>
             <div className="intel" id="intel-panel">
