@@ -200,4 +200,3 @@ After running, check the **Summary** sheet in the output Excel for:
 - `Unique` — final record count
 - `Duplicates removed` — dedup effectiveness
 - `Duration (s)` — performance baseline
-
