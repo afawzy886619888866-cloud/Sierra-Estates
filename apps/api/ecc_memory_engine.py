@@ -39,8 +39,8 @@ class EpisodicContextCache:
 
     def track_price_reduction(self, sierra_code: str, old_price: float, new_price: float, source: str = "WhatsApp Drop") -> Dict[str, Any]:
         drop_amount = old_price - new_price
-        drop_pct = round((drop_amount / old_price) * 100, 1)
-        is_hot = drop_pct >= 8.0
+        drop_pct = round((drop_amount / old_price) * 100, 1) if old_price else 0.0
+        is_hot = drop_pct >= HOT_DEAL_THRESHOLD_PCT
 
         episode = self.record_episode({
             "type": "price_drop",
