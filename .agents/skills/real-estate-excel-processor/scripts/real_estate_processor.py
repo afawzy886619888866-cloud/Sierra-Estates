@@ -130,10 +130,12 @@ def map_cols(headers):
     m, used = {}, set()
     for std, syns in COLUMN_SYNONYMS.items():
         for syn in syns:
+            found = False
             for i, h in enumerate(lows):
                 if i in used or not h: continue
-                if syn in h: m[std], _ = i, used.add(i); break
-        if std in m: break
+                if syn in h:
+                    m[std] = i; used.add(i); found = True; break
+            if found: break
     return m
 
 def find_header(raw, max_scan=10):
@@ -209,7 +211,8 @@ def extract_msg(text, dt, sender, gn, fp, ft):
 # ====================================================== PIPELINE
 def run_pipeline(source, output, log):
     t0 = time.time()
-    import pandas as pd, numpy as np  # noqa - re-import inside for GUI thread
+    global pd, np
+    import pandas as pd, numpy as np  # also binds globals so module-level helpers see them
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
