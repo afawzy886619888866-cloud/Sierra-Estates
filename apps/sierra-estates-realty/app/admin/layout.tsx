@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, isFirebaseClientConfigured } from '@/lib/firebase';
+import { isAdminPortalRole } from '@/lib/types';
 
 /**
  * Auth guard only — no chrome. The portal (AdminPortal.tsx) brings its own
  * sidebar/topbar. Staff-gating matches the previous admin layout and the
- * Firestore rules: users/{uid}.role must be 'admin' or 'manager'.
+   * Firestore rules: users/{uid}.role must be an approved staff role, including 'owner'.
  */
 export default function AdminLayout({
   children,
@@ -30,7 +31,7 @@ export default function AdminLayout({
         const res = await fetch('/api/auth', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          if (data.signedIn && ['admin', 'manager', 'superadmin', 'agent'].includes(data.role)) {
+          if (data.signedIn && isAdminPortalRole(data.role)) {
             setIsAuth(true);
             setIsLoading(false);
             return;
@@ -54,7 +55,7 @@ export default function AdminLayout({
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             const role = userDoc.data()?.role;
 
-            if (role === 'admin' || role === 'manager' || role === 'superadmin' || role === 'agent') {
+            if (isAdminPortalRole(role)) {
               setIsAuth(true);
               if (refreshInterval) clearInterval(refreshInterval);
               refreshInterval = setInterval(() => {

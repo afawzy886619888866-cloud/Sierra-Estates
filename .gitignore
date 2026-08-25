@@ -38,13 +38,17 @@ google-credentials.json
 askpass.bat
 askpass.sh
 
-# ─── Dependencies ───────────────────────────────────────────────────────────
+# ─── Dependencies & Python ───────────────────────────────────────────────────
 libs/
 node_modules/
 .pnp
 .pnp.js
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 # ─── Build outputs ───────────────────────────────────────────────────────────
 dist/
@@ -73,9 +77,6 @@ _archived_repos/
 .vercel-old/
 temp3
 
-.agent/
-.agents/
-!.agents/skills/
 .claude/
 .codex/
 .replit
@@ -114,6 +115,7 @@ service-account*.json
 firebase-adminsdk*.json
 .vercel
 .env*
+!.env.example
 
 wa_sessions/
 packages/whatsapp-agent/*.sw_col.json

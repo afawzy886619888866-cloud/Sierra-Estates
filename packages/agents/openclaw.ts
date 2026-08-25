@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import pino from 'pino';
 import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
+import * as XLSX from 'xlsx';
 import { obsidian } from '../obsidian/src/index';
 import { VertexAgent } from '@sierra-estates/agents-core';
 import {
@@ -446,6 +447,75 @@ export class OpenClawAgent {
   }
 
   /**
+   * Ingest and parse Excel spreadsheets (.xlsx, .xls) and CSV sheets.
+   * Maps common Arabic and English headers into canonical Sierra Estates listing records.
+   *
+   * @param filePath Absolute or relative path to the .xlsx, .xls, or .csv workbook
+   * @returns BatchIngestResult
+   */
+  async ingestSpreadsheet(filePath: string): Promise<BatchIngestResult> {
+    logger.info({ msg: 'OpenClaw: Ingesting spreadsheet workbook', filePath });
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { total: 0, succeeded: 0, failed: 0, duplicates: 0, errors: ['Workbook contains no sheets'], sierraCodes: [] };
+    }
+
+    const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+    logger.info({ msg: 'OpenClaw: Parsed rows from sheet', sheetName, rowCount: rows.length });
+
+    const units: MasterSheetUnit[] = rows.map((row, idx) => {
+      // Helper to find value from possible keys
+      const getVal = (keys: string[]): any => {
+        for (const k of keys) {
+          if (row[k] !== undefined && row[k] !== '') return row[k];
+          // Try case-insensitive matching
+          const matchKey = Object.keys(row).find((rk) => rk.trim().toLowerCase() === k.trim().toLowerCase());
+          if (matchKey && row[matchKey] !== undefined && row[matchKey] !== '') return row[matchKey];
+        }
+        return undefined;
+      };
+
+      const compound = getVal(['compound', 'cmp', 'المشروع', 'الكمبوند', 'الموقع', 'Location']) || 'New Cairo';
+      const priceRaw = getVal(['price', 'total price', 'السعر', 'المطلوب', 'Price', 'TotalPrice']) || 0;
+      const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw).replace(/[^0-9.]/g, '')) || 0;
+      const type = getVal(['type', 'unit type', 'نوع الوحدة', 'Type', 'UnitType']) || 'Apartment';
+      const areaRaw = getVal(['area', 'area_sqm', 'المساحة', 'BUA', 'Area']) || 0;
+      const area = typeof areaRaw === 'number' ? areaRaw : parseFloat(String(areaRaw).replace(/[^0-9.]/g, '')) || 0;
+      const bedsRaw = getVal(['beds', 'bedrooms', 'غرف', 'غرف النوم', 'Bedrooms', 'Beds']) || 3;
+      const beds = typeof bedsRaw === 'number' ? bedsRaw : parseInt(String(bedsRaw).replace(/[^0-9]/g, ''), 10) || 3;
+      const bathsRaw = getVal(['baths', 'bathrooms', 'حمامات', 'Bathrooms', 'Baths']) || 2;
+      const baths = typeof bathsRaw === 'number' ? bathsRaw : parseInt(String(bathsRaw).replace(/[^0-9]/g, ''), 10) || 2;
+      const finishing = getVal(['finishing', 'تشطيب', 'حالة التشطيب', 'Finishing']) || 'semi_finished';
+      const ownerType = getVal(['ownerType', 'sourceType', 'المالك / وسيط', 'الصفة', 'OwnerType']) || 'broker';
+      const mode = getVal(['mode', 'operation', 'العملية', 'Sale/Rent', 'Mode']) || 'sale';
+      const mobile = String(getVal(['mobile', 'phone', 'contact_info', 'رقم الهاتف', 'Mobile', 'Phone']) || '');
+      const code = getVal(['code', 'sierraCode', 'الكود', 'Code']) || undefined;
+      const comment = getVal(['comment', 'notes', 'ملاحظات', 'Comment', 'Notes']) || '';
+
+      return {
+        id: idx + 1,
+        code,
+        compound,
+        cmp: compound,
+        price,
+        type,
+        area,
+        beds,
+        baths,
+        finishing,
+        ownerType,
+        mode,
+        mobile,
+        comment,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+
+    return this.ingestMasterSheet(units);
+  }
+
+  /**
    * Ingest all units from the inventory_extracted_units.json schema
    * (the WhatsApp-scraped units with full metadata).
    */
@@ -619,15 +689,16 @@ export class OpenClawAgent {
         let toolResponseStr = '';
 
         if (call.name === 'addListing') {
-          const args = call.args as UnitListingData & { contact_info?: string };
+          const args = (call.args || {}) as unknown as UnitListingData & { contact_info?: string };
           if (!args.contact_info) args.contact_info = sender;
           toolResponseStr = await addListing(this.airtableConfig, args);
         } else if (call.name === 'editInventory') {
-          const args = call.args as { location: string; newPrice: number };
+          const args = (call.args || {}) as unknown as { location: string; newPrice: number };
           toolResponseStr = await editInventory(this.airtableConfig, args.location, args.newPrice);
         } else if (call.name === 'generateInventoryReport') {
           toolResponseStr = await generateInventoryReport(this.airtableConfig);
         }
+
 
         response = await this.ai.models.generateContent({
           model: 'gemini-2.5-flash',

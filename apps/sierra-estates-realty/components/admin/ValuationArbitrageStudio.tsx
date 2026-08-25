@@ -13,8 +13,8 @@ import {
   DollarSign,
   Clock,
   Layers,
-  ArrowRight,
 } from 'lucide-react';
+
 import { evaluatePropertyValuation, ValuationResult } from '@/lib/valuationArbitrageEngine';
 
 export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: string }) {
