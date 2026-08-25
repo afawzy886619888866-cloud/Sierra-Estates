@@ -5,32 +5,17 @@ import { COLLECTIONS } from '@/lib/models/schema';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
-
-import { z } from 'zod';
+import { leadCreateSchema, parseRequestBody, isParseFailure } from '@/lib/server/schemas';
 import { logger } from '@/lib/logger';
-const leadSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address").optional(),
-  phone: z.string().optional(),
-  message: z.string().optional(),
-  locale: z.string().optional()
-});
 
 export async function POST(req: Request) {
   const rateLimitResponse = await applyRateLimit(req, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
-    const data = await req.json();
-    const parseResult = leadSchema.safeParse(data);
-    
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: parseResult.error.issues },
-        { status: 400 }
-      );
-    }
-    
+    const parseResult = await parseRequestBody(req, leadCreateSchema);
+    if (isParseFailure(parseResult)) return parseResult.errorResponse;
+
     const { name, email, phone, message, locale } = parseResult.data;
 
     // 1. Add to Firestore
