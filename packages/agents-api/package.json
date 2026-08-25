@@ -14,10 +14,10 @@
     "socket.io": "^4.7.5",
     "cors": "^2.8.5",
     "express-rate-limit": "^6.7.0",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
-    "typescript": "^5.8.2",
+    "typescript": "^7.0.2",
     "tsx": "^4.21.0"
   }
 }

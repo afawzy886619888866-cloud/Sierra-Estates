@@ -24,6 +24,8 @@ import {
   RoleManagerView,
   DeepInsightsView,
   ReportsView,
+  ExcelMergerView,
+  RealEstateProcessorView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -58,9 +60,10 @@ const LANG = {
     parsedOutput:'Parsed & Structured Output', parseBtn:'Parse with AI',
     compound:'Compound', type:'Type', area:'Area', price:'Price', beds:'Beds',
     status:'Status', phone:'Phone', interest:'Interest', stage:'Stage', actions:'Actions',
-    client:'Client', view:'View', whatsapp:'WhatsApp',
+    client:'Client', view:'View', whatsapp:'WhatsApp', source:'Source', allSources:'All Sources',
     monthlyDeals:'📊 Monthly Deals Closed', revPipeline:'💰 Revenue Pipeline',
     perfByCompound:'🗺️ Performance by Compound',
+    excelMerger:'Excel Merger', processor:'Real Estate Processor',
     saveConfig:'Save Configuration', saved:'✓ Saved!', githubIntegration:'🔗 GitHub Integration',
     pullLatest:'Pull Latest', openRepo:'Open Repo', pushChanges:'Push Changes',
   },
@@ -88,9 +91,10 @@ const LANG = {
     parsedOutput:'المخرجات المنظمة', parseBtn:'تحليل بالذكاء الاصطناعي',
     compound:'المجمع', type:'النوع', area:'المساحة', price:'السعر', beds:'غرف',
     status:'الحالة', phone:'الهاتف', interest:'الاهتمام', stage:'المرحلة', actions:'الإجراءات',
-    client:'العميل', view:'عرض', whatsapp:'واتساب',
+    client:'العميل', view:'عرض', whatsapp:'واتساب', source:'المصدر', allSources:'كل المصادر',
     monthlyDeals:'📊 الصفقات الشهرية', revPipeline:'💰 خط الإيرادات',
     perfByCompound:'🗺️ الأداء حسب المجمع',
+    excelMerger:'دمج الإكسل', processor:'معالج العقارات',
     saveConfig:'حفظ الإعدادات', saved:'✓ تم الحفظ!', githubIntegration:'🔗 تكامل GitHub',
     pullLatest:'سحب آخر التحديثات', openRepo:'فتح المستودع', pushChanges:'رفع التغييرات',
   }
@@ -129,12 +133,12 @@ const WORKFLOWS = [
 ];
 
 const LEADS_DATA = [
-  {name:'Ahmed Al-Rashid',phone:'+20 100 111 2233',interest:'Villa · Hyde Park · EGP 20M+',stage:'Viewing Scheduled',color:'#00AEFF',hot:true},
-  {name:'Sara Mohamed',phone:'+20 101 222 3344',interest:'3-Bed · Mivida · Rent',stage:'AI Matched',color:'#1E88D9',hot:false},
-  {name:'Khalid Mansour',phone:'+971 50 333 4455',interest:'Penthouse · Uptown · EGP 15M',stage:'Contract Draft',color:'#34D399',hot:true},
-  {name:'Nadia Hassan',phone:'+20 112 444 5566',interest:'Apartment · Madinaty · EGP 5M',stage:'Initial Contact',color:'#7C3AED',hot:false},
-  {name:'Omar Farouk',phone:'+20 100 555 6677',interest:'Twin House · Mountain View',stage:'Negotiating',color:'#E63946',hot:true},
-  {name:'Layla Karim',phone:'+20 109 666 7788',interest:'Furnished 2-Bed · Eastown',stage:'AI Matched',color:'#5FC9FF',hot:false},
+  {name:'Ahmed Al-Rashid',phone:'+20 100 111 2233',source:'property-finder',interest:'Villa · Hyde Park · EGP 20M+',stage:'Viewing Scheduled',color:'#00AEFF',hot:true},
+  {name:'Sara Mohamed',phone:'+20 101 222 3344',source:'website',interest:'3-Bed · Mivida · Rent',stage:'AI Matched',color:'#1E88D9',hot:false},
+  {name:'Khalid Mansour',phone:'+971 50 333 4455',source:'whatsapp',interest:'Penthouse · Uptown · EGP 15M',stage:'Contract Draft',color:'#34D399',hot:true},
+  {name:'Nadia Hassan',phone:'+20 112 444 5566',source:'website',interest:'Apartment · Madinaty · EGP 5M',stage:'Initial Contact',color:'#7C3AED',hot:false},
+  {name:'Omar Farouk',phone:'+20 100 555 6677',source:'referral',interest:'Twin House · Mountain View',stage:'Negotiating',color:'#E63946',hot:true},
+  {name:'Layla Karim',phone:'+20 109 666 7788',source:'property-finder',interest:'Furnished 2-Bed · Eastown',stage:'AI Matched',color:'#5FC9FF',hot:false},
 ];
 
 const COMPOUNDS_DATA = {
@@ -163,6 +167,8 @@ const NAV_ITEMS = (T) => [
   {id:'pipeline',label:T('lang')==='ar'?'الصفقات':'Pipeline',icon:'💼',section:T('operations')},
   {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+  {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
+  {id:'real_estate_processor',label:T('processor'),icon:'🏘️',section:T('operations'),badge:'SKILL',badgeCls:'nb-blue'},
   {id:'curator',label:T('curator'),icon:'🎨',section:T('operations')},
   {id:'scribe',label:T('scribe'),icon:'✍️',section:T('operations')},
   {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
@@ -758,8 +764,24 @@ function OpenClawPage({ T }) {
 }
 
 /* ── LEADS PAGE ───────────────────────────────────────────────────────── */
-function LeadsPage({ T }) {
+const SOURCE_META = {
+  'website':          { label:'Website',         cls:'chip-blue'  },
+  'property-finder':  { label:'Property Finder',  cls:'chip-amber' },
+  'whatsapp':         { label:'WhatsApp',         cls:'chip-green' },
+  'olx':               { label:'OLX',              cls:'chip-amber' },
+  'referral':         { label:'Referral',         cls:'chip-green' },
+  'walk-in':          { label:'Walk-in',          cls:'chip-blue'  },
+  'social-media':     { label:'Social Media',     cls:'chip-red'   },
+  'instagram':        { label:'Instagram',        cls:'chip-red'   },
+  'facebook':         { label:'Facebook',         cls:'chip-blue'  },
+  'linkedin':         { label:'LinkedIn',         cls:'chip-blue'  },
+  'other':            { label:'Other',            cls:'chip-amber' },
+};
+const sourceMeta = (s) => SOURCE_META[s] || { label: s || 'Unknown', cls: 'chip-amber' };
+
+export function LeadsPage({ T }) {
   const [q,setQ]=useState('');
+  const [sourceFilter,setSourceFilter]=useState('all');
   const [importModal,setImportModal]=useState(false);
   const [leads,setLeads]=useState(LEADS_DATA);
   const [loading,setLoading]=useState(false);
@@ -787,16 +809,24 @@ function LeadsPage({ T }) {
     window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
   };
 
-  const filtered=useMemo(()=>leads.filter(l=>!q||(l.name && l.name.toLowerCase().includes(q.toLowerCase()))||(l.interest && l.interest.toLowerCase().includes(q.toLowerCase()))),[q, leads]);
+  const sourcesPresent=useMemo(()=>Array.from(new Set(leads.map(l=>l.source||'other'))),[leads]);
+  const filtered=useMemo(()=>leads.filter(l=>
+    (sourceFilter==='all'||(l.source||'other')===sourceFilter)
+    &&(!q||(l.name && l.name.toLowerCase().includes(q.toLowerCase()))||(l.interest && l.interest.toLowerCase().includes(q.toLowerCase())))
+  ),[q, leads, sourceFilter]);
   const stageChip=s=>({
     'Viewing Scheduled':'chip-blue','AI Matched':'chip-green','Contract Draft':'chip-green',
     'Initial Contact':'chip-amber','Negotiating':'chip-red',
   })[s]||'chip-amber';
-  const doExport=()=>exportCSV(filtered.map(l=>({Name:l.name,Phone:l.phone,Interest:l.interest,Stage:l.stage,Hot:l.hot?'Yes':'No'})),'sierra_leads.csv');
+  const doExport=()=>exportCSV(filtered.map(l=>({Name:l.name,Phone:l.phone,Source:sourceMeta(l.source).label,Interest:l.interest,Stage:l.stage,Hot:l.hot?'Yes':'No'})),'sierra_leads.csv');
   return (
     <div className="fade-up">
       <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
         <input value={q} onChange={e=>setQ(e.target.value)} className="f-in" style={{flex:1,minWidth:160}} placeholder={T('search')}/>
+        <select value={sourceFilter} onChange={e=>setSourceFilter(e.target.value)} className="f-in" style={{minWidth:150}}>
+          <option value="all">{T('allSources')}</option>
+          {sourcesPresent.map(s=><option key={s} value={s}>{sourceMeta(s).label}</option>)}
+        </select>
         <button className="btn btn-gold" onClick={fetchLeads}>⟳ {T('refresh') || 'Refresh'}</button>
         <button className="btn btn-ghost" onClick={doExport}>⬇ {T('exportCSV')}</button>
         <button className="btn btn-ghost" onClick={()=>setImportModal(true)}>⬆ {T('importCSV')}</button>
@@ -805,12 +835,13 @@ function LeadsPage({ T }) {
         <div className="card-hd"><span className="card-title">CRM · {T('leads')}</span><span className="chip chip-red">{filtered.length}</span></div>
         <div style={{overflowX:'auto'}}>
           <table className="data-table">
-            <thead><tr><th>{T('client')}</th><th>{T('phone')}</th><th>{T('interest')}</th><th>{T('stage')}</th><th>{T('actions')}</th></tr></thead>
+            <thead><tr><th>{T('client')}</th><th>{T('phone')}</th><th>{T('source')}</th><th>{T('interest')}</th><th>{T('stage')}</th><th>{T('actions')}</th></tr></thead>
             <tbody>
               {filtered.map((l,i)=>(
                 <tr key={i}>
                   <td><div style={{display:'flex',alignItems:'center',gap:8}}><div className="lead-avatar" style={{background:l.color || '#00AEFF',width:28,height:28,fontSize:11}}>{(l.name || 'C')[0]}</div><span style={{color:'var(--tx)',fontWeight:600}}>{l.name}</span>{l.hot&&<span>🔥</span>}</div></td>
                   <td style={{fontFamily:'JetBrains Mono',fontSize:10}}>{l.phone}</td>
+                  <td><span className={`chip ${sourceMeta(l.source).cls}`}>{sourceMeta(l.source).label}</span></td>
                   <td>{l.interest}</td>
                   <td><span className={`chip ${stageChip(l.stage)}`}>{l.stage}</span></td>
                   <td><div style={{display:'flex',gap:4}}>
@@ -1594,7 +1625,8 @@ function AdminApp() {
 
   const renderPage=()=>{
     switch(tab){
-      case 'overview':return <OverviewPage T={T}/>;
+      case 'overview':
+      case 'dashboard':return <DashboardView lang={langKey}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1608,16 +1640,18 @@ function AdminApp() {
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
       case 'listings':return <ListingsHubPage T={T}/>;
+      case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
+      case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
       case 'roles':return <RoleManagerView lang={langKey}/>;
       case 'security':return <SecurityView lang={langKey}/>;
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
-      case 'reports':return <ReportsPage T={T}/>;
+      case 'reports':return <ReportsView lang={langKey}/>;
       case 'intelligence':return <AgentIntelligence />;
       case 'settings':return <SettingsPage T={T}/>;
-      default:return <OverviewPage T={T}/>;
+      default:return <DashboardView lang={langKey}/>;
     }
   };
 
