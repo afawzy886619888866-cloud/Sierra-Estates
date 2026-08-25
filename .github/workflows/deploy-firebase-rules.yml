@@ -47,6 +47,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Verify canonical Firebase rule sources
+        run: node scripts/check-firebase-rules.mjs
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
