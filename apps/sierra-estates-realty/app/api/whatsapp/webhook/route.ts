@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
-import { COLLECTIONS, BrokerListing } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
+
+/**
+ * This route used to build and persist its own BrokerListing document
+ * inline via WhatsAppParserService.parseMessage — a second, weaker
+ * implementation of the same job app/api/webhooks/whatsapp/route.ts does
+ * via WhatsAppParserService.processIncomingMessage (which additionally
+ * dedupes, generates the Sierra code, geocodes, and persists media). No
+ * caller of this route was found anywhere in the codebase — the WhatsApp
+ * scraper posts to /api/webhooks/whatsapp, not here — but the endpoint is
+ * kept alive (rather than deleted) in case an external provider (this
+ * route's own comment names Ultramsg/Wati) still has it registered, now
+ * delegating to the same shared implementation instead of diverging from it.
+ */
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
@@ -32,38 +42,14 @@ export async function POST(req: NextRequest) {
 
     logger.info(`[WhatsApp Webhook] Processing message from ${sender} in ${group}`);
 
-    // AI Parsing - Stage 1
-    const parsedData = await WhatsAppParserService.parseMessage(rawMessage);
-
-    // Prepare Document
-    const listing: Partial<BrokerListing> = {
-      rawMessage,
-      sourceGroup: group,
-      sourcePlatform: 'whatsapp',
-      senderInfo: sender,
-      extractedData: {
-          compound: parsedData?.compound,
-          propertyType: parsedData?.propertyType,
-          bedrooms: parsedData?.bedrooms,
-          price: parsedData?.price,
-          area: parsedData?.area,
-          finishingType: parsedData?.finishingType,
-          phoneNumber: parsedData?.phoneNumber,
-      },
-      status: parsedData?.isListing ? 'parsed' : 'new',
-      isVerified: false,
-      createdAt: Timestamp.now() as any,
-      updatedAt: Timestamp.now() as any,
-    };
-
-    // Save to Firestore
-    const docRef = await adminDb.collection(COLLECTIONS.brokerListings).add(listing);
+    const result = await WhatsAppParserService.processIncomingMessage(rawMessage, sender, group);
 
     return NextResponse.json({
       success: true,
-      id: docRef.id,
-      isListing: parsedData?.isListing || false,
-      orchestration: parsedData?.isListing ? 'Stage 1 Completed' : 'Ignored (Chatter)'
+      id: result.id,
+      isListing: result.data?.isListing || false,
+      isDuplicate: result.isDuplicate,
+      orchestration: result.isDuplicate ? 'Duplicate ignored' : 'Stage 1 Completed',
     });
 
   } catch (error: any) {
