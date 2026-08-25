@@ -53,6 +53,10 @@ export interface ValuationResult {
 }
 
 // Egyptian Market Cap Rate Baselines
+// Mirrors RealEstateValuationAgent.CAP_RATE_BASELINES / AMENITY_MULTIPLIERS
+// in apps/api/valuation_agent_skill.py. The two are not wired together
+// (TS monorepo package vs. Python microservice), so these must be changed
+// in both places if cap-rate or premium policy changes.
 const CAP_RATE_BASELINES: Record<string, { min: number; max: number; label: string }> = {
   residential: { min: 0.08, max: 0.10, label: '8% - 10%' },
   administrative: { min: 0.10, max: 0.12, label: '10% - 12%' },

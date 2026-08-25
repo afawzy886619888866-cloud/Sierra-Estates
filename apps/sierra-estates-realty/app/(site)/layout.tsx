@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '../site-styles/shared.css';
+import '../site-styles/site-refinements.css';
 import { SiteProvider } from '@/lib/site/SiteContext';
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';

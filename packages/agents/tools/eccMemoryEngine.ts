@@ -11,6 +11,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// A price drop at or above this percentage is tagged as a hot/distressed
+// deal. Mirrors apps/api/ecc_memory_engine.py — the two are not wired
+// together (TS monorepo package vs. Python microservice), so this constant
+// must be changed in both places if the threshold policy changes.
+export const HOT_DEAL_THRESHOLD_PCT = 8.0;
+
 export type EpisodeType =
   | 'price_drop'
   | 'negotiation_offer'
@@ -119,8 +125,8 @@ export class EpisodicContextCache {
     ownerName?: string
   ): { episode: Episode; dropPct: number; isHotDeal: boolean } {
     const dropAmount = oldPrice - newPrice;
-    const dropPct = Number(((dropAmount / oldPrice) * 100).toFixed(1));
-    const isHotDeal = dropPct >= 8.0;
+    const dropPct = oldPrice ? Number(((dropAmount / oldPrice) * 100).toFixed(1)) : 0;
+    const isHotDeal = dropPct >= HOT_DEAL_THRESHOLD_PCT;
 
     const episode = this.recordEpisode({
       type: 'price_drop',
