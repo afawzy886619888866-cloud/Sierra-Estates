@@ -110,7 +110,36 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAuth) return null;
+  if (!isAuth) {
+    // router.replace() above should already be navigating away - this is a
+    // fallback for the window between "not authenticated" and the redirect
+    // actually completing. Previously this returned null, i.e. a genuinely
+    // blank page if that redirect silently didn't fire (matches the
+    // "blank dark screen, no controls" symptom from the 2026-08-18 smoke
+    // test) with no way out except reloading the URL by hand.
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          background: '#07111E',
+          color: 'rgba(240,237,229,.58)',
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 12,
+          letterSpacing: '.2em',
+        }}
+      >
+        <div>REDIRECTING…</div>
+        <a href="/admin/login" style={{ color: '#00AEFF', letterSpacing: 'normal', fontSize: 13 }}>
+          Click here if you are not redirected
+        </a>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }
