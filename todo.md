@@ -84,3 +84,22 @@
 - [x] Execute end-to-end test validation (440 passing tests across 32 test suites)
 - [x] Execute clean production build (79 Next.js static & dynamic routes compiled)
 - [x] Commit and push all milestones to GitHub `origin/main`
+
+
+## Cairo Plaza additive integration — completed in this session
+
+- [x] Inspect the existing broker-site repository, routes, navigation, and Important Projects section
+- [x] Add Cairo Plaza as a new internal project page without replacing the existing homepage or broker listings
+- [x] Add a clear Important Projects/navigation entry and return path
+- [x] Preserve bilingual RTL/LTR, light/dark theme, lightbox, contact form, directions CTA, and AI-concept disclosures
+- [x] Verify the existing English and Arabic Cairo Plaza routes and current main-site preservation
+- [x] Commit and push the non-destructive integration to GitHub (`cabf0f6`)
+
+
+## Cairo Plaza native broker-site restyling and real imagery
+
+- [x] Audit the existing Sierra Estates visual identity and available verified Cairo Plaza real-site assets
+- [x] Restyle the Cairo Plaza page to use the broker site's native shell, typography, colors, spacing, buttons, and section treatment
+- [x] Add verified real-site images with clear current-site captions and preserve AI-concept disclosures
+- [ ] Verify desktop/mobile visual continuity, image loading, and navigation (source/build checks passed; production visual verification pending Vercel deployment)
+- [ ] Commit and deliver the branded page update
