@@ -60,14 +60,13 @@ async def whatsapp_webhook(request: Request):
 
     logger.info("Received message from %s (Group: %s)", sender, is_group)
 
-    agent = get_titan_agent()
     prompt = (
         f"Sender: {sender}\nIs Group: {is_group}\nMessage: {message}\n\n"
         "Execute directives based on system instructions."
     )
 
     try:
-        response = agent.generate_content(prompt)
+        response = run_agent_turn(prompt)
         reply_text = response.text if response.text else None
 
         return {"status": "processed", "replyMessage": reply_text if not is_group else None}
