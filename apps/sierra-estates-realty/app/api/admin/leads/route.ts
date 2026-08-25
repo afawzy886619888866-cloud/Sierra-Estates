@@ -4,7 +4,7 @@ import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { adminDb } from '@/lib/server/firebase-admin';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
 // Validates the SPA lead shape; passthrough keeps any extra fields the mapper reads.
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     // already writes into COLLECTIONS.stakeholders, distinguished by `source`.
     const stakeholdersSnap = await adminDb.collection(COLLECTIONS.stakeholders).limit(limit).get();
 
-    const leads = stakeholdersSnap.docs.map((doc) => mapLeadToSpa(doc.id, doc.data()));
+    const leads = stakeholdersSnap.docs.map((doc: QueryDocumentSnapshot) => mapLeadToSpa(doc.id, doc.data()));
 
     return NextResponse.json({ success: true, leads, count: leads.length });
   } catch (err) {
