@@ -27,7 +27,23 @@ export interface BaseDocument {
 export type PropertyStatus = 'available' | 'reserved' | 'sold' | 'rented' | 'off-market';
 export type PropertyType = 'apartment' | 'villa' | 'townhouse' | 'duplex' | 'penthouse' | 'studio' | 'chalet' | 'commercial' | 'land';
 export type PipelineStage = 'inbound' | 'qualify' | 'engage' | 'proposal' | 'viewing' | 'negotiate' | 'reserve' | 'contract' | 'handover' | 'closed-won';
-export type StakeholderAcquisitionSource = 'property-finder' | 'olx' | 'website' | 'referral' | 'walk-in' | 'social-media' | 'whatsapp' | 'other';
+// The full set of lead-intake channels this app knows how to attribute and
+// group by on the admin Leads page. 'instagram' | 'facebook' | 'linkedin'
+// are declared ahead of the integrations that will populate them — add the
+// producer (whichever route/service ingests that channel) and it slots into
+// the existing admin grouping/filtering with no further schema changes.
+export type StakeholderAcquisitionSource =
+  | 'website'
+  | 'property-finder'
+  | 'whatsapp'
+  | 'olx'
+  | 'referral'
+  | 'walk-in'
+  | 'social-media'
+  | 'instagram'
+  | 'facebook'
+  | 'linkedin'
+  | 'other';
 export type CurrencyCode = 'EGP' | 'USD';
 export type FurnishingCode = 'F' | 'U' | 'K' | 'S';
 export type SierraFeatureCode = 'G' | 'P' | 'R' | 'V';

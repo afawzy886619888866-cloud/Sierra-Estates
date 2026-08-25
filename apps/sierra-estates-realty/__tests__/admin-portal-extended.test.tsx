@@ -13,6 +13,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
+import { LeadsPage } from '@/app/admin/AdminPortal';
 
 function render(el: React.ReactElement): string {
   return renderToStaticMarkup(el);
@@ -34,6 +35,30 @@ describe('Admin Portal Extended Suite', () => {
       expect(html).toContain('Stage-9 Autonomous Negotiation Simulator');
       expect(html).toContain('Run Stage-9 Multi-Party Simulation');
       expect(html).toContain('38000000');
+    });
+  });
+
+  describe('4. LeadsPage · lead source attribution', () => {
+    const T = (k: string) => k;
+
+    it('renders a Source column with a badge per lead, grouping every intake channel in one table', () => {
+      const html = render(<LeadsPage T={T} />);
+
+      // Placeholder data covers property-finder, website, whatsapp, and
+      // referral - the same acquisition channels real leads carry via
+      // StakeholderAcquisitionSource, so the admin page shows every source
+      // gathered in one place rather than needing separate views per channel.
+      expect(html).toContain('Property Finder');
+      expect(html).toContain('Website');
+      expect(html).toContain('WhatsApp');
+      expect(html).toContain('Referral');
+    });
+
+    it('offers a source filter dropdown covering every channel present in the lead list', () => {
+      const html = render(<LeadsPage T={T} />);
+      expect(html).toContain('>allSources</option>');
+      expect(html).toContain('<option value="property-finder">Property Finder</option>');
+      expect(html).toContain('<option value="website">Website</option>');
     });
   });
 

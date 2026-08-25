@@ -27,25 +27,28 @@ google-credentials.json
 *.env
 !.env.example
 
-# Cloned Sub-repositories
-ECC/
-Client page/
-qm/
-python-docs-samples/
-python-docs-samples-gcp/
+/ECC/
+/Client page/
+/qm/
+/python-docs-samples/
+/python-docs-samples-gcp/
 .archive/
 
 # Leaked / one-off credential helpers — never commit auth helper scripts
 askpass.bat
 askpass.sh
 
-# ─── Dependencies ───────────────────────────────────────────────────────────
+# ─── Dependencies & Python ───────────────────────────────────────────────────
 libs/
 node_modules/
 .pnp
 .pnp.js
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 # ─── Build outputs ───────────────────────────────────────────────────────────
 dist/
@@ -74,9 +77,6 @@ _archived_repos/
 .vercel-old/
 temp3
 
-# ─── AI tooling scaffolding — not part of the deployable app ───────────────
-.agent/
-.agents/
 .claude/
 .codex/
 .replit
@@ -115,6 +115,7 @@ service-account*.json
 firebase-adminsdk*.json
 .vercel
 .env*
+!.env.example
 
 wa_sessions/
 packages/whatsapp-agent/*.sw_col.json

@@ -5,6 +5,8 @@ export interface PropertyFinderSyncResult {
   totalSynced: number;
   totalErrors: number;
   durationMs: number;
+  /** True until this connector calls the real Property Finder API instead of returning sample data. */
+  mockMode: true;
   syncedListings: Array<{
     id: string;
     reference: string;
@@ -25,6 +27,12 @@ export class PropertyFinderConnector {
   public async syncCatalog(options: { limit?: number; since?: string } = {}): Promise<PropertyFinderSyncResult> {
     const started = Date.now();
     const syncId = `pf-sync-${Date.now()}`;
+
+    // MOCK MODE: this never calls the real Property Finder API — see
+    // packages/property-finder-api/src/index.ts's getAuthToken(), which is an
+    // unimplemented placeholder. Callers must check result.mockMode rather than
+    // assume a 'completed' status means real listings were synced.
+    console.warn('[PropertyFinderConnector] MOCK MODE — returning sample data, not calling the real Property Finder API.');
 
     // Sample mock items matching PropertyFinder feed structure
     const sampleItems = [
@@ -73,6 +81,7 @@ export class PropertyFinderConnector {
       totalSynced: toSync.length,
       totalErrors: 0,
       durationMs: Date.now() - started,
+      mockMode: true,
       syncedListings: toSync,
     };
   }
