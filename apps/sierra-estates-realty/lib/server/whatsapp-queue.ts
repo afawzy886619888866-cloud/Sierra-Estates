@@ -11,11 +11,15 @@ import {
 } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 
-// Defaults match the product spec: 4 numbers, 30 msgs/number per 2-hour window,
-// 12pm–8pm Africa/Cairo. dailyCapPerNumber = 30 × 4 windows = 120; total 480.
+// Single daily dispatch window: 10:00–10:59 Africa/Cairo. The dispatch cron
+// (.github/workflows/whatsapp-dispatch-cron.yml) fires once a day and relies
+// on this 1-hour window to (a) actually let that run through and (b) reject
+// the other UTC-offset firing used to cover Cairo's DST switch, so exactly
+// one run per day sends. dailyCapPerNumber/dailyCapTotal below are still the
+// per-run ceiling since there's only one run to spend them in.
 export const DEFAULT_OUTREACH_CONFIG: WhatsAppOutreachConfig = {
-  operatingHourStart: 12,
-  operatingHourEnd: 20,
+  operatingHourStart: 10,
+  operatingHourEnd: 11,
   timezone: 'Africa/Cairo',
   batchSizePerNumber: 30,
   windowMinutes: 120,
