@@ -9,6 +9,13 @@ import json
 import time
 from typing import Dict, Any, List, Optional
 
+# A price drop at or above this percentage is tagged as a hot/distressed deal.
+# Mirrors packages/agents/tools/eccMemoryEngine.ts — the two are not wired
+# together (Python microservice vs. TS monorepo package), so this constant
+# must be changed in both places if the threshold policy changes.
+HOT_DEAL_THRESHOLD_PCT = 8.0
+
+
 class EpisodicContextCache:
     def __init__(self, storage_path: Optional[str] = None):
         self.working_memory: Dict[str, Dict[str, Any]] = {}
