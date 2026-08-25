@@ -5,6 +5,12 @@ description: Empowers Antigravity and OpenClaw agents to inspect, unpack, read, 
 
 # Excel & Archive Processor Skill · Antigravity & OpenClaw
 
+> **Status: not yet implemented.** This skill document is aspirational — no
+> corresponding code exists in `packages/agents` or elsewhere in the repo.
+> An agent following this skill has no archive/spreadsheet-extraction tools
+> to invoke; treat every instruction below as a spec for future work, not a
+> capability available today.
+
 ## Purpose
 
 Enables autonomous handling, extraction, and ingestion of real estate data from compressed archives (`.zip`, `.rar`, `.7z`) and spreadsheets (`.xlsx`, `.xls`, `.csv`, `.tsv`).

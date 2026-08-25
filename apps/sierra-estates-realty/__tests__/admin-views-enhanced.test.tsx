@@ -22,6 +22,7 @@ import DeepInsightsView from '../app/admin/views/DeepInsightsView';
 import ReportsView from '../app/admin/views/ReportsView';
 import MonitoringView from '../app/admin/views/MonitoringView';
 import HealthView from '../app/admin/views/HealthView';
+import RealEstateProcessorView from '../app/admin/views/RealEstateProcessorView';
 
 function render(el: React.ReactElement): string {
   return renderToStaticMarkup(el);
@@ -130,6 +131,24 @@ describe('Enhanced Admin Views Test Suite', () => {
       expect(html).toContain('Hyde Park New Cairo');
       expect(html).toContain('All Regions');
       expect(html).toContain('New Cairo');
+    });
+  });
+
+  describe('RealEstateProcessorView', () => {
+    it('renders the processor registry and workflow in English', () => {
+      const html = render(<RealEstateProcessorView lang="en" />);
+      expect(html).toContain('Real Estate Processor');
+      expect(html).toContain('Excel and WhatsApp inventory processing');
+      expect(html).toContain('Phone last 7 digits + EGP price + deal type');
+      expect(html).toContain('Owners_Rent');
+      expect(html).toContain('.agents/skills/real-estate-excel-processor');
+    });
+
+    it('renders the processor registry in Arabic', () => {
+      const html = render(<RealEstateProcessorView lang="ar" />);
+      expect(html).toContain('معالج العقارات');
+      expect(html).toContain('المدخلات المدعومة');
+      expect(html).toContain('إزالة التكرار');
     });
   });
 

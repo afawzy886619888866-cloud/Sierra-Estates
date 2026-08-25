@@ -31,27 +31,45 @@ jobs:
         with:
           submodules: false
 
+      # If GOOGLE_SERVICE_ACCOUNT_JSON isn't configured, skip the rest of this job
+      # gracefully instead of hard-failing every push that touches apps/api.
+      - name: Check for GCP credentials
+        id: gcp_check
+        run: |
+          if [ -z "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" ]; then
+            echo "::notice::GOOGLE_SERVICE_ACCOUNT_JSON repo secret is not set — skipping Cloud Run deployment."
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        if: steps.gcp_check.outputs.has_creds == 'true'
+        uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
 
       - name: Set up Cloud SDK
+        if: steps.gcp_check.outputs.has_creds == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for GCR
+        if: steps.gcp_check.outputs.has_creds == 'true'
         run: gcloud auth configure-docker --quiet
 
       - name: Build Docker image
+        if: steps.gcp_check.outputs.has_creds == 'true'
         run: |
           docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:latest" apps/api/
 
       - name: Push Docker image
+        if: steps.gcp_check.outputs.has_creds == 'true'
         run: |
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
 
       - name: Deploy to Cloud Run
+        if: steps.gcp_check.outputs.has_creds == 'true'
         run: |
           gcloud run deploy $SERVICE_NAME \
             --image "$IMAGE:${{ github.sha }}" \
@@ -66,6 +84,7 @@ jobs:
             --set-env-vars "LOG_LEVEL=INFO,ALLOWED_ORIGINS=https://sierra-estates.net,https://admin.sierra-estates.net"
 
       - name: Output service URL
+        if: steps.gcp_check.outputs.has_creds == 'true'
         run: |
           URL=$(gcloud run services describe $SERVICE_NAME \
             --platform managed \

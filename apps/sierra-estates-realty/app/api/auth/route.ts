@@ -16,6 +16,7 @@ import {
   parseCookies,
 } from "@/lib/auth";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { isAdminPortalRole } from "@/lib/types";
 import type { Role, User } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -58,7 +59,10 @@ export async function POST(req: Request) {
         const decoded = await getAuth().verifyIdToken(firebaseIdToken);
         const userDoc = await db.collection("users").doc(decoded.uid).get();
         const userData = userDoc.data() as Partial<User> | undefined;
-        let role: Role = (userData?.role as Role) ?? "viewer";
+        const rawRole = String(userData?.role ?? "viewer").trim().toLowerCase();
+        let role: Role = ["viewer", "owner", "agent", "manager", "admin", "superadmin"].includes(rawRole)
+          ? (rawRole as Role)
+          : "viewer";
 
         if (!userDoc.exists) {
           const anyUser = await db.collection("users").limit(1).get();
@@ -72,6 +76,10 @@ export async function POST(req: Request) {
             createdAt: new Date().toISOString(),
           }, { merge: true });
         }
+        if (!isAdminPortalRole(role)) {
+          return NextResponse.json({ error: "This account is not approved for the admin portal." }, { status: 403 });
+        }
+
         const sess = await signSession({
           uid: decoded.uid,
           email: decoded.email ?? email,

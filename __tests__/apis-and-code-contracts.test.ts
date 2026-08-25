@@ -1,97 +1,55 @@
 import { describe, it, expect } from 'vitest';
-import { z } from 'zod';
+import { leadSchema } from '../apps/sierra-estates-realty/app/api/leads/route';
+import { InstallmentCalculator } from '../packages/agents-core/src/installment-calculator';
 
 describe('APIs & Code Contracts Test Suite', () => {
-  describe('Zod Schema API Validation Contracts', () => {
-    const LeadCreationSchema = z.object({
-      name: z.string().min(2, 'Name must be at least 2 characters'),
-      phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Invalid phone number format'),
-      email: z.string().email().optional(),
-      targetCompound: z.string().min(1, 'Target compound is required'),
-      budgetEgp: z.number().positive('Budget must be positive'),
-      currency: z.enum(['EGP', 'USD', 'AED']).default('EGP'),
-      notes: z.string().max(1000).optional(),
-    });
-
-    it('should validate valid lead creation payload', () => {
+  describe('Lead Creation API Validation Contract', () => {
+    it('should validate a valid lead payload', () => {
       const validPayload = {
         name: 'Karim Mansour',
         phone: '+201001234567',
         email: 'karim@example.com',
-        targetCompound: 'Mivida',
-        budgetEgp: 38000000,
-        currency: 'EGP',
-        notes: 'Looking for prompt cash closing',
+        message: 'Looking for prompt cash closing',
+        locale: 'en',
       };
 
-      const parsed = LeadCreationSchema.safeParse(validPayload);
+      const parsed = leadSchema.safeParse(validPayload);
       expect(parsed.success).toBe(true);
       if (parsed.success) {
         expect(parsed.data.name).toBe('Karim Mansour');
-        expect(parsed.data.currency).toBe('EGP');
       }
     });
 
-    it('should fail validation on malformed phone number or negative budget', () => {
+    it('should fail validation on missing name or malformed email', () => {
       const invalidPayload = {
-        name: 'A',
-        phone: 'invalid-phone-string',
-        targetCompound: 'Mivida',
-        budgetEgp: -5000,
+        name: '',
+        email: 'not-an-email',
       };
 
-      const parsed = LeadCreationSchema.safeParse(invalidPayload);
+      const parsed = leadSchema.safeParse(invalidPayload);
       expect(parsed.success).toBe(false);
       if (!parsed.success) {
         const errorMessages = parsed.error.issues.map((i) => i.message);
-        expect(errorMessages).toContain('Name must be at least 2 characters');
-        expect(errorMessages).toContain('Invalid phone number format');
-        expect(errorMessages).toContain('Budget must be positive');
+        expect(errorMessages).toContain('Name is required');
+        expect(errorMessages).toContain('Invalid email address');
       }
     });
   });
 
-  describe('Calculator API Response Serialization Contract', () => {
-    interface InstallmentCalculationResponse {
-      propertyPrice: number;
-      downPayment: number;
-      downPaymentPercent: number;
-      durationYears: number;
-      totalQuarters: number;
-      quarterlyPayment: number;
-      currency: string;
-    }
+  describe('Installment Calculator Contract', () => {
+    it('should calculate an accurate quarterly amortization schedule', () => {
+      const result = InstallmentCalculator.calculateSchedule({
+        totalPrice: 30_000_000,
+        downPaymentPercent: 10,
+        tenureYears: 8,
+        installmentsFrequency: 'quarterly',
+      });
 
-    function serializeCalculatorResponse(
-      price: number,
-      downPaymentPercent: number,
-      years: number,
-      currency = 'EGP'
-    ): InstallmentCalculationResponse {
-      const downPayment = (price * downPaymentPercent) / 100;
-      const balance = price - downPayment;
-      const quarters = years * 4;
-      const quarterlyPayment = Math.round(balance / quarters);
-
-      return {
-        propertyPrice: price,
-        downPayment,
-        downPaymentPercent,
-        durationYears: years,
-        totalQuarters: quarters,
-        quarterlyPayment,
-        currency,
-      };
-    }
-
-    it('should serialize accurate calculator payload response', () => {
-      const res = serializeCalculatorResponse(30_000_000, 10, 8, 'EGP');
-
-      expect(res.propertyPrice).toBe(30_000_000);
-      expect(res.downPayment).toBe(3_000_000);
-      expect(res.totalQuarters).toBe(32);
-      expect(res.quarterlyPayment).toBe(843750); // (27M / 32)
-      expect(res.currency).toBe('EGP');
+      expect(result.downPayment).toBe(3_000_000);
+      expect(result.totalInstallments).toBe(32);
+      expect(result.installmentAmount).toBe(843750); // (27M / 32)
+      expect(result.schedule.length).toBe(33); // down payment + 32 installments
+      expect(result.schedule.at(-1)?.remainingBalance).toBe(0);
     });
   });
 });
