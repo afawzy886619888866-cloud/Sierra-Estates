@@ -134,6 +134,12 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
 | `SESSION_SECRET` | Admin session signing secret for edge middleware RBAC |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Service Account JSON for server-side Firebase Admin SDK |
 
+> `deploy-vercel.yml` mirrors `GEMINI_API_KEY` into both the `GEMINI_API_KEY` and
+> `GOOGLE_AI_API_KEY` Vercel env vars — the WhatsApp bot code reads the latter name.
+> This table lists CI/CD-level GitHub secrets only. For the full set of variables
+> the app reads at runtime (Airtable, SMTP, Resend, DeepSeek, WhatsApp admin routing,
+> etc.), see `.env.example`, which is the canonical list.
+
 ### 🌐 Repository Variables (`Variables` Tab)
 
 | Variable Name | Value | Purpose |
@@ -158,11 +164,6 @@ To ensure all GitHub Actions (`ci.yml`, `deploy-vercel.yml`, `backend-tests.yml`
    - Never modify files under `apps/sierra-estates-realty/app/(client)/` or `apps/sierra-estates-realty/components/` without explicit written approval from user in the current conversation.
 2. **Push Protection & Secret Cleanliness:**
    - Never commit raw API keys, tokens, or credentials into the codebase. Always access via `process.env.*`.
-3. **Branch Sync:**
-   - Keep all working branches (`main`, `feature/admin-page`, `feature/agents-and-bots`, `feature/workflow`, `feature/client-page`) in sync without trailing commits.
-4. **Vercel Project Routing:**
-   - `sierra-estates.net` ➔ `prj_ieVcIcoeTtHndspXMzlE0cwLl89c` (Next.js client)
-   - `admin.sierra-estates.net` ➔ `prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA` (Next.js Admin / Proxy)
 
 ---
 

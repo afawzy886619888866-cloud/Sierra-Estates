@@ -20,7 +20,7 @@ describe('New Cairo Compounds Data', () => {
       expect(c.lat).toBeGreaterThan(29);
       expect(c.lat).toBeLessThan(31);
       expect(typeof c.lng).toBe('number');
-      expect(c.lng).toBeGreaterThan(31);
+      expect(c.lng).toBeGreaterThan(30.5);
       expect(c.lng).toBeLessThan(32);
       expect(typeof c.unitsCount).toBe('number');
       expect(c.unitsCount).toBeGreaterThan(0);

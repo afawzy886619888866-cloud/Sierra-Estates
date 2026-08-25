@@ -276,7 +276,12 @@ export class AirtableIntegrationService {
     return fields;
   }
 
-  /** Exports Firestore listings into an Airtable table (default "Team Units"). */
+  /**
+   * Exports Firestore listings into an Airtable table (default "Team Units").
+   * Scoped to owner-sourced inventory (`ownerType === 'owner'`) — Sheets and
+   * Airtable are the owner-listing sync surface, not a mirror of broker or
+   * internal/team inventory.
+   */
   static async exportListings(table = 'Team Units'): Promise<AirtableSyncResult> {
     const cfg = this.getConfig();
     if (!cfg) {
@@ -286,7 +291,10 @@ export class AirtableIntegrationService {
     }
 
     try {
-      const snap = await adminDb.collection(COLLECTIONS.units).get();
+      const snap = await adminDb
+        .collection(COLLECTIONS.units)
+        .where('ownerType', '==', 'owner')
+        .get();
       const records: Array<{ fields: Record<string, unknown> }> = [];
       snap.docs.forEach((doc: QueryDocumentSnapshot) => {
         const fields = this.unitToAirtableFields(doc.id, doc.data() as Partial<Unit>);
