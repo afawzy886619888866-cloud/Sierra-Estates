@@ -10,14 +10,17 @@ interface AgentHeartbeat {
   needs?: string[];
   missingSecrets?: string[];
   docLink?: string;
+  isSimulated?: boolean;
 }
 
 // In-memory heartbeat cache for live agent fleet & simulator
 const liveHeartbeats = new Map<string, AgentHeartbeat>();
 
+// Fixed-value simulator fleet. No process actually reports these heartbeats today;
+// POST to this route to register a real one, which overrides the simulated entry below.
 function getDefaultFleet(): AgentHeartbeat[] {
   const now = new Date().toISOString();
-  return [
+  const fleet: AgentHeartbeat[] = [
     {
       id: 'sierra-bot',
       name: 'Sierra Bot (AI Concierge)',
@@ -70,7 +73,7 @@ function getDefaultFleet(): AgentHeartbeat[] {
       load: '68%',
       heartbeat: now,
       needs: ['PropertyFinder Syndication', 'AVM Historical Weights'],
-      missingSecrets: process.env.PROPERTYFINDER_KEY ? [] : ['PROPERTYFINDER_KEY (required for live syndication)'],
+      missingSecrets: process.env.PROPERTY_FINDER_API_KEY ? [] : ['PROPERTY_FINDER_API_KEY (required for live syndication)'],
       docLink: '/docs/roles.md#2-the-curator--scribe',
     },
     {
@@ -107,19 +110,21 @@ function getDefaultFleet(): AgentHeartbeat[] {
       docLink: '/docs/roles.md#6-devops--infrastructure',
     },
   ];
+  return fleet.map((agent) => ({ ...agent, isSimulated: true }));
 }
 
 export async function GET() {
   const defaultFleet = getDefaultFleet();
   
-  // Merge live simulator heartbeats with default fleet
+  // Merge real POSTed heartbeats over the simulated defaults
   const agents = defaultFleet.map(agent => {
     const live = liveHeartbeats.get(agent.id);
     if (live) {
-      return { ...agent, ...live };
+      return { ...agent, ...live, isSimulated: false };
     }
     return agent;
   });
+  const simulatedAgentCount = agents.filter(a => a.isSimulated).length;
 
   const orchestratorUrl = process.env.ORCHESTRATOR_URL || process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || 'http://127.0.0.1:3000';
   const orchestratorToken = process.env.ORCHESTRATOR_TOKEN ? 'configured' : 'dev-fallback-active';
@@ -145,8 +150,8 @@ export async function GET() {
     },
     {
       name: 'PropertyFinder Connector',
-      status: process.env.PROPERTYFINDER_KEY ? 'READY' : 'SIMULATION',
-      value: process.env.PROPERTYFINDER_KEY ? 'API Key Active' : 'Fallback / Mock Sync Available',
+      status: process.env.PROPERTY_FINDER_API_KEY ? 'READY' : 'SIMULATION',
+      value: process.env.PROPERTY_FINDER_API_KEY ? 'API Key Active' : 'Fallback / Mock Sync Available',
       description: 'Syndication sync engine for property listings',
     },
     {
@@ -160,6 +165,8 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     activeAgents: agents.length,
+    simulatedAgentCount,
+    dataSource: simulatedAgentCount === agents.length ? 'simulated' : 'mixed',
     agents,
     systemNeeds,
     environment: {

@@ -2,7 +2,9 @@ name: Nightly Intelligence Fleet Regression
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 2:00 AM UTC every night
+    # Offset 1h after harness-eval.yml's identical '0 2 * * *' nightly cron
+    # so the two scheduled runs don't compete for the same runner window.
+    - cron: '0 3 * * *' # 3:00 AM UTC every night
   workflow_dispatch:
 
 permissions:

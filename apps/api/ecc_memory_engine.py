@@ -9,6 +9,13 @@ import json
 import time
 from typing import Dict, Any, List, Optional
 
+# A price drop at or above this percentage is tagged as a hot/distressed deal.
+# Mirrors packages/agents/tools/eccMemoryEngine.ts — the two are not wired
+# together (Python microservice vs. TS monorepo package), so this constant
+# must be changed in both places if the threshold policy changes.
+HOT_DEAL_THRESHOLD_PCT = 8.0
+
+
 class EpisodicContextCache:
     def __init__(self, storage_path: Optional[str] = None):
         self.working_memory: Dict[str, Dict[str, Any]] = {}
@@ -32,8 +39,8 @@ class EpisodicContextCache:
 
     def track_price_reduction(self, sierra_code: str, old_price: float, new_price: float, source: str = "WhatsApp Drop") -> Dict[str, Any]:
         drop_amount = old_price - new_price
-        drop_pct = round((drop_amount / old_price) * 100, 1)
-        is_hot = drop_pct >= 8.0
+        drop_pct = round((drop_amount / old_price) * 100, 1) if old_price else 0.0
+        is_hot = drop_pct >= HOT_DEAL_THRESHOLD_PCT
 
         episode = self.record_episode({
             "type": "price_drop",

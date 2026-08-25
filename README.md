@@ -74,9 +74,8 @@ SE-Vercel-deploy-main/
 # 1. Install all workspace dependencies
 pnpm install
 
-# 2. Configure environment variables
+# 2. Configure environment variables (see "Environment Setup" below)
 cp .env.example apps/sierra-estates-realty/.env.local
-# Fill in all NEXT_PUBLIC_FIREBASE_* and server secrets
 
 # 3. Start local development server (Next.js on :3000)
 pnpm dev
@@ -86,6 +85,59 @@ cd apps/api && uv run uvicorn main:app --reload
 
 # 5. (Optional) Run n8n workflows locally on :5678
 docker-compose -f docker-compose.n8n.yml up -d
+```
+
+---
+
+## 🔧 Environment Setup
+
+`.env.example` (repo root) is the canonical list of every variable the app reads — copy it to `apps/sierra-estates-realty/.env.local` and fill in what your task needs. Vars are grouped by whether local dev actually requires them.
+
+### Required to run `pnpm dev` at all
+
+| Variable(s) | Purpose | Where to get it |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID`, `_MEASUREMENT_ID` | Firebase client SDK init | Already filled in `.env.example` for the canonical `sierra-blu` project — just copy them |
+| `SESSION_SECRET` | HMAC signing key for the `sierra_sess` admin cookie | Generate: `openssl rand -hex 32` |
+| `SBR_SECRET_KEY` | Internal service/webhook auth (`X-SBR-SECRET-KEY`), checked by `lib/server/auth-guard.ts` | Any long random string |
+
+### Required for admin console sign-in
+
+| Variable(s) | Purpose |
+| :--- | :--- |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` **or** `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK — verifies ID tokens and mints `sierra_sess` (see [Admin Authentication](#-admin-authentication)) |
+| `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` | Dev-only fallback login when Firebase Admin isn't configured locally |
+
+Without Firebase Admin creds, the public client portal still runs — only `/admin` sign-in is blocked.
+
+### Feature-gated (only needed if you're touching that integration)
+
+| Area | Variables |
+| :--- | :--- |
+| AI / Gemini | `GOOGLE_AI_API_KEY`, `GOOGLE_GENAI_API_KEY`, `NEXT_PUBLIC_GEMINI_API_KEY`, `AI_PROVIDER`, `GOOGLE_CLOUD_LOCATION` |
+| WhatsApp (Meta Cloud API) | `WHATSAPP_API_TOKEN`, `WHATSAPP_META_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WABA_NUMBER_1..4` |
+| WhatsApp (Twilio, wired in Phase 4) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` |
+| Telegram alerts | `TELEGRAM_BOT_TOKEN` (from [@BotFather](https://t.me/botfather)), `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`) |
+| PropertyFinder sync | `PROPERTY_FINDER_API_KEY`, `PROPERTY_FINDER_API_SECRET`, `PROPERTY_FINDER_WEBHOOK_SECRET` |
+| Airtable inventory | `AIRTABLE_API_KEY` ([generate](https://airtable.com/create/tokens) with `data.records:write`), `AIRTABLE_BASE_ID`, `AIRTABLE_TABLE_NAME` |
+| Email (owner/lead notifications) | `SMTP_HOST/PORT/USER/PASS`, `SALES_NOTIFICATION_EMAIL`, `ADMIN_ALERT_EMAIL` — or `RESEND_API_KEY` as an alternative sender |
+| Rate limiting (distributed) | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — omit to fall back to an in-memory per-instance limiter |
+| DeepSeek harness | `DEEPSEEK_API_URL`, `DEEPSEEK_API_KEY` |
+| AWS (Bedrock / SNS / OpenMemory) | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
+| n8n | `N8N_BASE_URL` (default `http://localhost:5678`), `N8N_API_KEY` |
+| Inventory sheet sync | `INVENTORY_SHEET_ID`, `INVENTORY_SHEET_GID`, `MASTER_SHEET_ID` |
+| Python API URL | `PYTHON_API_URL` (default `http://localhost:8000`) |
+
+CI/CD-only tokens (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`) belong in **GitHub Actions secrets**, not `.env.local` — see the [🔑 GitHub Secrets & Variables Configuration](./CLAUDE.md) table in `CLAUDE.md`.
+
+> `REDIS_URL` / `KV_URL` are a separate concern from `UPSTASH_REDIS_REST_URL`/`_TOKEN` above, not another naming-drift pair — `packages/ai-orchestrator/src/pubsub-broker.ts` needs a long-lived Redis connection for pub/sub, which Upstash's stateless REST client can't provide.
+
+### Verifying setup
+
+```bash
+pnpm dev
+# open http://localhost:3000 — public portal should load with no console errors
+# open http://localhost:3000/admin — sign-in requires Firebase Admin creds above
 ```
 
 ### Verification & CI Checks
@@ -125,7 +177,7 @@ The admin console is at `admin.sierra-estates.net/admin` (or `/admin` locally).
 
 1. **Sign-in**: Browser authenticates via Firebase Auth (email/password) and receives a short-lived ID token.
 2. **Session Minting**: ID token sent to `POST /api/auth`.
-3. **Verification**: Firebase Admin SDK validates the token, checks Firestore `users/{uid}` for an `admin|manager|agent` role, and signs an `httpOnly SameSite=Lax` session cookie (`sierra_sess`).
+3. **Verification**: Firebase Admin SDK validates the token, checks Firestore `users/{uid}` for an approved `owner|admin|manager|agent|superadmin` role, and signs an `httpOnly SameSite=Lax` session cookie (`sierra_sess`).
 4. **Route Guard**: `middleware.ts` and server layouts enforce `sierra_sess` validation on every `/admin/*` request.
 
 ### Key Auth Environment Variables

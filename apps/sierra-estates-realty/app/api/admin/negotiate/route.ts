@@ -1,20 +1,14 @@
-import { NextResponse } from 'next/server';
-import { NegotiationEngine } from '@sierra-estates/agents-core/src/negotiation-engine';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+import { simulateNegotiationFromBody } from '@/lib/services/negotiation-simulate';
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorizedResponse();
+
   try {
-    const body = await request.json();
-    const askingPrice = Number(body.askingPrice) || 38000000;
-    const buyerOffer = Number(body.buyerOffer) || 34000000;
-    const sellerFloor = body.sellerFloor ? Number(body.sellerFloor) : undefined;
-    const maxYears = Number(body.maxYears) || 7;
-
-    const outcome = NegotiationEngine.simulateNegotiation(
-      askingPrice,
-      buyerOffer,
-      sellerFloor,
-      maxYears
-    );
+    const body = await req.json();
+    const outcome = simulateNegotiationFromBody(body);
 
     return NextResponse.json({
       success: true,

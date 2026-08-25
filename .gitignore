@@ -115,6 +115,7 @@ service-account*.json
 firebase-adminsdk*.json
 .vercel
 .env*
+!.env.example
 
 wa_sessions/
 packages/whatsapp-agent/*.sw_col.json
