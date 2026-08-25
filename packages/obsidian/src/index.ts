@@ -18,22 +18,39 @@ export class ObsidianMemory {
   }
 
   private readStore(): Record<string, MemoryEntry> {
-    try {
-      if (fs.existsSync(this.filePath)) {
-        const content = fs.readFileSync(this.filePath, 'utf-8');
-        return JSON.parse(content);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        if (fs.existsSync(this.filePath)) {
+          const content = fs.readFileSync(this.filePath, 'utf-8');
+          return JSON.parse(content);
+        }
+        return {};
+      } catch (err) {
+        if (attempt === 4) {
+          console.error('[ObsidianMemory] Error reading memory store:', err);
+          return {};
+        }
+        // Small synchronous backoff on lock contention
+        const end = Date.now() + 10 * (attempt + 1);
+        while (Date.now() < end) {}
       }
-    } catch (err) {
-      console.error('[ObsidianMemory] Error reading memory store:', err);
     }
     return {};
   }
 
   private writeStore(data: Record<string, MemoryEntry>): void {
-    try {
-      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('[ObsidianMemory] Error writing to memory store:', err);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+        return;
+      } catch (err) {
+        if (attempt === 4) {
+          console.error('[ObsidianMemory] Error writing to memory store:', err);
+          return;
+        }
+        const end = Date.now() + 10 * (attempt + 1);
+        while (Date.now() < end) {}
+      }
     }
   }
 
