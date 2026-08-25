@@ -45,7 +45,8 @@ describe('viewing-engine', () => {
         })
       );
 
-      expect(collectionMock).toHaveBeenCalledWith('stakeholders');
+      // COLLECTIONS.stakeholders resolves to the Firestore collection 'leads'.
+      expect(collectionMock).toHaveBeenCalledWith('leads');
       expect(docMock).toHaveBeenCalledWith('lead-1');
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({ 'orchestrationState.stage': 'S8_VIEWING_SCHEDULED', status: 'negotiating' })
