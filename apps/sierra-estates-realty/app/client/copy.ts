@@ -7,10 +7,11 @@ export type CopyKey = keyof typeof EN;
 
 export const EN = {
   brandSub: 'Future of Real Estate',
-  navHome: 'Home', navProps: 'Properties', navInv: 'Inventory', navCpds: 'Compounds', navAgents: 'Agents', navContact: 'Contact', navAI: 'AI Tools',
+  navHome: 'Home', navProps: 'Properties', navInv: 'Inventory', navCpds: 'Compounds', navExplore: '3D Explorer', navAgents: 'Agents', navContact: 'Contact', navAI: 'AI Tools',
   addListing: 'Add Listing', signIn: 'Sign In', langBtn: 'العربية',
   addr: 'Banafseg 2, Villa 402, New Cairo',
   heroSub: '21 compounds · 1,200+ units · AI-curated for you.',
+  heroExplore: 'Explore in 3D',
   q1: '1,240+ verified listings', q2: '19 compounds', q3: 'RERA-licensed brokers',
   tabBuy: 'Resale', tabRent: 'Rent', tabNew: 'New Projects',
   fLoc: 'Location', fType: 'Property Type', fBeds: 'Bedrooms', fPrice: 'Max Price', search: 'Search',
@@ -79,10 +80,11 @@ export const EN = {
 
 export const AR: Record<CopyKey, string> = {
   brandSub: 'مستقبل العقارات',
-  navHome: 'الرئيسية', navProps: 'العقارات', navInv: 'المخزون', navCpds: 'الكمبوندات', navAgents: 'المستشارون', navContact: 'تواصل', navAI: 'أدوات الذكاء',
+  navHome: 'الرئيسية', navProps: 'العقارات', navInv: 'المخزون', navCpds: 'الكمبوندات', navExplore: 'المستكشف ثلاثي الأبعاد', navAgents: 'المستشارون', navContact: 'تواصل', navAI: 'أدوات الذكاء',
   addListing: 'أضف عقارك', signIn: 'دخول', langBtn: 'English',
   addr: 'البنفسج 2، فيلا 402، القاهرة الجديدة',
   heroSub: '21 كمبوند · +1200 وحدة · منتقاة لك بالذكاء الاصطناعي.',
+  heroExplore: 'استكشف ثلاثي الأبعاد',
   q1: '+1240 عقار موثّق', q2: '19 كمبوند', q3: 'وسطاء مرخّصون',
   tabBuy: 'بيع', tabRent: 'إيجار', tabNew: 'مشروعات جديدة',
   fLoc: 'الموقع', fType: 'نوع العقار', fBeds: 'الغرف', fPrice: 'أقصى سعر', search: 'ابحث',

@@ -8,6 +8,7 @@
  * concierge → POST /api/chat (via <SierraConcierge/>). framer-motion entrances.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useReducedMotion } from 'framer-motion';
 import {
@@ -21,6 +22,13 @@ import {
   IconShield, IconRadar, IconTrendingUp, IconHandshake, IconStar, IconSend, IconPlus,
   IconSparkles, IconPhone,
 } from './icons';
+
+/**
+ * The hero's 3D skyline. Dynamically imported (ssr:false) so three.js stays out
+ * of the server bundle and off the critical path — the hero renders immediately
+ * with its photo slides, and the canvas fades in once loaded.
+ */
+const HeroScene3D = dynamic(() => import('./three/HeroScene3D'), { ssr: false });
 
 const WHATSAPP = 'https://wa.me/201092048333';
 
@@ -122,6 +130,7 @@ export default function HomePortal() {
           ))}
         </div>
         <div className="scrim" />
+        <HeroScene3D />
         <div className="wrap">
           <div className="h-eyebrow">{heroPre}</div>
           <h1>{heroWords.join(' ')} <span className="hl">{heroHl}</span></h1>
@@ -130,6 +139,10 @@ export default function HomePortal() {
             <span><IconBadgeCheck size={16} /> {t('q1')}</span>
             <span><IconMap size={16} /> {t('q2')}</span>
             <span><IconShield size={16} /> {t('q3')}</span>
+          </div>
+          <div className="hero-cta">
+            <Link href="/explore" className="btn btn-pri"><IconMap size={16} /> <span>{t('heroExplore')}</span></Link>
+            <Link href="/properties" className="btn btn-ghost"><IconSearch size={16} /> <span>{t('viewAll')}</span></Link>
           </div>
         </div>
         <div className="dots wrap" style={{ left: 'auto' }}>

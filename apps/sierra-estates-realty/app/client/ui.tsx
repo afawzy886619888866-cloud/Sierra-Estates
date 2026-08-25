@@ -120,7 +120,7 @@ export function Topbar() {
   );
 }
 
-export function Nav({ active }: { active?: 'home' | 'props' | 'inv' | 'cpds' }) {
+export function Nav({ active }: { active?: 'home' | 'props' | 'inv' | 'cpds' | 'explore' }) {
   const { t } = useT();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -141,6 +141,7 @@ export function Nav({ active }: { active?: 'home' | 'props' | 'inv' | 'cpds' }) 
           <Link href="/properties" className={active === 'props' ? 'active' : ''}>{t('navProps')}</Link>
           <Link href="/inventory" className={active === 'inv' ? 'active' : ''}>{t('navInv')}</Link>
           <Link href="/compounds" className={active === 'cpds' ? 'active' : ''}>{t('navCpds')}</Link>
+          <Link href="/explore" className={active === 'explore' ? 'active' : ''}>{t('navExplore')}</Link>
           <Link href="/#ai">{t('navAI')}</Link>
           <Link href="/#contact">{t('navContact')}</Link>
         </div>

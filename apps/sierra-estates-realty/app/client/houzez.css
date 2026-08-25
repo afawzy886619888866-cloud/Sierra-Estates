@@ -472,3 +472,99 @@
   .hz .p-head .price{text-align:start;}
   .hz .grid-cpds{grid-template-columns:1fr;}
 }
+
+/* ============================================================
+   3D Explorer (/explore) — CompoundCity3D + filter rail
+   ============================================================ */
+.hz .explore-main{padding-bottom:64px;}
+.hz .explore-main h1{font-size:clamp(28px,4vw,44px);line-height:1.12;color:var(--ink);}
+.hz .explore-main p.sub{color:var(--muted);font-size:16px;line-height:1.6;}
+
+.hz .explore-controls{display:flex;flex-wrap:wrap;align-items:center;gap:18px;
+  padding:16px 0 22px;border-bottom:1px solid var(--line-2);margin-bottom:22px;}
+
+.hz .explore-controls .seg{display:flex;gap:0;border:1.5px solid var(--line-2);
+  border-radius:var(--r-card);overflow:hidden;background:var(--surface);}
+.hz .explore-controls .seg button{padding:9px 20px;font-size:13px;font-weight:700;
+  border:0;background:transparent;color:var(--ink);cursor:pointer;transition:background .18s ease,color .18s ease;}
+.hz .explore-controls .seg button.on{background:var(--ink);color:#fff;}
+
+.hz .explore-slider{display:flex;flex-direction:column;gap:7px;min-width:260px;flex:1 1 260px;}
+.hz .explore-slider span{font-size:13px;color:var(--muted);font-weight:600;}
+.hz .explore-slider b{color:var(--ink);font-weight:800;}
+.hz .explore-slider small{font-size:11px;opacity:.7;}
+.hz .explore-slider input[type="range"]{width:100%;accent-color:var(--pri);cursor:pointer;}
+
+.hz .explore-zone{display:flex;flex-direction:column;gap:7px;}
+.hz .explore-zone span{font-size:13px;color:var(--muted);font-weight:600;}
+.hz .explore-zone select{padding:9px 12px;border:1.5px solid var(--line-2);
+  border-radius:var(--r-card);background:var(--surface);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;}
+
+.hz .explore-count{display:inline-flex;align-items:center;gap:7px;font-size:13px;
+  font-weight:700;color:var(--pri);margin-inline-start:auto;}
+
+.hz .explore-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start;}
+.hz .explore-canvas{min-width:0;}
+
+.hz .explore-empty{height:560px;border-radius:var(--r-card);
+  background:linear-gradient(180deg,#0d1a29,#060c14);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;color:#8aa4c0;text-align:center;padding:24px;}
+.hz .explore-empty p{max-width:280px;font-size:14px;font-weight:600;}
+
+.hz .explore-rail{border:1px solid var(--line-2);border-radius:var(--r-card);
+  background:var(--surface);padding:20px;position:sticky;top:88px;}
+.hz .explore-hint h3,.hz .explore-detail h3{font-size:19px;font-weight:800;color:var(--ink);margin:0 0 6px;}
+.hz .explore-hint p{font-size:14px;color:var(--muted);line-height:1.55;margin:0 0 16px;}
+
+.hz .explore-legend{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px;}
+.hz .explore-legend li{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--ink);}
+.hz .explore-legend i{width:26px;height:12px;border-radius:6px;flex:0 0 auto;}
+
+.hz .explore-zone-tag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;
+  font-weight:700;color:var(--pri);margin:0 0 14px;}
+
+.hz .explore-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  padding:14px 0;border-block:1px solid var(--line-2);margin-bottom:16px;}
+.hz .explore-stats div{display:flex;flex-direction:column;gap:3px;}
+.hz .explore-stats small{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;}
+.hz .explore-stats b{font-size:15px;font-weight:800;color:var(--ink);}
+
+.hz .explore-detail h4{font-size:13px;font-weight:800;color:var(--ink);margin:0 0 12px;
+  text-transform:uppercase;letter-spacing:.08em;}
+.hz .explore-detail h4 span{color:var(--muted);font-weight:700;}
+.hz .explore-none{font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 16px;}
+
+.hz .explore-units{list-style:none;padding:0;margin:0 0 18px;display:flex;flex-direction:column;gap:10px;}
+.hz .explore-units a{display:flex;gap:11px;align-items:center;text-decoration:none;
+  padding:8px;border-radius:var(--r-card);transition:background .18s ease;}
+.hz .explore-units a:hover{background:var(--surface-2);}
+.hz .explore-units img{width:62px;height:52px;object-fit:cover;border-radius:7px;flex:0 0 auto;}
+.hz .explore-units div{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.hz .explore-units b{font-size:13.5px;font-weight:800;color:var(--ink);}
+.hz .explore-units small{font-size:11.5px;color:var(--muted);font-weight:600;}
+.hz .explore-price{font-size:13px;font-weight:800;color:var(--pri);}
+
+.hz .explore-actions{display:flex;gap:9px;flex-wrap:wrap;}
+.hz .explore-actions .btn{flex:1 1 auto;justify-content:center;font-size:13px;padding:10px 14px;}
+
+@media (max-width:980px){
+  .hz .explore-grid{grid-template-columns:1fr;}
+  .hz .explore-rail{position:static;}
+  .hz .explore-count{margin-inline-start:0;}
+}
+
+/* Hero 3D skyline — sits above the photo scrim, below the hero copy (.wrap z-2).
+   Decorative only: pointer-events off so the hero CTAs stay clickable. */
+.hz .hero .hero-3d{position:absolute;inset:0;z-index:1;pointer-events:none;
+  opacity:.55;animation:hero3dIn 1.4s var(--silk) both;}
+@keyframes hero3dIn{from{opacity:0;}to{opacity:.55;}}
+
+.hz .hero .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px;}
+.hz .hero .hero-cta .btn{font-size:14px;padding:13px 24px;}
+.hz .hero .hero-cta .btn-ghost{background:rgba(255,255,255,.1);color:#fff;
+  border:1.5px solid rgba(255,255,255,.35);backdrop-filter:blur(6px);}
+.hz .hero .hero-cta .btn-ghost:hover{background:rgba(255,255,255,.18);}
+
+@media (prefers-reduced-motion:reduce){
+  .hz .hero .hero-3d{animation:none;}
+}
