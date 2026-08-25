@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminRequest } from '@/lib/auth/admin';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import {
   runMigrations,
   validateMigration,
