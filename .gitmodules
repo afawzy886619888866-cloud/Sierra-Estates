@@ -1,3 +1,0 @@
-[submodule "packages/deepseek-harness"]
-	path = packages/deepseek-harness
-	url = https://github.com/sierra-estates/deepseek-harness.git

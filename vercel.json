@@ -4,6 +4,9 @@
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "regions": ["fra1"],
+  "git": {
+    "deploymentEnabled": false
+  },
   "crons": [
     {
       "path": "/api/cron/sync-leads",

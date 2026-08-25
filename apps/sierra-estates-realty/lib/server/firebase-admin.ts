@@ -59,7 +59,6 @@ async function loadAndInitializeAdmin() {
 
       try {
         // Direct root require is 100% compatible with Jest and Node.js CJS
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const admin = require('firebase-admin');
         const adminAppMod = require('firebase-admin/app');
         getApps = adminAppMod.getApps || admin.apps;
