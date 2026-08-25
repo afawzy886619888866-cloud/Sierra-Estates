@@ -47,20 +47,18 @@ pnpm dev
 
 ## Project Structure
 
-```
-apps/web/
-├── app/                # Next.js App Router
-│   ├── page.tsx       # Landing page
-│   ├── api/           # API routes (protected)
-│   ├── admin/         # Admin dashboard
-│   └── ...
-├── components/        # React components
-├── lib/               # Business logic
-│   ├── server/        # Server-only modules
-│   └── ...
-├── agents/            # Agent implementations
+```text
+apps/sierra-estates-realty/
+├── app/(site)/         # Public client portal — bilingual EN/AR
+├── app/admin/          # Staff admin console — Claymorphic design system
+├── app/api/            # Edge & Node REST API routes, session auth, webhooks
+├── components/         # Premium UI design system & spatial components
+├── lib/                # Services, Firestore models, agents, server utilities
+│   └── server/         # Server-only modules
 └── package.json
 ```
+
+See [README.md § Repository Structure](./README.md#-repository-structure) for the full monorepo layout, including `packages/`, `functions/`, and `apps/api`.
 
 ---
 
