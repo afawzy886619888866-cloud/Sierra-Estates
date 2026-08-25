@@ -206,6 +206,9 @@ importers:
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(next@16.3.1(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+      '@workspace/aws':
+        specifier: workspace:*
+        version: link:../../lib/integrations/aws
       ai:
         specifier: ^7.0.74
         version: 7.0.79(zod@4.4.3)
