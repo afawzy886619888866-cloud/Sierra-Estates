@@ -2,8 +2,14 @@ name: Nightly Intelligence Fleet Regression
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 2:00 AM UTC every night
+    # Offset 1h after harness-eval.yml's identical '0 2 * * *' nightly cron
+    # so the two scheduled runs don't compete for the same runner window.
+    - cron: '0 3 * * *' # 3:00 AM UTC every night
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 
 jobs:
   nightly-regression:
@@ -23,11 +29,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '24'
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+
 
       - name: Run Threshold Checks
         run: pnpm run check-thresholds

@@ -6,33 +6,28 @@ describe('apps/agents (Bots & Agent Implementations)', () => {
   const AGENTS_ROOT = path.resolve(__dirname, '..');
 
   describe('Stage-9 Closer Agent', () => {
-    const closerDir = path.join(AGENTS_ROOT, 'stage-9-closer');
+    // The Stage-9 closer used to be forked here (apps/agents/stage-9-closer),
+    // never wired into the pnpm workspace graph and never called from
+    // production. The live implementation is packages/agents/src/closer-agent-enhanced.ts,
+    // imported by lib/intelligence.ts and by the WhatsApp bot router's
+    // 'closer' route. The fork was deleted rather than kept in sync by hand.
+    const closerAgentEnhancedPath = path.resolve(
+      AGENTS_ROOT,
+      '..',
+      '..',
+      'packages',
+      'agents',
+      'src',
+      'closer-agent-enhanced.ts'
+    );
 
-    it('should have stage-9-closer directory structure and tsconfig', () => {
-      expect(fs.existsSync(closerDir)).toBe(true);
-      expect(fs.existsSync(path.join(closerDir, 'package.json'))).toBe(true);
-      expect(fs.existsSync(path.join(closerDir, 'tsconfig.json'))).toBe(true);
-    });
+    it('has exactly one CloserAgentEnhanced implementation, and it is live', () => {
+      expect(fs.existsSync(path.join(AGENTS_ROOT, 'stage-9-closer'))).toBe(false);
+      expect(fs.existsSync(closerAgentEnhancedPath)).toBe(true);
 
-    it('should contain CloserAgent and CloserAgentEnhanced implementations', () => {
-      const closerAgentPath = path.join(closerDir, 'CloserAgent.ts');
-      const enhancedPath = path.join(closerDir, 'CloserAgentEnhanced.ts');
-      expect(fs.existsSync(closerAgentPath)).toBe(true);
-      expect(fs.existsSync(enhancedPath)).toBe(true);
-
-      const closerCode = fs.readFileSync(closerAgentPath, 'utf-8');
-      expect(closerCode).toContain('CloserAgent');
-      expect(closerCode).toContain('export');
-
-      const enhancedCode = fs.readFileSync(enhancedPath, 'utf-8');
-      expect(enhancedCode).toContain('CloserAgentEnhanced');
-    });
-
-    it('should contain proposal generator', () => {
-      const propGenPath = path.join(closerDir, 'proposal-generator.ts');
-      expect(fs.existsSync(propGenPath)).toBe(true);
-      const code = fs.readFileSync(propGenPath, 'utf-8');
-      expect(code).toContain('ProposalGenerator');
+      const code = fs.readFileSync(closerAgentEnhancedPath, 'utf-8');
+      expect(code).toContain('export class CloserAgentEnhanced');
+      expect(code).toContain('export const closerAgent');
     });
   });
 
@@ -57,16 +52,51 @@ describe('apps/agents (Bots & Agent Implementations)', () => {
       const toolsDir = path.join(vertexDir, 'tools');
       expect(fs.existsSync(toolsDir)).toBe(true);
     });
+
+    it('has an executor implementing every declared tool, and agent_core dispatches to it', () => {
+      // registry.py used to declare save_listing / send_whatsapp_message /
+      // query_crm_listings to the model with nothing that ever executed a
+      // call — api.py only ever read response.text. executor.py is the
+      // implementation; agent_core.py's run_agent_turn is the dispatch loop
+      // that calls it and feeds results back for a final reply.
+      const registryCode = fs.readFileSync(path.join(vertexDir, 'tools', 'registry.py'), 'utf-8');
+      const executorCode = fs.readFileSync(path.join(vertexDir, 'tools', 'executor.py'), 'utf-8');
+      const coreCode = fs.readFileSync(path.join(vertexDir, 'agent_core.py'), 'utf-8');
+
+      const declaredNames = [...registryCode.matchAll(/name="(\w+)"/g)].map((m) => m[1]);
+      expect(declaredNames.length).toBeGreaterThan(0);
+      for (const name of declaredNames) {
+        expect(executorCode).toContain(`def ${name}(`);
+        expect(executorCode).toContain(`"${name}": ${name}`);
+      }
+
+      expect(coreCode).toContain('def run_agent_turn');
+      expect(coreCode).toContain('execute_tool_call');
+    });
   });
 
   describe('Sierra Estates Bot (Python Service)', () => {
     const botDir = path.join(AGENTS_ROOT, 'sierra-estates-bot');
 
-    it('should contain python bot implementations and system prompts', () => {
+    it('has one canonical bot implementation, not a duplicate pair', () => {
+      // sierra_blue_bot_implementation.py was a byte-identical duplicate of
+      // sierra_estates_bot_implementation.py — merged away rather than kept
+      // in sync by hand. Same for the API integration pair: the surviving
+      // file uses the corrected graph.facebook.com endpoint and the v12+
+      // HubSpot SDK that only one of the two copies had.
       expect(fs.existsSync(path.join(botDir, 'sierra_estates_bot_implementation.py'))).toBe(true);
-      expect(fs.existsSync(path.join(botDir, 'sierra_blue_bot_implementation.py'))).toBe(true);
+      expect(fs.existsSync(path.join(botDir, 'sierra_blue_bot_implementation.py'))).toBe(false);
+      expect(fs.existsSync(path.join(botDir, 'sierra_estates_api_integration.py'))).toBe(true);
+      expect(fs.existsSync(path.join(botDir, 'sierra_blue_api_integration.py'))).toBe(false);
       expect(fs.existsSync(path.join(botDir, 'system_prompt_and_deployment.py'))).toBe(true);
       expect(fs.existsSync(path.join(botDir, 'requirements.txt'))).toBe(true);
+
+      const apiIntegrationCode = fs.readFileSync(
+        path.join(botDir, 'sierra_estates_api_integration.py'),
+        'utf-8'
+      );
+      expect(apiIntegrationCode).toContain('graph.facebook.com');
+      expect(apiIntegrationCode).not.toContain('graph.instagram.com');
     });
 
     it('should contain luxury real estate prompt definitions', () => {
