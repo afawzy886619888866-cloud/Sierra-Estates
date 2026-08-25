@@ -17,51 +17,27 @@ Welcome! This guide explains how to develop, test, and contribute to the Sierra 
 
 ```bash
 # Clone repository
-git clone https://github.com/ahmedfawzy8866/Sierra-Estates-Final.git
-cd Sierra-Estates-Final
+git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
+cd SE-Vercel-deploy-main
 
 # Install dependencies
 pnpm install
 
 # Copy environment template
-cp .env.example .env.local
+cp .env.example apps/sierra-estates-realty/.env.local
 
-# Fill in Firebase credentials
-# Edit .env.local with your Firebase config
+# Fill in Firebase credentials and any feature-gated secrets you need
+# Edit apps/sierra-estates-realty/.env.local
 ```
 
 ### Environment Variables
 
-```env
-# Firebase (Client)
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=sierra-estates-staging
-NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sierra-estates-staging.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sierra-estates-staging.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123...
-
-# Firebase (Server-Only)
-FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
-# OR individual env vars:
-FIREBASE_PROJECT_ID=sierra-estates-staging
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@...iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n'
-
-# API Security
-SBR_SECRET_KEY=your-secret-key-here
-
-# Optional Integrations
-GOOGLE_AI_API_KEY=sk-...
-TELEGRAM_BOT_TOKEN=123456:ABC...
-TELEGRAM_CHAT_ID=123456789
-STRIPE_SECRET_KEY=sk_test_...
-DOCUSIGN_API_KEY=...
-```
+See [README.md § Environment Setup](./README.md#-environment-setup) for the full, kept-current breakdown of required vs. feature-gated variables. `.env.example` (repo root) is the canonical source of truth — a CI sweep of `process.env.*` against it keeps the two in sync.
 
 ### Run Development Server
 
 ```bash
-cd apps/web
+# From the repo root (Turborepo runs the sierra-estates-realty dev server)
 pnpm dev
 
 # Open http://localhost:3000
@@ -71,20 +47,18 @@ pnpm dev
 
 ## Project Structure
 
-```
-apps/web/
-├── app/                # Next.js App Router
-│   ├── page.tsx       # Landing page
-│   ├── api/           # API routes (protected)
-│   ├── admin/         # Admin dashboard
-│   └── ...
-├── components/        # React components
-├── lib/               # Business logic
-│   ├── server/        # Server-only modules
-│   └── ...
-├── agents/            # Agent implementations
+```text
+apps/sierra-estates-realty/
+├── app/(site)/         # Public client portal — bilingual EN/AR
+├── app/admin/          # Staff admin console — Claymorphic design system
+├── app/api/            # Edge & Node REST API routes, session auth, webhooks
+├── components/         # Premium UI design system & spatial components
+├── lib/                # Services, Firestore models, agents, server utilities
+│   └── server/         # Server-only modules
 └── package.json
 ```
+
+See [README.md § Repository Structure](./README.md#-repository-structure) for the full monorepo layout, including `packages/`, `functions/`, and `apps/api`.
 
 ---
 

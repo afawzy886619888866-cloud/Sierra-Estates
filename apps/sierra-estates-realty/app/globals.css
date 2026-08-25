@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 /* Minimal global reset. Surface-specific styling lives with each surface
    (e.g. app/admin/admin-portal.css); keep this file lean so the client site
    can bring its own design without fighting global rules.
@@ -24,7 +26,81 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.cp-shell{min-height:100vh;background:#070d13;color:#f8fafc}.cp-header{position:sticky;top:0;z-index:40;border-bottom:1px solid #22303d;background:rgba(7,13,19,.94);backdrop-filter:blur(14px)}.cp-header-inner{max-width:1180px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.cp-brand{color:#eabf69;font-weight:700;letter-spacing:.18em;text-decoration:none}.cp-nav{display:flex;gap:7px;overflow:auto;white-space:nowrap}.cp-nav a,.cp-lang{color:#b8c1ca;text-decoration:none;padding:9px 12px;border-radius:8px;font-size:13px}.cp-nav a:hover,.cp-lang:hover{background:#14202b;color:#f5c96e}.cp-nav .active{background:#f0b84b;color:#101820;font-weight:700}.cp-lang{font-size:12px}.cp-hero{max-width:1180px;margin:0 auto;padding:78px 24px 58px;display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}.cp-eyebrow{color:#f0b84b;font-size:12px;font-weight:700;letter-spacing:.22em;margin:0 0 16px}.cp-title{font-size:clamp(38px,5vw,70px);line-height:1.03;margin:0;max-width:760px;letter-spacing:-.04em}.cp-body{color:#b8c1ca;max-width:650px;font-size:18px;line-height:1.75;margin:24px 0 0}.cp-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}.cp-btn{display:inline-block;text-decoration:none;border-radius:9px;padding:13px 18px;font-weight:700;font-size:14px}.cp-btn-primary{background:#f0b84b;color:#101820}.cp-btn-secondary{border:1px solid #334555;color:#e7edf2}.cp-scene{height:360px;border-radius:20px;overflow:hidden;border:1px solid #263746;background:#0d1721}.cp-grid{max-width:1180px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.cp-card{border:1px solid #22303d;background:#0e1822;border-radius:16px;padding:24px}.cp-card h2{font-size:18px;margin:0}.cp-card p{color:#98a6b3;font-size:14px;line-height:1.65;margin:10px 0 0}@media (max-width:850px){.cp-header-inner{align-items:flex-start;flex-wrap:wrap}.cp-hero{grid-template-columns:1fr;padding-top:52px}.cp-grid{grid-template-columns:1fr}.cp-scene{height:280px}.cp-title{font-size:48px}.cp-body{font-size:16px}}
-.cp-tour-shell{position:relative}.cp-tour-shell canvas{display:block}.cp-tour-top,.cp-tour-bottom{position:absolute;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;align-items:center;z-index:2}.cp-tour-top{top:14px}.cp-tour-bottom{bottom:14px;align-items:flex-end}.cp-tour-top strong{display:block;font-size:13px;color:#f5c96e}.cp-tour-top span{display:block;color:#b8c1ca;font-size:11px;margin-top:3px}.cp-tour-reset,.cp-tour-hotspot{border:1px solid #405365;background:rgba(7,13,19,.82);color:#e7edf2;border-radius:8px;padding:8px 10px;font-size:11px;cursor:pointer}.cp-tour-reset:hover,.cp-tour-hotspot:hover,.cp-tour-hotspot.is-active{background:#f0b84b;color:#101820;border-color:#f0b84b}.cp-tour-note{max-width:250px;color:#d5dee6;font-size:11px;line-height:1.45;text-shadow:0 1px 4px #000}.cp-tour-hotspots{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.cp-tour-toggle{border-color:#8e6c30}.cp-tour-fallback{height:100%;display:flex;align-items:center;justify-content:center;color:#b8c1ca;font-size:13px;padding:24px;text-align:center}
+/* ── Cairo Plaza — Sierra Blue identity ─────────────────────────────────
+   Rebuilt on the site's own tokens (--pri/--ink/--surface/--muted/--line
+   from shared.css, --display/--font/--mono) so the page follows whichever
+   theme [data-theme] is active instead of a fixed hardcoded palette. */
+.cp-shell{min-height:100vh;background:var(--surface);color:var(--ink);font-family:var(--font)}
+.cp-header{position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line);background:var(--surface);backdrop-filter:blur(14px)}
+.cp-header-inner{max-width:1180px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.cp-brand{color:var(--pri);font-family:var(--display);font-weight:700;letter-spacing:.06em;text-decoration:none}
+.cp-nav{display:flex;gap:7px;overflow:auto;white-space:nowrap}
+.cp-nav a{color:var(--muted);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:13px}
+.cp-nav a:hover{background:var(--pri-soft);color:var(--pri-d)}
+.cp-nav .active{background:var(--pri);color:var(--surface);font-weight:700}
+.cp-header-controls{display:flex;align-items:center;gap:8px}
+.cp-toggle{display:inline-flex;align-items:center;gap:6px;background:var(--pri-soft);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 12px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer}
+.cp-toggle:hover{border-color:var(--pri)}
+.cp-toggle .i{width:14px;height:14px}
+.cp-lang{color:var(--muted);text-decoration:none;font-size:12px}
+.cp-lang:hover{color:var(--pri-d)}
+.cp-hero{max-width:1180px;margin:0 auto;padding:78px 24px 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+.cp-eyebrow{color:var(--pri);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.22em;margin:0 0 16px}
+.cp-title{font-family:var(--display);font-weight:700;font-size:clamp(38px,5vw,70px);line-height:1.03;margin:0;max-width:760px;letter-spacing:-.02em;color:var(--ink)}
+.cp-body{color:var(--muted);max-width:650px;font-size:18px;line-height:1.75;margin:24px 0 0}
+.cp-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.cp-btn{display:inline-block;text-decoration:none;border-radius:9px;padding:13px 18px;font-weight:700;font-size:14px;font-family:var(--font)}
+.cp-btn-primary{background:var(--pri);color:var(--surface)}
+.cp-btn-secondary{border:1px solid var(--line-2);color:var(--ink)}
+.cp-scene{height:360px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2,var(--surface))}
+/* Stat strip — "7 / TOWERS" scale callout */
+.cp-stats{max-width:1180px;margin:0 auto;padding:0 24px 48px;display:flex;flex-wrap:wrap;gap:32px;border-bottom:1px solid var(--line)}
+.cp-stat{display:flex;flex-direction:column;gap:2px}
+.cp-stat b{font-family:var(--display);font-size:clamp(28px,4vw,44px);color:var(--pri);line-height:1}
+.cp-stat span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.cp-grid{max-width:1180px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.cp-card{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:24px}
+.cp-card h2{font-family:var(--display);font-weight:600;font-size:18px;margin:0;color:var(--ink)}
+.cp-card p{color:var(--muted);font-size:14px;line-height:1.65;margin:10px 0 0}
+/* Materials hub — bilingual deck / video brief / source pack */
+.cp-materials{max-width:1180px;margin:56px auto 0;padding:0 24px}
+.cp-materials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:22px}
+.cp-material-card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.cp-material-card h3{font-family:var(--display);font-size:16px;margin:0;color:var(--ink)}
+.cp-material-card p{color:var(--muted);font-size:13px;line-height:1.6;margin:0}
+.cp-material-card a{color:var(--pri-d);font-family:var(--font);font-size:13px;font-weight:600;text-decoration:none;margin-top:auto}
+.cp-material-card a:hover{text-decoration:underline}
+@media (max-width:850px){.cp-header-inner{align-items:flex-start;flex-wrap:wrap}.cp-hero{grid-template-columns:1fr;padding-top:52px}.cp-grid,.cp-materials-grid{grid-template-columns:1fr}.cp-scene{height:280px}.cp-title{font-size:48px}.cp-body{font-size:16px}}
+
+.cp-tour-shell{position:relative}.cp-tour-shell canvas{display:block}
+.cp-tour-top,.cp-tour-bottom{position:absolute;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;align-items:center;z-index:2}
+.cp-tour-top{top:14px}.cp-tour-bottom{bottom:14px;align-items:flex-end}
+.cp-tour-top strong{display:block;font-family:var(--display);font-size:13px;color:var(--pri)}
+.cp-tour-top span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.cp-tour-reset,.cp-tour-hotspot{border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;font-family:var(--font);font-size:11px;cursor:pointer}
+.cp-tour-reset:hover,.cp-tour-hotspot:hover,.cp-tour-hotspot.is-active{background:var(--pri);color:var(--surface);border-color:var(--pri)}
+.cp-tour-note{max-width:250px;color:var(--ink);font-size:11px;line-height:1.45}
+.cp-tour-hotspots{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.cp-tour-toggle{border-color:var(--pri)}
+.cp-tour-fallback{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;padding:24px;text-align:center}
 @media (max-width:850px){.cp-tour-top,.cp-tour-bottom{left:10px;right:10px}.cp-tour-top{align-items:flex-start}.cp-tour-bottom{display:block}.cp-tour-note{max-width:none;margin-bottom:8px}.cp-tour-hotspots{justify-content:flex-start}.cp-tour-hotspot,.cp-tour-reset{padding:7px 8px;font-size:10px}}
-.cp-calculator{max-width:1180px;margin:0 auto 80px;padding:30px 24px;border:1px solid #263746;border-radius:18px;background:linear-gradient(135deg,#101d28,#0b131b)}.cp-calc-head{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:24px}.cp-calc-head h2{font-size:28px;margin:0;color:#f8fafc}.cp-calc-head p:not(.cp-eyebrow){color:#98a6b3;line-height:1.6;margin:8px 0 0}.cp-calc-disclosure{max-width:250px;color:#f5c96e;border:1px solid #6c552b;background:#211b10;border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.5}.cp-calc-layout{display:grid;grid-template-columns:1.2fr .8fr;gap:22px}.cp-calc-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cp-calc-field{display:block;color:#cbd5df;font-size:12px}.cp-calc-field>span{display:block;margin-bottom:6px}.cp-calc-field>div{display:flex;align-items:center;border:1px solid #334555;background:#0a121a;border-radius:8px;overflow:hidden}.cp-calc-field input{width:100%;min-width:0;background:transparent;color:#f8fafc;border:0;padding:11px 12px;font:inherit;outline:none}.cp-calc-field b{color:#7f91a0;font-size:10px;padding:0 10px}.cp-calc-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cp-calc-results>div{border:1px solid #293d4d;background:#0b151e;border-radius:10px;padding:14px}.cp-calc-results span{display:block;color:#93a2af;font-size:11px;line-height:1.4}.cp-calc-results strong{display:block;color:#f0c36a;font-size:18px;margin-top:8px}.cp-calc-footnote{color:#7f91a0;font-size:11px;line-height:1.6;margin:20px 0 0}.cp-calc-field input:focus{box-shadow:inset 0 0 0 1px #f0b84b}@media (max-width:850px){.cp-calc-head{display:block}.cp-calc-disclosure{max-width:none;margin-top:16px}.cp-calc-layout{grid-template-columns:1fr}.cp-calc-inputs{grid-template-columns:1fr}.cp-calc-results{grid-template-columns:1fr 1fr}.cp-calculator{padding:24px 16px;margin-bottom:48px}}
+
+.cp-calculator{max-width:1180px;margin:0 auto 80px;padding:30px 24px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.cp-calc-head{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:24px}
+.cp-calc-head h2{font-family:var(--display);font-size:28px;margin:0;color:var(--ink)}
+.cp-calc-head p:not(.cp-eyebrow){color:var(--muted);line-height:1.6;margin:8px 0 0}
+.cp-calc-disclosure{max-width:250px;color:var(--pri-d);border:1px solid var(--line);background:var(--pri-soft);border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.5}
+.cp-calc-layout{display:grid;grid-template-columns:1.2fr .8fr;gap:22px}
+.cp-calc-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cp-calc-field{display:block;color:var(--ink);font-size:12px}
+.cp-calc-field>span{display:block;margin-bottom:6px}
+.cp-calc-field>div{display:flex;align-items:center;border:1px solid var(--line-2);background:var(--surface);border-radius:8px;overflow:hidden}
+.cp-calc-field input{width:100%;min-width:0;background:transparent;color:var(--ink);border:0;padding:11px 12px;font:inherit;outline:none}
+.cp-calc-field b{color:var(--muted);font-size:10px;padding:0 10px}
+.cp-calc-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cp-calc-results>div{border:1px solid var(--line);background:var(--pri-soft);border-radius:10px;padding:14px}
+.cp-calc-results span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+.cp-calc-results strong{display:block;font-family:var(--mono);color:var(--pri-d);font-size:18px;margin-top:8px}
+.cp-calc-footnote{color:var(--muted);font-size:11px;line-height:1.6;margin:20px 0 0}
+.cp-calc-field input:focus{box-shadow:inset 0 0 0 1px var(--pri)}
+@media (max-width:850px){.cp-calc-head{display:block}.cp-calc-disclosure{max-width:none;margin-top:16px}.cp-calc-layout{grid-template-columns:1fr}.cp-calc-inputs{grid-template-columns:1fr}.cp-calc-results{grid-template-columns:1fr 1fr}.cp-calculator{padding:24px 16px;margin-bottom:48px}}
