@@ -3,6 +3,7 @@
   "buildCommand": "pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
+  "outputDirectory": "apps/sierra-estates-realty/.next",
   "regions": ["fra1"],
   "git": {
     "deploymentEnabled": false
