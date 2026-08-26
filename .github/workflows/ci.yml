@@ -94,11 +94,26 @@ jobs:
           if not body:
               sys.exit("::error::no overrides: block found in pnpm-workspace.yaml")
 
+          # Quote-robust parse: YAML permits keys/values wrapped in single OR
+          # double quotes (pnpm reformats these) and trailing "# ..." comments.
+          # A regex that stripped only double quotes silently made every
+          # single-quoted value "differ" and turned this guard permanently red.
+          def _unquote(s):
+              s = s.strip()
+              if len(s) >= 2 and s[0] == s[-1] and s[0] in ('"', "'"):
+                  s = s[1:-1]
+              return s.strip()
           have = {}
-          for line in body.group(1).splitlines():
-              m = re.match(r'\s*"?([^"#:][^"]*?)"?:\s*"?([^"]+?)"?\s*$', line)
-              if m and m.group(2) != "-":      # "-" entries are platform exclusions
-                  have[m.group(1)] = m.group(2)
+          for raw in body.group(1).splitlines():
+              line = raw.split(" #", 1)[0].rstrip()
+              if not line.strip() or line.lstrip().startswith("#"):
+                  continue
+              key, sep, val = line.partition(":")
+              if not sep:
+                  continue
+              key, val = _unquote(key), _unquote(val)
+              if key and val and val != "-":      # "-" entries are platform exclusions
+                  have[key] = val
 
           missing = {k: v for k, v in want.items() if k not in have}
           differ  = {k: (v, have[k]) for k, v in want.items()
@@ -124,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
@@ -177,3 +192,31 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+
+  # The repo keeps TWO firestore.rules: a root copy (required to exist by
+  # __tests__/repo-integrity-and-hygiene.test.ts and reviewed at the root) and
+  # apps/sierra-estates-realty/firestore.rules — the one both firebase.json
+  # files actually deploy. They are byte-identical today; this guard makes sure
+  # they never silently drift, so the deployed rules always match the reviewed
+  # root copy. (Audit REPO_AUDIT_REPORT.md P2.)
+  firestore-rules-drift:
+    name: Firestore rules in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Root and app firestore.rules must be byte-identical
+        run: |
+          root="firestore.rules"
+          app="apps/sierra-estates-realty/firestore.rules"
+          if ! diff -q "$root" "$app" >/dev/null 2>&1; then
+            echo "::error title=Firestore rules drift::$root and $app differ"
+            echo "The root copy is reviewed and required by repo-integrity tests;"
+            echo "the app copy is what firebase.json deploys. Keep them identical."
+            diff "$root" "$app" || true
+            exit 1
+          fi
+          echo "firestore.rules root and app copies are identical."
