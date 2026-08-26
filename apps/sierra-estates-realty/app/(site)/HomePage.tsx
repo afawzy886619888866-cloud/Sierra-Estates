@@ -94,13 +94,14 @@ export default function HomePage() {
   async function submitInquiry(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await fetch('/api/leads', {
+      const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, intent: inqMode, source: 'portal_home_inquiry' }),
       });
-    } catch {
-      /* the confirmation still shows — the lead is retried by the CRM sync job */
+      if (!res.ok) console.warn('[HomePage] Lead submission returned', res.status);
+    } catch (err) {
+      console.warn('[HomePage] Lead submission failed (will be retried by CRM sync):', err);
     }
     setSent(true);
   }
