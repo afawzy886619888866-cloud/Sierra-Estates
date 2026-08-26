@@ -44,9 +44,6 @@ const nextConfig: NextConfig = {
     'googleapis',
     'twilio',
   ],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.googleusercontent.com' },
