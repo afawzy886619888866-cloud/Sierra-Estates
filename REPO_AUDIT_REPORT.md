@@ -2,7 +2,7 @@
 
 Date: 2026-08-25
 Branch: `main`
-Audited commit: `7a835493`
+Audited commit: `8a0f66c2`
 Scope: monorepo, Vercel Next.js app, Firebase rules, API boundaries, tests, deployment configuration, and repository architecture.
 
 ## Executive Decision
@@ -16,11 +16,13 @@ The immediate production blockers are configuration and operational readiness, n
 - The repository is a pnpm/Turborepo monorepo with a Next.js 16 App Router application, Firebase Functions, shared packages, agents, CRM services, and automation packages.
 - Vercel is configured to build the deployable app with `pnpm --filter sierra-estates-client-page build`.
 - The production Next build completed successfully with TypeScript validation enabled and generated 94 routes.
-- Root lint passed. Root type-check passed for all 13 configured type-check tasks. The app CI suite passed 68 suites and 704 tests.
+- Root lint passed. Root type-check passed for all 13 configured type-check tasks. The app CI suite passed 68 suites and 707 tests.
 - The Firebase rules use staff role checks for writes and a default staff-only fallback for unspecified collections.
 - Cron routes use a shared `verifyCronRequest` guard that fails closed in production when `CRON_SECRET` is missing.
 - Admin API routes generally use `verifyAdminRequest` or `requireRole`, and session cookies are HTTP-only.
 - The app already contains production-safe improvements in `next.config.ts`, Firebase Admin initialization, and `/api/health`: framework type errors are no longer ignored, Admin calls do not pretend to succeed in production, and health reports degraded state when dependencies are unavailable.
+- Local runtime smoke checks passed for `/` (`200`) and the unauthenticated `/admin` redirect (`307`); `/api/health` correctly returned `503` without Firebase credentials.
+- Deployment preflight now rejects missing production credentials, browser-visible server secrets, and Firebase rule-source drift before a rules deployment.
 - A deterministic code-only graph audit completed with 1,423 code files, 16,181 nodes, 33,026 edges, and 830 communities.
 
 ## Fixes Applied In This Audit
@@ -28,12 +30,17 @@ The immediate production blockers are configuration and operational readiness, n
 - Protected `/api/internal/*` at the edge proxy. Requests now require either a valid admin session or `X-SBR-SECRET-KEY`; production returns 503 when the internal secret is not configured and 401 for an invalid configured secret. Local development remains usable without a secret.
 - Added proxy tests for missing production configuration, trusted service access, and local development access.
 - Corrected `scripts/deploy-smoke-test.ts` so it sends the internal secret when configured, requires the exact expected HTTP status, and exits non-zero when any probe fails. Previously, a broad sub-400 response could be treated as success and the process never failed the deployment check.
+- Removed `NEXT_PUBLIC_GEMINI_API_KEY` and `NEXT_PUBLIC_TELEGRAM_BOT_TOKEN` from app configuration, Vercel synchronization, deployment automation, and active Next.js server fallbacks. Server-side features now use server-only `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY`.
+- Changed the Vercel workflow to fail when a deploy token is missing and to require Firebase Admin credentials, `SESSION_SECRET`, `SBR_SECRET_KEY`, and `CRON_SECRET` for production deployments. The old workflow could report a skipped deployment even though git deployments are disabled.
+- Made the app Firebase rules the canonical deployed source for both Firestore and Storage, synchronized the root mirrors, and added automated checks for public-environment and rules drift.
 
 ## What Is Not Working or Still Risky
 
 ### P0: Production configuration is not proven
 
-The local production build logged that Firebase credentials were absent and ran in limited mode. The build can therefore pass while lead writes, admin authentication, sync jobs, and Firestore-backed intelligence are unavailable. `/api/health` should be treated as a deployment readiness gate, not as a cosmetic status endpoint.
+The local production build logged that Firebase credentials were absent and ran in limited mode. A local runtime check also returned `503` from `/api/health` for the same reason. The build can therefore pass while lead writes, admin authentication, sync jobs, and Firestore-backed intelligence are unavailable. `/api/health` should be treated as a deployment readiness gate, not as a cosmetic status endpoint.
+
+The workflow now blocks a production deployment when its core secrets are absent, but it cannot prove that the configured values are valid or that external integrations are reachable.
 
 Required Vercel checks:
 
@@ -42,6 +49,10 @@ Required Vercel checks:
 - `SBR_SECRET_KEY` and `CRON_SECRET`
 - AI provider credentials required by enabled features
 - Property Finder, WhatsApp, Telegram, email, and rate-limit credentials for enabled workflows
+
+### P0: Previously browser-visible credentials must be rotated
+
+The prior deployment configuration copied Gemini and Telegram bot credentials into `NEXT_PUBLIC_*` variables. In Next.js, values with that prefix can be bundled into client JavaScript. The code and deployment automation now prevent this, but the existing Vercel variables and the affected Gemini/Telegram credentials must be removed and rotated outside this repository before the next production release.
 
 ### P1: Public catalog reads expose whole documents
 
@@ -59,9 +70,13 @@ The agent status, recommendation, report, and memory surfaces contain determinis
 
 The app suite passes, but reported coverage is approximately 13.9% statements, 10.6% branches, and 14.1% lines. Add route-level tests for auth failures, rate limits, malformed payloads, missing credentials, webhook signatures, and Firestore failures. Add one browser-level smoke flow for public listing search, inquiry submission, admin login, and a protected internal route.
 
-### P2: Duplicate configuration sources can drift
+### P1: Tests previously mutated tracked memory data
 
-The repository contains both root `firestore.rules` and `apps/sierra-estates-realty/firestore.rules`; they are identical today, but `firebase.json` deploys the app copy. Keep one canonical file or add a CI equality check. The pnpm override map is also maintained in two locations and emits a warning under the installed pnpm version; verify the active override source before upgrading pnpm.
+The global ECC memory singleton persisted test episodes into the tracked `obsidian-store.json` file. The singleton now uses a process-scoped temp file during tests; production and explicit `ECC_MEMORY_STORAGE_PATH` behavior are unchanged.
+
+### P2: Firebase mirrors remain a maintenance concern
+
+The root and app Firebase rule files are retained for compatibility, but `firebase.json` now deploys the app copy for both Firestore and Storage. Automated checks reject a mismatch. The pnpm override map is also maintained in two locations and emits a warning under the installed pnpm version; verify the active override source before upgrading pnpm.
 
 ### P2: Operational smoke coverage is incomplete
 
@@ -69,7 +84,7 @@ The smoke script now fails correctly, but it still requires a running deployment
 
 ## Missing
 
-- Firebase Emulator Suite tests for Firestore and Storage rules.
+- CI-run Firebase Emulator Suite tests for Firestore and Storage rules. A standalone Firestore rule test script exists, but it is not yet installed or executed by the deployment workflow.
 - A pre-deploy environment validator that fails before build when required production variables are missing.
 - End-to-end browser coverage for the public and admin journeys.
 - A documented Firestore backup, restore, retention, and disaster-recovery drill.

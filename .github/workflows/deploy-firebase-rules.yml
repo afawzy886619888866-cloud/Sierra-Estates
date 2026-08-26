@@ -43,9 +43,12 @@ jobs:
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
+
+      - name: Verify canonical Firebase rule sources
+        run: node scripts/check-firebase-rules.mjs
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3

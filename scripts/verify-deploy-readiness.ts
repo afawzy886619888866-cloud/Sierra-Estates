@@ -16,6 +16,30 @@ interface CheckResult {
 
 const RESULTS: CheckResult[] = [];
 
+function isConfigured(value: string | undefined) {
+  return Boolean(value && !/^(your-|change_me|replace_me|placeholder)/i.test(value));
+}
+
+function validateProductionEnvironment() {
+  const missing: string[] = [];
+  const hasFirebaseAdminCredentials = Boolean(
+    isConfigured(process.env.FIREBASE_SERVICE_ACCOUNT_JSON) ||
+    (isConfigured(process.env.FIREBASE_CLIENT_EMAIL) && isConfigured(process.env.FIREBASE_PRIVATE_KEY))
+  );
+
+  if (!hasFirebaseAdminCredentials) {
+    missing.push('FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY');
+  }
+
+  for (const name of ['SESSION_SECRET', 'SBR_SECRET_KEY', 'CRON_SECRET']) {
+    if (!isConfigured(process.env[name])) missing.push(name);
+  }
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required production configuration: ${missing.join(', ')}`);
+  }
+}
+
 function check(name: string, fn: () => void) {
   try {
     process.stdout.write(`⏳ Checking ${name}... `);
@@ -40,21 +64,33 @@ check('Root Configuration Files', () => {
   }
 });
 
-// 2. Check packages compilation
+// 2. Check production-only configuration before spending time on builds.
+check('Production Environment Configuration', validateProductionEnvironment);
+
+// 3. Prevent public environment variables from carrying server credentials.
+check('Public Environment Safety', () => {
+  execSync('node scripts/check-public-env-safety.mjs', { stdio: 'pipe' });
+});
+
+// 4. Check that root and app Firebase configurations deploy the same rules.
+check('Firebase Rule Configuration', () => {
+  execSync('node scripts/check-firebase-rules.mjs', { stdio: 'pipe' });
+});
+
+// 5. Check packages compilation
 check('Packages Compilation & Type-Check', () => {
   execSync('pnpm turbo run build --filter="./packages/*"', { stdio: 'pipe' });
 });
 
-// 3. Check client tests
-check('Client Unit & Integration Tests (34 Suites)', () => {
+// 6. Check client tests
+check('Client Unit & Integration Tests', () => {
   execSync('pnpm --filter sierra-estates-client-page test:ci', { stdio: 'pipe' });
 });
 
-// 4. Check git status
+// 7. A deployment must be reproducible from the checked-out commit.
 check('Git Status & Zero Working Tree Drift', () => {
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
-  // Ignored or clean is fine
-  console.log(`(git status: ${status.trim() ? 'dirty' : 'clean'})`);
+  if (status.trim()) throw new Error('Working tree is not clean');
 });
 
 console.log('\n======================================================');
