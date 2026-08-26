@@ -1,6 +1,9 @@
 {
   "version": 1,
-  "detectedIdeTargets": [],
+  "detectedIdeTargets": [
+    "agents",
+    "claude"
+  ],
   "adapterDecisions": {},
   "lastPromptAt": ""
 }

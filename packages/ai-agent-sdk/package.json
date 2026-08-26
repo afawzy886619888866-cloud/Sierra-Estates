@@ -14,10 +14,10 @@
     "@sierra-estates/obsidian": "workspace:*",
     "dotenv": "^17.4.2",
     "pino": "^9.6.0",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.2.0",
     "typescript": "^5.8.2",
     "vitest": "^4.1.10"
   }

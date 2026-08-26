@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail, Compass
+  Star, Send, CheckCircle, Plus, Phone, Mail,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -40,12 +40,14 @@ const AI_TOOLS = [
 ];
 
 const TICKER_EN = [
-  'Mountain View iCity +24%', 'Uptown Cairo +31%', 'Mivida rentals from $1,700/mo',
-  'Hyde Park AI score 9.8', 'Villette yield 8.1%', 'Taj City demand rising',
+  'HYDE PARK AI SCORE 9.8', 'VILLETTE YIELD 8.1%', 'TAJ CITY DEMAND RISING',
+  'MOUNTAIN VIEW ICITY +24%', 'UPTOWN CAIRO +31%', 'MIVIDA RENTALS FROM $1,700/MO',
+  'PALM HILLS AI SCORE 9.2', 'EASTOWN DEMAND SURGING', 'AL BUROUJ CAPITAL GAIN +18%',
 ];
 const TICKER_AR = [
-  'ماونتن فيو +24%', 'أب تاون كايرو +31%', 'ميفيدا إيجار من $1,700/شهر',
-  'هايد بارك AI 9.8', 'الرحاب عائد 8.1%', 'مدينتي طلب متزايد',
+  'هايد بارك AI 9.8', 'فيليت عائد 8.1%', 'تاج سيتي طلب متزايد',
+  'ماونتن فيو +24%', 'أب تاون كايرو +31%', 'ميفيدا إيجارات من $1,700/شهر',
+  'بالم هيلز AI 9.2', 'إيستاون طلب متزايد', 'البروج نمو سنوي +18%',
 ];
 
 export default function HomePage() {
@@ -58,7 +60,6 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
-  const [mapZone, setMapZone] = useState('all');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -68,21 +69,6 @@ export default function HomePage() {
     const items = isAr ? TICKER_AR : TICKER_EN;
     return items.concat(items);
   }, [isAr]);
-
-  const mapZones = useMemo(
-    () => ['all', ...Array.from(new Set(allCompounds.map((c) => c.z)))],
-    [allCompounds]
-  );
-
-  const filteredMapCompounds = useMemo(() => {
-    if (mapZone === 'all') return allCompounds;
-    return allCompounds.filter((c) => c.z === mapZone);
-  }, [allCompounds, mapZone]);
-
-  const selectedDetails = useMemo(() => {
-    if (!selectedMapCompound) return null;
-    return allCompounds.find((c) => c.n === selectedMapCompound) || null;
-  }, [allCompounds, selectedMapCompound]);
 
   const searchHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -198,136 +184,54 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* INTERACTIVE MASTERPLAN MAP SECTION */}
-      <section className="block well" id="interactive-map">
+      {/* IMPORTANT PROJECTS */}
+      <section className="block cairo-project-feature" id="important-projects" aria-labelledby="important-projects-title">
         <div className="wrap">
           <div className="sec-head rv">
             <div>
-              <div className="eyebrow">{isAr ? 'الخريطة التفاعلية' : 'Interactive Map'}</div>
-              <h2>{isAr ? 'خريطة كمبوندات القاهرة الجديدة' : 'New Cairo Masterplan & Compound Map'}</h2>
-              <p>{isAr ? 'استكشف مواقع أفضل الكمبوندات، الأسعار اللحظية، ومعدلات النمو السنوي على الخريطة مباشرة.' : 'Explore prime compound locations, real-time average pricing, and investment yields directly on the interactive map.'}</p>
+              <div className="eyebrow">{t('cairoProjectEyebrow')}</div>
+              <h2 id="important-projects-title">{t('cairoProjectTitle')}</h2>
+              <p>{t('cairoProjectBody')}</p>
             </div>
-            <Link href="/compounds" className="sec-link">
-              <span>{t('allCpds')}</span> <ArrowRight className="i" />
+            <Link href="/cairo-plaza" className="sec-link">
+              <span>{t('cairoProjectLink')}</span> <ArrowRight className="i" />
+            </Link>
+          </div>
+          <Link href="/cairo-plaza" className="cairo-project-feature__link rv" aria-label={t('cairoProjectLink')}>
+            <span className="cairo-project-feature__index">01</span>
+            <span className="cairo-project-feature__name">{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</span>
+            <span className="cairo-project-feature__place">{isAr ? 'أمام محطة مترو المطرية' : 'In front of Al-Mataria Metro Station'}</span>
+            <ArrowRight className="i" aria-hidden="true" />
+          </Link>
+        </div>
+      </section>
+
+      {/* INTERACTIVE MASTERPLAN MAP SECTION */}
+      <section className="block well" id="interactive-map">
+        <div className="wrap">
+          <div className="sec-head rv" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+            <div>
+              <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontFamily: 'var(--display)', color: 'var(--ink, #0f172a)', margin: '0 0 8px' }}>
+                {t('mapTit')}
+              </h2>
+              <p style={{ color: 'var(--muted, #64748b)', fontSize: 15, margin: 0, maxWidth: 640 }}>
+                {t('mapSub')}
+              </p>
+            </div>
+            <Link href="/compounds" className="sec-link" style={{ color: '#0284c7', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
             </Link>
           </div>
 
-          {/* Map Zone Selector Chips */}
-          <div className="zone-chips" style={{ marginBottom: 16 }}>
-            {mapZones.map((z) => (
-              <button
-                key={z}
-                type="button"
-                className={`af-chip${mapZone === z ? ' on' : ''}`}
-                onClick={() => setMapZone(z)}
-              >
-                {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
-              </button>
-            ))}
-          </div>
-
-          {/* Map + Side Live Intel Card */}
-          <div className="map-shell rv" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
-            <div id="cpd-map" style={{ height: 500, minHeight: 450 }}>
-              <CompoundsMap
-                compounds={filteredMapCompounds}
-                featured={featuredCompounds}
-                selectedName={selectedMapCompound}
-                onSelect={setSelectedMapCompound}
-              />
-            </div>
-
-            <div className="intel" style={{
-              background: 'var(--surface, #0b1929)',
-              border: '1px solid var(--line, rgba(233, 193, 118, 0.18))',
-              borderRadius: 16,
-              padding: 22,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              {selectedDetails ? (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <span style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 11,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.15em',
-                      color: 'var(--pri, #e9c176)',
-                    }}>
-                      {selectedDetails.z}
-                    </span>
-                    <span style={{
-                      background: 'linear-gradient(135deg, #f5c96e, #d4af37)',
-                      color: '#071523',
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                    }}>
-                      AI {selectedDetails.ai.toFixed(1)}
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontFamily: 'var(--display)', fontSize: 24, margin: '0 0 8px', color: 'var(--ink, #fff)' }}>
-                    {selectedDetails.n}
-                  </h3>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '16px 0' }}>
-                    <div style={{
-                      background: 'var(--surface-2, #0f2236)',
-                      padding: '12px',
-                      borderRadius: 10,
-                      border: '1px solid var(--line, rgba(255,255,255,0.08))',
-                    }}>
-                      <span style={{ fontSize: 11, color: 'var(--muted, #94a3b8)', display: 'block' }}>
-                        {isAr ? 'متوسط السعر' : 'Average Price'}
-                      </span>
-                      <strong style={{ fontSize: 16, color: '#e9c176' }}>
-                        EGP {selectedDetails.priceM}M
-                      </strong>
-                    </div>
-
-                    <div style={{
-                      background: 'var(--surface-2, #0f2236)',
-                      padding: '12px',
-                      borderRadius: 10,
-                      border: '1px solid var(--line, rgba(255,255,255,0.08))',
-                    }}>
-                      <span style={{ fontSize: 11, color: 'var(--muted, #94a3b8)', display: 'block' }}>
-                        {isAr ? 'معدل النمو' : 'Annual Growth'}
-                      </span>
-                      <strong style={{ fontSize: 16, color: '#10b981' }}>
-                        {selectedDetails.g}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <p style={{ fontSize: 13, color: 'var(--muted, #94a3b8)', lineHeight: 1.6 }}>
-                    {isAr
-                      ? 'موقع متميز بالقاهرة الجديدة مع وحدات سكنية واستثمارية معتمدة وتقييم استثماري فوري.'
-                      : 'Prime location in New Cairo featuring verified luxury inventory, clubhouse amenities, and high ROI yield.'}
-                  </p>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', margin: 'auto' }}>
-                  <Compass style={{ width: 36, height: 36, color: 'var(--pri, #e9c176)', margin: '0 auto 12px' }} />
-                  <p style={{ color: 'var(--muted, #94a3b8)', fontSize: 13 }}>
-                    {isAr ? 'انقر على أي نقطة على الخريطة لعرض تفاصيل الكمبوند' : 'Click any marker on the map to inspect compound intelligence.'}
-                  </p>
-                </div>
-              )}
-
-              <Link
-                href={selectedDetails ? `/properties?compound=${encodeURIComponent(selectedDetails.n)}` : '/compounds'}
-                className="btn btn-pri"
-                style={{ width: '100%', marginTop: 16 }}
-              >
-                <span>{isAr ? 'تصفح الوحدات المتاحة' : 'View Available Units'}</span>
-                <ArrowRight style={{ width: 16, height: 16 }} />
-              </Link>
-            </div>
+          {/* Interactive Map Canvas */}
+          <div className="map-shell rv" style={{ height: 560, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 36px rgba(0,0,0,0.08)', border: '1px solid var(--line, rgba(0,0,0,0.1))' }}>
+            <CompoundsMap
+              compounds={allCompounds}
+              featured={featuredCompounds}
+              selectedName={selectedMapCompound}
+              onSelectAction={setSelectedMapCompound}
+              showControls={true}
+            />
           </div>
         </div>
       </section>

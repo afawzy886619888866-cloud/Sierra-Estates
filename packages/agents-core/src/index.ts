@@ -3,4 +3,15 @@ export * from './vertex-agent';
 export * from './registry';
 export * from './orchestrator';
 export * from './workflows';
+export * from './property-matcher';
+export * from './installment-calculator';
+export * from './negotiation-engine';
+export * from './lead-router';
+export * from './wealth-engine';
+export * from './memo-generator';
+export * from './voice-transcriber';
+export * from './fx-gold-engine';
+export * from './contract-engine';
+export * from './arbitrage-scanner';
+export * from './vip-concierge';
 

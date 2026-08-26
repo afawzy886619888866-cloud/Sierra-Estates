@@ -1,0 +1,25 @@
+{
+  "sql.defaultDatabaseType": "postgres",
+  "files.associations": {
+    "*.sql": "postgres"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "python.languageServer": "Jedi",
+  "python.analysis.typeCheckingMode": "basic",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.turbo": true
+  },
+  "compilets.autoStart": true
+}

@@ -1,5 +1,5 @@
 import 'server-only';
-import { validateRequest } from 'twilio';
+import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 
 /**
@@ -13,8 +13,11 @@ import { logger } from '@/lib/logger';
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_MESSAGING_SERVICE_SID = process.env.TWILIO_MESSAGING_SERVICE_SID;
+const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
+const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
 
 export const twilioConfigured = Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN);
+export const customWhatsAppGatewayConfigured = Boolean(WHATSAPP_API_URL);
 
 function publicSiteBase(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
@@ -45,10 +48,7 @@ export function getTwilioInboundWebhookUrl(): string | undefined {
 
 /**
  * Validates Twilio's X-Twilio-Signature on an inbound webhook request.
- * Delegates to the official `twilio` package's validateRequest — Twilio's own
- * docs explicitly recommend against hand-rolling this HMAC check, and there's
- * no published test vector to verify a homegrown implementation against.
- * https://www.twilio.com/docs/usage/webhooks/webhooks-security
+ * Computes HMAC-SHA1 over the sorted parameter payload using constant-time comparison.
  *
  * @param url     The exact URL Twilio was given (getTwilioStatusCallbackUrl()),
  *                NOT the request's own URL — proxies/rewrites can alter that.
@@ -57,9 +57,25 @@ export function isValidTwilioSignature(
   signatureHeader: string | null,
   url: string,
   params: Record<string, string>,
+  authTokenOverride?: string,
 ): boolean {
-  if (!signatureHeader || !TWILIO_AUTH_TOKEN) return false;
-  return validateRequest(TWILIO_AUTH_TOKEN, signatureHeader, url, params);
+  const token = authTokenOverride || process.env.TWILIO_AUTH_TOKEN;
+  if (!signatureHeader || !token) return false;
+  try {
+    const data = Object.keys(params)
+      .sort()
+      .reduce((acc, key) => acc + key + params[key], url);
+    const expected = crypto
+      .createHmac('sha1', token)
+      .update(Buffer.from(data, 'utf-8'))
+      .digest('base64');
+    const sigBuf = Buffer.from(signatureHeader);
+    const expBuf = Buffer.from(expected);
+    return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+  } catch (err) {
+    logger.error('Twilio signature validation error:', err);
+    return false;
+  }
 }
 
 export interface TwilioSendResult {
@@ -84,38 +100,87 @@ export async function sendWhatsApp(
   body: string,
   statusCallback?: string,
 ): Promise<TwilioSendResult> {
-  if (!twilioConfigured) {
-    logger.warn(`⚠️ [twilio] Not configured — simulating send to ${toPhone}`);
-    return { sid: `SIMULATED_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, simulated: true };
+  // 1. Direct custom WhatsApp Gateway (AWS EC2 / Lambda / Baileys / WPP / Open-WA)
+  if (WHATSAPP_API_URL) {
+    try {
+      const endpoint = WHATSAPP_API_URL.endsWith('/send') || WHATSAPP_API_URL.endsWith('/messages')
+        ? WHATSAPP_API_URL
+        : `${WHATSAPP_API_URL.replace(/\/+$/, '')}/send`;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (WHATSAPP_API_TOKEN) {
+        headers['Authorization'] = `Bearer ${WHATSAPP_API_TOKEN}`;
+        headers['x-api-key'] = WHATSAPP_API_TOKEN;
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          to: toPhone.replace(/^whatsapp:/, ''),
+          from: fromPhone.replace(/^whatsapp:/, ''),
+          body,
+          text: body,
+          message: body,
+          statusCallback,
+        }),
+        signal: AbortSignal.timeout(12000),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(`WhatsApp Gateway (${endpoint}) failed with status ${res.status}: ${JSON.stringify(data)}`);
+      }
+
+      const sid = data.id || data.sid || data.messageId || `WA_GW_${Date.now()}`;
+      logger.info(`[WhatsApp Gateway] Message sent successfully to ${toPhone} (SID: ${sid})`);
+      return { sid, simulated: false };
+    } catch (err: any) {
+      logger.error(`[WhatsApp Gateway] Error sending to ${toPhone}:`, err);
+      // If Twilio is also configured, let it fall through, otherwise rethrow
+      if (!twilioConfigured) {
+        throw err;
+      }
+      logger.warn(`[WhatsApp Gateway] Falling back to Twilio for ${toPhone}...`);
+    }
   }
 
-  const form = new URLSearchParams();
-  form.set('To', toWhatsApp(toPhone));
-  if (TWILIO_MESSAGING_SERVICE_SID) {
-    form.set('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
-  } else {
-    form.set('From', toWhatsApp(fromPhone));
-  }
-  form.set('Body', body);
-  if (statusCallback) form.set('StatusCallback', statusCallback);
+  // 2. Twilio WhatsApp REST API
+  if (twilioConfigured) {
+    const form = new URLSearchParams();
+    form.set('To', toWhatsApp(toPhone));
+    if (TWILIO_MESSAGING_SERVICE_SID) {
+      form.set('MessagingServiceSid', TWILIO_MESSAGING_SERVICE_SID);
+    } else {
+      form.set('From', toWhatsApp(fromPhone));
+    }
+    form.set('Body', body);
+    if (statusCallback) form.set('StatusCallback', statusCallback);
 
-  const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: form.toString(),
+        signal: AbortSignal.timeout(10000),
       },
-      body: form.toString(),
-      signal: AbortSignal.timeout(10000),
-    },
-  );
+    );
 
-  const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string; code?: number };
-  if (!res.ok || !data.sid) {
-    throw new Error(`Twilio send failed (${res.status}): ${data.message || 'unknown error'}`);
+    const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string; code?: number };
+    if (!res.ok || !data.sid) {
+      throw new Error(`Twilio send failed (${res.status}): ${data.message || 'unknown error'}`);
+    }
+    return { sid: data.sid, simulated: false };
   }
-  return { sid: data.sid, simulated: false };
+
+  // 3. Fallback: Graceful Simulation in dev/preview
+  logger.warn(`⚠️ [whatsapp-client] Neither custom WHATSAPP_API_URL nor Twilio configured — simulating send to ${toPhone}`);
+  return { sid: `SIMULATED_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, simulated: true };
 }
