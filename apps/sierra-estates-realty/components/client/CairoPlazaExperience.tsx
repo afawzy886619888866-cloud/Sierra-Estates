@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,6 +11,50 @@ const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
   ssr: false,
   loading: () => <div className="cp-tour-fallback">Loading interactive tour…</div>,
 });
+
+/* ── count-up hook (respects reduced-motion) ──────────────────────── */
+function useCountUp(target: number, ms = 1200) {
+  const [val, setVal] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    let done = false;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting || done) return;
+        done = true;
+        io.disconnect();
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReduced) { setVal(target); return; }
+        let start = 0;
+        const step = (ts: number) => {
+          if (!start) start = ts;
+          const pr = Math.min((ts - start) / ms, 1);
+          setVal(target * (1 - Math.pow(1 - pr, 3)));
+          if (pr < 1) raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      });
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [target, ms]);
+  return { ref, text: Math.round(val).toString() };
+}
+
+function CpStat({ value, label }: { value: string; label: string }) {
+  const num = parseInt(value, 10);
+  const isNumeric = !isNaN(num);
+  const { ref, text } = useCountUp(isNumeric ? num : 0);
+  return (
+    <div className="cp-stat">
+      <b ref={isNumeric ? ref : undefined}>{isNumeric ? text : value}</b>
+      <span>{label}</span>
+    </div>
+  );
+}
 
 type Props = { lang?: 'en' | 'ar'; section: 'overview' | 'inventory' | 'investor' | 'contact' };
 
@@ -161,6 +205,13 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
     });
   };
 
+  // Lightbox state for evidence images
+  const [lightboxImg, setLightboxImg] = useState<{ src: string; alt: string; caption: string } | null>(null);
+  const openLightbox = useCallback((src: string, alt: string, caption: string) => {
+    setLightboxImg({ src, alt, caption });
+  }, []);
+  const closeLightbox = useCallback(() => setLightboxImg(null), []);
+
   return (
     <main dir={isAr ? 'rtl' : 'ltr'} className="cp-shell" data-theme={theme}>
       <header className="cp-header">
@@ -208,7 +259,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
       </section>
       <div className="cp-stats" role="group" aria-label={isAr ? 'أرقام كايرو بلازا' : 'Cairo Plaza at a glance'}>
         {stats[lang].map((s) => (
-          <div className="cp-stat" key={s.label}><b>{s.value}</b><span>{s.label}</span></div>
+          <CpStat key={s.label} value={s.value} label={s.label} />
         ))}
       </div>
       <section className="cp-grid" aria-label={isAr ? 'طبقة معلومات مضبوطة' : 'A controlled information layer'}>
@@ -226,7 +277,16 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
         </div>
         <div className="cp-evidence-grid">
           {realEvidence.map((image) => (
-            <figure className="cp-evidence-card" key={image.src}>
+            <figure
+              className="cp-evidence-card"
+              key={image.src}
+              style={{ cursor: 'zoom-in' }}
+              onClick={() => openLightbox(
+                image.src,
+                isAr ? image.altAr : image.altEn,
+                isAr ? `${image.titleAr} — ${image.captionAr}` : `${image.titleEn} — ${image.captionEn}`,
+              )}
+            >
               <div className="cp-evidence-media">
                 <Image
                   src={image.src}
@@ -262,6 +322,18 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
         <div className="cp-card"><h2>{isAr ? 'سيناريو توضيحي' : 'Illustrative scenario'}</h2><p>{isAr ? 'الأرقام والنتائج المحتملة ليست ضمانات.' : 'Financial figures and outcomes are not guarantees.'}</p></div>
       </section>
       <CairoPlazaCalculator lang={lang} />
+      <section className="cp-cta-banner" aria-labelledby="cp-cta-title">
+        <div className="cp-cta-inner">
+          <div>
+            <h2 id="cp-cta-title">{isAr ? 'جاهز للخطوة التالية؟' : 'Ready to take the next step?'}</h2>
+            <p>{isAr ? 'اطلب الملف الاستثماري أو جدول التأهيل الخاص بمستأجريك. نضمن لك متابعة خلال 24 ساعة.' : 'Request the investor pack or your tenant-fit schedule. We will follow up within 24 hours.'}</p>
+          </div>
+          <div className="cp-cta-actions">
+            <Link href={`${prefix}/investor`} className="cp-cta-btn cp-cta-btn-primary">{isAr ? 'اطلب الملف الاستثماري' : 'Request Investor Pack'}</Link>
+            <Link href={`${prefix}/contact`} className="cp-cta-btn cp-cta-btn-secondary">{isAr ? 'تواصل مع فريقنا' : 'Talk to our team'}</Link>
+          </div>
+        </div>
+      </section>
       <section className="cp-materials" aria-labelledby="cp-materials-title">
         <div className="cp-section-heading">
           <div>
@@ -280,6 +352,13 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
           ))}
         </div>
       </section>
+      {lightboxImg && (
+        <div className="cp-lightbox" onClick={closeLightbox} role="dialog" aria-label={isAr ? 'عرض الصورة' : 'Image viewer'}>
+          <img src={lightboxImg.src} alt={lightboxImg.alt} />
+          <button className="cp-lightbox-close" onClick={closeLightbox} aria-label={isAr ? 'إغلاق' : 'Close'}>×</button>
+          <div className="cp-lightbox-caption">{lightboxImg.caption}</div>
+        </div>
+      )}
     </main>
   );
 }
