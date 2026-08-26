@@ -38,6 +38,7 @@
         "check:public-env": "node scripts/check-public-env-safety.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
+        "deploy:check:env": "node scripts/verify-env-readiness.mjs",
         "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
     },
     "devDependencies": {
