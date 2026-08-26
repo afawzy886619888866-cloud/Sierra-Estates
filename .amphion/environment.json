@@ -4,6 +4,11 @@
     "agents",
     "claude"
   ],
-  "adapterDecisions": {},
-  "lastPromptAt": ""
+  "adapterDecisions": {
+    "claude": {
+      "policy": "accepted",
+      "updatedAt": "2026-08-26T02:14:09.515Z"
+    }
+  },
+  "lastPromptAt": "2026-08-26T02:14:09.515Z"
 }
