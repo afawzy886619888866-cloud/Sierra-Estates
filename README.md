@@ -114,7 +114,7 @@ Without Firebase Admin creds, the public client portal still runs — only `/adm
 
 | Area | Variables |
 | :--- | :--- |
-| AI / Gemini | `GOOGLE_AI_API_KEY`, `GOOGLE_GENAI_API_KEY`, `NEXT_PUBLIC_GEMINI_API_KEY`, `AI_PROVIDER`, `GOOGLE_CLOUD_LOCATION` |
+| AI / Gemini | `GOOGLE_AI_API_KEY`, `GOOGLE_GENAI_API_KEY`, `GEMINI_API_KEY`, `AI_PROVIDER`, `GOOGLE_CLOUD_LOCATION` |
 | WhatsApp (Meta Cloud API) | `WHATSAPP_API_TOKEN`, `WHATSAPP_META_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WABA_NUMBER_1..4` |
 | WhatsApp (Twilio, wired in Phase 4) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` |
 | Telegram alerts | `TELEGRAM_BOT_TOKEN` (from [@BotFather](https://t.me/botfather)), `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`) |
