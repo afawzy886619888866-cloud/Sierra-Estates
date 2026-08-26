@@ -144,7 +144,11 @@ jobs:
           echo "name=$ENV" >> "$GITHUB_OUTPUT"
           [ "$ENV" = "production" ] && echo "flag=--prod" >> "$GITHUB_OUTPUT" || echo "flag=" >> "$GITHUB_OUTPUT"
 
-<<<<<<< HEAD
+      - name: Validate public env safety
+        env:
+          SECRETS_JSON: ${{ toJson(secrets) }}
+        run: node scripts/check-public-env-safety.mjs
+
       # ── P0 GATE: refuse to build/deploy PRODUCTION without required secrets ──
       # Fails fast instead of shipping a build that silently runs in limited mode
       # (no lead writes, admin auth, or cron). Preview deploys are intentionally
@@ -172,33 +176,6 @@ jobs:
           PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: node scripts/verify-env-readiness.mjs
-=======
-      - name: Validate deployment prerequisites
-        env:
-          SECRETS_JSON: ${{ toJson(secrets) }}
-        run: |
-          node scripts/check-public-env-safety.mjs
-
-          if [ "${{ steps.target.outputs.name }}" != "production" ]; then
-            exit 0
-          fi
-
-          missing=()
-          SERVICE_ACCOUNT=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
-          SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
-          SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
-          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
-
-          [ -n "$SERVICE_ACCOUNT" ] || missing+=("FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON")
-          [ -n "$SESSION_SECRET_VAL" ] || missing+=("SESSION_SECRET")
-          [ -n "$SBR_SECRET" ] || missing+=("SBR_SECRET_KEY")
-          [ -n "$CRON_SECRET_VAL" ] || missing+=("CRON_SECRET")
-
-          if [ "${#missing[@]}" -gt 0 ]; then
-            printf '::error::Production deployment blocked. Missing GitHub secrets: %s\n' "$(IFS=', '; echo "${missing[*]}")"
-            exit 1
-          fi
->>>>>>> ff124d70640dfba7ff46ac27ff28935946bc1e28
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
       - name: Normalize Vercel project settings
