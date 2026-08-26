@@ -13,7 +13,7 @@
         "dev:all": "turbo run dev",
         "build": "turbo run build",
         "lint": "turbo run lint",
-        "hint": "hint",
+
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
@@ -43,8 +43,6 @@
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
-        "@openai/codex-security": "^0.1.4",
-        "hint": "^7.1.13",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
         "vitest": "^4.1.10"
