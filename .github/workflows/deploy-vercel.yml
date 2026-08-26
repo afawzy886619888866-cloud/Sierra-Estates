@@ -13,7 +13,8 @@ name: Deploy · Vercel
 #
 # Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets):
 #   VERCEL_TOKEN               — Vercel token with Projects R/W, Domains
-#   SESSION_SECRET             — App session signing secret
+#   FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON
+#   SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 #   VERCEL_ORG_ID              — Vercel team/org ID
@@ -103,10 +104,11 @@ jobs:
           
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 
-          # If VERCEL_TOKEN is unset, gracefully exit 0 with notice (native git integration handles deploys)
+          # Git deployments are disabled in vercel.json, so silently skipping
+          # this job would leave main undeployed. Fail visibly instead.
           if [ -z "$TOKEN" ]; then
-            echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment step. Vercel native Git integration handles deployments."
-            exit 0
+            echo "::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository."
+            exit 1
           fi
 
           echo "VERCEL_ORG_ID=$ORG_ID"     >> $GITHUB_ENV
@@ -115,13 +117,13 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: pnpm
@@ -141,6 +143,62 @@ jobs:
           fi
           echo "name=$ENV" >> "$GITHUB_OUTPUT"
           [ "$ENV" = "production" ] && echo "flag=--prod" >> "$GITHUB_OUTPUT" || echo "flag=" >> "$GITHUB_OUTPUT"
+
+<<<<<<< HEAD
+      # ── P0 GATE: refuse to build/deploy PRODUCTION without required secrets ──
+      # Fails fast instead of shipping a build that silently runs in limited mode
+      # (no lead writes, admin auth, or cron). Preview deploys are intentionally
+      # exempt so they stay usable for testing. Public NEXT_PUBLIC_* Firebase
+      # values fall back to the same non-secret literals the sync step uses, so
+      # this gates only on genuinely-missing server secrets. Audit P0.
+      - name: Verify production env readiness (P0 gate)
+        if: steps.target.outputs.name == 'production'
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs' }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'sierra-blu.firebaseapp.com' }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-blu' }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sierra-blu.firebasestorage.app' }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '941030513456' }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID || '1:941030513456:web:56209a1495d69f217086f5' }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          SBR_SECRET_KEY: ${{ secrets.SBR_SECRET_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU || secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || 'sierra-blu' }}
+          FIREBASE_CLIENT_EMAIL: ${{ vars.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: node scripts/verify-env-readiness.mjs
+=======
+      - name: Validate deployment prerequisites
+        env:
+          SECRETS_JSON: ${{ toJson(secrets) }}
+        run: |
+          node scripts/check-public-env-safety.mjs
+
+          if [ "${{ steps.target.outputs.name }}" != "production" ]; then
+            exit 0
+          fi
+
+          missing=()
+          SERVICE_ACCOUNT=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
+          SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
+          SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
+          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
+
+          [ -n "$SERVICE_ACCOUNT" ] || missing+=("FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON")
+          [ -n "$SESSION_SECRET_VAL" ] || missing+=("SESSION_SECRET")
+          [ -n "$SBR_SECRET" ] || missing+=("SBR_SECRET_KEY")
+          [ -n "$CRON_SECRET_VAL" ] || missing+=("CRON_SECRET")
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf '::error::Production deployment blocked. Missing GitHub secrets: %s\n' "$(IFS=', '; echo "${missing[*]}")"
+            exit 1
+          fi
+>>>>>>> ff124d70640dfba7ff46ac27ff28935946bc1e28
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
       - name: Normalize Vercel project settings
@@ -208,7 +266,7 @@ jobs:
           SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
           CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
 
-          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_BOT_TOKEN // .NEXT_PUBLIC_TELEGRAM_BOT_TOKEN // empty')
+          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_BOT_TOKEN // empty')
           TG_BOT_USERNAME=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME // empty')
           TG_CHAT_ID_VAL=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_CHAT_ID // empty')
           TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
@@ -312,7 +370,6 @@ jobs:
           # AI & LLM Providers
           upsert GOOGLE_AI_API_KEY                     "$AI_KEY" encrypted
           upsert GEMINI_API_KEY                        "$AI_KEY" encrypted
-          upsert NEXT_PUBLIC_GEMINI_API_KEY            "$AI_KEY"
           upsert GOOGLE_GENAI_API_KEY                  "$GENAI_KEY" encrypted
           upsert AI_PROVIDER                           "$AI_PROV"
           upsert GOOGLE_CLOUD_LOCATION                 "${GC_LOC:-europe-west1}"
@@ -342,7 +399,6 @@ jobs:
 
           # Telegram Integration
           upsert TELEGRAM_BOT_TOKEN                    "$TG_BOT_TOKEN" encrypted
-          upsert NEXT_PUBLIC_TELEGRAM_BOT_TOKEN        "$TG_BOT_TOKEN" encrypted
           upsert NEXT_PUBLIC_TELEGRAM_BOT_USERNAME     "$TG_BOT_USERNAME"
           upsert TELEGRAM_CHAT_ID                      "$TG_CHAT_ID_VAL" encrypted
           upsert TELEGRAM_WEBHOOK_SECRET               "$TG_WEBHOOK_SECRET" encrypted

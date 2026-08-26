@@ -20,7 +20,7 @@ dotenv.config({ path: path.resolve(process.cwd(), 'apps/sierra-estates-realty/.e
 const aiKey =
   process.env.GOOGLE_GENAI_API_KEY ||
   process.env.GOOGLE_AI_API_KEY ||
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+  process.env.GEMINI_API_KEY ||
   process.env.ANTIGRAVITY_API_KEY ||
   '';
 
