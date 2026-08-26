@@ -1,6 +1,6 @@
 'use client';
+// @ts-nocheck
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-/* @ts-nocheck — massive admin dashboard with dynamic patterns; typed incrementally */
 /**
  * SIERRA ESTATES 3.0 — ADMIN PORTAL (Intelligence OS)
  * Ported 1:1 from the designer's static bundle (admin3.0portalBLUE.html).
