@@ -13,6 +13,16 @@ const makeUnavailable = (name: string): any =>
       get(_target, prop) {
         if (prop === 'then') return undefined;
         return (..._args: any[]) => {
+          // Keep build-time and test fallbacks deterministic, but never let a
+          // production request report a fake successful database operation.
+          const isProductionRuntime =
+            process.env.NODE_ENV === 'production' &&
+            process.env.NEXT_PHASE !== 'phase-production-build';
+          if (isProductionRuntime) {
+            throw new Error(
+              `[firebase-admin] ${name} is unavailable. Configure Firebase server credentials before serving requests.`
+            );
+          }
           console.warn(`⚠️ [firebase-admin] ${name}.${String(prop)} called but not initialized.`);
           const chainable = {
             get: () => Promise.resolve({ size: 0, empty: true, forEach: () => {}, exists: false, data: () => ({}) }),
@@ -44,13 +54,46 @@ async function loadAndInitializeAdmin() {
   if (isAdminInitialized) return;
   if (initPromise) return initPromise;
 
+  // In test environment without credentials, use resilient mock fallback silently
+  if (process.env.NODE_ENV === 'test' && !process.env.FIREBASE_SERVICE_ACCOUNT_JSON && !process.env.FIREBASE_CLIENT_EMAIL) {
+    return;
+  }
+
   initPromise = (async () => {
     try {
-      const { getApps, getApp, initializeApp, cert } = await import('firebase-admin/app');
-      const { getAuth } = await import('firebase-admin/auth');
-      const { getFirestore } = await import('firebase-admin/firestore');
-      const { getAppCheck } = await import('firebase-admin/app-check');
-      const { getStorage } = await import('firebase-admin/storage');
+      let getApps: any, getApp: any, initializeApp: any, cert: any;
+      let getAuth: any;
+      let getFirestore: any;
+      let getAppCheck: any;
+      let getStorage: any;
+
+      try {
+        // Direct root require is 100% compatible with Jest and Node.js CJS
+        const admin = require('firebase-admin');
+        const adminAppMod = require('firebase-admin/app');
+        getApps = adminAppMod.getApps || admin.apps;
+        getApp = adminAppMod.getApp || (() => admin.app());
+        initializeApp = adminAppMod.initializeApp || admin.initializeApp;
+        cert = adminAppMod.cert || admin.credential?.cert;
+        getAuth = require('firebase-admin/auth').getAuth || admin.auth;
+        getFirestore = require('firebase-admin/firestore').getFirestore || admin.firestore;
+        getAppCheck = require('firebase-admin/app-check').getAppCheck || admin.appCheck;
+        getStorage = require('firebase-admin/storage').getStorage || admin.storage;
+      } catch {
+        const appMod = await import('firebase-admin/app');
+        const authMod = await import('firebase-admin/auth');
+        const firestoreMod = await import('firebase-admin/firestore');
+        const appCheckMod = await import('firebase-admin/app-check');
+        const storageMod = await import('firebase-admin/storage');
+        getApps = appMod.getApps;
+        getApp = appMod.getApp;
+        initializeApp = appMod.initializeApp;
+        cert = appMod.cert;
+        getAuth = authMod.getAuth;
+        getFirestore = firestoreMod.getFirestore;
+        getAppCheck = appCheckMod.getAppCheck;
+        getStorage = storageMod.getStorage;
+      }
 
       let apps = getApps();
 

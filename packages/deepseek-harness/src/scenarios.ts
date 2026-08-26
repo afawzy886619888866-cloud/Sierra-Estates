@@ -1,4 +1,4 @@
-import { EvalScenario } from './types.js';
+import { EvalScenario } from './types';
 
 export const BENCHMARK_SCENARIOS: EvalScenario[] = [
   {
@@ -66,5 +66,68 @@ export const BENCHMARK_SCENARIOS: EvalScenario[] = [
     expectedOutputKeys: ['historicalVolume', 'appreciationPct', 'memorySources'],
     maxLatencyMs: 3000,
     minAccuracyScore: 0.88,
+  },
+  {
+    id: 'sc-arbitrage-scanner-006',
+    category: 'arbitrage_detection',
+    prompt: 'Scan secondary resale vs developer primary launch price in Villette Sodic to identify arbitrage opportunities with >15% margin.',
+    context: {
+      compound: 'Villette Sodic',
+      resalePricePerSqm: 62000,
+      developerPrimaryPricePerSqm: 78000,
+    },
+    expectedOutputKeys: ['arbitrageMarginPercent', 'recommendation', 'riskAssessment', 'developerSpreadEgp'],
+    maxLatencyMs: 3000,
+    minAccuracyScore: 0.9,
+  },
+  {
+    id: 'sc-gold-currency-parity-007',
+    category: 'fx_gold_parity',
+    prompt: 'Compute multi-currency and 21K/24K Egyptian gold weight equivalents for a 48.65M EGP signature penthouse.',
+    context: {
+      priceEGP: 48650000,
+      rates: { USD: 48.65, AED: 13.25, gold21kGramEGP: 3450 },
+    },
+    expectedOutputKeys: ['usdEquivalent', 'aedEquivalent', 'gold21kGramsEquivalent', 'formattedGoldWeight'],
+    maxLatencyMs: 2000,
+    minAccuracyScore: 0.95,
+  },
+  {
+    id: 'sc-easy-listing-scribe-008',
+    category: 'scribe_extraction',
+    prompt: 'Parse raw unstructured WhatsApp text: "فيلا مستقلة في ميفيدا التجمع للبيع 380م مباني 4 غرف تشطيب الترا سوبر لوكس مطلوب 36 مليون كاش او تقسيط على 7 سنين بمقدم 10%" and generate SBR code.',
+    context: {
+      rawText: 'فيلا مستقلة في ميفيدا التجمع للبيع 380م مباني 4 غرف تشطيب الترا سوبر لوكس مطلوب 36 مليون كاش او تقسيط على 7 سنين بمقدم 10%',
+    },
+    expectedOutputKeys: ['compound', 'unitType', 'buaSqm', 'priceEGP', 'sbrPropertyCode'],
+    maxLatencyMs: 3500,
+    minAccuracyScore: 0.92,
+  },
+  {
+    id: 'sc-multi-party-negotiation-009',
+    category: 'multi_party_negotiation',
+    prompt: 'Broker a 3-way negotiation between asking price of 38M EGP and buyer offer of 34M EGP with seller floor of 35.5M EGP.',
+    context: {
+      askingPrice: 38000000,
+      buyerOffer: 34000000,
+      sellerFloor: 35500000,
+      maxTenureYears: 7,
+    },
+    expectedOutputKeys: ['negotiationStatus', 'agreedPriceEGP', 'commissionFeeEGP', 'counterRoundsCount'],
+    maxLatencyMs: 4000,
+    minAccuracyScore: 0.9,
+  },
+  {
+    id: 'sc-voice-transcription-tone-010',
+    category: 'voice_intent',
+    prompt: 'Analyze transcribed voice inquiry: "مساء الخير يا فندم أنا بدور على تاون هاوس في التجمع الخامس قريب من الجامعة الأمريكية وعايز استلام فوري."',
+    context: {
+      audioDurationSec: 6.5,
+      confidence: 0.96,
+      dialect: 'egyptian_arabic',
+    },
+    expectedOutputKeys: ['primaryLocation', 'propertyTypePreference', 'deliveryTimeline', 'followUpScript'],
+    maxLatencyMs: 2500,
+    minAccuracyScore: 0.92,
   },
 ];

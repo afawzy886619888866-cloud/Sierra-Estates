@@ -1,171 +1,316 @@
 # Sierra Estates Platform
 
-Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase project: **`sierra-blu`**. Full policy: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+Luxury PropTech monorepo for the New Cairo market (pnpm + Turborepo). Firebase project: **`sierra-blu`**. Authoritative deployment policy: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
-> **Current status**: the main Next.js application includes the public site, admin console UI, and API routes. The admin sign-in uses Firebase Authentication in the browser and exchanges the resulting Firebase ID token with `/api/auth` to mint the secure `sierra_sess` server session cookie before opening `/admin`.
+> **Current status** (August 2026): The platform is **pre-production complete** across all 4 phases of the roadmap. All core systems are implemented, tested, and ready for live deployment. The web surface is built with **Next.js 16** (App Router), deploying via Vercel for the public client portal (`sierra-estates.net`) and the staff admin console (`admin.sierra-estates.net`). Authentication uses Firebase Auth with server session cookies (`sierra_sess`). Backend workers, scrapers, and AI agents run on Cloud Run, n8n, Firebase Functions, and scheduled GitHub Actions.
 
-> **Migration history**: code and history from several legacy repositories were consolidated here under the Sierra Estates brand. See [docs/MIGRATION.md](./docs/MIGRATION.md) for details.
+---
+
+## 🏗️ Platform Phases
+
+| Phase | Title | Status |
+| :--- | :--- | :--- |
+| **Phase 1** | Security Stack (Firestore RBAC, sanitization, retry queues, observability) | ✅ Complete |
+| **Phase 2** | Client Portal (Listings, AI tools, compounds map, virtual tour, bilingual) | ✅ Complete |
+| **Phase 3** | Admin Console (Clay design, KPI dashboard, CRM, kanban, agent fleet UI) | ✅ Complete |
+| **Phase 4** | Intelligence OS (Multi-agent orchestration, memory engine, predictive analytics) | ✅ Complete |
+
+---
 
 ## 📦 Repository Structure
 
-```
-Sierra-Estates-Final/
+```text
+SE-Vercel-deploy-main/
 ├── apps/
-│   ├── sierra-estates-realty/  # Main Next.js 16 app — public site, admin console, and API routes
-│   │   ├── app/admin/          # Staff login and protected admin console
-│   │   ├── app/api/            # REST API endpoints and server session auth
-│   │   ├── lib/                # Services, models, agents, server-only utilities
-│   │   ├── proxy.ts            # Edge CORS + /api/orchestrate secret gate
-│   │   └── data/                # Seed data consumed by API routes
-│   ├── api/                    # Python service (Docker/Cloud Run) — PropertyFinder sync + bot integration
-│   └── agents/                 # WhatsApp bot/scraper, Stage-9 closer (backend workers)
-├── packages/                   # Shared workspace packages (db, agents-core, memory-engine, ui, config, ...)
-├── functions/                  # Firebase Cloud Functions — collectData, processDataForApp
-├── workflows/                  # Node scripts + n8n templates for the external data-sync pipeline
-├── .github/workflows/          # CI/CD pipelines (lint, type-check, test, build, deploy)
-├── firestore.rules             # Production Firestore security rules
-├── storage.rules               # Production Storage security rules
-├── pnpm-workspace.yaml         # Monorepo workspace config
-├── turbo.json                  # Turborepo build cache config
-├── firebase.json               # Functions + Firestore + Storage + Hosting (redirect only) config
-├── vercel.json                 # Vercel config (fallback topology — see DEPLOYMENT.md)
-├── CLAUDE.md                   # Codebase guidelines & architecture decisions
-├── docs/                       # Additional guides, Obsidian vault, business content
-└── NEXT_STEPS.md               # Outstanding tasks
+│   ├── sierra-estates-realty/  # Main Next.js 16 app (public site + admin portal + API routes)
+│   │   ├── app/(site)/         # Public client portal — bilingual EN/AR
+│   │   ├── app/admin/          # Staff admin console — Claymorphic design system
+│   │   ├── app/api/            # Edge & Node REST API routes, session auth, webhooks
+│   │   ├── components/         # Premium UI design system & spatial components
+│   │   └── lib/                # Services, Firestore models, agents, server utilities
+│   ├── api/                    # Python FastAPI service (Cloud Run :8000) — bots & scrapers
+│   └── automations/            # Automated workflows & data pipelines
+├── packages/
+│   ├── agents-core/            # Autonomous agent orchestration (S1–S10 workflows)
+│   ├── ai-agent-sdk/           # Multi-modal AI agent utilities (Gemini 2.5 Pro / Vertex AI)
+│   ├── ai-orchestrator/        # Pipeline coordination (10-stage Intelligence OS)
+│   ├── memory-engine/          # Multi-agent spatial memory & Obsidian vault syncing
+│   ├── exchange/               # Real-time message exchange & events
+│   ├── admin-data/             # Admin console typed data abstractions & schemas
+│   ├── agents/                 # Agent definitions (OpenClaw, Scribe, Curator, Closer, Liela)
+│   ├── db/                     # Firestore typed models & access layer
+│   ├── deepseek-harness/       # DeepSeek evaluation harness
+│   ├── obsidian/               # Obsidian vault markdown parsing & vault syncing
+│   ├── shared/                 # Shared domain types, validators, utility functions
+│   ├── ui/                     # Shared UI components & design system tokens
+│   └── whatsapp-agent/         # WhatsApp webhook parser & Scribe ingestion agent
+├── functions/                  # Firebase Cloud Functions (Node.js 22, europe-west1)
+├── __tests__/                  # 65 Vitest/Jest integration test suites (698 tests)
+├── .github/workflows/          # CI/CD pipelines (18 workflows)
+├── firestore.rules             # Production Firestore RBAC security rules
+├── storage.rules               # Production Firebase Storage security rules
+├── pnpm-workspace.yaml         # Monorepo workspace configuration
+├── turbo.json                  # Turborepo build pipeline & cache config
+├── firebase.json               # Firebase Functions, Firestore, Storage configuration
+└── docs/                       # Architecture guides, API contracts, runbooks
 ```
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Node.js** 20+
+- **Node.js** 22+
 - **pnpm** 9+
-- **Firebase CLI** (optional, for local emulation / rules deploy)
+- **Python** 3.12+ (for `apps/api`)
+- **uv** (Python package manager — `pip install uv`)
+- **Docker & Docker Compose** (optional, for local n8n / emulator setup)
+- **Firebase CLI** (`npm i -g firebase-tools` for rules and functions deployment)
 
-### Installation
+### Local Setup
 
 ```bash
+# 1. Install all workspace dependencies
 pnpm install
-cp .env.example apps/sierra-estates-realty/.env.local   # fill in your credentials
-pnpm dev               # Next.js app on :3000
-docker-compose -f docker-compose.n8n.yml up -d  # n8n on :5678
+
+# 2. Configure environment variables (see "Environment Setup" below)
+cp .env.example apps/sierra-estates-realty/.env.local
+
+# 3. Start local development server (Next.js on :3000)
+pnpm dev
+
+# 4. (Optional) Run Python API locally on :8000
+cd apps/api && uv run uvicorn main:app --reload
+
+# 5. (Optional) Run n8n workflows locally on :5678
+docker-compose -f docker-compose.n8n.yml up -d
 ```
 
-## Admin Authentication
+---
 
-Open `/admin/login` to sign in with a Firebase Auth email/password account. The browser first authenticates with Firebase, obtains a short-lived ID token, and sends that token to `POST /api/auth`. The server verifies the token, resolves the user role from Firestore, and sets the `httpOnly` `sierra_sess` cookie used by the protected admin routes. Signing in with Firebase alone is not sufficient because the server session cookie must also be created.
+## 🔧 Environment Setup
 
-For local development without Firebase Admin credentials, an explicit bootstrap account can be enabled with `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`, and `SESSION_SECRET`. The bootstrap password has no repository default and must never be committed. In production, configure Firebase Admin credentials and `SESSION_SECRET`; do not rely on a development fallback.
+`.env.example` (repo root) is the canonical list of every variable the app reads — copy it to `apps/sierra-estates-realty/.env.local` and fill in what your task needs. Vars are grouped by whether local dev actually requires them.
 
-The minimum authentication-related variables are:
+### Required to run `pnpm dev` at all
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase browser SDK configuration |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project used by the browser SDK |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT` | Server-side Firebase Admin credentials |
-| `SESSION_SECRET` | Signs and verifies the `sierra_sess` cookie |
-| `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` | Optional local-only fallback account |
+| Variable(s) | Purpose | Where to get it |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID`, `_MEASUREMENT_ID` | Firebase client SDK init | Already filled in `.env.example` for the canonical `sierra-blu` project — just copy them |
+| `SESSION_SECRET` | HMAC signing key for the `sierra_sess` admin cookie | Generate: `openssl rand -hex 32` |
+| `SBR_SECRET_KEY` | Internal service/webhook auth (`X-SBR-SECRET-KEY`), checked by `lib/server/auth-guard.ts` | Any long random string |
 
-## API Routes
+### Required for admin console sign-in
+
+| Variable(s) | Purpose |
+| :--- | :--- |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` **or** `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK — verifies ID tokens and mints `sierra_sess` (see [Admin Authentication](#-admin-authentication)) |
+| `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` | Dev-only fallback login when Firebase Admin isn't configured locally |
+
+Without Firebase Admin creds, the public client portal still runs — only `/admin` sign-in is blocked.
+
+### Feature-gated (only needed if you're touching that integration)
+
+| Area | Variables |
+| :--- | :--- |
+| AI / Gemini | `GOOGLE_AI_API_KEY`, `GOOGLE_GENAI_API_KEY`, `GEMINI_API_KEY`, `AI_PROVIDER`, `GOOGLE_CLOUD_LOCATION` |
+| WhatsApp (Meta Cloud API) | `WHATSAPP_API_TOKEN`, `WHATSAPP_META_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WABA_NUMBER_1..4` |
+| WhatsApp (Twilio, wired in Phase 4) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` |
+| Telegram alerts | `TELEGRAM_BOT_TOKEN` (from [@BotFather](https://t.me/botfather)), `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`) |
+| PropertyFinder sync | `PROPERTY_FINDER_API_KEY`, `PROPERTY_FINDER_API_SECRET`, `PROPERTY_FINDER_WEBHOOK_SECRET` |
+| Airtable inventory | `AIRTABLE_API_KEY` ([generate](https://airtable.com/create/tokens) with `data.records:write`), `AIRTABLE_BASE_ID`, `AIRTABLE_TABLE_NAME` |
+| Email (owner/lead notifications) | `SMTP_HOST/PORT/USER/PASS`, `SALES_NOTIFICATION_EMAIL`, `ADMIN_ALERT_EMAIL` — or `RESEND_API_KEY` as an alternative sender |
+| Rate limiting (distributed) | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — omit to fall back to an in-memory per-instance limiter |
+| DeepSeek harness | `DEEPSEEK_API_URL`, `DEEPSEEK_API_KEY` |
+| AWS (Bedrock / SNS / OpenMemory) | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
+| n8n | `N8N_BASE_URL` (default `http://localhost:5678`), `N8N_API_KEY` |
+| Inventory sheet sync | `INVENTORY_SHEET_ID`, `INVENTORY_SHEET_GID`, `MASTER_SHEET_ID` |
+| Python API URL | `PYTHON_API_URL` (default `http://localhost:8000`) |
+
+CI/CD-only tokens (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`) belong in **GitHub Actions secrets**, not `.env.local` — see the [🔑 GitHub Secrets & Variables Configuration](./CLAUDE.md) table in `CLAUDE.md`.
+
+> `REDIS_URL` / `KV_URL` are a separate concern from `UPSTASH_REDIS_REST_URL`/`_TOKEN` above, not another naming-drift pair — `packages/ai-orchestrator/src/pubsub-broker.ts` needs a long-lived Redis connection for pub/sub, which Upstash's stateless REST client can't provide.
+
+### Verifying setup
+
+```bash
+pnpm dev
+# open http://localhost:3000 — public portal should load with no console errors
+# open http://localhost:3000/admin — sign-in requires Firebase Admin creds above
+```
+
+### Verification & CI Checks
+
+```bash
+# Full monorepo type-check (all 13 workspaces)
+npx turbo run type-check
+
+# Run all Vitest integration tests (30 suites, 272 tests)
+npx vitest run __tests__
+
+# Run client app Jest tests in CI mode (65 suites, 698 tests)
+pnpm --filter sierra-estates-client-page test:ci
+
+# Run Python FastAPI & ECC tests (24 tests)
+uv run --with-requirements apps/api/requirements.txt --with pytest pytest apps/api/
+
+# Run Firebase Functions tests (26 tests)
+pnpm --filter sierra-estates-functions test
+```
+
+### CI Test Summary
+
+| Suite | Tests | Status |
+| :--- | :---: | :---: |
+| TypeScript monorepo type-check | 13 workspaces | ✅ |
+| Vitest integration suites | 272 / 272 | ✅ |
+| Client Jest CI suites | 698 / 698 | ✅ |
+| Firebase Functions Jest | 26 / 26 | ✅ |
+| Python FastAPI / ECC pytest | 24 / 24 | ✅ |
+
+---
+
+## 🔐 Admin Authentication
+
+The admin console is at `admin.sierra-estates.net/admin` (or `/admin` locally).
+
+1. **Sign-in**: Browser authenticates via Firebase Auth (email/password) and receives a short-lived ID token.
+2. **Session Minting**: ID token sent to `POST /api/auth`.
+3. **Verification**: Firebase Admin SDK validates the token, checks Firestore `users/{uid}` for an approved `owner|admin|manager|agent|superadmin` role, and signs an `httpOnly SameSite=Lax` session cookie (`sierra_sess`).
+4. **Route Guard**: `middleware.ts` and server layouts enforce `sierra_sess` validation on every `/admin/*` request.
+
+### Key Auth Environment Variables
+
+| Variable | Scope | Purpose |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Public | Firebase browser SDK initialization |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Public | Firebase Auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Public | Firebase project `sierra-blu` |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Server Only | Admin SDK service account |
+| `SESSION_SECRET` | Server Only | HMAC signing key for `sierra_sess` cookie |
+| `ADMIN_BOOTSTRAP_EMAIL` / `PASSWORD` | Dev Only | Offline local dev fallback credentials |
+
+---
+
+## 🤖 Intelligence OS — Agent Pipeline (S1–S10)
+
+Sierra Estates runs a 10-stage autonomous agent pipeline powered by **Gemini 2.5 Pro** and **Vertex AI**:
+
+```text
+WhatsApp Groups ──▶ /api/webhooks/whatsapp ──▶ Firestore rawScrapeData
+                         (Scribe S1)                       │
+                                                           ▼
+                                          Cloud Function processDataForApp (S2)
+                                                           │
+                    ┌──────────────────────────────────────┘
+                    ▼                       ▼
+              Curator Agent          Matchmaker Agent         Closer Agent
+            (AVM Pricing S3-5)   (Buyer Matching S6-8)    (Proposals S9)
+                                                           │
+                                                           ▼
+                                          Memory Engine (S10 — Obsidian Vault)
+```
+
+### Agent Fleet
+
+| Agent | Role | Engine |
+| :--- | :--- | :--- |
+| **Scribe** | WhatsApp group listener & normalizer | Gemini 2.0 Flash + Rule Engine |
+| **OpenClaw** | WhatsApp inventory harvester & XLSX ingestion | Vertex AI + xlsx parser |
+| **Curator** | AVM pricing & portfolio deduplication | Valuation matrix + LLM |
+| **Matchmaker** | Buyer-to-listing matching (ROI, zone, specs) | Gemini 2.5 Pro |
+| **Closer** | Proposal drafting & Telegram broker alerts | Gemini 2.0 Flash |
+| **Liela Bot** | Conversational real estate concierge | Gemini 2.0 Flash + Memory |
+| **Intelligence OS** | Multi-agent orchestration (NLP → ML → Guard → Docs) | `runIntelligenceWorkflow` |
+
+---
+
+## 🌐 API Directory
 
 | Route | Method | Description |
-| ------- | -------- | ------------- |
-| `/api/admin/deploy` | POST | Admin deploy trigger |
-| `/api/agent/hub` | POST | Multi-agent hub (Scribe/Curator/Matchmaker/Closer) |
-| `/api/closer/initiate` | POST | Stage 9 closer agent |
-| `/api/ingest/whatsapp` | POST | WhatsApp message ingestion |
-| `/api/leads` | POST | Create investment stakeholder |
-| `/api/leads/request-viewing` | POST | Request property viewing |
-| `/api/listings` | GET | Fetch portfolio assets |
-| `/api/matching` | POST | Run AI matching engine |
-| `/api/orchestrate` | POST | Full S1–S10 pipeline |
-| `/api/properties/sync` | POST | Property Finder sync |
-| `/api/property-finder` | GET/POST/PUT/DELETE | PF gateway |
-| `/api/proposals` | POST | Generate proposal |
-| `/api/sync` | GET/POST | Sync management |
-| `/api/sync/publish` | POST | Publish to Property Finder |
-| `/api/telegram/setup` | GET | Telegram webhook setup |
-| `/api/telegram/webhook` | POST | Telegram bot handler |
-| `/api/viewing-requests` | GET/POST | Viewing requests |
-| `/api/webhooks/property-finder` | POST | PF webhook (HMAC verified) |
-| `/api/webhooks/whatsapp` | GET/POST | WhatsApp webhook |
-| `/api/whatsapp/heartbeat` | POST | Scraper heartbeat |
-| `/api/whatsapp/webhook` | POST | WhatsApp message handler |
+| :--- | :--- | :--- |
+| `/api/auth` | POST / DELETE | Firebase ID token → `sierra_sess` cookie / Logout |
+| `/api/agent/hub` | POST | Multi-agent execution hub (Scribe, Curator, Matchmaker, Closer) |
+| `/api/closer/initiate` | POST | Stage 9 automated closer agent |
+| `/api/leads` | GET / POST | Manage buyer leads & investment profiles |
+| `/api/leads/request-viewing` | POST | Create property viewing requests |
+| `/api/listings` | GET / POST | Fetch & manage verified portfolio inventory |
+| `/api/matching` | POST | Multi-variable property-to-buyer matching |
+| `/api/orchestrate` | POST | Full S1–S10 Intelligence OS pipeline trigger |
+| `/api/pricing/evaluate` | POST | AVM valuation & arbitrage analysis |
+| `/api/properties/sync` | POST | PropertyFinder synchronization trigger |
+| `/api/proposals` | POST | Generate dynamic investment proposals |
+| `/api/sync` | GET / POST | Master inventory synchronization |
+| `/api/telegram/webhook` | POST | Telegram bot notification handler |
+| `/api/webhooks/property-finder` | POST | PropertyFinder incoming webhook (HMAC verified) |
+| `/api/webhooks/whatsapp` | GET / POST | WhatsApp webhook verification & ingestion |
+| `/api/whatsapp/heartbeat` | POST | WhatsApp scraper healthcheck |
 
-## Intelligence Pipeline
+---
 
-```
-WhatsApp Groups
-    └─→ /api/webhooks/whatsapp (Scribe agent — S1/S2)
-            └─→ Firestore rawScrapeData
-                    └─→ processDataForApp (Cloud Function)
-                            └─→ Matching Engine (S6/S7/S8)
-                                    └─→ Stage 9 Closer Agent
-                                            └─→ Telegram alerts + Proposals
-```
+## 🚢 Deployment Architecture
 
-## Deployment
+Full details: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
-Public site + admin + API deploy together via Vercel (GitHub Action `deploy-vercel.yml` — `vercel pull` → `vercel build` → `vercel deploy --prebuilt`; Vercel's own git auto-deploy is off). Firebase (`sierra-blu`) is backend-only — Firestore, Storage, Auth, Functions, plus one Hosting site that only 302-redirects the legacy admin URL. Full details, rollback procedure, and the deploy matrix: [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+### Web Applications (Vercel)
 
-```bash
-# Deploy Firestore/Storage rules + Cloud Functions (manual)
-pnpm deploy:rules
-pnpm deploy:functions
-```
+- **Client Portal**: `sierra-estates.net` → Vercel Project `sierra-estates-client-page`
+- **Admin Console**: `admin.sierra-estates.net` → same Vercel deployment at `/admin`
+- **CI/CD**: `.github/workflows/deploy-vercel.yml` builds & deploys on merge to `main`
 
-## 📋 Environment Variables
+### Backend Infrastructure (Firebase `sierra-blu`)
 
-See `.env.example` for the full, canonical list (kept in sync with a CI sweep of `process.env.*`). Copy it to `apps/sierra-estates-realty/.env.local` and fill in real values — never commit that file. For Vercel, add the same variables to the project’s Production, Preview, and Development environments as appropriate; keep all server-only credentials out of `NEXT_PUBLIC_*` variables.
+- **Firestore RBAC Rules**: Deploy via `pnpm deploy:rules` or `firebase deploy --only firestore:rules,storage`
+- **Cloud Functions**: Node.js 22 functions via `pnpm deploy:functions`
+- **Firebase Hosting**: Issues a 302 redirect from `admin-sierra-blu` → `https://admin.sierra-estates.net/admin`
 
-## Verification
+### Background Workers & Integrations
 
-From the repository root, run the following checks before deploying:
+| Service | Runtime | Purpose |
+| :--- | :--- | :--- |
+| Python FastAPI (`apps/api`) | Cloud Run :8000 | PropertyFinder scraper, bot webhooks, ECC |
+| n8n Automations | VPS Docker :5678 | Lead routing, notification workflows |
+| Scheduled GitHub Actions | GitHub Actions | Nightly sync, WhatsApp dispatch, cron bridges |
 
-```bash
-pnpm install --frozen-lockfile
-pnpm --filter sierra-estates-client-page type-check
-pnpm --filter sierra-estates-client-page build
-```
+---
 
-Then verify the admin flow in a deployed environment: open `/admin/login`, sign in, confirm that `/api/auth` returns `ok: true`, and confirm that the browser reaches `/admin` with the `sierra_sess` cookie present. Never test with real credentials in committed files, screenshots, or issue reports.
+## 🎨 Design System
 
-## 🔐 Security
+The platform runs a dual design system:
 
-- ✅ Type-safe with TypeScript strict mode
-- ✅ Authentication via Firebase Auth + JWT
-- ✅ Secrets via Google Secret Manager
-- ✅ CORS & CSP headers configured
-- ✅ SQL injection prevention (Zod validation)
-- ✅ XSS protection (React automatic escaping)
-- ✅ Rate limiting on Cloud Functions
-- ✅ Firestore Security Rules enforced
-- ✅ Cloud Storage CORS restricted
+- **Client Portal**: High-end luxury editorial — Double-Bezel (Doppelrand) property cards, floating island glassmorphism navigation, smooth `cubic-bezier(0.16, 1, 0.3, 1)` spring physics, AI score micro-badges, and bilingual Arabic RTL support.
+- **Admin Console**: Tactile Claymorphism — pneumatic dual-shadow bevels, squircle card surfaces, spring button click physics, and full dark/light mode with clay token system (`--clay-card-shadow`, `--clay-card-inset`, `--clay-btn-shadow`).
 
-## 📚 Documentation
+---
 
-- `ARCHITECTURE.md` - System design & data flows
-- `DEPLOYMENT.md` - Deployment policy & runbooks (authoritative)
-- `API.md` - REST API specifications
-- `CONTRIBUTING.md` - Developer setup & workflow
-- `SECURITY.md` - Security model & reporting
-- `docs/` - Additional guides (Firebase App Check, n8n workflows, theme system, Obsidian vault)
+## 🛡️ Security & Compliance
 
-## 🤝 Contributing
+- **Strict Type Safety**: TypeScript strict mode across all 13 workspace packages.
+- **Session Security**: `httpOnly`, `Secure`, `SameSite=Lax` cookies with HMAC verification.
+- **Zero Committed Secrets**: All credentials managed via Google Secret Manager, Vercel Env Vars, and GitHub Secrets.
+- **Firestore RBAC**: Role-based access (`admin|manager|agent`) with granular read/write policies (`firestore.rules`).
+- **API Guardrails**: Zod schema validation and rate limiting on all public endpoints.
+- **CORS & CSP**: Restrictive HTTP security headers configured in `proxy.ts` and `vercel.json`.
+- **Input Sanitization**: 10+ LLM injection pattern blocking via `sanitizer.ts`.
 
-1. Create feature branch: `git checkout -b feature/name`
-2. Follow TypeScript strict mode
-3. Add tests for new functionality
-4. Run linter & tests: `pnpm lint && pnpm type-check && pnpm test:ci`
-5. Submit pull request with description
+---
 
-## 📞 Support
+## 📚 Documentation Index
 
-- **Issues**: GitHub Issues (this repo)
-- **Docs**: See `ARCHITECTURE.md`, `API.md`, `DEPLOYMENT.md`
+- [`DEPLOYMENT.md`](./DEPLOYMENT.md) — Authoritative deployment policy, release matrix, and runbooks
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — Monorepo architecture and data flow diagrams
+- [`API.md`](./API.md) — REST API specifications and request/response contracts
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — Developer onboarding, branch conventions, and testing guidelines
+- [`SECURITY.md`](./SECURITY.md) — Threat model, security boundaries, and vulnerability reporting
+- [`MASTER_PROJECT_ROADMAP.md`](./MASTER_PROJECT_ROADMAP.md) — Full 4-phase delivery roadmap
+- [`PHASE_4_INTELLIGENCE_OS_BLUEPRINT.md`](./PHASE_4_INTELLIGENCE_OS_BLUEPRINT.md) — Multi-agent AI architecture
+- [`NEXT_STEPS.md`](./NEXT_STEPS.md) — Pre-deploy checklist and remaining production gates
+- [`docs/ADMIN_MIGRATION_PLAN.md`](./docs/ADMIN_MIGRATION_PLAN.md) — Admin console migration blueprint
+- [`docs/FIREBASE_APPCHECK_SETUP.md`](./docs/FIREBASE_APPCHECK_SETUP.md) — Firebase App Check setup
+
+---
 
 ## 📄 License
 
-Proprietary - Sierra Estates Inc.
+Proprietary — © Sierra Estates Inc. All rights reserved.

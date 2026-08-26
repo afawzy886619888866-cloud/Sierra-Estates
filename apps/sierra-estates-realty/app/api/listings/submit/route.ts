@@ -26,8 +26,11 @@ const submitListingSchema = z.object({
   price: z.coerce.number().min(0, 'Price must be positive'),
   finishing: z.string().optional().default('Fully Furnished'),
   ownerName: z.string().min(1, 'Owner name is required').max(100),
+  ownerType: z.string().optional().default('Owner'),
   mobile: z.string().min(6, 'Valid contact mobile is required').max(30),
   comment: z.string().max(2000).optional().default(''),
+  photos: z.array(z.string()).optional().default([]),
+  images: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(request: Request) {
@@ -72,9 +75,11 @@ export async function POST(request: Request) {
       ownerType: 'Owner',
       tag: 'Direct Submission',
       aiScore: 9.0,
-      agent: `${data.ownerName} (Owner)`,
+      agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
       ago: 'Just now',
-      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+      img: data.photos?.[0] || data.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+      photos: data.photos?.length ? data.photos : data.images?.length ? data.images : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'],
+      images: data.images?.length ? data.images : data.photos?.length ? data.photos : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'],
       comment: data.comment,
       submittedAt: now,
       source: 'web-submission',

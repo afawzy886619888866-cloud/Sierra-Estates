@@ -34,10 +34,12 @@ app.post("/api/agents/:agentId/message", (req: Request<{ agentId: string }>, res
   // Store user message
   if (!chatHistory[agentId]) chatHistory[agentId] = [];
   chatHistory[agentId].push({ role: "user", content: message });
-  // TODO: integrate real Antigravity SDK call here.
+  // No real Antigravity SDK call is wired up (needs ANTIGRAVITY_API_KEY handling +
+  // the actual SDK client); this echoes the input so callers can see stubMode=true
+  // rather than mistaking the echo for a real agent reply.
   const reply = `Echo from ${agentId}: ${message}`;
   chatHistory[agentId].push({ role: "assistant", content: reply });
-  res.json({ reply, history: chatHistory[agentId] });
+  res.json({ reply, history: chatHistory[agentId], stubMode: true });
 });
 
 // GET chat history
