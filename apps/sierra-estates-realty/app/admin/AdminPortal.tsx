@@ -735,9 +735,11 @@ function OpenClawPage({ T }) {
           setLogs(l=>[...l,{t:'blue',l:'[~] Testing OpenClaw API live...'}]);
           try {
             const r = await fetch('/api/health');
-            setLogs(l=>[...l,{t:'green',l:'[✓] Sierra Intelligence Gateway v3.0 · Healthy'}]);
+            if (!r.ok) throw new Error(`Health check returned ${r.status}`);
+            const health = await r.json() as { status?: string };
+            setLogs(l=>[...l,{t:'green',l:`[✓] Sierra Intelligence Gateway v3.0 · ${health.status || 'Healthy'}`}]);
           } catch {
-            setLogs(l=>[...l,{t:'green',l:'[✓] Connection established · v3.0 ready'}]);
+            setLogs(l=>[...l,{t:'red',l:'[!] Intelligence Gateway is unavailable or degraded'}]);
           }
         }}>⚡ Test API</button>
       </div>
