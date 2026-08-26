@@ -60,7 +60,7 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
@@ -120,7 +120,7 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
@@ -176,7 +176,7 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
@@ -232,7 +232,7 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures

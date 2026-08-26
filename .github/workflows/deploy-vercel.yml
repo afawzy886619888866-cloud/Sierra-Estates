@@ -137,7 +137,7 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.gate.outputs.run == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
