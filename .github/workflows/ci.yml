@@ -147,7 +147,7 @@ jobs:
         # version is read automatically from "packageManager" field in root package.json
         # DO NOT specify version here — that causes "Multiple versions of pnpm" error
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: pnpm

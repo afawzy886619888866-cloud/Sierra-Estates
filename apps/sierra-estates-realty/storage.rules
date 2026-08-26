@@ -1,10 +1,55 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /media/{allPaths=**} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null;
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
+
+    function getUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    function isClient() {
+      return isAuthenticated() && getUserRole() == 'client';
+    }
+
+    // Public property media (client portal + marketplace display these).
+    // Anyone may read; only admin may write.
+    match /listings/{allPaths=**}        { allow read: if true; allow write: if isAdmin(); }
+    match /houyez_listings/{allPaths=**} { allow read: if true; allow write: if isAdmin(); }
+    match /properties/{allPaths=**}      { allow read: if true; allow write: if isAdmin(); }
+    match /compounds/{allPaths=**}       { allow read: if true; allow write: if isAdmin(); }
+    match /media/{allPaths=**}           { allow read: if true; allow write: if isAdmin(); }
+    match /public/{allPaths=**}          { allow read: if true; allow write: if isAdmin(); }
+
+    match /admin/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /clients/{clientId}/{allPaths=**} {
+      allow read, write: if isAdmin() || (isClient() && request.auth.uid == clientId);
+    }
+
+    match /programs/{programId}/{allPaths=**} {
+      allow read: if isAdmin() || (isClient() &&
+                    firestore.exists(/databases/(default)/documents/enrollments/$(request.auth.uid + '_' + programId)));
+      allow write: if isAdmin();
+    }
+
+    match /agent_sessions/{sessionId}/{allPaths=**} {
+      allow read: if isAdmin() || (isClient() &&
+                    firestore.get(/databases/(default)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid);
+      allow write: if isAdmin() || (isClient() &&
+                    firestore.get(/databases/(default)/documents/agent_sessions/$(sessionId)).data.client_uid == request.auth.uid &&
+                    request.resource.size < 10 * 1024 * 1024);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

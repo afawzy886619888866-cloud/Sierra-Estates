@@ -15,10 +15,10 @@ export async function GET() {
       process.env.UPSTASH_REDIS_REST_URL
   );
   const aiConfigured = Boolean(
-    process.env.AI_PROVIDER ||
+      process.env.AI_PROVIDER ||
       process.env.GOOGLE_AI_API_KEY ||
       process.env.GOOGLE_GENAI_API_KEY ||
-      process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+      process.env.GEMINI_API_KEY ||
       process.env.OPENAI_API_KEY ||
       process.env.ANTHROPIC_API_KEY
   );

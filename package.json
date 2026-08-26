@@ -34,6 +34,8 @@
         "sync-propertyfinder": "tsx scripts/sync-propertyfinder.ts",
         "estimate-costs": "tsx scripts/estimate-costs.ts",
         "smoke:test": "tsx scripts/deploy-smoke-test.ts",
+        "check:firebase-rules": "node scripts/check-firebase-rules.mjs",
+        "check:public-env": "node scripts/check-public-env-safety.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "deploy:check:env": "node scripts/verify-env-readiness.mjs",
