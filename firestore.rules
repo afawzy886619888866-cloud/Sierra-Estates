@@ -69,15 +69,20 @@ service cloud.firestore {
     //     are staff (or Admin SDK). Matches the client payloads in
     //     app/proposals/[id]/page.tsx and app/concierge/[leadId]/page.tsx. ---
     match /proposals/{id} {
-      allow read: if true;
+      allow get: if true;             // recipients open a specific link by id
+      allow list: if isStaff();       // only staff may enumerate share links
       allow update: if isStaff()
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt']);
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt'])
+            && request.resource.data.viewCount is int
+            && request.resource.data.lastViewedAt is timestamp);
       allow create, delete: if isStaff();
     }
     match /concierge_selections/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if isStaff();
       allow update: if isStaff()
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement']);
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement'])
+            && request.resource.data.engagement is map);
       allow create, delete: if isStaff();
     }
 
