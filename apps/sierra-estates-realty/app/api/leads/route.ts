@@ -6,6 +6,7 @@ import { sendTelegramMessage } from '@/lib/telegram';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { leadCreateSchema, parseRequestBody, isParseFailure } from '@/lib/server/schemas';
+export { leadCreateSchema as leadSchema } from '@/lib/server/schemas';
 import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
