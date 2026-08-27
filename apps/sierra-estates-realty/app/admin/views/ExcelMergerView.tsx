@@ -24,7 +24,6 @@ import {
   Building2,
   Banknote,
   Copy,
-  TrendingDown,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -353,7 +352,7 @@ async function mergeFiles(
         sourceSheet,
       };
     })
-    .filter(Boolean) as NonNullable<ReturnType<typeof normalizePhone extends infer T ? any : any>>;
+    .filter(Boolean) as any[];
 
   const droppedNoPhone = totalRows - normalized.length;
   onLog(`📞 With valid phone: ${normalized.length} (dropped ${droppedNoPhone} — no phone)`);
@@ -598,7 +597,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
           <input
             ref={fileInputRef}
             type="file"
-            // @ts-ignore — webkitdirectory is non-standard but universally supported
+            // @ts-expect-error — webkitdirectory is non-standard but universally supported
             webkitdirectory=""
             multiple
             accept=".xls,.xlsx,.xlsm,.xlsb"
