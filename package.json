@@ -39,10 +39,12 @@
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "deploy:check:env": "node scripts/verify-env-readiness.mjs",
-        "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
+        "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds",
+        "hint": "hint"
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
+        "hint": "^7.1.13",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
         "vitest": "^4.1.10"
