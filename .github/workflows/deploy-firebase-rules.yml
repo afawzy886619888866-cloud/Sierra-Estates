@@ -57,4 +57,4 @@ jobs:
           credentials_json: ${{ secrets['FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU'] || secrets['FIREBASE_SERVICE_ACCOUNT_JSON'] }}
 
       - name: Deploy Firestore rules, indexes + Storage rules
-        run: npx firebase-tools@latest deploy --only firestore:rules,firestore:indexes,storage --project sierra-blu --non-interactive
+        run: npx firebase-tools@13 deploy --only firestore:rules,firestore:indexes,storage --project sierra-blu --non-interactive
