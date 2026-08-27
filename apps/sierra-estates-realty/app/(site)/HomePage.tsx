@@ -1,4 +1,4 @@
-'use client';
+2q3'use client';
 
 /** Port of deploy/index.html with direct 3D virtual tour and embedded interactive masterplan map. */
 import React, { useMemo, useState } from 'react';
