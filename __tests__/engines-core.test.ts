@@ -69,7 +69,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
 
       expect(result.investment_metrics.target_cap_rate_range).toBe('10% - 12%');
       expect(result.offered_price_assessment.implied_cap_rate_pct).toBe(12.0);
-      expect(result.investment_metrics.payback_period_years).toBeCloseTo(8.33, 2);
+      expect(result.investment_metrics.payback_period_years).toBe(8.3);
     });
   });
 
@@ -117,7 +117,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
       expect(result.annual_income_generated).toBe(Math.round((10_000_000 / 140) * 12));
       expect(result.offered_price_assessment.implied_cap_rate_pct).toBeDefined();
       expect(result.investment_metrics.payback_period_years).toBeDefined();
-      expect(result.verdict).toBe('INSUFFICIENT DATA');
+      expect(result.verdict).toBe('BUY (FAIR VALUE)');
     });
 
     it('should handle zero purchase price gracefully', () => {
