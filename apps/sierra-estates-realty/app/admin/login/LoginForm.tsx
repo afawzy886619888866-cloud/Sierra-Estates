@@ -22,7 +22,7 @@ export default function LoginForm() {
           router.replace('/admin');
         }
       })
-      .catch(() => {});
+      .catch((err) => console.warn('[LoginForm] Auth check failed:', err));
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
