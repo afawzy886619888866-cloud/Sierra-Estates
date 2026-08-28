@@ -86,10 +86,14 @@ export async function POST(req: NextRequest) {
     await WhatsAppStatusService.recordHeartbeat('syncing');
 
     // Dynamic extraction logic (Adapter Pattern)
-    const message = body.message?.text || body.text || body.Body;
-    const sender = body.from || body.From || "External Signal";
-    const group = body.groupName || body.Source || "WhatsApp Broker Group";
-    const isGroup = body.isGroup === true || body.isGroup === 'true';
+    const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
+
+    const message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+    const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
+    const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
+    const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
+    const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
     if (!message) {
       return NextResponse.json({ error: "Empty signal ignored" }, { status: 400 });
