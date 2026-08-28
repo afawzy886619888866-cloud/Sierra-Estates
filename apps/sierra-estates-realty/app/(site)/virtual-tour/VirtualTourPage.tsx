@@ -69,31 +69,86 @@ export default function VirtualTourPage() {
         </div>
       </section>
 
+      {/* Interactive VIP Appointment Booking Section */}
       <section className="block">
         <div className="wrap">
-          <Reveal className="cta">
+          <Reveal className="cta" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 20 }}>
             <div className="ct-txt">
-              <h2>{isAr ? 'شفت وحدة عجبتك؟' : 'Seen a unit you like?'}</h2>
+              <h2>{isAr ? 'احجز موعد معاينة VIP حصرية' : 'Book an Exclusive VIP On-Site Viewing'}</h2>
               <p>
                 {isAr
-                  ? 'احجز معاينة على الطبيعة، أو اطلب جولة مخصصة لوحدة بعينها.'
-                  : 'Book a viewing on site, or ask us to capture a tour for a specific unit.'}
+                  ? 'اختر التوقيت المناسب وسيقوم مستشارك العقاري بتجهيز كافة التفاصيل قبل وصولك.'
+                  : 'Select your preferred time window and your dedicated property advisor will coordinate access.'}
               </p>
             </div>
-            <div className="ct-act">
-              <Link href="/properties" className="btn btn-white">
-                <span>{isAr ? 'تصفح الوحدات' : 'Browse listings'}</span>
-                <ArrowRight className="i" />
-              </Link>
-              <a
-                href="https://wa.me/201092048333"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-out"
-              >
-                <span>+2 01092048333</span>
-              </a>
-            </div>
+
+            {/* Time Slot Picker */}
+            {(() => {
+              const [selectedSlot, setSelectedSlot] = React.useState('afternoon');
+              const [selectedDay, setSelectedDay] = React.useState('tomorrow');
+
+              const days = [
+                { id: 'today', labelEn: 'Today', labelAr: 'اليوم' },
+                { id: 'tomorrow', labelEn: 'Tomorrow', labelAr: 'غداً' },
+                { id: 'weekend', labelEn: 'This Weekend', labelAr: 'عطلة نهاية الأسبوع' },
+              ];
+
+              const slots = [
+                { id: 'morning', labelEn: '🌅 Morning (10 AM - 1 PM)', labelAr: '🌅 صباحاً (10 ص - 1 ظ)' },
+                { id: 'afternoon', labelEn: '☀️ Afternoon (1 PM - 5 PM)', labelAr: '☀️ بعد الظهر (1 ظ - 5 م)' },
+                { id: 'sunset', labelEn: '🌇 Sunset (5 PM - 8 PM)', labelAr: '🌇 وقت الغروب (5 م - 8 م)' },
+              ];
+
+              const targetDay = days.find((d) => d.id === selectedDay)?.labelEn || 'Tomorrow';
+              const targetSlot = slots.find((s) => s.id === selectedSlot)?.labelEn || 'Afternoon';
+
+              const waMessage = `Hello Sierra Estates — I'd like to book a VIP viewing on ${targetDay} during the ${targetSlot} window.`;
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {days.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setSelectedDay(d.id)}
+                        className={`af-chip${selectedDay === d.id ? ' on' : ''}`}
+                        style={{ border: '1px solid var(--line)', padding: '6px 14px' }}
+                      >
+                        {isAr ? d.labelAr : d.labelEn}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {slots.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setSelectedSlot(s.id)}
+                        className={`af-chip${selectedSlot === s.id ? ' on' : ''}`}
+                        style={{ border: '1px solid var(--line)', padding: '6px 14px' }}
+                      >
+                        {isAr ? s.labelAr : s.labelEn}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="ct-act" style={{ marginTop: 8 }}>
+                    <a
+                      href={`https://wa.me/201092048333?text=${encodeURIComponent(waMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-white"
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      <span>{isAr ? 'تأكيد الحجز الفوري عبر واتساب' : 'Confirm VIP Booking via WhatsApp'}</span>
+                      <ArrowRight className="i" />
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
           </Reveal>
         </div>
       </section>
