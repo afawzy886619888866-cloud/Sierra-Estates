@@ -78,7 +78,46 @@ export async function proxy(request: NextRequest) {
       });
     }
 
-    // 2) Internal Security Secret Gate for /api/orchestrate
+    // 2) Internal Security Gate
+    // Internal endpoints may be called by an authenticated admin session or by
+    // trusted services carrying the shared secret. In production, an unset
+    // secret must fail closed instead of exposing simulated operational data.
+    if (pathname.startsWith('/api/internal/')) {
+      const secretHeader = request.headers.get('x-sbr-secret-key');
+      const expectedSecret = process.env.SBR_SECRET_KEY;
+      const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+      let hasAdminSession = false;
+
+      try {
+        hasAdminSession = Boolean(await verifySession(sessionToken));
+      } catch {
+        hasAdminSession = false;
+      }
+
+      if (!hasAdminSession) {
+        if (!expectedSecret && process.env.NODE_ENV === 'production') {
+          return new NextResponse(
+            JSON.stringify({ error: 'Internal services are not configured' }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json', ...headers },
+            },
+          );
+        }
+
+        if (expectedSecret && secretHeader !== expectedSecret) {
+          return new NextResponse(
+            JSON.stringify({ error: 'Unauthorized internal request' }),
+            {
+              status: 401,
+              headers: { 'Content-Type': 'application/json', ...headers },
+            },
+          );
+        }
+      }
+    }
+
+    // 3) Shared-secret gate for the orchestration endpoint.
     if (pathname.startsWith('/api/orchestrate')) {
       const secretHeader = request.headers.get('x-sbr-secret-key');
       const expectedSecret = process.env.SBR_SECRET_KEY;

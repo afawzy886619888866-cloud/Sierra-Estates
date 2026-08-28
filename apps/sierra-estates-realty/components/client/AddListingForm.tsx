@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Moon, Sun, Languages, BadgeCheck, Users, Percent,
-  ArrowRight, Check, MessageCircle,
+  ArrowRight, Check, MessageCircle, UploadCloud, X,
 } from 'lucide-react';
 import s from './AddListingForm.module.css';
 
@@ -43,8 +43,11 @@ const T = {
     cpd: 'Compound', type: 'Property type', beds: 'Bedrooms', baths: 'Bathrooms',
     area: 'Area (m²)', priceSale: 'Asking price (EGP)', priceRent: 'Monthly rent (EGP)',
     finish: 'Finishing', notes: 'Anything else we should know',
+    photosTit: 'Property Photos', dropPhotos: 'Drop property photos here or click to browse',
+    photosSub: 'High-res photos increase inquiry velocity by 3.4x (JPG, PNG, WebP · Max 10 photos)',
+    coverTag: 'Cover Photo', removePhoto: 'Remove photo',
     role: 'You are', owner: 'Owner', broker: 'Broker', name: 'Full name', wa: 'WhatsApp number',
-    note: "Photos and documents go over WhatsApp after you submit — we'll open the chat for you.",
+    note: "Photos and documents can also be sent over WhatsApp after you submit — we'll open the chat for you.",
     submit: 'Submit listing', sending: 'Submitting…',
     needCpd: 'Which compound is the unit in?', needArea: 'Add the unit area in m².',
     needPrice: 'Add the asking price.', needName: 'Please add your name.',
@@ -52,7 +55,7 @@ const T = {
     failed: 'Something went wrong — please try again.',
     doneTit: 'Listing received',
     doneMsg: 'Our inventory team reviews it within 24 hours and comes back to you on WhatsApp.',
-    ref: 'Reference', sendPhotos: 'Send photos on WhatsApp', again: 'Add another listing',
+    ref: 'Reference', sendPhotos: 'Send more photos on WhatsApp', again: 'Add another listing',
     legal: 'Sierra Estates · Banafseg 2, Villa 402, New Cairo · +2 010 9204 8333',
     phName: 'Your name', phCpd: 'e.g. Mivida', phArea: '220',
     phPriceSale: '12,500,000', phPriceRent: '85,000',
@@ -67,8 +70,11 @@ const T = {
     cpd: 'الكمبوند', type: 'نوع العقار', beds: 'غرف النوم', baths: 'الحمامات',
     area: 'المساحة (م²)', priceSale: 'السعر المطلوب (ج.م)', priceRent: 'الإيجار الشهري (ج.م)',
     finish: 'التشطيب', notes: 'أي تفاصيل إضافية',
+    photosTit: 'صور العقار', dropPhotos: 'اسحب وأفلت صور العقار هنا أو اضغط للاختيار',
+    photosSub: 'الصور عالية الجودة تزيد من سرعة التواصل بمعدل 3.4x (JPG, PNG, WebP · حتى 10 صور)',
+    coverTag: 'الصورة الرئيسية', removePhoto: 'حذف الصورة',
     role: 'أنت', owner: 'مالك', broker: 'وسيط', name: 'الاسم بالكامل', wa: 'رقم الواتساب',
-    note: 'الصور والمستندات تتبعت على واتساب بعد الإرسال — هنفتحلك المحادثة.',
+    note: 'يمكن أيضاً إرسال الصور والمستندات عبر واتساب بعد الإرسال — هنفتحلك المحادثة.',
     submit: 'أرسل العقار', sending: 'جارٍ الإرسال…',
     needCpd: 'الوحدة في أي كمبوند؟', needArea: 'اكتب مساحة الوحدة بالمتر.',
     needPrice: 'اكتب السعر المطلوب.', needName: 'من فضلك اكتب اسمك.',
@@ -76,7 +82,7 @@ const T = {
     failed: 'حدث خطأ، برجاء المحاولة مرة أخرى.',
     doneTit: 'تم استلام العقار',
     doneMsg: 'فريق المخزون يراجعه خلال 24 ساعة ويرجعلك على واتساب.',
-    ref: 'رقم الطلب', sendPhotos: 'ابعت الصور على واتساب', again: 'أضف عقار آخر',
+    ref: 'رقم الطلب', sendPhotos: 'إرسال المزيد على واتساب', again: 'أضف عقار آخر',
     legal: 'سييرا إستيتس · البنفسج 2، فيلا 402، القاهرة الجديدة · 01092048333',
     phName: 'اسمك', phCpd: 'مثال: ميفيدا', phArea: '220',
     phPriceSale: '12,500,000', phPriceRent: '85,000',
@@ -91,8 +97,8 @@ type Role = 'owner' | 'broker';
 
 const digits = (v: string) => String(v || '').replace(/[^\d]/g, '');
 
-export default function AddListingForm() {
-  const [lang, setLang] = useState<Lang>('en');
+export default function AddListingForm({ defaultLang = 'en' }: { defaultLang?: Lang } = {}) {
+  const [lang, setLang] = useState<Lang>(defaultLang);
   const [theme, setTheme] = useState<Theme>('light');
 
   const [purpose, setPurpose] = useState<Purpose>('sale');
@@ -105,6 +111,8 @@ export default function AddListingForm() {
   const [price, setPrice] = useState('');
   const [finish, setFinish] = useState('Fully finished');
   const [notes, setNotes] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -141,6 +149,8 @@ export default function AddListingForm() {
     window.localStorage.setItem('hzp-lang', next);
   }
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   function clearErr() {
     setErr('');
     setBadField(null);
@@ -152,6 +162,39 @@ export default function AddListingForm() {
     ref.current?.focus();
     return false;
   }
+
+  const processFiles = (files: FileList | File[]) => {
+    const list = Array.from(files).slice(0, 10);
+    list.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const res = e.target?.result as string;
+        if (res) {
+          setPhotos((prev) => (prev.length < 10 && !prev.includes(res) ? [...prev, res] : prev));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
 
   async function onSubmit() {
     const cpdV = cpd.trim();
@@ -181,8 +224,11 @@ export default function AddListingForm() {
           price: Number(priceV),
           finishing: finish,
           ownerName: nameV,
+          ownerType: role === 'broker' ? 'Broker' : 'Owner',
           mobile: phone.trim(),
           comment: notes.trim(),
+          photos,
+          images: photos,
         }),
       });
       const result = await res.json().catch(() => null);
@@ -398,6 +444,52 @@ export default function AddListingForm() {
                       <option key={o} value={o}>{isAr ? FIN_AR[o] || o : o}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className={`${s.f} ${s.wide}`}>
+                  <label>{t.photosTit}</label>
+                  <div
+                    className={`${s.photoDropzone} ${isDragging ? s.dragover : ''}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    <UploadCloud className={s.photoIcon} />
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{t.dropPhotos}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{t.photosSub}</div>
+                  </div>
+
+                  {photos.length > 0 && (
+                    <div className={s.photoGrid}>
+                      {photos.map((src, idx) => (
+                        <div key={idx} className={s.photoThumb}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt={`Property upload ${idx + 1}`} />
+                          {idx === 0 && <span className={s.photoCoverBadge}>{t.coverTag}</span>}
+                          <button
+                            type="button"
+                            className={s.photoRemoveBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePhoto(idx);
+                            }}
+                            title={t.removePhoto}
+                            aria-label={t.removePhoto}
+                          >
+                            <X style={{ width: 12, height: 12 }} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className={`${s.f} ${s.wide}`}>

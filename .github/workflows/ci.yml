@@ -16,7 +16,12 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # cancel-in-progress: true for pull_request events; false on main to preserve CI verdicts.
+  # Cancelling a main run leaves that commit with no CI verdict at all, which is exactly how
+  # the TypeScript 7 bump landed unverified and broke every ts-jest suite: its
+  # run (9b793cb6) was cancelled by the next push, and the failure only surfaced
+  # one commit later. Rapid successive merges must each get a real verdict.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   PUPPETEER_SKIP_DOWNLOAD: "true"
@@ -26,20 +31,88 @@ permissions:
   contents: read
 
 jobs:
+  # Catches the failure mode that silently blocked 6 of 20 production deploys:
+  # a commit author address whose GitHub user ID has been float-formatted
+  # (2.63279258e+08 instead of 263279258). GitHub cannot attribute such a
+  # commit to any account, so Vercel rejects the deployment as BLOCKED before
+  # the build starts — with no build log to explain why. Fail loudly here
+  # instead. Checks the tip commit only, so existing history stays green.
+  commit-attribution:
+    name: Commit author attribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Reject float-formatted author addresses
+        run: |
+          email="$(git log -1 --format='%ae')"
+          echo "Tip commit author: $email"
+          if printf '%s' "$email" | grep -Eq '^[0-9]+\.[0-9]+e\+[0-9]+\+'; then
+            echo "::error title=Malformed commit author::$email"
+            echo "The GitHub user ID in this noreply address has been float-formatted,"
+            echo "e.g. 2.63279258e+08 where it should read 263279258."
+            echo "GitHub cannot attribute the commit to any account, so Vercel rejects"
+            echo "the deployment as BLOCKED before the build ever runs."
+            echo "Expected form: <numeric-user-id>+<login>@users.noreply.github.com"
+            echo "Fix the git identity in whatever environment authored this commit."
+            exit 1
+          fi
+          echo "Author address is well-formed."
+
+  # pnpm-workspace.yaml is now the single source of truth for dependency overrides.
+  # This job verifies the overrides block is present and non-empty.
+  override-sync:
+    name: Security overrides present
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Verify overrides block exists and is non-empty
+        run: |
+          python3 - <<'PY'
+          import re, sys
+
+          text = open("pnpm-workspace.yaml", encoding="utf-8").read()
+          body = re.search(r"^overrides:\n(.*?)(?=^\S|\Z)", text, re.S | re.M)
+          if not body:
+              sys.exit("::error::no overrides: block found in pnpm-workspace.yaml")
+
+          # Count non-comment, non-blank key:value lines
+          count = 0
+          for raw in body.group(1).splitlines():
+              line = raw.split(" #", 1)[0].rstrip()
+              if not line.strip() or line.lstrip().startswith("#"):
+                  continue
+              key, sep, val = line.partition(":")
+              if sep:
+                  count += 1
+
+          if count == 0:
+              sys.exit("::error::overrides block in pnpm-workspace.yaml is empty")
+          print(f"pnpm-workspace.yaml overrides block contains {count} entries")
+          PY
+
   monorepo:
     name: Realty app + packages · Type-check + Lint + Test + Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         # version is read automatically from "packageManager" field in root package.json
         # DO NOT specify version here — that causes "Multiple versions of pnpm" error
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: pnpm
@@ -84,3 +157,31 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+
+  # The repo keeps TWO firestore.rules: a root copy (required to exist by
+  # __tests__/repo-integrity-and-hygiene.test.ts and reviewed at the root) and
+  # apps/sierra-estates-realty/firestore.rules — the one both firebase.json
+  # files actually deploy. They are byte-identical today; this guard makes sure
+  # they never silently drift, so the deployed rules always match the reviewed
+  # root copy. (Audit REPO_AUDIT_REPORT.md P2.)
+  firestore-rules-drift:
+    name: Firestore rules in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Root and app firestore.rules must be byte-identical
+        run: |
+          root="firestore.rules"
+          app="apps/sierra-estates-realty/firestore.rules"
+          if ! diff -q "$root" "$app" >/dev/null 2>&1; then
+            echo "::error title=Firestore rules drift::$root and $app differ"
+            echo "The root copy is reviewed and required by repo-integrity tests;"
+            echo "the app copy is what firebase.json deploys. Keep them identical."
+            diff "$root" "$app" || true
+            exit 1
+          fi
+          echo "firestore.rules root and app copies are identical."

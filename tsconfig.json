@@ -8,11 +8,11 @@
     "moduleResolution": "bundler",
     "lib": ["ES2020"],
     "paths": {
-      "@sierra-estates/exchange": ["./packages/exchange/dist/index.d.ts", "./packages/exchange/exchange-client.ts"],
+      "@sierra-estates/exchange": ["./packages/exchange/exchange-client.ts", "./packages/exchange/dist/index.js"],
       "@sierra-estates/agents": ["./packages/agents/index.ts"],
       "@sierra-estates/agents-core": ["./packages/agents-core/src/index.ts"],
-      "@sierra-estates/memory-engine": ["./packages/memory-engine/dist/index.d.ts", "./packages/memory-engine/src/index.ts"],
-      "@sierra-estates/obsidian": ["./packages/obsidian/dist/index.d.ts", "./packages/obsidian/src/index.ts"],
+      "@sierra-estates/memory-engine": ["./packages/memory-engine/src/index.ts", "./packages/memory-engine/dist/index.js"],
+      "@sierra-estates/obsidian": ["./packages/obsidian/src/index.ts", "./packages/obsidian/dist/index.js"],
       "@sierra-estates/db": ["./packages/db/lib/index.ts"],
       "@sierra-estates/auth": ["./packages/auth"],
       "@sierra-estates/config": ["./packages/config"]
@@ -28,6 +28,9 @@
     },
     {
       "path": "./lib/api-zod"
+    },
+    {
+      "path": "./lib/integrations/aws"
     }
   ]
 }

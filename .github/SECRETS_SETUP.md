@@ -75,6 +75,22 @@ Only needed if you want the automated data sync workflows to run.
 
 ---
 
+## 🧠 REQUIRED FOR DEEPSEEK HARNESS EVALUATION
+
+| Secret Name | Description |
+| :--- | :--- |
+| `DEEPSEEK_API_KEY` | DeepSeek API key for running automated reasoning & AVM harness evaluations in CI (`harness-eval.yml`) |
+
+---
+
+## ⏱️ REQUIRED FOR CRON & DISPATCH WORKFLOWS
+
+| Secret Name | Description |
+| :--- | :--- |
+| `CRON_SECRET` | Secret token guarding `/api/cron/*` endpoints, used by `vercel-cron-bridge.yml` and `whatsapp-dispatch-cron.yml` |
+
+---
+
 ## How to add secrets
 
 1. Go to your repo on GitHub

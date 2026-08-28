@@ -21,6 +21,9 @@ export class AgentRegistry {
 
   private loadAllProfiles() {
     try {
+      if (!this.srcDir || !fs.existsSync(this.srcDir)) {
+        return;
+      }
       const files = fs.readdirSync(this.srcDir);
       for (const file of files) {
         if (file.endsWith('.md')) {

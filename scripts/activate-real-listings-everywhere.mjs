@@ -5,8 +5,9 @@
  * Reads apps/sierra-estates-realty/data/real-listings.json (320 units directly
  * fetched from Master Owner Google Sheet) and updates:
  *   1. apps/sierra-estates-realty/lib/seed.ts (SEED_LISTINGS)
- *   2. apps/sierra-estates-realty/public/client-page/data.js (window.HZDATA.listings)
+ *   2. apps/sierra-estates-realty/public/client-page/data.js (if present)
  *   3. apps/sierra-estates-realty/lib/inventory/snapshot.json
+ *   4. obsidian-store.json
  *
  * Usage: node scripts/activate-real-listings-everywhere.mjs
  */
@@ -83,60 +84,39 @@ const seedListings = rawReal.map((item, idx) => ({
 
 // Update lib/seed.ts
 const SEED_TS_PATH = path.join(ROOT, 'apps/sierra-estates-realty/lib/seed.ts');
-let seedTsContent = fs.readFileSync(SEED_TS_PATH, 'utf8');
+if (fs.existsSync(SEED_TS_PATH)) {
+  let seedTsContent = fs.readFileSync(SEED_TS_PATH, 'utf8');
+  const seedListingsJson = JSON.stringify(seedListings, null, 2);
+  const newSeedTs = seedTsContent.replace(
+    /export const SEED_LISTINGS: Listing\[\] = \[\s*[\s\S]*?\n\];/m,
+    `export const SEED_LISTINGS: Listing[] = ${seedListingsJson};`
+  );
+  fs.writeFileSync(SEED_TS_PATH, newSeedTs, 'utf8');
+  console.log(`✅ Updated apps/sierra-estates-realty/lib/seed.ts with ${seedListings.length} real listings.`);
+}
 
-// Replace SEED_LISTINGS export
-const seedListingsJson = JSON.stringify(seedListings, null, 2);
-const newSeedTs = seedTsContent.replace(
-  /export const SEED_LISTINGS: Listing\[\] = \[\s*[\s\S]*?\n\];/m,
-  `export const SEED_LISTINGS: Listing[] = ${seedListingsJson};`
-);
+// 2. Format and write to snapshot.json
+const SNAPSHOT_DIR = path.join(ROOT, 'apps/sierra-estates-realty/lib/inventory');
+if (!fs.existsSync(SNAPSHOT_DIR)) {
+  fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
+}
+const SNAPSHOT_PATH = path.join(SNAPSHOT_DIR, 'snapshot.json');
+const snapshotPayload = {
+  generatedAt: new Date().toISOString(),
+  units: seedListings
+};
+fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshotPayload, null, 2), 'utf8');
+console.log(`✅ Updated ${SNAPSHOT_PATH} with ${seedListings.length} real listings.`);
 
-fs.writeFileSync(SEED_TS_PATH, newSeedTs, 'utf8');
-console.log(`✅ Updated apps/sierra-estates-realty/lib/seed.ts with ${seedListings.length} real listings.`);
-
-// 2. Format for window.HZDATA.listings in public/client-page/data.js
-const hzListings = rawReal.map((item, idx) => ({
-  id: String(item.code || item.id || `real-${idx + 1}`),
-  code: String(item.code || `SE-${String(idx + 1).padStart(3, '0')}`),
-  title: `${item.type || 'Apartment'} in ${item.compound || 'New Cairo'}`,
-  titleAr: `${item.type || 'شقة'} في ${item.compound || 'القاهرة الجديدة'}`,
-  compound: String(item.compound || 'New Cairo'),
-  cmp: String(item.compound || 'New Cairo'),
-  zone: String(item.zone || '5th Settlement'),
-  type: String(item.type || 'Apartment'),
-  beds: Number(item.beds || 3),
-  bath: Number(item.baths || 2),
-  baths: Number(item.baths || 2),
-  area: Number(item.area || 150),
-  price: Number(item.price || 0),
-  currency: 'EGP',
-  egpM: Number(item.egpM || (item.price ? item.price / 1_000_000 : 0)),
-  usd: Number(item.usd || (item.price ? Math.round(item.price / 50) : 0)),
-  mode: item.mode === 'rent' ? 'rent' : 'sale',
-  tag: item.tag || 'Verified Owner',
-  aiScore: Number(item.aiScore || 8.5),
-  agent: String(item.agent || 'Sierra Advisor'),
-  ago: 'Live Google Sheet Sync',
-  img: item.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-  images: [
-    item.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80'
-  ],
-  description: String(item.comment || `${item.type} in ${item.compound} - ${item.beds} Bedrooms, ${item.area}m²`),
-  amenities: ['central-ac', 'security', 'parking', 'balcony'],
-}));
-
+// 3. Update data.js if exists
 const DATA_JS_PATH = path.join(ROOT, 'apps/sierra-estates-realty/public/client-page/data.js');
-let dataJsContent = fs.readFileSync(DATA_JS_PATH, 'utf8');
-
-// Replace HZDATA.listings in data.js
-const hzListingsJson = JSON.stringify(hzListings, null, 2);
-const newStyleListings = `listings: ${hzListingsJson},`;
-
-// Replace listings block in window.HZDATA
-const updatedDataJs = dataJsContent.replace(/listings:\s*\[[\s\S]*?\n\s*\],/m, newStyleListings);
-fs.writeFileSync(DATA_JS_PATH, updatedDataJs, 'utf8');
-console.log(`✅ Updated apps/sierra-estates-realty/public/client-page/data.js with ${hzListings.length} real listings.`);
+if (fs.existsSync(DATA_JS_PATH)) {
+  let dataJsContent = fs.readFileSync(DATA_JS_PATH, 'utf8');
+  const hzListingsJson = JSON.stringify(seedListings, null, 2);
+  const newStyleListings = `listings: ${hzListingsJson},`;
+  const updatedDataJs = dataJsContent.replace(/listings:\s*\[[\s\S]*?\n\s*\],/m, newStyleListings);
+  fs.writeFileSync(DATA_JS_PATH, updatedDataJs, 'utf8');
+  console.log(`✅ Updated ${DATA_JS_PATH} with ${seedListings.length} real listings.`);
+}
 
 console.log('\n🎉 ALL MOCK LISTINGS REPLACED WITH REAL MASTER SHEET DATA EVERYWHERE!');
