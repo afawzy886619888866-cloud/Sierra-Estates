@@ -66,4 +66,24 @@ describe('WhatsApp Webhook Ingestion & Cryptographic Security Test Suite', () =>
     expect(routeIncomingSignal(groupPayload).handler).toBe('WhatsAppParserService');
     expect(routeIncomingSignal(directPayload).handler).toBe('WhatsAppConversationalService');
   });
+
+  describe('Outbound Auto-Reply Dispatch Formatting', () => {
+    function formatOutboundMetaMessage(toPhone: string, replyText: string) {
+      const cleanPhone = toPhone.replace(/[^0-9]/g, '');
+      return {
+        messaging_product: 'whatsapp',
+        to: cleanPhone,
+        type: 'text',
+        text: { body: replyText },
+      };
+    }
+
+    it('formats outbound Meta WhatsApp message payload correctly with sanitized E.164 phone', () => {
+      const payload = formatOutboundMetaMessage('+20 109-204-8333', 'Welcome to Sierra Estates. Here is the Mivida brochure.');
+      expect(payload.to).toBe('201092048333');
+      expect(payload.messaging_product).toBe('whatsapp');
+      expect(payload.type).toBe('text');
+      expect(payload.text.body).toContain('Mivida brochure');
+    });
+  });
 });
