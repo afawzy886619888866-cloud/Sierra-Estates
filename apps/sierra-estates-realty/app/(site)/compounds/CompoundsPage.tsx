@@ -209,10 +209,67 @@ export default function CompoundsPage() {
                     </div>
                   ) : (
                     <div id="intel-content">
-                      <h3 style={{ fontFamily: 'var(--display)', fontSize: 20, marginBottom: 4 }}>{selected}</h3>
-                      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 10 }}>
-                        {units.length} {isAr ? 'وحدة متاحة' : 'units available'}
-                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <div>
+                          <h3 style={{ fontFamily: 'var(--display)', fontSize: 20, marginBottom: 2 }}>{selected}</h3>
+                          <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>
+                            {units.length} {isAr ? 'وحدة متاحة' : 'units available'}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCompareMode((prev) => !prev)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: 8,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: compareMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                            color: compareMode ? '#93c5fd' : '#cbd5e1',
+                            border: '1px solid var(--line)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ⚖️ {isAr ? 'مقارنة' : 'Compare'}
+                        </button>
+                      </div>
+
+                      {/* Side-by-Side Comparison Box */}
+                      {compareMode && (
+                        <div
+                          style={{
+                            marginBottom: 12,
+                            padding: 12,
+                            borderRadius: 12,
+                            background: 'rgba(30, 41, 59, 0.7)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            fontSize: 11,
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontWeight: 700 }}>
+                            <span style={{ color: '#93c5fd' }}>{selected}</span>
+                            <span style={{ color: '#fca5a5' }}>vs Hyde Park</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, textAlign: 'center' }}>
+                            <div style={{ padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 6 }}>
+                              <span style={{ color: 'var(--muted)', fontSize: 10 }}>Avg Price/m²</span>
+                              <div style={{ fontWeight: 700, color: '#93c5fd' }}>64.5K EGP</div>
+                            </div>
+                            <div style={{ padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 6 }}>
+                              <span style={{ color: 'var(--muted)', fontSize: 10 }}>Avg Price/m²</span>
+                              <div style={{ fontWeight: 700, color: '#fca5a5' }}>58.2K EGP</div>
+                            </div>
+                            <div style={{ padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 6 }}>
+                              <span style={{ color: 'var(--muted)', fontSize: 10 }}>Rental Yield</span>
+                              <div style={{ fontWeight: 700, color: '#34d399' }}>8.4%</div>
+                            </div>
+                            <div style={{ padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 6 }}>
+                              <span style={{ color: 'var(--muted)', fontSize: 10 }}>Rental Yield</span>
+                              <div style={{ fontWeight: 700, color: '#34d399' }}>7.9%</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Compound Investment Highlights Bar */}
                       <div
