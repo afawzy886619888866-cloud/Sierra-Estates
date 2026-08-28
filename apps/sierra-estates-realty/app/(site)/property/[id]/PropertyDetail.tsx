@@ -56,8 +56,101 @@ export default function PropertyDetail({ id }: { id: string }) {
   const fallback = listings.filter((x) => x.id !== p.id).slice(0, 3);
   const related = similar.length ? similar : fallback;
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+
+  const openLightbox = (idx: number) => {
+    setActiveImgIndex(idx);
+    setLightboxOpen(true);
+  };
+
   return (
     <SiteShell active="best">
+      {/* Full-Screen Image Lightbox Modal */}
+      {lightboxOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(2, 6, 23, 0.95)',
+            backdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            style={{
+              position: 'absolute',
+              top: 24,
+              insetInlineEnd: 24,
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#fff',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              cursor: 'pointer',
+              fontSize: 18,
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            ✕
+          </button>
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={thumbs[activeImgIndex] || hero}
+            alt="Full view"
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              borderRadius: 16,
+              objectFit: 'contain',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <div
+            style={{
+              marginTop: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              color: '#fff',
+              fontSize: 13,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveImgIndex((prev) => (prev > 0 ? prev - 1 : thumbs.length - 1))}
+              className="btn btn-ghost"
+              style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              ←
+            </button>
+            <span>{activeImgIndex + 1} / {thumbs.length}</span>
+            <button
+              type="button"
+              onClick={() => setActiveImgIndex((prev) => (prev < thumbs.length - 1 ? prev + 1 : 0))}
+              className="btn btn-ghost"
+              style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              →
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="page-hero">
         <div className="wrap">
           <div className="crumbs">
@@ -84,7 +177,7 @@ export default function PropertyDetail({ id }: { id: string }) {
 
           <div className="pdetail-layout">
             <div>
-              <div className="gallery-main rv">
+              <div className="gallery-main rv" onClick={() => openLightbox(0)} style={{ cursor: 'zoom-in' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={hero} alt={`${p.type} in ${p.cmp}`} />
                 <div className="gallery-badges">
@@ -93,7 +186,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                     {p.mode === 'rent' ? t('modeRent') : t('modeSale')}
                   </span>
                 </div>
-                <Link href="/virtual-tour" className="gallery-3d-btn">
+                <Link href="/virtual-tour" className="gallery-3d-btn" onClick={(e) => e.stopPropagation()}>
                   <Scan style={{ width: 15, height: 15 }} />
                   {isAr ? 'ابدأ الجولة ثلاثية الأبعاد' : 'Launch 3D Virtual Tour'}
                 </Link>
@@ -104,7 +197,10 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <button
                     key={i}
                     type="button"
-                    onClick={() => setPhoto(src)}
+                    onClick={() => {
+                      setPhoto(src);
+                      openLightbox(i);
+                    }}
                     style={{ border: 0, padding: 0, background: 'none', cursor: 'pointer' }}
                     aria-label={`Photo ${i + 1}`}
                   >
