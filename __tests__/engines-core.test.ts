@@ -101,7 +101,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
       });
 
       expect(result.offered_price_assessment.implied_cap_rate_pct).toBe(2.4); // 1.2M / 50M = 2.4%
-      expect(result.verdict).toBe('AVOID (OVERPRICED)');
+      expect(result.verdict).toBe('OVERPRICED (NEGOTIATE OR RENT)');
     });
   });
 
