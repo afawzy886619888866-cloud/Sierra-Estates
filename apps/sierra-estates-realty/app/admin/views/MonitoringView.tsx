@@ -40,8 +40,8 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
         </div>
       </div>
 
-      {/* Omnichannel SLA Trackers */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Omnichannel SLA & Health Trackers */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>WHATSAPP BOT SLA</span>
@@ -68,12 +68,54 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
           <div className="text-xl font-bold text-white">482 msg / min</div>
           <p className="text-[11px] text-slate-500">Active event bus sync across broker instances</p>
         </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+          <div className="flex justify-between text-xs text-slate-400 font-mono">
+            <span>INVENTORY HEALTH</span>
+            <span className="text-amber-400">98.4% Verified</span>
+          </div>
+          <div className="text-xl font-bold text-white">528 Active</div>
+          <p className="text-[11px] text-slate-500">High-res photos &amp; AVM price audited</p>
+        </div>
       </div>
 
       {/* Live Terminal Log Stream */}
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
-          <span className="text-slate-400 text-xs uppercase tracking-wider">Live System Stream</span>
+          <div className="flex items-center gap-3">
+            <span className="text-slate-400 text-xs uppercase tracking-wider">Live System Stream</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(filteredLogs, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `sierra-telemetry-logs-${Date.now()}.json`;
+                  a.click();
+                }}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] transition-colors"
+              >
+                📥 JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const txt = filteredLogs.map((l) => `[${l.timestamp}] [${l.type.toUpperCase()}] ${l.text}`).join('\n');
+                  const blob = new Blob([txt], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `sierra-telemetry-logs-${Date.now()}.txt`;
+                  a.click();
+                }}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] transition-colors"
+              >
+                📥 TXT
+              </button>
+            </div>
+          </div>
           <div className="flex gap-1.5 overflow-x-auto">
             {(['all', 'info', 'agent', 'pubsub', 'warn'] as const).map((ft) => (
               <button
@@ -108,6 +150,87 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
               >
                 {log.text}
               </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Real-Time Inbound WhatsApp Lead Activity Stream */}
+      <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <h3 className="text-sm font-bold text-white">
+              {isAr ? 'البث المباشر للرسائل والعملاء المحتملين' : 'Real-Time Inbound WhatsApp & Lead Ingestion Stream'}
+            </h3>
+          </div>
+          <span className="text-[11px] text-emerald-400 font-mono font-semibold">
+            {isAr ? 'متصل بالشبكة السحابية' : 'Live Cloud Feed · Active'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            {
+              id: 'lead-act-1',
+              name: 'Dr. Tarek Fouad',
+              phone: '+201098887766',
+              compound: 'Mountain View iCity',
+              budget: '28.5M EGP',
+              aiStatus: 'QUALIFIED_VIP',
+              time: 'Just now',
+              message: 'طلب تفاصيل فيلا مستقلة مع حديقة للمعاينة غداً',
+            },
+            {
+              id: 'lead-act-2',
+              name: 'Nadia El-Gohary',
+              phone: '+201012345678',
+              compound: 'Katameya Dunes',
+              budget: '$850K USD',
+              aiStatus: 'USD_BUYER_HIGH_FIT',
+              time: '2 mins ago',
+              message: 'Interested in golf-front standalone properties for cash settlement',
+            },
+            {
+              id: 'lead-act-3',
+              name: 'Eng. Amr Soliman',
+              phone: '+201155443322',
+              compound: 'Hyde Park',
+              budget: '18M EGP',
+              aiStatus: 'INVESTOR_HIGH_YIELD',
+              time: '5 mins ago',
+              message: 'استفسار عن أعلى عائد إيجاري متاح لشقق 3 غرف',
+            },
+          ].map((lead) => (
+            <div
+              key={lead.id}
+              className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between space-y-2 text-xs"
+            >
+              <div>
+                <div className="flex justify-between items-start">
+                  <span className="font-semibold text-white">{lead.name}</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                    {lead.aiStatus}
+                  </span>
+                </div>
+                <div className="text-[11px] text-cyan-400 font-mono mt-0.5">{lead.phone}</div>
+                <div className="text-[11px] text-slate-300 mt-1 font-medium">
+                  {lead.compound} · <span className="text-amber-300">{lead.budget}</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5 italic line-clamp-2">
+                  &ldquo;{lead.message}&rdquo;
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500">
+                <span>{lead.time}</span>
+                <span className="text-emerald-400 font-medium cursor-pointer hover:underline">
+                  {isAr ? 'فتح المحادثة ↗' : 'Open WhatsApp ↗'}
+                </span>
+              </div>
             </div>
           ))}
         </div>

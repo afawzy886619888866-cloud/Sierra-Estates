@@ -24,7 +24,7 @@ import {
   Building2,
   Banknote,
   Copy,
-  TrendingDown,
+  Database,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -353,7 +353,7 @@ async function mergeFiles(
         sourceSheet,
       };
     })
-    .filter(Boolean) as NonNullable<ReturnType<typeof normalizePhone extends infer T ? any : any>>;
+    .filter(Boolean) as any[];
 
   const droppedNoPhone = totalRows - normalized.length;
   onLog(`📞 With valid phone: ${normalized.length} (dropped ${droppedNoPhone} — no phone)`);
@@ -516,6 +516,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewPage, setPreviewPage] = useState(1);
+  const [isSyncing, setIsSyncing] = useState(false);
   const PAGE_SIZE = 12;
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -565,6 +566,27 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
     await downloadExcel(mergedRows, addLog);
   };
 
+  const onSyncToDb = async () => {
+    if (!mergedRows.length) return;
+    setIsSyncing(true);
+    addLog(`\n🔌 Syncing ${mergedRows.length} units to master database...`);
+    try {
+      const res = await fetch('/api/admin/db/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ units: mergedRows }),
+      });
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}: ${await res.text()}`);
+      }
+      addLog(`✅ Successfully synced to database!`);
+    } catch (e: any) {
+      addLog(`❌ Sync failed: ${e?.message ?? e}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const onReset = () => {
     setStatus('idle');
     setLogs([]);
@@ -598,7 +620,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
           <input
             ref={fileInputRef}
             type="file"
-            // @ts-ignore — webkitdirectory is non-standard but universally supported
+            // @ts-expect-error — webkitdirectory is non-standard but universally supported
             webkitdirectory=""
             multiple
             accept=".xls,.xlsx,.xlsm,.xlsb"
@@ -628,13 +650,23 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
           </button>
 
           {status === 'done' && (
-            <button
-              onClick={onDownload}
-              className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold flex items-center gap-2 transition-colors shadow-lg"
-            >
-              <Download className="w-4 h-4" />
-              {isAr ? 'تحميل Excel' : 'Download Excel'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onDownload}
+                className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold flex items-center gap-2 transition-colors shadow-lg"
+              >
+                <Download className="w-4 h-4" />
+                {isAr ? 'تحميل Excel' : 'Download Excel'}
+              </button>
+              <button
+                onClick={onSyncToDb}
+                disabled={isSyncing}
+                className="px-4 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-2 transition-colors shadow-lg"
+              >
+                {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                {isAr ? 'مزامنة مع قاعدة البيانات' : 'Sync to Database'}
+              </button>
+            </div>
           )}
 
           <button
@@ -644,6 +676,30 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
             <RotateCcw className="w-3.5 h-3.5" />
             {isAr ? 'إعادة' : 'Reset'}
           </button>
+        </div>
+      </div>
+
+      {/* ── Auto-Detected Column Mapping Inspector ── */}
+      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <span>✨</span> {isAr ? 'خريطة التعرف الذكي على الأعمدة (Auto-Mapping Dictionary)' : 'Active Smart Column Mapping Dictionary'}
+          </span>
+          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/40 border border-emerald-800/60 px-2 py-0.5 rounded">
+            {isAr ? '16 عمود قياسي مفعل' : '16 Standard Normalized Fields Active'}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(COLUMN_SYNONYMS).slice(0, 10).map(([col, synonyms]) => (
+            <span
+              key={col}
+              className="text-[10px] font-mono px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-1"
+              title={`Synonyms: ${synonyms.join(', ')}`}
+            >
+              <strong className="text-cyan-400">{col}</strong>
+              <span className="text-slate-500">({synonyms.length})</span>
+            </span>
+          ))}
         </div>
       </div>
 
@@ -717,13 +773,23 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
             <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono">
               {isAr ? 'معاينة النتائج' : 'Preview'} ({mergedRows.length.toLocaleString()} {isAr ? 'وحدة' : 'units'})
             </h3>
-            <button
-              onClick={onDownload}
-              className="px-3 py-1.5 rounded-lg bg-blue-700/80 hover:bg-blue-600 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              {isAr ? 'تحميل' : 'Download Excel'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onDownload}
+                className="px-3 py-1.5 rounded-lg bg-blue-700/80 hover:bg-blue-600 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                {isAr ? 'تحميل' : 'Download'}
+              </button>
+              <button
+                onClick={onSyncToDb}
+                disabled={isSyncing}
+                className="px-3 py-1.5 rounded-lg bg-indigo-700/80 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                {isSyncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+                {isAr ? 'مزامنة' : 'Sync'}
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-xl">
