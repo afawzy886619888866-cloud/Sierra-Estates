@@ -60,21 +60,23 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Search
         if: steps.secrets.outputs.configured == 'true'
@@ -120,21 +122,23 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Contact
         if: steps.secrets.outputs.configured == 'true'
@@ -176,21 +180,23 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Email Sender
         if: steps.secrets.outputs.configured == 'true'
@@ -232,21 +238,23 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Unit Adder
         if: steps.secrets.outputs.configured == 'true'

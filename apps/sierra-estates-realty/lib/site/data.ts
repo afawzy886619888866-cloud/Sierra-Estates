@@ -1,5 +1,4 @@
 /* Ported from deploy/data.js — regenerate from source rather than hand-editing. */
- 
 
 const DATA: any = {
   slides: [
