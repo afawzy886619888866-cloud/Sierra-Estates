@@ -50,6 +50,7 @@ packages:
   # (admin.sierra-estates.net). apps/frontend has no package.json and is
   # skipped automatically by pnpm.
   - packages/agents
+  - packages/agents-api
   - packages/agents-core
   - packages/ai-agent-sdk
   - packages/ai-orchestrator
@@ -64,8 +65,6 @@ packages:
   - packages/memory-engine
   - packages/obsidian
   - packages/property-finder-api
-  - packages/shared
-  - packages/types
   - packages/ui
   - packages/whatsapp-shared
   # packages/open-memory is a standalone third-party project — excluded from
@@ -75,7 +74,6 @@ packages:
   - lib/*
   - lib/integrations/*
   - scripts
-  - my-agent
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.6.1
@@ -99,6 +97,7 @@ catalog:
   tailwind-merge: ^3.3.1
   tailwindcss: ^4.3.3
   tsx: ^4.21.0
+  typescript: ^5.8.2
   vite: ^7.3.5
   wouter: ^3.3.5
   zod: ^3.25.76
@@ -118,24 +117,14 @@ onlyBuiltDependencies:
   - sharp
 
 # ---------------------------------------------------------------------------
-# ⚠️  DUAL-LOCATION OVERRIDES — KEEP IN SYNC WITH package.json `pnpm.overrides`
+# DEPENDENCY OVERRIDES — single source of truth
 #
-# pnpm reads dependency overrides from a DIFFERENT file depending on its major:
-#   pnpm 9  (pinned via `packageManager` in package.json) → package.json `pnpm.overrides`
-#   pnpm 10+                                              → this block
-#
-# Today the repo is pinned to pnpm@9.15.4, so THIS BLOCK IS INERT — package.json
-# is the live source of truth, and it is what pnpm-lock.yaml records. Verified by
-# deleting this block and re-running `pnpm install --frozen-lockfile`: the lockfile
-# is untouched. (pnpm 9 also prints a forward-compat warning about `pnpm.overrides`
-# in package.json; that warning is misleading — pnpm 9 does still honour it.)
-#
-# Any change here must be mirrored in package.json (and vice versa) or the two will
-# silently diverge, and whichever set is inert will quietly activate on a pnpm bump.
-# Before upgrading to pnpm 10, diff the two blocks and regenerate the lockfile.
+# The pnpm.overrides block was removed from package.json because the pnpm CLI
+# wrapper (v10+) ignores it and emits a noisy warning. pnpm-workspace.yaml is
+# now the sole location for overrides across all pnpm major versions.
 # ---------------------------------------------------------------------------
 overrides:
-  # --- security overrides (kept in sync with package.json pnpm.overrides) ---
+  # --- security overrides ---
   tar@<7.5.21: '>=7.5.21'
   tar-fs@>=2.0.0 <2.1.4: '>=2.1.4 <3'
   undici@<6.28.0: '>=6.28.0 <7'
@@ -159,7 +148,7 @@ overrides:
   file-type@>=13.0.0 <21.3.1: '>=21.3.1'
   # typescript is pinned by the bare "typescript:" key further down in this same
   # map; repeating it here would be a duplicate YAML mapping key, which pnpm
-  # rejects. That entry is kept equal to package.json pnpm.overrides.typescript.
+  # rejects.
   # --- end security overrides ---
   # replit uses linux-x64 only, we can exclude all other platforms
   esbuild>@esbuild/darwin-arm64: '-'
@@ -255,9 +244,8 @@ overrides:
   sharp: '>=0.35.0'
   # Must stay on 7.x: apps/admin-dashboard depends on react-router-dom ^7.18.0, and
   # react-router 8 is a breaking major. This previously read ">=8.3.0", which was
-  # harmless only because this whole block is inert under pnpm 9 — on a pnpm 10 bump
+  # harmless only because this whole block was inert under pnpm 9 — on a pnpm 10 bump
   # it would have silently forced a major upgrade and broken the admin dashboard.
-  # Kept identical to package.json `pnpm.overrides`.
   react-router: '>=7.18.2'
   brace-expansion: '>=5.0.9'
   # Additional pinned overrides from pnpm audit --fix (2026-08-07)
@@ -265,7 +253,7 @@ overrides:
   pdfjs-dist: '>=6.2.108'
   dompurify: '>=3.4.13'
   nanoid: '>=3.3.17'
-  # Kept equal to package.json pnpm.overrides.typescript.
+  # Kept equal to the value that was formerly in package.json pnpm.overrides.
   typescript: ^5.8.2
 
 allowBuilds:
