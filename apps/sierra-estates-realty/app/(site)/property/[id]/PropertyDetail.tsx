@@ -66,6 +66,55 @@ export default function PropertyDetail({ id }: { id: string }) {
 
   return (
     <SiteShell active="best">
+      {/* Print-Only Luxury Brochure Header and Watermark */}
+      <style jsx global>{`
+        @media print {
+          body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+          }
+          nav, footer, .page-hero, .gallery-thumbs, .gallery-3d-btn, .mortgage-calc-box, .pdetail-card a, aside .btn {
+            display: none !important;
+          }
+          .pdetail-layout {
+            display: block !important;
+          }
+          .pdetail-head {
+            margin-bottom: 24px !important;
+          }
+          .gallery-main img {
+            max-height: 400px !important;
+            width: 100% !important;
+            object-fit: cover !important;
+            border-radius: 8px !important;
+          }
+          .print-brochure-header {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+          }
+        }
+        @media screen {
+          .print-brochure-header {
+            display: none;
+          }
+        }
+      `}</style>
+
+      {/* Print Brochure Header */}
+      <div className="print-brochure-header">
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', margin: 0 }}>SIERRA ESTATES</h2>
+          <span style={{ fontSize: 11, color: '#64748b' }}>Luxury Real Estate Portfolio · New Cairo &amp; North Coast</span>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: 11, color: '#0f172a' }}>
+          <b>Concierge Hotline:</b> +20 109 204 8333<br />
+          <b>Ref Code:</b> {p.code}
+        </div>
+      </div>
       {/* Full-Screen Image Lightbox Modal */}
       {lightboxOpen && (
         <div
