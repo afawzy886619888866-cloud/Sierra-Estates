@@ -140,7 +140,7 @@ export default function CompoundsPage() {
             </span>
           </div>
 
-          {/* Zone chips */}
+          {/* Zone & Yield chips */}
           <div className="zone-chips" id="zone-chips">
             {zones.map((z) => (
               <button
@@ -152,6 +152,23 @@ export default function CompoundsPage() {
                 {z === 'all' ? (isAr ? 'كل المناطق' : 'All zones') : z}
               </button>
             ))}
+            <span style={{ borderLeft: '1px solid var(--line)', margin: '0 4px' }} />
+            <button
+              type="button"
+              className="af-chip"
+              style={{ color: '#34D399' }}
+              onClick={() => {}}
+            >
+              💎 {isAr ? 'عائد استثماري مرتفع (>8%)' : 'High Yield (>8%)'}
+            </button>
+            <button
+              type="button"
+              className="af-chip"
+              style={{ color: '#FCD34D' }}
+              onClick={() => {}}
+            >
+              📈 {isAr ? 'نمو رأسمالي سنوي (>20%)' : 'High Growth (>20%)'}
+            </button>
           </div>
 
           {/* Luxury Amenity Badges */}
