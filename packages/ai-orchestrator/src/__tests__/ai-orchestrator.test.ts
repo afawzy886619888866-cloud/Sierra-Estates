@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { WorkflowRunner } from '../workflow-runner';
-import { WorkflowInstance } from '../types';
-import { AgentCoordinator } from '../coordinator';
+import { WorkflowRunner } from '../workflow-runner.js';
+import { WorkflowInstance } from '../types.js';
+import { AgentCoordinator } from '../coordinator.js';
+
 
 describe('AI Orchestrator', () => {
   it('registers and retrieves available agents via coordinator', () => {
