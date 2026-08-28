@@ -53,29 +53,34 @@ service cloud.firestore {
     //     falls back to static data and leads never reach Firestore / Laila bot.
     match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
     match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
+    // Writes arrive via the Admin SDK in app/api/inquiries/route.ts and
+    // app/api/careers/apply/route.ts, which enforce zod validation and a body
+    // size cap. The previous anonymous `allow create` grants bypassed both and
+    // matched a payload shape nothing produces (the API writes status
+    // 'S1_NEW_LEAD', and career applications go to `career_applications`).
     match /inquiries/{id} {
-      allow read, update, delete: if isStaff();
-      allow create: if request.resource.data.status == 'new'
-        && request.resource.data.size() <= 40;
+      allow read, write: if isStaff();
     }
     match /careers/{id} {
-      allow read, update, delete: if isStaff();
-      allow create: if request.resource.data.status == 'new'
-        && request.resource.data.size() <= 40;
+      allow read, write: if isStaff();
     }
 
-    // --- Public share links: recipients open these via a URL (no login). They
-    //     may READ, and record lightweight analytics ONLY. Substantive writes
-    //     are staff (or Admin SDK). Matches the client payloads in
-    //     app/proposals/[id]/page.tsx and app/concierge/[leadId]/page.tsx. ---
+    // --- Share links. `allow read: if true` on a wildcard document match
+    //     authorises LIST queries over the whole collection, not just direct
+    //     gets, so it exposed every client name and deal price to anyone
+    //     holding the public web API key. The client pages it was written for
+    //     (app/proposals/[id]/page.tsx, app/concierge/[leadId]/page.tsx) do not
+    //     exist. Serve public share links through an Admin SDK route instead.
+    //     Analytics writes stay open so an unauthenticated viewer can still be
+    //     counted if those pages return. ---
     match /proposals/{id} {
-      allow read: if true;
+      allow read: if isStaff();
       allow update: if isStaff()
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt']);
       allow create, delete: if isStaff();
     }
     match /concierge_selections/{id} {
-      allow read: if true;
+      allow read: if isStaff();
       allow update: if isStaff()
         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement']);
       allow create, delete: if isStaff();

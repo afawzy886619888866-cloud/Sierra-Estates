@@ -18,7 +18,7 @@ name: Deploy · Vercel
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 #   VERCEL_ORG_ID              — Vercel team/org ID
 #   CLIENT_VERCEL_PROJECT_ID   — prj_theA731k4WdFVhgd6DJUP6pAry6n
-#   ADMIN_VERCEL_PROJECT_ID    — prj_NMqZUADX9A5ba22ylMfls2l7I0zX
+#   ADMIN_VERCEL_PROJECT_ID    — prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
 on:
@@ -36,7 +36,7 @@ on:
 
 concurrency:
   group: vercel-deploy-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   VERCEL_CLI_VERSION: 'latest'
@@ -92,6 +92,7 @@ jobs:
           # If VERCEL_TOKEN is unset, gracefully exit 0 with notice (native git integration handles deploys)
           if [ -z "$TOKEN" ]; then
             echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment step. Vercel native Git integration handles deployments."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -102,20 +103,25 @@ jobs:
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
       - uses: actions/checkout@v4
+        if: steps.proj.outputs.skip != 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
       - uses: pnpm/action-setup@v4
+        if: steps.proj.outputs.skip != 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.proj.outputs.skip != 'true'
         with:
           node-version: '24'
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.proj.outputs.skip != 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Determine deploy environment
+        if: steps.proj.outputs.skip != 'true'
         id: target
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -130,6 +136,7 @@ jobs:
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
       - name: Normalize Vercel project settings
+        if: steps.proj.outputs.skip != 'true'
         run: |
           # Vercel needs to know to build from apps/sierra-estates-realty
           code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \
@@ -144,6 +151,7 @@ jobs:
           fi
 
       - name: Sync env vars to Vercel project
+        if: steps.proj.outputs.skip != 'true'
         env:
           VARS_JSON: ${{ toJson(vars) }}
           SECRETS_JSON: ${{ toJson(secrets) }}
@@ -185,7 +193,8 @@ jobs:
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\",\"preview\"]}" || echo "000")
+              -d "$(jq -n --arg k "$1" --arg v "$2" --arg t "${3:-plain}" \
+                    '{key:$k, value:$v, type:$t, target:["production","preview"]}')" || echo "000")
             case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)";; esac
           }
 
@@ -239,6 +248,7 @@ jobs:
           upsert LEAD_NOTIFY_WHATSAPP_NUMBER              "$LEAD_WHATSAPP" encrypted
 
       - name: Remove crons from admin project (client project owns them)
+        if: steps.proj.outputs.skip != 'true'
         if: matrix.role == 'admin'
         run: |
           if [ -f "${{ matrix.app_dir }}/vercel.json" ]; then
@@ -248,10 +258,12 @@ jobs:
           fi
 
       - name: Install Vercel CLI
+        if: steps.proj.outputs.skip != 'true'
         run: npm install --global vercel@${VERCEL_CLI_VERSION}
 
       # ── Point vercel CLI at THIS role's project ONLY ──────────────────────
       - name: Write .vercel/project.json for this role
+        if: steps.proj.outputs.skip != 'true'
         run: |
           mkdir -p .vercel "${{ matrix.app_dir }}/.vercel"
           printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
@@ -261,14 +273,17 @@ jobs:
           echo "✅ .vercel/project.json → ${VERCEL_PROJECT_ID}"
 
       - name: Pull Vercel project settings
+        if: steps.proj.outputs.skip != 'true'
         run: |
           vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Build
+        if: steps.proj.outputs.skip != 'true'
         run: |
           vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Deploy (prebuilt artifact)
+        if: steps.proj.outputs.skip != 'true'
         id: deploy_step
         run: |
           url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }})
@@ -277,6 +292,7 @@ jobs:
           echo "deployed: $url"
 
       - name: Attach production domain (${{ matrix.domain }})
+        if: steps.proj.outputs.skip != 'true'
         if: steps.target.outputs.name == 'production'
         run: |
           code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \

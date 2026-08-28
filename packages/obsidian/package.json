@@ -16,7 +16,8 @@
   },
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^4.4.3"
