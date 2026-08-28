@@ -40,4 +40,13 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
+  {
+    // Machine port of deploy/data.js — regenerated from that source rather than
+    // hand-edited, so its ES5 `var` style is intentional and must not be "fixed"
+    // here (the next regeneration would reintroduce it).
+    files: ['lib/site/data.ts'],
+    rules: {
+      'no-var': 'off',
+    },
+  },
 ]
