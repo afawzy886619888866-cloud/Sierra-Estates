@@ -6,7 +6,6 @@ import {
   fmtArea,
   fmtScore,
   fmtRelative,
-  fmtDate,
   fmtDateTime,
   fmtPercent,
   fmtYield,
