@@ -16,6 +16,7 @@
  * gate in proxy.ts.
  */
 import { NextResponse } from 'next/server';
+import { safeEqual } from '@/lib/auth';
 
 /**
  * Returns a response to send back when the request must be rejected, or `null`
@@ -35,7 +36,7 @@ export function verifyCronRequest(req: Request): NextResponse | null {
     return null;
   }
 
-  if (req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+  if (!safeEqual(req.headers.get('authorization') || '', `Bearer ${cronSecret}`)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
