@@ -191,4 +191,15 @@ describe('Real Estate Savings & Financial Valuation Engine Test Suite', () => {
       expect(result.netMonthlyCarry).toBe(82500);
     });
   });
+
+  describe('Egyptian Gold Sovereign Multi-Asset Parity Engine', () => {
+    it('converts property price to exact Egyptian Gold Sovereigns (8g 21K gold)', async () => {
+      const { FxGoldValuationEngine, DEFAULT_FX_RATES } = await import('../packages/agents-core/src/fx-gold-engine');
+      // At 3,450 EGP/g, 1 Gold Sovereign (8g) = 27,600 EGP
+      // 27,600,000 EGP property = 1,000 Gold Sovereigns
+      const valuation = FxGoldValuationEngine.calculateParity(27_600_000, DEFAULT_FX_RATES);
+      expect(valuation.goldSovereignEquivalent).toBe(1000);
+      expect(valuation.formattedDisplay.goldSovereign).toContain('1,000 Sovereigns (جنيه ذهب)');
+    });
+  });
 });
