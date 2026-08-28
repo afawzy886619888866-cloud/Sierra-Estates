@@ -703,8 +703,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                             {item.ownerName || item.contact_info || 'Direct Client'}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          {item.sourceGroup || item.ago || 'Verified Sync'}
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                          <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                          <span>{item.sourceGroup || item.ago || 'Verified Sync'}</span>
                         </div>
                       </td>
                       <td className="p-3.5">
