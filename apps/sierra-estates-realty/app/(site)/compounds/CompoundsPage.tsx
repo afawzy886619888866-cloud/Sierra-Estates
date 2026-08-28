@@ -408,7 +408,10 @@ export default function CompoundsPage() {
                 key={c.n}
                 type="button"
                 className={`comp rv d${(i % 4) + 1} ${selected === c.n ? 'is-active' : ''}`}
-                onClick={() => setSelected(c.n)}
+                onClick={() => {
+                  setSelected(c.n);
+                  document.getElementById('cpd-map')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }}
                 style={{ border: 0, padding: 0, cursor: 'pointer', textAlign: 'start' }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

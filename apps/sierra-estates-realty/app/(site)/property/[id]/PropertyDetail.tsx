@@ -387,10 +387,41 @@ export default function PropertyDetail({ id }: { id: string }) {
                   type="button"
                   onClick={() => window.print()}
                   className="btn btn-ghost"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)', marginBottom: 8 }}
                 >
                   <FileText className="i" style={{ width: 14, height: 14 }} />
                   <span>{isAr ? 'تحميل البروشور (PDF)' : 'Download PDF Brochure'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const icsContent = [
+                      'BEGIN:VCALENDAR',
+                      'VERSION:2.0',
+                      'PRODID:-//Sierra Estates//VIP Viewing//EN',
+                      'BEGIN:VEVENT',
+                      `SUMMARY:VIP Viewing: ${p.code} (${p.type} in ${p.cmp})`,
+                      `DESCRIPTION:Private property walkthrough scheduled with ${p.agent} (Sierra Estates). Contact: +201092048333`,
+                      `LOCATION:${p.cmp}, ${p.zone}, New Cairo`,
+                      'DTSTART:20260901T100000Z',
+                      'DTEND:20260901T110000Z',
+                      'END:VEVENT',
+                      'END:VCALENDAR',
+                    ].join('\r\n');
+                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `sierra-viewing-${p.code}.ics`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="btn btn-ghost"
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
+                >
+                  <Calendar className="i" style={{ width: 14, height: 14 }} />
+                  <span>{isAr ? 'حفظ الموعد في التقويم (.ics)' : 'Add to Calendar (.ics)'}</span>
                 </button>
 
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
