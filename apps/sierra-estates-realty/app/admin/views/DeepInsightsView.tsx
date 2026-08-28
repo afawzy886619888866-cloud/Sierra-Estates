@@ -108,6 +108,43 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
         </div>
       </div>
 
+      {/* Comparative Heat-Map & Growth Trajectory Matrix */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/20 to-slate-900 border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <span>🗺️</span> {isAr ? 'مصفوفة نمو سعر المتر والعائد التأجيري (Heat-Map)' : 'Compound Price / m² & Yield Trajectory Matrix'}
+          </h3>
+          <span className="text-[11px] text-cyan-400 font-mono font-semibold">
+            {isAr ? 'بيانات السوق المحدثة · 2026' : 'Live Normalized Benchmark · 2026'}
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {filteredTrends.map((c) => {
+            const numPrice = parseInt(c.pricePerSqm.replace(/[^0-9]/g, ''), 10) || 60000;
+            const barWidth = Math.min(100, Math.round((numPrice / 120000) * 100));
+            return (
+              <div key={c.id} className="space-y-1 text-xs">
+                <div className="flex justify-between items-center text-slate-300">
+                  <span className="font-semibold text-white">{c.name}</span>
+                  <div className="flex items-center gap-3 font-mono">
+                    <span className="text-cyan-400">{c.pricePerSqm}</span>
+                    <span className="text-emerald-400">{c.appreciation.split(' ')[0]}</span>
+                    <span className="text-purple-400">{c.rentalYield.split(' ')[0]}</span>
+                  </div>
+                </div>
+                <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800/80">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500"
+                    style={{ width: `${barWidth}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Grid of Compound Analytics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filteredTrends.map((item) => (
