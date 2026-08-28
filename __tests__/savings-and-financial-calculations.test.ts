@@ -155,4 +155,51 @@ describe('Real Estate Savings & Financial Valuation Engine Test Suite', () => {
       expect(plan.quarterlyPayment).toBe(562500); // 562,500 EGP / Quarter
     });
   });
+
+  describe('Mortgage Affordability & Net Monthly Carry Calculations', () => {
+    function calculateMortgageAffordability(
+      propertyPriceEgp: number,
+      downPaymentPct: number,
+      tenureYears: number,
+      annualInterestRate: number = 0.12,
+      estGrossYieldPct: number = 0.085
+    ) {
+      const downPayment = (propertyPriceEgp * downPaymentPct) / 100;
+      const principalFinanced = propertyPriceEgp - downPayment;
+      const totalInterest = principalFinanced * annualInterestRate * tenureYears;
+      const totalPayable = principalFinanced + totalInterest;
+      const monthlyMortgage = Math.round(totalPayable / (tenureYears * 12));
+      const estMonthlyRent = Math.round((propertyPriceEgp * estGrossYieldPct) / 12);
+      const netMonthlyCarry = monthlyMortgage - estMonthlyRent;
+
+      return {
+        downPayment,
+        principalFinanced,
+        monthlyMortgage,
+        estMonthlyRent,
+        netMonthlyCarry,
+      };
+    }
+
+    it('calculates 30% down payment and 7-year monthly net carry accurately', () => {
+      const result = calculateMortgageAffordability(10_000_000, 30, 7, 0.12, 0.085);
+
+      expect(result.downPayment).toBe(3_000_000);
+      expect(result.principalFinanced).toBe(7_000_000);
+      expect(result.monthlyMortgage).toBe(153333);
+      expect(result.estMonthlyRent).toBe(70833);
+      expect(result.netMonthlyCarry).toBe(82500);
+    });
+  });
+
+  describe('Egyptian Gold Sovereign Multi-Asset Parity Engine', () => {
+    it('converts property price to exact Egyptian Gold Sovereigns (8g 21K gold)', async () => {
+      const { FxGoldValuationEngine, DEFAULT_FX_RATES } = await import('../packages/agents-core/src/fx-gold-engine');
+      // At 3,450 EGP/g, 1 Gold Sovereign (8g) = 27,600 EGP
+      // 27,600,000 EGP property = 1,000 Gold Sovereigns
+      const valuation = FxGoldValuationEngine.calculateParity(27_600_000, DEFAULT_FX_RATES);
+      expect(valuation.goldSovereignEquivalent).toBe(1000);
+      expect(valuation.formattedDisplay.goldSovereign).toContain('1,000 Sovereigns (جنيه ذهب)');
+    });
+  });
 });

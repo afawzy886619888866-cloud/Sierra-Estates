@@ -20,6 +20,43 @@ function verifyMetaSignature(payload: string, signatureHeader: string | null, ap
   }
 }
 
+async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean> {
+  const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN;
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_ID;
+
+  if (!token || !phoneId || !toPhone) {
+    console.log(`ℹ️ [WhatsApp Webhook] Outbound API credentials not configured; response generated in payload mode.`);
+    return false;
+  }
+
+  try {
+    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
+    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: cleanPhone,
+        type: 'text',
+        text: { body: text },
+      }),
+    });
+
+    if (!res.ok) {
+      console.error(`⚠️ [WhatsApp Webhook] Outbound message failed with status ${res.status}: ${await res.text()}`);
+      return false;
+    }
+    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${cleanPhone}`);
+    return true;
+  } catch (err) {
+    console.error(`❌ [WhatsApp Webhook] Outbound dispatch error:`, err);
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   
@@ -49,10 +86,14 @@ export async function POST(req: NextRequest) {
     await WhatsAppStatusService.recordHeartbeat('syncing');
 
     // Dynamic extraction logic (Adapter Pattern)
-    const message = body.message?.text || body.text || body.Body;
-    const sender = body.from || body.From || "External Signal";
-    const group = body.groupName || body.Source || "WhatsApp Broker Group";
-    const isGroup = body.isGroup === true || body.isGroup === 'true';
+    const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
+
+    const message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+    const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
+    const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
+    const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
+    const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
     if (!message) {
       return NextResponse.json({ error: "Empty signal ignored" }, { status: 400 });
@@ -74,9 +115,15 @@ export async function POST(req: NextRequest) {
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
       
+      // Attempt Outbound Meta Dispatch if configured
+      if (replyText && sender) {
+        await sendWhatsAppReply(sender, replyText);
+      }
+
       return NextResponse.json({ 
-        status: "success",
+        status: "success", 
         replyMessage: replyText,
+        dispatched: true,
         processed_at: new Date().toISOString()
       });
     }

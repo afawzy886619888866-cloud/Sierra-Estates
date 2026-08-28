@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import {
   Send, Mail, Phone, Briefcase, Clock, MapPin, ArrowRight,
-  Users, Rocket, Heart, Shield, Zap, Globe, ChevronDown,
-  CheckCircle, Star, TrendingUp, GraduationCap, Coffee,
+  Users, Rocket, Heart, Shield, ChevronDown,
+  CheckCircle, Star, GraduationCap, Coffee,
   Laptop, Palmtree, Dumbbell, HeartPulse,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
