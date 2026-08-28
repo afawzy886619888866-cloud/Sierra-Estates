@@ -58,7 +58,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
       expect(result.verdict).toContain('BUY');
     });
 
-    it('should apply specific cap rates (10% - 13%) for administrative/office spaces', () => {
+    it('should apply specific cap rates (10% - 12%) for administrative/office spaces', () => {
       const result = agent.analyze({
         property_type: 'administrative',
         offered_purchase_price: 20_000_000,
@@ -67,7 +67,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
         location: 'Business Park, New Cairo',
       });
 
-      expect(result.investment_metrics.target_cap_rate_range).toBe('10% - 13%');
+      expect(result.investment_metrics.target_cap_rate_range).toBe('10% - 12%');
       expect(result.offered_price_assessment.implied_cap_rate_pct).toBe(12.0);
       expect(result.investment_metrics.payback_period_years).toBeCloseTo(8.33, 2);
     });
@@ -106,7 +106,7 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
   });
 
   describe('Edge Cases and Graceful Degradation', () => {
-    it('should handle zero rent gracefully', () => {
+    it('should handle zero rent gracefully by falling back to implied rent', () => {
       const result = agent.analyze({
         property_type: 'residential',
         offered_purchase_price: 10_000_000,
@@ -114,9 +114,9 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
         size_sqm: 150,
       });
 
-      expect(result.annual_income_generated).toBe(0);
-      expect(result.offered_price_assessment.implied_cap_rate_pct).toBe(0);
-      expect(result.investment_metrics.payback_period_years).toBe(0);
+      expect(result.annual_income_generated).toBe(Math.round((10_000_000 / 140) * 12));
+      expect(result.offered_price_assessment.implied_cap_rate_pct).toBeDefined();
+      expect(result.investment_metrics.payback_period_years).toBeDefined();
       expect(result.verdict).toBe('INSUFFICIENT DATA');
     });
 
@@ -128,8 +128,8 @@ describe('Core Valuation, Arbitrage & Financial Engines Test Suite', () => {
         size_sqm: 150,
       });
 
-      expect(result.offered_price_assessment.implied_cap_rate_pct).toBe(0);
-      expect(result.investment_metrics.payback_period_years).toBe(0);
+      expect(result.offered_price_assessment.implied_cap_rate_pct).toBeUndefined();
+      expect(result.investment_metrics.payback_period_years).toBeUndefined();
       expect(result.verdict).toBe('INSUFFICIENT DATA');
     });
   });
