@@ -82,7 +82,40 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
       {/* Live Terminal Log Stream */}
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
-          <span className="text-slate-400 text-xs uppercase tracking-wider">Live System Stream</span>
+          <div className="flex items-center gap-3">
+            <span className="text-slate-400 text-xs uppercase tracking-wider">Live System Stream</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(filteredLogs, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `sierra-telemetry-logs-${Date.now()}.json`;
+                  a.click();
+                }}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] transition-colors"
+              >
+                📥 JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const txt = filteredLogs.map((l) => `[${l.timestamp}] [${l.type.toUpperCase()}] ${l.text}`).join('\n');
+                  const blob = new Blob([txt], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `sierra-telemetry-logs-${Date.now()}.txt`;
+                  a.click();
+                }}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-[10px] transition-colors"
+              >
+                📥 TXT
+              </button>
+            </div>
+          </div>
           <div className="flex gap-1.5 overflow-x-auto">
             {(['all', 'info', 'agent', 'pubsub', 'warn'] as const).map((ft) => (
               <button
