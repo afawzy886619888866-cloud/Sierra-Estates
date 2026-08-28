@@ -11,7 +11,8 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 
 import { Boom } from '@hapi/boom';
-import qrcode from 'qrcode-terminal';
+import qrcodeTerminal from 'qrcode-terminal';
+import QRCode from 'qrcode';
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
@@ -25,10 +26,118 @@ const logger = pino({ level: 'info', name: 'sierra-wa-owners' });
 const OUTPUT_DIR = process.env.OUTPUT_DIR || 'H:\\Sheets';
 const MEDIA_DIR = path.join(OUTPUT_DIR, 'Owners_Media');
 const INVENTORY_FILE = path.join(OUTPUT_DIR, 'Owners_Inventory.json');
+const QR_PNG_PATH = path.join(OUTPUT_DIR, 'whatsapp_qr.png');
+const QR_HTML_PATH = path.join(OUTPUT_DIR, 'whatsapp_qr.html');
 
 if (!fs.existsSync(MEDIA_DIR)) {
   fs.mkdirSync(MEDIA_DIR, { recursive: true });
 }
+
+async function renderQRPage(qr) {
+  try {
+    const dataUrl = await QRCode.toDataURL(qr, { width: 400, margin: 2 });
+    await QRCode.toFile(QR_PNG_PATH, qr, { width: 400, margin: 2 });
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sierra Estates WhatsApp Link</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      max-width: 480px;
+      border: 1px solid #334155;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: #38bdf8;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .qr-container {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      display: inline-block;
+      margin: 20px 0;
+    }
+    .qr-container img {
+      display: block;
+      width: 280px;
+      height: 280px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #0369a1;
+      color: #e0f2fe;
+      margin-bottom: 12px;
+    }
+    .steps {
+      text-align: left;
+      background: #0f172a;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-top: 10px;
+    }
+    .steps ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">Sierra Estates Mobile Connector</div>
+    <h1>Scan with WhatsApp</h1>
+    <p>Point your phone's camera at the QR code below to connect your WhatsApp session.</p>
+    <div class="qr-container">
+      <img src="${dataUrl}" alt="WhatsApp QR Code" />
+    </div>
+    <div class="steps">
+      <ol>
+        <li>Open <b>WhatsApp</b> on your phone</li>
+        <li>Tap <b>Settings</b> &gt; <b>Linked Devices</b></li>
+        <li>Tap <b>Link a Device</b> and scan this screen</li>
+      </ol>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    fs.writeFileSync(QR_HTML_PATH, htmlContent, 'utf-8');
+    logger.info({ QR_HTML_PATH, QR_PNG_PATH }, '🖼️ Generated HTML and PNG QR code');
+  } catch (err) {
+    logger.error({ err: err.message }, 'Failed to render QR page');
+  }
+}
+
 
 const COMPOUNDS_MAP = {
   'Madinaty': [/مدينت[يى]/i, /madinat/i],
@@ -183,13 +292,16 @@ export async function startOwnersHarvester() {
       console.log('\n======================================================');
       console.log('📱 SCAN THIS QR CODE IN WHATSAPP MOBILE TO CONNECT:');
       console.log('Open WhatsApp > Linked Devices > Link a Device');
+      console.log('Or open in browser: ' + QR_HTML_PATH);
       console.log('======================================================\n');
-      qrcode.generate(qr, { small: true });
+      qrcodeTerminal.generate(qr, { small: true });
+      await renderQRPage(qr);
     }
 
     if (connection === 'open') {
       console.log('\n✅ WhatsApp Connected! Harvesting Owners Groups & Photos...\n');
     }
+
 
     if (connection === 'close') {
       const shouldReconnect =
