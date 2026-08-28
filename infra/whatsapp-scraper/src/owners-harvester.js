@@ -4,12 +4,12 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import baileysPkg, {
+import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   downloadMediaMessage,
 } from '@whiskeysockets/baileys';
-const makeWASocket = baileysPkg.default || baileysPkg.makeWASocket || baileysPkg;
+
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import pino from 'pino';
