@@ -490,6 +490,19 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                   <Download className="w-3.5 h-3.5 text-cyan-400" />
                   <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export Selected'}</span>
                 </button>
+
+                {/* Bulk Broadcast via WhatsApp */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkNotification(`Created draft WhatsApp broadcast batch for ${selectedListingIds.length} properties.`);
+                    setTimeout(() => setBulkNotification(null), 4000);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <span>💬</span>
+                  <span>{isAr ? 'إرسال عبر واتساب' : 'WhatsApp Broadcast'}</span>
+                </button>
               </div>
             </div>
           )}
