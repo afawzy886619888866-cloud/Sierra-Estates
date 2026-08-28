@@ -220,7 +220,7 @@ export default function CompoundsPage() {
                           display: 'grid',
                           gridTemplateColumns: 'repeat(3, 1fr)',
                           gap: 6,
-                          marginBottom: 14,
+                          marginBottom: 12,
                           padding: 10,
                           borderRadius: 10,
                           background: 'rgba(15, 23, 42, 0.6)',
@@ -237,6 +237,12 @@ export default function CompoundsPage() {
                           <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'العائد التأجيري' : 'Net Yield'}</span>
                           <strong style={{ color: '#34D399', fontFamily: 'var(--mono)' }}>8.4%</strong>
                         </div>
+                        <div>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'النمو السنوي' : 'YoY Growth'}</span>
+                          <strong style={{ color: '#FCD34D', fontFamily: 'var(--mono)' }}>+24%</strong>
+                        </div>
+                      </div>
+
                       {/* Master Plan Zones & Phases */}
                       <div style={{ marginBottom: 12 }}>
                         <span style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
