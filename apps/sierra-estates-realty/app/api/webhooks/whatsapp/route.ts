@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
@@ -57,6 +58,7 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
 }
 
 export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
   // Optional secret verification for WhatsApp webhook
   const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
   if (SECRET_KEY) {
