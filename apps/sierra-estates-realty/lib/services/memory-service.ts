@@ -85,14 +85,17 @@ export class MemoryService {
       // Check shared memory bus cache first
       const cachedTrends = await sharedMemory.read('global:patterns');
       if (cachedTrends) return cachedTrends;
-    } catch {}
+    } catch (cacheErr) {
+      console.warn('[MemoryService] Cache read failed:', cacheErr);
+    }
 
     try {
       const globalRef = doc(db, COLLECTIONS.intelligence, 'global_patterns');
       const snap = await getDoc(globalRef);
       const data = snap.exists() ? snap.data() : null;
       if (data) {
-        await sharedMemory.write('global:patterns', data, { author: 'admin', ttlSeconds: 300 }).catch(() => {});
+        await sharedMemory.write('global:patterns', data, { author: 'admin', ttlSeconds: 300 })
+          .catch((writeErr) => console.warn('[MemoryService] Cache write failed:', writeErr));
       }
       return data;
     } catch {

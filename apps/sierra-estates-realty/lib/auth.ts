@@ -29,8 +29,12 @@ const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
 const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
 
 function getKey(): string {
-  const secret =
-    process.env.SESSION_SECRET || process.env.VERCEL_AUTOMATION_BYPASS_TOKEN;
+  // Only SESSION_SECRET may sign sessions. VERCEL_AUTOMATION_BYPASS_TOKEN was
+  // previously accepted as a fallback, but Vercel injects it automatically —
+  // so the production guard below could never fire, and anyone who could read
+  // that token (it is visible in project settings and handed out for preview
+  // protection bypass) could forge an admin session cookie.
+  const secret = process.env.SESSION_SECRET;
 
   if (secret) return secret;
 
@@ -82,7 +86,7 @@ export const SESSION_COOKIE = COOKIE_NAME;
 export function cookieOpts() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
@@ -133,7 +137,7 @@ export function tryDemoLogin(email: string, password: string): Session | null {
 }
 
 /** Constant-time string comparison. */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
