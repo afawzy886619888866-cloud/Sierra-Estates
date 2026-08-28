@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, isAdminInitialized } from '@/lib/server/firebase-admin';
 import { logger } from '@/lib/logger';
-import { safeEqual } from '@/lib/auth';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 export async function POST(req: NextRequest) {
   // Telegram sends X-Telegram-Bot-Api-Secret-Token when the webhook was registered
-  // with a secret_token (setWebhook). An unset TELEGRAM_WEBHOOK_SECRET used to skip
-  // the check entirely (FAIL-OPEN), so anyone could drive the bot. Fail CLOSED in
-  // production, keep the unauthenticated path in development — same shape as
-  // lib/server/cron-auth.ts.
-  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    if (process.env.NODE_ENV === 'production') {
-      logger.error('[Telegram Webhook] TELEGRAM_WEBHOOK_SECRET is not configured — rejecting all requests');
-      return NextResponse.json({ ok: false, error: 'Webhook is not configured' }, { status: 503 });
-    }
-  } else if (!safeEqual(req.headers.get('x-telegram-bot-api-secret-token') || '', webhookSecret)) {
-    return NextResponse.json({ ok: false, error: 'Invalid webhook secret' }, { status: 401 });
-  }
+  // with a secret_token (setWebhook). Register the webhook with a secret and set
+  // TELEGRAM_WEBHOOK_SECRET — in production an unset secret fails closed (503).
+  const denied = verifySharedSecret(req, {
+    header: 'x-telegram-bot-api-secret-token',
+    secret: process.env.TELEGRAM_WEBHOOK_SECRET,
+    name: 'TELEGRAM_WEBHOOK_SECRET',
+  });
+  if (denied) return denied;
 
   try {
     const body = await req.json();
