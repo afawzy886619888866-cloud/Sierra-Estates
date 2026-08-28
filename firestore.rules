@@ -53,16 +53,13 @@ service cloud.firestore {
     //     falls back to static data and leads never reach Firestore / Laila bot.
     match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
     match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
-    // Writes arrive via the Admin SDK in app/api/inquiries/route.ts and
-    // app/api/careers/apply/route.ts, which enforce zod validation and a body
-    // size cap. The previous anonymous `allow create` grants bypassed both and
-    // matched a payload shape nothing produces (the API writes status
-    // 'S1_NEW_LEAD', and career applications go to `career_applications`).
     match /inquiries/{id} {
-      allow read, write: if isStaff();
+      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
+      allow read, update, delete: if isStaff();
     }
     match /careers/{id} {
-      allow read, write: if isStaff();
+      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
+      allow read, update, delete: if isStaff();
     }
 
     // --- Share links. `allow read: if true` on a wildcard document match
@@ -74,7 +71,8 @@ service cloud.firestore {
     //     Analytics writes stay open so an unauthenticated viewer can still be
     //     counted if those pages return. ---
     match /proposals/{id} {
-      allow read: if isStaff();
+      allow get: if true;
+      allow list: if isStaff();
       allow update: if isStaff()
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt'])
             && request.resource.data.viewCount is int
@@ -82,7 +80,8 @@ service cloud.firestore {
       allow create, delete: if isStaff();
     }
     match /concierge_selections/{id} {
-      allow read: if isStaff();
+      allow get: if true;
+      allow list: if isStaff();
       allow update: if isStaff()
         || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement'])
             && request.resource.data.engagement is map);
