@@ -14,6 +14,7 @@ export interface CardListing {
   id: number; code: string; cmp: string; zone: string; type: string;
   beds: number; bath: number; area: number; egpM: number; usd: number;
   ai: number; tag: string | null; mode: string; agent: string; ago: string; img: string;
+  yield?: number;
 }
 
 export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number }) {

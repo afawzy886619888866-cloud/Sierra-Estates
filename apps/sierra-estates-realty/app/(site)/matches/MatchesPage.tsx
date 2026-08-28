@@ -102,6 +102,17 @@ export default function MatchesPage() {
               />
             </div>
 
+            <div className="af-group">
+              <span className="af-label">{isAr ? 'الحد الأدنى للعائد' : 'Min Yield'}</span>
+              <div className="af-chips">
+                {[0, 7, 9, 12].map((y) => (
+                  <button key={y} type="button" className={`af-chip${minYield === y ? ' on' : ''}`} onClick={() => setMinYield(y)}>
+                    {y === 0 ? (isAr ? 'الكل' : 'Any') : `${y}%+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <span className="af-count"><b>{matched.length}</b> {isAr ? 'نتيجة' : 'matches'}</span>
           </div>
 
