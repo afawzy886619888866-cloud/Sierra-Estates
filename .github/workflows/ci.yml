@@ -19,7 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
@@ -61,7 +60,7 @@ jobs:
         run: pnpm --filter sierra-estates-client-page type-check
 
       - name: Lint realty app
-        run: pnpm --filter sierra-estates-client-page lint || true
+        run: pnpm --filter sierra-estates-client-page lint
 
       - name: Unit tests (functions)
         run: pnpm --filter sierra-estates-functions test

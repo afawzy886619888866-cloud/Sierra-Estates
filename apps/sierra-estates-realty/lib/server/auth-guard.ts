@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from './firebase-admin';
+import { safeEqual } from '@/lib/auth';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
@@ -42,7 +43,7 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
 
   // Method 2: Internal Secret Key (for server-to-server, cron, webhooks)
   const secretHeader = req.headers.get('x-sbr-secret-key');
-  if (SECRET_KEY && secretHeader === SECRET_KEY) {
+  if (SECRET_KEY && safeEqual(secretHeader || '', SECRET_KEY)) {
     return {
       authenticated: true,
       method: 'secret-key',

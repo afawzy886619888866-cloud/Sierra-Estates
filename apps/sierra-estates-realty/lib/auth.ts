@@ -28,8 +28,10 @@ const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
 const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
 
 function getKey(): string {
-  const secret =
-    process.env.SESSION_SECRET || process.env.VERCEL_AUTOMATION_BYPASS_TOKEN;
+  // ONLY SESSION_SECRET. The previous fallback to
+  // VERCEL_AUTOMATION_BYPASS_TOKEN was a deployment-protection value handed to
+  // CI and preview tooling, so anyone holding it could forge admin sessions.
+  const secret = process.env.SESSION_SECRET;
 
   if (secret) return secret;
 
@@ -66,7 +68,7 @@ export async function verifySession(token: string | null | undefined): Promise<S
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
   const expectedSig = await hmacSha256(body, getKey());
-  if (sig !== expectedSig) return null;
+  if (!safeEqual(sig, expectedSig)) return null;
   try {
     const s = JSON.parse(Buffer.from(body, "base64url").toString("utf-8")) as Session;
     if (s.exp < Date.now()) return null;
@@ -131,8 +133,12 @@ export function tryDemoLogin(email: string, password: string): Session | null {
   return null;
 }
 
-/** Constant-time string comparison. */
-function safeEqual(a: string, b: string): boolean {
+/**
+ * Constant-time string comparison. Exported so every shared-secret /
+ * signature comparison in the app comes from one implementation instead of
+ * an early-exiting `===`, which leaks the secret one character at a time.
+ */
+export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);

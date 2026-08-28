@@ -68,13 +68,15 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Search
         if: steps.secrets.outputs.configured == 'true'
@@ -128,13 +130,15 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Contact
         if: steps.secrets.outputs.configured == 'true'
@@ -184,13 +188,15 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Email Sender
         if: steps.secrets.outputs.configured == 'true'
@@ -240,13 +246,15 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Unit Adder
         if: steps.secrets.outputs.configured == 'true'

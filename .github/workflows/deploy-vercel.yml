@@ -17,13 +17,17 @@ name: Deploy · Vercel
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
 #   VERCEL_ORG_ID              — Vercel team/org ID
-#   CLIENT_VERCEL_PROJECT_ID   — prj_theA731k4WdFVhgd6DJUP6pAry6n
-#   ADMIN_VERCEL_PROJECT_ID    — prj_NMqZUADX9A5ba22ylMfls2l7I0zX
+#   CLIENT_VERCEL_PROJECT_ID   — Vercel project behind sierra-estates.net (required)
+#   ADMIN_VERCEL_PROJECT_ID    — Vercel project behind admin.sierra-estates.net (required)
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
 on:
-  push:
+  # Gated on CI rather than firing on the same push: previously a commit that
+  # failed type-check or tests still deployed to production in parallel.
+  workflow_run:
+    workflows: ["CI"]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -40,7 +44,6 @@ concurrency:
 
 env:
   VERCEL_CLI_VERSION: 'latest'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
   NEXT_TELEMETRY_DISABLED: "1"
@@ -65,6 +68,7 @@ jobs:
             framework: nextjs
             proj_id_secret: ADMIN_VERCEL_PROJECT_ID
     name: deploy (${{ matrix.role }})
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -80,20 +84,29 @@ jobs:
           TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
           
           if [ "${{ matrix.role }}" = "admin" ]; then
-            PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
-            PROJ="${PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+            PROJ=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
+            PROJ_VAR=ADMIN_VERCEL_PROJECT_ID
           else
-            PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
-            PROJ="${PROJ_RAW:-prj_theA731k4WdFVhgd6DJUP6pAry6n}"
+            PROJ=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
+            PROJ_VAR=CLIENT_VERCEL_PROJECT_ID
+          fi
+
+          # No fallback: a wrong project ID here attaches a production domain to
+          # someone else's project. Fail loudly instead of guessing.
+          if [ -z "$PROJ" ]; then
+            echo "::error::repository variable $PROJ_VAR is not set — cannot resolve the ${{ matrix.role }} Vercel project."
+            exit 1
           fi
           
           ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
 
           # If VERCEL_TOKEN is unset, gracefully exit 0 with notice (native git integration handles deploys)
           if [ -z "$TOKEN" ]; then
-            echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment step. Vercel native Git integration handles deployments."
+            echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment. Vercel native Git integration handles deployments."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
           echo "VERCEL_ORG_ID=$ORG_ID"     >> $GITHUB_ENV
           echo "VERCEL_PROJECT_ID=$PROJ"   >> $GITHUB_ENV
@@ -109,7 +122,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: pnpm
 
       - name: Install dependencies
@@ -130,13 +143,15 @@ jobs:
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
       - name: Normalize Vercel project settings
+        if: steps.proj.outputs.skip != 'true'
         run: |
           # Vercel needs to know to build from apps/sierra-estates-realty
           code=$(curl -sS -o /dev/null -w '%{http_code}' -X PATCH \
             "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
             -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"rootDirectory\":\"${{ matrix.app_dir }}\",\"framework\":\"${{ matrix.framework }}\",\"buildCommand\":null,\"installCommand\":\"pnpm install\",\"outputDirectory\":null,\"devCommand\":null}" || echo "000")
+            -d "$(jq -n --arg root "${{ matrix.app_dir }}" --arg fw "${{ matrix.framework }}" \
+                  '{rootDirectory:$root,framework:$fw,buildCommand:null,installCommand:"pnpm install --frozen-lockfile",outputDirectory:null,devCommand:null}')" || echo "000")
           if [ "$code" = "200" ] || [ "$code" = "204" ]; then
             echo "✅ Project normalized: rootDirectory=${{ matrix.app_dir }}, framework=${{ matrix.framework }}"
           else
@@ -144,6 +159,7 @@ jobs:
           fi
 
       - name: Sync env vars to Vercel project
+        if: steps.proj.outputs.skip != 'true'
         env:
           VARS_JSON: ${{ toJson(vars) }}
           SECRETS_JSON: ${{ toJson(secrets) }}
@@ -185,7 +201,8 @@ jobs:
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\",\"preview\"]}" || echo "000")
+              -d "$(jq -n --arg key "$1" --arg value "$2" --arg type "${3:-plain}" \
+                    '{key:$key,value:$value,type:$type,target:["production","preview"]}')" || echo "000")
             case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)";; esac
           }
 
@@ -239,7 +256,7 @@ jobs:
           upsert LEAD_NOTIFY_WHATSAPP_NUMBER              "$LEAD_WHATSAPP" encrypted
 
       - name: Remove crons from admin project (client project owns them)
-        if: matrix.role == 'admin'
+        if: steps.proj.outputs.skip != 'true' && matrix.role == 'admin'
         run: |
           if [ -f "${{ matrix.app_dir }}/vercel.json" ]; then
             jq 'del(.crons)' "${{ matrix.app_dir }}/vercel.json" > /tmp/vercel.json
@@ -248,10 +265,12 @@ jobs:
           fi
 
       - name: Install Vercel CLI
+        if: steps.proj.outputs.skip != 'true'
         run: npm install --global vercel@${VERCEL_CLI_VERSION}
 
       # ── Point vercel CLI at THIS role's project ONLY ──────────────────────
       - name: Write .vercel/project.json for this role
+        if: steps.proj.outputs.skip != 'true'
         run: |
           mkdir -p .vercel "${{ matrix.app_dir }}/.vercel"
           printf '{"projectId":"%s","orgId":"%s"}' "${VERCEL_PROJECT_ID}" "${VERCEL_ORG_ID}" \
@@ -261,14 +280,17 @@ jobs:
           echo "✅ .vercel/project.json → ${VERCEL_PROJECT_ID}"
 
       - name: Pull Vercel project settings
+        if: steps.proj.outputs.skip != 'true'
         run: |
           vercel pull --yes --environment=${{ steps.target.outputs.name }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Build
+        if: steps.proj.outputs.skip != 'true'
         run: |
           vercel build ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }}
 
       - name: Deploy (prebuilt artifact)
+        if: steps.proj.outputs.skip != 'true'
         id: deploy_step
         run: |
           url=$(vercel deploy --prebuilt ${{ steps.target.outputs.flag }} --token=$ROLE_VERCEL_TOKEN --cwd=${{ matrix.app_dir }})
@@ -277,13 +299,13 @@ jobs:
           echo "deployed: $url"
 
       - name: Attach production domain (${{ matrix.domain }})
-        if: steps.target.outputs.name == 'production'
+        if: steps.proj.outputs.skip != 'true' && steps.target.outputs.name == 'production'
         run: |
           code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
             "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
             -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"name\":\"${{ matrix.domain }}\"}" || echo "000")
+            -d "$(jq -n --arg name "${{ matrix.domain }}" '{name:$name}')" || echo "000")
           body=$(cat /tmp/dom-res.json)
           if [ "$code" = "200" ] || [ "$code" = "201" ]; then
             echo "✅ domain ${{ matrix.domain }} attached"

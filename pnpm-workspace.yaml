@@ -51,6 +51,7 @@ packages:
   # skipped automatically by pnpm.
   - "packages/agents"
   - "packages/agents-core"
+  - "packages/agents-api"
   - "packages/admin-data"
   - "packages/api"
   - "packages/auth"
@@ -61,8 +62,6 @@ packages:
   - "packages/memory-engine"
   - "packages/obsidian"
   - "packages/property-finder-api"
-  - "packages/shared"
-  - "packages/types"
   - "packages/ui"
   - "packages/whatsapp-agent"
   # packages/open-memory is a standalone third-party project — excluded from
@@ -72,7 +71,6 @@ packages:
   - "lib/*"
   - "lib/integrations/*"
   - "scripts"
-  - my-agent
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.6.1
