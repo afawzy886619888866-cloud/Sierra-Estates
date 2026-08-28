@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { AgentExecutionRequestSchema } from '../types';
-import { InsightsAgent } from '../insights-agent';
+import { AgentExecutionRequestSchema } from '../types.js';
+import { InsightsAgent } from '../insights-agent.js';
+
 
 describe('AI Agent SDK', () => {
   it('validates AgentExecutionRequest schema correctly', () => {

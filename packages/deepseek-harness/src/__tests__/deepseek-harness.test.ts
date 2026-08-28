@@ -1,18 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { HarnessEvaluator } from '../evaluator';
 import { EvalScenario, EvalScenarioSchema } from '../types';
-import { DEFAULT_BENCHMARK_SCENARIOS } from '../scenarios';
+import { BENCHMARK_SCENARIOS } from '../scenarios';
 
 describe('DeepSeek Harness Evaluator', () => {
   const evaluator = new HarnessEvaluator();
 
   it('validates benchmark scenarios schema', () => {
-    expect(DEFAULT_BENCHMARK_SCENARIOS.length).toBeGreaterThan(0);
-    for (const scenario of DEFAULT_BENCHMARK_SCENARIOS) {
+    expect(BENCHMARK_SCENARIOS.length).toBeGreaterThan(0);
+    for (const scenario of BENCHMARK_SCENARIOS) {
       const parsed = EvalScenarioSchema.safeParse(scenario);
       expect(parsed.success).toBe(true);
     }
   });
+
 
   it('evaluates successful output correctly', () => {
     const scenario: EvalScenario = {
