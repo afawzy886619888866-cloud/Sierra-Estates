@@ -237,9 +237,28 @@ export default function CompoundsPage() {
                           <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'العائد التأجيري' : 'Net Yield'}</span>
                           <strong style={{ color: '#34D399', fontFamily: 'var(--mono)' }}>8.4%</strong>
                         </div>
-                        <div>
-                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'النمو السنوي' : 'YoY Growth'}</span>
-                          <strong style={{ color: '#FCD34D', fontFamily: 'var(--mono)' }}>+24%</strong>
+                      {/* Master Plan Zones & Phases */}
+                      <div style={{ marginBottom: 12 }}>
+                        <span style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
+                          {isAr ? 'مخطط المراحل والأحياء' : 'Master Plan Phases & Zones'}
+                        </span>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {['Phase 1 (Delivered)', 'Park Residences', 'Lagoon Quarter', 'Clubhouse Villas'].map((phase, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                fontSize: 10,
+                                padding: '2px 8px',
+                                borderRadius: 6,
+                                background: idx === 0 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                color: idx === 0 ? '#93c5fd' : '#cbd5e1',
+                                border: '1px solid var(--line)',
+                                fontFamily: 'var(--mono)',
+                              }}
+                            >
+                              {phase}
+                            </span>
+                          ))}
                         </div>
                       </div>
 
