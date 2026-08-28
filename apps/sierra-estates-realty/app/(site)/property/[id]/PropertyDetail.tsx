@@ -421,6 +421,16 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <Calendar className="i" style={{ width: 14, height: 14 }} />
                   <span>{isAr ? 'حفظ الموعد في التقويم (.ics)' : 'Add to Calendar (.ics)'}</span>
                 </button>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.cmp} ${p.zone || 'New Cairo'} Egypt`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost"
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)', marginTop: 8 }}
+                >
+                  <MapPin className="i" style={{ width: 14, height: 14, color: '#38BDF8' }} />
+                  <span>{isAr ? 'اتجاهات الموقع (Google Maps)' : 'Live Route Directions (Google Maps)'}</span>
+                </a>
 
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span className="av" style={{ width: 36, height: 36, display: 'grid', placeItems: 'center', borderRadius: '50%', background: 'var(--navy)', color: '#fff', fontSize: 12, fontWeight: 700 }}>
