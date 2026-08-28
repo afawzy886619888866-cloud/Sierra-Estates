@@ -446,7 +446,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
             <div className="pt-3 border-t border-slate-800 flex justify-end">
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `*SIERRA ESTATES — AVM VALUATION REPORT*\n📍 Location: ${location}\n📐 Area: ${sizeSqm} m² (${propertyType})\n💰 Asking: ${purchasePrice.toLocaleString()} EGP\n📈 Implied Cap Rate: ${valuation.offered_price_assessment.implied_cap_rate_pct}%\n💎 Fair Value Range: ${(valuation.calculated_fair_value_range.conservative_cap_value / 1e6).toFixed(1)}M - ${(valuation.calculated_fair_value_range.premium_adjusted_optimistic / 1e6).toFixed(1)}M EGP\n⚖️ Decision: ${valuation.investment_recommendation || valuation.offered_price_assessment.status}`
+                  `*SIERRA ESTATES — AVM VALUATION REPORT*\n📍 Location: ${location}\n📐 Area: ${sizeSqm} m² (${propertyType})\n💰 Asking: ${purchasePrice.toLocaleString()} EGP\n📈 Implied Cap Rate: ${valuation.offered_price_assessment.implied_cap_rate_pct}%\n💎 Fair Value Range: ${(valuation.calculated_fair_value_range.conservative_cap_value / 1e6).toFixed(1)}M - ${(valuation.calculated_fair_value_range.premium_adjusted_optimistic / 1e6).toFixed(1)}M EGP\n⚖️ Decision: ${valuation.verdict || valuation.offered_price_assessment.status}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
