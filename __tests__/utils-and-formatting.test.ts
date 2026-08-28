@@ -6,7 +6,6 @@ import {
   fmtArea,
   fmtScore,
   fmtRelative,
-  fmtDateTime,
   fmtPercent,
   fmtYield,
   fmtPaybackYears
