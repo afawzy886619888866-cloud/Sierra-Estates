@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import '../../site-styles/shared.css';
 import '../../site-styles/site-refinements.css';
+import { SiteProvider } from '@/lib/site/SiteContext';
+import SiteShell from '@/components/site/SiteShell';
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';
 
@@ -17,5 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default function CairoPlazaArLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <SiteProvider>
+      <SiteShell active="projects">
+        {children}
+      </SiteShell>
+    </SiteProvider>
+  );
 }

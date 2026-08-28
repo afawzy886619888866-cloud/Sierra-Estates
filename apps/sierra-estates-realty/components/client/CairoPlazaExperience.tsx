@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Sun, Moon, Languages, Building2, Phone, MessageSquare,
-  ShieldCheck, FileText, TrendingUp,
+  Building2, Phone, MessageSquare, ShieldCheck, FileText,
+  TrendingUp, Search, Filter, Layers, DollarSign,
 } from 'lucide-react';
+import { useSite } from '@/lib/site/SiteContext';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
 
 const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
@@ -137,8 +138,8 @@ const copy = {
     },
     inventory: {
       eyebrow: 'CAIRO PLAZA / AVAILABLE INVENTORY',
-      title: 'Review the commercial & office units prepared for investor and operator conversations.',
-      body: 'Inventory is presented as an illustrative working schedule and should be confirmed against the latest official availability before any commitment.',
+      title: 'Commercial & Office Units Schedule for Investors and Brand Operators.',
+      body: 'Filter and inspect units by type (Retail, Banking, Corporate Offices, Clinics, F&B), view spatial specifications, estimated yields, and book private briefings.',
     },
     investor: {
       eyebrow: 'CAIRO PLAZA / INVESTOR PACK',
@@ -159,8 +160,8 @@ const copy = {
     },
     inventory: {
       eyebrow: 'كايرو بلازا / الوحدات المتاحة',
-      title: 'استعرض الوحدات التجارية والإدارية المعدة لمحادثات المستثمرين والمشغلين.',
-      body: 'المخزون المعروض جدول عمل توضيحي منظم ويتم تأكيده دوريًا وفق أحدث مراجعة رسمية قبل أي تعاقد.',
+      title: 'جدول الوحدات التجارية والإدارية المعدّة للمستثمرين والمشغلين.',
+      body: 'قم بفرز واختيار الوحدات حسب النوع (تجاري، بنوك، مكاتب إدارية، عيادات، كافيهات)، مع فحص المساحات والعوائد وحجز المعاينات.',
     },
     investor: {
       eyebrow: 'كايرو بلازا / الملف الاستثماري',
@@ -216,85 +217,169 @@ const materials = {
   ],
 } as const;
 
-/* ── sample inventory schedule ───────────────────────────────────── */
-const sampleInventory = [
+export type UnitType = 'all' | 'retail' | 'office' | 'medical' | 'fnb';
+
+export type InventoryUnit = {
+  code: string;
+  category: 'retail' | 'office' | 'medical' | 'fnb';
+  typeEn: string;
+  typeAr: string;
+  areaNum: number;
+  area: string;
+  terrace: string;
+  frontageEn: string;
+  frontageAr: string;
+  statusEn: string;
+  statusAr: string;
+  roi: string;
+  priceEgp: number;
+  priceUsd: number;
+  featuredImg: string;
+};
+
+const fullInventorySchedule: InventoryUnit[] = [
   {
     code: 'CP-T1-G01',
-    typeEn: 'Ground Commercial / Bank Branch',
-    typeAr: 'تجاري أرضي / فرع بنكي أو صيدلية',
+    category: 'retail',
+    typeEn: 'Ground Commercial Flagship / Bank Branch',
+    typeAr: 'تجاري أرضي رئيسي / فرع بنكي أو صيدلية كبرى',
+    areaNum: 245,
     area: '245 m²',
     terrace: '60 m²',
-    frontageEn: 'Direct Metro Station Frontage',
-    frontageAr: 'واجهة مباشرة أمام محطة المترو',
+    frontageEn: 'Direct Metro Station Frontage & Main Plaza',
+    frontageAr: 'واجهة مباشرة أمام محطة المترو والممشى الرئيسي',
     statusEn: 'Available for Long Lease / Sale',
     statusAr: 'متاح للإيجار طويل الأجل / البيع',
     roi: '14.2%',
+    priceEgp: 28500000,
+    priceUsd: 585000,
+    featuredImg: '/cairo-plaza/real-facade-ai-enhanced.jpg',
   },
   {
     code: 'CP-T1-M04',
-    typeEn: 'Mezzanine Retail / Food & Beverage',
-    typeAr: 'ميزانين تجاري / مطاعم وكافيهات',
+    category: 'fnb',
+    typeEn: 'Mezzanine Retail / Food & Beverage Terrace',
+    typeAr: 'ميزانين تجاري / مطاعم وتراس كافيهات',
+    areaNum: 180,
     area: '180 m²',
     terrace: '45 m²',
-    frontageEn: 'Plaza Courtyard View',
-    frontageAr: 'إطلالة على البلازا والممشى الداخلي',
+    frontageEn: 'Plaza Courtyard & Outdoor Promenade View',
+    frontageAr: 'إطلالة على البلازا والممشى المفتوح',
     statusEn: 'Reserved for Qualified Operators',
-    statusAr: 'مخصص للمشغلين المؤهلين',
+    statusAr: 'مخصص للمشغلين والعلامات التجارية',
     roi: '13.8%',
+    priceEgp: 19800000,
+    priceUsd: 405000,
+    featuredImg: '/cairo-plaza/real-entrance-ai-enhanced.jpg',
   },
   {
     code: 'CP-T2-03B',
-    typeEn: 'Administrative Corporate Headquarters',
-    typeAr: 'مقر إداري للشركات والمؤسسات',
+    category: 'office',
+    typeEn: 'Administrative Corporate Headquarters Suite',
+    typeAr: 'مقر إداري للشركات والمؤسسات المالية',
+    areaNum: 320,
     area: '320 m²',
     terrace: '—',
-    frontageEn: 'Main Boulevard Panoramic',
+    frontageEn: 'Main Boulevard Panoramic Skyline',
     frontageAr: 'إطلالة بانورامية على الشارع الرئيسي',
     statusEn: 'Available / Fitted Options',
-    statusAr: 'متاح / خيارات نصف تشطيب وكامل',
+    statusAr: 'متاح / خيارات تسليم نصف تشطيب وكامل',
     roi: '12.5%',
+    priceEgp: 22400000,
+    priceUsd: 460000,
+    featuredImg: '/cairo-plaza/real-tower-frontage-ai-enhanced.jpg',
   },
   {
     code: 'CP-T3-05C',
-    typeEn: 'Specialized Medical & Clinic Suite',
-    typeAr: 'عيادات ومجمع طبي متخصص',
+    category: 'medical',
+    typeEn: 'Specialized Medical & Clinical Center',
+    typeAr: 'عيادات ومجمع طبي واستشاري متخصص',
+    areaNum: 115,
     area: '115 m²',
     terrace: '—',
-    frontageEn: 'Tower East Wing',
-    frontageAr: 'الجناح الشرقي للبرج',
-    statusEn: 'Available / Ready for Fitout',
-    statusAr: 'متاح / جاهز لأعمال التجهيز',
+    frontageEn: 'Tower East Wing & Elevator Node',
+    frontageAr: 'الجناح الشرقي للبرج بجوار المصاعد',
+    statusEn: 'Available / Ready for Medical Fitout',
+    statusAr: 'متاح / جاهز للتجهيز والترخيص الطبي',
     roi: '15.1%',
+    priceEgp: 9800000,
+    priceUsd: 202000,
+    featuredImg: '/cairo-plaza/real-interior-context-ai-enhanced.jpg',
+  },
+  {
+    code: 'CP-T4-02A',
+    category: 'office',
+    typeEn: 'Executive Private Office / Law & Audit Firm',
+    typeAr: 'مكتب تنفيذي / شركات المحاماة والاستشارات',
+    areaNum: 140,
+    area: '140 m²',
+    terrace: '15 m²',
+    frontageEn: 'Plaza View with Private Balcony',
+    frontageAr: 'إطلالة على البلازا مع شرفة خاصة',
+    statusEn: 'Available / Immediate Delivery',
+    statusAr: 'متاح / جاهز للتعاقد الفوري',
+    roi: '13.1%',
+    priceEgp: 11200000,
+    priceUsd: 230000,
+    featuredImg: '/cairo-plaza/real-site-context-ai-enhanced.jpg',
+  },
+  {
+    code: 'CP-T5-G02',
+    category: 'retail',
+    typeEn: 'Corner Commercial Showroom & Anchor Store',
+    typeAr: 'معرض تجاري ناصية / متجر رئيسي',
+    areaNum: 390,
+    area: '390 m²',
+    terrace: '85 m²',
+    frontageEn: 'Dual Frontage on Boulevard & Metro Hub',
+    frontageAr: 'واجهتان على الشارع ومحور المترو',
+    statusEn: 'Available for Anchor Tenant / Acquisition',
+    statusAr: 'متاح للتوكيلات الكبرى والاستحواذ',
+    roi: '14.8%',
+    priceEgp: 48500000,
+    priceUsd: 995000,
+    featuredImg: '/cairo-plaza/real-frontage-context-ai-enhanced.jpg',
   },
 ];
 
-export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
-  const isAr = lang === 'ar';
-  const t = copy[lang][section];
+export default function CairoPlazaExperience({ lang: initialLang = 'en', section }: Props) {
+  const { lang: siteLang, isAr: siteIsAr } = useSite();
+  const lang = initialLang || siteLang;
+  const isAr = lang === 'ar' || siteIsAr;
+  const t = copy[isAr ? 'ar' : 'en'][section];
   const prefix = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
   const targetLangPrefix = isAr ? '/cairo-plaza' : '/ar/cairo-plaza';
   const switchLangHref = section === 'overview' ? targetLangPrefix : `${targetLangPrefix}/${section}`;
 
   const nav = [
     ['overview', isAr ? 'نظرة عامة' : 'Overview'],
-    ['inventory', isAr ? 'الوحدات المتاحة' : 'Available inventory'],
-    ['investor', isAr ? 'الملف الاستثماري' : 'Investor pack'],
+    ['inventory', isAr ? 'الوحدات المتاحة' : 'Available Inventory'],
+    ['investor', isAr ? 'الملف الاستثماري' : 'Investor Pack'],
     ['contact', isAr ? 'تواصل ومسارات الطلب' : 'Contact & Mandates'],
   ] as const;
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  useEffect(() => {
-    const stored = window.localStorage.getItem('cp-theme');
-    if (stored === 'light' || stored === 'dark') setTheme(stored);
-  }, []);
+  // Inventory Filters State
+  const [selectedType, setSelectedType] = useState<UnitType>('all');
+  const [selectedSizeRange, setSelectedSizeRange] = useState<'all' | 'small' | 'med' | 'large'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currency, setCurrency] = useState<'EGP' | 'USD'>('EGP');
 
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      window.localStorage.setItem('cp-theme', next);
-      return next;
+  const filteredUnits = useMemo(() => {
+    return fullInventorySchedule.filter((u) => {
+      if (selectedType !== 'all' && u.category !== selectedType) return false;
+      if (selectedSizeRange === 'small' && u.areaNum > 150) return false;
+      if (selectedSizeRange === 'med' && (u.areaNum < 150 || u.areaNum > 250)) return false;
+      if (selectedSizeRange === 'large' && u.areaNum < 250) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchCode = u.code.toLowerCase().includes(q);
+        const matchType = u.typeEn.toLowerCase().includes(q) || u.typeAr.toLowerCase().includes(q);
+        const matchFront = u.frontageEn.toLowerCase().includes(q) || u.frontageAr.toLowerCase().includes(q);
+        if (!matchCode && !matchType && !matchFront) return false;
+      }
+      return true;
     });
-  };
+  }, [selectedType, selectedSizeRange, searchQuery]);
 
   const [lightboxImg, setLightboxImg] = useState<{ src: string; alt: string; caption: string } | null>(null);
   const openLightbox = useCallback((src: string, alt: string, caption: string) => {
@@ -302,68 +387,40 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
   }, []);
   const closeLightbox = useCallback(() => setLightboxImg(null), []);
 
-  const whatsappInquire = (unitCode: string) => {
+  const whatsappInquire = (unit: InventoryUnit) => {
+    const priceTxt = currency === 'EGP' ? `${unit.priceEgp.toLocaleString()} EGP` : `$${unit.priceUsd.toLocaleString()} USD`;
     const msg = isAr
-      ? `مرحبًا سييرا استيتس، أود الاستفسار عن تفاصيل وحجز الوحدة ${unitCode} في مشروع كايرو بلازا.`
-      : `Hello Sierra Estates, I would like to inquire about unit ${unitCode} at Cairo Plaza.`;
+      ? `مرحبًا سييرا استيتس، أود الاستفسار وحجز الوحدة (${unit.code} - ${unit.typeAr}) بمساحة ${unit.area} بقيمة تقديرية ${priceTxt} في مشروع كايرو بلازا.`
+      : `Hello Sierra Estates, I am inquiring about unit ${unit.code} (${unit.typeEn}), size ${unit.area}, estimated price ${priceTxt} at Cairo Plaza.`;
     window.open(`https://wa.me/201092048333?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
-    <main dir={isAr ? 'rtl' : 'ltr'} className="cp-shell" data-theme={theme}>
-      {/* ── Luxury Header ─────────────────────────────────────────── */}
-      <header className="cp-header">
-        <div className="cp-header-inner">
-          <div className="cp-brand-group">
-            <Link href="/" className="cp-back-link" title={isAr ? 'العودة إلى موقع سييرا استيتس' : 'Back to Sierra Estates Main Site'}>
-              ← {isAr ? 'الرئيسية' : 'Main Portal'}
-            </Link>
-            <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
-              <Image src="/assets/sierra-estates-official-logo.png" alt="Sierra Estates" width={48} height={48} className="cp-official-logo" priority />
-              <span className="cp-brand-text">
-                <b>{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</b>
-                <small>{isAr ? 'بوابة المشروع الرسمية' : 'Official Project Portal'}</small>
-              </span>
-            </Link>
-          </div>
-
-          <nav className="cp-nav" aria-label={isAr ? 'تنقل كايرو بلازا' : 'Cairo Plaza navigation'}>
+    <div dir={isAr ? 'rtl' : 'ltr'} className="cp-shell-wrapper">
+      {/* ── Sub-Navigation Bar Aligned with Main Portal ─────────────── */}
+      <div className="cp-subnav-bar">
+        <div className="cp-subnav-inner">
+          <div className="cp-subnav-links" role="tablist" aria-label={isAr ? 'أقسام كايرو بلازا' : 'Cairo Plaza sections'}>
             {nav.map(([key, label]) => (
               <Link
                 key={key}
                 href={key === 'overview' ? prefix : `${prefix}/${key}`}
-                className={section === key ? 'active' : ''}
+                className={`cp-subnav-link${section === key ? ' active' : ''}`}
+                role="tab"
+                aria-selected={section === key}
               >
                 {label}
               </Link>
             ))}
-          </nav>
+          </div>
 
-          <div className="cp-header-controls">
-            <button
-              type="button"
-              className="cp-toggle"
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Toggle light theme' : 'Toggle dark theme'}
-              title={theme === 'dark' ? (isAr ? 'التبديل للوضع الفاتح' : 'Switch to Light') : (isAr ? 'التبديل للوضع الداكن' : 'Switch to Dark')}
-            >
-              {theme === 'dark' ? <Sun className="i" /> : <Moon className="i" />}
-              <span className="cp-toggle-txt">{theme === 'dark' ? (isAr ? 'فاتح' : 'Light') : (isAr ? 'داكن' : 'Dark')}</span>
-            </button>
-
-            <Link
-              href={switchLangHref}
-              className="cp-toggle cp-lang"
-              aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
-              title={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
-            >
-              <Languages className="i" />
-              <span className="cp-toggle-txt">{isAr ? 'English' : 'عربي'}</span>
-              <span className="cp-lang-badge">{isAr ? 'EN' : 'AR'}</span>
+          <div className="cp-subnav-meta">
+            <Link href={switchLangHref} className="cp-subnav-lang" title={isAr ? 'Switch to English' : 'التبديل إلى العربية'}>
+              {isAr ? 'Switch to English' : 'النسخة العربية'}
             </Link>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* ── Section Hero ─────────────────────────────────────────── */}
       <section className="cp-hero">
@@ -400,7 +457,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
 
       {/* ── Key Project Metrics Strip ─────────────────────────────── */}
       <div className="cp-stats" role="group" aria-label={isAr ? 'أرقام كايرو بلازا' : 'Cairo Plaza at a glance'}>
-        {stats[lang].map((s) => (
+        {stats[isAr ? 'ar' : 'en'].map((s) => (
           <CpStat key={s.label} value={s.value} label={s.label} />
         ))}
       </div>
@@ -409,7 +466,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
       {section === 'overview' && (
         <>
           <section className="cp-grid" aria-label={isAr ? 'طبقة معلومات مضبوطة' : 'A controlled information layer'}>
-            {trust[lang].map((card) => (
+            {trust[isAr ? 'ar' : 'en'].map((card) => (
               <div className="cp-card" key={card.title}>
                 <div className="cp-card-icon"><ShieldCheck className="i" /></div>
                 <h2>{card.title}</h2>
@@ -466,14 +523,14 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
               </div>
               <p className="cp-section-note">{isAr ? 'تصور تفاعلي توضيحي، وليس نموذج تنفيذ أو صورة للموقع الحالي.' : 'An interactive illustration, not an execution model or current-site photograph.'}</p>
             </div>
-            <CairoPlazaScene lang={lang} />
+            <CairoPlazaScene lang={isAr ? 'ar' : 'en'} />
           </section>
 
-          <CairoPlazaCalculator lang={lang} />
+          <CairoPlazaCalculator lang={isAr ? 'ar' : 'en'} />
         </>
       )}
 
-      {/* ── INVENTORY SECTION: Interactive Schedule ─────────────────── */}
+      {/* ── INVENTORY SECTION: Interactive Schedule with Full Filters ── */}
       {section === 'inventory' && (
         <section className="cp-inventory-section" aria-labelledby="cp-inv-title">
           <div className="cp-section-heading">
@@ -481,32 +538,140 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
               <p className="cp-eyebrow">{isAr ? 'جدول الوحدات المتاحة' : 'COMMERCIAL & OFFICE SCHEDULE'}</p>
               <h2 id="cp-inv-title" className="cp-section-title">{isAr ? 'الوحدات المجهزة للطرح الاستثماري والتشغيلي' : 'Prime commercial & corporate inventory'}</h2>
             </div>
-            <p className="cp-section-note">{isAr ? 'اختر الوحدة المناسبة لطلب نموذج التدفقات النقدية ومطابقة الشروط الفنية.' : 'Select a unit to receive full architectural layout, cash flow scenario, and fit-out timeline.'}</p>
+            <p className="cp-section-note">{isAr ? 'اختر نوع الوحدة والمساحة المناسبة لطلب نموذج التدفقات النقدية والمخططات المعمارية.' : 'Filter by property type, space range, or search directly for specific unit codes and frontage.'}</p>
           </div>
 
-          <div className="cp-inventory-grid">
-            {sampleInventory.map((unit) => (
-              <div className="cp-inventory-card" key={unit.code}>
-                <div className="cp-inv-head">
-                  <span className="cp-inv-code">{unit.code}</span>
-                  <span className="cp-inv-roi">{isAr ? `عائد تقديري ${unit.roi}` : `Est. Yield ${unit.roi}`}</span>
-                </div>
-                <h3 className="cp-inv-title">{isAr ? unit.typeAr : unit.typeEn}</h3>
-                <div className="cp-inv-specs">
-                  <div><span>{isAr ? 'المساحة الإجمالية' : 'Built-up Area'}</span><strong>{unit.area}</strong></div>
-                  <div><span>{isAr ? 'المساحة الخارجية' : 'Outdoor Terrace'}</span><strong>{unit.terrace}</strong></div>
-                  <div><span>{isAr ? 'الموقع والإطلالة' : 'Frontage'}</span><strong>{isAr ? unit.frontageAr : unit.frontageEn}</strong></div>
-                </div>
-                <div className="cp-inv-foot">
-                  <span className="cp-inv-status">{isAr ? unit.statusAr : unit.statusEn}</span>
-                  <button type="button" onClick={() => whatsappInquire(unit.code)} className="cp-inv-btn">
-                    <MessageSquare className="i" style={{ width: 14, height: 14 }} />
-                    {isAr ? 'استفسار عبر واتساب' : 'Inquire via WhatsApp'}
+          {/* ── Interactive Category Tabs & Search Bar ──────────────── */}
+          <div className="cp-filter-container">
+            <div className="cp-type-tabs" role="tablist" aria-label={isAr ? 'أنواع الوحدات' : 'Unit types'}>
+              {[
+                { id: 'all', labelEn: 'All Units', labelAr: 'جميع الوحدات', icon: Layers },
+                { id: 'retail', labelEn: 'Retail & Banks', labelAr: 'تجاري وفروع بنكية', icon: Building2 },
+                { id: 'office', labelEn: 'Offices & HQ', labelAr: 'مكاتب ومقرات إدارية', icon: FileText },
+                { id: 'medical', labelEn: 'Medical & Clinics', labelAr: 'عيادات ومراكز طبية', icon: ShieldCheck },
+                { id: 'fnb', labelEn: 'F&B Terraces', labelAr: 'مطاعم وتراس كافيهات', icon: TrendingUp },
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                const active = selectedType === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setSelectedType(tab.id as UnitType)}
+                    className={`cp-type-pill${active ? ' active' : ''}`}
+                  >
+                    <IconComponent className="i" style={{ width: 15, height: 15 }} />
+                    <span>{isAr ? tab.labelAr : tab.labelEn}</span>
                   </button>
-                </div>
+                );
+              })}
+            </div>
+
+            <div className="cp-filter-controls">
+              <div className="cp-search-wrap">
+                <Search className="i cp-search-icon" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={isAr ? 'بحث بالرمز، المساحة، أو الواجهة…' : 'Search by unit code, area, or frontage…'}
+                  className="cp-search-input"
+                />
               </div>
-            ))}
+
+              <div className="cp-size-filter">
+                <Filter className="i" style={{ width: 14, height: 14, color: 'var(--muted)' }} />
+                <select
+                  value={selectedSizeRange}
+                  onChange={(e) => setSelectedSizeRange(e.target.value as any)}
+                  className="cp-select-pill"
+                  aria-label={isAr ? 'تصفية المساحة' : 'Filter by size'}
+                >
+                  <option value="all">{isAr ? 'جميع المساحات' : 'All Sizes'}</option>
+                  <option value="small">{isAr ? 'أقل من 150 م²' : '< 150 m²'}</option>
+                  <option value="med">{isAr ? '150 إلى 250 م²' : '150 - 250 m²'}</option>
+                  <option value="large">{isAr ? 'أكثر من 250 م²' : '> 250 m²'}</option>
+                </select>
+              </div>
+
+              <div className="cp-currency-toggle">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('EGP')}
+                  className={`cp-curr-btn${currency === 'EGP' ? ' active' : ''}`}
+                >
+                  EGP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={`cp-curr-btn${currency === 'USD' ? ' active' : ''}`}
+                >
+                  USD
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* ── Units Grid ─────────────────────────────────────────── */}
+          <div className="cp-inventory-grid">
+            {filteredUnits.map((unit) => {
+              const displayPrice = currency === 'EGP'
+                ? `${unit.priceEgp.toLocaleString()} ج.م`
+                : `$${unit.priceUsd.toLocaleString()}`;
+
+              return (
+                <div className="cp-inventory-card" key={unit.code}>
+                  <div className="cp-inv-media-thumb">
+                    <Image
+                      src={unit.featuredImg}
+                      alt={isAr ? unit.typeAr : unit.typeEn}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <span className="cp-inv-code-badge">{unit.code}</span>
+                    <span className="cp-inv-roi-badge">{isAr ? `عائد ${unit.roi}` : `Est. Yield ${unit.roi}`}</span>
+                  </div>
+
+                  <div className="cp-inv-content">
+                    <h3 className="cp-inv-title">{isAr ? unit.typeAr : unit.typeEn}</h3>
+
+                    <div className="cp-inv-specs">
+                      <div><span>{isAr ? 'المساحة الداخلية' : 'Internal Area'}</span><strong>{unit.area}</strong></div>
+                      <div><span>{isAr ? 'التراس الخارجي' : 'Outdoor Area'}</span><strong>{unit.terrace}</strong></div>
+                      <div><span>{isAr ? 'الموقع والإطلالة' : 'Frontage'}</span><strong>{isAr ? unit.frontageAr : unit.frontageEn}</strong></div>
+                    </div>
+
+                    <div className="cp-inv-price-row">
+                      <div className="cp-inv-price-val">
+                        <span>{isAr ? 'القيمة التقديرية' : 'Estimated Value'}</span>
+                        <b>{displayPrice}</b>
+                      </div>
+                      <span className="cp-inv-status">{isAr ? unit.statusAr : unit.statusEn}</span>
+                    </div>
+
+                    <div className="cp-inv-foot">
+                      <button type="button" onClick={() => whatsappInquire(unit)} className="cp-inv-btn">
+                        <MessageSquare className="i" style={{ width: 14, height: 14 }} />
+                        {isAr ? 'طلب المعاينة وحجز الوحدة' : 'Inquire & Book Briefing'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredUnits.length === 0 && (
+            <div className="cp-no-results">
+              <Building2 className="i" style={{ width: 36, height: 36, color: 'var(--muted)', margin: '0 auto 12px' }} />
+              <p>{isAr ? 'لم نجد وحدات مطابقة لبحثك. يرجى تعديل الفلاتر أو التواصل مع مستشارنا مباشرة.' : 'No units match your selected filter. Please adjust your criteria or consult our advisory desk.'}</p>
+            </div>
+          )}
 
           <div className="cp-meeting-callout">
             <div>
@@ -666,7 +831,7 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
           <p className="cp-section-note">{isAr ? 'كل مادة موجهة لمسار الاستثمار أو تأهيل المستأجرين لضمان دقة المتابعة.' : 'Each item is routed to the investor or tenant-fit path with verified data.'}</p>
         </div>
         <div className="cp-materials-grid">
-          {materials[lang].map((m) => (
+          {materials[isAr ? 'ar' : 'en'].map((m) => (
             <div className="cp-material-card" key={m.title}>
               <h3>{m.title}</h3>
               <p>{m.body}</p>
@@ -694,6 +859,6 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
           <div className="cp-lightbox-caption">{lightboxImg.caption}</div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
