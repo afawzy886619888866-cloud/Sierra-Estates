@@ -11,11 +11,15 @@ import {
 } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 
-// Defaults match the product spec: 4 numbers, 30 msgs/number per 2-hour window,
-// 12pm–8pm Africa/Cairo. dailyCapPerNumber = 30 × 4 windows = 120; total 480.
+// Single daily dispatch window: 10:00–10:59 Africa/Cairo. The dispatch cron
+// (.github/workflows/whatsapp-dispatch-cron.yml) fires once a day and relies
+// on this 1-hour window to (a) actually let that run through and (b) reject
+// the other UTC-offset firing used to cover Cairo's DST switch, so exactly
+// one run per day sends. dailyCapPerNumber/dailyCapTotal below are still the
+// per-run ceiling since there's only one run to spend them in.
 export const DEFAULT_OUTREACH_CONFIG: WhatsAppOutreachConfig = {
-  operatingHourStart: 12,
-  operatingHourEnd: 20,
+  operatingHourStart: 10,
+  operatingHourEnd: 11,
   timezone: 'Africa/Cairo',
   batchSizePerNumber: 30,
   windowMinutes: 120,
@@ -51,8 +55,8 @@ export function isWithinOperatingHours(config: WhatsAppOutreachConfig, now: Date
 
 /**
  * Enqueues an outbound WhatsApp job. The dispatch worker (cron) sends it later,
- * subject to operating hours + per-number quota. Single write — safe to call from
- * request handlers.
+ * subject to operating hours + per-number quota and scheduled date/time.
+ * Single write — safe to call from request handlers.
  */
 export async function enqueueWhatsAppJob(params: {
   purpose: WhatsAppMessagePurpose;
@@ -63,7 +67,22 @@ export async function enqueueWhatsAppJob(params: {
   ownerNegotiationId?: string;
   templateName?: string;
   templateParams?: Record<string, string>;
+  scheduledFor?: Timestamp | Date | string | null;
 }): Promise<string> {
+  let scheduledTimestamp: Timestamp | undefined;
+  if (params.scheduledFor) {
+    if (typeof (params.scheduledFor as any)?.toMillis === 'function') {
+      scheduledTimestamp = params.scheduledFor as Timestamp;
+    } else if (params.scheduledFor instanceof Date) {
+      scheduledTimestamp = typeof Timestamp?.fromDate === 'function' ? Timestamp.fromDate(params.scheduledFor) : (params.scheduledFor as any);
+    } else if (typeof params.scheduledFor === 'string') {
+      const parsedDate = new Date(params.scheduledFor);
+      if (!isNaN(parsedDate.getTime())) {
+        scheduledTimestamp = typeof Timestamp?.fromDate === 'function' ? Timestamp.fromDate(parsedDate) : (parsedDate as any);
+      }
+    }
+  }
+
   const job: Omit<WhatsAppMessageJob, 'id'> = {
     direction: 'outbound',
     purpose: params.purpose,
@@ -71,8 +90,9 @@ export async function enqueueWhatsAppJob(params: {
     body: params.body,
     status: 'queued',
     attempts: 0,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: Timestamp.now() as any,
+    updatedAt: Timestamp.now() as any,
+    ...(scheduledTimestamp ? { scheduledFor: scheduledTimestamp as any } : {}),
     ...(params.leadId ? { leadId: params.leadId } : {}),
     ...(params.unitId ? { unitId: params.unitId } : {}),
     ...(params.ownerNegotiationId ? { ownerNegotiationId: params.ownerNegotiationId } : {}),

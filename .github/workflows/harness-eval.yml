@@ -1,0 +1,55 @@
+name: Harness Evaluation Suite
+
+on:
+  push:
+    branches:
+      - main
+      - 'harness-**'
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+
+jobs:
+  harness-eval:
+    name: Run DeepSeek Reasoning & AVM Harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+
+      - name: Execute DeepSeek Harness Evaluation
+        run: pnpm run harness:eval
+        env:
+          NODE_ENV: test
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+
+      - name: Check Performance & Accuracy Thresholds (Merge Gate)
+        run: pnpm run check-thresholds
+

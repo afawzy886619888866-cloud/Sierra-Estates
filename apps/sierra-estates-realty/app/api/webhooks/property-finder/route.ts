@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
           name: clientName,
           phone: clientPhone,
           email: lead.sender?.email || lead.email || '',
-          source: 'property_finder',
+          source: 'property-finder',
           status: 'new',
           stage: 'inbound',
           mode: 'sale',
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           await adminDb.collection('whatsapp_queue').add({
             phone: clientPhone,
             clientName,
-            source: 'property_finder',
+            source: 'property-finder',
             propertyRef: listingRef,
             text: autoMessage,
             status: 'pending',

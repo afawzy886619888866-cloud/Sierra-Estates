@@ -13,7 +13,7 @@
 
 ## 0. Golden rules (the policy in 8 lines)
 
-1. **One front door per concern.** Public site + admin → **Vercel**. Database/auth/jobs → **Firebase**. Heavy/long work → **workers** (Cloud Run / n8n / GitHub Actions).
+1. **One front door per concern.** Public site + admin → **Vercel** (isolated projects: `sierra-estates` and `sierra-admin-dashboard`). Database/auth/jobs → **Firebase**. Heavy/long work → **workers** (Cloud Run / n8n / GitHub Actions).
 2. **Heavy or long-running work NEVER runs inside a Next.js request or Vercel function.** Scrapers, browser automation, multi-minute agents, bulk sends → a worker. The web app only *triggers/monitors* them through typed clients (`lib/server/n8n-client.ts`, `lib/server/python-api-client.ts`).
 3. **One canonical admin:** `apps/sierra-estates-realty/app/admin/`. No second admin UI, ever.
 4. **Firebase is backend-only.** No app hosting on Firebase except the single legacy-admin **redirect**. Never host the Next.js app on Firebase.
@@ -26,34 +26,36 @@
 
 ## 1. Architecture
 
-```
-                              sierra-estates.net  (Vercel · region iad1)
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  apps/sierra-estates-realty  (Next.js 16, App Router)                          │
-│    sierra-estates.net/                public marketing site (listings, etc.)   │
-│    admin.sierra-estates.net/admin     staff console  (host-split, see §3)      │
-│    /api/*                             lightweight API — TRIGGERS workers only   │
-│    cron (vercel.json)                 thin scheduled pokes (no heavy work)      │
-└───────────────┬───────────────────────────────┬──────────────────────────────┘
-                │ Admin SDK / REST              │ typed trigger calls
-                ▼                                ▼
-┌───────────────────────────────┐   ┌───────────────────────────────────────────┐
-│  Firebase  (project: sierra-blu)│   │  Workers — where heavy work actually runs │
-│   Firestore  (rules-gated)     │   │   n8n            Docker/VPS :5678           │
-│   Storage    (rules-gated)     │   │     WhatsApp scraping + automation         │
-│   Auth                         │   │   apps/api       Cloud Run (FastAPI :8000) │
-│   Functions  (europe-west1)    │   │     PropertyFinder sync + bot integration  │
-│   Hosting    redirect → /admin │   │   Intelligence OS Cloud Run (europe-west2) │
-│   (NOT an app host)            │   │     Remix console (embedded in /admin)     │
-└───────────────────────────────┘   │   GitHub Actions external-workflows.yml    │
-                                     │     scheduled external data-sync           │
-                                     └───────────────────────────────────────────┘
+```text
+                      ┌────────────────────────────────────────────────────────┐
+                      │                   Vercel (Region iad1)                 │
+                      │                                                        │
+                      │  Project: sierra-estates (Client)                      │
+                      │    Domain: sierra-estates.net                          │
+                      │    Surface: Public marketing site, listings, lead gen  │
+                      │                                                        │
+                      │  Project: sierra-admin-dashboard (Admin)               │
+                      │    Domain: admin.sierra-estates.net                    │
+                      │    Surface: Staff console, agents hub, orchestrator    │
+                      └───────────────────┬────────────────┬───────────────────┘
+                                          │ Admin SDK/REST │ typed triggers
+                                          ▼                ▼
+┌─────────────────────────────────────────┐   ┌───────────────────────────────────────────┐
+│  Firebase  (Project: sierra-blu)        │   │  Workers — where heavy work actually runs │
+│   Firestore  (rules-gated via CI)       │   │   n8n            Docker/VPS :5678           │
+│   Storage    (rules-gated via CI)       │   │     WhatsApp scraping + automation         │
+│   Auth       (Identity Platform)        │   │   apps/api       Cloud Run (FastAPI :8000) │
+│   Functions  (europe-west1, Node.js 20) │   │     PropertyFinder sync + bot integration  │
+│   Hosting    redirect → /admin          │   │   Intelligence OS Cloud Run (europe-west2) │
+│   (NOT an app host)                     │   │     Remix console (embedded in /admin)     │
+└─────────────────────────────────────────┘   │   GitHub Actions (Scheduled / Event Cron)  │
+                                              │     external-workflows.yml                 │
+                                              │     whatsapp-dispatch-cron.yml             │
+                                              │     vercel-cron-bridge.yml                 │
+                                              └───────────────────────────────────────────┘
 ```
 
-**Why this shape:** the public site stays fast and cheap; the admin can be busy
-without touching it; and the genuinely heavy/stateful work (a persistent WhatsApp
-browser session, long agent runs) lives on always-on infra that Vercel's
-serverless model can't host anyway.
+**Why this shape:** The public site and staff console run in completely isolated Vercel projects from a unified codebase (`apps/sierra-estates-realty`), ensuring zero blast radius between marketing traffic spikes and staff operations. Heavy and long-running stateful tasks (WhatsApp scraping, continuous scrapers, long agent chains) live on Cloud Run, VPS/Docker, and GitHub Actions cron runners.
 
 ---
 
@@ -61,139 +63,130 @@ serverless model can't host anyway.
 
 | Component | Path | Runtime / Host | How it deploys | Domain / endpoint |
 | --- | --- | --- | --- | --- |
-| **Public site + Admin + API** | `apps/sierra-estates-realty` | Vercel (Next.js) | **Auto on push to `main`** → `.github/workflows/deploy-vercel.yml` | `sierra-estates.net` (+ `admin.sierra-estates.net`) |
-| **Backend infra** | `firestore.rules`, `storage.rules`, `functions/` | Firebase · project `sierra-blu` | Manual → `firebase deploy --only firestore:rules,storage,functions --project sierra-blu` (or `pnpm deploy:rules` / `pnpm deploy:functions`) | n/a (Firestore/Storage/Auth) |
-| **Legacy-admin redirect** | `firebase.json` hosting `sierra-estates-admin` | Firebase Hosting site `admin-sierra-blu` | Manual → `deploy-firebase.yml` | 302 → `sierra-estates.net/admin` |
-| **Python API + bots** | `apps/api` | Cloud Run (FastAPI, :8000) | `gcloud run deploy` (own pipeline) | gated by `PYTHON_API_BASE_URL` |
-| **Intelligence OS** | external (Remix) | Cloud Run · europe-west2 | `gcloud run deploy` (own pipeline) | `NEXT_PUBLIC_INTELLIGENCE_OS_URL` |
-| **WhatsApp scraper + automation** | `workflows/`, n8n templates | n8n · Docker/VPS :5678 | imported into n8n; triggered by `N8N_BASE_URL` webhooks | internal |
-| **Scheduled external sync** | `workflows/*` | GitHub Actions | `external-workflows.yml` (cron) | n/a |
-| **Shared libraries** | `packages/*` | — | **not deployed** — consumed by apps at build time | n/a |
-| **`apps/admin-dashboard`** | *removed* | **deleted** | legacy Vite second-admin UI removed; Firebase serves only the redirect (never an app) | — |
+| **Public Client Site** | `apps/sierra-estates-realty` | Vercel (Next.js) | **Auto on push to `main`** → `.github/workflows/deploy-vercel.yml` (`role: client`) | `sierra-estates.net` |
+| **Admin Console** | `apps/sierra-estates-realty` | Vercel (Next.js) | **Auto on push to `main`** → `.github/workflows/deploy-vercel.yml` (`role: admin`) | `admin.sierra-estates.net` |
+| **Firestore & Storage Rules** | `firestore.rules`, `storage.rules` | Firebase · `sierra-blu` | **Auto on push to `main`** → `.github/workflows/deploy-firebase-rules.yml` (or `pnpm deploy:rules`) | n/a (Security policies) |
+| **Cloud Functions** | `functions/` | Firebase Functions · `sierra-blu` | Manual / CD → `firebase deploy --only functions --project sierra-blu` (or `pnpm deploy:functions`) | `europe-west1` callable / triggers |
+| **Legacy-admin redirect** | `firebase.json` (`sierra-estates-admin`) | Firebase Hosting (`admin-sierra-blu`) | `.github/workflows/deploy-firebase.yml` | 302 → `admin.sierra-estates.net/admin` |
+| **Python API + bots** | `apps/api` | Cloud Run (FastAPI, :8000) | `gcloud run deploy` (containerized) | Gated by `PYTHON_API_BASE_URL` |
+| **Intelligence OS** | external (Remix) | Cloud Run · europe-west2 | `gcloud run deploy` (containerized) | `NEXT_PUBLIC_INTELLIGENCE_OS_URL` |
+| **WhatsApp scraper & automations** | `workflows/`, n8n templates | n8n · Docker/VPS :5678 | Webhook triggered via `N8N_BASE_URL` | Internal |
+| **Scheduled Data Sync** | `workflows/*` | GitHub Actions | `.github/workflows/external-workflows.yml` | n/a |
+| **Shared packages** | `packages/*` | Monorepo internal | **Not deployed independently** — built into consuming apps | n/a |
 
-> Identifiers (non-secret, committed): Vercel team `team_k2jaWfzeatcYG6Qpl0ooCxQh`,
-> project `prj_theA731k4WdFVhgd6DJUP6pAry6n` (root dir pinned to
-> `apps/sierra-estates-realty`). Firebase project `sierra-blu`, hosting target
-> `sierra-estates-admin` → site `admin-sierra-blu`.
-
----
-
-## 3. Domains & DNS
-
-- **Root (public client site):** `sierra-estates.net` → Dedicated Vercel project `sierra-estates` (Repo Var: `CLIENT_VERCEL_PROJECT_ID`).
-- **Admin Console:** `admin.sierra-estates.net` → Dedicated Vercel project `sierra-admin-dashboard` (Repo Var: `ADMIN_VERCEL_PROJECT_ID`).
-- **Strict Separation Policy:** Client and Admin surfaces run on **separate Vercel projects** for full compute and deployment isolation.
-  - Remove `admin.sierra-estates.net` from the `sierra-estates` client project.
-  - Attach `admin.sierra-estates.net` strictly to the `sierra-admin-dashboard` project.
-  - `.github/workflows/deploy-vercel.yml` deploys each target independently to its respective Vercel project.
-- **Rule:** new surfaces get a **subdomain of `sierra-estates.net`**, never a new root domain.
+> **Identifiers (committed & non-secret)**:
+>
+> - Vercel Org ID: `team_UvdJ5ezVTaqEKyhqZ5QVqOKJ` (or repo var `VERCEL_ORG_ID`)
+> - Client Vercel Project: `prj_theA731k4WdFVhgd6DJUP6pAry6n` (repo var `CLIENT_VERCEL_PROJECT_ID`)
+> - Admin Vercel Project: `prj_NMqZUADX9A5ba22ylMfls2l7I0zX` (repo var `ADMIN_VERCEL_PROJECT_ID`)
+> - Firebase Project: `sierra-blu`
+> - Firebase Hosting Target: `sierra-estates-admin` → Site: `admin-sierra-blu`
 
 ---
 
-## 4. Environments & secrets
+## 3. Domains & DNS Configuration
 
-| Scope | Where values live | Notes |
+- **Root (Client Public Portal):** `sierra-estates.net` → Dedicated Vercel project `sierra-estates` (`CLIENT_VERCEL_PROJECT_ID`).
+- **Admin Console:** `admin.sierra-estates.net` → Dedicated Vercel project `sierra-admin-dashboard` (`ADMIN_VERCEL_PROJECT_ID`).
+- **Strict Compute & Deployment Separation:**
+  - `sierra-estates.net` is attached exclusively to the client project.
+  - `admin.sierra-estates.net` is attached exclusively to the admin project.
+  - Host filtering in `middleware.ts` routes requests based on `ADMIN_HOST` to prevent cross-domain pollution.
+  - `.github/workflows/deploy-vercel.yml` deploys both matrix targets independently with immutable build artifacts.
+- **Rule:** Every new surface gets a **subdomain of `sierra-estates.net`** (e.g. `api.sierra-estates.net`), never a new root domain.
+
+---
+
+## 4. Environments & Secrets Management
+
+| Scope | Location | Items |
 | --- | --- | --- |
-| Vercel (prod/preview) | Vercel project → Environment Variables | `ADMIN_HOST`, `NEXT_PUBLIC_*`, `SBR_SECRET_KEY`, `N8N_*`, `PYTHON_API_BASE_URL`, Firebase Admin creds |
-| Firebase Functions | `firebase functions:config` / runtime env | server-only |
-| Cloud Run (api, OS) | service env vars | `PROPERTY_FINDER_*`, `ALLOWED_ORIGINS`, etc. |
-| GitHub Actions | repo **Secrets** | `VERCEL_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU`, `NEXT_PUBLIC_FIREBASE_*` |
+| **Vercel (Prod/Preview)** | Vercel Project Environment Variables | `ADMIN_HOST`, `SESSION_SECRET`, `NEXT_PUBLIC_FIREBASE_*`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `N8N_BASE_URL`, `PYTHON_API_BASE_URL` |
+| **Firebase Functions** | Cloud Secret Manager / Runtime Env | `FIREBASE_ADMIN_*`, service keys |
+| **Cloud Run (API/OS)** | Cloud Run Environment Variables | `PROPERTY_FINDER_*`, `ALLOWED_ORIGINS`, DB connection URLs |
+| **GitHub Actions** | Repository Secrets & Variables | `VERCEL_TOKEN`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU` |
 
-**Never commit** service-account JSON, tokens, or private keys. `*.env.example`
-files document *names only*. `NEXT_PUBLIC_*` are public by design (protected by
-Firestore rules + App Check, not secrecy). Canonical env templates: root
-`.env.example` and `apps/sierra-estates-realty/.env.local.example`.
+**Security Guardrail:** Service account private keys, API secrets, and signing tokens must never be committed to source control. Canonical templates: `.env.example` and `apps/sierra-estates-realty/.env.local.example`.
 
 ---
 
-## 5. CI/CD gates (`.github/workflows/ci.yml`, runs on every PR + push to `main`)
+## 5. CI/CD Gates (`.github/workflows/ci.yml`)
 
-| Step | Status today | Policy target |
+Runs on every Pull Request and push to `main`:
+
+| Gate | Command | Enforcement |
 | --- | --- | --- |
-| **Lint** (`pnpm run lint`, turbo, all workspaces) | **Hard gate — blocks** | keep blocking |
-| **Type-check** (`tsc --noEmit`) | **Hard gate — blocks** | keep blocking |
-| **Build** (`pnpm run build`, turbo) | **Hard gate — blocks** | keep blocking |
-| **Test** (`pnpm test:ci`) | non-blocking | make blocking as coverage grows |
-| **CodeQL** (`codeql.yml`) | security analysis | keep |
-
-> Reality check: Lint, type-check, and build are all hard gates now (verified
-> locally against current `main` — all three pass clean). Test coverage is still
-> thin and stays non-blocking until that improves.
+| **Lint** | `pnpm run lint` (Turbo, all workspaces) | **Hard Gate — Blocks merge** |
+| **Type Check** | `pnpm run type-check` (tsc across packages) | **Hard Gate — Blocks merge** |
+| **Build** | `pnpm run build` (Turbo cache verification) | **Hard Gate — Blocks merge** |
+| **Unit & Integration Tests** | `pnpm test:ci` (Vitest) | Hard Gate for critical paths |
+| **CodeQL Security Analysis** | `.github/workflows/codeql.yml` | Security vulnerability scan |
 
 ---
 
-## 6. Release flow (how a change reaches production)
+## 6. Release Flow (Production Path)
 
+```text
+┌─────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
+│ Feature Branch  │ ────▶ │ Pull Request & Review  │ ────▶ │ CI Gates Pass (Hard)   │
+└─────────────────┘       └────────────────────────┘       └────────────────────────┘
+                                                                       │
+                                                                       ▼
+┌────────────────────────┐       ┌────────────────────────┐       ┌────────────────────────┐
+│ Production Live        │ ◀──── │ Matrix Deploy Vercel   │ ◀──── │ Squash-Merge to `main` │
+│ (Client & Admin)       │       │ deploy-vercel.yml      │       └────────────────────────┘
+└────────────────────────┘       └────────────────────────┘
 ```
-feature branch  ──PR──▶  CI (lint hard-gate)  ──review──▶  squash-merge to main
-                                                                  │
-                    push to main triggers deploy-vercel.yml ──────┘
-                                  │
-                                  ▼
-                    production live at sierra-estates.net
-```
 
-1. Branch from `main` (never commit to `main`).
-2. Open a **draft PR**; let CI run; mark **ready**; **squash-merge** when green.
-3. Merge to `main` → `deploy-vercel.yml` builds + deploys **production** automatically.
-4. **Backend** changes (rules/functions): `firebase deploy --only firestore:rules,storage,functions --project sierra-blu` (or `pnpm deploy:rules` / `pnpm deploy:functions`). The **`deploy-firebase.yml`** Action deploys only the admin **redirect**, not rules/functions.
-5. **Cloud Run** apps (`apps/api`, Intelligence OS): deploy via their own `gcloud run deploy`.
-6. **n8n** workflows: import/update in the n8n UI.
+1. **Branching**: Create branch from `main` (`feature/xyz` or `fix/abc`). Never push directly to `main`.
+2. **Pull Request**: Open PR, verify all CI gates (`lint`, `type-check`, `build`) pass green.
+3. **Squash-Merge**: Merge PR to `main`.
+4. **Vercel Continuous Deployment**: `.github/workflows/deploy-vercel.yml` deploys both `client` (`sierra-estates.net`) and `admin` (`admin.sierra-estates.net`) simultaneously.
+5. **Firebase Security Deployment**: `.github/workflows/deploy-firebase-rules.yml` applies updated `firestore.rules` and `storage.rules`.
+6. **Backend Cloud Functions**: Deployed manually or via tagged releases with `pnpm deploy:functions`.
 
 ---
 
-## 7. Policy — adding ANY new app or service
+## 7. Policy — Adding New Apps or Services
 
-Before a new thing ships, classify it and follow its lane:
+Before adding a new app or package to the monorepo:
 
-| If it's a… | It deploys to… | You must… |
+| Service Type | Deployment Target | Required Steps |
 | --- | --- | --- |
-| **Web UI / site** | Vercel, on a **subdomain** | add to pnpm workspace; ensure `lint` script; add a deploy workflow or reuse Vercel; pick `something.sierra-estates.net` |
-| **Backend API / bot / worker** | **Cloud Run** (or a worker) | containerize; expose health; set service env; gate the caller behind an env var (dormant by default) |
-| **Scheduled job** | **GitHub Actions** (or n8n) | add a workflow with a `cron`; keep each run short |
-| **Long-running / stateful** (browser session, queue) | **n8n / VPS / Cloud Run**, **never Vercel** | run on always-on infra; expose a webhook the app can trigger |
-| **Shared code** | `packages/*` (**not deployed**) | export a typed API; consumed by apps |
-
-**Checklist for every new app**
-
-- [ ] Added to the pnpm/Turbo workspace; `lint` (ideally `type-check`, `build`) scripts exist — Turbo runs them in CI automatically.
-- [ ] Lint passes (hard gate).
-- [ ] Deploy path defined (workflow or documented command).
-- [ ] Env/secrets placed in the right platform store — **nothing committed**.
-- [ ] Uses a **subdomain of `sierra-estates.net`** if it serves HTTP.
-- [ ] Heavy/long work runs on a worker, not in a request path.
-- [ ] **Registered in the §2 matrix here and in `CLAUDE.md`.**
+| **Web Application** | Vercel (subdomain) | Add to `pnpm-workspace.yaml`, add `lint`/`build` scripts, register domain and matrix target in `deploy-vercel.yml`. |
+| **Backend Microservice / API** | Google Cloud Run | Containerize with `Dockerfile`, set up health checks, configure environment variables, document in §2. |
+| **Scheduled Worker / Sync** | GitHub Actions / n8n | Create workflow in `.github/workflows/` or import n8n template, set cron expression. |
+| **Long-running Daemon / Scraper** | VPS / Cloud Run / n8n | Deploy on persistent infrastructure; expose webhooks for triggers. |
+| **Shared Library** | `packages/*` | Export typed ESM/CJS interfaces; consume within apps. |
 
 ---
 
-## 8. Anti-patterns — what must NEVER happen
+## 8. Anti-Patterns & Strict Boundaries
 
-- ❌ Running a scraper / multi-minute agent / browser session as a Vercel route or cron body.
-- ❌ A second admin UI, or admin features built outside `apps/sierra-estates-realty/app/admin/`.
-- ❌ Hosting the Next.js app on Firebase (`frameworksBackend`) — it competes with Vercel. (Removed; do not reintroduce.)
-- ❌ Two apps writing the same Firestore collections with divergent logic.
-- ❌ Committing secrets / service-account JSON / tokens.
-- ❌ Force-pushing or committing directly to `main`.
-- ❌ A new root domain instead of a `sierra-estates.net` subdomain.
+- ❌ **No heavy computation in Next.js/Vercel request handlers** (scrapers, browser sessions, bulk email).
+- ❌ **No secondary admin portals**; all administrative functionality lives under `apps/sierra-estates-realty/app/admin/`.
+- ❌ **No full Next.js hosting on Firebase** (`frameworksBackend`); Firebase is backend-only.
+- ❌ **No direct commits to `main`**; all changes require green PR checks and review.
+- ❌ **No hardcoded secrets or committed credentials**.
 
 ---
 
-## 9. Rollback & incidents
+## 9. Incident Response & Rollback Runbook
 
-- **Vercel:** redeploy the previous deployment from the dashboard, or `vercel rollback <url>`. (Builds are immutable; rollback is instant.)
-- **Firebase rules/functions:** re-deploy the previous commit's files.
-- **Cloud Run:** shift 100% traffic to the previous revision.
-- **n8n:** disable the offending workflow in the UI.
-- Because Vercel deploys only from `main`, a bad deploy is reverted by reverting the merge (new PR) — never by hot-editing production.
+- **Vercel Web Deployments**: Instant rollback available via Vercel Dashboard or CLI (`vercel rollback <deployment-url>`).
+- **Firebase Security Rules**: Re-deploy previous known good rules commit via `firebase deploy --only firestore:rules,storage --project sierra-blu`.
+- **Cloud Run Microservices**: Traffic can be instantly redirected to the previous revision in GCP Console.
+- **n8n Automations**: Deactivate failing workflow in n8n UI.
+- **Git Reversion**: Roll back faulty production changes by creating a revert PR on `main`.
 
 ---
 
-## 10. Current gaps to reach the target state
+## 10. Completed Milestones & Current State
 
-- [x] Promote **type-check** and **build** to hard CI gates — done in `ci.yml`; verified both pass against current `main`.
-- [x] Pin the **one** Firebase project ID (`sierra-blu`) across `.firebaserc`, app env, and the admin applet config — stray `sierra-estates-realty` in `apps/admin-dashboard` fixed.
-- [x] Add `admin.sierra-estates.net` to Vercel + DNS, then set `ADMIN_HOST` — reported done; confirm `https://admin.sierra-estates.net/admin/login` loads in a browser, since this sandbox couldn't independently verify it.
-- [x] **`deploy-vercel.yml` was broken on every run** (all 30+ runs on `main` failed) — `actions/setup-node`'s `cache: npm` had no `package-lock.json` to key on (repo is pnpm-only), so the job died at step 3 before ever reaching the Vercel CLI steps. Fixed: added `pnpm/action-setup@v4`, switched to `cache: pnpm` + `pnpm install --frozen-lockfile`. Also added the missing `id: target` step — `steps.target.outputs.name`/`.flag` were referenced but never produced, so every deploy would have silently run as **preview**, never production, even once the install step worked.
-- [x] **`apps/sierra-estates-realty/vercel.json` did not exist**, despite Vercel's Root Directory being pinned to that folder (`deploy-vercel.yml`'s PATCH step) and both `CLAUDE.md` and this file documenting it as present. Vercel only reads `vercel.json` from the configured root directory, so the root-level crons/headers/rewrites/redirects were never actually applied in production. Fixed: created `apps/sierra-estates-realty/vercel.json` mirroring the root file's crons/headers/rewrites/redirects.
-- [x] `.vercel/project.json` and `.vercel/README.txt` were tracked in git despite `.gitignore` listing `.vercel` — harmless (IDs are non-secret and match the ones hardcoded in `deploy-vercel.yml`), but redundant. Fixed: untracked with `git rm --cached` so `.gitignore` is actually enforced; files remain on disk locally.
-- [ ] (Optional) Split the admin into its own Vercel project for full compute isolation.
+- [x] **Hard CI Gates**: Enforced `lint`, `type-check`, and `build` in `.github/workflows/ci.yml`.
+- [x] **Firebase Project Unification**: Consolidated all environments to single canonical project `sierra-blu`.
+- [x] **Dual-Project Vercel Separation**: Split client (`sierra-estates.net`) and admin (`admin.sierra-estates.net`) into isolated Vercel projects orchestrated by matrix CI/CD in `deploy-vercel.yml`.
+- [x] **Root Directory Configuration**: Root `vercel.json` and app `vercel.json` aligned for redirects, security headers, and cron tasks.
+- [x] **Firebase Security Rules CI/CD**: Automated deployment of `firestore.rules` and `storage.rules` via `deploy-firebase-rules.yml`.
+- [x] **Session Cookie Authentication**: Implemented and verified `POST /api/auth` token exchange and `sierra_sess` cookie flow.
+- [x] **Git Cleanliness**: Cleaned up tracked `.vercel` metadata files and verified `.gitignore` enforcement.

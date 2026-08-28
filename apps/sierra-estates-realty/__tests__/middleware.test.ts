@@ -150,3 +150,38 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
     }
   });
 });
+
+describe('proxy — /api/internal security gate', () => {
+  it('blocks internal routes in production when the shared secret is missing', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    try {
+      const res = await middleware(
+        request('https://sierra-estates.net/api/internal/health'),
+      );
+      expect(res.status).toBe(503);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  it('allows trusted services with the shared secret', async () => {
+    process.env.SBR_SECRET_KEY = 'internal-secret';
+    const res = await middleware(
+      request('https://sierra-estates.net/api/internal/health', {
+        headers: { 'X-SBR-SECRET-KEY': 'internal-secret' },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('keeps internal routes available in local development without a secret', async () => {
+    delete process.env.SBR_SECRET_KEY;
+    const res = await middleware(
+      request('https://sierra-estates.net/api/internal/health'),
+    );
+    expect(res.status).toBe(200);
+  });
+});

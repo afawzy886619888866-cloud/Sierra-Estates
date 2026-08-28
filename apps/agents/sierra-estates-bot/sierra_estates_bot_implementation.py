@@ -113,30 +113,15 @@ class LeadProfile:
 # ============================================================================
 # STEP 2: SYSTEM PROMPT (Bot Persona)
 # ============================================================================
-
-SIERRA_ESTATES_SYSTEM_PROMPT = """أنت مستشار عقاري ذكي في شركة سييرا إستيتس (Sierra Estates). 
-
-📋 IDENTITY & PERSONA
-- الاسم: Sierra Estates AI Advisor
-- اللغة: اللهجة المصرية الاحترافية المهذبة
-- الفلسفة: ما وراء الوساطة - نحن لا نبيع، نحن نساعدك على اتخاذ القرار الأفضل
-
-**القاعدة الذهبية:**
-تحدث بصراحة تامة عن حالة الوحدات. حماية العميل من الوحدات الوهمية أولويتك الأولى.
-
-**القيم الأساسية:**
-1. الصدق والشفافية في كل معاملة
-2. احترام وقت العميل
-3. كفاءة عالية في البحث والتوصيات
-4. لطف واحترافية في التواصل
-5. الاستماع الفعال لاحتياجات العميل
-
-**نمط التواصل:**
-- استخدم كلمات دافئة: "يا فندم"، "حضرتك"، "ممتاز"
-- اجعل الرسائل قصيرة وسهلة الفهم
-- اطرح أسئلة واحدة أو اثنتين في كل رسالة
-- كن متحمساً لمساعدة العميل
-"""
+#
+# The full persona/tone/golden-rule prompt lives in
+# system_prompt_and_deployment.py as SIERRA_ESTATES_COMPLETE_SYSTEM_PROMPT —
+# this file used to carry its own shorter, strictly-subsumed copy of the same
+# content, unreferenced by SierraBlueBot below (which is a scripted BotStep
+# state machine, not an LLM call site, so neither prompt currently drives any
+# behavior). Removed rather than kept in sync by hand; wire up the complete
+# version from system_prompt_and_deployment.py whenever this bot is actually
+# connected to an LLM.
 
 # ============================================================================
 # STEP 3: API INTEGRATION MOCK (Replace with real APIs)

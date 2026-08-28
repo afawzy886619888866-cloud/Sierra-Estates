@@ -1,9 +1,11 @@
 'use client';
 
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Float, OrbitControls } from '@react-three/drei';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Environment, Float, OrbitControls, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+
+const SATELLITE_UNDERLAY = '/cairo-plaza/site-satellite.jpg';
 
 type ViewKey = 'courtyard' | 'tower' | 'station';
 
@@ -12,6 +14,23 @@ const views: Record<ViewKey, { label: string; labelAr: string; camera: [number, 
   tower: { label: 'Tower frontage', labelAr: 'واجهة البرج', camera: [3.2, 2.6, 4.3], target: [0, 0.5, 0], note: 'Inspect the illustrative tower frontage and façade rhythm.', noteAr: 'استعرض واجهة البرج الإيضاحية وإيقاع الواجهة.' },
   station: { label: 'Metro-station approach', labelAr: 'واجهة محطة المترو', camera: [-5.3, 2.8, 5.5], target: [0, 0.2, 0], note: 'View the project massing from the Al-Mataria Metro Station approach.', noteAr: 'شاهد كتلة المشروع من جهة الاقتراب أمام محطة مترو المطرية.' },
 };
+
+function SatelliteGround() {
+  const texture = useTexture(SATELLITE_UNDERLAY);
+  const { gl } = useThree();
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = gl.capabilities.getMaxAnisotropy();
+  texture.center.set(0.5, 0.5);
+  // North-up: the plane is rotated -90° around X, so flip the image so its
+  // top edge points toward -Z (away from the default camera).
+  texture.rotation = Math.PI;
+  return (
+    <mesh position={[0, -1.42, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[9.6, 9.6]} />
+      <meshStandardMaterial map={texture} roughness={0.92} metalness={0} />
+    </mesh>
+  );
+}
 
 function PlazaMassing() {
   const group = useRef<THREE.Group>(null);
@@ -24,10 +43,6 @@ function PlazaMassing() {
           <meshStandardMaterial color={i === 1 ? '#c9a86a' : '#8d7657'} metalness={0.18} roughness={0.58} />
         </mesh>
       ))}
-      <mesh position={[0, -1.35, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[8, 5]} />
-        <meshStandardMaterial color="#17202a" roughness={0.85} />
-      </mesh>
       {[...Array(18)].map((_, i) => <mesh key={i} position={[-2.8 + (i % 9) * 0.7, 0.4 + Math.floor(i / 9) * 0.55, 0.63]}><boxGeometry args={[0.22, 0.2, 0.03]} /><meshStandardMaterial color="#7bc9dc" emissive="#1e5365" emissiveIntensity={0.35} /></mesh>)}
     </group>
   );
@@ -65,13 +80,20 @@ export default function CairoPlazaScene({ lang = 'en' }: { lang?: 'en' | 'ar' })
         <color attach="background" args={['#0b1118']} />
         <ambientLight intensity={1.4} />
         <directionalLight position={[4, 8, 5]} intensity={2.6} castShadow />
+        <React.Suspense fallback={null}>
+          <SatelliteGround />
+        </React.Suspense>
         <Float speed={0.5} rotationIntensity={0.06} floatIntensity={0.1}><PlazaMassing /></Float>
         <Environment preset="city" />
         <CameraPreset view={view} controls={controls} />
         <OrbitControls ref={controls} enablePan={false} minDistance={5} maxDistance={13} autoRotate={autoRotate && !reducedMotion} autoRotateSpeed={0.35} enableDamping />
       </Canvas>
       <div className="cp-tour-top" dir={isAr ? 'rtl' : 'ltr'}>
-        <div><strong>{isAr ? 'جولة كايرو بلازا ثلاثية الأبعاد' : 'Cairo Plaza 3D virtual tour'}</strong><span>{isAr ? 'تصور تفاعلي توضيحي — ليس نموذجًا تنفيذيًا' : 'Illustrative interactive visualization — not an execution model'}</span></div>
+        <div>
+          <strong>{isAr ? 'جولة كايرو بلازا ثلاثية الأبعاد' : 'Cairo Plaza 3D virtual tour'}</strong>
+          <span>{isAr ? 'تصور تفاعلي توضيحي — ليس نموذجًا تنفيذيًا' : 'Illustrative interactive visualization — not an execution model'}</span>
+          <em className="cp-tour-credit">{isAr ? 'خلفية الأقمار الصناعية للموقع: Esri World Imagery' : 'Real-site satellite underlay: Esri World Imagery'}</em>
+        </div>
         <button className="cp-tour-reset" type="button" onClick={reset}>{isAr ? 'إعادة ضبط' : 'Reset view'}</button>
       </div>
       <div className="cp-tour-bottom" dir={isAr ? 'rtl' : 'ltr'}>

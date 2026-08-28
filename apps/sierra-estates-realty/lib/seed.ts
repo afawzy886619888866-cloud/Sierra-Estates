@@ -154,30 +154,9 @@ export const SEED_LISTINGS: Listing[] = [
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
-    "area": 150,
-    "egpM": 8,
-    "usd": 1500,
-    "aiScore": 8.5,
-    "tag": null,
-    "mode": "sale",
-    "agent": "أحمد بدر (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    "status": "available",
-    "description": "undefined in New Cairo - undefined Bedrooms, undefinedm²",
-    "featured": false
-  },
-  {
-    "id": "OMA517",
-    "code": "OMA517",
-    "compound": "Madinaty",
-    "zone": "Madinaty",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
     "area": 200,
-    "egpM": 35000,
-    "usd": 700,
+    "egpM": 34000,
+    "usd": 680,
     "aiScore": 9.2,
     "tag": "Direct Drop",
     "mode": "rent",
@@ -185,8 +164,8 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
-    "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": true
+    "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
+    "featured": false
   },
   {
     "id": "OFM706",
@@ -207,54 +186,12 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
     "description": "متاح اكثر من وحده",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OFN708",
     "code": "OFN708",
     "compound": "Fifth square",
-    "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
-    "area": 150,
-    "egpM": 8,
-    "usd": 1500,
-    "aiScore": 8.5,
-    "tag": null,
-    "mode": "sale",
-    "agent": "احمد (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-    "status": "available",
-    "description": "undefined in Fifth square - undefined Bedrooms, undefinedm²",
-    "featured": false
-  },
-  {
-    "id": "OR2-5R-2M$",
-    "code": "OR2-5R-2M$",
-    "compound": "CFC",
-    "zone": "5th Settlement",
-    "type": "Villa",
-    "beds": 6,
-    "bath": 5,
-    "area": 690,
-    "egpM": 2,
-    "usd": 40000,
-    "aiScore": 9.3,
-    "tag": "Featured",
-    "mode": "sale",
-    "agent": "L (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-    "status": "available",
-    "description": "Villa in CFC - 6 Bedrooms, 690m²",
-    "featured": false
-  },
-  {
-    "id": "GRD-520-35K",
-    "code": "GRD-520-35K",
-    "compound": "gardina city",
     "zone": "5th Settlement",
     "type": "Apartment",
     "beds": 3,
@@ -269,7 +206,7 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
-    "description": "Apartment in gardina city - 3 Bedrooms, 200m²",
+    "description": "Apartment in Fifth square - 3 Bedrooms, 200m²",
     "featured": false
   },
   {
@@ -291,7 +228,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OZH429",
@@ -354,7 +291,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OSA540",
@@ -396,7 +333,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "MT-HTH-4R-260K",
@@ -459,7 +396,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
     "status": "available",
     "description": "Apartment in CFC - 2 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM739",
@@ -501,7 +438,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
     "status": "available",
     "description": "Villa in CFC - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OFM755",
@@ -564,7 +501,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Town House in Hyde Park - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OMM561",
@@ -606,7 +543,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OMA160",
@@ -669,7 +606,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OMM001",
@@ -711,7 +648,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OML552",
@@ -774,7 +711,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     "status": "available",
     "description": "Town House in Up Town Cairo - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "O422",
@@ -816,7 +753,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Floor With Garden in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "OMD952",
@@ -879,7 +816,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 200m²",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM469",
@@ -921,7 +858,7 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
-    "featured": true
+    "featured": false
   },
   {
     "id": "GRD-520-35K",
@@ -973,27 +910,6 @@ export const SEED_LISTINGS: Listing[] = [
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
-    "area": 185,
-    "egpM": 30000,
-    "usd": 600,
-    "aiScore": 9.1,
-    "tag": "Verified Owner",
-    "mode": "rent",
-    "agent": "mostafa younis (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
-    "status": "available",
-    "description": "undefined in Fifth square - undefined Bedrooms, 185m²",
-    "featured": false
-  },
-  {
-    "id": "NC-3F-7.6M",
-    "code": "NC-3F-7.6M",
-    "compound": "other",
-    "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
     "area": 200,
     "egpM": 35000,
     "usd": 700,
@@ -1005,34 +921,13 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     "status": "available",
     "description": "دور رابع +2 اسانسير+3نوم+3 حمام+2ريشبيسن",
-    "featured": false
+    "featured": true
   },
   {
     "id": "OGM999",
     "code": "OGM999",
     "compound": "New Cairo",
     "zone": "5th Settlement",
-    "type": "Apartment",
-    "beds": 3,
-    "bath": 2,
-    "area": 150,
-    "egpM": 7.5,
-    "usd": 150000,
-    "aiScore": 9.2,
-    "tag": "Featured",
-    "mode": "sale",
-    "agent": "محمد غريب (Owner)",
-    "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
-    "status": "available",
-    "description": "undefined in New Cairo - undefined Bedrooms, undefinedm²",
-    "featured": true
-  },
-  {
-    "id": "RERH-3F-40K",
-    "code": "RERH-3F-40K",
-    "compound": "rehab",
-    "zone": "Rehab",
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
@@ -1046,7 +941,7 @@ export const SEED_LISTINGS: Listing[] = [
     "ago": "Live Google Sheet Sync",
     "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
     "status": "available",
-    "description": "Apartment in rehab - 3 Bedrooms, 200m²",
+    "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
   },
   {
@@ -6885,6 +6780,216 @@ export const SEED_LISTINGS: Listing[] = [
     "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
+    "featured": false
+  },
+  {
+    "id": "MD-B10-3F-35K",
+    "code": "MD-B10-3F-35K",
+    "compound": "Madinaty",
+    "zone": "Madinaty",
+    "type": "Apartment",
+    "beds": 3,
+    "bath": 2,
+    "area": 140,
+    "egpM": 0.035,
+    "usd": 700,
+    "aiScore": 9.8,
+    "tag": "Verified Owner",
+    "mode": "rent",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "status": "available",
+    "description": "متاحه مدينتي الشقه فيو مميز جدا ايجار مفروش تشطيب سوبر لوكس مكيفة بالكامل بالفرش والأجهزة الحديثة جاهزة للسكن الفوري",
+    "featured": true
+  },
+  {
+    "id": "RH-P4-3S-6.8M",
+    "code": "RH-P4-3S-6.8M",
+    "compound": "Al Rehab",
+    "zone": "Rehab",
+    "type": "Floor with Garden",
+    "beds": 3,
+    "bath": 2,
+    "area": 127,
+    "egpM": 6.8,
+    "usd": 136000,
+    "aiScore": 9.6,
+    "tag": "Verified Owner",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+    "status": "available",
+    "description": "للبيع شقة أرضي بحديقة في الرحاب 4 مساحة 127م + 60م حديقة تشطيب خاص بحري بالكامل موقع مميز بالقرب من السوق الشرقي والنادي",
+    "featured": false
+  },
+  {
+    "id": "MV-GS-5U-42M",
+    "code": "MV-GS-5U-42M",
+    "compound": "Mivida",
+    "zone": "5th Settlement",
+    "type": "Standalone Villa",
+    "beds": 5,
+    "bath": 6,
+    "area": 450,
+    "egpM": 42,
+    "usd": 840000,
+    "aiScore": 9.9,
+    "tag": "Featured",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "status": "available",
+    "description": "فيلا مستقلة للبيع بميفيدا إعمار مساحة أرض 620م مباني 450م استلام فوري نص تشطيب موقع بانوراما مباشر على سنترال بارك",
+    "featured": false
+  },
+  {
+    "id": "ET-R90-4S-18.5M",
+    "code": "ET-R90-4S-18.5M",
+    "compound": "Eastown (SODIC)",
+    "zone": "5th Settlement",
+    "type": "Duplex",
+    "beds": 4,
+    "bath": 4,
+    "area": 310,
+    "egpM": 18.5,
+    "usd": 370000,
+    "aiScore": 9.7,
+    "tag": "Verified Owner",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
+    "status": "available",
+    "description": "دوبلكس الترا سوبر لوكس للبيع في إيست تاون سوديك التسعين الجنوبي مساحة 310م روف خاص 85م بحري صريح فيو مساحات خضراء بيدجيت 100 الف مقدم أو كاش تفاوض",
+    "featured": false
+  },
+  {
+    "id": "HP-GR-3C-9.2M",
+    "code": "HP-GR-3C-9.2M",
+    "compound": "Hyde Park",
+    "zone": "5th Settlement",
+    "type": "Apartment",
+    "beds": 3,
+    "bath": 3,
+    "area": 185,
+    "egpM": 9.2,
+    "usd": 184000,
+    "aiScore": 9.5,
+    "tag": "Direct Drop",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    "status": "available",
+    "description": "متاح شقة للبيع في هايد بارك التجمع 185 متر 3 غرف نوم (منهم ماستر بدريسنج) + 3 حمام استلام فوري اقساط متساوية بدون عمولة",
+    "featured": false
+  },
+  {
+    "id": "SL-HAF-4U-38M",
+    "code": "SL-HAF-4U-38M",
+    "compound": "Swan Lake Residence",
+    "zone": "5th Settlement",
+    "type": "Twin House",
+    "beds": 4,
+    "bath": 5,
+    "area": 375,
+    "egpM": 38,
+    "usd": 760000,
+    "aiScore": 9.8,
+    "tag": "Featured",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "status": "available",
+    "description": "توين هاوس للبيع سوان ليك ريزيدنس التجمع الأول تشطيب كامل الترا مودرن جاهز للسكن بحري صريح موقع مميز جدا على اللاجون",
+    "featured": true
+  },
+  {
+    "id": "BD-PH-3C-14.2M",
+    "code": "BD-PH-3C-14.2M",
+    "compound": "Badya (Palm Hills)",
+    "zone": "6th of October",
+    "type": "Townhouse",
+    "beds": 3,
+    "bath": 4,
+    "area": 240,
+    "egpM": 14.2,
+    "usd": 284000,
+    "aiScore": 9.4,
+    "tag": "Direct Drop",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80",
+    "status": "available",
+    "description": "تاون هاوس كورنر للبيع في بادية بالم هيلز استلام قريب مساحة مباني 240م أرض 290م مدفوع جزء ومتبقي اقساط مريحة حتى 2030",
+    "featured": false
+  },
+  {
+    "id": "VS-3A-16.5M+FF",
+    "code": "VS-3A-16.5M+FF",
+    "compound": "Villette (SODIC)",
+    "zone": "5th Settlement",
+    "type": "Apartment",
+    "beds": 3,
+    "bath": 3,
+    "area": 220,
+    "egpM": 16.5,
+    "usd": 330000,
+    "aiScore": 9.7,
+    "tag": "Featured",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "status": "available",
+    "description": "شقة للبيع في فيلييت سوديك 3 غرف مساحة 220 متر تشطيب كامل سعر 16,500,000 جنيه كاش أو تقسيط على 5 سنين",
+    "featured": false
+  },
+  {
+    "id": "MV-POOL-4U-38M",
+    "code": "MV-POOL-4U-38M",
+    "compound": "Mivida",
+    "zone": "5th Settlement",
+    "type": "Standalone Villa",
+    "beds": 4,
+    "bath": 5,
+    "area": 450,
+    "egpM": 38,
+    "usd": 760000,
+    "aiScore": 9.9,
+    "tag": "Verified Owner",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "status": "available",
+    "description": "🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري.",
+    "featured": false
+  },
+  {
+    "id": "HP-LAKE-3P-16.5M",
+    "code": "HP-LAKE-3P-16.5M",
+    "compound": "Hyde Park",
+    "zone": "5th Settlement",
+    "type": "Penthouse",
+    "beds": 3,
+    "bath": 3,
+    "area": 280,
+    "egpM": 16.5,
+    "usd": 330000,
+    "aiScore": 9.8,
+    "tag": "Featured",
+    "mode": "sale",
+    "agent": "Sierra WhatsApp Gateway",
+    "ago": "WhatsApp Import",
+    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "status": "available",
+    "description": "للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات.",
     "featured": false
   }
 ];
