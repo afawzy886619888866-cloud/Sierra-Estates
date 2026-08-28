@@ -82,10 +82,14 @@
     "CLIENT_VERCEL_PROJECT_ID",
     "N8N_BASE_URL",
     "N8N_API_KEY",
-<<<<<<< HEAD
     "PF_WEBHOOK_SECRET",
     "ADMIN_BOOTSTRAP_EMAIL",
-    "ADMIN_BOOTSTRAP_PASSWORD"
+    "ADMIN_BOOTSTRAP_PASSWORD",
+    "ORCHESTRATOR_URL",
+    "ORCHESTRATOR_TOKEN",
+    "DEEPSEEK_API_KEY",
+    "PUBSUB_TOPIC",
+    "REDIS_URL"
   ],
   "globalPassThroughEnv": [
     "NODE_EXTRA_CA_CERTS",
@@ -101,13 +105,6 @@
     "VERCEL_ENV",
     "VERCEL_URL",
     "VERCEL_GIT_COMMIT_SHA"
-=======
-    "ORCHESTRATOR_URL",
-    "ORCHESTRATOR_TOKEN",
-    "DEEPSEEK_API_KEY",
-    "PUBSUB_TOPIC",
-    "REDIS_URL"
->>>>>>> main
   ],
   "tasks": {
     "build": {

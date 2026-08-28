@@ -49,27 +49,6 @@ packages:
   # SPA from the -19-6-AI repo, now deployed as a separate Vercel project
   # (admin.sierra-estates.net). apps/frontend has no package.json and is
   # skipped automatically by pnpm.
-<<<<<<< HEAD
-  - "packages/agents"
-  - "packages/agents-api"
-  - "packages/agents-core"
-  - "packages/admin-data"
-  - "packages/api"
-  - "packages/db"
-  - "packages/exchange"
-  - "packages/memory-engine"
-  - "packages/obsidian"
-  - "packages/property-finder-api"
-  - "packages/shared"
-  - "packages/ui"
-  - "packages/whatsapp-agent"
-  # packages/open-memory is a standalone third-party project — excluded from
-  # workspace to prevent its heavy dependencies and vitest config from
-  # polluting the Sierra Estates build and CI pipeline.
-  - "functions"
-  - "lib/*"
-  - "scripts"
-=======
   - packages/agents
   - packages/agents-api
   - packages/agents-core
@@ -95,7 +74,6 @@ packages:
   - lib/*
   - lib/integrations/*
   - scripts
->>>>>>> main
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.6.1
