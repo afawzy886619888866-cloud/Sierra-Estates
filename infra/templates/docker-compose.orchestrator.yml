@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  ai-orchestrator:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: sierra-ai-orchestrator
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - GOOGLE_GENAI_API_KEY=${GOOGLE_GENAI_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - REDIS_URL=redis://redis-broker:6379
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis-broker
+    networks:
+      - sierra-net
+
+  redis-broker:
+    image: redis:7-alpine
+    container_name: sierra-redis-broker
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - sierra-net
+
+networks:
+  sierra-net:
+    driver: bridge
+
+volumes:
+  redis-data:

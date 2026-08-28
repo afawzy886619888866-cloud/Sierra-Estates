@@ -39,19 +39,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: '.nvmrc'
+
+      - name: Verify canonical Firebase rule sources
+        run: node scripts/check-firebase-rules.mjs
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU — set in: GitHub → Settings → Secrets → Actions
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU }}
+          # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON — set in: GitHub → Settings → Secrets → Actions
+          credentials_json: ${{ secrets['FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU'] || secrets['FIREBASE_SERVICE_ACCOUNT_JSON'] }}
 
-      - name: Deploy Firestore + Storage rules
-        run: npx firebase-tools@latest deploy --only firestore:rules,storage --project sierra-blu --non-interactive
+      - name: Deploy Firestore rules, indexes + Storage rules
+        run: npx firebase-tools@13 deploy --only firestore:rules,firestore:indexes,storage --project sierra-blu --non-interactive

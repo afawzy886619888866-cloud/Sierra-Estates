@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Dev Server",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*compiling.*",
+          "endsPattern": ".*compiled.*"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Tests",
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run CI Test Suite",
+      "type": "npm",
+      "script": "test:ci",
+      "group": "test"
+    },
+    {
+      "label": "Type-Check Workspace",
+      "type": "npm",
+      "script": "type-check",
+      "group": "build"
+    },
+    {
+      "label": "Run Linter",
+      "type": "npm",
+      "script": "lint",
+      "group": "build"
+    },
+    {
+      "label": "Build Monorepo",
+      "type": "npm",
+      "script": "build",
+      "group": "build"
+    },
+    {
+      "label": "Sync WhatsApp Inventory",
+      "type": "shell",
+      "command": "node scripts/add-whatsapp-units-to-inventory.mjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run DeepSeek Harness Benchmark",
+      "type": "npm",
+      "script": "run-harness",
+      "problemMatcher": []
+    }
+  ]
+}

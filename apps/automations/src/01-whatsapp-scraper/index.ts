@@ -1,21 +1,13 @@
 import express from 'express';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getDb } from '../lib/firebase';
 
 /**
  * 01-whatsapp-scraper
- * 
+ *
  * Sets up an Express webhook to receive incoming WhatsApp messages (e.g. from n8n or Cloud API),
  * parses them, and saves raw leads to Firestore.
  */
-
-if (!getApps().length) {
-  try {
-    initializeApp();
-  } catch (error) {
-    console.warn('[WhatsApp Scraper] Firebase admin could not be initialized.');
-  }
-}
 
 export function startWhatsAppWebhookServer(port: number = 3000) {
   const app = express();
@@ -40,7 +32,7 @@ export function startWhatsAppWebhookServer(port: number = 3000) {
       const isPropertyLead = lowerMsg.includes('for sale') || lowerMsg.includes('للبيع') || lowerMsg.includes('mivida');
 
       if (isPropertyLead) {
-        const db = getFirestore();
+        const db = getDb('WhatsApp Scraper');
         
         const lead = {
           sender,
