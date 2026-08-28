@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
-import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
 
 /**
  * Edge proxy (proxy.ts).
@@ -100,7 +100,7 @@ export async function proxy(request: NextRequest) {
       }
 
       // Fail-closed if secret is configured but header is missing or mismatched
-      if (expectedSecret && secretHeader !== expectedSecret) {
+      if (expectedSecret && !safeEqual(secretHeader || '', expectedSecret)) {
         return new NextResponse(
           JSON.stringify({ error: 'Unauthorized system orchestration request' }),
           {

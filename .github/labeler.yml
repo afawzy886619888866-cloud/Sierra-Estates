@@ -13,7 +13,6 @@
       - 'apps/sierra-estates-realty/app/admin/**'
       - 'apps/sierra-estates-realty/app/(admin)/**'
       - 'apps/sierra-estates-realty/components/admin/**'
-      - 'apps/admin-dashboard/**'
 
 'agents':
   - changed-files:

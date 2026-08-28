@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get('X-Signature') || '';
 
-  if (WEBHOOK_SECRET && !verifySignature(rawBody, signature)) {
+  if (!verifySignature(rawBody, signature)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 

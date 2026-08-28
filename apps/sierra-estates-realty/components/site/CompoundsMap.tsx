@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
-import { Compass, Filter, Search, RotateCcw, MapPin, Sparkles, Building2 } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 import { HZDATA } from '@/lib/site/data';
 
 export interface MapCompound {
@@ -54,7 +54,6 @@ export default function CompoundsMap({
   const [activeDistrict, setActiveDistrict] = useState<string>('all');
   const [activeTier, setActiveTier] = useState<string>('all');
   const [mapSearch, setMapSearch] = useState<string>('');
-  const [currentZoom, setCurrentZoom] = useState<number>(12);
 
   // Extract unique zones/districts
   const districts = useMemo(() => {
@@ -105,20 +104,17 @@ export default function CompoundsMap({
         subdomains: 'abcd',
       }).addTo(map);
 
-      map.on('zoomend', () => {
-        setCurrentZoom(map.getZoom());
-      });
-
       layerRef.current = L.layerGroup().addTo(map);
       setReady(true);
     })();
 
+    const markersMap = markersMapRef.current;
     return () => {
       cancelled = true;
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
-      markersMapRef.current.clear();
+      markersMap.clear();
     };
   }, []);
 

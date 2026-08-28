@@ -2,8 +2,11 @@ name: Deploy · Firebase (Firestore + Storage rules)
 
 # Deploys the Firestore + Storage SECURITY RULES to the sierra-blu project, as
 # wired in firebase.json:
-#   firestore.rules => apps/sierra-estates-realty/firestore.rules
-#   storage.rules   => apps/sierra-estates-realty/storage.rules
+#   firestore.rules => firestore.rules   (repo root — single source of truth)
+#   storage.rules   => storage.rules     (repo root — single source of truth)
+#
+# apps/sierra-estates-realty/firebase.json points at these same root files, so
+# deploying from either directory ships identical rules.
 #
 # This is intentionally SEPARATE from deploy-firebase.yml (which only deploys the
 # admin hosting redirect). Rules changes are security-sensitive, so this is a
@@ -28,9 +31,6 @@ concurrency:
   group: firebase-deploy-rules-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3

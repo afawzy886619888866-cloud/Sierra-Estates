@@ -11,13 +11,33 @@ import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
+import { safeEqual } from '@/lib/auth';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
-async function verifyWebhookSecret(req: NextRequest): Promise<boolean> {
-  if (!SECRET_KEY) return true;
+/**
+ * Returns a response to send back when the request must be rejected, or `null`
+ * when the caller is authorised. Previously this returned `true` whenever
+ * SBR_SECRET_KEY was unset — FAIL-OPEN: an unconfigured deployment accepted
+ * anonymous writes into the listings pipeline. Mirrors lib/server/cron-auth.ts:
+ * 503 in production when the secret is missing, unauthenticated only in dev.
+ */
+async function verifyWebhookSecret(req: NextRequest): Promise<NextResponse | null> {
+  if (!SECRET_KEY) {
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('[Ingest WhatsApp] SBR_SECRET_KEY is not configured — rejecting all requests');
+      return NextResponse.json({ error: 'Ingest is not configured' }, { status: 503 });
+    }
+    // Development: no secret configured, allow the call through.
+    return null;
+  }
+
   const secretHeader = req.headers.get('x-sbr-secret-key');
-  return secretHeader === SECRET_KEY;
+  if (!safeEqual(secretHeader || '', SECRET_KEY)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return null;
 }
 
 const extractRawMessage = (body: Record<string, any>) =>
@@ -115,9 +135,8 @@ const buildListingDocument = (
 };
 
 export async function POST(req: NextRequest) {
-  if (!await verifyWebhookSecret(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authFailure = await verifyWebhookSecret(req);
+  if (authFailure) return authFailure;
 
   try {
     const body = await req.json() as Record<string, any>;

@@ -23,9 +23,6 @@ concurrency:
   group: firebase-deploy-admin-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
@@ -40,7 +37,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
