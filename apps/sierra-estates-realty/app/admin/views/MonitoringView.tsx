@@ -40,8 +40,8 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
         </div>
       </div>
 
-      {/* Omnichannel SLA Trackers */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Omnichannel SLA & Health Trackers */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>WHATSAPP BOT SLA</span>
@@ -67,6 +67,15 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
           </div>
           <div className="text-xl font-bold text-white">482 msg / min</div>
           <p className="text-[11px] text-slate-500">Active event bus sync across broker instances</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+          <div className="flex justify-between text-xs text-slate-400 font-mono">
+            <span>INVENTORY HEALTH</span>
+            <span className="text-amber-400">98.4% Verified</span>
+          </div>
+          <div className="text-xl font-bold text-white">528 Active</div>
+          <p className="text-[11px] text-slate-500">High-res photos &amp; AVM price audited</p>
         </div>
       </div>
 
