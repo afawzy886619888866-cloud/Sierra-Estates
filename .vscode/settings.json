@@ -12,6 +12,8 @@
   "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.languageServer": "Jedi",
   "python.analysis.typeCheckingMode": "basic",
+  "vscode-edge-devtools.webhint": false,
+  "webhint.enable": false,
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -21,5 +23,6 @@
     "**/Thumbs.db": true,
     "**/.turbo": true
   },
-  "compilets.autoStart": true
+  "compilets.autoStart": true,
+  "markdown.validate.enabled": true
 }
