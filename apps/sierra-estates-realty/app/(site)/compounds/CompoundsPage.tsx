@@ -243,6 +243,43 @@ export default function CompoundsPage() {
                         </div>
                       </div>
 
+                      {/* 12-Month Price Trend SVG Micro-Sparkline */}
+                      <div
+                        style={{
+                          marginBottom: 12,
+                          padding: '8px 12px',
+                          borderRadius: 10,
+                          background: 'rgba(2, 6, 23, 0.4)',
+                          border: '1px solid var(--line)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: 10, color: 'var(--muted)', display: 'block' }}>
+                            {isAr ? 'منحنى السعر (12 شهر)' : '12M Price Trajectory'}
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#34D399', fontFamily: 'var(--mono)' }}>
+                            ↗ +24.8% EGP/m²
+                          </span>
+                        </div>
+                        <svg width="100" height="24" viewBox="0 0 100 24" fill="none">
+                          <path
+                            d="M0 20 L20 17 L40 18 L60 12 L80 14 L100 4"
+                            stroke="#34D399"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M0 20 L20 17 L40 18 L60 12 L80 14 L100 4 L100 24 L0 24 Z"
+                            fill="rgba(52, 211, 153, 0.15)"
+                          />
+                        </svg>
+                      </div>
+
                       {/* Master Plan Zones & Phases */}
                       <div style={{ marginBottom: 12 }}>
                         <span style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>
