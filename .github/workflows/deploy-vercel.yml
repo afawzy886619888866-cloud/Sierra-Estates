@@ -248,8 +248,7 @@ jobs:
           upsert LEAD_NOTIFY_WHATSAPP_NUMBER              "$LEAD_WHATSAPP" encrypted
 
       - name: Remove crons from admin project (client project owns them)
-        if: steps.proj.outputs.skip != 'true'
-        if: matrix.role == 'admin'
+        if: steps.proj.outputs.skip != 'true' && matrix.role == 'admin'
         run: |
           if [ -f "${{ matrix.app_dir }}/vercel.json" ]; then
             jq 'del(.crons)' "${{ matrix.app_dir }}/vercel.json" > /tmp/vercel.json
@@ -292,8 +291,7 @@ jobs:
           echo "deployed: $url"
 
       - name: Attach production domain (${{ matrix.domain }})
-        if: steps.proj.outputs.skip != 'true'
-        if: steps.target.outputs.name == 'production'
+        if: steps.proj.outputs.skip != 'true' && steps.target.outputs.name == 'production'
         run: |
           code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
             "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
