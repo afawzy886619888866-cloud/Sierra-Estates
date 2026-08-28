@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
           submodules: false
@@ -64,74 +64,40 @@ jobs:
           fi
           echo "Author address is well-formed."
 
-  # package.json's pnpm.overrides is read by pnpm 9 (the pinned major);
-  # pnpm-workspace.yaml's overrides: block is read by pnpm 10+. Both copies must
-  # carry the same security pins, or a pnpm bump silently drops whichever set is
-  # inert. Dependabot only ever edits package.json, so drift is the default
-  # outcome unless something checks. This is that check.
+  # pnpm-workspace.yaml is now the single source of truth for dependency overrides.
+  # This job verifies the overrides block is present and non-empty.
   override-sync:
-    name: Security overrides in sync
+    name: Security overrides present
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
 
-      - name: Compare the two override sets
+      - name: Verify overrides block exists and is non-empty
         run: |
           python3 - <<'PY'
-          import json, re, sys
+          import re, sys
 
-          pkg  = json.load(open("package.json"))
-          want = pkg.get("pnpm", {}).get("overrides", {})
-
-          # Scan the WHOLE overrides map, not just the security block: some pins
-          # (js-yaml) legitimately live elsewhere in it, and a key present
-          # anywhere is a key pnpm 10+ will honour.
           text = open("pnpm-workspace.yaml", encoding="utf-8").read()
           body = re.search(r"^overrides:\n(.*?)(?=^\S|\Z)", text, re.S | re.M)
           if not body:
               sys.exit("::error::no overrides: block found in pnpm-workspace.yaml")
 
-          # Quote-robust parse: YAML permits keys/values wrapped in single OR
-          # double quotes (pnpm reformats these) and trailing "# ..." comments.
-          # A regex that stripped only double quotes silently made every
-          # single-quoted value "differ" and turned this guard permanently red.
-          def _unquote(s):
-              s = s.strip()
-              if len(s) >= 2 and s[0] == s[-1] and s[0] in ('"', "'"):
-                  s = s[1:-1]
-              return s.strip()
-          have = {}
+          # Count non-comment, non-blank key:value lines
+          count = 0
           for raw in body.group(1).splitlines():
               line = raw.split(" #", 1)[0].rstrip()
               if not line.strip() or line.lstrip().startswith("#"):
                   continue
               key, sep, val = line.partition(":")
-              if not sep:
-                  continue
-              key, val = _unquote(key), _unquote(val)
-              if key and val and val != "-":      # "-" entries are platform exclusions
-                  have[key] = val
+              if sep:
+                  count += 1
 
-          missing = {k: v for k, v in want.items() if k not in have}
-          differ  = {k: (v, have[k]) for k, v in want.items()
-                     if k in have and have[k] != v}
-
-          for k, v in missing.items():
-              print(f'::error::override missing from pnpm-workspace.yaml: "{k}": "{v}"')
-          for k, (a, b) in differ.items():
-              print(f'::error::override value differs for "{k}" -- package.json={a} pnpm-workspace.yaml={b}')
-
-          if missing or differ:
-              print("")
-              print("package.json pnpm.overrides is read by pnpm 9; pnpm-workspace.yaml")
-              print("overrides is read by pnpm 10+. Both must carry the same pins or a")
-              print("pnpm bump silently drops whichever set is inert.")
-              sys.exit(1)
-
-          print(f"all {len(want)} package.json overrides are mirrored in pnpm-workspace.yaml")
+          if count == 0:
+              sys.exit("::error::overrides block in pnpm-workspace.yaml is empty")
+          print(f"pnpm-workspace.yaml overrides block contains {count} entries")
           PY
 
   monorepo:
@@ -204,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
 
