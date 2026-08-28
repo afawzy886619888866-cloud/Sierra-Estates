@@ -183,9 +183,39 @@ export default function CompoundsPage() {
                   ) : (
                     <div id="intel-content">
                       <h3 style={{ fontFamily: 'var(--display)', fontSize: 20, marginBottom: 4 }}>{selected}</h3>
-                      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
+                      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 10 }}>
                         {units.length} {isAr ? 'وحدة متاحة' : 'units available'}
                       </p>
+
+                      {/* Compound Investment Highlights Bar */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(3, 1fr)',
+                          gap: 6,
+                          marginBottom: 14,
+                          padding: 10,
+                          borderRadius: 10,
+                          background: 'rgba(15, 23, 42, 0.6)',
+                          border: '1px solid var(--line)',
+                          fontSize: 11,
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'متوسط السعر/م²' : 'Avg Price/m²'}</span>
+                          <strong style={{ color: 'var(--accent, #5FC9FF)', fontFamily: 'var(--mono)' }}>64,500 EGP</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'العائد التأجيري' : 'Net Yield'}</span>
+                          <strong style={{ color: '#34D399', fontFamily: 'var(--mono)' }}>8.4%</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 10 }}>{isAr ? 'النمو السنوي' : 'YoY Growth'}</span>
+                          <strong style={{ color: '#FCD34D', fontFamily: 'var(--mono)' }}>+24%</strong>
+                        </div>
+                      </div>
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {units.slice(0, 12).map((u) => (
                           <div
