@@ -20,6 +20,13 @@ export default function PropertyDetail({ id }: { id: string }) {
 
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+
+  const openLightbox = (idx: number) => {
+    setActiveImgIndex(idx);
+    setLightboxOpen(true);
+  };
 
   if (!p) {
     return (
@@ -55,14 +62,6 @@ export default function PropertyDetail({ id }: { id: string }) {
   const similar = listings.filter((x) => x.id !== p.id && x.cmp === p.cmp).slice(0, 3);
   const fallback = listings.filter((x) => x.id !== p.id).slice(0, 3);
   const related = similar.length ? similar : fallback;
-
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [activeImgIndex, setActiveImgIndex] = useState(0);
-
-  const openLightbox = (idx: number) => {
-    setActiveImgIndex(idx);
-    setLightboxOpen(true);
-  };
 
   return (
     <SiteShell active="best">
@@ -311,7 +310,6 @@ export default function PropertyDetail({ id }: { id: string }) {
 
                   {(() => {
                     const baseEGP = p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 12_000_000);
-                    const [downPct, setDownPct] = [30, 7]; // Defaults
                     const downPayment = (baseEGP * 30) / 100;
                     const financedAmount = baseEGP - downPayment;
                     const monthlyMortgage = Math.round((financedAmount * (1 + 0.12 * 7)) / (7 * 12));
