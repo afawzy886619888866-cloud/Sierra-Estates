@@ -53,6 +53,8 @@ const SUBSYSTEMS: Subsystem[] = [
 export default function HealthView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
   const [subsystems, setSubsystems] = useState<Subsystem[]>(SUBSYSTEMS);
+  const [isPinging, setIsPinging] = useState(false);
+  const [pingResult, setPingResult] = useState<string | null>(null);
 
   const handlePing = async () => {
     setIsPinging(true);
