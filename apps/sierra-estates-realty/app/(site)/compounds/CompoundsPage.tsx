@@ -153,6 +153,33 @@ export default function CompoundsPage() {
             ))}
           </div>
 
+          {/* Luxury Amenity Badges */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+            {[
+              { id: 'golf', labelEn: '⛳ Golf Course', labelAr: '⛳ ملاعب جولف' },
+              { id: 'school', labelEn: '🏫 Int. School', labelAr: '🏫 مدارس دولية' },
+              { id: 'lagoon', labelEn: '🏊 Private Lagoon', labelAr: '🏊 لاجون خاص' },
+              { id: 'club', labelEn: '🎾 Club House', labelAr: '🎾 نوادي رياضية' },
+            ].map((amenity) => (
+              <span
+                key={amenity.id}
+                style={{
+                  fontSize: 11,
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid var(--line)',
+                  color: 'var(--muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                {isAr ? amenity.labelAr : amenity.labelEn}
+              </span>
+            ))}
+          </div>
+
           {/* Map + intel panel */}
           <div className="map-shell rv">
             <div id="cpd-map">
