@@ -203,6 +203,19 @@ const trust = {
   ],
 } as const;
 
+const materials = {
+  en: [
+    { title: 'Bilingual deck', body: 'Arabic/English project overview for sharing ahead of a call.', href: '/cairo-plaza/investor', cta: 'Open deck' },
+    { title: 'Investor pack', body: 'Illustrative scenario model plus a verification checklist.', href: '/cairo-plaza/investor', cta: 'Request pack' },
+    { title: 'Tenant-fit brief', body: 'Operator-facing summary for fit and timeline conversations.', href: '/cairo-plaza/contact', cta: 'Request brief' },
+  ],
+  ar: [
+    { title: 'ملف ثنائي اللغة', body: 'نظرة عامة على المشروع بالعربية والإنجليزية للمشاركة قبل المكالمة.', href: '/ar/cairo-plaza/investor', cta: 'فتح الملف' },
+    { title: 'الملف الاستثماري', body: 'نموذج سيناريو توضيحي بالإضافة إلى قائمة تحقق.', href: '/ar/cairo-plaza/investor', cta: 'طلب الملف' },
+    { title: 'ملخص تأهيل المستأجرين', body: 'ملخص موجه للمشغلين لمحادثات الملاءمة والجدول الزمني.', href: '/ar/cairo-plaza/contact', cta: 'طلب الملخص' },
+  ],
+} as const;
+
 /* ── sample inventory schedule ───────────────────────────────────── */
 const sampleInventory = [
   {
