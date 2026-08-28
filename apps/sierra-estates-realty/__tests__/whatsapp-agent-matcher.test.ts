@@ -8,9 +8,9 @@
  *  4. BrochureManager (Catalog metadata, brochure generation)
  */
 
-const propertyEvaluator = require('../../../packages/whatsapp-agent/src/property-evaluator');
-const propertyMatcher = require('../../../packages/whatsapp-agent/src/property-matcher');
-const brochureManager = require('../../../packages/whatsapp-agent/src/brochure-manager');
+const propertyEvaluator = require('../../../packages/whatsapp-shared/src/property-evaluator');
+const propertyMatcher = require('../../../packages/whatsapp-shared/src/property-matcher');
+const brochureManager = require('../../../packages/whatsapp-shared/src/brochure-manager');
 
 describe('WhatsApp Agent Concierge Suite', () => {
   describe('1. PropertyEvaluator', () => {

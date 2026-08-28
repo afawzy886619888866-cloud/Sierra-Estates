@@ -71,7 +71,7 @@ describe('AI Agents & LLM Intelligence Test Suite', () => {
           return { valid: false, error: 'Invalid confidenceScore' };
         }
         return { valid: true, data: parsed };
-      } catch (e) {
+      } catch {
         return { valid: false, error: 'JSON parsing failure' };
       }
     }

@@ -144,6 +144,8 @@ async function loadAndInitializeAdmin() {
 }
 
 // Call on module load but don't block
-loadAndInitializeAdmin().catch(() => {});
+loadAndInitializeAdmin().catch((err) => {
+  console.warn('[firebase-admin] Module-load init failed:', err);
+});
 
 export { adminApp, adminAuth, adminDb, adminAppCheck, adminStorage, isAdminInitialized, loadAndInitializeAdmin };

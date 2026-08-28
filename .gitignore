@@ -1,138 +1,59 @@
-# ─── Security-sensitive files — NEVER commit these ──────────────────────────
-# SSL certificates
-*.crt
-*.ca-bundle
-*.p7b
-*.key
-*.pem
-ssl/
-certs/
-
-# Twilio / API recovery codes
-*recovery_code*
-*twilio_2fa*
-
-# Firebase service accounts
-service-account.json
-*-firebase-adminsdk-*.json
-*sa-key*.json
-google-credentials.json
-*.patch
-*.zip
-
-# Environment files
-.env
-.env.local
-.env.production
-*.env
-!.env.example
-
-/ECC/
-/Client page/
-/qm/
-/python-docs-samples/
-/python-docs-samples-gcp/
-.archive/
-
-# Leaked / one-off credential helpers — never commit auth helper scripts
-askpass.bat
-askpass.sh
-
-# ─── Dependencies & Python ───────────────────────────────────────────────────
-libs/
+# Dependencies
 node_modules/
-.pnp
-.pnp.js
-.venv/
-venv/
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
+.pnpm-store/
 
-# ─── Build outputs ───────────────────────────────────────────────────────────
-dist/
-build/
+# Next.js & Turborepo build outputs
 .next/
-/out/
-.nuxt/
-.cache/
+out/
+build/
+dist/
 .turbo/
+graphify-out/
+
+# Vercel CLI cache & local configs
 .vercel/
-.firebase/
-coverage/
+
+# TypeScript cache
 *.tsbuildinfo
-next-env.d.ts
-apps/admin-dashboard/api/server.js
-apps/admin-dashboard/api/server.js.map
 
-# ─── WhatsApp session / cache data — contains live auth tokens ─────────────
-.wwebjs_auth/
-whatsapp-auth/
-n8n-data/
+# Environment variables & secrets
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
 
-# ─── Legacy / archived / unused snapshots ───────────────────────────────────
-_unused_archive/
-_archived_repos/
-.vercel-old/
-temp3
+# WhatsApp & Browser automation session caches
+**/wa_sessions/
+testrun/
+output/
+work-items-out/
 
-.claude/
-.codex/
-.replit
-.replitignore
+# Python & virtual environments
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pkl
 
-# ─── IDE ──────────────────────────────────────────────────────────────────
-.vscode/
+# Robocorp / RPA
+temp/
+.rpa/
+
+# IDE & OS files
 .idea/
-*.swp
-*.swo
-
-# ─── OS ───────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+.~lock*
 
-# ─── Secrets ────────────────────────────────────────────────────────────────
-secrets/
-!package.json
-!tsconfig.json
-
-# ─── Logs ─────────────────────────────────────────────────────────────────
+# Logs & Test Coverage
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-eslint-results.json
-*.apk
-.codebuddy
-graphify-out/
-.eve/
-.output/
+coverage/
+.pytest_cache/
 
-# ─── Additional coverage from merged upstream ignore rules ──────────────────
-.env*.local
-service-account*.json
-firebase-adminsdk*.json
-.vercel
-.env*
-!.env.example
+# Jupyter
+.ipynb_checkpoints/
+.virtual_documents/
 
-wa_sessions/
-packages/whatsapp-agent/*.sw_col.json
-
-# CodeBridge for OneStream
-# OneStream local metadata store (user-specific, regenerated via Import)
-.onestream/
-# OneStream connection configurations (contains sensitive data)
-.onestream-metadata/connections.json
-# VS Code extension packages
-*.vsix
-# OneStream file selections (user-specific)
-.onestream-selections.json
-# OneStream authentication tokens
-onestream-token-*
-# C# build artifacts
-obj/
-bin/
-**/obj/
-**/bin/
+# Archive files
+*.zip
+*.tar.gz

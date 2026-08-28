@@ -85,7 +85,11 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       for (const wf of cancelConcurrencyWorkflows) {
         const content = fs.readFileSync(path.join(WORKFLOWS_DIR, wf), 'utf-8');
         expect(content, `${wf} should declare concurrency group`).toContain('concurrency:');
-        expect(content, `${wf} should declare cancel-in-progress`).toMatch(/cancel-in-progress:\s*(true|\$\{\{)/);
+        if (wf === 'ci.yml') {
+          expect(content, `${wf} should conditionally cancel-in-progress`).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
+        } else {
+          expect(content, `${wf} should cancel-in-progress: true`).toContain('cancel-in-progress: true');
+        }
       }
     });
 
