@@ -33,3 +33,8 @@ Egypt PropTech platform market ≈ USD 1.2 B, Cairo-dominated. 2026 trends: AI p
 3. Decide fate of duplicate admin (apps/admin-dashboard vs (admin) routes).
 4. Rotate exposed OpenClaw token (arc, public).
 5. De-duplicate the 7–20 copies of legacy bot/services inside the repo.
+
+## Daily idea log
+
+- 2026-08-17 — Egypt's 2023 listing-transparency regulation requires verified ownership docs on digital platforms: make the D-section `verified` status a document-backed field (ownership doc ref + verifier + date), which both satisfies compliance and substantiates the site's `1,900+ verified listings` claim.
+

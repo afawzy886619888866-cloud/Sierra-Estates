@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "detectedIdeTargets": [
+    "agents",
+    "claude"
+  ],
+  "adapterDecisions": {
+    "claude": {
+      "policy": "accepted",
+      "updatedAt": "2026-08-26T20:13:57.411Z"
+    }
+  },
+  "lastPromptAt": "2026-08-26T20:13:57.411Z"
+}

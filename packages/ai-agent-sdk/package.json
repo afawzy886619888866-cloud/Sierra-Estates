@@ -1,0 +1,24 @@
+{
+  "name": "@sierra-estates/ai-agent-sdk",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Unified TypeScript SDK for interacting with Sierra Estates AI agents, unified memory, and pub/sub events",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sierra-estates/obsidian": "workspace:*",
+    "dotenv": "^17.4.2",
+    "pino": "^9.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.10"
+  }
+}

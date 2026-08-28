@@ -130,7 +130,7 @@ export class OrchestratorService {
           notifyTelegram(
             `🆘 <b>DLQ write FAILED</b> for <code>${docId}</code> (${collection}) — ` +
             `original error: <code>${error.message}</code>`,
-          ).catch(() => {});
+          ).catch((tgErr) => logger.error('[ORCHESTRATOR] Telegram DLQ alert failed:', tgErr));
         }
 
         // Alert admin via Telegram
@@ -140,7 +140,7 @@ export class OrchestratorService {
           `Collection: <code>${collection}</code>\n` +
           `Stage: <b>${currentStage}</b>\n` +
           `Error: <code>${error.message}</code>`;
-        notifyTelegram(alertMsg).catch(() => {});
+        notifyTelegram(alertMsg).catch((tgErr) => logger.error('[ORCHESTRATOR] Telegram alert failed:', tgErr));
 
         throw error;
       }

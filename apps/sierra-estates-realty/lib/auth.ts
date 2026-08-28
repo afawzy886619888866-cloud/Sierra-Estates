@@ -7,6 +7,7 @@
  * For dev / sandbox (no FIREBASE_SERVICE_ACCOUNT), we accept a hardcoded
  * demo admin so the admin page is reachable without Firebase credentials.
  */
+import { isAdminPortalRole } from "./types";
 import type { Session, Role } from "./types";
 
 const COOKIE_NAME = "sierra_sess";
@@ -85,7 +86,7 @@ export const SESSION_COOKIE = COOKIE_NAME;
 export function cookieOpts() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
@@ -184,8 +185,16 @@ export async function requireRole(req: Request, min: Role): Promise<Session> {
       headers: { "content-type": "application/json" },
     });
   }
-  const order: Role[] = ["viewer", "manager", "admin"];
-  if (order.indexOf(sess.role) < order.indexOf(min)) {
+  const order: Role[] = ["viewer", "owner", "agent", "manager", "admin", "superadmin"];
+  const roleIndex = order.indexOf(sess.role);
+  const requiredIndex = order.indexOf(min);
+  if (!isAdminPortalRole(sess.role) && sess.role !== "viewer") {
+    throw new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  if (roleIndex === -1 || requiredIndex === -1 || roleIndex < requiredIndex) {
     throw new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,
       headers: { "content-type": "application/json" },

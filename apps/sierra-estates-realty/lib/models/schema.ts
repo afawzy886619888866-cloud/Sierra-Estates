@@ -27,7 +27,23 @@ export interface BaseDocument {
 export type PropertyStatus = 'available' | 'reserved' | 'sold' | 'rented' | 'off-market';
 export type PropertyType = 'apartment' | 'villa' | 'townhouse' | 'duplex' | 'penthouse' | 'studio' | 'chalet' | 'commercial' | 'land';
 export type PipelineStage = 'inbound' | 'qualify' | 'engage' | 'proposal' | 'viewing' | 'negotiate' | 'reserve' | 'contract' | 'handover' | 'closed-won';
-export type StakeholderAcquisitionSource = 'property-finder' | 'olx' | 'website' | 'referral' | 'walk-in' | 'social-media' | 'whatsapp' | 'other';
+// The full set of lead-intake channels this app knows how to attribute and
+// group by on the admin Leads page. 'instagram' | 'facebook' | 'linkedin'
+// are declared ahead of the integrations that will populate them — add the
+// producer (whichever route/service ingests that channel) and it slots into
+// the existing admin grouping/filtering with no further schema changes.
+export type StakeholderAcquisitionSource =
+  | 'website'
+  | 'property-finder'
+  | 'whatsapp'
+  | 'olx'
+  | 'referral'
+  | 'walk-in'
+  | 'social-media'
+  | 'instagram'
+  | 'facebook'
+  | 'linkedin'
+  | 'other';
 export type CurrencyCode = 'EGP' | 'USD';
 export type FurnishingCode = 'F' | 'U' | 'K' | 'S';
 export type SierraFeatureCode = 'G' | 'P' | 'R' | 'V';
@@ -614,8 +630,8 @@ export interface WhatsAppMessageJob extends BaseDocument {
 
   assignedNumberId?: string;    // FK -> whatsapp_numbers, set once claimed
   status: WhatsAppMessageQueueStatus;
-  scheduledFor?: Timestamp;     // earliest send time; used to defer outside operating hours
-  sentAt?: Timestamp;
+  scheduledFor?: Timestamp | any;     // earliest send time; used to defer outside operating hours
+  sentAt?: Timestamp | any;
 
   twilioMessageSid?: string;
   twilioStatus?: string;        // raw status string from Twilio's callback
@@ -661,12 +677,12 @@ export interface OwnerNegotiation extends BaseDocument {
 // ─── Outreach Operating Config (singleton doc) ───────────────────────
 
 export interface WhatsAppOutreachConfig {
-  operatingHourStart: number;    // 12 (24hr, local timezone)
-  operatingHourEnd: number;      // 20
+  operatingHourStart: number;    // 10 (24hr, local timezone)
+  operatingHourEnd: number;      // 11 — a 1hr window since dispatch now runs once/day at 10am
   timezone: string;              // 'Africa/Cairo'
   batchSizePerNumber: number;    // 30
   windowMinutes: number;         // 120
-  dailyCapPerNumber: number;     // 120 (30 * 4 windows between 12pm-8pm)
+  dailyCapPerNumber: number;     // 120 (30 * 4 windows) — per-run ceiling now that there's 1 run/day
   dailyCapTotal: number;         // 480 across all 4 numbers
 }
 
