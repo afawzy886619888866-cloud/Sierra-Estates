@@ -705,14 +705,28 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                         )}
                       </td>
                       <td className="p-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => setActiveValuationUnit(item)}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 mx-auto transition-colors"
-                        >
-                          <Zap className="w-3 h-3 text-emerald-400" />
-                          <span>Valuate</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveValuationUnit(item)}
+                            className="px-2 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors"
+                            title="Instant AVM Valuation"
+                          >
+                            <Zap className="w-3 h-3 text-emerald-400" />
+                            <span>Valuate</span>
+                          </button>
+                          <a
+                            href={`https://wa.me/201092048333?text=${encodeURIComponent(
+                              `Hello Sierra Estates Broker Desk — Inquiring about ${code} in ${item.compound || item.location || 'New Cairo'}.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 transition-colors"
+                            title="Chat on WhatsApp"
+                          >
+                            <span className="text-xs">💬</span>
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   );

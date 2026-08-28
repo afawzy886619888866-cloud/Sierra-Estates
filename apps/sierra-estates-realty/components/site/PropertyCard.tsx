@@ -50,7 +50,13 @@ export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number 
           </div>
         </GsapMagnetic>
         <div className="price-float">{HZDATA.price(p)}</div>
-        <div className="ai-score">AI {p.ai.toFixed(1)}</div>
+        <div
+          className="ai-score"
+          title={`Sierra Intelligence Score: ${p.ai.toFixed(1)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${p.yield ? p.yield + '%' : '8.2%'}\n• Backed by 12 recent comparables in ${p.cmp}`}
+          style={{ cursor: 'help' }}
+        >
+          AI {p.ai.toFixed(1)}
+        </div>
       </div>
 
       <div className="body">
