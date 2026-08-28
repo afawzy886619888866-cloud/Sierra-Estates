@@ -1,8 +1,7 @@
+import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
-import * as crypto from 'crypto';
-import { safeEqual } from '@/lib/auth';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -60,20 +59,11 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
-
-  // Secret verification for the WhatsApp webhook. A missing SBR_SECRET_KEY
-  // used to skip the check entirely (FAIL-OPEN), leaving the ingest pipeline
-  // open to anonymous callers. Fail CLOSED in production, keep the
-  // unauthenticated path in development — same shape as lib/server/cron-auth.ts.
+  // Optional secret verification for WhatsApp webhook
   const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-  if (!SECRET_KEY) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('🚨 SBR_SECRET_KEY is not configured — rejecting webhook request');
-      return NextResponse.json({ error: 'Webhook is not configured' }, { status: 503 });
-    }
-  } else {
+  if (SECRET_KEY) {
     const secretHeader = req.headers.get('x-sbr-secret-key');
-    if (!secretHeader || !safeEqual(secretHeader, SECRET_KEY)) {
+    if (!secretHeader || secretHeader !== SECRET_KEY) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
