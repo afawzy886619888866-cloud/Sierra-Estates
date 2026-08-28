@@ -81,7 +81,7 @@ jobs:
 
     steps:
       # ── Resolve correct project ID & token for the role ──────────────────────
-      - name: Resolve project ID & Vercel Token
+      - name: Validate deployment prerequisites & resolve project ID
         id: proj
         env:
           VARS_JSON: ${{ toJson(vars) }}
@@ -108,6 +108,7 @@ jobs:
           # this job would leave main undeployed. Fail visibly instead.
           if [ -z "$TOKEN" ]; then
             echo "::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository."
+            echo "::error::Production deployment blocked. Missing GitHub secrets (VERCEL_TOKEN / VERCEL_AUTH_TOKEN)."
             exit 1
           fi
 
