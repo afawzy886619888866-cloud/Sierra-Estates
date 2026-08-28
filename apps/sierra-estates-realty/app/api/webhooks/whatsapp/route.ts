@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -10,14 +11,12 @@ import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
  */
 
 export async function POST(req: NextRequest) {
-  // Optional secret verification for WhatsApp webhook
-  const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-  if (SECRET_KEY) {
-    const secretHeader = req.headers.get('x-sbr-secret-key');
-    if (!secretHeader || secretHeader !== SECRET_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  const denied = verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
+  if (denied) return denied;
 
   try {
     const body = await req.json();

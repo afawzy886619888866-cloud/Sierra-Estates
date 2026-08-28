@@ -3,7 +3,7 @@ name: Deploy · Firebase (Firestore + Storage rules)
 # Deploys the Firestore + Storage SECURITY RULES to the sierra-blu project, as
 # wired in firebase.json:
 #   firestore.rules => apps/sierra-estates-realty/firestore.rules
-#   storage.rules   => apps/sierra-estates-realty/storage.rules
+#   storage.rules   => storage.rules (repo root)
 #
 # This is intentionally SEPARATE from deploy-firebase.yml (which only deploys the
 # admin hosting redirect). Rules changes are security-sensitive, so this is a

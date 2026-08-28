@@ -61,7 +61,7 @@ jobs:
         run: pnpm --filter sierra-estates-client-page type-check
 
       - name: Lint realty app
-        run: pnpm --filter sierra-estates-client-page lint || true
+        run: pnpm --filter sierra-estates-client-page lint
 
       - name: Unit tests (functions)
         run: pnpm --filter sierra-estates-functions test

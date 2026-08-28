@@ -5,7 +5,8 @@
   "description": "Scaffolded n8n / Node.js automated workflows",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -17,6 +18,6 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
-    "typescript": "^7.0.2"
+    "typescript": "^5.8.2"
   }
 }

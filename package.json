@@ -2,7 +2,7 @@
     "name": "sierra-estates",
     "version": "1.0.0",
     "private": true,
-    "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
+    "description": "Sierra Estates \u2014 Luxury PropTech Platform for New Cairo",
     "workspaces": [
         "apps/*",
         "packages/*"
@@ -41,7 +41,7 @@
         "pnpm": ">=9"
     },
     "packageManager": "pnpm@9.15.4",
-    "_comment_pnpm_overrides": "ACTIVE overrides for pnpm 9 (the pinned major) — this is what pnpm-lock.yaml records. pnpm 10+ reads `overrides:` in pnpm-workspace.yaml instead; keep the two in sync. See the header comment above that block before changing either.",
+    "_comment_pnpm_overrides": "ACTIVE overrides for pnpm 9 (the pinned major) \u2014 this is what pnpm-lock.yaml records. pnpm 10+ reads `overrides:` in pnpm-workspace.yaml instead; keep the two in sync. See the header comment above that block before changing either.",
     "pnpm": {
         "overrides": {
             "esbuild@<=0.24.2": ">=0.25.0",
@@ -54,7 +54,8 @@
             "fast-uri@>=3.0.0 <3.1.5": ">=3.1.5",
             "js-yaml@>=4.0.0 <4.3.1": ">=4.3.1",
             "pdfjs-dist@>=5.6.83 <6.2.108": ">=6.2.108",
-            "react-router@>=7.12.0 <7.18.2": ">=7.18.2"
+            "react-router@>=7.12.0 <7.18.2": ">=7.18.2",
+            "typescript": "^5.9.3"
         }
     }
 }

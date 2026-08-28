@@ -4,7 +4,7 @@
  */
 
 import { GoogleAIService } from '../server/google-ai';
-import { SkillLoader } from './skill-loader';
+import { SkillLoader } from '../services/skill-loader';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { COLLECTIONS, type Lead } from '../models/schema';

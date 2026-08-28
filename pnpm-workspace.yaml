@@ -50,19 +50,16 @@ packages:
   # (admin.sierra-estates.net). apps/frontend has no package.json and is
   # skipped automatically by pnpm.
   - "packages/agents"
+  - "packages/agents-api"
   - "packages/agents-core"
   - "packages/admin-data"
   - "packages/api"
-  - "packages/auth"
-  - "packages/batch"
-  - "packages/config"
   - "packages/db"
   - "packages/exchange"
   - "packages/memory-engine"
   - "packages/obsidian"
   - "packages/property-finder-api"
   - "packages/shared"
-  - "packages/types"
   - "packages/ui"
   - "packages/whatsapp-agent"
   # packages/open-memory is a standalone third-party project — excluded from
@@ -70,9 +67,7 @@ packages:
   # polluting the Sierra Estates build and CI pipeline.
   - "functions"
   - "lib/*"
-  - "lib/integrations/*"
   - "scripts"
-  - my-agent
 
 catalog:
   '@replit/vite-plugin-cartographer': ^0.6.1
@@ -214,6 +209,11 @@ overrides:
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.28.1"
   cross-env: "7.0.3"
+  # Single TypeScript major across the monorepo. Without this, packages that
+  # only have a transitive `typescript` peer (lib/api-spec via typedoc,
+  # packages/whatsapp-agent) resolve to TS 7, installing two majors and
+  # breaking typedoc's peer range. Keep in sync with package.json overrides.
+  typescript: "^5.9.3"
   js-yaml: "4.3.1"
   "js-yaml@^4.0.0": "4.3.1"
   "js-yaml@^4.1.0": "4.3.1"

@@ -28,8 +28,12 @@ const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
 const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
 
 function getKey(): string {
-  const secret =
-    process.env.SESSION_SECRET || process.env.VERCEL_AUTOMATION_BYPASS_TOKEN;
+  // Only SESSION_SECRET may sign sessions. VERCEL_AUTOMATION_BYPASS_TOKEN was
+  // previously accepted as a fallback, but Vercel injects it automatically —
+  // so the production guard below could never fire, and anyone who could read
+  // that token (it is visible in project settings and handed out for preview
+  // protection bypass) could forge an admin session cookie.
+  const secret = process.env.SESSION_SECRET;
 
   if (secret) return secret;
 

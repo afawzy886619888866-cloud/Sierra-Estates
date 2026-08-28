@@ -2,29 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/server/firebase-admin';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { Timestamp } from 'firebase-admin/firestore';
-import crypto from 'crypto';
 import { logger } from '@/lib/logger';
+import { verifyHmacSignature } from '@/lib/server/webhook-auth';
 
 const WEBHOOK_SECRET = process.env.PF_WEBHOOK_SECRET || '';
-
-function verifySignature(payload: string, signature: string): boolean {
-  if (!WEBHOOK_SECRET) {
-    logger.error('[PF Webhook] PF_WEBHOOK_SECRET is not configured — rejecting all requests');
-    return false;
-  }
-  if (!signature) return false;
-  const expected = crypto.createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex');
-  if (Buffer.byteLength(signature) !== Buffer.byteLength(expected)) return false;
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-}
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get('X-Signature') || '';
 
-  if (WEBHOOK_SECRET && !verifySignature(rawBody, signature)) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-  }
+  const denied = verifyHmacSignature(rawBody, signature, {
+    secret: WEBHOOK_SECRET,
+    name: 'PF_WEBHOOK_SECRET',
+  });
+  if (denied) return denied;
 
   try {
     const event = JSON.parse(rawBody);
