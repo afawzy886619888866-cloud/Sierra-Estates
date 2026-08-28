@@ -196,15 +196,20 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
                   <span className="font-semibold text-white text-base">
                     {isAr ? item.propertyTitle.ar : item.propertyTitle.en}
                   </span>
-                  <span
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold border ${
-                      item.matchScore >= 90
-                        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
-                        : 'bg-purple-950/80 text-purple-300 border-purple-800'
-                    }`}
-                  >
-                    {isAr ? `تطابق ${item.matchScore}%` : `Match: ${item.matchScore}%`}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
+                      {item.leadType === 'vip-buyer' ? (isAr ? '💎 عميل مميز' : '💎 VIP Match') : item.leadType === 'investment' ? (isAr ? '📈 عائد مرتفع' : '📈 High Yield') : (isAr ? '🔑 جاهز للسكن' : '🔑 Immediate Move')}
+                    </span>
+                    <span
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold border ${
+                        item.matchScore >= 90
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                          : 'bg-purple-950/80 text-purple-300 border-purple-800'
+                      }`}
+                    >
+                      {isAr ? `تطابق ${item.matchScore}%` : `Match: ${item.matchScore}%`}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs">

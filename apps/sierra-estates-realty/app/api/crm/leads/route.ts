@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           description: `Investor Profile: ${client_name} | Assigned Specialist: ${selectedSalesCloserRepId}`,
           phone_number: client_mobile
         })
-      }).catch(() => {});
+      }).catch((zapErr) => console.warn('[CRM:leads] Zapier webhook failed:', zapErr));
     }
 
     return NextResponse.json({ success: true, lead_id: leadDocumentId, metrics_score: `${leadScoreValue}/10`, rep_owner: selectedSalesCloserRepId });
