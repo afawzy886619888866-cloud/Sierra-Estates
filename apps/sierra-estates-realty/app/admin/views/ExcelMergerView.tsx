@@ -679,6 +679,30 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
         </div>
       </div>
 
+      {/* ── Auto-Detected Column Mapping Inspector ── */}
+      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <span>✨</span> {isAr ? 'خريطة التعرف الذكي على الأعمدة (Auto-Mapping Dictionary)' : 'Active Smart Column Mapping Dictionary'}
+          </span>
+          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/40 border border-emerald-800/60 px-2 py-0.5 rounded">
+            {isAr ? '16 عمود قياسي مفعل' : '16 Standard Normalized Fields Active'}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(COLUMN_SYNONYMS).slice(0, 10).map(([col, synonyms]) => (
+            <span
+              key={col}
+              className="text-[10px] font-mono px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-1"
+              title={`Synonyms: ${synonyms.join(', ')}`}
+            >
+              <strong className="text-cyan-400">{col}</strong>
+              <span className="text-slate-500">({synonyms.length})</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ── Stats Cards (shown after processing) ── */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
