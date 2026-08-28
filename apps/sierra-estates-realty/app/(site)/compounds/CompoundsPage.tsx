@@ -195,6 +195,9 @@ export default function CompoundsPage() {
               >
                 {isAr ? amenity.labelAr : amenity.labelEn}
               </span>
+            ))}
+          </div>
+
           {/* Map View Mode Controls */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 6 }}>
             <button
