@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateCurrencyArbitrage,
   generateCapRateSensitivityMatrix,
-  evaluatePropertyValuation,
 } from '../packages/agents/tools/valuationArbitrageEngine';
 
 describe('Admin Extended Features & Financial Tooling Test Suite', () => {
