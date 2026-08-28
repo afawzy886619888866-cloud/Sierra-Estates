@@ -55,7 +55,7 @@ export async function pushListingToPF(listing: SBRListing): Promise<PFSyncResult
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ unitId: listing.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { error?: string; id?: string };
     if (!res.ok) return { success: false, error: data.error };
     return { success: true, id: data.id ?? listing.id };
   } catch (err) {

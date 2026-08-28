@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { memoryEngine, sharedMemory, openMemoryClient } from '@sierra-estates/memory-engine';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 /**
  * SIERRA ESTATES UNIFIED MEMORY API ROUTE
  * Handles memory operations across OpenMemory HSG, SharedMemoryBus, and MemoryEngine.
+ *
+ * SECURITY: the whole route (read AND write) is admin-only. The shared memory
+ * store holds agent context, lead signals and operational notes, so anonymous
+ * reads leak internal state and anonymous writes poison every agent that reads
+ * it back.
  */
 
+/** Hard caps so a single write cannot be used to fill the memory store. */
+const MAX_CONTENT_CHARS = 20_000;
+const MAX_DATA_BYTES = 100_000;
+
+/** 401 in this route's response shape. */
+function unauthorized() {
+  return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+}
+
 export async function GET(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorized();
+
   try {
     const { searchParams } = new URL(req.url);
     const key = searchParams.get('key') || searchParams.get('id');
@@ -70,9 +88,37 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorized();
+
   try {
     const body = await req.json();
     const { action, key, content, data, agentId, tags, ttlSeconds } = body;
+
+    if (typeof content === 'string' && content.length > MAX_CONTENT_CHARS) {
+      return NextResponse.json(
+        { success: false, error: `content exceeds ${MAX_CONTENT_CHARS} characters` },
+        { status: 413 }
+      );
+    }
+
+    if (data !== undefined) {
+      let dataBytes = 0;
+      try {
+        dataBytes = Buffer.byteLength(JSON.stringify(data) ?? '', 'utf8');
+      } catch {
+        return NextResponse.json(
+          { success: false, error: 'data is not serializable' },
+          { status: 400 }
+        );
+      }
+      if (dataBytes > MAX_DATA_BYTES) {
+        return NextResponse.json(
+          { success: false, error: `data exceeds ${MAX_DATA_BYTES} bytes` },
+          { status: 413 }
+        );
+      }
+    }
 
     // 1. Semantic memory store via OpenMemory
     if (action === 'store_semantic' || (content && !action)) {
