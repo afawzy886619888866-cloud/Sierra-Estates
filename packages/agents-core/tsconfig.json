@@ -9,9 +9,7 @@
       "@sierra-estates/agents-core": ["./src/index.ts"],
       "@sierra-estates/memory-engine": ["../memory-engine/dist/index.d.ts", "../memory-engine/src/index.ts"],
       "@sierra-estates/db": ["../db/lib/index.ts"],
-      "@sierra-estates/agents": ["../agents/index.ts"],
-      "@sierra-estates/auth": ["../auth"],
-      "@sierra-estates/config": ["../config"]
+      "@sierra-estates/agents": ["../agents/index.ts"]
     }
   },
   "include": ["src/**/*"],
