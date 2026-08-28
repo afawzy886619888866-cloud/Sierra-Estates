@@ -11,13 +11,14 @@ import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
-const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-
-async function verifyWebhookSecret(req: NextRequest): Promise<boolean> {
-  if (!SECRET_KEY) return true;
-  const secretHeader = req.headers.get('x-sbr-secret-key');
-  return secretHeader === SECRET_KEY;
+function verifyWebhookSecret(req: NextRequest) {
+  return verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
 }
 
 const extractRawMessage = (body: Record<string, any>) =>
@@ -115,9 +116,8 @@ const buildListingDocument = (
 };
 
 export async function POST(req: NextRequest) {
-  if (!await verifyWebhookSecret(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyWebhookSecret(req);
+  if (denied) return denied;
 
   try {
     const body = await req.json() as Record<string, any>;
