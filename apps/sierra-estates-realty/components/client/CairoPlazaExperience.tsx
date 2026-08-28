@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Sun, Moon, Languages, Building2, CheckCircle2, Phone, MessageSquare,
-  ArrowRight, ShieldCheck, FileText, TrendingUp, Sparkles, MapPin,
+  Sun, Moon, Languages, Building2, Phone, MessageSquare,
+  ShieldCheck, FileText, TrendingUp,
 } from 'lucide-react';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
 
