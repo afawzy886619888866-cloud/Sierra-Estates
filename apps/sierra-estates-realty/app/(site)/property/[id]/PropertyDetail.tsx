@@ -142,6 +142,67 @@ export default function PropertyDetail({ id }: { id: string }) {
                     ? `${p.type} بمساحة ${p.area} م² في ${p.cmp}، ${p.zone}. تضم ${p.beds} غرف نوم و${p.bath} حمامات، ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.`
                     : `A ${p.area} m² ${p.type.toLowerCase()} in ${p.cmp}, ${p.zone}. ${p.beds} bedrooms and ${p.bath} bathrooms, scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.`}
                 </p>
+
+                {/* Mortgage & Investment Yield Analyzer */}
+                <div
+                  className="mortgage-calc-box"
+                  style={{
+                    marginTop: 28,
+                    padding: 20,
+                    borderRadius: 16,
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(16px)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>🧮</span> {isAr ? 'حاسبة التمويل والعائد الاستثماري' : 'Mortgage & Investment Yield Analyzer'}
+                    </h3>
+                    <span style={{ fontSize: 11, color: '#34D399', fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: 'rgba(52, 211, 153, 0.1)' }}>
+                      {isAr ? 'تحليل لحظي' : 'Live Calculation'}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 12_000_000);
+                    const [downPct, setDownPct] = [30, 7]; // Defaults
+                    const downPayment = (baseEGP * 30) / 100;
+                    const financedAmount = baseEGP - downPayment;
+                    const monthlyMortgage = Math.round((financedAmount * (1 + 0.12 * 7)) / (7 * 12));
+                    const estMonthlyRent = Math.round((baseEGP * 0.085) / 12);
+                    const netMonthlyCarry = monthlyMortgage - estMonthlyRent;
+
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, fontSize: 12.5 }}>
+                        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'المقدم التقديري (30%)' : 'Down Payment (30%)'}</span>
+                          <strong style={{ fontSize: 15, color: '#5FC9FF', fontFamily: 'var(--mono)' }}>
+                            {(downPayment / 1_000_000).toFixed(2)}M EGP
+                          </strong>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'القسط الشهري (7 سنوات)' : 'Monthly Payment (7 Yrs)'}</span>
+                          <strong style={{ fontSize: 15, color: '#fff', fontFamily: 'var(--mono)' }}>
+                            {monthlyMortgage.toLocaleString()} EGP
+                          </strong>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'الإيجار المتوقع شهرياً' : 'Est. Monthly Rent'}</span>
+                          <strong style={{ fontSize: 15, color: '#34D399', fontFamily: 'var(--mono)' }}>
+                            +{estMonthlyRent.toLocaleString()} EGP
+                          </strong>
+                        </div>
+                        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'صافي التكلفة الشهرية' : 'Net Monthly Carry'}</span>
+                          <strong style={{ fontSize: 15, color: '#FCD34D', fontFamily: 'var(--mono)' }}>
+                            {netMonthlyCarry.toLocaleString()} EGP/mo
+                          </strong>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               </Reveal>
             </div>
 
