@@ -33,8 +33,13 @@ def export_owners_sheet():
     df["has_photo_rank"] = df["Has_Photos"].map({"YES": 0, "NO": 1})
     df = df.sort_values(["has_photo_rank", "Received_At"], ascending=[True, False]).drop(columns=["has_photo_rank"])
 
+    # Export Airtable-compatible CSV
+    AIRTABLE_CSV = os.path.join(OUTPUT_DIR, "Owners_Inventory_Airtable.csv")
+    df.to_csv(AIRTABLE_CSV, index=False, encoding="utf-8-sig")
+
     with pd.ExcelWriter(EXCEL_FILE, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Owners_Inventory", index=False)
+
 
         # Summary sheet
         summary_data = {
