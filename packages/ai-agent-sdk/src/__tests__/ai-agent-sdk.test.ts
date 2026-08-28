@@ -20,12 +20,14 @@ describe('AI Agent SDK', () => {
 
   it('runs InsightsAgent execution and produces structured market insight', async () => {
     const agent = new InsightsAgent();
-    const result = await agent.run({
+    const result = await agent.execute({
       agentId: 'agent-insights-lead',
       prompt: 'Analyze Mivida market',
       context: { compound: 'Mivida', inventoryCount: 150 },
       memoryTags: ['resale', 'compound-analysis'],
+      timeoutMs: 30000,
     });
+
 
     expect(result.success).toBe(true);
     expect(result.data.headline).toContain('Mivida');
