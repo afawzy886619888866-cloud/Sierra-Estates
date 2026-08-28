@@ -29,7 +29,7 @@
   },
   "API Workflow-initial-context": {
     "id": "API Workflow-initial-context",
-    "value": "Listing CRUD endpoints",
+    "value": "Implement Secure Leads Ingestion API",
     "tags": [
       "shared-knowledge",
       "pipeline-context"
@@ -275,7 +275,7 @@
   },
   "UI/UX Enhancement Workflow-initial-context": {
     "id": "UI/UX Enhancement Workflow-initial-context",
-    "value": "Redesign Property card",
+    "value": "Redesign Luxury Compound Hero Section",
     "tags": [
       "shared-knowledge",
       "pipeline-context"

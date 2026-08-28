@@ -111,10 +111,20 @@ describe('Firestore Security Rules — Structural Validation', () => {
       );
     });
 
-    it('restricts user writes to staff only (prevents self privilege escalation)', () => {
+    it('blocks staff from changing the role field on their OWN user doc', () => {
       expect(rules).toMatch(
-        /match \/users\/\{uid\}[\s\S]*?allow write:\s*if isStaff\(\)/
+        /match \/users\/\{uid\}[\s\S]*?allow update:\s*if isStaff\(\)[\s\S]*?request\.auth\.uid != uid[\s\S]*?affectedKeys\(\)\.hasAny\(\['role'\]\)/
       );
+    });
+
+    it('restricts user provisioning and removal to admins', () => {
+      expect(rules).toMatch(
+        /match \/users\/\{uid\}[\s\S]*?allow create, delete:\s*if isAdmin\(\)/
+      );
+    });
+
+    it('defines an isAdmin() helper distinct from isStaff()', () => {
+      expect(rules).toMatch(/function isAdmin\(\)[\s\S]*?\.role == 'admin'/);
     });
   });
 
@@ -135,7 +145,19 @@ describe('Firestore Security Rules — Structural Validation', () => {
   describe('7. Catch-all rule', () => {
     it('has a catch-all staff-only rule for uncategorized collections', () => {
       expect(rules).toMatch(
-        /match \/\{document=\*\*\}[\s\S]*?allow read, write:\s*if isStaff\(\)/
+        /match \/\{collection\}\/\{document=\*\*\}[\s\S]*?allow read, write:\s*if isStaff\(\)/
+      );
+    });
+
+    it('excludes users and audit_logs from the catch-all so it cannot re-grant them', () => {
+      expect(rules).toMatch(
+        /match \/\{collection\}\/\{document=\*\*\}[\s\S]*?!\(collection in \['users', 'audit_logs'\]\)/
+      );
+    });
+
+    it('makes audit_logs client-read-only for admins', () => {
+      expect(rules).toMatch(
+        /match \/audit_logs\/\{document=\*\*\}[\s\S]*?allow read:\s*if isAdmin\(\)[\s\S]*?allow write:\s*if false/
       );
     });
   });
