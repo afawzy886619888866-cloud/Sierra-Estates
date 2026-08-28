@@ -37,6 +37,7 @@ export default function CompoundsPage() {
   const [type, setType] = useState('all');
   const [beds, setBeds] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
 
   const zones = useMemo(
     () => ['all', ...Array.from(new Set(all.map((c) => c.z)))],
