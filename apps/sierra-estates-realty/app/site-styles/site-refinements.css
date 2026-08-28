@@ -598,3 +598,354 @@ section.block:has(.cta){background:linear-gradient(180deg,var(--white) 0%,var(--
 [data-theme="dark"] .cta{background:linear-gradient(135deg,#0b1929,#0f2236);border:1px solid rgba(233,193,118,.15);}
 [data-theme="dark"] .cta::before{background:radial-gradient(circle,rgba(233,193,118,.1),transparent 70%);}
 @media(max-width:860px){.cta{grid-template-columns:1fr;padding:36px 28px;}}
+
+
+/* ── 4. Luxury Header Control Pills ───────────────────────────────── */
+.nav-control-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--font, 'Plus Jakarta Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--line, rgba(0, 43, 75, 0.12));
+  background: var(--surface-2, #f8fafc);
+  color: var(--ink, #071523);
+  box-shadow: 0 2px 8px rgba(13, 33, 54, 0.04);
+  transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.nav-control-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--pri, #00aeff);
+  background: var(--pri-soft, #e9f8ff);
+  color: var(--pri-d, #0098e0);
+  box-shadow: 0 4px 14px rgba(0, 174, 255, 0.18);
+}
+
+.nav-control-pill:active {
+  transform: scale(0.96);
+}
+
+.nav-control-pill .i {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+.nav-control-pill .pill-badge {
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0, 43, 75, 0.08);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+[data-theme="dark"] .nav-control-pill {
+  background: rgba(11, 25, 41, 0.85);
+  border-color: rgba(233, 193, 118, 0.22);
+  color: #f5c96e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .nav-control-pill:hover {
+  background: rgba(233, 193, 118, 0.14);
+  border-color: #f5c96e;
+  color: #fae0a2;
+  box-shadow: 0 4px 18px rgba(233, 193, 118, 0.25);
+}
+
+[data-theme="dark"] .nav-control-pill .pill-badge {
+  background: rgba(233, 193, 118, 0.2);
+  color: #f5c96e;
+}
+
+
+/* ── 5. Cairo Plaza Dedicated Section Styles ────────────────────────── */
+.cp-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--pri-soft, rgba(0, 174, 255, 0.1));
+  color: var(--pri, #00aeff);
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+.cp-card-icon .i {
+  width: 22px;
+  height: 22px;
+}
+[data-theme="dark"] .cp-card-icon {
+  background: rgba(233, 193, 118, 0.12);
+  color: #f5c96e;
+}
+
+/* Inventory schedule */
+.cp-inventory-section,
+.cp-investor-section,
+.cp-contact-section {
+  max-width: 1200px;
+  margin: clamp(36px, 6vw, 72px) auto 0;
+  padding: 0 24px;
+}
+
+.cp-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.cp-inventory-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, rgba(0, 43, 75, 0.1));
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-s, 0 2px 10px rgba(13, 33, 54, 0.06));
+  transition: transform 260ms var(--silk), box-shadow 260ms var(--silk), border-color 260ms;
+}
+
+.cp-inventory-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--pri);
+  box-shadow: var(--shadow-m, 0 12px 34px rgba(13, 33, 54, 0.1));
+}
+
+.cp-inv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cp-inv-code {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--pri-soft, #e9f8ff);
+  color: var(--pri-d, #0098e0);
+}
+
+.cp-inv-roi {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.cp-inv-title {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.cp-inv-specs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+}
+
+.cp-inv-specs span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cp-inv-specs strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.cp-inv-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cp-inv-status {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cp-inv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.cp-inv-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+}
+
+.cp-meeting-callout {
+  margin-top: 36px;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.cp-meeting-callout h3 {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cp-meeting-callout p {
+  color: var(--muted);
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+/* Investor & Contact grids */
+.cp-investor-grid,
+.cp-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.cp-investor-card,
+.cp-contact-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-s);
+}
+
+.cp-investor-card h3,
+.cp-contact-card h3 {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cp-investor-card p,
+.cp-contact-card p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.cp-contact-card .cp-btn {
+  margin-top: auto;
+  text-align: center;
+  justify-content: center;
+}
+
+.cp-investor-cta-box {
+  margin-top: 32px;
+  padding: 32px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--navy, #002b4b), #001f38);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.cp-investor-cta-text h3 {
+  color: #fff;
+  font-family: var(--display, Georgia, serif);
+  font-size: 22px;
+  margin: 0;
+}
+
+.cp-investor-cta-text p {
+  color: rgba(255, 255, 255, 0.75);
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.cp-investor-cta-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .cp-inventory-card,
+[data-theme="dark"] .cp-investor-card,
+[data-theme="dark"] .cp-contact-card {
+  background: #0b1929;
+  border-color: rgba(233, 193, 118, 0.16);
+}
+
+[data-theme="dark"] .cp-inv-specs {
+  background: #07121e;
+  border-color: rgba(233, 193, 118, 0.12);
+}
+
+[data-theme="dark"] .cp-inv-code {
+  background: rgba(233, 193, 118, 0.15);
+  color: #f5c96e;
+}
+
+[data-theme="dark"] .cp-investor-cta-box {
+  background: linear-gradient(135deg, #0b1929, #0f2236);
+  border: 1px solid rgba(233, 193, 118, 0.2);
+}
+
+@media (max-width: 900px) {
+  .cp-inventory-grid,
+  .cp-investor-grid,
+  .cp-contact-grid {
+    grid-template-columns: 1fr;
+  }
+  .cp-inv-specs {
+    grid-template-columns: 1fr;
+  }
+}
+
