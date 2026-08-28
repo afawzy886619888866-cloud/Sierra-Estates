@@ -16,7 +16,9 @@ import QRCode from 'qrcode';
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
+import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -272,7 +274,24 @@ async function processIncomingListing(msg, sock) {
 
   // Persist JSON cache for Excel exporter
   fs.writeFileSync(INVENTORY_FILE, JSON.stringify(Array.from(harvestedOwners.values()), null, 2));
+  scheduleExcelExport();
 }
+
+let exportTimer = null;
+function scheduleExcelExport() {
+  if (exportTimer) clearTimeout(exportTimer);
+  exportTimer = setTimeout(() => {
+    exec(
+      'uv run --with pandas --with openpyxl python src/export-owners-excel.py',
+      { cwd: path.join(__dirname, '..') },
+      (err) => {
+        if (err) logger.error({ err: err.message }, 'Excel auto-export failed');
+        else logger.info('📊 Automatically updated H:\\Sheets\\Owners_Inventory.xlsx');
+      }
+    );
+  }, 2500);
+}
+
 
 export async function startOwnersHarvester() {
   const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, '../auth'));
