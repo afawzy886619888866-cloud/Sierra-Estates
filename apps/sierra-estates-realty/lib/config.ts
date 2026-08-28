@@ -37,15 +37,15 @@ export const SiteConfig = {
     },
   ],
   executive: {
-    name: "Ahmed Fawzy",
-    role: "Chief Executive Officer & Sales Manager",
-    phone: "+20 10 61399688",
-    email: "EmeraldEstatesegypt@gmail.com",
-    telegramBot: "https://t.me/Sierrablurealtybot",
+    name: process.env.EXEC_NAME ?? "",
+    role: process.env.EXEC_ROLE ?? "Chief Executive Officer & Sales Manager",
+    phone: process.env.EXEC_PHONE ?? "",
+    email: process.env.EXEC_EMAIL ?? "",
+    telegramBot: process.env.EXEC_TELEGRAM_BOT_URL ?? "",
   },
   contact: {
-    whatsapp: "https://wa.me/201061399688",
-    mainOffice: "Cairo, Egypt",
+    whatsapp: process.env.CONTACT_WHATSAPP ?? "",
+    mainOffice: process.env.CONTACT_MAIN_OFFICE ?? "Cairo, Egypt",
   },
   links: {
     portal: "/",

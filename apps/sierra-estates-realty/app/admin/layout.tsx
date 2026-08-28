@@ -59,7 +59,7 @@ export default function AdminLayout({
               setIsAuth(true);
               if (refreshInterval) clearInterval(refreshInterval);
               refreshInterval = setInterval(() => {
-                user.getIdToken(true).catch(() => {});
+                user.getIdToken(true).catch((tokenErr) => console.warn('[AdminLayout] Token refresh failed:', tokenErr));
               }, 10 * 60 * 1000);
             } else {
               setIsAuth(false);

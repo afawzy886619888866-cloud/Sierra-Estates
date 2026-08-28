@@ -2,10 +2,10 @@
  * Verification Test: AI Property Evaluation, 20% Owner Boost, and Cross-Bot Memory Sync
  */
 
-const propertyEvaluator = require('./packages/whatsapp-agent/src/property-evaluator');
-const propertyMatcher = require('./packages/whatsapp-agent/src/property-matcher');
-const hermesAgent = require('./packages/whatsapp-agent/src/hermes-agent');
-const unifiedMemory = require('./packages/whatsapp-agent/src/unified-memory-engine');
+const propertyEvaluator = require('./packages/whatsapp-shared/src/property-evaluator');
+const propertyMatcher = require('./packages/whatsapp-shared/src/property-matcher');
+const hermesAgent = require('./packages/whatsapp-shared/src/hermes-agent');
+const unifiedMemory = require('./packages/whatsapp-shared/src/unified-memory-engine');
 
 async function runTest() {
   console.log('🧪 ═══════════════════════════════════════════════════════════════════');
