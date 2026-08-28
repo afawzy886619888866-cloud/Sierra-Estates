@@ -151,7 +151,11 @@ export class RealEstateValuationAgent {
     let verdict: ValuationVerdict = 'FAIR VALUE';
     let recommendation = 'Standard viable real estate investment.';
 
-    if (purchasePrice) {
+    if (!purchasePrice || !annualIncome) {
+      status = 'Insufficient Data';
+      verdict = 'INSUFFICIENT DATA' as any;
+      recommendation = `Missing purchase price or rental income. Cannot calculate accurate valuation metrics.`;
+    } else {
       if (paybackYears !== undefined && paybackYears < 8.0) {
         status = 'Highly Undervalued / Significant Arbitrage';
         verdict = 'BUY (MASSIVE ARBITRAGE)';
@@ -165,9 +169,6 @@ export class RealEstateValuationAgent {
         verdict = 'OVERPRICED (NEGOTIATE OR RENT)';
         recommendation = `Asking price exceeds capitalized rental yield valuation (${paybackYears || '>13'} years payback). Recommend negotiating down to ${premiumAdjustedConservative.toLocaleString()} ${this.currency} or renting instead.`;
       }
-    } else {
-      verdict = 'BUY (FAIR VALUE)';
-      recommendation = `Target acquisition price should be between ${conservativeFairValue.toLocaleString()} ${this.currency} (conservative) and ${premiumAdjustedOptimistic.toLocaleString()} ${this.currency} (premium-adjusted).`;
     }
 
     return {
