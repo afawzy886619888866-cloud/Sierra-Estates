@@ -12,7 +12,7 @@ async function runTest() {
 
   // 1. Test Brochure Manager
   console.log('🔹 1. Testing Compound Brochure & Masterplan Matcher...');
-  const brochureManager = require('../packages/whatsapp-agent/src/brochure-manager');
+  const brochureManager = require('../packages/whatsapp-shared/src/brochure-manager');
   const mividaMatch = brochureManager.detectBrochureIntent('ممكن تبعتلي بروشور ميفيدا لو سمحت؟');
   console.log('   Brochure Match Result:', mividaMatch ? `✅ Detected compound "${mividaMatch.compound.name}"` : '❌ Failed');
   if (mividaMatch) {
@@ -22,7 +22,7 @@ async function runTest() {
 
   // 2. Test Calendar Service
   console.log('\n🔹 2. Testing 1-Click Google Calendar Reservation Link Generator...');
-  const calendarService = require('../packages/whatsapp-agent/src/calendar-service');
+  const calendarService = require('../packages/whatsapp-shared/src/calendar-service');
   const calUrl = calendarService.generateGoogleCalendarUrl({
     clientName: 'Karim Mansour',
     phone: '201012345678',
@@ -38,7 +38,7 @@ async function runTest() {
 
   // 3. Test Memory Service
   console.log('\n🔹 3. Testing Semantic Memory & Budget Tolerance Search...');
-  const memoryService = require('../packages/whatsapp-agent/src/memory-service');
+  const memoryService = require('../packages/whatsapp-shared/src/memory-service');
   const context = await memoryService.getContextForClient('201012345678', 'عايز فيلا في التجمع بحدود 60 ألف جنيه شهرياً في كمبوند هادي');
   console.log(`   Memory Match Result: ✅ Retrieved ${context.knowledgeSnippets.length} relevant Obsidian knowledge snippets.`);
   if (context.knowledgeSnippets.length > 0) {
@@ -73,7 +73,7 @@ async function runTest() {
 
   // 5. Test Viewing Confirmation Flow
   console.log('\n🔹 5. Testing Viewing Confirmation & Rescheduling Handler...');
-  const ViewingReminderService = require('../packages/whatsapp-agent/src/reminder-service');
+  const ViewingReminderService = require('../packages/whatsapp-shared/src/reminder-service');
   const reminderService = new ViewingReminderService(null);
   console.log('   Reminder Service initialized:', typeof reminderService.handleClientConfirmation === 'function' ? '✅ Success' : '❌ Failed');
 

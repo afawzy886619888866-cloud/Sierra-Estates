@@ -13,10 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          submodules: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -34,7 +36,8 @@ jobs:
         run: |
           git config user.name "Ahmed Fawzy"
           git config user.email "sierrablue8866@gmail.com"
-          git add Inventory_with_Photos.xlsx Inventory_with_Photos_Airtable.csv Inventory_sync_change_log.json
+          git add Inventory_with_Photos.xlsx Inventory_with_Photos_Airtable.csv || true
+          git add Inventory_sync_change_log.json || true
           git diff --cached --quiet && exit 0
           git commit -m "chore: sync inventory from Airtable"
           git push

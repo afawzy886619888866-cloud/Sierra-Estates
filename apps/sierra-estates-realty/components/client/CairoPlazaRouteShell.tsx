@@ -14,8 +14,8 @@ export default function CairoPlazaRouteShell({ lang, section }: Props) {
 
   if (!mounted) {
     return (
-      <main className="cp-shell">
-        <div className="cp-tour-fallback">Loading Cairo Plaza experience…</div>
+      <main className="cp-shell" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="cp-tour-fallback">{lang === 'ar' ? 'جارٍ تحميل تجربة كايرو بلازا…' : 'Loading Cairo Plaza experience…'}</div>
       </main>
     );
   }
