@@ -50,7 +50,7 @@ concurrency:
 
 env:
   VERCEL_CLI_VERSION: 'latest'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
   NEXT_TELEMETRY_DISABLED: "1"
@@ -81,33 +81,26 @@ jobs:
 
     steps:
       # ── Resolve correct project ID & token for the role ──────────────────────
-      - name: Resolve project ID & Vercel Token
+      - name: Validate deployment prerequisites & resolve project ID
         id: proj
         env:
-          VARS_JSON: ${{ toJson(vars) }}
-          SECRETS_JSON: ${{ toJson(secrets) }}
-        # The prj_/team_ fallback literals below are NOT secrets — they're the same
-        # public IDs already recorded in CLAUDE.md's Repository Variables table.
-        # They only kick in if those GitHub Variables haven't been configured yet,
-        # so the pipeline degrades gracefully instead of failing outright.
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          ORG_ID_RAW=$(echo "$VARS_JSON" | jq -r '.VERCEL_ORG_ID // empty')
-          TOKEN=$(echo "$SECRETS_JSON" | jq -r '.VERCEL_TOKEN // .VERCEL_AUTH_TOKEN // empty')
+          TOKEN="$VERCEL_TOKEN"
           
           if [ "${{ matrix.role }}" = "admin" ]; then
-            PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.ADMIN_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_ADMIN // empty')
-            PROJ="${PROJ_RAW:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+            PROJ="${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}"
           else
-            PROJ_RAW=$(echo "$VARS_JSON" | jq -r '.CLIENT_VERCEL_PROJECT_ID // .VERCEL_PROJECT_ID_CLIENT // empty')
-            PROJ="${PROJ_RAW:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
+            PROJ="${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}"
           fi
           
-          ORG_ID="${ORG_ID_RAW:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
+          ORG_ID="${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}"
 
           # Git deployments are disabled in vercel.json, so silently skipping
           # this job would leave main undeployed. Fail visibly instead.
           if [ -z "$TOKEN" ]; then
             echo "::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository."
+            echo "::error::Production deployment blocked. Missing GitHub secrets (VERCEL_TOKEN / VERCEL_AUTH_TOKEN)."
             exit 1
           fi
 
@@ -145,8 +138,6 @@ jobs:
           [ "$ENV" = "production" ] && echo "flag=--prod" >> "$GITHUB_OUTPUT" || echo "flag=" >> "$GITHUB_OUTPUT"
 
       - name: Validate public env safety
-        env:
-          SECRETS_JSON: ${{ toJson(secrets) }}
         run: node scripts/check-public-env-safety.mjs
 
       # ── P0 GATE: refuse to build/deploy PRODUCTION without required secrets ──
@@ -204,85 +195,82 @@ jobs:
 
       - name: Sync env vars to Vercel project
         env:
-          VARS_JSON: ${{ toJson(vars) }}
-          SECRETS_JSON: ${{ toJson(secrets) }}
+          # Firebase Client SDK
+          FB_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs' }}
+          FB_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'sierra-blu.firebaseapp.com' }}
+          FB_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-blu' }}
+          FB_STORAGE: ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sierra-blu.firebasestorage.app' }}
+          FB_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '941030513456' }}
+          FB_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID || '1:941030513456:web:56209a1495d69f217086f5' }}
+          FB_MEASUREMENT: ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || 'G-ZP054BPJ8Q' }}
+          FB_DATABASE_URL: ${{ vars.NEXT_PUBLIC_FIREBASE_DATABASE_URL || 'https://sierra-blu-default-rtdb.firebaseio.com' }}
+          # AI & LLM
+          AI_KEY: ${{ secrets.GOOGLE_AI_API_KEY || secrets.GEMINI_API_KEY }}
+          GENAI_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY || secrets.GOOGLE_AI_API_KEY }}
+          AI_PROV: ${{ vars.AI_PROVIDER }}
+          GC_LOC: ${{ vars.GOOGLE_CLOUD_LOCATION || 'europe-west1' }}
+          DEEPSEEK_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_URL: ${{ vars.DEEPSEEK_API_URL }}
+          # Property Finder
+          PF_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY || secrets.PF_API_KEY }}
+          PF_SECRET: ${{ secrets.PROPERTY_FINDER_API_SECRET || secrets.PF_API_SECRET }}
+          PF_TOKEN: ${{ secrets.PROPERTY_FINDER_AUTH_TOKEN || secrets.PF_JWT_TOKEN || secrets.PROPERTY_FINDER_JWT_TOKEN }}
+          PF_COMP_ID: ${{ vars.PF_COMPANY_ID }}
+          PF_WEBHOOK: ${{ secrets.PF_WEBHOOK_SECRET }}
+          # AWS
+          AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SEC: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REG: ${{ vars.AWS_REGION || 'us-east-1' }}
+          # Security
+          SESSION_SECRET_VAL: ${{ secrets.SESSION_SECRET }}
+          ADMIN_API_KEY_VAL: ${{ secrets.ADMIN_API_KEY }}
+          ANTIGRAVITY_API_KEY_VAL: ${{ secrets.ANTIGRAVITY_API_KEY }}
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU || secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FB_PRIV_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FB_CLIENT_EM: ${{ vars.FIREBASE_CLIENT_EMAIL }}
+          SBR_SECRET: ${{ secrets.SBR_SECRET_KEY }}
+          CRON_SECRET_VAL: ${{ secrets.CRON_SECRET }}
+          # Telegram
+          TG_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_BOT_USERNAME: ${{ vars.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME }}
+          TG_CHAT_ID_VAL: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TG_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          # WhatsApp
+          WA_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN || secrets.WHATSAPP_META_TOKEN }}
+          WA_PHONE_ID: ${{ vars.WHATSAPP_PHONE_NUMBER_ID }}
+          WA_VERIFY: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          LEAD_WHATSAPP: ${{ secrets.LEAD_NOTIFY_WHATSAPP_NUMBER }}
+          BRAND_TAG: ${{ vars.BRANDING_TAG }}
+          WABA_1: ${{ vars.WABA_NUMBER_1 }}
+          WABA_2: ${{ vars.WABA_NUMBER_2 }}
+          WABA_3: ${{ vars.WABA_NUMBER_3 }}
+          WABA_4: ${{ vars.WABA_NUMBER_4 }}
+          # Twilio
+          TW_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TW_AUTH: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TW_MSG_SID: ${{ vars.TWILIO_MESSAGING_SERVICE_SID }}
+          # SendGrid
+          SENDGRID_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDER_EMAIL_VAL: ${{ vars.SENDER_EMAIL || vars.SENDGRID_FROM_EMAIL }}
+          # Domains
+          DEFAULT_LOCALE: ${{ vars.NEXT_PUBLIC_DEFAULT_LOCALE || 'en' }}
+          APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          INT_OS_URL: ${{ vars.NEXT_PUBLIC_INTELLIGENCE_OS_URL }}
+          OPENMEM_URL: ${{ vars.OPENMEMORY_URL }}
+          # Redis
+          REDIS_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          REDIS_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          # Sheets
+          INV_SHEET_ID: ${{ vars.INVENTORY_SHEET_ID }}
+          INV_SHEET_GID: ${{ vars.INVENTORY_SHEET_GID }}
+          MST_SHEET_ID: ${{ vars.MASTER_SHEET_ID }}
+          BRK_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID }}
+          # n8n
+          N8N_URL: ${{ vars.N8N_BASE_URL }}
+          N8N_KEY: ${{ secrets.N8N_API_KEY }}
         run: |
-          FB_API_KEY=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_API_KEY // empty')
-          FB_AUTH_DOMAIN=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN // empty')
-          FB_PROJECT_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_PROJECT_ID // empty')
-          FB_STORAGE=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET // empty')
-          FB_SENDER_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID // empty')
-          FB_APP_ID=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_APP_ID // empty')
-          FB_MEASUREMENT=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID // empty')
-          FB_DATABASE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_FIREBASE_DATABASE_URL // empty')
-          
-          AI_KEY=$(echo "$SECRETS_JSON" | jq -r '.GOOGLE_AI_API_KEY // .GEMINI_API_KEY // empty')
-          GENAI_KEY=$(echo "$SECRETS_JSON" | jq -r '.GOOGLE_GENAI_API_KEY // .GOOGLE_AI_API_KEY // empty')
-          AI_PROV=$(echo "$VARS_JSON" | jq -r '.AI_PROVIDER // empty')
-          GC_LOC=$(echo "$VARS_JSON" | jq -r '.GOOGLE_CLOUD_LOCATION // empty')
-          DEEPSEEK_KEY=$(echo "$SECRETS_JSON" | jq -r '.DEEPSEEK_API_KEY // empty')
-          DEEPSEEK_URL=$(echo "$VARS_JSON" | jq -r '.DEEPSEEK_API_URL // empty')
-
-          PF_KEY=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_KEY // .PF_API_KEY // empty')
-          PF_SECRET=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_API_SECRET // .PF_API_SECRET // empty')
-          PF_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.PROPERTY_FINDER_AUTH_TOKEN // .PF_JWT_TOKEN // .PROPERTY_FINDER_JWT_TOKEN // empty')
-          PF_COMP_ID=$(echo "$VARS_JSON" | jq -r '.PF_COMPANY_ID // empty')
-          PF_WEBHOOK=$(echo "$SECRETS_JSON" | jq -r '.PF_WEBHOOK_SECRET // empty')
-
-          AWS_KEY=$(echo "$SECRETS_JSON" | jq -r '.AWS_ACCESS_KEY_ID // empty')
-          AWS_SEC=$(echo "$SECRETS_JSON" | jq -r '.AWS_SECRET_ACCESS_KEY // empty')
-          AWS_REG=$(echo "$VARS_JSON" | jq -r '.AWS_REGION // empty')
-
-          SESSION_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.SESSION_SECRET // empty')
-          ADMIN_API_KEY_VAL=$(echo "$SECRETS_JSON" | jq -r '.ADMIN_API_KEY // empty')
-          ANTIGRAVITY_API_KEY_VAL=$(echo "$SECRETS_JSON" | jq -r '.ANTIGRAVITY_API_KEY // empty')
-          SA_JSON=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU // .FIREBASE_SERVICE_ACCOUNT_JSON // empty')
-          FB_PRIV_KEY=$(echo "$SECRETS_JSON" | jq -r '.FIREBASE_PRIVATE_KEY // empty')
-          FB_CLIENT_EM=$(echo "$VARS_JSON" | jq -r '.FIREBASE_CLIENT_EMAIL // empty')
-
-          SBR_SECRET=$(echo "$SECRETS_JSON" | jq -r '.SBR_SECRET_KEY // empty')
-          CRON_SECRET_VAL=$(echo "$SECRETS_JSON" | jq -r '.CRON_SECRET // empty')
-
-          TG_BOT_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_BOT_TOKEN // empty')
-          TG_BOT_USERNAME=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME // empty')
-          TG_CHAT_ID_VAL=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_CHAT_ID // empty')
-          TG_WEBHOOK_SECRET=$(echo "$SECRETS_JSON" | jq -r '.TELEGRAM_WEBHOOK_SECRET // empty')
-
-          WA_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.WHATSAPP_API_TOKEN // .WHATSAPP_META_TOKEN // empty')
-          WA_PHONE_ID=$(echo "$VARS_JSON" | jq -r '.WHATSAPP_PHONE_NUMBER_ID // empty')
-          WA_VERIFY=$(echo "$SECRETS_JSON" | jq -r '.WHATSAPP_VERIFY_TOKEN // empty')
-          LEAD_WHATSAPP=$(echo "$SECRETS_JSON" | jq -r '.LEAD_NOTIFY_WHATSAPP_NUMBER // empty')
-          BRAND_TAG=$(echo "$VARS_JSON" | jq -r '.BRANDING_TAG // empty')
-          WABA_1=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_1 // empty')
-          WABA_2=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_2 // empty')
-          WABA_3=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_3 // empty')
-          WABA_4=$(echo "$VARS_JSON" | jq -r '.WABA_NUMBER_4 // empty')
-
-          TW_SID=$(echo "$SECRETS_JSON" | jq -r '.TWILIO_ACCOUNT_SID // empty')
-          TW_AUTH=$(echo "$SECRETS_JSON" | jq -r '.TWILIO_AUTH_TOKEN // empty')
-          TW_MSG_SID=$(echo "$VARS_JSON" | jq -r '.TWILIO_MESSAGING_SERVICE_SID // empty')
-
-          SENDGRID_KEY=$(echo "$SECRETS_JSON" | jq -r '.SENDGRID_API_KEY // empty')
-          SENDER_EMAIL_VAL=$(echo "$VARS_JSON" | jq -r '.SENDER_EMAIL // .SENDGRID_FROM_EMAIL // empty')
-
-          DEFAULT_LOCALE=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_DEFAULT_LOCALE // empty')
-          APP_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_APP_URL // empty')
-          SITE_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_SITE_URL // empty')
-          ORIGINS=$(echo "$VARS_JSON" | jq -r '.ALLOWED_ORIGINS // empty')
-          INT_OS_URL=$(echo "$VARS_JSON" | jq -r '.NEXT_PUBLIC_INTELLIGENCE_OS_URL // empty')
-          OPENMEM_URL=$(echo "$VARS_JSON" | jq -r '.OPENMEMORY_URL // empty')
-
-          REDIS_URL=$(echo "$SECRETS_JSON" | jq -r '.UPSTASH_REDIS_REST_URL // empty')
-          REDIS_TOKEN=$(echo "$SECRETS_JSON" | jq -r '.UPSTASH_REDIS_REST_TOKEN // empty')
-
-          INV_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.INVENTORY_SHEET_ID // empty')
-          INV_SHEET_GID=$(echo "$VARS_JSON" | jq -r '.INVENTORY_SHEET_GID // empty')
-          MST_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.MASTER_SHEET_ID // empty')
-          BRK_SHEET_ID=$(echo "$VARS_JSON" | jq -r '.BROKER_INBOX_SHEET_ID // empty')
-
-          N8N_URL=$(echo "$VARS_JSON" | jq -r '.N8N_BASE_URL // empty')
-          N8N_KEY=$(echo "$SECRETS_JSON" | jq -r '.N8N_API_KEY // empty')
-
           # Rate-limited upsert helper with exponential backoff & pacing
           upsert() {
             [ -n "$2" ] || { return 0; }
@@ -326,17 +314,15 @@ jobs:
           upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL       "$INT_OS_URL"
           upsert OPENMEMORY_URL                        "${OPENMEM_URL:-http://localhost:8080}"
 
-          # Firebase Client SDK — fallback literals below match CLAUDE.md's Repository
-          # Variables table exactly. NEXT_PUBLIC_* Firebase client keys identify the
-          # project, not a user; they're safe to default here, not a leaked secret.
-          upsert NEXT_PUBLIC_FIREBASE_API_KEY          "${FB_API_KEY:-AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs}"
-          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN      "${FB_AUTH_DOMAIN:-sierra-blu.firebaseapp.com}"
-          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID       "${FB_PROJECT_ID:-sierra-blu}"
-          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET   "${FB_STORAGE:-sierra-blu.firebasestorage.app}"
-          upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "${FB_SENDER_ID:-941030513456}"
-          upsert NEXT_PUBLIC_FIREBASE_APP_ID           "${FB_APP_ID:-1:941030513456:web:56209a1495d69f217086f5}"
-          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID   "${FB_MEASUREMENT:-G-ZP054BPJ8Q}"
-          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL     "${FB_DATABASE_URL:-https://sierra-blu-default-rtdb.firebaseio.com}"
+          # Firebase Client SDK
+          upsert NEXT_PUBLIC_FIREBASE_API_KEY          "$FB_API_KEY"
+          upsert NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN      "$FB_AUTH_DOMAIN"
+          upsert NEXT_PUBLIC_FIREBASE_PROJECT_ID       "$FB_PROJECT_ID"
+          upsert NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET   "$FB_STORAGE"
+          upsert NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "$FB_SENDER_ID"
+          upsert NEXT_PUBLIC_FIREBASE_APP_ID           "$FB_APP_ID"
+          upsert NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID   "$FB_MEASUREMENT"
+          upsert NEXT_PUBLIC_FIREBASE_DATABASE_URL     "$FB_DATABASE_URL"
 
           # Firebase Admin & Service Account
           upsert FIREBASE_PROJECT_ID                   "sierra-blu"

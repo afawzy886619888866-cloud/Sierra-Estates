@@ -82,7 +82,7 @@ export const SESSION_COOKIE = COOKIE_NAME;
 export function cookieOpts() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
