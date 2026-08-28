@@ -195,7 +195,22 @@ export default function CompoundsPage() {
               >
                 {isAr ? amenity.labelAr : amenity.labelEn}
               </span>
-            ))}
+          {/* Map View Mode Controls */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, gap: 6 }}>
+            <button
+              type="button"
+              className="af-chip on"
+              style={{ fontSize: 11, padding: '4px 10px' }}
+            >
+              🗺️ {isAr ? 'الخريطة القياسية' : 'Standard Density'}
+            </button>
+            <button
+              type="button"
+              className="af-chip"
+              style={{ fontSize: 11, padding: '4px 10px', color: '#F59E0B' }}
+            >
+              🔥 {isAr ? 'خريطة العائد الاستثماري (Heatmap)' : 'ROI Yield Heatmap'}
+            </button>
           </div>
 
           {/* Map + intel panel */}
