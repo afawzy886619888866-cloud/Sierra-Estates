@@ -67,7 +67,7 @@ packages:
   - packages/shared
   - packages/types
   - packages/ui
-  - packages/whatsapp-agent
+  - packages/whatsapp-shared
   # packages/open-memory is a standalone third-party project — excluded from
   # workspace to prevent its heavy dependencies and vitest config from
   # polluting the Sierra Estates build and CI pipeline.
