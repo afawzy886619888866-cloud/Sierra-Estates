@@ -192,37 +192,27 @@ def merge_all():
             if not sub.empty:
                 sub.to_excel(writer, sheet_name=name, index=False)
 
-    # 9. Style Excel Workbook
+    # 9. Fast & Memory-Efficient Styling
     wb = openpyxl.load_workbook(MASTER_EXCEL)
     hf = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
     hfont = Font(name="Segoe UI", size=10, bold=True, color="FFFFFF")
-    dfont = Font(name="Segoe UI", size=9)
-    photo_fill = PatternFill(start_color="E2F0D9", end_color="E2F0D9", fill_type="solid")
-    rev_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
 
     for ws in wb.worksheets:
         ws.freeze_panes = "A2"
         ws.auto_filter.ref = f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
         for c in range(1, ws.max_column + 1):
-            ws.cell(1, c).fill = hf
-            ws.cell(1, c).font = hfont
-            ws.cell(1, c).alignment = Alignment(horizontal="center", vertical="center")
-            for r in range(2, ws.max_row + 1):
-                cell = ws.cell(r, c)
-                cell.font = dfont
-                if isinstance(cell.value, (int, float)) and "price" in str(ws.cell(1, c).value or "").lower():
-                    cell.number_format = "#,##0"
-                if str(ws.cell(1, c).value) == "Status":
-                    if "Ready" in str(cell.value or ""):
-                        cell.fill = photo_fill
-                    elif "Revision" in str(cell.value or ""):
-                        cell.fill = rev_fill
-            mx = max((len(str(ws.cell(r, c).value or "")) for r in range(1, min(ws.max_row, 100) + 1)), default=10)
-            ws.column_dimensions[get_column_letter(c)].width = min(mx + 3, 42)
+            cell = ws.cell(1, c)
+            cell.fill = hf
+            cell.font = hfont
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            header_str = str(cell.value or "")
+            col_width = min(max(len(header_str) + 5, 12), 40)
+            ws.column_dimensions[get_column_letter(c)].width = col_width
 
     wb.save(MASTER_EXCEL)
     dur = round(time.time() - t0, 1)
     print(f"🎉 Merge Complete in {dur}s! Master Excel: {MASTER_EXCEL}")
+
 
 if __name__ == "__main__":
     merge_all()
