@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Building2, Phone, MessageSquare, ShieldCheck, FileText,
-  TrendingUp, Search, Filter, Layers, DollarSign,
+  TrendingUp, Search, Filter, Layers,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
