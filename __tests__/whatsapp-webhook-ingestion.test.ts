@@ -67,23 +67,70 @@ describe('WhatsApp Webhook Ingestion & Cryptographic Security Test Suite', () =>
     expect(routeIncomingSignal(directPayload).handler).toBe('WhatsAppConversationalService');
   });
 
-  describe('Outbound Auto-Reply Dispatch Formatting', () => {
-    function formatOutboundMetaMessage(toPhone: string, replyText: string) {
-      const cleanPhone = toPhone.replace(/[^0-9]/g, '');
-      return {
-        messaging_product: 'whatsapp',
-        to: cleanPhone,
-        type: 'text',
-        text: { body: replyText },
-      };
+  describe('Multi-Source Webhook Adapter Extraction', () => {
+    function extractWebhookSignal(body: any) {
+      const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+      const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
+
+      const message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+      const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
+      const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
+      const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
+      const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
+
+      return { message, sender, group, isGroup };
     }
 
-    it('formats outbound Meta WhatsApp message payload correctly with sanitized E.164 phone', () => {
-      const payload = formatOutboundMetaMessage('+20 109-204-8333', 'Welcome to Sierra Estates. Here is the Mivida brochure.');
-      expect(payload.to).toBe('201092048333');
-      expect(payload.messaging_product).toBe('whatsapp');
-      expect(payload.type).toBe('text');
-      expect(payload.text.body).toContain('Mivida brochure');
+    it('extracts messages and senders from standard Meta Cloud API webhook payloads', () => {
+      const metaPayload = {
+        object: 'whatsapp_business_account',
+        entry: [{
+          id: '123456789',
+          changes: [{
+            value: {
+              messaging_product: 'whatsapp',
+              contacts: [{ profile: { name: 'Dr. Tarek' }, wa_id: '201011223344' }],
+              messages: [{
+                from: '201011223344',
+                id: 'wamid.HBgLMjAxMD...',
+                timestamp: '1720000000',
+                text: { body: 'مهتم بفيلا في سوان ليك' },
+                type: 'text',
+              }],
+            },
+            field: 'messages',
+          }],
+        }],
+      };
+
+      const extracted = extractWebhookSignal(metaPayload);
+      expect(extracted.message).toBe('مهتم بفيلا في سوان ليك');
+      expect(extracted.sender).toBe('201011223344');
+      expect(extracted.isGroup).toBe(false);
+    });
+
+    it('correctly detects WhatsApp broker groups from @g.us sender JIDs', () => {
+      const groupPayload = {
+        from: '120363029482910@g.us',
+        text: 'شقة للبيع بماونتن فيو اي سيتي التجمع الخامس 160م',
+      };
+
+      const extracted = extractWebhookSignal(groupPayload);
+      expect(extracted.isGroup).toBe(true);
+      expect(extracted.group).toBe('120363029482910@g.us');
+    });
+
+    it('extracts messages from Twilio WhatsApp format', () => {
+      const twilioPayload = {
+        From: 'whatsapp:+201099887766',
+        Body: 'Available listings in Hyde Park?',
+        isGroup: false,
+      };
+
+      const extracted = extractWebhookSignal(twilioPayload);
+      expect(extracted.message).toBe('Available listings in Hyde Park?');
+      expect(extracted.sender).toBe('whatsapp:+201099887766');
+      expect(extracted.isGroup).toBe(false);
     });
   });
 });
