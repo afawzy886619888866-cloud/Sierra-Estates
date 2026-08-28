@@ -1,41 +1,10 @@
 {
   "ecc_memory": {
     "version": "1.0.0",
-    "lastUpdated": "2026-08-25T18:34:38.813Z",
+    "lastUpdated": "2026-08-25T20:02:43.206Z",
     "total_episodes": 50,
     "total_entities": 2,
     "recent_episodes": [
-      {
-        "id": "ep-1787525784743-1cmwi",
-        "timestamp": "2026-08-23T22:56:24.743Z",
-        "decayWeight": 1,
-        "type": "negotiation_offer",
-        "entityId": "SE-MV-401",
-        "actor": "Buyer Karim",
-        "summary": "Offered 32M cash with 10% down payment",
-        "data": {
-          "offeredAmount": 32000000,
-          "paymentTerms": "cash"
-        }
-      },
-      {
-        "id": "ep-1787525785002-5llgp",
-        "timestamp": "2026-08-23T22:56:25.002Z",
-        "decayWeight": 1,
-        "type": "price_drop",
-        "entityId": "SE-MV-401",
-        "actor": "Owner Ahmed",
-        "summary": "Price reduction of 10% from 40,000,000 EGP to 36,000,000 EGP (WhatsApp Group #4 (Owners Direct))",
-        "data": {
-          "sierraCode": "SE-MV-401",
-          "oldPrice": 40000000,
-          "newPrice": 36000000,
-          "dropAmount": 4000000,
-          "dropPct": 10,
-          "source": "WhatsApp Group #4 (Owners Direct)",
-          "isHotDeal": true
-        }
-      },
       {
         "id": "ep-1787526221581-6ho61",
         "timestamp": "2026-08-23T23:03:41.581Z",
@@ -779,6 +748,37 @@
           "source": "WhatsApp Group #4 (Owners Direct)",
           "isHotDeal": true
         }
+      },
+      {
+        "id": "ep-1787688163185-bnkll",
+        "timestamp": "2026-08-25T20:02:43.185Z",
+        "decayWeight": 1,
+        "type": "negotiation_offer",
+        "entityId": "SE-MV-401",
+        "actor": "Buyer Karim",
+        "summary": "Offered 32M cash with 10% down payment",
+        "data": {
+          "offeredAmount": 32000000,
+          "paymentTerms": "cash"
+        }
+      },
+      {
+        "id": "ep-1787688163194-5t1ks",
+        "timestamp": "2026-08-25T20:02:43.194Z",
+        "decayWeight": 1,
+        "type": "price_drop",
+        "entityId": "SE-MV-401",
+        "actor": "Owner Ahmed",
+        "summary": "Price reduction of 10% from 40,000,000 EGP to 36,000,000 EGP (WhatsApp Group #4 (Owners Direct))",
+        "data": {
+          "sierraCode": "SE-MV-401",
+          "oldPrice": 40000000,
+          "newPrice": 36000000,
+          "dropAmount": 4000000,
+          "dropPct": 10,
+          "source": "WhatsApp Group #4 (Owners Direct)",
+          "isHotDeal": true
+        }
       }
     ],
     "entities": {
@@ -814,9 +814,10 @@
           "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL",
+          "HOT_DISTRESSED_DEAL",
           "HOT_DISTRESSED_DEAL"
         ],
-        "lastUpdated": "2026-08-25T18:34:38.802Z",
+        "lastUpdated": "2026-08-25T20:02:43.194Z",
         "historicalPrices": [
           {
             "price": 36000000,
@@ -962,6 +963,11 @@
             "price": 36000000,
             "timestamp": "2026-08-25T18:34:38.802Z",
             "source": "WhatsApp Group #4 (Owners Direct)"
+          },
+          {
+            "price": 36000000,
+            "timestamp": "2026-08-25T20:02:43.194Z",
+            "source": "WhatsApp Group #4 (Owners Direct)"
           }
         ]
       },
@@ -978,7 +984,7 @@
         "tags": [
           "VIP_CASH_BUYER"
         ],
-        "lastUpdated": "2026-08-25T18:34:38.811Z",
+        "lastUpdated": "2026-08-25T20:02:43.204Z",
         "historicalPrices": []
       }
     }

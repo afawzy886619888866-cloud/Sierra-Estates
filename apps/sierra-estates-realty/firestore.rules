@@ -54,30 +54,37 @@ service cloud.firestore {
     match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
     match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
     match /inquiries/{id} {
+      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
       allow read, update, delete: if isStaff();
-      allow create: if request.resource.data.status == 'new'
-        && request.resource.data.size() <= 40;
     }
     match /careers/{id} {
+      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
       allow read, update, delete: if isStaff();
-      allow create: if request.resource.data.status == 'new'
-        && request.resource.data.size() <= 40;
     }
 
-    // --- Public share links: recipients open these via a URL (no login). They
-    //     may READ, and record lightweight analytics ONLY. Substantive writes
-    //     are staff (or Admin SDK). Matches the client payloads in
-    //     app/proposals/[id]/page.tsx and app/concierge/[leadId]/page.tsx. ---
+    // --- Share links. `allow read: if true` on a wildcard document match
+    //     authorises LIST queries over the whole collection, not just direct
+    //     gets, so it exposed every client name and deal price to anyone
+    //     holding the public web API key. The client pages it was written for
+    //     (app/proposals/[id]/page.tsx, app/concierge/[leadId]/page.tsx) do not
+    //     exist. Serve public share links through an Admin SDK route instead.
+    //     Analytics writes stay open so an unauthenticated viewer can still be
+    //     counted if those pages return. ---
     match /proposals/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if isStaff();
       allow update: if isStaff()
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt']);
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'lastViewedAt'])
+            && request.resource.data.viewCount is int
+            && request.resource.data.lastViewedAt is timestamp);
       allow create, delete: if isStaff();
     }
     match /concierge_selections/{id} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if isStaff();
       allow update: if isStaff()
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement']);
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engagement'])
+            && request.resource.data.engagement is map);
       allow create, delete: if isStaff();
     }
 

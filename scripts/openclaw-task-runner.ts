@@ -20,14 +20,14 @@ dotenv.config({ path: path.resolve(process.cwd(), 'apps/sierra-estates-realty/.e
 const aiKey =
   process.env.GOOGLE_GENAI_API_KEY ||
   process.env.GOOGLE_AI_API_KEY ||
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+  process.env.GEMINI_API_KEY ||
   process.env.ANTIGRAVITY_API_KEY ||
   '';
 
 /** Paths to data files */
 const EXTRACTED_UNITS_PATH = path.resolve(
   process.cwd(),
-  'packages/whatsapp-agent/inventory_extracted_units.json',
+  'packages/whatsapp-shared/inventory_extracted_units.json',
 );
 const MASTER_SHEET_PATH = path.resolve(
   process.cwd(),

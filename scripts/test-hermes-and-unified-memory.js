@@ -5,8 +5,8 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
-const unifiedMemory = require('../packages/whatsapp-agent/src/unified-memory-engine');
-const hermesAgent = require('../packages/whatsapp-agent/src/hermes-agent');
+const unifiedMemory = require('../packages/whatsapp-shared/src/unified-memory-engine');
+const hermesAgent = require('../packages/whatsapp-shared/src/hermes-agent');
 
 async function runTest() {
   console.log('🧪 ══════════════════════════════════════════════════════════════');
