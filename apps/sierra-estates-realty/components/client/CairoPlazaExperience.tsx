@@ -216,9 +216,18 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
     <main dir={isAr ? 'rtl' : 'ltr'} className="cp-shell" data-theme={theme}>
       <header className="cp-header">
         <div className="cp-header-inner">
-          <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
-            <Image src="/assets/sierra-estates-official-logo.png" alt="Sierra Estates" width={52} height={52} className="cp-official-logo" />
-          </Link>
+          <div className="cp-brand-group">
+            <Link href="/" className="cp-back-link" title={isAr ? 'العودة إلى موقع سييرا استيتس' : 'Back to Sierra Estates Main Site'}>
+              ← {isAr ? 'الرئيسية' : 'Main Portal'}
+            </Link>
+            <Link href={isAr ? '/ar/cairo-plaza' : '/cairo-plaza'} className="cp-brand" aria-label={isAr ? 'سييرا استيتس — كايرو بلازا' : 'Sierra Estates — Cairo Plaza'}>
+              <Image src="/assets/sierra-estates-official-logo.png" alt="Sierra Estates" width={48} height={48} className="cp-official-logo" priority />
+              <span className="cp-brand-text">
+                <b>{isAr ? 'كايرو بلازا' : 'Cairo Plaza'}</b>
+                <small>{isAr ? 'بوابة المشروع الرسمية' : 'Official Project Portal'}</small>
+              </span>
+            </Link>
+          </div>
           <nav className="cp-nav" aria-label={isAr ? 'تنقل كايرو بلازا' : 'Cairo Plaza navigation'}>
             {nav.map(([key, label]) => <Link key={key} href={`${prefix}/${key}`} className={section === key ? 'active' : ''}>{label}</Link>)}
           </nav>
@@ -354,8 +363,18 @@ export default function CairoPlazaExperience({ lang = 'en', section }: Props) {
       </section>
       {lightboxImg && (
         <div className="cp-lightbox" onClick={closeLightbox} role="dialog" aria-label={isAr ? 'عرض الصورة' : 'Image viewer'}>
-          <img src={lightboxImg.src} alt={lightboxImg.alt} />
-          <button className="cp-lightbox-close" onClick={closeLightbox} aria-label={isAr ? 'إغلاق' : 'Close'}>×</button>
+          <div className="cp-lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={lightboxImg.src}
+              alt={lightboxImg.alt}
+              width={1200}
+              height={800}
+              className="cp-lightbox-img"
+              style={{ objectFit: 'contain', width: 'auto', height: 'auto', maxWidth: '90vw', maxHeight: '80vh' }}
+              priority
+            />
+          </div>
+          <button type="button" className="cp-lightbox-close" onClick={closeLightbox} aria-label={isAr ? 'إغلاق' : 'Close'}>×</button>
           <div className="cp-lightbox-caption">{lightboxImg.caption}</div>
         </div>
       )}
