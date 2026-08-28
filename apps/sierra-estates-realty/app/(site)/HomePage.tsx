@@ -112,22 +112,24 @@ export default function HomePage() {
 
       {/* SEARCH CARD */}
       <div className="wrap searchbar">
-        <div className="search-card rv">
-          <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'}>
-            {(['buy', 'rent', 'new'] as const).map((mode) => (
-              <button
-                key={mode}
-                className={searchMode === mode ? 'active' : undefined}
-                type="button"
-                role="tab"
-                aria-selected={searchMode === mode}
-                onClick={() => setSearchMode(mode)}
-              >
-                {t(mode === 'buy' ? 'tabBuy' : mode === 'rent' ? 'tabRent' : 'tabNew')}
-              </button>
-            ))}
-          </div>
-          <div className="search-fields">
+        <div className="search-card rv" style={{ padding: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '24px', backdropFilter: 'blur(24px)', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
+          <div className="search-card-inner" style={{ background: 'rgba(15, 23, 42, 0.65)', borderRadius: '18px', padding: '16px', boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)' }}>
+            <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'}>
+              {(['buy', 'rent', 'new'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  className={searchMode === mode ? 'active' : undefined}
+                  type="button"
+                  role="tab"
+                  aria-selected={searchMode === mode}
+                  onClick={() => setSearchMode(mode)}
+                  style={{ transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease' }}
+                >
+                  {t(mode === 'buy' ? 'tabBuy' : mode === 'rent' ? 'tabRent' : 'tabNew')}
+                </button>
+              ))}
+            </div>
+            <div className="search-fields">
             <div className="field">
               <label htmlFor="hero-compound-search">{t('fLoc')}</label>
               <input
@@ -170,11 +172,12 @@ export default function HomePage() {
               </select>
             </div>
             <div className="field searchbtn">
-              <Link href={searchHref} className="btn btn-pri" id="hero-search-btn">
+              <Link href={searchHref} className="btn btn-pri" id="hero-search-btn" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', cursor: 'pointer' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Search className="i" /> <span>{t('search')}</span>
               </Link>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -502,10 +505,10 @@ export default function HomePage() {
               <p>{t('ctaSub')}</p>
             </div>
             <div className="ct-act">
-              <Link href="/add-listing" className="btn btn-white">
+              <Link href="/add-listing" className="btn btn-white" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Plus className="i" /> <span>{t('ctaBtn1')}</span>
               </Link>
-              <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out">
+              <a href="https://wa.me/201092048333" target="_blank" rel="noopener noreferrer" className="btn btn-out" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Phone className="i" /> <span>+2 01092048333</span>
               </a>
             </div>
