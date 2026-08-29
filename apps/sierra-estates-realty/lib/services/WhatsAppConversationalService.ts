@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { adminDb } from "../server/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { logger } from '@/lib/logger';
+import { sharedMemory } from '@sierra-estates/memory-engine';
 
 const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -108,7 +109,18 @@ CORE IDENTITY & KNOWLEDGE:
         messages: updatedMessages,
       }, { merge: true });
 
-      logger.info(`✅ AI Response sent and saved to ECC memory for ${sender}`);
+      // Update Shared Memory Bus for Multi-Agent Pipeline Visibility (Liela, Sierra, OpenClaw, Hermes, Closer)
+      await sharedMemory.write(
+        `conversation:${sender}:last_turn`,
+        {
+          userMessage: message,
+          modelReply: replyText,
+          timestamp: new Date().toISOString(),
+        },
+        { author: 'hermes', tags: ['whatsapp', 'conversation', sender] }
+      );
+
+      logger.info(`✅ AI Response sent and saved to ECC memory & Shared Memory Bus for ${sender}`);
 
       // Asynchronous Lead Qualification & CRM Upsert (non-blocking)
       this.qualifyAndSyncLead(sender, updatedMessages).catch(err => {
@@ -182,6 +194,13 @@ Respond ONLY with a JSON object:
 
         await leadRef.set(leadData, { merge: true });
         logger.info(`🎯 [CRM] Upserted WhatsApp lead for ${cleanPhone} (Score: ${intel.priorityScore})`);
+
+        // Broadcast qualified lead intelligence to SharedMemoryBus for all 5 agents (Liela, Sierra, OpenClaw, Hermes, Closer)
+        await sharedMemory.write(
+          `lead:${cleanPhone}:intelligence`,
+          leadData,
+          { author: 'liela', tags: ['lead_intel', 'qualified', cleanPhone] }
+        );
 
         // If high priority (Score >= 80 or budget >= 15M EGP), notify Brokers via Telegram
         if (intel.priorityScore >= 80 || (intel.budgetEGP && intel.budgetEGP >= 15000000)) {
