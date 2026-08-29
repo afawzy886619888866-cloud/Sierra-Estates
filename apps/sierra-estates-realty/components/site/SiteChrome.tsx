@@ -48,6 +48,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
             <Link href="/properties" className={act('best')}>{t('navBest')}</Link>
             <Link href={cairoPlazaHref} className={act('projects')}>{t('navProjects')}</Link>
+            <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'}>🎙️ {isAr ? 'نوت بوك الذكي' : 'NotebookLM'}</Link>
             <Link href="/#contact" className={act('contact')}>{t('navContact')}</Link>
           </div>
 
@@ -104,8 +105,8 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
         <Link href={cairoPlazaHref} className={`bn-item${active === 'projects' ? ' active' : ''}`}>
           <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
         </Link>
-        <Link href="/#ai" className="bn-item">
-          <Sparkles className="i" /><span>{t('navAI')}</span>
+        <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'} className="bn-item">
+          <Sparkles className="i" /><span>{isAr ? 'نوت بوك' : 'NotebookLM'}</span>
         </Link>
         <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`}>
           <Phone className="i" /><span>{t('navContact')}</span>
