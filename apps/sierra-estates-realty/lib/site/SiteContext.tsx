@@ -4,7 +4,7 @@
  * Theme + language state for the ported static site.
  * Mirrors the behaviour of deploy/shared.js, including its localStorage keys.
  */
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useLayoutEffect, useState } from 'react';
 import { I18N, type Lang } from './i18n-dict';
 
 type Theme = 'light' | 'dark';
@@ -24,14 +24,19 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>('en');
   const [theme, setTheme] = useState<Theme>('light');
 
-  useEffect(() => {
+  // Read persisted theme/language before the browser paints so users with a
+  // saved dark mode or Arabic preference never see a light/English flash on load.
+  // useLayoutEffect (rather than useEffect) runs synchronously before paint,
+  // while keeping the initial state at the server-rendered defaults to avoid a
+  // React hydration mismatch on the client-provided text.
+  useLayoutEffect(() => {
     const storedLang = window.localStorage.getItem('hzp-lang');
     const storedTheme = window.localStorage.getItem('hzp-theme');
     if (storedLang === 'ar' || storedLang === 'en') setLang(storedLang);
     if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.setAttribute('lang', lang);
     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
