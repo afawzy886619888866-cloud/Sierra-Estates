@@ -74,6 +74,15 @@ type EvidenceImage = {
 
 const realEvidence: EvidenceImage[] = [
   {
+    src: '/cairo-plaza/real-site-panorama.jpg',
+    altEn: 'Full wide panoramic site photograph showing the Cairo Plaza tower massing and courtyard under construction',
+    altAr: 'صورة بانورامية حقيقية شاملة لموقع مشروع كايرو بلازا والأبراج والساحة قيد الإنشاء',
+    titleEn: 'Site 360° Panorama',
+    titleAr: 'بانوراما الموقع الشاملة',
+    captionEn: 'Real-site verified panoramic photograph · showing actual building footprint, tower elevation, and open public realm',
+    captionAr: 'صورة بانورامية حقيقية للموقع · توضح كتلة الأبراج والساحة العامة المفتوحة',
+  },
+  {
     src: '/cairo-plaza/real-facade-ai-enhanced.jpg',
     altEn: 'AI-enhanced current-site photograph of the Cairo Plaza façade with Banque Misr frontage',
     altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لواجهة كايرو بلازا مع واجهة بنك مصر',
@@ -512,6 +521,36 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
                   </figcaption>
                 </figure>
               ))}
+            </div>
+          </section>
+
+          {/* ── REAL-SITE PANORAMA SHOWCASE ── */}
+          <section className="cp-panorama-showcase" aria-labelledby="cp-pano-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+            <div className="cp-section-heading">
+              <div>
+                <p className="cp-eyebrow">{isAr ? 'بانوراما الموقع الحقيقي 360°' : 'REAL-SITE 360° PANORAMIC VIEW'}</p>
+                <h2 id="cp-pano-title" className="cp-section-title">{isAr ? 'الموقع الفعلي والأبراج قيد الإنشاء' : 'Actual site footprint & construction context'}</h2>
+              </div>
+              <p className="cp-section-note">{isAr ? 'صورة بانورامية حقيقية شاملة للموقع توضح كتلة الأبراج، الساحة المفتوحة، والمحيط العمراني أمام محطة مترو المطرية.' : 'High-resolution wide panoramic site capture showing real tower massing, open public courtyard, and immediate metro street frontage.'}</p>
+            </div>
+            
+            <div className="cp-pano-frame" style={{ position: 'relative', width: '100%', height: '420px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(201, 168, 106, 0.25)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', background: '#0b1118' }}>
+              <Image
+                src="/cairo-plaza/real-site-panorama.jpg"
+                alt={isAr ? 'صورة بانورامية حقيقية شاملة لموقع مشروع كايرو بلازا' : 'Wide verified real-site panorama of Cairo Plaza construction site'}
+                fill
+                priority
+                sizes="100vw"
+                style={{ objectFit: 'cover', objectPosition: 'center 40%' }}
+              />
+              <div style={{ position: 'absolute', top: '16px', left: isAr ? 'auto' : '16px', right: isAr ? '16px' : 'auto', background: 'rgba(11, 17, 24, 0.85)', backdropFilter: 'blur(8px)', padding: '6px 14px', borderRadius: '20px', border: '1px solid rgba(201,168,106,0.4)', fontSize: '0.8rem', color: '#c9a86a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }}></span>
+                {isAr ? 'صورة بانورامية حية من أرض الواقع' : 'VERIFIED REAL-SITE PANORAMA'}
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,17,24,0.95), transparent)', padding: '24px 20px 16px', color: '#e5e7eb', fontSize: '0.85rem' }}>
+                <strong style={{ color: '#fff', fontSize: '1rem', display: 'block', marginBottom: '2px' }}>{isAr ? 'مشروع كايرو بلازا — أمام محطة مترو المطرية' : 'Cairo Plaza — Al-Mataria Metro Station Frontage'}</strong>
+                <span>{isAr ? 'توثيق ميداني لأعمال البناء والهيكل الخرساني والساحة الداخلية للمشروع' : 'Field documentation of tower structure, concrete framework, and integrated public plaza'}</span>
+              </div>
             </div>
           </section>
 
