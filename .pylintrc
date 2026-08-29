@@ -1,0 +1,12 @@
+[MASTER]
+ignore=CVS
+
+[MESSAGES CONTROL]
+disable=import-error,
+        missing-module-docstring,
+        line-too-long,
+        missing-class-docstring,
+        missing-function-docstring,
+        trailing-newlines,
+        unused-import,
+        consider-using-f-string
