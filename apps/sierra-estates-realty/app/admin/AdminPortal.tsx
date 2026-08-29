@@ -32,6 +32,7 @@ import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender'
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
+import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
@@ -1442,6 +1443,7 @@ function AdminApp() {
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsView lang={langKey}/>;
       case 'intelligence':return <AgentIntelligence />;
+      case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
       default:return <DashboardView lang={langKey}/>;
     }

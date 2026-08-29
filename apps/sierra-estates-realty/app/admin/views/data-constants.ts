@@ -155,6 +155,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'deep_insights',label:T('lang')==='ar'?'الرؤى العميقة':'Deep Insights',icon:'📈',section:T('analytics')},
   {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
   {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
+  {id:'notebookllm',label:T('lang')==='ar'?'استوديو نوت بوك الذكي':'NotebookLM Studio',icon:'🎙️',section:T('analytics'),badge:'NEW',badgeCls:'nb-green'},
   {id:'settings',label:T('settings'),icon:'🔧',section:T('system')},
 ];
 
