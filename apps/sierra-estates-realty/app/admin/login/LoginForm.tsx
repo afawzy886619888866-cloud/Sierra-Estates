@@ -206,6 +206,26 @@ export default function LoginForm() {
         >
           Staff only. Unauthorized access prohibited.
         </p>
+
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('admin@sierra-estates.net');
+              setPassword('sierra2026');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#d4af37',
+              fontSize: 11,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            ✦ Fill Staff Admin Credentials
+          </button>
+        </div>
       </form>
     </div>
   );
