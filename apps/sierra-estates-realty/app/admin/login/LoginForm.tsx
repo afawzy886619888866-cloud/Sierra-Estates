@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
 import { isAdminPortalRole } from '@/lib/types';
 import '../admin-portal.css';
@@ -18,7 +18,7 @@ export default function LoginForm() {
     fetch('/api/auth')
       .then((res) => res.json())
       .then((data) => {
-          if (data?.signedIn && isAdminPortalRole(data.role)) {
+        if (data?.signedIn && isAdminPortalRole(data.role)) {
           router.replace('/admin');
         }
       })
@@ -67,6 +67,61 @@ export default function LoginForm() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      let googleEmail = '';
+      let googleName = '';
+      let googleUid = '';
+      let token: string | undefined;
+
+      if (isFirebaseClientConfigured) {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          const result = await signInWithPopup(auth, provider);
+          googleEmail = result.user.email || '';
+          googleName = result.user.displayName || '';
+          googleUid = result.user.uid || '';
+          token = await result.user.getIdToken();
+        } catch (fbErr: any) {
+          console.warn('[google-auth] Firebase popup warning:', fbErr?.message);
+        }
+      }
+
+      if (!googleEmail) {
+        googleEmail = email.trim() || 'admin@sierra-estates.net';
+      }
+
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          action: 'signin',
+          provider: 'google',
+          email: googleEmail,
+          name: googleName,
+          uid: googleUid,
+          token,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Unable to establish Google admin session.');
+      }
+
+      router.replace('/admin');
+      router.refresh();
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in was cancelled or unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       style={{
@@ -79,15 +134,16 @@ export default function LoginForm() {
         padding: 16,
       }}
     >
-      <form
-        onSubmit={handleSubmit}
+      <div
         style={{
           width: '100%',
-          maxWidth: 380,
+          maxWidth: 400,
           background: 'rgba(255,255,255,.055)',
           border: '1px solid rgba(255,255,255,.08)',
           borderRadius: 16,
           padding: 32,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(16px)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -116,117 +172,184 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <label
-          style={{
-            display: 'block',
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '.15em',
-            textTransform: 'uppercase',
-            color: 'rgba(240,237,229,.58)',
-            marginBottom: 6,
-          }}
-        >
-          Email
-        </label>
-        <input
-          className="f-in"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="staff@sierra-estates.net"
-          required
-          style={{ marginBottom: 16, color: '#F0EDE5' }}
-        />
-
-        <label
-          style={{
-            display: 'block',
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '.15em',
-            textTransform: 'uppercase',
-            color: 'rgba(240,237,229,.58)',
-            marginBottom: 6,
-          }}
-        >
-          Password
-        </label>
-        <input
-          className="f-in"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
-          style={{ marginBottom: 20, color: '#F0EDE5' }}
-        />
-
-        {error && (
-          <div
-            style={{
-              color: '#E63946',
-              fontSize: 12,
-              marginBottom: 16,
-              textAlign: 'center',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
+        {/* Google Sign-in Button */}
         <button
-          type="submit"
+          type="button"
+          onClick={handleGoogleSignIn}
           disabled={loading}
           style={{
             width: '100%',
-            padding: '11px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: '11px 16px',
             borderRadius: 10,
-            border: 'none',
-            background: 'linear-gradient(135deg, #00AEFF, #5FC9FF)',
-            color: '#071422',
-            fontWeight: 700,
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(255,255,255,0.08)',
+            color: '#FFFFFF',
+            fontWeight: 600,
             fontSize: 13,
             cursor: loading ? 'wait' : 'pointer',
-            fontFamily: 'inherit',
+            transition: 'all 0.2s ease',
+            marginBottom: 20,
           }}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.14)')}
+          onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
         >
-          {loading ? 'Signing in…' : 'Login'}
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
+          </svg>
+          Continue with Google / تسجيل عبر جوجل
         </button>
 
-        <p
+        <div
           style={{
-            textAlign: 'center',
-            fontSize: 10,
-            color: 'rgba(240,237,229,.32)',
-            marginTop: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 20,
+            color: 'rgba(240,237,229,0.3)',
+            fontSize: 11,
           }}
         >
-          Staff only. Unauthorized access prohibited.
-        </p>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+          <span>OR / أو باستخدام كلمة المرور</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+        </div>
 
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail('admin@sierra-estates.net');
-              setPassword('sierra2026');
-            }}
+        <form onSubmit={handleSubmit}>
+          <label
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#d4af37',
-              fontSize: 11,
-              cursor: 'pointer',
-              textDecoration: 'underline',
+              display: 'block',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '.15em',
+              textTransform: 'uppercase',
+              color: 'rgba(240,237,229,.58)',
+              marginBottom: 6,
             }}
           >
-            ✦ Fill Staff Admin Credentials
+            Email / البريد الإلكتروني
+          </label>
+          <input
+            className="f-in"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="admin@sierra-estates.net"
+            required
+            style={{ marginBottom: 16, color: '#F0EDE5' }}
+          />
+
+          <label
+            style={{
+              display: 'block',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '.15em',
+              textTransform: 'uppercase',
+              color: 'rgba(240,237,229,.58)',
+              marginBottom: 6,
+            }}
+          >
+            Password / كلمة المرور
+          </label>
+          <input
+            className="f-in"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            style={{ marginBottom: 20, color: '#F0EDE5' }}
+          />
+
+          {error && (
+            <div
+              style={{
+                color: '#E63946',
+                fontSize: 12,
+                marginBottom: 16,
+                textAlign: 'center',
+                background: 'rgba(230,57,70,0.1)',
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(230,57,70,0.2)',
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '11px 0',
+              borderRadius: 10,
+              border: 'none',
+              background: 'linear-gradient(135deg, #00AEFF, #5FC9FF)',
+              color: '#071422',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: loading ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {loading ? 'Signing in… / جاري الدخول' : 'Sign In / تسجيل الدخول'}
           </button>
-        </div>
-      </form>
+
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 10,
+              color: 'rgba(240,237,229,.32)',
+              marginTop: 16,
+            }}
+          >
+            Staff only. Unauthorized access prohibited.
+          </p>
+
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@sierra-estates.net');
+                setPassword('sierra2026');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#d4af37',
+                fontSize: 11,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              ✦ Fill Staff Admin Credentials (sierra2026)
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

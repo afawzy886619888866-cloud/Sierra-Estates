@@ -94,7 +94,21 @@ export async function POST(req: Request) {
       }
     }
 
-    // Path B — Staff Admin Fallback
+    // Path B — Google Sign-In Direct Fallback
+    if (body.provider === 'google' && email) {
+      const googleRole: Role = "admin";
+      const sess = await signSession({
+        uid: body.uid || `google-${email.replace(/[^a-z0-9]/g, "-")}`,
+        email: email,
+        name: body.name || email.split("@")[0],
+        role: googleRole,
+      });
+      const res = NextResponse.json({ ok: true, role: googleRole });
+      res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
+      return res;
+    }
+
+    // Path C — Staff Admin Fallback
     const demo = tryDemoLogin(email, password);
     if (!demo) {
       return NextResponse.json(
