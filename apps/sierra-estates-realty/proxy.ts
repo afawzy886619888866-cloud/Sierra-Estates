@@ -35,14 +35,6 @@ export async function proxy(request: NextRequest) {
 
   // 0b) Admin route protection & host split
   if (targetPath.startsWith('/admin')) {
-    if (adminHost && !onAdminHost && !isLocal) {
-      const url = new URL(request.url);
-      url.hostname = adminHost;
-      url.protocol = 'https:';
-      url.port = '';
-      return NextResponse.redirect(url, 307);
-    }
-
     // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
       return isRewritten
