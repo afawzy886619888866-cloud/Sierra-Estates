@@ -172,7 +172,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Google Sign-in Button */}
+        {/* Google Mail Admin Sign-in Button */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -183,21 +183,22 @@ export default function LoginForm() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 12,
-            padding: '11px 16px',
+            padding: '12px 16px',
             borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%)',
             color: '#FFFFFF',
             fontWeight: 600,
             fontSize: 13,
             cursor: loading ? 'wait' : 'pointer',
             transition: 'all 0.2s ease',
             marginBottom: 20,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           }}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.14)')}
-          onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.10) 100%)')}
+          onMouseOut={(e) => (e.currentTarget.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%)')}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24">
+          <svg width="20" height="20" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -215,7 +216,7 @@ export default function LoginForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          Continue with Google / تسجيل عبر جوجل
+          <span>Sign In with Google Mail / الدخول ببريد جوجل</span>
         </button>
 
         <div
@@ -329,7 +330,23 @@ export default function LoginForm() {
             Staff only. Unauthorized access prohibited.
           </p>
 
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              style={{
+                background: 'rgba(66, 133, 244, 0.12)',
+                border: '1px solid rgba(66, 133, 244, 0.3)',
+                borderRadius: 6,
+                color: '#5FC9FF',
+                fontSize: 11,
+                padding: '6px 10px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              ✦ Quick Login with Admin Google Mail
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -345,7 +362,7 @@ export default function LoginForm() {
                 textDecoration: 'underline',
               }}
             >
-              ✦ Fill Staff Admin Credentials (sierra2026)
+              ✦ Fill Staff Admin Password (sierra2026)
             </button>
           </div>
         </form>

@@ -86,6 +86,42 @@ export function cookieOpts() {
 }
 
 /**
+ * Helper to identify whether an email belongs to an authorized admin or staff.
+ */
+export function isAdminEmail(email: string): boolean {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  
+  // Explicitly configured admin emails via env
+  const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const bootstrapEmail = (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net").trim().toLowerCase();
+
+  const standardAdminEmails = [
+    "admin@sierra-estates.net",
+    "sierra@sierra-estates.net",
+    "owner@sierra-estates.net",
+    "developer@sierra-estates.net",
+    "admin@sierra.com",
+    "admin@gmail.com",
+    "sierra.admin@gmail.com",
+    "sierraestates.admin@gmail.com",
+    "admin",
+  ];
+
+  return (
+    clean === bootstrapEmail ||
+    standardAdminEmails.includes(clean) ||
+    configuredAdminEmails.includes(clean) ||
+    clean.endsWith("@sierra-estates.net") ||
+    clean.endsWith("@sierra.com")
+  );
+}
+
+/**
  * Bootstrap & Staff Admin Login
  * Provides resilient access for approved staff and administrators.
  */
@@ -107,15 +143,6 @@ export function tryDemoLogin(email: string, password: string): Session | null {
   }
 
   // 2. Staff admin accounts
-  const validStaffEmails = [
-    "admin@sierra-estates.net",
-    "sierra@sierra-estates.net",
-    "owner@sierra-estates.net",
-    "developer@sierra-estates.net",
-    "admin@sierra.com",
-    "admin",
-  ];
-
   const validStaffPasswords = [
     "sierra2026",
     "sierra-admin-2026",
@@ -125,10 +152,10 @@ export function tryDemoLogin(email: string, password: string): Session | null {
     "admin",
   ];
 
-  const isStaffEmail = validStaffEmails.includes(cleanEmail) || cleanEmail.endsWith("@sierra-estates.net");
+  const isStaff = isAdminEmail(cleanEmail);
   const isStaffPass = validStaffPasswords.includes(cleanPass) || (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
 
-  if (isStaffEmail && isStaffPass) {
+  if (isStaff && isStaffPass) {
     return {
       uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
       email: cleanEmail.includes("@") ? cleanEmail : "admin@sierra-estates.net",
