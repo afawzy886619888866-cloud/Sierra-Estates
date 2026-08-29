@@ -20,9 +20,9 @@ except ImportError:
         return None
 
 try:
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    from pydantic import BaseModel, Field
+    from fastapi import FastAPI  # pylint: disable=import-error
+    from fastapi.middleware.cors import CORSMiddleware  # pylint: disable=import-error
+    from pydantic import BaseModel, Field  # pylint: disable=import-error
 except ImportError:
     # Stubs for environment without fastapi installed locally
     class FastAPI:  # type: ignore[no-redef]
