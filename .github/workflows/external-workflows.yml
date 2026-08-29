@@ -61,12 +61,12 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           node-version: '24'
@@ -123,12 +123,12 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           node-version: '24'
@@ -181,12 +181,12 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           node-version: '24'
@@ -239,12 +239,12 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
           node-version: '24'
