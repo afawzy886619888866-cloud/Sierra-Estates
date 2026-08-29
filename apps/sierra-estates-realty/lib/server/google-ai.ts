@@ -98,7 +98,7 @@ export const GoogleAIService = {
     }>;
   }> {
     return instrumentAgent(agentId, unitName, JSON.stringify(messages), async () => {
-      const modelName = options.model || 'gemini-flash-latest';
+      const modelName = normalizeModelName(options.model);
       
       try {
         const model = genAI.getGenerativeModel({ 
