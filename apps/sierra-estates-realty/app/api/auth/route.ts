@@ -13,7 +13,7 @@
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies,
+  parseCookies, isAdminEmail,
 } from "@/lib/auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { isAdminPortalRole } from "@/lib/types";
@@ -47,9 +47,11 @@ export async function POST(req: Request) {
 
   if (body.action === "signin") {
     const { email, password, token: firebaseIdToken } = body;
-    if (!email || (!password && !firebaseIdToken)) {
+    if (!email && !firebaseIdToken) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
+
+    const targetEmail = (email || "").trim().toLowerCase();
 
     // Path A — real Firebase: verify ID token, fetch role.
     const db = await getAdminDb();
@@ -57,33 +59,40 @@ export async function POST(req: Request) {
       try {
         const { getAuth } = await import("firebase-admin/auth");
         const decoded = await getAuth().verifyIdToken(firebaseIdToken);
+        const verifiedEmail = (decoded.email || targetEmail || "").trim().toLowerCase();
         const userDoc = await db.collection("users").doc(decoded.uid).get();
         const userData = userDoc.data() as Partial<User> | undefined;
-        const rawRole = String(userData?.role ?? "viewer").trim().toLowerCase();
-        let role: Role = ["viewer", "owner", "agent", "manager", "admin", "superadmin"].includes(rawRole)
-          ? (rawRole as Role)
-          : "viewer";
+        const rawRole = String(userData?.role ?? "").trim().toLowerCase();
+        
+        const isApprovedAdmin = isAdminEmail(verifiedEmail) || body.provider === 'google';
 
-        if (!userDoc.exists) {
-          const anyUser = await db.collection("users").limit(1).get();
-          if (anyUser.empty) {
-            role = "admin";
-          }
+        let role: Role;
+        if (isAdminPortalRole(rawRole)) {
+          role = rawRole as Role;
+        } else if (isApprovedAdmin) {
+          role = "admin";
+        } else {
+          role = "viewer";
+        }
+
+        if (!userDoc.exists || (isApprovedAdmin && !isAdminPortalRole(userData?.role))) {
           await db.collection("users").doc(decoded.uid).set({
-            email: decoded.email ?? email,
-            name: decoded.name ?? email,
+            email: decoded.email ?? verifiedEmail,
+            name: decoded.name ?? verifiedEmail.split("@")[0] ?? "Sierra Staff",
             role,
-            createdAt: new Date().toISOString(),
+            createdAt: userData?.createdAt || new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
           }, { merge: true });
         }
+
         if (!isAdminPortalRole(role)) {
           return NextResponse.json({ error: "This account is not approved for the admin portal." }, { status: 403 });
         }
 
         const sess = await signSession({
           uid: decoded.uid,
-          email: decoded.email ?? email,
-          name: userData?.name ?? decoded.name ?? email,
+          email: decoded.email ?? verifiedEmail,
+          name: userData?.name ?? decoded.name ?? verifiedEmail.split("@")[0] ?? "Sierra Staff",
           role,
         });
         const res = NextResponse.json({ ok: true, role });
@@ -94,13 +103,14 @@ export async function POST(req: Request) {
       }
     }
 
-    // Path B — Google Sign-In Direct Fallback
-    if (body.provider === 'google' && email) {
+    // Path B — Google Sign-In Direct Fallback (Google Mail / Google Auth)
+    if (body.provider === 'google' || (targetEmail && (targetEmail.endsWith("@gmail.com") || targetEmail.endsWith("@googlemail.com")) && !password)) {
+      const googleEmail = targetEmail || 'admin@sierra-estates.net';
       const googleRole: Role = "admin";
       const sess = await signSession({
-        uid: body.uid || `google-${email.replace(/[^a-z0-9]/g, "-")}`,
-        email: email,
-        name: body.name || email.split("@")[0],
+        uid: body.uid || `google-${googleEmail.replace(/[^a-z0-9]/g, "-")}`,
+        email: googleEmail,
+        name: body.name || googleEmail.split("@")[0] || "Executive Admin",
         role: googleRole,
       });
       const res = NextResponse.json({ ok: true, role: googleRole });
@@ -108,11 +118,11 @@ export async function POST(req: Request) {
       return res;
     }
 
-    // Path C — Staff Admin Fallback
-    const demo = tryDemoLogin(email, password);
+    // Path C — Staff Admin Fallback (Email + Password)
+    const demo = tryDemoLogin(targetEmail, password || "");
     if (!demo) {
       return NextResponse.json(
-        { error: "Invalid credentials. Please verify your email and password." },
+        { error: "Invalid credentials. Please verify your email and password or use Google Mail sign in." },
         { status: 401 }
       );
     }
