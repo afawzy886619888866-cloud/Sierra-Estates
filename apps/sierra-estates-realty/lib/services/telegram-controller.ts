@@ -43,7 +43,8 @@ export async function sendTelegramMessage(text: string, chatId?: string) {
  * Controller: Handles incoming webhook commands
  */
 export async function handleTelegramCommand(command: string, args: string[], chatId: string) {
-  switch (command) {
+  const cleanCmd = command.replace(/^\//, '').toLowerCase();
+  switch (cleanCmd) {
     case 'score':
       return await cmdScore(args[0], chatId);
     case 'matches':
@@ -52,10 +53,80 @@ export async function handleTelegramCommand(command: string, args: string[], cha
       return await cmdApprove(args[0], chatId);
     case 'maintenance':
       return await cmdMaintenance(chatId);
+    case 'leads':
+      return await cmdLeads(chatId);
+    case 'inventory':
+      return await cmdInventory(chatId);
     case 'start':
-      return await sendTelegramMessage("Welcome to the <b>Sierra Estates Intelligence Platform</b>. Send me a Signature Asset ID to analyze.", chatId);
+    case 'help':
+      return await sendTelegramMessage(
+        "🏛️ <b>Sierra Estates Command OS</b>\n\n" +
+        "Available tactical commands:\n" +
+        "• <code>/leads</code> — View top active client leads & prospects\n" +
+        "• <code>/inventory</code> — View live portfolio inventory stats\n" +
+        "• <code>/score [unitId]</code> — Strategic valuation & legal risk assessment\n" +
+        "• <code>/matches [unitId]</code> — Find matched buyers for a signature asset\n" +
+        "• <code>/approve [leadId]</code> — Authorize Stage-8 concierge gallery deployment\n" +
+        "• <code>/maintenance</code> — Run strategic portfolio hygiene & flag stale units",
+        chatId
+      );
     default:
-      return await sendTelegramMessage("Unknown command. Supported: /score, /matches, /maintenance", chatId);
+      return await sendTelegramMessage(
+        "Unknown command. Send <code>/help</code> to see available commands.",
+        chatId
+      );
+  }
+}
+
+async function cmdLeads(chatId: string) {
+  try {
+    const leadsSnap = await getDocs(collection(db, COLLECTIONS.stakeholders));
+    if (leadsSnap.empty) {
+      return sendTelegramMessage("No active stakeholders in the CRM pipeline.", chatId);
+    }
+
+    const leads = leadsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Lead)).slice(0, 5);
+    let text = `👥 <b>Top CRM Stakeholders (${leadsSnap.size} total):</b>\n\n`;
+
+    leads.forEach((l, idx) => {
+      const budget = l.preferences?.budget ? `${formatEGP(l.preferences.budget)}` : 'N/A';
+      const status = l.status || 'Active';
+      text += `${idx + 1}. <b>${l.name}</b> (${status})\n` +
+              `   💰 Budget: ${budget} | 📱 ${l.phone || l.email || 'Direct'}\n` +
+              `   📍 Target: ${l.preferences?.compound || l.preferences?.location || 'New Cairo'}\n\n`;
+    });
+
+    await sendTelegramMessage(text, chatId);
+  } catch (err) {
+    console.error('[Telegram] cmdLeads error:', err);
+    await sendTelegramMessage("❌ Failed to fetch stakeholders from Firestore.", chatId);
+  }
+}
+
+async function cmdInventory(chatId: string) {
+  try {
+    const unitsSnap = await getDocs(collection(db, COLLECTIONS.units));
+    if (unitsSnap.empty) {
+      return sendTelegramMessage("Portfolio inventory is currently empty.", chatId);
+    }
+
+    const units = unitsSnap.docs.map(d => d.data() as Unit);
+    const activeUnits = units.filter(u => u.status !== 'archived' && u.status !== 'flagged_stale');
+    const avgPrice = activeUnits.length > 0
+      ? activeUnits.reduce((acc, u) => acc + (u.price || 0), 0) / activeUnits.length
+      : 0;
+
+    const text = `📊 <b>Sierra Estates Portfolio Summary</b>\n\n` +
+                 `• Total Assets: <b>${units.length}</b>\n` +
+                 `• Active / Available: <b>${activeUnits.length}</b>\n` +
+                 `• Average Asset Price: <b>${formatEGP(avgPrice)}</b>\n` +
+                 `• Stale / Flagged: <b>${units.length - activeUnits.length}</b>\n\n` +
+                 `<i>Send /maintenance to audit and archive stale units.</i>`;
+
+    await sendTelegramMessage(text, chatId);
+  } catch (err) {
+    console.error('[Telegram] cmdInventory error:', err);
+    await sendTelegramMessage("❌ Failed to calculate portfolio statistics.", chatId);
   }
 }
 
