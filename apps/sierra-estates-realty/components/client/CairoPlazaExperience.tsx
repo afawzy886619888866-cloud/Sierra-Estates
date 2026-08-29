@@ -639,6 +639,78 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
             </div>
           </section>
 
+          {/* ── OFFICIAL MARKETING SUITE & CAMPAIGN CREATIVES ── */}
+          <section className="cp-campaigns-section" aria-labelledby="cp-campaigns-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+            <div className="cp-section-heading">
+              <div>
+                <p className="cp-eyebrow">{isAr ? 'الهوية التسويقية والحملات الإعلانية' : 'MARKETING SUITE & AD CREATIVES'}</p>
+                <h2 id="cp-campaigns-title" className="cp-section-title">{isAr ? 'حملات الطرح الرسمي لكايرو بلازا' : 'Official Launch Campaigns & Marketing Creatives'}</h2>
+              </div>
+              <p className="cp-section-note">{isAr ? 'تصميمات الطرح والحملات الترويجية الرسمية المعتمدة من Sierra Estates للاستخدام التسويقي والترويجي عبر الوسائط الرقمية.' : 'High-impact branded social and investor campaign creatives designed for multi-channel syndication and ad deployment.'}</p>
+            </div>
+
+            <div className="cp-evidence-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {officialAdCampaigns.map((ad) => (
+                <figure
+                  className="cp-evidence-card"
+                  key={ad.src}
+                  style={{
+                    cursor: 'zoom-in',
+                    background: 'linear-gradient(180deg, rgba(16, 26, 40, 0.95), rgba(11, 17, 24, 0.98))',
+                    border: '1px solid rgba(201, 168, 106, 0.3)',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                  }}
+                  onClick={() => openLightbox(
+                    ad.src,
+                    isAr ? ad.titleAr : ad.titleEn,
+                    isAr ? `${ad.titleAr} (${ad.ref}) — ${ad.descAr}` : `${ad.titleEn} (${ad.ref}) — ${ad.descEn}`,
+                  )}
+                >
+                  <div className="cp-evidence-media" style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1' }}>
+                    <Image
+                      src={ad.src}
+                      alt={isAr ? ad.titleAr : ad.titleEn}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 620px) 100vw, (max-width: 900px) 50vw, 33vw"
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <span
+                      className="cp-evidence-badge"
+                      style={{
+                        background: 'linear-gradient(135deg, #c9a86a, #dfc38c)',
+                        color: '#0b1118',
+                        fontWeight: 700,
+                        boxShadow: '0 4px 12px rgba(201, 168, 106, 0.4)',
+                      }}
+                    >
+                      {isAr ? ad.badgeAr : ad.badgeEn}
+                    </span>
+                  </div>
+                  <figcaption style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '1rem', color: '#fff' }}>{isAr ? ad.titleAr : ad.titleEn}</strong>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '0 0 12px 0', lineHeight: 1.45 }}>
+                      {isAr ? ad.descAr : ad.descEn}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
+                      <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#c9a86a', letterSpacing: '0.5px' }}>
+                        {ad.ref}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        🔍 {isAr ? 'تكبير الصورة' : 'View full'}
+                      </span>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+
           <section className="cp-tour" aria-labelledby="cp-tour-title">
             <div className="cp-section-heading">
               <div>
