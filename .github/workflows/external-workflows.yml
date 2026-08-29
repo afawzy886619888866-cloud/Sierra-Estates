@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://gist.githubusercontent.com/sargunv/c2ca41a08391cd06feaad97aece309e4/raw/empty-json-schema.json
 name: External Workflows — Sync Data with Sheets
 
 # Each job guards on its required repository secrets: when secrets are not
@@ -68,7 +69,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -130,7 +131,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -188,7 +189,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -246,7 +247,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 

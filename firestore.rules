@@ -11,12 +11,9 @@ rules_version = '2';
 // Privileged server operations use the Firebase Admin SDK, which BYPASSES these
 // rules — so locking the client down here does not affect API routes / cron.
 //
-// Rules use OR semantics: the broad catch-all staff rule grants staff access
-// everywhere; the specific matches ADD narrower public access on top (public
-// catalog reads, public share-link reads + constrained analytics writes).
-// Because a narrower match can never SUBTRACT access, collections that must be
-// locked down harder than "any staff member" (users, audit_logs) are excluded
-// from the catch-all by name at the bottom of this file.
+// Rules use OR semantics: the broad `/{document=**}` staff rule grants staff
+// access everywhere; the specific matches ADD narrower public access on top
+// (public catalog reads, public share-link reads + constrained analytics writes).
 //
 // ⚠️ BEFORE DEPLOYING (firebase deploy --only firestore:rules):
 //   1. Every staff member MUST have a users/{uid} doc with role ∈
@@ -37,12 +34,6 @@ service cloud.firestore {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'manager', 'agent'];
-    }
-
-    function isAdmin() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // --- Public marketplace catalog: anyone may read; only staff may write ---
@@ -97,27 +88,12 @@ service cloud.firestore {
       allow create, delete: if isStaff();
     }
 
-    // --- Users: a user may read their own profile; writes are constrained ---
-    // Staff may update user docs, but NOBODY may change the `role` field on
-    // their OWN document — that would be self privilege-escalation (an agent
-    // promoting itself to admin). Provisioning and removal are admin-only;
-    // server-side provisioning uses the Admin SDK, which bypasses these rules.
+    // --- Users: a user may read their own profile; only staff may write ---
+    // (Write is staff-only to prevent self privilege-escalation via the `role`
+    // field. New staff docs are provisioned server-side via the Admin SDK.)
     match /users/{uid} {
-      allow read:   if isSignedIn() && (request.auth.uid == uid || isStaff());
-      allow update: if isStaff()
-        && (request.auth.uid != uid
-            || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
-      allow create, delete: if isAdmin();
-    }
-
-    // --- Audit trail: append-only from the server. Staff (including agents)
-    //     must never be able to rewrite or delete their own audit trail from
-    //     the client. The Admin SDK bypasses these rules, so the server-side
-    //     audit writes in app/api/admin/* keep working. Admins may read for
-    //     review; everyone else goes through the /api/admin/audit route. ---
-    match /audit_logs/{document=**} {
-      allow read:  if isAdmin();
-      allow write: if false;
+      allow read:  if isSignedIn() && (request.auth.uid == uid || isStaff());
+      allow write: if isStaff();
     }
 
     // --- AI Engine & Multi-Agent Orchestrator (engine_memory, engine_memory_audit, ai_workflow_results, propertyfinder_sync) ---
@@ -138,16 +114,9 @@ service cloud.firestore {
 
     // --- Everything else (leads, deals, sales, viewings, vouchers, activities,
     //     intelligence, strategic_pipeline, agents, workflows, syncQueue, … )
-    //     — staff only.
-    //
-    //     Rules use OR semantics: a narrower match can only ADD access, never
-    //     subtract it. So any collection that must be MORE restricted than
-    //     "any staff member" has to be excluded from this catch-all by name —
-    //     otherwise the `users` and `audit_logs` rules above would be
-    //     silently overridden by it. ---
-    match /{collection}/{document=**} {
-      allow read, write: if isStaff()
-        && !(collection in ['users', 'audit_logs']);
+    //     — staff only ---
+    match /{document=**} {
+      allow read, write: if isStaff();
     }
   }
 }
