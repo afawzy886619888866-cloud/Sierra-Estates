@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from property_finder_sync import PropertyFinderSyncHub
 from ecc_memory_engine import EpisodicContextCache
+from valuation_agent_skill import RealEstateValuationAgent
 
 load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Sierra Estates API",
-    description="Consolidated Python backend for Sierra Estates integrations & ECC Memory.",
+    description="Consolidated Python backend for Sierra Estates integrations, ECC Memory & Valuation Engine.",
     version="1.0.0",
 )
 
@@ -32,6 +33,7 @@ app.add_middleware(
 
 sync_hub = PropertyFinderSyncHub()
 ecc_engine = EpisodicContextCache()
+valuation_agent = RealEstateValuationAgent()
 
 
 class PortfolioAsset(BaseModel):
@@ -99,6 +101,12 @@ def get_entity_memory(entity_id: str) -> Dict[str, Any]:
     if not entity:
         return {"status": "not_found", "entityId": entity_id, "memory": None}
     return {"status": "success", "entityId": entity_id, "memory": entity}
+
+
+@app.post("/valuation/analyze")
+def analyze_valuation(payload: Dict[str, Any]) -> Dict[str, Any]:
+    analysis = valuation_agent.analyze(payload)
+    return {"status": "success", "valuation": analysis}
 
 
 if __name__ == "__main__":
