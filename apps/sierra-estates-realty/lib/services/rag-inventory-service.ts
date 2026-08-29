@@ -18,17 +18,17 @@ export class RagInventoryService {
       // We will fetch up to 20 available units and filter them in-memory to keep it robust and fast.
       const snapshot = await query.limit(50).get();
 
-      let units = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Unit));
+      let units = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Unit));
 
       // 1. Filter by Property Type (if strict)
       if (propertyType && propertyType.toLowerCase() !== 'any') {
-        units = units.filter(u => u.propertyType.toLowerCase() === propertyType.toLowerCase());
+        units = units.filter((u: Unit) => u.propertyType.toLowerCase() === propertyType.toLowerCase());
       }
 
       // 2. Filter by Compound (if specified and not 'any')
       if (compound && compound.toLowerCase() !== 'any') {
         const compoundLower = compound.toLowerCase();
-        units = units.filter(u => 
+        units = units.filter((u: Unit) => 
           (u.compound && u.compound.toLowerCase().includes(compoundLower)) ||
           (u.title && u.title.toLowerCase().includes(compoundLower)) ||
           (u.location && u.location.toLowerCase().includes(compoundLower))
@@ -38,11 +38,11 @@ export class RagInventoryService {
       // 3. Filter by Budget (allow 20% margin for up-selling)
       if (budgetMax && budgetMax > 0) {
         const acceptableMax = budgetMax * 1.2;
-        units = units.filter(u => u.price <= acceptableMax);
+        units = units.filter((u: Unit) => u.price <= acceptableMax);
       }
 
       // Sort by price descending (highest value that fits the budget) and take top 5
-      units.sort((a, b) => b.price - a.price);
+      units.sort((a: Unit, b: Unit) => b.price - a.price);
       const topMatches = units.slice(0, 5);
 
       if (topMatches.length === 0) {
@@ -50,7 +50,7 @@ export class RagInventoryService {
       }
 
       // Format as a crisp Markdown list for Gemini's context window
-      const formatted = topMatches.map(u => 
+      const formatted = topMatches.map((u: Unit) => 
         `- [UNIT ID: ${u.id}] ${u.title} | ${u.compound || u.location} | Type: ${u.propertyType} | Area: ${u.area} sqm | Price: ${u.price.toLocaleString()} EGP`
       ).join("\n");
 
