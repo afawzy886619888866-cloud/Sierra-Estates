@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from property_finder_sync import PropertyFinderSyncHub
 from ecc_memory_engine import EpisodicContextCache
 from valuation_agent_skill import RealEstateValuationAgent
+from hubspot_sync import HubSpotSyncHub
 
 load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Sierra Estates API",
-    description="Consolidated Python backend for Sierra Estates integrations, ECC Memory & Valuation Engine.",
+    description="Consolidated Python backend for Sierra Estates integrations, ECC Memory, CRM & Valuation Engine.",
     version="1.0.0",
 )
 
@@ -34,6 +35,7 @@ app.add_middleware(
 sync_hub = PropertyFinderSyncHub()
 ecc_engine = EpisodicContextCache()
 valuation_agent = RealEstateValuationAgent()
+hubspot_hub = HubSpotSyncHub()
 
 
 class PortfolioAsset(BaseModel):
@@ -107,6 +109,18 @@ def get_entity_memory(entity_id: str) -> Dict[str, Any]:
 def analyze_valuation(payload: Dict[str, Any]) -> Dict[str, Any]:
     analysis = valuation_agent.analyze(payload)
     return {"status": "success", "valuation": analysis}
+
+
+@app.post("/crm/hubspot/contact")
+def sync_hubspot_contact(lead_data: Dict[str, Any]) -> Dict[str, Any]:
+    result = hubspot_hub.sync_contact(lead_data)
+    return result
+
+
+@app.post("/crm/hubspot/deal")
+def create_hubspot_deal(deal_data: Dict[str, Any]) -> Dict[str, Any]:
+    result = hubspot_hub.create_deal(deal_data)
+    return result
 
 
 if __name__ == "__main__":
