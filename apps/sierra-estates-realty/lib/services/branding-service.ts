@@ -32,10 +32,11 @@ export class BrandingService {
         sharp = sharpModule.default || sharpModule;
       } catch (err) {
         // If native sharp binary fails to load, upload original buffer without watermark
-        const uploadUrl = await StorageService.uploadFile(
-          sourceBuffer,
-          `properties/${docId}/branded_${path.basename(sourceUrl)}`,
-          'image/jpeg'
+        const uploadUrl = await StorageService.uploadPropertyMedia(
+          docId,
+          sourceBuffer.toString('base64'),
+          'image/jpeg',
+          `branded_${path.basename(sourceUrl)}`
         );
         return uploadUrl;
       }
