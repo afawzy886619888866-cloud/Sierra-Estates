@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 # pylint: disable=import-error,no-name-in-module
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv  # pylint: disable=import-error
     load_dotenv()
 except ImportError:
     def load_dotenv():  # type: ignore[misc]
