@@ -228,6 +228,8 @@ overrides:
   '@expo/ngrok-bin>@expo/ngrok-bin-sunos-x64': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32': '-'
   '@expo/ngrok-bin>@expo/ngrok-bin-win32-x64': '-'
+  'jsdom>canvas': '-'
+  '@mapbox/node-pre-gyp>tar': '>=7.5.21'
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   '@esbuild-kit/esm-loader': npm:tsx@^4.21.0
   esbuild: 0.28.1
@@ -255,6 +257,18 @@ overrides:
   nanoid: '>=3.3.17'
   # Kept equal to the value that was formerly in package.json pnpm.overrides.
   typescript: ^5.8.2
+  tar: '>=7.5.21'
+  cross-spawn: '>=7.0.6'
+  micromatch: '>=4.0.8'
+  braces: '>=3.0.3'
+  ws: '>=8.18.0'
+  cookie: '>=0.7.2'
+  body-parser: '>=1.20.3'
+  express: '>=4.21.2'
+  path-to-regexp: '>=0.1.12'
+  send: '>=0.19.1'
+  serve-static: '>=1.16.2'
+
 
 allowBuilds:
   '@firebase/util': true
