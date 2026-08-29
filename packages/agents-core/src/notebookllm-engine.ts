@@ -55,7 +55,7 @@ export class NotebookLMEngine {
       throw new Error('Gemini API key is not configured for NotebookLM Engine.');
     }
 
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     const formattedSources = sources
       .map((s, idx) => `=== SOURCE [${idx + 1}]: ${s.title} (ID: ${s.id}, Type: ${s.type}) ===\n${s.content}\n`)
@@ -106,7 +106,7 @@ Respond ONLY with valid JSON.`;
       throw new Error('Gemini API key is not configured for NotebookLM Engine.');
     }
 
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     const formattedSources = sources
       .map((s, idx) => `[Source ${idx + 1} - ${s.title}]:\n${s.content}`)
