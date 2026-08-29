@@ -39,7 +39,6 @@
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
-        "hint": "^7.1.13",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
         "vitest": "^4.1.10"
@@ -52,5 +51,19 @@
         "node": ">=22.0.0",
         "pnpm": ">=9"
     },
-    "packageManager": "pnpm@9.15.4"
+    "packageManager": "pnpm@9.15.4",
+    "overrides": {
+        "tar": ">=7.5.21",
+        "cross-spawn": ">=7.0.6",
+        "micromatch": ">=4.0.8",
+        "braces": ">=3.0.3",
+        "nanoid": ">=3.3.8",
+        "ws": ">=8.18.0",
+        "cookie": ">=0.7.2",
+        "body-parser": ">=1.20.3",
+        "express": ">=4.21.2",
+        "path-to-regexp": ">=0.1.12",
+        "send": ">=0.19.1",
+        "serve-static": ">=1.16.2"
+    }
 }
