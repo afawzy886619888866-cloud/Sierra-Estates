@@ -12,7 +12,7 @@ export class RagInventoryService {
     propertyType?: string
   ): Promise<string> {
     try {
-      let query = adminDb.collection("units").where("status", "==", "available");
+      const query = adminDb.collection("units").where("status", "==", "available");
 
       // We cannot easily do multiple inequality/OR queries in Firestore without a compound index.
       // We will fetch up to 20 available units and filter them in-memory to keep it robust and fast.
