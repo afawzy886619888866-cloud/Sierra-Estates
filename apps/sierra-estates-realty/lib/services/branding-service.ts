@@ -30,7 +30,7 @@ export class BrandingService {
       try {
         const sharpModule = await import('sharp');
         sharp = sharpModule.default || sharpModule;
-      } catch (err) {
+      } catch (_err) {
         // If native sharp binary fails to load, upload original buffer without watermark
         const uploadUrl = await StorageService.uploadPropertyMedia(
           docId,
