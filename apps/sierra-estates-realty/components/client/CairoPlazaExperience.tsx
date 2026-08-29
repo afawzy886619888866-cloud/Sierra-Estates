@@ -138,6 +138,91 @@ const realEvidence: EvidenceImage[] = [
   },
 ];
 
+type AdCampaign = {
+  src: string;
+  badgeEn: string;
+  badgeAr: string;
+  titleEn: string;
+  titleAr: string;
+  descEn: string;
+  descAr: string;
+  ref: string;
+};
+
+const officialAdCampaigns: AdCampaign[] = [
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-retail.jpg',
+    badgeEn: 'RETAIL & COMMERCIAL',
+    badgeAr: 'محلات ومقرات تجارية',
+    titleEn: 'Cairo Plaza Retail Flagship',
+    titleAr: 'كايرو بلازا — واجهات ومحلات تجارية',
+    descEn: 'Prime retail units & commercial flagship spaces with maximum footfall.',
+    descAr: 'مساحات مرنة تناسب كبرى العلامات التجارية والأنشطة الحيوية.',
+    ref: 'REF: SE-CP-RETAIL',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-office.jpg',
+    badgeEn: 'OFFICES & CLINICS',
+    badgeAr: 'مكاتب إدارية وعيادات',
+    titleEn: 'Administrative HQ & Medical Suites',
+    titleAr: 'كايرو بلازا — مقرات إدارية وعيادات طبية',
+    descEn: 'Modern corporate offices & clinics with 24/7 security and hotel-grade lobbies.',
+    descAr: 'مكاتب إدارية فاخرة وعيادات طبية متخصصة مع مداخل فندقية مستقلة.',
+    ref: 'REF: SE-CP-OFFICE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-roi.jpg',
+    badgeEn: 'MAXIMUM ROI',
+    badgeAr: 'أعلى عائد استثماري',
+    titleEn: 'Guaranteed Rental Yield & Capital Growth',
+    titleAr: 'استثمارك المضمون بعائد إيجاري فوري',
+    descEn: 'Long-term corporate tenant security with high capital appreciation.',
+    descAr: 'عائد إيجاري دوري مرتفع مع نمو متواصل للقيمة الرأسمالية.',
+    ref: 'REF: SE-CP-ROI',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-location.jpg',
+    badgeEn: 'STRATEGIC LOCATION',
+    badgeAr: 'موقع استراتيجي',
+    titleEn: '1 Minute from Al-Mataria Metro Station',
+    titleAr: 'دقيقة واحدة من محطة مترو المطرية',
+    descEn: 'Seamless transit accessibility from Cairo’s prime hubs and expressways.',
+    descAr: 'موقع حيوي يربط مشروعك بكافة محاور وشرايين القاهرة الكبرى.',
+    ref: 'REF: SE-CP-LOC',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-delivery.jpg',
+    badgeEn: 'IMMEDIATE DELIVERY',
+    badgeAr: 'استلام فوري وتسهيلات',
+    titleEn: 'Ready-to-Operate Units & Flexible Financing',
+    titleAr: 'استلام فوري وتسهيلات سداد بدون فوائد',
+    descEn: 'Immediate handover with flexible installment structures and cash discounts.',
+    descAr: 'ابدأ نشاطك اليوم فوراً مع خطط سداد ميسرة وخصومات للكاش.',
+    ref: 'REF: SE-CP-DELIVERY',
+  },
+  {
+    src: '/cairo-plaza/ads/sierra-ad-cairo-plaza.jpg',
+    badgeEn: 'SIERRA-ESTATES.NET',
+    badgeAr: 'منصة SIERRA-ESTATES.NET',
+    titleEn: 'Official Sierra Estates Institutional Listing',
+    titleAr: 'الطرح الرسمي عبر منصة سيراليون إستيتس',
+    descEn: 'Verified property listing and digital advisory mandate on sierra-estates.net.',
+    descAr: 'العقار موثق بالكامل ومتاح للحجز المباشر عبر البوابة الرسمية.',
+    ref: 'REF: SE-CP-101',
+  },
+  {
+    src: '/cairo-plaza/ads/sierra-ad-portal.jpg',
+    badgeEn: 'GLOBAL PORTFOLIO',
+    badgeAr: 'المحفظة العقارية الشاملة',
+    titleEn: 'Sierra Estates Institutional Portal',
+    titleAr: 'بوابتك الأولى للاستثمار العقاري الفاخر',
+    descEn: 'Institutional advisory & multi-asset commercial portfolio management.',
+    descAr: 'محفظة متكاملة من الأصول التجارية والإدارية والسكنية الفاخرة.',
+    ref: 'REF: SE-PORTAL-2026',
+  },
+];
+
+
 const copy = {
   en: {
     overview: {
