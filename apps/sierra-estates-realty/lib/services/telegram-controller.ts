@@ -89,11 +89,12 @@ async function cmdLeads(chatId: string) {
     let text = `👥 <b>Top CRM Stakeholders (${leadsSnap.size} total):</b>\n\n`;
 
     leads.forEach((l, idx) => {
-      const budget = l.preferences?.budget ? `${formatEGP(l.preferences.budget)}` : 'N/A';
-      const status = l.status || 'Active';
-      text += `${idx + 1}. <b>${l.name}</b> (${status})\n` +
+      const budget = l.budget ? `${formatEGP(l.budget)}` : 'N/A';
+      const stage = l.stage || 'inbound';
+      const target = l.preferencedCompounds?.[0] || l.preferredLocations?.[0] || 'New Cairo';
+      text += `${idx + 1}. <b>${l.name}</b> (Stage: ${stage})\n` +
               `   💰 Budget: ${budget} | 📱 ${l.phone || l.email || 'Direct'}\n` +
-              `   📍 Target: ${l.preferences?.compound || l.preferences?.location || 'New Cairo'}\n\n`;
+              `   📍 Target: ${target}\n\n`;
     });
 
     await sendTelegramMessage(text, chatId);
@@ -111,7 +112,7 @@ async function cmdInventory(chatId: string) {
     }
 
     const units = unitsSnap.docs.map(d => d.data() as Unit);
-    const activeUnits = units.filter(u => u.status !== 'archived' && u.status !== 'flagged_stale');
+    const activeUnits = units.filter(u => u.status === 'available');
     const avgPrice = activeUnits.length > 0
       ? activeUnits.reduce((acc, u) => acc + (u.price || 0), 0) / activeUnits.length
       : 0;
@@ -120,7 +121,7 @@ async function cmdInventory(chatId: string) {
                  `• Total Assets: <b>${units.length}</b>\n` +
                  `• Active / Available: <b>${activeUnits.length}</b>\n` +
                  `• Average Asset Price: <b>${formatEGP(avgPrice)}</b>\n` +
-                 `• Stale / Flagged: <b>${units.length - activeUnits.length}</b>\n\n` +
+                 `• Off-market / Reserved: <b>${units.length - activeUnits.length}</b>\n\n` +
                  `<i>Send /maintenance to audit and archive stale units.</i>`;
 
     await sendTelegramMessage(text, chatId);
