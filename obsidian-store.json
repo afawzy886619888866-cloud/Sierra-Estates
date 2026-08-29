@@ -7026,5 +7026,79 @@
     ],
     "createdAt": "2026-08-29T01:46:44.242Z",
     "updatedAt": "2026-08-29T01:46:44.242Z"
+  },
+  "task-exec-1787978368945-iqesc": {
+    "id": "task-exec-1787978368945-iqesc",
+    "value": {
+      "prompt": "Analyze Mivida market",
+      "result": {
+        "topic": "Market Liquidity & Pricing Trends — Mivida",
+        "headline": "Strong Secondary Resale Demand Detected in Mivida",
+        "sentiment": "bullish",
+        "confidence": 0.94,
+        "dataPoints": [
+          {
+            "label": "Active Monitored Units",
+            "value": 150
+          },
+          {
+            "label": "Average Price / Sqm (Finished)",
+            "value": "62,500 EGP"
+          },
+          {
+            "label": "Projected 12M Capital Growth",
+            "value": "+24.5%"
+          },
+          {
+            "label": "Gross Rental Yield",
+            "value": "8.4%"
+          }
+        ],
+        "recommendedAction": "Target direct-owner cash buyers with high urgency listings in Mivida and Hyde Park."
+      }
+    },
+    "tags": [
+      "resale",
+      "compound-analysis"
+    ],
+    "createdAt": "2026-08-29T04:39:28.948Z",
+    "updatedAt": "2026-08-29T04:39:28.948Z"
+  },
+  "task-exec-1787978395130-0dytl": {
+    "id": "task-exec-1787978395130-0dytl",
+    "value": {
+      "prompt": "Analyze Mivida market",
+      "result": {
+        "topic": "Market Liquidity & Pricing Trends — Mivida",
+        "headline": "Strong Secondary Resale Demand Detected in Mivida",
+        "sentiment": "bullish",
+        "confidence": 0.94,
+        "dataPoints": [
+          {
+            "label": "Active Monitored Units",
+            "value": 150
+          },
+          {
+            "label": "Average Price / Sqm (Finished)",
+            "value": "62,500 EGP"
+          },
+          {
+            "label": "Projected 12M Capital Growth",
+            "value": "+24.5%"
+          },
+          {
+            "label": "Gross Rental Yield",
+            "value": "8.4%"
+          }
+        ],
+        "recommendedAction": "Target direct-owner cash buyers with high urgency listings in Mivida and Hyde Park."
+      }
+    },
+    "tags": [
+      "resale",
+      "compound-analysis"
+    ],
+    "createdAt": "2026-08-29T04:39:55.137Z",
+    "updatedAt": "2026-08-29T04:39:55.137Z"
   }
 }
