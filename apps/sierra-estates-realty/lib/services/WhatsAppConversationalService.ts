@@ -62,7 +62,27 @@ CORE IDENTITY & KNOWLEDGE:
         parts: [{ text: msg.content }],
       }));
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: this.SYSTEM_PROMPT });
+      // Unified Memory: Fetch Stakeholder Profile & Inject RAG Inventory Context
+      const cleanPhone = sender.replace(/[^0-9+]/g, '');
+      const stakeholderDoc = await adminDb.collection('stakeholders').doc(cleanPhone).get();
+      
+      let dynamicSystemPrompt = this.SYSTEM_PROMPT;
+      
+      if (stakeholderDoc.exists) {
+        const data = stakeholderDoc.data() || {};
+        const budget = data.preferences?.budget;
+        const compound = data.preferences?.compound;
+        const unitType = data.preferences?.unitType;
+        
+        dynamicSystemPrompt += `\n\nCLIENT CONTEXT (MEMORY):\n- Name: ${data.name || 'Unknown'}\n- Budget: ${budget || 'Unknown'} EGP\n- Preferences: ${compound || 'Any compound'}, ${unitType || 'any unit'}\n- AI Notes: ${data.aiSummary || 'New lead'}`;
+        
+        const { RagInventoryService } = await import('./rag-inventory-service');
+        const ragContext = await RagInventoryService.getMatchedInventoryContext(budget, compound, unitType);
+        
+        dynamicSystemPrompt += `\n\n${ragContext}`;
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
         history: geminiHistory,

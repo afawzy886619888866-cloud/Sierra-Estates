@@ -49,6 +49,8 @@ export async function handleTelegramCommand(command: string, args: string[], cha
       return await cmdScore(args[0], chatId);
     case 'matches':
       return await cmdMatches(args[0], chatId);
+    case 'recommend':
+      return await cmdRecommend(args[0], chatId);
     case 'approve':
       return await cmdApprove(args[0], chatId);
     case 'maintenance':
@@ -66,6 +68,7 @@ export async function handleTelegramCommand(command: string, args: string[], cha
         "• <code>/inventory</code> — View live portfolio inventory stats\n" +
         "• <code>/score [unitId]</code> — Strategic valuation & legal risk assessment\n" +
         "• <code>/matches [unitId]</code> — Find matched buyers for a signature asset\n" +
+        "• <code>/recommend [leadId]</code> — Get RAG-curated inventory recommendations for a client\n" +
         "• <code>/approve [leadId]</code> — Authorize Stage-8 concierge gallery deployment\n" +
         "• <code>/maintenance</code> — Run strategic portfolio hygiene & flag stale units",
         chatId
@@ -209,4 +212,34 @@ async function cmdApprove(leadId: string, chatId: string) {
   await OrchestratorService.runPipeline(leadId, 'stakeholders');
 
   await sendTelegramMessage(`✅ <b>Approved.</b> Concierge Gallery generated and deployed to Stakeholder. Deployment status: <code>active</code>.`);
+}
+async function cmdRecommend(leadId: string, chatId: string) {
+  if (!leadId) return sendTelegramMessage("Please provide a Stakeholder ID. Usage: /recommend [id]", chatId);
+
+  try {
+    const leadRef = doc(db, COLLECTIONS.stakeholders, leadId);
+    const leadSnap = await getDoc(leadRef);
+    if (!leadSnap.exists()) return sendTelegramMessage("Stakeholder not found.", chatId);
+    
+    const leadData = leadSnap.data();
+    const budget = leadData.preferences?.budget;
+    const compound = leadData.preferences?.compound;
+    const unitType = leadData.preferences?.unitType;
+    
+    // We import dynamically because RagInventoryService uses adminDb
+    // Warning: Since telegram-controller uses client SDK mostly, mixing them on the backend is OK if environment is Next.js server route
+    const { RagInventoryService } = await import('./rag-inventory-service');
+    const ragContext = await RagInventoryService.getMatchedInventoryContext(budget, compound, unitType);
+
+    const text = `🎯 <b>RAG Recommendations for ${leadData.name}:</b>\n\n` +
+                 `Budget: ${budget || 'Any'}\n` +
+                 `Compound: ${compound || 'Any'}\n\n` +
+                 `<pre>${ragContext}</pre>\n\n` +
+                 `<i>Data pulled live from Master Inventory via RAG engine.</i>`;
+
+    await sendTelegramMessage(text, chatId);
+  } catch (err) {
+    console.error('[Telegram] cmdRecommend error:', err);
+    await sendTelegramMessage("❌ Failed to generate RAG recommendations.", chatId);
+  }
 }
