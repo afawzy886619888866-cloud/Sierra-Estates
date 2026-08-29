@@ -19,7 +19,7 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules",
+    "rules": "apps/sierra-estates-realty/firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "storage": {

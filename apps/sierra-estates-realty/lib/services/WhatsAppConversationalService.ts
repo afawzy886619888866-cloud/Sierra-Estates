@@ -62,7 +62,27 @@ CORE IDENTITY & KNOWLEDGE:
         parts: [{ text: msg.content }],
       }));
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: this.SYSTEM_PROMPT });
+      // Unified Memory: Fetch Stakeholder Profile & Inject RAG Inventory Context
+      const cleanPhone = sender.replace(/[^0-9+]/g, '');
+      const stakeholderDoc = await adminDb.collection('stakeholders').doc(cleanPhone).get();
+      
+      let dynamicSystemPrompt = this.SYSTEM_PROMPT;
+      
+      if (stakeholderDoc.exists) {
+        const data = stakeholderDoc.data() || {};
+        const budget = data.preferences?.budget;
+        const compound = data.preferences?.compound;
+        const unitType = data.preferences?.unitType;
+        
+        dynamicSystemPrompt += `\n\nCLIENT CONTEXT (MEMORY):\n- Name: ${data.name || 'Unknown'}\n- Budget: ${budget || 'Unknown'} EGP\n- Preferences: ${compound || 'Any compound'}, ${unitType || 'any unit'}\n- AI Notes: ${data.aiSummary || 'New lead'}`;
+        
+        const { RagInventoryService } = await import('./rag-inventory-service');
+        const ragContext = await RagInventoryService.getMatchedInventoryContext(budget, compound, unitType);
+        
+        dynamicSystemPrompt += `\n\n${ragContext}`;
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
         history: geminiHistory,
@@ -89,11 +109,95 @@ CORE IDENTITY & KNOWLEDGE:
       }, { merge: true });
 
       logger.info(`✅ AI Response sent and saved to ECC memory for ${sender}`);
+
+      // Asynchronous Lead Qualification & CRM Upsert (non-blocking)
+      this.qualifyAndSyncLead(sender, updatedMessages).catch(err => {
+        logger.error(`⚠️ [WhatsAppConversationalService] Lead sync error for ${sender}:`, err);
+      });
+
       return replyText;
 
     } catch (error) {
       logger.error("❌ Neural Conversation Failure:", error);
       return "I'm having a little trouble connecting to my database right now. One of our senior brokers will reach out to you shortly.";
+    }
+  }
+
+  /**
+   * Background AI Lead Qualification & CRM Ingestion
+   */
+  private static async qualifyAndSyncLead(sender: string, messages: ECCMessage[]): Promise<void> {
+    if (messages.length < 2) return;
+
+    try {
+      const recentHistoryText = messages
+        .slice(-10)
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join('\n');
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `Analyze this real estate WhatsApp conversation and extract structured lead intelligence.
+CONVERSATION:
+${recentHistoryText}
+
+Respond ONLY with a JSON object:
+{
+  "isQualified": boolean,
+  "clientName": string,
+  "intent": "buyer" | "seller" | "renter" | "investor" | "general",
+  "compound": string,
+  "unitType": "apartment" | "villa" | "townhouse" | "duplex" | "penthouse" | "chalet" | "commercial" | "any",
+  "budgetEGP": number,
+  "priorityScore": number (1-100),
+  "urgency": "immediate" | "soon" | "casual",
+  "summary": string
+}`;
+
+      const res = await model.generateContent(prompt);
+      const text = (await res.response).text().replace(/```json|```/g, "").trim();
+      const intel = JSON.parse(text);
+
+      if (intel.isQualified) {
+        const cleanPhone = sender.replace(/[^0-9+]/g, '');
+        const leadRef = adminDb.collection('stakeholders').doc(cleanPhone);
+        const existingSnap = await leadRef.get();
+
+        const leadData = {
+          name: intel.clientName && intel.clientName !== 'unknown' ? intel.clientName : (existingSnap.data()?.name || `WhatsApp Client (${cleanPhone.slice(-4)})`),
+          phone: cleanPhone,
+          channel: 'whatsapp',
+          status: 'qualified',
+          intent: intel.intent,
+          priorityScore: intel.priorityScore || 70,
+          preferences: {
+            compound: intel.compound || 'Any',
+            unitType: intel.unitType || 'any',
+            budget: intel.budgetEGP || 0,
+            urgency: intel.urgency || 'soon',
+          },
+          aiSummary: intel.summary,
+          updatedAt: Timestamp.now(),
+          createdAt: existingSnap.exists ? existingSnap.data()?.createdAt : Timestamp.now(),
+        };
+
+        await leadRef.set(leadData, { merge: true });
+        logger.info(`🎯 [CRM] Upserted WhatsApp lead for ${cleanPhone} (Score: ${intel.priorityScore})`);
+
+        // If high priority (Score >= 80 or budget >= 15M EGP), notify Brokers via Telegram
+        if (intel.priorityScore >= 80 || (intel.budgetEGP && intel.budgetEGP >= 15000000)) {
+          const { TelegramAlertService } = await import('./telegram-alert-service');
+          await TelegramAlertService.sendVipMatchAlert({
+            leadName: leadData.name,
+            propertyTitle: `${intel.compound || 'Luxury Compound'} (${intel.unitType || 'Prime Asset'})`,
+            matchScore: intel.priorityScore,
+            budget: intel.budgetEGP ? `${(intel.budgetEGP / 1000000).toFixed(1)}M EGP` : 'Flexible / High Net Worth',
+            proposalUrl: `https://admin.sierra-estates.net/leads`,
+            roi: 'High Propensity'
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn(`Could not qualify lead for ${sender}:`, err);
     }
   }
 }

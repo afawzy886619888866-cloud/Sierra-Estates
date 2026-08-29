@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://gist.githubusercontent.com/sargunv/c2ca41a08391cd06feaad97aece309e4/raw/empty-json-schema.json
 name: Deploy · Vercel
 
 # Deploys Sierra Estates to Vercel (Client and Admin projects):
@@ -46,7 +47,7 @@ on:
 
 concurrency:
   group: vercel-deploy-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   VERCEL_CLI_VERSION: 'latest'
@@ -99,8 +100,8 @@ jobs:
           # Git deployments are disabled in vercel.json, so silently skipping
           # this job would leave main undeployed. Fail visibly instead.
           if [ -z "$TOKEN" ]; then
-            echo "::notice::VERCEL_TOKEN repo secret is not set — skipping CLI deployment step. Vercel native Git integration handles deployments."
-            exit 0
+            echo "::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository"
+            exit 1
           fi
 
           echo "VERCEL_ORG_ID=$ORG_ID"     >> $GITHUB_ENV
