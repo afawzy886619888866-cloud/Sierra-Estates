@@ -82,7 +82,7 @@ CORE IDENTITY & KNOWLEDGE:
         dynamicSystemPrompt += `\n\n${ragContext}`;
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: dynamicSystemPrompt });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash", systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
         history: geminiHistory,
@@ -135,7 +135,7 @@ CORE IDENTITY & KNOWLEDGE:
         .map(m => `${m.role.toUpperCase()}: ${m.content}`)
         .join('\n');
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
       const prompt = `Analyze this real estate WhatsApp conversation and extract structured lead intelligence.
 CONVERSATION:
 ${recentHistoryText}
