@@ -110,7 +110,7 @@ async function handleCommand(text: string, chatId: number | string, senderName: 
     try {
       const genAI = new GoogleGenerativeAI(GEMINI_KEY);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3.6-flash',
         systemInstruction:
           'You are Aria, the Senior Real Estate Intelligence Advisor for Sierra Estates in Egypt. Respond concisely and professionally with accurate facts about New Cairo, Golden Square, and luxury developments.',
       });
