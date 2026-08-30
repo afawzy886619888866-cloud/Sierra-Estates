@@ -144,35 +144,6 @@ jobs:
           echo "name=$ENV" >> "$GITHUB_OUTPUT"
           [ "$ENV" = "production" ] && echo "flag=--prod" >> "$GITHUB_OUTPUT" || echo "flag=" >> "$GITHUB_OUTPUT"
 
-<<<<<<< HEAD
-      # ── P0 GATE: refuse to build/deploy PRODUCTION without required secrets ──
-      # Fails fast instead of shipping a build that silently runs in limited mode
-      # (no lead writes, admin auth, or cron). Preview deploys are intentionally
-      # exempt so they stay usable for testing. Public NEXT_PUBLIC_* Firebase
-      # values fall back to the same non-secret literals the sync step uses, so
-      # this gates only on genuinely-missing server secrets. Audit P0.
-      - name: Verify production env readiness (P0 gate)
-        if: steps.target.outputs.name == 'production'
-        env:
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs' }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'sierra-blu.firebaseapp.com' }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-blu' }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'sierra-blu.firebasestorage.app' }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '941030513456' }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID || '1:941030513456:web:56209a1495d69f217086f5' }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-          SBR_SECRET_KEY: ${{ secrets.SBR_SECRET_KEY }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU || secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || 'sierra-blu' }}
-          FIREBASE_CLIENT_EMAIL: ${{ vars.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
-          PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        run: node scripts/verify-env-readiness.mjs
-=======
       - name: Validate deployment prerequisites
         env:
           SECRETS_JSON: ${{ toJson(secrets) }}
@@ -198,7 +169,6 @@ jobs:
             printf '::error::Production deployment blocked. Missing GitHub secrets: %s\n' "$(IFS=', '; echo "${missing[*]}")"
             exit 1
           fi
->>>>>>> ff124d70640dfba7ff46ac27ff28935946bc1e28
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
       - name: Normalize Vercel project settings

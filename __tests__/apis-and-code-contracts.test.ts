@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { leadSchema } from '../apps/sierra-estates-realty/app/api/leads/route';
+import { leadCreateSchema as leadSchema } from '../apps/sierra-estates-realty/lib/server/schemas';
 import { InstallmentCalculator } from '../packages/agents-core/src/installment-calculator';
 
 describe('APIs & Code Contracts Test Suite', () => {
