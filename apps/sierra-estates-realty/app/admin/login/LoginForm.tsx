@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
 import { isAdminPortalRole } from '@/lib/types';
 import '../admin-portal.css';
