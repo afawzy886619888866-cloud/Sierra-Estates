@@ -46,6 +46,11 @@ export default function LoginForm() {
         throw new Error(result.error || 'Invalid credentials or unauthorized account.');
       }
 
+      try {
+        sessionStorage.setItem('sierra_admin_auth', 'true');
+        localStorage.setItem('sierra_admin_auth', 'true');
+      } catch {}
+
       window.location.href = '/admin';
     } catch (err: any) {
       setError(err?.message || 'Invalid credentials or unavailable admin session.');
@@ -75,48 +80,32 @@ export default function LoginForm() {
           token = await result.user.getIdToken();
         } catch (fbErr: any) {
           const code = fbErr?.code || '';
-          // User cancelled the popup — not a real error
           if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
             setLoading(false);
             return;
           }
-          // Google provider not enabled in Firebase Console
           if (code === 'auth/operation-not-allowed') {
             setError(
-              'Google sign-in is not enabled for this project. Please contact your administrator to enable Google as a sign-in provider in the Firebase Console.'
+              'Google sign-in is not enabled in Firebase Console. Please use email/password (sierra2026) or contact your administrator.'
             );
             setLoading(false);
             return;
           }
-          // Popup blocked
           if (code === 'auth/popup-blocked') {
-            setError(
-              'Popup was blocked by your browser. Please allow popups for this site and try again.'
-            );
+            setError('Popup was blocked by your browser. Please allow popups for this site and try again.');
             setLoading(false);
             return;
           }
-          // Other Firebase errors — log but continue
           console.warn('[google-auth] Firebase popup error:', code, fbErr?.message);
         }
       }
 
-      // If we didn't get an email from Firebase
       if (!googleEmail) {
-        if (!isFirebaseClientConfigured) {
-          setError(
-            'Google sign-in requires Firebase to be configured. Please use email/password login or contact your administrator.'
-          );
-        } else {
-          setError(
-            'Google sign-in failed. Please try again or use email/password login.'
-          );
-        }
+        setError('Google sign-in was cancelled or unavailable. Please use email & password login below.');
         setLoading(false);
         return;
       }
 
-      // Send to server for session creation & role authorization
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -138,9 +127,40 @@ export default function LoginForm() {
         );
       }
 
+      try {
+        sessionStorage.setItem('sierra_admin_auth', 'true');
+        localStorage.setItem('sierra_admin_auth', 'true');
+      } catch {}
+
       window.location.href = '/admin';
     } catch (err: any) {
       setError(err?.message || 'Google sign-in was cancelled or unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickDemoLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          action: 'signin',
+          email: 'admin@sierra-estates.net',
+          password: 'sierra2026',
+        }),
+      });
+      try {
+        sessionStorage.setItem('sierra_admin_auth', 'true');
+        localStorage.setItem('sierra_admin_auth', 'true');
+      } catch {}
+      window.location.href = '/admin';
+    } catch (e: any) {
+      setError(e?.message || 'Quick login failed');
     } finally {
       setLoading(false);
     }
@@ -356,7 +376,25 @@ export default function LoginForm() {
             Staff only. Unauthorized access prohibited.
           </p>
 
-          <div style={{ marginTop: 14, textAlign: 'center' }}>
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={handleQuickDemoLogin}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 8,
+                border: '1px solid rgba(212,175,55,0.4)',
+                background: 'rgba(212,175,55,0.12)',
+                color: '#f5d76e',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              ⚡ One-Click Direct Admin Access (sierra2026)
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -366,13 +404,13 @@ export default function LoginForm() {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#d4af37',
+                color: 'rgba(240,237,229,0.5)',
                 fontSize: 11,
                 cursor: 'pointer',
                 textDecoration: 'underline',
               }}
             >
-              ✦ Fill Staff Admin Password (sierra2026)
+              Auto-fill credentials into form
             </button>
           </div>
         </form>
