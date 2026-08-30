@@ -182,6 +182,14 @@ export class WhatsAppParserService {
           adminDb.collection(COLLECTIONS.brokerListings).add(signal),
           new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 2000)),
         ]);
+
+        if (media && docRef?.id) {
+          try {
+            const mediaUrl = await StorageService.uploadPropertyMedia(docRef.id, media.data, media.mimeType);
+            await docRef.update({ mediaUrls: [mediaUrl], 'intelligence.hasVisualReference': true });
+          } catch {}
+        }
+
         return { id: docRef.id, data: extractedData, isDuplicate: !!duplicateId };
       } catch {
         return { id: signalId, data: extractedData, isDuplicate: false };
