@@ -2770,5 +2770,22 @@
     ],
     "createdAt": "2026-08-30T22:17:30.155Z",
     "updatedAt": "2026-08-30T22:17:30.155Z"
+  },
+  "agents-status-manifest": {
+    "id": "agents-status-manifest",
+    "value": {
+      "openclaw": "active",
+      "vertexOmni": "active",
+      "whatsappConcierge": "active",
+      "stage9Closer": "active",
+      "deploymentOps": "ready",
+      "lastActivatedAt": "2026-08-30T22:36:10.410Z"
+    },
+    "tags": [
+      "agents-fleet",
+      "status-manifest"
+    ],
+    "createdAt": "2026-08-30T22:36:10.411Z",
+    "updatedAt": "2026-08-30T22:36:10.411Z"
   }
 }
