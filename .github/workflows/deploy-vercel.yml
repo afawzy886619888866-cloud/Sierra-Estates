@@ -1,4 +1,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# IDE NOTE: secrets/vars context warnings are false positives — this repo uses runtime-resolved
+# GitHub Actions secrets that cannot be statically verified offline.
+# Validation is disabled in .vscode/settings.json via github-actions.workflows.validations.enabled: false
 name: Deploy · Vercel
 
 # Deploys Sierra Estates to Vercel (Client and Admin projects):
