@@ -1009,8 +1009,8 @@
       },
       "data": {
         "userMessage": "Hello! I am looking for a 3-bedroom villa in Mivida New Cairo with private garden, budget up to 40M EGP.",
-        "modelReply": "Welcome to Sierra Estates. I would be",
-        "timestamp": "2026-08-30T06:29:40.513Z"
+        "modelReply": "Good day! You’ve reached **Hermes",
+        "timestamp": "2026-08-30T06:30:12.178Z"
       }
     },
     "tags": [
@@ -1021,7 +1021,7 @@
       "+201099887766"
     ],
     "createdAt": "2026-08-30T06:29:40.514Z",
-    "updatedAt": "2026-08-30T06:29:40.514Z"
+    "updatedAt": "2026-08-30T06:30:12.179Z"
   },
   "lead:+201099887766:intelligence": {
     "id": "lead:+201099887766:intelligence",
