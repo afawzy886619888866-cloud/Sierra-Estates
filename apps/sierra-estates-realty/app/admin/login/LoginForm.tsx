@@ -30,17 +30,6 @@ export default function LoginForm() {
     setError('');
     setLoading(true);
     try {
-      let token: string | undefined;
-
-      if (isFirebaseClientConfigured) {
-        try {
-          const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-          token = await credential.user.getIdToken();
-        } catch (fbErr: any) {
-          console.warn('[login] Firebase client sign-in failed, trying server auth:', fbErr?.message);
-        }
-      }
-
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -49,13 +38,12 @@ export default function LoginForm() {
           action: 'signin',
           email: email.trim(),
           password,
-          token,
         }),
       });
 
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'Unable to create an admin session.');
+        throw new Error(result.error || 'Invalid credentials or unauthorized account.');
       }
 
       window.location.href = '/admin';
