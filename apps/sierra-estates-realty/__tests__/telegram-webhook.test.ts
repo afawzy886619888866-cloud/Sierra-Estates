@@ -1,16 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '../app/api/webhooks/telegram/route';
 import * as telegramController from '../lib/services/telegram-controller';
 
-vi.mock('../lib/services/telegram-controller', () => ({
-  handleTelegramCommand: vi.fn().mockResolvedValue(undefined),
-  sendTelegramMessage: vi.fn().mockResolvedValue(undefined),
+jest.mock('../lib/services/telegram-controller', () => ({
+  handleTelegramCommand: jest.fn().mockResolvedValue(undefined),
+  sendTelegramMessage: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('Telegram Webhook Route', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     delete process.env.TELEGRAM_WEBHOOK_SECRET;
   });
 

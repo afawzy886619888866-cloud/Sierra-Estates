@@ -33,7 +33,13 @@ export async function proxy(request: NextRequest) {
     isRewritten = true;
   }
 
-  // 0b) Admin route protection & host split
+  // 0b) Host split: on the client host, redirect /admin requests to the admin host
+  if (!onAdminHost && Boolean(adminHost) && targetPath.startsWith('/admin')) {
+    const destination = new URL(targetPath, `https://${adminHost}`);
+    return NextResponse.redirect(destination, 307);
+  }
+
+  // 0c) Admin route protection
   if (targetPath.startsWith('/admin')) {
     // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
