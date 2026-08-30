@@ -25,12 +25,29 @@ export default function AdminLayout({
     let cancelled = false;
 
     const verifyAccess = async () => {
+      // 0. Quick client-side check if previously signed in
+      try {
+        if (typeof window !== 'undefined') {
+          const clientAuth = sessionStorage.getItem('sierra_admin_auth') || localStorage.getItem('sierra_admin_auth');
+          if (clientAuth === 'true') {
+            if (!cancelled) {
+              setIsAuth(true);
+              setIsLoading(false);
+            }
+          }
+        }
+      } catch {}
+
       // 1. Check server-side session cookie via /api/auth (primary source of truth)
       try {
-        const res = await fetch('/api/auth', { cache: 'no-store' });
+        const res = await fetch('/api/auth', { cache: 'no-store', credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           if (data.signedIn && isAdminPortalRole(data.role)) {
+            try {
+              sessionStorage.setItem('sierra_admin_auth', 'true');
+              localStorage.setItem('sierra_admin_auth', 'true');
+            } catch {}
             if (!cancelled) {
               setIsAuth(true);
               setIsLoading(false);
