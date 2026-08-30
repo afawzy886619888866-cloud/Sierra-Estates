@@ -9,7 +9,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
-      "@sierra-estates/obsidian": ["../obsidian/dist/index.d.ts", "../obsidian/src/index.ts"]
+      "@sierra-estates/obsidian": ["../obsidian/src/index.ts", "../obsidian/dist/index.d.ts"]
     }
   },
   "include": ["src"],
