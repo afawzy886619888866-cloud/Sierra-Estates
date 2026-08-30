@@ -21,6 +21,7 @@
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
         "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
+        "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
         "run-harness": "tsx scripts/run-harness.ts",
         "harness:eval": "tsx scripts/run-harness.ts",
