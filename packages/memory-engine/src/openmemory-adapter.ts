@@ -84,7 +84,7 @@ export class OpenMemoryAdapter {
       clearTimeout(timer);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { id?: string; memory_id?: string };
         return {
           id: data.id || data.memory_id || `om-${Date.now()}`,
           success: true,
@@ -136,7 +136,9 @@ export class OpenMemoryAdapter {
       clearTimeout(timer);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as
+          | Array<Record<string, unknown>>
+          | { results?: Array<Record<string, unknown>>; memories?: Array<Record<string, unknown>> };
         const results = Array.isArray(data) ? data : data.results || data.memories || [];
         return results.map((item: any) => ({
           id: item.id || item.memory_id || 'unknown',
