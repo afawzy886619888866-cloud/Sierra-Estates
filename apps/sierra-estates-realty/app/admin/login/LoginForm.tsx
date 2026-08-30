@@ -77,23 +77,59 @@ export default function LoginForm() {
       let token: string | undefined;
 
       if (isFirebaseClientConfigured) {
+        // Attempt Firebase Google popup sign-in
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
         try {
-          const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({ prompt: 'select_account' });
           const result = await signInWithPopup(auth, provider);
           googleEmail = result.user.email || '';
           googleName = result.user.displayName || '';
           googleUid = result.user.uid || '';
           token = await result.user.getIdToken();
         } catch (fbErr: any) {
-          console.warn('[google-auth] Firebase popup warning:', fbErr?.message);
+          const code = fbErr?.code || '';
+          // User cancelled the popup — not a real error
+          if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+            setLoading(false);
+            return;
+          }
+          // Google provider not enabled in Firebase Console
+          if (code === 'auth/operation-not-allowed') {
+            setError(
+              'Google sign-in is not enabled for this project. Please contact your administrator to enable Google as a sign-in provider in the Firebase Console.'
+            );
+            setLoading(false);
+            return;
+          }
+          // Popup blocked
+          if (code === 'auth/popup-blocked') {
+            setError(
+              'Popup was blocked by your browser. Please allow popups for this site and try again.'
+            );
+            setLoading(false);
+            return;
+          }
+          // Other Firebase errors — log but continue to server fallback
+          console.warn('[google-auth] Firebase popup error:', code, fbErr?.message);
         }
       }
 
+      // If we didn't get an email from Firebase, we can't authenticate via Google
       if (!googleEmail) {
-        googleEmail = email.trim() || 'admin@sierra-estates.net';
+        if (!isFirebaseClientConfigured) {
+          setError(
+            'Google sign-in requires Firebase to be configured. Please use email/password login or contact your administrator.'
+          );
+        } else {
+          setError(
+            'Google sign-in failed. Please try again or use email/password login.'
+          );
+        }
+        setLoading(false);
+        return;
       }
 
+      // Send to server for session creation
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -110,7 +146,9 @@ export default function LoginForm() {
 
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
-        throw new Error(result.error || 'Unable to establish Google admin session.');
+        throw new Error(
+          result.error || 'Your Google account is not authorized for the admin portal.'
+        );
       }
 
       router.replace('/admin');
@@ -172,7 +210,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Google Mail Admin Sign-in Button */}
+        {/* ── Google Sign-In Button ─────────────────────────── */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -216,9 +254,10 @@ export default function LoginForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Sign In with Google Mail / الدخول ببريد جوجل</span>
+          <span>Sign In with Google / الدخول ببريد جوجل</span>
         </button>
 
+        {/* ── Divider ──────────────────────────────────────── */}
         <div
           style={{
             display: 'flex',
@@ -234,6 +273,7 @@ export default function LoginForm() {
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
 
+        {/* ── Email/Password Form ─────────────────────────── */}
         <form onSubmit={handleSubmit}>
           <label
             style={{
@@ -330,23 +370,7 @@ export default function LoginForm() {
             Staff only. Unauthorized access prohibited.
           </p>
 
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              style={{
-                background: 'rgba(66, 133, 244, 0.12)',
-                border: '1px solid rgba(66, 133, 244, 0.3)',
-                borderRadius: 6,
-                color: '#5FC9FF',
-                fontSize: 11,
-                padding: '6px 10px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              ✦ Quick Login with Admin Google Mail
-            </button>
+          <div style={{ marginTop: 14, textAlign: 'center' }}>
             <button
               type="button"
               onClick={() => {
@@ -370,3 +394,4 @@ export default function LoginForm() {
     </div>
   );
 }
+
