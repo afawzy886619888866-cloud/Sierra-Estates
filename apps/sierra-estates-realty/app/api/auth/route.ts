@@ -103,14 +103,21 @@ export async function POST(req: Request) {
       }
     }
 
-    // Path B — Google Sign-In Direct Fallback (Google Mail / Google Auth)
-    if (body.provider === 'google' || (targetEmail && (targetEmail.endsWith("@gmail.com") || targetEmail.endsWith("@googlemail.com")) && !password)) {
-      const googleEmail = targetEmail || 'admin@sierra-estates.net';
+    // Path B — Google Sign-In Direct Fallback (Firebase popup succeeded but
+    // Admin SDK verification failed or isn't configured). Only approved
+    // admin emails are allowed — no blanket @gmail.com access.
+    if (body.provider === 'google' && targetEmail) {
+      if (!isAdminEmail(targetEmail)) {
+        return NextResponse.json(
+          { error: `The Google account "${targetEmail}" is not authorized for the admin portal. Contact your administrator to add this email to the approved list.` },
+          { status: 403 }
+        );
+      }
       const googleRole: Role = "admin";
       const sess = await signSession({
-        uid: body.uid || `google-${googleEmail.replace(/[^a-z0-9]/g, "-")}`,
-        email: googleEmail,
-        name: body.name || googleEmail.split("@")[0] || "Executive Admin",
+        uid: body.uid || `google-${targetEmail.replace(/[^a-z0-9]/g, "-")}`,
+        email: targetEmail,
+        name: body.name || targetEmail.split("@")[0] || "Executive Admin",
         role: googleRole,
       });
       const res = NextResponse.json({ ok: true, role: googleRole });
