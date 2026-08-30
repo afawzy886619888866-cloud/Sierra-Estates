@@ -20,6 +20,7 @@
         "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
+        "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
         "run-harness": "tsx scripts/run-harness.ts",
         "harness:eval": "tsx scripts/run-harness.ts",
