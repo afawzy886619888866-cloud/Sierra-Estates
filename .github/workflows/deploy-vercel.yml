@@ -454,6 +454,17 @@ jobs:
             exit 1
           fi
 
+      - name: Post-deploy smoke test (client production)
+        if: steps.proj.outputs.skip != 'true' && matrix.role == 'client' && steps.target.outputs.name == 'production'
+        continue-on-error: true
+        env:
+          SMOKE_URL: ${{ steps.deploy_step.outputs.url }}
+          NEXT_PUBLIC_APP_URL: ${{ steps.deploy_step.outputs.url }}
+        run: |
+          echo "🔍 Running smoke test against $SMOKE_URL"
+          npx tsx scripts/deploy-smoke-test.ts || \
+            echo "::warning title=Smoke test warning::Deployment is live but smoke test flagged issues. Check $SMOKE_URL manually."
+
       - name: Attach production domain (${{ matrix.domain }})
         if: steps.proj.outputs.skip != 'true' && steps.target.outputs.name == 'production'
         run: |
