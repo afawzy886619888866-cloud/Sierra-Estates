@@ -58,8 +58,7 @@ export default function LoginForm() {
         throw new Error(result.error || 'Unable to create an admin session.');
       }
 
-      router.replace('/admin');
-      router.refresh();
+      window.location.href = '/admin';
     } catch (err: any) {
       setError(err?.message || 'Invalid credentials or unavailable admin session.');
     } finally {
@@ -151,8 +150,7 @@ export default function LoginForm() {
         );
       }
 
-      router.replace('/admin');
-      router.refresh();
+      window.location.href = '/admin';
     } catch (err: any) {
       setError(err?.message || 'Google sign-in was cancelled or unavailable.');
     } finally {
