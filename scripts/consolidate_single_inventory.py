@@ -5,8 +5,12 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.formatting.rule import CellIsRule
 
-SOURCE = Path('/home/ubuntu/whatsapp_inventory/merged_inventory/merged_rental_inventory.xlsx')
-OUT = Path('/home/ubuntu/whatsapp_inventory/merged_inventory/Sierra_Estates_All_Inventory_One_Sheet.xlsx')
+import os
+
+BASE_DIR = Path(__file__).parent.resolve()
+SOURCE = Path(os.environ.get('INVENTORY_SOURCE_PATH', BASE_DIR / 'merged_inventory' / 'merged_rental_inventory.xlsx'))
+OUT = Path(os.environ.get('INVENTORY_OUTPUT_PATH', BASE_DIR / 'merged_inventory' / 'Sierra_Estates_All_Inventory_One_Sheet.xlsx'))
+
 
 
 def read_formatted_sheet(ws):
