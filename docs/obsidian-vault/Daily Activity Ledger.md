@@ -1,4 +1,5 @@
 # 📅 Daily Activity Ledger: Operational Reports Template
+>
 > **Path:** `docs/obsidian-vault/Daily Activity Ledger.md`  
 > **Parent Node:** `[[Sierra Estates Memory Engine]]`
 
@@ -38,7 +39,7 @@ Every 24 hours, the system generates a new ledger entry with the following layou
 ---
 
 ## 📈 Yield Performance Tracking
-The n8n workflow monitors this ledger to generate weekly reports. If active leads drop or scraper failures occur, it triggers an immediate **Telegram Bot Alert** to keep the Egypt brokerage team fully informed.
 
+The n8n workflow monitors this ledger to generate weekly reports. If active leads drop or scraper failures occur, it triggers an immediate **Telegram Bot Alert** to keep the Egypt brokerage team fully informed.
 
 - **2026-07-28 00:30:12**: Codebase & Firebase synced. Branch: `main` | Commit: `80c1a9f7 - feat: implement admin listings management page with atomic CRUD operations for listings and owners (Ahmed Fawzy, 4 minutes ago)` | Firebase: `sierra-blu`

@@ -1,4 +1,5 @@
 # Sierra Estates — WhatsApp AI Agent
+
 ## Built on OpenWA (@open-wa/wa-automate) + Google Gemini AI
 
 > **⚠️ IMPORTANT:** Use a **dedicated phone number** for this bot. Never use your personal or primary business number — OpenWA uses WhatsApp Web automation which carries a small ban risk.
@@ -34,6 +35,7 @@ npm install
 ```
 
 This installs:
+
 - `@open-wa/wa-automate` — WhatsApp Web bridge
 - `@google/generative-ai` — Gemini AI SDK
 - `dotenv`, `express`, `nodemon`
@@ -45,6 +47,7 @@ npm start
 ```
 
 A **QR code** will appear in your terminal. Scan it with the **dedicated WhatsApp number**:
+
 - Open WhatsApp on the phone
 - Go to **Settings → Linked Devices → Link a Device**
 - Scan the QR code
@@ -54,11 +57,13 @@ A **QR code** will appear in your terminal. Scan it with the **dedicated WhatsAp
 ### Step 4 — Verify it works
 
 Send a message from **your admin number** to the bot number:
+
 ```
 /status
 ```
 
 You should get back:
+
 ```
 📡 Sierra Agent Status
 ✅ Status: ONLINE
@@ -71,6 +76,7 @@ You should get back:
 ### Step 5 — Test the AI
 
 Send any client query to the bot number (from a different phone):
+
 ```
 What's the price range for apartments in Hyde Park New Cairo?
 ```
@@ -84,7 +90,7 @@ The bot will reply in Gemini AI, with Sierra Estates context!
 All commands must be sent **from your admin WhatsApp number** (`WA_ADMIN_NUMBER`):
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `/help` | Show all available commands |
 | `/status` | Bot uptime, messages handled, AI model |
 | `/report` | Today's activity summary |
@@ -96,12 +102,14 @@ All commands must be sent **from your admin WhatsApp number** (`WA_ADMIN_NUMBER`
 | `/price <compound>` | Get compound price range from AI |
 | `/ask <question>` | Ask Gemini a direct question |
 
-### `/add` Examples:
+### `/add` Examples
+
 ```
 /add Villa Mivida 380sqm 15M 4beds ready
 /add Apartment Hyde Park 145sqm 4.5M 2beds under_construction
 /add Penthouse Fifth Square 220sqm 9M 3beds 2026delivery
 ```
+
 The AI automatically parses natural language details.
 
 ---
@@ -109,11 +117,13 @@ The AI automatically parses natural language details.
 ## 🤖 Group Features
 
 When added to a WhatsApp group, the bot:
+
 1. Sends a welcome message introducing itself
 2. Only responds when **mentioned** or when message starts with "Sierra"
 3. Can answer property questions from team members or clients in the group
 
 To mention the bot in a group:
+
 ```
 @Sierra what's the price of Villette apartments?
 Sierra, can you send a report?
@@ -145,7 +155,7 @@ packages/whatsapp-agent/
 ## ⚙️ Configuration Reference
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `GOOGLE_AI_API_KEY` | *(required)* | Gemini API key from AI Studio |
 | `WA_ADMIN_NUMBER` | *(required)* | Your WhatsApp number (digits only) |
 | `WA_TEAM_NUMBERS` | `""` | Comma-separated team numbers |
@@ -179,6 +189,7 @@ pm2 startup  # auto-start on system reboot
 ```
 
 Or use the included `docker-compose.yml`:
+
 ```powershell
 docker compose up -d sierra-wa-agent
 ```

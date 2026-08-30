@@ -8,6 +8,7 @@
 **Value if adopted:** open-memory appears bespoke; mempalace has multi-backend portability + real test coverage + MCP-native recall for agents (Scribe/Curator could recall past listings/negotiations via MCP).
 
 **Options:**
+
 1. Add mempalace as an external dependency; retire memory-engine (8 files, likely vestigial). Effort: S.
 2. Vendor into `packages/` and migrate open-memory callers. Effort: L. Only if open-memory is failing.
 3. Do nothing (default).

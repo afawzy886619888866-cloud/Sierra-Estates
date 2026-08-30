@@ -8,6 +8,7 @@ One entry point for every listing ingestion path + a real lifecycle behind the
 - `verifyAndPublish`, `sweepStale` (30-day freshness SLA, wire into /api/cron/maintenance), `isCountedVerified`, `matchesCriteria`.
 
 Integration steps (backend only, no frontend change):
+
 1. Wire `/api/properties/sync`, `/api/ingest/whatsapp`, `/api/cron/ingest-from-sheets`, `/api/admin/listings` POST to call `upsertFromSource`.
 2. Add `sweepStale` call to `/api/cron/maintenance`.
 3. Public `/api/listings` filters on `PUBLIC_STATUSES`.
