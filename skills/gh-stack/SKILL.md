@@ -46,7 +46,7 @@ Agent harnesses differ, so always pass the flags below instead of relying on tha
 `--remote` flag and require the config.
 
 | Always run | Never run bare | Why |
-|---|---|---|
+| --- | --- | --- |
 | `gh stack view --json` | `gh stack view` | opens a TUI under a PTY |
 | `gh stack submit --auto` | `gh stack submit` | prompts for a title per new PR |
 | `gh stack merge <target> --yes` | `gh pr merge` | `gh pr merge` cannot merge a stack |
@@ -139,7 +139,7 @@ an ancestor of the branch.
 ## Exit codes
 
 | Code | Meaning | Recovery |
-|---|---|---|
+| --- | --- | --- |
 | 0 | Success | — |
 | 1 | Generic error | Read stderr |
 | 2 | Not in a stack | `gh stack init`, or `gh stack checkout <target>` |
