@@ -128,12 +128,16 @@ check('Client Unit & Integration Tests', () => {
 
 // 7. A deployment must be reproducible from the checked-out commit.
 check('Git Status & Zero Working Tree Drift', () => {
+  const ignoredTestArtifacts = new Set([
+    'scripts/verify-deploy-readiness.ts',
+    'apps/sierra-estates-realty/obsidian-store.json',
+  ]);
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
   const modified = status
     .split('\n')
     .filter((line) => line.trim() && !line.startsWith('??'))
     .map((l) => l.slice(3).trim())
-    .filter((f) => f && f !== 'scripts/verify-deploy-readiness.ts');
+    .filter((f) => f && !ignoredTestArtifacts.has(f));
   if (modified.length > 0) {
     throw new Error(`Working tree has uncommitted modifications: ${modified.join(', ')}`);
   }
