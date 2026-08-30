@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, isFirebaseClientConfigured } from '@/lib/firebase';
+import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
 import { isAdminPortalRole } from '@/lib/types';
 
 /**
