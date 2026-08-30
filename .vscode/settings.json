@@ -25,5 +25,13 @@
   },
   "compilets.autoStart": true,
   "markdown.validate.enabled": true,
-  "github-actions.workflows.validations.enabled": false
+  "github-actions.workflows.validations.enabled": false,
+  // Prevent the Red Hat YAML extension from validating workflow files against the
+  // github-workflow JSON schema. That schema cannot statically resolve runtime secrets,
+  // generating hundreds of false-positive "Context access might be invalid" warnings.
+  // Setting the schema to an empty array disables schema-driven validation for these files.
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": []
+  },
+  "yaml.schemaStore.enable": false
 }

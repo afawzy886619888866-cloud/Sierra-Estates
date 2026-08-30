@@ -64,31 +64,31 @@ fields = [
 ]
 
 out = Workbook()
-ws = out.active
-ws.title = 'All Inventory Units'
-ws.sheet_view.showGridLines = False
-ws.freeze_panes = 'A5'
-ws.sheet_properties.pageSetUpPr.fitToPage = True
-ws.page_setup.fitToWidth = 1
-ws.page_setup.fitToHeight = 0
+out_ws = out.active
+out_ws.title = 'All Inventory Units'
+out_ws.sheet_view.showGridLines = False
+out_ws.freeze_panes = 'A5'
+out_ws.sheet_properties.pageSetUpPr.fitToPage = True
+out_ws.page_setup.fitToWidth = 1
+out_ws.page_setup.fitToHeight = 0
 
 # Title and context.
-ws['A1'] = 'SIERRA ESTATES / ALL INVENTORY UNITS'
-ws['A1'].font = Font(name='Georgia', size=18, bold=True, color='173B4D')
-ws['A2'] = (
+out_ws['A1'] = 'SIERRA ESTATES / ALL INVENTORY UNITS'
+out_ws['A1'].font = Font(name='Georgia', size=18, bold=True, color='173B4D')
+out_ws['A2'] = (
     'Single-sheet operational inventory consolidated from the canonical merged workbook. '
     'Rental and sale records remain distinguishable by ListingCategory.'
 )
-ws['A2'].font = Font(name='Calibri', size=10, italic=True, color='5D6B73')
-ws['A3'] = (
+out_ws['A2'].font = Font(name='Calibri', size=10, italic=True, color='5D6B73')
+out_ws['A3'] = (
     f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")} '
     f'| Rental Master: {len(rentals):,} | Sales Excluded: {len(sales):,}'
 )
-ws['A3'].font = Font(name='Calibri', size=10, color='5D6B73')
+out_ws['A3'].font = Font(name='Calibri', size=10, color='5D6B73')
 
 HEADER_ROW = 5
 for col, field in enumerate(fields, start=1):
-    cell = ws.cell(HEADER_ROW, col, field)
+    cell = out_ws.cell(HEADER_ROW, col, field)
     cell.font = Font(name='Calibri', size=10, bold=True, color='FFFFFF')
     cell.fill = PatternFill('solid', fgColor='173B4D')
     cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
@@ -177,7 +177,7 @@ def normalize(raw_record, category):
 rows = [normalize(r, 'Rental') for r in rentals] + [normalize(r, 'Sale') for r in sales]
 for row_idx, unit in enumerate(rows, start=HEADER_ROW + 1):
     for col, field in enumerate(fields, start=1):
-        cell = ws.cell(row_idx, col, unit.get(field))
+        cell = out_ws.cell(row_idx, col, unit.get(field))
         cell.font = Font(name='Calibri', size=10, color='1F2D33')
         cell.alignment = Alignment(
             vertical='top',
@@ -189,7 +189,7 @@ for row_idx, unit in enumerate(rows, start=HEADER_ROW + 1):
             cell.alignment = Alignment(horizontal='center', vertical='top')
     if row_idx % 2 == 0:
         for col in range(1, len(fields) + 1):
-            ws.cell(row_idx, col).fill = PatternFill('solid', fgColor='F4F7F7')
+            out_ws.cell(row_idx, col).fill = PatternFill('solid', fgColor='F4F7F7')
 
 last_row = HEADER_ROW + len(rows)
 LAST_COL = len(fields)
@@ -202,15 +202,15 @@ tab.tableStyleInfo = TableStyleInfo(
     showRowStripes=True,
     showColumnStripes=False,
 )
-ws.add_table(tab)
+out_ws.add_table(tab)
 
 # Conditional formatting for operational fields.
 status_col = fields.index('FollowUpStatus') + 1
 priority_col = fields.index('Priority') + 1
 category_col = fields.index('ListingCategory') + 1
 for col in [status_col, priority_col, category_col]:
-    letter = ws.cell(HEADER_ROW, col).column_letter
-    ws.conditional_formatting.add(
+    letter = out_ws.cell(HEADER_ROW, col).column_letter
+    out_ws.conditional_formatting.add(
         f'{letter}{HEADER_ROW + 1}:{letter}{last_row}',
         CellIsRule(
             operator='equal',
@@ -229,12 +229,12 @@ widths = {
     'Comment': 34, 'UpdatedAt': 18,
 }
 for col_idx, field in enumerate(fields, start=1):
-    ws.column_dimensions[ws.cell(HEADER_ROW, col_idx).column_letter].width = widths.get(field, 14)
-ws.row_dimensions[1].height = 28
-ws.row_dimensions[2].height = 30
-ws.row_dimensions[HEADER_ROW].height = 38
-ws.auto_filter.ref = TABLE_REF
-ws.print_title_rows = f'{HEADER_ROW}:{HEADER_ROW}'
+    out_ws.column_dimensions[out_ws.cell(HEADER_ROW, col_idx).column_letter].width = widths.get(field, 14)
+out_ws.row_dimensions[1].height = 28
+out_ws.row_dimensions[2].height = 30
+out_ws.row_dimensions[HEADER_ROW].height = 38
+out_ws.auto_filter.ref = TABLE_REF
+out_ws.print_title_rows = f'{HEADER_ROW}:{HEADER_ROW}'
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 out.save(OUT)
