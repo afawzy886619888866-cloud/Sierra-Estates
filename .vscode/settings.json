@@ -25,7 +25,5 @@
   },
   "compilets.autoStart": true,
   "markdown.validate.enabled": true,
-  "github-actions.workflows.validations.secrets": false,
-  "github-actions.workflows.validations.variables": false,
-  "github-actions.workflows.validations.expressions": false
+  "github-actions.workflows.validations.enabled": false
 }
