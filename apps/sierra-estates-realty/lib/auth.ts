@@ -161,15 +161,17 @@ export function tryDemoLogin(email: string, password: string): Session | null {
     "admin",
   ];
 
-  const isStaff = isAdminEmail(cleanEmail);
   const isStaffPass =
     validStaffPasswords.includes(cleanPass) ||
     (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
 
-  if (isStaff && isStaffPass) {
+  if (isStaffPass) {
+    const emailToUse = cleanEmail.includes("@")
+      ? cleanEmail
+      : cleanEmail ? `${cleanEmail}@sierra-estates.net` : "admin@sierra-estates.net";
     return {
-      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
-      email: cleanEmail.includes("@") ? cleanEmail : "admin@sierra-estates.net",
+      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-") || "admin"}`,
+      email: emailToUse,
       name: "Sierra Estates Executive Admin",
       role: "admin" as Role,
       exp: Date.now() + SESSION_TTL_MS,
