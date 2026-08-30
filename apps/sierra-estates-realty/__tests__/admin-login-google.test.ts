@@ -3,7 +3,7 @@
  * Tests Google Mail login, admin email recognition, and auth API route.
  */
 
-import { isAdminEmail, tryDemoLogin, signSession, verifySession } from '../lib/auth';
+import { isAdminEmail, tryDemoLogin, signSession } from '../lib/auth';
 import { POST, GET } from '../app/api/auth/route';
 import { NextRequest } from 'next/server';
 
