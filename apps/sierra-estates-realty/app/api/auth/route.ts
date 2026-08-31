@@ -39,6 +39,10 @@ export async function POST(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { body = {}; }
 
+  const reqHost = (() => {
+    try { return new URL(req.url).hostname; } catch { return req.headers.get("host") || undefined; }
+  })();
+
   if (body.action === "signout") {
     const res = NextResponse.json({ ok: true });
     res.cookies.delete(SESSION_COOKIE);
@@ -46,7 +50,6 @@ export async function POST(req: Request) {
   }
 
   if (body.action === "signin") {
-    const reqHost = req.headers.get("host") || undefined;
     const { email, password, token: firebaseIdToken } = body;
     if (!email && !firebaseIdToken) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
