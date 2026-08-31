@@ -62,7 +62,9 @@ async function handleScribe(message: string) {
       if (omResults && omResults.length > 0) {
         openMemContext = `OpenMemory Context:\n${omResults.map(r => `- ${r.content}`).join('\n')}`;
       }
-    } catch {}
+    } catch (omErr) {
+      console.warn('[AgentHub] OpenMemory query failed:', omErr);
+    }
 
     const enrichedSystemPrompt = `
       ${LEILA_PROMPT.system}

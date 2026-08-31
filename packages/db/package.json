@@ -6,6 +6,7 @@
   "types": "lib/index.ts",
   "private": true,
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
     "firebase": "^12.18",
     "firebase-admin": "^14.3",
     "zod": "^4.4.3"
@@ -13,5 +14,8 @@
   "devDependencies": {
     "@types/node": "^26",
     "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
   }
 }

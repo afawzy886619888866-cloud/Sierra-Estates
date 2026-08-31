@@ -6,18 +6,20 @@ import type { BrokerListing } from '@/lib/models/schema';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
+import { WhatsAppConversationalService } from '@/lib/services/WhatsAppConversationalService';
 import { OrchestratorService } from '@/lib/services/orchestrator';
 import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
-const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-
-async function verifyWebhookSecret(req: NextRequest): Promise<boolean> {
-  if (!SECRET_KEY) return true;
-  const secretHeader = req.headers.get('x-sbr-secret-key');
-  return secretHeader === SECRET_KEY;
+function verifyWebhookSecret(req: NextRequest) {
+  return verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
 }
 
 const extractRawMessage = (body: Record<string, any>) =>
@@ -115,9 +117,8 @@ const buildListingDocument = (
 };
 
 export async function POST(req: NextRequest) {
-  if (!await verifyWebhookSecret(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyWebhookSecret(req);
+  if (denied) return denied;
 
   try {
     const body = await req.json() as Record<string, any>;
@@ -152,21 +153,30 @@ export async function POST(req: NextRequest) {
     let leilaReply = null;
     if (parsed && !parsed.isListing) {
       try {
-        const responseText = await GoogleAIService.generateContent(
-          'SCRIBE', 'S1-WhatsApp-Intake',
-          {
-            system: LEILA_PROMPT.system,
-            user: rawMessage
-          },
-          { model: 'gemini-1.5-flash', temperature: 0.3 }
-        );
-        
+        const conversationalResponse = await WhatsAppConversationalService.processDirectMessage(rawMessage, sender);
         leilaReply = {
-          text: responseText.replace('[VIP_ALERT_TRIGGER]', '').trim(),
-          isVIP: responseText.includes('[VIP_ALERT_TRIGGER]')
+          text: conversationalResponse.trim(),
+          isVIP: conversationalResponse.includes('VIP') || conversationalResponse.includes('Portfolio Manager')
         };
       } catch (err) {
-        logger.warn('[WhatsApp Ingest] Leila response generation failed:', err);
+        logger.warn('[WhatsApp Ingest] Hermes conversational response generation failed, falling back to scribe:', err);
+        try {
+          const responseText = await GoogleAIService.generateContent(
+            'SCRIBE', 'S1-WhatsApp-Intake',
+            {
+              system: LEILA_PROMPT.system,
+              user: rawMessage
+            },
+            { model: 'gemini-1.5-flash', temperature: 0.3 }
+          );
+          
+          leilaReply = {
+            text: responseText.replace('[VIP_ALERT_TRIGGER]', '').trim(),
+            isVIP: responseText.includes('[VIP_ALERT_TRIGGER]')
+          };
+        } catch (fallbackErr) {
+          logger.warn('[WhatsApp Ingest] Leila response generation fallback failed:', fallbackErr);
+        }
       }
     }
 

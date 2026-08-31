@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eccMemory, Episode } from '@/lib/eccMemoryEngine';
+import {
+  recordEccEpisodeViaPythonApi,
+  trackPriceReductionViaPythonApi,
+} from '@/lib/server/python-api-client';
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,11 +45,26 @@ export async function POST(req: NextRequest) {
         source || 'WhatsApp Drop',
         ownerName
       );
+
+      // Asynchronously synchronize with Python microservice if available
+      trackPriceReductionViaPythonApi({
+        sierraCode,
+        oldPrice,
+        newPrice,
+        source: source || 'WhatsApp Drop',
+      }).catch(() => {});
+
       return NextResponse.json({ success: true, data: result });
     }
 
     if (body.action === 'record_episode') {
       const episode = eccMemory.recordEpisode(body.episode as Episode);
+
+      // Asynchronously synchronize with Python microservice if available
+      if (body.episode?.entityId) {
+        recordEccEpisodeViaPythonApi(body.episode).catch(() => {});
+      }
+
       return NextResponse.json({ success: true, episode });
     }
 

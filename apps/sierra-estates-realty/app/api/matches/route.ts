@@ -8,12 +8,28 @@
  * zone match + AI score weight.
  */
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { SEED_LISTINGS } from "@/lib/seed";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { Listing, MatchAnswers, MatchResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * The body was previously cast straight to MatchAnswers with no validation, so a
+ * missing `budget` made every budget score NaN (`|l.usd - undefined| / undefined`)
+ * and the whole response serialized as null scores. `type` and `preferredZone` stay
+ * plain bounded strings — they are only ever compared with === against listing
+ * fields, so restating the unions here would just be a second copy to drift.
+ */
+const matchAnswersSchema = z.object({
+  budget: z.number().positive().finite(),
+  beds: z.number().int().min(0).max(20),
+  type: z.string().min(1).max(80),
+  mode: z.enum(["sale", "rent"]),
+  preferredZone: z.string().min(1).max(120).optional(),
+});
 
 async function loadListings(): Promise<Listing[]> {
   const db = await getAdminDb();
@@ -30,7 +46,14 @@ async function loadListings(): Promise<Listing[]> {
 }
 
 export async function POST(req: Request) {
-  const answers = (await req.json().catch(() => ({}))) as MatchAnswers;
+  const parsed = matchAnswersSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid match criteria", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+  const answers = parsed.data as MatchAnswers;
   const listings = await loadListings();
 
   const results: MatchResult[] = listings

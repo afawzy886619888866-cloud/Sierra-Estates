@@ -107,12 +107,19 @@ export class AgentOrchestrator {
     }
 
     try {
-      // 1. Fetch Shared Knowledge from Obsidian Memory
+      // 1. Fetch Shared Knowledge from Obsidian Memory & Unified Skills Catalog
       const sharedIntel = await this.getSharedKnowledge();
+      const skillsCatalog = registry.getSkillsCatalogSummary();
 
-      // 2. Synthesize System Prompt containing the Agent's profile + Shared Knowledge
+      // 2. Synthesize System Prompt containing the Agent's profile + Shared Knowledge + Available Skills
       const enrichedSystemPrompt = `
 ${agent.systemPrompt}
+
+=========================================
+🛠️ UNIFIED SKILLS & CAPABILITIES CATALOG
+=========================================
+You have direct access and awareness of all specialized skills in Sierra Estates:
+${skillsCatalog}
 
 =========================================
 🧠 SHARED COGNITIVE MEMORY (OBSIDIAN STORE)

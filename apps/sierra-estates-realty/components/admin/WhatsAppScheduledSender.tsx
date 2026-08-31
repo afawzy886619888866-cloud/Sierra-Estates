@@ -257,20 +257,45 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
 
             {/* Message Body */}
             <div>
-              <label className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center justify-between">
-                <span className="flex items-center gap-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                  {isAr ? 'نص رسالة الواتساب' : 'WhatsApp Message Content'}
-                </span>
-                <span className="text-[10px] text-emerald-400/80">Tag: &#123;&#123;name&#125;&#125; supported</span>
-              </label>
+                  <span>{isAr ? 'نص رسالة الواتساب' : 'WhatsApp Message Content'}</span>
+                </label>
+                <div className="flex items-center gap-1 text-[10px]">
+                  <span className="text-slate-400">{isAr ? 'إدراج متغير:' : 'Insert tags:'}</span>
+                  {['{{name}}', '{{compound}}', '{{price}}'].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setMessageBody((prev) => `${prev} ${tag}`)}
+                      className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-mono text-[10px]"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <textarea
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
-                rows={5}
+                rows={4}
                 className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-emerald-500"
                 required
               />
+
+              {/* Live Interpolation Preview */}
+              <div className="mt-2 p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-xs">
+                <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                  {isAr ? 'معاينة الرسالة الحية:' : 'Live Render Preview (Sample: Ahmed Al-Rashid · Mivida):'}
+                </div>
+                <div className="text-slate-200 whitespace-pre-line text-[11px]">
+                  {messageBody
+                    .replace(/\{\{name\}\}/g, isAr ? 'أحمد الرشيد' : 'Ahmed Al-Rashid')
+                    .replace(/\{\{compound\}\}/g, isAr ? 'ميفيدا التجمع الخامس' : 'Mivida New Cairo')
+                    .replace(/\{\{price\}\}/g, isAr ? '18,500,000 ج.م' : '18,500,000 EGP')}
+                </div>
+              </div>
             </div>
 
             {/* Schedule Date/Time Section */}

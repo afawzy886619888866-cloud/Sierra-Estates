@@ -18,8 +18,10 @@
     "firebase-functions": "^7.3.0"
   },
   "devDependencies": {
+    "@types/jest": "^30",
     "@types/node": "^26.2.0",
     "jest": "^30",
+    "ts-jest": "^29",
     "typescript": "^5.8.2"
   },
   "private": true

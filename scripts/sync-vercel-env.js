@@ -16,7 +16,6 @@ const __dirname = path.dirname(__filename);
 // Load local environment files
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
@@ -52,7 +51,6 @@ export const CLIENT_ENV_VARS = {
   // AI & LLM
   GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
-  NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
   GOOGLE_GENAI_API_KEY: process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_AI_API_KEY,
   AI_PROVIDER: process.env.AI_PROVIDER,
   GOOGLE_CLOUD_LOCATION: process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1',
@@ -84,7 +82,6 @@ export const CLIENT_ENV_VARS = {
 
   // Telegram & WhatsApp
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
-  NEXT_PUBLIC_TELEGRAM_BOT_TOKEN: process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN,
   NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME,
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,

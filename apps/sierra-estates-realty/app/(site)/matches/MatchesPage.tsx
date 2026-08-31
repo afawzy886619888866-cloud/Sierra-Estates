@@ -13,23 +13,30 @@ export default function MatchesPage() {
   const listings = HZDATA.listings as CardListing[];
 
   const [mode, setMode] = useState<'all' | 'sale' | 'rent'>('all');
+  const [currency, setCurrency] = useState<'EGP' | 'USD'>('EGP');
   const [beds, setBeds] = useState(0);
   const [budget, setBudget] = useState(40);
+  const [minYield, setMinYield] = useState(0);
 
   const matched = useMemo(() => {
     return listings
       .filter((p) => mode === 'all' || p.mode === mode)
       .filter((p) => !beds || p.beds >= beds)
-      .filter((p) => (p.mode === 'rent' ? true : p.egpM <= budget))
+      .filter((p) => {
+        if (p.mode === 'rent') return true;
+        const priceInUnits = currency === 'USD' ? (p.usd ? p.usd / 1000 : (p.egpM * 1000000) / 48.65 / 1000) : p.egpM;
+        return priceInUnits <= budget;
+      })
       .map((p) => {
-        // Weighted fit: AI score dominates, then how well budget and beds land.
-        const budgetFit = p.mode === 'rent' ? 1 : Math.max(0, 1 - Math.abs(budget - p.egpM) / Math.max(budget, 1));
+        const priceInUnits = currency === 'USD' ? (p.usd ? p.usd / 1000 : (p.egpM * 1000000) / 48.65 / 1000) : p.egpM;
+        const budgetFit = p.mode === 'rent' ? 1 : Math.max(0, 1 - Math.abs(budget - priceInUnits) / Math.max(budget, 1));
         const bedFit = beds ? Math.max(0, 1 - Math.abs(p.beds - beds) / 5) : 0.8;
-        const score = p.ai / 10 * 0.6 + budgetFit * 0.25 + bedFit * 0.15;
+        const yieldFit = minYield > 0 ? (p.yield && p.yield >= minYield ? 1.0 : 0.6) : 1.0;
+        const score = p.ai / 10 * 0.5 + budgetFit * 0.2 + bedFit * 0.15 + yieldFit * 0.15;
         return { p, score: Math.round(score * 100) };
       })
       .sort((a, b) => b.score - a.score);
-  }, [listings, mode, beds, budget]);
+  }, [listings, mode, currency, beds, budget, minYield]);
 
   return (
     <AiToolPage
@@ -56,6 +63,20 @@ export default function MatchesPage() {
             </div>
 
             <div className="af-group">
+              <span className="af-label">{isAr ? 'العملة' : 'Currency'}</span>
+              <div className="af-chips">
+                {(['EGP', 'USD'] as const).map((c) => (
+                  <button key={c} type="button" className={`af-chip${currency === c ? ' on' : ''}`} onClick={() => {
+                    setCurrency(c);
+                    setBudget(c === 'USD' ? 800 : 40);
+                  }}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="af-group">
               <span className="af-label">{isAr ? 'الغرف' : 'Bedrooms'}</span>
               <div className="af-chips">
                 {[0, 2, 3, 4, 5].map((b) => (
@@ -66,16 +87,30 @@ export default function MatchesPage() {
               </div>
             </div>
 
-            <div className="af-group" style={{ minWidth: 220 }}>
+            <div className="af-group" style={{ minWidth: 200 }}>
               <span className="af-label">
-                {isAr ? 'الميزانية' : 'Budget'}: <b>EGP {budget}M</b>
+                {isAr ? 'الميزانية' : 'Budget'}: <b>{currency === 'USD' ? `$${budget}K` : `EGP ${budget}M`}</b>
               </span>
               <input
-                type="range" min={3} max={60} step={1}
+                type="range"
+                min={currency === 'USD' ? 100 : 3}
+                max={currency === 'USD' ? 2000 : 60}
+                step={currency === 'USD' ? 50 : 1}
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
                 style={{ width: '100%' }}
               />
+            </div>
+
+            <div className="af-group">
+              <span className="af-label">{isAr ? 'الحد الأدنى للعائد' : 'Min Yield'}</span>
+              <div className="af-chips">
+                {[0, 7, 9, 12].map((y) => (
+                  <button key={y} type="button" className={`af-chip${minYield === y ? ' on' : ''}`} onClick={() => setMinYield(y)}>
+                    {y === 0 ? (isAr ? 'الكل' : 'Any') : `${y}%+`}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <span className="af-count"><b>{matched.length}</b> {isAr ? 'نتيجة' : 'matches'}</span>

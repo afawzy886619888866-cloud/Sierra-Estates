@@ -25,6 +25,7 @@
 import { AgentOrchestrator } from '@sierra-estates/agents-core'
 import { sharedMemory, memoryEngine } from '@sierra-estates/memory-engine'
 import { stripWhatsAppSuffix } from './phone'
+import { buildListingsDigest, type ListingFetchResult } from './property-finder'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -194,9 +195,14 @@ export function routeMessage(intent: MessageIntent, urgency: string, isNewClient
 
 export class WhatsAppBotRouter {
   private orchestrator: AgentOrchestrator
+  private listingsProvider?: (message: string, intent: string) => Promise<ListingFetchResult>
 
-  constructor(apiKey?: string) {
+  constructor(
+    apiKey?: string,
+    listingsProvider?: (message: string, intent: string) => Promise<ListingFetchResult>
+  ) {
     this.orchestrator = new AgentOrchestrator({ apiKey })
+    this.listingsProvider = listingsProvider
     console.log('[WhatsAppBotRouter] Initialized. Liela and Sierra are ready.')
   }
 
@@ -307,6 +313,20 @@ export class WhatsAppBotRouter {
     const needsAnalysis = route.supportingAgents.includes('sierra')
 
     let enrichedContext = context
+
+    // Ground the pipeline in REAL listings for any property-related intent so
+    // OpenClaw/Sierra/Hermes answer from actual inventory instead of improvising.
+    const propertyIntents = ['availability_check', 'property_inquiry', 'property_search', 'price_inquiry']
+    if (propertyIntents.includes(route.intent)) {
+      const provider = this.listingsProvider
+        ? this.listingsProvider(userMessage, route.intent)
+        : buildListingsDigest(userMessage, route.intent)
+      const listings = await provider
+      if (listings.ok && listings.digest) {
+        enrichedContext += `\n\n${listings.digest}`
+        console.log(`[Router] Injected ${listings.count} live listings into context.`)
+      }
+    }
 
     if (needsData) {
       const dataResult = await this.orchestrator.runAgentTask(

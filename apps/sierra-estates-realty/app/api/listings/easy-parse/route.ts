@@ -33,7 +33,7 @@ interface ParsedListingResult {
   confidence: number;
 }
 
-const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 /**
  * Fallback heuristic extractor when AI API key is unavailable in dev/offline

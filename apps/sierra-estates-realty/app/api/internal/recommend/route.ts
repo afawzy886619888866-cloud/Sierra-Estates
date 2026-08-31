@@ -78,6 +78,8 @@ export async function GET(req: NextRequest) {
     success: true,
     total: matches.length,
     matches,
+    source: 'sample-inventory',
+    mockMode: true,
     timestamp: new Date().toISOString(),
   });
 }
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json({ success: true, recommendation });
+    return NextResponse.json({ success: true, recommendation, source: 'sample-inventory', mockMode: true });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },
