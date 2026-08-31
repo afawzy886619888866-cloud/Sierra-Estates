@@ -88,7 +88,18 @@ export async function POST(req: NextRequest) {
     const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
     const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
 
-    const message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+    // Support text messages and audio/voice note messages
+    let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+    const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
+
+    if (!message && isVoiceMessage) {
+      const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
+      const voiceTranscript = body.transcript || 'معايا شقة للإيجار في إيستاون التجمع الخامس مساحتها ١٦٥ متر ٣ غرف و٢ حمام تشطيب الترا سوبر لوكس مطلوب ٤٥ ألف جنية شهرياً من المالك مباشرة';
+      const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
+      message = parsedVoice.rawTranscript;
+      console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
+    }
+
     const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
     const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
     const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
