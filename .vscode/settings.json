@@ -30,6 +30,11 @@
   "compilets.autoStart": true,
   "markdown.validate.enabled": true,
   "github-actions.workflows.validations.enabled": false,
+  "github-actions.workflows.validations.context.access": "ignore",
+  "github-actions.workflows.validations.undefined.context": "ignore",
+  "github-actions.workflows.validations.expression.validation": "ignore",
+  "github-actions.workflows.validations.schema": false,
+  "yaml.validate": false,
   "yaml.schemas": {},
   "yaml.schemaStore.enable": false
 }
