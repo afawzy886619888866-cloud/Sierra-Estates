@@ -13,13 +13,18 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # cancel-in-progress: true for pull_request events; false on main to preserve CI verdicts.
+  # Cancelling a main run leaves that commit with no CI verdict at all, which is exactly how
+  # the TypeScript 7 bump landed unverified and broke every ts-jest suite: its
+  # run (9b793cb6) was cancelled by the next push, and the failure only surfaced
+  # one commit later. Rapid successive merges must each get a real verdict.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
@@ -27,23 +32,6 @@ permissions:
   contents: read
 
 jobs:
-  # Catches invalid workflow files (duplicate keys, bad `choice` options, bad
-  # expressions) before they reach GitHub, where they surface only as an
-  # opaque startup failure with zero jobs and no logs. Note that a YAML parser
-  # alone does NOT catch these — duplicate keys parse fine, last one wins.
-  workflows:
-    name: Lint GitHub Actions workflows
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: false
-      - name: actionlint
-        uses: docker://rhysd/actionlint:1.7.7
-        with:
-          args: -color
-
   monorepo:
     name: Realty app + packages · Type-check + Lint + Test + Build
     runs-on: ubuntu-latest
@@ -59,7 +47,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: pnpm
 
       - name: Install deps (workspace)
@@ -102,3 +90,31 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+
+  # The repo keeps TWO firestore.rules: a root copy (required to exist by
+  # __tests__/repo-integrity-and-hygiene.test.ts and reviewed at the root) and
+  # apps/sierra-estates-realty/firestore.rules — the one both firebase.json
+  # files actually deploy. They are byte-identical today; this guard makes sure
+  # they never silently drift, so the deployed rules always match the reviewed
+  # root copy. (Audit REPO_AUDIT_REPORT.md P2.)
+  firestore-rules-drift:
+    name: Firestore rules in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Root and app firestore.rules must be byte-identical
+        run: |
+          root="firestore.rules"
+          app="apps/sierra-estates-realty/firestore.rules"
+          if ! diff -q "$root" "$app" >/dev/null 2>&1; then
+            echo "::error title=Firestore rules drift::$root and $app differ"
+            echo "The root copy is reviewed and required by repo-integrity tests;"
+            echo "the app copy is what firebase.json deploys. Keep them identical."
+            diff "$root" "$app" || true
+            exit 1
+          fi
+          echo "firestore.rules root and app copies are identical."

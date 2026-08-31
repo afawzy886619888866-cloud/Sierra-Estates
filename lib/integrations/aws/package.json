@@ -1,0 +1,19 @@
+{
+  "name": "@workspace/aws",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ec2": "./src/ec2.ts",
+    "./lambda": "./src/lambda.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.930.0",
+    "@aws-sdk/client-lambda": "^3.930.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "^5.8.2"
+  }
+}

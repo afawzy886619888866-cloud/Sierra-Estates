@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
+import { requireRole } from '@/lib/auth';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
 import { logger } from '@/lib/logger';
 
@@ -14,10 +15,19 @@ import { logger } from '@/lib/logger';
  * If a human agent does not answer within the 6-hour window,
  * the bot automatically books a viewing, drafts co-broke coordinates,
  * and notifies all stakeholders via a.fawzy8866@gmail.com.
+ *
+ * SECURITY: manager+ session required — this drives real outreach against live
+ * owner/broker records. The owner contact number, the outreach script and the
+ * rendered email body are deliberately NOT echoed in the response; they stay in
+ * the email / Firestore side effect only (same rule as /api/inventory, which
+ * strips owner PII before it reaches a client).
  */
 export async function POST(request: Request) {
   const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
   if (rateLimitResponse) return rateLimitResponse;
+
+  // Throws a 401/403 Response when the caller has no manager-level session.
+  await requireRole(request, 'manager');
 
   try {
     const { propertyCode, visitorName, visitorEmail, visitorPhone } = await request.json();
@@ -119,11 +129,10 @@ Sierra Estates Intelligence OS
       meta: {
         listingEntity,
         contactName,
-        contactPhone,
+        // contactPhone, cobrokeScript and emailContent are intentionally
+        // omitted: owner/broker PII and the outreach copy stay server-side.
         unitDetails,
-        cobrokeScript,
         emailSentTo: emailPayload.to,
-        emailContent: emailPayload.body,
         calendarEvent: `Viewing: ${propertyCode} — ${visitorName}`,
       },
     });

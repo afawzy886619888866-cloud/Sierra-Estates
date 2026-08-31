@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   const payload = {
     ...parsed.data,
-    source: 'clients_request_portal',
+    source: 'website',
     status: 'S1_NEW_LEAD',
     createdAt: new Date(),
   };

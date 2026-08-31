@@ -46,11 +46,13 @@ Configure your MCP client (`.mcp.json` for Cursor/Windsurf, or Claude settings):
 OpenMemory provides two complementary memory systems:
 
 ### Contextual Memory (HSG)
+
 Semantic memory organized into cognitive sectors (episodic, semantic, procedural, emotional, reflective) with vector-based retrieval.
 
 **Best for:** Conversations, rich context, experiential memories
 
 ### Temporal Facts
+
 Structured facts (subject-predicate-object triples) with time-based validity and automatic invalidation.
 
 **Best for:** Preferences, business rules, configurations that change over time
@@ -64,7 +66,7 @@ Store content in contextual memory, temporal facts, or both.
 #### Parameters
 
 | Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
+| ----------- | ------ | ---------- | --------- | ------------- |
 | `content` | string | Yes | - | Raw memory text |
 | `type` | enum | No | "contextual" | Storage type: "contextual", "factual", or "both" |
 | `facts` | array | Conditional | - | Facts array (required if type is "factual" or "both") |
@@ -88,6 +90,7 @@ Store content in contextual memory, temporal facts, or both.
 #### Examples
 
 **Store contextual memory:**
+
 ```json
 {
   "content": "User prefers morning meetings",
@@ -97,6 +100,7 @@ Store content in contextual memory, temporal facts, or both.
 ```
 
 **Store temporal fact:**
+
 ```json
 {
   "content": "Client prefers Excel format",
@@ -111,6 +115,7 @@ Store content in contextual memory, temporal facts, or both.
 ```
 
 **Store in both systems:**
+
 ```json
 {
   "content": "Approval threshold updated to $75K",
@@ -150,7 +155,7 @@ Query contextual memories, temporal facts, or both.
 #### Parameters
 
 | Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
+| ----------- | ------ | ---------- | --------- | ------------- |
 | `query` | string | Yes | - | Search text |
 | `type` | enum | No | "contextual" | Query type: "contextual", "factual", or "unified" |
 | `fact_pattern` | object | No | - | Pattern for temporal queries |
@@ -174,6 +179,7 @@ Query contextual memories, temporal facts, or both.
 #### Examples
 
 **Query contextual memories:**
+
 ```json
 {
   "query": "user preferences",
@@ -182,6 +188,7 @@ Query contextual memories, temporal facts, or both.
 ```
 
 **Query current facts:**
+
 ```json
 {
   "query": "client report format",
@@ -194,6 +201,7 @@ Query contextual memories, temporal facts, or both.
 ```
 
 **Historical query:**
+
 ```json
 {
   "query": "Q3 approval limit",
@@ -207,6 +215,7 @@ Query contextual memories, temporal facts, or both.
 ```
 
 **Unified query:**
+
 ```json
 {
   "query": "client information",
@@ -226,7 +235,7 @@ List recent memories.
 #### Parameters
 
 | Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
+| ----------- | ------ | ---------- | --------- | ------------- |
 | `limit` | number | No | 10 | Number of memories to return (max 50) |
 | `sector` | enum | No | - | Filter by sector |
 | `user_id` | string | No | - | User identifier |
@@ -249,7 +258,7 @@ Fetch a single memory by ID.
 #### Parameters
 
 | Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
+| ----------- | ------ | ---------- | --------- | ------------- |
 | `id` | string | Yes | - | Memory identifier |
 | `include_vectors` | boolean | No | false | Include sector vector metadata |
 | `user_id` | string | No | - | User identifier |
@@ -290,6 +299,7 @@ Boost salience of a memory.
 ### openmemory_store
 
 **Contextual storage:**
+
 ```json
 {
   "type": "contextual",
@@ -302,6 +312,7 @@ Boost salience of a memory.
 ```
 
 **Factual storage:**
+
 ```json
 {
   "type": "factual",
@@ -319,6 +330,7 @@ Boost salience of a memory.
 ### openmemory_query
 
 **Contextual query:**
+
 ```json
 {
   "type": "contextual",
@@ -334,6 +346,7 @@ Boost salience of a memory.
 ```
 
 **Factual query:**
+
 ```json
 {
   "type": "factual",
@@ -351,6 +364,7 @@ Boost salience of a memory.
 ```
 
 **Unified query:**
+
 ```json
 {
   "type": "unified",
@@ -408,7 +422,7 @@ Use undefined fields in `fact_pattern` for wildcards:
 ### Storage Type Selection
 
 | Type | Use Case | Example |
-|------|----------|---------|
+| ------ | ---------- | --------- |
 | `contextual` | Rich narratives, conversations | "Team discussed the Q4 strategy..." |
 | `factual` | Structured data that changes | client_acme prefers_format Excel |
 | `both` | Rich context with extractable facts | "Client wants monthly Excel reports" |
@@ -416,30 +430,36 @@ Use undefined fields in `fact_pattern` for wildcards:
 ### Fact Naming Conventions
 
 **Subject:** Specific entity identifier
+
 - ✅ `user_123`, `client_acme_corp`, `expense_policy`
 - ❌ `the user`, `client`, `policy`
 
 **Predicate:** Clear relationship in snake_case
+
 - ✅ `prefers_report_format`, `requires_approval_at`, `uses_data_source`
 - ❌ `preference`, `requirement`, `uses`
 
 **Object:** Concrete value
+
 - ✅ `Excel`, `50000`, `Salesforce_CRM`
 - ❌ `file format`, `high`, `CRM system`
 
 ### Query Strategy
 
 **Use `type="contextual"` when:**
+
 - Asking open-ended questions
 - Needing semantic similarity
 - Searching conversations
 
 **Use `type="factual"` when:**
+
 - Asking for specific current values
 - Querying structured data
 - Need historical accuracy
 
 **Use `type="unified"` when:**
+
 - Need comprehensive context
 - Unsure which system has the answer
 - Want both semantic context AND facts
@@ -577,11 +597,13 @@ const result = await client.callTool({
 ## Database Schema
 
 ### Contextual Memory Tables
+
 - `memories` / `openmemory_memories` - Memory content and metadata
 - `vectors` / `openmemory_vectors` - Sector-specific embeddings
 - `waypoints` / `openmemory_waypoints` - Associative graph connections
 
 ### Temporal Graph Tables
+
 - `temporal_facts` - Subject-predicate-object facts with validity periods
 - `temporal_edges` - Relationships between facts
 
@@ -604,6 +626,7 @@ When using `type="factual"` or `type="both"`, you must provide the `facts` param
 ### Empty Temporal Results
 
 If `type="factual"` returns no results:
+
 1. Verify facts were stored with correct subject/predicate
 2. Check `at` parameter matches validity period
 3. Use wildcards in fact_pattern to broaden search
@@ -611,6 +634,7 @@ If `type="factual"` returns no results:
 ### Connection Issues
 
 Ensure environment variables are set:
+
 - Postgres: `OM_PG_HOST`, `OM_PG_DB`, `OM_PG_USER`, `OM_PG_PASSWORD`
 - Embeddings: `OPENAI_API_KEY` (or relevant provider key)
 

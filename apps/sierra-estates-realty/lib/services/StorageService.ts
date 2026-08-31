@@ -1,6 +1,6 @@
 import { adminApp } from '../server/firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 /**
  * SIERRA ESTATES STORAGE SERVICE
@@ -34,7 +34,7 @@ export class StorageService {
     originalName: string = 'upload.jpg'
   ): Promise<string> {
     const extension = mimeType.split('/')[1] || 'jpg';
-    const filename = `${uuidv4()}.${extension}`;
+    const filename = `${crypto.randomUUID()}.${extension}`;
     const filePath = `properties/${docId}/${filename}`;
     const bucket = this.getBucket();
     const file = bucket.file(filePath);

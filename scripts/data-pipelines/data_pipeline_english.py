@@ -23,7 +23,7 @@ except ImportError:
 # Constants
 UNIFIED_COLUMNS = ['phone', 'price', 'rooms', 'bathrooms', 'location', 'compound', 'extra_info', 'date']
 SOURCE_FILES = ["Sheet1.xlsx", "Sheet2.xlsx"] # Mock list for local testing
-TARGET_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1Qd7wc3J90hrP1WH2yYUFjQMNIbOAH4-5/edit'
+TARGET_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606'
 
 def classify_and_clean(df, unified_columns):
     """

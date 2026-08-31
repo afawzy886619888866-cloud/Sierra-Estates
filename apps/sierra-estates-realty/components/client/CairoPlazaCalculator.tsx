@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import React, { useMemo, useState, type FormEvent } from 'react';
 
 type Props = { lang?: 'en' | 'ar' };
 

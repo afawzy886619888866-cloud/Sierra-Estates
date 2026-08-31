@@ -4,7 +4,7 @@ import { COLLECTIONS, Unit, PropertyStatus, PropertyType } from '@/lib/models/sc
 import { logger } from '@/lib/logger';
 import { resolveLocation } from '@/lib/inventory/gazetteer';
 
-export const MASTER_SHEET_ID_DEFAULT = '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
+export const MASTER_SHEET_ID_DEFAULT = '1VEOSYbXPNVWVzC8A_yhYYdsYMqJwAoEnOFGZcJqSzv4';
 
 export interface RawOwnerSheetRow {
   timestamp?: string;

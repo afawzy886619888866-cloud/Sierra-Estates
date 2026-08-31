@@ -18,36 +18,47 @@ export class ObsidianMemory {
   }
 
   private readStore(): Record<string, MemoryEntry> {
-    try {
-      if (fs.existsSync(this.filePath)) {
-        const content = fs.readFileSync(this.filePath, 'utf-8');
-        return JSON.parse(content);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        if (fs.existsSync(this.filePath)) {
+          const content = fs.readFileSync(this.filePath, 'utf-8');
+          return JSON.parse(content);
+        }
+        return {};
+      } catch (err) {
+        if (attempt === 4) {
+          console.error('[ObsidianMemory] Error reading memory store:', err);
+          return {};
+        }
+        // Small synchronous backoff on lock contention
+        const end = Date.now() + 10 * (attempt + 1);
+        while (Date.now() < end) {}
       }
-    } catch (err) {
-      console.error('[ObsidianMemory] Error reading memory store:', err);
     }
     return {};
   }
 
   private writeStore(data: Record<string, MemoryEntry>): void {
-    try {
-      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('[ObsidianMemory] Error writing to memory store:', err);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
+        return;
+      } catch (err) {
+        if (attempt === 4) {
+          console.error('[ObsidianMemory] Error writing to memory store:', err);
+          return;
+        }
+        const end = Date.now() + 10 * (attempt + 1);
+        while (Date.now() < end) {}
+      }
     }
   }
 
-  /**
-   * Retrieves a memory entry by ID.
-   */
   async get(id: string): Promise<MemoryEntry | null> {
     const store = this.readStore();
     return store[id] || null;
   }
 
-  /**
-   * Sets or updates a memory entry.
-   */
   async set(id: string, value: any, tags: string[] = []): Promise<MemoryEntry> {
     const store = this.readStore();
     const now = new Date().toISOString();
@@ -65,41 +76,34 @@ export class ObsidianMemory {
     return entry;
   }
 
-  /**
-   * Searches memories by query string and/or tags.
-   */
-  async search(queryText: string, tags: string[] = []): Promise<MemoryEntry[]> {
+  async search(query: string, tags?: string[]): Promise<MemoryEntry[]> {
     const store = this.readStore();
-    let entries = Object.values(store);
+    const q = (query || '').toLowerCase();
+    const targetTags = Array.isArray(tags) ? tags.map((t) => t.toLowerCase()) : [];
 
-    // Filter by tags if provided
-    if (tags.length > 0) {
-      entries = entries.filter((entry) =>
-        tags.every((t) => (entry.tags || []).includes(t))
-      );
-    }
+    return Object.values(store).filter((entry) => {
+      const matchesQuery =
+        (typeof entry.id === 'string' && entry.id.toLowerCase().includes(q)) ||
+        (entry.value && JSON.stringify(entry.value).toLowerCase().includes(q)) ||
+        (Array.isArray(entry.tags) && entry.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(q)));
 
-    // Filter by queryText if provided
-    if (queryText.trim()) {
-      const q = queryText.toLowerCase();
-      entries = entries.filter((entry) => {
-        const valStr = typeof entry.value === 'string' 
-          ? entry.value 
-          : JSON.stringify(entry.value);
-        return (
-          entry.id.toLowerCase().includes(q) ||
-          valStr.toLowerCase().includes(q) ||
-          (entry.tags || []).some((t) => t.toLowerCase().includes(q))
-        );
-      });
-    }
+      if (targetTags.length === 0) return matchesQuery;
 
-    return entries;
+      const hasTag =
+        Array.isArray(entry.tags) &&
+        entry.tags.some((t) => typeof t === 'string' && targetTags.includes(t.toLowerCase()));
+      return matchesQuery || hasTag;
+    });
   }
 
-  /**
-   * Deletes a memory entry by ID.
-   */
+  async searchByTag(tag: string): Promise<MemoryEntry[]> {
+    const store = this.readStore();
+    const t = (tag || '').toLowerCase();
+    return Object.values(store).filter((entry) =>
+      Array.isArray(entry.tags) && entry.tags.some((entryTag) => typeof entryTag === 'string' && entryTag.toLowerCase() === t)
+    );
+  }
+
   async delete(id: string): Promise<boolean> {
     const store = this.readStore();
     if (store[id]) {
@@ -110,21 +114,15 @@ export class ObsidianMemory {
     return false;
   }
 
-  /**
-   * Lists all memories in the store.
-   */
   async list(): Promise<MemoryEntry[]> {
     const store = this.readStore();
     return Object.values(store);
   }
 
-  /**
-   * Clears all memories.
-   */
   async clear(): Promise<void> {
     this.writeStore({});
   }
 }
 
-// Export default shared instances and backward-compatible aliases
 export const obsidian = new ObsidianMemory();
+export default obsidian;

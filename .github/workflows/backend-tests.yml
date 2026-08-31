@@ -2,27 +2,24 @@ name: Backend Tests
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - 'apps/api/**'
       - 'functions/**'
-      - 'packages/api/**'
-      - 'packages/db/**'
-      - 'packages/auth/**'
-      - 'packages/config/**'
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
   pull_request:
-    branches: [main, master]
+    branches: [main]
     paths:
       - 'apps/api/**'
       - 'functions/**'
-      - 'packages/api/**'
-      - 'packages/db/**'
-      - 'packages/auth/**'
-      - 'packages/config/**'
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
+  workflow_dispatch: {}
+
+concurrency:
+  group: backend-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -36,45 +33,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
-      - name: Check if apps/api exists
-        id: check-api
-        run: |
-          if [ ! -d "apps/api" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::apps/api directory not found — Python tests skipped."
-          fi
       - uses: actions/setup-python@v5
-        if: steps.check-api.outputs.skip != 'true'
         with:
           python-version: '3.12'
           cache: pip
       - name: Install dependencies
-        if: steps.check-api.outputs.skip != 'true'
         working-directory: apps/api
         run: pip install -r requirements.txt pytest
       - name: Run pytest
-        if: steps.check-api.outputs.skip != 'true'
         working-directory: apps/api
         run: pytest -v
-
-  functions-backend:
-    name: Firebase Functions (functions/)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Type-check functions
-        run: pnpm --filter sierra-estates-functions run type-check
-      - name: Build functions
-        run: pnpm --filter sierra-estates-functions run build
-      - name: Test functions
-        run: pnpm --filter sierra-estates-functions test

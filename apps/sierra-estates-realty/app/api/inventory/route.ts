@@ -28,9 +28,17 @@ export const dynamic = 'force-dynamic';
 
 /** Committed snapshot fallback. */
 function snapshotResponse(): InventoryResponse {
-  const units = (snapshot as { units: InventoryUnit[] }).units;
+  const snapshotData = snapshot as unknown;
+  const isArray = Array.isArray(snapshotData);
+  const units: InventoryUnit[] = isArray
+    ? (snapshotData as InventoryUnit[])
+    : ((snapshotData as { units?: InventoryUnit[] })?.units || []);
+  const generatedAt = !isArray && typeof (snapshotData as { generatedAt?: string })?.generatedAt === 'string'
+    ? (snapshotData as { generatedAt: string }).generatedAt
+    : new Date().toISOString();
+
   return {
-    generatedAt: (snapshot as { generatedAt: string }).generatedAt,
+    generatedAt,
     source: 'snapshot',
     count: units.length,
     units,

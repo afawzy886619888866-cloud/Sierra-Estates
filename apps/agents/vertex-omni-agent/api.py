@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-from agent_core import get_titan_agent
+from agent_core import run_agent_turn
 
 app = FastAPI(title="Vertex Omni-Agent (Titan)")
 logger = logging.getLogger("uvicorn.error")
@@ -29,12 +29,11 @@ async def run_agent(payload: AgentRunPayload):
     """
     logger.info("Running agent in mode '%s' with prompt: %s...", payload.mode, payload.prompt[:80])
     try:
-        agent = get_titan_agent()
         full_prompt = f"Mode: {payload.mode}\nPrompt: {payload.prompt}"
         if payload.context:
             full_prompt += f"\nContext: {payload.context}"
 
-        response = agent.generate_content(full_prompt)
+        response = run_agent_turn(full_prompt)
 
         candidates = []
         if hasattr(response, 'candidates'):
@@ -61,14 +60,13 @@ async def whatsapp_webhook(request: Request):
 
     logger.info("Received message from %s (Group: %s)", sender, is_group)
 
-    agent = get_titan_agent()
     prompt = (
         f"Sender: {sender}\nIs Group: {is_group}\nMessage: {message}\n\n"
         "Execute directives based on system instructions."
     )
 
     try:
-        response = agent.generate_content(prompt)
+        response = run_agent_turn(prompt)
         reply_text = response.text if response.text else None
 
         return {"status": "processed", "replyMessage": reply_text if not is_group else None}

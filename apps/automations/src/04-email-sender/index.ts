@@ -1,20 +1,12 @@
 import { Resend } from 'resend';
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getDb } from '../lib/firebase';
 
 /**
  * 04-email-sender
- * 
+ *
  * Sends bulk matches and investor briefings.
  */
-
-if (!getApps().length) {
-  try {
-    initializeApp();
-  } catch (error) {
-    console.warn('[Email Sender] Firebase admin could not be initialized.');
-  }
-}
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 
@@ -22,7 +14,7 @@ export async function runEmailSender(campaignId: string) {
   console.log(`[Email Sender] Processing campaign: ${campaignId}`);
   
   try {
-    const db = getFirestore();
+    const db = getDb('Email Sender');
     
     // 1. Fetch targeted investors from Matchmaker agent outputs (mocked)
     // Normally we'd query: db.collection('investors').where('matchedCampaign', '==', campaignId)

@@ -2,16 +2,13 @@
     "name": "sierra-estates",
     "version": "1.0.0",
     "private": true,
-    "description": "Sierra Estates \u2014 Luxury PropTech Platform for New Cairo",
-    "workspaces": [
-        "apps/*",
-        "packages/*"
-    ],
+    "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
     "scripts": {
         "dev": "turbo run dev",
+        "dev:web": "pnpm --filter sierra-estates-client-page dev",
+        "dev:all": "turbo run dev",
         "build": "turbo run build",
         "lint": "turbo run lint",
-        "hint": "hint",
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
@@ -20,42 +17,60 @@
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
         "deploy:prod": "vercel --prod",
-        "deploy:rules": "firebase deploy --only firestore:rules,storage",
+        "test:prod": "tsx scripts/test-production.ts",
+        "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
+        "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
-        "openclaw:task": "tsx scripts/openclaw-task-runner.ts"
+        "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
+        "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
+        "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
+        "run-harness": "tsx scripts/run-harness.ts",
+        "harness:eval": "tsx scripts/run-harness.ts",
+        "publish-recommendation": "tsx scripts/publish-recommendation.ts",
+        "write-memory": "tsx scripts/write-memory.ts",
+        "check-thresholds": "tsx scripts/check-thresholds.ts",
+        "sync-propertyfinder": "tsx scripts/sync-propertyfinder.ts",
+        "estimate-costs": "tsx scripts/estimate-costs.ts",
+        "smoke:test": "tsx scripts/deploy-smoke-test.ts",
+        "check:firebase-rules": "node scripts/check-firebase-rules.mjs",
+        "check:public-env": "node scripts/check-public-env-safety.mjs",
+        "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
+        "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
+        "deploy:check:env": "node scripts/verify-env-readiness.mjs",
+        "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds",
+        "hint": "hint"
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
-        "@openai/codex-security": "^0.1.4",
         "hint": "^7.1.13",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
         "vitest": "^4.1.10"
     },
     "dependencies": {
-        "@vercel/speed-insights": "^2.0.0"
+        "@vercel/speed-insights": "^2.0.0",
+        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
     },
     "engines": {
-        "node": ">=22.0.0",
+        "node": ">=20.0.0",
         "pnpm": ">=9"
     },
     "packageManager": "pnpm@9.15.4",
-    "_comment_pnpm_overrides": "ACTIVE overrides for pnpm 9 (the pinned major) \u2014 this is what pnpm-lock.yaml records. pnpm 10+ reads `overrides:` in pnpm-workspace.yaml instead; keep the two in sync. See the header comment above that block before changing either.",
-    "pnpm": {
-        "overrides": {
-            "esbuild@<=0.24.2": ">=0.25.0",
-            "postcss@<8.5.10": ">=8.5.10",
-            "uuid@<11.1.1": ">=11.1.1",
-            "sharp@<0.35.0": ">=0.35.0",
-            "postcss@<=8.5.11": ">=8.5.12",
-            "postcss@<=8.5.17": ">=8.5.18",
-            "postcss@<=8.5.22": ">=8.5.23",
-            "fast-uri@>=3.0.0 <3.1.5": ">=3.1.5",
-            "js-yaml@>=4.0.0 <4.3.1": ">=4.3.1",
-            "pdfjs-dist@>=5.6.83 <6.2.108": ">=6.2.108",
-            "react-router@>=7.12.0 <7.18.2": ">=7.18.2",
-            "typescript": "^5.9.3"
-        }
+    "overrides": {
+        "tar": ">=7.5.22",
+        "cross-spawn": ">=7.0.6",
+        "micromatch": ">=4.0.8",
+        "braces": ">=3.0.3",
+        "nanoid": ">=3.3.8",
+        "ws": ">=8.18.0",
+        "cookie": ">=0.7.2",
+        "body-parser": ">=1.20.3",
+        "express": ">=4.21.2",
+        "path-to-regexp": ">=0.1.12",
+        "send": ">=0.19.1",
+        "serve-static": ">=1.16.2",
+        "uuid": ">=11.1.1",
+        "esbuild": ">=0.25.0"
     }
 }

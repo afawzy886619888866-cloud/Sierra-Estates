@@ -92,7 +92,9 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
           }),
         });
         if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()) as {
+            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+          };
           return data.candidates?.[0]?.content?.parts?.[0]?.text || this.generateFallbackProposal(context);
         }
       } catch (err: any) {

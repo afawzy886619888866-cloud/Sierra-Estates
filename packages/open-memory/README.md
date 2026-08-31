@@ -1,9 +1,12 @@
-# 🚧 This project is currently being rewritten.
+# 🚧 This project is currently being rewritten
 
 Expect breaking changes and potential bugs.
+
 ### Contributers needed
-To contribute, visit https://github.com/CaviraOSS/OpenMemory/tree/rewrite branch.
+
+To contribute, visit <https://github.com/CaviraOSS/OpenMemory/tree/rewrite> branch.
 If you find an issue, please open a GitHub issue with details so it can be tracked and resolved.
+
 ## OpenMemory
 
 > **Real long-term memory for AI agents. Not RAG. Not a vector DB. Self-hosted, Python + Node.**
@@ -140,7 +143,7 @@ OpenMemory can run **inside your app** or as a **central service**.
 - ✅ Supports external DBs (via config)
 - ✅ Great fit for LangChain / LangGraph / CrewAI / notebooks
 
-Docs: https://openmemory.cavira.app/docs/sdks/python
+Docs: <https://openmemory.cavira.app/docs/sdks/python>
 
 ---
 
@@ -150,7 +153,7 @@ Docs: https://openmemory.cavira.app/docs/sdks/python
 - Ideal for JS/TS applications
 - Can either run fully local or talk to a central backend
 
-Docs: https://openmemory.cavira.app/docs/sdks/javascript
+Docs: <https://openmemory.cavira.app/docs/sdks/javascript>
 
 ---
 
@@ -556,7 +559,7 @@ Star the repo to follow along.
 
 Issues and PRs are welcome.
 
-- Bugs: https://github.com/CaviraOSS/OpenMemory/issues
+- Bugs: <https://github.com/CaviraOSS/OpenMemory/issues>
 - Feature requests: use the GitHub issue templates
 - Before large changes, open a discussion or small design PR
 
