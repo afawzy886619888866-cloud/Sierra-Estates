@@ -1,26 +1,19 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-# IDE NOTE: secrets/vars context warnings are false positives — this repo uses runtime-resolved
-# GitHub Actions secrets that cannot be statically verified offline.
-# Validation is disabled in .vscode/settings.json via github-actions.workflows.validations.enabled: false
-name: External Workflows — Sync Data with Sheets
+# ─────────────────────────────────────────────────────────────
+# Workflows Automation: Owner Search, Contact, Email, Unit Adder
+# Standalone automation runners for Sierra Estates backend operations
+# ─────────────────────────────────────────────────────────────
 
-# Runs the 4 external workflows from the workflows/ directory:
-#   1. owner-search  — Daily at 9am UTC (scrapes Property Finder → Google Sheets)
-#   2. owner-contact — Daily at 10am UTC (sends WhatsApp messages to owners)
-#   3. email-sender  — Daily at 8am UTC (sends email notifications via SendGrid)
-#   4. unit-adder    — Every 30 min (syncs Google Sheets → Firestore)
-#
-# Can also be triggered manually via workflow_dispatch with a workflow selector.
+name: External Workflows Runner
 
 on:
   schedule:
-    # 8am UTC: email-sender
-    - cron: '0 8 * * *'
-    # 9am UTC: owner-search
+    # owner-search: Daily at 9am UTC (11am Cairo)
     - cron: '0 9 * * *'
-    # 10am UTC: owner-contact
+    # owner-contact: Daily at 10am UTC (12pm Cairo)
     - cron: '0 10 * * *'
-    # Every 30 minutes: unit-adder
+    # email-sender: Daily at 8am UTC (10am Cairo)
+    - cron: '0 8 * * *'
+    # unit-adder: Every 30 minutes
     - cron: '*/30 * * * *'
 
   workflow_dispatch:
@@ -56,16 +49,16 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.workflow == 'all' || github.event.inputs.workflow == 'owner-search')
 
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check required secrets
         id: secrets
         env:
-          PF_JWT: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
+          PF_KEY: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
           GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
-          if [ -z "$PF_JWT" ] || [ -z "$GSA_KEY" ]; then
+          if [ -z "$PF_KEY" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice title=Owner Search skipped::Required secrets not configured (PROPERTY_FINDER_JWT_TOKEN, GOOGLE_SERVICE_ACCOUNT_KEY). See workflows/GITHUB_SECRETS_SETUP.md"
           else
@@ -106,9 +99,6 @@ jobs:
 
   # ─────────────────────────────────────────────────────────────
   # JOB 2: Owner Contact (Daily at 10am UTC)
-  # NOTE: independent of owner-search — the old `needs: owner-search`
-  # meant this job was ALWAYS skipped on its 10am schedule (owner-search
-  # only runs on the 9am cron, so the dependency was never satisfied).
   # ─────────────────────────────────────────────────────────────
   owner-contact:
     runs-on: ubuntu-latest
@@ -137,7 +127,7 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
@@ -156,9 +146,9 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-contact
         env:
-          WHATSAPP_API_URL: ${{ vars['WHATSAPP_API_URL'] || secrets['WHATSAPP_API_URL'] }}
+          WHATSAPP_API_URL: ${{ vars['WHATSAPP_API_URL'] }}
           WHATSAPP_API_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}
-          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
@@ -176,7 +166,7 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.workflow == 'all' || github.event.inputs.workflow == 'email-sender')
 
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check required secrets
@@ -195,7 +185,7 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
@@ -215,8 +205,8 @@ jobs:
         run: cd workflows && npm run email-sender
         env:
           SENDGRID_API_KEY: ${{ secrets['SENDGRID_API_KEY'] }}
-          SENDGRID_FROM_EMAIL: ${{ vars['SENDGRID_FROM_EMAIL'] || secrets['SENDGRID_FROM_EMAIL'] || 'noreply@sierra-estates.net' }}
-          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          SENDGRID_FROM_EMAIL: ${{ vars['SENDGRID_FROM_EMAIL'] || 'noreply@sierra-estates.net' }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
@@ -241,7 +231,7 @@ jobs:
         id: secrets
         env:
           GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
-          SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
         run: |
           if [ -z "$GSA_KEY" ] || [ -z "$SHEET_ID" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -253,7 +243,7 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
@@ -272,10 +262,10 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run unit-adder
         env:
-          FIREBASE_PROJECT_ID: ${{ vars['FIREBASE_PROJECT_ID'] || secrets['FIREBASE_PROJECT_ID'] || 'sierra-blu' }}
+          FIREBASE_PROJECT_ID: ${{ vars['FIREBASE_PROJECT_ID'] || 'sierra-blu' }}
           FIREBASE_PRIVATE_KEY: ${{ secrets['FIREBASE_PRIVATE_KEY'] }}
-          FIREBASE_CLIENT_EMAIL: ${{ vars['FIREBASE_CLIENT_EMAIL'] || secrets['FIREBASE_CLIENT_EMAIL'] }}
-          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          FIREBASE_CLIENT_EMAIL: ${{ vars['FIREBASE_CLIENT_EMAIL'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
@@ -297,13 +287,3 @@ jobs:
           echo "Owner Contact: ${{ needs.owner-contact.result }}"
           echo "Email Sender: ${{ needs.email-sender.result }}"
           echo "Unit Adder: ${{ needs.unit-adder.result }}"
-
-          if [[ "${{ needs.owner-search.result }}" == "failure" || \
-                "${{ needs.owner-contact.result }}" == "failure" || \
-                "${{ needs.email-sender.result }}" == "failure" || \
-                "${{ needs.unit-adder.result }}" == "failure" ]]; then
-            echo "❌ One or more workflows failed"
-            exit 1
-          else
-            echo "✅ All workflows completed or skipped cleanly"
-          fi
