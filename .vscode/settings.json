@@ -1,7 +1,8 @@
 {
   "sql.defaultDatabaseType": "postgres",
   "files.associations": {
-    "*.sql": "postgres"
+    "*.sql": "postgres",
+    "pnpm-lock.yaml": "text"
   },
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
@@ -26,11 +27,6 @@
   "compilets.autoStart": true,
   "markdown.validate.enabled": true,
   "github-actions.workflows.validations.enabled": false,
-  "yaml.schemas": {
-    "none": [
-      "pnpm-lock.yaml",
-      "**/pnpm-lock.yaml"
-    ]
-  },
+  "yaml.schemas": {},
   "yaml.schemaStore.enable": false
 }
