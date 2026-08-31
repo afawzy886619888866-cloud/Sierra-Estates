@@ -372,3 +372,113 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
+
+-- ------------------------------------------------------------------------------
+-- 15. Advanced Multi-Filter Search Function
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION search_properties(
+    search_query text DEFAULT NULL,
+    p_compound text DEFAULT NULL,
+    p_deal_type text DEFAULT NULL,
+    p_min_price numeric DEFAULT NULL,
+    p_max_price numeric DEFAULT NULL,
+    p_bedrooms int DEFAULT NULL,
+    p_limit int DEFAULT 50,
+    p_offset int DEFAULT 0
+)
+RETURNS TABLE (
+    id text,
+    ref_id text,
+    title text,
+    compound text,
+    deal_type text,
+    property_type text,
+    price numeric,
+    bedrooms int,
+    bathrooms int,
+    area_sqm numeric,
+    finishing_type text,
+    status text,
+    images text[],
+    source_channel text
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        l.id,
+        l.ref_id,
+        l.title,
+        l.compound,
+        l.deal_type,
+        l.property_type,
+        l.price,
+        l.bedrooms,
+        l.bathrooms,
+        l.area_sqm,
+        l.finishing_type,
+        l.status,
+        l.images,
+        l.source_channel
+    FROM public.listings l
+    WHERE l.status = 'active'
+      AND (p_compound IS NULL OR l.compound ILIKE '%' || p_compound || '%')
+      AND (p_deal_type IS NULL OR l.deal_type = p_deal_type)
+      AND (p_min_price IS NULL OR l.price >= p_min_price)
+      AND (p_max_price IS NULL OR l.price <= p_max_price)
+      AND (p_bedrooms IS NULL OR l.bedrooms = p_bedrooms)
+      AND (search_query IS NULL OR (
+          l.title ILIKE '%' || search_query || '%' OR
+          l.compound ILIKE '%' || search_query || '%' OR
+          l.description ILIKE '%' || search_query || '%' OR
+          l.property_type ILIKE '%' || search_query || '%'
+      ))
+    ORDER BY l.created_at DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$;
+
+-- ------------------------------------------------------------------------------
+-- 16. Gemini 768-Dimension Vector Search Function
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION match_listings_gemini(
+    query_embedding vector(768),
+    match_threshold float DEFAULT 0.5,
+    match_count int DEFAULT 10
+)
+RETURNS TABLE (
+    id text,
+    ref_id text,
+    title text,
+    compound text,
+    price numeric,
+    bedrooms int,
+    area_sqm numeric,
+    deal_type text,
+    similarity float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        listings.id,
+        listings.ref_id,
+        listings.title,
+        listings.compound,
+        listings.price,
+        listings.bedrooms,
+        listings.area_sqm,
+        listings.deal_type,
+        1 - (listings.embedding_768 <=> query_embedding) AS similarity
+    FROM public.listings
+    WHERE listings.status = 'active'
+      AND listings.embedding_768 IS NOT NULL
+      AND 1 - (listings.embedding_768 <=> query_embedding) > match_threshold
+    ORDER BY listings.embedding_768 <=> query_embedding
+    LIMIT match_count;
+END;
+$$;
+
