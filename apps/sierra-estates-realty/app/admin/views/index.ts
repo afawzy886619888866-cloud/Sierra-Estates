@@ -11,3 +11,5 @@ export { default as DeepInsightsView } from './DeepInsightsView';
 export { default as ReportsView } from './ReportsView';
 export { default as ExcelMergerView } from './ExcelMergerView';
 export { default as RealEstateProcessorView } from './RealEstateProcessorView';
+export { ContractsView } from './ContractsView';
+
