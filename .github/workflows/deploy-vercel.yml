@@ -89,16 +89,18 @@ jobs:
         id: proj
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          ADMIN_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN }}
+          CLIENT_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT }}
+          ORG_ID_VAR: ${{ vars.VERCEL_ORG_ID }}
         run: |
           TOKEN="$VERCEL_TOKEN"
+          ORG_ID="${ORG_ID_VAR:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
           
           if [ "${{ matrix.role }}" = "admin" ]; then
-            PROJ="${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}"
+            PROJ="${ADMIN_PROJECT_ID:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
           else
-            PROJ="${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}"
+            PROJ="${CLIENT_PROJECT_ID:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
           fi
-          
-          ORG_ID="${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}"
 
           # Git deployments are disabled in vercel.json, so silently skipping
           # this job would leave main undeployed. Fail visibly instead.
