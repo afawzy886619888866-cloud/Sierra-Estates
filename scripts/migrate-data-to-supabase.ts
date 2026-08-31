@@ -168,18 +168,37 @@ async function migrateData() {
         }
     }
 
-    // Batch insert listings
-    console.log(`💾 Inserting ${listingsToInsert.length} properties into Supabase...`);
-    const { data: inserted, error: insertError } = await supabase
-        .from('listings')
-        .upsert(listingsToInsert, { onConflict: 'ref_id' })
-        .select('id, ref_id, title');
+    // Deduplicate listings by ref_id
+    const uniqueMap = new Map<string, ParsedListing>();
+    listingsToInsert.forEach((item, idx) => {
+        const uniqueKey = item.ref_id && item.ref_id !== '' ? item.ref_id : `SE-GEN-${idx + 1}`;
+        item.ref_id = uniqueKey;
+        uniqueMap.set(uniqueKey, item);
+    });
+    const finalUniqueListings = Array.from(uniqueMap.values());
 
-    if (insertError) {
-        console.error('❌ Insert error:', insertError.message);
-    } else {
-        console.log(`🎉 Successfully synced ${inserted?.length || listingsToInsert.length} properties to Supabase!`);
+    // Batch insert listings
+    console.log(`💾 Inserting ${finalUniqueListings.length} unique properties into Supabase...`);
+    
+    // Insert in chunks of 100 to avoid payload limits
+    const CHUNK_SIZE = 100;
+    let totalInserted = 0;
+
+    for (let i = 0; i < finalUniqueListings.length; i += CHUNK_SIZE) {
+        const chunk = finalUniqueListings.slice(i, i + CHUNK_SIZE);
+        const { data: inserted, error: insertError } = await supabase
+            .from('listings')
+            .upsert(chunk, { onConflict: 'ref_id' })
+            .select('id, ref_id, title');
+
+        if (insertError) {
+            console.error(`❌ Insert error on chunk ${i / CHUNK_SIZE + 1}:`, insertError.message);
+        } else {
+            totalInserted += (inserted?.length || chunk.length);
+        }
     }
+
+    console.log(`🎉 Successfully synced ${totalInserted} properties to Supabase!`);
 
     // Insert sample CRM Leads
     const sampleLeads = [
