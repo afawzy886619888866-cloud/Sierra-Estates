@@ -17,6 +17,7 @@
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
         "deploy:prod": "vercel --prod",
+        "test:prod": "tsx scripts/test-production.ts",
         "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
         "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
