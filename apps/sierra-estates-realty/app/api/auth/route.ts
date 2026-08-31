@@ -65,33 +65,32 @@ export async function POST(req: Request) {
         const decoded = await getAuth().verifyIdToken(firebaseIdToken);
         const verifiedEmail = (decoded.email || targetEmail || "").trim().toLowerCase();
         const userDoc = await db.collection("users").doc(decoded.uid).get();
+
+        // Accounts are provisioned out-of-band only (scripts/seed-admin.mjs).
+        // A verified token for a uid we have never provisioned is NOT a new
+        // staff member — it is anyone who managed to create a Firebase account.
+        // Reject it; never write a users/ document from this request path.
+        if (!userDoc.exists) {
+          return NextResponse.json(
+            { error: "This account is not provisioned for the admin portal." },
+            { status: 403 }
+          );
+        }
+
         const userData = userDoc.data() as Partial<User> | undefined;
         const rawRole = String(userData?.role ?? "").trim().toLowerCase();
-        
-        const isApprovedAdmin = isAdminEmail(verifiedEmail) || body.provider === 'google';
 
-        let role: Role;
-        if (isAdminPortalRole(rawRole)) {
-          role = rawRole as Role;
-        } else if (isApprovedAdmin) {
-          role = "admin";
-        } else {
-          role = "viewer";
-        }
-
-        if (!userDoc.exists || (isApprovedAdmin && !isAdminPortalRole(userData?.role))) {
-          await db.collection("users").doc(decoded.uid).set({
-            email: decoded.email ?? verifiedEmail,
-            name: decoded.name ?? verifiedEmail.split("@")[0] ?? "Sierra Staff",
-            role,
-            createdAt: userData?.createdAt || new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-          }, { merge: true });
-        }
-
-        if (!isAdminPortalRole(role)) {
+        // The stored role is the only source of truth — no email allowlist or
+        // sign-in provider may promote an account at login time.
+        if (!isAdminPortalRole(rawRole)) {
           return NextResponse.json({ error: "This account is not approved for the admin portal." }, { status: 403 });
         }
+        const role = rawRole as Role;
+
+        await db.collection("users").doc(decoded.uid).set(
+          { lastLogin: new Date().toISOString() },
+          { merge: true }
+        );
 
         const sess = await signSession({
           uid: decoded.uid,
@@ -108,9 +107,27 @@ export async function POST(req: Request) {
     }
 
     // Path B — Google Sign-In Direct Fallback (Firebase popup succeeded but
-    // Admin SDK verification failed or isn't configured). Only approved
-    // admin emails are allowed — no blanket @gmail.com access.
+    // Admin SDK verification failed or isn't configured).
+    //
+    // Everything this path trusts — provider, email, uid — comes from the
+    // request body, and none of it is verified. It previously minted a signed
+    // admin session from those claims alone, so any POST carrying
+    // {provider:'google', email:'<anything>@sierra-estates.net'} was issued an
+    // admin cookie whenever the Admin SDK was unconfigured or verifyIdToken
+    // threw. isAdminEmail() accepts any address on that domain, so it gated
+    // nothing an attacker could not satisfy.
+    //
+    // It stays available for local development, where the Admin SDK often is
+    // not configured, and is closed in production: there, a real ID token
+    // verified by Path A is the only way in.
     if (body.provider === 'google' && targetEmail) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[api/auth] Path B refused in production: Firebase Admin verification is required.');
+        return NextResponse.json(
+          { error: 'Sign-in is temporarily unavailable. Firebase Admin verification is not configured.' },
+          { status: 503 }
+        );
+      }
       if (!isAdminEmail(targetEmail)) {
         return NextResponse.json(
           { error: `The Google account "${targetEmail}" is not authorized for the admin portal. Contact your administrator to add this email to the approved list.` },

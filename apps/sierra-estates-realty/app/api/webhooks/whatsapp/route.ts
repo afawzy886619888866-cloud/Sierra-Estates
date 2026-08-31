@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -58,15 +59,20 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
 }
 
 export async function POST(req: NextRequest) {
+  // Shared-secret verification. This used to be `if (SECRET_KEY) { ...check... }`,
+  // i.e. FAIL-OPEN: with SBR_SECRET_KEY unset the webhook accepted anything from
+  // anyone and fed it straight into the listing parser. `verifySharedSecret`
+  // fails closed in production (503 when unconfigured) while still allowing
+  // local development without a secret — the same contract as
+  // /api/ingest/whatsapp and /api/telegram/webhook.
+  const denied = verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
+  if (denied) return denied;
+
   const rawBody = await req.text();
-  // Optional secret verification for WhatsApp webhook
-  const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-  if (SECRET_KEY) {
-    const secretHeader = req.headers.get('x-sbr-secret-key');
-    if (!secretHeader || secretHeader !== SECRET_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
 
   // Meta X-Hub-Signature-256 validation
   const metaSecret = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN || '';

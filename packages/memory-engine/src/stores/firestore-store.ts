@@ -52,8 +52,7 @@ export class FirestoreMemoryStore implements MemoryStore {
         const req =
           typeof module !== 'undefined' && typeof module.require === 'function'
             ? module.require.bind(module)
-            : // eslint-disable-next-line @typescript-eslint/no-var-requires
-              eval('require')
+            : eval('require')
         const admin = req('firebase-admin')
 
         if (!admin.apps?.length) {

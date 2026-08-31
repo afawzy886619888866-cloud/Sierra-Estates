@@ -6,6 +6,7 @@
   "types": "./index.ts",
   "private": true,
   "scripts": {
+    "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

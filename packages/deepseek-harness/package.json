@@ -6,6 +6,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
+    "lint": "eslint .",
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "eval": "tsx src/harness.ts",

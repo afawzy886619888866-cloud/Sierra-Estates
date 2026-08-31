@@ -108,6 +108,33 @@
 
 **Security Guardrail:** Service account private keys, API secrets, and signing tokens must never be committed to source control. Canonical templates: `.env.example` and `apps/sierra-estates-realty/.env.local.example`.
 
+### 4.1 Seeding the first admin
+
+`POST /api/auth` never provisions accounts. A Firebase ID token whose uid has no
+pre-existing `users/{uid}` document is rejected with **403**, and a document whose
+`role` is not an admin-portal role is rejected the same way. There is no
+self-service bootstrap — anyone who can register in Firebase Auth would otherwise
+be able to claim the console.
+
+Admin access is granted out-of-band with the seeding script, which writes
+`users/{uid}` via the Admin SDK. The person must already exist in Firebase
+Authentication (they sign in once and get the 403, or an operator creates them in
+the Firebase console).
+
+```bash
+# credentials come from the environment only — never pass a key as an argument
+export FIREBASE_SERVICE_ACCOUNT_JSON="$(cat /secure/path/sierra-blu-sa.json)"
+
+pnpm --filter sierra-estates-client-page seed:admin -- ops@sierra-estates.net
+# or by uid, or with an explicit role/name:
+#   ... seed:admin -- <firebase-uid> --role manager --name "Ops Lead"
+```
+
+The script refuses to run without `FIREBASE_SERVICE_ACCOUNT_JSON`,
+`FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU`, `FIREBASE_SERVICE_ACCOUNT`, or
+`GOOGLE_APPLICATION_CREDENTIALS`, prints exactly what it wrote, and is safe to
+re-run (it preserves `createdAt` and only updates the role).
+
 ---
 
 ## 5. CI/CD Gates (`.github/workflows/ci.yml`)
