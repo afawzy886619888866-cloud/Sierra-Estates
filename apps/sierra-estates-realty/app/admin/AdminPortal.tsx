@@ -27,6 +27,7 @@ import {
   ExcelMergerView,
   RealEstateProcessorView,
   ContractsView,
+  HeatmapView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
