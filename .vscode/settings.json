@@ -36,5 +36,6 @@
   "github-actions.workflows.validations.schema": false,
   "yaml.validate": false,
   "yaml.schemas": {},
-  "yaml.schemaStore.enable": false
+  "yaml.schemaStore.enable": false,
+  "abl.buildMode": 1
 }
