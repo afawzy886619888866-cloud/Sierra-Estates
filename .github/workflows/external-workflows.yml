@@ -4,25 +4,29 @@
 # Validation is disabled in .vscode/settings.json via github-actions.workflows.validations.enabled: false
 name: External Workflows — Sync Data with Sheets
 
-# Each job guards on its required repository secrets: when secrets are not
-# configured the job SKIPS gracefully (notice, green run) instead of failing
-# every schedule. Configure secrets per workflows/GITHUB_SECRETS_SETUP.md.
+# Runs the 4 external workflows from the workflows/ directory:
+#   1. owner-search  — Daily at 9am UTC (scrapes Property Finder → Google Sheets)
+#   2. owner-contact — Daily at 10am UTC (sends WhatsApp messages to owners)
+#   3. email-sender  — Daily at 8am UTC (sends email notifications via SendGrid)
+#   4. unit-adder    — Every 30 min (syncs Google Sheets → Firestore)
+#
+# Can also be triggered manually via workflow_dispatch with a workflow selector.
 
 on:
   schedule:
-    # 9am daily — Search for new owner properties on PF/OLX
-    - cron: '0 9 * * *'
-    # 10am daily — Send WhatsApp outreach to owners
-    - cron: '0 10 * * *'
-    # 8am daily — Send email campaigns
+    # 8am UTC: email-sender
     - cron: '0 8 * * *'
-    # Every 30 minutes — Sync new units from Sheets to Firestore
+    # 9am UTC: owner-search
+    - cron: '0 9 * * *'
+    # 10am UTC: owner-contact
+    - cron: '0 10 * * *'
+    # Every 30 minutes: unit-adder
     - cron: '*/30 * * * *'
 
   workflow_dispatch:
     inputs:
       workflow:
-        description: 'Which workflow to run?'
+        description: 'Workflow to run'
         required: true
         default: 'all'
         type: choice
@@ -32,6 +36,10 @@ on:
           - owner-contact
           - email-sender
           - unit-adder
+
+concurrency:
+  group: external-workflows-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -54,8 +62,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          PF_JWT: ${{ secrets.PROPERTY_FINDER_JWT_TOKEN }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          PF_JWT: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
           if [ -z "$PF_JWT" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -72,7 +80,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -86,10 +94,10 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-search
         env:
-          PROPERTY_FINDER_API_BASE: ${{ vars.PROPERTY_FINDER_API_BASE || secrets.PROPERTY_FINDER_API_BASE || 'https://api.propertyfinder.com.eg/v3' }}
-          PROPERTY_FINDER_JWT_TOKEN: ${{ secrets.PROPERTY_FINDER_JWT_TOKEN }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          PROPERTY_FINDER_API_BASE: ${{ vars['PROPERTY_FINDER_API_BASE'] || secrets['PROPERTY_FINDER_API_BASE'] || 'https://api.propertyfinder.com.eg/v3' }}
+          PROPERTY_FINDER_JWT_TOKEN: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -116,8 +124,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          WA_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          WA_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
           if [ -z "$WA_TOKEN" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -134,7 +142,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -148,10 +156,10 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-contact
         env:
-          WHATSAPP_API_URL: ${{ vars.WHATSAPP_API_URL || secrets.WHATSAPP_API_URL }}
-          WHATSAPP_API_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          WHATSAPP_API_URL: ${{ vars['WHATSAPP_API_URL'] || secrets['WHATSAPP_API_URL'] }}
+          WHATSAPP_API_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -174,8 +182,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          SG_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SG_KEY: ${{ secrets['SENDGRID_API_KEY'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
           if [ -z "$SG_KEY" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -192,7 +200,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -206,10 +214,10 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run email-sender
         env:
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL || secrets.SENDGRID_FROM_EMAIL || 'noreply@sierra-estates.net' }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SENDGRID_API_KEY: ${{ secrets['SENDGRID_API_KEY'] }}
+          SENDGRID_FROM_EMAIL: ${{ vars['SENDGRID_FROM_EMAIL'] || secrets['SENDGRID_FROM_EMAIL'] || 'noreply@sierra-estates.net' }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -232,8 +240,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-          SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
+          SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
         run: |
           if [ -z "$GSA_KEY" ] || [ -z "$SHEET_ID" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -250,7 +258,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -264,12 +272,11 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run unit-adder
         env:
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || secrets.FIREBASE_PROJECT_ID || 'sierra-blu' }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          FIREBASE_CLIENT_EMAIL: ${{ vars.FIREBASE_CLIENT_EMAIL || secrets.FIREBASE_CLIENT_EMAIL }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
+          FIREBASE_PROJECT_ID: ${{ vars['FIREBASE_PROJECT_ID'] || secrets['FIREBASE_PROJECT_ID'] || 'sierra-blu' }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets['FIREBASE_PRIVATE_KEY'] }}
+          FIREBASE_CLIENT_EMAIL: ${{ vars['FIREBASE_CLIENT_EMAIL'] || secrets['FIREBASE_CLIENT_EMAIL'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
