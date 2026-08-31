@@ -8,11 +8,13 @@
 ## **What Was Built**
 
 ### Security Hardening
+
 ✅ `lib/middleware/auth-guard.ts` — Bearer token + secret key validation  
 ✅ `lib/middleware/rate-limit.ts` — 100 req/min per IP  
 ✅ `middleware.ts` — CORS (sierra-estates.net only) + security headers  
 
 ### Production Wiring
+
 ✅ `.github/workflows/deploy.yml` — Auto-deploy on push to main  
 ✅ `VERCEL_ENV_VARS.md` — Environment setup guide  
 

@@ -97,7 +97,7 @@ available sources: `github`, `notion`, `google_drive`, `google_sheets`, `google_
 openmemory automatically classifies content into 5 cognitive sectors:
 
 | sector | description | examples | decay rate |
-|--------|-------------|----------|------------|
+| -------- | ------------- | ---------- | ------------ |
 | **episodic** | time-bound events & experiences | "yesterday i attended a conference" | medium |
 | **semantic** | timeless facts & knowledge | "paris is the capital of france" | very low |
 | **procedural** | skills, procedures, how-tos | "to deploy: build, test, push" | low |
@@ -142,11 +142,13 @@ mem = Memory(
 ### embedding providers
 
 #### synthetic (testing/development)
+
 ```python
 embeddings={'provider': 'synthetic'}
 ```
 
 #### openai (recommended for production)
+
 ```python
 embeddings={
     'provider': 'openai',
@@ -156,6 +158,7 @@ embeddings={
 ```
 
 #### gemini
+
 ```python
 embeddings={
     'provider': 'gemini',
@@ -164,6 +167,7 @@ embeddings={
 ```
 
 #### ollama (fully local)
+
 ```python
 embeddings={
     'provider': 'ollama',
@@ -173,6 +177,7 @@ embeddings={
 ```
 
 #### minimax
+
 ```python
 embeddings={
     'provider': 'minimax',
@@ -183,6 +188,7 @@ embeddings={
 > uses MiniMax's `embo-01` model (1536 dimensions). for chat completions, MiniMax supports `MiniMax-M2.7` and `MiniMax-M2.5-highspeed` via OpenAI-compatible API.
 
 #### aws bedrock
+
 ```python
 embeddings={
     'provider': 'aws',

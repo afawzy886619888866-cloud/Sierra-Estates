@@ -38,6 +38,7 @@ FIREBASE_SERVICE_ACCOUNT_JSON = [paste your service account JSON here]
 ```
 
 **Steps:**
+
 1. Get your service account key from [Firebase Console](https://console.firebase.google.com)
 2. Download as JSON
 3. Paste entire JSON as the value (single line)
