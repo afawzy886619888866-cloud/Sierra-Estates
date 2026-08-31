@@ -27,17 +27,11 @@ name: Deploy · Vercel
 #   NEXT_PUBLIC_FIREBASE_*     — Firebase public SDK configuration values
 
 on:
-  push:
+  # Gated on CI rather than racing it on the same push.
+  workflow_run:
+    workflows: ["CI"]
     branches: [main]
-    paths:
-      - 'apps/sierra-estates-realty/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'turbo.json'
-      - 'tsconfig*.json'
-      - '.github/workflows/deploy-vercel.yml'
+    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -80,6 +74,7 @@ jobs:
             framework: nextjs
             proj_id_secret: ADMIN_VERCEL_PROJECT_ID
     name: deploy (${{ matrix.role }})
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -187,7 +182,8 @@ jobs:
               "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"rootDirectory\":\"${{ matrix.app_dir }}\",\"framework\":\"${{ matrix.framework }}\",\"buildCommand\":null,\"installCommand\":\"pnpm install\",\"outputDirectory\":null,\"devCommand\":null}" || echo "000")
+              -d "$(jq -n --arg root "${{ matrix.app_dir }}" --arg fw "${{ matrix.framework }}" \
+                    '{rootDirectory:$root,framework:$fw,buildCommand:null,installCommand:"pnpm install --frozen-lockfile",outputDirectory:null,devCommand:null}')" || echo "000")
             if [ "$code" = "200" ] || [ "$code" = "204" ]; then
               echo "✅ Project normalized: rootDirectory=${{ matrix.app_dir }}, framework=${{ matrix.framework }}"
               success=true
@@ -287,7 +283,8 @@ jobs:
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"${3:-plain}\",\"target\":[\"production\",\"preview\"]}" || echo "000")
+              -d "$(jq -n --arg key "$1" --arg value "$2" --arg type "${3:-plain}" \
+                    '{key:$key,value:$value,type:$type,target:["production","preview"]}')" || echo "000")
             case "$code" in 200|201) echo "  $1 ✓";; *) echo "::warning::env $1 → HTTP $code $(cat /tmp/env-res.json 2>/dev/null || true)";; esac
           }
 
@@ -475,7 +472,7 @@ jobs:
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
               -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "{\"name\":\"${{ matrix.domain }}\"}" || echo "000")
+              -d "$(jq -n --arg name "${{ matrix.domain }}" '{name:$name}')" || echo "000")
             body=$(cat /tmp/dom-res.json 2>/dev/null || true)
             if [ "$code" = "200" ] || [ "$code" = "201" ]; then
               echo "✅ domain ${{ matrix.domain }} attached"
