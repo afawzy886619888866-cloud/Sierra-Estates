@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
   if (body.action === "signout") {
     const res = NextResponse.json({ ok: true });
-    res.cookies.delete(SESSION_COOKIE);
+    res.cookies.set(SESSION_COOKIE, "", { ...cookieOpts(), maxAge: 0 });
     return res;
   }
 
