@@ -5,6 +5,7 @@ import {
   generateSignatureHash 
 } from '@/lib/services/digital-contracts';
 import { adminDb } from '@/lib/server/firebase-admin';
+import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 // In-memory store fallback for development and test environments
 const inMemoryContracts: Map<string, DigitalContractData> = new Map();
@@ -31,21 +32,24 @@ const sampleContract: DigitalContractData = {
   },
   buyer: {
     name: 'Karim Mansour',
-    nationalIdOrPassport: '29201010102938',
-    phone: '+201001234567',
+    nationalIdOrPassport: 'SAMPLE-NATIONAL-ID-1',
+    phone: '+20-000-000-0001',
     email: 'karim.m@example.com',
   },
   sellerOrOwner: {
     name: 'Mohamed El-Sayed',
-    nationalIdOrPassport: '28509090104829',
-    phone: '+201022844661',
+    nationalIdOrPassport: 'SAMPLE-NATIONAL-ID-2',
+    phone: '+20-000-000-0002',
   },
   signatureHash: 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8',
 };
 
 inMemoryContracts.set(sampleContract.id, sampleContract);
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorizedResponse();
+
   try {
     const contracts: DigitalContractData[] = [];
 
@@ -79,6 +83,9 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorizedResponse();
+
   try {
     const body = await req.json();
     const contractType = body.contractType || 'unit_reservation';
