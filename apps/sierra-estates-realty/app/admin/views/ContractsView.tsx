@@ -41,7 +41,7 @@ interface ContractItem {
 
 export function ContractsView() {
   const [contracts, setContracts] = useState<ContractItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'create' | 'vault'>('create');
   const [submitting, setSubmitting] = useState(false);
   const [generatedResult, setGeneratedResult] = useState<any>(null);
@@ -50,14 +50,14 @@ export function ContractsView() {
   const [contractType, setContractType] = useState<'unit_reservation' | 'broker_commission_split'>('unit_reservation');
   const [compoundName, setCompoundName] = useState('Eastown (SODIC)');
   const [unitCode, setUnitCode] = useState('ET-B04-3U');
-  const [propertyType, setPropertyType] = useState('Apartment');
+  const [propertyType] = useState('Apartment');
   const [dealType, setDealType] = useState<'sale' | 'rent'>('rent');
   const [agreedPrice, setAgreedPrice] = useState(45000);
   const [reservationDeposit, setReservationDeposit] = useState(45000);
   const [areaSqm, setAreaSqm] = useState(165);
-  const [bedrooms, setBedrooms] = useState(3);
-  const [bathrooms, setBathrooms] = useState(2);
-  const [finishing, setFinishing] = useState('Ultra Super Lux');
+  const [bedrooms] = useState(3);
+  const [bathrooms] = useState(2);
+  const [finishing] = useState('Ultra Super Lux');
 
   const [buyerName, setBuyerName] = useState('Omar Farouk');
   const [buyerPhone, setBuyerPhone] = useState('+201011223344');
@@ -67,9 +67,9 @@ export function ContractsView() {
   const [sellerPhone, setSellerPhone] = useState('+201022844661');
   const [sellerNationalId, setSellerNationalId] = useState('28509090104829');
 
-  const [commissionPercentage, setCommissionPercentage] = useState(2.5);
-  const [externalBrokerName, setExternalBrokerName] = useState('');
-  const [externalBrokerPhone, setExternalBrokerPhone] = useState('');
+  const [commissionPercentage] = useState(2.5);
+  const [externalBrokerName] = useState('');
+  const [externalBrokerPhone] = useState('');
 
   useEffect(() => {
     fetchContracts();
