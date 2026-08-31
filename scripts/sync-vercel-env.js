@@ -16,7 +16,6 @@ const __dirname = path.dirname(__filename);
 // Load local environment files
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';

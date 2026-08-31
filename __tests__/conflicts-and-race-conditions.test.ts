@@ -142,4 +142,84 @@ describe('Conflicts, Concurrency & Race Condition Protection Test Suite', () => 
       expect(executionCount).toBe(1); // Not executed twice
     });
   });
+
+  describe('Optimistic Locking & Concurrency Control', () => {
+    interface VersionedPropertyListing {
+      id: string;
+      priceEgp: number;
+      version: number;
+      updatedAt: string;
+    }
+
+    class OptimisticListingStore {
+      private listings = new Map<string, VersionedPropertyListing>();
+
+      public setListing(item: VersionedPropertyListing) {
+        this.listings.set(item.id, { ...item });
+      }
+
+      public updatePrice(id: string, expectedVersion: number, newPrice: number): { success: boolean; conflict?: boolean } {
+        const current = this.listings.get(id);
+        if (!current) return { success: false };
+
+        if (current.version !== expectedVersion) {
+          return { success: false, conflict: true }; // Conflict: Stale version
+        }
+
+        current.priceEgp = newPrice;
+        current.version += 1;
+        current.updatedAt = new Date().toISOString();
+        return { success: true };
+      }
+    }
+
+    it('rejects stale price update when another broker has committed a newer version', () => {
+      const store = new OptimisticListingStore();
+      store.setListing({
+        id: 'prop-101',
+        priceEgp: 15_000_000,
+        version: 1,
+        updatedAt: '2026-08-28T00:00:00Z',
+      });
+
+      // Broker A fetches version 1 and updates price to 14.5M
+      const updateA = store.updatePrice('prop-101', 1, 14_500_000);
+      expect(updateA.success).toBe(true);
+
+      // Broker B attempts update using stale version 1 (which was already incremented to 2)
+      const updateB = store.updatePrice('prop-101', 1, 14_000_000);
+      expect(updateB.success).toBe(false);
+      expect(updateB.conflict).toBe(true);
+    });
+  });
+
+  describe('Lead Claim Locks with TTL Expiration', () => {
+    class LeadLockManager {
+      private locks = new Map<string, { claimedBy: string; expiresAt: number }>();
+
+      public claimLead(leadId: string, agentId: string, ttlMs: number, now = Date.now()): boolean {
+        const existing = this.locks.get(leadId);
+        if (existing && existing.expiresAt > now) {
+          return existing.claimedBy === agentId; // Locked by someone else
+        }
+        this.locks.set(leadId, { claimedBy: agentId, expiresAt: now + ttlMs });
+        return true;
+      }
+    }
+
+    it('prevents simultaneous lead claiming but allows reclaiming after lock expiry', () => {
+      const lockManager = new LeadLockManager();
+      const startTime = 1000000;
+
+      // Agent 1 claims lead for 10 minutes (600,000 ms)
+      expect(lockManager.claimLead('lead-55', 'agent-ahmed', 600000, startTime)).toBe(true);
+
+      // Agent 2 attempts to claim within lock window -> blocked
+      expect(lockManager.claimLead('lead-55', 'agent-sara', 600000, startTime + 100000)).toBe(false);
+
+      // Agent 2 attempts after lock has expired (startTime + 700,000 ms) -> granted
+      expect(lockManager.claimLead('lead-55', 'agent-sara', 600000, startTime + 700000)).toBe(true);
+    });
+  });
 });
+

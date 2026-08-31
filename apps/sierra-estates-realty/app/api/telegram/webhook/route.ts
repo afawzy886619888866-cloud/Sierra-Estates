@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb, isAdminInitialized } from '@/lib/server/firebase-admin';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 export async function POST(req: NextRequest) {
   // Telegram sends X-Telegram-Bot-Api-Secret-Token when the webhook was registered
-  // with a secret_token (setWebhook). Enforced only when TELEGRAM_WEBHOOK_SECRET is set,
-  // so existing deployments keep working until the webhook is re-registered.
-  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (webhookSecret && req.headers.get('x-telegram-bot-api-secret-token') !== webhookSecret) {
-    return NextResponse.json({ ok: false, error: 'Invalid webhook secret' }, { status: 401 });
-  }
+  // with a secret_token (setWebhook). Register the webhook with a secret and set
+  // TELEGRAM_WEBHOOK_SECRET — in production an unset secret fails closed (503).
+  const denied = verifySharedSecret(req, {
+    header: 'x-telegram-bot-api-secret-token',
+    secret: process.env.TELEGRAM_WEBHOOK_SECRET,
+    name: 'TELEGRAM_WEBHOOK_SECRET',
+  });
+  if (denied) return denied;
 
   try {
     const body = await req.json();

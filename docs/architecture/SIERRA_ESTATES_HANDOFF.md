@@ -35,8 +35,9 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 > A broker sends a WhatsApp message → AI parses it into a structured listing → AI brands it → AI distributes it to portals → AI matches it with leads → AI generates a proposal → Agent closes the deal → System learns from outcome.
 
 ### Core Concepts
+
 | Term | Meaning |
-|------|---------|
+| ------ | --------- |
 | **Signature Asset** | A property listing (unit) |
 | **Investment Stakeholder** | A lead / buyer / renter |
 | **Strategic Acquisition** | A completed sale |
@@ -49,8 +50,9 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 ## 2. Tech Stack & Dependencies
 
 ### Core Framework
+
 | Layer | Technology | Version |
-|-------|-----------|---------|
+| ------- | ----------- | --------- |
 | Framework | **Next.js** (App Router) | 16.2.1 |
 | UI | **React** | 19.2.4 |
 | Language | **TypeScript** | ^5 |
@@ -58,8 +60,9 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 | Animations | **Framer Motion** + **anime.js** | 12.38 / 4.3.6 |
 
 ### Backend & Data
+
 | Layer | Technology |
-|-------|-----------|
+| ------- | ----------- |
 | Database | **Firebase Firestore** (NoSQL) |
 | Auth | **Firebase Auth** (Email/Password + Guest mode) |
 | Storage | **Firebase Storage** (images, brochures) |
@@ -67,8 +70,9 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 | Observability | **OpenTelemetry** → Arize Phoenix (traces) |
 
 ### External Integrations
+
 | Service | Purpose |
-|---------|---------|
+| --------- | --------- |
 | Property Finder API | Distribution — push/pull listings |
 | WhatsApp Business API (Meta) | Broker intake + lead messaging |
 | Telegram Bot API | Alternate broker intake channel |
@@ -76,6 +80,7 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 | Leaflet.js | Map visualization |
 
 ### Key npm Dependencies
+
 ```
 firebase, firebase-admin, @google/generative-ai, framer-motion, animejs,
 lucide-react, react-hot-toast, next-intl, leaflet, react-leaflet,
@@ -90,7 +95,7 @@ lucide-react, react-hot-toast, next-intl, leaflet, react-leaflet,
 > All env vars live in `.env.local`. A template exists at `.env.example`.
 
 | Variable | Purpose | Required |
-|----------|---------|----------|
+| ---------- | --------- | ---------- |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Web SDK | ✅ |
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth | ✅ |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firestore project | ✅ |
@@ -249,7 +254,7 @@ my-app/
 ### Collections Map
 
 | Collection Name | TypeScript Interface | Purpose |
-|----------------|---------------------|---------|
+| ---------------- | --------------------- | --------- |
 | `listings` | `Unit` / `PortfolioAsset` | Property inventory |
 | `leads` | `InvestmentStakeholder` / `Lead` | Buyer/renter pipeline |
 | `sales` | `Sale` | Completed transactions |
@@ -266,6 +271,7 @@ my-app/
 | `syncLog` | `SyncResult` | Sync run history |
 
 ### Key Type: `Unit` (Listing)
+
 ```
 title, titleAr, code, propertyType, status, compound, location,
 area, bedrooms, bathrooms, price, images[], automation{},
@@ -274,6 +280,7 @@ orchestrationState{stage, status, lastTriggeredAt}
 ```
 
 ### Key Type: `InvestmentStakeholder` (Lead)
+
 ```
 name, phone, email, stage (PipelineStage), source,
 budget, preferredLocations[], aiProfiling{score, topMatches[]},
@@ -284,7 +291,9 @@ interactionHistory[{unitId, action, timestamp}]
 ```
 
 ### Orchestration State (On Every Document)
+
 Every document can carry:
+
 ```typescript
 orchestrationState: {
   stage: string;        // 'S1' through 'S10'
@@ -322,6 +331,7 @@ The heart of Sierra Estates. Controlled by [orchestrator.ts](file:///c:/OpenClaw
 ```
 
 ### Pipeline Trigger
+
 ```
 POST /api/orchestrate
 Header: X-SBR-SECRET-KEY: <secret>
@@ -337,8 +347,9 @@ The pipeline runs **asynchronously** — the API returns immediately with `statu
 All files in `lib/services/`. Each file is a self-contained service module.
 
 ### Core Pipeline Services
+
 | File | Function |
-|------|----------|
+| ------ | ---------- |
 | [orchestrator.ts](file:///c:/OpenClaw/my-app/lib/services/orchestrator.ts) | Pipeline controller — sequences S1→S10 |
 | [WhatsAppParserService.ts](file:///c:/OpenClaw/my-app/lib/services/WhatsAppParserService.ts) | Stage 1-2: NLP parsing of raw broker messages via Gemini |
 | [coding-algorithm.ts](file:///c:/OpenClaw/my-app/lib/services/coding-algorithm.ts) | Generates Sierra Internal Codes (`MVD-3F-75K+G`) |
@@ -350,8 +361,9 @@ All files in `lib/services/`. Each file is a self-contained service module.
 | [feedback-engine.ts](file:///c:/OpenClaw/my-app/lib/services/feedback-engine.ts) | Stage 10: Outcome learning loop |
 
 ### Integration Services
+
 | File | Function |
-|------|----------|
+| ------ | ---------- |
 | [sync-engine.ts](file:///c:/OpenClaw/my-app/lib/services/sync-engine.ts) | Property Finder ↔ Firestore bi-directional sync |
 | [PFIntegrationService.ts](file:///c:/OpenClaw/my-app/lib/services/PFIntegrationService.ts) | Property Finder API integration |
 | [PropertyFinderService.ts](file:///c:/OpenClaw/my-app/lib/services/PropertyFinderService.ts) | PF data normalization |
@@ -360,8 +372,9 @@ All files in `lib/services/`. Each file is a self-contained service module.
 | [WhatsAppStatusService.ts](file:///c:/OpenClaw/my-app/lib/services/WhatsAppStatusService.ts) | WA delivery status tracking |
 
 ### AI & Intelligence Services
+
 | File | Function |
-|------|----------|
+| ------ | ---------- |
 | [antigravity-agent.ts](file:///c:/OpenClaw/my-app/lib/services/antigravity-agent.ts) | Main AI agent (12.5KB) — multi-skill orchestration |
 | [skill-loader.ts](file:///c:/OpenClaw/my-app/lib/services/skill-loader.ts) | Dynamic skill registry for AI agent |
 | [nexus-agent.ts](file:///c:/OpenClaw/my-app/lib/services/nexus-agent.ts) | Nexus integration agent |
@@ -371,8 +384,9 @@ All files in `lib/services/`. Each file is a self-contained service module.
 | [legal-brain.ts](file:///c:/OpenClaw/my-app/lib/services/legal-brain.ts) | Legal risk assessment AI |
 
 ### Operational Services
+
 | File | Function |
-|------|----------|
+| ------ | ---------- |
 | [firestore-service.ts](file:///c:/OpenClaw/my-app/lib/services/firestore-service.ts) | Generic Firestore CRUD helpers |
 | [handoff-service.ts](file:///c:/OpenClaw/my-app/lib/services/handoff-service.ts) | Agent-to-agent handoff logic |
 | [asset-encoding.ts](file:///c:/OpenClaw/my-app/lib/services/asset-encoding.ts) | Asset encoding utilities |
@@ -381,8 +395,9 @@ All files in `lib/services/`. Each file is a self-contained service module.
 | [ClosingSimulator.ts](file:///c:/OpenClaw/my-app/lib/services/ClosingSimulator.ts) | Deal close simulation |
 
 ### AI Agent Files (`lib/agents/`)
+
 | File | Agent | Stages |
-|------|-------|--------|
+| ------ | ------- | -------- |
 | [scribe.ts](file:///c:/OpenClaw/my-app/lib/agents/scribe.ts) | The Scribe | S1, S2 |
 | [curator.ts](file:///c:/OpenClaw/my-app/lib/agents/curator.ts) | The Curator | S3, S4, S5 |
 | [matchmaker.ts](file:///c:/OpenClaw/my-app/lib/agents/matchmaker.ts) | The Matchmaker | S6, S7, S8 |
@@ -395,7 +410,7 @@ All files in `lib/services/`. Each file is a self-contained service module.
 All routes under `app/api/`.
 
 | Route | Method | Purpose | Auth |
-|-------|--------|---------|------|
+| ------- | -------- | --------- | ------ |
 | `/api/orchestrate` | POST | Trigger pipeline for a document | `X-SBR-SECRET-KEY` header |
 | `/api/ingest` | POST | Raw data intake | — |
 | `/api/leads` | POST | Create new lead from landing page | — |
@@ -421,7 +436,7 @@ All routes under `app/api/`.
 **File**: [AuthContext.tsx](file:///c:/OpenClaw/my-app/lib/AuthContext.tsx)
 
 | Feature | Implementation |
-|---------|---------------|
+| --------- | --------------- |
 | Auth Provider | Firebase Auth (Email/Password) |
 | Guest Mode | `isGuest` flag — can browse portal with limited access |
 | Inactivity Timeout | 30 minutes → auto sign-out |
@@ -429,12 +444,14 @@ All routes under `app/api/`.
 | App Check | Optional ReCaptcha Enterprise integration |
 
 ### Auth Flow
+
 1. User hits `/portal` → if not authenticated, shows `LoginScreen`
 2. User logs in via Firebase → `AuthProvider` sets user state
 3. After 30 min inactivity → auto logout
 4. Guest mode available for demo purposes
 
 ### Role System (UserProfile)
+
 ```typescript
 role: 'admin' | 'manager' | 'agent'
 ```
@@ -449,7 +466,7 @@ role: 'admin' | 'manager' | 'agent'
 **File**: [I18nContext.tsx](file:///c:/OpenClaw/my-app/lib/I18nContext.tsx)
 
 | Feature | Implementation |
-|---------|---------------|
+| --------- | --------------- |
 | Languages | English (EN) / Arabic (AR) |
 | RTL Support | `dir="rtl"` on container elements |
 | Font | `Noto Sans Arabic` (Google Fonts) for AR |
@@ -472,43 +489,46 @@ role: 'admin' | 'manager' | 'agent'
 **Language**: Bilingual EN/AR with toggle
 
 #### What This Page Must Communicate
+
 - "This is a premium, institutional-grade real estate firm" — not a classifieds site
 - Entry point for lead capture
 - Showcase of featured properties
 
 #### Required Sections (Top to Bottom)
+
 1. **Navigation Bar**
    - Brand logo (left)
    - Language toggle (EN/AR)
    - CTA button → Advisor Portal (`/portal`)
-   
+
 2. **Hero Section** (full viewport)
    - Large headline (translated via i18n key: `landing.hero`)
    - Subtitle (i18n: `landing.heroSub`)
    - Primary CTA → scrolls to collection or opens form
    - Scroll indicator
-   
+
 3. **Stats Bar** — 3 metrics:
    - Assets Managed (e.g. "1.2B EGP")
    - Luxury Compounds (e.g. "85+")
    - Average Response Time (e.g. "15 min")
-   
+
 4. **Featured Properties Grid** — 3 to 6 cards:
    - Data source: Firestore `listings` where `isFeatured == true`
    - Fallback: hardcoded 3 properties if DB empty
    - Each card: image, location, title, price
-   
+
 5. **Consultation Section** — Lead capture form:
    - Uses `SmartProfilingForm` component (AI-powered conversational form)
    - Submits to `/api/leads`
    - Success state: confirmation message
-   
+
 6. **Footer**
    - Brand logo
    - Executive contact info (from `SiteConfig`)
    - Links: Telegram Bot, WhatsApp Direct
 
 #### Design Notes for Designers
+
 - This page uses **scroll-driven parallax** (Framer Motion `useScroll`)
 - Has architectural SVG wireframe layers that animate on scroll
 - Mouse-following gold glow effect exists in the background
@@ -524,6 +544,7 @@ role: 'admin' | 'manager' | 'agent'
 **Auth**: Login required (or Guest mode)
 
 #### Layout Structure
+
 ```
 ┌──────────────────────────────────────────────┐
 │  Topbar (logo, user avatar, sign out)        │
@@ -537,8 +558,9 @@ role: 'admin' | 'manager' | 'agent'
 ```
 
 #### Sidebar Navigation Items (16 screens)
+
 | Screen Key | Label | Component |
-|-----------|-------|-----------|
+| ----------- | ------- | ----------- |
 | `dashboard` | Dashboard | `DashboardV4` |
 | `listings` | Portfolio Assets | `PortfolioAssets` |
 | `crm` | CRM Pipeline | `CRMKanban` |
@@ -556,6 +578,7 @@ role: 'admin' | 'manager' | 'agent'
 | `intelligence` | Market Intel | `MarketIntelligence` |
 
 #### Design Notes for Designers
+
 - **Dashboard** is the default view — should show KPIs, pipeline status, recent activity
 - All screens are loaded via **dynamic import** (code splitting)
 - Greeting is time-aware ("Good morning", "Good afternoon", "Good evening")
@@ -570,19 +593,22 @@ role: 'admin' | 'manager' | 'agent'
 **Audience**: Internal power users  
 
 #### Layout
+
 - Top nav with 4-stage switcher tabs: `Scribe | Curator | Matchmaker | Closer`
 - Main area shows the active agent portal component
 - Tabs transition with blur/scale animations
 
 #### Stage Components
+
 | Tab | Component | Status |
-|-----|-----------|--------|
+| ----- | ----------- | -------- |
 | Scribe | `ScribePortal` | ✅ Built |
 | Curator | `CuratorPortal` | ✅ Built |
 | Matchmaker | — | 🔒 Locked placeholder |
 | Closer | — | 🔒 Locked placeholder |
 
 #### Design Notes
+
 - The locked stages show a "LOCKED | AWAITING UPSTREAM SYNC" message
 - Search bar in nav for asset search
 - This is a **power user interface**, not client-facing
@@ -595,6 +621,7 @@ role: 'admin' | 'manager' | 'agent'
 **Audience**: Internal — system administrators, power users
 
 #### Layout
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Header: Sierra Estates — INTELLIGENCE PIPELINE [BASE 44]  │
@@ -607,6 +634,7 @@ role: 'admin' | 'manager' | 'agent'
 ```
 
 #### Functional Requirements
+
 - **Agent Selection** (left sidebar): 4 buttons (Scribe, Curator, Matchmaker, Closer)
 - **Chat Log** (center): Messages from USER, AGENT, and SYSTEM
 - **Chat Input**: Textarea + "TRANSMIT" button
@@ -615,6 +643,7 @@ role: 'admin' | 'manager' | 'agent'
 - Switching agents logs a system message
 
 #### Design Notes
+
 - Each agent has a unique accent color
 - Background glow changes color based on active agent
 - This is styled with CSS Modules (`agent.module.css`, 7.5KB)
@@ -628,12 +657,14 @@ role: 'admin' | 'manager' | 'agent'
 **Audience**: Administrators only
 
 #### Functional Requirements
+
 - Simple login form: Institutional ID + Security Token
 - Currently a **simulation** (shows alert, no real backend auth)
 - Back link to public terminal (`/`)
 - Status indicators: Node name, connection status
 
 #### Design Notes
+
 - Centered card on dark background
 - Dot-grid background pattern
 - This needs real admin auth implementation
@@ -646,6 +677,7 @@ role: 'admin' | 'manager' | 'agent'
 **Audience**: External — shared with leads via unique URL
 
 #### Functional Requirements
+
 - Dynamic route — loads proposal by Firestore ID
 - Shows: lead name, curated property cards with match scores
 - Each property card: title, price, match score (%), match reason, optional financial analysis (ROI, yield)
@@ -654,6 +686,7 @@ role: 'admin' | 'manager' | 'agent'
 - Optional expiry date
 
 #### Design Notes
+
 - This is a **shareable, public-facing page** — must look institutional
 - Should feel like receiving a luxury portfolio from a wealth manager
 - No auth required — URL is the access credential
@@ -666,6 +699,7 @@ role: 'admin' | 'manager' | 'agent'
 **Audience**: External — leads reviewing their curated options
 
 #### Functional Requirements
+
 - Loads matched properties for a specific lead
 - Tinder-style or gallery interface: swipe through properties
 - Actions per property: "Interested" / "Pass" (with optional reason)
@@ -673,6 +707,7 @@ role: 'admin' | 'manager' | 'agent'
 - Results feed back into the matching engine (Neural Memory)
 
 #### Design Notes
+
 - Mobile-first — this is often sent via WhatsApp
 - Must be fast-loading and intuitive
 - The `SelectionView.tsx` component handles rendering
@@ -683,8 +718,9 @@ role: 'admin' | 'manager' | 'agent'
 ## 12. Component Inventory
 
 ### Operations Components (16 total)
+
 | Component | Size | Purpose |
-|-----------|------|---------|
+| ----------- | ------ | --------- |
 | `EasyListing.tsx` | 42KB | Full listing creation/edit workflow |
 | `IntegrationHub.tsx` | 17KB | API integrations management |
 | `CuratorPortal.tsx` | 13KB | Stage 3-5 branding/distribution |
@@ -712,7 +748,7 @@ role: 'admin' | 'manager' | 'agent'
 **Sync Logic**: [sync-engine.ts](file:///c:/OpenClaw/my-app/lib/services/sync-engine.ts)
 
 | Feature | Implementation |
-|---------|---------------|
+| --------- | --------------- |
 | Match by Reference | Exact match → auto-merge |
 | Fuzzy Match | Weighted scoring (title 20%, price 15%, location 15%, size 10%, ref# 40%) |
 | High Confidence (≥90%) | Auto-merge with editorial override protection |
@@ -725,6 +761,7 @@ role: 'admin' | 'manager' | 'agent'
 **Webhook**: `/api/whatsapp` (GET for verification, POST for messages)
 
 Flow:
+
 1. Raw message arrives → `WhatsAppParserService.processIncomingMessage()`
 2. Gemini 1.5 Flash parses text → structured JSON
 3. Sierra Code generated → DQE duplicate check → saved to `broker_listings`
@@ -733,6 +770,7 @@ Flow:
 ### AI Matching (Gemini)
 
 **Scoring Weights**:
+
 - Neural Alignment (preferences & memory): 30%
 - Financial ROI / Capital Appreciation: 40%
 - Market Liquidity & Scarcity: 20%
@@ -748,7 +786,7 @@ Fallback: If AI is unavailable, uses heuristic scoring (property type + budget +
 > These items need attention before production.
 
 | Area | Gap | Priority |
-|------|-----|----------|
+| ------ | ----- | ---------- |
 | **Auth** | No server-side role enforcement on API routes | 🔴 Critical |
 | **Admin** | `/admin` page is a simulation — no real admin auth | 🔴 Critical |
 | **Pipeline** | Matchmaker and Closer portals are locked placeholders | 🟡 Medium |
@@ -768,7 +806,7 @@ Fallback: If AI is unavailable, uses heuristic scoring (property type + budget +
 > These tokens are currently hardcoded in `globals.css` and various components. The design team should define the final design system. These are what currently exist in the code:
 
 | Token | Value | Usage |
-|-------|-------|-------|
+| ------- | ------- | ------- |
 | Navy | `#0A1A3A` / `#0B1A3E` / `#020611` | Primary dark backgrounds |
 | Gold | `#C9A24A` / `#C5A059` / `#D4AF37` | Accent, CTAs, highlights |
 | Silver | `#E2E8F0` | Secondary text |

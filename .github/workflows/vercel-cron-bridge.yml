@@ -28,11 +28,12 @@ on:
   workflow_dispatch:
     inputs:
       endpoint:
-        description: 'Single endpoint to run (blank = every endpoint due now)'
+        description: 'Single endpoint to run, or "all" for every endpoint'
         required: false
+        default: all
         type: choice
         options:
-          - ''
+          - all
           - sync-leads
           - ingest-from-sheets
           - sync-listings
@@ -56,7 +57,7 @@ jobs:
           MANUAL_ENDPOINT: ${{ inputs.endpoint }}
           SCHEDULE: ${{ github.event.schedule }}
         run: |
-          if [ -n "$MANUAL_ENDPOINT" ]; then
+          if [ -n "$MANUAL_ENDPOINT" ] && [ "$MANUAL_ENDPOINT" != "all" ]; then
             targets="$MANUAL_ENDPOINT"
           else
             case "$SCHEDULE" in

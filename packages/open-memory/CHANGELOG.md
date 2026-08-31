@@ -5,6 +5,7 @@
 ### 🎉 major refactors
 
 #### api simplification
+
 - **python sdk**: simplified to zero-config `Memory()` api matching javascript
   - `from openmemory.client import Memory` → `mem = Memory()`
   - works out of the box with sensible defaults (in-memory sqlite, fast tier, synthetic embeddings)
@@ -12,6 +13,7 @@
   - breaking change: moved from `OpenMemory` class to `Memory` class
 
 #### benchmark suite rewrite
+
 - implemented comprehensive benchmark suite in `temp/benchmarks/`
   - typescript-based using `tsx` for execution
   - supports longmemeval dataset evaluation
@@ -24,6 +26,7 @@
 ### ✨ features
 
 #### core improvements
+
 - **`Memory.wipe()`**: added database wipe functionality for testing
   - `clear_all` implementation in `db.ts` for postgres and sqlite
   - clears memories, vectors, waypoints, and users tables
@@ -36,6 +39,7 @@
   - `OM_DB_PATH`: sqlite database path (supports `:memory:`)
 
 #### vector store enhancements
+
 - added comprehensive logging to `PostgresVectorStore`
   - logs vector storage operations with id, sector, dimension
   - logs search operations with sector and result count
@@ -89,6 +93,7 @@
 ## [1.2.2] - 2024-11-xx
 
 ### bug fixes
+
 - memory consolidation edge cases
 - multi-user query isolation
 - vector dimension handling
@@ -98,6 +103,7 @@
 ## [1.2.1] - 2024-11-xx
 
 ### improvements
+
 - performance optimizations for large datasets
 - enhanced sector classification accuracy
 
@@ -106,6 +112,7 @@
 ## [1.2.0] - 2024-10-xx
 
 ### features
+
 - multi-sector memory architecture
 - cognitive decay system
 - reflection and consolidation
@@ -115,6 +122,7 @@
 ## [1.1.0] - 2024-09-xx
 
 ### features
+
 - initial typescript sdk release
 - sqlite vector store
 - basic query and add operations
@@ -124,6 +132,7 @@
 ## [1.0.0] - 2024-08-xx
 
 ### initial release
+
 - python sdk
 - local-first architecture
 - basic memory operations

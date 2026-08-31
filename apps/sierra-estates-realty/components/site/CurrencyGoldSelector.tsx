@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FxGoldValuationEngine, DEFAULT_FX_RATES, MultiCurrencyValuation } from '@sierra-estates/agents-core/src/fx-gold-engine';
 
-export type SupportedCurrency = 'EGP' | 'USD' | 'AED' | 'SAR' | 'GOLD_21K';
+export type SupportedCurrency = 'EGP' | 'USD' | 'AED' | 'SAR' | 'GOLD_21K' | 'GOLD_SOVEREIGN';
 
 interface CurrencyGoldSelectorProps {
   basePriceEGP: number;
@@ -36,6 +36,8 @@ export function CurrencyGoldSelector({ basePriceEGP, className = '', onCurrencyC
         return `${valuation.sarEquivalent.toLocaleString()} SAR`;
       case 'GOLD_21K':
         return `${valuation.formattedDisplay.gold21k} (21K Gold)`;
+      case 'GOLD_SOVEREIGN':
+        return `${valuation.formattedDisplay.goldSovereign}`;
       case 'EGP':
       default:
         return `${basePriceEGP.toLocaleString()} EGP`;
@@ -50,7 +52,7 @@ export function CurrencyGoldSelector({ basePriceEGP, className = '', onCurrencyC
         </span>
       </div>
       <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg p-0.5 backdrop-blur-md">
-        {(['EGP', 'USD', 'AED', 'GOLD_21K'] as SupportedCurrency[]).map((c) => (
+        {(['EGP', 'USD', 'AED', 'GOLD_21K', 'GOLD_SOVEREIGN'] as SupportedCurrency[]).map((c) => (
           <button
             key={c}
             onClick={() => handleSelect(c)}
@@ -58,10 +60,10 @@ export function CurrencyGoldSelector({ basePriceEGP, className = '', onCurrencyC
             className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium transition-all ${
               currency === c
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                : 'text-zinc-400 hover:text-white border border-transparent'
             }`}
           >
-            {c === 'GOLD_21K' ? '🥇 Gold' : c}
+            {c === 'GOLD_21K' ? '21K Gold' : c === 'GOLD_SOVEREIGN' ? 'جنيه ذهب' : c}
           </button>
         ))}
       </div>

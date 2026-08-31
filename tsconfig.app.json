@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noEmit": true
   },
-  "include": ["__tests__/**/*", "scripts/**/*", "types/**/*"]
+  "include": ["__tests__/**/*", "scripts/**/*", "types/**/*", "workflows/**/*"]
 }

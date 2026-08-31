@@ -3,7 +3,7 @@ name: Deploy · Firebase (Firestore + Storage rules)
 # Deploys the Firestore + Storage SECURITY RULES to the sierra-blu project, as
 # wired in firebase.json:
 #   firestore.rules => apps/sierra-estates-realty/firestore.rules
-#   storage.rules   => apps/sierra-estates-realty/storage.rules
+#   storage.rules   => storage.rules (repo root)
 #
 # This is intentionally SEPARATE from deploy-firebase.yml (which only deploys the
 # admin hosting redirect). Rules changes are security-sensitive, so this is a
@@ -39,11 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
 
@@ -51,10 +51,10 @@ jobs:
         run: node scripts/check-firebase-rules.mjs
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@v2
         with:
           # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON — set in: GitHub → Settings → Secrets → Actions
           credentials_json: ${{ secrets['FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU'] || secrets['FIREBASE_SERVICE_ACCOUNT_JSON'] }}
 
       - name: Deploy Firestore rules, indexes + Storage rules
-        run: npx firebase-tools@latest deploy --only firestore:rules,firestore:indexes,storage --project sierra-blu --non-interactive
+        run: npx firebase-tools@13 deploy --only firestore:rules,firestore:indexes,storage --project sierra-blu --non-interactive

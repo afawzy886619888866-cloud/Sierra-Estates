@@ -13,18 +13,21 @@ changing the user-facing experience.
 ## The 7-layer ecosystem
 
 ### Layer 1 — User Application (the entry point)
+
 A thin routing application that channels user requests into the system.
 
 - **Rule:** Keep the UI completely decoupled from agent logic. The agent backend
   must be replaceable without altering the user-facing experience.
 
 ### Layer 2 — Orchestration (the brain)
+
 The central coordinator: an intent classifier plus an agent registry.
 
 - **Rule:** This layer is what separates "multi-agent" from "many agents." The
   right agent must automatically handle the right request — no disconnected bots.
 
 ### Layer 3 — Knowledge (what agents know)
+
 Centralized source bases and vector databases that feed grounded, retrievable
 data to every agent.
 
@@ -32,12 +35,14 @@ data to every agent.
   contradict one another.
 
 ### Layer 4 — Storage (what agents remember)
+
 The repository for conversation history and the agent state registry.
 
 - **Rule:** Statelessness kills multi-agent systems. Agents must resume exactly
   where they left off and hand context to each other instead of starting cold.
 
 ### Layer 5 — Agent Layer (the workers)
+
 A Supervisor Agent coordinating specialized local workers (running as MCP
 clients) plus a remote layer for distributed tasks.
 
@@ -45,6 +50,7 @@ clients) plus a remote layer for distributed tasks.
   specialization beats generalization and prevents single-agent overload.
 
 ### Layer 6 — Integration & MCP (reaching the world)
+
 The standardized bridge connecting agent groups to external tools via Model
 Context Protocol (MCP) servers.
 
@@ -52,6 +58,7 @@ Context Protocol (MCP) servers.
   No bespoke, hardcoded per-tool integrations.
 
 ### Layer 7 — Observability & Evaluation (keeping it honest)
+
 Cross-cutting monitoring plus dedicated evaluation spanning every layer.
 
 - **Rule:** In distributed systems, failures are subtle. Use observability to
