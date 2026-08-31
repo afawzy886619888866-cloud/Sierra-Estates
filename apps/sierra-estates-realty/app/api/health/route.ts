@@ -10,7 +10,7 @@ export async function GET() {
   let supabaseReady = false;
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase.from('health_check').select('1').limit(1).single().catch(() => ({ data: null, error: null }));
+    await supabase.from('health_check').select('1').limit(1).single();
     // Even if no health_check table exists, if client is initialized it's ready
     supabaseReady = true;
   } catch {
