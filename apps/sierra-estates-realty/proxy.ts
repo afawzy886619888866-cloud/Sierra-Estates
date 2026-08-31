@@ -31,11 +31,8 @@ export async function proxy(request: NextRequest) {
     isRewritten = true;
   }
 
-  // 0b) Host split: on the client host, redirect /admin requests to the admin host
-  if (!onAdminHost && Boolean(adminHost) && targetPath.startsWith('/admin')) {
-    const destination = new URL(targetPath, `https://${adminHost}`);
-    return NextResponse.redirect(destination, 307);
-  }
+  // 0b) Host split: if on dedicated admin host root, rewrite to /admin
+  // /admin is directly accessible across all domains without host redirect
 
   // 0c) Direct Admin Portal access (Login wall removed)
   if (targetPath.startsWith('/admin')) {
