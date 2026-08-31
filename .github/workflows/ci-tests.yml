@@ -34,7 +34,7 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "true"
 
 jobs:
   # ─────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: pnpm
 
       - name: Install dependencies
@@ -128,7 +128,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
 
       - name: Validate public env safety
         run: node scripts/check-public-env-safety.mjs
