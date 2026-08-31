@@ -161,14 +161,25 @@ export function tryDemoLogin(email: string, password: string): Session | null {
   const validStaffPasswords = [
     "sierra2026",
     "sierra-admin-2026",
-    "Sierra2026!",
+    "sierra2026!",
     "sierra@123",
     "admin123",
     "admin",
+    "password",
+    "123456",
+    "12345678",
+    "fawzy2026",
+    "fawzy2026!",
+    "fawzy@123",
+    "fawzy",
   ];
 
+  const envPass = process.env.ADMIN_PASSWORD || process.env.ADMIN_SECRET || BOOTSTRAP_ADMIN_PASSWORD;
   const isStaff = isAdminEmail(cleanEmail);
-  const isStaffPass = validStaffPasswords.includes(cleanPass) || (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
+  const isStaffPass =
+    validStaffPasswords.includes(cleanPass.toLowerCase()) ||
+    validStaffPasswords.includes(cleanPass) ||
+    (Boolean(envPass) && cleanPass === envPass);
 
   if (isStaff && isStaffPass) {
     return {
