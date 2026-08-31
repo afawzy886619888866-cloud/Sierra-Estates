@@ -1,4 +1,5 @@
 # 🏗️ Architecture & Dependencies Map
+>
 > **Path:** `docs/memory/architecture_dependencies.md`  
 > **Parent Node:** `docs/memory/index.md`
 
@@ -30,7 +31,7 @@ refine-full-stack-ecosystem/
 If you edit files in the left column, you MUST verify the packages/apps in the right column:
 
 | Modified Component | Impacted Areas | Action Required |
-|---|---|---|
+| --- | --- | --- |
 | **`packages/db/`** | `apps/web`, `apps/admin`, `functions/` | Run `pnpm run build` at root to verify type compilation. |
 | **`packages/ui/`** | `apps/web`, `apps/admin` | Verify visual pages using local dev server. |
 | **`packages/auth/`** | `apps/web`, `apps/admin`, `apps/api` | Verify that Firebase Auth middleware continues to authorize agents correctly. |
@@ -40,6 +41,6 @@ If you edit files in the left column, you MUST verify the packages/apps in the r
 ---
 
 ## 🚨 Critical Compile Warnings
-1.  **TypeScript Gating:** The monorepo enforces `ignoreBuildErrors: false` inside `apps/web/next.config.ts`. Any TypeScript error on the frontend will completely fail the production deployment build on Vercel. Always run `pnpm type-check` before pushing to origin.
-2.  **PostCSS v4:** Next.js uses the new CSS-first Tailwind configuration. Customize styling variables inside `apps/web/app/globals.css` rather than trying to use traditional tailwind.config files.
 
+1. **TypeScript Gating:** The monorepo enforces `ignoreBuildErrors: false` inside `apps/web/next.config.ts`. Any TypeScript error on the frontend will completely fail the production deployment build on Vercel. Always run `pnpm type-check` before pushing to origin.
+2. **PostCSS v4:** Next.js uses the new CSS-first Tailwind configuration. Customize styling variables inside `apps/web/app/globals.css` rather than trying to use traditional tailwind.config files.

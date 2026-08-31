@@ -42,6 +42,7 @@ Worth flagging before wiring more manager-facing actions.
 ```
 
 ### 1. Dashboard — `/admin` (`app/admin/page.tsx`)
+
 Read-only live view. Subscribes to Firestore `leads` and `properties` collections via
 `onSnapshot` and renders four stat cards (total/new leads, total/active listings) plus
 three "Quick Action" buttons (View Leads / Manage Listings / Launch Intelligence OS —
@@ -49,6 +50,7 @@ currently links only, no dedicated logic). This is the page most likely to want 
 visual map background, since it's the first screen staff see.
 
 ### 2. Leads — `/admin/leads`
+
 Staff view of the investment-stakeholder pipeline fed by [[Sourcing Pipeline & Lead Aggregator]]
 and the [[WhatsApp CRM & Hand-off Pipeline]]. Public intake happens through
 `/api/leads` and `/api/leads/request-viewing` (no auth — anyone can submit); staff actions
@@ -56,6 +58,7 @@ on existing leads (e.g. viewing-request approval) go through `/api/viewing-reque
 which is `admin`-only via `verifyAdminRequest`.
 
 ### 3. Listings — `/admin/listings`
+
 Portfolio/inventory management. Backed by the public `/api/listings` (GET, no auth) for
 reads; sync/writes are triggered — not performed — from here, via
 `lib/server/python-api-client.ts` calling into the standalone `apps/api` Python service
@@ -63,6 +66,7 @@ reads; sync/writes are triggered — not performed — from here, via
 actions. The admin page never runs the sync itself — it just calls the worker.
 
 ### 4. Intelligence OS — `/admin/intelligence-os`
+
 Embeds the separate Remix "Intelligence OS" app (its own Cloud Run deployment) inside
 `/admin/intelligence-os`. This is where [[Sierra Agent Intelligence]] and
 [[Leila Agent Intelligence]] cognition, plus the [[Forecasting Engine]] and
@@ -70,6 +74,7 @@ Embeds the separate Remix "Intelligence OS" app (its own Cloud Run deployment) i
 frames/monitors it; the reasoning runs in the separate service.
 
 ### 5. Login — `/admin/login`
+
 The one public admin route. Firebase email/password sign-in; on success the layout's
 `onAuthStateChanged` picks up the session and re-checks role.
 

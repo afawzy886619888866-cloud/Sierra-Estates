@@ -1,4 +1,5 @@
 # 🔐 Security Rules & Role Gating
+>
 > **Path:** `docs/memory/security_rules.md`  
 > **Parent Node:** `docs/memory/index.md`
 
@@ -10,10 +11,11 @@ This document details the critical Firestore security rules and authentication g
 
 Users are authenticated via **Firebase Auth**. Access to operational data in Firestore is gated based on custom user documents stored in the `users/{uid}` collection.
 
-### Valid Roles:
-*   `admin` — Complete control over configuration, agents, leads, and API triggers.
-*   `manager` — CRM access, deal scoping, listing publishes.
-*   `agent` — Matches client requests, triggers viewings, logs customer communications.
+### Valid Roles
+
+* `admin` — Complete control over configuration, agents, leads, and API triggers.
+* `manager` — CRM access, deal scoping, listing publishes.
+* `agent` — Matches client requests, triggers viewings, logs customer communications.
 
 ---
 
@@ -66,6 +68,6 @@ service cloud.firestore {
 ---
 
 ## 🚨 Guard rails for future migrations
-1.  **Do not deploy rules without local test checks!** Running `pnpm test` executes the unit tests which validate these rules against the Firebase Emulator before they are uploaded.
-2.  **Ensure every staff user has a corresponding document in `/users` collection** specifying their role, otherwise they will be blocked from accessing the CRM dashboard.
 
+1. **Do not deploy rules without local test checks!** Running `pnpm test` executes the unit tests which validate these rules against the Firebase Emulator before they are uploaded.
+2. **Ensure every staff user has a corresponding document in `/users` collection** specifying their role, otherwise they will be blocked from accessing the CRM dashboard.

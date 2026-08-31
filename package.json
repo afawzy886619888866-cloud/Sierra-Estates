@@ -9,7 +9,6 @@
         "dev:all": "turbo run dev",
         "build": "turbo run build",
         "lint": "turbo run lint",
-
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
@@ -21,6 +20,8 @@
         "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
+        "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
+        "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
         "run-harness": "tsx scripts/run-harness.ts",
         "harness:eval": "tsx scripts/run-harness.ts",
@@ -53,5 +54,19 @@
         "node": ">=22.0.0",
         "pnpm": ">=9"
     },
-    "packageManager": "pnpm@9.15.4"
+    "packageManager": "pnpm@9.15.4",
+    "overrides": {
+        "tar": ">=7.5.21",
+        "cross-spawn": ">=7.0.6",
+        "micromatch": ">=4.0.8",
+        "braces": ">=3.0.3",
+        "nanoid": ">=3.3.8",
+        "ws": ">=8.18.0",
+        "cookie": ">=0.7.2",
+        "body-parser": ">=1.20.3",
+        "express": ">=4.21.2",
+        "path-to-regexp": ">=0.1.12",
+        "send": ">=0.19.1",
+        "serve-static": ">=1.16.2"
+    }
 }

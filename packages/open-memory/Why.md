@@ -50,14 +50,14 @@ Vector databases like **Chroma**, **Weaviate**, or **Pinecone** are excellent fo
 
 ## 3. The Architectural Difference
 
-### Vector DBs:
+### Vector DBs
 
 - Treat every entry as an independent embedding.
 - Retrieval = cosine similarity search.
 - No understanding of relationships, meaning, or salience.
 - Result: duplicate data, poor recall, high storage cost.
 
-### OpenMemory:
+### OpenMemory
 
 - Breaks information into **memory sectors** (like the brain).
 - Stores one unified node per memory with **multi-sector embeddings**.

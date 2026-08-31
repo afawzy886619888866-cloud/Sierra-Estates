@@ -6,10 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Building2, Phone, MessageSquare, ShieldCheck, FileText,
-  TrendingUp, Search, Filter, Layers,
+  TrendingUp, Search, Filter, Layers, Sparkles, CheckCircle2,
 } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { useSite } from '@/lib/site/SiteContext';
 import CairoPlazaCalculator from './CairoPlazaCalculator';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
 
 const CairoPlazaScene = dynamic(() => import('./CairoPlazaScene'), {
   ssr: false,
@@ -74,11 +81,20 @@ type EvidenceImage = {
 
 const realEvidence: EvidenceImage[] = [
   {
+    src: '/cairo-plaza/real-site-panorama.jpg',
+    altEn: 'Full wide panoramic site photograph showing the Cairo Plaza tower massing and courtyard under construction',
+    altAr: 'صورة بانورامية حقيقية شاملة لموقع مشروع كايرو بلازا والأبراج والساحة قيد الإنشاء',
+    titleEn: 'Site 360° Panorama',
+    titleAr: 'بانوراما الموقع الشاملة',
+    captionEn: 'Real-site verified panoramic photograph · showing actual building footprint, tower elevation, and open public realm',
+    captionAr: 'صورة بانورامية حقيقية للموقع · توضح كتلة الأبراج والساحة العامة المفتوحة',
+  },
+  {
     src: '/cairo-plaza/real-facade-ai-enhanced.jpg',
     altEn: 'AI-enhanced current-site photograph of the Cairo Plaza façade with Banque Misr frontage',
     altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لواجهة كايرو بلازا مع واجهة بنك مصر',
-    titleEn: 'Main façade',
-    titleAr: 'الواجهة الرئيسية',
+    titleEn: 'Main façade & Banque Misr',
+    titleAr: 'الواجهة الرئيسية وبنك مصر',
     captionEn: 'AI-enhanced current-site evidence · façade and visible businesses preserved',
     captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على الواجهة والأنشطة الظاهرة',
   },
@@ -95,8 +111,8 @@ const realEvidence: EvidenceImage[] = [
     src: '/cairo-plaza/real-entrance-ai-enhanced.jpg',
     altEn: 'AI-enhanced current-site photograph of the Cairo Plaza entrance and active frontage',
     altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لمدخل كايرو بلازا والواجهة العاملة',
-    titleEn: 'Entrance and frontage',
-    titleAr: 'المدخل والواجهة',
+    titleEn: 'Entrance & concourse',
+    titleAr: 'المدخل والممر الرئيسي',
     captionEn: 'AI-enhanced current-site evidence · visible signage and street context preserved',
     captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على اللافتات وسياق الشارع',
   },
@@ -129,12 +145,96 @@ const realEvidence: EvidenceImage[] = [
   },
 ];
 
+type AdCampaign = {
+  src: string;
+  badgeEn: string;
+  badgeAr: string;
+  titleEn: string;
+  titleAr: string;
+  descEn: string;
+  descAr: string;
+  ref: string;
+};
+
+const officialAdCampaigns: AdCampaign[] = [
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-retail.jpg',
+    badgeEn: 'RETAIL & COMMERCIAL',
+    badgeAr: 'محلات ومقرات تجارية',
+    titleEn: 'Cairo Plaza Retail Flagship',
+    titleAr: 'كايرو بلازا — واجهات ومحلات تجارية',
+    descEn: 'Prime retail units & commercial flagship spaces with maximum footfall.',
+    descAr: 'مساحات مرنة تناسب كبرى العلامات التجارية والأنشطة الحيوية.',
+    ref: 'REF: SE-CP-RETAIL',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-office.jpg',
+    badgeEn: 'OFFICES & CLINICS',
+    badgeAr: 'مكاتب إدارية وعيادات',
+    titleEn: 'Administrative HQ & Medical Suites',
+    titleAr: 'كايرو بلازا — مقرات إدارية وعيادات طبية',
+    descEn: 'Modern corporate offices & clinics with 24/7 security and hotel-grade lobbies.',
+    descAr: 'مكاتب إدارية فاخرة وعيادات طبية متخصصة مع مداخل فندقية مستقلة.',
+    ref: 'REF: SE-CP-OFFICE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-roi.jpg',
+    badgeEn: 'MAXIMUM ROI',
+    badgeAr: 'أعلى عائد استثماري',
+    titleEn: 'Guaranteed Rental Yield & Capital Growth',
+    titleAr: 'استثمارك المضمون بعائد إيجاري فوري',
+    descEn: 'Long-term corporate tenant security with high capital appreciation.',
+    descAr: 'عائد إيجاري دوري مرتفع مع نمو متواصل للقيمة الرأسمالية.',
+    ref: 'REF: SE-CP-ROI',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-location.jpg',
+    badgeEn: 'STRATEGIC LOCATION',
+    badgeAr: 'موقع استراتيجي',
+    titleEn: '1 Minute from Al-Mataria Metro Station',
+    titleAr: 'دقيقة واحدة من محطة مترو المطرية',
+    descEn: 'Seamless transit accessibility from Cairo’s prime hubs and expressways.',
+    descAr: 'موقع حيوي يربط مشروعك بكافة محاور وشرايين القاهرة الكبرى.',
+    ref: 'REF: SE-CP-LOC',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-delivery.jpg',
+    badgeEn: 'IMMEDIATE DELIVERY',
+    badgeAr: 'استلام فوري وتسهيلات',
+    titleEn: 'Ready-to-Operate Units & Flexible Financing',
+    titleAr: 'استلام فوري وتسهيلات سداد بدون فوائد',
+    descEn: 'Immediate handover with flexible installment structures and cash discounts.',
+    descAr: 'ابدأ نشاطك اليوم فوراً مع خطط سداد ميسرة وخصومات للكاش.',
+    ref: 'REF: SE-CP-DELIVERY',
+  },
+  {
+    src: '/cairo-plaza/ads/sierra-ad-cairo-plaza.jpg',
+    badgeEn: 'SIERRA-ESTATES.NET',
+    badgeAr: 'منصة SIERRA-ESTATES.NET',
+    titleEn: 'Official Sierra Estates Institutional Listing',
+    titleAr: 'الطرح الرسمي عبر منصة سيراليون إستيتس',
+    descEn: 'Verified property listing and digital advisory mandate on sierra-estates.net.',
+    descAr: 'العقار موثق بالكامل ومتاح للحجز المباشر عبر البوابة الرسمية.',
+    ref: 'REF: SE-CP-101',
+  },
+  {
+    src: '/cairo-plaza/ads/sierra-ad-portal.jpg',
+    badgeEn: 'GLOBAL PORTFOLIO',
+    badgeAr: 'المحفظة العقارية الشاملة',
+    titleEn: 'Sierra Estates Institutional Portal',
+    titleAr: 'بوابتك الأولى للاستثمار العقاري الفاخر',
+    descEn: 'Institutional advisory & multi-asset commercial portfolio management.',
+    descAr: 'محفظة متكاملة من الأصول التجارية والإدارية والسكنية الفاخرة.',
+    ref: 'REF: SE-PORTAL-2026',
+  },
+];
+
 const copy = {
   en: {
     overview: {
       eyebrow: 'CAIRO PLAZA / OVERVIEW',
       title: 'A strategic address directly in front of Al-Mataria Metro Station.',
-      body: 'Explore the current project evidence, tower context, interactive 3D massing, and the distinction between real-site photography and AI concept visuals.',
+      body: 'Explore current project evidence, interactive 3D massing textured with real on-site photography, and high-yield commercial investment schedules.',
     },
     inventory: {
       eyebrow: 'CAIRO PLAZA / AVAILABLE INVENTORY',
@@ -156,7 +256,7 @@ const copy = {
     overview: {
       eyebrow: 'كايرو بلازا / نظرة عامة',
       title: 'عنوان استراتيجي مباشر أمام محطة مترو المطرية.',
-      body: 'استعرض أدلة الموقع الحالي، والكتلة ثلاثية الأبعاد التفاعلية، وسياق الأبراج مع الفصل الكامل بين الصور الحقيقية وتصوّرات الذكاء الاصطناعي.',
+      body: 'استعرض أدلة الموقع الحالي، والكتلة ثلاثية الأبعاد التفاعلية المزودة بملامس وصور حقيقية، وجدول الوحدات التجارية والإدارية الاستثمارية.',
     },
     inventory: {
       eyebrow: 'كايرو بلازا / الوحدات المتاحة',
@@ -185,22 +285,40 @@ const stats = {
   ],
   ar: [
     { value: '7', label: 'أبراج تجارية وإدارية' },
-    { value: '2', label: 'مسارا طلب مخصصان' },
-    { value: '100%', label: 'أدلة موقع حقيقية وموسومة' },
-    { value: '24h', label: 'سرعة الاستجابة والمتابعة' },
+    { value: '2', label: 'مسارات مخصصة للطلب' },
+    { value: '100%', label: 'أدلة موثقة من أرض الواقع' },
+    { value: '24h', label: 'زمن استجابة المستشارين' },
   ],
 } as const;
 
 const trust = {
   en: [
-    { title: 'Architectural review', body: 'Massing and tower context are reviewed against the real-site evidence below before any illustrative view is published.' },
-    { title: 'Source control', body: 'Every photograph is labeled current-site evidence or AI concept — never blended without a caption saying which is which.' },
-    { title: 'Two distinct paths', body: 'Investor and tenant-fit requests are routed separately so each conversation gets the right follow-up.' },
+    {
+      title: 'Real-site evidence',
+      body: 'All photos are labeled to state what is shown (e.g. Banque Misr frontage, construction status).',
+    },
+    {
+      title: '3D Real-Texture Visualizer',
+      body: '3D model with real on-site facade photo mapping and verified 360° spherical panorama.',
+    },
+    {
+      title: 'Dedicated request paths',
+      body: 'Separate advisory paths for investors and commercial operators to ensure appropriate follow-up.',
+    },
   ],
   ar: [
-    { title: 'مراجعة معمارية', body: 'تُراجع الكتلة العمرانية وسياق الأبراج مقابل أدلة الموقع الحقيقية أدناه قبل نشر أي تصور توضيحي.' },
-    { title: 'ضبط المصدر', body: 'كل صورة موسومة بوضوح: دليل موقع حقيقي أو تصوّر ذكاء اصطناعي — دون خلط دون توضيح.' },
-    { title: 'مساران منفصلان', body: 'تُوجَّه طلبات المستثمرين وطلبات تأهيل المستأجرين بشكل منفصل لضمان المتابعة المناسبة لكل محادثة.' },
+    {
+      title: 'أدلة موثقة من الموقع',
+      body: 'جميع الصور موضحة بدقة لبيان ما يظهر فيها (مثل واجهة بنك مصر وحالة الإنشاءات).',
+    },
+    {
+      title: 'مجسم ثلاثي الأبعاد بملامس حقيقية',
+      body: 'نموذج ثلاثي الأبعاد بملامس وصور واجهات حقيقية وبانوراما كروية 360° من قلب الموقع.',
+    },
+    {
+      title: 'مسارات طلب مخصصة',
+      body: 'مسارات متابعة مستقلة للمستثمرين والمشغلين التجاريين لضمان سرعة ودقة الاستجابة.',
+    },
   ],
 } as const;
 
@@ -351,6 +469,8 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
   const targetLangPrefix = isAr ? '/cairo-plaza' : '/ar/cairo-plaza';
   const switchLangHref = section === 'overview' ? targetLangPrefix : `${targetLangPrefix}/${section}`;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const nav = [
     ['overview', isAr ? 'نظرة عامة' : 'Overview'],
     ['inventory', isAr ? 'الوحدات المتاحة' : 'Available Inventory'],
@@ -387,6 +507,153 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
   }, []);
   const closeLightbox = useCallback(() => setLightboxImg(null), []);
 
+  // ── GSAP Master Animations ──────────────────────────────────────────
+  useGSAP(
+    () => {
+      if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      // 1. Hero Entrance Sequence
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from('.cp-hero .cp-eyebrow', { opacity: 0, y: 16, duration: 0.5 })
+        .from('.cp-hero .cp-title', { opacity: 0, y: 24, duration: 0.65 }, '-=0.35')
+        .from('.cp-hero .cp-body', { opacity: 0, y: 18, duration: 0.5 }, '-=0.35')
+        .from('.cp-hero .cp-actions a', { opacity: 0, y: 14, stagger: 0.1, duration: 0.5 }, '-=0.25')
+        .from('.cp-hero-photo', { opacity: 0, scale: 0.95, y: 24, duration: 0.75 }, '-=0.45')
+        .from('.cp-stat', { opacity: 0, y: 18, stagger: 0.08, duration: 0.5 }, '-=0.4');
+
+      // 2. Trust Feature Cards (Overview)
+      if (document.querySelector('.cp-grid .cp-card')) {
+        gsap.from('.cp-grid .cp-card', {
+          scrollTrigger: {
+            trigger: '.cp-grid',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 35,
+          stagger: 0.12,
+          duration: 0.75,
+          ease: 'power3.out',
+        });
+      }
+
+      // 3. Real Evidence Gallery
+      if (document.querySelector('.cp-evidence-grid .cp-evidence-card')) {
+        gsap.from('.cp-evidence-grid .cp-evidence-card', {
+          scrollTrigger: {
+            trigger: '.cp-evidence',
+            start: 'top 82%',
+          },
+          opacity: 0,
+          y: 40,
+          stagger: 0.08,
+          duration: 0.75,
+          ease: 'power2.out',
+        });
+      }
+
+      // 4. Panorama Showcase Frame
+      if (document.querySelector('.cp-pano-frame')) {
+        gsap.from('.cp-pano-frame', {
+          scrollTrigger: {
+            trigger: '.cp-panorama-showcase',
+            start: 'top 82%',
+          },
+          opacity: 0,
+          scale: 0.96,
+          duration: 0.85,
+          ease: 'power3.out',
+        });
+      }
+
+      // 5. Official Marketing Creatives
+      if (document.querySelector('.cp-campaigns-section .cp-evidence-card')) {
+        gsap.from('.cp-campaigns-section .cp-evidence-card', {
+          scrollTrigger: {
+            trigger: '.cp-campaigns-section',
+            start: 'top 82%',
+          },
+          opacity: 0,
+          y: 30,
+          stagger: 0.06,
+          duration: 0.7,
+          ease: 'power2.out',
+        });
+      }
+
+      // 6. 3D Tour Canvas Container
+      if (document.querySelector('.cp-tour .cp-scene')) {
+        gsap.from('.cp-tour .cp-scene', {
+          scrollTrigger: {
+            trigger: '.cp-tour',
+            start: 'top 80%',
+          },
+          opacity: 0,
+          y: 35,
+          duration: 0.9,
+          ease: 'power3.out',
+        });
+      }
+
+      // 7. Inventory Cards
+      if (document.querySelector('.cp-inventory-card')) {
+        gsap.from('.cp-inventory-card', {
+          opacity: 0,
+          y: 25,
+          stagger: 0.06,
+          duration: 0.55,
+          ease: 'power2.out',
+        });
+      }
+
+      // 8. Investor Dossier Cards
+      if (document.querySelector('.cp-investor-grid .cp-investor-card')) {
+        gsap.from('.cp-investor-grid .cp-investor-card', {
+          scrollTrigger: {
+            trigger: '.cp-investor-grid',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 30,
+          stagger: 0.1,
+          duration: 0.7,
+          ease: 'power3.out',
+        });
+      }
+
+      // 9. Contact Mandate Cards
+      if (document.querySelector('.cp-contact-grid .cp-contact-card')) {
+        gsap.from('.cp-contact-grid .cp-contact-card', {
+          scrollTrigger: {
+            trigger: '.cp-contact-grid',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 30,
+          stagger: 0.1,
+          duration: 0.7,
+          ease: 'power3.out',
+        });
+      }
+
+      // 10. CTA Inner Banner
+      if (document.querySelector('.cp-cta-inner')) {
+        gsap.from('.cp-cta-inner', {
+          scrollTrigger: {
+            trigger: '.cp-cta-banner',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 35,
+          duration: 0.8,
+          ease: 'power3.out',
+        });
+      }
+    },
+    { scope: containerRef, dependencies: [section, filteredUnits] }
+  );
+
   const whatsappInquire = (unit: InventoryUnit) => {
     const priceTxt = currency === 'EGP' ? `${unit.priceEgp.toLocaleString()} EGP` : `$${unit.priceUsd.toLocaleString()} USD`;
     const msg = isAr
@@ -396,7 +663,7 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
   };
 
   return (
-    <div dir={isAr ? 'rtl' : 'ltr'} className="cp-shell-wrapper">
+    <div ref={containerRef} dir={isAr ? 'rtl' : 'ltr'} className="cp-shell-wrapper">
       {/* ── Sub-Navigation Bar Aligned with Main Portal ─────────────── */}
       <div className="cp-subnav-bar">
         <div className="cp-subnav-inner">
@@ -515,13 +782,115 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
             </div>
           </section>
 
+          {/* ── REAL-SITE PANORAMA SHOWCASE ── */}
+          <section className="cp-panorama-showcase" aria-labelledby="cp-pano-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+            <div className="cp-section-heading">
+              <div>
+                <p className="cp-eyebrow">{isAr ? 'بانوراما الموقع الحقيقي 360°' : 'REAL-SITE 360° PANORAMIC VIEW'}</p>
+                <h2 id="cp-pano-title" className="cp-section-title">{isAr ? 'الموقع الفعلي والأبراج قيد الإنشاء' : 'Actual site footprint & construction context'}</h2>
+              </div>
+              <p className="cp-section-note">{isAr ? 'صورة بانورامية حقيقية شاملة للموقع توضح كتلة الأبراج، الساحة المفتوحة، والمحيط العمراني أمام محطة مترو المطرية.' : 'High-resolution wide panoramic site capture showing real tower massing, open public courtyard, and immediate metro street frontage.'}</p>
+            </div>
+            
+            <div className="cp-pano-frame" style={{ position: 'relative', width: '100%', height: '420px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(201, 168, 106, 0.25)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', background: '#0b1118' }}>
+              <Image
+                src="/cairo-plaza/real-site-panorama.jpg"
+                alt={isAr ? 'صورة بانورامية حقيقية شاملة لموقع مشروع كايرو بلازا' : 'Wide verified real-site panorama of Cairo Plaza construction site'}
+                fill
+                priority
+                sizes="100vw"
+                style={{ objectFit: 'cover', objectPosition: 'center 40%' }}
+              />
+              <div style={{ position: 'absolute', top: '16px', left: isAr ? 'auto' : '16px', right: isAr ? '16px' : 'auto', background: 'rgba(11, 17, 24, 0.85)', backdropFilter: 'blur(8px)', padding: '6px 14px', borderRadius: '20px', border: '1px solid rgba(201,168,106,0.4)', fontSize: '0.8rem', color: '#c9a86a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }}></span>
+                {isAr ? 'صورة بانورامية حية من أرض الواقع' : 'VERIFIED REAL-SITE PANORAMA'}
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(11,17,24,0.95), transparent)', padding: '24px 20px 16px', color: '#e5e7eb', fontSize: '0.85rem' }}>
+                <strong style={{ color: '#fff', fontSize: '1rem', display: 'block', marginBottom: '2px' }}>{isAr ? 'مشروع كايرو بلازا — أمام محطة مترو المطرية' : 'Cairo Plaza — Al-Mataria Metro Station Frontage'}</strong>
+                <span>{isAr ? 'توثيق ميداني لأعمال البناء والهيكل الخرساني والساحة الداخلية للمشروع' : 'Field documentation of tower structure, concrete framework, and integrated public plaza'}</span>
+              </div>
+            </div>
+          </section>
+
+          {/* ── OFFICIAL MARKETING SUITE & CAMPAIGN CREATIVES ── */}
+          <section className="cp-campaigns-section" aria-labelledby="cp-campaigns-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+            <div className="cp-section-heading">
+              <div>
+                <p className="cp-eyebrow">{isAr ? 'الهوية التسويقية والحملات الإعلانية' : 'MARKETING SUITE & AD CREATIVES'}</p>
+                <h2 id="cp-campaigns-title" className="cp-section-title">{isAr ? 'حملات الطرح الرسمي لكايرو بلازا' : 'Official Launch Campaigns & Marketing Creatives'}</h2>
+              </div>
+              <p className="cp-section-note">{isAr ? 'تصميمات الطرح والحملات الترويجية الرسمية المعتمدة من Sierra Estates للاستخدام التسويقي والترويجي عبر الوسائط الرقمية.' : 'High-impact branded social and investor campaign creatives designed for multi-channel syndication and ad deployment.'}</p>
+            </div>
+
+            <div className="cp-evidence-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {officialAdCampaigns.map((ad) => (
+                <figure
+                  className="cp-evidence-card"
+                  key={ad.src}
+                  style={{
+                    cursor: 'zoom-in',
+                    background: 'linear-gradient(180deg, rgba(16, 26, 40, 0.95), rgba(11, 17, 24, 0.98))',
+                    border: '1px solid rgba(201, 168, 106, 0.3)',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                  }}
+                  onClick={() => openLightbox(
+                    ad.src,
+                    isAr ? ad.titleAr : ad.titleEn,
+                    isAr ? `${ad.titleAr} (${ad.ref}) — ${ad.descAr}` : `${ad.titleEn} (${ad.ref}) — ${ad.descEn}`,
+                  )}
+                >
+                  <div className="cp-evidence-media" style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1' }}>
+                    <Image
+                      src={ad.src}
+                      alt={isAr ? ad.titleAr : ad.titleEn}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 620px) 100vw, (max-width: 900px) 50vw, 33vw"
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <span
+                      className="cp-evidence-badge"
+                      style={{
+                        background: 'linear-gradient(135deg, #c9a86a, #dfc38c)',
+                        color: '#0b1118',
+                        fontWeight: 700,
+                        boxShadow: '0 4px 12px rgba(201, 168, 106, 0.4)',
+                      }}
+                    >
+                      {isAr ? ad.badgeAr : ad.badgeEn}
+                    </span>
+                  </div>
+                  <figcaption style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '1rem', color: '#fff' }}>{isAr ? ad.titleAr : ad.titleEn}</strong>
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '0 0 12px 0', lineHeight: 1.45 }}>
+                      {isAr ? ad.descAr : ad.descEn}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
+                      <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#c9a86a', letterSpacing: '0.5px' }}>
+                        {ad.ref}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        🔍 {isAr ? 'تكبير الصورة' : 'View full'}
+                      </span>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          {/* ── 3D INTERACTIVE TOUR WITH REAL-PHOTO TEXTURED MASSING & PHOTOSPHERE ── */}
           <section className="cp-tour" aria-labelledby="cp-tour-title">
             <div className="cp-section-heading">
               <div>
-                <p className="cp-eyebrow">{isAr ? 'جولة توضيحية ثلاثية الأبعاد' : 'ILLUSTRATIVE 3D TOUR'}</p>
-                <h2 id="cp-tour-title" className="cp-section-title">{isAr ? 'استكشف الكتلة العمرانية وتوزيع الأبراج' : 'Explore the illustrative massing'}</h2>
+                <p className="cp-eyebrow">{isAr ? 'جولة تفاعلية ثلاثية الأبعاد وصور حقيقية' : '3D SPATIAL TOUR & REAL PHOTOS'}</p>
+                <h2 id="cp-tour-title" className="cp-section-title">{isAr ? 'استكشف الأبراج بالصور الحقيقية وبانوراما 360°' : 'Explore Real-Photo Textured Towers & 360° Site'}</h2>
               </div>
-              <p className="cp-section-note">{isAr ? 'تصور تفاعلي توضيحي، وليس نموذج تنفيذ أو صورة للموقع الحالي.' : 'An interactive illustration, not an execution model or current-site photograph.'}</p>
+              <p className="cp-section-note">{isAr ? 'مجسم تفاعلي يدمج ملامس الواجهات الحقيقية للمشروع، مع وضع بانوراما كروية 360° ونقاط تفاعلية للموقع.' : 'Interactive visualizer with real facade texture mapping, 360° on-site photosphere dome, and clickable real-photo hotspots.'}</p>
             </div>
             <CairoPlazaScene lang={isAr ? 'ar' : 'en'} />
           </section>

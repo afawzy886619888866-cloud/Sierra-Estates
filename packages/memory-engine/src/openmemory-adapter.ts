@@ -86,7 +86,7 @@ export class OpenMemoryAdapter {
       if (response.ok) {
         const data = (await response.json()) as { id?: string; memory_id?: string };
         return {
-          id: data.id || data.memory_id || `om-${Date.now()}`,
+          id: data?.id || data?.memory_id || `om-${Date.now()}`,
           success: true,
           fallback: false,
         };

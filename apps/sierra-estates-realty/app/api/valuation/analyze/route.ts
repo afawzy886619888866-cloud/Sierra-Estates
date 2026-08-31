@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { evaluatePropertyValuation, ValuationInput } from '@/lib/valuationArbitrageEngine';
+import { analyzeValuationViaPythonApi } from '@/lib/server/python-api-client';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,11 +16,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = evaluatePropertyValuation(body);
+    // Try Python Valuation Engine microservice first if configured
+    const pythonResult = await analyzeValuationViaPythonApi(body as Record<string, any>);
+    const result = pythonResult.success && pythonResult.valuation
+      ? pythonResult.valuation
+      : evaluatePropertyValuation(body);
 
     return NextResponse.json({
       success: true,
       agent: 'The Curator (AVM & Valuation Engine)',
+      source: pythonResult.success ? 'python-microservice' : 'local-ts-engine',
       data: result,
       timestamp: new Date().toISOString(),
     });

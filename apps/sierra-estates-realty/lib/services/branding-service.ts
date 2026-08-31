@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import axios from 'axios';
 import { StorageService } from './StorageService';
 import path from 'path';
@@ -25,6 +24,22 @@ export class BrandingService {
       // 1. Fetch source image
       const response = await axios.get(sourceUrl, { responseType: 'arraybuffer' });
       const sourceBuffer = Buffer.from(response.data);
+
+      // Lazy load sharp with graceful fallback
+      let sharp: any;
+      try {
+        const sharpModule = await import('sharp');
+        sharp = sharpModule.default || sharpModule;
+      } catch (_err) {
+        // If native sharp binary fails to load, upload original buffer without watermark
+        const uploadUrl = await StorageService.uploadPropertyMedia(
+          docId,
+          sourceBuffer.toString('base64'),
+          'image/jpeg',
+          `branded_${path.basename(sourceUrl)}`
+        );
+        return uploadUrl;
+      }
 
       // 2. Prepare Logo
       let logoBuffer: Buffer;

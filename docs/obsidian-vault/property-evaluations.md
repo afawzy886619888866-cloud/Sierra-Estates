@@ -47,6 +47,7 @@ $$\text{Priority Score} = \min(100, [(\text{Compound Tier} \times 0.5) + (\text{
 ---
 
 ## 4. Multi-Agent Synchronization
+
 - **Hermes Agent**: Uses this matrix to prioritize market scout reports and price benchmarking.
 - **WhatsApp Senior Bot**: Delivers top-evaluated units with investment badges and direct-owner status.
 - **Stage-9 Closer**: References valuation scores to counter pricing objections and justify rental yields.

@@ -1,4 +1,5 @@
 # تقرير تكامل بيانات العقارات ونشر المستودع على Vercel
+
 **إعداد:** Manus AI  
 **المشروع:** Sierra Estates Realty — Monorepo Architecture (Client & Admin)  
 **المستودع الهدف:** `sierrablue8866-droid/SE-Vercel-deploy-main`
@@ -6,6 +7,7 @@
 ---
 
 ## مقدمة وملخص تنفيذي
+
 تم إنجاز تكامل بيانات العقارات والمركبات العقارية في التجمع الخامس (New Cairo) مع إعطاء الأولوية للغة العربية باعتبارها المصدر المحدث والأصح للبيانات (وفقًا لتحليلات الحضانة والقرب الجغرافي من nurseries ومقارنات المجمعات السكنية مثل Villette وEastown وLake View Residence). تم دمج العميل و لوحة الإدارة (Admin Dashboard) داخل بنية الـ Monorepo الخاصة بالمستودع المحدد على GitHub (`sierrablue8866-droid/SE-Vercel-deploy-main`) مع ضمان عدم ضياع أي كود أو عمل سابق، وتحقيق بناء نظيف تمامًا (Clean Build) لخوادم Vercel لكل من البوابة والعصر الإداري [1] [2].
 
 ---
@@ -60,6 +62,7 @@
 ---
 
 ## المراجع والتوثيق
+
 1. [Next.js Documentation — Production Build and Deployment](https://nextjs.org/docs/app/building-your-application/deploying)
 2. [Vercel Monorepo Deployment Guide](https://vercel.com/docs/projects/monorepos)
 3. [React 19 Server and Client Components Overview](https://react.dev/reference/react)

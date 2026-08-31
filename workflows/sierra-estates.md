@@ -5,6 +5,7 @@ description: How to develop, test, and deploy the Sierra Estates Realty platform
 # Sierra Estates Platform Workflow
 
 ## Project Overview
+
 - **Location**: `c:\OpenClaw\my-app`
 - **Stack**: Next.js 16, React 19, TypeScript, Firebase 12 (Auth + Firestore + Hosting + Storage), Framer Motion, Tailwind CSS v4
 - **Brand Mandate**: Always use "Investment Stakeholders" (not leads), "Strategic Pipeline" (not CRM), "Portfolio Assets" (not listings), in all UI + code comments
@@ -67,6 +68,7 @@ storage.rules         ← Storage security rules
 ---
 
 ## Firestore Collections
+
 | Collection    | Purpose                                |
 |---------------|----------------------------------------|
 | `listings`    | Portfolio Assets (properties)          |
@@ -85,7 +87,7 @@ cd c:\OpenClaw\my-app
 npm run dev
 ```
 
-Open: http://localhost:3000
+Open: <http://localhost:3000>
 
 ---
 
@@ -198,7 +200,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 GOOGLE_GENAI_API_KEY=         ← OpenClaw AI
 PROPERTY_FINDER_API_KEY=      ← Property Finder feed
-TELEGRAM_BOT_TOKEN=8719045454:AAH4E11VUdXiK_HldPX2ZSllSFPgntamC0I
+TELEGRAM_BOT_TOKEN=          ← Telegram lead alerts (get from @BotFather)
 ```
 
 ---
