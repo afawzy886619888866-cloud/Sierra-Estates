@@ -19,12 +19,15 @@ export interface MemoryEngineConfig {
   store?: MemoryStore
 }
 
+/** Pub/sub subscriber callback — receives the published message. */
+export type SubscriberHandler = (message: any) => void
+
 export class MemoryEngine {
   private contexts: Map<string, Context> = new Map()
   private skillRegistry: Map<string, Skill> = new Map()
   private agentProfiles: Map<string, Agent> = new Map()
   private executionLogs: ExecutionLog[] = []
-  private subscribers: Map<string, Set<Function>> = new Map()
+  private subscribers: Map<string, Set<SubscriberHandler>> = new Map()
   private pendingWrites = 0
   private lastStoreError: string | null = null
 
@@ -179,7 +182,7 @@ export class MemoryEngine {
     }
   }
 
-  subscribe(topic: string, handler: Function): () => void {
+  subscribe(topic: string, handler: SubscriberHandler): () => void {
     if (!this.subscribers.has(topic)) {
       this.subscribers.set(topic, new Set())
     }
