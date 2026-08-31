@@ -60,8 +60,9 @@ async function migrateData() {
     }
     console.log('✅ Supabase database connection verified.');
 
-    // 2. Find Excel or JSON inventory source files
+    // 2. Find real live inventory files
     const possiblePaths = [
+        path.resolve(__dirname, '../apps/sierra-estates-realty/data/real-listings.json'),
         path.resolve(__dirname, '../Final_RealEstate_Database.xlsx'),
         path.resolve(__dirname, '../data/Final_RealEstate_Database.xlsx'),
         path.resolve(__dirname, '../apps/sierra-estates-realty/public/data/inventory.json'),
@@ -71,7 +72,35 @@ async function migrateData() {
     const existingFile = possiblePaths.find(p => fs.existsSync(p));
     const listingsToInsert: ParsedListing[] = [];
 
-    if (existingFile && existingFile.endsWith('.xlsx')) {
+    if (existingFile && existingFile.endsWith('.json')) {
+        console.log(`📖 Reading Real Ingested JSON file: ${existingFile}`);
+        const raw = JSON.parse(fs.readFileSync(existingFile, 'utf8'));
+        const list = Array.isArray(raw) ? raw : (raw.properties || raw.listings || []);
+        console.log(`📊 Found ${list.length} real property records.`);
+
+        list.forEach((item: any, idx: number) => {
+            const compound = item.compound || item.cmp || 'New Cairo';
+            const price = Number(item.price) || 0;
+            const dealType = (item.mode || item.deal_type || 'sale').toLowerCase().includes('rent') ? 'rent' : 'sale';
+
+            listingsToInsert.push({
+                ref_id: item.code || `SE-${(idx + 1).toString().padStart(4, '0')}`,
+                title: `${item.type || 'Property'} in ${compound}`,
+                compound,
+                deal_type: dealType,
+                property_type: item.type || 'Apartment',
+                price: price,
+                bedrooms: parseInt(item.beds || '3', 10) || 3,
+                bathrooms: parseInt(item.baths || '2', 10) || 2,
+                area_sqm: parseFloat(item.area || '150') || 150,
+                finishing_type: item.finishing || 'Core & Shell',
+                owner_phone: item.mobile || '',
+                owner_name: item.ownerName || '',
+                source_channel: item.ago?.includes('WhatsApp') ? 'whatsapp' : 'google_sheets',
+                status: 'active',
+            });
+        });
+    } else if (existingFile && existingFile.endsWith('.xlsx')) {
         console.log(`📖 Reading Excel file: ${existingFile}`);
         const workbook = XLSX.readFile(existingFile);
         const sheetName = workbook.SheetNames[0];
