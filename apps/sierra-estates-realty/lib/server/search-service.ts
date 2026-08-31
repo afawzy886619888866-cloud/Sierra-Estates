@@ -465,19 +465,61 @@ export async function semanticSearch(params: {
     intent = { ...intent, ...intentOverride };
   }
 
-  // 2. Query Firestore — fetch a wider pool, then score + rank client-side.
-  //    Firestore doesn't support OR queries across different fields, so we
-  //    fetch the available pool (limit 200) and filter in memory.
-  const snapshot = await adminDb
-    .collection(COLLECTIONS.units)
-    .where('status', 'in', ['available', 'reserved'])
-    .limit(200)
-    .get();
+  // 2. Query Supabase listings directly (fast SQL with index)
+  let rawUnits: RawUnit[] = [];
 
-  const rawUnits: RawUnit[] = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-    id: doc.id,
-    ...(doc.data() as Record<string, unknown>),
-  })) as RawUnit[];
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .limit(300);
+
+    if (!error && data && data.length > 0) {
+      rawUnits = data.map((item: any) => ({
+        id: item.id || item.ref_id,
+        title: item.title,
+        titleAr: item.title_ar,
+        description: item.description,
+        compound: item.compound,
+        district: item.location_area || item.compound,
+        city: item.city || 'Cairo',
+        price: Number(item.price) || 0,
+        monthlyRent: item.deal_type === 'rent' ? Number(item.price) : undefined,
+        currency: item.price_currency || 'EGP',
+        bedrooms: item.bedrooms || 0,
+        bathrooms: item.bathrooms || 1,
+        area: Number(item.area_sqm) || 150,
+        propertyType: item.property_type || 'Apartment',
+        status: item.status || 'available',
+        finishingType: item.finishing_type,
+        images: item.images || [],
+        featuredImage: (item.images && item.images[0]) || null,
+        isRental: item.deal_type === 'rent',
+      })) as RawUnit[];
+    }
+  } catch (supabaseErr) {
+    logger.warn('[search] Supabase fetch error, checking Firestore fallback:', supabaseErr);
+  }
+
+  // Fallback to Firestore if Supabase returned no rows
+  if (rawUnits.length === 0) {
+    try {
+      const snapshot = await adminDb
+        .collection(COLLECTIONS.units)
+        .where('status', 'in', ['available', 'reserved'])
+        .limit(200)
+        .get();
+
+      rawUnits = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...(doc.data() as Record<string, unknown>),
+      })) as RawUnit[];
+    } catch (e) {
+      logger.warn('[search] Firestore query fallback error:', e);
+    }
+  }
 
   // 3. Score + filter + sort
   const scored = rawUnits
