@@ -1445,6 +1445,7 @@ function AdminApp() {
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsView lang={langKey}/>;
       case 'contracts':return <ContractsView />;
+      case 'heatmap':return <HeatmapView />;
       case 'intelligence':return <AgentIntelligence />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
