@@ -36,7 +36,7 @@ jobs:
       - name: Check for GCP credentials
         id: gcp_check
         env:
-          GSA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GSA_JSON: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_JSON'] }}
         run: |
           if [ -z "$GSA_JSON" ]; then
             echo "::notice::GOOGLE_SERVICE_ACCOUNT_JSON repo secret is not set — skipping Cloud Run deployment."
@@ -49,7 +49,7 @@ jobs:
         if: steps.gcp_check.outputs.has_creds == 'true'
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          credentials_json: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_JSON'] }}
 
       - name: Set up Cloud SDK
         if: steps.gcp_check.outputs.has_creds == 'true'
