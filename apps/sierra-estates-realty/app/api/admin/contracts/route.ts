@@ -4,6 +4,7 @@ import {
   generateContractNumber, 
   generateSignatureHash 
 } from '@/lib/services/digital-contracts';
+import { adminDb } from '@/lib/server/firebase-admin';
 
 // In-memory store fallback for development and test environments
 const inMemoryContracts: Map<string, DigitalContractData> = new Map();
@@ -46,9 +47,26 @@ inMemoryContracts.set(sampleContract.id, sampleContract);
 
 export async function GET(_req: NextRequest) {
   try {
-    const contracts = Array.from(inMemoryContracts.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const contracts: DigitalContractData[] = [];
+
+    // Attempt to query Firestore
+    try {
+      const snap = await adminDb.collection('contracts').orderBy('createdAt', 'desc').limit(100).get();
+      if (snap && !snap.empty) {
+        snap.forEach((doc: any) => {
+          contracts.push({ id: doc.id, ...doc.data() });
+        });
+      }
+    } catch {
+      // Fallback silently to in-memory store
+    }
+
+    if (contracts.length === 0) {
+      const fallbackList = Array.from(inMemoryContracts.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      contracts.push(...fallbackList);
+    }
 
     return NextResponse.json({
       success: true,
@@ -112,6 +130,13 @@ export async function POST(req: NextRequest) {
 
     newContract.signatureHash = generateSignatureHash(newContract);
     inMemoryContracts.set(newContract.id, newContract);
+
+    // Attempt Firestore persistence
+    try {
+      await adminDb.collection('contracts').doc(newContract.id).set(newContract);
+    } catch {
+      // Graceful fallback
+    }
 
     const host = req.headers.get('host') || 'sierra-estates.net';
     const proto = host.includes('localhost') ? 'http' : 'https';

@@ -12,14 +12,44 @@ import {
 import { CompoundHeatmapMetric, COMPOUNDS_HEATMAP_DATA } from '@/lib/services/compounds-heatmap-data';
 
 export function HeatmapView() {
-  const [compounds] = useState<CompoundHeatmapMetric[]>(COMPOUNDS_HEATMAP_DATA);
+  const [compounds, setCompounds] = useState<CompoundHeatmapMetric[]>(COMPOUNDS_HEATMAP_DATA);
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'capRate' | 'priceSqm' | 'appreciation' | 'inventory'>('capRate');
   const [selectedCompound, setSelectedCompound] = useState<CompoundHeatmapMetric | null>(COMPOUNDS_HEATMAP_DATA[0]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [marketStats, setMarketStats] = useState({ avgCapRate: 12.5, avgPricePerSqm: 75850 });
 
   const zones = ['all', 'Golden Square', 'South 90th St', 'Suez Road', '1st Settlement', 'Northern Extension'];
 
-  const filteredCompounds = compounds
+  React.useEffect(() => {
+    async function loadHeatmapData() {
+      try {
+        setLoading(true);
+        const query = selectedZone !== 'all' ? `?zone=${encodeURIComponent(selectedZone)}` : '';
+        const res = await fetch(`/api/analytics/compounds-heatmap${query}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.compounds)) {
+          setCompounds(data.compounds);
+          if (data.averageMarketCapRate) {
+            setMarketStats({
+              avgCapRate: data.averageMarketCapRate,
+              avgPricePerSqm: data.averagePricePerSqm || 75850,
+            });
+          }
+          if (data.compounds.length > 0 && !selectedCompound) {
+            setSelectedCompound(data.compounds[0]);
+          }
+        }
+      } catch (err) {
+        console.warn('Using local fallback for heatmap data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadHeatmapData();
+  }, [selectedZone]);
+
+  const filteredCompounds = [...compounds]
     .filter(c => selectedZone === 'all' || c.zone.toLowerCase().includes(selectedZone.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === 'capRate') return b.rentalCapRate - a.rentalCapRate;
@@ -53,11 +83,11 @@ export function HeatmapView() {
         <div className="flex items-center gap-3">
           <div className="px-4 py-2 bg-slate-950/60 rounded-xl border border-slate-800 text-right">
             <div className="text-[11px] text-slate-400">Average Cap Rate</div>
-            <div className="text-lg font-bold text-emerald-400">12.5% p.a.</div>
+            <div className="text-lg font-bold text-emerald-400">{marketStats.avgCapRate}% p.a.</div>
           </div>
           <div className="px-4 py-2 bg-slate-950/60 rounded-xl border border-slate-800 text-right">
             <div className="text-[11px] text-slate-400">Market Avg / m²</div>
-            <div className="text-lg font-bold text-amber-400">75,850 EGP</div>
+            <div className="text-lg font-bold text-amber-400">{marketStats.avgPricePerSqm.toLocaleString()} EGP</div>
           </div>
         </div>
       </div>
