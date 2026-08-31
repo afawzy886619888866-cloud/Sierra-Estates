@@ -46,6 +46,7 @@ export async function POST(req: Request) {
   }
 
   if (body.action === "signin") {
+    const reqHost = req.headers.get("host") || undefined;
     const { email, password, token: firebaseIdToken } = body;
     if (!email && !firebaseIdToken) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
           role,
         });
         const res = NextResponse.json({ ok: true, role });
-        res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
+        res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
         return res;
       } catch (fbErr: any) {
         console.warn("[api/auth] Firebase verification failed, falling back to staff auth:", fbErr?.message);
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
         role: googleRole,
       });
       const res = NextResponse.json({ ok: true, role: googleRole });
-      res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
+      res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
       return res;
     }
 
@@ -137,7 +138,7 @@ export async function POST(req: Request) {
       uid: demo.uid, email: demo.email, name: demo.name, role: demo.role,
     });
     const res = NextResponse.json({ ok: true, role: demo.role });
-    res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
+    res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
     return res;
   }
 
