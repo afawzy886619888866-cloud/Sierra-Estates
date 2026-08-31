@@ -1,9 +1,25 @@
-import { describe, it, expect } from 'vitest';
+// Authored against Vitest but this directory runs under Jest, so the import
+// threw at load and the whole suite never ran. Jest provides describe/it/expect
+// as globals — the assertions below are unchanged.
 import { NextRequest } from 'next/server';
 import { proxy } from '../proxy';
 import { supabase } from '../lib/supabase';
 
 describe('Production & Deployment Architecture Tests', () => {
+  // cors.ts builds its allowlist solely from ALLOWED_ORIGINS with no default, so
+  // it correctly emits no allow-origin header when the var is unset. Set it here
+  // rather than weakening the assertion — and note the deployment implication:
+  // ALLOWED_ORIGINS must be configured in production or the site's own origin is
+  // refused.
+  const originalAllowedOrigins = process.env.ALLOWED_ORIGINS;
+  beforeAll(() => {
+    process.env.ALLOWED_ORIGINS = 'https://sierra-estates.net,https://admin.sierra-estates.net';
+  });
+  afterAll(() => {
+    if (originalAllowedOrigins === undefined) delete process.env.ALLOWED_ORIGINS;
+    else process.env.ALLOWED_ORIGINS = originalAllowedOrigins;
+  });
+
   describe('1. Middleware Proxy & Admin Route Direct Access', () => {
     it('allows direct access to /admin without session token', async () => {
       const req = new NextRequest('https://sierra-estates.net/admin', {
