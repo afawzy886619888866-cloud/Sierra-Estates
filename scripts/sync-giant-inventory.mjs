@@ -140,8 +140,8 @@ const publicDir = path.join(ROOT, 'apps/sierra-estates-realty/public/downloads')
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 
-fs.writeFileSync(path.join(dataDir, 'real-listings.json'), JSON.stringify(listings, null, 2), 'utf8');
-console.log(`💾 Saved local JSON → apps/sierra-estates-realty/data/real-listings.json`);
+fs.writeFileSync(path.join(dataDir, 'master-inventory-9k.json'), JSON.stringify(listings, null, 2), 'utf8');
+console.log(`💾 Saved local JSON → apps/sierra-estates-realty/data/master-inventory-9k.json`);
 
 // Also save flat clean CSV
 const cleanCsvHeader = 'RecordID,ListingCategory,Type,Location,Zone,PropertyType,Bedrooms,Bathrooms,AreaSqm,PriceEGP,Furnished,ContactName,ContactPhone,OwnerBroker,Availability,PhotosCount,PhotoURLs\n';
