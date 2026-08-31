@@ -72,20 +72,38 @@ const RECENT_ACTIVITIES: ActivityFeedItem[] = [
 export default function DashboardView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [liveData, setLiveData] = useState<{
+    totalListings?: number;
+    activeListings?: number;
+    newInquiries7d?: number;
+    conversionRate?: number;
+  } | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/admin/dashboard')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setLiveData(d);
+      })
+      .catch((err) => console.warn('[DashboardView] Metrics fetch failed:', err));
+  }, []);
 
   const metrics = useMemo(() => {
+    const total = liveData?.totalListings ? liveData.totalListings.toLocaleString() : '1,547';
+    const leadsCount = liveData?.newInquiries7d !== undefined ? liveData.newInquiries7d.toString() : '284';
+
     switch (timeRange) {
       case '7d':
-        return { catalog: '1,547', catalogGrowth: '+4% this week', leads: '92', leadsGrowth: '+14 new', volume: 'EGP 142M', volumeGrowth: '+3.1%' };
+        return { catalog: total, catalogGrowth: '+4% this week', leads: leadsCount, leadsGrowth: '+14 new', volume: 'EGP 142M', volumeGrowth: '+3.1%' };
       case '90d':
-        return { catalog: '1,547', catalogGrowth: '+28% this quarter', leads: '740', leadsGrowth: '+112 closed', volume: 'EGP 1.84B', volumeGrowth: '+18.4%' };
+        return { catalog: total, catalogGrowth: '+28% this quarter', leads: '740', leadsGrowth: '+112 closed', volume: 'EGP 1.84B', volumeGrowth: '+18.4%' };
       case 'all':
-        return { catalog: '1,547', catalogGrowth: 'Historical Peak', leads: '2,480', leadsGrowth: '+620 closed', volume: 'EGP 5.2B', volumeGrowth: 'All-time' };
+        return { catalog: total, catalogGrowth: 'Historical Peak', leads: '2,480', leadsGrowth: '+620 closed', volume: 'EGP 5.2B', volumeGrowth: 'All-time' };
       case '30d':
       default:
-        return { catalog: '1,547', catalogGrowth: '+12% this week', leads: '284', leadsGrowth: '+8 new today', volume: 'EGP 14.8M', volumeGrowth: '+5.2% MoM' };
+        return { catalog: total, catalogGrowth: '+12% this week', leads: leadsCount, leadsGrowth: '+8 new today', volume: 'EGP 14.8M', volumeGrowth: '+5.2% MoM' };
     }
-  }, [timeRange]);
+  }, [timeRange, liveData]);
 
   return (
     <div className="space-y-6" data-testid="dashboard-view">

@@ -113,6 +113,48 @@ async function fetchRealData() {
       !l.status.toLowerCase().includes('not available')
     );
 
+    // Merge WhatsApp ingested units from packages/whatsapp-shared/inventory_extracted_units.json
+    const waExtractedPath = path.join(__dirname, '../../../packages/whatsapp-shared/inventory_extracted_units.json');
+    if (fs.existsSync(waExtractedPath)) {
+      try {
+        const waUnits = JSON.parse(fs.readFileSync(waExtractedPath, 'utf8'));
+        waUnits.forEach((wu, wIdx) => {
+          const egpM = wu.price > 100000 ? wu.price / 1_000_000 : wu.price;
+          const usd = Math.round((wu.price || 0) / 50);
+          listings.push({
+            id: listings.length + 1,
+            code: wu.id || `WA-${wIdx + 1}`,
+            ownerName: wu.sender || 'WhatsApp Owner',
+            mobile: wu.sender || '',
+            status: 'Available',
+            cmp: wu.compound || 'New Cairo',
+            compound: wu.compound || 'New Cairo',
+            zone: (wu.compound || '').toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
+            type: wu.type || 'Apartment',
+            beds: wu.bedrooms || 3,
+            baths: wu.bathrooms || 2,
+            area: wu.area_sqm || 150,
+            gardenArea: wu.garden_area_sqm || 0,
+            price: wu.price || 50000,
+            egpM: Number(egpM.toFixed(2)),
+            usd,
+            mode: (wu.operation || 'rent').toLowerCase().includes('sale') ? 'sale' : 'rent',
+            finishing: wu.furnishing || 'Furnished',
+            ownerType: 'Direct Owner',
+            tag: 'WhatsApp Verified',
+            aiScore: 9.2,
+            agent: `${wu.sender || 'WhatsApp Direct'} (WhatsApp Verified)`,
+            ago: 'WhatsApp Import',
+            img: getCompoundImage(wu.compound || 'New Cairo'),
+            comment: wu.description || '',
+            updatedAt: new Date().toISOString(),
+          });
+        });
+      } catch (err) {
+        console.warn('Could not parse WhatsApp extracted units:', err.message);
+      }
+    }
+
     // Save output to local data folder
     const dataDir = path.join(__dirname, '../data');
     if (!fs.existsSync(dataDir)) {

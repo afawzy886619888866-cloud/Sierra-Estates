@@ -1,4 +1,5 @@
 # 💬 Sales Scripts & Outreach Registry
+>
 > **Path:** `docs/obsidian-vault/Sales Scripts & Outreach.md`  
 > **Parent Node:** `[[Sierra Estates Memory Engine]]`
 
@@ -7,9 +8,11 @@ This registry contains the active communication scripts used by **Leila (Convers
 ---
 
 ## 👨‍💼 WhatsApp Direct Owner Outreach Scripts
+
 When an owner lists a property on Dubizzle or Facebook, Leila sends this friendly, highly professional WhatsApp text to vet the unit and request high-quality photos.
 
 ### Script 1: Initial Vetting & Photo Request (Arabic)
+
 ```
 السلام عليكم يا فندم، أنا ليلى من شركة سييرا بلو العقارية بالتجمع الخامس. 
 
@@ -21,7 +24,9 @@ When an owner lists a property on Dubizzle or Facebook, Leila sends this friendl
 ```
 
 ### Script 2: Price Correction & Negotiation (Arabic)
+
 If our `[[Forecasting Engine]]` calculates that the owner's price per square meter is overpriced by more than 15% compared to the New Cairo market average:
+
 ```
 أهلاً بحضرتك يا فندم. حابة أشكرك على التفاصيل والصور. 
 
@@ -33,9 +38,11 @@ If our `[[Forecasting Engine]]` calculates that the owner's price per square met
 ---
 
 ## 🤝 WhatsApp Broker co-broke Coordination Scripts
+
 If the property listing belongs to another real estate broker, the AI bot handles the co-broke (cooperation) outreach systematically using standard codes.
 
 ### Script 3: co-broke Proposal (Arabic/English Mixed)
+
 ```
 السلام عليكم يا كوتش، معاك سييرا من سييرا بلو للتسويق العقاري.
 
@@ -49,9 +56,11 @@ If the property listing belongs to another real estate broker, the AI bot handle
 ---
 
 ## 📧 Email Outreach Templates (`a.fawzy8866@gmail.com`)
+
 When a deal is closed or scheduled, the system sends an automation notification email containing all unit, owner, and broker contact coordinates.
 
 ### Email Format: viewing Appointment Booked
+
 ```
 Subject: 📅 [Sierra Estates AI] Viewing Scheduled - Compound: [Compound] - Unit Code: [Unit Code]
 
@@ -82,4 +91,3 @@ Please confirm this appointment has been synced to your Google Calendar.
 Best regards,
 Sierra Estates Intelligence OS
 ```
-

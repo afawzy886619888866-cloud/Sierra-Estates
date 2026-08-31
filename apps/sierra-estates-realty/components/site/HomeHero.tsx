@@ -1,7 +1,7 @@
 'use client';
 
 /** Hero slideshow — port of the hero block + slide logic in deploy/index.html. */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { BadgeCheck, Map, ShieldCheck } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
@@ -24,9 +24,11 @@ export default function HomeHero() {
   const [leaving, setLeaving] = useState<number | null>(null);
   const [captionOut, setCaptionOut] = useState(false);
   const firstPaint = useRef(true);
+  const timerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
+  const startTimer = useCallback(() => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    timerRef.current = window.setInterval(() => {
       setCur((prev) => {
         const next = (prev + 1) % slides.length;
         setLeaving(prev);
@@ -37,8 +39,14 @@ export default function HomeHero() {
       setCaptionOut(true);
       window.setTimeout(() => setCaptionOut(false), 320);
     }, 7000);
-    return () => window.clearInterval(timer);
   }, [slides.length]);
+
+  useEffect(() => {
+    startTimer();
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, [startTimer]);
 
   const go = (n: number) => {
     if (n === cur) return;
@@ -48,6 +56,9 @@ export default function HomeHero() {
     window.setTimeout(() => setCaptionOut(false), 320);
     setCur(n);
     firstPaint.current = false;
+    // Restart the auto-advance timer so a manual selection isn't immediately
+    // overridden by the old cycle.
+    startTimer();
   };
 
   const s = slides[cur];

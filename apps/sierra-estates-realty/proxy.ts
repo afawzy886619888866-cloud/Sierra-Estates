@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
-import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
 
 /**
  * Edge proxy (proxy.ts).
@@ -22,8 +22,6 @@ export async function proxy(request: NextRequest) {
     requestHost.startsWith('admin') || 
     requestHost.startsWith('sierra-admin');
 
-  const isLocal = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
-
   let targetPath = pathname;
   let isRewritten = false;
 
@@ -33,31 +31,13 @@ export async function proxy(request: NextRequest) {
     isRewritten = true;
   }
 
-  // 0b) Admin route protection & host split
+  // 0b) Host split: if on dedicated admin host root, rewrite to /admin
+  // /admin is directly accessible across all domains without host redirect
+
+  // 0c) Direct Admin Portal access (Login wall removed)
   if (targetPath.startsWith('/admin')) {
-    if (adminHost && !onAdminHost && !isLocal) {
-      const url = new URL(request.url);
-      url.hostname = adminHost;
-      url.protocol = 'https:';
-      url.port = '';
-      return NextResponse.redirect(url, 307);
-    }
-
-    // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
-      return isRewritten
-        ? NextResponse.rewrite(new URL('/admin/login', request.url))
-        : NextResponse.next();
-    }
-
-    // Guard all other /admin routes with RBAC session token
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-    const session = await verifySession(token);
-
-    if (!session) {
-      const loginUrl = new URL('/admin/login', request.url);
-      loginUrl.searchParams.set('redirect', targetPath);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
 
     return isRewritten
@@ -139,7 +119,7 @@ export async function proxy(request: NextRequest) {
       }
 
       // Fail-closed if secret is configured but header is missing or mismatched
-      if (expectedSecret && secretHeader !== expectedSecret) {
+      if (expectedSecret && !safeEqual(secretHeader || '', expectedSecret)) {
         return new NextResponse(
           JSON.stringify({ error: 'Unauthorized system orchestration request' }),
           {

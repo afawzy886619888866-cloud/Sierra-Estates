@@ -27,7 +27,7 @@ const aiKey =
 /** Paths to data files */
 const EXTRACTED_UNITS_PATH = path.resolve(
   process.cwd(),
-  'packages/whatsapp-agent/inventory_extracted_units.json',
+  'packages/whatsapp-shared/inventory_extracted_units.json',
 );
 const MASTER_SHEET_PATH = path.resolve(
   process.cwd(),

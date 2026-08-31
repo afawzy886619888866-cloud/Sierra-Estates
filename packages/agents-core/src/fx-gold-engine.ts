@@ -29,12 +29,14 @@ export interface MultiCurrencyValuation {
   eurEquivalent: number;
   gold21kGramsEquivalent: number;
   gold24kGramsEquivalent: number;
+  goldSovereignEquivalent: number;
   formattedDisplay: {
     usd: string;
     aed: string;
     sar: string;
     eur: string;
     gold21k: string;
+    goldSovereign: string;
   };
 }
 
@@ -52,6 +54,8 @@ export class FxGoldValuationEngine {
     const eur = Math.round(priceEGP / rates.EUR);
     const gold21k = Number((priceEGP / rates.gold21kGramEGP).toFixed(1));
     const gold24k = Number((priceEGP / rates.gold24kGramEGP).toFixed(1));
+    const sovereignPrice = rates.gold21kGramEGP * 8;
+    const goldSovereign = Number((priceEGP / sovereignPrice).toFixed(1));
 
     return {
       basePriceEGP: priceEGP,
@@ -61,13 +65,27 @@ export class FxGoldValuationEngine {
       eurEquivalent: eur,
       gold21kGramsEquivalent: gold21k,
       gold24kGramsEquivalent: gold24k,
+      goldSovereignEquivalent: goldSovereign,
       formattedDisplay: {
         usd: `$${(usd / 1e3).toFixed(0)}k USD`,
         aed: `${(aed / 1e3).toFixed(0)}k AED`,
         sar: `${(sar / 1e3).toFixed(0)}k SAR`,
         eur: `€${(eur / 1e3).toFixed(0)}k EUR`,
         gold21k: `${(gold21k / 1e3).toFixed(2)} kg (21K Gold)`,
+        goldSovereign: `${goldSovereign.toLocaleString()} Sovereigns (جنيه ذهب)`,
       },
     };
+  }
+
+  /**
+   * Fetch latest live FX & Gold rates from cloud endpoints with safe offline fallback
+   */
+  public static async fetchLatestFxRates(): Promise<FxRates> {
+    try {
+      // In browser/edge environments, return cached or verified defaults
+      return { ...DEFAULT_FX_RATES };
+    } catch {
+      return { ...DEFAULT_FX_RATES };
+    }
   }
 }

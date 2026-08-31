@@ -67,6 +67,16 @@ io.on("connection", (socket) => {
 });
 
 const PORT = parseInt(process.env.PORT || "4000", 10);
+server.on("error", (err: any) => {
+  if (err.code === "EADDRINUSE") {
+    console.warn(`[agents-api] Port ${PORT} in use, attempting port ${PORT + 1}...`);
+    server.listen(PORT + 1, () => {
+      console.log(`Agents API server listening on http://0.0.0.0:${PORT + 1}`);
+    });
+  } else {
+    console.error("[agents-api] Server error:", err);
+  }
+});
 server.listen(PORT, () => {
   console.log(`Agents API server listening on http://0.0.0.0:${PORT}`);
 });

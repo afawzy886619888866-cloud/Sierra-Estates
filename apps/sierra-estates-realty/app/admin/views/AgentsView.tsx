@@ -36,6 +36,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
   const [insights, setInsights] = useState<InsightsSummary | null>(null);
   const [_loading, setLoading] = useState(true);
   const [simulatorStatus, setSimulatorStatus] = useState<string>('');
+  const [selectedAgent, setSelectedAgent] = useState<'sierra-bot' | 'laila-bilingual' | 'stage9-closer' | 'the-curator'>('sierra-bot');
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'ai'; text: string; time: string }>>([
     {
@@ -335,18 +336,73 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
           </div>
         </div>
 
-        {/* Chat Manager / Laila AI Channel */}
+        {/* Chat Manager & Agent Command Playground */}
         <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>💬</span> {isAr ? 'مدير المحادثات · قناة المساعد الذكي' : 'Chat Manager · AI Agent Channel'}
+              <span>💬</span> {isAr ? 'غرفة عمليات الأسطول · التوجيه المباشر' : 'Fleet Command Playground'}
             </h3>
-            <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-bold">
-              ● Live Proxy
-            </span>
+            
+            {/* Target Agent Selector */}
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setSelectedAgent('sierra-bot')}
+                className={`px-2 py-0.5 rounded font-medium transition-all ${
+                  selectedAgent === 'sierra-bot' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Sierra Bot
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedAgent('laila-bilingual')}
+                className={`px-2 py-0.5 rounded font-medium transition-all ${
+                  selectedAgent === 'laila-bilingual' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Leila (AR)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedAgent('stage9-closer')}
+                className={`px-2 py-0.5 rounded font-medium transition-all ${
+                  selectedAgent === 'stage9-closer' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Closer
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedAgent('the-curator')}
+                className={`px-2 py-0.5 rounded font-medium transition-all ${
+                  selectedAgent === 'the-curator' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Curator
+              </button>
+            </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 h-44 overflow-y-auto space-y-2 text-xs">
+          {/* Quick Prompt Chips */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[
+              { label: isAr ? '🔥 العقارات الأقل من القيمة العادلة' : '🔥 Top Underpriced Assets', query: 'Show top 3 undervalued properties in New Cairo with highest cap rates.' },
+              { label: isAr ? '📝 مسودة واتساب لمشتري فيلا' : '📝 Draft VIP Buyer Follow-up', query: 'Draft a bilingual WhatsApp message for Villa buyer in Mountain View iCity.' },
+              { label: isAr ? '📊 حساب العائد الاستثماري لـ 15 مليون' : '📊 15M EGP AVM Analysis', query: 'Evaluate purchase price 15,000,000 EGP with 80,000 EGP/mo rent in Hyde Park.' },
+            ].map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setChatInput(chip.query)}
+                className="px-2 py-1 rounded bg-slate-950/70 hover:bg-slate-800 border border-slate-800 text-[10px] text-slate-300 transition-colors"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 h-40 overflow-y-auto space-y-2 text-xs">
             {chatMessages.map((msg, i) => (
               <div
                 key={i}
@@ -362,7 +418,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
             ))}
             {chatLoading && (
               <div className="text-xs text-cyan-400 animate-pulse font-mono">
-                AI Agent is reasoning over inventory...
+                {selectedAgent.toUpperCase()} is executing neural evaluation...
               </div>
             )}
           </div>
@@ -373,7 +429,11 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-              placeholder={isAr ? 'اسأل عن وحدات ميفيدا، هايد بارك، أو التقييمات...' : 'Inquire about Mivida, Hyde Park, or AVM yields...'}
+              placeholder={
+                isAr
+                  ? `أرسل أمراً إلى ${selectedAgent}...`
+                  : `Dispatch prompt to ${selectedAgent}...`
+              }
               className="flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans"
             />
             <button

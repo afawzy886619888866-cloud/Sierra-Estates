@@ -39,7 +39,7 @@ function useLiveUnitCounts(): Record<string, number> {
         }
         setCounts(next);
       })
-      .catch(() => {});
+      .catch((err) => console.warn('[LiveMap] Listings fetch failed:', err));
     return () => {
       cancelled = true;
     };

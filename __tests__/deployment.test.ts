@@ -121,8 +121,8 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
     it('fails deployments visibly when deployment credentials are absent', () => {
       const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf8');
       expect(deployWf).toContain('::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required');
-      expect(deployWf).toContain('Validate deployment prerequisites');
-      expect(deployWf).toContain('Production deployment blocked. Missing GitHub secrets');
+      expect(deployWf).toContain('VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository');
+      expect(deployWf).toContain('exit 1');
     });
   });
 

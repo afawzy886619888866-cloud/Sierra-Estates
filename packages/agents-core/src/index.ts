@@ -14,4 +14,5 @@ export * from './fx-gold-engine';
 export * from './contract-engine';
 export * from './arbitrage-scanner';
 export * from './vip-concierge';
+export * from './notebookllm-engine';
 

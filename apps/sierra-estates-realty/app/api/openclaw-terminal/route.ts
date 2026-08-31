@@ -16,7 +16,12 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAppCheck } from "@/lib/server/app-check";
+import { applyRateLimit, publicEndpointLimiter } from "@/lib/server/rate-limit";
+
+/** Longest prompt we will forward to the LLM provider. */
+const MAX_PROMPT_CHARS = 4000;
 
 /* ── Sierra-specific system prompt ──────────────────────────────────────── */
 
@@ -115,15 +120,34 @@ async function callLLM(prompt: string): Promise<{ reply: string; diff?: string }
 
 /* ── Route handler ───────────────────────────────────────────────────────── */
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // 1. Verify App Check Attestation (same gate as /api/openclaw) — without it
+  //    any anonymous caller can spend the LLM budget on this endpoint.
+  const { isValid, errorResponse } = await verifyAppCheck(request);
+  if (!isValid) {
+    return errorResponse;
+  }
+
+  // 2. Rate limit per IP on top of attestation.
+  const rateLimitResponse = await applyRateLimit(request, publicEndpointLimiter);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json() as { prompt?: string };
 
-    if (!body.prompt?.trim()) {
+    const prompt = body.prompt?.trim();
+    if (!prompt) {
       return NextResponse.json({ error: "prompt is required" }, { status: 400 });
     }
 
-    const result = await callLLM(body.prompt.trim());
+    if (prompt.length > MAX_PROMPT_CHARS) {
+      return NextResponse.json(
+        { error: `prompt exceeds ${MAX_PROMPT_CHARS} characters` },
+        { status: 400 }
+      );
+    }
+
+    const result = await callLLM(prompt);
     return NextResponse.json(result);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal server error";
