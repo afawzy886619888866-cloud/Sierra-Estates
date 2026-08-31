@@ -339,6 +339,7 @@ try {
 | **Video** | `fluent-ffmpeg` + Whisper  | Audio extraction → Transcription (mp4, etc) |
 
 **Audio/Video Notes:**
+
 - **File size limit**: 25MB (Whisper API limit)
 - **Cost**: ~$0.006 per minute of audio
 - **Supported audio formats**: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg

@@ -40,6 +40,7 @@ export default function SiteFooter() {
             <Link href="/properties">{t('fRent')}</Link>
             <Link href="/properties">{t('fNew')}</Link>
             <Link href="/compounds">{t('fCpds')}</Link>
+            <Link href="/notebookllm" style={{ color: '#d4af37', fontWeight: 600 }}>🎙️ NotebookLM Studio</Link>
             <Link href="#">{t('fAgent')}</Link>
           </div>
 

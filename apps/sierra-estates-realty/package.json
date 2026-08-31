@@ -37,6 +37,7 @@
         "@react-three/drei": "^10.7.7",
         "@react-three/fiber": "^9.6.1",
         "@sierra-estates/agents": "workspace:*",
+        "@sierra-estates/agents-core": "workspace:*",
         "@sierra-estates/db": "workspace:*",
         "@sierra-estates/memory-engine": "workspace:*",
         "@sierra-estates/obsidian": "workspace:*",

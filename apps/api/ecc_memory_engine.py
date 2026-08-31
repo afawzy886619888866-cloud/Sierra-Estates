@@ -5,7 +5,6 @@ Episodic Context Cache (ECC) Memory Engine (Python).
 Provides 3-tier episodic and semantic entity graph memory for agents.
 """
 
-import json
 import time
 from typing import Dict, Any, List, Optional
 
@@ -17,13 +16,17 @@ HOT_DEAL_THRESHOLD_PCT = 8.0
 
 
 class EpisodicContextCache:
+    """Episodic Context Cache and entity graph tracker for real estate agents."""
+
     def __init__(self, storage_path: Optional[str] = None):
+        """Initialize working memory, episodic journal, and entity graph."""
         self.working_memory: Dict[str, Dict[str, Any]] = {}
         self.episodic_journal: List[Dict[str, Any]] = []
         self.entity_graph: Dict[str, Dict[str, Any]] = {}
         self.storage_path = storage_path or "obsidian-store.json"
 
     def record_episode(self, episode: Dict[str, Any]) -> Dict[str, Any]:
+        """Record an episode in journal and update the associated entity."""
         full_episode = {
             "id": episode.get("id", f"ep-{int(time.time()*1000)}"),
             "timestamp": episode.get("timestamp", time.strftime("%Y-%m-%dT%H:%M:%SZ")),
@@ -37,16 +40,27 @@ class EpisodicContextCache:
         self._update_entity(full_episode)
         return full_episode
 
-    def track_price_reduction(self, sierra_code: str, old_price: float, new_price: float, source: str = "WhatsApp Drop") -> Dict[str, Any]:
+    def track_price_reduction(
+        self,
+        sierra_code: str,
+        old_price: float,
+        new_price: float,
+        source: str = "WhatsApp Drop",
+    ) -> Dict[str, Any]:
+        """Track price reduction for an asset and flag hot deals."""
         drop_amount = old_price - new_price
         drop_pct = round((drop_amount / old_price) * 100, 1) if old_price else 0.0
         is_hot = drop_pct >= HOT_DEAL_THRESHOLD_PCT
 
+        summary_text = (
+            f"Price drop of {drop_pct}% from {old_price:,} "
+            f"to {new_price:,} EGP ({source})"
+        )
         episode = self.record_episode({
             "type": "price_drop",
             "entityId": sierra_code,
             "actor": "Direct Owner",
-            "summary": f"Price drop of {drop_pct}% from {old_price:,} to {new_price:,} EGP ({source})",
+            "summary": summary_text,
             "data": {
                 "sierraCode": sierra_code,
                 "oldPrice": old_price,

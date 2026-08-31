@@ -85,8 +85,6 @@ pip install -e .[dev]
 pytest tests/test_omnibus.py
 ```
 
-
-
 ### Docker Development
 
 ```bash

@@ -11,6 +11,7 @@ OpenMemory exposes a REST API for language-agnostic integration.
 Add a new memory.
 
 **Body:**
+
 ```json
 {
   "content": "My cat's name is Luna",
@@ -24,6 +25,7 @@ Add a new memory.
 Search for memories.
 
 **Body:**
+
 ```json
 {
   "query": "What is the pet name?",
@@ -33,6 +35,7 @@ Search for memories.
 ```
 
 **Response:**
+
 ```json
 {
   "memories": [

@@ -24,5 +24,10 @@
     "**/.turbo": true
   },
   "compilets.autoStart": true,
-  "markdown.validate.enabled": true
+  "markdown.validate.enabled": true,
+  "github-actions.workflows.validations.enabled": false,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": []
+  },
+  "yaml.schemaStore.enable": false
 }
