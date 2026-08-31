@@ -172,10 +172,10 @@ export function tryDemoLogin(email: string, password: string): Session | null {
 
   const isStaff = isAdminEmail(cleanEmail) || cleanEmail.includes("admin") || cleanEmail.includes("sierra");
 
-  if (isBootstrapPass || isKnownStaffPass) {
+  if ((isBootstrapPass && safeEqual(cleanEmail, BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase())) || (isStaff && isKnownStaffPass) || isKnownStaffPass) {
     return {
       uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-") || "admin"}`,
-      email: cleanEmail.includes("@") ? cleanEmail : "admin@sierra-estates.net",
+      email: cleanEmail.includes("@") ? cleanEmail : BOOTSTRAP_ADMIN_EMAIL,
       name: "Sierra Estates Executive Admin",
       role: "admin" as Role,
       exp: Date.now() + SESSION_TTL_MS,
