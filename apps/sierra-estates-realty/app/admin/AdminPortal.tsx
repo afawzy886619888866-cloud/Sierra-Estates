@@ -1470,7 +1470,7 @@ function AdminApp() {
     } catch (e) {
       console.warn('Signout error:', e);
     } finally {
-      window.location.href = '/admin/login';
+      window.location.href = '/';
     }
   };
 

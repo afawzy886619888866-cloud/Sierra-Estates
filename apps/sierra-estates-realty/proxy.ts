@@ -37,23 +37,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(destination, 307);
   }
 
-  // 0c) Admin route protection
+  // 0c) Direct Admin Portal access (Login wall removed)
   if (targetPath.startsWith('/admin')) {
-    // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
-      return isRewritten
-        ? NextResponse.rewrite(new URL('/admin/login', request.url))
-        : NextResponse.next();
-    }
-
-    // Guard all other /admin routes with RBAC session token
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-    const session = await verifySession(token);
-
-    if (!session) {
-      const loginUrl = new URL('/admin/login', request.url);
-      loginUrl.searchParams.set('redirect', targetPath);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
 
     return isRewritten
