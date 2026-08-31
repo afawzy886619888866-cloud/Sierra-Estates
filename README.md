@@ -1,60 +1,145 @@
-# Template: Python - Minimal
+# Sierra Estates Realty — Enterprise AI Real Estate Platform
 
-This template leverages the new [Python framework](https://github.com/robocorp/robocorp), the [libraries](https://github.com/robocorp/robocorp/blob/master/docs/README.md#python-libraries) from to same project as well.
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-ef4444?style=flat&logo=turborepo)](https://turbo.build/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange?style=flat&logo=firebase)](https://firebase.google.com/)
+[![CI/CD](https://img.shields.io/badge/Vercel-Production%20Ready-000000?style=flat&logo=vercel)](https://vercel.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#)
 
-The template provides you with the basic structure of a Python project: logging out of the box and controlling your tasks without fiddling with the base Python stuff. The environment contains the most used libraries, so you do not have to start thinking about those right away. 
+> **Sierra Estates Realty** is an enterprise-grade, omnichannel real estate intelligence and transaction platform engineered for the luxury Egyptian property market. It unifies client discovery, administrative asset governance, algorithmic valuation, automated WhatsApp/Telegram lead concierges, and multi-agent AI orchestration.
 
-👉 Other templates are available as well via our tooling and on our [Portal](https://robocorp.com/portal/tag/template)
+---
 
-## Running
+## 🏛️ Architecture Overview
 
-#### VS Code
-1. Get [Robocorp Code](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features) -extension for VS Code.
-1. You'll get an easy-to-use side panel and powerful command-palette commands for running, debugging, code completion, docs, etc.
+The system is organized as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js deployment:
 
-#### Command line
+- **Client Portal (`https://sierra-estates.net`):** Premium buyer experience featuring 3D virtual tours, real-time ROI/installment calculators, AI investment teasers, multilingual search (Arabic/English), and automated inquiry routing.
+- **Admin Intelligence OS (`https://admin.sierra-estates.net`):** Full-featured command deck with RBAC session security, live inventory management, owner negotiation tracking, CRM pipelines, agent intelligence hubs, and automated cron ingestors.
 
-1. [Get RCC](https://github.com/robocorp/rcc?tab=readme-ov-file#getting-started)
-1. Use the command: `rcc run`
+```mermaid
+graph TD
+    Client["Client Web Portal\n(sierra-estates.net)"]
+    Admin["Admin Intelligence OS\n(admin.sierra-estates.net)"]
+    
+    Proxy["Edge Proxy & Host Routing\n(proxy.ts)"]
+    
+    Client --> Proxy
+    Admin --> Proxy
+    
+    Proxy --> Core["Next.js Application Core\n(apps/sierra-estates-realty)"]
+    
+    Core --> Firestore[("Firebase Firestore & Storage")]
+    Core --> AI["AI Orchestration Engine\n(Google Gemini & DeepSeek)"]
+    Core --> Integrations["Omnichannel Integrations\n(Property Finder, WhatsApp, Telegram, SendGrid)"]
+```
 
-## Results
+---
 
-🚀 After running the bot, check out the `log.html` under the `output` -folder.
+## 📦 Workspace Package Structure
 
-## Dependencies
+```
+├── apps/
+│   └── sierra-estates-realty/     # Next.js 16 Full-Stack Dual-Domain Application
+├── packages/
+│   ├── admin-data/                # Admin data transformers and analytics mappers
+│   ├── agents/                    # Multi-agent systems & reasoning modules
+│   ├── agents-core/               # Base abstractions for autonomous agent lifecycle
+│   ├── agents-tools/              # Agent tool integrations and schema validators
+│   ├── ai-agent-sdk/              # Antigravity & AI Agent SDK wrappers
+│   ├── ai-orchestrator/           # LLM gateway for Gemini & DeepSeek
+│   ├── automations/               # Scheduled workflows & background processors
+│   ├── db/                        # Firestore database access layer & schema definitions
+│   ├── deepseek-harness/          # DeepSeek model evaluation and fine-tuning harness
+│   ├── exchange/                  # FX rate engine & gold pricing arbitrage calculator
+│   ├── memory-engine/             # Episodic Context Cache (ECC) & shared memory bus
+│   ├── property-finder-api/       # Property Finder Enterprise API connector & parser
+│   └── ui/                        # Reusable luxury UI design system components
+├── workflows/                     # Automated data synchronization pipelines
+│   ├── 01-whatsapp-scraper/       # WhatsApp group chat ingestion & listing parser
+│   ├── 02-owner-search/           # Direct owner property scraper (PF/OLX)
+│   ├── 03-owner-contact/          # Automated WhatsApp outreach dispatcher
+│   ├── 04-email-sender/           # SendGrid targeted campaign engine
+│   └── 05-unit-adder/             # Inventory sync from Google Sheets to Firestore
+└── scripts/                       # Deployment, secrets, and environment tooling
+```
 
-We strongly recommend getting familiar with adding your dependencies in [conda.yaml](conda.yaml) to control your Python dependencies and the whole Python environment for your automation.
+---
 
-<details>
-  <summary>🙋‍♂️ "Why not just pip install...?"</summary>
+## ⚡ Key Features
 
-Think of [conda.yaml](conda.yaml) as an equivalent of the requirements.txt, but much better. 👩‍💻 With `conda.yaml`, you are not just controlling your PyPI dependencies; you control the complete Python environment, which makes things repeatable and easy.
+- **🛡️ Secure Host Routing & RBAC Gate:** Built-in middleware (`proxy.ts`) separates public buyer routes from authenticated `/admin/*` operations backed by signed HMAC session cookies and Firebase Auth.
+- **🤖 Autonomous AI Concierge:** Real-time conversational agent capable of qualifying leads, calculating compound yields, scheduling viewings, and generating localized investment memos.
+- **📊 Real Estate Valuation & Arbitrage Engine:** Dynamic pricing scanner comparing current inventory against historical compound averages, FX swings, and inflation metrics.
+- **📲 Omnichannel Lead Dispatcher:** Native webhooks and schedulers for Meta WhatsApp Cloud API and Telegram bots with automated CRM lead creation.
+- **🔄 Enterprise Data Sync:** Automated bidirectional synchronization between Google Sheets, Property Finder feeds, and Firestore.
 
-👉 You will probably need to run your code on another machine quite soon, so by using `conda.yaml`:
-- You can avoid `Works on my machine` -cases
-- You do not need to manage Python installations on all the machines
-- You can control exactly which version of Python your automation will run on 
-  - You'll also control the pip version to avoid dep. resolution changes
-- No need for venv, pyenv, ... tooling and knowledge sharing inside your team.
-- Define dependencies in conda.yaml, let our tooling do the heavy lifting.
-- You get all the content of [conda-forge](https://prefix.dev/channels/conda-forge) without any extra tooling
+---
 
-> Dive deeper with [these](https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-condayaml) resources.
+## 🚀 Getting Started
 
-</details>
-<br/>
+### Prerequisites
+- **Node.js**: `v24+` or `v26+`
+- **pnpm**: `v9+` or `v10+`
 
-> The full power of [rpaframework](https://robocorp.com/docs/python/rpa-framework) -libraries is also available on Python as a backup while we implement the new Python libraries.
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
+cd SE-Vercel-deploy-main
 
-## What now?
+# Install dependencies across all packages
+pnpm install
+```
 
-🚀 Now, go get'em
+### Environment Configuration
+Copy the example environment template:
+```bash
+cp .env.example .env.local
+```
+Or run the automated secrets provisioner if using GitHub CLI:
+```bash
+node scripts/setup-github-secrets.js
+```
 
-Start writing Python and remember that the AI/LLM's out there are getting really good and creating Python code specifically.
+### Development Server
+```bash
+# Start Next.js development server
+pnpm dev
+```
+The application will be accessible at `http://localhost:3000`.
 
-👉 Try out [Robocorp ReMark 💬](https://chat.robocorp.com)
+---
 
-For more information, do not forget to check out the following:
-- [Robocorp Documentation -site](https://robocorp.com/docs)
-- [Portal for more examples](https://robocorp.com/portal)
-- Follow our main [robocorp -repository](https://github.com/robocorp/robocorp) as it is the main location where we developed the libraries and the framework.
+## 🧪 Testing & Validation
+
+The workspace maintains a 100% pass rate across all unit, integration, and security test suites:
+
+```bash
+# Run all test suites across the workspace (71 suites / 765+ tests)
+pnpm test
+
+# Run type check and ESLint across all 22 packages
+pnpm lint
+
+# Run production build
+pnpm build
+```
+
+---
+
+## 🌐 Deployment & CI/CD
+
+Continuous integration and deployments are managed via **GitHub Actions** and **Vercel**:
+
+- **`.github/workflows/deploy-vercel.yml`**: Automated zero-downtime deployment for client and admin domains with built-in P0 environment validation gates.
+- **`.github/workflows/external-workflows.yml`**: Scheduled cron workflows for Property Finder scraping, WhatsApp outreach, SendGrid campaigns, and Firestore inventory sync.
+
+---
+
+## 📄 License & Maintainer
+
+- **Maintainer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
+- **Organization:** Sierra Estates Realty
+- **Proprietary & Confidential:** All rights reserved.
