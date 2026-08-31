@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Float, OrbitControls, useTexture, Html, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import Image from 'next/image';
-import { Eye, Layers, Compass, Maximize2, Minimize2, Sparkles, Sun, Moon, MapPin, ZoomIn, CheckCircle2 } from 'lucide-react';
+import { Layers, Compass, Maximize2, Minimize2, Sparkles, Sun, Moon, MapPin, CheckCircle2 } from 'lucide-react';
 
 const SATELLITE_UNDERLAY = '/cairo-plaza/site-satellite.jpg';
 const PANORAMA_TEXTURE = '/cairo-plaza/real-site-panorama.jpg';

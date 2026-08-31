@@ -1,14 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Link from 'next/link';
 import {
-  Send, Mail, Phone, Briefcase, Clock, MapPin, ArrowRight,
-  Users, Rocket, Heart, Shield, ChevronDown,
-  CheckCircle, Star, GraduationCap, Coffee,
-  Laptop, Palmtree, Dumbbell, HeartPulse, Sparkles,
-  TrendingUp, Award, DollarSign, Building, FileCheck,
-  CheckCircle2, MessageSquare, HelpCircle,
+  Send, Mail, Phone, Briefcase, Clock, MapPin, ArrowRight, Rocket, ChevronDown,
+  CheckCircle, GraduationCap, Coffee, Palmtree, HeartPulse, Sparkles, Award, DollarSign, Building,
+  CheckCircle2, MessageSquare,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';

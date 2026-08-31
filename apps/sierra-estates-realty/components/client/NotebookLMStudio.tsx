@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BookOpen,
   Headphones,
@@ -8,19 +8,12 @@ import {
   Send,
   FileText,
   Layers,
-  Volume2,
-  VolumeX,
   Play,
   Pause,
-  CheckCircle,
   ExternalLink,
   ShieldCheck,
-  Building,
   DollarSign,
   TrendingUp,
-  Radio,
-  FileCode,
-  ArrowRight,
   RefreshCw,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
