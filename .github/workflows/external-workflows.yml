@@ -94,9 +94,9 @@ jobs:
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-search
         env:
-          PROPERTY_FINDER_API_BASE: ${{ vars['PROPERTY_FINDER_API_BASE'] || secrets['PROPERTY_FINDER_API_BASE'] || 'https://api.propertyfinder.com.eg/v3' }}
+          PROPERTY_FINDER_API_BASE: ${{ vars['PROPERTY_FINDER_API_BASE'] || 'https://api.propertyfinder.com.eg/v3' }}
           PROPERTY_FINDER_JWT_TOKEN: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
-          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] || secrets['BROKER_INBOX_SHEET_ID'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
