@@ -26,6 +26,7 @@ import {
   ReportsView,
   ExcelMergerView,
   RealEstateProcessorView,
+  ContractsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -1442,6 +1443,7 @@ function AdminApp() {
       case 'security':return <SecurityView lang={langKey}/>;
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsView lang={langKey}/>;
+      case 'contracts':return <ContractsView />;
       case 'intelligence':return <AgentIntelligence />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
