@@ -1,3 +1,21 @@
+/**
+ * Escapes text for Telegram's HTML parse mode.
+ *
+ * Every sendMessage here uses parse_mode: 'HTML', so any untrusted value
+ * interpolated into a message body (a lead's name, a free-text enquiry) can
+ * otherwise inject markup — or break the send outright, since Telegram rejects
+ * malformed HTML. Telegram only needs these three escaped.
+ *
+ * Escape the VALUES, never the template: escaping the whole message would strip
+ * the <b>/<i> tags the templates rely on.
+ */
+export function escapeTelegramHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 export async function sendTelegramMessage(message: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

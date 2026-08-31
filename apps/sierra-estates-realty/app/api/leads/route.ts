@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/server/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { COLLECTIONS } from '@/lib/models/schema';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { leadCreateSchema, parseRequestBody, isParseFailure } from '@/lib/server/schemas';
@@ -50,12 +50,12 @@ export async function POST(req: Request) {
     // 2. Send Telegram Notification
     const text = `
 <b>🚀 New Lead - Sierra Estates Realty</b>
-<b>Name:</b> ${name}
-<b>Email:</b> ${email || 'n/a'}
-<b>Phone:</b> ${phone || 'n/a'}
+<b>Name:</b> ${escapeTelegramHtml(name)}
+<b>Email:</b> ${escapeTelegramHtml(email || 'n/a')}
+<b>Phone:</b> ${escapeTelegramHtml(phone || 'n/a')}
 <b>Interest:</b> General Inquiry
-<b>Message:</b> ${message || 'n/a'}
-<b>Locale:</b> ${locale || 'n/a'}
+<b>Message:</b> ${escapeTelegramHtml(message || 'n/a')}
+<b>Locale:</b> ${escapeTelegramHtml(locale || 'n/a')}
     `.trim();
 
     await sendTelegramMessage(text);
