@@ -1,10 +1,99 @@
 import { AgentOrchestrator, TaskResult } from './orchestrator';
+import { sharedMemory } from '@sierra-estates/memory-engine';
 
 export class AgentWorkflows {
   private orchestrator: AgentOrchestrator;
 
   constructor(orchestrator: AgentOrchestrator) {
     this.orchestrator = orchestrator;
+  }
+
+  /**
+   * 🤖 5-Agent WhatsApp Lead & Deal Pipeline
+   * Pipeline Flow: Liela (Triage) ➔ Sierra (Valuation & Matching) ➔ OpenClaw (Inventory & Ops) ➔ Hermes (Main Closer Communication) ➔ Closer (Stage 9 Contract & Closing)
+   * All 5 agents read/write to SharedMemoryBus.
+   */
+  async runWhatsApp5AgentPipeline(
+    inboundMessage: string,
+    senderPhone: string,
+    metadata: Record<string, any> = {}
+  ): Promise<{
+    pipelineResults: TaskResult[];
+    finalClientMessage: string;
+    dealSummary: any;
+  }> {
+    const cleanPhone = senderPhone.replace(/[^0-9+]/g, '');
+
+    // Log Inbound Event to Shared Memory Bus
+    await sharedMemory.write(
+      `lead:${cleanPhone}:inbound`,
+      {
+        message: inboundMessage,
+        sender: cleanPhone,
+        metadata,
+        receivedAt: new Date().toISOString(),
+      },
+      { author: 'system', tags: ['inbound', 'whatsapp', cleanPhone] }
+    );
+
+    const pipelineResults = await this.orchestrator.orchestratePipeline(
+      `WhatsApp 5-Agent Pipeline for ${cleanPhone}`,
+      [
+        // 1. LIELA: Intent Detection, Triage & Qualification
+        {
+          agentName: 'liela',
+          taskDescription: `Analyze inbound WhatsApp message from ${cleanPhone}: "${inboundMessage}". Extract buyer intent, budget, preferred compounds (e.g. Mivida, Hyde Park, Cairo Plaza), unit category, and urgency level.`,
+        },
+        // 2. SIERRA: Property Search, Valuation & Price Benchmarking
+        {
+          agentName: 'sierra',
+          taskDescription: `Using the intent parsed by Liela, query Sierra Estates Master Inventory (9,000+ units) and AVM pricing models. Identify the top 2-3 matching resale and primary investment options with price-per-meter and expected yields.`,
+        },
+        // 3. OPENCLAW: Operational Data Retrieval & Inventory Verification
+        {
+          agentName: 'openclaw',
+          taskDescription: `Verify live availability, developer payment plans, and owner direct/broker channel validity for the units matched by Sierra. Flag any immediate viewing opportunities or price reductions.`,
+        },
+        // 4. HERMES (MAIN): Natural Egyptian Arabic Closer Communication
+        {
+          agentName: 'hermes',
+          taskDescription: `Synthesize findings from Liela, Sierra, and OpenClaw. Craft the final, high-converting customer-facing WhatsApp reply in polished Egyptian Arabic (اللهجة المصرية الراقية) or English (matching client language). Qualify the next step toward a private viewing or advisor call.`,
+        },
+        // 5. CLOSER AGENT (STAGE 9): Deal Follow-up & Contract Staging
+        {
+          agentName: 'closer',
+          taskDescription: `Structure the deal file for ${cleanPhone}. Formulate payment schedule scenarios (downpayment, installments, cash discount) and stage viewing appointment milestones for the assigned broker desk.`,
+        },
+      ],
+      `Client Phone: ${cleanPhone} | Channel: WhatsApp Meta/Direct | Initial Query: "${inboundMessage}"`
+    );
+
+    // Extract Hermes output as the customer-facing message
+    const hermesResult = pipelineResults.find((r) => r.agentName === 'hermes' && r.status === 'success');
+    const finalClientMessage = hermesResult?.output || 'أهلاً بك في سييرا العقارية، جاري تجهيز أفضل الخيارات المتاحة لك من فريقنا الاستشاري.';
+
+    // Extract Closer output
+    const closerResult = pipelineResults.find((r) => r.agentName === 'closer' && r.status === 'success');
+    const dealSummary = closerResult?.output || 'Deal file initiated.';
+
+    // Record Pipeline Completion to Shared Memory Bus
+    await sharedMemory.write(
+      `lead:${cleanPhone}:pipeline_state`,
+      {
+        phone: cleanPhone,
+        finalMessage: finalClientMessage,
+        dealState: dealSummary,
+        completedAt: new Date().toISOString(),
+        stagesCompleted: pipelineResults.map((r) => ({ agent: r.agentName, status: r.status })),
+      },
+      { author: 'hermes', tags: ['pipeline_complete', 'whatsapp', cleanPhone] }
+    );
+
+    return {
+      pipelineResults,
+      finalClientMessage,
+      dealSummary,
+    };
   }
 
   /**
@@ -72,7 +161,7 @@ export class AgentWorkflows {
         },
         {
           agentName: 'orchestrator',
-          agentName_fallback: 'orchestrator', // coordinate
+          agentName_fallback: 'orchestrator',
           taskDescription: `Review project architecture, dependencies, and verify alignment.`,
         } as any,
       ],
@@ -145,7 +234,7 @@ export class AgentWorkflows {
   }
 
   /**
-   * Phase 4: Intelligence OS AI Admin & Predictive Analytics Workflow
+   * Intelligence OS AI Admin & Predictive Analytics Workflow
    */
   async runIntelligenceWorkflow(taskDescription: string): Promise<TaskResult[]> {
     return this.orchestrator.orchestratePipeline(
@@ -172,4 +261,3 @@ export class AgentWorkflows {
     );
   }
 }
-

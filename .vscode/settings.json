@@ -12,6 +12,8 @@
   "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.languageServer": "Jedi",
   "python.analysis.typeCheckingMode": "basic",
+  "vscode-edge-devtools.webhint": false,
+  "webhint.enable": false,
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -21,8 +23,11 @@
     "**/Thumbs.db": true,
     "**/.turbo": true
   },
-  "yaml.schemas": {},
-  "yaml.customTags": [],
-  "yaml.validate": false,
-  "compilets.autoStart": true
+  "compilets.autoStart": true,
+  "markdown.validate.enabled": true,
+  "github-actions.workflows.validations.enabled": false,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": []
+  },
+  "yaml.schemaStore.enable": false
 }

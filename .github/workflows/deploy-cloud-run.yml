@@ -35,8 +35,10 @@ jobs:
       # gracefully instead of hard-failing every push that touches apps/api.
       - name: Check for GCP credentials
         id: gcp_check
+        env:
+          GSA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -z "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" ]; then
+          if [ -z "$GSA_JSON" ]; then
             echo "::notice::GOOGLE_SERVICE_ACCOUNT_JSON repo secret is not set — skipping Cloud Run deployment."
             echo "has_creds=false" >> "$GITHUB_OUTPUT"
           else
@@ -81,7 +83,7 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --max-instances 5 \
-            --set-env-vars "LOG_LEVEL=INFO,ALLOWED_ORIGINS=https://sierra-estates.net,https://admin.sierra-estates.net"
+            --set-env-vars "LOG_LEVEL=INFO;ALLOWED_ORIGINS=https://sierra-estates.net,https://admin.sierra-estates.net"
 
       - name: Output service URL
         if: steps.gcp_check.outputs.has_creds == 'true'

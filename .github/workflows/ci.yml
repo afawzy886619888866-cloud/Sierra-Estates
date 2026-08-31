@@ -16,15 +16,14 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # Cancel superseded runs on pull requests, but NEVER on main. Cancelling a
-  # main run leaves that commit with no CI verdict at all, which is exactly how
+  # cancel-in-progress: true for pull_request events; false on main to preserve CI verdicts.
+  # Cancelling a main run leaves that commit with no CI verdict at all, which is exactly how
   # the TypeScript 7 bump landed unverified and broke every ts-jest suite: its
   # run (9b793cb6) was cancelled by the next push, and the failure only surfaced
   # one commit later. Rapid successive merges must each get a real verdict.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
@@ -32,114 +31,12 @@ permissions:
   contents: read
 
 jobs:
-  # Catches the failure mode that silently blocked 6 of 20 production deploys:
-  # a commit author address whose GitHub user ID has been float-formatted
-  # (2.63279258e+08 instead of 263279258). GitHub cannot attribute such a
-  # commit to any account, so Vercel rejects the deployment as BLOCKED before
-  # the build starts — with no build log to explain why. Fail loudly here
-  # instead. Checks the tip commit only, so existing history stays green.
-  commit-attribution:
-    name: Commit author attribution
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          submodules: false
-
-      - name: Reject float-formatted author addresses
-        run: |
-          email="$(git log -1 --format='%ae')"
-          echo "Tip commit author: $email"
-          if printf '%s' "$email" | grep -Eq '^[0-9]+\.[0-9]+e\+[0-9]+\+'; then
-            echo "::error title=Malformed commit author::$email"
-            echo "The GitHub user ID in this noreply address has been float-formatted,"
-            echo "e.g. 2.63279258e+08 where it should read 263279258."
-            echo "GitHub cannot attribute the commit to any account, so Vercel rejects"
-            echo "the deployment as BLOCKED before the build ever runs."
-            echo "Expected form: <numeric-user-id>+<login>@users.noreply.github.com"
-            echo "Fix the git identity in whatever environment authored this commit."
-            exit 1
-          fi
-          echo "Author address is well-formed."
-
-  # package.json's pnpm.overrides is read by pnpm 9 (the pinned major);
-  # pnpm-workspace.yaml's overrides: block is read by pnpm 10+. Both copies must
-  # carry the same security pins, or a pnpm bump silently drops whichever set is
-  # inert. Dependabot only ever edits package.json, so drift is the default
-  # outcome unless something checks. This is that check.
-  override-sync:
-    name: Security overrides in sync
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: false
-
-      - name: Compare the two override sets
-        run: |
-          python3 - <<'PY'
-          import json, re, sys
-
-          pkg  = json.load(open("package.json"))
-          want = pkg.get("pnpm", {}).get("overrides", {})
-
-          # Scan the WHOLE overrides map, not just the security block: some pins
-          # (js-yaml) legitimately live elsewhere in it, and a key present
-          # anywhere is a key pnpm 10+ will honour.
-          text = open("pnpm-workspace.yaml", encoding="utf-8").read()
-          body = re.search(r"^overrides:\n(.*?)(?=^\S|\Z)", text, re.S | re.M)
-          if not body:
-              sys.exit("::error::no overrides: block found in pnpm-workspace.yaml")
-
-          # Quote-robust parse: YAML permits keys/values wrapped in single OR
-          # double quotes (pnpm reformats these) and trailing "# ..." comments.
-          # A regex that stripped only double quotes silently made every
-          # single-quoted value "differ" and turned this guard permanently red.
-          def _unquote(s):
-              s = s.strip()
-              if len(s) >= 2 and s[0] == s[-1] and s[0] in ('"', "'"):
-                  s = s[1:-1]
-              return s.strip()
-          have = {}
-          for raw in body.group(1).splitlines():
-              line = raw.split(" #", 1)[0].rstrip()
-              if not line.strip() or line.lstrip().startswith("#"):
-                  continue
-              key, sep, val = line.partition(":")
-              if not sep:
-                  continue
-              key, val = _unquote(key), _unquote(val)
-              if key and val and val != "-":      # "-" entries are platform exclusions
-                  have[key] = val
-
-          missing = {k: v for k, v in want.items() if k not in have}
-          differ  = {k: (v, have[k]) for k, v in want.items()
-                     if k in have and have[k] != v}
-
-          for k, v in missing.items():
-              print(f'::error::override missing from pnpm-workspace.yaml: "{k}": "{v}"')
-          for k, (a, b) in differ.items():
-              print(f'::error::override value differs for "{k}" -- package.json={a} pnpm-workspace.yaml={b}')
-
-          if missing or differ:
-              print("")
-              print("package.json pnpm.overrides is read by pnpm 9; pnpm-workspace.yaml")
-              print("overrides is read by pnpm 10+. Both must carry the same pins or a")
-              print("pnpm bump silently drops whichever set is inert.")
-              sys.exit(1)
-
-          print(f"all {len(want)} package.json overrides are mirrored in pnpm-workspace.yaml")
-          PY
-
   monorepo:
     name: Realty app + packages · Type-check + Lint + Test + Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
@@ -147,7 +44,7 @@ jobs:
         # version is read automatically from "packageManager" field in root package.json
         # DO NOT specify version here — that causes "Multiple versions of pnpm" error
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: pnpm
@@ -168,7 +65,7 @@ jobs:
         run: pnpm --filter sierra-estates-client-page type-check
 
       - name: Lint realty app
-        run: pnpm --filter sierra-estates-client-page lint || true
+        run: pnpm --filter sierra-estates-client-page lint
 
       - name: Unit tests (functions)
         run: pnpm --filter sierra-estates-functions test

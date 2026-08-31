@@ -2,6 +2,13 @@
 
 import dynamic from 'next/dynamic';
 
+// ssr:false — Next.js was otherwise generating BOTH a static prerendered shell
+// AND a dynamic serverless function for this route despite
+// `export const dynamic = 'force-dynamic'` on the page itself. Rendering
+// client-only avoids the static shell entirely.
+//
+// The loading skeleton below mirrors the real LoginForm layout so the page
+// feels instant while the JS bundle loads — no more blank dark screen.
 const LoginForm = dynamic(() => import('./LoginForm'), {
   ssr: false,
   loading: () => (
@@ -124,4 +131,3 @@ const LoginForm = dynamic(() => import('./LoginForm'), {
 export default function LoginFormShell() {
   return <LoginForm />;
 }
-

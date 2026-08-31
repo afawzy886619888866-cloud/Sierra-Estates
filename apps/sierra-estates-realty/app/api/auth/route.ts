@@ -1,15 +1,14 @@
 /**
  * POST /api/auth
  *   { action: "signin", email, password }  → sets cookie, { ok: true }
- *   { action: "signin", provider: "google", email, token, ... } → sets cookie, { ok: true }
  *   { action: "signout" }                  → clears cookie, { ok: true }
  * GET /api/auth
  *   → { signedIn: boolean, role?, name?, email? }
  *
  * When Firebase Admin is configured, "signin" verifies the Firebase ID
  * token (passed in `token` field) and reads the user's role from
- * Firestore /users/{uid}. When NOT configured or fallback, checks
- * isAdminEmail() and tryDemoLogin().
+ * Firestore /users/{uid}. When NOT configured, falls back to demo admin
+ * (see lib/auth.ts tryDemoLogin).
  */
 import { NextResponse } from "next/server";
 import {
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
 
   if (body.action === "signout") {
     const res = NextResponse.json({ ok: true });
-    res.cookies.set(SESSION_COOKIE, "", { ...cookieOpts(), maxAge: 0 });
+    res.cookies.delete(SESSION_COOKIE);
     return res;
   }
 
@@ -130,7 +129,7 @@ export async function POST(req: Request) {
     const demo = tryDemoLogin(targetEmail, password || "");
     if (!demo) {
       return NextResponse.json(
-        { error: "Invalid credentials. Please verify your email and password or use Google sign in." },
+        { error: "Invalid credentials. Please verify your email and password or use Google Mail sign in." },
         { status: 401 }
       );
     }
@@ -144,4 +143,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 }
-

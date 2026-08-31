@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
-import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
 
 /**
  * Edge proxy (proxy.ts).
@@ -33,16 +33,14 @@ export async function proxy(request: NextRequest) {
     isRewritten = true;
   }
 
-  // 0b) Admin route protection & host split
-  if (targetPath.startsWith('/admin')) {
-    if (adminHost && !onAdminHost && !isLocal) {
-      const url = new URL(request.url);
-      url.hostname = adminHost;
-      url.protocol = 'https:';
-      url.port = '';
-      return NextResponse.redirect(url, 307);
-    }
+  // 0b) Host split: on the client host, redirect /admin requests to the admin host
+  if (!onAdminHost && Boolean(adminHost) && targetPath.startsWith('/admin')) {
+    const destination = new URL(targetPath, `https://${adminHost}`);
+    return NextResponse.redirect(destination, 307);
+  }
 
+  // 0c) Admin route protection
+  if (targetPath.startsWith('/admin')) {
     // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
       return isRewritten
@@ -139,7 +137,7 @@ export async function proxy(request: NextRequest) {
       }
 
       // Fail-closed if secret is configured but header is missing or mismatched
-      if (expectedSecret && secretHeader !== expectedSecret) {
+      if (expectedSecret && !safeEqual(secretHeader || '', expectedSecret)) {
         return new NextResponse(
           JSON.stringify({ error: 'Unauthorized system orchestration request' }),
           {
