@@ -22,7 +22,6 @@ export default function AdminLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let refreshInterval: NodeJS.Timeout | null = null;
     let unsubAuth: (() => void) | null = null;
 
     const verifyAccess = async () => {
@@ -87,7 +86,6 @@ export default function AdminLayout({
     verifyAccess();
 
     return () => {
-      if (refreshInterval) clearInterval(refreshInterval);
       if (unsubAuth) unsubAuth();
     };
   }, [router, isLoginPage]);

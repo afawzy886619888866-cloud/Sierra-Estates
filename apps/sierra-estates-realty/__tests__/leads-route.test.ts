@@ -16,6 +16,10 @@ jest.mock('firebase-admin/firestore', () => ({
 
 jest.mock('@/lib/telegram', () => ({
   sendTelegramMessage: (...args: unknown[]) => sendTelegramMessageMock(...args),
+  // The route escapes user values before interpolating them into the HTML
+  // alert, so the mock has to provide the real helper, not drop it.
+  escapeTelegramHtml: (value: unknown) =>
+    String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
 }));
 
 import { POST } from '@/app/api/leads/route';
