@@ -3,9 +3,9 @@ import '../../site-styles/notebookllm.css';
 import NotebookLMPage from '../../(site)/notebookllm/NotebookLMPage';
 
 export const metadata: Metadata = {
-  title: 'استوديو نوت بوك إل إم العقاري الذكي · Google NotebookLM Studio',
+  title: 'بنك المعلومات العقاري — عقارات ووحدات القاهرة الجديدة | سييرا العقارية',
   description:
-    'استوديو الأبحاث العقارية الموثقة من سييرا العقارية المدعوم بـ Google NotebookLM. إجابات موثقة بالمصادر 100%، توليد بودكاست صوتي ذكي (Audio Overview)، وملخصات تنفيذية للماستر إنفنتوري وكايرو بلازا.',
+    'بنك معلومات عقارات القاهرة الجديدة والتجمع الخامس من سييرا العقارية. مستشار عقاري ذكي، مطابقة أفضل الوحدات والكمبوندات، مقارنة أسعار المتر، خطط السداد، وبودكاست تحليلي موثق 100%.',
   alternates: {
     canonical: 'https://sierra-estates.net/ar/notebookllm',
   },
