@@ -1,6 +1,6 @@
 /**
  * GitHub Secrets & Variables Provisioner
- * Sets all required repository variables and secrets using GitHub CLI (gh)
+ * Comprehensive setup for all workflow dependencies: deploy-vercel.yml & external-workflows.yml
  */
 
 import { execSync } from 'child_process';
@@ -35,6 +35,24 @@ const VARIABLES = {
   PF_COMPANY_ID: 'SB-EG-2024-001',
   OPENMEMORY_URL: 'http://localhost:8080',
   N8N_BASE_URL: 'http://localhost:5678',
+  PROPERTY_FINDER_API_BASE: 'https://api.propertyfinder.com.eg/v3',
+  BROKER_INBOX_SHEET_ID: '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk',
+  INVENTORY_SHEET_ID: '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk',
+  INVENTORY_SHEET_GID: '0',
+  MASTER_SHEET_ID: '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk',
+  SENDGRID_FROM_EMAIL: 'a.fawzy8866@gmail.com',
+  SENDER_EMAIL: 'a.fawzy8866@gmail.com',
+  WHATSAPP_PHONE_NUMBER_ID: '106558292408990',
+  LEAD_NOTIFY_WHATSAPP_NUMBER: '+201000000000',
+  WABA_NUMBER_1: '+201000000001',
+  WABA_NUMBER_2: '+201000000002',
+  WABA_NUMBER_3: '+201000000003',
+  WABA_NUMBER_4: '+201000000004',
+  NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: 'sierra_estates_bot',
+  NEXT_PUBLIC_INTELLIGENCE_OS_URL: 'https://admin.sierra-estates.net',
+  TWILIO_MESSAGING_SERVICE_SID: 'MG1234567890abcdef1234567890abcdef',
+  AI_PROVIDER: 'gemini',
+  WHATSAPP_API_URL: 'https://y2ldihfwkuf742wj7i5pfa3ntu0nscsc.lambda-url.us-east-1.on.aws',
 };
 
 const SECRETS = {
@@ -45,6 +63,7 @@ const SECRETS = {
   ANTIGRAVITY_API_KEY: 'ag-dev-master-key',
   TELEGRAM_BOT_TOKEN: 'REDACTED_TELEGRAM_BOT_TOKEN',
   TELEGRAM_WEBHOOK_SECRET: '741350388e7097a49663bf0a13ffed1409d9e33c2bbd5074754cc30aac8df24b',
+  TELEGRAM_CHAT_ID: '123456789',
   GOOGLE_AI_API_KEY: 'REDACTED_GEMINI_API_KEY',
   GEMINI_API_KEY: 'REDACTED_GEMINI_API_KEY',
   GOOGLE_GENAI_API_KEY: 'REDACTED_GEMINI_API_KEY',
@@ -55,9 +74,20 @@ const SECRETS = {
   PF_JWT_TOKEN: 'REDACTED_PROPERTY_FINDER_JWT_TOKE',
   PROPERTY_FINDER_API_KEY: 'REDACTED_PROPERTY_FINDER_API_KEY',
   PROPERTY_FINDER_API_SECRET: 'REDACTED_PROPERTY_FINDER_API_SECR',
+  PF_WEBHOOK_SECRET: 'pf_webhook_secret_2026_sierra',
   WHATSAPP_API_TOKEN: 'REDACTED_WHATSAPP_API_TOKEN',
   WHATSAPP_META_TOKEN: 'REDACTED_WHATSAPP_API_TOKEN',
   WHATSAPP_VERIFY_TOKEN: 'sierra-verify-webhook-token',
+  AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE',
+  AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+  TWILIO_ACCOUNT_SID: 'AC1234567890abcdef1234567890abcdef',
+  TWILIO_AUTH_TOKEN: 'auth_token_sierra_2026',
+  SENDGRID_API_KEY: 'SG.dev_sierra_estates_key_2026',
+  UPSTASH_REDIS_REST_URL: 'https://sierra-redis-dev.upstash.io',
+  UPSTASH_REDIS_REST_TOKEN: 'upstash_dev_token_2026',
+  N8N_API_KEY: 'n8n_api_key_sierra_2026',
+  FIREBASE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC69X...\\n-----END PRIVATE KEY-----',
+  GOOGLE_SERVICE_ACCOUNT_KEY: '{"type":"service_account","project_id":"sierra-blu","private_key_id":"dev_sa_key_2026","client_email":"a.fawzy8866@gmail.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}',
 };
 
 async function setupGitHubConfig() {
@@ -86,7 +116,7 @@ async function setupGitHubConfig() {
     }
   }
 
-  console.log('\n🎉 Variables and Secrets Provisioning Complete!');
+  console.log('\n🎉 Comprehensive Variables and Secrets Provisioning Complete!');
 }
 
 setupGitHubConfig().catch(console.error);
