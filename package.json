@@ -19,6 +19,7 @@
         "deploy:prod": "vercel --prod",
         "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
         "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
+        "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
         "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
         "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
