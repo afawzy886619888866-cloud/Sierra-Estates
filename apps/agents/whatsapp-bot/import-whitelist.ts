@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { normalizePhone } from './phone';
 
 const whitelistPath = path.resolve(__dirname, 'whitelist.json');
 const targetFile = process.argv[2] || path.resolve(__dirname, '../../../clients.csv');
@@ -7,10 +8,6 @@ const targetFile = process.argv[2] || path.resolve(__dirname, '../../../clients.
 interface WhitelistConfig {
   enabled: boolean;
   numbers: string[];
-}
-
-function normalizePhone(phoneStr: string): string {
-  return phoneStr.replace(/\D/g, '');
 }
 
 function loadWhitelist(): WhitelistConfig {

@@ -1,0 +1,45 @@
+name: 🏢 WhatsApp Group or Inventory Source Ingestion
+description: Request ingestion of a new WhatsApp group, direct owner channel, or master inventory sheet
+title: '[INGEST]: '
+labels: ['inventory', 'openclaw']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Ingest New Property Channels into Sierra Estates Master Inventory
+  - type: input
+    id: channel_name
+    attributes:
+      label: WhatsApp Group or Sheet Name
+      description: Enter the name of the WhatsApp group or inventory spreadsheet.
+      placeholder: 'e.g., Mivida Direct Owners Q4 2026'
+    validations:
+      required: true
+  - type: dropdown
+    id: source_type
+    attributes:
+      label: Source Classification
+      description: Is this channel primarily direct owners or broker network?
+      options:
+        - Direct Owner (owner)
+        - Broker Network (broker)
+        - Master Sheet / Corporate Developer
+    validations:
+      required: true
+  - type: dropdown
+    id: channel_status
+    attributes:
+      label: Channel Status
+      options:
+        - Active
+        - Archived
+    validations:
+      required: true
+  - type: textarea
+    id: sample_listings
+    attributes:
+      label: Sample Listing Text or Link
+      description: Paste 1 or 2 sample listing messages or provide the Google Sheets / Excel URL.
+      placeholder: 'Villa for sale in Hyde Park, 450m2, price 18,500,000 EGP...'
+    validations:
+      required: false

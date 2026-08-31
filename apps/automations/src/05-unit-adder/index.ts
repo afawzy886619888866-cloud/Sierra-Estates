@@ -1,22 +1,11 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getDb } from '../lib/firebase';
 
 /**
  * 05-unit-adder
- * 
+ *
  * Cleans and deduplicates new units into Firestore.
  */
-
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  // Uses GOOGLE_APPLICATION_CREDENTIALS environment variable by default
-  // Or can be configured via service account JSON
-  try {
-    initializeApp();
-  } catch (error) {
-    console.warn('[Unit Adder] Firebase admin could not be initialized automatically. Please set GOOGLE_APPLICATION_CREDENTIALS.');
-  }
-}
 
 function generateSBRCode(compound: string, rooms: number, isFurnished: boolean, price: number, currency: string) {
   // SBR Code Pattern: [CompoundCode]-[Rooms][FurnishingCode]-[PriceCode]
@@ -40,7 +29,7 @@ export async function runUnitAdder(rawUnitData: any) {
   console.log(`[Unit Adder] Processing new unit payload for ${rawUnitData.compound}`);
   
   try {
-    const db = getFirestore();
+    const db = getDb('Unit Adder');
     
     // Hardcoded Rule 1: Currency Threshold
     // Price < 10,000 → USD ($). Price >= 10,000 → EGP.

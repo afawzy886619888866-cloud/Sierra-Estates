@@ -1,7 +1,15 @@
+import logging
 import os
+
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from vertexai.generative_models import GenerativeModel, Part
+
+from tools.executor import execute_tool_call
 from tools.registry import vertex_tools
+
+logger = logging.getLogger("uvicorn.error")
+
+MAX_TOOL_HOPS = 3
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "sierra-estates-core")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
@@ -31,3 +39,46 @@ def get_titan_agent():
         system_instruction=[SYSTEM_INSTRUCTION]
     )
     return model
+
+
+def run_agent_turn(prompt: str, max_tool_hops: int = MAX_TOOL_HOPS):
+    """
+    Sends `prompt` to Titan and, when the model responds with one or more
+    function calls, executes them via tools.executor and feeds the results
+    back for a final natural-language reply.
+
+    Previously api.py called agent.generate_content(prompt) directly and
+    returned whatever came back — including a bare function-call response
+    with no text, since nothing executed the call or continued the turn.
+    """
+    model = get_titan_agent()
+    chat = model.start_chat()
+    response = chat.send_message(prompt)
+
+    hops = 0
+    while hops < max_tool_hops:
+        candidate = response.candidates[0] if response.candidates else None
+        if not candidate or not candidate.content.parts:
+            break
+
+        function_calls = [
+            part.function_call
+            for part in candidate.content.parts
+            if getattr(part, "function_call", None) and part.function_call.name
+        ]
+        if not function_calls:
+            break
+
+        function_response_parts = []
+        for fc in function_calls:
+            args = dict(fc.args) if fc.args else {}
+            logger.info("[Titan] Executing tool call: %s(%s)", fc.name, args)
+            result = execute_tool_call(fc.name, args)
+            function_response_parts.append(
+                Part.from_function_response(name=fc.name, response={"content": result})
+            )
+
+        response = chat.send_message(function_response_parts)
+        hops += 1
+
+    return response

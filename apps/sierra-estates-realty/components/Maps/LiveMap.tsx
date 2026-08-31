@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Marker, MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -15,8 +15,42 @@ type LiveMapProps = {
   onSelectCompound?: (c: CompoundLocation) => void;
 };
 
-function createCompoundIcon(compound: CompoundLocation, isSelected: boolean) {
-  const name = compound.nameEn;
+/**
+ * Live per-compound available-unit counts from /api/inventory, matched
+ * against NEW_CAIRO_COMPOUNDS by location name. Previously compound.unitsCount
+ * was a hardcoded static number in compounds-data.ts that never changed as
+ * inventory came and went.
+ */
+function useLiveUnitCounts(): Record<string, number> {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { units?: Array<{ location?: string; status?: string }> } | null) => {
+        if (cancelled || !data?.units) return;
+        const next: Record<string, number> = {};
+        for (const unit of data.units) {
+          if (unit.status && unit.status !== 'available') continue;
+          const key = (unit.location || '').trim().toLowerCase();
+          if (!key) continue;
+          next[key] = (next[key] || 0) + 1;
+        }
+        setCounts(next);
+      })
+      .catch((err) => console.warn('[LiveMap] Listings fetch failed:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return counts;
+}
+
+function createCompoundIcon(compound: CompoundLocation, isSelected: boolean, liveCount: number | null) {
+  const name = compound.code;
+  const count = liveCount ?? compound.unitsCount;
   return L.divIcon({
     className: '',
     html: `
@@ -47,7 +81,7 @@ function createCompoundIcon(compound: CompoundLocation, isSelected: boolean) {
           border-radius: 10px;
           font-family: monospace;
           font-weight: 700;
-        ">${compound.unitsCount}</span>
+        ">${count}</span>
       </div>
     `,
     iconSize: undefined,
@@ -57,6 +91,7 @@ function createCompoundIcon(compound: CompoundLocation, isSelected: boolean) {
 
 export default function LiveMap({ mode = 'light', selectedCode, onSelectCompound }: LiveMapProps) {
   const isDark = mode === 'dark';
+  const liveCounts = useLiveUnitCounts();
   const tileUrl = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -75,11 +110,12 @@ export default function LiveMap({ mode = 'light', selectedCode, onSelectCompound
       />
       {NEW_CAIRO_COMPOUNDS.map((compound) => {
         const isSelected = selectedCode === compound.code;
+        const liveCount = liveCounts[compound.nameEn.trim().toLowerCase()] ?? null;
         return (
           <Marker
             key={compound.code}
             position={[compound.lat, compound.lng]}
-            icon={createCompoundIcon(compound, isSelected)}
+            icon={createCompoundIcon(compound, isSelected, liveCount)}
             eventHandlers={{
               click: () => onSelectCompound?.(compound),
             }}

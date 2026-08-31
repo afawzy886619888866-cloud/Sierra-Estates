@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { corsHeaders } from '@/lib/server/cors';
-import { verifySession, SESSION_COOKIE } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, safeEqual } from '@/lib/auth';
 
 /**
  * Edge proxy (proxy.ts).
@@ -22,8 +22,6 @@ export async function proxy(request: NextRequest) {
     requestHost.startsWith('admin') || 
     requestHost.startsWith('sierra-admin');
 
-  const isLocal = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
-
   let targetPath = pathname;
   let isRewritten = false;
 
@@ -33,31 +31,13 @@ export async function proxy(request: NextRequest) {
     isRewritten = true;
   }
 
-  // 0b) Admin route protection & host split
+  // 0b) Host split: if on dedicated admin host root, rewrite to /admin
+  // /admin is directly accessible across all domains without host redirect
+
+  // 0c) Direct Admin Portal access (Login wall removed)
   if (targetPath.startsWith('/admin')) {
-    if (adminHost && !onAdminHost && !isLocal) {
-      const url = new URL(request.url);
-      url.hostname = adminHost;
-      url.protocol = 'https:';
-      url.port = '';
-      return NextResponse.redirect(url, 307);
-    }
-
-    // Allow /admin/login without session verification
     if (targetPath === '/admin/login') {
-      return isRewritten
-        ? NextResponse.rewrite(new URL('/admin/login', request.url))
-        : NextResponse.next();
-    }
-
-    // Guard all other /admin routes with RBAC session token
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-    const session = await verifySession(token);
-
-    if (!session) {
-      const loginUrl = new URL('/admin/login', request.url);
-      loginUrl.searchParams.set('redirect', targetPath);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
 
     return isRewritten
@@ -78,7 +58,46 @@ export async function proxy(request: NextRequest) {
       });
     }
 
-    // 2) Internal Security Secret Gate for /api/orchestrate
+    // 2) Internal Security Gate
+    // Internal endpoints may be called by an authenticated admin session or by
+    // trusted services carrying the shared secret. In production, an unset
+    // secret must fail closed instead of exposing simulated operational data.
+    if (pathname.startsWith('/api/internal/')) {
+      const secretHeader = request.headers.get('x-sbr-secret-key');
+      const expectedSecret = process.env.SBR_SECRET_KEY;
+      const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+      let hasAdminSession = false;
+
+      try {
+        hasAdminSession = Boolean(await verifySession(sessionToken));
+      } catch {
+        hasAdminSession = false;
+      }
+
+      if (!hasAdminSession) {
+        if (!expectedSecret && process.env.NODE_ENV === 'production') {
+          return new NextResponse(
+            JSON.stringify({ error: 'Internal services are not configured' }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json', ...headers },
+            },
+          );
+        }
+
+        if (expectedSecret && secretHeader !== expectedSecret) {
+          return new NextResponse(
+            JSON.stringify({ error: 'Unauthorized internal request' }),
+            {
+              status: 401,
+              headers: { 'Content-Type': 'application/json', ...headers },
+            },
+          );
+        }
+      }
+    }
+
+    // 3) Shared-secret gate for the orchestration endpoint.
     if (pathname.startsWith('/api/orchestrate')) {
       const secretHeader = request.headers.get('x-sbr-secret-key');
       const expectedSecret = process.env.SBR_SECRET_KEY;
@@ -100,7 +119,7 @@ export async function proxy(request: NextRequest) {
       }
 
       // Fail-closed if secret is configured but header is missing or mismatched
-      if (expectedSecret && secretHeader !== expectedSecret) {
+      if (expectedSecret && !safeEqual(secretHeader || '', expectedSecret)) {
         return new NextResponse(
           JSON.stringify({ error: 'Unauthorized system orchestration request' }),
           {

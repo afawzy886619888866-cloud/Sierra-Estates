@@ -1,0 +1,55 @@
+name: Nightly Intelligence Fleet Regression
+
+on:
+  schedule:
+    # Offset 1h after harness-eval.yml's identical '0 2 * * *' nightly cron
+    # so the two scheduled runs don't compete for the same runner window.
+    - cron: '0 3 * * *' # 3:00 AM UTC every night
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+
+jobs:
+  nightly-regression:
+    name: Nightly Multi-Agent & Operational Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+
+
+      - name: Run Threshold Checks
+        run: pnpm run check-thresholds
+
+      - name: Run DeepSeek Harness Benchmarks
+        run: pnpm run run-harness
+
+      - name: Run PropertyFinder Sync Simulation
+        run: pnpm run sync-propertyfinder
+
+      - name: Test Pub/Sub Dispatch
+        run: pnpm run publish-recommendation
+
+      - name: Write Nightly Checkpoint Memory
+        run: pnpm run write-memory

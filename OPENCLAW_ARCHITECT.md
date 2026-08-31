@@ -14,7 +14,7 @@ the listings" or "change the hero background to a sunset image"), OpenClaw:
 
 ## How It Works
 
-```
+```text
 You: "Add a contact form in the footer"
          ↓
 OpenClaw reads the codebase

@@ -72,14 +72,46 @@ describe('POST /api/crm/leads', () => {
     expect(body.metrics_score).toBe('10/10');
     expect(body.rep_owner).toBe('CLOSER_VIP_GOLDEN_SQUARE');
 
-    expect(collectionMock).toHaveBeenCalledWith('Leads');
+    // Writes into the same collection every other lead-intake route uses
+    // (COLLECTIONS.stakeholders = 'leads'), not a separate 'Leads' collection
+    // invisible to the admin Leads page.
+    expect(collectionMock).toHaveBeenCalledWith('leads');
     expect(setMock).toHaveBeenCalledTimes(1);
     const written = setMock.mock.calls[0][0];
     expect(written.name).toBe('Jane Doe');
+    expect(written.phone).toBe('+201000000000');
     expect(written.mobile).toBe('+201000000000');
+    expect(written.source).toBe('other');
     expect(written.sierra_ai_score).toBe(10);
     expect(written.pipeline_stage).toBe('VIP_QUALIFIED_CORRIDOR');
     expect(written.assigned_specialist).toBe('CLOSER_VIP_GOLDEN_SQUARE');
+  });
+
+  test('accepts a caller-supplied source for admin-page attribution', async () => {
+    const res = await POST(
+      makeRequest({
+        client_name: 'Jane Doe',
+        client_mobile: '+201000000000',
+        source: 'instagram',
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const written = setMock.mock.calls[0][0];
+    expect(written.source).toBe('instagram');
+  });
+
+  test('falls back to "other" for an unrecognized source', async () => {
+    await POST(
+      makeRequest({
+        client_name: 'Jane Doe',
+        client_mobile: '+201000000000',
+        source: 'carrier-pigeon',
+      }),
+    );
+
+    const written = setMock.mock.calls[0][0];
+    expect(written.source).toBe('other');
   });
 
   test('routes Mokattam/uptown targets to the Mokattam specialist', async () => {

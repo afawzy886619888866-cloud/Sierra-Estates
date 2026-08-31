@@ -1,0 +1,41 @@
+{
+  "sql.defaultDatabaseType": "postgres",
+  "files.associations": {
+    "*.sql": "postgres",
+    "pnpm-lock.yaml": "text",
+    "**/.github/workflows/*.yml": "yaml",
+    "**/.github/workflows/*.yaml": "yaml",
+    "**/.github/workflows/*": "yaml"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "python.languageServer": "Jedi",
+  "python.analysis.typeCheckingMode": "basic",
+  "vscode-edge-devtools.webhint": false,
+  "webhint.enable": false,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.turbo": true
+  },
+  "compilets.autoStart": true,
+  "markdown.validate.enabled": true,
+  "github-actions.workflows.validations.enabled": false,
+  "github-actions.workflows.validations.context.access": "ignore",
+  "github-actions.workflows.validations.undefined.context": "ignore",
+  "github-actions.workflows.validations.expression.validation": "ignore",
+  "github-actions.workflows.validations.schema": false,
+  "yaml.validate": false,
+  "yaml.schemas": {},
+  "yaml.schemaStore.enable": false,
+  "abl.buildMode": 1
+}

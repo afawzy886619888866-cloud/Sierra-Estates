@@ -1,21 +1,26 @@
 name: Cron · WhatsApp dispatch
 
-# Vercel Hobby only allows DAILY crons, so the every-10-minutes WhatsApp queue
-# drain runs from here instead. NOTE: there is no Vercel cron fallback for this
-# path — apps/sierra-estates-realty/vercel.json declares no crons at all, and it
-# is the only vercel.json Vercel reads (see CLAUDE.md → Vercel Setup). This
-# workflow is the sole schedule for the dispatch endpoint. The route itself
-# enforces operating hours (12pm–8pm Africa/Cairo) and per-number quotas, so an
-# out-of-window ping is a cheap no-op.
+# Vercel Hobby only allows DAILY crons, so this workflow drives the WhatsApp
+# queue drain instead. NOTE: there is no Vercel cron fallback for this path —
+# apps/sierra-estates-realty/vercel.json declares no crons at all, and it is
+# the only vercel.json Vercel reads (see CLAUDE.md → Vercel Setup). This
+# workflow is the sole schedule for the dispatch endpoint.
+#
+# Runs once a day at 10:00 Africa/Cairo. GitHub Actions cron is UTC-only and
+# Cairo observes DST (EET UTC+2 in winter, EEST UTC+3 in summer), so 10:00
+# Cairo falls on a different UTC hour depending on the season — both
+# candidate hours are scheduled below. The route's operating-hours guard
+# (DEFAULT_OUTREACH_CONFIG: 10:00-10:59 Africa/Cairo) accepts only whichever
+# one actually lands at 10:00 local and no-ops the other, so exactly one real
+# dispatch happens per day.
 #
 # Required repo secret:
 #   CRON_SECRET — must match the CRON_SECRET env var on the Vercel project.
 
 on:
   schedule:
-    # Every 10 min, 08:00–18:59 UTC — covers the Cairo operating window in
-    # both UTC+2 (winter) and UTC+3 (summer).
-    - cron: '*/10 8-18 * * *'
+    - cron: '0 7 * * *' # 10:00 Cairo during EEST (UTC+3, roughly Apr-Oct)
+    - cron: '0 8 * * *' # 10:00 Cairo during EET (UTC+2, roughly Nov-Mar)
   workflow_dispatch:
 
 concurrency:
@@ -31,8 +36,12 @@ jobs:
     steps:
       - name: Trigger dispatch endpoint
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_SECRET: ${{ secrets['CRON_SECRET'] }}
         run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::CRON_SECRET is not set — skipping WhatsApp dispatch cron."
+            exit 0
+          fi
           code=$(curl -s -o /tmp/body -w '%{http_code}' \
             -H "Authorization: Bearer $CRON_SECRET" \
             "https://sierra-estates.net/api/cron/whatsapp-dispatch")

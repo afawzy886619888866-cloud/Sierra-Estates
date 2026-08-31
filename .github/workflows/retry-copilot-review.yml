@@ -13,6 +13,7 @@ jobs:
       github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' &&
       contains(github.event.review.body, 'unable to review this pull request')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Re-request Copilot review once
@@ -21,7 +22,11 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const pull_number = context.payload.pull_request.number;
+            const pull_number = context.payload.pull_request?.number || context.issue?.number;
+            if (!pull_number) {
+              core.info('No pull request number found in event payload. Skipping.');
+              return;
+            }
             const reviewerLogin = 'copilot-pull-request-reviewer[bot]';
             const failureText = 'unable to review this pull request';
 

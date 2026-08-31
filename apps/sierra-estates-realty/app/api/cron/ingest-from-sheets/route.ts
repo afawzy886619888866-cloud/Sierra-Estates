@@ -200,7 +200,7 @@ export async function GET(req: NextRequest) {
           range: `${SHEET_TAB}!F${rowIndex}`,
           valueInputOption: 'USER_ENTERED',
           requestBody: { values: [['FAILED']] },
-        }).catch(() => {});
+        }).catch((sheetErr) => logger.error(`[CRON:ingest-from-sheets] Failed to mark row ${rowIndex} as FAILED:`, sheetErr));
 
         results.failed++;
       }

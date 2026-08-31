@@ -45,7 +45,7 @@ The Firebase Web API key is intentionally public (part of the client SDK configu
    - Select **"HTTP referrers (web sites)"**
    - Add these origins:
 
-     ```
+     ```text
      https://sierra-estates.net
      https://sierra-estates.net/*
      https://*.sierra-estates.net
@@ -200,7 +200,7 @@ App Check is **not yet enabled** but is recommended for production to prevent ab
 2. **Configure Firestore Rules to require App Check:**
    - In `firestore.rules`, add to protected collections:
 
-     ```
+     ```javascript
      allow read, write: if request.auth != null && request.appCheck.token != null;
      ```
 
@@ -317,7 +317,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
 
 **Set in Vercel:**
 
-```
+```env
 ALLOWED_ORIGINS=https://sierra-estates.net,https://admin.sierra-estates.net
 ```
 

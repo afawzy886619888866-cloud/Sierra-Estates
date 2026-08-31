@@ -13,7 +13,8 @@ jest.mock('firebase-admin/app', () => ({
 jest.mock('firebase-admin/firestore', () => ({
   getFirestore: jest.fn(),
   Timestamp: {
-    now: jest.fn(() => ({ toDate: () => new Date() })),
+    now: jest.fn(() => ({ toDate: () => new Date(), toMillis: () => Date.now() })),
+    fromDate: jest.fn((date: Date) => ({ toDate: () => date, toMillis: () => date.getTime() })),
   },
 }));
 

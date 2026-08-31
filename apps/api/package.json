@@ -4,7 +4,7 @@
   "private": true,
   "description": "Python FastAPI sidecar (PropertyFinder sync + bot integration). Built with Docker / Cloud Run, not part of the pnpm workspace — this manifest exists only to declare it private and document how to run it.",
   "scripts": {
-    "dev": "uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "dev": "node -e \"console.log('[Python API Sidecar] To run FastAPI locally: uvicorn main:app --reload --port 8000')\"",
     "build": "echo \"Skipping Docker build\"",
     "start": "uvicorn main:app --host 0.0.0.0 --port 8000"
   }

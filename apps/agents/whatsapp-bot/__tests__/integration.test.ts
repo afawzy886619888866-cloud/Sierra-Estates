@@ -37,7 +37,15 @@ describe('Integration: Full WhatsApp Message Flow', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    router = new WhatsAppBotRouter('test-api-key')
+    router = new WhatsAppBotRouter(
+      'test-api-key',
+      // Inject a hermetic listings provider so no network call is made during tests.
+      jest.fn().mockResolvedValue({
+        ok: true,
+        count: 2,
+        digest: 'LIVE INVENTORY (2 listings):\n- SE001: Apartment · New Cairo · 3 beds · 140 m² · USD 180,000',
+      })
+    )
 
     // Default: all agent tasks succeed
     mockRunAgentTask.mockImplementation((agentName: string) => {
@@ -100,6 +108,23 @@ describe('Integration: Full WhatsApp Message Flow', () => {
       expect(calledAgents).toContain('hermes')
 
       expect(response).toBeTruthy()
+    })
+
+    it('should inject live listings into the Hermes context for property searches', async () => {
+      const msg: IncomingMessage = {
+        from: '+201088776655@c.us',
+        body: 'عايز شقة في التجمع الخامس',
+        groupName: 'Direct Message',
+        timestamp: Math.floor(Date.now() / 1000),
+      }
+
+      await router.handle(msg)
+
+      // Hermes should have received the properties digest in its context.
+      const hermesCall = mockRunAgentTask.mock.calls.find((c: string[]) => c[0] === 'hermes')
+      expect(hermesCall).toBeTruthy()
+      const hermesContext = String(hermesCall[2] ?? '')
+      expect(hermesContext).toContain('LIVE INVENTORY')
     })
   })
 

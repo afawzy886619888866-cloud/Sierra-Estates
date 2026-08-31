@@ -262,7 +262,7 @@ async function runVertexAgent(listings) {
   console.log('  STAGE 3 — Vertex AI Agent Real Data Analysis');
   console.log('══════════════════════════════════════════════════════');
 
-  const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error('❌ No Gemini/Vertex API key found!');
     console.error('   Add one of these to .env.local:');

@@ -5,11 +5,13 @@ OpenMemory provides a drop-in, SQL-native long-term memory layer for your AI age
 ## Installation
 
 ### Python
+
 ```bash
 pip install openmemory-py
 ```
 
 ### Node.js
+
 ```bash
 npm install openmemory-js
 ```
@@ -53,6 +55,7 @@ main();
 ```
 
 ## Configuration
+
 OpenMemory defaults to `sqlite:///openmemory.db` in the current directory. You can configure this via environment variables:
 
 - `OPENMEMORY_DB_URL`: Database connection string (e.g., `postgresql://...`)

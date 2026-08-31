@@ -10,7 +10,9 @@
           "text-wrap",
           "text-wrap: balance",
           "scrollbar-width",
-          "scrollbar-color"
+          "scrollbar-color",
+          "backdrop-filter",
+          "field-sizing"
         ]
       }
     ],
@@ -29,6 +31,10 @@
     "**/public/client-page/.min/**",
     "**/.min/**",
     "**/client-page/.min/**",
-    "**/deploy/**"
+    "**/deploy/**",
+    "**/.next/**",
+    "**/node_modules/**",
+    "**/out/**",
+    "**/dist/**"
   ]
 }
