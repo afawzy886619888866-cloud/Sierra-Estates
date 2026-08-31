@@ -36,16 +36,32 @@ describe('Admin Login & Google Mail Authentication', () => {
     });
   });
 
+  // The hardcoded staff-password list ("sierra2026", "admin", "password", …)
+  // was removed: it made the email check irrelevant and handed out signed
+  // admin cookies in production. These now exercise the replacement contract —
+  // a single operator-configured password. Full coverage, including the
+  // regression guard on the old passwords, lives in auth-bootstrap-login.test.ts.
   describe('tryDemoLogin with staff credentials', () => {
-    it('authenticates admin@sierra-estates.net with sierra2026', () => {
-      const session = tryDemoLogin('admin@sierra-estates.net', 'sierra2026');
+    const ORIGINAL_BOOTSTRAP_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+
+    beforeEach(() => {
+      process.env.ADMIN_BOOTSTRAP_PASSWORD = 'operator-configured-pass';
+    });
+
+    afterEach(() => {
+      if (ORIGINAL_BOOTSTRAP_PASSWORD === undefined) delete process.env.ADMIN_BOOTSTRAP_PASSWORD;
+      else process.env.ADMIN_BOOTSTRAP_PASSWORD = ORIGINAL_BOOTSTRAP_PASSWORD;
+    });
+
+    it('authenticates admin@sierra-estates.net with the configured password', () => {
+      const session = tryDemoLogin('admin@sierra-estates.net', 'operator-configured-pass');
       expect(session).not.toBeNull();
       expect(session?.role).toBe('admin');
       expect(session?.email).toBe('admin@sierra-estates.net');
     });
 
-    it('authenticates Google Mail admin account with staff password', () => {
-      const session = tryDemoLogin('admin@gmail.com', 'sierra2026');
+    it('authenticates a Google Mail admin account with the configured password', () => {
+      const session = tryDemoLogin('admin@gmail.com', 'operator-configured-pass');
       expect(session).not.toBeNull();
       expect(session?.role).toBe('admin');
     });
@@ -53,6 +69,10 @@ describe('Admin Login & Google Mail Authentication', () => {
     it('rejects invalid password', () => {
       const session = tryDemoLogin('admin@sierra-estates.net', 'wrong-pass');
       expect(session).toBeNull();
+    });
+
+    it('rejects the retired hardcoded staff password', () => {
+      expect(tryDemoLogin('admin@sierra-estates.net', 'sierra2026')).toBeNull();
     });
   });
 
@@ -79,22 +99,29 @@ describe('Admin Login & Google Mail Authentication', () => {
       expect(setCookie).toContain('sierra_sess=');
     });
 
-    it('authenticates standard staff login', async () => {
-      const req = new NextRequest('http://localhost:3000/api/auth', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'signin',
-          email: 'admin@sierra-estates.net',
-          password: 'sierra2026',
-        }),
-      });
+    it('authenticates standard staff login with the configured operator password', async () => {
+      const original = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+      process.env.ADMIN_BOOTSTRAP_PASSWORD = 'operator-configured-pass';
+      try {
+        const req = new NextRequest('http://localhost:3000/api/auth', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            action: 'signin',
+            email: 'admin@sierra-estates.net',
+            password: 'operator-configured-pass',
+          }),
+        });
 
-      const res = await POST(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.ok).toBe(true);
-      expect(data.role).toBe('admin');
+        const res = await POST(req);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.ok).toBe(true);
+        expect(data.role).toBe('admin');
+      } finally {
+        if (original === undefined) delete process.env.ADMIN_BOOTSTRAP_PASSWORD;
+        else process.env.ADMIN_BOOTSTRAP_PASSWORD = original;
+      }
     });
 
     it('rejects unauthenticated requests without credentials', async () => {

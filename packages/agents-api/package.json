@@ -5,6 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "lint": "eslint .",
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "type-check": "tsc --noEmit"
