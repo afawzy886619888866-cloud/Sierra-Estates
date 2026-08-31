@@ -16,7 +16,7 @@ export function HeatmapView() {
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'capRate' | 'priceSqm' | 'appreciation' | 'inventory'>('capRate');
   const [selectedCompound, setSelectedCompound] = useState<CompoundHeatmapMetric | null>(COMPOUNDS_HEATMAP_DATA[0]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [_loading, setLoading] = useState<boolean>(false);
   const [marketStats, setMarketStats] = useState({ avgCapRate: 12.5, avgPricePerSqm: 75850 });
 
   const zones = ['all', 'Golden Square', 'South 90th St', 'Suez Road', '1st Settlement', 'Northern Extension'];
@@ -36,8 +36,8 @@ export function HeatmapView() {
               avgPricePerSqm: data.averagePricePerSqm || 75850,
             });
           }
-          if (data.compounds.length > 0 && !selectedCompound) {
-            setSelectedCompound(data.compounds[0]);
+          if (data.compounds.length > 0) {
+            setSelectedCompound((prev) => prev || data.compounds[0]);
           }
         }
       } catch (err) {
