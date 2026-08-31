@@ -1,3 +1,4 @@
+
 // Authored against Vitest but this directory runs under Jest, so the import
 // threw at load and the whole suite never ran. Jest provides describe/it/expect
 // as globals — the assertions below are unchanged.
