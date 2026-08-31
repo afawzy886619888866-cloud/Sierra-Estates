@@ -17,6 +17,7 @@ export const Ic = {
 
 /* ── SHIELD LOGO ─────────────────────────────────────────────────────── */
 export function ShieldLogo({size=24}: {size?: number}) {
+  // eslint-disable-next-line @next/next/no-img-element
   return <img src="/assets/logo-gold.png" alt="Sierra Estates" width={size} height={size} className="brand-logo" style={{objectFit:'contain',display:'block',flexShrink:0}}/>;
 }
 
