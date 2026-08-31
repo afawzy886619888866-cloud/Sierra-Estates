@@ -47,7 +47,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         if: steps.gcp_check.outputs.has_creds == 'true'
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
 
