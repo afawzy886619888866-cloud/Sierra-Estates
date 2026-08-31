@@ -41,7 +41,16 @@ export default function AdminLayout({
         console.warn('[AdminLayout] Session cookie verification failed:', err);
       }
 
-      // 2. Check Firebase client auth if configured
+      // 2. Check client-side storage session fallback
+      try {
+        if (typeof window !== 'undefined' && (sessionStorage.getItem('sierra_admin_auth') === 'true' || localStorage.getItem('sierra_admin_auth') === 'true')) {
+          setIsAuth(true);
+          setIsLoading(false);
+          return;
+        }
+      } catch (storageErr) {}
+
+      // 3. Check Firebase client auth only if available and fast
       if (isFirebaseClientConfigured) {
         unsubAuth = onAuthStateChanged(auth, async (user) => {
           if (!user) {
@@ -57,16 +66,11 @@ export default function AdminLayout({
 
             if (isAdminPortalRole(role)) {
               setIsAuth(true);
-              if (refreshInterval) clearInterval(refreshInterval);
-              refreshInterval = setInterval(() => {
-                user.getIdToken(true).catch((tokenErr) => console.warn('[AdminLayout] Token refresh failed:', tokenErr));
-              }, 10 * 60 * 1000);
             } else {
               setIsAuth(false);
               router.replace('/admin/login');
             }
           } catch (error) {
-            console.error('Error checking admin role:', error);
             setIsAuth(false);
             router.replace('/admin/login');
           } finally {
