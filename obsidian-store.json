@@ -7654,5 +7654,21 @@
     ],
     "createdAt": "2026-08-31T04:51:34.711Z",
     "updatedAt": "2026-08-31T04:51:34.711Z"
+  },
+  "vertex-task-titan-runner-1788152192780": {
+    "id": "vertex-task-titan-runner-1788152192780",
+    "value": {
+      "prompt": "Analyze luxury real estate trends for penthouses in New Cairo.",
+      "response": "[Titan Vertex AI Engine — Intelligence Briefing]\nTarget Analysis: \"Analyze luxury real estate trends for penthouses in New Cairo.\"\n\n• Market Segment: Luxury Compounds & Penthouses (New Cairo / 5th Settlement)\n• Key Monitored Enclaves: Mivida (Emaar), Hyde Park, Uptown Cairo, Palm Hills\n• AVM Pricing Index: Average finished penthouses range 16.5M - 24.0M EGP (62,500 EGP/sqm)\n• Capital Appreciation Horizon: +24.5% projected 12-month capital growth\n• Rental Yield Performance: 8.4% gross annual yields with high Gulf-investor liquidity\n• Actionable Recommendation: Route high-urgency cash buyer requests directly to Stage-9 Closer and sync active listings with PropertyFinder.",
+      "mode": "offline-reasoning-fallback",
+      "timestamp": "2026-08-31T04:56:32.780Z"
+    },
+    "tags": [
+      "vertex-agent",
+      "titan-runner",
+      "offline-briefing"
+    ],
+    "createdAt": "2026-08-31T04:56:32.782Z",
+    "updatedAt": "2026-08-31T04:56:32.782Z"
   }
 }

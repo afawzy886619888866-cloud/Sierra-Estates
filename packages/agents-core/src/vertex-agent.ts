@@ -1,6 +1,6 @@
 import { BaseAgent, type AgentResult } from './base-agent';
 import { GoogleGenAI } from '@google/genai';
-import { ObsidianMemory } from '@sierra-estates/obsidian';
+import { ObsidianMemory } from '../../obsidian/src/index.js';
 
 export interface VertexAgentOptions {
   name?: string;
