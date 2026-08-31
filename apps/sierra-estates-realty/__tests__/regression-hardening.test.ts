@@ -77,12 +77,13 @@ describe('Regression & Configuration Hardening Suite', () => {
     });
   });
 
-  describe('2. Webhint / Hint Tooling & Config Guard', () => {
-    it('root package.json includes hint >= 7.1.13 in devDependencies', () => {
+  describe('2. Core Tooling & Script Config Guard', () => {
+    it('root package.json includes turbo and typescript in devDependencies', () => {
       const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
       expect(rootPkg.devDependencies).toBeDefined();
-      expect(rootPkg.devDependencies.hint).toBeDefined();
-      expect(rootPkg.scripts.hint).toBe('hint');
+      expect(rootPkg.devDependencies.turbo).toBeDefined();
+      expect(rootPkg.devDependencies.typescript).toBeDefined();
+      expect(rootPkg.scripts.build).toBe('turbo run build');
     });
   });
 
