@@ -82,8 +82,6 @@ export function generateSignatureHash(contract: DigitalContractData): string {
  */
 export function renderBilingualContractHtml(contract: DigitalContractData, locale: 'ar' | 'en' | 'bilingual' = 'bilingual'): string {
   const isAr = locale === 'ar';
-  const isEn = locale === 'en';
-  const isBi = locale === 'bilingual';
 
   return `
 <!DOCTYPE html>
