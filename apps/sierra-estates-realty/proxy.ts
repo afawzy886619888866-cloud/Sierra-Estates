@@ -22,8 +22,6 @@ export async function proxy(request: NextRequest) {
     requestHost.startsWith('admin') || 
     requestHost.startsWith('sierra-admin');
 
-  const isLocal = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
-
   let targetPath = pathname;
   let isRewritten = false;
 
