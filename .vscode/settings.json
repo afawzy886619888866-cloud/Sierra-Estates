@@ -2,7 +2,9 @@
   "sql.defaultDatabaseType": "postgres",
   "files.associations": {
     "*.sql": "postgres",
-    "pnpm-lock.yaml": "text"
+    "pnpm-lock.yaml": "text",
+    ".github/workflows/*.yml": "yaml",
+    ".github/workflows/*.yaml": "yaml"
   },
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
