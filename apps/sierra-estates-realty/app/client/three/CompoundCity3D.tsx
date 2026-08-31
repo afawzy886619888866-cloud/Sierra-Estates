@@ -71,7 +71,7 @@ function Tower({
   const mesh = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  const [x, z] = useMemo(() => project([compound.lat, compound.lng]), [compound.lat, compound.lng]);
+  const [x, z] = useMemo(() => project(compound.c), [compound.c]);
 
   // Normalised price 0..1 within the current dataset range, driving height + colour.
   const norm = useMemo(() => {

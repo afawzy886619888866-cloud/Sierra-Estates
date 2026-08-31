@@ -107,6 +107,7 @@ export function isAdminEmail(email: string): boolean {
     "developer@sierra-estates.net",
     "admin@sierra.com",
     "admin@gmail.com",
+    "admin.investor@gmail.com",
     "sierra.admin@gmail.com",
     "sierraestates.admin@gmail.com",
     "admin",
