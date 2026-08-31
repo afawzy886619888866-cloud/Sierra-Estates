@@ -1451,6 +1451,10 @@ function AdminApp() {
 
   const handleSignOut = async () => {
     try {
+      try {
+        sessionStorage.removeItem('sierra_admin_auth');
+        localStorage.removeItem('sierra_admin_auth');
+      } catch {}
       await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

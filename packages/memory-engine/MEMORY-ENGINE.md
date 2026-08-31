@@ -32,6 +32,7 @@ Memory Engine
 ## How It Works
 
 ### 1. **Agent Initialization**
+
 ```yaml
 When an agent starts:
   1. Load context from Memory Engine
@@ -42,6 +43,7 @@ When an agent starts:
 ```
 
 ### 2. **Skill Execution**
+
 ```yaml
 When a skill runs:
   1. Query Memory Engine for context
@@ -52,6 +54,7 @@ When a skill runs:
 ```
 
 ### 3. **Agent Communication**
+
 ```yaml
 Agent Bus (pub/sub):
   - Agents publish state changes
@@ -61,6 +64,7 @@ Agent Bus (pub/sub):
 ```
 
 ### 4. **Learning & Evolution**
+
 ```yaml
 Continuous Learning:
   1. Capture execution patterns
@@ -73,21 +77,25 @@ Continuous Learning:
 ## Integration Points
 
 ### With Agents
+
 - Each agent loads its profile from Memory Engine on startup
 - Agents query context before decisions
 - Agents report results to update knowledge base
 
 ### With Skills
+
 - Skills access Memory Engine for context
 - Skills can read/write to knowledge base
 - Skills contribute to pattern library
 
 ### With Hooks
+
 - Hooks trigger based on Memory Engine state
 - Hooks can update context and knowledge base
 - Enables event-driven architecture
 
 ### With Commands
+
 - Commands route through Memory Engine
 - Context injected into command execution
 - Results feed back into learning system
@@ -104,7 +112,9 @@ Continuous Learning:
 ## Implementation
 
 ### Step 1: Context Registry
+
 Create a unified context API:
+
 ```typescript
 interface MemoryEngine {
   // Context operations
@@ -127,7 +137,9 @@ interface MemoryEngine {
 ```
 
 ### Step 2: Agent Integration
+
 Each agent gets Memory Engine as a service:
+
 ```markdown
 Agent receives:
 - Current context (session, project, historical)
@@ -137,7 +149,9 @@ Agent receives:
 ```
 
 ### Step 3: Automatic Learning
+
 System captures and analyzes:
+
 - Successful patterns
 - Decision effectiveness
 - Skill combinations
