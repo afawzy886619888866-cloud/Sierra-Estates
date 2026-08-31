@@ -435,7 +435,7 @@ const PROCESS = [
 /* ------------------------------------------------------------------ */
 
 export default function CareerPage() {
-  const { isAr, toggleLang } = useSite();
+  const { isAr } = useSite();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [deptFilter, setDeptFilter] = useState<'all' | 'sales' | 'admin'>('all');
