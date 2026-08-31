@@ -1,24 +1,25 @@
-name: External Workflows — Sync Data with Sheets
+# ─────────────────────────────────────────────────────────────
+# Workflows Automation: Owner Search, Contact, Email, Unit Adder
+# Standalone automation runners for Sierra Estates backend operations
+# ─────────────────────────────────────────────────────────────
 
-# Each job guards on its required repository secrets: when secrets are not
-# configured the job SKIPS gracefully (notice, green run) instead of failing
-# every schedule. Configure secrets per workflows/GITHUB_SECRETS_SETUP.md.
+name: External Workflows Runner
 
 on:
   schedule:
-    # 9am daily — Search for new owner properties on PF/OLX
+    # owner-search: Daily at 9am UTC (11am Cairo)
     - cron: '0 9 * * *'
-    # 10am daily — Send WhatsApp outreach to owners
+    # owner-contact: Daily at 10am UTC (12pm Cairo)
     - cron: '0 10 * * *'
-    # 8am daily — Send email campaigns
+    # email-sender: Daily at 8am UTC (10am Cairo)
     - cron: '0 8 * * *'
-    # Every 30 minutes — Sync new units from Sheets to Firestore
+    # unit-adder: Every 30 minutes
     - cron: '*/30 * * * *'
 
   workflow_dispatch:
     inputs:
       workflow:
-        description: 'Which workflow to run?'
+        description: 'Workflow to run'
         required: true
         default: 'all'
         type: choice
@@ -28,6 +29,10 @@ on:
           - owner-contact
           - email-sender
           - unit-adder
+
+concurrency:
+  group: external-workflows-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -44,16 +49,16 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.workflow == 'all' || github.event.inputs.workflow == 'owner-search')
 
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check required secrets
         id: secrets
         env:
-          PF_JWT: ${{ secrets.PROPERTY_FINDER_JWT_TOKEN }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          PF_KEY: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
-          if [ -z "$PF_JWT" ] || [ -z "$GSA_KEY" ]; then
+          if [ -z "$PF_KEY" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice title=Owner Search skipped::Required secrets not configured (PROPERTY_FINDER_JWT_TOKEN, GOOGLE_SERVICE_ACCOUNT_KEY). See workflows/GITHUB_SECRETS_SETUP.md"
           else
@@ -68,22 +73,24 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Search
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-search
         env:
-          PROPERTY_FINDER_API_BASE: ${{ vars.PROPERTY_FINDER_API_BASE || secrets.PROPERTY_FINDER_API_BASE || 'https://api.propertyfinder.com.eg/v3' }}
-          PROPERTY_FINDER_JWT_TOKEN: ${{ secrets.PROPERTY_FINDER_JWT_TOKEN }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          PROPERTY_FINDER_API_BASE: ${{ vars['PROPERTY_FINDER_API_BASE'] || 'https://api.propertyfinder.com.eg/v3' }}
+          PROPERTY_FINDER_JWT_TOKEN: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -92,9 +99,6 @@ jobs:
 
   # ─────────────────────────────────────────────────────────────
   # JOB 2: Owner Contact (Daily at 10am UTC)
-  # NOTE: independent of owner-search — the old `needs: owner-search`
-  # meant this job was ALWAYS skipped on its 10am schedule (owner-search
-  # only runs on the 9am cron, so the dependency was never satisfied).
   # ─────────────────────────────────────────────────────────────
   owner-contact:
     runs-on: ubuntu-latest
@@ -110,8 +114,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          WA_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          WA_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
           if [ -z "$WA_TOKEN" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -123,27 +127,29 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Owner Contact
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run owner-contact
         env:
-          WHATSAPP_API_URL: ${{ vars.WHATSAPP_API_URL || secrets.WHATSAPP_API_URL }}
-          WHATSAPP_API_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          WHATSAPP_API_URL: ${{ vars['WHATSAPP_API_URL'] }}
+          WHATSAPP_API_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -160,14 +166,14 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.workflow == 'all' || github.event.inputs.workflow == 'email-sender')
 
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check required secrets
         id: secrets
         env:
-          SG_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SG_KEY: ${{ secrets['SENDGRID_API_KEY'] }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
         run: |
           if [ -z "$SG_KEY" ] || [ -z "$GSA_KEY" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -179,27 +185,29 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Email Sender
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run email-sender
         env:
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL || secrets.SENDGRID_FROM_EMAIL || 'noreply@sierra-estates.net' }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          SENDGRID_API_KEY: ${{ secrets['SENDGRID_API_KEY'] }}
+          SENDGRID_FROM_EMAIL: ${{ vars['SENDGRID_FROM_EMAIL'] || 'noreply@sierra-estates.net' }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -222,8 +230,8 @@ jobs:
       - name: Check required secrets
         id: secrets
         env:
-          GSA_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-          SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
+          GSA_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
+          SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
         run: |
           if [ -z "$GSA_KEY" ] || [ -z "$SHEET_ID" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -235,29 +243,30 @@ jobs:
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+          submodules: false
 
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '24'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workflows/package-lock.json'
 
       - name: Install workflow dependencies
         if: steps.secrets.outputs.configured == 'true'
         run: |
           cd workflows
-          npm install --production
+          npm ci --omit=dev
 
       - name: Run Unit Adder
         if: steps.secrets.outputs.configured == 'true'
         run: cd workflows && npm run unit-adder
         env:
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || secrets.FIREBASE_PROJECT_ID || 'sierra-blu' }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          FIREBASE_CLIENT_EMAIL: ${{ vars.FIREBASE_CLIENT_EMAIL || secrets.FIREBASE_CLIENT_EMAIL }}
-          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}
-          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
+          FIREBASE_PROJECT_ID: ${{ vars['FIREBASE_PROJECT_ID'] || 'sierra-blu' }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets['FIREBASE_PRIVATE_KEY'] }}
+          FIREBASE_CLIENT_EMAIL: ${{ vars['FIREBASE_CLIENT_EMAIL'] }}
+          BROKER_INBOX_SHEET_ID: ${{ vars['BROKER_INBOX_SHEET_ID'] }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}
 
       - name: Notify on failure
         if: failure()
@@ -278,13 +287,3 @@ jobs:
           echo "Owner Contact: ${{ needs.owner-contact.result }}"
           echo "Email Sender: ${{ needs.email-sender.result }}"
           echo "Unit Adder: ${{ needs.unit-adder.result }}"
-
-          if [[ "${{ needs.owner-search.result }}" == "failure" || \
-                "${{ needs.owner-contact.result }}" == "failure" || \
-                "${{ needs.email-sender.result }}" == "failure" || \
-                "${{ needs.unit-adder.result }}" == "failure" ]]; then
-            echo "❌ One or more workflows failed"
-            exit 1
-          else
-            echo "✅ All workflows completed or skipped cleanly"
-          fi

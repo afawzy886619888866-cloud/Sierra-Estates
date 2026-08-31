@@ -7,6 +7,8 @@ export async function GET() {
     activeProperties: 306,
     monitoredCompounds: 19,
     valuationConfidence: 0.94,
+    source: 'static-fallback',
+    mockMode: true,
     generatedAt: new Date().toISOString(),
   });
 }

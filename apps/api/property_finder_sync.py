@@ -61,10 +61,13 @@ class PropertyFinderSyncHub:
             return self._access_token
 
         if not _HTTPX_AVAILABLE:
-            raise RuntimeError("httpx is required for live PF API calls. Install it via: pip install httpx")
+            raise RuntimeError(
+                "httpx is required for live PF API calls. "
+                "Install it via: pip install httpx"
+            )
 
         resp = httpx.post(  # type: ignore[name-defined]
-            "%s/v1/auth/token" % self.api_gateway,
+            f"{self.api_gateway}/v1/auth/token",
             json={"apiKey": self.api_key, "apiSecret": self.api_secret},
             headers={"Accept": "application/json"},
             timeout=10,
@@ -82,7 +85,7 @@ class PropertyFinderSyncHub:
 
     def _auth_headers(self) -> dict[str, str]:
         return {
-            "Authorization": "Bearer %s" % self._get_access_token(),
+            "Authorization": f"Bearer {self._get_access_token()}",
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
@@ -133,7 +136,7 @@ class PropertyFinderSyncHub:
         try:
             headers = self._auth_headers()
             resp = httpx.post(  # type: ignore[name-defined]
-                "%s/v1/listings/batch" % self.api_gateway,
+                f"{self.api_gateway}/v1/listings/batch",
                 json={"listings": formatted_assets},
                 headers=headers,
                 timeout=30,

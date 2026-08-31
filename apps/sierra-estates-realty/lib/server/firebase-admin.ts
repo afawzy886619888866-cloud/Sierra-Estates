@@ -13,6 +13,16 @@ const makeUnavailable = (name: string): any =>
       get(_target, prop) {
         if (prop === 'then') return undefined;
         return (..._args: any[]) => {
+          // Keep build-time and test fallbacks deterministic, but never let a
+          // production request report a fake successful database operation.
+          const isProductionRuntime =
+            process.env.NODE_ENV === 'production' &&
+            process.env.NEXT_PHASE !== 'phase-production-build';
+          if (isProductionRuntime) {
+            throw new Error(
+              `[firebase-admin] ${name} is unavailable. Configure Firebase server credentials before serving requests.`
+            );
+          }
           console.warn(`⚠️ [firebase-admin] ${name}.${String(prop)} called but not initialized.`);
           const chainable = {
             get: () => Promise.resolve({ size: 0, empty: true, forEach: () => {}, exists: false, data: () => ({}) }),
@@ -134,6 +144,8 @@ async function loadAndInitializeAdmin() {
 }
 
 // Call on module load but don't block
-loadAndInitializeAdmin().catch(() => {});
+loadAndInitializeAdmin().catch((err) => {
+  console.warn('[firebase-admin] Module-load init failed:', err);
+});
 
 export { adminApp, adminAuth, adminDb, adminAppCheck, adminStorage, isAdminInitialized, loadAndInitializeAdmin };

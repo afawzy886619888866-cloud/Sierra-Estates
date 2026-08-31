@@ -1,537 +1,190 @@
 # Contributing to Sierra 2027
 
-Welcome! This guide explains how to develop, test, and contribute to the Sierra 2027 platform.
+Welcome! This document outlines engineering standards, workflows, and contribution guidelines for the Sierra 2027 platform.
 
 ---
 
-## Getting Started
+## 1. Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- pnpm 9.0+
-- Firebase project (staging & production)
-- Git
+- **Node.js**: `22.0.0+`
+- **pnpm**: `9.0+`
+- **Firebase CLI** & **Vercel CLI**
 
-### Setup
+### Setup & Local Development
 
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
 cd SE-Vercel-deploy-main
 
-# Install dependencies
+# 2. Install dependencies
 pnpm install
 
-# Copy environment template
+# 3. Configure environment variables (.env.example is the source of truth)
 cp .env.example apps/sierra-estates-realty/.env.local
 
-# Fill in Firebase credentials and any feature-gated secrets you need
-# Edit apps/sierra-estates-realty/.env.local
-```
-
-### Environment Variables
-
-See [README.md § Environment Setup](./README.md#-environment-setup) for the full, kept-current breakdown of required vs. feature-gated variables. `.env.example` (repo root) is the canonical source of truth — a CI sweep of `process.env.*` against it keeps the two in sync.
-
-### Run Development Server
-
-```bash
-# From the repo root (Turborepo runs the sierra-estates-realty dev server)
+# 4. Start local development server (http://localhost:3000)
 pnpm dev
-
-# Open http://localhost:3000
 ```
 
 ---
 
-## Project Structure
+## 2. Monorepo Structure
 
 ```text
-apps/sierra-estates-realty/
-├── app/(site)/         # Public client portal — bilingual EN/AR
-├── app/admin/          # Staff admin console — Claymorphic design system
-├── app/api/            # Edge & Node REST API routes, session auth, webhooks
-├── components/         # Premium UI design system & spatial components
-├── lib/                # Services, Firestore models, agents, server utilities
-│   └── server/         # Server-only modules
-└── package.json
+SE-Vercel-deploy-main/
+├── apps/
+│   └── sierra-estates-realty/     # Next.js 15 PropTech application (Bilingual EN/AR)
+│       ├── app/(site)/            # Public client portal
+│       ├── app/admin/             # Admin management console
+│       ├── app/api/               # REST API route handlers & webhooks
+│       ├── components/            # UI components & spatial design system
+│       └── lib/                   # Firestore models, services & server utilities
+├── packages/                      # Shared internal packages
+├── functions/                     # Firebase Cloud Functions
+├── scripts/                       # Deployment, agent & maintenance scripts
+└── turbo.json                     # Turborepo task pipeline
 ```
-
-See [README.md § Repository Structure](./README.md#-repository-structure) for the full monorepo layout, including `packages/`, `functions/`, and `apps/api`.
 
 ---
 
-## Development Workflow
+## 3. Workflow & Git Standards
 
-### 1. Create Feature Branch
+### Branching Strategy
 
-```bash
-git checkout -b feature/your-feature-name
-```
+Branch off `main` with appropriate type prefixes:
 
-### 2. Make Changes
+| Branch Prefix | Usage | Example |
+| :--- | :--- | :--- |
+| `feature/` | New features or capabilities | `feature/client-portal-chat` |
+| `fix/` | Bug fixes | `fix/inventory-sync-currency` |
+| `refactor/` | Code refactoring without behavior change | `refactor/listing-card-hooks` |
+| `docs/` | Documentation updates | `docs/api-routes-reference` |
+| `chore/` | Tooling, dependencies, or maintenance | `chore/upgrade-turborepo` |
 
-```bash
-# Keep TypeScript strict mode happy
-pnpm run build
-pnpm run lint
-```
+### Pre-Commit Verification
 
-### 3. Run Tests
-
-```bash
-pnpm test
-pnpm test:ci  # For CI environments
-```
-
-### 4. Commit with Clear Messages
+Always verify types, linting, and tests locally before committing:
 
 ```bash
-git add .
-git commit -m "feat: Add new feature
-
-- Added X functionality
-- Updated Y component
-- Removed deprecated Z
-
-Fixes #123"
+pnpm type-check    # Validate TypeScript types
+pnpm lint          # Run ESLint checks
+pnpm test          # Run Vitest test suite
 ```
 
-### 5. Push & Create PR
+### Commit Convention
 
-```bash
-git push origin feature/your-feature-name
-# Create PR on GitHub
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```text
+feat(listings): add bilingual compound filter
+
+- Implement English and Arabic query token matching
+- Add cache revalidation tag for compound listings
+- Add unit tests for compound slug resolution
+
+Fixes #123
 ```
-
-### 6. Code Review
-
-- Ensure CI passes (tests, linting, build)
-- Get approval from team
-- Merge to main
 
 ---
 
-## Code Style Guide
+## 4. Code Style & Architecture
 
-### TypeScript
+### TypeScript Standards
 
-- Always use **strict mode** (no `any`)
-- Use explicit return types
-- Avoid `!` non-null assertions (prefer guard clauses)
+- Strict mode is enforced (`noImplicitAny`, `strictNullChecks`).
+- Specify explicit return types on exported functions and API routes.
+- Prefer optional chaining (`?.`) and nullish coalescing (`??`) over non-null assertions (`!`).
 
 ```typescript
 // ✅ Good
-function getProperty(id: string): SierraProperty | null {
+export function getPropertyById(id: string): SierraProperty | null {
   if (!id) return null;
-  return properties[id];
+  return propertiesRegistry.get(id) ?? null;
 }
 
 // ❌ Bad
-function getProperty(id: string): SierraProperty {
-  return properties[id]!;
+export function getPropertyById(id: string): SierraProperty {
+  return propertiesRegistry.get(id)!;
 }
 ```
 
-### React Components
+### React & Tailwind Standards
 
-- Use functional components (no class components)
-- Prefer composition over inheritance
-- Use hooks for state management
-
-```typescript
-// ✅ Good
-export function PropertyCard({ property }: { property: SierraProperty }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  return <div>...</div>;
-}
-
-// ❌ Bad
-export class PropertyCard extends React.Component {
-  state = { isExpanded: false };
-  render() { return <div>...</div>; }
-}
-```
-
-### CSS (Tailwind)
-
-- Use utility classes only (no custom CSS)
-- Follow design tokens (colors from tailwind.config.js)
-- Respect responsive breakpoints
+- Use functional components with standard React Hooks.
+- Add `'use client'` only when client-side state or browser APIs are required.
+- Use Tailwind design tokens from `tailwind.config.ts` (avoid hardcoded hex colors or arbitrary values).
 
 ```tsx
 // ✅ Good
-<div className="bg-ivory-100 text-navy-300 rounded-lg shadow-card p-6">
-  <h2 className="font-serif text-heading-lg text-navy-300 mb-4">Title</h2>
-</div>
-
-// ❌ Bad
-<div style={{ backgroundColor: '#F4F0E8', padding: '24px' }}>
-  <h2 style={{ fontSize: '28px' }}>Title</h2>
-</div>
-```
-
-### Naming Conventions
-
-```typescript
-// Components: PascalCase
-export function PropertyCard() {}
-export function AdminDashboard() {}
-
-// Functions: camelCase
-export function getPropertyById(id: string) {}
-export function calculateRoi(property: SierraProperty) {}
-
-// Constants: UPPER_SNAKE_CASE
-export const MAX_PROPERTIES = 1000;
-export const API_TIMEOUT = 5000;
-
-// Interfaces/Types: PascalCase
-interface SierraProperty { }
-type DealStatus = 'draft' | 'signed' | 'closed';
-```
-
----
-
-## Testing
-
-### Unit Tests
-
-```typescript
-// components/__tests__/PropertyCard.test.tsx
-import { render, screen } from '@testing-library/react';
-import { PropertyCard } from '../PropertyCard';
-
-describe('PropertyCard', () => {
-  it('displays property details', () => {
-    const property: SierraProperty = {
-      id: '123',
-      sbrCode: 'TEST-1B-50K',
-      // ... other required fields
-    };
-
-    render(<PropertyCard property={property} />);
-    expect(screen.getByText('TEST-1B-50K')).toBeInTheDocument();
-  });
-});
-```
-
-### Integration Tests
-
-```typescript
-// app/api/listings/__tests__/route.test.ts
-import { GET } from '../route';
-import { NextRequest } from 'next/server';
-
-describe('/api/listings', () => {
-  it('returns property listings', async () => {
-    const request = new NextRequest(
-      new URL('http://localhost:3000/api/listings'),
-      { headers: { 'X-SBR-SECRET-KEY': process.env.SBR_SECRET_KEY } }
-    );
-
-    const response = await GET(request);
-    expect(response.status).toBe(200);
-  });
-});
-```
-
-### Run Tests
-
-```bash
-pnpm test                    # Run once
-pnpm test --watch          # Watch mode
-pnpm test:ci               # CI mode (with coverage)
-```
-
----
-
-## Firebase Development
-
-### Firestore Rules (Local Testing)
-
-```bash
-# Start Firestore emulator
-firebase emulators:start
-
-# In tests, connect to emulator
-process.env.FIREBASE_EMULATOR_HOST = 'localhost:8080';
-```
-
-### Cloud Functions (Local Testing)
-
-```bash
-# Deploy to local emulator
-firebase deploy --only functions --debug
-
-# Test locally before deploying to production
-```
-
-### Connecting to Staging vs Production
-
-```typescript
-// lib/firebase.ts - Use NEXT_PUBLIC_FIREBASE_PROJECT_ID
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-// Staging: sierra-estates-staging
-// Production: sierra-estates-production
-```
-
----
-
-## Build & Deployment
-
-### Local Build
-
-```bash
-pnpm run build              # Build for production
-pnpm run lint              # Check code quality
-pnpm run type-check        # Run TypeScript check
-```
-
-### Deploy to Vercel
-
-```bash
-# Automatic on main branch push
-# OR manual:
-vercel --prod
-```
-
-### Deploy Cloud Functions
-
-```bash
-firebase deploy --only functions
-
-# Deploy with specific environment
-firebase deploy --project sierra-estates-staging --only functions
-```
-
----
-
-## Debugging
-
-### Browser DevTools
-
-- Open Chrome DevTools (F12)
-- Use React DevTools extension
-- Check Network tab for API calls
-
-### Server Logs
-
-```bash
-# View Vercel logs
-vercel logs
-
-# View Firestore logs
-gcloud firestore admin list-indexes --project=sierra-estates-staging
-```
-
-### Firebase Emulator Logs
-
-```bash
-firebase emulators:start --debug
-```
-
----
-
-## Common Tasks
-
-### Add New API Endpoint
-
-```typescript
-// apps/web/app/api/my-feature/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    // Validate input
-    // Process logic
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Add New React Component
-
-```typescript
-// apps/web/components/MyComponent.tsx
-'use client';
-
-import React from 'react';
-
-interface MyComponentProps {
-  title: string;
-  onAction?: () => void;
-}
-
-export function MyComponent({ title, onAction }: MyComponentProps) {
+export function PropertyCard({ property }: { property: SierraProperty }) {
   return (
-    <div className="bg-ivory-100 p-6 rounded-lg">
-      <h2 className="font-serif text-heading-lg text-navy-300">{title}</h2>
-      {onAction && (
-        <button
-          onClick={onAction}
-          className="mt-4 bg-gold-500 text-navy-300 px-6 py-2 rounded"
-        >
-          Action
-        </button>
-      )}
+    <div className="rounded-lg border border-gold-500/20 bg-ivory-100 p-6 md:p-8">
+      <h3 className="font-serif text-heading-md text-navy-900">{property.title}</h3>
     </div>
   );
 }
 ```
 
-### Query Firestore
-
-```typescript
-// Use the database protocol
-import { fetchPropertiesByCompound } from '@/lib/database-protocol';
-
-const properties = await fetchPropertiesByCompound('Mountain View Desert');
-```
-
-### Use Authentication
-
-```typescript
-// Client-side
-import { useAuth } from '@/lib/AuthContext';
-
-function MyComponent() {
-  const { user, isAdmin } = useAuth();
-  return isAdmin ? <AdminPanel /> : <UserPanel />;
-}
-
-// Server-side
-import { verifyAdminRequest } from '@/lib/auth/admin';
-
-export async function POST(req: NextRequest) {
-  const auth = await verifyAdminRequest(req);
-  if (!auth.authenticated) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  // Proceed with admin operation
-}
-```
-
 ---
 
-## Performance Tips
+## 5. Testing & Local Emulation
 
-### Optimize Images
+### Writing Tests
 
-```tsx
-import Image from 'next/image';
+```typescript
+// apps/sierra-estates-realty/components/__tests__/PropertyCard.test.tsx
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { PropertyCard } from '../PropertyCard';
 
-<Image
-  src="/property.jpg"
-  alt="Property"
-  width={400}
-  height={300}
-  loading="lazy"
-/>
-```
+describe('PropertyCard', () => {
+  it('renders unit code and price accurately', () => {
+    const mockProperty: SierraProperty = {
+      id: 'prop-123',
+      sbrCode: 'MV-OCT-402',
+      title: 'Mountain View 4BR Villa',
+      price: 15500000,
+    };
 
-### Lazy Load Components
-
-```tsx
-import dynamic from 'next/dynamic';
-
-const VirtualTour = dynamic(() => import('@/components/VirtualTour'), {
-  loading: () => <p>Loading...</p>,
+    render(<PropertyCard property={mockProperty} />);
+    expect(screen.getByText('MV-OCT-402')).toBeInTheDocument();
+  });
 });
 ```
 
-### Cache Firestore Queries
+### Firebase Local Emulators
 
-```typescript
-// Cache for 60 seconds
-const response = await fetch('/api/listings', {
-  next: { revalidate: 60 }
-});
+```bash
+# Start local Firestore, Storage, and Functions emulators
+firebase emulators:start
 ```
 
 ---
 
-## Git Conventions
+## 6. Key Commands Reference
 
-### Branch Naming
-
-```
-feature/user-authentication
-fix/property-search-bug
-refactor/firestore-queries
-docs/api-documentation
-```
-
-### Commit Messages
-
-```
-feat: Add X feature
-fix: Resolve Y bug
-refactor: Improve Z code
-docs: Update X documentation
-test: Add tests for X
-chore: Update dependencies
-```
-
-### Pull Request Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-- [ ] Unit tests added
-- [ ] Integration tests added
-- [ ] Manual testing completed
-
-## Checklist
-- [ ] Code follows style guide
-- [ ] TypeScript strict mode passes
-- [ ] Tests pass locally
-- [ ] No console warnings/errors
-```
+| Command | Description |
+| :--- | :--- |
+| `pnpm dev` | Run local dev server via Turborepo |
+| `pnpm build` | Build all apps and packages for production |
+| `pnpm lint` | Run ESLint across monorepo |
+| `pnpm type-check` | Run TypeScript type checking |
+| `pnpm test` | Run test suite via Vitest |
+| `pnpm deploy:prod` | Deploy client web app to Vercel production |
+| `pnpm deploy:rules` | Deploy Firestore security rules and storage rules |
+| `pnpm deploy:firebase` | Deploy full Firebase suite (rules, storage, functions) |
 
 ---
 
-## Issues & Bugs
+## 7. Additional References
 
-### Reporting Bugs
-
-1. Search existing issues
-2. Create new issue with:
-   - Clear title
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Environment info (Node version, browser, OS)
-
-### Working on Issues
-
-1. Comment "I'll work on this"
-2. Create branch from issue number: `fix/#123-short-description`
-3. Reference issue in PR: "Fixes #123"
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — System design, data pipeline, and architecture
+- [API.md](./API.md) — API routes and schema contracts
+- [DEPLOYMENT.md](./DEPLOYMENT.md) — Infrastructure and deployment operations
 
 ---
 
-## Questions?
-
-- Check [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
-- Check [API.md](./API.md) for endpoint documentation
-- Open a GitHub issue for questions/discussions
-
----
-
-**Happy coding! 🚀**
-
-Last Updated: 2026-05-26
+### Happy Coding! 🚀

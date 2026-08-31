@@ -8,8 +8,8 @@
  * 4. Multi-Agent SharedMemoryBus Pub/Sub coordination
  */
 
-const propertyEvaluator = require('../../../packages/whatsapp-agent/src/property-evaluator');
-const propertyMatcher = require('../../../packages/whatsapp-agent/src/property-matcher');
+const propertyEvaluator = require('../../../packages/whatsapp-shared/src/property-evaluator');
+const propertyMatcher = require('../../../packages/whatsapp-shared/src/property-matcher');
 
 describe('Agents & Bots Orchestration Suite', () => {
 

@@ -1,6 +1,6 @@
 import { BaseAgent, type AgentResult } from './base-agent';
 import { GoogleGenAI } from '@google/genai';
-import { ObsidianMemory, obsidian } from '@sierra-estates/obsidian';
+import { ObsidianMemory } from '@sierra-estates/obsidian';
 
 export interface VertexAgentOptions {
   name?: string;
@@ -22,7 +22,7 @@ export class VertexAgent extends BaseAgent {
   private systemInstruction: string;
   private tools: any[];
   private datastoreId?: string;
-  private memory: typeof obsidian;
+  private memory: ObsidianMemory;
 
   constructor(options: VertexAgentOptions = {}) {
     super();
@@ -32,7 +32,7 @@ export class VertexAgent extends BaseAgent {
     this.systemInstruction = options.systemInstruction || 'You are an advanced Vertex AI Agent powered by Gemini on Google Cloud.';
     this.tools = options.tools || [];
     this.datastoreId = options.datastoreId || process.env.VERTEX_SEARCH_DATASTORE_ID;
-    this.memory = obsidian;
+    this.memory = new ObsidianMemory();
 
     const projectId = options.projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-estates-core';
     const location = options.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';

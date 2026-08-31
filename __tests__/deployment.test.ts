@@ -83,6 +83,49 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
     });
   });
 
+  describe('Deployment Secret and Firebase Rule Safety', () => {
+    it('does not configure server credentials as browser-visible variables', () => {
+      const forbiddenNames = [
+        'NEXT_PUBLIC_' + 'GEMINI_API_KEY',
+        'NEXT_PUBLIC_' + 'TELEGRAM_BOT_TOKEN',
+      ];
+      const files = [
+        path.join(ROOT_DIR, '.env.example'),
+        path.join(REALTY_APP_DIR, '.env.local.example'),
+        path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'),
+        path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js'),
+        path.join(ROOT_DIR, 'scripts', 'deployment', 'push_all_vercel_envs.js'),
+        path.join(ROOT_DIR, 'turbo.json'),
+      ];
+
+      for (const file of files) {
+        const content = fs.readFileSync(file, 'utf8');
+        for (const forbiddenName of forbiddenNames) {
+          expect(content).not.toContain(forbiddenName);
+        }
+      }
+    });
+
+    it('uses one canonical Firebase rule set and keeps mirrors synchronized', () => {
+      const firebaseConfig = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'firebase.json'), 'utf8'));
+      expect(firebaseConfig.firestore.rules).toBe('apps/sierra-estates-realty/firestore.rules');
+      expect(firebaseConfig.storage.rules).toBe('apps/sierra-estates-realty/storage.rules');
+
+      for (const ruleFile of ['firestore.rules', 'storage.rules']) {
+        const rootRules = fs.readFileSync(path.join(ROOT_DIR, ruleFile), 'utf8').replace(/\r\n/g, '\n');
+        const appRules = fs.readFileSync(path.join(REALTY_APP_DIR, ruleFile), 'utf8').replace(/\r\n/g, '\n');
+        expect(rootRules).toBe(appRules);
+      }
+    });
+
+    it('fails deployments visibly when deployment credentials are absent', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf8');
+      expect(deployWf).toContain('::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required');
+      expect(deployWf).toContain('VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository');
+      expect(deployWf).toContain('exit 1');
+    });
+  });
+
   describe('Vercel Scripts & Deployment Tools', () => {
     it('sync-vercel-env.js should be present, valid and define client & admin env sets', () => {
       const syncScriptPath = path.join(ROOT_DIR, 'scripts', 'sync-vercel-env.js');

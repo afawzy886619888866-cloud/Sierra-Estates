@@ -1,32 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
-/**
- * This route used to build and persist its own BrokerListing document
- * inline via WhatsAppParserService.parseMessage — a second, weaker
- * implementation of the same job app/api/webhooks/whatsapp/route.ts does
- * via WhatsAppParserService.processIncomingMessage (which additionally
- * dedupes, generates the Sierra code, geocodes, and persists media). No
- * caller of this route was found anywhere in the codebase — the WhatsApp
- * scraper posts to /api/webhooks/whatsapp, not here — but the endpoint is
- * kept alive (rather than deleted) in case an external provider (this
- * route's own comment names Ultramsg/Wati) still has it registered, now
- * delegating to the same shared implementation instead of diverging from it.
- */
-
-const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-
-async function verifyWebhookSecret(req: NextRequest): Promise<boolean> {
-  if (!SECRET_KEY) return true;
-  const secretHeader = req.headers.get('x-sbr-secret-key');
-  return secretHeader === SECRET_KEY;
+function verifyWebhookSecret(req: NextRequest) {
+  return verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
 }
 
 export async function POST(req: NextRequest) {
-  if (!await verifyWebhookSecret(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyWebhookSecret(req);
+  if (denied) return denied;
 
   try {
     const body = await req.json();

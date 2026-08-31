@@ -151,7 +151,11 @@ export class RealEstateValuationAgent {
     let verdict: ValuationVerdict = 'FAIR VALUE';
     let recommendation = 'Standard viable real estate investment.';
 
-    if (purchasePrice) {
+    if (!purchasePrice || !annualIncome) {
+      status = 'Insufficient Data';
+      verdict = 'INSUFFICIENT DATA' as any;
+      recommendation = `Missing purchase price or rental income. Cannot calculate accurate valuation metrics.`;
+    } else {
       if (paybackYears !== undefined && paybackYears < 8.0) {
         status = 'Highly Undervalued / Significant Arbitrage';
         verdict = 'BUY (MASSIVE ARBITRAGE)';
@@ -165,9 +169,6 @@ export class RealEstateValuationAgent {
         verdict = 'OVERPRICED (NEGOTIATE OR RENT)';
         recommendation = `Asking price exceeds capitalized rental yield valuation (${paybackYears || '>13'} years payback). Recommend negotiating down to ${premiumAdjustedConservative.toLocaleString()} ${this.currency} or renting instead.`;
       }
-    } else {
-      verdict = 'BUY (FAIR VALUE)';
-      recommendation = `Target acquisition price should be between ${conservativeFairValue.toLocaleString()} ${this.currency} (conservative) and ${premiumAdjustedOptimistic.toLocaleString()} ${this.currency} (premium-adjusted).`;
     }
 
     return {
@@ -205,4 +206,91 @@ export class RealEstateValuationAgent {
 export function evaluatePropertyValuation(input: ValuationInput): ValuationResult {
   const agent = new RealEstateValuationAgent();
   return agent.analyze(input);
+}
+
+export interface CurrencyArbitrageResult {
+  egp_price: number;
+  usd_price: number;
+  market_exchange_rate: number;
+  implied_exchange_rate: number;
+  arbitrage_spread_pct: number;
+  arbitrage_advantage: 'USD_BUYER_ADVANTAGE' | 'EGP_BUYER_ADVANTAGE' | 'PARITY';
+  recommendation: string;
+}
+
+/**
+ * Calculates currency arbitrage between local EGP listing price and USD developer/resale quotes.
+ */
+export function calculateCurrencyArbitrage(
+  egpPrice: number,
+  usdPrice: number,
+  marketExchangeRate = 48.0
+): CurrencyArbitrageResult {
+  if (!egpPrice || !usdPrice || marketExchangeRate <= 0) {
+    return {
+      egp_price: egpPrice || 0,
+      usd_price: usdPrice || 0,
+      market_exchange_rate: marketExchangeRate,
+      implied_exchange_rate: 0,
+      arbitrage_spread_pct: 0,
+      arbitrage_advantage: 'PARITY',
+      recommendation: 'Insufficient data for currency arbitrage calculation.',
+    };
+  }
+
+  const impliedRate = egpPrice / usdPrice;
+  const spreadPct = Number((((impliedRate - marketExchangeRate) / marketExchangeRate) * 100).toFixed(2));
+
+  let advantage: CurrencyArbitrageResult['arbitrage_advantage'] = 'PARITY';
+  let recommendation = 'Pricing is aligned with official bank exchange parity.';
+
+  if (spreadPct <= -3.0) {
+    advantage = 'USD_BUYER_ADVANTAGE';
+    recommendation = `EGP listing is discounted by ${Math.abs(spreadPct)}% relative to USD benchmark (Implied rate: ${impliedRate.toFixed(2)} vs Market: ${marketExchangeRate}). Favorable for USD cash foreign investors.`;
+  } else if (spreadPct >= 3.0) {
+    advantage = 'EGP_BUYER_ADVANTAGE';
+    recommendation = `USD quote carries a ${spreadPct}% premium over local EGP price (Implied rate: ${impliedRate.toFixed(2)} vs Market: ${marketExchangeRate}). Recommend settling in local EGP.`;
+  }
+
+  return {
+    egp_price: egpPrice,
+    usd_price: usdPrice,
+    market_exchange_rate: marketExchangeRate,
+    implied_exchange_rate: Number(impliedRate.toFixed(2)),
+    arbitrage_spread_pct: spreadPct,
+    arbitrage_advantage: advantage,
+    recommendation,
+  };
+}
+
+export interface SensitivityScenario {
+  price_adjustment_pct: number;
+  adjusted_price: number;
+  annual_income: number;
+  implied_cap_rate_pct: number;
+  payback_period_years: number;
+}
+
+/**
+ * Generates a Cap Rate & Payback sensitivity matrix across price variations (e.g. -10%, -5%, 0%, +5%, +10%).
+ */
+export function generateCapRateSensitivityMatrix(
+  purchasePrice: number,
+  annualRent: number,
+  priceSteps = [-15, -10, -5, 0, 5, 10, 15]
+): SensitivityScenario[] {
+  if (!purchasePrice || !annualRent) return [];
+
+  return priceSteps.map((pct) => {
+    const adjustedPrice = Math.round(purchasePrice * (1 + pct / 100));
+    const capRate = Number(((annualRent / adjustedPrice) * 100).toFixed(2));
+    const payback = Number((adjustedPrice / annualRent).toFixed(1));
+    return {
+      price_adjustment_pct: pct,
+      adjusted_price: adjustedPrice,
+      annual_income: annualRent,
+      implied_cap_rate_pct: capRate,
+      payback_period_years: payback,
+    };
+  });
 }

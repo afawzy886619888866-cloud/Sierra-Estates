@@ -28,6 +28,7 @@ infra/
 ## Quick Start
 
 ### 1. Place Firebase service account
+
 ```bash
 mkdir -p secrets
 # Download from Firebase Console → Project Settings → Service Accounts → Generate new key
@@ -35,19 +36,23 @@ cp ~/Downloads/sierra-estates-firebase-adminsdk.json secrets/firebase-service-ac
 ```
 
 ### 2. Configure environment
+
 ```bash
 cp .env.example .env
 nano .env  # fill in: GEMINI_API_KEY, N8N_BASIC_AUTH_PASSWORD, FIREBASE_*, etc.
 ```
 
 ### 3. Start services
+
 ```bash
 docker compose up -d
 docker compose logs -f whatsapp-scraper
 ```
 
 ### 4. Scan QR code
+
 The first time you start the WhatsApp scraper, it prints a QR code in the logs:
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Scan this QR code with WhatsApp:
@@ -55,11 +60,13 @@ Scan this QR code with WhatsApp:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [QR code here]
 ```
+
 Open WhatsApp on your phone → Settings → Linked Devices → Link a device → scan.
 
 The session is saved to `whatsapp-auth/` — you won't need to re-scan on restart.
 
 ### 5. Access n8n
+
 Open `http://your-vps-ip:5678` in your browser. Login with the credentials from `.env`.
 
 ## Architecture
@@ -106,12 +113,15 @@ docker compose restart
 ## Troubleshooting
 
 ### QR code not showing
+
 ```bash
 docker compose logs whatsapp-scraper | grep -A 20 "Scan this QR"
 ```
 
 ### WhatsApp disconnected
+
 Delete the auth session and re-scan:
+
 ```bash
 docker compose down
 rm -rf whatsapp-auth/
@@ -120,7 +130,9 @@ docker compose logs -f whatsapp-scraper
 ```
 
 ### n8n not receiving webhooks
+
 Check the webhook URL in `.env`:
+
 ```bash
 # Should be reachable from whatsapp-scraper container
 N8N_WEBHOOK_URL=http://n8n:5678/webhook/whatsapp-incoming

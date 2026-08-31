@@ -13,15 +13,20 @@ interface Probe {
   path: string;
   method: 'GET' | 'POST';
   body?: any;
+  headers?: Record<string, string>;
   expectedStatus: number;
 }
+
+const internalHeaders = process.env.SBR_SECRET_KEY
+  ? { 'X-SBR-SECRET-KEY': process.env.SBR_SECRET_KEY }
+  : undefined;
 
 const PROBES: Probe[] = [
   { name: 'Root Client Portal', path: '/', method: 'GET', expectedStatus: 200 },
   { name: 'System Health Check', path: '/api/health', method: 'GET', expectedStatus: 200 },
-  { name: 'Internal Health Proxy', path: '/api/internal/health', method: 'GET', expectedStatus: 200 },
+  { name: 'Internal Health Proxy', path: '/api/internal/health', method: 'GET', headers: internalHeaders, expectedStatus: 200 },
   { name: 'WhatsApp Webhook Challenge', path: '/api/webhooks/whatsapp', method: 'GET', expectedStatus: 200 },
-  { name: 'Property Vector Recommendation', path: '/api/internal/recommend', method: 'GET', expectedStatus: 200 },
+  { name: 'Property Vector Recommendation', path: '/api/internal/recommend', method: 'GET', headers: internalHeaders, expectedStatus: 200 },
   { name: 'Closer Negotiation Engine', path: '/api/closer/negotiate', method: 'POST', body: { askingPrice: 38000000, buyerOfferPrice: 35000000 }, expectedStatus: 200 },
 ];
 
@@ -45,12 +50,13 @@ async function runProbe(p: Probe): Promise<boolean> {
           method: p.method,
           headers: {
             'Content-Type': 'application/json',
+            ...p.headers,
             ...(postData ? { 'Content-Length': Buffer.byteLength(postData) } : {}),
           },
           timeout: 15000,
         },
         (res) => {
-          if (res.statusCode === p.expectedStatus || (res.statusCode && res.statusCode < 400)) {
+          if (res.statusCode === p.expectedStatus) {
             console.log(`  ✅ ${p.name} -> HTTP ${res.statusCode}`);
             finish(true);
           } else {
@@ -92,6 +98,9 @@ async function main() {
   console.log(`\n📊 Smoke Test Summary: ${passed}/${PROBES.length} probes successful\n`);
   if (passed === PROBES.length) {
     console.log('🎉 ALL SMOKE PROBES VERIFIED!\n');
+  } else {
+    process.exitCode = 1;
+    console.error('❌ Smoke test failed. Fix the failing endpoint or its required environment before deploying.\n');
   }
 }
 

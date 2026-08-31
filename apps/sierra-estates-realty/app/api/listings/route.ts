@@ -216,9 +216,49 @@ function inventoryUnitToListing(u: any): Listing {
   } as Listing;
 }
 
-/** Filter-mode read: Firebase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
+/** Filter-mode read: Supabase → Firebase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
 async function readListings(): Promise<Listing[]> {
-  // Try Firebase Firestore first (reads houyez_listings + listings merged)
+  // 1. Try Supabase first (reads all active listings directly)
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data: supaListings, error: supaErr } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .limit(500);
+
+    if (!supaErr && supaListings && supaListings.length > 0) {
+      return supaListings.map((item: any) => {
+        const price = Number(item.price) || 0;
+        const egpM = price > 100000 ? price / 1_000_000 : price;
+        const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+
+        return {
+          id: item.id || item.ref_id,
+          code: item.ref_id || `SE-${item.id?.substring(0, 4)}`,
+          compound: item.compound || 'New Cairo',
+          zone: item.location_area || '5th Settlement',
+          type: item.property_type || 'Apartment',
+          beds: item.bedrooms || 3,
+          bath: item.bathrooms || 2,
+          area: Number(item.area_sqm) || 150,
+          egpM: Number(egpM.toFixed(2)),
+          usd: usd || 1500,
+          aiScore: item.roi_percentage ? 9.0 : 8.8,
+          tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner',
+          mode: item.deal_type === 'rent' ? 'rent' : 'sale',
+          agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
+          img: (item.images && item.images[0]) || '',
+          status: item.status || 'available',
+          description: item.description || '',
+        } as Listing;
+      });
+    }
+  } catch (supaErr) {
+    console.warn('[listings] Supabase read failed, checking Firestore fallback:', supaErr);
+  }
+
+  // 2. Try Firebase Firestore (reads houyez_listings + listings merged)
   const db = await getAdminDb();
   if (db) {
     try {

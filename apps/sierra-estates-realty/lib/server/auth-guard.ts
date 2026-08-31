@@ -9,6 +9,14 @@ import { adminAuth } from './firebase-admin';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
+/** Constant-time string comparison to prevent timing attacks. */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 export interface AuthResult {
   authenticated: boolean;
   uid?: string;
@@ -42,7 +50,7 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
 
   // Method 2: Internal Secret Key (for server-to-server, cron, webhooks)
   const secretHeader = req.headers.get('x-sbr-secret-key');
-  if (SECRET_KEY && secretHeader === SECRET_KEY) {
+  if (SECRET_KEY && secretHeader && safeEqual(secretHeader, SECRET_KEY)) {
     return {
       authenticated: true,
       method: 'secret-key',

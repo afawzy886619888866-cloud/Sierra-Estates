@@ -17,9 +17,11 @@ export async function GET() {
     return NextResponse.json({
       status: 'active',
       indexedRecords: count || 822,
+      source: count > 0 ? 'obsidian-store' : 'static-fallback',
+      mockMode: count === 0,
       lastSynchronized: new Date().toISOString(),
     });
   } catch (_error) {
-    return NextResponse.json({ status: 'active', indexedRecords: 822 });
+    return NextResponse.json({ status: 'active', indexedRecords: 822, source: 'static-fallback', mockMode: true });
   }
 }
