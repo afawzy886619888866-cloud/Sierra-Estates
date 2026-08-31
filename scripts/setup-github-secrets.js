@@ -86,8 +86,8 @@ const SECRETS = {
   UPSTASH_REDIS_REST_URL: 'https://sierra-redis-dev.upstash.io',
   UPSTASH_REDIS_REST_TOKEN: 'upstash_dev_token_2026',
   N8N_API_KEY: 'n8n_api_key_sierra_2026',
-  FIREBASE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC69X...\\n-----END PRIVATE KEY-----',
   GOOGLE_SERVICE_ACCOUNT_KEY: '{"type":"service_account","project_id":"sierra-blu","private_key_id":"dev_sa_key_2026","client_email":"a.fawzy8866@gmail.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}',
+  GOOGLE_SERVICE_ACCOUNT_JSON: '{"type":"service_account","project_id":"sierra-blu","private_key_id":"dev_sa_key_2026","client_email":"a.fawzy8866@gmail.com","client_id":"123456789","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}',
 };
 
 async function setupGitHubConfig() {
