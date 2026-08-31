@@ -129,6 +129,7 @@ Workers — long-running/heavy workloads (isolated from Next.js request loop)
 ## 🧠 Obsidian Knowledge Vault (`docs/obsidian-vault/`)
 
 The repository includes a 14-node cognitive architecture and domain vault:
+
 - `objections-and-policies.md` — Pricing rules, discount matrices, payment options
 - `compounds-guide.md` — New Cairo compound pricing and features
 - `Sales Scripts & Outreach.md` — Inbound qualification dialogues in Egyptian Arabic & English
@@ -141,6 +142,7 @@ The repository includes a 14-node cognitive architecture and domain vault:
 This project uses the Micro-Contract Development (MCD) protocol.
 
 ### Slash Commands Routing
+
 - **/evaluate** → [`.agents/workflows/evaluate.md`](.agents/workflows/evaluate.md)
 - **/contract** → [`.agents/workflows/contract.md`](.agents/workflows/contract.md)
 - **/execute** → [`.agents/workflows/execute.md`](.agents/workflows/execute.md)
@@ -151,10 +153,11 @@ This project uses the Micro-Contract Development (MCD) protocol.
 - **/bug** → [`.agents/workflows/bug.md`](.agents/workflows/bug.md)
 
 ### Command Deck REST API
+
 Base URL: `http://127.0.0.1:{port}` (resolved from `.amphion/config.json`):
 
 | Action | Method | Route | Payload / Parameters |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Read state | GET | `/api/state` | — |
 | Find (board map) | GET | `/api/find` | Optional: `?q=`, `?milestoneId=`, `?list=` |
 | Create chart | POST | `/api/charts` | `boardId`, `title`; optional: `markdown`, `description` |
@@ -169,7 +172,9 @@ Base URL: `http://127.0.0.1:{port}` (resolved from `.amphion/config.json`):
 | Query memory | GET | `/api/memory/query` | `?q=` (prefix) |
 
 ### Discrete Context Windows Handoff
+
 Before completing an MCD task card, write handoff memory:
+
 ```json
 POST /api/memory/events
 {
