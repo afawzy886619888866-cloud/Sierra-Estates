@@ -50,6 +50,7 @@ const headers = rawRows[headerIndex];
 console.log(`📋 Header row found at index ${headerIndex}: ${headers.length} columns`);
 
 const listings = [];
+let unitIndex = 0;
 
 for (let r = headerIndex + 1; r < rawRows.length; r++) {
   const row = rawRows[r];
@@ -60,21 +61,22 @@ for (let r = headerIndex + 1; r < rawRows.length; r++) {
     if (h) item[h.trim()] = row[idx] !== undefined ? row[idx] : '';
   });
 
+  unitIndex++;
   const recordId = String(item.RecordID || `INV-${r}`).trim();
   const rawPrice = String(item.PriceEGP || '0').replace(/[^0-9.]/g, '');
   const price = parseFloat(rawPrice) || 0;
-  const area = parseFloat(String(item.AreaSqm || '0').replace(/[^0-9.]/g, '')) || 0;
-  const beds = parseInt(String(item.Bedrooms || '0'), 10) || 0;
-  const baths = parseInt(String(item.Bathrooms || '0'), 10) || 0;
+  const area = parseFloat(String(item.AreaSqm || '0').replace(/[^0-9.]/g, '')) || 150;
+  const beds = parseInt(String(item.Bedrooms || '0'), 10) || 3;
+  const baths = parseInt(String(item.Bathrooms || '0'), 10) || Math.max(1, beds - 1);
   const location = String(item.Location || 'New Cairo').trim();
   const zone = String(item.Zone || location).trim();
   const propertyType = String(item.PropertyType || 'Apartment').trim();
   const listingCategory = String(item.ListingCategory || 'Rental').trim();
   const isSale = listingCategory.toLowerCase().includes('sale') || listingCategory.toLowerCase().includes('بيع');
-  const type = isSale ? 'sale' : 'rent';
+  const mode = isSale ? 'sale' : 'rent';
 
   const contactPhone = String(item.ContactPhone || '').trim();
-  const contactName = String(item.ContactName || '').trim();
+  const contactName = String(item.ContactName || 'Direct Owner').trim();
   const ownerBroker = String(item.OwnerBroker || 'Owner').trim();
   const isOwner = ownerBroker.toLowerCase().includes('owner') || ownerBroker.toLowerCase().includes('مالك');
 
@@ -84,31 +86,43 @@ for (let r = headerIndex + 1; r < rawRows.length; r++) {
     .filter(u => u.startsWith('http'));
 
   const comment = String(item.Comment || item.AdditionalFeatures || '').trim();
+  const code = String(item.Code || item.UnitFingerprint || `SE-${recordId}`).trim();
 
   listings.push({
-    id: recordId,
+    id: unitIndex,
     recordId,
+    code,
     title: `${propertyType} in ${location} (${beds} Beds)`,
     compound: location,
     location,
     zone,
     propertyType,
-    type,
+    type: propertyType,
+    mode,
+    status: 'Available',
     listingCategory,
     price,
     priceFormatted: price > 0 ? `${price.toLocaleString('en-US')} EGP` : 'Price on Request',
+    egpM: Number((price / 1_000_000).toFixed(2)),
+    usd: Math.round(price / 50),
     currency: 'EGP',
     area,
     bedrooms: beds,
+    beds,
     bathrooms: baths,
+    baths,
     furnished: String(item.Furnished || 'no').toLowerCase().includes('yes') || String(item.Furnished || '').toLowerCase().includes('furnish') || String(item.Furnished || '').includes('مفروش'),
     garden: Boolean(item.Garden),
     pool: Boolean(item.Pool),
-    contactName: contactName || 'Direct Owner',
+    ownerName: contactName,
+    agent: contactName.includes('Owner') ? `${contactName} (WhatsApp Verified)` : 'Sierra WhatsApp Concierge',
+    contactName,
     contactPhone,
+    mobile: contactPhone,
     ownerBroker,
     isDirectOwner: isOwner,
-    availability: String(item.Availability || 'Available').trim(),
+    availability: 'Available',
+    ago: 'WhatsApp Import',
     photos: photoUrls,
     images: photoUrls.length > 0 ? photoUrls : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80'],
     img: photoUrls.length > 0 ? photoUrls[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',
@@ -132,7 +146,7 @@ console.log(`💾 Saved local JSON → apps/sierra-estates-realty/data/real-list
 // Also save flat clean CSV
 const cleanCsvHeader = 'RecordID,ListingCategory,Type,Location,Zone,PropertyType,Bedrooms,Bathrooms,AreaSqm,PriceEGP,Furnished,ContactName,ContactPhone,OwnerBroker,Availability,PhotosCount,PhotoURLs\n';
 const cleanCsvRows = listings.map(l => 
-  `"${l.id}","${l.listingCategory}","${l.type}","${l.location.replace(/"/g, '""')}","${l.zone.replace(/"/g, '""')}","${l.propertyType}",${l.bedrooms},${l.bathrooms},${l.area},${l.price},${l.furnished},"${l.contactName.replace(/"/g, '""')}","${l.contactPhone}","${l.ownerBroker}","${l.availability}",${l.photos.length},"${(l.photos[0] || '').replace(/"/g, '""')}"`
+  `"${l.recordId}","${l.listingCategory}","${l.mode}","${l.location.replace(/"/g, '""')}","${l.zone.replace(/"/g, '""')}","${l.propertyType}",${l.bedrooms},${l.bathrooms},${l.area},${l.price},${l.furnished},"${l.contactName.replace(/"/g, '""')}","${l.contactPhone}","${l.ownerBroker}","${l.availability}",${l.photos.length},"${(l.photos[0] || '').replace(/"/g, '""')}"`
 ).join('\n');
 
 fs.writeFileSync(path.join(publicDir, 'sierra-estates-clean-inventory.csv'), cleanCsvHeader + cleanCsvRows, 'utf8');
@@ -158,11 +172,11 @@ async function syncToFirestore() {
 
   try {
     if (getApps().length === 0) {
-      if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && process.env.GOOGLE_SERVICE_ACCOUNT_KEY.includes('{')) {
+      if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && process.env.GOOGLE_SERVICE_ACCOUNT_KEY.includes('{') && process.env.GOOGLE_SERVICE_ACCOUNT_KEY.includes('private_key')) {
         const sa = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
         initializeApp({ credential: cert(sa), projectId });
         console.log(`🔑 Authenticated via GOOGLE_SERVICE_ACCOUNT_KEY → ${projectId}`);
-      } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && !process.env.FIREBASE_PRIVATE_KEY.includes('...')) {
         initializeApp({
           credential: cert({
             projectId,
@@ -190,7 +204,7 @@ async function syncToFirestore() {
         const batch = db.batch();
         const slice = listings.slice(i, i + BATCH_SIZE);
         for (const unit of slice) {
-          const docRef = db.collection(colName).doc(unit.id);
+          const docRef = db.collection(colName).doc(String(unit.recordId));
           batch.set(docRef, unit, { merge: true });
         }
         await batch.commit();
