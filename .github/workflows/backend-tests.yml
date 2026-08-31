@@ -15,6 +15,7 @@ on:
       - 'functions/**'
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
+  workflow_dispatch: {}
 
 concurrency:
   group: backend-tests-${{ github.ref }}
