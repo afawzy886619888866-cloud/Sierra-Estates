@@ -3,8 +3,9 @@
   "files.associations": {
     "*.sql": "postgres",
     "pnpm-lock.yaml": "text",
-    ".github/workflows/*.yml": "yaml",
-    ".github/workflows/*.yaml": "yaml"
+    "**/.github/workflows/*.yml": "yaml",
+    "**/.github/workflows/*.yaml": "yaml",
+    "**/.github/workflows/*": "yaml"
   },
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
