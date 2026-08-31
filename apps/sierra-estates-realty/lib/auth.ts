@@ -75,20 +75,23 @@ export async function verifySession(token: string | null | undefined): Promise<S
 export const SESSION_COOKIE = COOKIE_NAME;
 
 export function cookieOpts(reqHost?: string) {
-  const isLocalhost =
-    reqHost?.includes("localhost") ||
-    reqHost?.includes("127.0.0.1") ||
+  const host = (reqHost || "").toLowerCase();
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("::1") ||
+    host.includes("0.0.0.0") ||
     !IS_PROD;
   const configuredDomain = process.env.COOKIE_DOMAIN?.trim();
-  const domain = isLocalhost || !configuredDomain ? undefined : configuredDomain;
+  const domain = isLocal || !configuredDomain ? undefined : configuredDomain;
 
   return {
     httpOnly: true,
-    secure: IS_PROD,
+    secure: IS_PROD && !isLocal,
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
-    domain,
+    ...(domain ? { domain } : {}),
   };
 }
 
