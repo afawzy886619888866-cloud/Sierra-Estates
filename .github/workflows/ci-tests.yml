@@ -21,6 +21,7 @@ on:
       - '.github/workflows/ci-tests.yml'
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-tests-${{ github.ref }}
