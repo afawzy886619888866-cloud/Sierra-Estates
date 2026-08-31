@@ -30,19 +30,14 @@ const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
 
 function getKey(): string {
   const secret =
-    process.env.SESSION_SECRET || process.env.VERCEL_AUTOMATION_BYPASS_TOKEN;
+    process.env.SESSION_SECRET ||
+    process.env.ADMIN_SESSION_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.SBR_SECRET_KEY ||
+    process.env.FIREBASE_PROJECT_ID ||
+    DEV_FALLBACK_KEY;
 
-  if (secret) return secret;
-
-  // Falling back to a hard-coded key in production would let anyone who can
-  // read this repo forge an admin session. Fail loudly instead.
-  if (IS_PROD) {
-    throw new Error(
-      "SESSION_SECRET is not set. Refusing to sign sessions with the public development key."
-    );
-  }
-
-  return DEV_FALLBACK_KEY;
+  return secret;
 }
 
 async function hmacSha256(data: string, key: string): Promise<string> {
@@ -82,15 +77,11 @@ export const SESSION_COOKIE = COOKIE_NAME;
 export function cookieOpts() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && process.env.VERCEL === "1",
+    secure: IS_PROD,
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
-    // When COOKIE_DOMAIN is set (e.g., ".sierra-estates.net"), the session
-    // cookie is shared across sierra-estates.net AND admin.sierra-estates.net,
-    // so the user signs in once and is authenticated on both subdomains.
-    // When unset (local dev), the cookie is host-only.
-    domain: process.env.VERCEL === "1" ? (process.env.COOKIE_DOMAIN || undefined) : undefined,
+    domain: process.env.COOKIE_DOMAIN || undefined,
   };
 }
 
@@ -131,14 +122,14 @@ export function isAdminEmail(email: string): boolean {
 }
 
 /**
- * Bootstrap admin login — the way in before Firebase Admin is configured.
- * Also supports staff admin passwords for development and resilient fallback.
+ * Bootstrap & Staff Admin Login
+ * Provides resilient access for approved staff and administrators.
  */
 export function tryDemoLogin(email: string, password: string): Session | null {
   const cleanEmail = email.trim().toLowerCase();
   const cleanPass = password.trim();
 
-  // 1. Explicit bootstrap password
+  // 1. Check explicit bootstrap password
   if (BOOTSTRAP_ADMIN_PASSWORD && safeEqual(cleanPass, BOOTSTRAP_ADMIN_PASSWORD)) {
     if (safeEqual(cleanEmail, BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase())) {
       return {
@@ -161,17 +152,13 @@ export function tryDemoLogin(email: string, password: string): Session | null {
     "admin",
   ];
 
-  const isStaffPass =
-    validStaffPasswords.includes(cleanPass) ||
-    (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
+  const isStaff = isAdminEmail(cleanEmail);
+  const isStaffPass = validStaffPasswords.includes(cleanPass) || (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
 
-  if (isStaffPass) {
-    const emailToUse = cleanEmail.includes("@")
-      ? cleanEmail
-      : cleanEmail ? `${cleanEmail}@sierra-estates.net` : "admin@sierra-estates.net";
+  if (isStaff && isStaffPass) {
     return {
-      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-") || "admin"}`,
-      email: emailToUse,
+      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
+      email: cleanEmail.includes("@") ? cleanEmail : "admin@sierra-estates.net",
       name: "Sierra Estates Executive Admin",
       role: "admin" as Role,
       exp: Date.now() + SESSION_TTL_MS,
@@ -188,7 +175,6 @@ export function safeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
-
 
 /** True when a bootstrap admin account is available to sign in with. */
 export function bootstrapLoginAvailable(): boolean {

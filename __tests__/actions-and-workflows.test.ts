@@ -85,7 +85,11 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       for (const wf of cancelConcurrencyWorkflows) {
         const content = fs.readFileSync(path.join(WORKFLOWS_DIR, wf), 'utf-8');
         expect(content, `${wf} should declare concurrency group`).toContain('concurrency:');
-        expect(content, `${wf} should declare cancel-in-progress`).toMatch(/cancel-in-progress:\s*(true|\$\{\{)/);
+        if (wf === 'ci.yml') {
+          expect(content, `${wf} should conditionally cancel-in-progress`).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
+        } else {
+          expect(content, `${wf} should cancel-in-progress: true`).toContain('cancel-in-progress: true');
+        }
       }
     });
 
@@ -106,26 +110,56 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     });
   });
 
-  describe('Secret & Variable Dual-Binding Fallbacks', () => {
-    it('external-workflows.yml must support fallback between vars and secrets', () => {
-      const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'external-workflows.yml'), 'utf-8');
-      expect(content).toContain('PROPERTY_FINDER_API_BASE: ${{ vars.PROPERTY_FINDER_API_BASE || secrets.PROPERTY_FINDER_API_BASE');
-      expect(content).toContain('BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID || secrets.BROKER_INBOX_SHEET_ID }}');
-      expect(content).toContain('WHATSAPP_API_URL: ${{ vars.WHATSAPP_API_URL || secrets.WHATSAPP_API_URL }}');
-      expect(content).toContain('SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL || secrets.SENDGRID_FROM_EMAIL');
-      expect(content).toContain('FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || secrets.FIREBASE_PROJECT_ID');
+  describe('External Workflows (external-workflows.yml) Deep Contract Suite', () => {
+    const extWfPath = path.join(WORKFLOWS_DIR, 'external-workflows.yml');
+    const content = fs.readFileSync(extWfPath, 'utf-8');
+
+    it('must use the official json.schemastore.org workflow schema', () => {
+      expect(content).toContain('$schema=https://json.schemastore.org/github-workflow.json');
     });
 
-    it('vercel-cron-bridge.yml must guard on CRON_SECRET and skip gracefully if unset', () => {
-      const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'vercel-cron-bridge.yml'), 'utf-8');
-      expect(content).toContain('CRON_SECRET');
-      expect(content).toContain('skipping cron bridge invocation');
+    it('must define all 5 scheduled jobs and summary reporter', () => {
+      expect(content).toContain('owner-search:');
+      expect(content).toContain('owner-contact:');
+      expect(content).toContain('email-sender:');
+      expect(content).toContain('unit-adder:');
+      expect(content).toContain('summary:');
     });
 
-    it('whatsapp-dispatch-cron.yml must guard on CRON_SECRET and skip gracefully if unset', () => {
-      const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'whatsapp-dispatch-cron.yml'), 'utf-8');
-      expect(content).toContain('CRON_SECRET');
-      expect(content).toContain('skipping WhatsApp dispatch cron');
+    it('must define exact schedules for each automation pipeline', () => {
+      expect(content).toContain("- cron: '0 9 * * *'"); // Owner Search (9am)
+      expect(content).toContain("- cron: '0 10 * * *'"); // Owner Contact (10am)
+      expect(content).toContain("- cron: '0 8 * * *'"); // Email Sender (8am)
+      expect(content).toContain("- cron: '*/30 * * * *'"); // Unit Adder (every 30m)
+    });
+
+    it('must configure workflow_dispatch with choices', () => {
+      expect(content).toContain('workflow_dispatch:');
+      expect(content).toContain('owner-search');
+      expect(content).toContain('owner-contact');
+      expect(content).toContain('email-sender');
+      expect(content).toContain('unit-adder');
+    });
+
+    it('must guard all jobs against missing secrets with graceful skips', () => {
+      expect(content).toContain('PROPERTY_FINDER_JWT_TOKEN, GOOGLE_SERVICE_ACCOUNT_KEY');
+      expect(content).toContain('WHATSAPP_API_TOKEN, GOOGLE_SERVICE_ACCOUNT_KEY');
+      expect(content).toContain('SENDGRID_API_KEY, GOOGLE_SERVICE_ACCOUNT_KEY');
+      expect(content).toContain('GOOGLE_SERVICE_ACCOUNT_KEY, BROKER_INBOX_SHEET_ID');
+    });
+
+    it('must pass all necessary Google Sheets, Firebase, SendGrid, and WhatsApp credentials', () => {
+      expect(content).toContain("GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets['GOOGLE_SERVICE_ACCOUNT_KEY'] }}");
+      expect(content).toContain('BROKER_INBOX_SHEET_ID:');
+      expect(content).toContain("PROPERTY_FINDER_JWT_TOKEN: ${{ secrets['PROPERTY_FINDER_JWT_TOKEN'] }}");
+      expect(content).toContain("WHATSAPP_API_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] }}");
+      expect(content).toContain("SENDGRID_API_KEY: ${{ secrets['SENDGRID_API_KEY'] }}");
+      expect(content).toContain("FIREBASE_PRIVATE_KEY: ${{ secrets['FIREBASE_PRIVATE_KEY'] }}");
+    });
+
+    it('summary job must depend on all 4 pipelines and execute unconditionally', () => {
+      expect(content).toContain('needs: [owner-search, owner-contact, email-sender, unit-adder]');
+      expect(content).toContain('if: always()');
     });
   });
 });

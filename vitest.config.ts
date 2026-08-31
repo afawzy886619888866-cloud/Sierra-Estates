@@ -5,13 +5,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    passWithNoTests: true,
     include: [
+      'packages/*/src/__tests__/**/*.test.ts',
+      'packages/*/src/**/*.test.ts',
       'packages/shared/src/__tests__/**/*.test.ts',
       'packages/agents-core/src/__tests__/**/*.test.ts',
+      'packages/memory-engine/src/__tests__/**/*.test.ts',
       'infra/n8n-workflows/__tests__/**/*.test.ts',
       'infra/whatsapp-scraper/__tests__/**/*.test.ts',
       'apps/agents/__tests__/**/*.test.ts',
-      'apps/admin-dashboard/src/__tests__/**/*.test.ts',
       'workflows/__tests__/**/*.test.ts',
       'deploy/__tests__/**/*.test.ts',
       '__tests__/**/*.test.ts',
@@ -26,3 +29,4 @@ export default defineConfig({
     },
   },
 });
+

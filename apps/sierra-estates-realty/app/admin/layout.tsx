@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { auth, isFirebaseClientConfigured } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db, isFirebaseClientConfigured } from '@/lib/firebase';
 import { isAdminPortalRole } from '@/lib/types';
 
 /**
@@ -20,36 +22,18 @@ export default function AdminLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
+    let refreshInterval: NodeJS.Timeout | null = null;
+    let unsubAuth: (() => void) | null = null;
 
     const verifyAccess = async () => {
-      // 0. Quick client-side check if previously signed in
+      // 1. Check server-side session cookie via /api/auth
       try {
-        if (typeof window !== 'undefined') {
-          const clientAuth = sessionStorage.getItem('sierra_admin_auth') || localStorage.getItem('sierra_admin_auth');
-          if (clientAuth === 'true') {
-            if (!cancelled) {
-              setIsAuth(true);
-              setIsLoading(false);
-            }
-          }
-        }
-      } catch {}
-
-      // 1. Check server-side session cookie via /api/auth (primary source of truth)
-      try {
-        const res = await fetch('/api/auth', { cache: 'no-store', credentials: 'include' });
+        const res = await fetch('/api/auth', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.signedIn && isAdminPortalRole(data.role)) {
-            try {
-              sessionStorage.setItem('sierra_admin_auth', 'true');
-              localStorage.setItem('sierra_admin_auth', 'true');
-            } catch {}
-            if (!cancelled) {
-              setIsAuth(true);
-              setIsLoading(false);
-            }
+            setIsAuth(true);
+            setIsLoading(false);
             return;
           }
         }
@@ -57,53 +41,50 @@ export default function AdminLayout({
         console.warn('[AdminLayout] Session cookie verification failed:', err);
       }
 
-      // 2. Fallback: check Firebase client auth if configured and exchange token
-      if (isFirebaseClientConfigured && auth?.currentUser) {
-        try {
-          const user = auth.currentUser;
-          const token = await user.getIdToken();
-          const res = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              action: 'signin',
-              provider: 'google',
-              email: user.email,
-              token,
-              uid: user.uid,
-              name: user.displayName,
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.ok && isAdminPortalRole(data.role)) {
-              if (!cancelled) {
-                setIsAuth(true);
-                setIsLoading(false);
-              }
-              return;
-            }
+      // 2. Check Firebase client auth if configured
+      if (isFirebaseClientConfigured) {
+        unsubAuth = onAuthStateChanged(auth, async (user) => {
+          if (!user) {
+            setIsAuth(false);
+            if (!isLoginPage) router.replace('/admin/login');
+            setIsLoading(false);
+            return;
           }
-        } catch (fbErr) {
-          console.warn('[AdminLayout] Firebase client token exchange error:', fbErr);
-        }
-      }
 
-      // 3. Not authenticated -> redirect to login
-      if (!cancelled) {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const role = userDoc.data()?.role;
+
+            if (isAdminPortalRole(role)) {
+              setIsAuth(true);
+              if (refreshInterval) clearInterval(refreshInterval);
+              refreshInterval = setInterval(() => {
+                user.getIdToken(true).catch((tokenErr) => console.warn('[AdminLayout] Token refresh failed:', tokenErr));
+              }, 10 * 60 * 1000);
+            } else {
+              setIsAuth(false);
+              router.replace('/admin/login');
+            }
+          } catch (error) {
+            console.error('Error checking admin role:', error);
+            setIsAuth(false);
+            router.replace('/admin/login');
+          } finally {
+            setIsLoading(false);
+          }
+        });
+      } else {
         setIsAuth(false);
+        if (!isLoginPage) router.replace('/admin/login');
         setIsLoading(false);
-        if (!isLoginPage) {
-          router.replace('/admin/login');
-        }
       }
     };
 
     verifyAccess();
 
     return () => {
-      cancelled = true;
+      if (refreshInterval) clearInterval(refreshInterval);
+      if (unsubAuth) unsubAuth();
     };
   }, [router, isLoginPage]);
 

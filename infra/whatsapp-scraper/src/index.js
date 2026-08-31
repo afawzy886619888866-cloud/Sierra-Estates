@@ -29,8 +29,8 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import baileysPkg, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
-const makeWASocket = baileysPkg.default || baileysPkg.makeWASocket || baileysPkg;
+import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import fetch from 'node-fetch';

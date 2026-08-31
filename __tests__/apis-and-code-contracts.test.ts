@@ -29,7 +29,7 @@ describe('APIs & Code Contracts Test Suite', () => {
       const parsed = leadSchema.safeParse(invalidPayload);
       expect(parsed.success).toBe(false);
       if (!parsed.success) {
-        const errorMessages = parsed.error.issues.map((i) => i.message);
+        const errorMessages = parsed.error.issues.map((i: any) => i.message);
         expect(errorMessages).toContain('Name is required');
         expect(errorMessages).toContain('Invalid email address');
       }

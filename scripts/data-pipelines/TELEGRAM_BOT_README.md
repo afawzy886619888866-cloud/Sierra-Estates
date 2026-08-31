@@ -1,6 +1,8 @@
 # 🤖 Telegram Bot Integration Status
 
-**Bot Token:** `8719045454:AAH4E11VUdXiK_HldPX2ZSllSFPgntamC0I`
+**Bot Token:** set via the `TELEGRAM_BOT_TOKEN` environment variable — never commit it.
+> ⚠️ A live token was previously committed here and is still present in git history.
+> It must be revoked and reissued via @BotFather; redacting this file is not sufficient.
 
 ### ✅ Completed Tasks
 
