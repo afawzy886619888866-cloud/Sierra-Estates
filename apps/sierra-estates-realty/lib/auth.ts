@@ -33,9 +33,21 @@ function getKey(): string {
     process.env.SESSION_SECRET ||
     process.env.ADMIN_SESSION_SECRET ||
     process.env.NEXTAUTH_SECRET ||
-    process.env.SBR_SECRET_KEY ||
-    process.env.FIREBASE_PROJECT_ID ||
-    DEV_FALLBACK_KEY;
+    process.env.SBR_SECRET_KEY;
+
+  // FIREBASE_PROJECT_ID used to sit at the end of this chain, ahead of the dev
+  // fallback. It is not a secret — it is also published as
+  // NEXT_PUBLIC_FIREBASE_PROJECT_ID and is visible in every client bundle — so
+  // anyone could mint a `sierra_sess` cookie with role "admin". Same for the
+  // committed DEV_FALLBACK_KEY. Production must fail closed and loud instead.
+  if (!secret) {
+    if (IS_PROD) {
+      throw new Error(
+        "SESSION_SECRET is not configured — refusing to sign or verify admin sessions with a public or committed fallback key.",
+      );
+    }
+    return DEV_FALLBACK_KEY;
+  }
 
   return secret;
 }
@@ -144,45 +156,34 @@ export function tryDemoLogin(email: string, password: string): Session | null {
   const cleanEmail = (email || "").trim().toLowerCase();
   const cleanPass = (password || "").trim();
 
-  // 1. Check explicit bootstrap password or staff master passwords
-  const validStaffPasswords = [
-    "sierra2026",
-    "sierra-admin-2026",
-    "sierra2026!",
-    "sierra@123",
-    "adminsierra2026!",
-    "adminsierra2026",
-    "admin123",
-    "admin",
-    "password",
-    "123456",
-    "12345678",
-    "fawzy2026",
-    "fawzy2026!",
-    "fawzy@123",
-    "fawzy",
-  ];
+  // This path previously accepted a hardcoded list of passwords — including
+  // "admin", "password", "123456" and "12345678" — and its final condition was
+  // `... || isKnownStaffPass`, which made the email check irrelevant. The route
+  // calling it (app/api/auth/route.ts, Path C) has no environment gate, so any
+  // POST /api/auth with any email and one of those passwords was issued a signed
+  // session cookie with role "admin" in production. The list is gone.
+  //
+  // What remains: a single operator-configured password, compared in constant
+  // time, and only for an address that is already an admin email. With no
+  // password configured this path is closed — which is the correct default.
+  const configuredPass =
+    process.env.ADMIN_BOOTSTRAP_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ADMIN_SECRET ||
+    "";
 
-  const envPass = process.env.ADMIN_PASSWORD || process.env.ADMIN_SECRET || BOOTSTRAP_ADMIN_PASSWORD;
-  const isBootstrapPass = BOOTSTRAP_ADMIN_PASSWORD && safeEqual(cleanPass, BOOTSTRAP_ADMIN_PASSWORD);
-  const isKnownStaffPass =
-    validStaffPasswords.includes(cleanPass.toLowerCase()) ||
-    validStaffPasswords.includes(cleanPass) ||
-    (Boolean(envPass) && cleanPass === envPass);
+  if (!configuredPass) return null;
+  if (!cleanEmail || !cleanPass) return null;
+  if (!isAdminEmail(cleanEmail)) return null;
+  if (!safeEqual(cleanPass, configuredPass)) return null;
 
-  const isStaff = isAdminEmail(cleanEmail) || cleanEmail.includes("admin") || cleanEmail.includes("sierra");
-
-  if ((isBootstrapPass && safeEqual(cleanEmail, BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase())) || (isStaff && isKnownStaffPass) || isKnownStaffPass) {
-    return {
-      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-") || "admin"}`,
-      email: cleanEmail.includes("@") ? cleanEmail : BOOTSTRAP_ADMIN_EMAIL,
-      name: "Sierra Estates Executive Admin",
-      role: "admin" as Role,
-      exp: Date.now() + SESSION_TTL_MS,
-    };
-  }
-
-  return null;
+  return {
+    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
+    email: cleanEmail,
+    name: "Sierra Estates Executive Admin",
+    role: "admin" as Role,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
 }
 
 /** Constant-time string comparison. */

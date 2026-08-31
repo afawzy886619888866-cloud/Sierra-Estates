@@ -10,6 +10,7 @@
         "type-check": "tsc --noEmit",
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
+        "seed:admin": "node scripts/seed-admin.mjs",
         "test": "jest --testPathPatterns=__tests__",
         "test:ci": "jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
     },
