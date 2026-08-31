@@ -90,7 +90,7 @@ export function cookieOpts() {
     // cookie is shared across sierra-estates.net AND admin.sierra-estates.net,
     // so the user signs in once and is authenticated on both subdomains.
     // When unset (local dev), the cookie is host-only.
-    domain: process.env.COOKIE_DOMAIN || undefined,
+    domain: process.env.VERCEL === "1" ? (process.env.COOKIE_DOMAIN || undefined) : undefined,
   };
 }
 

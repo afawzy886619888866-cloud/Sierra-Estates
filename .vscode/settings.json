@@ -23,5 +23,6 @@
   },
   "yaml.schemas": {},
   "yaml.customTags": [],
+  "yaml.validate": false,
   "compilets.autoStart": true
 }
