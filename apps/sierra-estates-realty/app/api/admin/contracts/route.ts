@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   DigitalContractData, 
   generateContractNumber, 
-  generateSignatureHash, 
-  renderBilingualContractHtml 
+  generateSignatureHash 
 } from '@/lib/services/digital-contracts';
 
 // In-memory store fallback for development and test environments
@@ -45,7 +44,7 @@ const sampleContract: DigitalContractData = {
 
 inMemoryContracts.set(sampleContract.id, sampleContract);
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const contracts = Array.from(inMemoryContracts.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

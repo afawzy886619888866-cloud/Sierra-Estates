@@ -1,24 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  TrendingUp, 
-  Percent, 
-  DollarSign, 
   Building2, 
   MapPin, 
   Compass, 
-  ShieldCheck, 
-  ArrowUpRight, 
   Filter,
   Sparkles,
-  Layers,
   ChevronRight
 } from 'lucide-react';
 import { CompoundHeatmapMetric, COMPOUNDS_HEATMAP_DATA } from '@/app/api/analytics/compounds-heatmap/route';
 
 export function HeatmapView() {
-  const [compounds, setCompounds] = useState<CompoundHeatmapMetric[]>(COMPOUNDS_HEATMAP_DATA);
+  const [compounds] = useState<CompoundHeatmapMetric[]>(COMPOUNDS_HEATMAP_DATA);
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'capRate' | 'priceSqm' | 'appreciation' | 'inventory'>('capRate');
   const [selectedCompound, setSelectedCompound] = useState<CompoundHeatmapMetric | null>(COMPOUNDS_HEATMAP_DATA[0]);

@@ -8,14 +8,9 @@ import {
   Clock, 
   Printer, 
   ShieldCheck, 
-  Download, 
   Sparkles, 
-  DollarSign, 
   Building2, 
-  User, 
-  Phone,
-  Layers,
-  Copy,
+  User,
   ExternalLink
 } from 'lucide-react';
 
