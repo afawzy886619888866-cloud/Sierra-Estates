@@ -141,14 +141,14 @@ The repository includes a 14-node cognitive architecture and domain vault:
 This project uses the Micro-Contract Development (MCD) protocol.
 
 ### Slash Commands Routing
-- **/evaluate** → [`.claude/commands/evaluate.md`](.claude/commands/evaluate.md) / [`.agents/workflows/evaluate.md`](.agents/workflows/evaluate.md)
-- **/contract** → [`.claude/commands/contract.md`](.claude/commands/contract.md) / [`.agents/workflows/contract.md`](.agents/workflows/contract.md)
-- **/execute** → [`.claude/commands/execute.md`](.claude/commands/execute.md) / [`.agents/workflows/execute.md`](.agents/workflows/execute.md)
-- **/closeout** → [`.claude/commands/closeout.md`](.claude/commands/closeout.md) / [`.agents/workflows/closeout.md`](.agents/workflows/closeout.md)
-- **/help** → [`.claude/commands/help.md`](.claude/commands/help.md) / [`.agents/workflows/help.md`](.agents/workflows/help.md)
-- **/remember** → [`.claude/commands/remember.md`](.claude/commands/remember.md) / [`.agents/workflows/remember.md`](.agents/workflows/remember.md)
-- **/docs** → [`.claude/commands/docs.md`](.claude/commands/docs.md) / [`.agents/workflows/docs.md`](.agents/workflows/docs.md)
-- **/bug** → [`.claude/commands/bug.md`](.claude/commands/bug.md) / [`.agents/workflows/bug.md`](.agents/workflows/bug.md)
+- **/evaluate** → [`.agents/workflows/evaluate.md`](.agents/workflows/evaluate.md)
+- **/contract** → [`.agents/workflows/contract.md`](.agents/workflows/contract.md)
+- **/execute** → [`.agents/workflows/execute.md`](.agents/workflows/execute.md)
+- **/closeout** → [`.agents/workflows/closeout.md`](.agents/workflows/closeout.md)
+- **/help** → [`.agents/workflows/help.md`](.agents/workflows/help.md)
+- **/remember** → [`.agents/workflows/remember.md`](.agents/workflows/remember.md)
+- **/docs** → [`.agents/workflows/docs.md`](.agents/workflows/docs.md)
+- **/bug** → [`.agents/workflows/bug.md`](.agents/workflows/bug.md)
 
 ### Command Deck REST API
 Base URL: `http://127.0.0.1:{port}` (resolved from `.amphion/config.json`):
