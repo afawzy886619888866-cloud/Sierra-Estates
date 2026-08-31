@@ -27,7 +27,10 @@
   "markdown.validate.enabled": true,
   "github-actions.workflows.validations.enabled": false,
   "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow.json": []
+    "none": [
+      "pnpm-lock.yaml",
+      "**/pnpm-lock.yaml"
+    ]
   },
   "yaml.schemaStore.enable": false
 }
