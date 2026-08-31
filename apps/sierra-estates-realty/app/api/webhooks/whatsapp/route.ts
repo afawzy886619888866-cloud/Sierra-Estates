@@ -88,6 +88,11 @@ export async function POST(req: NextRequest) {
     const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
     const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
 
+    const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
+    const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
+    const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
+    const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
+
     // Support text messages and audio/voice note messages
     let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
     const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
@@ -99,11 +104,6 @@ export async function POST(req: NextRequest) {
       message = parsedVoice.rawTranscript;
       console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
     }
-
-    const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
-    const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
-    const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
-    const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
     if (!message) {
       return NextResponse.json({ error: "Empty signal ignored" }, { status: 400 });
