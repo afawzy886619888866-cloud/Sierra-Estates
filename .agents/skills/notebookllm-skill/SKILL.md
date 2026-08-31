@@ -1,75 +1,22 @@
 ---
 name: notebookllm-skill
-description: Grounded multi-source research, citation verification, study guide creation, and NotebookLM-style Audio Overview podcast briefing generation for Sierra Estates.
+description: Grounded New Cairo Real Estate Information Bank, intelligent unit recommendation, citation verification, study guide creation, and NotebookLM-style Audio Overview podcast briefing generation for Sierra Estates.
 ---
 
-# NotebookLM Grounded Knowledge & Audio Briefing Skill
+# Information Bank & New Cairo Unit Recommendation Engine (NotebookLM Skill)
 
 ## Overview
 
-The `notebookllm-skill` provides Google NotebookLM capabilities specifically tailored for Sierra Estates real estate intelligence:
+The `notebookllm-skill` (Sierra Information Bank / بنك المعلومات العقاري) provides Google NotebookLM-powered intelligence and unit recommendations tailored for New Cairo and luxury Egyptian real estate:
 
-1. **Strict Source Grounding & Citation Verification**: Query across multiple heterogeneous real estate documents (developer PDF brochures, compound masterplans, Excel inventory archives, WhatsApp owner negotiations, and contracts) with direct verbatim citation attribution.
-2. **Audio Overview Generation**: Automatically generate 2-person Deep Dive podcast scripts (Host & Financial Analyst) discussing compound yields, payment structures, and market arbitrage.
-3. **Investment Memorandum & Study Guide Synthesis**: Distill complex 50-page developer agreements and payment matrices into executive memos.
+1. **New Cairo Real Estate Encyclopedia**: Built-in verified knowledge spanning Golden Square, Fifth Settlement, Mostakbal City, and prime compounds (Mivida, Palm Hills, Mountain View iCity, Hyde Park, Villette, Eastown, Swan Lake, Azzar, etc.).
+2. **Intelligent Unit Recommendation**: When any user asks about buying, renting, or investing in New Cairo, it suggests the best matching compounds, specific unit types (Apartments, iVillas, Townhouses, Standalones), prices, down payments, and installment structures.
+3. **Strict Source Grounding & Citation Verification**: Query across multiple verified real estate documents with direct verbatim citation attribution.
+4. **Audio Overview Generation**: Automatically generate 2-person Deep Dive podcast scripts (Host & Financial Analyst) discussing compound yields, payment structures, and market arbitrage.
+5. **Investment Memorandum & Study Guide Synthesis**: Distill complex developer agreements, pricing spreadsheets, and payment matrices into executive memos.
 
 ## TypeScript Architecture
 
 - **Engine**: [`NotebookLMEngine`](file:///h:/last/Main/SE-Vercel-deploy-main/packages/agents-core/src/notebookllm-engine.ts)
 - **Export**: `@sierra-estates/agents-core`
-
-## Usage Examples
-
-### 1. Grounded Q&A with Citation Provenance
-
-```typescript
-import { NotebookLMEngine, SourceDocument } from '@sierra-estates/agents-core';
-
-const engine = new NotebookLMEngine();
-
-const sources: SourceDocument[] = [
-  {
-    id: 'mivida-brochure-2026',
-    title: 'Emaar Mivida Masterplan & Resale Guideline',
-    type: 'pdf',
-    content: 'Mivida standalone villas in Crescent Park average 120,000 EGP per sqm with immediate delivery...',
-  },
-  {
-    id: 'hyde-park-excel-inventory',
-    title: 'Hyde Park New Cairo Master Inventory',
-    type: 'excel',
-    content: 'Unit HP-VL-01: 480 sqm villa listed at 28.5M EGP (59,375 EGP/sqm). Owner open to 10% cash discount.',
-  }
-];
-
-const result = await engine.queryGroundedSources(
-  sources,
-  'Compare the price per square meter between Mivida Crescent Park and Hyde Park villas.'
-);
-
-console.log('Answer:', result.answer);
-console.log('Direct Citations:', result.citations);
-console.log('Grounding Score:', result.groundingScore);
-```
-
-### 2. Generate an Audio Overview Podcast Script
-
-```typescript
-import { NotebookLMEngine } from '@sierra-estates/agents-core';
-
-const engine = new NotebookLMEngine();
-
-const episode = await engine.generateAudioOverview(
-  sources,
-  'Golden Square vs 5th Settlement Villa Yield Arbitrage'
-);
-
-console.log('Podcast Title:', episode.title);
-console.log('Dialogue Turns:', episode.script);
-```
-
-## Integration Touchpoints
-
-- **Hermes WhatsApp Closer**: Can invoke grounded Q&A to answer complex payment-plan questions without hallucination.
-- **Telegram Command OS**: Use `/briefing <compound>` to generate a 2-minute executive audio overview dialogue.
-- **Valuation Agent**: Validates comps against uploaded official developer price lists.
+- **Client Route**: `/notebookllm` & `/ar/notebookllm` (Information Bank / بنك المعلومات)
