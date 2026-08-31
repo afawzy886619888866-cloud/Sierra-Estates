@@ -9,7 +9,7 @@ import {
   Sparkles,
   ChevronRight
 } from 'lucide-react';
-import { CompoundHeatmapMetric, COMPOUNDS_HEATMAP_DATA } from '@/app/api/analytics/compounds-heatmap/route';
+import { CompoundHeatmapMetric, COMPOUNDS_HEATMAP_DATA } from '@/lib/services/compounds-heatmap-data';
 
 export function HeatmapView() {
   const [compounds] = useState<CompoundHeatmapMetric[]>(COMPOUNDS_HEATMAP_DATA);
