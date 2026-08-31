@@ -248,7 +248,7 @@ jobs:
           WA_TOKEN: ${{ secrets['WHATSAPP_API_TOKEN'] || secrets['WHATSAPP_META_TOKEN'] }}
           WA_PHONE_ID: ${{ vars['WHATSAPP_PHONE_NUMBER_ID'] }}
           WA_VERIFY: ${{ secrets['WHATSAPP_VERIFY_TOKEN'] }}
-          LEAD_WHATSAPP: ${{ secrets['LEAD_NOTIFY_WHATSAPP_NUMBER'] }}
+          LEAD_WHATSAPP: ${{ vars['LEAD_NOTIFY_WHATSAPP_NUMBER'] }}
           BRAND_TAG: ${{ vars['BRANDING_TAG'] }}
           WABA_1: ${{ vars['WABA_NUMBER_1'] }}
           WABA_2: ${{ vars['WABA_NUMBER_2'] }}
