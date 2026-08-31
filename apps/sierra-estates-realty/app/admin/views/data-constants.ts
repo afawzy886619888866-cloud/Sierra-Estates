@@ -155,7 +155,8 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'deep_insights',label:T('lang')==='ar'?'الرؤى العميقة':'Deep Insights',icon:'📈',section:T('analytics')},
   {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
   {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
-  {id:'notebookllm',label:T('lang')==='ar'?'بنك المعلومات العقاري':'Information Bank',icon:'🏦',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
+  {id:'contracts',label:T('lang')==='ar'?'العقود الإلكترونية':'Digital Contracts',icon:'📜',section:T('operations'),badge:'E-SIGN',badgeCls:'nb-green'},
+  {id:'heatmap',label:T('lang')==='ar'?'خريطة العوائد':'Yield Heatmap',icon:'🗺️',section:T('analytics'),badge:'NEW',badgeCls:'nb-blue'},
   {id:'settings',label:T('settings'),icon:'🔧',section:T('system')},
 ];
 
