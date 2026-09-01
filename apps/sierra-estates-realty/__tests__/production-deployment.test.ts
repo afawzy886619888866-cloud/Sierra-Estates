@@ -28,17 +28,17 @@ describe('Production & Deployment Architecture Tests', () => {
       });
       const res = await proxy(req);
       // Status should be 200 / next() without redirect to /admin/login
-      expect(res.status).not.toBe(307);
+      expect(res.status).toBe(200);
       expect(res.headers.get('location')).toBeNull();
     });
 
-    it('redirects legacy /admin/login directly to /admin', async () => {
+    it('allows direct access to /admin/login without redirection', async () => {
       const req = new NextRequest('https://sierra-estates.net/admin/login', {
         method: 'GET',
       });
       const res = await proxy(req);
-      expect(res.status).toBe(307);
-      expect(res.headers.get('location')).toContain('/admin');
+      expect(res.status).toBe(200);
+      expect(res.headers.get('location')).toBeNull();
     });
 
     it('attaches proper CORS headers to API routes', async () => {

@@ -50,12 +50,11 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('redirects the retired /admin/login page to /admin', async () => {
+  it('serves /admin/login directly without redirecting away', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://admin.sierra-estates.net/admin/login'));
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('/admin');
-    expect(res.headers.get('location')).not.toContain('/admin/login');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
   });
 
   it('serves the admin-host root `/` as the console, with no login redirect', async () => {

@@ -1467,10 +1467,12 @@ function AdminApp() {
       const { auth } = await import('@/lib/firebase');
       const { signOut } = await import('firebase/auth');
       await signOut(auth).catch((signOutErr) => console.warn('[AdminPortal] Firebase signOut failed:', signOutErr));
+      const { supabase } = await import('@/lib/supabase');
+      await supabase.auth.signOut().catch(() => {});
     } catch (e) {
       console.warn('Signout error:', e);
     } finally {
-      window.location.href = '/';
+      window.location.href = '/admin/login';
     }
   };
 
