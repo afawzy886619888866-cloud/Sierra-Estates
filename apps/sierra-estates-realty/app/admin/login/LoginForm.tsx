@@ -9,7 +9,7 @@ import '../admin-portal.css';
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState('admin@sierra-estates.net');
-  const [password, setPassword] = useState('sierra2026');
+  const [password, setPassword] = useState('AdminSierra2026!');
   const [isMagicLink, setIsMagicLink] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -18,15 +18,27 @@ export default function LoginForm() {
   // ── 1. Check existing session on mount ──────────────────────────────────
   useEffect(() => {
     // Check Supabase client session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         try {
+          await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              action: 'signin',
+              provider: 'google',
+              email: session.user.email,
+              uid: session.user.id,
+              name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+            }),
+          });
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
         } catch (e) {}
         router.replace('/admin');
       }
-    });
+    }).catch(() => {});
 
     // Check server session cookie
     fetch('/api/auth')
@@ -42,10 +54,22 @@ export default function LoginForm() {
       })
       .catch((err) => console.warn('[LoginForm] Session verification:', err));
 
-    // Listen for live Supabase Auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Listen for live Supabase Auth state changes (e.g., Google OAuth callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         try {
+          await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              action: 'signin',
+              provider: 'google',
+              email: session.user.email,
+              uid: session.user.id,
+              name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+            }),
+          });
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
         } catch (e) {}
@@ -55,11 +79,11 @@ export default function LoginForm() {
     });
 
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe?.();
     };
   }, [router]);
 
-  // ── 2. Password Login via Supabase & Server Session ──────────────────────
+  // ── 2. Password Login via Server Session & Supabase ──────────────────────
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -67,15 +91,10 @@ export default function LoginForm() {
     setLoading(true);
 
     const cleanEmail = email.trim();
+    const supaEmail = cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@sierra-estates.net`;
 
     try {
-      // 1. Authenticate with Supabase Auth Client
-      const { data: supaData, error: supaErr } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
-
-      // 2. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
+      // 1. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
       const serverRes = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -89,8 +108,20 @@ export default function LoginForm() {
 
       const serverResult = await serverRes.json().catch(() => ({}));
 
-      // Check if either Supabase or Master Staff Auth succeeded
-      if (supaData?.session || (serverRes.ok && serverResult.ok)) {
+      // 2. Also authenticate with Supabase Auth Client in background
+      let supaData: any = null;
+      try {
+        const res = await supabase.auth.signInWithPassword({
+          email: supaEmail,
+          password,
+        });
+        supaData = res.data;
+      } catch (sErr) {
+        // Server auth is primary for configured admin roles
+      }
+
+      // Check if either Server Auth or Supabase succeeded
+      if ((serverRes.ok && serverResult.ok) || supaData?.session) {
         try {
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
@@ -102,7 +133,7 @@ export default function LoginForm() {
       }
 
       throw new Error(
-        supaErr?.message || serverResult?.error || 'Invalid email or password. Please verify your credentials.'
+        serverResult?.error || 'Invalid email or password. Please verify your credentials.'
       );
     } catch (err: any) {
       setError(err?.message || 'Authentication failed. Please check your credentials.');
@@ -138,13 +169,59 @@ export default function LoginForm() {
     }
   };
 
-  // ── 4. Supabase Google OAuth ─────────────────────────────────────────────
+  // ── 4. Google Sign-In (Firebase Popup + Supabase OAuth Fallback) ─────────
   const handleGoogleSignIn = async () => {
     setError('');
     setSuccessMsg('');
     setLoading(true);
 
     try {
+      // 1. Check if Firebase Client is available
+      const { isFirebaseClientConfigured, auth } = await import('@/lib/firebase');
+      if (isFirebaseClientConfigured) {
+        try {
+          const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          const result = await signInWithPopup(auth, provider);
+          const idToken = await result.user.getIdToken();
+          const googleEmail = result.user.email || '';
+          const googleName = result.user.displayName || '';
+
+          const serverRes = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              action: 'signin',
+              provider: 'google',
+              token: idToken,
+              email: googleEmail,
+              name: googleName,
+            }),
+          });
+
+          const serverResult = await serverRes.json().catch(() => ({}));
+          if (serverRes.ok && serverResult.ok) {
+            try {
+              sessionStorage.setItem('sierra_admin_auth', 'true');
+              localStorage.setItem('sierra_admin_auth', 'true');
+            } catch (e) {}
+            router.replace('/admin');
+            router.refresh();
+            return;
+          }
+        } catch (fbErr: any) {
+          const code = fbErr?.code || '';
+          if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+            setLoading(false);
+            return;
+          }
+          console.warn('[LoginForm] Firebase Google sign-in fallback to Supabase:', fbErr?.message);
+        }
+      }
+
+      // 2. Fallback to Supabase OAuth
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -156,7 +233,7 @@ export default function LoginForm() {
         throw oauthError;
       }
     } catch (err: any) {
-      setError(err?.message || 'Google OAuth failed. Please use email & password.');
+      setError(err?.message || 'Google sign-in failed. Please use email & password.');
       setLoading(false);
     }
   };
@@ -375,15 +452,16 @@ export default function LoginForm() {
               marginBottom: 6,
             }}
           >
-            Email / البريد الإلكتروني
+            Username or Email / اسم المستخدم أو البريد الإلكتروني
           </label>
           <input
             className="f-in"
-            type="email"
-            autoComplete="email"
+            type="text"
+            inputMode="email"
+            autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@sierra-estates.net"
+            placeholder="admin@sierra-estates.net or admin"
             required
             style={{
               marginBottom: isMagicLink ? 20 : 16,
@@ -501,7 +579,7 @@ export default function LoginForm() {
               onClick={() => {
                 setIsMagicLink(false);
                 setEmail('admin@sierra-estates.net');
-                setPassword('sierra2026');
+                setPassword('AdminSierra2026!');
               }}
               style={{
                 background: 'none',
@@ -512,7 +590,7 @@ export default function LoginForm() {
                 textDecoration: 'underline',
               }}
             >
-              ✦ Quick Fill Executive Admin (sierra2026)
+              ✦ Quick Fill Executive Admin (AdminSierra2026!)
             </button>
           </div>
         </form>
