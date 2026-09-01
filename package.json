@@ -2,7 +2,7 @@
     "name": "sierra-estates",
     "version": "1.0.0",
     "private": true,
-    "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
+    "description": "Sierra Estates \u2014 Luxury PropTech Platform for New Cairo",
     "scripts": {
         "dev": "turbo run dev",
         "dev:web": "pnpm --filter sierra-estates-client-page dev",
@@ -43,9 +43,12 @@
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
+        "eslint": "^10",
+        "eslint-plugin-unused-imports": "^4.4.1",
         "hint": "^7.1.13",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
+        "typescript-eslint": "^8.67.0",
         "vitest": "^4.1.10"
     },
     "dependencies": {
