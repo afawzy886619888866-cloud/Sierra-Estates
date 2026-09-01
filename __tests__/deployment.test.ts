@@ -149,7 +149,8 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       const verifyScript = path.join(ROOT_DIR, 'scripts', 'verify-deploy-readiness.ts');
       expect(fs.existsSync(verifyScript)).toBe(true);
       const code = fs.readFileSync(verifyScript, 'utf-8');
-      expect(code).toContain('sierra-estates-client-page');
+      // The script refers to the client app by path, not by package name.
+      expect(code).toContain('apps/sierra-estates-realty');
     });
   });
 });

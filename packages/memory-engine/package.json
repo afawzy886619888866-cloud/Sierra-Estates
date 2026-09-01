@@ -24,6 +24,7 @@
   "author": "Sierra Estates Team",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "@sierra-estates/obsidian": "workspace:*"
   },
   "devDependencies": {
