@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
-import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
-// Force dynamic rendering — uses Firebase/auth at runtime
+// Force dynamic rendering — uses Supabase/auth at runtime
 export const dynamic = 'force-dynamic';
 
-/** Mirrors the SPA's writeBatch usage for multi-select actions in LeadsPage. */
+/** See app/api/admin/leads/route.ts — the SPA mappers still speak the old Firestore field names. */
+function leadPatchToColumns(patch: Record<string, unknown>): RecordData {
+  const { name, notes, assignedTo, stage, ...rest } = patch;
+  const out: RecordData = { ...rest };
+  if (name !== undefined) out.fullName = name;
+  if (notes !== undefined) out.summaryNotes = notes;
+  if (assignedTo !== undefined) out.assignedAgentId = assignedTo;
+  if (stage !== undefined) out.pipelineStage = stage;
+  return out;
+}
+
+/**
+ * Mirrors the SPA's multi-select actions in LeadsPage.
+ *
+ * NOTE: this was a Firestore `writeBatch`, which committed all ids atomically.
+ * PostgREST has no batch-update-by-differing-id primitive, so the rows are now
+ * written one at a time: a failure part-way through leaves the earlier ids
+ * already applied. The response still reports the requested count, and the
+ * error path is unchanged (a throw becomes the same 500 as before).
+ */
 export async function POST(req: NextRequest) {
   const authResult = await verifyAdminRequest(req);
   if (!authResult.authenticated) {
@@ -22,19 +39,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'ids must be a non-empty array' }, { status: 400 });
     }
 
-    const batch = adminDb.batch();
-    const collection = adminDb.collection(COLLECTIONS.stakeholders);
-
     if (action === 'delete') {
-      ids.forEach((id: string) => batch.delete(collection.doc(id)));
+      for (const id of ids as string[]) {
+        await deleteRecord('leads', id);
+      }
     } else if (action === 'update') {
-      const mapped = mapSpaToLeadPatch(patch || {});
-      ids.forEach((id: string) => batch.update(collection.doc(id), { ...mapped, updatedAt: Timestamp.now() }));
+      const mapped = leadPatchToColumns(mapSpaToLeadPatch(patch || {}));
+      for (const id of ids as string[]) {
+        await updateRecord('leads', id, { ...mapped, updatedAt: new Date().toISOString() });
+      }
     } else {
       return NextResponse.json({ error: 'action must be "delete" or "update"' }, { status: 400 });
     }
 
-    await batch.commit();
     return NextResponse.json({ success: true, count: ids.length });
   } catch (err) {
     logger.error('Error in bulk lead operation:', err);

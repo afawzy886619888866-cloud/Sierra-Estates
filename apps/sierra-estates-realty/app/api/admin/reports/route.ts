@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
-import { Timestamp, type QueryDocumentSnapshot, type DocumentData } from 'firebase-admin/firestore';
+import { listRecords, countRecords, type RecordData } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
@@ -24,31 +22,30 @@ export async function GET(req: NextRequest) {
       case 'quarter': startDate.setMonth(now.getMonth() - 3);     break;
       case 'year':    startDate.setFullYear(now.getFullYear() - 1); break;
     }
-    const startTs = Timestamp.fromDate(startDate);
+    const startTs = startDate.toISOString();
 
     let data: Record<string, unknown> = {};
 
     if (reportType === 'summary' || reportType === 'all') {
-      const [unitsCount, leadsCount, dealsSnap, salesSnap] = await Promise.all([
-        adminDb.collection(COLLECTIONS.units).count().get(),
-        adminDb.collection(COLLECTIONS.stakeholders).count().get(),
-        adminDb.collection(COLLECTIONS.strategicPipeline).where('stage', '==', 'closed').count().get(),
-        adminDb.collection(COLLECTIONS.sales)
-          .where('createdAt', '>=', startTs)
-          .get(),
+      const [totalUnits, totalLeads, closedDeals, sales] = await Promise.all([
+        countRecords('listings'),
+        countRecords('leads'),
+        countRecords('strategic_pipeline', [{ column: 'stage', value: 'closed' }]),
+        listRecords<RecordData>('sales', {
+          where: [{ column: 'createdAt', op: 'gte', value: startTs }],
+        }),
       ]);
 
-      const totalRevenue = salesSnap.docs.reduce(
-        (sum: number, d: QueryDocumentSnapshot<DocumentData>) => sum + (d.data().salePrice || 0),
+      const totalRevenue = sales.reduce(
+        (sum: number, sale) => sum + (Number(sale.salePrice) || 0),
         0,
       );
-      const closedDeals = dealsSnap.data().count;
 
       data = {
         ...data,
         metrics: {
-          totalUnits: unitsCount.data().count,
-          totalLeads: leadsCount.data().count,
+          totalUnits,
+          totalLeads,
           closedDeals,
           avgDealValue: closedDeals > 0 ? Math.round(totalRevenue / closedDeals) : 0,
         },
@@ -56,18 +53,17 @@ export async function GET(req: NextRequest) {
     }
 
     if (reportType === 'deals' || reportType === 'all') {
-      const dealsSnap = await adminDb
-        .collection(COLLECTIONS.strategicPipeline)
-        .where('createdAt', '>=', startTs)
-        .orderBy('createdAt', 'desc')
-        .get();
+      const deals = await listRecords<RecordData>('strategic_pipeline', {
+        where: [{ column: 'createdAt', op: 'gte', value: startTs }],
+        orderBy: { column: 'createdAt', ascending: false },
+      });
 
       const dealsByMonth: Record<string, number> = {};
-      dealsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const date: Date = doc.data().createdAt?.toDate?.() ?? new Date();
+      for (const deal of deals) {
+        const date = deal.createdAt ? new Date(String(deal.createdAt)) : new Date();
         const month = date.toLocaleDateString('en-US', { month: 'short' });
         dealsByMonth[month] = (dealsByMonth[month] || 0) + 1;
-      });
+      }
 
       data = {
         ...data,
@@ -76,30 +72,33 @@ export async function GET(req: NextRequest) {
     }
 
     if (reportType === 'agents' || reportType === 'all') {
-      const [agentsSnap, salesSnap] = await Promise.all([
-        adminDb.collection(COLLECTIONS.users)
-          .where('role', 'in', ['admin', 'agent', 'broker'])
-          .get(),
-        adminDb.collection(COLLECTIONS.sales)
-          .where('createdAt', '>=', startTs)
-          .get(),
+      const [agents, sales] = await Promise.all([
+        listRecords<RecordData>('profiles', {
+          where: [{ column: 'role', op: 'in', value: ['admin', 'agent', 'broker'] }],
+        }),
+        listRecords<RecordData>('sales', {
+          where: [{ column: 'createdAt', op: 'gte', value: startTs }],
+        }),
       ]);
 
       // Aggregate deals & revenue per agent
       const agentMap: Record<string, { name: string; deals: number; revenue: number }> = {};
-      salesSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const { agentId, agentName, salePrice } = doc.data();
-        if (!agentId) return;
-        if (!agentMap[agentId]) agentMap[agentId] = { name: agentName || 'Unknown', deals: 0, revenue: 0 };
+      for (const sale of sales) {
+        const agentId = sale.agentId ? String(sale.agentId) : '';
+        if (!agentId) continue;
+        if (!agentMap[agentId]) {
+          agentMap[agentId] = { name: (sale.agentName as string) || 'Unknown', deals: 0, revenue: 0 };
+        }
         agentMap[agentId].deals += 1;
-        agentMap[agentId].revenue += salePrice || 0;
-      });
+        agentMap[agentId].revenue += Number(sale.salePrice) || 0;
+      }
 
-      // Fallback: include agents with 0 deals from users collection
-      agentsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        const { name } = doc.data();
-        if (!agentMap[doc.id]) agentMap[doc.id] = { name: name || 'Unknown', deals: 0, revenue: 0 };
-      });
+      // Fallback: include agents with 0 deals from the profiles table
+      for (const agent of agents) {
+        const id = String(agent.id);
+        // profiles.full_name is the Firestore users doc's `name`.
+        if (!agentMap[id]) agentMap[id] = { name: (agent.fullName as string) || 'Unknown', deals: 0, revenue: 0 };
+      }
 
       const topAgents = Object.values(agentMap)
         .sort((a, b) => b.deals - a.deals)

@@ -4,7 +4,7 @@ import {
   generateContractNumber, 
   generateSignatureHash 
 } from '@/lib/services/digital-contracts';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords, upsertRecord } from '@sierra-estates/db';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 // In-memory store fallback for development and test environments
@@ -53,13 +53,14 @@ export async function GET(req: NextRequest) {
   try {
     const contracts: DigitalContractData[] = [];
 
-    // Attempt to query Firestore
+    // Attempt to query Supabase
     try {
-      const snap = await adminDb.collection('contracts').orderBy('createdAt', 'desc').limit(100).get();
-      if (snap && !snap.empty) {
-        snap.forEach((doc: any) => {
-          contracts.push({ id: doc.id, ...doc.data() });
-        });
+      const rows = await listRecords('contracts', {
+        orderBy: { column: 'createdAt', ascending: false },
+        limit: 100,
+      });
+      for (const row of rows) {
+        contracts.push(row as unknown as DigitalContractData);
       }
     } catch {
       // Fallback silently to in-memory store
@@ -138,9 +139,11 @@ export async function POST(req: NextRequest) {
     newContract.signatureHash = generateSignatureHash(newContract);
     inMemoryContracts.set(newContract.id, newContract);
 
-    // Attempt Firestore persistence
+    // Attempt Supabase persistence. The DigitalContractData payload maps onto
+    // dedicated columns (contract_number, unit, buyer, seller_or_owner,
+    // commission, notes_ar/en, signature_hash) — see supabase/schema.sql.
     try {
-      await adminDb.collection('contracts').doc(newContract.id).set(newContract);
+      await upsertRecord('contracts', { ...newContract });
     } catch {
       // Graceful fallback
     }

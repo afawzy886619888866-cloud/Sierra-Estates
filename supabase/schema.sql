@@ -1337,6 +1337,9 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sync_hash TEXT;            
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sync_source TEXT;           -- 'crm-pf-import' | 'property-finder' | …
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMPTZ;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
+-- 'F' (furnished) / 'U' (unfurnished) — the Sierra coding algorithm's furnishing
+-- token. Distinct from finishing_type, which is the developer's finishing spec.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS furnishing_status TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_listings_pf_reference ON public.listings(pf_reference_number);
 CREATE INDEX IF NOT EXISTS idx_listings_sync_hash ON public.listings(sync_hash);
@@ -1351,7 +1354,20 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS stage TEXT;                   
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS mode TEXT;                     -- 'sale' | 'rent' — what the lead is after
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_lead_id TEXT;               -- Property Finder lead id (webhook upsert key)
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_pf_lead_id ON public.leads(pf_lead_id) WHERE pf_lead_id IS NOT NULL;
+-- The AI-scoring intake (/api/crm/leads) fields. `pipeline_stage` is the CRM
+-- funnel position the admin Leads page surfaces as `stage` (see the mapper in
+-- app/api/admin/leads/route.ts) — distinct from leads.stage above, which is the
+-- public intake routes' own free-form stage. `sierra_ai_score` is a 0-10 CRM
+-- score and is deliberately NOT lead_score, which is the 0-100 scale.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pipeline_stage TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS assigned_specialist TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS sierra_ai_score INT;
+
+-- Non-partial on purpose: the Property Finder webhook upserts on this column,
+-- and Postgres can only infer a PARTIAL unique index for ON CONFLICT when the
+-- statement repeats the index predicate, which PostgREST does not emit. NULLs
+-- are distinct in a unique index, so rows without a PF id are unaffected.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_pf_lead_id ON public.leads(pf_lead_id);
 CREATE INDEX IF NOT EXISTS idx_leads_source ON public.leads(source);
 
 -- ─── proposals: the wealth-intelligence payload ──────────────────────────────
@@ -1397,7 +1413,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_broker_listings_dedupe
 CREATE INDEX IF NOT EXISTS idx_session_buffer_logs_expire ON public.session_buffer_logs(expire_at);
 
 -- ─── RLS for the three new tables ────────────────────────────────────────────
--- All three are operational/internal: staff read-write, никогда anon. The
+-- All three are operational/internal: staff read-write, never anon. The
 -- service role (used by the routes themselves) bypasses RLS entirely.
 ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.broker_listings ENABLE ROW LEVEL SECURITY;

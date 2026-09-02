@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,29 +30,25 @@ export async function POST(request: Request) {
     );
   }
 
+  // `type` is the column name in public.inquiries' TypeScript model
+  // (`propertyType`); everything else maps 1:1.
+  const { type, ...rest } = parsed.data;
   const payload = {
-    ...parsed.data,
+    ...rest,
+    propertyType: type,
     source: 'website',
     status: 'S1_NEW_LEAD',
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
 
   try {
-    const db = await getAdminDb();
-    if (!db) {
-      if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json(
-          { error: 'The request service is temporarily unavailable. Please try again shortly.' },
-          { status: 503 }
-        );
-      }
+    const created = await insertRecord<{ id: string }>('inquiries', payload);
+    return NextResponse.json({ id: created.id, status: 'received' });
+  } catch (error) {
+    console.error('[inquiries] Supabase write failed:', error);
+    if (process.env.NODE_ENV !== 'production') {
       return NextResponse.json({ id: `local-${crypto.randomUUID()}`, fallback: true });
     }
-
-    const reference = await db.collection('leads').add(payload);
-    return NextResponse.json({ id: reference.id, status: 'received' });
-  } catch (error) {
-    console.error('[inquiries] Firestore write failed:', error);
     return NextResponse.json(
       { error: 'Unable to save your request right now. Please try again shortly.' },
       { status: 503 }

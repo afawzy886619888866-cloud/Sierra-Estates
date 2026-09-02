@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runMatchingForLead } from '@/lib/services/matching-engine';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
@@ -16,18 +16,18 @@ export async function POST(req: NextRequest) {
 
     if (bulk) {
       // Bulk matching for new leads that haven't been matched yet
-      const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-        .where('status', 'in', ['new', 'contacted'])
-        .limit(10)
-        .get();
+      const leads = await listRecords<{ id: string }>(COLLECTIONS.stakeholders, {
+        where: [{ column: 'status', op: 'in', value: ['new', 'contacted'] }],
+        limit: 10,
+      });
       const results = [];
 
-      for (const doc of snap.docs) {
+      for (const lead of leads) {
         try {
-          const matches = await runMatchingForLead(doc.id);
-          results.push({ leadId: doc.id, matches: matches.length });
+          const matches = await runMatchingForLead(lead.id);
+          results.push({ leadId: lead.id, matches: matches.length });
         } catch (e) {
-          results.push({ leadId: doc.id, error: String(e) });
+          results.push({ leadId: lead.id, error: String(e) });
         }
       }
 
