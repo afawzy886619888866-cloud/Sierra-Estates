@@ -26,7 +26,17 @@ const STAFF_ONLY_TABLES = [
   'whatsapp_queue',
   'unified_memory',
   'agent_executions',
+  // Added by the Firebase -> Supabase migration.
+  'owners',
+  'followups',
+  'knowledge_base',
+  'agents_registry',
+  'bot_commands',
+  'workflows',
 ];
+
+/** Public forms may INSERT but must never SELECT their own submissions back. */
+const PUBLIC_INSERT_TABLES = ['viewing_requests', 'inquiries', 'career_applications'];
 
 describe('Supabase RLS — role helpers', () => {
   it('defines is_admin() over profiles.role', () => {
@@ -97,5 +107,38 @@ describe('Supabase RLS — profiles', () => {
     expect(schema).toMatch(
       /"profiles_admin_manage" ON public\.profiles\s+FOR ALL TO authenticated USING \(public\.is_admin\(\)\)/
     );
+  });
+});
+
+describe('Supabase RLS — migrated tables', () => {
+  it.each(PUBLIC_INSERT_TABLES)(
+    'lets anon insert into public.%s but not read it back',
+    (table) => {
+      // These carry contact details, so a SELECT policy for anon would turn
+      // each public form into a data export.
+      expect(schema).toMatch(
+        new RegExp(`ON public\\.${table}\\s+FOR INSERT TO anon, authenticated WITH CHECK \\(TRUE\\)`)
+      );
+      expect(schema).toMatch(
+        new RegExp(`ON public\\.${table}\\s+FOR ALL TO authenticated USING \\(public\\.is_staff\\(\\)\\)`)
+      );
+    }
+  );
+
+  it('restricts contracts to admins, not all staff — they hold buyer national IDs', () => {
+    expect(schema).toMatch(
+      /"contracts_admin_access" ON public\.contracts\s+FOR ALL TO authenticated USING \(public\.is_admin\(\)\)/
+    );
+  });
+
+  it('makes audit_logs admin-read-only, with no client insert path', () => {
+    expect(schema).toMatch(
+      /"audit_logs_admin_read" ON public\.audit_logs\s+FOR SELECT TO authenticated USING \(public\.is_admin\(\)\)/
+    );
+    expect(schema).not.toMatch(/ON public\.audit_logs\s+FOR (INSERT|ALL) TO (anon|authenticated)/);
+  });
+
+  it('keeps published CMS pages public but drafts staff-only', () => {
+    expect(schema).toMatch(/FOR SELECT TO anon, authenticated USING \(published = TRUE OR public\.is_staff\(\)\)/);
   });
 });

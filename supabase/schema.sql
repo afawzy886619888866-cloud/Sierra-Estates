@@ -415,6 +415,397 @@ BEGIN
     -- written by the service role only, and denying by default is correct.
 END $$;
 
+
+-- ==============================================================================
+-- Firebase → Supabase migration: tables for the remaining Firestore collections.
+--
+-- Column shapes are taken from the existing TypeScript models
+-- (apps/sierra-estates-realty/lib/models/schema.ts and lib/types.ts) rather
+-- than invented, so the route migration is a mechanical rename of field names
+-- from camelCase to snake_case.
+-- ==============================================================================
+
+-- ─── Compounds (New Cairo reference data, public read) ───────────────────────
+CREATE TABLE IF NOT EXISTS public.compounds (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL UNIQUE,
+    zone TEXT NOT NULL,
+    lat DOUBLE PRECISION,
+    lng DOUBLE PRECISION,
+    growth TEXT,
+    ai_score NUMERIC(4, 2) DEFAULT 0,
+    price_m NUMERIC(15, 2) DEFAULT 0,
+    rent NUMERIC(15, 2) DEFAULT 0,
+    image TEXT,
+    featured BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Property owners (keyed by phone, from CRM / PropertyFinder sync) ────────
+CREATE TABLE IF NOT EXISTS public.owners (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    owner_name TEXT NOT NULL,
+    primary_mobile TEXT NOT NULL UNIQUE,
+    last_sync_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Viewing requests (inbound, pre-confirmation) ────────────────────────────
+-- Distinct from viewing_appointments: this is the raw public-site request.
+-- An agent turns a confirmed request into an appointment.
+CREATE TABLE IF NOT EXISTS public.viewing_requests (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    property_code TEXT NOT NULL,
+    visitor_name TEXT NOT NULL,
+    visitor_email TEXT,
+    visitor_phone TEXT NOT NULL,
+    preferred_date DATE,
+    preferred_time TEXT,
+    number_of_people INT,
+    message TEXT,
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Inquiries (public contact form) ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.inquiries (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    mode TEXT DEFAULT 'sale',
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT,
+    zone TEXT,
+    property_type TEXT,
+    budget TEXT,
+    status TEXT DEFAULT 'new',
+    source TEXT DEFAULT 'web',
+    notes TEXT,
+    assigned_to TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Career applications (public careers form) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS public.career_applications (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT,
+    position TEXT NOT NULL,
+    experience TEXT,
+    message TEXT,
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'reviewed', 'hired', 'rejected')),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Follow-ups (agent task management) ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.followups (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE CASCADE,
+    agent_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    type TEXT DEFAULT 'call'
+        CHECK (type IN ('call', 'whatsapp', 'email', 'meeting', 'viewing', 'other')),
+    title TEXT NOT NULL,
+    notes TEXT,
+    due_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled', 'overdue')),
+    priority TEXT DEFAULT 'medium'
+        CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Pages (public-site CMS) ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.pages (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    slug TEXT NOT NULL,
+    locale TEXT NOT NULL DEFAULT 'en' CHECK (locale IN ('en', 'ar')),
+    sections JSONB DEFAULT '{}'::jsonb,
+    published BOOLEAN DEFAULT FALSE,
+    updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    UNIQUE (slug, locale)
+);
+
+-- ─── Knowledge base (AI agent reference notes) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS public.knowledge_base (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    last_modified TIMESTAMPTZ,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Contracts (buyer PII — staff only, never public) ────────────────────────
+CREATE TABLE IF NOT EXISTS public.contracts (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    listing_id TEXT REFERENCES public.listings(id) ON DELETE SET NULL,
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE SET NULL,
+    buyer JSONB DEFAULT '{}'::jsonb,
+    seller JSONB DEFAULT '{}'::jsonb,
+    terms JSONB DEFAULT '{}'::jsonb,
+    total_value NUMERIC(15, 2) DEFAULT 0,
+    currency TEXT DEFAULT 'EGP',
+    status TEXT DEFAULT 'draft',
+    signed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Audit log (append-only; clients never write) ────────────────────────────
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    actor_email TEXT,
+    action TEXT NOT NULL,
+    target TEXT,
+    before JSONB,
+    after JSONB,
+    ip TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Operational: bots, workflows, orchestration, analytics ──────────────────
+CREATE TABLE IF NOT EXISTS public.agents_registry (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    avatar TEXT,
+    rating NUMERIC(4, 2) DEFAULT 0,
+    listings_count INT DEFAULT 0,
+    status TEXT DEFAULT 'idle',
+    last_pulse TIMESTAMPTZ,
+    last_error TEXT,
+    config JSONB DEFAULT '{}'::jsonb,
+    stats JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.bot_commands (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    bot_id TEXT NOT NULL,
+    command TEXT NOT NULL CHECK (command IN ('start', 'stop', 'restart', 'run_now')),
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'acknowledged', 'completed', 'failed')),
+    issued_by TEXT NOT NULL DEFAULT 'system',
+    issued_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.workflows (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    description TEXT,
+    enabled BOOLEAN DEFAULT FALSE,
+    schedule TEXT,
+    definition JSONB DEFAULT '{}'::jsonb,
+    last_run_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.workflow_executions (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    workflow_id TEXT REFERENCES public.workflows(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'running',
+    started_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    finished_at TIMESTAMPTZ,
+    error TEXT,
+    payload JSONB DEFAULT '{}'::jsonb
+);
+
+CREATE TABLE IF NOT EXISTS public.failed_orchestrations (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    pipeline TEXT NOT NULL,
+    attempts INT DEFAULT 0,
+    last_error TEXT,
+    payload JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.search_queries (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    query TEXT NOT NULL,
+    result_count INT DEFAULT 0,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.system_config (
+    key TEXT PRIMARY KEY,
+    value JSONB DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Indexes on the columns the routes actually filter by ────────────────────
+CREATE INDEX IF NOT EXISTS idx_followups_lead ON public.followups(lead_id);
+CREATE INDEX IF NOT EXISTS idx_followups_agent ON public.followups(agent_id);
+CREATE INDEX IF NOT EXISTS idx_followups_status ON public.followups(status);
+CREATE INDEX IF NOT EXISTS idx_viewing_requests_status ON public.viewing_requests(status);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
+CREATE INDEX IF NOT EXISTS idx_pages_slug_locale ON public.pages(slug, locale);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bot_commands_bot ON public.bot_commands(bot_id, status);
+CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow ON public.workflow_executions(workflow_id);
+
+-- ==============================================================================
+-- RLS for the migrated tables.
+--
+-- Same rule as the tables above: nothing is open to `authenticated` at large,
+-- because sign-ups land as role 'client'. Public forms insert through `anon`
+-- where the product requires it, but never read back.
+-- ==============================================================================
+ALTER TABLE public.compounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.owners ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.viewing_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.career_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.followups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.knowledge_base ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agents_registry ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bot_commands ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.workflows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.workflow_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.failed_orchestrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.search_queries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    -- ── Public reference data: anyone may read, staff may write ───────────
+    DROP POLICY IF EXISTS "compounds_public_read" ON public.compounds;
+    CREATE POLICY "compounds_public_read" ON public.compounds
+        FOR SELECT TO anon, authenticated USING (TRUE);
+    DROP POLICY IF EXISTS "compounds_staff_write" ON public.compounds;
+    CREATE POLICY "compounds_staff_write" ON public.compounds
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Published CMS pages are the public site's copy; drafts are staff-only.
+    DROP POLICY IF EXISTS "pages_public_read" ON public.pages;
+    CREATE POLICY "pages_public_read" ON public.pages
+        FOR SELECT TO anon, authenticated USING (published = TRUE OR public.is_staff());
+    DROP POLICY IF EXISTS "pages_staff_write" ON public.pages;
+    CREATE POLICY "pages_staff_write" ON public.pages
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- ── Public submission forms: insert-only for anon, read for staff ─────
+    -- These carry contact details, so the public may create a row but must
+    -- never select one back — that would turn each form into a data export.
+    DROP POLICY IF EXISTS "viewing_requests_public_insert" ON public.viewing_requests;
+    CREATE POLICY "viewing_requests_public_insert" ON public.viewing_requests
+        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "viewing_requests_staff_access" ON public.viewing_requests;
+    CREATE POLICY "viewing_requests_staff_access" ON public.viewing_requests
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "inquiries_public_insert" ON public.inquiries;
+    CREATE POLICY "inquiries_public_insert" ON public.inquiries
+        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "inquiries_staff_access" ON public.inquiries;
+    CREATE POLICY "inquiries_staff_access" ON public.inquiries
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "career_applications_public_insert" ON public.career_applications;
+    CREATE POLICY "career_applications_public_insert" ON public.career_applications
+        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "career_applications_staff_access" ON public.career_applications;
+    CREATE POLICY "career_applications_staff_access" ON public.career_applications
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- ── Staff-only business data ─────────────────────────────────────────
+    DROP POLICY IF EXISTS "owners_staff_access" ON public.owners;
+    CREATE POLICY "owners_staff_access" ON public.owners
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "followups_staff_access" ON public.followups;
+    CREATE POLICY "followups_staff_access" ON public.followups
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "knowledge_base_staff_access" ON public.knowledge_base;
+    CREATE POLICY "knowledge_base_staff_access" ON public.knowledge_base
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Contracts hold buyer national IDs and phones: admins only, not all staff.
+    DROP POLICY IF EXISTS "contracts_admin_access" ON public.contracts;
+    CREATE POLICY "contracts_admin_access" ON public.contracts
+        FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+    -- ── Audit log: readable by admins, never written from a client ───────
+    -- Inserts come from the service role only, so that a compromised staff
+    -- session cannot forge or backdate entries.
+    DROP POLICY IF EXISTS "audit_logs_admin_read" ON public.audit_logs;
+    CREATE POLICY "audit_logs_admin_read" ON public.audit_logs
+        FOR SELECT TO authenticated USING (public.is_admin());
+
+    -- ── Operational control plane: staff read/write, service role runs it ─
+    DROP POLICY IF EXISTS "agents_registry_staff_access" ON public.agents_registry;
+    CREATE POLICY "agents_registry_staff_access" ON public.agents_registry
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "bot_commands_staff_access" ON public.bot_commands;
+    CREATE POLICY "bot_commands_staff_access" ON public.bot_commands
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "workflows_staff_access" ON public.workflows;
+    CREATE POLICY "workflows_staff_access" ON public.workflows
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "workflow_executions_staff_read" ON public.workflow_executions;
+    CREATE POLICY "workflow_executions_staff_read" ON public.workflow_executions
+        FOR SELECT TO authenticated USING (public.is_staff());
+
+    DROP POLICY IF EXISTS "failed_orchestrations_admin_read" ON public.failed_orchestrations;
+    CREATE POLICY "failed_orchestrations_admin_read" ON public.failed_orchestrations
+        FOR SELECT TO authenticated USING (public.is_admin());
+
+    DROP POLICY IF EXISTS "search_queries_staff_read" ON public.search_queries;
+    CREATE POLICY "search_queries_staff_read" ON public.search_queries
+        FOR SELECT TO authenticated USING (public.is_staff());
+
+    -- system_config keeps RLS on with no authenticated policy: service role
+    -- only, deny-by-default is correct for singleton config.
+END $$;
+
+-- updated_at triggers for the migrated tables.
+DO $$
+DECLARE
+    t TEXT;
+BEGIN
+    FOREACH t IN ARRAY ARRAY[
+        'compounds', 'owners', 'viewing_requests', 'inquiries',
+        'career_applications', 'followups', 'pages', 'knowledge_base',
+        'contracts', 'agents_registry', 'bot_commands', 'workflows'
+    ]
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_' || t
+        ) THEN
+            EXECUTE format(
+                'CREATE TRIGGER %I BEFORE UPDATE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at()',
+                'trigger_update_' || t, t
+            );
+        END IF;
+    END LOOP;
+END $$;
+
 -- ------------------------------------------------------------------------------
 -- 14. Vector Search Helper Functions
 -- ------------------------------------------------------------------------------
