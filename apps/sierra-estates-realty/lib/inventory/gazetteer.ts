@@ -6,26 +6,26 @@
  * Coordinates are approximate compound/area centroids (good enough for a city
  * overview map). Units that share a centroid are spread out client-side by the
  * map component, so exact per-unit accuracy is not required here.
- *
- * This is a plain .js module (JSDoc-typed) on purpose: it is the single source
- * of truth shared by the Next.js runtime (lib/inventory + /api/inventory) and
- * the snapshot generator (scripts/build-inventory-snapshot.mjs).
- *
- * @typedef {Object} GazetteerEntry
- * @property {number} lat
- * @property {number} lng
- * @property {string} label  Canonical, display-ready location name.
- * @property {string} zone   Broad New Cairo zone bucket.
  */
 
+export interface GazetteerEntry {
+  lat: number;
+  lng: number;
+  label: string;
+  zone: string;
+}
+
+export interface ResolvedLocation extends GazetteerEntry {
+  approx: boolean;
+}
+
 /** New Cairo centroid — fallback for locations we can't resolve. */
-export const NEW_CAIRO_CENTER = { lat: 30.03, lng: 31.47, label: 'New Cairo', zone: 'New Cairo' };
+export const NEW_CAIRO_CENTER: GazetteerEntry = { lat: 30.03, lng: 31.47, label: 'New Cairo', zone: 'New Cairo' };
 
 /**
  * Alias (already normalized via `normalizeKey`) → GazetteerEntry.
- * @type {Record<string, GazetteerEntry>}
  */
-export const GAZETTEER = {
+export const GAZETTEER: Record<string, GazetteerEntry> = {
   madinaty: { lat: 30.101, lng: 31.664, label: 'Madinaty', zone: 'Madinaty' },
   'new cairo': { lat: 30.03, lng: 31.47, label: 'New Cairo', zone: 'New Cairo' },
   rehab: { lat: 30.058, lng: 31.514, label: 'Al Rehab', zone: 'Al Rehab' },
@@ -72,12 +72,9 @@ export const GAZETTEER = {
  * Normalize a raw location string into a gazetteer lookup key:
  * lowercase, strip Arabic diacritics + bidi/zero-width marks, collapse
  * whitespace.
- * @param {string} raw
- * @returns {string}
  */
-export function normalizeKey(raw) {
+export function normalizeKey(raw: string): string {
   return String(raw || '')
-    // strip zero-width / bidi control marks that leak in from the sheet
     .replace(/[\u200B-\u200F\u061C\u202A-\u202E\u2066-\u2069\uFEFF]/g, '')
     .trim()
     .toLowerCase()
@@ -89,13 +86,10 @@ export function normalizeKey(raw) {
  * Resolve a raw location string to coordinates + canonical label/zone.
  * Unknown / blank / junk values fall back to the New Cairo centroid and are
  * flagged `approx: true` so callers can treat them as low-confidence.
- * @param {string} raw
- * @returns {GazetteerEntry & { approx: boolean }}
  */
-export function resolveLocation(raw) {
+export function resolveLocation(raw: string): ResolvedLocation {
   const key = normalizeKey(raw);
   if (key) {
-    // exact alias, then with a trailing " city" dropped (e.g. "El Shorouk City").
     const hit = GAZETTEER[key] || GAZETTEER[key.replace(/\s*city$/, '').trim()];
     if (hit) return { ...hit, approx: false };
   }
