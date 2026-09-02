@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 # ─────────────────────────────────────────────────────────────
 # Workflows Automation: Owner Search, Contact, Email, Unit Adder
 # Standalone automation runners for Sierra Estates backend operations
@@ -73,7 +74,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -132,7 +133,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -190,7 +191,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 
@@ -248,7 +249,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.secrets.outputs.configured == 'true'
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: 'workflows/package-lock.json'
 

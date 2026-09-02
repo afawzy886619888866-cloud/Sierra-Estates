@@ -59,13 +59,19 @@ service cloud.firestore {
     //     falls back to static data and leads never reach Firestore / Laila bot.
     match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
     match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
+    // Writes arrive via the Admin SDK in app/api/inquiries/route.ts and
+    // app/api/careers/apply/route.ts, which enforce zod validation and a 24 KB
+    // body cap. An anonymous `allow create` here bypasses both, and matched a
+    // payload shape nothing produces: the inquiries API writes status
+    // 'S1_NEW_LEAD' (not 'new'), and career applications are written to
+    // `career_applications`, not `careers`. Verified: no client-SDK or static
+    // page writes to either collection. Re-add only alongside a real
+    // client-side writer, and gate it on that writer's actual payload.
     match /inquiries/{id} {
-      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
-      allow read, update, delete: if isStaff();
+      allow read, write: if isStaff();
     }
     match /careers/{id} {
-      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
-      allow read, update, delete: if isStaff();
+      allow read, write: if isStaff();
     }
 
     // --- Share links. `allow read: if true` on a wildcard document match
