@@ -21,7 +21,7 @@ jest.mock('firebase-admin/auth', () => ({
 jest.mock('@/lib/firebase-admin', () => ({
   adminEnabled: () => true,
   getAdminApp: async () => ({}),
-  getAdminDb: async () => ({ collection: (...args: unknown[]) => collectionMock(...args) }),
+  getAdminDb: async () => ({ collection: (...args: any[]) => collectionMock(...args) }),
 }));
 
 import { POST } from '@/app/api/auth/route';

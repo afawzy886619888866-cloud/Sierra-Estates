@@ -14,6 +14,7 @@
  * NOTE: the module captures IS_PROD at import time, so any production-mode
  * assertion must set NODE_ENV and then re-import via `jest.resetModules()`.
  */
+export {};
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 
 /** NODE_ENV is typed read-only (Next augments ProcessEnv); assign via a widened cast. */
