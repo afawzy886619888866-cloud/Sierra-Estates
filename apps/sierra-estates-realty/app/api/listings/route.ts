@@ -19,7 +19,7 @@
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { COLLECTIONS, isPubliclyVisibleListingStatus } from '@/lib/models/schema';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { SEED_LISTINGS } from '@/lib/seed';
@@ -356,7 +356,13 @@ export async function GET(request: Request) {
     if (id) {
       const result = await queryFirestoreRest(COLLECTIONS.units, undefined, id);
       if (result?.doc) {
-        return NextResponse.json({ success: true, listing: transformToListing(result.doc) });
+        const listing = transformToListing(result.doc);
+        // The submit endpoint hands the caller the new id, so fetch-by-id
+        // would otherwise be a direct link to an unverified submission.
+        if (listing && isPubliclyVisibleListingStatus(listing.status)) {
+          return NextResponse.json({ success: true, listing });
+        }
+        return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
       const seed = SEED_LISTINGS.find((l) => l.id === id);
       if (!seed) {
@@ -379,7 +385,10 @@ export async function GET(request: Request) {
 
     // ── Filter mode (api-client contract): bare Listing[] ──────────────────
     let items = await readListings();
-    items = items.filter((l) => l.status !== 'archived');
+    // Excludes archived listings and unreviewed public submissions alike —
+    // /api/listings/submit is unauthenticated, so anything it wrote is only
+    // a claim until staff verify it.
+    items = items.filter((l) => isPubliclyVisibleListingStatus(l.status));
     if (mode) items = items.filter((l) => l.mode === mode);
     if (compound) items = items.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
     if (type) items = items.filter((l) => l.type === type);

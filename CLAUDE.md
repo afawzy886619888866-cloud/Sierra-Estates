@@ -93,6 +93,7 @@ Workers — long-running/heavy workloads (isolated from Next.js request loop)
   - *Service + Token*: `admin/ingest`
   - *Webhook Secret*: `telegram/webhook`, `whatsapp/webhook`, `ingest/whatsapp`
   - *Public*: `listings`, `leads`, `leads/request-viewing`, `closer/initiate`, `concierge/[leadId]`
+  - *Public + moderated*: `listings/submit` — unauthenticated by design (owners submit without an account). Writes `status: 'Pending Review'`, `verified: false`, `publishToClient: false`; `/api/listings` filters those out of both response modes, so a submission is never public inventory until staff clear it.
 
 ---
 

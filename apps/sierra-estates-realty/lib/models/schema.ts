@@ -831,6 +831,27 @@ export interface StakeholderMessage {
   timestamp: Timestamp;
 }
 
+// ─── Listing Visibility ─────────────────────────────────────────────
+
+/**
+ * Status assigned to listings that arrive through the public /add-listing
+ * form. They are not inventory yet — staff verify them before they publish.
+ */
+export const LISTING_STATUS_PENDING_REVIEW = 'Pending Review';
+
+/**
+ * Whether a listing status may be served on the public site.
+ *
+ * A denylist rather than an allowlist on purpose: existing documents carry
+ * several historical spellings for the live state ('available', 'Available',
+ * 'active', and others), so an allowlist would silently hide real inventory.
+ * Only the states we positively know must stay hidden are listed here.
+ */
+export function isPubliclyVisibleListingStatus(status?: string | null): boolean {
+  const normalized = String(status ?? '').trim().toLowerCase();
+  return normalized !== 'archived' && normalized !== 'pending' && normalized !== 'pending review';
+}
+
 // ─── Collection Names (Constants) ───────────────────────────────────
 
 export const COLLECTIONS = {
