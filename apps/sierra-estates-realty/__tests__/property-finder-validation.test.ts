@@ -247,7 +247,7 @@ describe('EgyptListingValidator — price', () => {
   it('reports a price type with no matching amount', () => {
     // e.g. type says "rent" but only a sale amount was supplied.
     const result = EgyptListingValidator.validate(
-      validListing({ price: { type: 'rent', amounts: { sale: 100 } } } as Partial<PFListingRequest>),
+      validListing({ price: { type: 'rent', amounts: { sale: 100 } } } as unknown as Partial<PFListingRequest>),
     );
 
     expect(result.errors).toContain('Price amount for type "rent" must be greater than 0.');
