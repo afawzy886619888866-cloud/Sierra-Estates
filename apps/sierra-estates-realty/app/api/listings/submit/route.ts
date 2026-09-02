@@ -4,7 +4,7 @@
  * Public listing submission endpoint, reachable from the /add-listing form.
  *
  * Accepts a listing submission payload, validates fields via Zod, and persists
- * it to Firestore (and the Google Sheets sync queue).
+ * it to Supabase (public.listings).
  *
  * Deliberately unauthenticated — property owners submit here without an
  * account. Because anyone can post, a submission is NOT inventory: it is
@@ -16,7 +16,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
+import { toListingColumns } from '@/lib/server/listing-columns';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 
 export const runtime = 'nodejs';
@@ -96,15 +97,23 @@ export async function POST(request: Request) {
       source: 'web-submission',
     };
 
-    const db = await getAdminDb();
     let id = listingCode;
 
-    if (db) {
-      const docRef = await db.collection('houyez_listings').add(listingDocument);
-      id = docRef.id;
-      await db.collection('listings').doc(id).set({ ...listingDocument, id }, { merge: true });
-      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Firestore`);
-    } else {
+    try {
+      // houyez_listings and listings are one table now, so this is a single
+      // insert rather than the old dual-write. `title` is NOT NULL in
+      // Postgres and the public form has no title field, so it is derived the
+      // same way the seed envelope derives one.
+      const created = await insertRecord<{ id: string }>('listings', {
+        ...toListingColumns(listingDocument),
+        title: `${data.propertyType} · ${data.compound}`,
+      });
+      id = created.id;
+      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Supabase`);
+    } catch (writeError) {
+      // Local/sandbox development without Supabase credentials keeps the form
+      // flow working; production must surface the failure instead.
+      if (process.env.NODE_ENV === 'production') throw writeError;
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
     }
 

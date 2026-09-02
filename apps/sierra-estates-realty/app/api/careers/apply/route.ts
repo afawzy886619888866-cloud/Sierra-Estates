@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,17 +67,20 @@ export async function POST(request: Request) {
   let persisted = false;
 
   try {
-    const db = await getAdminDb();
-    if (db) {
-      const reference = await db.collection('career_applications').add({
-        ...applicationRecord,
-        createdAt: new Date(),
-      });
-      applicationId = reference.id;
-      persisted = true;
-    }
+    // public.career_applications names these columns `name` / `position` /
+    // `message`; the form calls them fullName / role / notes. Every field the
+    // Firestore document carried is still stored, under the table's names.
+    const { fullName, role, notes, ...answers } = applicationRecord;
+    const created = await insertRecord<{ id: string }>('career_applications', {
+      ...answers,
+      name: fullName,
+      position: role,
+      message: notes,
+    });
+    applicationId = created.id;
+    persisted = true;
   } catch (error) {
-    console.error('[careers/apply] Firestore write failed:', error);
+    console.error('[careers/apply] Supabase write failed:', error);
   }
 
   if (!persisted && process.env.NODE_ENV === 'production') {

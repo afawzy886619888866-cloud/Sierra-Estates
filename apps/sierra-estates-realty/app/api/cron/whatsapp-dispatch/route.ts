@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { listRecords, updateRecord } from '@sierra-estates/db';
 import { sendWhatsApp, getTwilioStatusCallbackUrl } from '@/lib/server/twilio-client';
 import {
   getOutreachConfig,
@@ -14,7 +12,17 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 /**
  * CRON: WhatsApp dispatch worker.
- * Drains the whatsapp_message_queue subject to operating hours (10:00–10:59
+ *
+ * ⚠️ Cross-store dependency: this worker now drains public.whatsapp_queue in
+ * Postgres, but the enqueue side (enqueueWhatsAppJob in
+ * lib/server/whatsapp-queue.ts) and the sender-number quota bookkeeping
+ * (ensureNumbersSeeded / claimEligibleNumber, backed by the whatsapp_numbers
+ * collection) still write Firestore. Until that helper is migrated, jobs
+ * enqueued by the app will not be visible here. The mapping the helper must
+ * adopt: toPhone → recipient_phone, body → message_body, everything else keeps
+ * its own column (see supabase/schema.sql).
+ *
+ * Drains the queue subject to operating hours (10:00–10:59
  * Africa/Cairo, see DEFAULT_OUTREACH_CONFIG) and per-number quota (30/2hr,
  * 480/day across 4 senders). Fired once daily by
  * .github/workflows/whatsapp-dispatch-cron.yml.
@@ -44,11 +52,10 @@ export async function GET(req: NextRequest) {
 
     const statusCallback = getTwilioStatusCallbackUrl();
 
-    const queued = await adminDb
-      .collection(COLLECTIONS.whatsappMessageQueue)
-      .where('status', '==', 'queued')
-      .limit(MAX_PER_RUN)
-      .get();
+    const queued = await listRecords<Record<string, any>>('whatsapp_queue', {
+      where: [{ column: 'status', value: 'queued' }],
+      limit: MAX_PER_RUN,
+    });
 
     let sent = 0;
     let failed = 0;
@@ -56,12 +63,10 @@ export async function GET(req: NextRequest) {
     let deferredScheduled = 0;
     const nowMs = Date.now();
 
-    for (const jobDoc of queued.docs) {
-      const job = jobDoc.data() as Record<string, any>;
-
+    for (const job of queued) {
       // If job is scheduled for a future time/date, leave it queued for later dispatch
       if (job.scheduledFor) {
-        const scheduledTimeMs = typeof job.scheduledFor.toMillis === 'function'
+        const scheduledTimeMs = typeof job.scheduledFor?.toMillis === 'function'
           ? job.scheduledFor.toMillis()
           : new Date(job.scheduledFor).getTime();
 
@@ -74,35 +79,35 @@ export async function GET(req: NextRequest) {
       const claim = await claimEligibleNumber(config);
       if (!claim) {
         // No sender has remaining quota this window — leave the rest queued.
-        skippedQuota = queued.size - sent - failed;
+        skippedQuota = queued.length - sent - failed;
         break;
       }
 
-      await jobDoc.ref.update({
+      await updateRecord('whatsapp_queue', job.id, {
         status: 'sending',
         assignedNumberId: claim.id,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
 
       try {
-        const result = await sendWhatsApp(claim.e164Phone, job.toPhone, job.body, statusCallback);
-        await jobDoc.ref.update({
+        const result = await sendWhatsApp(claim.e164Phone, job.recipientPhone, job.messageBody, statusCallback);
+        await updateRecord('whatsapp_queue', job.id, {
           status: 'sent',
           twilioMessageSid: result.sid,
-          sentAt: Timestamp.now(),
+          sentAt: new Date().toISOString(),
           attempts: (job.attempts ?? 0) + 1,
-          updatedAt: Timestamp.now(),
+          updatedAt: new Date().toISOString(),
         });
         sent++;
       } catch (err: any) {
-        await jobDoc.ref.update({
+        await updateRecord('whatsapp_queue', job.id, {
           status: 'failed',
           errorMessage: err?.message || String(err),
           attempts: (job.attempts ?? 0) + 1,
-          updatedAt: Timestamp.now(),
+          updatedAt: new Date().toISOString(),
         });
         failed++;
-        logger.error(`[whatsapp-dispatch] send failed for job ${jobDoc.id}:`, err);
+        logger.error(`[whatsapp-dispatch] send failed for job ${job.id}:`, err);
       }
     }
 

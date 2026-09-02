@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
 
-  if (auth.method === 'firebase') {
+  if (auth.method === 'supabase') {
     try {
-      const userDoc = await adminDb.collection('users').doc(auth.uid!).get();
-      if (!userDoc.exists || userDoc.data()?.role !== 'admin') {
+      const profile = await getRecord<{ role?: string }>('profiles', auth.uid!);
+      if (profile?.role !== 'admin') {
         return unauthorizedResponse('Admin privileges required');
       }
     } catch {

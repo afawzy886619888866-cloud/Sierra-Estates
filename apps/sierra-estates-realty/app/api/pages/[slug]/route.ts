@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(
@@ -24,26 +24,23 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const locale = searchParams.get('locale') === 'ar' ? 'ar' : 'en';
 
-    const snap = await adminDb
-      .collection('pages')
-      .where('slug', '==', slug)
-      .where('locale', '==', locale)
-      .where('published', '==', true)
-      .limit(1)
-      .get();
+    const rows = await listRecords('pages', {
+      where: [
+        { column: 'slug', value: slug },
+        { column: 'locale', value: locale },
+        { column: 'published', value: true },
+      ],
+      limit: 1,
+    });
 
-    if (snap.empty) {
+    if (rows.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Page not found', slug, locale },
         { status: 404 }
       );
     }
 
-    const doc = snap.docs[0];
-    return NextResponse.json({
-      success: true,
-      page: { id: doc.id, ...doc.data() },
-    });
+    return NextResponse.json({ success: true, page: rows[0] });
   } catch (err) {
     logger.error('[public-pages] GET by slug failed:', err);
     return NextResponse.json(

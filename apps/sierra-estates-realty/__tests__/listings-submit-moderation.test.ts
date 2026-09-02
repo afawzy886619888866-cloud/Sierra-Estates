@@ -7,22 +7,20 @@
  * `houyez_listings` collections, which /api/listings then served to everyone:
  * anyone on the internet could publish a listing on the site. Submissions must
  * now land pending review, and both public read modes must filter them out.
+ *
+ * The store is Supabase (public.listings) rather than Firestore since the
+ * migration, and the two collections are one table, so the write is a single
+ * insert — but the moderation guarantees are identical.
  */
 import {
   LISTING_STATUS_PENDING_REVIEW,
   isPubliclyVisibleListingStatus,
 } from '@/lib/models/schema';
 
-const addMock = jest.fn(async (..._args: unknown[]) => ({ id: 'generated-doc-id' }));
-const setMock = jest.fn(async (..._args: unknown[]) => undefined);
+const insertMock = jest.fn(async (..._args: unknown[]) => ({ id: 'generated-doc-id' }));
 
-jest.mock('@/lib/firebase-admin', () => ({
-  getAdminDb: async () => ({
-    collection: () => ({
-      add: (...args: unknown[]) => addMock(...args),
-      doc: () => ({ set: (...args: unknown[]) => setMock(...args) }),
-    }),
-  }),
+jest.mock('@sierra-estates/db', () => ({
+  insertRecord: (...args: unknown[]) => insertMock(...args),
 }));
 
 jest.mock('@/lib/server/rate-limit', () => ({
@@ -54,8 +52,9 @@ describe('/api/listings/submit — moderation', () => {
     const res = await POST(submit(validSubmission));
     expect(res.status).toBe(201);
 
-    expect(addMock).toHaveBeenCalledTimes(1);
-    const written = addMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    expect(insertMock.mock.calls[0][0]).toBe('listings');
+    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
     expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
     expect(written.status).not.toBe('Available');
@@ -64,7 +63,7 @@ describe('/api/listings/submit — moderation', () => {
 
   it('keeps a submission out of the client feed and unranked', async () => {
     await POST(submit(validSubmission));
-    const written = addMock.mock.calls[0][0] as Record<string, unknown>;
+    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
     // A self-submitted listing must not arrive pre-scored at the top of the
     // inventory, nor flagged for the public client page.
@@ -72,18 +71,20 @@ describe('/api/listings/submit — moderation', () => {
     expect(written.aiScore).toBe(0);
   });
 
-  it('mirrors the same pending document into the second collection', async () => {
+  it('writes the submission exactly once — the dual-write collection is gone', async () => {
     await POST(submit(validSubmission));
 
-    expect(setMock).toHaveBeenCalledTimes(1);
-    const mirrored = setMock.mock.calls[0][0] as Record<string, unknown>;
-    expect(mirrored.status).toBe(LISTING_STATUS_PENDING_REVIEW);
+    // listings and houyez_listings are one table now, so a second write would
+    // mean a duplicate row rather than a mirror.
+    expect(insertMock).toHaveBeenCalledTimes(1);
+    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
   });
 
-  it('still rejects an invalid payload before touching Firestore', async () => {
+  it('still rejects an invalid payload before touching the database', async () => {
     const res = await POST(submit({ compound: '', price: 'not-a-number' }));
     expect(res.status).toBe(400);
-    expect(addMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });
 

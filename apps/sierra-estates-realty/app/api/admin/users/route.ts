@@ -2,33 +2,33 @@
  * GET /api/admin/users            (manager+)   → User[]
  * PUT /api/admin/users?uid=...    (admin)      → { ok: true }
  *   body: { role?, status?, name? }
+ *
+ * Backed by public.profiles. The Firestore `users` docs were keyed by uid and
+ * carried `name`; the table is keyed by `id` (FK to auth.users) and carries
+ * `full_name`, so both are translated here — the API shape is unchanged.
  */
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { listRecords, updateRecord, insertRecord, type RecordData } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
-import type { Role, User, UserStatus } from "@/lib/types";
+import type { Role, UserStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   await requireRole(req, "manager");
-  const db = await getAdminDb();
-  if (!db) {
-    throw new Error("Firestore admin not initialized");
-  }
 
   try {
-    const snap = await db.collection("users").get();
-    if (!snap.empty) {
-      return NextResponse.json(
-        snap.docs.map((d) => ({ uid: d.id, ...(d.data() as any) }))
-      );
-    }
-    return NextResponse.json([]);
+    const rows = await listRecords("profiles");
+    return NextResponse.json(
+      rows.map((row) => {
+        const { id, fullName, ...rest } = row as Record<string, unknown>;
+        return { uid: id, ...rest, name: fullName };
+      })
+    );
   } catch (err) {
-    console.error("[admin/users] Firestore read failed:", err);
-    throw new Error("Failed to read from Firestore");
+    console.error("[admin/users] Supabase read failed:", err);
+    throw new Error("Failed to read from Supabase");
   }
 }
 
@@ -39,21 +39,29 @@ export async function PUT(req: Request) {
   if (!uid) return NextResponse.json({ error: "Missing uid" }, { status: 400 });
   const body = await req.json().catch(() => ({}));
 
-  const patch: Partial<User> = {};
+  // `patch` is the audited, API-facing shape; `columns` is the same data in
+  // profiles' column names.
+  const patch: { role?: Role; status?: UserStatus; name?: string } = {};
   if (body.role && ["viewer", "manager", "admin"].includes(body.role))
     patch.role = body.role as Role;
   if (body.status && ["active", "suspended", "deleted"].includes(body.status))
     patch.status = body.status as UserStatus;
   if (body.name) patch.name = String(body.name).slice(0, 200);
 
-  const db = await getAdminDb();
-  if (!db) throw new Error("Firestore admin not initialized");
+  const columns: RecordData = { updatedAt: new Date().toISOString() };
+  if (patch.role !== undefined) columns.role = patch.role;
+  if (patch.status !== undefined) columns.status = patch.status;
+  if (patch.name !== undefined) columns.fullName = patch.name;
 
-  await db.collection("users").doc(uid).set(
-    { ...patch, updatedAt: new Date().toISOString() },
-    { merge: true }
-  );
-  await db.collection("audit_logs").add({
+  // A profile row cannot be conjured the way the Firestore set(merge) did: the
+  // primary key is a foreign key onto auth.users. An unknown uid is therefore
+  // a no-op rather than an insert, and is logged.
+  const updated = await updateRecord("profiles", uid, columns);
+  if (!updated) {
+    console.warn(`[admin/users] no profile row for uid ${uid}; update skipped`);
+  }
+
+  await insertRecord("audit_logs", {
     actorUid: sess.uid,
     actorEmail: sess.email,
     action: "user.update",
