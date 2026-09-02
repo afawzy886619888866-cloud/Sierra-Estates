@@ -518,6 +518,7 @@ CREATE TABLE IF NOT EXISTS public.followups (
         CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled', 'overdue')),
     priority TEXT DEFAULT 'medium'
         CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+    created_by TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
