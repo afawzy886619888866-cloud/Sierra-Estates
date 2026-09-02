@@ -6,7 +6,7 @@
  * Those are intentionally never read here, so they cannot leak into the API
  * response, the committed snapshot, or the public map.
  */
-import type { InventoryUnit, InventoryStatus, ListingMode, PropertyType } from './types';
+import type { InventoryUnit, InventoryStatus, InventoryMode } from './types';
 import type { ResolvedLocation } from './gazetteer';
 
 /** Column headers as they appear in the sheet (note the trailing spaces). */
@@ -62,7 +62,7 @@ function toInt(raw: unknown): number {
  * Classify listing mode (rent | sale) from the sheet's free-text "Type" column,
  * falling back to price magnitude when the text is ambiguous.
  */
-function classifyMode(rawMode: string, price: number): ListingMode {
+function classifyMode(rawMode: string, price: number): InventoryMode {
   const m = String(rawMode || '').toLowerCase();
   if (/sale|بيع/.test(m)) return 'sale';
   if (/rent|ايجار|إيجار/.test(m)) return 'rent';
@@ -91,7 +91,7 @@ const STATUS_LABEL: Record<InventoryStatus, string> = {
 };
 
 /** Human-friendly price label. Exported so the domain→map mapper can reuse it. */
-export function priceLabel(price: number, mode?: ListingMode): string {
+export function priceLabel(price: number, mode?: InventoryMode): string {
   if (!price) return 'Price on request';
   if (mode === 'rent') return `EGP ${price.toLocaleString('en-US')}/mo`;
   if (price >= 1_000_000) return `EGP ${(price / 1_000_000).toFixed(price % 1_000_000 === 0 ? 0 : 1)}M`;
@@ -107,11 +107,11 @@ function clampPrice(price: number, rawMode: string): number {
 }
 
 /** Title-case + tidy the property-type free text. */
-function normalizeType(raw: string): PropertyType | null {
+function normalizeType(raw: string): string | null {
   const t = String(raw || '').trim();
   if (!t) return null;
   const lower = t.toLowerCase();
-  const map: Record<string, PropertyType> = {
+  const map: Record<string, string> = {
     apartment: 'Apartment',
     villa: 'Villa',
     'standalone villa': 'Standalone Villa',
@@ -127,7 +127,7 @@ function normalizeType(raw: string): PropertyType | null {
     admin: 'Admin',
     clinic: 'Clinic',
   };
-  return map[lower] || (t.replace(/\b\w/g, (c) => c.toUpperCase()) as PropertyType);
+  return map[lower] || t.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 /**
