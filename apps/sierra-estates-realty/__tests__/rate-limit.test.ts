@@ -246,3 +246,5 @@ describe('exported limiters and applyRateLimit', () => {
     expect(limiter).toHaveBeenCalledWith(req);
   });
 });
+
+export {};

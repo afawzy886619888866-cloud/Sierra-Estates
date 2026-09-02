@@ -194,3 +194,5 @@ describe('verifyHmacSignature', () => {
     expect(verifyHmacSignature(body, null, { secret: undefined, name: 'PF_SECRET' })).toBeNull();
   });
 });
+
+export {};
