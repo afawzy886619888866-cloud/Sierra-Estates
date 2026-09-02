@@ -1,17 +1,28 @@
 /**
- * Tests: POST /api/auth "Path B" — the Google sign-in direct fallback.
+ * /api/auth — unverified provider claims have no path in.
  *
- * Everything this path trusts (provider, email, uid, name) comes from the
- * request body and none of it is verified, so it used to mint a signed admin
- * session from unverified claims whenever the Admin SDK was unconfigured or
- * `verifyIdToken` threw. It is now closed in production: there, only a real ID
- * token verified by Path A gets in.
+ * There used to be a "Path B" that ran when Firebase Admin verification failed
+ * or was unconfigured. Everything it trusted — `provider`, `email`, `uid` —
+ * came straight from the request body and none of it was verified, so a POST
+ * carrying {provider:'google', email:'<anything>@sierra-estates.net'} was
+ * issued a signed admin cookie. It was closed in production first; under
+ * Supabase Auth a Google sign-in returns a real access token that Path A
+ * verifies, so the unverified path is gone entirely.
  *
- * The route itself is owned by another change; this suite only pins its
- * behaviour. NODE_ENV is read inside the handler, so no re-import is needed.
+ * These tests pin that: a body-only claim must never mint a session, in any
+ * environment.
  */
-import { NextRequest } from 'next/server';
-import { POST } from '../app/api/auth/route';
+const getUserMock = jest.fn();
+const getRecordMock = jest.fn();
+const updateRecordMock = jest.fn();
+
+jest.mock('@sierra-estates/db', () => ({
+  getSupabaseAdmin: () => ({ auth: { getUser: getUserMock } }),
+  getRecord: (...args: unknown[]) => getRecordMock(...args),
+  updateRecord: (...args: unknown[]) => updateRecordMock(...args),
+}));
+
+import { POST } from '@/app/api/auth/route';
 
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 
@@ -20,102 +31,53 @@ function setNodeEnv(value: string | undefined) {
   (process.env as Record<string, string | undefined>).NODE_ENV = value;
 }
 
-function signin(body: Record<string, unknown>): NextRequest {
-  return new NextRequest('https://admin.sierra-estates.net/api/auth', {
+const signinRequest = (body: Record<string, unknown>) =>
+  new Request('http://localhost:3000/api/auth', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ action: 'signin', ...body }),
-  } as any);
-}
-
-afterEach(() => {
-  setNodeEnv(ORIGINAL_NODE_ENV);
-});
-
-describe('POST /api/auth — Path B in production', () => {
-  beforeEach(() => {
-    setNodeEnv('production');
   });
 
-  it('refuses an unverified google claim with 503 and sets no cookie', async () => {
-    const res = await POST(signin({ provider: 'google', email: 'admin@sierra-estates.net' }));
+describe.each(['production', 'development'])(
+  'POST /api/auth — unverified google claims in %s',
+  (env) => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setNodeEnv(env);
+    });
+    afterEach(() => setNodeEnv(ORIGINAL_NODE_ENV));
 
-    expect(res.status).toBe(503);
-    expect(res.headers.get('set-cookie')).toBeNull();
-  });
+    it('never mints a session from a body-only google claim', async () => {
+      const res = await POST(
+        signinRequest({ provider: 'google', email: 'attacker@sierra-estates.net' })
+      );
 
-  it('refuses even a claim carrying an allowlisted email and a uid', async () => {
-    const res = await POST(
-      signin({
-        provider: 'google',
-        email: 'admin@sierra-estates.net',
-        uid: 'attacker-chosen-uid',
-        name: 'Not Verified',
-      }),
-    );
+      expect(res.headers.get('set-cookie')).toBeNull();
+      expect(res.status).not.toBe(200);
+    });
 
-    expect(res.status).toBe(503);
-  });
+    it('never mints a session for a claim carrying an allowlisted email and a uid', async () => {
+      const res = await POST(
+        signinRequest({
+          provider: 'google',
+          email: 'admin@sierra-estates.net',
+          uid: 'attacker-chosen-uid',
+          name: 'Totally The Admin',
+        })
+      );
 
-  it('refuses before the email allowlist is even consulted', async () => {
-    // A non-allowlisted email would be a 403 outside production; in production
-    // the path is closed outright, so the answer is the same 503 either way —
-    // no oracle telling a caller which addresses are admin addresses.
-    const res = await POST(signin({ provider: 'google', email: 'attacker@evil.com' }));
+      expect(res.headers.get('set-cookie')).toBeNull();
+      expect(res.status).not.toBe(200);
+    });
 
-    expect(res.status).toBe(503);
-  });
-});
+    it('does not consult the profiles table for an unverified claim', async () => {
+      // Nothing about a body-only claim should reach the database: there is no
+      // identity to look up.
+      await POST(signinRequest({ provider: 'google', email: 'admin@sierra-estates.net' }));
 
-describe('POST /api/auth — Path B outside production', () => {
-  beforeEach(() => {
-    setNodeEnv('development');
-  });
-
-  it('still rejects a non-allowlisted email with 403', async () => {
-    const res = await POST(signin({ provider: 'google', email: 'attacker@evil.com' }));
-
-    expect(res.status).toBe(403);
-    expect(res.headers.get('set-cookie')).toBeNull();
-  });
-
-  it('issues a session for an allowlisted email so local dev keeps working', async () => {
-    const res = await POST(signin({ provider: 'google', email: 'admin@sierra-estates.net' }));
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ ok: true, role: 'admin' });
-    expect(res.headers.get('set-cookie')).toContain('sierra_sess=');
-  });
-});
-
-describe('POST /api/auth — request shape', () => {
-  it('rejects a signin with neither email nor token', async () => {
-    const res = await POST(signin({}));
-
-    expect(res.status).toBe(400);
-  });
-
-  it('rejects an unknown action', async () => {
-    const req = new NextRequest('https://admin.sierra-estates.net/api/auth', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'elevate' }),
-    } as any);
-
-    expect((await POST(req)).status).toBe(400);
-  });
-
-  it('clears the session cookie on signout', async () => {
-    const req = new NextRequest('https://admin.sierra-estates.net/api/auth', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'signout' }),
-    } as any);
-
-    const res = await POST(req);
-
-    expect(res.status).toBe(200);
-    expect(res.headers.get('set-cookie')).toContain('sierra_sess=');
-    expect(res.headers.get('set-cookie')).toMatch(/Max-Age=0|Expires=Thu, 01 Jan 1970/);
-  });
-});
+      expect(getUserMock).not.toHaveBeenCalled();
+      expect(getRecordMock).not.toHaveBeenCalled();
+      expect(updateRecordMock).not.toHaveBeenCalled();
+    });
+  }
+);

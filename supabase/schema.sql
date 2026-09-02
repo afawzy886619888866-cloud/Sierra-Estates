@@ -16,8 +16,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE NOT NULL,
     full_name TEXT,
     phone TEXT,
-    role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'agent', 'broker', 'client', 'owner')),
+    role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'manager', 'agent', 'broker', 'viewer', 'client', 'owner')),
     avatar_url TEXT,
+    -- Recorded at sign-in by /api/auth; the Firestore users doc carried these.
+    status TEXT DEFAULT 'active',
+    last_login TIMESTAMPTZ,
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
@@ -29,7 +32,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.listings (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     ref_id TEXT UNIQUE,
-    title TEXT NOT NULL,
+    -- Defaulted: the admin SPA's create-listing form has no title field, it
+    -- posts compound/type/price only (app/api/admin/listings POST).
+    title TEXT NOT NULL DEFAULT '',
     title_ar TEXT,
     description TEXT,
     description_ar TEXT,
@@ -52,7 +57,43 @@ CREATE TABLE IF NOT EXISTS public.listings (
     roi_percentage NUMERIC(5, 2),
     cap_rate NUMERIC(5, 2),
     valuation_status TEXT DEFAULT 'Fair Value',
-    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'pending', 'sold', 'rented', 'archived', 'draft')),
+    -- The public site and the legacy Firestore documents use a wider status
+    -- vocabulary than the original six values: 'available' is what the client
+    -- feed and the seed data emit, and 'Pending Review' is what the
+    -- unauthenticated /api/listings/submit endpoint writes. Both must be
+    -- storable or the moderation flow cannot be represented at all.
+    -- isPubliclyVisibleListingStatus() (lib/models/schema.ts) is what decides
+    -- which of these reach the public feed.
+    status TEXT DEFAULT 'active' CHECK (status IN (
+        'active', 'pending', 'sold', 'rented', 'archived', 'draft',
+        'available', 'reserved', 'off-market', 'Pending Review'
+    )),
+    -- Moderation gate for public submissions: a row written by the public
+    -- /api/listings/submit endpoint is a claim, not inventory, until staff
+    -- verify it and publish it to the client feed.
+    verified BOOLEAN DEFAULT FALSE,
+    publish_to_client BOOLEAN DEFAULT FALSE,
+    -- Legacy presentation/CRM fields carried over from the Firestore
+    -- `listings` / `houyez_listings` documents (see lib/types.ts `Listing`).
+    code TEXT,                        -- human-facing code, e.g. 'SE-SUB-123456'
+    zone TEXT,                        -- sub-area within the compound
+    egp_m NUMERIC(15, 2),             -- headline price in EGP millions
+    usd NUMERIC(15, 2),               -- headline price in USD
+    ai_score NUMERIC(4, 2) DEFAULT 0, -- 0-10 ranking weight used by the feed
+    tag TEXT,                         -- 'Verified Owner' | 'Featured' | ...
+    agent TEXT,                       -- display name of the listing agent
+    ago TEXT,                         -- freshness label captured at write time
+    img TEXT,                         -- primary image (images[0] equivalent)
+    photos TEXT[] DEFAULT ARRAY[]::TEXT[],
+    garden_area NUMERIC(10, 2) DEFAULT 0,
+    owner_type TEXT,                  -- 'Owner' | 'Broker'
+    pf_reference_number TEXT,         -- PropertyFinder reference, when synced
+    pf_status TEXT,                   -- PropertyFinder publication state
+    automation JSONB DEFAULT '{}'::jsonb,   -- { isPublishedToPF, ... }
+    intelligence JSONB DEFAULT '{}'::jsonb, -- { valuationScore, urgencyScore, ... }
+    category TEXT,                    -- 'residential' | 'commercial'
+    dupe_check_hash TEXT,             -- inventory dedupe fingerprint
+    sync_source TEXT,                 -- 'manual' | 'property-finder' | 'whatsapp' | ...
     featured BOOLEAN DEFAULT FALSE,
     is_hot_deal BOOLEAN DEFAULT FALSE,
     owner_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -77,11 +118,15 @@ CREATE TABLE IF NOT EXISTS public.listings (
 CREATE TABLE IF NOT EXISTS public.leads (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     full_name TEXT NOT NULL,
-    phone TEXT NOT NULL,
+    -- Nullable: the public /api/leads contact form requires an email but
+    -- leaves the phone optional, so NOT NULL would reject a valid submission.
+    phone TEXT,
     email TEXT,
     channel TEXT DEFAULT 'whatsapp' CHECK (channel IN ('whatsapp', 'telegram', 'web', 'phone', 'referral', 'property_finder')),
     lead_type TEXT DEFAULT 'buyer' CHECK (lead_type IN ('buyer', 'renter', 'investor', 'seller', 'owner')),
-    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture')),
+    -- 'Viewing Requested' is written by /api/leads/request-viewing; the rest
+    -- are the canonical pipeline values.
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture', 'Viewing Requested')),
     target_compound TEXT,
     target_property_type TEXT,
     budget_min NUMERIC(15, 2) DEFAULT 0,
@@ -94,6 +139,38 @@ CREATE TABLE IF NOT EXISTS public.leads (
     summary_notes TEXT,
     tags TEXT[] DEFAULT ARRAY[]::TEXT[],
     metadata JSONB DEFAULT '{}'::jsonb,
+    -- CRM/qualification fields written by the public and concierge routes.
+    -- `channel` above is the normalised intake channel; `source` keeps the
+    -- raw attribution string ('website', 'property-finder', ...).
+    source TEXT DEFAULT 'website',
+    mode TEXT DEFAULT 'sale',         -- 'sale' | 'rent' interest
+    zone TEXT,
+    phase TEXT,                       -- 'acquisition' | ...
+    priority TEXT,                    -- 'hot' | 'warm' | 'cold'
+    via TEXT,                         -- human label for how the lead arrived
+    interest TEXT,
+    capital_allocation TEXT,
+    locale TEXT,
+    stage INT,                        -- numeric funnel position (1..n)
+    whatsapp TEXT,                    -- WhatsApp number when it differs from phone
+    ai_profiling JSONB DEFAULT '{}'::jsonb,
+    automation JSONB DEFAULT '{}'::jsonb,
+    -- Admin CRM board fields (app/api/admin/leads). `pipeline_stage` is the
+    -- PipelineStage enum ('inbound'..'closed-won') the board works in; it is
+    -- deliberately NOT `stage` above, which the public intake routes use as a
+    -- numeric funnel position.
+    pipeline_stage TEXT DEFAULT 'inbound',
+    color TEXT,                       -- board swimlane colour
+    hot BOOLEAN DEFAULT FALSE,
+    archived BOOLEAN DEFAULT FALSE,
+    pf_lead_id TEXT,                  -- PropertyFinder lead id, when source is PF
+    interested_project_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+    preferred_property_type TEXT,
+    -- Concierge portfolio pointer (see public.concierge_selections).
+    concierge_portfolio_id TEXT,
+    concierge_portfolio_sent_at TIMESTAMPTZ,
+    concierge_portfolio_sent_via TEXT,
+    last_curated_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -485,6 +562,7 @@ CREATE TABLE IF NOT EXISTS public.inquiries (
     source TEXT DEFAULT 'web',
     notes TEXT,
     assigned_to TEXT,
+    updated_by TEXT,                 -- uid of the staff member who last edited
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -498,7 +576,49 @@ CREATE TABLE IF NOT EXISTS public.career_applications (
     position TEXT NOT NULL,
     experience TEXT,
     message TEXT,
-    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'reviewed', 'hired', 'rejected')),
+    -- Remaining answers from the /careers form.
+    real_estate_knowledge TEXT,
+    availability TEXT,
+    source TEXT DEFAULT 'careers_page',
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'pending_review', 'reviewed', 'hired', 'rejected')),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Viewings (confirmed site inspections booked from the concierge flow) ────
+-- Distinct from viewing_requests (raw public form) and viewing_appointments
+-- (the agent calendar): this is the Firestore `viewings` collection, created by
+-- /api/leads/request-viewing and lib/services/viewing-engine.ts.
+CREATE TABLE IF NOT EXISTS public.viewings (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE CASCADE,
+    unit_id TEXT,                     -- listing id; not an FK, seed ids are not rows
+    portfolio_id TEXT,                -- concierge_selections.id, when curated
+    agent_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    scheduled_at TIMESTAMPTZ,
+    status TEXT DEFAULT 'pending_approval'
+        CHECK (status IN ('pending_approval', 'scheduled', 'completed', 'cancelled', 'no_show')),
+    location TEXT,
+    reminder_sent BOOLEAN DEFAULT FALSE,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Concierge selections (S8 curated portfolios shared with a lead) ─────────
+-- Reachable by link at /concierge/{leadId}, so readable without an account.
+CREATE TABLE IF NOT EXISTS public.concierge_selections (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE CASCADE,
+    lead_name TEXT,
+    units JSONB DEFAULT '[]'::jsonb,
+    personal_note TEXT,
+    matching_score NUMERIC(6, 2) DEFAULT 0,
+    estimated_portfolio_roi NUMERIC(6, 2) DEFAULT 0,
+    whatsapp_link TEXT,
+    status TEXT DEFAULT 'generated',
+    last_updated_unit TEXT,
+    engagement JSONB DEFAULT '{}'::jsonb,  -- { viewed, unit_clicked, requested_viewing }
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -556,6 +676,15 @@ CREATE TABLE IF NOT EXISTS public.contracts (
     buyer JSONB DEFAULT '{}'::jsonb,
     seller JSONB DEFAULT '{}'::jsonb,
     terms JSONB DEFAULT '{}'::jsonb,
+    -- ── DigitalContractData payload (lib/services/digital-contracts.ts) ────
+    contract_number TEXT,
+    contract_type TEXT,
+    unit JSONB DEFAULT '{}'::jsonb,          -- unitCode, compoundName, agreedPrice, ...
+    seller_or_owner JSONB DEFAULT '{}'::jsonb,
+    commission JSONB,                        -- null when no commission agreed
+    notes_ar TEXT,
+    notes_en TEXT,
+    signature_hash TEXT,
     total_value NUMERIC(15, 2) DEFAULT 0,
     currency TEXT DEFAULT 'EGP',
     status TEXT DEFAULT 'draft',
@@ -568,6 +697,9 @@ CREATE TABLE IF NOT EXISTS public.contracts (
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    -- Raw caller uid as supplied by the session guard. Kept as TEXT alongside
+    -- actor_id because legacy Firebase uids are not UUIDs and must not be lost.
+    actor_uid TEXT,
     actor_email TEXT,
     action TEXT NOT NULL,
     target TEXT,
@@ -579,13 +711,20 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 
 -- ─── Operational: bots, workflows, orchestration, analytics ──────────────────
 CREATE TABLE IF NOT EXISTS public.agents_registry (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     name TEXT NOT NULL,
     phone TEXT,
     email TEXT,
     avatar TEXT,
     rating NUMERIC(4, 2) DEFAULT 0,
     listings_count INT DEFAULT 0,
+    -- Display fields for the /admin agents board. `description` is surfaced as
+    -- `desc` by the route (DESC is a SQL keyword, so it cannot be a bare column).
+    description TEXT,
+    emoji TEXT,
+    color TEXT,
+    load INT DEFAULT 0,              -- 0-100 utilisation
+    tasks INT DEFAULT 0,
     status TEXT DEFAULT 'idle',
     last_pulse TIMESTAMPTZ,
     last_error TEXT,
@@ -643,6 +782,12 @@ CREATE TABLE IF NOT EXISTS public.search_queries (
     query TEXT NOT NULL,
     result_count INT DEFAULT 0,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    -- Recorded by /api/search/semantic so extraction quality can be audited:
+    -- `intent` is the structured filter set the AI extracted from the query.
+    locale TEXT DEFAULT 'en',
+    intent JSONB DEFAULT '{}'::jsonb,
+    extraction_method TEXT,
+    user_agent TEXT,
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -658,6 +803,8 @@ CREATE INDEX IF NOT EXISTS idx_followups_lead ON public.followups(lead_id);
 CREATE INDEX IF NOT EXISTS idx_followups_agent ON public.followups(agent_id);
 CREATE INDEX IF NOT EXISTS idx_followups_status ON public.followups(status);
 CREATE INDEX IF NOT EXISTS idx_viewing_requests_status ON public.viewing_requests(status);
+CREATE INDEX IF NOT EXISTS idx_viewings_lead ON public.viewings(lead_id);
+CREATE INDEX IF NOT EXISTS idx_concierge_selections_lead ON public.concierge_selections(lead_id);
 CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_pages_slug_locale ON public.pages(slug, locale);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs(created_at DESC);
@@ -674,6 +821,8 @@ CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow ON public.workflow_e
 ALTER TABLE public.compounds ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.owners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.viewing_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.viewings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.concierge_selections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.career_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.followups ENABLE ROW LEVEL SECURITY;
@@ -715,6 +864,21 @@ BEGIN
         FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
     DROP POLICY IF EXISTS "viewing_requests_staff_access" ON public.viewing_requests;
     CREATE POLICY "viewing_requests_staff_access" ON public.viewing_requests
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Booked viewings carry the lead's identity: staff only, no public read.
+    -- /api/leads/request-viewing is public but writes through the service role.
+    DROP POLICY IF EXISTS "viewings_staff_access" ON public.viewings;
+    CREATE POLICY "viewings_staff_access" ON public.viewings
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- A concierge portfolio is shared with the lead as a link, so it is
+    -- readable without an account; only staff (or the service role) write it.
+    DROP POLICY IF EXISTS "concierge_selections_public_read" ON public.concierge_selections;
+    CREATE POLICY "concierge_selections_public_read" ON public.concierge_selections
+        FOR SELECT TO anon, authenticated USING (TRUE);
+    DROP POLICY IF EXISTS "concierge_selections_staff_write" ON public.concierge_selections;
+    CREATE POLICY "concierge_selections_staff_write" ON public.concierge_selections
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "inquiries_public_insert" ON public.inquiries;
@@ -793,7 +957,8 @@ BEGIN
     FOREACH t IN ARRAY ARRAY[
         'compounds', 'owners', 'viewing_requests', 'inquiries',
         'career_applications', 'followups', 'pages', 'knowledge_base',
-        'contracts', 'agents_registry', 'bot_commands', 'workflows'
+        'contracts', 'agents_registry', 'bot_commands', 'workflows',
+        'concierge_selections'
     ]
     LOOP
         IF NOT EXISTS (
@@ -805,6 +970,17 @@ BEGIN
             );
         END IF;
     END LOOP;
+END $$;
+
+-- public.viewings is handled separately: 'trigger_update_viewings' is already
+-- taken by public.viewing_appointments above, so the loop's name-existence
+-- check would silently skip it.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_viewings_table') THEN
+        CREATE TRIGGER trigger_update_viewings_table BEFORE UPDATE ON public.viewings
+            FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
 END $$;
 
 -- ------------------------------------------------------------------------------
@@ -954,3 +1130,301 @@ BEGIN
 END;
 $$;
 
+
+-- ==============================================================================
+-- Admin console tables (app/api/admin/*) — sales, strategic pipeline, owner
+-- negotiations and worker heartbeats. Column shapes are taken from the
+-- existing TypeScript models (lib/models/schema.ts) rather than invented.
+-- ==============================================================================
+
+-- ─── Sales (closed transactions; feeds /api/admin/reports revenue) ──────────
+CREATE TABLE IF NOT EXISTS public.sales (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    unit_id TEXT,                     -- listing id; not an FK, legacy ids may not be rows
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE SET NULL,
+    agent_id TEXT,                    -- uid of the closing agent
+    agent_name TEXT,                  -- denormalised for the reports table
+    sale_price NUMERIC(15, 2) NOT NULL DEFAULT 0,
+    commission_percent NUMERIC(5, 2) DEFAULT 0,
+    commission_amount NUMERIC(15, 2) DEFAULT 0,
+    closing_date TIMESTAMPTZ,
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'contracted', 'completed', 'cancelled')),
+    contract_number TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Strategic pipeline (S9 deal board, written by mcp-servers/sierra-deals) ─
+CREATE TABLE IF NOT EXISTS public.strategic_pipeline (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    stakeholder_id TEXT,              -- FK -> leads, kept loose for legacy ids
+    portfolio_asset_code TEXT,
+    status TEXT DEFAULT 'draft',
+    stage TEXT DEFAULT 'inbound',     -- 'inbound'..'closed'; reports count stage='closed'
+    terms JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Owner negotiations (WhatsApp buy/sell threads with property owners) ────
+CREATE TABLE IF NOT EXISTS public.owner_negotiations (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    unit_id TEXT,                     -- listing id, once a canonical unit exists
+    broker_listing_id TEXT,           -- raw inbound signal this came from
+    owner_name TEXT,
+    owner_phone TEXT NOT NULL,
+    interested_lead_id TEXT,          -- the buyer/renter this is negotiated for
+    asking_price NUMERIC(15, 2),
+    current_offer_price NUMERIC(15, 2),
+    status TEXT DEFAULT 'contacted'
+        CHECK (status IN ('contacted', 'negotiating', 'agreed', 'completed', 'rejected', 'stale')),
+    -- Append-only message log: [{ direction, message, price?, timestamp }]
+    history JSONB DEFAULT '[]'::jsonb,
+    assigned_agent_id TEXT,
+    last_contact_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── System status (worker heartbeats; was Firestore system_status/{id}) ────
+-- One row per background worker, e.g. id = 'whatsapp_node'. Written by the
+-- worker heartbeat endpoints, read by /api/admin/agents.
+CREATE TABLE IF NOT EXISTS public.system_status (
+    id TEXT PRIMARY KEY,
+    status TEXT DEFAULT 'idle'
+        CHECK (status IN ('active', 'syncing', 'error', 'idle', 'offline')),
+    last_pulse TIMESTAMPTZ,
+    last_error TEXT,
+    last_command TEXT,
+    last_command_at TIMESTAMPTZ,
+    config JSONB DEFAULT '{}'::jsonb,   -- { interval, enabled }
+    stats JSONB DEFAULT '{}'::jsonb,    -- { processedToday, errorsToday }
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sales_created ON public.sales(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sales_agent ON public.sales(agent_id);
+CREATE INDEX IF NOT EXISTS idx_strategic_pipeline_stage ON public.strategic_pipeline(stage);
+CREATE INDEX IF NOT EXISTS idx_strategic_pipeline_created ON public.strategic_pipeline(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_owner_negotiations_status ON public.owner_negotiations(status);
+CREATE INDEX IF NOT EXISTS idx_owner_negotiations_phone ON public.owner_negotiations(owner_phone);
+
+-- Every one of these is internal commercial data: staff only, never public,
+-- and never open to `authenticated` at large (sign-ups land as role 'client').
+ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.strategic_pipeline ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.owner_negotiations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_status ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "sales_staff_access" ON public.sales;
+    CREATE POLICY "sales_staff_access" ON public.sales
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "strategic_pipeline_staff_access" ON public.strategic_pipeline;
+    CREATE POLICY "strategic_pipeline_staff_access" ON public.strategic_pipeline
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "owner_negotiations_staff_access" ON public.owner_negotiations;
+    CREATE POLICY "owner_negotiations_staff_access" ON public.owner_negotiations
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Read-only for staff; heartbeats are written by workers via service role.
+    DROP POLICY IF EXISTS "system_status_staff_read" ON public.system_status;
+    CREATE POLICY "system_status_staff_read" ON public.system_status
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_sales') THEN
+        CREATE TRIGGER trigger_update_sales BEFORE UPDATE ON public.sales FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_strategic_pipeline') THEN
+        CREATE TRIGGER trigger_update_strategic_pipeline BEFORE UPDATE ON public.strategic_pipeline FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_owner_negotiations') THEN
+        CREATE TRIGGER trigger_update_owner_negotiations BEFORE UPDATE ON public.owner_negotiations FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+END $$;
+
+
+-- ==============================================================================
+-- Firebase → Supabase migration, batch 2:
+--   the cron / sync / ingest / webhook routes under
+--   apps/sierra-estates-realty/app/api/{cron,sync,crm,ingest,webhooks,
+--   properties,telegram,wealth,internal}.
+--
+-- Everything below is additive and idempotent (CREATE TABLE IF NOT EXISTS /
+-- ADD COLUMN IF NOT EXISTS), so it is safe to re-run against a database that
+-- already has the tables above. Column names are the snake_case form of the
+-- field names those routes were already writing to Firestore, so no field is
+-- dropped by the migration.
+-- ==============================================================================
+
+-- ─── Activity feed (Firestore `activities`) ──────────────────────────────────
+-- Written by every sync/cron route to give the admin dashboard a human-readable
+-- audit trail. Distinct from audit_logs, which records staff mutations; this is
+-- the operational "what did the automation just do" stream.
+CREATE TABLE IF NOT EXISTS public.activities (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    type TEXT NOT NULL,
+    actor_id TEXT NOT NULL DEFAULT 'system',
+    actor_name TEXT,
+    description TEXT,
+    -- `text` and `color` are UI-facing fields the cron routes have always
+    -- written alongside `description`: the admin feed renders `text` and tints
+    -- the row with `color` (a CSS custom-property token, e.g. 'var(--blue-light)').
+    text TEXT,
+    color TEXT,
+    related_id TEXT,
+    related_type TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Broker listings (Firestore `broker_listings`) ───────────────────────────
+-- Raw inbound WhatsApp/broker signal before it is promoted to public.listings.
+-- Written by /api/ingest/whatsapp and /api/cron/ingest-from-sheets; the
+-- orchestrator pipeline reads it back by id.
+CREATE TABLE IF NOT EXISTS public.broker_listings (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    raw_message TEXT NOT NULL,
+    source_group TEXT,
+    source_platform TEXT DEFAULT 'whatsapp',
+    sender_info TEXT,
+    extracted_data JSONB DEFAULT '{}'::jsonb,
+    intelligence JSONB DEFAULT '{}'::jsonb,
+    orchestration_state JSONB DEFAULT '{}'::jsonb,
+    status TEXT DEFAULT 'new',
+    is_verified BOOLEAN DEFAULT FALSE,
+    -- sha1(sender|rawMessage). Webhook providers retry on timeout, so this is
+    -- the idempotency key that stops a retry creating a second row and
+    -- re-running the pipeline.
+    dedupe_hash TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ─── Session buffer logs (Firestore `SessionBufferLogs`) ─────────────────────
+-- Short-lived ingestion trace written by /api/crm/property-finder. `expire_at`
+-- carries the 7-day TTL the Firestore collection had; nothing evicts it
+-- automatically in Postgres yet, so a reaper (or a pg_cron job) still has to
+-- delete rows past expire_at.
+CREATE TABLE IF NOT EXISTS public.session_buffer_logs (
+    id TEXT PRIMARY KEY,
+    target_sync_hash TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    agent_identity TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    expire_at TIMESTAMPTZ
+);
+
+-- ─── listings: columns the Property Finder / CRM sync paths write ────────────
+-- These routes wrote a denormalised Firestore document. Fields with a canonical
+-- equivalent are mapped onto the existing columns (title, compound, price,
+-- bedrooms, images, …) and the source-specific remainder is kept verbatim in
+-- listings.raw_data. The columns below are the ones that are *queried* by a
+-- route and therefore cannot live inside JSONB.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS code TEXT;                  -- SBR uniform tracking code, e.g. NEW-3F-12M
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS pf_reference_number TEXT;   -- Property Finder listing reference (webhook lookup key)
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS pf_status TEXT;             -- 'published' | 'unpublished' on Property Finder
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS automation JSONB DEFAULT '{}'::jsonb; -- { isPublishedToPF: boolean, … }
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sync_hash TEXT;             -- sha256(location-bua-code-owner) CRM dedupe fingerprint
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sync_source TEXT;           -- 'crm-pf-import' | 'property-finder' | …
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMPTZ;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_listings_pf_reference ON public.listings(pf_reference_number);
+CREATE INDEX IF NOT EXISTS idx_listings_sync_hash ON public.listings(sync_hash);
+CREATE INDEX IF NOT EXISTS idx_listings_code ON public.listings(code);
+
+-- ─── leads: intake-channel columns ───────────────────────────────────────────
+-- `channel` is a closed CHECK list; `source` is the open acquisition-channel
+-- string every intake route (website, olx, walk-in, instagram, …) has always
+-- written and the admin Leads page groups by. They coexist deliberately.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS source TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS stage TEXT;                    -- free-form funnel stage, e.g. 'inbound'
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS mode TEXT;                     -- 'sale' | 'rent' — what the lead is after
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_lead_id TEXT;               -- Property Finder lead id (webhook upsert key)
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_pf_lead_id ON public.leads(pf_lead_id) WHERE pf_lead_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_leads_source ON public.leads(source);
+
+-- ─── proposals: the wealth-intelligence payload ──────────────────────────────
+-- /api/wealth/roi re-analyses each unit on a proposal and writes both the
+-- per-unit array and the rolled-up analysis back onto the proposal.
+ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS units JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS financial_analysis JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.proposals ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL;
+
+-- ─── whatsapp_queue: the fields the dispatch worker needs ────────────────────
+-- The queue drains through /api/cron/whatsapp-dispatch and is updated by the
+-- Twilio status callback. `recipient_phone`/`message_body` stay the canonical
+-- columns for the job's toPhone/body.
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS direction TEXT DEFAULT 'outbound';
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS purpose TEXT;         -- owner-negotiation | client-recommendation | general-outreach
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS unit_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS owner_negotiation_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_name TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_params JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS assigned_number_id TEXT;  -- FK -> whatsapp_numbers, set when a sender is claimed
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS twilio_message_sid TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS twilio_status TEXT;   -- raw status string from Twilio's callback
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS attempts INT DEFAULT 0;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL;
+
+-- The queue's real lifecycle is wider than the original CHECK list: a job is
+-- 'queued' until a sender number is claimed, 'sending' while the Twilio call is
+-- in flight, and 'skipped-quota'/'skipped-hours' when the outreach window or
+-- the per-number cap rejected it. Dropping the old constraint and recreating it
+-- keeps existing rows valid (every previous value is still allowed).
+ALTER TABLE public.whatsapp_queue DROP CONSTRAINT IF EXISTS whatsapp_queue_status_check;
+ALTER TABLE public.whatsapp_queue ADD CONSTRAINT whatsapp_queue_status_check
+    CHECK (status IN ('pending', 'queued', 'processing', 'sending', 'sent',
+                      'delivered', 'read', 'failed', 'skipped-quota', 'skipped-hours'));
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_queue_twilio_sid
+    ON public.whatsapp_queue(twilio_message_sid) WHERE twilio_message_sid IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_activities_created ON public.activities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_broker_listings_status ON public.broker_listings(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_broker_listings_dedupe
+    ON public.broker_listings(dedupe_hash) WHERE dedupe_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_session_buffer_logs_expire ON public.session_buffer_logs(expire_at);
+
+-- ─── RLS for the three new tables ────────────────────────────────────────────
+-- All three are operational/internal: staff read-write, никогда anon. The
+-- service role (used by the routes themselves) bypasses RLS entirely.
+ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.broker_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_buffer_logs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "activities_staff_access" ON public.activities;
+    CREATE POLICY "activities_staff_access" ON public.activities
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "broker_listings_staff_access" ON public.broker_listings;
+    CREATE POLICY "broker_listings_staff_access" ON public.broker_listings
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- session_buffer_logs keeps RLS enabled with no authenticated policy: it is
+    -- written and read by the service role only, so denying by default is right.
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_broker_listings') THEN
+        CREATE TRIGGER trigger_update_broker_listings BEFORE UPDATE ON public.broker_listings
+            FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_proposals') THEN
+        CREATE TRIGGER trigger_update_proposals BEFORE UPDATE ON public.proposals
+            FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+END $$;

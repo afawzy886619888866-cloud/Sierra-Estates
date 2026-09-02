@@ -5,17 +5,18 @@
  * GET /api/auth
  *   → { signedIn: boolean, role?, name?, email? }
  *
- * When Firebase Admin is configured, "signin" verifies the Firebase ID
- * token (passed in `token` field) and reads the user's role from
- * Firestore /users/{uid}. When NOT configured, falls back to demo admin
- * (see lib/auth.ts tryDemoLogin).
+ * "signin" verifies the Supabase access token (passed in the `token` field)
+ * and reads the caller's role from public.profiles. When no token is supplied
+ * it falls back to the env-gated bootstrap login (see lib/auth.ts
+ * tryDemoLogin), which exists so the portal is reachable before the first
+ * Supabase account is provisioned.
  */
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies, isAdminEmail,
+  parseCookies,
 } from "@/lib/auth";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
 import type { Role, User } from "@/lib/types";
 
@@ -50,101 +51,82 @@ export async function POST(req: Request) {
   }
 
   if (body.action === "signin") {
-    const { email, password, token: firebaseIdToken } = body;
-    if (!email && !firebaseIdToken) {
+    const { email, password, token: accessToken } = body;
+    if (!email && !accessToken) {
       return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
     }
 
     const targetEmail = (email || "").trim().toLowerCase();
 
-    // Path A — real Firebase: verify ID token, fetch role.
-    const db = await getAdminDb();
-    if (db && firebaseIdToken) {
+    // Path A — verify the Supabase access token, then read the stored role.
+    if (accessToken) {
       try {
-        const { getAuth } = await import("firebase-admin/auth");
-        const decoded = await getAuth().verifyIdToken(firebaseIdToken);
-        const verifiedEmail = (decoded.email || targetEmail || "").trim().toLowerCase();
-        const userDoc = await db.collection("users").doc(decoded.uid).get();
+        const { data, error } = await getSupabaseAdmin().auth.getUser(accessToken);
+        const user = error ? null : data?.user;
 
-        // Accounts are provisioned out-of-band only (scripts/seed-admin.mjs).
-        // A verified token for a uid we have never provisioned is NOT a new
-        // staff member — it is anyone who managed to create a Firebase account.
-        // Reject it; never write a users/ document from this request path.
-        if (!userDoc.exists) {
-          return NextResponse.json(
-            { error: "This account is not provisioned for the admin portal." },
-            { status: 403 }
+        if (user) {
+          const verifiedEmail = (user.email || targetEmail || "").trim().toLowerCase();
+          const profile = await getRecord<Partial<User> & { fullName?: string; role?: string }>(
+            "profiles",
+            user.id
           );
+
+          // Accounts are provisioned out-of-band only (scripts/seed-admin.mjs).
+          // A verified token for a uid we have never provisioned is NOT a new
+          // staff member — it is anyone who managed to create an account.
+          // Reject it; never write a profiles row from this request path.
+          if (!profile) {
+            return NextResponse.json(
+              { error: "This account is not provisioned for the admin portal." },
+              { status: 403 }
+            );
+          }
+
+          const rawRole = String(profile.role ?? "").trim().toLowerCase();
+
+          // The stored role is the only source of truth — no email allowlist or
+          // sign-in provider may promote an account at login time.
+          if (!isAdminPortalRole(rawRole)) {
+            return NextResponse.json(
+              { error: "This account is not approved for the admin portal." },
+              { status: 403 }
+            );
+          }
+          const role = rawRole as Role;
+
+          await updateRecord("profiles", user.id, { lastLogin: new Date().toISOString() });
+
+          const sess = await signSession({
+            uid: user.id,
+            email: user.email ?? verifiedEmail,
+            name:
+              profile.fullName ??
+              (user.user_metadata?.full_name as string | undefined) ??
+              verifiedEmail.split("@")[0] ??
+              "Sierra Staff",
+            role,
+          });
+          const res = NextResponse.json({ ok: true, role });
+          res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
+          return res;
         }
 
-        const userData = userDoc.data() as Partial<User> | undefined;
-        const rawRole = String(userData?.role ?? "").trim().toLowerCase();
-
-        // The stored role is the only source of truth — no email allowlist or
-        // sign-in provider may promote an account at login time.
-        if (!isAdminPortalRole(rawRole)) {
-          return NextResponse.json({ error: "This account is not approved for the admin portal." }, { status: 403 });
-        }
-        const role = rawRole as Role;
-
-        await db.collection("users").doc(decoded.uid).set(
-          { lastLogin: new Date().toISOString() },
-          { merge: true }
-        );
-
-        const sess = await signSession({
-          uid: decoded.uid,
-          email: decoded.email ?? verifiedEmail,
-          name: userData?.name ?? decoded.name ?? verifiedEmail.split("@")[0] ?? "Sierra Staff",
-          role,
-        });
-        const res = NextResponse.json({ ok: true, role });
-        res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
-        return res;
-      } catch (fbErr: any) {
-        console.warn("[api/auth] Firebase verification failed, falling back to staff auth:", fbErr?.message);
+        console.warn("[api/auth] Supabase token verification failed:", error?.message);
+      } catch (err: any) {
+        console.warn("[api/auth] Supabase token verification threw:", err?.message);
       }
+
+      // A token was supplied and did not verify. Falling through to a
+      // password path here would let a caller bypass token verification by
+      // sending a bad token alongside credentials, so refuse outright.
+      return NextResponse.json({ error: "Invalid or expired session token." }, { status: 401 });
     }
 
-    // Path B — Google Sign-In Direct Fallback (Firebase popup succeeded but
-    // Admin SDK verification failed or isn't configured).
-    //
-    // Everything this path trusts — provider, email, uid — comes from the
-    // request body, and none of it is verified. It previously minted a signed
-    // admin session from those claims alone, so any POST carrying
-    // {provider:'google', email:'<anything>@sierra-estates.net'} was issued an
-    // admin cookie whenever the Admin SDK was unconfigured or verifyIdToken
-    // threw. isAdminEmail() accepts any address on that domain, so it gated
-    // nothing an attacker could not satisfy.
-    //
-    // It stays available for local development, where the Admin SDK often is
-    // not configured, and is closed in production: there, a real ID token
-    // verified by Path A is the only way in.
-    if (body.provider === 'google' && targetEmail) {
-      if (process.env.NODE_ENV === 'production') {
-        console.error('[api/auth] Path B refused in production: Firebase Admin verification is required.');
-        return NextResponse.json(
-          { error: 'Sign-in is temporarily unavailable. Firebase Admin verification is not configured.' },
-          { status: 503 }
-        );
-      }
-      if (!isAdminEmail(targetEmail)) {
-        return NextResponse.json(
-          { error: `The Google account "${targetEmail}" is not authorized for the admin portal. Contact your administrator to add this email to the approved list.` },
-          { status: 403 }
-        );
-      }
-      const googleRole: Role = "admin";
-      const sess = await signSession({
-        uid: body.uid || `google-${targetEmail.replace(/[^a-z0-9]/g, "-")}`,
-        email: targetEmail,
-        name: body.name || targetEmail.split("@")[0] || "Executive Admin",
-        role: googleRole,
-      });
-      const res = NextResponse.json({ ok: true, role: googleRole });
-      res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
-      return res;
-    }
+    // NOTE: the former "Path B" (Google Sign-In direct fallback) is gone.
+    // It trusted `provider`, `email` and `uid` straight from the request body
+    // and minted an admin session from those claims alone. Under Supabase Auth
+    // a Google sign-in returns a real access token, so Path A covers it and
+    // the unverified path has no reason to exist.
 
     // Path C — Staff Admin Fallback (Email + Password)
     const demo = tryDemoLogin(targetEmail, password || "");
