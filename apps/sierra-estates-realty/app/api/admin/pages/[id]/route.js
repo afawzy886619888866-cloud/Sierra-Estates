@@ -11,7 +11,6 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
 async function callerIsSuperadmin(authResult) {
-  if (authResult.method === 'secret-key') return true;
   if (!authResult.uid) return false;
   const callerDoc = await adminDb.collection('users').doc(authResult.uid).get();
   return _optionalChain([callerDoc, 'access', _ => _.data, 'call', _2 => _2(), 'optionalAccess', _3 => _3.role]) === 'superadmin';

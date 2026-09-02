@@ -65,7 +65,14 @@ export async function proxy(request) {
       let hasAdminSession = false;
 
       try {
-        hasAdminSession = Boolean(await verifySession(sessionToken));
+        // verifySession only validates HMAC + expiry — it does not inspect the
+        // role. ADMIN_PORTAL_ROLES includes owner and agent, so this gate,
+        // despite its name, used to admit any staff session to /api/internal/*
+        // (internal/memory, internal/run-harness, internal/agents/status — none
+        // of which carry their own guard).
+        const internalSession = await verifySession(sessionToken);
+        hasAdminSession =
+          _optionalChain([internalSession, 'optionalAccess', _5 => _5.role]) === 'admin' || _optionalChain([internalSession, 'optionalAccess', _6 => _6.role]) === 'superadmin';
       } catch (e) {
         hasAdminSession = false;
       }
@@ -81,7 +88,7 @@ export async function proxy(request) {
           );
         }
 
-        if (expectedSecret && secretHeader !== expectedSecret) {
+        if (expectedSecret && !safeEqual(secretHeader || '', expectedSecret)) {
           return new NextResponse(
             JSON.stringify({ error: 'Unauthorized internal request' }),
             {
