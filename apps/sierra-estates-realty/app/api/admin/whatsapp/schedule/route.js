@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/server/firebase-admin';
 import { COLLECTIONS, } from '@/lib/models/schema';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
-import { verifyRequest } from '@/lib/server/auth-guard';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,9 +41,14 @@ const scheduleMessageSchema = z.object({
  */
 export async function POST(req) {
   try {
-    const auth = await verifyRequest(req);
-    // Allow service/internal or authenticated admin requests
-    if (!auth.authenticated && process.env.NODE_ENV === 'production') {
+    // Was `verifyRequest` gated on NODE_ENV === 'production'. Two problems:
+    // verifyRequest accepts ANY valid Firebase ID token in the project with no
+    // users/{uid}.role check, so any self-registered account could enqueue bulk
+    // outreach from the company number; and the guard was skipped entirely on
+    // preview deployments. The sibling app/api/admin/whatsapp/send/route.ts was
+    // hardened to verifyAdminRequest for exactly this reason — match it.
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authenticated) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
