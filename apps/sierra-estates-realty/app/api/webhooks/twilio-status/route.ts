@@ -41,8 +41,15 @@ export async function POST(req: NextRequest) {
         logger.warn('[twilio-status] rejected request with invalid/missing X-Twilio-Signature');
         return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      // Was a bare warn-and-continue, so with TWILIO_AUTH_TOKEN unset anyone
+      // could POST MessageSid/MessageStatus and corrupt delivery state for
+      // queued messages. The sibling twilio-inbound route already fails closed
+      // in production; match it.
+      logger.error('[twilio-status] TWILIO_AUTH_TOKEN is not configured — rejecting request');
+      return NextResponse.json({ error: 'Webhook is not configured' }, { status: 503 });
     } else {
-      logger.warn('[twilio-status] TWILIO_AUTH_TOKEN not set — signature validation skipped');
+      logger.warn('[twilio-status] TWILIO_AUTH_TOKEN not set — signature validation skipped (development only)');
     }
 
     const sid = params['MessageSid'] || params['SmsSid'] || '';

@@ -111,10 +111,21 @@ describe('Firestore Security Rules — Structural Validation', () => {
       );
     });
 
-    it('blocks staff from changing the role field on their OWN user doc', () => {
+    // The earlier rule only blocked changing `role` on your OWN document, which
+    // still let any isStaff() caller — agents included — promote a colleague, or
+    // demote every admin and lock the org out. Role writes now require isAdmin()
+    // on ANY document; non-role fields stay staff-writable.
+    it('allows staff to update a user doc only when `role` is untouched', () => {
       expect(rules).toMatch(
-        /match \/users\/\{uid\}[\s\S]*?allow update:\s*if isStaff\(\)[\s\S]*?request\.auth\.uid != uid[\s\S]*?affectedKeys\(\)\.hasAny\(\['role'\]\)/
+        /match \/users\/\{uid\}[\s\S]*?allow update:\s*if \(isStaff\(\)[\s\S]*?!request\.resource\.data\.diff\(resource\.data\)\.affectedKeys\(\)\.hasAny\(\['role'\]\)\)/
       );
+    });
+
+    it('requires isAdmin() to write the role field on any user doc', () => {
+      const usersBlock = rules.match(/match \/users\/\{uid\}[\s\S]*?\n    \}/)?.[0] ?? '';
+      expect(usersBlock).toMatch(/allow update:[\s\S]*?\|\|\s*isAdmin\(\)/);
+      // The self-only carve-out must be gone — it was the bug.
+      expect(usersBlock).not.toMatch(/request\.auth\.uid != uid/);
     });
 
     it('restricts user provisioning and removal to admins', () => {
