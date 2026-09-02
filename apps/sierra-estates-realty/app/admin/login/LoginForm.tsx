@@ -35,7 +35,7 @@ export default function LoginForm() {
           });
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
-        } catch (e) {}
+        } catch (_e) {}
         router.replace('/admin');
       }
     }).catch(() => {});
@@ -48,7 +48,7 @@ export default function LoginForm() {
           try {
             sessionStorage.setItem('sierra_admin_auth', 'true');
             localStorage.setItem('sierra_admin_auth', 'true');
-          } catch (e) {}
+          } catch (_e) {}
           router.replace('/admin');
         }
       })
@@ -72,7 +72,7 @@ export default function LoginForm() {
           });
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
-        } catch (e) {}
+        } catch (_e) {}
         router.replace('/admin');
         router.refresh();
       }
@@ -116,7 +116,7 @@ export default function LoginForm() {
           password,
         });
         supaData = res.data;
-      } catch (sErr) {
+      } catch (_sErr) {
         // Server auth is primary for configured admin roles
       }
 
@@ -125,7 +125,7 @@ export default function LoginForm() {
         try {
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
-        } catch (storageErr) {}
+        } catch (_storageErr) {}
 
         router.replace('/admin');
         router.refresh();
@@ -206,7 +206,7 @@ export default function LoginForm() {
             try {
               sessionStorage.setItem('sierra_admin_auth', 'true');
               localStorage.setItem('sierra_admin_auth', 'true');
-            } catch (e) {}
+            } catch (_e) {}
             router.replace('/admin');
             router.refresh();
             return;

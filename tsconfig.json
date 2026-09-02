@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
-  "files": [],
   "compilerOptions": {
     "target": "ES2020",
     "module": "esnext",
@@ -10,6 +9,9 @@
       "ES2020"
     ],
     "paths": {
+      "@/*": [
+        "./apps/sierra-estates-realty/*"
+      ],
       "@sierra-estates/exchange": [
         "./packages/exchange/exchange-client.ts"
       ],
@@ -30,6 +32,13 @@
       ]
     }
   },
+  "include": [
+    "packages/**/*",
+    "apps/**/*",
+    "scripts/**/*",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": [
     "node_modules",
     "dist",

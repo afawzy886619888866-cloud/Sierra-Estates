@@ -39,13 +39,6 @@
   ],
   "exclude": [
     "node_modules",
-    "__tests__/**/*",
-    "**/*.test.ts",
-    "agents/**/*",
-    "apps/**/*",
-    "bots/**/*",
-    "docs/**/*",
-    "functions/**/*",
-    "public/**/*"
+    ".next"
   ]
 }
