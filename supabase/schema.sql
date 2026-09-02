@@ -296,43 +296,123 @@ ALTER TABLE public.unified_memory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.agent_executions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_metrics ENABLE ROW LEVEL SECURITY;
 
+-- ------------------------------------------------------------------------------
+-- Role helpers.
+--
+-- SECURITY DEFINER so the policies below can read public.profiles even though
+-- profiles itself is RLS-protected (a policy that queried it directly would
+-- recurse). search_path is pinned so the function cannot be redirected by a
+-- caller-controlled search_path.
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public, pg_temp
+AS $fn$
+    SELECT EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('superadmin', 'admin')
+    );
+$fn$;
+
+CREATE OR REPLACE FUNCTION public.is_staff()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public, pg_temp
+AS $fn$
+    SELECT EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role IN ('superadmin', 'admin', 'agent', 'broker')
+    );
+$fn$;
+
 DO $$
 BEGIN
+    -- ── profiles ──────────────────────────────────────────────────────────
+    -- RLS was enabled with no policies at all, which denies every non-service
+    -- read, so role lookups from the client could never work. Sign-ups land as
+    -- role 'client', and role is the privilege boundary: a user may edit their
+    -- own profile but never their own role, which is why the self-update policy
+    -- pins role to its current value. Only an admin may change it.
+    DROP POLICY IF EXISTS "profiles_self_read" ON public.profiles;
+    CREATE POLICY "profiles_self_read" ON public.profiles
+        FOR SELECT TO authenticated USING (id = auth.uid() OR public.is_staff());
+
+    DROP POLICY IF EXISTS "profiles_self_update" ON public.profiles;
+    CREATE POLICY "profiles_self_update" ON public.profiles
+        FOR UPDATE TO authenticated
+        USING (id = auth.uid())
+        WITH CHECK (
+            id = auth.uid()
+            AND role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+        );
+
+    DROP POLICY IF EXISTS "profiles_admin_manage" ON public.profiles;
+    CREATE POLICY "profiles_admin_manage" ON public.profiles
+        FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+    -- ── listings ──────────────────────────────────────────────────────────
+    -- Public reads stay open for active inventory. Writes were open to every
+    -- authenticated user, which on a self-serve sign-up means any customer
+    -- could edit or delete the whole catalogue.
     DROP POLICY IF EXISTS "Public can view active listings" ON public.listings;
     CREATE POLICY "Public can view active listings" ON public.listings
-        FOR SELECT USING (status = 'active' OR auth.role() = 'authenticated');
+        FOR SELECT USING (status = 'active' OR public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can manage listings" ON public.listings;
-    CREATE POLICY "Authenticated users can manage listings" ON public.listings
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "listings_staff_write" ON public.listings;
+    CREATE POLICY "listings_staff_write" ON public.listings
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
+    -- ── leads / deals / proposals / viewings ──────────────────────────────
+    -- Customer PII and commercial terms. These were readable and writable by
+    -- any authenticated account; staff only from here on.
     DROP POLICY IF EXISTS "Service role full access leads" ON public.leads;
     CREATE POLICY "Service role full access leads" ON public.leads
         FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
     DROP POLICY IF EXISTS "Authenticated users can access leads" ON public.leads;
-    CREATE POLICY "Authenticated users can access leads" ON public.leads
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "leads_staff_access" ON public.leads;
+    CREATE POLICY "leads_staff_access" ON public.leads
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can access deals" ON public.deals;
-    CREATE POLICY "Authenticated users can access deals" ON public.deals
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "deals_staff_access" ON public.deals;
+    CREATE POLICY "deals_staff_access" ON public.deals
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "proposals_staff_access" ON public.proposals;
+    CREATE POLICY "proposals_staff_access" ON public.proposals
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can access viewings" ON public.viewing_appointments;
-    CREATE POLICY "Authenticated users can access viewings" ON public.viewing_appointments
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "viewings_staff_access" ON public.viewing_appointments;
+    CREATE POLICY "viewings_staff_access" ON public.viewing_appointments
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
+    -- ── operational tables ────────────────────────────────────────────────
+    -- Outbound message queue and agent memory: staff-only, never a customer.
     DROP POLICY IF EXISTS "Authenticated users can access whatsapp queue" ON public.whatsapp_queue;
-    CREATE POLICY "Authenticated users can access whatsapp queue" ON public.whatsapp_queue
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "whatsapp_queue_staff_access" ON public.whatsapp_queue;
+    CREATE POLICY "whatsapp_queue_staff_access" ON public.whatsapp_queue
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can access unified memory" ON public.unified_memory;
-    CREATE POLICY "Authenticated users can access unified memory" ON public.unified_memory
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "unified_memory_staff_access" ON public.unified_memory;
+    CREATE POLICY "unified_memory_staff_access" ON public.unified_memory
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can access executions" ON public.agent_executions;
-    CREATE POLICY "Authenticated users can access executions" ON public.agent_executions
-        FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    DROP POLICY IF EXISTS "agent_executions_staff_access" ON public.agent_executions;
+    CREATE POLICY "agent_executions_staff_access" ON public.agent_executions
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- system_metrics keeps RLS enabled with no authenticated policy: it is
+    -- written by the service role only, and denying by default is correct.
 END $$;
 
 -- ------------------------------------------------------------------------------

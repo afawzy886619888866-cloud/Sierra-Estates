@@ -53,9 +53,21 @@ describe('Production & Deployment Architecture Tests', () => {
   });
 
   describe('2. Supabase Integration & Data Contract', () => {
-    it('initializes Supabase client with valid project URL', () => {
+    it('initializes the Supabase client from configured credentials', () => {
+      // This used to assert the URL contained the hardcoded project ref, which
+      // only held because the client fell back to it when the env var was
+      // missing. That fallback meant a misconfigured deployment silently talked
+      // to the production project, so it was removed: outside production the
+      // client resolves to an obvious placeholder, and in production a missing
+      // NEXT_PUBLIC_SUPABASE_URL throws instead of guessing.
       expect(supabase).toBeDefined();
-      expect((supabase as any).supabaseUrl).toContain('REDACTED-PROJECT.supabase.co');
+
+      const url = (supabase as unknown as { supabaseUrl: string }).supabaseUrl;
+      expect(url).toBe(
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+          process.env.SUPABASE_URL ||
+          'https://placeholder.supabase.co'
+      );
     });
 
     it('has search_properties RPC callable schema', () => {
