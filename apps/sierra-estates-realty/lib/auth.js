@@ -1,0 +1,254 @@
+ function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }/**
+ * Auth helpers — server-side session cookie (JWT-like, signed via HMAC).
+ * No external JWT lib required: small HS256 impl. The session is stored
+ * in the `sierra_sess` httpOnly cookie. Admin SDK verifies the Firebase
+ * ID token at sign-in time, then we mint our own session cookie.
+ *
+ * For dev / sandbox (no FIREBASE_SERVICE_ACCOUNT), we accept a hardcoded
+ * demo admin so the admin page is reachable without Firebase credentials.
+ */
+import { isAdminPortalRole } from "./types";
+
+
+const COOKIE_NAME = "sierra_sess";
+const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
+
+const IS_PROD = process.env.NODE_ENV === "production";
+
+/**
+ * Bootstrap admin. There is deliberately NO default password: a committed
+ * credential is a published credential. The account exists only when
+ * ADMIN_BOOTSTRAP_PASSWORD is explicitly set, so production fails closed
+ * unless an operator opts in.
+ */
+const BOOTSTRAP_ADMIN_EMAIL =
+  process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net";
+const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+
+/** Dev-only fallback signing key. Never reachable in production — see getKey(). */
+const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
+
+function getKey() {
+  const secret =
+    process.env.SESSION_SECRET ||
+    process.env.ADMIN_SESSION_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.SBR_SECRET_KEY;
+
+  // FIREBASE_PROJECT_ID used to sit at the end of this chain, ahead of the dev
+  // fallback. It is not a secret — it is also published as
+  // NEXT_PUBLIC_FIREBASE_PROJECT_ID and is visible in every client bundle — so
+  // anyone could mint a `sierra_sess` cookie with role "admin". Same for the
+  // committed DEV_FALLBACK_KEY. Production must fail closed and loud instead.
+  if (!secret) {
+    if (IS_PROD) {
+      throw new Error(
+        "SESSION_SECRET is not configured — refusing to sign or verify admin sessions with a public or committed fallback key.",
+      );
+    }
+    return DEV_FALLBACK_KEY;
+  }
+
+  return secret;
+}
+
+async function hmacSha256(data, key) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
+  return Buffer.from(new Uint8Array(sig)).toString("base64url");
+}
+
+export async function signSession(s) {
+  const exp = Date.now() + SESSION_TTL_MS;
+  const payload = { ...s, exp };
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = await hmacSha256(body, getKey());
+  return `${body}.${sig}`;
+}
+
+export async function verifySession(token) {
+  if (!token) return null;
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return null;
+  const expectedSig = await hmacSha256(body, getKey());
+  if (sig !== expectedSig) return null;
+  try {
+    const s = JSON.parse(Buffer.from(body, "base64url").toString("utf-8")) ;
+    if (s.exp < Date.now()) return null;
+    return s;
+  } catch (e2) {
+    return null;
+  }
+}
+
+export const SESSION_COOKIE = COOKIE_NAME;
+
+export function cookieOpts(reqHost) {
+  const host = (reqHost || "").toLowerCase();
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("::1") ||
+    host.includes("0.0.0.0") ||
+    !IS_PROD;
+  const configuredDomain = _optionalChain([process, 'access', _ => _.env, 'access', _2 => _2.COOKIE_DOMAIN, 'optionalAccess', _3 => _3.trim, 'call', _4 => _4()]);
+  const domain = isLocal || !configuredDomain ? undefined : configuredDomain;
+
+  return {
+    httpOnly: true,
+    secure: IS_PROD && !isLocal,
+    sameSite: "lax" ,
+    path: "/",
+    maxAge: SESSION_TTL_MS / 1000,
+    ...(domain ? { domain } : {}),
+  };
+}
+
+/**
+ * Helper to identify whether an email belongs to an authorized admin or staff.
+ */
+export function isAdminEmail(email) {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  
+  // Explicitly configured admin emails via env
+  const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const bootstrapEmail = (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net").trim().toLowerCase();
+
+  const standardAdminEmails = [
+    "admin@sierra-estates.net",
+    "sierra@sierra-estates.net",
+    "owner@sierra-estates.net",
+    "developer@sierra-estates.net",
+    "admin@sierra.com",
+    "admin@gmail.com",
+    "admin.investor@gmail.com",
+    "sierra.admin@gmail.com",
+    "sierraestates.admin@gmail.com",
+    "a.fawzy8866@gmail.com",
+    "sierrablue8866@gmail.com",
+    "sierrablue8866-droid@gmail.com",
+    "a.fawzy@sierra-estates.net",
+    "admin",
+  ];
+
+  return (
+    clean === bootstrapEmail ||
+    standardAdminEmails.includes(clean) ||
+    configuredAdminEmails.includes(clean) ||
+    clean.endsWith("@sierra-estates.net") ||
+    clean.endsWith("@sierra.com")
+  );
+}
+
+/**
+ * Bootstrap & Staff Admin Login
+ * Provides resilient access for approved staff and administrators.
+ */
+export function tryDemoLogin(email, password) {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanPass = (password || "").trim();
+
+  // This path previously accepted a hardcoded list of passwords — including
+  // "admin", "password", "123456" and "12345678" — and its final condition was
+  // `... || isKnownStaffPass`, which made the email check irrelevant. The route
+  // calling it (app/api/auth/route.ts, Path C) has no environment gate, so any
+  // POST /api/auth with any email and one of those passwords was issued a signed
+  // session cookie with role "admin" in production. The list is gone.
+  //
+  // What remains: a single operator-configured password, compared in constant
+  // time, and only for an address that is already an admin email. With no
+  // password configured this path is closed — which is the correct default.
+  const configuredPass =
+    process.env.ADMIN_BOOTSTRAP_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ADMIN_SECRET ||
+    "";
+
+  if (!configuredPass) return null;
+  if (!cleanEmail || !cleanPass) return null;
+  if (!isAdminEmail(cleanEmail)) return null;
+  if (!safeEqual(cleanPass, configuredPass)) return null;
+
+  return {
+    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
+    email: cleanEmail,
+    name: "Sierra Estates Executive Admin",
+    role: "admin" ,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
+}
+
+/** Constant-time string comparison. */
+export function safeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** True when a bootstrap admin account is available to sign in with. */
+export function bootstrapLoginAvailable() {
+  if (
+    process.env.FIREBASE_SERVICE_ACCOUNT ||
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS
+  ) {
+    return false;
+  }
+  return Boolean(BOOTSTRAP_ADMIN_PASSWORD);
+}
+
+/** Parse cookie header into a map. */
+export function parseCookies(header) {
+  if (!header) return {};
+  const out = {};
+  for (const pair of header.split(";")) {
+    const idx = pair.indexOf("=");
+    if (idx === -1) continue;
+    const k = pair.slice(0, idx).trim();
+    const v = pair.slice(idx + 1).trim();
+    out[k] = decodeURIComponent(v);
+  }
+  return out;
+}
+
+/** Read session from a Next.js Request. */
+export async function getSessionFromRequest(req) {
+  const cookies = parseCookies(req.headers.get("cookie"));
+  return verifySession(cookies[COOKIE_NAME]);
+}
+
+/** Throws 401 if no session, 403 if role insufficient. */
+export async function requireRole(req, min) {
+  const sess = await getSessionFromRequest(req);
+  if (!sess) {
+    throw new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  const order = ["viewer", "owner", "agent", "manager", "admin", "superadmin"];
+  const roleIndex = order.indexOf(sess.role);
+  const requiredIndex = order.indexOf(min);
+  if (!isAdminPortalRole(sess.role) && sess.role !== "viewer") {
+    throw new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  if (roleIndex === -1 || requiredIndex === -1 || roleIndex < requiredIndex) {
+    throw new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  return sess;
+}
