@@ -15,13 +15,13 @@ const docMock = jest.fn(() => ({ get: userGetMock, set: userSetMock }));
 const collectionMock = jest.fn((..._args: unknown[]) => ({ doc: docMock }));
 
 jest.mock('firebase-admin/auth', () => ({
-  getAuth: () => ({ verifyIdToken: (...args: unknown[]) => verifyIdTokenMock(...args) }),
+  getAuth: () => ({ verifyIdToken: verifyIdTokenMock }),
 }));
 
 jest.mock('@/lib/firebase-admin', () => ({
   adminEnabled: () => true,
   getAdminApp: async () => ({}),
-  getAdminDb: async () => ({ collection: (...args: unknown[]) => collectionMock(...args) }),
+  getAdminDb: async () => ({ collection: collectionMock }),
 }));
 
 import { POST } from '@/app/api/auth/route';

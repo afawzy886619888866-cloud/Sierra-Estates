@@ -13246,5 +13246,104 @@
     ],
     "createdAt": "2026-09-02T03:47:11.371Z",
     "updatedAt": "2026-09-02T03:47:11.371Z"
+  },
+  "listing-1788321151837-kffg0": {
+    "id": "listing-1788321151837-kffg0",
+    "value": {
+      "id": "listing-1788321151837-kffg0",
+      "sierraCode": "HY-A-3F-11.5M",
+      "type": "Apartment",
+      "location": "Hyde Park",
+      "compound": "Hyde Park",
+      "price": 11500000,
+      "currency": "EGP",
+      "area_sqm": 190,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "finishing": "fully_finished",
+      "contact_info": "Mohamed Fouad (Direct Owner)",
+      "sourceType": "owner",
+      "whatsappGroupName": "New Cairo Direct Owners WhatsApp Archive",
+      "listedAt": "24/08/2026, 10:15:22 AM",
+      "isNewListing": false,
+      "fromArchivedGroup": false,
+      "notes": "للبيع في هايد بارك التجمع الخامس شقة 190 متر 3 غرف نوم و 3 حمام تشطيب الترا سوبر لوكس فيو بحري فيو لاند سكيب. السعر 11,500,000 كاش بدون عمولة من المالك مباشرة 01012345678",
+      "status": "available",
+      "createdAt": "2026-09-02T03:52:31.837Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "owner-listing",
+      "hyde-park",
+      "apartment"
+    ],
+    "createdAt": "2026-09-02T03:52:31.872Z",
+    "updatedAt": "2026-09-02T03:52:31.872Z"
+  },
+  "listing-1788321151903-rp06d": {
+    "id": "listing-1788321151903-rp06d",
+    "value": {
+      "id": "listing-1788321151903-rp06d",
+      "sierraCode": "MI-S-3S-48M",
+      "type": "Standalone Villa",
+      "location": "Mivida",
+      "compound": "Mivida",
+      "price": 48000000,
+      "currency": "EGP",
+      "area_sqm": 200,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "finishing": "semi_finished",
+      "contact_info": "Karim Broker",
+      "sourceType": "owner",
+      "whatsappGroupName": "New Cairo Direct Owners WhatsApp Archive",
+      "listedAt": "24/08/2026, 11:20:45 AM",
+      "isNewListing": false,
+      "fromArchivedGroup": false,
+      "notes": "مطلوب مشتري كاش لفيلا مستقلة في ميفيدا إعمار 500م مباني سعر 48 مليون تواصل 01198765432",
+      "status": "available",
+      "createdAt": "2026-09-02T03:52:31.903Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "owner-listing",
+      "mivida",
+      "standalone villa"
+    ],
+    "createdAt": "2026-09-02T03:52:31.919Z",
+    "updatedAt": "2026-09-02T03:52:31.919Z"
+  },
+  "listing-1788321151925-svbji": {
+    "id": "listing-1788321151925-svbji",
+    "value": {
+      "id": "listing-1788321151925-svbji",
+      "sierraCode": "MA-A-3F-12.5M+G",
+      "type": "Apartment",
+      "location": "Madinaty",
+      "compound": "Madinaty",
+      "price": 12500000,
+      "currency": "EGP",
+      "area_sqm": 200,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "finishing": "fully_finished",
+      "contact_info": "Sarah Owner",
+      "sourceType": "owner",
+      "whatsappGroupName": "New Cairo Direct Owners WhatsApp Archive",
+      "listedAt": "24/08/2026, 12:05:10 PM",
+      "isNewListing": false,
+      "fromArchivedGroup": false,
+      "notes": "للايجار مفروش في مدينتي B10 شقة 140م دور تالت فيو وايد جاردن 3 غرف 2 حمام مكيفة بالكامل 38 الف شهريا للتواصل 01234567890",
+      "status": "available",
+      "createdAt": "2026-09-02T03:52:31.925Z"
+    },
+    "tags": [
+      "inventory-listing",
+      "owner-listing",
+      "madinaty",
+      "apartment"
+    ],
+    "createdAt": "2026-09-02T03:52:31.968Z",
+    "updatedAt": "2026-09-02T03:52:31.968Z"
   }
 }
