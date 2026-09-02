@@ -12,7 +12,7 @@ const verifyIdTokenMock = jest.fn();
 const userGetMock = jest.fn();
 const userSetMock = jest.fn();
 const docMock = jest.fn(() => ({ get: userGetMock, set: userSetMock }));
-const collectionMock = jest.fn(() => ({ doc: docMock }));
+const collectionMock = jest.fn((..._args: unknown[]) => ({ doc: docMock }));
 
 jest.mock('firebase-admin/auth', () => ({
   getAuth: () => ({ verifyIdToken: (...args: unknown[]) => verifyIdTokenMock(...args) }),

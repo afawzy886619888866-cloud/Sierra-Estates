@@ -23,7 +23,7 @@ describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
 
   it('enqueues an immediate WhatsApp outreach job when scheduledFor is omitted', async () => {
     const jobId = await enqueueWhatsAppJob({
-      purpose: 'campaign-broadcast',
+      purpose: 'general-outreach',
       toPhone: '+201001112233',
       body: 'Exclusive Mivida Villa Launch',
     });
@@ -44,7 +44,7 @@ describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
   it('enqueues a future scheduled job when scheduledFor is provided as an ISO string or Date', async () => {
     const futureDate = new Date(Date.now() + 86400000); // 24 hours in future
     const jobId = await enqueueWhatsAppJob({
-      purpose: 'property-recommendation',
+      purpose: 'client-recommendation',
       toPhone: '+201012223344',
       body: 'Scheduled viewing reminder for tomorrow at Hyde Park',
       scheduledFor: futureDate,
