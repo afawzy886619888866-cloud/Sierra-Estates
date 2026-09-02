@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import { handleTelegramCommand, sendTelegramMessage } from '@/lib/services/telegram-controller';
 
 /**
@@ -16,15 +17,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify Telegram Webhook Secret Token if configured
-    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    if (expectedSecret) {
-      const secretHeader = req.headers.get('x-telegram-bot-api-secret-token');
-      if (secretHeader !== expectedSecret) {
-        console.warn('⚠️ [Telegram Webhook] Unauthorized secret header mismatch.');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-    }
+    // Verify the Telegram webhook secret. This was `if (expectedSecret) { check }`,
+    // so an unset TELEGRAM_WEBHOOK_SECRET removed the check entirely and anyone
+    // could POST a command here — handleTelegramCommand dispatches /leads,
+    // /inventory and /approve and replies to the chat id in the request body, so
+    // an open route exfiltrates the CRM lead list to an attacker's chat.
+    // The sibling route app/api/telegram/webhook/route.ts already fails closed;
+    // use the same guard so the two cannot drift again.
+    const denied = verifySharedSecret(req, {
+      header: 'x-telegram-bot-api-secret-token',
+      secret: process.env.TELEGRAM_WEBHOOK_SECRET,
+      name: 'TELEGRAM_WEBHOOK_SECRET',
+    });
+    if (denied) return denied;
 
     const body = await req.json();
 
