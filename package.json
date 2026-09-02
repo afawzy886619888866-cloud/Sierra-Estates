@@ -13,6 +13,8 @@
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
         "test:ci": "turbo run test:ci",
+        "verify": "bash scripts/verify.sh",
+        "hooks:install": "git config core.hooksPath .githooks && echo \"pre-push hook installed\"",
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",

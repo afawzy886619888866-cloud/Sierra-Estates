@@ -666,6 +666,9 @@ importers:
       '@sierra-estates/obsidian':
         specifier: workspace:*
         version: link:../obsidian
+      '@supabase/supabase-js':
+        specifier: ^2.112.4
+        version: 2.112.4(@opentelemetry/api@1.9.1)
     devDependencies:
       '@types/node':
         specifier: ^26.2.0
