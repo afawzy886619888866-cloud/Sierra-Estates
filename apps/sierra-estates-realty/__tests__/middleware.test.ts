@@ -141,7 +141,7 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
   it('blocks /api/orchestrate in production when SBR_SECRET_KEY is unset', async () => {
     delete process.env.SBR_SECRET_KEY;
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
 
     try {
       const res = await middleware(
@@ -149,7 +149,7 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
       );
       expect(res.status).toBe(503);
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     }
   });
 });
@@ -158,7 +158,7 @@ describe('proxy — /api/internal security gate', () => {
   it('blocks internal routes in production when the shared secret is missing', async () => {
     delete process.env.SBR_SECRET_KEY;
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
 
     try {
       const res = await middleware(
@@ -166,7 +166,7 @@ describe('proxy — /api/internal security gate', () => {
       );
       expect(res.status).toBe(503);
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     }
   });
 
