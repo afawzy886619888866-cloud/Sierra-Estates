@@ -1,16 +1,23 @@
 /**
  * POST /api/listings/submit
  *
- * Owner / Admin Submit New Listing API Endpoint
+ * Public listing submission endpoint, reachable from the /add-listing form.
  *
- * Accepts a listing submission payload, validates fields via Zod,
- * and persists it to Firestore (and Google Sheets sync queue).
+ * Accepts a listing submission payload, validates fields via Zod, and persists
+ * it to Firestore (and the Google Sheets sync queue).
+ *
+ * Deliberately unauthenticated — property owners submit here without an
+ * account. Because anyone can post, a submission is NOT inventory: it is
+ * written with `status: LISTING_STATUS_PENDING_REVIEW` and `verified: false`,
+ * and /api/listings filters those out of both of its public response modes.
+ * Staff publish a listing by moving it off the pending status.
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { getAdminDb } from '@/lib/firebase-admin';
+import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,7 +65,8 @@ export async function POST(request: Request) {
       code: listingCode,
       ownerName: data.ownerName,
       mobile: data.mobile,
-      status: 'Available',
+      status: LISTING_STATUS_PENDING_REVIEW,
+      verified: false,
       cmp: data.compound,
       compound: data.compound,
       zone: data.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
@@ -74,7 +82,10 @@ export async function POST(request: Request) {
       finishing: data.finishing,
       ownerType: 'Owner',
       tag: 'Direct Submission',
-      aiScore: 9.0,
+      // An unreviewed submission is not ranked inventory: it scores 0 until a
+      // human grades it, and stays out of the client feed either way.
+      aiScore: 0,
+      publishToClient: false,
       agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
       ago: 'Just now',
       img: data.photos?.[0] || data.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
