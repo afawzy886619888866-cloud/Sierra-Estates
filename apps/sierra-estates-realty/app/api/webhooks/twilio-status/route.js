@@ -1,0 +1,82 @@
+ function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } } function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/server/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
+import { COLLECTIONS } from '@/lib/models/schema';
+import { isValidTwilioSignature, getTwilioStatusCallbackUrl, twilioConfigured } from '@/lib/server/twilio-client';
+import { logger } from '@/lib/logger';
+
+/**
+ * Twilio delivery/read status callback. Twilio POSTs form-encoded params
+ * (MessageSid, MessageStatus, …) for each WhatsApp message we send with a
+ * StatusCallback URL. We map the Twilio status onto the queued job's status.
+ *
+ * Validates X-Twilio-Signature so this can't be spoofed to forge delivery
+ * statuses. Skipped (with a warning) only when Twilio isn't configured at
+ * all — in that mode every send is already simulated, so there's no real
+ * Twilio traffic to authenticate.
+ */
+
+const TWILIO_TO_JOB_STATUS = {
+  queued: 'sent',
+  sending: 'sending',
+  sent: 'sent',
+  delivered: 'delivered',
+  read: 'read',
+  failed: 'failed',
+  undelivered: 'failed',
+};
+
+export async function POST(req) {
+  try {
+    const form = await req.formData();
+    const params = {};
+    for (const [key, value] of form.entries()) {
+      params[key] = String(value);
+    }
+
+    if (twilioConfigured) {
+      const callbackUrl = getTwilioStatusCallbackUrl();
+      const signature = req.headers.get('x-twilio-signature');
+      if (!callbackUrl || !isValidTwilioSignature(signature, callbackUrl, params)) {
+        logger.warn('[twilio-status] rejected request with invalid/missing X-Twilio-Signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+      }
+    } else {
+      logger.warn('[twilio-status] TWILIO_AUTH_TOKEN not set — signature validation skipped');
+    }
+
+    const sid = params['MessageSid'] || params['SmsSid'] || '';
+    const twilioStatus = params['MessageStatus'] || params['SmsStatus'] || '';
+
+    if (!sid) {
+      return NextResponse.json({ error: 'Missing MessageSid' }, { status: 400 });
+    }
+
+    const snap = await adminDb
+      .collection(COLLECTIONS.whatsappMessageQueue)
+      .where('twilioMessageSid', '==', sid)
+      .limit(1)
+      .get();
+
+    if (snap.empty) {
+      // Unknown SID (e.g. a message not sent by the queue) — ack so Twilio stops retrying.
+      logger.warn(`[twilio-status] no job found for SID ${sid} (status ${twilioStatus})`);
+      return NextResponse.json({ ok: true, matched: false });
+    }
+
+    const mapped = TWILIO_TO_JOB_STATUS[twilioStatus];
+    const update = { twilioStatus, updatedAt: Timestamp.now() };
+    // Never regress a 'read' job back to 'delivered'/'sent' on out-of-order callbacks.
+    const current = snap.docs[0].data().status ;
+    const rank = { sent: 1, delivered: 2, read: 3, failed: 3 };
+    if (mapped && (_nullishCoalesce(rank[mapped], () => ( 0))) >= (_nullishCoalesce(rank[_nullishCoalesce(current, () => ( ''))], () => ( 0)))) {
+      update.status = mapped;
+    }
+
+    await snap.docs[0].ref.update(update);
+    return NextResponse.json({ ok: true, matched: true });
+  } catch (error) {
+    logger.error('[twilio-status] callback error:', error);
+    return NextResponse.json({ error: _optionalChain([error, 'optionalAccess', _ => _.message]) || 'callback failed' }, { status: 500 });
+  }
+}

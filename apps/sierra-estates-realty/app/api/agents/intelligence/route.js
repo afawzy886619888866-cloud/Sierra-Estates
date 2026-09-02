@@ -1,0 +1,76 @@
+ function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } } function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }/**
+ * GET /api/agents/intelligence
+ *
+ * What the agents have actually learned, read from durable history rather than
+ * the in-process cache — on serverless the cache is empty on almost every
+ * request, so anything computed from it would be noise.
+ *
+ * Admin-only: this exposes operational detail about the agent fleet.
+ */
+import { NextResponse } from 'next/server';
+import {
+  memoryEngine,
+  scoreSkills,
+  summarisePatterns,
+} from '../../../../../../packages/memory-engine/src/index.js';
+import { verifySession, SESSION_COOKIE, parseCookies } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET(request) {
+  const cookies = parseCookies(request.headers.get('cookie'));
+  const session = await verifySession(cookies[SESSION_COOKIE]);
+  
+  // Admin and manager roles only — no environment-based bypass.
+  const isAuthorized = _optionalChain([session, 'optionalAccess', _ => _.role]) === 'admin' || _optionalChain([session, 'optionalAccess', _2 => _2.role]) === 'manager';
+  if (!isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const agentId = _nullishCoalesce(url.searchParams.get('agent'), () => ( undefined));
+    const sinceParam = url.searchParams.get('sinceHours');
+    const since = sinceParam
+      ? new Date(Date.now() - Number(sinceParam) * 3600000).toISOString()
+      : undefined;
+
+    const [patterns, executions, storeHealthy] = await Promise.all([
+      memoryEngine.getPatternsFromStore({ agentId, since, limit: 1000 }),
+      memoryEngine.getExecutions({ agentId, since, limit: 50 }),
+      memoryEngine.storeHealthy(),
+    ]);
+
+    const skills = scoreSkills(
+      await memoryEngine.getExecutions({ agentId, since, limit: 1000 })
+    );
+    const summary = summarisePatterns(patterns);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        store: {
+          name: memoryEngine.storeName,
+          healthy: storeHealthy,
+          error: memoryEngine.storeError,
+          // Without a durable store every statistic below is computed from a
+          // cache that dies with the process — say so plainly.
+          durable: storeHealthy && memoryEngine.storeName !== 'memory',
+        },
+        summary,
+        patterns: patterns.sort((a, b) => b.occurrences - a.occurrences),
+        skills,
+        recent: executions.slice(0, 50),
+        generatedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    logger.error('[AGENT_INTELLIGENCE]', _optionalChain([error, 'optionalAccess', _3 => _3.message]) || error);
+    return NextResponse.json(
+      { success: false, error: _optionalChain([error, 'optionalAccess', _4 => _4.message]) || 'Failed to read agent intelligence' },
+      { status: 500 }
+    );
+  }
+}
