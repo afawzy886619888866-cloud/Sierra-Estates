@@ -10,7 +10,7 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>'],
-  testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx', '**/__tests__/**/*.test.js'],
+  testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   // `tsc` without an outDir emits a .js next to every .ts source, and those
   // artifacts have been committed under lib/ and app/. Jest's default order
   // resolves the stale ESM .js first and fails to parse it, so .ts wins here.
