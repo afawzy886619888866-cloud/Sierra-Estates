@@ -1,0 +1,117 @@
+ function _nullishCoalesce(lhs, rhsFn) { if (lhs != null) { return lhs; } else { return rhsFn(); } }/**
+ * POST /api/matches
+ *   { budget, beds, type, mode, preferredZone? }
+ *   → MatchResult[] (top 3 listings with score + reasons)
+ *
+ * Pure scoring — no DB writes. Reads listings (Supabase or seed),
+ * ranks by composite score: budget fit + beds fit + type match +
+ * zone match + AI score weight.
+ */
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { SEED_LISTINGS } from "@/lib/seed";
+import { listRecords } from "@sierra-estates/db";
+import { toListingRecord } from "@/lib/server/listing-columns";
+
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * The body was previously cast straight to MatchAnswers with no validation, so a
+ * missing `budget` made every budget score NaN (`|l.usd - undefined| / undefined`)
+ * and the whole response serialized as null scores. `type` and `preferredZone` stay
+ * plain bounded strings — they are only ever compared with === against listing
+ * fields, so restating the unions here would just be a second copy to drift.
+ */
+const matchAnswersSchema = z.object({
+  budget: z.number().positive().finite(),
+  beds: z.number().int().min(0).max(20),
+  type: z.string().min(1).max(80),
+  mode: z.enum(["sale", "rent"]),
+  preferredZone: z.string().min(1).max(120).optional(),
+});
+
+async function loadListings() {
+  try {
+    const rows = await listRecords("listings");
+    if (rows.length > 0) {
+      // toListingRecord restores the app vocabulary (beds / bath / area /
+      // type / mode) the scorer below reads.
+      return rows.map((row) => toListingRecord(row)) ;
+    }
+  } catch (err) {
+    console.warn("[matches] Supabase read failed, using seed:", err);
+  }
+  return SEED_LISTINGS;
+}
+
+/**
+ * The seed data and the legacy Firestore documents call an on-market unit
+ * 'available'; public.listings defaults to 'active'. Both mean the same thing
+ * here, so matching only one of them would silently return no matches.
+ */
+function isOnMarket(status) {
+  const normalized = String(_nullishCoalesce(status, () => ( ""))).trim().toLowerCase();
+  return normalized === "available" || normalized === "active";
+}
+
+export async function POST(req) {
+  const parsed = matchAnswersSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid match criteria", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+  const answers = parsed.data ;
+  const listings = await loadListings();
+
+  const results = listings
+    .filter((l) => isOnMarket(l.status) && l.mode === answers.mode)
+    .map((l) => {
+      const reasons = [];
+      let score = 0;
+
+      // Budget fit (40 pts max) — within ±25% of budget is full score
+      const budgetDiff = Math.abs(l.usd - answers.budget) / answers.budget;
+      const budgetScore = Math.max(0, 40 - budgetDiff * 80);
+      score += budgetScore;
+      if (budgetDiff < 0.1) reasons.push("Exactly on budget");
+      else if (budgetDiff < 0.25) reasons.push("Within budget range");
+      else reasons.push(`${budgetDiff < 0.5 ? "Slightly over" : "Higher than"} budget`);
+
+      // Beds fit (20 pts) — exact match = 20, ±1 = 10
+      const bedDiff = Math.abs(l.beds - answers.beds);
+      score += bedDiff === 0 ? 20 : bedDiff === 1 ? 10 : 0;
+      if (bedDiff === 0) reasons.push(`${l.beds} bedrooms matches`);
+
+      // Type match (15 pts)
+      if (l.type === answers.type) {
+        score += 15;
+        reasons.push(`${l.type} matches preference`);
+      }
+
+      // Zone match (15 pts)
+      if (answers.preferredZone && l.zone === answers.preferredZone) {
+        score += 15;
+        reasons.push(`In ${l.zone}`);
+      } else if (answers.preferredZone) {
+        score += 5;
+      }
+
+      // AI score weight (10 pts) — normalized 0..10
+      score += l.aiScore;
+      reasons.push(`AI score ${l.aiScore.toFixed(1)}/10`);
+
+      return {
+        listing: l,
+        score: Math.round(Math.min(100, score)),
+        reasons,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  return NextResponse.json(results);
+}
