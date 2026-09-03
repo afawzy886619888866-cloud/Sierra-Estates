@@ -152,10 +152,10 @@ describe('Streamable-HTTP MCP Transport Route (/api/mcp)', () => {
           id: 3,
           method: 'tools/call',
           params: {
-            name: 'send_whatsapp_message',
+            name: 'send_message',
             arguments: {
-              recipientPhone: '+201092048333',
-              messageText: 'Hello from Sierra Estates Remote MCP',
+              leadPhone: '+201092048333',
+              template: 'luxury_welcome_en',
             },
           },
         }),
