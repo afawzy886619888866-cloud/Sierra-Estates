@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase/firestore';
+import type { IsoTimestamp as Timestamp } from './timestamps';
 
 export type PipelineEntryStatus = 'draft' | 'offered' | 'signing' | 'payment_pending' | 'closed' | 'cancelled';
 

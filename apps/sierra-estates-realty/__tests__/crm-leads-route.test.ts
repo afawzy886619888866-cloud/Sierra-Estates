@@ -1,12 +1,8 @@
-const collectionMock = jest.fn();
-const docMock = jest.fn();
-const setMock = jest.fn();
+const insertRecordMock = jest.fn();
 const verifyRequestMock = jest.fn();
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: {
-    collection: (...args: unknown[]) => collectionMock(...args),
-  },
+jest.mock('@sierra-estates/db', () => ({
+  insertRecord: (...args: unknown[]) => insertRecordMock(...args),
 }));
 
 jest.mock('@/lib/server/auth-guard', () => ({
@@ -32,9 +28,7 @@ describe('POST /api/crm/leads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     verifyRequestMock.mockResolvedValue({ authenticated: true, uid: 'admin-user' });
-    setMock.mockResolvedValue(undefined);
-    docMock.mockReturnValue({ set: setMock });
-    collectionMock.mockReturnValue({ doc: docMock });
+    insertRecordMock.mockResolvedValue({ id: 'lead-1' });
     delete process.env.ZAPIER_CALENDAR_WEBHOOK_URL;
   });
 
@@ -46,7 +40,7 @@ describe('POST /api/crm/leads', () => {
     );
 
     expect(res.status).toBe(401);
-    expect(collectionMock).not.toHaveBeenCalled();
+    expect(insertRecordMock).not.toHaveBeenCalled();
   });
 
   test('stores a lead and returns the computed score (success path)', async () => {
@@ -75,16 +69,18 @@ describe('POST /api/crm/leads', () => {
     // Writes into the same collection every other lead-intake route uses
     // (COLLECTIONS.stakeholders = 'leads'), not a separate 'Leads' collection
     // invisible to the admin Leads page.
-    expect(collectionMock).toHaveBeenCalledWith('leads');
-    expect(setMock).toHaveBeenCalledTimes(1);
-    const written = setMock.mock.calls[0][0];
-    expect(written.name).toBe('Jane Doe');
+    expect(insertRecordMock).toHaveBeenCalledTimes(1);
+    expect(insertRecordMock.mock.calls[0][0]).toBe('leads');
+    const written = insertRecordMock.mock.calls[0][1];
+    // Field names are the record layer's camelCase; it writes the snake_case
+    // columns (full_name, sierra_ai_score, ...). The Firestore version also
+    // wrote `mobile` as a duplicate of `phone`; the table has one phone column.
+    expect(written.fullName).toBe('Jane Doe');
     expect(written.phone).toBe('+201000000000');
-    expect(written.mobile).toBe('+201000000000');
     expect(written.source).toBe('other');
-    expect(written.sierra_ai_score).toBe(10);
-    expect(written.pipeline_stage).toBe('VIP_QUALIFIED_CORRIDOR');
-    expect(written.assigned_specialist).toBe('CLOSER_VIP_GOLDEN_SQUARE');
+    expect(written.sierraAiScore).toBe(10);
+    expect(written.pipelineStage).toBe('VIP_QUALIFIED_CORRIDOR');
+    expect(written.assignedSpecialist).toBe('CLOSER_VIP_GOLDEN_SQUARE');
   });
 
   test('accepts a caller-supplied source for admin-page attribution', async () => {
@@ -97,7 +93,7 @@ describe('POST /api/crm/leads', () => {
     );
 
     expect(res.status).toBe(200);
-    const written = setMock.mock.calls[0][0];
+    const written = insertRecordMock.mock.calls[0][1];
     expect(written.source).toBe('instagram');
   });
 
@@ -110,7 +106,7 @@ describe('POST /api/crm/leads', () => {
       }),
     );
 
-    const written = setMock.mock.calls[0][0];
+    const written = insertRecordMock.mock.calls[0][1];
     expect(written.source).toBe('other');
   });
 
@@ -137,7 +133,7 @@ describe('POST /api/crm/leads', () => {
       success: false,
       error: 'client_name and client_mobile are required',
     });
-    expect(setMock).not.toHaveBeenCalled();
+    expect(insertRecordMock).not.toHaveBeenCalled();
   });
 
   test('returns 500 when the request body is malformed JSON', async () => {
@@ -153,8 +149,8 @@ describe('POST /api/crm/leads', () => {
     expect(body.success).toBe(false);
   });
 
-  test('returns 500 when Firestore persistence fails', async () => {
-    setMock.mockRejectedValue(new Error('firestore down'));
+  test('returns 500 when persistence fails', async () => {
+    insertRecordMock.mockRejectedValue(new Error('database down'));
 
     const res = await POST(
       makeRequest({ client_name: 'Jane', client_mobile: '+201000000000' }),
@@ -162,6 +158,6 @@ describe('POST /api/crm/leads', () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body).toEqual({ success: false, error: 'firestore down' });
+    expect(body).toEqual({ success: false, error: 'database down' });
   });
 });

@@ -3,8 +3,7 @@
  * Closes the circle by capturing stakeholder satisfaction and triggering re-match logic.
  */
 
-import { db } from '../firebase';
-import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { getRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead } from '../models/schema';
 import { sendTelegramMessage } from './telegram-controller';
 
@@ -14,11 +13,22 @@ import { sendTelegramMessage } from './telegram-controller';
 export async function initiateFeedbackLoop(leadId: string, saleId: string) {
   console.log(`[FeedbackLoop] Initiating for Lead: ${leadId}`);
   
-  // 1. Send Survey (Simulated via automated log)
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'automation.feedbackRequested': true,
-    'automation.lastFeedbackAt': serverTimestamp(),
-    'orchestrationState.stage': 'S10_FEEDBACK_PENDING',
+  // 1. Send Survey (Simulated via automated log).
+  // `automation` and `orchestrationState` are single JSONB columns, so what
+  // Firestore did with dotted paths is a read-merge-write here.
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error(`Lead ${leadId} not found`);
+
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    automation: {
+      ...(lead.automation ?? {}),
+      feedbackRequested: true,
+      lastFeedbackAt: new Date().toISOString(),
+    },
+    orchestrationState: {
+      ...(lead.orchestrationState ?? {}),
+      stage: 'S10_FEEDBACK_PENDING',
+    },
     stage: 'closed-won'
   });
 
@@ -33,11 +43,17 @@ export async function initiateFeedbackLoop(leadId: string, saleId: string) {
  * Captures the actual feedback result.
  */
 export async function submitStakeholderFeedback(leadId: string, score: number, comment: string) {
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'aiProfiling.satisfactionScore': score,
-    'intelligence.lastFeedbackComment': comment,
-    'orchestrationState.stage': 'S10_COMPLETED',
-    'orchestrationState.status': 'archived'
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error(`Lead ${leadId} not found`);
+
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    aiProfiling: { ...(lead.aiProfiling ?? {}), satisfactionScore: score },
+    intelligence: { ...(lead.intelligence ?? {}), lastFeedbackComment: comment },
+    orchestrationState: {
+      ...(lead.orchestrationState ?? {}),
+      stage: 'S10_COMPLETED',
+      status: 'archived',
+    },
   });
 
   await sendTelegramMessage(`🌟 <b>Stakholder Success</b>\nFeedback received: ${score}/5. "<i>${comment}</i>"\nPipeline Cycle Complete.`);
@@ -53,12 +69,10 @@ export async function recordSelectionFeedback(
   action: 'pass' | 'interested',
   reason?: string
 ) {
-  const leadRef = doc(db, COLLECTIONS.stakeholders, leadId);
-  const leadSnap = await getDoc(leadRef);
-  if (!leadSnap.exists()) return;
-  const lead = leadSnap.data() as Lead;
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) return;
 
-  const timestamp = serverTimestamp();
+  const timestamp = new Date().toISOString();
 
   // 1. Record in Interaction History
   const historyItem = { unitId, action, timestamp, reason };
@@ -67,24 +81,29 @@ export async function recordSelectionFeedback(
   // 2. If 'pass', record move to objections and learn from it
   const updateData: any = {
     interactionHistory: updatedHistory,
-    updatedAt: timestamp
   };
 
   if (action === 'pass' && reason) {
+    // One JSONB column, so both dotted paths merge into the same object.
+    const intelligence: any = { ...(lead.intelligence ?? {}) };
     const objection = { unitId, reason, timestamp };
-    updateData['intelligence.objections'] = [...(lead.intelligence?.objections || []), objection];
-    
+    intelligence.objections = [...(lead.intelligence?.objections || []), objection];
+
     // Simple Learning: If reason mentions 'dark' or 'low floor', add to dislikes
     const existingDislikes = lead.intelligence?.preferences?.dislikes || [];
     if (reason.toLowerCase().includes('dark') && !existingDislikes.includes('dark units')) {
-      updateData['intelligence.preferences.dislikes'] = [...existingDislikes, 'dark units'];
+      intelligence.preferences = {
+        ...(lead.intelligence?.preferences ?? {}),
+        dislikes: [...existingDislikes, 'dark units'],
+      };
     }
+    updateData.intelligence = intelligence;
   }
 
-  await updateDoc(leadRef, updateData);
+  await updateRecord(COLLECTIONS.stakeholders, leadId, updateData);
 
   // 3. Notify agent if 'interested'
   if (action === 'interested') {
-    await sendTelegramMessage(`🔥 <b>High Intent Detected</b>\nStakeholder <b>${lead.name}</b> is interested in unit: <code>${unitId}</code>.\nAction: Contact immediately to close.`);
+    await sendTelegramMessage(`🔥 <b>High Intent Detected</b>\nStakeholder <b>${(lead as { fullName?: string }).fullName ?? lead.name}</b> is interested in unit: <code>${unitId}</code>.\nAction: Contact immediately to close.`);
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { COLLECTIONS, type WhatsAppMessagePurpose } from '@/lib/models/schema';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
@@ -128,27 +128,36 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Number(searchParams.get('limit') || 50), 100);
     const status = searchParams.get('status') || 'queued';
 
-    const snap = await adminDb
-      .collection(COLLECTIONS.whatsappMessageQueue)
-      .where('status', '==', status)
-      .limit(limit)
-      .get();
-
-    const jobs = snap.docs.map((doc: any) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        toPhone: data.toPhone,
-        purpose: data.purpose,
-        body: data.body,
-        status: data.status,
-        scheduledFor: data.scheduledFor ? data.scheduledFor.toDate().toISOString() : null,
-        createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-        sentAt: data.sentAt ? data.sentAt.toDate().toISOString() : null,
-        attempts: data.attempts || 0,
-        errorMessage: data.errorMessage,
-      };
+    const rows = await listRecords<{
+      id: string;
+      toPhone?: string;
+      purpose?: string;
+      body?: string;
+      status?: string;
+      scheduledFor?: string | null;
+      createdAt?: string | null;
+      sentAt?: string | null;
+      attempts?: number;
+      errorMessage?: string;
+    }>(COLLECTIONS.whatsappMessageQueue, {
+      where: [{ column: 'status', value: status }],
+      limit,
     });
+
+    // The timestamp columns come back as ISO strings already, so the Firestore
+    // .toDate().toISOString() hops are gone; the response shape is unchanged.
+    const jobs = rows.map((data) => ({
+      id: data.id,
+      toPhone: data.toPhone,
+      purpose: data.purpose,
+      body: data.body,
+      status: data.status,
+      scheduledFor: data.scheduledFor ?? null,
+      createdAt: data.createdAt ?? null,
+      sentAt: data.sentAt ?? null,
+      attempts: data.attempts || 0,
+      errorMessage: data.errorMessage,
+    }));
 
     return NextResponse.json({
       success: true,

@@ -6,9 +6,8 @@
  */
 
 import { runMatchingForLead } from '@/lib/services/matching-engine';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import type { Lead, Unit } from '@/lib/models/schema';
+import { deleteRecord, insertRecord } from '@sierra-estates/db';
+import { COLLECTIONS, type Lead, type Unit } from '@/lib/models/schema';
 
 /**
  * Test Data: 10 synthetic leads with different profiles
@@ -170,28 +169,32 @@ export async function runMatchingValidationSuite() {
     // 1. Seed test units
     console.log('📊 Seeding 10 test units...');
     for (const unit of TEST_UNITS.slice(0, 10)) {
-      const docRef = await addDoc(collection(db, 'units'), {
+      // COLLECTIONS.units, not the literal 'units': the table is `listings`,
+      // and the literal wrote somewhere nothing else in the app reads.
+      const created = await insertRecord<{ id: string }>(COLLECTIONS.units, {
         ...unit,
         status: 'available',
-        sbr_code: generateSBRCode(unit.compound, unit.bedrooms),
-        createdAt: new Date(),
+        sbrCode: generateSBRCode(unit.compound, unit.bedrooms),
       });
-      testUnitIds.push(docRef.id);
+      testUnitIds.push(created.id);
     }
     console.log(`✅ Created ${testUnitIds.length} units\n`);
 
     // 2. Seed test leads and run matching
     console.log('👥 Running matching for 5 test leads...\n');
     for (const lead of TEST_LEADS) {
-      const docRef = await addDoc(collection(db, 'stakeholders'), {
-        ...lead,
+      // Likewise COLLECTIONS.stakeholders — the table is `leads` — and
+      // `fullName`, which is the column the record layer maps.
+      const { name, ...rest } = lead;
+      const created = await insertRecord<{ id: string }>(COLLECTIONS.stakeholders, {
+        ...rest,
+        fullName: name,
         aiProfiling: { topMatches: [] },
-        createdAt: new Date(),
       });
-      testLeadIds.push(docRef.id);
+      testLeadIds.push(created.id);
 
       try {
-        const matches = await runMatchingForLead(docRef.id);
+        const matches = await runMatchingForLead(created.id);
         const matchScore = matches.length > 0
           ? (matches.reduce((sum, m) => sum + m.matchScore, 0) / matches.length).toFixed(1)
           : 0;
@@ -221,10 +224,10 @@ export async function runMatchingValidationSuite() {
     console.log('\n🧹 Cleaning up test data...');
     
     for (const leadId of testLeadIds) {
-      await deleteDoc(doc(db, 'stakeholders', leadId));
+      await deleteRecord(COLLECTIONS.stakeholders, leadId);
     }
     for (const unitId of testUnitIds) {
-      await deleteDoc(doc(db, 'units', unitId));
+      await deleteRecord(COLLECTIONS.units, unitId);
     }
     
     console.log('✅ Test data cleaned up\n');

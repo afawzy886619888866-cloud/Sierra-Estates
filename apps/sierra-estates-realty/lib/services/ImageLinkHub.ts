@@ -1,5 +1,4 @@
-import { adminDb } from '../server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { listRecords, upsertRecord, updateRecord } from '@sierra-estates/db';
 
 /**
  * ImageLinkHub: The "Visual Glue" of Sierra Estates.
@@ -7,7 +6,7 @@ import { Timestamp } from 'firebase-admin/firestore';
  * Function: Stores image metadata and provides lookup logic to prevent media fragmentation.
  */
 export class ImageLinkHub {
-  private static COLLECTION = 'image_links';
+  private static TABLE = 'image_links';
 
   /**
    * Registers a new image or media asset from WhatsApp.
@@ -15,12 +14,14 @@ export class ImageLinkHub {
   static async registerWhatsAppMedia(mediaId: string, signalId: string, imageUrl: string) {
     console.log(`🖼️ [ImageLinkHub] Registering media ${mediaId} for signal ${signalId}`);
     
-    const docRef = adminDb.collection(this.COLLECTION).doc(mediaId);
-    await docRef.set({
+    // Keyed by the provider's media id, so a redelivered webhook upserts the
+    // same row rather than creating a duplicate.
+    await upsertRecord(this.TABLE, {
+      id: mediaId,
       source: 'whatsapp',
       signalId,
       imageUrl,
-      createdAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
       status: 'pending_correlation'
     });
 
@@ -33,11 +34,11 @@ export class ImageLinkHub {
   static async linkToPortalListing(mediaId: string, portalListingId: string, portal: 'PF' | 'BAYUT') {
     console.log(`🔗 [ImageLinkHub] Linking media ${mediaId} to ${portal} listing ${portalListingId}`);
     
-    await adminDb.collection(this.COLLECTION).doc(mediaId).update({
+    await updateRecord(this.TABLE, mediaId, {
       portalId: portalListingId,
       portalType: portal,
       status: 'correlated',
-      correlatedAt: Timestamp.now()
+      correlatedAt: new Date().toISOString()
     });
   }
 
@@ -45,10 +46,8 @@ export class ImageLinkHub {
    * Finds media associated with a specific inbound signal.
    */
   static async getMediaForSignal(signalId: string) {
-    const snapshot = await adminDb.collection(this.COLLECTION)
-      .where('signalId', '==', signalId)
-      .get();
-      
-    return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    return await listRecords(this.TABLE, {
+      where: [{ column: 'signalId', value: signalId }],
+    });
   }
 }

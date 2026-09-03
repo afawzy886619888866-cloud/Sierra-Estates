@@ -13,7 +13,7 @@
  *   1. Extract structured SearchIntent from the natural-language query
  *      using Gemini. Falls back to a naive regex-based extractor when the
  *      AI service is unavailable (no API key, network error, etc.).
- *   2. Build a Firestore query from the intent.
+ *   2. Build a Supabase query from the intent.
  *   3. Score each result by how many intent fields it matches.
  *   4. Return ranked results.
  *
@@ -26,14 +26,12 @@
  */
 
 import 'server-only';
-import { adminDb } from '@/lib/server/firebase-admin';
 import { GoogleAIService } from '@/lib/server/google-ai';
 import {
   searchIntentSchema,
   type SearchIntent,
 } from '@/lib/server/schemas';
 import { logger } from '@/lib/logger';
-import { COLLECTIONS } from '@/lib/models/schema';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -235,7 +233,7 @@ function extractIntentWithRegex(query: string): SearchIntent {
   });
 }
 
-// ─── Firestore query + scoring ────────────────────────────────────────────
+// ─── Inventory query + scoring ────────────────────────────────────────────
 
 interface RawUnit {
   id?: string;
@@ -500,26 +498,12 @@ export async function semanticSearch(params: {
       })) as RawUnit[];
     }
   } catch (supabaseErr) {
-    logger.warn('[search] Supabase fetch error, checking Firestore fallback:', supabaseErr);
+    logger.warn('[search] Supabase fetch error:', supabaseErr);
   }
 
-  // Fallback to Firestore if Supabase returned no rows
-  if (rawUnits.length === 0) {
-    try {
-      const snapshot = await adminDb
-        .collection(COLLECTIONS.units)
-        .where('status', 'in', ['available', 'reserved'])
-        .limit(200)
-        .get();
-
-      rawUnits = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-        id: doc.id,
-        ...(doc.data() as Record<string, unknown>),
-      })) as RawUnit[];
-    } catch (e) {
-      logger.warn('[search] Firestore query fallback error:', e);
-    }
-  }
+  // The Firestore fallback that used to sit here is gone: Supabase is the only
+  // store now. An empty result means no matching inventory, and the caller
+  // already handles that.
 
   // 3. Score + filter + sort
   const scored = rawUnits

@@ -1,16 +1,29 @@
 /**
  * Repository Pattern — Abstract persistence layer
- * Decouples services from Firebase implementation
- * Enables unit testing without Firebase credentials
+ *
+ * Decouples services from the database implementation and lets them be unit
+ * tested without live credentials. Backed by the Supabase record layer in
+ * @sierra-estates/db, which converts camelCase <-> snake_case and throws on
+ * database errors rather than returning them.
  */
 
-import { adminDb, isAdminInitialized } from '@/lib/server/firebase-admin';
-import { CollectionReference, DocumentData, Query } from 'firebase-admin/firestore';
+import {
+  listRecords,
+  getRecord,
+  insertRecord,
+  updateRecord,
+  deleteRecord,
+  type WhereClause,
+} from '@sierra-estates/db';
 
-// Type alias for Firebase Admin query constraints
-export type QueryConstraint = any;
+/**
+ * A single filter. Previously an opaque Firebase constraint object; now the
+ * record layer's clause shape, so callers state the column, operator and value
+ * explicitly instead of building a driver-specific object.
+ */
+export type QueryConstraint = WhereClause;
 
-export interface Repository<T extends DocumentData> {
+export interface Repository<T> {
   findById(id: string): Promise<T | null>;
   findAll(constraints?: QueryConstraint[]): Promise<T[]>;
   findOne(constraints: QueryConstraint[]): Promise<T | null>;
@@ -19,90 +32,82 @@ export interface Repository<T extends DocumentData> {
   delete(id: string): Promise<void>;
 }
 
-export class FirestoreRepository<T extends DocumentData> implements Repository<T> {
-  constructor(private collectionName: string) {}
-
-  private getCollection(): CollectionReference<T> {
-    if (!isAdminInitialized) {
-      throw new Error(`Firebase not initialized. Cannot access ${this.collectionName}`);
-    }
-    return adminDb.collection(this.collectionName) as CollectionReference<T>;
-  }
+export class SupabaseRepository<T> implements Repository<T> {
+  constructor(private tableName: string) {}
 
   async findById(id: string): Promise<T | null> {
     try {
-      const doc = await this.getCollection().doc(id).get();
-      return doc.exists ? ({ id: doc.id, ...doc.data() } as unknown as T) : null;
+      return await getRecord<T>(this.tableName, id);
     } catch (error) {
-      console.error(`[Repository] Error finding ${this.collectionName}/${id}:`, error);
+      console.error(`[Repository] Error finding ${this.tableName}/${id}:`, error);
       throw error;
     }
   }
 
   async findAll(constraints: QueryConstraint[] = []): Promise<T[]> {
     try {
-      let query: Query<T> = this.getCollection();
-      for (const constraint of constraints) {
-        query = query.where(constraint) as Query<T>;
-      }
-      const snapshot = await query.get();
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as T));
+      return await listRecords<T>(this.tableName, { where: constraints });
     } catch (error) {
-      console.error(`[Repository] Error finding all in ${this.collectionName}:`, error);
+      console.error(`[Repository] Error finding all in ${this.tableName}:`, error);
       throw error;
     }
   }
 
   async findOne(constraints: QueryConstraint[]): Promise<T | null> {
     try {
-      let query: Query<T> = this.getCollection();
-      for (const constraint of constraints) {
-        query = query.where(constraint) as Query<T>;
-      }
-      const snapshot = await query.limit(1).get();
-      const doc = snapshot.docs[0];
-      return doc ? ({ id: doc.id, ...doc.data() } as T) : null;
+      const [row] = await listRecords<T>(this.tableName, {
+        where: constraints,
+        limit: 1,
+      });
+      return row ?? null;
     } catch (error) {
-      console.error(`[Repository] Error finding one in ${this.collectionName}:`, error);
+      console.error(`[Repository] Error finding one in ${this.tableName}:`, error);
       throw error;
     }
   }
 
   async create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
     try {
-      const docRef = await this.getCollection().add({
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      } as any);
-      return { id: docRef.id, ...data, createdAt: new Date(), updatedAt: new Date() } as unknown as T;
+      const now = new Date().toISOString();
+      // insertRecord returns the stored row, so the created object reflects
+      // database defaults rather than being reconstructed from the input.
+      return await insertRecord<T>(this.tableName, {
+        ...(data as Record<string, unknown>),
+        createdAt: now,
+        updatedAt: now,
+      });
     } catch (error) {
-      console.error(`[Repository] Error creating in ${this.collectionName}:`, error);
+      console.error(`[Repository] Error creating in ${this.tableName}:`, error);
       throw error;
     }
   }
 
   async update(id: string, data: Partial<T>): Promise<T> {
     try {
-      await this.getCollection().doc(id).update({
-        ...data,
-        updatedAt: new Date(),
+      const updated = await updateRecord<T>(this.tableName, id, {
+        ...(data as Record<string, unknown>),
+        updatedAt: new Date().toISOString(),
       });
-      const updated = await this.findById(id);
       if (!updated) throw new Error(`Document not found after update: ${id}`);
       return updated;
     } catch (error) {
-      console.error(`[Repository] Error updating ${this.collectionName}/${id}:`, error);
+      console.error(`[Repository] Error updating ${this.tableName}/${id}:`, error);
       throw error;
     }
   }
 
   async delete(id: string): Promise<void> {
     try {
-      await this.getCollection().doc(id).delete();
+      await deleteRecord(this.tableName, id);
     } catch (error) {
-      console.error(`[Repository] Error deleting ${this.collectionName}/${id}:`, error);
+      console.error(`[Repository] Error deleting ${this.tableName}/${id}:`, error);
       throw error;
     }
   }
 }
+
+/**
+ * @deprecated Kept so existing imports keep working during the migration.
+ * Prefer SupabaseRepository — this is the same class, not Firestore.
+ */
+export const FirestoreRepository = SupabaseRepository;

@@ -1,8 +1,7 @@
 import 'server-only';
-import { adminDb } from '../server/firebase-admin';
+import { getRecord, insertRecord, updateRecord, getSupabaseAdmin } from '@sierra-estates/db';
 import { COLLECTIONS } from '../models/schema';
 import { OrchestrationStage } from '../services/orchestrator';
-import { Timestamp, type Transaction, type DocumentReference } from 'firebase-admin/firestore';
 
 // Linear stage order, used to make stage advances monotonic (forward-only) so
 // two concurrent agents can't double-advance or regress the pipeline.
@@ -12,9 +11,56 @@ const STAGE_ORDER: OrchestrationStage[] = [
 const stageIndex = (s?: string): number =>
   STAGE_ORDER.indexOf(s as OrchestrationStage);
 
+/** The parent row's orchestration bookkeeping, stored in one JSONB column. */
+interface OrchestrationState {
+  stage?: string;
+  status?: string;
+  error?: string;
+  reviewReason?: string;
+  lastTriggeredAt?: string;
+  lastCompletedAt?: string;
+  failedAt?: string;
+  [key: string]: unknown;
+}
+
+interface StatefulRow {
+  orchestrationState?: OrchestrationState | null;
+}
+
+const table = (collection: keyof typeof COLLECTIONS): string => COLLECTIONS[collection];
+
+/**
+ * Read the current orchestration state.
+ *
+ * Firestore addressed these fields with dotted paths ('orchestrationState.stage'),
+ * which merged into the parent object server-side. Postgres has no equivalent for
+ * a JSONB column through PostgREST, so every mutation is a read-merge-write; the
+ * merge is shallow, matching what a dotted-path update did.
+ */
+async function readState(
+  docId: string,
+  collection: keyof typeof COLLECTIONS
+): Promise<OrchestrationState> {
+  const row = await getRecord<StatefulRow>(table(collection), docId);
+  return row?.orchestrationState ?? {};
+}
+
+async function mergeState(
+  docId: string,
+  collection: keyof typeof COLLECTIONS,
+  patch: OrchestrationState,
+  extra?: Record<string, unknown>
+): Promise<void> {
+  const current = await readState(docId, collection);
+  await updateRecord(table(collection), docId, {
+    ...extra,
+    orchestrationState: { ...current, ...patch },
+  });
+}
+
 /**
  * Centralized State Manager for orchestration.
- * Agents call StateManager methods instead of writing to Firestore directly.
+ * Agents call StateManager methods instead of writing to the database directly.
  * This creates a seam for:
  * - Testing (mock StateManager)
  * - Auditing (log all state changes)
@@ -22,28 +68,31 @@ const stageIndex = (s?: string): number =>
  */
 export class StateManager {
   /**
-   * Update document stage and mark as processing.
+   * Update row stage and mark as processing.
    */
   static async startStage(
     docId: string,
     collection: keyof typeof COLLECTIONS,
     stage: OrchestrationStage
   ): Promise<void> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    await docRef.update({
-      'orchestrationState.stage': stage,
-      'orchestrationState.status': 'processing',
-      'orchestrationState.lastTriggeredAt': Timestamp.now(),
+    await mergeState(docId, collection, {
+      stage,
+      status: 'processing',
+      lastTriggeredAt: new Date().toISOString(),
     });
   }
 
   /**
    * Mark stage as complete and advance to next.
    *
-   * Runs in a transaction with a monotonic (forward-only) guard: if another
-   * concurrent agent has already moved the document to `nextStage` or beyond,
-   * this advance is skipped so the pipeline can't double-advance or regress.
-   * Any non-stage `updates` are still applied.
+   * Monotonic (forward-only): if another concurrent agent has already moved the
+   * row to `nextStage` or beyond, this advance is skipped so the pipeline can't
+   * double-advance or regress. Any non-stage `updates` are still applied.
+   *
+   * Firestore enforced this inside runTransaction. The Postgres equivalent is a
+   * compare-and-set: the UPDATE only matches while the stage is still the one we
+   * read, so a racing writer invalidates it and we re-read and re-decide. Without
+   * the guard a lost update could silently skip a stage.
    */
   static async completeStage(
     docId: string,
@@ -51,24 +100,68 @@ export class StateManager {
     nextStage: OrchestrationStage,
     updates?: Record<string, any>
   ): Promise<void> {
-    const docRef: DocumentReference = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    await adminDb.runTransaction(async (tx: Transaction) => {
-      const snap = await tx.get(docRef);
-      const currentStage = snap.data()?.orchestrationState?.stage as string | undefined;
+    const hasUpdates = Boolean(updates && Object.keys(updates).length > 0);
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const current = await readState(docId, collection);
 
       // Already at or past the target — apply non-stage updates only, don't regress.
-      if (stageIndex(currentStage) >= stageIndex(nextStage)) {
-        if (updates && Object.keys(updates).length > 0) tx.update(docRef, updates);
+      if (stageIndex(current.stage) >= stageIndex(nextStage)) {
+        if (hasUpdates) await updateRecord(table(collection), docId, updates!);
         return;
       }
 
-      tx.update(docRef, {
-        ...updates,
-        'orchestrationState.stage': nextStage,
-        'orchestrationState.status': 'completed',
-        'orchestrationState.lastCompletedAt': Timestamp.now(),
-      });
-    });
+      const applied = await StateManager.casState(docId, collection, current, {
+        ...current,
+        stage: nextStage,
+        status: 'completed',
+        lastCompletedAt: new Date().toISOString(),
+      }, updates);
+
+      if (applied) return;
+    }
+
+    throw new Error(
+      `[StateManager] completeStage(${docId} -> ${nextStage}) lost the compare-and-set race 5 times; ` +
+      'another writer is advancing the same row continuously.'
+    );
+  }
+
+  /**
+   * Write `next` only while the stored stage still equals the one in `observed`.
+   * Returns false when a concurrent writer moved it first, so the caller re-reads.
+   *
+   * `is`/`eq` on a JSONB path needs the raw client: the record layer snake_cases
+   * column names, which would corrupt the path expression. Keys inside JSONB are
+   * stored snake_cased by that same layer, hence `->>stage` (single word, so
+   * unchanged) is safe to address directly.
+   */
+  private static async casState(
+    docId: string,
+    collection: keyof typeof COLLECTIONS,
+    observed: OrchestrationState,
+    next: OrchestrationState,
+    updates?: Record<string, any>
+  ): Promise<boolean> {
+    const payload: Record<string, unknown> = {
+      ...(updates ?? {}),
+      orchestration_state: next,
+    };
+
+    let query = getSupabaseAdmin()
+      .from(table(collection))
+      .update(payload)
+      .eq('id', docId);
+
+    query = observed.stage
+      ? query.eq('orchestration_state->>stage', observed.stage)
+      : query.is('orchestration_state->>stage', null);
+
+    const { data, error } = await query.select('id');
+    if (error) {
+      throw new Error(`[supabase:completeStage ${table(collection)}] ${error.message}`);
+    }
+    return (data?.length ?? 0) > 0;
   }
 
   /**
@@ -80,11 +173,10 @@ export class StateManager {
     stage: OrchestrationStage,
     errorMessage: string
   ): Promise<void> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    await docRef.update({
-      'orchestrationState.status': 'failed',
-      'orchestrationState.error': errorMessage,
-      'orchestrationState.failedAt': Timestamp.now(),
+    await mergeState(docId, collection, {
+      status: 'failed',
+      error: errorMessage,
+      failedAt: new Date().toISOString(),
     });
   }
 
@@ -97,59 +189,55 @@ export class StateManager {
     stage: OrchestrationStage,
     reason: string
   ): Promise<void> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    await docRef.update({
-      'orchestrationState.status': 'waiting_agent_review',
-      'orchestrationState.stage': stage,
-      'orchestrationState.reviewReason': reason,
-      'orchestrationState.pausedAt': Timestamp.now(),
+    await mergeState(docId, collection, {
+      status: 'waiting_agent_review',
+      stage,
+      reviewReason: reason,
     });
   }
 
   /**
-   * Update any document fields (S1, S2, S3, etc. agent-specific data).
-   * Agents call this instead of doing docRef.update() directly.
+   * Update any row fields (S1, S2, S3, etc. agent-specific data).
+   * Agents call this instead of writing to the table directly.
    */
   static async updateFields(
     docId: string,
     collection: keyof typeof COLLECTIONS,
     updates: Record<string, any>
   ): Promise<void> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    await docRef.update(updates);
+    await updateRecord(table(collection), docId, updates);
   }
 
   /**
-   * Fetch current document state.
+   * Fetch current row state.
    * Agents should call this to read before making decisions.
    */
   static async getDocument(
     docId: string,
     collection: keyof typeof COLLECTIONS
   ): Promise<any> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    const snap = await docRef.get();
-    return snap.exists ? snap.data() : null;
+    return getRecord(table(collection), docId);
   }
 
   /**
-   * Check if document exists.
+   * Check if the row exists.
    */
   static async exists(
     docId: string,
     collection: keyof typeof COLLECTIONS
   ): Promise<boolean> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    const snap = await docRef.get();
-    return snap.exists;
+    const row = await getRecord(table(collection), docId, 'id');
+    return row !== null;
   }
 
   /**
    * Add to orchestration history.
    *
-   * Written to an `orchestrationHistory` SUBCOLLECTION (one doc per entry) rather
-   * than an array field on the parent — an unbounded `arrayUnion` would eventually
-   * blow the 1 MB document-size limit after enough stage transitions.
+   * Firestore kept this in an `orchestrationHistory` SUBCOLLECTION (one doc per
+   * entry) rather than an array field on the parent, because an unbounded
+   * arrayUnion would eventually blow the 1 MB document-size limit. The Postgres
+   * equivalent is a separate append-only table keyed by (parent table, parent id),
+   * which keeps the same unbounded-log shape.
    */
   static async addHistoryEntry(
     docId: string,
@@ -158,15 +246,13 @@ export class StateManager {
     status: string,
     details?: Record<string, any>
   ): Promise<void> {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    const historyEntry = {
+    await insertRecord('orchestration_history', {
+      parentTable: table(collection),
+      parentId: docId,
       stage,
       status,
-      timestamp: Timestamp.now(),
       engineVersion: '12.0.0-quiet-luxury',
-      ...details,
-    };
-
-    await docRef.collection('orchestrationHistory').add(historyEntry);
+      details: details ?? {},
+    });
   }
 }

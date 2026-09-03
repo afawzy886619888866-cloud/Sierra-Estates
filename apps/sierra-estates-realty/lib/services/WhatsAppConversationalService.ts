@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { adminDb } from "../server/firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
+import { getRecord, insertRecord, listRecords, updateRecord, upsertRecord } from "@sierra-estates/db";
+import { COLLECTIONS } from "../models/schema";
 import { logger } from '@/lib/logger';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 
@@ -11,6 +11,24 @@ interface ECCMessage {
   role: 'user' | 'model';
   content: string;
   timestamp: any;
+}
+
+interface StakeholderRow {
+  id: string;
+  fullName?: string;
+  summaryNotes?: string;
+  aiProfiling?: Record<string, any>;
+}
+
+/** The lead row for a phone number, or null. `phone` is not unique in the
+ *  schema, so the most recent match wins — same as Firestore's single doc. */
+async function findStakeholderByPhone(phone: string): Promise<StakeholderRow | null> {
+  const rows = await listRecords<StakeholderRow>(COLLECTIONS.stakeholders, {
+    where: [{ column: 'phone', value: phone }],
+    orderBy: { column: 'createdAt', ascending: false },
+    limit: 1,
+  });
+  return rows[0] ?? null;
 }
 
 export class WhatsAppConversationalService {
@@ -46,13 +64,13 @@ CORE IDENTITY & KNOWLEDGE:
     }
 
     try {
-      const chatRef = adminDb.collection('whatsapp_conversations').doc(sender);
-      const chatDoc = await chatRef.get();
-      
-      let history: ECCMessage[] = [];
-      if (chatDoc.exists) {
-        history = chatDoc.data()?.messages || [];
-      }
+      // Keyed by phone number, as the Firestore document was.
+      const chat = await getRecord<{ messages?: ECCMessage[] }>(
+        'whatsapp_conversations',
+        sender,
+        'phone_number'
+      );
+      const history: ECCMessage[] = chat?.messages || [];
 
       // We only want the last 15 messages for context window efficiency (ECC short-term memory)
       const recentHistory = history.slice(-15);
@@ -65,17 +83,18 @@ CORE IDENTITY & KNOWLEDGE:
 
       // Unified Memory: Fetch Stakeholder Profile & Inject RAG Inventory Context
       const cleanPhone = sender.replace(/[^0-9+]/g, '');
-      const stakeholderDoc = await adminDb.collection('stakeholders').doc(cleanPhone).get();
-      
+      const stakeholder = await findStakeholderByPhone(cleanPhone);
+
       let dynamicSystemPrompt = this.SYSTEM_PROMPT;
-      
-      if (stakeholderDoc.exists) {
-        const data = stakeholderDoc.data() || {};
-        const budget = data.preferences?.budget;
-        const compound = data.preferences?.compound;
-        const unitType = data.preferences?.unitType;
-        
-        dynamicSystemPrompt += `\n\nCLIENT CONTEXT (MEMORY):\n- Name: ${data.name || 'Unknown'}\n- Budget: ${budget || 'Unknown'} EGP\n- Preferences: ${compound || 'Any compound'}, ${unitType || 'any unit'}\n- AI Notes: ${data.aiSummary || 'New lead'}`;
+
+      if (stakeholder) {
+        const data = stakeholder;
+        const prefs = data.aiProfiling?.preferences ?? {};
+        const budget = prefs.budget;
+        const compound = prefs.compound;
+        const unitType = prefs.unitType;
+
+        dynamicSystemPrompt += `\n\nCLIENT CONTEXT (MEMORY):\n- Name: ${data.fullName || 'Unknown'}\n- Budget: ${budget || 'Unknown'} EGP\n- Preferences: ${compound || 'Any compound'}, ${unitType || 'any unit'}\n- AI Notes: ${data.summaryNotes || 'New lead'}`;
         
         const { RagInventoryService } = await import('./rag-inventory-service');
         const ragContext = await RagInventoryService.getMatchedInventoryContext(budget, compound, unitType);
@@ -112,19 +131,19 @@ CORE IDENTITY & KNOWLEDGE:
       }
 
       // Update ECC Memory
-      const newUserMsg: ECCMessage = { role: 'user', content: message, timestamp: Timestamp.now() };
-      const newModelMsg: ECCMessage = { role: 'model', content: replyText, timestamp: Timestamp.now() };
+      const newUserMsg: ECCMessage = { role: 'user', content: message, timestamp: new Date().toISOString() };
+      const newModelMsg: ECCMessage = { role: 'model', content: replyText, timestamp: new Date().toISOString() };
       
       const updatedMessages = [...history, newUserMsg, newModelMsg];
       
       try {
         await Promise.race([
-          chatRef.set({
+          upsertRecord('whatsapp_conversations', {
             phoneNumber: sender,
-            lastActive: Timestamp.now(),
+            lastActive: new Date().toISOString(),
             messages: updatedMessages,
-          }, { merge: true }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), 2000)),
+          }, 'phone_number'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database write timeout')), 2000)),
         ]);
       } catch {
         // Local dev or offline mode
@@ -194,28 +213,41 @@ Respond ONLY with a JSON object:
 
       if (intel.isQualified) {
         const cleanPhone = sender.replace(/[^0-9+]/g, '');
-        const leadRef = adminDb.collection('stakeholders').doc(cleanPhone);
-        const existingSnap = await leadRef.get();
+        const existing = await findStakeholderByPhone(cleanPhone);
 
+        // Firestore keyed the lead document by phone number, which made this an
+        // upsert for free. `leads.id` is a generated id with `phone` as an
+        // ordinary column, so the row is looked up first. Two qualifying
+        // messages from the same unknown number arriving together could both
+        // insert; the intake routes have always had that same race.
         const leadData = {
-          name: intel.clientName && intel.clientName !== 'unknown' ? intel.clientName : (existingSnap.data()?.name || `WhatsApp Client (${cleanPhone.slice(-4)})`),
+          fullName: intel.clientName && intel.clientName !== 'unknown'
+            ? intel.clientName
+            : (existing?.fullName || `WhatsApp Client (${cleanPhone.slice(-4)})`),
           phone: cleanPhone,
           channel: 'whatsapp',
           status: 'qualified',
-          intent: intel.intent,
-          priorityScore: intel.priorityScore || 70,
-          preferences: {
-            compound: intel.compound || 'Any',
-            unitType: intel.unitType || 'any',
-            budget: intel.budgetEGP || 0,
-            urgency: intel.urgency || 'soon',
+          leadScore: intel.priorityScore || 70,
+          summaryNotes: intel.summary,
+          // `intent` and `preferences` are not columns; they live in the
+          // ai_profiling JSONB alongside whatever profiling already wrote.
+          aiProfiling: {
+            ...(existing?.aiProfiling ?? {}),
+            intent: intel.intent,
+            preferences: {
+              compound: intel.compound || 'Any',
+              unitType: intel.unitType || 'any',
+              budget: intel.budgetEGP || 0,
+              urgency: intel.urgency || 'soon',
+            },
           },
-          aiSummary: intel.summary,
-          updatedAt: Timestamp.now(),
-          createdAt: existingSnap.exists ? existingSnap.data()?.createdAt : Timestamp.now(),
         };
 
-        await leadRef.set(leadData, { merge: true });
+        if (existing) {
+          await updateRecord(COLLECTIONS.stakeholders, existing.id, leadData);
+        } else {
+          await insertRecord(COLLECTIONS.stakeholders, leadData);
+        }
         logger.info(`🎯 [CRM] Upserted WhatsApp lead for ${cleanPhone} (Score: ${intel.priorityScore})`);
 
         // Broadcast qualified lead intelligence to SharedMemoryBus for all 5 agents (Liela, Sierra, OpenClaw, Hermes, Closer)
@@ -229,7 +261,7 @@ Respond ONLY with a JSON object:
         if (intel.priorityScore >= 80 || (intel.budgetEGP && intel.budgetEGP >= 15000000)) {
           const { TelegramAlertService } = await import('./telegram-alert-service');
           await TelegramAlertService.sendVipMatchAlert({
-            leadName: leadData.name,
+            leadName: leadData.fullName,
             propertyTitle: `${intel.compound || 'Luxury Compound'} (${intel.unitType || 'Prime Asset'})`,
             matchScore: intel.priorityScore,
             budget: intel.budgetEGP ? `${(intel.budgetEGP / 1000000).toFixed(1)}M EGP` : 'Flexible / High Net Worth',
