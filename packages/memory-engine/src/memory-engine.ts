@@ -6,7 +6,7 @@
 import type { Agent, Skill, Context, ExecutionLog, Pattern } from './types'
 import type { MemoryStore, ExecutionLogQuery } from './stores/types'
 import { InMemoryStore } from './stores/memory-store'
-import { FirestoreMemoryStore } from './stores/firestore-store'
+import { SupabaseMemoryStore } from './stores/supabase-store'
 
 export interface MemoryEngineConfig {
   persistenceLayer?: 'file' | 'memory' | 'database'
@@ -292,8 +292,11 @@ export class MemoryEngine {
  * deployment silently ran memory-only. It is honoured now.
  */
 function resolveStore(layer: string): MemoryStore {
-  if (layer === 'database' || layer === 'firestore') {
-    return new FirestoreMemoryStore({ namespace: process.env.MEMORY_NAMESPACE })
+  // 'firestore' is still accepted so an existing MEMORY_PERSISTENCE value
+  // keeps selecting a durable store rather than silently falling back to
+  // in-memory; it resolves to Supabase like 'database' does.
+  if (layer === 'database' || layer === 'firestore' || layer === 'supabase') {
+    return new SupabaseMemoryStore()
   }
   return new InMemoryStore()
 }
