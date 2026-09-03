@@ -1,6 +1,16 @@
 {
   "mcpServers": {
-    "sierra-estates": {
+    "sierra-estates-remote": {
+      "url": "https://sierra-estates.net/api/mcp",
+      "transport": "http",
+      "oauth": {
+        "authorization_endpoint": "https://sierra-estates.net/api/mcp/oauth/authorize",
+        "token_endpoint": "https://sierra-estates.net/api/mcp/oauth/token",
+        "registration_endpoint": "https://sierra-estates.net/api/mcp/oauth/register",
+        "scopes": ["mcp:read", "mcp:tools", "mcp:write", "mcp:spend"]
+      }
+    },
+    "sierra-estates-local": {
       "command": "openclaw",
       "args": [
         "mcp",
@@ -26,4 +36,3 @@
     }
   }
 }
-

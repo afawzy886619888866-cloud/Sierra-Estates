@@ -166,10 +166,16 @@ const ALLOWED = new Set([
   'scripts/write-memory.js',
 ]);
 
-const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
-  .split('\0')
-  .filter(Boolean)
-  .filter((p) => !p.includes('node_modules/'));
+// `git ls-files` emits one row per merge stage, so a path with an unresolved
+// conflict appears up to three times. De-duplicate, or the report lists it twice.
+const tracked = [
+  ...new Set(
+    execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+      .split('\0')
+      .filter(Boolean)
+      .filter((p) => !p.includes('node_modules/'))
+  ),
+];
 
 const sources = new Set(tracked.filter((p) => p.endsWith('.ts') || p.endsWith('.tsx')));
 
