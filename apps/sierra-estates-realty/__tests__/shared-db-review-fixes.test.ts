@@ -1,4 +1,4 @@
-import { parseDSL, buildFirestoreQuery } from '../../../packages/db/lib/dsl/parser';
+import { parseDSL, buildQueryClauses } from '../../../packages/db/lib/dsl/parser';
 import { pushListingToPF } from '../../../packages/db/lib/integrations/property-finder';
 import { VIEW_CONFIGS } from '../../../packages/db/lib/sierra-estates-view-configs';
 
@@ -34,12 +34,17 @@ describe('shared db review fixes', () => {
     ]);
   });
 
-  it('throws a clear error when COMPOUND IN is combined with another multi-value IN filter', () => {
+  // Firestore allowed only one array-membership filter per query, so this view
+  // used to throw. Postgres ANDs the two IN clauses, so the assertion is now
+  // that both actually reach the query rather than that the build is rejected.
+  it('emits both IN clauses when COMPOUND IN is combined with another multi-value IN filter', () => {
     const parsed = parseDSL(VIEW_CONFIGS.hidden_gems.dsl, VIEW_CONFIGS.hidden_gems.collection);
 
-    expect(() => buildFirestoreQuery(parsed, {} as never)).toThrow(
-      'Firestore queries cannot combine COMPOUND IN (...) with another IN filter unless exactly one compound is provided.',
-    );
+    const clauses = buildQueryClauses(parsed);
+    const inClauses = clauses.filter((c) => c.op === 'in');
+
+    expect(inClauses.length).toBeGreaterThanOrEqual(2);
+    expect(clauses.some((c) => c.column === 'Compound' && c.op === 'in')).toBe(true);
   });
 
   it('fails fast when listing.id is missing', async () => {
