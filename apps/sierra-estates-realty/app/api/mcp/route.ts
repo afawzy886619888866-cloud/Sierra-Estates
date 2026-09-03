@@ -212,24 +212,17 @@ export async function POST(request: Request) {
 
   // 4. tools/list
   if (method === 'tools/list') {
-    const servers = mcpRegistry.listServers();
     const tools: Array<{
       name: string;
       description: string;
       inputSchema: Record<string, unknown>;
     }> = [];
 
-    servers.forEach((server) => {
-      server.tools.forEach((tool) => {
-        tools.push({
-          name: tool.name,
-          description: tool.description || `${server.name} tool`,
-          inputSchema: tool.input_schema || {
-            type: 'object',
-            properties: {},
-            additionalProperties: true,
-          },
-        });
+    TOOL_DEFINITIONS.forEach((tool) => {
+      tools.push({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: getToolJsonSchema(tool.name),
       });
     });
 
@@ -248,33 +241,52 @@ export async function POST(request: Request) {
     if (!toolName) {
       return NextResponse.json({
         jsonrpc: '2.0',
-        id,
+        id: id ?? null,
         error: { code: -32602, message: 'Invalid params: tool name is required' },
       });
     }
 
-    // Find which server hosts this tool
-    const servers = mcpRegistry.listServers();
-    let hostingServer: string | null = null;
+    const check = validateAndAuthorizeTool(toolName, toolArgs, auth.token?.scope || 'mcp:read');
 
-    for (const server of servers) {
-      if (server.tools.some((t) => t.name === toolName)) {
-        hostingServer = server.name;
-        break;
-      }
-    }
-
-    if (!hostingServer) {
+    // 1. Tool not found
+    if (!check.tool) {
       return NextResponse.json({
         jsonrpc: '2.0',
-        id,
+        id: id ?? null,
         error: { code: -32601, message: `Tool '${toolName}' not found` },
       });
     }
 
+    // 2. Scope verification check (refuse write/spend tools for read-only tokens)
+    if (!check.authorized) {
+      return NextResponse.json(
+        {
+          jsonrpc: '2.0',
+          id: id ?? null,
+          error: {
+            code: -32003,
+            message: check.error || 'Forbidden: Insufficient token scope',
+          },
+        },
+        { status: 403 },
+      );
+    }
+
+    // 3. Schema validation check (reject invalid input before handler)
+    if (!check.valid) {
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: id ?? null,
+        error: {
+          code: -32602,
+          message: check.error || 'Invalid tool input',
+        },
+      });
+    }
+
     try {
-      logger.info(`[MCPGateway] Invoking tool '${toolName}' on '${hostingServer}' with client '${auth.token?.client_id}'`);
-      const toolResult = await mcpRegistry.callTool(hostingServer, toolName, toolArgs);
+      logger.info(`[MCPGateway] Invoking tool '${toolName}' with client '${auth.token?.client_id}'`);
+      const toolResult = await check.tool.handler(check.parsedArgs);
 
       return NextResponse.json({
         jsonrpc: '2.0',
