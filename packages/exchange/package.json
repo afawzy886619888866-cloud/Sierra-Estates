@@ -1,7 +1,7 @@
 {
   "name": "@sierra-estates/exchange",
   "version": "1.0.0",
-  "description": "Sierra Estates Exchange Sheet — Firestore message bus between Admin, Agents, and Workflows",
+  "description": "Sierra Estates Exchange Sheet \u2014 message bus between Admin, Agents, and Workflows",
   "main": "./index.ts",
   "types": "./index.ts",
   "private": true,
@@ -12,8 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "firebase": "^12.18.0",
-    "firebase-admin": "^14.3.0"
+    "@sierra-estates/db": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26",

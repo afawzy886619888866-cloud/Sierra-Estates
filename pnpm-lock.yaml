@@ -634,12 +634,9 @@ importers:
 
   packages/exchange:
     dependencies:
-      firebase:
-        specifier: ^12.18.0
-        version: 12.18.0
-      firebase-admin:
-        specifier: ^14.3.0
-        version: 14.3.0(@firebase/app-compat@0.5.17)(@firebase/app@0.16.1)(encoding@0.1.13)
+      '@sierra-estates/db':
+        specifier: workspace:*
+        version: link:../db
     devDependencies:
       '@types/node':
         specifier: ^26
