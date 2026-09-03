@@ -1,4 +1,4 @@
-import { adminDb } from "../server/firebase-admin";
+import { listRecords } from "@sierra-estates/db";
 import { Unit } from "../models/schema";
 
 export class RagInventoryService {
@@ -12,13 +12,13 @@ export class RagInventoryService {
     propertyType?: string
   ): Promise<string> {
     try {
-      const query = adminDb.collection("units").where("status", "==", "available");
-
-      // We cannot easily do multiple inequality/OR queries in Firestore without a compound index.
-      // We will fetch up to 20 available units and filter them in-memory to keep it robust and fast.
-      const snapshot = await query.limit(50).get();
-
-      let units = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Unit));
+      // Fetch a bounded page and filter in memory, as before — the remaining
+      // predicates are fuzzy (case-insensitive compound match, budget bands)
+      // and not worth pushing into SQL for 50 rows.
+      let units = await listRecords<Unit>("listings", {
+        where: [{ column: "status", value: "available" }],
+        limit: 50,
+      });
 
       // 1. Filter by Property Type (if strict)
       if (propertyType && propertyType.toLowerCase() !== 'any') {
