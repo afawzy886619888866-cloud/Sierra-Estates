@@ -1135,6 +1135,34 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Closing simulations (lib/services/ClosingSimulator.ts) ──────────────────
+-- Audit trail for each 'what-if' settlement run against a lead/unit pair.
+CREATE TABLE IF NOT EXISTS public.closing_simulations (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT NOT NULL,
+    unit_id TEXT NOT NULL,
+    advisor_id TEXT DEFAULT 'system_gen',
+    legal_audit JSONB DEFAULT '{}'::jsonb,
+    financial_simulation JSONB DEFAULT '{}'::jsonb,
+    execution_timeline JSONB DEFAULT '[]'::jsonb,
+    status TEXT DEFAULT 'simulated',
+    is_actionable BOOLEAN DEFAULT FALSE,
+    strategic_recommendation TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_closing_simulations_lead
+    ON public.closing_simulations(lead_id, created_at DESC);
+
+ALTER TABLE public.closing_simulations ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "closing_simulations_staff_access" ON public.closing_simulations;
+    CREATE POLICY "closing_simulations_staff_access" ON public.closing_simulations
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ─── Lead chat history (lib/services/OmnichannelChatService.ts) ──────────────
 -- Firestore kept this as a `messages` SUBCOLLECTION under each lead so the
 -- transcript could grow past the 1 MB document limit. Postgres has no
