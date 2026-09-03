@@ -40,6 +40,14 @@ export async function POST(request: Request) {
         );
       }
 
+      // Validate redirect_uri matches the authorization request per RFC 6749 §4.1.3
+      if (redirect_uri && authCode.redirect_uri && redirect_uri !== authCode.redirect_uri) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'redirect_uri mismatch' },
+          { status: 400 },
+        );
+      }
+
       // Verify PKCE verifier
       if (authCode.code_challenge) {
         if (!code_verifier) {
