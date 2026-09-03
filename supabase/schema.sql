@@ -1135,6 +1135,15 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Memory engine durable store (packages/memory-engine) ────────────────────
+-- SupabaseMemoryStore keys agent profiles and per-agent context snapshots by
+-- (agent_id, key) in unified_memory and upserts on them. Without a unique
+-- index there is nothing for ON CONFLICT to match, so every save inserted a
+-- new row: contexts accumulated duplicates and loadContext's .single() then
+-- failed on the second save onward.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unified_memory_agent_key
+    ON public.unified_memory(agent_id, key);
+
 -- ─── Houyez portal content (lib/houyez/firestore.ts) ─────────────────────────
 -- Five Firestore collections (houyez_slides / _compounds / _rooms / _listings
 -- / _tours) held bilingual presentation content with different shapes each.
