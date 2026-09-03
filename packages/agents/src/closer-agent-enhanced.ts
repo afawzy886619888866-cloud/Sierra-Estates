@@ -4,12 +4,31 @@
  * Uses Claude / Gemini for complex negotiation logic
  */
 
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 
-function getDb() {
-  if (!getApps().length) initializeApp();
-  return getFirestore();
+/**
+ * The orchestration codes this agent tracks ('S9_proposal_ready', ...) are not
+ * members of the deals.stage CHECK, which is the deal's own vocabulary. The
+ * code is kept verbatim in metadata.orchestrationStage and the closest deal
+ * stage is written to the column, so both survive and the write is accepted.
+ */
+const DEAL_STAGE_FOR: Record<string, string> = {
+  S9_proposal_ready: 'proposal',
+  S9_signing_initiated: 'under_contract',
+  S10_complete: 'closed_won',
+};
+
+/** Merge into the deal's metadata rather than replacing it — one JSONB column. */
+async function patchDeal(
+  dealId: string,
+  orchestrationStage: string,
+  metadataPatch: Record<string, unknown> = {},
+): Promise<void> {
+  const deal = await getRecord<{ metadata?: Record<string, unknown> }>('deals', dealId);
+  await updateRecord('deals', dealId, {
+    stage: DEAL_STAGE_FOR[orchestrationStage] ?? 'proposal',
+    metadata: { ...(deal?.metadata ?? {}), ...metadataPatch, orchestrationStage },
+  });
 }
 
 export interface ProposalContext {
@@ -159,26 +178,27 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
     proposalContent: string,
     terms: Record<string, unknown>
   ): Promise<string> {
-    const db = getDb();
-
-    const proposalRef = await db.collection('proposals').add({
+    // proposals has a fixed column set; the agent's free-form fields
+    // (content, terms, provenance) go in roi_calculation, its JSONB column.
+    // 'finalized' is not a member of the proposals status CHECK — 'draft' is
+    // what a finalized-but-unsent proposal is in that vocabulary.
+    const proposal = await insertRecord<{ id: string }>('proposals', {
       dealId,
-      leadPhone,
-      content: proposalContent,
-      ...terms,
-      status: 'finalized',
-      stage: 'S9_proposal_finalized',
-      createdAt: new Date().toISOString(),
-      generatedBy: 'closer-agent-enhanced',
+      offeredPrice: Number(terms.offeredPrice ?? terms.price ?? 0),
+      paymentTerms: typeof terms.paymentTerms === 'string' ? terms.paymentTerms : null,
+      status: 'draft',
+      roiCalculation: {
+        leadPhone,
+        content: proposalContent,
+        ...terms,
+        orchestrationStage: 'S9_proposal_finalized',
+        generatedBy: 'closer-agent-enhanced',
+      },
     });
 
-    await db.collection('deals').doc(dealId).set({
-      proposalId: proposalRef.id,
-      stage: 'S9_proposal_ready',
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    await patchDeal(dealId, 'S9_proposal_ready', { proposalId: proposal.id });
 
-    return proposalRef.id;
+    return proposal.id;
   }
 
   /**
@@ -188,17 +208,13 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
     const envelopeId = `ENV-${dealId}-${Date.now()}`;
     const signingMessage = `تهانينا! تم إعداد عقد الوحدة للتعاقد الإكتروني/المباشر. معرف العقد: ${envelopeId}`;
 
-    const db = getDb();
-
-    await db.collection('deals').doc(dealId).set({
+    await patchDeal(dealId, 'S9_signing_initiated', {
       signingEnvelope: {
         envelopeId,
         status: 'created',
         createdAt: new Date().toISOString(),
       },
-      stage: 'S9_signing_initiated',
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    });
 
     return { envelopeId, message: signingMessage };
   }
@@ -207,28 +223,25 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
    * Complete closing and create sale record
    */
   async completeClosing(dealId: string, leadPhone: string): Promise<void> {
-    const db = getDb();
+    const deal = await getRecord<{
+      listingId?: string;
+      leadId?: string;
+      dealValue?: number;
+      metadata?: Record<string, unknown>;
+    }>('deals', dealId);
 
-    const doc = await db.collection('deals').doc(dealId).get();
-    const data = doc.exists ? doc.data()! : {};
-
-    await db.collection('sales').add({
-      dealId,
-      assetId: data.assetId || 'ASSET_UNKNOWN',
-      leadPhone,
-      salePriceEGP: data.negotiatedPrice || 0,
-      closeDate: new Date().toISOString(),
-      paymentStatus: 'completed',
-      createdAt: new Date().toISOString(),
-      closedBy: 'closer-agent-enhanced',
+    // Mapped onto the sales columns: unitId/salePrice/closingDate/status, not
+    // the assetId/salePriceEGP/closeDate/paymentStatus names Firestore took.
+    await insertRecord('sales', {
+      unitId: deal?.listingId ?? 'ASSET_UNKNOWN',
+      leadId: deal?.leadId ?? null,
+      salePrice: Number(deal?.metadata?.negotiatedPrice ?? deal?.dealValue ?? 0),
+      closingDate: new Date().toISOString(),
+      status: 'completed',
+      notes: `Closed by closer-agent-enhanced for ${leadPhone}`,
     });
 
-    await db.collection('deals').doc(dealId).set({
-      stage: 'S10_complete',
-      status: 'closed_won',
-      closedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    await patchDeal(dealId, 'S10_complete', { closedAt: new Date().toISOString() });
   }
 }
 
