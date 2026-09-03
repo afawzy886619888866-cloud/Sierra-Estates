@@ -4,7 +4,7 @@
  * This is the single source of truth for the database schema.
  */
 
-import { Timestamp, FieldValue } from 'firebase/firestore';
+import type { IsoTimestamp as Timestamp, WritableTimestamp as FieldValue } from './timestamps';
 
 // ─── Base Types ──────────────────────────────────────────────────────
 
