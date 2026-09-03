@@ -1061,6 +1061,56 @@ BEGIN
     END IF;
 END $$;
 
+
+-- ─── WhatsApp sender pool (lib/server/whatsapp-queue.ts) ─────────────────────
+-- The four Twilio senders and their quota counters. Outreach is load-balanced
+-- across them: claimEligibleNumber picks the least-loaded active sender that is
+-- under both its rolling-window and daily caps.
+-- Queue columns the outreach engine writes that the base table lacked, plus a
+-- widened status set: lib/server/whatsapp-queue.ts enqueues as 'queued' and the
+-- dispatcher moves rows through 'sending'/'sent'/'failed'. Without these the
+-- insert violates the CHECK constraint and every enqueue fails.
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS direction TEXT DEFAULT 'outbound';
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS purpose TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS attempts INT DEFAULT 0;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS unit_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS owner_negotiation_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_name TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_params JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW());
+
+DO $$
+BEGIN
+    ALTER TABLE public.whatsapp_queue DROP CONSTRAINT IF EXISTS whatsapp_queue_status_check;
+    ALTER TABLE public.whatsapp_queue ADD CONSTRAINT whatsapp_queue_status_check
+        CHECK (status IN ('pending', 'queued', 'processing', 'sending', 'sent', 'delivered', 'read', 'failed'));
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.whatsapp_numbers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    label TEXT,
+    e164_phone TEXT NOT NULL UNIQUE,
+    status TEXT DEFAULT 'active',
+    window_sent_count INT DEFAULT 0,
+    window_reset_at TIMESTAMPTZ,
+    daily_sent_count INT DEFAULT 0,
+    daily_reset_at TIMESTAMPTZ,
+    last_sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_numbers_status ON public.whatsapp_numbers(status, window_sent_count);
+
+ALTER TABLE public.whatsapp_numbers ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "whatsapp_numbers_staff_access" ON public.whatsapp_numbers;
+    CREATE POLICY "whatsapp_numbers_staff_access" ON public.whatsapp_numbers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ------------------------------------------------------------------------------
 -- 14. Vector Search Helper Functions
 -- ------------------------------------------------------------------------------
@@ -1474,6 +1524,10 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS sierra_ai_score INT;
 -- Firestore updated these with dotted field paths; here the whole object is
 -- read, merged and written back (see /api/admin/whatsapp/send).
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS automation JSONB DEFAULT '{}'::jsonb;
+-- Pipeline stage tracked by the orchestration engine, e.g. { stage: 'S8_...' }.
+-- Firestore set this with the dotted path 'orchestrationState.stage'; here the
+-- object is read, merged and written back (see lib/services/viewing-engine.ts).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS orchestration_state JSONB DEFAULT '{}'::jsonb;
 
 -- Non-partial on purpose: the Property Finder webhook upserts on this column,
 -- and Postgres can only infer a PARTIAL unique index for ON CONFLICT when the

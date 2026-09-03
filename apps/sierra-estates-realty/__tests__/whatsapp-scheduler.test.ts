@@ -1,19 +1,14 @@
-import { enqueueWhatsAppJob } from '../lib/server/whatsapp-queue';
-
-// Minimal fake Firestore collection for test isolation
-const mockCollection = jest.fn();
+// Minimal record-layer stub for test isolation.
 const mockAdd = jest.fn();
 
-jest.mock('../lib/server/firebase-admin', () => ({
-  adminDb: {
-    collection: (name: string) => {
-      mockCollection(name);
-      return {
-        add: mockAdd,
-      };
-    },
-  },
+jest.mock('@sierra-estates/db', () => ({
+  insertRecord: (table: string, values: unknown) => mockAdd(table, values),
+  listRecords: jest.fn(async () => []),
+  getRecord: jest.fn(async () => null),
+  updateRecord: jest.fn(async () => null),
 }));
+
+import { enqueueWhatsAppJob } from '../lib/server/whatsapp-queue';
 
 describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
   beforeEach(() => {
@@ -29,13 +24,13 @@ describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
     });
 
     expect(jobId).toBe('job_test_123');
-    expect(mockCollection).toHaveBeenCalledWith('whatsapp_message_queue');
+    expect(mockAdd.mock.calls[0][0]).toBe('whatsapp_queue');
     expect(mockAdd).toHaveBeenCalledTimes(1);
 
-    const savedJob = mockAdd.mock.calls[0][0];
+    const savedJob = mockAdd.mock.calls[0][1];
     expect(savedJob.direction).toBe('outbound');
-    expect(savedJob.toPhone).toBe('+201001112233');
-    expect(savedJob.body).toBe('Exclusive Mivida Villa Launch');
+    expect(savedJob.recipientPhone).toBe('+201001112233');
+    expect(savedJob.messageBody).toBe('Exclusive Mivida Villa Launch');
     expect(savedJob.status).toBe('queued');
     expect(savedJob.attempts).toBe(0);
     expect(savedJob.scheduledFor).toBeUndefined();
@@ -53,11 +48,13 @@ describe('WhatsApp Scheduler & Deferred Queue Engine', () => {
     expect(jobId).toBe('job_test_123');
     expect(mockAdd).toHaveBeenCalledTimes(1);
 
-    const savedJob = mockAdd.mock.calls[0][0];
-    expect(savedJob.toPhone).toBe('+201012223344');
+    const savedJob = mockAdd.mock.calls[0][1];
+    expect(savedJob.recipientPhone).toBe('+201012223344');
+    // scheduled_for is a timestamptz column, so the value is an ISO string
+    // rather than a Firestore Timestamp with .toMillis().
     expect(savedJob.scheduledFor).toBeDefined();
-    expect(typeof savedJob.scheduledFor.toMillis).toBe('function');
-    expect(savedJob.scheduledFor.toMillis()).toBeCloseTo(futureDate.getTime(), -3);
+    expect(typeof savedJob.scheduledFor).toBe('string');
+    expect(Date.parse(savedJob.scheduledFor)).toBeCloseTo(futureDate.getTime(), -3);
   });
 
   it('defers future scheduled jobs during cron dispatch processing', () => {
