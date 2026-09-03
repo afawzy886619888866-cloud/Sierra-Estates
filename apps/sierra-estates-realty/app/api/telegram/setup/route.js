@@ -1,0 +1,25 @@
+import { NextResponse } from 'next/server';
+import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+
+export async function GET(req) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorizedResponse();
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get('url');
+
+  if (!token) return NextResponse.json({ error: 'No token' });
+  if (!url) return NextResponse.json({ error: 'Provide url param' });
+
+  try {
+    const webhookUrl = `${url}/api/telegram/webhook`;
+    const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+    const endpoint = `https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}${secretToken ? `&secret_token=${encodeURIComponent(secretToken)}` : ''}`;
+    const response = await fetch(endpoint);
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: error.message });
+  }
+}
