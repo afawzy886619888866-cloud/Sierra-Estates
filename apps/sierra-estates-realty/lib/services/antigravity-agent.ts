@@ -4,8 +4,7 @@
  */
 
 import { GoogleAIService } from '../server/google-ai';
-import { adminDb } from '../server/firebase-admin';
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { getRecord, getSupabaseAdmin, insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead, type Unit } from '../models/schema';
 import { generateOptionsPackage } from './sales-engine';
 import { runMatchingForLead } from './matching-engine';
@@ -87,26 +86,40 @@ Format: JSON only: {"type": "intent_name", "params": {}}`;
   }
 }
 
-async function handleAnalyzeLead(name: string): Promise<AgentResponse> {
-  const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-    .where('name', '>=', name)
-    .limit(1)
-    .get();
-  if (snap.empty) return { message: `Stakeholder "${name}" not found.`, success: false };
+/**
+ * The lead's display name. The column is `full_name`; older documents carried
+ * `name`, and the admin API still speaks `name` to the client, so both are
+ * accepted here.
+ */
+function stakeholderName(lead: Lead): string {
+  return (lead as any).fullName ?? (lead as any).name ?? '';
+}
 
-  const lead = { id: snap.docs[0].id, ...snap.docs[0].data() } as Lead;
+/**
+ * Firestore emulated a prefix search with `where('name', '>=', name)`, which
+ * actually matched everything ordered at or after it. `ilike` is the honest
+ * version of what that was reaching for.
+ */
+async function findStakeholderByName(name: string): Promise<Lead | null> {
+  const rows = await listRecords<Lead>(COLLECTIONS.stakeholders, {
+    where: [{ column: 'fullName', op: 'ilike', value: `${name}%` }],
+    limit: 1,
+  });
+  return rows[0] ?? null;
+}
+
+async function handleAnalyzeLead(name: string): Promise<AgentResponse> {
+  const lead = await findStakeholderByName(name);
+  if (!lead) return { message: `Stakeholder "${name}" not found.`, success: false };
 
   // Trigger matching just in case
   await runMatchingForLead(lead.id!);
 
   // Re-fetch with matches
-  const updatedSnap = await adminDb.collection(COLLECTIONS.stakeholders)
-    .where('name', '==', lead.name)
-    .get();
-  const updatedLead = updatedSnap.docs[0].data() as Lead;
+  const updatedLead = (await getRecord<Lead>(COLLECTIONS.stakeholders, lead.id!)) ?? lead;
 
   const summary = `
-<b>👤 Stakeholder Profile: ${updatedLead.name}</b>
+<b>👤 Stakeholder Profile: ${stakeholderName(updatedLead)}</b>
 <b>Budget:</b> ${updatedLead.budget} - ${updatedLead.budgetMax}
 <b>Interests:</b> ${updatedLead.aiProfiling?.interests?.join(', ') || 'N/A'}
 <b>Top Strategic Matches:</b> ${updatedLead.aiProfiling?.topMatches?.length || 0} assets.
@@ -118,11 +131,8 @@ async function handleAnalyzeLead(name: string): Promise<AgentResponse> {
 }
 
 async function handleGenerateProposal(name: string, text: string): Promise<AgentResponse> {
-  const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-    .where('name', '>=', name)
-    .limit(1)
-    .get();
-  if (snap.empty) return { message: `Stakeholder "${name}" not found.`, success: false };
+  const lead = await findStakeholderByName(name);
+  if (!lead) return { message: `Stakeholder "${name}" not found.`, success: false };
 
   // Command: Analyze Lead [leadId]
   if (text.includes('analyze')) {
@@ -148,8 +158,7 @@ async function handleGenerateProposal(name: string, text: string): Promise<Agent
     }
   }
 
-  const leadId = snap.docs[0].id;
-  const proposalId = await generateOptionsPackage(leadId);
+  const proposalId = await generateOptionsPackage(lead.id!);
 
   return {
     message: `
@@ -165,10 +174,10 @@ Strategic portfolio for <b>${name}</b> has been generated.
 
 async function handleCheckListing(id: string): Promise<AgentResponse> {
   // Search by code or title
-  const snap = await adminDb.collection(COLLECTIONS.units).limit(1).get();
-  if (snap.empty) return { message: `Listing "${id}" not found.`, success: false };
+  const units = await listRecords<Unit>(COLLECTIONS.units, { limit: 1 });
+  if (units.length === 0) return { message: `Listing "${id}" not found.`, success: false };
 
-  const unit = snap.docs[0].data() as Unit;
+  const unit = units[0];
   const legal = assessLegalRisk(unit);
   const legalSummary = generateLegalSummary(legal, 'en');
 
@@ -216,31 +225,40 @@ Answer every query with authority, blending professional warmth with the precisi
  * Handle Stakeholder Stage 6 Interview logic.
  */
 async function handleStakeholderInterview(chatId: number, text: string): Promise<AgentResponse> {
-  // 1. Find or Create Lead based on chatId
-  const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-    .where('automation.telegramId', '==', chatId)
+  // 1. Find or Create Lead based on chatId.
+  //
+  // `automation` is a JSONB column, so this filters on a key inside it and has
+  // to go through the client directly — the record layer snake_cases column
+  // names, which would corrupt the path. The key reads snake_cased because that
+  // same layer converts payload keys recursively on write.
+  const { data: found, error: findError } = await getSupabaseAdmin()
+    .from(COLLECTIONS.stakeholders)
+    .select('*')
+    .eq('automation->>telegram_id', String(chatId))
     .limit(1)
-    .get();
+    .maybeSingle();
+  if (findError) throw new Error(`[supabase:handleStakeholderInterview] ${findError.message}`);
 
   let lead: Lead;
   let leadId = '';
 
-  if (snap.empty) {
-    // Create new lead in S2 (extracted)
-    const newLeadRef = adminDb.collection(COLLECTIONS.stakeholders).doc();
-    leadId = newLeadRef.id;
-    lead = {
-      name: `Stakeholder-${chatId}`,
+  if (!found) {
+    // Create new lead in S2 (extracted). Firestore's .doc() handed back an id
+    // for a document that was never written, so the update below always failed
+    // with NOT_FOUND for a first-time chat; the row is now actually inserted.
+    const created = await insertRecord<Lead>(COLLECTIONS.stakeholders, {
+      fullName: `Stakeholder-${chatId}`,
       phone: `TELEGRAM:${chatId}`,
       stage: 'lead',
       source: 'whatsapp', // using legacy placeholder
       orchestrationState: { stage: 'S2', status: 'pending' },
-      automation: { telegramId: chatId, botInitiated: true }
-    } as any;
-    // Note: We'd save this, but for brevity we'll combine with current text
+      automation: { telegramId: chatId, botInitiated: true },
+    });
+    leadId = created.id!;
+    lead = created;
   } else {
-    leadId = snap.docs[0].id;
-    lead = { id: leadId, ...snap.docs[0].data() } as Lead;
+    lead = found as Lead;
+    leadId = lead.id!;
   }
 
   // 2. Profile & Feedback Extraction (Stage 6-10)
@@ -251,40 +269,56 @@ async function handleStakeholderInterview(chatId: number, text: string): Promise
   const feedback = await extractFeedbackAndSentiment(text);
 
   // 3. Update Lead Intelligence Profile & Neural Memory
-  const leadRef = adminDb.collection(COLLECTIONS.stakeholders).doc(leadId);
-  const updates: any = {
-    'intelligence.profile': {
-      ...(lead.intelligence?.profile || {}),
-      nationality: profile.nationality || lead.intelligence?.profile?.nationality,
-      familySize: profile.familySize || lead.intelligence?.profile?.familySize,
-      budget: profile.budget || lead.intelligence?.profile?.budget,
-      location: profile.location || lead.intelligence?.profile?.location,
-      moveInDate: profile.moveInDate || lead.intelligence?.profile?.moveInDate
-    },
-    'orchestrationState.stage': profile.isQualified ? 'S7' : 'S6',
-    updatedAt: Timestamp.now()
+  //
+  // Firestore addressed these with dotted paths ('intelligence.profile') and
+  // grew the arrays with FieldValue.arrayUnion. `intelligence` and
+  // `orchestrationState` are single JSONB columns here, so the whole object is
+  // read, merged and written back — arrayUnion becomes an explicit dedupe.
+  const intelligence: Record<string, any> = { ...(lead.intelligence ?? {}) };
+  intelligence.profile = {
+    ...(lead.intelligence?.profile || {}),
+    nationality: profile.nationality || lead.intelligence?.profile?.nationality,
+    familySize: profile.familySize || lead.intelligence?.profile?.familySize,
+    budget: profile.budget || lead.intelligence?.profile?.budget,
+    location: profile.location || lead.intelligence?.profile?.location,
+    moveInDate: profile.moveInDate || lead.intelligence?.profile?.moveInDate
   };
 
   // Inject Neural Memory (Negative Signals & Objections)
   if (feedback && (feedback.signals?.length > 0 || feedback.objections?.length > 0)) {
     if (feedback.signals?.length > 0) {
-      updates['intelligence.memory.negativeSignals'] = FieldValue.arrayUnion(...feedback.signals);
+      const existing: string[] = intelligence.memory?.negativeSignals ?? [];
+      intelligence.memory = {
+        ...(intelligence.memory ?? {}),
+        negativeSignals: Array.from(new Set([...existing, ...feedback.signals])),
+      };
     }
     if (feedback.objections?.length > 0) {
-      updates['intelligence.objections'] = FieldValue.arrayUnion(...feedback.objections.map((obj: any) => ({
-        ...obj,
-        timestamp: new Date()
-      })));
+      // Each objection carries its own timestamp, so these are appended rather
+      // than deduped — arrayUnion never collapsed them either.
+      intelligence.objections = [
+        ...(intelligence.objections ?? []),
+        ...feedback.objections.map((obj: any) => ({
+          ...obj,
+          timestamp: new Date().toISOString()
+        })),
+      ];
     }
     if (feedback.matrix) {
-      updates['intelligence.matrix'] = {
+      intelligence.matrix = {
         ...(lead.intelligence?.matrix || {}),
         ...feedback.matrix
       };
     }
   }
 
-  await leadRef.update(updates);
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    intelligence,
+    orchestrationState: {
+      ...(lead.orchestrationState ?? {}),
+      stage: profile.isQualified ? 'S7' : 'S6',
+    },
+  });
 
   // 4. Get Next Question - Using Sierra's Editorial Luxury Persona
   const welcomeSequence = `

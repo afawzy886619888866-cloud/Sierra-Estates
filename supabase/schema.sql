@@ -650,7 +650,9 @@ CREATE TABLE IF NOT EXISTS public.pages (
     locale TEXT NOT NULL DEFAULT 'en' CHECK (locale IN ('en', 'ar')),
     sections JSONB DEFAULT '{}'::jsonb,
     published BOOLEAN DEFAULT FALSE,
-    updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    -- TEXT, not a profiles FK: /api/admin/pages records the literal 'system'
+    -- when a page is saved by a service caller rather than a signed-in user.
+    updated_by TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     UNIQUE (slug, locale)
@@ -754,6 +756,15 @@ CREATE TABLE IF NOT EXISTS public.workflows (
     schedule TEXT,
     definition JSONB DEFAULT '{}'::jsonb,
     last_run_at TIMESTAMPTZ,
+    -- Admin automations board (/api/admin/workflows). The route's payload uses
+    -- `desc`/`descAr`, which are mapped to description/description_ar because
+    -- DESC is a SQL keyword; the API response keeps the original key names.
+    name_ar TEXT,
+    description_ar TEXT,
+    color TEXT DEFAULT '#6366f1',
+    status TEXT DEFAULT 'paused',
+    runs INT DEFAULT 0,
+    last_run_label TEXT DEFAULT 'never',
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -983,6 +994,584 @@ BEGIN
     END IF;
 END $$;
 
+
+-- ─── Automation rules engine (/api/admin/automations) ────────────────────────
+-- Column shapes follow lib/models/automation.ts. The nested structures
+-- (trigger, actions, conditions, stats, action results) stay JSONB rather than
+-- being normalised: they are authored and read as whole documents by the
+-- automation builder UI and the executor, never queried field-by-field.
+CREATE TABLE IF NOT EXISTS public.automation_rules (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    description_ar TEXT DEFAULT '',
+    template_id TEXT,
+    trigger JSONB DEFAULT '{}'::jsonb,
+    actions JSONB DEFAULT '[]'::jsonb,
+    enabled BOOLEAN DEFAULT FALSE,
+    conditions JSONB DEFAULT '{}'::jsonb,
+    execution_settings JSONB DEFAULT '{}'::jsonb,
+    stats JSONB DEFAULT '{}'::jsonb,
+    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.automation_execution_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    rule_id TEXT REFERENCES public.automation_rules(id) ON DELETE CASCADE,
+    rule_name TEXT,
+    trigger_type TEXT,
+    triggered_by TEXT,
+    triggered_by_object JSONB DEFAULT '{}'::jsonb,
+    status TEXT DEFAULT 'pending',
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    duration_ms INT,
+    action_results JSONB DEFAULT '[]'::jsonb,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_automation_logs_rule ON public.automation_execution_logs(rule_id, started_at DESC);
+
+ALTER TABLE public.automation_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automation_execution_logs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "automation_rules_staff_access" ON public.automation_rules;
+    CREATE POLICY "automation_rules_staff_access" ON public.automation_rules
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Logs are written by the executor under the service role; staff read only.
+    DROP POLICY IF EXISTS "automation_logs_staff_read" ON public.automation_execution_logs;
+    CREATE POLICY "automation_logs_staff_read" ON public.automation_execution_logs
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_automation_rules') THEN
+        CREATE TRIGGER trigger_update_automation_rules BEFORE UPDATE ON public.automation_rules
+            FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+END $$;
+
+
+-- ─── WhatsApp sender pool (lib/server/whatsapp-queue.ts) ─────────────────────
+-- The four Twilio senders and their quota counters. Outreach is load-balanced
+-- across them: claimEligibleNumber picks the least-loaded active sender that is
+-- under both its rolling-window and daily caps.
+-- Queue columns the outreach engine writes that the base table lacked, plus a
+-- widened status set: lib/server/whatsapp-queue.ts enqueues as 'queued' and the
+-- dispatcher moves rows through 'sending'/'sent'/'failed'. Without these the
+-- insert violates the CHECK constraint and every enqueue fails.
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS direction TEXT DEFAULT 'outbound';
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS purpose TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS attempts INT DEFAULT 0;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS unit_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS owner_negotiation_id TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_name TEXT;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS template_params JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.whatsapp_queue ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW());
+
+DO $$
+BEGIN
+    ALTER TABLE public.whatsapp_queue DROP CONSTRAINT IF EXISTS whatsapp_queue_status_check;
+    ALTER TABLE public.whatsapp_queue ADD CONSTRAINT whatsapp_queue_status_check
+        CHECK (status IN ('pending', 'queued', 'processing', 'sending', 'sent', 'delivered', 'read', 'failed'));
+END $$;
+
+-- ─── Media correlation (lib/services/ImageLinkHub.ts) ────────────────────────
+-- Links WhatsApp media to portal listings so the same photo is not re-uploaded
+-- per channel. Keyed by the provider's media id, which is why id is not
+-- generated here.
+CREATE TABLE IF NOT EXISTS public.image_links (
+    id TEXT PRIMARY KEY,
+    source TEXT DEFAULT 'whatsapp',
+    signal_id TEXT,
+    image_url TEXT,
+    portal_id TEXT,
+    portal_type TEXT,
+    status TEXT DEFAULT 'pending_correlation',
+    correlated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_image_links_signal ON public.image_links(signal_id);
+
+ALTER TABLE public.image_links ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "image_links_staff_access" ON public.image_links;
+    CREATE POLICY "image_links_staff_access" ON public.image_links
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── WhatsApp conversation memory (lib/services/WhatsAppConversationalService.ts)
+-- The ECC short-term memory for a direct WhatsApp thread. Firestore keyed the
+-- document by phone number; the phone stays the primary key here so the same
+-- upsert-by-sender remains a single statement.
+CREATE TABLE IF NOT EXISTS public.whatsapp_conversations (
+    phone_number TEXT PRIMARY KEY,
+    messages JSONB DEFAULT '[]'::jsonb,
+    last_active TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.whatsapp_conversations ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "whatsapp_conversations_staff_access" ON public.whatsapp_conversations;
+    CREATE POLICY "whatsapp_conversations_staff_access" ON public.whatsapp_conversations
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Automation worker tables (apps/automations) ─────────────────────────────
+-- The n8n-style workers run outside the Vercel build and write here directly.
+-- `communications` is the outbound-message log shared by 03-owner-contact and
+-- 04-email-sender; it is distinct from whatsapp_queue, which is the dispatcher's
+-- work queue rather than a record of what was sent.
+CREATE TABLE IF NOT EXISTS public.communications (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    target_phone TEXT,
+    target_email TEXT,
+    direction TEXT DEFAULT 'outbound' CHECK (direction IN ('inbound', 'outbound')),
+    type TEXT DEFAULT 'whatsapp' CHECK (type IN ('whatsapp', 'email', 'sms', 'telegram', 'call')),
+    subject TEXT,
+    message TEXT,
+    context JSONB DEFAULT '{}'::jsonb,
+    campaign_id TEXT,
+    status TEXT DEFAULT 'sent' CHECK (status IN ('queued', 'sent', 'delivered', 'read', 'failed')),
+    sent_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_communications_target
+    ON public.communications(target_phone, sent_at DESC);
+
+-- The agent exchange bus (packages/exchange). Workers post progress events
+-- here; nothing reads them synchronously, so this is telemetry, not a queue.
+CREATE TABLE IF NOT EXISTS public.exchange (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    type TEXT NOT NULL,
+    source TEXT DEFAULT 'workflow'
+        CHECK (source IN ('admin', 'agent', 'workflow', 'webhook', 'system')),
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'running', 'done', 'error', 'cancelled')),
+    step_name TEXT,
+    progress INT DEFAULT 0,
+    payload JSONB DEFAULT '{}'::jsonb,
+    -- Optional links, all nullable: a record may reference any combination.
+    agent_id TEXT,
+    workflow_id TEXT,
+    lead_id TEXT,
+    property_id TEXT,
+    user_id TEXT,
+    -- Output of the task this record tracks.
+    result JSONB,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_exchange_type_status
+    ON public.exchange(type, status, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_exchange_created ON public.exchange(created_at DESC);
+
+ALTER TABLE public.communications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exchange ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "communications_staff_access" ON public.communications;
+    CREATE POLICY "communications_staff_access" ON public.communications
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "exchange_staff_read" ON public.exchange;
+    CREATE POLICY "exchange_staff_read" ON public.exchange
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+-- ─── Memory engine durable store (packages/memory-engine) ────────────────────
+-- SupabaseMemoryStore keys agent profiles and per-agent context snapshots by
+-- (agent_id, key) in unified_memory and upserts on them. Without a unique
+-- index there is nothing for ON CONFLICT to match, so every save inserted a
+-- new row: contexts accumulated duplicates and loadContext's .single() then
+-- failed on the second save onward.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unified_memory_agent_key
+    ON public.unified_memory(agent_id, key);
+
+-- ─── Houyez portal content (lib/houyez/firestore.ts) ─────────────────────────
+-- Five Firestore collections (houyez_slides / _compounds / _rooms / _listings
+-- / _tours) held bilingual presentation content with different shapes each.
+-- Rather than five tables of near-duplicate EN/AR columns, they collapse into
+-- one table discriminated by `collection`, with the row payload in JSONB —
+-- this is display content, never queried by field.
+CREATE TABLE IF NOT EXISTS public.houyez_content (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    collection TEXT NOT NULL
+        CHECK (collection IN ('slides', 'compounds', 'rooms', 'listings', 'tours')),
+    "order" INT DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE,
+    data JSONB DEFAULT '{}'::jsonb NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_houyez_content_collection
+    ON public.houyez_content(collection, "order");
+
+ALTER TABLE public.houyez_content ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    -- Public-site presentation content: anyone may read, only staff may write.
+    DROP POLICY IF EXISTS "houyez_content_public_read" ON public.houyez_content;
+    CREATE POLICY "houyez_content_public_read" ON public.houyez_content
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "houyez_content_staff_write" ON public.houyez_content;
+    CREATE POLICY "houyez_content_staff_write" ON public.houyez_content
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Property Finder sync bookkeeping (lib/services/sync-engine.ts) ──────────
+-- The dedupe review queue: PF listings whose match against our inventory was
+-- ambiguous or conflicting, held for a human to resolve.
+CREATE TABLE IF NOT EXISTS public.sync_queue (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    pf_reference_number TEXT NOT NULL,
+    firestore_doc_id TEXT,   -- historical column name: the matched listing's id
+    status TEXT NOT NULL DEFAULT 'ambiguous'
+        CHECK (status IN ('matched', 'ambiguous', 'new', 'conflict', 'resolved', 'skipped')),
+    match_confidence NUMERIC(5, 2) DEFAULT 0,
+    pf_data JSONB DEFAULT '{}'::jsonb,
+    firestore_data JSONB DEFAULT '{}'::jsonb,
+    conflict_fields TEXT[] DEFAULT ARRAY[]::TEXT[],
+    resolved_by TEXT,
+    resolved_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sync_queue_status ON public.sync_queue(status);
+
+-- One row per sync run, which the admin dashboard reads for sync health.
+CREATE TABLE IF NOT EXISTS public.sync_log (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    total INT DEFAULT 0,
+    matched INT DEFAULT 0,
+    created INT DEFAULT 0,
+    skipped INT DEFAULT 0,
+    dedupe_queue INT DEFAULT 0,
+    errors TEXT[] DEFAULT ARRAY[]::TEXT[],
+    status TEXT,
+    timestamp TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sync_log_created ON public.sync_log(created_at DESC);
+
+-- ─── Incentive vouchers (lib/services/sales-engine.ts) ───────────────────────
+CREATE TABLE IF NOT EXISTS public.vouchers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    code TEXT NOT NULL UNIQUE,
+    type TEXT DEFAULT 'viewing-reward',
+    value NUMERIC(12, 2) DEFAULT 0,
+    currency TEXT DEFAULT 'EGP',
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'redeemed', 'expired', 'void')),
+    conditions TEXT,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_vouchers_lead ON public.vouchers(lead_id);
+
+-- ─── Catalogue reference data (lib/models/schema.ts) ─────────────────────────
+-- Declared in COLLECTIONS and modelled in schema.ts. No route writes them yet;
+-- the tables exist so a COLLECTIONS entry never points at a missing relation.
+CREATE TABLE IF NOT EXISTS public.projects (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT,
+    developer_id TEXT,
+    slug TEXT,
+    location TEXT,
+    city TEXT,
+    governorate TEXT,
+    coordinates JSONB DEFAULT '{}'::jsonb,
+    description TEXT,
+    description_ar TEXT,
+    total_units INT,
+    available_units INT,
+    launch_date TIMESTAMPTZ,
+    delivery_date TIMESTAMPTZ,
+    completion_percent NUMERIC(5, 2),
+    price_range_min NUMERIC(15, 2),
+    price_range_max NUMERIC(15, 2),
+    payment_plan TEXT,
+    logo TEXT,
+    hero_image TEXT,
+    images TEXT[] DEFAULT ARRAY[]::TEXT[],
+    master_plan_url TEXT,
+    brochure_url TEXT,
+    status TEXT DEFAULT 'pre-launch',
+    is_featured BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.developers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT,
+    slug TEXT,
+    description TEXT,
+    description_ar TEXT,
+    founded_year INT,
+    headquarters TEXT,
+    website TEXT,
+    rating NUMERIC(3, 2),
+    total_projects INT,
+    tier TEXT,
+    logo TEXT,
+    cover_image TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.media_assets (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    filename TEXT NOT NULL,
+    original_filename TEXT,
+    mime_type TEXT,
+    size_bytes BIGINT,
+    storage_path TEXT,
+    download_url TEXT,
+    thumbnail_url TEXT,
+    asset_type TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.sync_queue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sync_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.developers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media_assets ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "sync_queue_staff_access" ON public.sync_queue;
+    CREATE POLICY "sync_queue_staff_access" ON public.sync_queue
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "sync_log_staff_read" ON public.sync_log;
+    CREATE POLICY "sync_log_staff_read" ON public.sync_log
+        FOR SELECT TO authenticated USING (public.is_staff());
+
+    DROP POLICY IF EXISTS "vouchers_staff_access" ON public.vouchers;
+    CREATE POLICY "vouchers_staff_access" ON public.vouchers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "media_assets_staff_access" ON public.media_assets;
+    CREATE POLICY "media_assets_staff_access" ON public.media_assets
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Projects and developers are public catalogue data, like listings:
+    -- anyone may read, only staff may write.
+    DROP POLICY IF EXISTS "projects_public_read" ON public.projects;
+    CREATE POLICY "projects_public_read" ON public.projects
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "projects_staff_write" ON public.projects;
+    CREATE POLICY "projects_staff_write" ON public.projects
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "developers_public_read" ON public.developers;
+    CREATE POLICY "developers_public_read" ON public.developers
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "developers_staff_write" ON public.developers;
+    CREATE POLICY "developers_staff_write" ON public.developers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Global neural memory (lib/services/MemoryService.ts) ────────────────────
+-- Cross-deal learning: aggregate patterns keyed by a well-known row id
+-- ('global_patterns'), not per-lead. Per-lead memory lives in leads.intelligence.
+CREATE TABLE IF NOT EXISTS public.intelligence (
+    id TEXT PRIMARY KEY,
+    rejection_stats JSONB DEFAULT '{}'::jsonb,
+    last_trend_update TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.intelligence ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "intelligence_staff_access" ON public.intelligence;
+    CREATE POLICY "intelligence_staff_access" ON public.intelligence
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- Firestore's increment() on the dotted path 'rejectionStats.<category>' was
+-- atomic. A read-modify-write through PostgREST is not, and two rejections
+-- landing together would lose a count, so the whole thing happens in one
+-- statement. jsonb_set with create_if_missing handles a category seen for the
+-- first time; the INSERT ... ON CONFLICT handles the row not existing yet.
+CREATE OR REPLACE FUNCTION public.bump_rejection_stat(p_id TEXT, p_category TEXT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $fn$
+    INSERT INTO public.intelligence (id, rejection_stats, last_trend_update)
+    VALUES (
+        p_id,
+        jsonb_build_object(p_category, 1),
+        TIMEZONE('utc'::text, NOW())
+    )
+    ON CONFLICT (id) DO UPDATE
+       SET rejection_stats = jsonb_set(
+               COALESCE(public.intelligence.rejection_stats, '{}'::jsonb),
+               ARRAY[p_category],
+               to_jsonb(
+                   COALESCE(
+                       (public.intelligence.rejection_stats ->> p_category)::int,
+                       0
+                   ) + 1
+               ),
+               TRUE
+           ),
+           last_trend_update = TIMEZONE('utc'::text, NOW()),
+           updated_at = TIMEZONE('utc'::text, NOW());
+$fn$;
+
+REVOKE ALL ON FUNCTION public.bump_rejection_stat(TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.bump_rejection_stat(TEXT, TEXT) TO service_role;
+
+-- ─── Closing simulations (lib/services/ClosingSimulator.ts) ──────────────────
+-- Audit trail for each 'what-if' settlement run against a lead/unit pair.
+CREATE TABLE IF NOT EXISTS public.closing_simulations (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT NOT NULL,
+    unit_id TEXT NOT NULL,
+    advisor_id TEXT DEFAULT 'system_gen',
+    legal_audit JSONB DEFAULT '{}'::jsonb,
+    financial_simulation JSONB DEFAULT '{}'::jsonb,
+    execution_timeline JSONB DEFAULT '[]'::jsonb,
+    status TEXT DEFAULT 'simulated',
+    is_actionable BOOLEAN DEFAULT FALSE,
+    strategic_recommendation TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_closing_simulations_lead
+    ON public.closing_simulations(lead_id, created_at DESC);
+
+ALTER TABLE public.closing_simulations ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "closing_simulations_staff_access" ON public.closing_simulations;
+    CREATE POLICY "closing_simulations_staff_access" ON public.closing_simulations
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Lead chat history (lib/services/OmnichannelChatService.ts) ──────────────
+-- Firestore kept this as a `messages` SUBCOLLECTION under each lead so the
+-- transcript could grow past the 1 MB document limit. Postgres has no
+-- subcollections, so it becomes an append-only table with a foreign key.
+CREATE TABLE IF NOT EXISTS public.lead_messages (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT NOT NULL REFERENCES public.leads(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL CHECK (sender IN ('user', 'sierra')),
+    text TEXT,
+    platform TEXT,
+    timestamp TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_lead_messages_lead
+    ON public.lead_messages(lead_id, timestamp DESC);
+
+ALTER TABLE public.lead_messages ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "lead_messages_staff_access" ON public.lead_messages;
+    CREATE POLICY "lead_messages_staff_access" ON public.lead_messages
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Orchestration history (lib/orchestration/StateManager.ts) ───────────────
+-- Firestore kept this as an `orchestrationHistory` SUBCOLLECTION under each
+-- pipeline row, so the log could grow without hitting the 1 MB document limit.
+-- Postgres has no subcollections, so it becomes an append-only table keyed by
+-- (parent table, parent id) — the pipeline runs over more than one table
+-- (`leads` and `broker_listings` today), hence the table name is a column
+-- rather than a foreign key.
+CREATE TABLE IF NOT EXISTS public.orchestration_history (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    parent_table TEXT NOT NULL,
+    parent_id TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    status TEXT NOT NULL,
+    engine_version TEXT,
+    details JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_orchestration_history_parent
+    ON public.orchestration_history(parent_table, parent_id, created_at DESC);
+
+ALTER TABLE public.orchestration_history ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "orchestration_history_staff_read" ON public.orchestration_history;
+    CREATE POLICY "orchestration_history_staff_read" ON public.orchestration_history
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.whatsapp_numbers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    label TEXT,
+    e164_phone TEXT NOT NULL UNIQUE,
+    status TEXT DEFAULT 'active',
+    window_sent_count INT DEFAULT 0,
+    window_reset_at TIMESTAMPTZ,
+    daily_sent_count INT DEFAULT 0,
+    daily_reset_at TIMESTAMPTZ,
+    last_sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_numbers_status ON public.whatsapp_numbers(status, window_sent_count);
+
+ALTER TABLE public.whatsapp_numbers ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "whatsapp_numbers_staff_access" ON public.whatsapp_numbers;
+    CREATE POLICY "whatsapp_numbers_staff_access" ON public.whatsapp_numbers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ------------------------------------------------------------------------------
 -- 14. Vector Search Helper Functions
 -- ------------------------------------------------------------------------------
@@ -1199,10 +1788,36 @@ CREATE TABLE IF NOT EXISTS public.system_status (
     last_error TEXT,
     last_command TEXT,
     last_command_at TIMESTAMPTZ,
+    -- Set by /api/admin/bots alongside last_command.
+    last_command_by TEXT,
+    last_config_update TIMESTAMPTZ,
+    last_config_updated_by TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    logs JSONB DEFAULT '[]'::jsonb,
     config JSONB DEFAULT '{}'::jsonb,   -- { interval, enabled }
     stats JSONB DEFAULT '{}'::jsonb,    -- { processedToday, errorsToday }
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Per-bot operator configuration, keyed by bot id. Kept separate from
+-- system_status because status is heartbeat data written by the bots while
+-- this is authored by admins in /api/admin/bots.
+CREATE TABLE IF NOT EXISTS public.bot_configs (
+    id TEXT PRIMARY KEY,
+    config JSONB DEFAULT '{}'::jsonb,
+    updated_by TEXT,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.bot_configs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "bot_configs_staff_access" ON public.bot_configs;
+    CREATE POLICY "bot_configs_staff_access" ON public.bot_configs
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_sales_created ON public.sales(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sales_agent ON public.sales(agent_id);
@@ -1340,6 +1955,22 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
 -- 'F' (furnished) / 'U' (unfurnished) — the Sierra coding algorithm's furnishing
 -- token. Distinct from finishing_type, which is the developer's finishing spec.
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS furnishing_status TEXT;
+-- Map pin coordinates from the Property Finder feed (the client site renders
+-- listings on Leaflet). public.compounds already stores lat/lng this way.
+-- Property Finder registry push state
+-- (lib/integrations/portfolio-asset-registry.ts).
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS registry_asset_id TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS synced_to_registry BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_registry_sync TIMESTAMPTZ;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS registry_status TEXT;
+
+-- Written by /api/admin/ingest: the landlord-sheet code stamped onto each
+-- ingested unit, and the derived per-sqm price the admin inventory sorts on.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sbr_code TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS price_per_sqm NUMERIC(15, 2);
+
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
 
 CREATE INDEX IF NOT EXISTS idx_listings_pf_reference ON public.listings(pf_reference_number);
 CREATE INDEX IF NOT EXISTS idx_listings_sync_hash ON public.listings(sync_hash);
@@ -1362,6 +1993,65 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_lead_id TEXT;              
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pipeline_stage TEXT;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS assigned_specialist TEXT;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS sierra_ai_score INT;
+-- Per-lead automation flags, e.g. { whatsappFollowupSent, lastWhatsAppSentAt }.
+-- Firestore updated these with dotted field paths; here the whole object is
+-- read, merged and written back (see /api/admin/whatsapp/send).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS automation JSONB DEFAULT '{}'::jsonb;
+-- Pipeline stage tracked by the orchestration engine, e.g. { stage: 'S8_...' }.
+-- Firestore set this with the dotted path 'orchestrationState.stage'; here the
+-- object is read, merged and written back (see lib/services/viewing-engine.ts).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS orchestration_state JSONB DEFAULT '{}'::jsonb;
+
+-- Neural memory the Telegram agent accumulates per lead: extracted profile,
+-- negative signals, objections and the scoring matrix
+-- (lib/services/antigravity-agent.ts). Firestore addressed these with dotted
+-- paths and grew the arrays with arrayUnion; here it is one JSONB object that
+-- is read, merged and written back.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intelligence JSONB DEFAULT '{}'::jsonb;
+
+-- Property Finder lead attribution (lib/services/PFIntegrationService.ts).
+-- `pf_lead_id` above is the dedupe key; these two are the human-readable
+-- provenance the CRM shows next to it.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS origin_channel TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_listing_reference_number TEXT;
+
+-- Property Finder registry sync bookkeeping
+-- (lib/integrations/portfolio-asset-registry.ts). The registry pushes
+-- stakeholders to us by webhook; registry_stakeholder_id is the idempotency
+-- key it is deduped on.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS registry_stakeholder_id TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS registry_created_at TIMESTAMPTZ;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS asset_reference TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS asset_id TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intent TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS neural_match_score NUMERIC(6, 2);
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS leila_score NUMERIC(6, 2);
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS advisor_assigned TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_registry_stakeholder
+    ON public.leads(registry_stakeholder_id);
+
+-- Omnichannel conversation counters (lib/services/OmnichannelChatService.ts).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS interaction_count INT DEFAULT 0;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS last_contact_at TIMESTAMPTZ;
+
+-- Firestore's FieldValue.increment() was atomic; a read-modify-write through
+-- PostgREST is not, and two messages arriving together would lose a count.
+-- This does the increment inside a single statement instead.
+CREATE OR REPLACE FUNCTION public.bump_lead_interaction(p_lead_id TEXT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $fn$
+    UPDATE public.leads
+       SET interaction_count = COALESCE(interaction_count, 0) + 1,
+           last_contact_at = TIMEZONE('utc'::text, NOW()),
+           updated_at = TIMEZONE('utc'::text, NOW())
+     WHERE id = p_lead_id;
+$fn$;
+
+REVOKE ALL ON FUNCTION public.bump_lead_interaction(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.bump_lead_interaction(TEXT) TO service_role;
+
 
 -- Non-partial on purpose: the Property Finder webhook upserts on this column,
 -- and Postgres can only infer a PARTIAL unique index for ON CONFLICT when the

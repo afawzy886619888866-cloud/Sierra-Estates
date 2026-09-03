@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { adminDb } from "../server/firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
+import { getSupabaseAdmin, insertRecord, updateRecord } from "@sierra-estates/db";
 import { COLLECTIONS, type InboundAssetSignal } from "../models/schema";
 import { buildSierraCodeMetadata, type PropertyCodeInput } from "./coding-algorithm";
 import { StorageService } from "./StorageService";
@@ -163,7 +162,6 @@ export class WhatsAppParserService {
           sourcePlatform: 'whatsapp',
           senderInfo: sender,
           isVerified: false,
-          createdAt: Timestamp.now() as any,
           extractedData: extractedData,
           coordinates: this.simulateGeocoding(extractedData.compound),
           duplicateOf: duplicateId || undefined,
@@ -178,19 +176,24 @@ export class WhatsAppParserService {
           }
         };
 
-        const docRef = await Promise.race([
-          adminDb.collection(COLLECTIONS.brokerListings).add(signal),
-          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 2000)),
+        const created = await Promise.race([
+          insertRecord<{ id: string }>(COLLECTIONS.brokerListings, signal),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 2000)),
         ]);
 
-        if (media && docRef?.id) {
+        if (media && created?.id) {
           try {
-            const mediaUrl = await StorageService.uploadPropertyMedia(docRef.id, media.data, media.mimeType);
-            await docRef.update({ mediaUrls: [mediaUrl], 'intelligence.hasVisualReference': true });
+            const mediaUrl = await StorageService.uploadPropertyMedia(created.id, media.data, media.mimeType);
+            // `intelligence` is one JSONB column, so the dotted-path update
+            // becomes a merge of the object we just wrote.
+            await updateRecord(COLLECTIONS.brokerListings, created.id, {
+              mediaUrls: [mediaUrl],
+              intelligence: { ...signal.intelligence, hasVisualReference: true },
+            });
           } catch {}
         }
 
-        return { id: docRef.id, data: extractedData, isDuplicate: !!duplicateId };
+        return { id: created.id, data: extractedData, isDuplicate: !!duplicateId };
       } catch {
         return { id: signalId, data: extractedData, isDuplicate: false };
       }
@@ -250,20 +253,27 @@ export class WhatsAppParserService {
   private static async checkForDuplicates(data: any): Promise<string | null> {
     if (!data.compound || !data.price) return null;
 
-    const snapshot = await adminDb.collection(COLLECTIONS.brokerListings)
-      .where('extractedData.compound', '==', data.compound)
-      .where('extractedData.bedrooms', '==', data.bedrooms)
-      .get();
+    // `extracted_data` is a JSONB column, so these filter on keys inside it and
+    // have to go through the client directly — the record layer snake_cases
+    // whole column names, which would corrupt a JSON path. The keys read
+    // snake_cased because that same layer converts payload keys recursively.
+    const { data: rows, error } = await getSupabaseAdmin()
+      .from(COLLECTIONS.brokerListings)
+      .select('id, extracted_data')
+      .eq('extracted_data->>compound', String(data.compound))
+      .eq('extracted_data->>bedrooms', String(data.bedrooms));
+
+    if (error) throw new Error(`[supabase:checkForDuplicates] ${error.message}`);
 
     const margin = 0.05; // 5% price margin
 
-    for (const doc of snapshot.docs) {
-      const existing = doc.data() as InboundAssetSignal;
-      const existingPrice = existing.extractedData.price || 0;
+    for (const row of rows ?? []) {
+      const existing = (row as { id: string; extracted_data?: InboundAssetSignal['extractedData'] });
+      const existingPrice = existing.extracted_data?.price || 0;
       const priceDiff = Math.abs(existingPrice - data.price) / (existingPrice || 1);
 
       if (priceDiff <= margin) {
-        return doc.id;
+        return existing.id;
       }
     }
 
