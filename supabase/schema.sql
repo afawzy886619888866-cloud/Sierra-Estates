@@ -1340,6 +1340,10 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
 -- 'F' (furnished) / 'U' (unfurnished) — the Sierra coding algorithm's furnishing
 -- token. Distinct from finishing_type, which is the developer's finishing spec.
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS furnishing_status TEXT;
+-- Map pin coordinates from the Property Finder feed (the client site renders
+-- listings on Leaflet). public.compounds already stores lat/lng this way.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
 
 CREATE INDEX IF NOT EXISTS idx_listings_pf_reference ON public.listings(pf_reference_number);
 CREATE INDEX IF NOT EXISTS idx_listings_sync_hash ON public.listings(sync_hash);
