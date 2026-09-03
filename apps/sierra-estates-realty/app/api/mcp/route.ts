@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { OAuthStore, type OAuthToken } from '@/lib/mcp/oauth-store';
-import { mcpRegistry, initializeMCPServers } from '@/lib/mcp-registry';
+import { initializeMCPServers } from '@/lib/mcp-registry';
 import {
   TOOL_DEFINITIONS,
   getToolJsonSchema,
