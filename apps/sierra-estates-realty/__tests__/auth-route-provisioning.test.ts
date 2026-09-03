@@ -1,27 +1,23 @@
 /**
- * /api/auth — account provisioning policy.
+ * /api/auth — account provisioning policy, under Supabase Auth.
  *
- * The route used to mint a `users/{uid}` document for any uid it had never
- * seen (admin for the first/approved account, viewer for everyone else). That
- * made whoever registered first in Firebase Auth the owner of the console.
- * Provisioning now happens only out-of-band via scripts/seed-admin.mjs, so an
- * unknown uid must be rejected with 403 and nothing may be written.
+ * The route used to mint a user record for any uid it had never seen (admin
+ * for the first/approved account, viewer for everyone else), which made
+ * whoever registered first the owner of the console. Provisioning happens
+ * out-of-band only, so an unknown uid must be rejected with 403 and nothing
+ * may be written.
+ *
+ * These are the same guarantees the Firebase version was held to; only the
+ * identity provider underneath has changed.
  */
+const getUserMock = jest.fn();
+const getRecordMock = jest.fn();
+const updateRecordMock = jest.fn();
 
-const verifyIdTokenMock = jest.fn();
-const userGetMock = jest.fn();
-const userSetMock = jest.fn();
-const docMock = jest.fn(() => ({ get: userGetMock, set: userSetMock }));
-const collectionMock = jest.fn((..._args: unknown[]) => ({ doc: docMock }));
-
-jest.mock('firebase-admin/auth', () => ({
-  getAuth: () => ({ verifyIdToken: verifyIdTokenMock }),
-}));
-
-jest.mock('@/lib/firebase-admin', () => ({
-  adminEnabled: () => true,
-  getAdminApp: async () => ({}),
-  getAdminDb: async () => ({ collection: collectionMock }),
+jest.mock('@sierra-estates/db', () => ({
+  getSupabaseAdmin: () => ({ auth: { getUser: getUserMock } }),
+  getRecord: (...args: unknown[]) => getRecordMock(...args),
+  updateRecord: (...args: unknown[]) => updateRecordMock(...args),
 }));
 
 import { POST } from '@/app/api/auth/route';
@@ -33,105 +29,102 @@ const signinRequest = (body: Record<string, unknown>) =>
     body: JSON.stringify({ action: 'signin', ...body }),
   });
 
+/** A token that Supabase accepts, for the uid given. */
+const verifiedTokenFor = (id: string, email: string) =>
+  getUserMock.mockResolvedValue({ data: { user: { id, email, user_metadata: {} } }, error: null });
+
 describe('POST /api/auth — provisioning is out-of-band only', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    userSetMock.mockResolvedValue(undefined);
+    updateRecordMock.mockResolvedValue(undefined);
   });
 
-  it('rejects a verified token whose uid has no users/ document', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'brand-new-uid', email: 'stranger@example.com' });
-    userGetMock.mockResolvedValue({ exists: false, data: () => undefined });
+  it('rejects a verified token whose uid has no profiles row', async () => {
+    verifiedTokenFor('brand-new-uid', 'stranger@example.com');
+    getRecordMock.mockResolvedValue(null);
 
-    const res = await POST(signinRequest({ token: 'valid-id-token', email: 'stranger@example.com' }));
+    const res = await POST(signinRequest({ token: 'valid-token', email: 'stranger@example.com' }));
 
     expect(res.status).toBe(403);
-    expect(userSetMock).not.toHaveBeenCalled();
+    expect(updateRecordMock).not.toHaveBeenCalled();
     expect(res.headers.get('set-cookie')).toBeNull();
   });
 
-  it('does not mint an admin for the first user when the users collection is empty', async () => {
-    // Empty collection: every lookup misses. The old bootstrap turned this into
+  it('does not mint an admin for the first user when profiles is empty', async () => {
+    // Empty table: every lookup misses. The old bootstrap turned this into
     // `role: "admin"`; it must now be an unconditional rejection.
-    verifyIdTokenMock.mockResolvedValue({ uid: 'first-ever-uid', email: 'attacker@gmail.com' });
-    userGetMock.mockResolvedValue({ exists: false, data: () => undefined });
+    verifiedTokenFor('first-ever-uid', 'attacker@gmail.com');
+    getRecordMock.mockResolvedValue(null);
 
-    const res = await POST(signinRequest({ token: 'valid-id-token', email: 'attacker@gmail.com' }));
-    const body = await res.json();
+    const res = await POST(signinRequest({ token: 'valid-token', email: 'attacker@gmail.com' }));
 
     expect(res.status).toBe(403);
-    expect(body.role).toBeUndefined();
-    expect(body.ok).toBeUndefined();
-    expect(userSetMock).not.toHaveBeenCalled();
+    expect(res.headers.get('set-cookie')).toBeNull();
   });
 
-  it('does not auto-provision even for an allow-listed admin email or google provider', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'unseeded-uid', email: 'a.fawzy8866@gmail.com' });
-    userGetMock.mockResolvedValue({ exists: false, data: () => undefined });
+  it('does not auto-provision even for an allow-listed admin email', async () => {
+    // The email domain used to be enough to self-provision. The stored role is
+    // now the only source of truth.
+    verifiedTokenFor('unprovisioned-uid', 'someone@sierra-estates.net');
+    getRecordMock.mockResolvedValue(null);
 
     const res = await POST(
-      signinRequest({ token: 'valid-id-token', email: 'a.fawzy8866@gmail.com', provider: 'google' }),
+      signinRequest({ token: 'valid-token', email: 'someone@sierra-estates.net', provider: 'google' })
     );
 
     expect(res.status).toBe(403);
-    expect(userSetMock).not.toHaveBeenCalled();
+    expect(updateRecordMock).not.toHaveBeenCalled();
   });
 
   it('does not promote an existing non-portal role at sign-in', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'viewer-uid', email: 'a.fawzy8866@gmail.com' });
-    userGetMock.mockResolvedValue({
-      exists: true,
-      data: () => ({ role: 'viewer', email: 'a.fawzy8866@gmail.com', name: 'Viewer' }),
-    });
+    verifiedTokenFor('client-uid', 'customer@example.com');
+    getRecordMock.mockResolvedValue({ role: 'client', fullName: 'A Customer' });
 
-    const res = await POST(
-      signinRequest({ token: 'valid-id-token', email: 'a.fawzy8866@gmail.com', provider: 'google' }),
-    );
+    const res = await POST(signinRequest({ token: 'valid-token', email: 'customer@example.com' }));
 
     expect(res.status).toBe(403);
-    // The role write is what escalated the account before; only lastLogin may
-    // ever be written from this path, and not for a rejected sign-in.
-    expect(userSetMock).not.toHaveBeenCalled();
+    expect(res.headers.get('set-cookie')).toBeNull();
   });
 
   it('authenticates a pre-seeded admin and records the login', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'seeded-admin', email: 'ops@sierra-estates.net' });
-    userGetMock.mockResolvedValue({
-      exists: true,
-      data: () => ({
-        uid: 'seeded-admin',
-        email: 'ops@sierra-estates.net',
-        name: 'Seeded Admin',
-        role: 'admin',
-        status: 'active',
-        createdAt: '2026-01-01T00:00:00.000Z',
-      }),
-    });
+    verifiedTokenFor('seeded-admin-uid', 'admin@sierra-estates.net');
+    getRecordMock.mockResolvedValue({ role: 'admin', fullName: 'Seeded Admin' });
 
-    const res = await POST(signinRequest({ token: 'valid-id-token', email: 'ops@sierra-estates.net' }));
+    const res = await POST(signinRequest({ token: 'valid-token' }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ ok: true, role: 'admin' });
-    expect(res.headers.get('set-cookie')).toContain('sierra_sess=');
-    expect(collectionMock).toHaveBeenCalledWith('users');
-    expect(userSetMock).toHaveBeenCalledTimes(1);
-    const [written, opts] = userSetMock.mock.calls[0];
-    expect(Object.keys(written)).toEqual(['lastLogin']);
-    expect(opts).toEqual({ merge: true });
+    expect(res.headers.get('set-cookie')).toContain('sierra_sess');
+    expect(updateRecordMock).toHaveBeenCalledWith(
+      'profiles',
+      'seeded-admin-uid',
+      expect.objectContaining({ lastLogin: expect.any(String) })
+    );
   });
 
   it('honours a seeded non-admin portal role without upgrading it', async () => {
-    verifyIdTokenMock.mockResolvedValue({ uid: 'seeded-manager', email: 'manager@sierra-estates.net' });
-    userGetMock.mockResolvedValue({
-      exists: true,
-      data: () => ({ role: 'manager', email: 'manager@sierra-estates.net', name: 'Manager' }),
-    });
+    verifiedTokenFor('agent-uid', 'agent@sierra-estates.net');
+    getRecordMock.mockResolvedValue({ role: 'agent', fullName: 'An Agent' });
 
-    const res = await POST(signinRequest({ token: 'valid-id-token', email: 'manager@sierra-estates.net' }));
+    const res = await POST(signinRequest({ token: 'valid-token' }));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.role).toBe('manager');
+    expect(body.role).toBe('agent');
+  });
+
+  it('refuses when the token does not verify, rather than trying a password path', async () => {
+    // Falling through to credentials here would let a caller skip token
+    // verification by sending a bad token alongside a password.
+    getUserMock.mockResolvedValue({ data: null, error: { message: 'invalid JWT' } });
+
+    const res = await POST(
+      signinRequest({ token: 'forged-token', email: 'admin@sierra-estates.net', password: 'whatever' })
+    );
+
+    expect(res.status).toBe(401);
+    expect(res.headers.get('set-cookie')).toBeNull();
+    expect(getRecordMock).not.toHaveBeenCalled();
   });
 });

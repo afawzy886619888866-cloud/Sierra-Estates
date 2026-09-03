@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { listRecords, type WhereClause } from '@sierra-estates/db';
 import { startOrContinueOwnerNegotiation } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
 
@@ -12,6 +11,11 @@ import { logger } from '@/lib/logger';
  * the same quota-gated queue as client recommendations and bulk outreach
  * (see lib/server/whatsapp-queue.ts); inbound replies are routed here
  * automatically by OmnichannelChatService.
+ *
+ * MIGRATION NOTE: the GET below reads public.owner_negotiations, but POST
+ * delegates to startOrContinueOwnerNegotiation() in lib/server/whatsapp-queue.ts,
+ * which still writes Firestore. Until that module is migrated, threads created
+ * through POST will not appear in this listing.
  */
 
 const initiateSchema = z.object({
@@ -35,12 +39,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
 
-    let query: FirebaseFirestore.Query = adminDb.collection(COLLECTIONS.ownerNegotiations);
-    if (status) query = query.where('status', '==', status);
-    query = query.orderBy('updatedAt', 'desc').limit(100);
+    const where: WhereClause[] = [];
+    if (status) where.push({ column: 'status', value: status });
 
-    const snap = await query.get();
-    const negotiations = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const negotiations = await listRecords('owner_negotiations', {
+      where,
+      orderBy: { column: 'updatedAt', ascending: false },
+      limit: 100,
+    });
 
     return NextResponse.json({ negotiations });
   } catch (err) {

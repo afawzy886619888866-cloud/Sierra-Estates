@@ -77,7 +77,12 @@ describe('Admin Login & Google Mail Authentication', () => {
   });
 
   describe('POST /api/auth endpoint', () => {
-    it('authenticates Google Mail sign-in with provider=google', async () => {
+    it('refuses a google sign-in claim that carries no verified token', async () => {
+      // This previously returned 200 with an admin cookie: `provider`, `email`
+      // and `name` all came from the request body and none was verified, so
+      // any caller could name themselves admin. Under Supabase Auth the client
+      // completes the Google flow and sends a real access token, which Path A
+      // verifies; a body-only claim has no way in.
       const req = new NextRequest('http://localhost:3000/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -90,13 +95,8 @@ describe('Admin Login & Google Mail Authentication', () => {
       });
 
       const res = await POST(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.ok).toBe(true);
-      expect(data.role).toBe('admin');
-      
-      const setCookie = res.headers.get('set-cookie');
-      expect(setCookie).toContain('sierra_sess=');
+      expect(res.status).not.toBe(200);
+      expect(res.headers.get('set-cookie')).toBeNull();
     });
 
     it('authenticates standard staff login with the configured operator password', async () => {

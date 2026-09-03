@@ -3,18 +3,19 @@ import { syncBatch, getPendingDedupeItems, resolveDedupeItem } from '@/lib/servi
 import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
 import { pfClient } from '@/lib/property-finder-client';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 /**
  * SYNC MANAGEMENT API
- * Handles PF ↔ Firestore sync operations and dedup queue management.
+ * Handles PF ↔ inventory sync operations and dedup queue management.
  */
 
+/** Fails closed: any lookup error denies rather than admits. */
 async function isAdmin(uid: string): Promise<boolean> {
   try {
-    const userDoc = await adminDb.collection('users').doc(uid).get();
-    return userDoc.exists && userDoc.data()?.role === 'admin';
+    const profile = await getRecord<{ role?: string }>('profiles', uid);
+    return profile?.role === 'admin';
   } catch (error) {
     logger.error('[SYNC_AUTH_ERROR] Role check failed:', error);
     return false;
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
   
-  if (auth.method === 'firebase') {
+  if (auth.method === 'supabase') {
     const admin = await isAdmin(auth.uid!);
     if (!admin) return unauthorizedResponse('Admin privileges required');
   }
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
 
-  if (auth.method === 'firebase') {
+  if (auth.method === 'supabase') {
     const admin = await isAdmin(auth.uid!);
     if (!admin) return unauthorizedResponse('Admin privileges required');
   }

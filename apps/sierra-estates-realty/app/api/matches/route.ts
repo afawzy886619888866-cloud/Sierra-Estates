@@ -3,14 +3,15 @@
  *   { budget, beds, type, mode, preferredZone? }
  *   → MatchResult[] (top 3 listings with score + reasons)
  *
- * Pure scoring — no DB writes. Reads listings (seed or Firestore),
+ * Pure scoring — no DB writes. Reads listings (Supabase or seed),
  * ranks by composite score: budget fit + beds fit + type match +
  * zone match + AI score weight.
  */
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { SEED_LISTINGS } from "@/lib/seed";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { listRecords } from "@sierra-estates/db";
+import { toListingRecord } from "@/lib/server/listing-columns";
 import type { Listing, MatchAnswers, MatchResult } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -32,17 +33,27 @@ const matchAnswersSchema = z.object({
 });
 
 async function loadListings(): Promise<Listing[]> {
-  const db = await getAdminDb();
-  if (db) {
-    try {
-      const snap = await db.collection("listings").get();
-      if (!snap.empty)
-        return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Listing[];
-    } catch (err) {
-      console.warn("[matches] Firestore read failed, using seed:", err);
+  try {
+    const rows = await listRecords<Record<string, unknown>>("listings");
+    if (rows.length > 0) {
+      // toListingRecord restores the app vocabulary (beds / bath / area /
+      // type / mode) the scorer below reads.
+      return rows.map((row) => toListingRecord(row)) as unknown as Listing[];
     }
+  } catch (err) {
+    console.warn("[matches] Supabase read failed, using seed:", err);
   }
   return SEED_LISTINGS;
+}
+
+/**
+ * The seed data and the legacy Firestore documents call an on-market unit
+ * 'available'; public.listings defaults to 'active'. Both mean the same thing
+ * here, so matching only one of them would silently return no matches.
+ */
+function isOnMarket(status?: string | null): boolean {
+  const normalized = String(status ?? "").trim().toLowerCase();
+  return normalized === "available" || normalized === "active";
 }
 
 export async function POST(req: Request) {
@@ -57,7 +68,7 @@ export async function POST(req: Request) {
   const listings = await loadListings();
 
   const results: MatchResult[] = listings
-    .filter((l) => l.status === "available" && l.mode === answers.mode)
+    .filter((l) => isOnMarket(l.status) && l.mode === answers.mode)
     .map((l) => {
       const reasons: string[] = [];
       let score = 0;

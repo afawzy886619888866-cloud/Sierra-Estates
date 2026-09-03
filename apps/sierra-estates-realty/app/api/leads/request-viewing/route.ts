@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 
@@ -29,41 +29,46 @@ export async function POST(req: Request) {
 
     const { leadId, unitId, portfolioId } = parseResult.data;
 
+    const now = new Date().toISOString();
+
     // Create a viewing request record
-    const viewingDoc = await adminDb.collection(COLLECTIONS.viewings).add({
+    const viewing = await insertRecord<{ id: string }>(COLLECTIONS.viewings, {
       leadId,
       unitId,
       portfolioId: portfolioId || null,
       status: 'pending_approval',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: now,
+      updatedAt: now,
     });
 
     // Update the lead status
-    const leadRef = adminDb.collection(COLLECTIONS.stakeholders).doc(leadId);
-    const leadSnap = await leadRef.get();
-
-    if (leadSnap.exists) {
-      await leadRef.update({
+    const lead = await getRecord(COLLECTIONS.stakeholders, leadId);
+    if (lead) {
+      await updateRecord(COLLECTIONS.stakeholders, leadId, {
         status: 'Viewing Requested',
         stage: 2,
-        updatedAt: new Date()
+        updatedAt: now,
       });
     }
 
-    // Update the concierge selection if provided
+    // Update the concierge selection if provided. `engagement` is a JSONB
+    // column rather than a Firestore map, so the existing keys are read and
+    // merged instead of patched with a dotted field path.
     if (portfolioId) {
-      const portfolioRef = adminDb.collection(COLLECTIONS.conciergeSelections).doc(portfolioId);
-      await portfolioRef.update({
-        [`engagement.requested_viewing`]: new Date(),
+      const portfolio = await getRecord<{ engagement?: Record<string, unknown> }>(
+        COLLECTIONS.conciergeSelections,
+        portfolioId
+      );
+      await updateRecord(COLLECTIONS.conciergeSelections, portfolioId, {
+        engagement: { ...(portfolio?.engagement ?? {}), requestedViewing: now },
         status: 'viewing_requested',
-        lastUpdatedUnit: unitId
+        lastUpdatedUnit: unitId,
       });
     }
 
     return NextResponse.json({
       success: true,
-      viewingId: viewingDoc.id,
+      viewingId: viewing.id,
       message: 'Viewing request received. Laila is preparing matches for agent confirmation.'
     });
   } catch (error: any) {
