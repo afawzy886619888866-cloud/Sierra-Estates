@@ -169,7 +169,7 @@ jobs:
           PROPERTY_FINDER_API_KEY: ${{ secrets['PROPERTY_FINDER_API_KEY'] }}
           TELEGRAM_BOT_TOKEN: ${{ secrets['TELEGRAM_BOT_TOKEN'] }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets['NEXT_PUBLIC_SUPABASE_URL'] || vars['NEXT_PUBLIC_SUPABASE_URL'] }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets['NEXT_PUBLIC_SUPABASE_ANON_KEY'] || secrets['SUPABASE_ANON_KEY'] }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets['SUPABASE_ANON_KEY'] }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
         run: node scripts/verify-env-readiness.mjs
 
@@ -269,7 +269,7 @@ jobs:
           OPENMEM_URL: ${{ vars['OPENMEMORY_URL'] }}
           # Supabase (Primary Database)
           SB_URL: ${{ secrets['NEXT_PUBLIC_SUPABASE_URL'] || vars['NEXT_PUBLIC_SUPABASE_URL'] }}
-          SB_ANON: ${{ secrets['NEXT_PUBLIC_SUPABASE_ANON_KEY'] || secrets['SUPABASE_ANON_KEY'] }}
+          SB_ANON: ${{ secrets['SUPABASE_ANON_KEY'] }}
           SB_SERVICE: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
           # Redis
           REDIS_URL: ${{ secrets['UPSTASH_REDIS_REST_URL'] }}
