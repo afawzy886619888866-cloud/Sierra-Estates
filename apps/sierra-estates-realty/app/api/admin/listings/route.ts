@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
 import { fingerprint } from '@/lib/services/inventory/dedupe';
-import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
 // Validates the SPA listing shape; passthrough keeps extra fields the mapper reads.
@@ -24,7 +22,26 @@ const listingCreateSchema = z
   })
   .passthrough();
 
-/** Admin-scoped listings CRUD via the Admin SDK — unlike the public /api/listings (read-only REST key). */
+/**
+ * A `public.listings` row → the document shape the SPA mappers were written
+ * against. Only two columns were renamed by the Supabase schema:
+ *   area_sqm      → area
+ *   location_area → location   (the mapper's fallback for `compound`)
+ */
+function rowToListingDoc(row: RecordData): Record<string, unknown> {
+  const { areaSqm, locationArea, ...rest } = row as Record<string, unknown>;
+  return { ...rest, area: areaSqm, location: locationArea };
+}
+
+/** Inverse of rowToListingDoc, for the patches mapSpaToListingPatch produces. */
+function listingPatchToColumns(patch: Record<string, unknown>): RecordData {
+  const { area, ...rest } = patch;
+  const out: RecordData = { ...rest };
+  if (area !== undefined) out.areaSqm = area;
+  return out;
+}
+
+/** Admin-scoped listings CRUD via the service-role client — unlike the public /api/listings. */
 export async function GET(req: NextRequest) {
   const authResult = await verifyAdminRequest(req);
   if (!authResult.authenticated) {
@@ -33,28 +50,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
-    
-    // Fetch from both units (canonical) and properties (legacy/syndicated)
-    const [unitsSnap, propsSnap] = await Promise.all([
-      adminDb.collection(COLLECTIONS.units).limit(limit).get(),
-      adminDb.collection('properties').limit(limit).get(),
-    ]);
 
-    const listingMap = new Map<string, any>();
+    // This used to read the Firestore collections 'listings' and 'properties'
+    // and merge them by doc id. Both were consolidated into public.listings by
+    // the migration, so a single read now returns the same set.
+    const rows = await listRecords('listings', { limit });
 
-    // Process units
-    for (const doc of unitsSnap.docs) {
-      listingMap.set(doc.id, mapListingToSpa(doc.id, doc.data()));
-    }
-
-    // Process properties (attach if not already present or merge PF publication status)
-    for (const doc of propsSnap.docs) {
-      if (!listingMap.has(doc.id)) {
-        listingMap.set(doc.id, mapListingToSpa(doc.id, doc.data()));
-      }
-    }
-
-    const listings = Array.from(listingMap.values());
+    const listings = rows.map((row) => mapListingToSpa(String(row.id), rowToListingDoc(row)));
 
     return NextResponse.json({ success: true, listings, count: listings.length });
   } catch (err) {
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest) {
     // currently reads dupeCheckHash, so it carries zero live risk, but it should
     // not be treated as authoritative for rent/sale dedupe until the SPA adds an
     // explicit offer-type field. See FUTURE_PLAN/04 for the tracked follow-up.
-    const inventoryFields: Record<string, unknown> = { syncSource: 'manual' };
+    const inventoryFields: RecordData = { syncSource: 'manual' };
     if (
       typeof patch.bedrooms === 'number' &&
       typeof patch.area === 'number' &&
@@ -110,18 +112,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const ref = await adminDb.collection(COLLECTIONS.units).add({
-      ...patch,
+    const created = await insertRecord('listings', {
+      ...listingPatchToColumns(patch),
       ...inventoryFields,
       status: patch.status || 'available',
       category: 'residential',
       ownerType: 'internal',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
-    const created = await ref.get();
-    return NextResponse.json({ success: true, listing: mapListingToSpa(ref.id, created.data()) });
+    return NextResponse.json({ success: true, listing: mapListingToSpa(String(created.id), rowToListingDoc(created)) });
   } catch (err) {
     logger.error('Error creating listing:', err);
     return NextResponse.json(

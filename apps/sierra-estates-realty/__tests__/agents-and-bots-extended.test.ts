@@ -8,6 +8,7 @@
  * 4. Multi-Agent SharedMemoryBus Pub/Sub coordination
  */
 
+export {};
 const propertyEvaluator = require('../../../packages/whatsapp-shared/src/property-evaluator');
 const propertyMatcher = require('../../../packages/whatsapp-shared/src/property-matcher');
 

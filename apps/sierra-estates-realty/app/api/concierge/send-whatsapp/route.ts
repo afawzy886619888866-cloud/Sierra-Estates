@@ -1,7 +1,6 @@
 import { buildPortfolioMessage } from '@/lib/services/portfolio-engine';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
@@ -28,15 +27,18 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Fetch lead to get phone number if not provided
-    const leadSnap = await adminDb.collection(COLLECTIONS.stakeholders).doc(leadId).get();
-    if (!leadSnap.exists) {
+    const lead = await getRecord<{
+      phone?: string;
+      whatsapp?: string;
+      conciergePortfolioId?: string;
+    }>(COLLECTIONS.stakeholders, leadId);
+    if (!lead) {
       return NextResponse.json(
         { error: 'Lead not found' },
         { status: 404 }
       );
     }
 
-    const lead = leadSnap.data()!;
     const phone = phoneNumber || lead.phone || lead.whatsapp;
 
     if (!phone) {
@@ -47,8 +49,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Fetch the concierge portfolio
-    const portfolioSnap = await adminDb.collection(COLLECTIONS.stakeholders).doc(leadId).get();
-    const portfolioId = portfolioSnap.data()?.conciergePortfolioId;
+    const portfolioId = lead.conciergePortfolioId;
 
     if (!portfolioId) {
       return NextResponse.json(
@@ -57,15 +58,13 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const portfolioSnap2 = await adminDb.collection(COLLECTIONS.conciergeSelections).doc(portfolioId).get();
-    if (!portfolioSnap2.exists) {
+    const portfolio = await getRecord<any>(COLLECTIONS.conciergeSelections, portfolioId);
+    if (!portfolio) {
       return NextResponse.json(
         { error: 'Portfolio data not found' },
         { status: 404 }
       );
     }
-
-    const portfolio = { id: portfolioSnap2.id, ...portfolioSnap2.data() } as any;
 
     // Enqueue the real WhatsApp send (drained by the dispatch worker under
     // operating-hours + per-number quota).
@@ -77,9 +76,9 @@ export const POST = async (req: NextRequest) => {
     });
 
     // Update lead record
-    await adminDb.collection(COLLECTIONS.stakeholders).doc(leadId).update({
-      'conciergePortfolioSentAt': Timestamp.now(),
-      'conciergePortfolioSentVia': 'whatsapp',
+    await updateRecord(COLLECTIONS.stakeholders, leadId, {
+      conciergePortfolioSentAt: new Date().toISOString(),
+      conciergePortfolioSentVia: 'whatsapp',
     });
 
     return NextResponse.json({
