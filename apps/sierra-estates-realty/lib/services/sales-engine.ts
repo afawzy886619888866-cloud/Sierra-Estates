@@ -3,16 +3,7 @@
  * Orchestrates Strategic Proposals (Options Packages) and Automated Incentives.
  */
 
-import { db } from '../firebase';
-import {
-  collection,
-  doc,
-  getDoc,
-  addDoc,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead, type Proposal, type Unit, type Voucher } from '../models/schema';
 import { GoogleAIService } from '../server/google-ai';
 import { analyzeAssetFinancials } from './roi-service';
@@ -23,9 +14,8 @@ import { logger } from '@/lib/logger';
  */
 export async function generateOptionsPackage(leadId: string): Promise<string> {
   // 1. Fetch Lead
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) throw new Error('Lead not found');
-  const lead = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+  const lead = await getRecord<Lead & { fullName?: string }>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error('Lead not found');
 
   if (!lead.aiProfiling?.topMatches || lead.aiProfiling.topMatches.length === 0) {
     throw new Error('No matches found for this lead. Run Stage 6 Matching first.');
@@ -37,9 +27,8 @@ export async function generateOptionsPackage(leadId: string): Promise<string> {
   let totalYield = 0;
 
   for (const match of lead.aiProfiling.topMatches) {
-    const unitSnap = await getDoc(doc(db, COLLECTIONS.units, match.unitId));
-    if (unitSnap.exists()) {
-      const unit = { id: unitSnap.id, ...unitSnap.data() } as Unit;
+    const unit = await getRecord<Unit>(COLLECTIONS.units, match.unitId);
+    if (unit) {
       const financials = await analyzeAssetFinancials(unit);
       
       unitsData.push({
@@ -70,13 +59,12 @@ export async function generateOptionsPackage(leadId: string): Promise<string> {
   
   const proposalData: Partial<Proposal> = {
     leadId,
-    leadName: lead.name,
+    leadName: lead.fullName ?? lead.name,
     unitIds: unitsData.map(u => u.id),
     units: unitsData,
     strategicSummary: summary,
     status: 'draft',
-    createdAt: serverTimestamp() as Timestamp,
-    expiresAt: Timestamp.fromMillis(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Days
+    expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 Days
     financialAnalysis: {
       projectedROI: avgROI,
       annualYield: parseFloat(avgYield),
@@ -84,19 +72,19 @@ export async function generateOptionsPackage(leadId: string): Promise<string> {
     }
   };
 
-  const proposalRef = await addDoc(collection(db, COLLECTIONS.proposals), proposalData);
-  
+  const proposal = await insertRecord<{ id: string }>(COLLECTIONS.proposals, proposalData);
+
   // 4b. Update with public shareable URL
-  const shareableUrl = `${siteUrl}/proposals/${proposalRef.id}`;
-  await updateDoc(proposalRef, { shareableUrl });
+  const shareableUrl = `${siteUrl}/proposals/${proposal.id}`;
+  await updateRecord(COLLECTIONS.proposals, proposal.id, { shareableUrl });
 
   // 5. Automation Check: Trigger high-fidelity incentives
   const maxScore = Math.max(...unitsData.map(u => u.matchScore));
   if (maxScore >= 90) {
-    await triggerIncentive(leadId, proposalRef.id);
+    await triggerIncentive(leadId, proposal.id);
   }
 
-  return proposalRef.id;
+  return proposal.id;
 }
 
 /**
@@ -104,9 +92,8 @@ export async function generateOptionsPackage(leadId: string): Promise<string> {
  * Generates a curated selection gallery for the stakeholder.
  */
 export async function generateConciergeSelection(leadId: string): Promise<string> {
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) throw new Error('Stakeholder profile not found');
-  const lead = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error('Stakeholder profile not found');
 
   // 1. Ensure matches exist (Neural Synthesis / S7)
   if (!lead.aiProfiling?.topMatches || lead.aiProfiling.topMatches.length === 0) {
@@ -118,11 +105,15 @@ export async function generateConciergeSelection(leadId: string): Promise<string
   const selectionUrl = `${siteUrl}/select/${leadId}`;
 
   // 3. Mark selection as deployed
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'automation.selectionUrlSent': true,
-    'orchestrationState.stage': 'S8',
-    'orchestrationState.status': 'completed',
-    updatedAt: serverTimestamp()
+  // `automation` and `orchestrationState` are single JSONB columns, so the
+  // dotted paths become merges onto what is already on the row.
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    automation: { ...(lead.automation ?? {}), selectionUrlSent: true },
+    orchestrationState: {
+      ...(lead.orchestrationState ?? {}),
+      stage: 'S8',
+      status: 'completed',
+    },
   });
 
   return selectionUrl;
@@ -139,7 +130,7 @@ CORE COMPETENCIES:
 3. Investment Precision: You justify asset curation based on ROI, location fidelity, and portfolio alignment.
 
 TASK: Write a 3-4 sentence justification for why these specific assets were curated for the stakeholder.
-STAKEHOLDER: ${lead.name} (${lead.preferredPropertyType} in ${lead.preferredLocations?.join(', ') || 'selected areas'})
+STAKEHOLDER: ${(lead as { fullName?: string }).fullName ?? lead.name} (${lead.preferredPropertyType} in ${lead.preferredLocations?.join(', ') || 'selected areas'})
 ASSETS: ${units.map(u => `${u.title} (MatchScore: ${u.matchScore}%)`).join('; ')}
 
 Output the response as a single cohesive paragraph.`;
@@ -174,16 +165,19 @@ async function triggerIncentive(leadId: string, _proposalId: string) {
     currency: 'EGP',
     leadId,
     status: 'active',
-    createdAt: serverTimestamp() as Timestamp,
-    expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
     conditions: "Valid for site inspection bookings within 7 days of proposal deployment."
   };
 
-  await addDoc(collection(db, COLLECTIONS.vouchers), voucher);
+  await insertRecord(COLLECTIONS.vouchers, voucher);
 
   // Log automation in lead
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'automation.viewingRewardActive': true,
-    'automation.lastIncentiveAt': serverTimestamp(),
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    automation: {
+      ...(lead?.automation ?? {}),
+      viewingRewardActive: true,
+      lastIncentiveAt: new Date().toISOString(),
+    },
   });
 }

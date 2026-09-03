@@ -3,18 +3,7 @@
 // Covers: Portfolio Assets push, image CDN sync, Investment Stakeholder webhook ingestion, valuation updates
 import { createHmac } from "node:crypto";
 
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { getSupabaseAdmin, insertRecord, listRecords, updateRecord } from "@sierra-estates/db";
 import { COLLECTIONS } from "../models/schema";
 
 // ════════════════════════════════════════════════════════════════
@@ -153,12 +142,11 @@ export async function pushAssetToRegistry(asset: SBRAsset): Promise<RegistrySync
 
     const data = await res.json();
 
-    // Update Strategic Pipeline (Firestore) with Registry ID and sync timestamp
-    const db = getFirestore();
-    await updateDoc(doc(db, COLLECTIONS.portfolioAssets, asset.id), {
+    // Update Strategic Pipeline with Registry ID and sync timestamp
+    await updateRecord(COLLECTIONS.portfolioAssets, asset.id, {
       registryAssetId:  data.id,
       syncedToRegistry: true,
-      lastRegistrySync: serverTimestamp(),
+      lastRegistrySync: new Date().toISOString(),
       registryStatus:   "active",
     });
 
@@ -176,25 +164,21 @@ export async function pushAssetToRegistry(asset: SBRAsset): Promise<RegistrySync
 // ════════════════════════════════════════════════════════════════
 
 export async function syncAllAssetsToRegistry(): Promise<{ synced: number; failed: number; errors: string[] }> {
-  const db = getFirestore();
-  const q  = query(
-    collection(db, COLLECTIONS.portfolioAssets),
-    where("status", "==", "active"),
-    where("syncedToRegistry", "==", false),
-  );
-
-  const snapshot = await getDocs(q);
+  const assets = await listRecords<SBRAsset>(COLLECTIONS.portfolioAssets, {
+    where: [
+      { column: 'status', value: 'active' },
+      { column: 'syncedToRegistry', value: false },
+    ],
+  });
   const results  = { synced: 0, failed: 0, errors: [] as string[] };
 
   // Process in batches of 10 (respect Registry rate limit)
   const BATCH_SIZE = 10;
-  const docs       = snapshot.docs;
 
-  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-    const batch = docs.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < assets.length; i += BATCH_SIZE) {
+    const batch = assets.slice(i, i + BATCH_SIZE);
 
-    await Promise.all(batch.map(async (docSnap) => {
-      const asset = { id: docSnap.id, ...docSnap.data() } as SBRAsset;
+    await Promise.all(batch.map(async (asset) => {
       const result = await pushAssetToRegistry(asset);
 
       if (result.success) {
@@ -206,7 +190,7 @@ export async function syncAllAssetsToRegistry(): Promise<{ synced: number; faile
     }));
 
     // Rate limit buffer between batches
-    if (i + BATCH_SIZE < docs.length) {
+    if (i + BATCH_SIZE < assets.length) {
       await new Promise(r => setTimeout(r, 1000));
     }
   }
@@ -234,23 +218,31 @@ export async function handleStakeholderWebhook(
     }
 
     const stakeholder = body as InvestmentStakeholder;
-    const db   = getFirestore();
 
     // Check for duplicate (Registry may retry)
-    const dupQ  = query(collection(db, COLLECTIONS.stakeholders), where("registryStakeholderId", "==", stakeholder.id));
-    const dupSnap = await getDocs(dupQ);
-    if (!dupSnap.empty) {
-      return { success: true, stakeholderId: dupSnap.docs[0].id }; // idempotent
+    const duplicates = await listRecords<{ id: string }>(COLLECTIONS.stakeholders, {
+      where: [{ column: 'registryStakeholderId', value: stakeholder.id }],
+      select: 'id',
+      limit: 1,
+    });
+    if (duplicates.length > 0) {
+      return { success: true, stakeholderId: duplicates[0].id }; // idempotent
     }
 
     // Resolve the internal Portfolio Asset from SBR code
-    const assetQ    = query(collection(db, COLLECTIONS.portfolioAssets), where("sbrCode", "==", stakeholder.assetReference));
-    const assetSnap = await getDocs(assetQ);
-    const assetRef  = assetSnap.empty ? null : assetSnap.docs[0].id;
+    const assets = await listRecords<{ id: string }>(COLLECTIONS.portfolioAssets, {
+      where: [{ column: 'sbrCode', value: stakeholder.assetReference }],
+      select: 'id',
+      limit: 1,
+    });
+    const assetRef = assets[0]?.id ?? null;
 
-    // Save Investment Stakeholder to Strategic Pipeline (Firestore)
-    const newStakeholder = await addDoc(collection(db, COLLECTIONS.stakeholders), {
-      name:               stakeholder.name,
+    // Save Investment Stakeholder to the Strategic Pipeline.
+    // `full_name` is the column, and `status` is CHECK-constrained: the old
+    // 'pending_review' is not a member, and 'new' is what an unreviewed
+    // inbound lead is called everywhere else in the pipeline.
+    const newStakeholder = await insertRecord<{ id: string }>(COLLECTIONS.stakeholders, {
+      fullName:           stakeholder.name,
       phone:              stakeholder.phone,
       email:              stakeholder.email ?? null,
       intent:             stakeholder.intent ?? null,
@@ -258,12 +250,11 @@ export async function handleStakeholderWebhook(
       assetReference:     stakeholder.assetReference,
       assetId:            assetRef,
       registryStakeholderId: stakeholder.id,
-      status:             "pending_review",
+      status:             "new",
       stage:              "initial_inquiry",
       neuralMatchScore:   null,   // Matchmaker agent fills this
       leilaScore:         null,
       advisorAssigned:    null,
-      createdAt:          serverTimestamp(),
       registryCreatedAt:  stakeholder.createdAt,
     });
 
@@ -342,24 +333,31 @@ export async function getAssetRegistryAnalytics(registryAssetId: string) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// 6. VISUAL SYNC — Firebase Storage → Registry CDN
+// 6. VISUAL SYNC — Supabase Storage → Registry CDN
 // ════════════════════════════════════════════════════════════════
 
-export async function syncVisualsToFirebase(
+/**
+ * Resolve the public URLs of an asset's visuals so the Registry can fetch them.
+ *
+ * Resolution only, as the Firebase version was: it never uploaded, it read back
+ * URLs for files expected to be there already. The bucket is the public
+ * property-media one for the same reason StorageService uses it — the Registry
+ * fetches these URLs later, so a signed URL would expire.
+ */
+export async function syncVisualsToStorage(
   sbrCode: string,
-  visualFiles: File[],
+  visualFiles: Array<{ name: string }>,
 ): Promise<string[]> {
-  const storage = getStorage();
-  const urls: string[] = [];
+  const bucket = process.env.SUPABASE_PROPERTY_MEDIA_BUCKET || 'property-media';
+  const storage = getSupabaseAdmin().storage.from(bucket);
 
-  for (const file of visualFiles) {
-    const storageRef = ref(storage, `assets/${sbrCode}/${file.name}`);
-    const url = await getDownloadURL(storageRef);
-    urls.push(url);
-  }
-
-  return urls;
+  return visualFiles.map(
+    (file) => storage.getPublicUrl(`assets/${sbrCode}/${file.name}`).data.publicUrl,
+  );
 }
+
+/** @deprecated Renamed to syncVisualsToStorage when Firebase Storage was dropped. */
+export const syncVisualsToFirebase = syncVisualsToStorage;
 
 // ════════════════════════════════════════════════════════════════
 // PRIVATE HELPERS

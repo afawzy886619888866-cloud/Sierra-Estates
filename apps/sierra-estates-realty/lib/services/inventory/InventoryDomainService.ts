@@ -19,7 +19,7 @@ import type {
 import { fingerprint } from './dedupe';
 import { assertTransition, isStale, FRESHNESS_SLA_DAYS, VERIFIED_STATUSES } from './lifecycle';
 
-/** Minimal Firestore surface we use — matches firebase-admin's Firestore. */
+/** Minimal query surface this service needs from the data layer. */
 export interface FirestoreLike {
   collection(name: string): {
     doc(id?: string): {

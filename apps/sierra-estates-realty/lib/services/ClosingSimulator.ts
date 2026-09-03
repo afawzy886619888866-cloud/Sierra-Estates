@@ -1,5 +1,4 @@
-import { db } from '../firebase';
-import { doc, getDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
+import { getRecord, insertRecord } from '@sierra-estates/db';
 import { assessLegalRisk } from './legal-brain';
 import { Unit } from '../models/schema';
 
@@ -19,17 +18,14 @@ export class ClosingSimulator {
     
     try {
       // 1. Fetch Stakeholder & Asset Data in Parallel
-      const [leadSnap, unitSnap] = await Promise.all([
-        getDoc(doc(db, 'leads', leadId)),
-        getDoc(doc(db, 'listings', unitId))
+      const [lead, unit] = await Promise.all([
+        getRecord<Record<string, any>>('leads', leadId),
+        getRecord<Unit>('listings', unitId)
       ]);
 
-      if (!leadSnap.exists() || !unitSnap.exists()) {
+      if (!lead || !unit) {
         throw new Error("Critical synchronization error: Stakeholder or Asset missing in Pipeline.");
       }
-
-      const lead = leadSnap.data();
-      const unit = unitSnap.data() as Unit;
 
       // 2. Intelligence: Legal Risk Calculation via LegalBrain
       const legalAudit = assessLegalRisk(unit);
@@ -57,7 +53,7 @@ export class ClosingSimulator {
       ];
 
       // 5. Store Simulation Result for Audit Trail
-      const simRef = await addDoc(collection(db, 'closing_simulations'), {
+      const simulation = await insertRecord<{ id: string }>('closing_simulations', {
         leadId,
         unitId,
         advisorId: lead.assignedAdvisor || 'system_gen',
@@ -66,14 +62,13 @@ export class ClosingSimulator {
         executionTimeline,
         status: 'simulated',
         isActionable: legalAudit.isApprovedForProposal,
-        createdAt: serverTimestamp(),
         strategicRecommendation: legalAudit.isApprovedForProposal 
           ? "Asset is legally sound. Recommended action: Proceed to MOU with negotiated settlement price."
           : `CAUTION: High-risk flags [${legalAudit.flags.join(', ')}] detected. Manual legal vetting required.`
       });
 
       return {
-        simulationId: simRef.id,
+        simulationId: simulation.id,
         isApproved: legalAudit.isApprovedForProposal,
         finalProjections: financialSimulation,
         timeline: executionTimeline,

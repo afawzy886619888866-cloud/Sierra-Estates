@@ -22,6 +22,7 @@
     "typescript": "^5.8.2"
   },
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
   }
 }

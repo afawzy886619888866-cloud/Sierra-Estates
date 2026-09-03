@@ -374,23 +374,37 @@ export class WhatsAppBotRouter {
    */
   private async runCloserAgent(phone: string, userMessage: string): Promise<string> {
     try {
-      const { getApps, initializeApp } = await import('firebase-admin/app')
-      const { getFirestore } = await import('firebase-admin/firestore')
-      if (!getApps().length) initializeApp()
-      const db = getFirestore()
+      const { getSupabaseAdmin, listRecords } = await import('@sierra-estates/db')
 
-      const dealSnap = await db
-        .collection('deals')
-        .where('leadPhone', '==', phone)
-        .where('stage', 'in', [
-          'S9_proposal_ready',
-          'S9_proposal_finalized',
-          'S9_signing_initiated',
-        ])
-        .limit(1)
-        .get()
+      // `deals` has no leadPhone column — it links to a lead by lead_id — so
+      // the phone is resolved to a lead first.
+      const leads = await listRecords<{ id: string }>('leads', {
+        where: [{ column: 'phone', value: phone }],
+        select: 'id',
+        limit: 1,
+      })
 
-      if (dealSnap.empty) {
+      // The S9 codes live in metadata.orchestrationStage, not `stage`: they
+      // are not members of the deals.stage CHECK, so closer-agent-enhanced
+      // records them alongside the deal's own stage. `metadata` is JSONB, so
+      // this filter goes through the client directly — the record layer
+      // snake_cases column names and would corrupt the path.
+      const { data: dealRows, error: dealErr } = leads.length
+        ? await getSupabaseAdmin()
+            .from('deals')
+            .select('*')
+            .eq('lead_id', leads[0].id)
+            .in('metadata->>orchestrationStage', [
+              'S9_proposal_ready',
+              'S9_proposal_finalized',
+              'S9_signing_initiated',
+            ])
+            .limit(1)
+        : { data: [], error: null }
+
+      if (dealErr) throw new Error(dealErr.message)
+
+      if (!dealRows || dealRows.length === 0) {
         // Nothing on record for this phone at closing stage — a human needs
         // to open/verify the deal before any terms are quoted.
         await this.escalateToHuman(
@@ -402,19 +416,21 @@ export class WhatsAppBotRouter {
         return 'ممتاز! سأقوم بتحويلك فوراً لأحد مستشارينا لإتمام إجراءات التعاقد والتوقيع.'
       }
 
-      const deal = dealSnap.docs[0]
-      const dealData = deal.data() as Record<string, unknown>
+      const dealData = dealRows[0] as Record<string, unknown>
+      // The agent-specific fields are in the deal's metadata JSONB; only
+      // listing_id and the CRM columns are top-level.
+      const meta = (dealData.metadata as Record<string, unknown>) || {}
 
       const { closerAgent } = await import('@sierra-estates/agents/src/closer-agent-enhanced')
 
       const context = {
-        dealId: deal.id,
+        dealId: dealData.id as string,
         leadPhone: phone,
-        propertyCode: (dealData.propertyCode as string) || (dealData.assetId as string) || 'N/A',
-        buyerProfile: (dealData.buyerProfile as Record<string, unknown>) || {},
-        propertyData: (dealData.propertyData as Record<string, unknown>) || {},
-        previousOffers: (dealData.previousOffers as Array<{ amount: number; date: string }>) || [],
-        negotiationHistory: (dealData.negotiationHistory as string[]) || [],
+        propertyCode: (meta.propertyCode as string) || (dealData.listing_id as string) || 'N/A',
+        buyerProfile: (meta.buyerProfile as Record<string, unknown>) || {},
+        propertyData: (meta.propertyData as Record<string, unknown>) || {},
+        previousOffers: (meta.previousOffers as Array<{ amount: number; date: string }>) || [],
+        negotiationHistory: (meta.negotiationHistory as string[]) || [],
       }
 
       const proposal = await closerAgent.generateIntelligentProposal(context)

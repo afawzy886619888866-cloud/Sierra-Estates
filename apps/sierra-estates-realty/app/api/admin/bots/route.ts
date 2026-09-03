@@ -12,7 +12,7 @@
  * Each bot has a status doc in `system_status/{botId}`:
  *   {
  *     status: 'active' | 'syncing' | 'error' | 'idle' | 'offline',
- *     lastPulse: Timestamp,
+ *     lastPulse: timestamptz,
  *     lastError?: string,
  *     config?: { interval, enabled, ... },
  *     stats?: { processedToday, errorsToday, ... }
@@ -25,8 +25,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, insertRecord, upsertRecord } from '@sierra-estates/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -139,25 +138,22 @@ export async function GET(req: NextRequest) {
   try {
     // Fetch status & config docs for all known bots
     const statusPromises = KNOWN_BOTS.map(async (botId) => {
-      const doc = await adminDb.doc(`system_status/${botId}`).get();
-      const configDoc = await adminDb.doc(`bot_configs/${botId}`).get();
-      
-      const docData = doc.exists ? doc.data() : {};
-      const configData = configDoc.exists ? configDoc.data() : {};
-      
+      const docData = await getRecord<Record<string, any>>('system_status', botId);
+      const configRow = await getRecord<{ config?: Record<string, unknown> }>('bot_configs', botId);
+
       const mergedConfig = {
         ...(DEFAULT_CONFIGS[botId] || {}),
         ...(docData?.config || {}),
-        ...configData,
+        ...(configRow?.config || {}),
       };
 
       return {
         id: botId,
         ...docData,
-        // If no status doc exists, mark as active or idle
-        status: doc.exists ? (docData?.status ?? 'active') : (botId === 'whatsapp-agent' ? 'active' : 'idle'),
+        // If no status row exists, mark as active or idle
+        status: docData ? (docData.status ?? 'active') : (botId === 'whatsapp-agent' ? 'active' : 'idle'),
         enabled: docData?.enabled ?? true,
-        lastPulse: docData?.lastPulse ?? Timestamp.now(),
+        lastPulse: docData?.lastPulse ?? new Date().toISOString(),
         config: mergedConfig,
         stats: docData?.stats ?? {
           processedToday: Math.floor(Math.random() * 45) + 12,
@@ -206,22 +202,23 @@ export async function POST(req: NextRequest) {
     const { botId, command } = parsed.data;
 
     // Write the command to a commands queue — bots poll this (or subscribe via Firestore listener)
-    const cmdRef = await adminDb.collection('bot_commands').add({
+    const now = new Date().toISOString();
+
+    const cmdRef = await insertRecord<{ id: string }>('bot_commands', {
       botId,
       command,
       status: 'pending',
       issuedBy: authResult.uid ?? 'system',
-      issuedAt: Timestamp.now(),
+      issuedAt: now,
     });
 
-    // Also update the bot's status doc to reflect the command
-    const statusRef = adminDb.doc(`system_status/${botId}`);
-    const statusDoc = await statusRef.get();
+    // Also update the bot's status row to reflect the command
+    const statusRow = await getRecord<Record<string, unknown>>('system_status', botId);
     const update: Record<string, unknown> = {
       lastCommand: command,
-      lastCommandAt: Timestamp.now(),
+      lastCommandAt: now,
       lastCommandBy: authResult.uid ?? 'system',
-      lastPulse: Timestamp.now(),
+      lastPulse: now,
     };
 
     if (command === 'enable') update.enabled = true;
@@ -230,15 +227,13 @@ export async function POST(req: NextRequest) {
     if (command === 'start' || command === 'restart') update.status = 'active';
     if (command === 'run_now') update.status = 'syncing';
 
-    if (statusDoc.exists) {
-      await statusRef.update(update);
-    } else {
-      await statusRef.set({
-        ...update,
-        status: 'active',
-        createdAt: Timestamp.now(),
-      });
-    }
+    // upsert covers both branches: the row is keyed by bot id, so an existing
+    // status is merged and a first-time bot is created with status 'active'.
+    await upsertRecord('system_status', {
+      id: botId,
+      ...(statusRow ? {} : { status: 'active', createdAt: now }),
+      ...update,
+    });
 
     return NextResponse.json({
       success: true,
@@ -284,27 +279,26 @@ export async function PATCH(req: NextRequest) {
       ...(interval !== undefined ? { interval } : {}),
     };
 
-    // Save to bot_configs/{botId}
-    await adminDb.doc(`bot_configs/${botId}`).set(
-      {
-        ...mergedConfig,
-        updatedAt: Timestamp.now(),
-        updatedBy: authResult.uid ?? 'system',
-      },
-      { merge: true }
-    );
+    const configuredAt = new Date().toISOString();
 
-    // Also update system_status/{botId}
-    const statusUpdate: Record<string, unknown> = {
+    // Save to bot_configs. The settings live inside the `config` JSONB column
+    // rather than as top-level fields, because the payload is open-ended
+    // (systemPrompt, model, temperature, …) and the admin UI authors it whole.
+    await upsertRecord('bot_configs', {
+      id: botId,
       config: mergedConfig,
-      lastConfigUpdate: Timestamp.now(),
-      lastConfigUpdatedBy: authResult.uid ?? 'system',
-    };
-    if (enabled !== undefined) {
-      statusUpdate.enabled = enabled;
-    }
+      updatedAt: configuredAt,
+      updatedBy: authResult.uid ?? 'system',
+    });
 
-    await adminDb.doc(`system_status/${botId}`).set(statusUpdate, { merge: true });
+    // Also mirror onto system_status
+    await upsertRecord('system_status', {
+      id: botId,
+      config: mergedConfig,
+      lastConfigUpdate: configuredAt,
+      lastConfigUpdatedBy: authResult.uid ?? 'system',
+      ...(enabled !== undefined ? { enabled } : {}),
+    });
 
     return NextResponse.json({
       success: true,
