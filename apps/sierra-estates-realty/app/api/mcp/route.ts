@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { OAuthStore, type OAuthToken } from '@/lib/mcp/oauth-store';
 import { mcpRegistry, initializeMCPServers } from '@/lib/mcp-registry';
+import {
+  TOOL_DEFINITIONS,
+  getToolJsonSchema,
+  validateAndAuthorizeTool,
+} from '@/lib/mcp/tool-bridge';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
