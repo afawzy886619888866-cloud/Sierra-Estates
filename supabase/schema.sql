@@ -1086,6 +1086,34 @@ BEGIN
         CHECK (status IN ('pending', 'queued', 'processing', 'sending', 'sent', 'delivered', 'read', 'failed'));
 END $$;
 
+-- ─── Media correlation (lib/services/ImageLinkHub.ts) ────────────────────────
+-- Links WhatsApp media to portal listings so the same photo is not re-uploaded
+-- per channel. Keyed by the provider's media id, which is why id is not
+-- generated here.
+CREATE TABLE IF NOT EXISTS public.image_links (
+    id TEXT PRIMARY KEY,
+    source TEXT DEFAULT 'whatsapp',
+    signal_id TEXT,
+    image_url TEXT,
+    portal_id TEXT,
+    portal_type TEXT,
+    status TEXT DEFAULT 'pending_correlation',
+    correlated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_image_links_signal ON public.image_links(signal_id);
+
+ALTER TABLE public.image_links ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "image_links_staff_access" ON public.image_links;
+    CREATE POLICY "image_links_staff_access" ON public.image_links
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.whatsapp_numbers (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     label TEXT,

@@ -32,7 +32,6 @@ import {
   type SearchIntent,
 } from '@/lib/server/schemas';
 import { logger } from '@/lib/logger';
-import { COLLECTIONS } from '@/lib/models/schema';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
