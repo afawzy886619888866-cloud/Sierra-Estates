@@ -168,6 +168,9 @@ jobs:
           GOOGLE_AI_API_KEY: ${{ secrets['GOOGLE_AI_API_KEY'] }}
           PROPERTY_FINDER_API_KEY: ${{ secrets['PROPERTY_FINDER_API_KEY'] }}
           TELEGRAM_BOT_TOKEN: ${{ secrets['TELEGRAM_BOT_TOKEN'] }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets[format('{0}', 'NEXT_PUBLIC_SUPABASE_URL')] || secrets[format('{0}', 'SUPABASE_URL')] || vars[format('{0}', 'NEXT_PUBLIC_SUPABASE_URL')] || vars[format('{0}', 'SUPABASE_URL')] }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets[format('{0}', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')] || secrets[format('{0}', 'SUPABASE_ANON_KEY')] || vars[format('{0}', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')] || vars[format('{0}', 'SUPABASE_ANON_KEY')] }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
         run: node scripts/verify-env-readiness.mjs
 
       # ── Set Vercel project settings for THIS role ─────────────────────────
@@ -264,6 +267,10 @@ jobs:
           ORIGINS: ${{ vars['ALLOWED_ORIGINS'] }}
           INT_OS_URL: ${{ vars['NEXT_PUBLIC_INTELLIGENCE_OS_URL'] }}
           OPENMEM_URL: ${{ vars['OPENMEMORY_URL'] }}
+          # Supabase (Primary Database)
+          SB_URL: ${{ secrets[format('{0}', 'NEXT_PUBLIC_SUPABASE_URL')] || secrets[format('{0}', 'SUPABASE_URL')] || vars[format('{0}', 'NEXT_PUBLIC_SUPABASE_URL')] || vars[format('{0}', 'SUPABASE_URL')] }}
+          SB_ANON: ${{ secrets[format('{0}', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')] || secrets[format('{0}', 'SUPABASE_ANON_KEY')] || vars[format('{0}', 'NEXT_PUBLIC_SUPABASE_ANON_KEY')] || vars[format('{0}', 'SUPABASE_ANON_KEY')] }}
+          SB_SERVICE: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
           # Redis
           REDIS_URL: ${{ secrets['UPSTASH_REDIS_REST_URL'] }}
           REDIS_TOKEN: ${{ secrets['UPSTASH_REDIS_REST_TOKEN'] }}
@@ -387,6 +394,11 @@ jobs:
           # n8n
           upsert N8N_BASE_URL                          "$N8N_URL"
           upsert N8N_API_KEY                           "$N8N_KEY" encrypted
+
+          # Supabase (Primary Database)
+          upsert NEXT_PUBLIC_SUPABASE_URL              "$SB_URL"
+          upsert NEXT_PUBLIC_SUPABASE_ANON_KEY         "$SB_ANON"
+          upsert SUPABASE_SERVICE_ROLE_KEY             "$SB_SERVICE" encrypted
 
           echo "✅ Environment variables synchronization complete for ${{ matrix.role }}."
 
