@@ -1444,6 +1444,10 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_lead_id TEXT;              
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pipeline_stage TEXT;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS assigned_specialist TEXT;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS sierra_ai_score INT;
+-- Per-lead automation flags, e.g. { whatsappFollowupSent, lastWhatsAppSentAt }.
+-- Firestore updated these with dotted field paths; here the whole object is
+-- read, merged and written back (see /api/admin/whatsapp/send).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS automation JSONB DEFAULT '{}'::jsonb;
 
 -- Non-partial on purpose: the Property Finder webhook upserts on this column,
 -- and Postgres can only infer a PARTIAL unique index for ON CONFLICT when the

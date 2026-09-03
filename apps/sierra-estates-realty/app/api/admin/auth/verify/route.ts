@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { getRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
-// Force dynamic rendering — uses Firebase/auth at runtime
+// Force dynamic rendering — reads the caller's identity at runtime
 export const dynamic = 'force-dynamic';
 
 /**
- * Lets the admin SPA confirm whether the signed-in Firebase user has admin access,
- * replacing its own getDoc(admins/{uid}) read against a separate Firestore project.
+ * Lets the admin SPA confirm whether the signed-in Supabase user has admin
+ * access, by reading the role stored on their public.profiles row.
  */
 export async function GET(req: NextRequest) {
   const result = await verifyRequest(req);
@@ -18,8 +17,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const userDoc = await adminDb.collection(COLLECTIONS.users).doc(result.uid).get();
-    const role = userDoc.exists ? userDoc.data()?.role ?? null : null;
+    const profile = await getRecord<{ role?: string }>('profiles', result.uid);
+    const role = profile?.role ?? null;
     const isAdmin = role === 'admin' || role === 'superadmin';
 
     return NextResponse.json({
