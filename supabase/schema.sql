@@ -1135,6 +1135,39 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Houyez portal content (lib/houyez/firestore.ts) ─────────────────────────
+-- Five Firestore collections (houyez_slides / _compounds / _rooms / _listings
+-- / _tours) held bilingual presentation content with different shapes each.
+-- Rather than five tables of near-duplicate EN/AR columns, they collapse into
+-- one table discriminated by `collection`, with the row payload in JSONB —
+-- this is display content, never queried by field.
+CREATE TABLE IF NOT EXISTS public.houyez_content (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    collection TEXT NOT NULL
+        CHECK (collection IN ('slides', 'compounds', 'rooms', 'listings', 'tours')),
+    "order" INT DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE,
+    data JSONB DEFAULT '{}'::jsonb NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_houyez_content_collection
+    ON public.houyez_content(collection, "order");
+
+ALTER TABLE public.houyez_content ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    -- Public-site presentation content: anyone may read, only staff may write.
+    DROP POLICY IF EXISTS "houyez_content_public_read" ON public.houyez_content;
+    CREATE POLICY "houyez_content_public_read" ON public.houyez_content
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "houyez_content_staff_write" ON public.houyez_content;
+    CREATE POLICY "houyez_content_staff_write" ON public.houyez_content
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ─── Property Finder sync bookkeeping (lib/services/sync-engine.ts) ──────────
 -- The dedupe review queue: PF listings whose match against our inventory was
 -- ambiguous or conflicting, held for a human to resolve.
@@ -1848,6 +1881,13 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS furnishing_status TEXT;
 -- Map pin coordinates from the Property Finder feed (the client site renders
 -- listings on Leaflet). public.compounds already stores lat/lng this way.
+-- Property Finder registry push state
+-- (lib/integrations/portfolio-asset-registry.ts).
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS registry_asset_id TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS synced_to_registry BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS last_registry_sync TIMESTAMPTZ;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS registry_status TEXT;
+
 -- Written by /api/admin/ingest: the landlord-sheet code stamped onto each
 -- ingested unit, and the derived per-sqm price the admin inventory sorts on.
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sbr_code TEXT;
@@ -1898,6 +1938,22 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intelligence JSONB DEFAULT '{}
 -- provenance the CRM shows next to it.
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS origin_channel TEXT;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_listing_reference_number TEXT;
+
+-- Property Finder registry sync bookkeeping
+-- (lib/integrations/portfolio-asset-registry.ts). The registry pushes
+-- stakeholders to us by webhook; registry_stakeholder_id is the idempotency
+-- key it is deduped on.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS registry_stakeholder_id TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS registry_created_at TIMESTAMPTZ;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS asset_reference TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS asset_id TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intent TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS neural_match_score NUMERIC(6, 2);
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS leila_score NUMERIC(6, 2);
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS advisor_assigned TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_registry_stakeholder
+    ON public.leads(registry_stakeholder_id);
 
 -- Omnichannel conversation counters (lib/services/OmnichannelChatService.ts).
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS interaction_count INT DEFAULT 0;
