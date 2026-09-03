@@ -1114,6 +1114,27 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── WhatsApp conversation memory (lib/services/WhatsAppConversationalService.ts)
+-- The ECC short-term memory for a direct WhatsApp thread. Firestore keyed the
+-- document by phone number; the phone stays the primary key here so the same
+-- upsert-by-sender remains a single statement.
+CREATE TABLE IF NOT EXISTS public.whatsapp_conversations (
+    phone_number TEXT PRIMARY KEY,
+    messages JSONB DEFAULT '[]'::jsonb,
+    last_active TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.whatsapp_conversations ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "whatsapp_conversations_staff_access" ON public.whatsapp_conversations;
+    CREATE POLICY "whatsapp_conversations_staff_access" ON public.whatsapp_conversations
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ─── Lead chat history (lib/services/OmnichannelChatService.ts) ──────────────
 -- Firestore kept this as a `messages` SUBCOLLECTION under each lead so the
 -- transcript could grow past the 1 MB document limit. Postgres has no
@@ -1619,6 +1640,12 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS orchestration_state JSONB DEFA
 -- paths and grew the arrays with arrayUnion; here it is one JSONB object that
 -- is read, merged and written back.
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intelligence JSONB DEFAULT '{}'::jsonb;
+
+-- Property Finder lead attribution (lib/services/PFIntegrationService.ts).
+-- `pf_lead_id` above is the dedupe key; these two are the human-readable
+-- provenance the CRM shows next to it.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS origin_channel TEXT;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS pf_listing_reference_number TEXT;
 
 -- Omnichannel conversation counters (lib/services/OmnichannelChatService.ts).
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS interaction_count INT DEFAULT 0;
