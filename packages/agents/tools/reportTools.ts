@@ -50,7 +50,7 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { records?: Array<{ fields: Record<string, any> }> };
         const records = data.records || [];
         if (records.length > 0) {
           let report = `📊 *Inventory Report (Top ${records.length})*\n\n`;
