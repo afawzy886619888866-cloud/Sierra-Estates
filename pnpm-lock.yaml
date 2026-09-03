@@ -402,19 +402,6 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  packages/admin-data:
-    dependencies:
-      firebase:
-        specifier: ^12.18.0
-        version: 12.18.0
-    devDependencies:
-      '@types/node':
-        specifier: ^26
-        version: 26.1.1
-      typescript:
-        specifier: ^5.8.2
-        version: 5.9.3
-
   packages/agents:
     dependencies:
       '@google/genai':
