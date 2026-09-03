@@ -22,20 +22,13 @@ const parseMessage = jest.fn().mockResolvedValue({ isListing: false });
 const processIncomingMessage = jest.fn().mockResolvedValue({ id: 'listing-1' });
 const processDirectMessage = jest.fn().mockResolvedValue('reply');
 const recordHeartbeat = jest.fn().mockResolvedValue(true);
-const listingsAdd = jest.fn().mockResolvedValue({ id: 'doc-1' });
-const listingsGet = jest.fn().mockResolvedValue({ empty: true, docs: [] });
+const insertRecordMock = jest.fn().mockResolvedValue({ id: 'doc-1' });
+// No existing row, so the dedupe lookup misses and the handler inserts.
+const listRecordsMock = jest.fn().mockResolvedValue([]);
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  isAdminInitialized: false,
-  adminDb: {
-    collection: () => ({
-      add: (...a: unknown[]) => listingsAdd(...a),
-      where: () => ({ limit: () => ({ get: () => listingsGet() }) }),
-      orderBy: () => ({ limit: () => ({ get: () => listingsGet() }) }),
-      limit: () => ({ get: () => listingsGet() }),
-      get: () => listingsGet(),
-    }),
-  },
+jest.mock('@sierra-estates/db', () => ({
+  insertRecord: (...a: unknown[]) => insertRecordMock(...a),
+  listRecords: (...a: unknown[]) => listRecordsMock(...a),
 }));
 
 jest.mock('@/lib/services/WhatsAppStatusService', () => ({
@@ -133,7 +126,7 @@ async function loadRoute(modulePath: string, nodeEnv: string) {
 beforeEach(() => {
   jest.clearAllMocks();
   parseMessage.mockResolvedValue({ isListing: false });
-  listingsGet.mockResolvedValue({ empty: true, docs: [] });
+  listRecordsMock.mockResolvedValue({ empty: true, docs: [] });
   recordHeartbeat.mockResolvedValue(true);
 });
 
@@ -173,7 +166,7 @@ describe.each(CASES)('$name — fail-closed shared-secret guard', (c) => {
 
     expect(parseMessage).not.toHaveBeenCalled();
     expect(processIncomingMessage).not.toHaveBeenCalled();
-    expect(listingsAdd).not.toHaveBeenCalled();
+    expect(insertRecordMock).not.toHaveBeenCalled();
     expect(recordHeartbeat).not.toHaveBeenCalled();
   });
 
@@ -209,7 +202,7 @@ describe.each(CASES)('$name — fail-closed shared-secret guard', (c) => {
 
     expect(parseMessage).not.toHaveBeenCalled();
     expect(processIncomingMessage).not.toHaveBeenCalled();
-    expect(listingsAdd).not.toHaveBeenCalled();
+    expect(insertRecordMock).not.toHaveBeenCalled();
     expect(recordHeartbeat).not.toHaveBeenCalled();
   });
 
@@ -250,7 +243,7 @@ describe('/api/ingest/whatsapp — handler reached with a valid secret', () => {
 
     expect(res.status).toBe(200);
     expect(parseMessage).toHaveBeenCalledWith('Apartment in Eastown for 45000');
-    expect(listingsAdd).toHaveBeenCalled();
+    expect(insertRecordMock).toHaveBeenCalled();
   });
 
   it('rejects an authenticated request with no message content as 400, not 401', async () => {
