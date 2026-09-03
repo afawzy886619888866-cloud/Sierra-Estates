@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp, Query } from 'firebase-admin/firestore';
+import { insertRecord, listRecords, type WhereClause } from '@sierra-estates/db';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
 
@@ -50,8 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add viewing request to Firestore
-    const docRef = await adminDb.collection('viewing_requests').add({
+    // Add viewing request to Supabase
+    const created = await insertRecord<{ id: string }>('viewing_requests', {
       propertyCode,
       visitorName,
       visitorEmail,
@@ -61,14 +60,14 @@ export async function POST(request: NextRequest) {
       numberOfPeople: numberOfPeople || 1,
       message: message || '',
       status: 'pending',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     return NextResponse.json(
       {
         success: true,
-        requestId: docRef.id,
+        requestId: created.id,
         message: 'Viewing request created successfully'
       },
       { status: 201 }
@@ -91,20 +90,15 @@ export async function GET(request: NextRequest) {
     const propertyCode = searchParams.get('propertyCode');
     const status = searchParams.get('status');
 
-    let ref: Query = adminDb.collection('viewing_requests');
-
+    const where: WhereClause[] = [];
     if (propertyCode) {
-      ref = ref.where('propertyCode', '==', propertyCode);
+      where.push({ column: 'propertyCode', value: propertyCode });
     }
     if (status) {
-      ref = ref.where('status', '==', status);
+      where.push({ column: 'status', value: status });
     }
 
-    const snapshot = await ref.get();
-    const requests = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const requests = await listRecords('viewing_requests', { where });
 
     return NextResponse.json({
       success: true,

@@ -1,15 +1,15 @@
 /**
  * /api/admin/followups — task management for agent follow-ups with leads
  *
- * Schema (per followup doc):
+ * Schema (public.followups in Supabase; camelCase here, snake_case in Postgres):
  *   {
- *     leadId: string,           // FK to stakeholders
- *     agentId: string,          // FK to users (uid)
+ *     leadId: string,           // FK to public.leads
+ *     agentId: string,          // FK to public.profiles
  *     type: 'call' | 'whatsapp' | 'email' | 'meeting' | 'viewing' | 'other',
  *     title: string,
  *     notes?: string,
- *     dueAt: Timestamp,
- *     completedAt?: Timestamp,
+ *     dueAt: timestamptz,
+ *     completedAt?: timestamptz,
  *     status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'overdue',
  *     priority: 'low' | 'medium' | 'high' | 'urgent',
  *     createdAt, updatedAt, createdBy
@@ -21,8 +21,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { listRecords, insertRecord, getRecord, type WhereClause } from '@sierra-estates/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -49,29 +48,26 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
 
-    let query: FirebaseFirestore.Query = adminDb.collection('followups');
+    const where: WhereClause[] = [];
 
-    // Non-admins (regular agents) only see their own follow-ups
-    if (authResult.method === 'firebase' && authResult.uid) {
-      const callerDoc = await adminDb.collection('users').doc(authResult.uid).get();
-      const role = callerDoc.data()?.role;
-      if (role === 'agent' && !agentId) {
-        query = query.where('agentId', '==', authResult.uid);
+    // Non-admins (regular agents) only see their own follow-ups.
+    if (authResult.uid) {
+      const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
+      if (caller?.role === 'agent' && !agentId) {
+        where.push({ column: 'agentId', value: authResult.uid });
       }
     }
 
-    if (agentId) query = query.where('agentId', '==', agentId);
-    if (leadId) query = query.where('leadId', '==', leadId);
-    if (status) query = query.where('status', '==', status);
-    if (priority) query = query.where('priority', '==', priority);
+    if (agentId) where.push({ column: 'agentId', value: agentId });
+    if (leadId) where.push({ column: 'leadId', value: leadId });
+    if (status) where.push({ column: 'status', value: status });
+    if (priority) where.push({ column: 'priority', value: priority });
 
-    query = query.orderBy('dueAt', 'asc').limit(200);
-
-    const snap = await query.get();
-    const followups = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const followups = await listRecords('followups', {
+      where,
+      orderBy: { column: 'dueAt', ascending: true },
+      limit: 200,
+    });
 
     return NextResponse.json({ success: true, followups, count: followups.length });
   } catch (err) {
@@ -102,17 +98,15 @@ export async function POST(req: NextRequest) {
     // Default agentId to the caller if not specified
     const agentId = parsed.data.agentId ?? authResult.uid ?? 'system';
 
-    const ref = await adminDb.collection('followups').add({
+    const created = await insertRecord<{ id: string }>('followups', {
       ...parsed.data,
       agentId,
-      dueAt: Timestamp.fromDate(new Date(parsed.data.dueAt)),
+      dueAt: new Date(parsed.data.dueAt).toISOString(),
       status: 'pending',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
       createdBy: authResult.uid ?? 'system',
     });
 
-    return NextResponse.json({ success: true, id: ref.id }, { status: 201 });
+    return NextResponse.json({ success: true, id: created.id }, { status: 201 });
   } catch (err) {
     logger.error('[followups] POST failed:', err);
     return NextResponse.json(

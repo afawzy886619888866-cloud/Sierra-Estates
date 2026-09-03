@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
-// Force dynamic rendering — uses Firebase/auth at runtime
+// Force dynamic rendering — uses Supabase/auth at runtime
 export const dynamic = 'force-dynamic';
 
 // PATCH accepts a partial of the agent display shape; unknown keys are stripped
-// so callers can't write arbitrary fields onto the document.
+// so callers can't write arbitrary fields onto the row.
 const agentPatchSchema = z
   .object({
     name: z.string().min(1).max(200),
@@ -38,10 +37,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    await adminDb.collection(COLLECTIONS.agentStatus).doc(id).update({
-      ...parsed.data,
-      updatedAt: new Date(),
-    });
+    // `desc` is the API field name; DESC is a SQL keyword, so the column is
+    // `description` (see app/api/admin/agents/route.ts).
+    const { desc, ...rest } = parsed.data;
+    const columns: RecordData = { ...rest, updatedAt: new Date().toISOString() };
+    if (desc !== undefined) columns.description = desc;
+
+    await updateRecord('agents_registry', id, columns);
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -61,7 +63,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
-    await adminDb.collection(COLLECTIONS.agentStatus).doc(id).delete();
+    await deleteRecord('agents_registry', id);
     return NextResponse.json({ success: true });
   } catch (err) {
     logger.error('Error deleting agent:', err);

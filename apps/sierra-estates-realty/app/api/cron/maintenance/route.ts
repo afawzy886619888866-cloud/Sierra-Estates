@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MaintenanceMonitor } from '@/lib/services/MaintenanceMonitor';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
-import { Timestamp } from 'firebase-admin/firestore';
+import { insertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifyCronRequest } from '@/lib/server/cron-auth';
 
@@ -20,16 +18,16 @@ export async function GET(req: NextRequest) {
 
     const flaggedCount = await MaintenanceMonitor.flagStaleListings();
 
-    // Log maintenance activity using adminDb
+    // Log maintenance activity to the Supabase activity feed
     if (flaggedCount > 0) {
-      await adminDb.collection(COLLECTIONS.activities).add({
+      await insertRecord('activities', {
         type: 'maintenance_completed',
         actorId: 'system',
         actorName: 'Maintenance Monitor',
         description: `Maintenance Audit: **${flaggedCount} assets** flagged as stale or archived due to inactivity.`,
         text: `Maintenance Audit: **${flaggedCount} assets** flagged as stale or archived due to inactivity.`,
         color: 'var(--amber-light)',
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString(),
       });
     }
 
