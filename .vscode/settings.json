@@ -27,7 +27,7 @@
     "**/Thumbs.db": true,
     "**/.turbo": true
   },
-  "compilets.autoStart": true,
+  "compilets.autoStart": false,
   "markdown.validate.enabled": true,
   "github-actions.workflows.validations.enabled": false,
   "github-actions.workflows.validations.context.access": "ignore",
