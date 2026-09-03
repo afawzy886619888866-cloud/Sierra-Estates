@@ -1163,15 +1163,28 @@ CREATE INDEX IF NOT EXISTS idx_communications_target
 CREATE TABLE IF NOT EXISTS public.exchange (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     type TEXT NOT NULL,
-    source TEXT DEFAULT 'workflow',
+    source TEXT DEFAULT 'workflow'
+        CHECK (source IN ('admin', 'agent', 'workflow', 'webhook', 'system')),
     status TEXT DEFAULT 'pending'
         CHECK (status IN ('pending', 'running', 'done', 'error', 'cancelled')),
     step_name TEXT,
     progress INT DEFAULT 0,
     payload JSONB DEFAULT '{}'::jsonb,
+    -- Optional links, all nullable: a record may reference any combination.
+    agent_id TEXT,
+    workflow_id TEXT,
+    lead_id TEXT,
+    property_id TEXT,
+    user_id TEXT,
+    -- Output of the task this record tracks.
+    result JSONB,
+    error TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_exchange_type_status
+    ON public.exchange(type, status, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_exchange_created ON public.exchange(created_at DESC);
 

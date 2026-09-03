@@ -1,39 +1,16 @@
 /**
- * SIERRA ESTATES — EXCHANGE SHEET CLIENT
- * Central data contract between Admin UI, Agents, and Workflows
- * Uses Firestore /exchange collection as the shared message bus
+ * Exchange Sheet client — the shared bus Admin UI, agents, workflows and
+ * webhooks post task records to.
+ *
+ * Backed by the `exchange` table. The Firestore version exposed onSnapshot
+ * subscriptions, so the Admin Hub updated live. Postgres reads are one-shot,
+ * so `subscribeExchange` polls on an interval and keeps the same
+ * subscribe/unsubscribe contract its callers already use — a dashboard that
+ * refreshes every few seconds is closer to the old behaviour than one that
+ * never refreshes at all. Supabase Realtime is the drop-in upgrade if the
+ * latency ever matters.
  */
-
-import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
-  where,
-  Timestamp,
-  type DocumentData,
-  type QuerySnapshot,
-  type Unsubscribe,
-} from 'firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-
-// Initialize a default instance if not provided by the consumer
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+import { insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,8 +33,9 @@ export interface ExchangeRecord {
   source: ExchangeSource;
   status: ExchangeStatus;
   payload: Record<string, unknown>;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  /** ISO-8601, as timestamptz arrives over PostgREST. */
+  createdAt: string;
+  updatedAt: string;
   // Optional links
   agentId?: string;
   workflowId?: string;
@@ -74,13 +52,12 @@ export interface ExchangeRecord {
 
 export type ExchangeCreateInput = Omit<ExchangeRecord, 'id' | 'createdAt' | 'updatedAt'>;
 
-// ─── Collection Reference ─────────────────────────────────────────────────────
+// ─── Table ────────────────────────────────────────────────────────────────────
 
-const EXCHANGE_COLLECTION = 'exchange';
+const EXCHANGE_TABLE = 'exchange';
 
-function exchangeCol() {
-  return collection(db, EXCHANGE_COLLECTION);
-}
+/** Cancels a subscription started by subscribeExchange. */
+export type Unsubscribe = () => void;
 
 // ─── Write Operations ─────────────────────────────────────────────────────────
 
@@ -91,14 +68,11 @@ function exchangeCol() {
 export async function writeExchange(
   input: ExchangeCreateInput
 ): Promise<string> {
-  const now = Timestamp.now();
-  const docRef = await addDoc(exchangeCol(), {
+  const created = await insertRecord<{ id: string }>(EXCHANGE_TABLE, {
     ...input,
     status: input.status ?? 'pending',
-    createdAt: now,
-    updatedAt: now,
   });
-  return docRef.id;
+  return created.id;
 }
 
 /**
@@ -109,11 +83,7 @@ export async function updateExchange(
   id: string,
   updates: Partial<Pick<ExchangeRecord, 'status' | 'result' | 'error' | 'progress' | 'stepName' | 'agentId' | 'workflowId'>>
 ): Promise<void> {
-  const ref = doc(db, EXCHANGE_COLLECTION, id);
-  await updateDoc(ref, {
-    ...updates,
-    updatedAt: Timestamp.now(),
-  });
+  await updateRecord(EXCHANGE_TABLE, id, { ...updates });
 }
 
 // ─── Admin Signal (Admin UI → Workflow/Agent) ─────────────────────────────────
@@ -155,35 +125,40 @@ export function subscribeExchange(
     limitTo?: number;
     onData: (records: ExchangeRecord[]) => void;
     onError?: (error: Error) => void;
+    /** Poll interval in ms. Default 5s. */
+    intervalMs?: number;
   }
 ): Unsubscribe {
-  let q = query(
-    exchangeCol(),
-    orderBy('createdAt', 'desc'),
-    limit(options.limitTo ?? 100)
-  );
+  const where: Array<{ column: string; value: unknown }> = [];
+  if (options.type) where.push({ column: 'type', value: options.type });
+  if (options.status) where.push({ column: 'status', value: options.status });
 
-  if (options.type) {
-    q = query(q, where('type', '==', options.type));
-  }
-  if (options.status) {
-    q = query(q, where('status', '==', options.status));
-  }
+  let cancelled = false;
 
-  return onSnapshot(
-    q,
-    (snapshot: QuerySnapshot<DocumentData>) => {
-      const records: ExchangeRecord[] = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<ExchangeRecord, 'id'>),
-      }));
-      options.onData(records);
-    },
-    (err) => {
-      console.error('[ExchangeSheet] Subscription error:', err);
-      options.onError?.(err);
+  const poll = async () => {
+    try {
+      const records = await listRecords<ExchangeRecord>(EXCHANGE_TABLE, {
+        where,
+        orderBy: { column: 'createdAt', ascending: false },
+        limit: options.limitTo ?? 100,
+      });
+      // A response that lands after unsubscribe must not reach the caller,
+      // whose component may already be unmounted.
+      if (!cancelled) options.onData(records);
+    } catch (err) {
+      if (cancelled) return;
+      console.error('[ExchangeSheet] Poll error:', err);
+      options.onError?.(err instanceof Error ? err : new Error(String(err)));
     }
-  );
+  };
+
+  void poll();
+  const timer = setInterval(poll, options.intervalMs ?? 5000);
+
+  return () => {
+    cancelled = true;
+    clearInterval(timer);
+  };
 }
 
 /**
