@@ -1,13 +1,11 @@
 import 'server-only';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, listRecords } from '@sierra-estates/db';
 
 /**
- * Server-only inventory reads via the Firebase Admin SDK. Previously this
- * read through the client `firebase/firestore` SDK with NEXT_PUBLIC_* keys —
- * meaning a server route (WealthService -> /api/wealth/portfolio) was
- * silently depending on Firestore security rules instead of the admin-trust
- * model every other app/api/ route uses. Client-side code should call
- * /api/listings instead of importing this file.
+ * Server-only inventory reads through the Supabase service-role client.
+ * Client-side code should call /api/listings rather than importing this file:
+ * this bypasses RLS by design, on the same admin-trust model every other
+ * app/api/ route uses.
  */
 
 export type OfferType = 'sale' | 'rent';
@@ -34,15 +32,10 @@ export interface Property {
 
 export const InventoryService = {
   async getProperty(id: string): Promise<Property | null> {
-    const docSnap = await adminDb.collection('listings').doc(id).get();
-    if (docSnap.exists) {
-      return { id: docSnap.id, ...docSnap.data() } as Property;
-    }
-    return null;
+    return await getRecord<Property>('listings', id);
   },
 
   async getFeaturedListings(count: number = 3): Promise<Property[]> {
-    const snap = await adminDb.collection('listings').limit(count).get();
-    return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Property));
+    return await listRecords<Property>('listings', { limit: count });
   },
 };

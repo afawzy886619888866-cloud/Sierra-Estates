@@ -47,8 +47,9 @@ jest.mock('@/lib/services/master-sheet-sync', () => ({
   syncMasterOwnerSheet: (...args: unknown[]) => syncMasterOwnerSheet(...args),
 }));
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: () => ({ add: (...a: unknown[]) => activitiesAdd(...a) }) },
+jest.mock('@sierra-estates/db', () => ({
+  // The cron routes log an activity row after each run.
+  insertRecord: (...a: unknown[]) => activitiesAdd(...a),
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -167,6 +168,7 @@ describe('/api/cron/sync-leads', () => {
 
     expect(activitiesAdd).toHaveBeenCalledTimes(1);
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'sync_completed', actorId: 'system' }),
     );
   });
@@ -219,6 +221,7 @@ describe('/api/cron/sync-listings', () => {
     await syncListings(authed());
 
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'sync_completed' }),
     );
   });
@@ -264,6 +267,7 @@ describe('/api/cron/maintenance', () => {
     await maintenance(authed());
 
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'maintenance_completed' }),
     );
   });

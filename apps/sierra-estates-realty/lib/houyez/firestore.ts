@@ -1,227 +1,98 @@
 /**
- * Houyez-Style Portal — Firestore schema + dynamic data layer
+ * Houyez-Style Portal — content schema + data layer
  * ────────────────────────────────────────────────────────────────────────────
- * Companion to components/houyez-portal/HouyezPortal.tsx.
- *
  * Why this file exists
  * ───────────────────
- * The portal was originally wired to a static TS data file (data/houyez-properties.ts).
- * That made the page render fast but every content change (price, hero image,
- * adding a property, reordering a compound) required a code commit + redeploy.
+ * The portal was originally wired to a static TS data file
+ * (data/houyez-properties.ts), so every content change — price, hero image,
+ * adding a property, reordering a compound — required a code commit and a
+ * redeploy. This module moves that content into the database instead.
  *
- * This module flips the portal to be fully dynamic:
+ * All portal content lives in ONE table, `houyez_content`, discriminated by a
+ * `collection` column ('slides' | 'compounds' | 'rooms' | 'listings' | 'tours')
+ * with the row payload in a JSONB `data` column. Firestore had five separate
+ * collections; the shapes are bilingual presentation blobs that are never
+ * queried by field, so five tables of near-duplicate EN/AR columns would have
+ * bought nothing.
  *
- *   - All portal content lives in four Firestore collections:
- *       houyez_slides     → hero slider
- *       houyez_compounds  → compounds grid
- *       houyez_rooms      → 360° rooms strip
- *       houyez_listings   → AI-curated listings grid
- *   - The portal subscribes via `onSnapshot` so changes appear in real-time
- *     the moment an admin edits them in Firebase Console or via the admin
- *     portal — no redeploy needed.
- *   - A `seedHouyezPortal()` helper writes the static seed data (from
- *     data/houyez-properties.ts) into Firestore, so a fresh project is
- *     instantly populated. Re-runnable: it skips collections that already
- *     have docs (or wipes them with `overwrite: true`).
- *   - A safety fallback: if Firestore returns 0 docs (or the Firebase client
- *     isn't configured in dev), the hook transparently returns the static
- *     seed data so the page never renders empty.
+ * `seedHouyezPortal()` writes the static seed data into that table so a fresh
+ * project is instantly populated. It is re-runnable: it skips a collection
+ * that already has rows, or replaces it with `overwrite: true`.
  *
- * Firestore document shapes (all fields bilingual for EN/AR)
- * ──────────────────────────────────────────────────────────
+ * The reader helpers fall back to the static seed whenever the table is empty
+ * or unreachable, so the portal never renders blank.
  *
- * houyez_slides/{auto-id}:
- *   pre: string, preAr: string,
- *   main: string, mainAr: string,
- *   img: string,
- *   order: number          // ascending; lower = earlier slide
- *
- * houyez_compounds/{auto-id}:
- *   name: string, nameAr: string,
- *   zone: string, zoneAr: string,
- *   count: number,         // listing count to display
- *   img: string,
- *   order: number
- *
- * houyez_rooms/{auto-id}:
- *   name: string, nameAr: string,
- *   sub: string, subAr: string,
- *   img: string,
- *   order: number
- *
- * houyez_listings/{auto-id}:
- *   code: string,          // SBR code, e.g. 'HP-VL-01'
- *   cmp: string, cmpAr: string,
- *   zone: string, zoneAr: string,
- *   type: 'Villa' | 'Twin House' | 'Apartment' | 'Penthouse' | 'Duplex',
- *   typeAr: string,
- *   beds: number, bath: number, area: number,
- *   egpM: number,          // price in millions EGP (sale)
- *   usd: number,           // price in USD (sale total OR rent per month)
- *   ai: number,            // AI match score 0-10
- *   tag: 'Premium' | 'Featured' | 'Smart Match' | 'Exclusive' | 'New' | 'Best ROI' | null,
- *   tagAr: string | null,
- *   mode: 'sale' | 'rent',
- *   modeAr: string,
- *   agent: string, agentAr: string,
- *   ago: string, agoAr: string,
- *   img: string,
- *   order: number,
- *   active: boolean        // soft-delete / hide without removing the doc
+ * NOTE ON REAL-TIME: the Firestore version exposed subscribeHouyez* helpers
+ * built on onSnapshot, so admin edits appeared live. Those had no callers —
+ * the component they were written for does not exist in this repo — and are
+ * not reimplemented here. Supabase Realtime would be the equivalent if the
+ * portal ever needs it.
  */
 
-import {
-  collection, query, orderBy, onSnapshot, where,
-  addDoc, setDoc, doc, getDocs, writeBatch, serverTimestamp,
-} from 'firebase/firestore';
-import { db, isFirebaseClientConfigured } from '@/lib/firebase';
+import { getSupabaseAdmin, insertRecords, listRecords } from '@sierra-estates/db';
 import {
   HOUEZ_SLIDES, HOUEZ_COMPOUNDS, HOUEZ_ROOMS, HOUEZ_LISTINGS, HOUEZ_TOURS,
   type HouyezSlide, type HouyezCompound, type HouyezRoom, type HouyezListing, type HouyezTour,
 } from '@/data/houyez-properties';
 
-// ─── Collection names ───────────────────────────────────────────────────────
+/** The single table all portal content lives in. */
+const HOUYEZ_TABLE = 'houyez_content';
+
+/**
+ * Discriminator values for `houyez_content.collection`. These were five
+ * separate Firestore collection names ('houyez_slides', ...); the prefix is
+ * now the table, so only the suffix remains.
+ */
 export const HOUEZ_COLLECTIONS = {
-  slides: 'houyez_slides',
-  compounds: 'houyez_compounds',
-  rooms: 'houyez_rooms',
-  listings: 'houyez_listings',
-  tours: 'houyez_tours',
+  slides: 'slides',
+  compounds: 'compounds',
+  rooms: 'rooms',
+  listings: 'listings',
+  tours: 'tours',
 } as const;
 
-// ─── Subscriptions ──────────────────────────────────────────────────────────
+// ─── Readers ────────────────────────────────────────────────────────────────
 /**
- * Subscribe to a Houyez collection. Calls back with the typed doc array.
- * Returns an unsubscribe function (or a no-op if Firebase isn't configured).
+ * Read one portal collection, ordered as authored.
  *
- * Always returns the static seed data as a fallback when:
- *   - Firebase client isn't configured (dev without credentials), OR
- *   - The collection is empty (first run before seeding).
- *
- * This guarantees the portal never renders empty.
+ * Always falls back to the static seed when the table is empty or unreachable,
+ * which is what keeps the portal from rendering blank on a fresh project or a
+ * database blip.
  */
-function subscribe<T>(
-  colName: string,
-  seed: T[],
-  onData: (rows: T[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  // Dev-mode fallback: no Firebase client → return seed.
-  if (!isFirebaseClientConfigured) {
-    onData(seed);
-    return () => {};
-  }
+async function readCollection<T>(collection: string, seed: T[]): Promise<T[]> {
   try {
-    const q = query(collection(db, colName), orderBy('order', 'asc'));
-    return onSnapshot(
-      q,
-      (snap) => {
-        if (snap.empty) {
-          onData(seed);
-          return;
-        }
-        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as unknown as T);
-        onData(rows);
-      },
-      (err) => {
-        console.warn(`[houyez] ${colName} subscription failed, using seed:`, err.message);
-        onData(seed);
-        onError?.(err as Error);
-      },
-    );
+    const rows = await listRecords<{ id: string; data: Record<string, unknown> }>(HOUYEZ_TABLE, {
+      where: [
+        { column: 'collection', value: collection },
+        { column: 'active', value: true },
+      ],
+      orderBy: { column: 'order', ascending: true },
+    });
+    if (rows.length === 0) return seed;
+    return rows.map((row) => ({ id: row.id, ...row.data }) as unknown as T);
   } catch (err) {
-    console.warn(`[houyez] ${colName} subscription setup failed, using seed:`, err);
-    onData(seed);
-    return () => {};
+    console.warn(`[houyez] ${collection} read failed, using seed:`, (err as Error).message);
+    return seed;
   }
 }
 
-export function subscribeHouyezSlides(cb: (rows: HouyezSlide[]) => void, onErr?: (e: Error) => void) {
-  return subscribe<HouyezSlide>(HOUEZ_COLLECTIONS.slides, HOUEZ_SLIDES, cb, onErr);
-}
-export function subscribeHouyezCompounds(cb: (rows: HouyezCompound[]) => void, onErr?: (e: Error) => void) {
-  return subscribe<HouyezCompound>(HOUEZ_COLLECTIONS.compounds, HOUEZ_COMPOUNDS, cb, onErr);
-}
-export function subscribeHouyezRooms(cb: (rows: HouyezRoom[]) => void, onErr?: (e: Error) => void) {
-  return subscribe<HouyezRoom>(HOUEZ_COLLECTIONS.rooms, HOUEZ_ROOMS, cb, onErr);
-}
-export function subscribeHouyezListings(cb: (rows: HouyezListing[]) => void, onErr?: (e: Error) => void) {
-  // Only subscribe to active listings (soft-delete support).
-  if (!isFirebaseClientConfigured) {
-    cb(HOUEZ_LISTINGS);
-    return () => {};
-  }
-  try {
-    const q = query(
-      collection(db, HOUEZ_COLLECTIONS.listings),
-      where('active', '==', true),
-      orderBy('order', 'asc'),
-    );
-    return onSnapshot(
-      q,
-      (snap) => {
-        if (snap.empty) {
-          cb(HOUEZ_LISTINGS);
-          return;
-        }
-        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as unknown as HouyezListing);
-        cb(rows);
-      },
-      (err) => {
-        console.warn('[houyez] listings subscription failed, using seed:', err.message);
-        cb(HOUEZ_LISTINGS);
-        onErr?.(err as Error);
-      },
-    );
-  } catch (err) {
-    console.warn('[houyez] listings subscription setup failed, using seed:', err);
-    cb(HOUEZ_LISTINGS);
-    return () => {};
-  }
-}
+export const getHouyezSlides = () =>
+  readCollection<HouyezSlide>(HOUEZ_COLLECTIONS.slides, HOUEZ_SLIDES);
+export const getHouyezCompounds = () =>
+  readCollection<HouyezCompound>(HOUEZ_COLLECTIONS.compounds, HOUEZ_COMPOUNDS);
+export const getHouyezRooms = () =>
+  readCollection<HouyezRoom>(HOUEZ_COLLECTIONS.rooms, HOUEZ_ROOMS);
+export const getHouyezListings = () =>
+  readCollection<HouyezListing>(HOUEZ_COLLECTIONS.listings, HOUEZ_LISTINGS);
+export const getHouyezTours = () =>
+  readCollection<HouyezTour>(HOUEZ_COLLECTIONS.tours, HOUEZ_TOURS);
 
-export function subscribeHouyezTours(cb: (rows: HouyezTour[]) => void, onErr?: (e: Error) => void) {
-  // Only subscribe to active tours (soft-delete support).
-  if (!isFirebaseClientConfigured) {
-    cb(HOUEZ_TOURS);
-    return () => {};
-  }
-  try {
-    const q = query(
-      collection(db, HOUEZ_COLLECTIONS.tours),
-      where('active', '==', true),
-      orderBy('order', 'asc'),
-    );
-    return onSnapshot(
-      q,
-      (snap) => {
-        if (snap.empty) {
-          cb(HOUEZ_TOURS);
-          return;
-        }
-        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as unknown as HouyezTour);
-        cb(rows);
-      },
-      (err) => {
-        console.warn('[houyez] tours subscription failed, using seed:', err.message);
-        cb(HOUEZ_TOURS);
-        onErr?.(err as Error);
-      },
-    );
-  } catch (err) {
-    console.warn('[houyez] tours subscription setup failed, using seed:', err);
-    cb(HOUEZ_TOURS);
-    return () => {};
-  }
-}
-
-// ─── Seed / write helpers ───────────────────────────────────────────────────
 /**
- * Seed all four Houyez collections from the static data file.
+ * Seed all five Houyez collections from the static data file.
  *
- * Idempotent: if a collection already has docs, it's skipped (so re-running
+ * Idempotent: if a collection already has rows, it's skipped (so re-running
  * won't create duplicates). To force a re-seed, pass `overwrite: true` — that
- * wipes the collection first (deletes all docs) before re-inserting.
+ * deletes that collection's rows first before re-inserting.
  *
  * Returns a per-collection summary.
  */
@@ -232,42 +103,54 @@ export async function seedHouyezPortal(opts: { overwrite?: boolean } = {}): Prom
 }> {
   const result = { slides: 0, compounds: 0, rooms: 0, listings: 0, tours: 0, skipped: [] as string[], errors: [] as string[] };
 
-  if (!isFirebaseClientConfigured) {
-    result.errors.push('Firebase client not configured — set NEXT_PUBLIC_FIREBASE_* env vars.');
-    return result;
-  }
-
   const collectionsToSeed: Array<{
-    name: string; rows: Array<Record<string, unknown>>; counterKey: 'slides' | 'compounds' | 'rooms' | 'listings' | 'tours';
+    name: string;
+    rows: Array<Record<string, unknown>>;
+    counterKey: 'slides' | 'compounds' | 'rooms' | 'listings' | 'tours';
+    active: boolean;
   }> = [
-    { name: HOUEZ_COLLECTIONS.slides, counterKey: 'slides',
-      rows: HOUEZ_SLIDES.map((s, i) => ({ ...s, order: i, createdAt: serverTimestamp() })) },
-    { name: HOUEZ_COLLECTIONS.compounds, counterKey: 'compounds',
-      rows: HOUEZ_COMPOUNDS.map((c, i) => ({ ...c, order: i, createdAt: serverTimestamp() })) },
-    { name: HOUEZ_COLLECTIONS.rooms, counterKey: 'rooms',
-      rows: HOUEZ_ROOMS.map((r, i) => ({ ...r, order: i, createdAt: serverTimestamp() })) },
-    { name: HOUEZ_COLLECTIONS.listings, counterKey: 'listings',
-      rows: HOUEZ_LISTINGS.map((l, i) => ({ ...l, order: i, active: true, createdAt: serverTimestamp() })) },
-    { name: HOUEZ_COLLECTIONS.tours, counterKey: 'tours',
-      rows: HOUEZ_TOURS.map((t, i) => ({ ...t, order: i, active: true, createdAt: serverTimestamp() })) },
+    { name: HOUEZ_COLLECTIONS.slides, counterKey: 'slides', active: true,
+      rows: HOUEZ_SLIDES as unknown as Array<Record<string, unknown>> },
+    { name: HOUEZ_COLLECTIONS.compounds, counterKey: 'compounds', active: true,
+      rows: HOUEZ_COMPOUNDS as unknown as Array<Record<string, unknown>> },
+    { name: HOUEZ_COLLECTIONS.rooms, counterKey: 'rooms', active: true,
+      rows: HOUEZ_ROOMS as unknown as Array<Record<string, unknown>> },
+    { name: HOUEZ_COLLECTIONS.listings, counterKey: 'listings', active: true,
+      rows: HOUEZ_LISTINGS as unknown as Array<Record<string, unknown>> },
+    { name: HOUEZ_COLLECTIONS.tours, counterKey: 'tours', active: true,
+      rows: HOUEZ_TOURS as unknown as Array<Record<string, unknown>> },
   ];
 
-  for (const { name, rows, counterKey } of collectionsToSeed) {
+  for (const { name, rows, counterKey, active } of collectionsToSeed) {
     try {
-      const existing = await getDocs(collection(db, name));
-      if (!opts.overwrite && !existing.empty) {
-        result.skipped.push(`${name} (already has ${existing.size} docs)`);
+      const existing = await listRecords<{ id: string }>(HOUYEZ_TABLE, {
+        where: [{ column: 'collection', value: name }],
+        select: 'id',
+      });
+
+      if (!opts.overwrite && existing.length > 0) {
+        result.skipped.push(`${name} (already has ${existing.length} rows)`);
         continue;
       }
-      if (opts.overwrite && !existing.empty) {
-        const batch = writeBatch(db);
-        existing.docs.forEach((d) => batch.delete(d.ref));
-        await batch.commit();
+
+      if (opts.overwrite && existing.length > 0) {
+        // One statement rather than the per-document delete batch Firestore
+        // needed; deleteRecord() is keyed by id and would be N round trips.
+        const { error } = await getSupabaseAdmin()
+          .from(HOUYEZ_TABLE)
+          .delete()
+          .eq('collection', name);
+        if (error) throw new Error(error.message);
       }
-      for (const row of rows) {
-        await addDoc(collection(db, name), row);
-        result[counterKey]++;
-      }
+
+      // `order` preserves the authored sequence, as the Firestore `order`
+      // field did. It is a reserved word, so the column is quoted in the
+      // schema; PostgREST addresses it by name and needs no quoting here.
+      await insertRecords(
+        HOUYEZ_TABLE,
+        rows.map((row, i) => ({ collection: name, order: i, active, data: row })),
+      );
+      result[counterKey] = rows.length;
     } catch (err) {
       result.errors.push(`${name}: ${(err as Error).message}`);
     }
@@ -276,22 +159,21 @@ export async function seedHouyezPortal(opts: { overwrite?: boolean } = {}): Prom
 }
 
 /**
- * Upsert a single Houyez doc (admin use). Pass an explicit `id` to update an
- * existing doc; omit it to create a new one with an auto-id.
+ * Upsert a single Houyez row (admin use). Pass an explicit `id` to update an
+ * existing row; omit it to create a new one.
  */
 export async function upsertHouyezDoc(
   col: keyof typeof HOUEZ_COLLECTIONS,
   data: Record<string, unknown>,
   id?: string,
 ): Promise<{ id: string; created: boolean }> {
-  if (!isFirebaseClientConfigured) {
-    throw new Error('Firebase client not configured.');
-  }
-  const colName = HOUEZ_COLLECTIONS[col];
+  const { insertRecord, updateRecord } = await import('@sierra-estates/db');
+  const collection = HOUEZ_COLLECTIONS[col];
+
   if (id) {
-    await setDoc(doc(db, colName, id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    await updateRecord(HOUYEZ_TABLE, id, { collection, data });
     return { id, created: false };
   }
-  const ref = await addDoc(collection(db, colName), { ...data, createdAt: serverTimestamp() });
-  return { id: ref.id, created: true };
+  const created = await insertRecord<{ id: string }>(HOUYEZ_TABLE, { collection, data });
+  return { id: created.id, created: true };
 }

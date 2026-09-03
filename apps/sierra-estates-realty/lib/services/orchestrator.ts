@@ -1,12 +1,11 @@
-import 'server-only'; // gRPC dependency — server only
-import { adminDb } from '../server/firebase-admin';
+import 'server-only';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '../models/schema';
 import { instrumentAgent } from '../arize';
 import { runScribe } from '../agents/scribe';
 import { runCurator } from '../agents/curator';
 import { runMatchmaker } from '../agents/matchmaker';
 import { runCloser } from '../agents/closer';
-import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
 /** Inline Telegram alert — avoids loading the client-SDK telegram-controller in server context */
@@ -23,6 +22,15 @@ async function notifyTelegram(text: string) {
   } catch { /* non-critical */ }
 }
 
+/** The pipeline bookkeeping shared by every orchestrated table. */
+interface StatefulRow {
+  orchestrationState?: {
+    stage?: OrchestrationStage;
+    status?: string;
+    [key: string]: unknown;
+  } | null;
+}
+
 export type OrchestrationStage =
   | 'S1' | 'S2' | 'S3' | 'S4' | 'S5'
   | 'S6' | 'S7' | 'S8' | 'S9' | 'S10';
@@ -33,20 +41,24 @@ export class OrchestratorService {
    * Can be started from any stage.
    */
   static async runPipeline(docId: string, collection: keyof typeof COLLECTIONS, forceStage?: OrchestrationStage) {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
+    const table = COLLECTIONS[collection];
+    const readRow = () => getRecord<StatefulRow>(table, docId);
 
     return instrumentAgent('orchestrator', 'pipeline', docId, async () => {
       // 0. Fetch initial state
-      const doc = await docRef.get();
-      if (!doc.exists) throw new Error(`Document ${docId} not found in ${collection}`);
+      const row = await readRow();
+      if (!row) throw new Error(`Document ${docId} not found in ${collection}`);
 
-      let currentStage = forceStage || (doc.data()?.orchestrationState?.stage || 'S1') as OrchestrationStage;
+      let currentStage = forceStage || (row.orchestrationState?.stage || 'S1') as OrchestrationStage;
       logger.info(`🚀 Starting Sierra Estates Orchestration for ${docId} at stage ${currentStage}`);
 
+      // --- STAGE EXECUTION LOOP WITH RETRY ---
+      // Declared outside the try so the DLQ record below can report how many
+      // attempts were burnt before the pipeline gave up.
+      let attempts = 0;
+      const maxAttempts = 3;
+
       try {
-        // --- STAGE EXECUTION LOOP WITH RETRY ---
-        let attempts = 0;
-        const maxAttempts = 3;
 
         while (attempts < maxAttempts) {
           try {
@@ -55,8 +67,8 @@ export class OrchestratorService {
               await this.updateState(docId, collection, currentStage, 'processing');
               await runScribe(docId, collection, currentStage);
 
-              const d = await docRef.get();
-              currentStage = d.data()?.orchestrationState?.stage || 'S3';
+              const d = await readRow();
+              currentStage = d?.orchestrationState?.stage || 'S3';
             }
 
             // S3, S4, S5: CURATOR (The Architect of Desire)
@@ -64,15 +76,15 @@ export class OrchestratorService {
               await this.updateState(docId, collection, currentStage, 'processing');
               await runCurator(docId, collection, currentStage);
 
-              const d = await docRef.get();
-              currentStage = d.data()?.orchestrationState?.stage || 'S6';
+              const d = await readRow();
+              currentStage = d?.orchestrationState?.stage || 'S6';
             }
 
             // S6, S7, S8: MATCHMAKER (The Architect of Wealth)
             if (['S6', 'S7', 'S8'].includes(currentStage)) {
               // Check for Human Review Pause at S7.5
-              const d = await docRef.get();
-              if (currentStage === 'S8' && d.data()?.orchestrationState?.status === 'waiting_agent_review') {
+              const d = await readRow();
+              if (currentStage === 'S8' && d?.orchestrationState?.status === 'waiting_agent_review') {
                 logger.info(`🛑 Orchestration paused for ${docId}: Human Review Required.`);
                 return;
               }
@@ -80,8 +92,8 @@ export class OrchestratorService {
               await this.updateState(docId, collection, currentStage, 'processing');
               await runMatchmaker(docId, collection, currentStage);
 
-              const d2 = await docRef.get();
-              currentStage = d2.data()?.orchestrationState?.stage || 'S9';
+              const d2 = await readRow();
+              currentStage = d2?.orchestrationState?.stage || 'S9';
             }
 
             // S9, S10: CLOSER (The Architect of Success)
@@ -89,8 +101,8 @@ export class OrchestratorService {
               await this.updateState(docId, collection, currentStage, 'processing');
               await runCloser(docId, collection, currentStage);
 
-              const d = await docRef.get();
-              currentStage = d.data()?.orchestrationState?.stage || 'S10';
+              const d = await readRow();
+              currentStage = d?.orchestrationState?.stage || 'S10';
             }
 
             if (currentStage === 'S10') {
@@ -103,7 +115,7 @@ export class OrchestratorService {
             logger.warn(`[ORCHESTRATOR] Attempt ${attempts} failed for ${docId}: ${innerError.message}`);
             if (attempts >= maxAttempts) throw innerError;
             // Exponential backoff with jitter to avoid a synchronized retry
-            // thundering-herd when a shared dependency (Gemini/Firestore) blips.
+            // thundering-herd when a shared dependency (Gemini/Supabase) blips.
             const backoff = 2000 * attempts + Math.floor(Math.random() * 1000);
             await new Promise(resolve => setTimeout(resolve, backoff));
           }
@@ -117,12 +129,13 @@ export class OrchestratorService {
 
         // DLQ: write to failed_orchestrations for manual intervention
         try {
-          await adminDb.collection('failed_orchestrations').add({
-            docId,
-            collection,
-            stage: currentStage,
-            error: error.message || String(error),
-            timestamp: Timestamp.now(),
+          // The DLQ table stores the identifying fields in `payload`, so the
+          // same table can hold failures from pipelines with different shapes.
+          await insertRecord('failed_orchestrations', {
+            pipeline: 'orchestrator',
+            attempts,
+            lastError: error.message || String(error),
+            payload: { docId, collection, stage: currentStage },
           });
         } catch (dlqErr) {
           // DLQ itself is broken — don't let the failure vanish; escalate loudly.
@@ -151,17 +164,16 @@ export class OrchestratorService {
    * Resumes a paused pipeline (e.g. after S7.5 human review)
    */
   static async resumePipeline(docId: string, collection: keyof typeof COLLECTIONS) {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-    const doc = await docRef.get();
-    if (!doc.exists) throw new Error("Document not found");
+    const row = await getRecord<StatefulRow>(COLLECTIONS[collection], docId);
+    if (!row) throw new Error("Document not found");
 
-    const state = doc.data()?.orchestrationState;
+    const state = row.orchestrationState;
     if (state?.status !== 'waiting_agent_review') {
       throw new Error(`Pipeline is not in a resumeable state: ${state?.status}`);
     }
 
     // Set to processing and continue from current stage
-    await this.updateState(docId, collection, state.stage, 'processing');
+    await this.updateState(docId, collection, state.stage as OrchestrationStage, 'processing');
     return this.runPipeline(docId, collection);
   }
 
@@ -172,30 +184,34 @@ export class OrchestratorService {
     status: 'pending' | 'processing' | 'completed' | 'failed' | 'waiting_agent_review',
     errorMessage?: string
   ) {
-    const docRef = adminDb.collection(COLLECTIONS[collection]).doc(docId);
-
-    const historyEntry = {
-      stage,
-      status,
-      timestamp: Timestamp.now(),
-      engineVersion: '12.0.0-quiet-luxury',
-      error: errorMessage || null
-    };
+    const table = COLLECTIONS[collection];
 
     logger.info(`[ORCHESTRATOR] Updating ${docId} to ${stage} [${status}]`);
 
-    await docRef.set({
+    // Firestore's set({ merge: true }) deep-merged into the nested map, so keys
+    // this call doesn't name survived. PostgREST replaces a JSONB column
+    // wholesale, so read the current object and merge here to keep that.
+    const current = await getRecord<StatefulRow>(table, docId);
+    await updateRecord(table, docId, {
       orchestrationState: {
+        ...(current?.orchestrationState ?? {}),
         stage,
         status,
-        lastTriggeredAt: Timestamp.now(),
+        lastTriggeredAt: new Date().toISOString(),
         engineVersion: '12.0.0-quiet-luxury',
-        error: errorMessage || null
+        error: errorMessage || null,
       },
-    }, { merge: true });
+    });
 
-    // History is an unbounded append log → subcollection, not a parent-doc array
-    // (an arrayUnion would eventually exceed the 1 MB document-size limit).
-    await docRef.collection('orchestrationHistory').add(historyEntry);
+    // History is an unbounded append log → its own table, not a JSONB array on
+    // the parent row, so it can grow without bloating every read of that row.
+    await insertRecord('orchestration_history', {
+      parentTable: table,
+      parentId: docId,
+      stage,
+      status,
+      engineVersion: '12.0.0-quiet-luxury',
+      details: { error: errorMessage ?? null },
+    });
   }
 }

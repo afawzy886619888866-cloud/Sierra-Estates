@@ -1464,9 +1464,6 @@ function AdminApp() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'signout' }),
       });
-      const { auth } = await import('@/lib/firebase');
-      const { signOut } = await import('firebase/auth');
-      await signOut(auth).catch((signOutErr) => console.warn('[AdminPortal] Firebase signOut failed:', signOutErr));
       const { supabase } = await import('@/lib/supabase');
       await supabase.auth.signOut().catch(() => {});
     } catch (e) {

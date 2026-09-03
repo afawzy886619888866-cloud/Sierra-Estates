@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import type { BrokerListing } from '@/lib/models/schema';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { insertRecord, listRecords } from '@sierra-estates/db';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { WhatsAppConversationalService } from '@/lib/services/WhatsAppConversationalService';
@@ -53,7 +50,7 @@ const buildListingDocument = (
   sender: string,
   group: string,
   parsed: any
-): Omit<BrokerListing, 'id'> => {
+) => {
   const isListing = parsed?.isListing === true;
   
   // Use the pre-calculated sierraCode if available, else build it
@@ -72,7 +69,7 @@ const buildListingDocument = (
   return {
     rawMessage,
     sourceGroup: group,
-    sourcePlatform: 'whatsapp',
+    sourcePlatform: 'whatsapp' as const,
     senderInfo: sender,
     extractedData: {
       compound: parsed?.compound,
@@ -101,17 +98,17 @@ const buildListingDocument = (
       sentiment: parsed?.sentiment || 'neutral',
       matchingKeywords: parsed?.matchingKeywords || [],
       parserVersion: 'whatsapp-ingest/v2-unified',
-      lastUpdatedAt: Timestamp.now(),
+      lastUpdatedAt: new Date().toISOString(),
     },
     status: isListing ? 'parsed' : 'new',
     isVerified: false,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     orchestrationState: {
       stage: isListing ? 'S2' : 'S1',
       status: isListing ? 'completed' : 'pending',
       engineVersion: 'whatsapp-ingest/v2-unified',
-      lastTriggeredAt: Timestamp.now() as any,
+      lastTriggeredAt: new Date().toISOString(),
     },
   };
 };
@@ -134,16 +131,15 @@ export async function POST(req: NextRequest) {
     // create duplicate broker_listings and re-run the pipeline. Short-circuit
     // on an exact (sender + message) repeat before spending an AI parse call.
     const dedupeHash = createHash('sha1').update(`${sender}|${rawMessage}`).digest('hex');
-    const existing = await adminDb
-      .collection(COLLECTIONS.brokerListings)
-      .where('dedupeHash', '==', dedupeHash)
-      .limit(1)
-      .get();
-    if (!existing.empty) {
+    const existing = await listRecords<{ id: string }>('broker_listings', {
+      where: [{ column: 'dedupeHash', value: dedupeHash }],
+      limit: 1,
+    });
+    if (existing.length > 0) {
       return NextResponse.json({
         success: true,
         deduped: true,
-        id: existing.docs[0].id,
+        id: existing[0].id,
         orchestration: 'Duplicate ignored',
       });
     }
@@ -181,7 +177,7 @@ export async function POST(req: NextRequest) {
     }
 
     const listing = buildListingDocument(rawMessage, sender, group, parsed);
-    const docRef = await adminDb.collection(COLLECTIONS.brokerListings).add({ ...listing, dedupeHash });
+    const docRef = await insertRecord<{ id: string }>('broker_listings', { ...listing, dedupeHash });
 
     // Dual-Ingestion: Also append to Google Sheets Master Log
     try {

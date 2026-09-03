@@ -1,24 +1,13 @@
 /**
  * SIERRA ESTATES — SYNC ENGINE
- * Property Finder ↔ Firestore synchronization with:
+ * Property Finder ↔ inventory synchronization with:
  * 1. Editorial override protection (manual edits never overwritten)
  * 2. Deduplicate queue for ambiguous matches
  * 3. Conflict resolution tracking
  */
 
-import { db } from '../firebase';
-import {
-  collection,
-  doc,
-  getDoc,
-  updateDoc,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
+import { getRecord, insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
+import type { IsoTimestamp } from '../models/timestamps';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -32,9 +21,9 @@ export interface SyncRecord {
   firestoreData?: Record<string, unknown>;
   conflictFields?: string[];
   resolvedBy?: string;
-  resolvedAt?: Timestamp | null;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  resolvedAt?: IsoTimestamp | null;
+  createdAt?: IsoTimestamp;
+  updatedAt?: IsoTimestamp;
 }
 
 export interface SyncResult {
@@ -50,10 +39,13 @@ export interface SyncResult {
 
 const MATCH_THRESHOLD_HIGH = 90;   // Auto-match
 const MATCH_THRESHOLD_LOW = 50;    // Send to dedup queue
+// Table names. The sync tables were camelCase Firestore collections; the
+// Postgres tables are snake_case, and lib/models/schema.ts carries the same
+// mapping for the rest of the app.
 const COLLECTIONS = {
   listings: 'listings',
-  syncQueue: 'syncQueue',
-  syncLog: 'syncLog',
+  syncQueue: 'sync_queue',
+  syncLog: 'sync_log',
 } as const;
 
 // ─── Matching Logic ──────────────────────────────────────────────────
@@ -166,24 +158,17 @@ export function mergeWithProtection(
  * Add an ambiguous match to the dedup review queue.
  */
 export async function addToDedupeQueue(record: SyncRecord): Promise<string> {
-  const docRef = await addDoc(collection(db, COLLECTIONS.syncQueue), {
-    ...record,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  const created = await insertRecord<{ id: string }>(COLLECTIONS.syncQueue, { ...record });
+  return created.id;
 }
 
 /**
  * Get all pending items in the dedup queue.
  */
 export async function getPendingDedupeItems(): Promise<SyncRecord[]> {
-  const q = query(
-    collection(db, COLLECTIONS.syncQueue),
-    where('status', 'in', ['ambiguous', 'conflict'])
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SyncRecord));
+  return listRecords<SyncRecord>(COLLECTIONS.syncQueue, {
+    where: [{ column: 'status', op: 'in', value: ['ambiguous', 'conflict'] }],
+  });
 }
 
 /**
@@ -195,32 +180,27 @@ export async function resolveDedupeItem(
   resolvedBy: string,
   firestoreDocId?: string
 ): Promise<void> {
-  const queueRef = doc(db, COLLECTIONS.syncQueue, queueId);
-  const queueSnap = await getDoc(queueRef);
-  
-  if (!queueSnap.exists()) {
+  const record = await getRecord<SyncRecord>(COLLECTIONS.syncQueue, queueId);
+
+  if (!record) {
     throw new Error('Queue item not found');
   }
-  
-  const record = queueSnap.data() as SyncRecord;
 
   if (resolution === 'matched' && firestoreDocId) {
     // 1. Resolve as Match — Apply PF data to existing listing
-    const fsRef = doc(db, COLLECTIONS.listings, firestoreDocId);
-    const fsSnap = await getDoc(fsRef);
-    
-    if (fsSnap.exists()) {
-      const fsData = fsSnap.data();
-      const protectedFields = getProtectedFields(fsData);
-      const { merged } = mergeWithProtection(record.pfData as Record<string, unknown>, fsData, protectedFields);
-      await updateDoc(fsRef, {
+    const existing = await getRecord<Record<string, unknown>>(COLLECTIONS.listings, firestoreDocId);
+
+    if (existing) {
+      const protectedFields = getProtectedFields(existing);
+      const { merged } = mergeWithProtection(record.pfData as Record<string, unknown>, existing, protectedFields);
+      await updateRecord(COLLECTIONS.listings, firestoreDocId, {
         ...merged,
         lastSyncAt: new Date().toISOString(),
       });
     }
   } else if (resolution === 'new') {
     // 2. Resolve as New — Create new listing
-    await addDoc(collection(db, COLLECTIONS.listings), {
+    await insertRecord(COLLECTIONS.listings, {
       ...record.pfData,
       syncSource: 'property-finder',
       manualOverrides: [],
@@ -229,12 +209,11 @@ export async function resolveDedupeItem(
   }
 
   // 3. Mark the queue item as resolved
-  await updateDoc(queueRef, {
+  await updateRecord(COLLECTIONS.syncQueue, queueId, {
     status: resolution === 'matched' ? 'resolved' : resolution,
     firestoreDocId: firestoreDocId || record.firestoreDocId || null,
     resolvedBy,
-    resolvedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    resolvedAt: new Date().toISOString(),
   });
 }
 
@@ -294,16 +273,14 @@ export async function syncBatch(
       const refNum = pfData.referenceNumber;
 
       // 1. Try exact match by reference number
-      const exactQuery = query(
-        collection(db, COLLECTIONS.listings),
-        where('referenceNumber', '==', refNum)
+      const exactMatches = await listRecords<Record<string, unknown> & { id: string }>(
+        COLLECTIONS.listings,
+        { where: [{ column: 'referenceNumber', value: refNum }], limit: 1 }
       );
-      const exactSnapshot = await getDocs(exactQuery);
 
-      if (!exactSnapshot.empty) {
+      if (exactMatches.length > 0) {
         // Exact match found — merge with protection
-        const fsDoc = exactSnapshot.docs[0];
-        const fsData = fsDoc.data();
+        const fsData = exactMatches[0];
         const protectedFields = getProtectedFields(fsData);
         const { merged, conflicts } = mergeWithProtection(pfData, fsData, protectedFields);
 
@@ -311,7 +288,7 @@ export async function syncBatch(
           // Has conflicts — add to dedup queue for review
           await addToDedupeQueue({
             pfReferenceNumber: refNum,
-            firestoreDocId: fsDoc.id,
+            firestoreDocId: fsData.id,
             status: 'conflict',
             matchConfidence: 100,
             pfData,
@@ -321,20 +298,20 @@ export async function syncBatch(
           result.dedupeQueue++;
         } else {
           // Clean merge — update directly
-          await updateDoc(doc(db, COLLECTIONS.listings, fsDoc.id), merged as any);
+          await updateRecord(COLLECTIONS.listings, fsData.id, merged as any);
           result.matched++;
         }
         continue;
       }
 
       // 2. No exact match — search for fuzzy matches
-      const allListingsSnapshot = await getDocs(collection(db, COLLECTIONS.listings));
+      const allListings = await listRecords<Record<string, unknown> & { id: string }>(COLLECTIONS.listings);
       let bestMatch: { docId: string; confidence: number; data: Record<string, unknown> } | null = null;
 
-      for (const fsDoc of allListingsSnapshot.docs) {
-        const confidence = calculateMatchConfidence(pfData, fsDoc.data());
+      for (const candidate of allListings) {
+        const confidence = calculateMatchConfidence(pfData, candidate);
         if (!bestMatch || confidence > bestMatch.confidence) {
-          bestMatch = { docId: fsDoc.id, confidence, data: fsDoc.data() };
+          bestMatch = { docId: candidate.id, confidence, data: candidate };
         }
       }
 
@@ -342,7 +319,7 @@ export async function syncBatch(
         // High confidence — auto-merge with protection
         const protectedFields = getProtectedFields(bestMatch.data);
         const { merged } = mergeWithProtection(pfData, bestMatch.data, protectedFields);
-        await updateDoc(doc(db, COLLECTIONS.listings, bestMatch.docId), merged as any);
+        await updateRecord(COLLECTIONS.listings, bestMatch.docId, merged as any);
         result.matched++;
       } else if (bestMatch && bestMatch.confidence >= MATCH_THRESHOLD_LOW) {
         // Medium confidence — send to dedup queue
@@ -357,7 +334,7 @@ export async function syncBatch(
         result.dedupeQueue++;
       } else {
         // No match at all — create new listing
-        await addDoc(collection(db, COLLECTIONS.listings), {
+        await insertRecord(COLLECTIONS.listings, {
           ...pfData,
           syncSource: 'property-finder',
           manualOverrides: [],
@@ -371,9 +348,9 @@ export async function syncBatch(
   }
 
   // Log the sync run
-  await addDoc(collection(db, COLLECTIONS.syncLog), {
+  await insertRecord(COLLECTIONS.syncLog, {
     ...result,
-    timestamp: serverTimestamp(),
+    timestamp: new Date().toISOString(),
   });
 
   return result;

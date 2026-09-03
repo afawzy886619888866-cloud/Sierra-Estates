@@ -11,16 +11,7 @@
  * hardcoded placeholders, not live data. Do not reintroduce that pattern.
  */
 
-import { db } from '../firebase';
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-  getCountFromServer,
-} from 'firebase/firestore';
+import { countRecords, listRecords } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead, type PipelineStage } from '../models/schema';
 import { logger } from '../logger';
 
@@ -47,18 +38,25 @@ const ACTIVE_STAGES: PipelineStage[] = [
 
 export async function getDashboardKPIs(): Promise<DashboardKPIs> {
   try {
-    const [unitsSnap, activeSnap, recentSnap, syncSnap] = await Promise.all([
-      getCountFromServer(collection(db, COLLECTIONS.units)),
-      getCountFromServer(query(collection(db, COLLECTIONS.stakeholders), where('stage', 'in', ACTIVE_STAGES))),
-      getDocs(query(collection(db, COLLECTIONS.stakeholders), orderBy('updatedAt', 'desc'), limit(8))),
-      getDocs(query(collection(db, COLLECTIONS.syncLog), orderBy('createdAt', 'desc'), limit(1))),
+    const [totalUnits, activeLeads, recent, sync] = await Promise.all([
+      countRecords(COLLECTIONS.units),
+      countRecords(COLLECTIONS.stakeholders, [{ column: 'stage', op: 'in', value: ACTIVE_STAGES }]),
+      listRecords(COLLECTIONS.stakeholders, {
+        orderBy: { column: 'updatedAt', ascending: false },
+        limit: 8,
+        select: 'id',
+      }),
+      listRecords<{ status?: string }>(COLLECTIONS.syncLog, {
+        orderBy: { column: 'createdAt', ascending: false },
+        limit: 1,
+      }),
     ]);
 
     return {
-      totalUnits: unitsSnap.data().count,
-      activeLeads: activeSnap.data().count,
-      recentActivityCount: recentSnap.size,
-      syncStatus: syncSnap.empty ? null : (syncSnap.docs[0].data().status as string) ?? null,
+      totalUnits,
+      activeLeads,
+      recentActivityCount: recent.length,
+      syncStatus: sync[0]?.status ?? null,
     };
   } catch (err) {
     logger.error('getDashboardKPIs failed:', err);
@@ -71,8 +69,7 @@ export async function getPipelineStageBreakdown(): Promise<Record<PipelineStage,
   const stages: PipelineStage[] = [...ACTIVE_STAGES, 'closed-won'];
   const counts = await Promise.all(
     stages.map((stage) =>
-      getCountFromServer(query(collection(db, COLLECTIONS.stakeholders), where('stage', '==', stage)))
-        .then((snap) => snap.data().count)
+      countRecords(COLLECTIONS.stakeholders, [{ column: 'stage', value: stage }])
         .catch((err) => {
           logger.error(`getPipelineStageBreakdown failed for stage=${stage}:`, err);
           return 0;
@@ -84,13 +81,19 @@ export async function getPipelineStageBreakdown(): Promise<Record<PipelineStage,
 
 export async function getRecentLeadActivity(max = 8): Promise<RecentLeadActivity[]> {
   try {
-    const snap = await getDocs(
-      query(collection(db, COLLECTIONS.stakeholders), orderBy('updatedAt', 'desc'), limit(max))
+    const rows = await listRecords<Lead & { id: string; fullName?: string }>(
+      COLLECTIONS.stakeholders,
+      { orderBy: { column: 'updatedAt', ascending: false }, limit: max }
     );
-    return snap.docs.map((d) => {
-      const data = d.data() as Lead;
-      return { id: d.id, name: data.name, stage: data.stage, source: data.source, updatedAt: data.updatedAt, budget: data.budget };
-    });
+    // `full_name` is the column; the admin API is what renames it to `name`.
+    return rows.map((data) => ({
+      id: data.id,
+      name: data.fullName ?? data.name,
+      stage: data.stage,
+      source: data.source,
+      updatedAt: data.updatedAt,
+      budget: data.budget,
+    }));
   } catch (err) {
     logger.error('getRecentLeadActivity failed:', err);
     return [];

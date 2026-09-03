@@ -11,7 +11,6 @@ export { OpenMemoryAdapter, openMemoryClient, type OpenMemoryConfig, type OpenMe
 /* Durable persistence — the layer that makes learning survive a cold start. */
 export type { MemoryStore, ExecutionLogQuery } from './stores/types'
 export { InMemoryStore } from './stores/memory-store'
-export { FirestoreMemoryStore, type FirestoreStoreConfig } from './stores/firestore-store'
 export { SupabaseMemoryStore, type SupabaseStoreConfig } from './stores/supabase-store'
 
 /* Learning loop: measured skill selection. */
