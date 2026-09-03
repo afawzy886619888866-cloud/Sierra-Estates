@@ -169,59 +169,18 @@ export default function LoginForm() {
     }
   };
 
-  // ── 4. Google Sign-In (Firebase Popup + Supabase OAuth Fallback) ─────────
+  // ── 4. Google Sign-In (Supabase OAuth) ───────────────────────────────────
+  // This used to open a Firebase popup first and POST the resulting Firebase
+  // ID token to /api/auth, falling back to Supabase OAuth when that failed.
+  // /api/auth verifies Supabase access tokens, so the Firebase leg could only
+  // ever be rejected — it cost the user a popup before the redirect that
+  // actually signs them in.
   const handleGoogleSignIn = async () => {
     setError('');
     setSuccessMsg('');
     setLoading(true);
 
     try {
-      // 1. Check if Firebase Client is available
-      const { isFirebaseClientConfigured, auth } = await import('@/lib/firebase');
-      if (isFirebaseClientConfigured) {
-        try {
-          const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
-          const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({ prompt: 'select_account' });
-          const result = await signInWithPopup(auth, provider);
-          const idToken = await result.user.getIdToken();
-          const googleEmail = result.user.email || '';
-          const googleName = result.user.displayName || '';
-
-          const serverRes = await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              action: 'signin',
-              provider: 'google',
-              token: idToken,
-              email: googleEmail,
-              name: googleName,
-            }),
-          });
-
-          const serverResult = await serverRes.json().catch(() => ({}));
-          if (serverRes.ok && serverResult.ok) {
-            try {
-              sessionStorage.setItem('sierra_admin_auth', 'true');
-              localStorage.setItem('sierra_admin_auth', 'true');
-            } catch (_e) {}
-            router.replace('/admin');
-            router.refresh();
-            return;
-          }
-        } catch (fbErr: any) {
-          const code = fbErr?.code || '';
-          if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-            setLoading(false);
-            return;
-          }
-          console.warn('[LoginForm] Firebase Google sign-in fallback to Supabase:', fbErr?.message);
-        }
-      }
-
-      // 2. Fallback to Supabase OAuth
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
