@@ -1,6 +1,5 @@
  function _optionalChain(ops) { let lastAccessLHS = undefined; let value = ops[0]; let i = 1; while (i < ops.length) { const op = ops[i]; const fn = ops[i + 1]; i += 2; if ((op === 'optionalAccess' || op === 'optionalCall') && value == null) { return undefined; } if (op === 'access' || op === 'optionalAccess') { lastAccessLHS = value; value = fn(value); } else if (op === 'call' || op === 'optionalCall') { value = fn((...args) => value.call(lastAccessLHS, ...args)); lastAccessLHS = undefined; } } return value; }import express from 'express';
-import { FieldValue } from 'firebase-admin/firestore';
-import { getDb } from '../lib/firebase';
+import { assertDbConfigured, insertRecord } from '../lib/db';
 
 /**
  * 01-whatsapp-scraper
@@ -31,19 +30,17 @@ export function startWhatsAppWebhookServer(port = 3000) {
       const lowerMsg = messageBody.toLowerCase();
       const isPropertyLead = lowerMsg.includes('for sale') || lowerMsg.includes('للبيع') || lowerMsg.includes('mivida');
 
-      if (isPropertyLead) {
-        const db = getDb('WhatsApp Scraper');
-        
-        const lead = {
-          sender,
-          originalMessage: messageBody,
+      if (isPropertyLead && assertDbConfigured('WhatsApp Scraper')) {
+        // Mapped onto the broker_listings columns: the raw text is
+        // `raw_message` and the group is `source_platform`; `originalMessage`
+        // and `source` were free-form Firestore fields with no column.
+        await insertRecord('broker_listings', {
+          senderInfo: sender,
+          rawMessage: messageBody,
           status: 'raw',
-          source: 'whatsapp_group',
-          createdAt: FieldValue.serverTimestamp(),
-        };
-
-        // 3. Save to broker_listings collection
-        await db.collection('broker_listings').add(lead);
+          sourcePlatform: 'whatsapp',
+          sourceGroup: 'whatsapp_group',
+        });
         console.log(`[WhatsApp Scraper] Lead captured from ${sender}`);
       }
 
