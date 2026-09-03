@@ -994,6 +994,73 @@ BEGIN
     END IF;
 END $$;
 
+
+-- ─── Automation rules engine (/api/admin/automations) ────────────────────────
+-- Column shapes follow lib/models/automation.ts. The nested structures
+-- (trigger, actions, conditions, stats, action results) stay JSONB rather than
+-- being normalised: they are authored and read as whole documents by the
+-- automation builder UI and the executor, never queried field-by-field.
+CREATE TABLE IF NOT EXISTS public.automation_rules (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    description_ar TEXT DEFAULT '',
+    template_id TEXT,
+    trigger JSONB DEFAULT '{}'::jsonb,
+    actions JSONB DEFAULT '[]'::jsonb,
+    enabled BOOLEAN DEFAULT FALSE,
+    conditions JSONB DEFAULT '{}'::jsonb,
+    execution_settings JSONB DEFAULT '{}'::jsonb,
+    stats JSONB DEFAULT '{}'::jsonb,
+    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    created_by TEXT,
+    updated_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.automation_execution_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    rule_id TEXT REFERENCES public.automation_rules(id) ON DELETE CASCADE,
+    rule_name TEXT,
+    trigger_type TEXT,
+    triggered_by TEXT,
+    triggered_by_object JSONB DEFAULT '{}'::jsonb,
+    status TEXT DEFAULT 'pending',
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    duration_ms INT,
+    action_results JSONB DEFAULT '[]'::jsonb,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_automation_logs_rule ON public.automation_execution_logs(rule_id, started_at DESC);
+
+ALTER TABLE public.automation_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automation_execution_logs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "automation_rules_staff_access" ON public.automation_rules;
+    CREATE POLICY "automation_rules_staff_access" ON public.automation_rules
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Logs are written by the executor under the service role; staff read only.
+    DROP POLICY IF EXISTS "automation_logs_staff_read" ON public.automation_execution_logs;
+    CREATE POLICY "automation_logs_staff_read" ON public.automation_execution_logs
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_automation_rules') THEN
+        CREATE TRIGGER trigger_update_automation_rules BEFORE UPDATE ON public.automation_rules
+            FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+END $$;
+
 -- ------------------------------------------------------------------------------
 -- 14. Vector Search Helper Functions
 -- ------------------------------------------------------------------------------
