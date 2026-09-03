@@ -4,18 +4,7 @@
  * using high-fidelity NLP scoring.
  */
 
-import { db } from '../firebase';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  getDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
-  limit,
-} from 'firebase/firestore';
+import { getRecord, getSupabaseAdmin, listRecords, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead, type Unit } from '../models/schema';
 import { GoogleAIService } from '../server/google-ai';
 import { TelegramAlertService } from './telegram-alert-service';
@@ -32,20 +21,15 @@ export interface MatchResult {
  */
 export async function runMatchingForLead(leadId: string): Promise<MatchResult[]> {
   // 1. Fetch the Lead
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) throw new Error('Lead not found');
-  const lead = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+  const lead = await getRecord<Lead & { fullName?: string }>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error('Lead not found');
 
   // 2. Initial Filtered Search for potential units
   // We don't want to send 1000 listings to AI. We filter by basic criteria first.
-  const unitsQuery = query(
-    collection(db, COLLECTIONS.units),
-    where('status', '==', 'available'),
-    limit(20) // Heuristic limit for AI processing
-  );
-  
-  const unitsSnap = await getDocs(unitsQuery);
-  const candidateUnits = unitsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Unit));
+  const candidateUnits = await listRecords<Unit>(COLLECTIONS.units, {
+    where: [{ column: 'status', value: 'available' }],
+    limit: 20, // Heuristic limit for AI processing
+  });
 
   if (candidateUnits.length === 0) return [];
 
@@ -54,9 +38,14 @@ export async function runMatchingForLead(leadId: string): Promise<MatchResult[]>
   const matches = await scoreMatchesWithAI(lead, candidateUnits);
 
   // 4. Update Lead with new matches
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'aiProfiling.topMatches': matches,
-    'aiProfiling.lastMatchRunAt': serverTimestamp(),
+  // `aiProfiling` is one JSONB column, so the dotted paths become a merge onto
+  // whatever profiling already wrote there.
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    aiProfiling: {
+      ...(lead.aiProfiling ?? {}),
+      topMatches: matches,
+      lastMatchRunAt: new Date().toISOString(),
+    },
   });
 
   // 5. VIP Alerting (Stage 7 Logic)
@@ -65,7 +54,7 @@ export async function runMatchingForLead(leadId: string): Promise<MatchResult[]>
       const unit = candidateUnits.find(u => u.id === match.unitId);
       if (unit) {
         await TelegramAlertService.sendVipMatchAlert({
-          leadName: lead.name,
+          leadName: lead.fullName ?? lead.name,
           propertyTitle: unit.title,
           matchScore: match.matchScore,
           budget: `${lead.budgetMax || lead.budget} EGP`,
@@ -84,18 +73,21 @@ export async function runMatchingForLead(leadId: string): Promise<MatchResult[]>
  * Strategic Synthesis: Identifies the top 50 stakeholders and ranks this asset for them.
  */
 export async function runMatchingForUnit(unitId: string): Promise<void> {
-  const unitSnap = await getDoc(doc(db, COLLECTIONS.units, unitId));
-  if (!unitSnap.exists()) return;
-  const unit = { id: unitSnap.id, ...unitSnap.data() } as Unit;
+  const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
+  if (!unit) return;
 
-  const leadsQuery = query(
-    collection(db, COLLECTIONS.stakeholders),
-    where('orchestrationState.status', '!=', 'archived'),
-    limit(50)
-  );
-  
-  const leadsSnap = await getDocs(leadsQuery);
-  const candidates = leadsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Lead));
+  // `orchestration_state` is a JSONB column, so this filters on a key inside it
+  // and goes through the client directly: the record layer snake_cases column
+  // names, which would corrupt a JSON path. `neq` alone would drop rows where
+  // the key is absent, which Firestore's '!=' also did — `or` keeps them, since
+  // a lead with no orchestration state is not archived.
+  const { data: leadRows, error } = await getSupabaseAdmin()
+    .from(COLLECTIONS.stakeholders)
+    .select('*')
+    .or('orchestration_state->>status.neq.archived,orchestration_state->>status.is.null')
+    .limit(50);
+  if (error) throw new Error(`[supabase:runMatchingForUnit] ${error.message}`);
+  const candidates = (leadRows ?? []) as unknown as Lead[];
 
   for (const lead of candidates) {
     const matches = await scoreMatchesWithAI(lead, [unit]);
@@ -103,9 +95,12 @@ export async function runMatchingForUnit(unitId: string): Promise<void> {
       const currentMatches = lead.aiProfiling?.topMatches || [];
       const updatedMatches = [matches[0], ...currentMatches.filter(m => m.unitId !== unitId)].slice(0, 5);
       
-      await updateDoc(doc(db, COLLECTIONS.stakeholders, lead.id!), {
-        'aiProfiling.topMatches': updatedMatches,
-        'aiProfiling.lastMatchRunAt': serverTimestamp(),
+      await updateRecord(COLLECTIONS.stakeholders, lead.id!, {
+        aiProfiling: {
+          ...(lead.aiProfiling ?? {}),
+          topMatches: updatedMatches,
+          lastMatchRunAt: new Date().toISOString(),
+        },
       });
     }
   }
@@ -217,19 +212,17 @@ function fallbackScoring(lead: Lead, units: Unit[]): MatchResult[] {
  * Generates a concise summary of matches for a lead (Operational Intelligence).
  */
 export async function getMatchSummaryForLead(leadId: string): Promise<string> {
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) return "Stakeholder profile not found.";
-  const lead = leadSnap.data() as Lead;
+  const lead = await getRecord<Lead & { fullName?: string }>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) return "Stakeholder profile not found.";
 
   if (!lead.aiProfiling?.topMatches || lead.aiProfiling.topMatches.length === 0) {
     return "No strategic matches detected. Initialize Neural Matching Engine.";
   }
 
-  let summary = `<b>Matches for ${lead.name}:</b>\n`;
+  let summary = `<b>Matches for ${lead.fullName ?? lead.name}:</b>\n`;
   for (const match of lead.aiProfiling.topMatches) {
-    const unitSnap = await getDoc(doc(db, COLLECTIONS.units, match.unitId));
-    if (unitSnap.exists()) {
-      const unit = unitSnap.data() as Unit;
+    const unit = await getRecord<Unit>(COLLECTIONS.units, match.unitId);
+    if (unit) {
       summary += `💎 ${unit.title} (${match.matchScore}%)\n`;
     }
   }

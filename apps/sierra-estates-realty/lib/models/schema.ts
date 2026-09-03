@@ -856,16 +856,16 @@ export function isPubliclyVisibleListingStatus(status?: string | null): boolean 
 
 export const COLLECTIONS = {
   units: 'listings',        // keeping backward compat with existing 'listings' collection
-  portfolioAssets: 'portfolio_assets',
+  portfolioAssets: 'listings',        // PortfolioAsset is an alias of Unit — same table
   projects: 'projects',
   developers: 'developers',
-  mediaAssets: 'mediaAssets',
+  mediaAssets: 'media_assets',
   stakeholders: 'leads',
   sales: 'sales',
   activities: 'activities',
-  users: 'users',
-  syncQueue: 'syncQueue',
-  syncLog: 'syncLog',
+  users: 'profiles',          // Supabase Auth profile rows
+  syncQueue: 'sync_queue',
+  syncLog: 'sync_log',
   vouchers: 'vouchers',
   proposals: 'proposals',
   brokerListings: 'broker_listings',
@@ -873,10 +873,10 @@ export const COLLECTIONS = {
   intelligence: 'intelligence', // Global Neural Memory
   conciergeSelections: 'concierge_selections', // S8 Curated Portfolios
   strategicPipeline: 'strategic_pipeline',      // S9 Deal Pipeline
-  agentStatus: 'agents',         // operational status reported by workers (n8n, whatsapp-scraper, etc.)
+  agentStatus: 'agents_registry', // operational status reported by workers (n8n, whatsapp-scraper, etc.)
   automationWorkflows: 'workflows', // admin-managed automation toggles, surfaced in /admin
   whatsappNumbers: 'whatsapp_numbers',                 // 4 Twilio senders + their quota state
-  whatsappMessageQueue: 'whatsapp_message_queue',       // every outbound/inbound WhatsApp message
+  whatsappMessageQueue: 'whatsapp_queue',               // every outbound/inbound WhatsApp message
   ownerNegotiations: 'owner_negotiations',              // owner-side buy/sell negotiation threads
   systemConfig: 'system_config',                        // singleton config docs, e.g. system_config/whatsapp_outreach
   owners: 'owners',                       // property owners (keyed by phone), from CRM/PF sync

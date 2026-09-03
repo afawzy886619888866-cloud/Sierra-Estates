@@ -1135,6 +1135,225 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Property Finder sync bookkeeping (lib/services/sync-engine.ts) ──────────
+-- The dedupe review queue: PF listings whose match against our inventory was
+-- ambiguous or conflicting, held for a human to resolve.
+CREATE TABLE IF NOT EXISTS public.sync_queue (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    pf_reference_number TEXT NOT NULL,
+    firestore_doc_id TEXT,   -- historical column name: the matched listing's id
+    status TEXT NOT NULL DEFAULT 'ambiguous'
+        CHECK (status IN ('matched', 'ambiguous', 'new', 'conflict', 'resolved', 'skipped')),
+    match_confidence NUMERIC(5, 2) DEFAULT 0,
+    pf_data JSONB DEFAULT '{}'::jsonb,
+    firestore_data JSONB DEFAULT '{}'::jsonb,
+    conflict_fields TEXT[] DEFAULT ARRAY[]::TEXT[],
+    resolved_by TEXT,
+    resolved_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sync_queue_status ON public.sync_queue(status);
+
+-- One row per sync run, which the admin dashboard reads for sync health.
+CREATE TABLE IF NOT EXISTS public.sync_log (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    total INT DEFAULT 0,
+    matched INT DEFAULT 0,
+    created INT DEFAULT 0,
+    skipped INT DEFAULT 0,
+    dedupe_queue INT DEFAULT 0,
+    errors TEXT[] DEFAULT ARRAY[]::TEXT[],
+    status TEXT,
+    timestamp TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sync_log_created ON public.sync_log(created_at DESC);
+
+-- ─── Incentive vouchers (lib/services/sales-engine.ts) ───────────────────────
+CREATE TABLE IF NOT EXISTS public.vouchers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    code TEXT NOT NULL UNIQUE,
+    type TEXT DEFAULT 'viewing-reward',
+    value NUMERIC(12, 2) DEFAULT 0,
+    currency TEXT DEFAULT 'EGP',
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'redeemed', 'expired', 'void')),
+    conditions TEXT,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_vouchers_lead ON public.vouchers(lead_id);
+
+-- ─── Catalogue reference data (lib/models/schema.ts) ─────────────────────────
+-- Declared in COLLECTIONS and modelled in schema.ts. No route writes them yet;
+-- the tables exist so a COLLECTIONS entry never points at a missing relation.
+CREATE TABLE IF NOT EXISTS public.projects (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT,
+    developer_id TEXT,
+    slug TEXT,
+    location TEXT,
+    city TEXT,
+    governorate TEXT,
+    coordinates JSONB DEFAULT '{}'::jsonb,
+    description TEXT,
+    description_ar TEXT,
+    total_units INT,
+    available_units INT,
+    launch_date TIMESTAMPTZ,
+    delivery_date TIMESTAMPTZ,
+    completion_percent NUMERIC(5, 2),
+    price_range_min NUMERIC(15, 2),
+    price_range_max NUMERIC(15, 2),
+    payment_plan TEXT,
+    logo TEXT,
+    hero_image TEXT,
+    images TEXT[] DEFAULT ARRAY[]::TEXT[],
+    master_plan_url TEXT,
+    brochure_url TEXT,
+    status TEXT DEFAULT 'pre-launch',
+    is_featured BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.developers (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    name_ar TEXT,
+    slug TEXT,
+    description TEXT,
+    description_ar TEXT,
+    founded_year INT,
+    headquarters TEXT,
+    website TEXT,
+    rating NUMERIC(3, 2),
+    total_projects INT,
+    tier TEXT,
+    logo TEXT,
+    cover_image TEXT,
+    contact_email TEXT,
+    contact_phone TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.media_assets (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    filename TEXT NOT NULL,
+    original_filename TEXT,
+    mime_type TEXT,
+    size_bytes BIGINT,
+    storage_path TEXT,
+    download_url TEXT,
+    thumbnail_url TEXT,
+    asset_type TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.sync_queue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sync_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.developers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media_assets ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "sync_queue_staff_access" ON public.sync_queue;
+    CREATE POLICY "sync_queue_staff_access" ON public.sync_queue
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "sync_log_staff_read" ON public.sync_log;
+    CREATE POLICY "sync_log_staff_read" ON public.sync_log
+        FOR SELECT TO authenticated USING (public.is_staff());
+
+    DROP POLICY IF EXISTS "vouchers_staff_access" ON public.vouchers;
+    CREATE POLICY "vouchers_staff_access" ON public.vouchers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "media_assets_staff_access" ON public.media_assets;
+    CREATE POLICY "media_assets_staff_access" ON public.media_assets
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Projects and developers are public catalogue data, like listings:
+    -- anyone may read, only staff may write.
+    DROP POLICY IF EXISTS "projects_public_read" ON public.projects;
+    CREATE POLICY "projects_public_read" ON public.projects
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "projects_staff_write" ON public.projects;
+    CREATE POLICY "projects_staff_write" ON public.projects
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "developers_public_read" ON public.developers;
+    CREATE POLICY "developers_public_read" ON public.developers
+        FOR SELECT USING (TRUE);
+    DROP POLICY IF EXISTS "developers_staff_write" ON public.developers;
+    CREATE POLICY "developers_staff_write" ON public.developers
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- ─── Global neural memory (lib/services/MemoryService.ts) ────────────────────
+-- Cross-deal learning: aggregate patterns keyed by a well-known row id
+-- ('global_patterns'), not per-lead. Per-lead memory lives in leads.intelligence.
+CREATE TABLE IF NOT EXISTS public.intelligence (
+    id TEXT PRIMARY KEY,
+    rejection_stats JSONB DEFAULT '{}'::jsonb,
+    last_trend_update TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.intelligence ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "intelligence_staff_access" ON public.intelligence;
+    CREATE POLICY "intelligence_staff_access" ON public.intelligence
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
+-- Firestore's increment() on the dotted path 'rejectionStats.<category>' was
+-- atomic. A read-modify-write through PostgREST is not, and two rejections
+-- landing together would lose a count, so the whole thing happens in one
+-- statement. jsonb_set with create_if_missing handles a category seen for the
+-- first time; the INSERT ... ON CONFLICT handles the row not existing yet.
+CREATE OR REPLACE FUNCTION public.bump_rejection_stat(p_id TEXT, p_category TEXT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $fn$
+    INSERT INTO public.intelligence (id, rejection_stats, last_trend_update)
+    VALUES (
+        p_id,
+        jsonb_build_object(p_category, 1),
+        TIMEZONE('utc'::text, NOW())
+    )
+    ON CONFLICT (id) DO UPDATE
+       SET rejection_stats = jsonb_set(
+               COALESCE(public.intelligence.rejection_stats, '{}'::jsonb),
+               ARRAY[p_category],
+               to_jsonb(
+                   COALESCE(
+                       (public.intelligence.rejection_stats ->> p_category)::int,
+                       0
+                   ) + 1
+               ),
+               TRUE
+           ),
+           last_trend_update = TIMEZONE('utc'::text, NOW()),
+           updated_at = TIMEZONE('utc'::text, NOW());
+$fn$;
+
+REVOKE ALL ON FUNCTION public.bump_rejection_stat(TEXT, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.bump_rejection_stat(TEXT, TEXT) TO service_role;
+
 -- ─── Closing simulations (lib/services/ClosingSimulator.ts) ──────────────────
 -- Audit trail for each 'what-if' settlement run against a lead/unit pair.
 CREATE TABLE IF NOT EXISTS public.closing_simulations (
