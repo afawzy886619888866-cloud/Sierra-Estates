@@ -699,8 +699,7 @@ export interface Owner extends BaseDocument {
 // ─── Viewing Requests (inbound, pre-confirmation) ────────────────────
 // Distinct from `Viewing` (COLLECTIONS.viewings): this is the raw inbound
 // request from the public site (app/api/viewing-requests); once an agent
-// schedules it, a Viewing doc is created. lib/firebase-config.ts also
-// writes here directly from the client SDK.
+// schedules it, a Viewing row is created.
 
 export type ViewingRequestStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 

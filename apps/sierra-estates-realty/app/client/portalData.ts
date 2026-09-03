@@ -2,10 +2,8 @@
  * Sierra Estates — client portal data + i18n
  * Ported from the owner-approved ui_kits/houzez-portal/data.js + shared.js I18N.
  * The `listings`/`compounds` arrays are the LOCAL FALLBACK; live data is read
- * from Firestore `properties` at runtime (see fetchFeaturedProperties / etc.).
+ * from /api/listings at runtime (see fetchListings).
  */
-import { collection, query, limit as fbLimit, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 export interface Listing {
   id: number | string;
@@ -132,11 +130,14 @@ export function priceLabel(p: Pick<Listing, 'mode' | 'usd' | 'egpM'>): string {
     : 'EGP ' + p.egpM.toFixed(1) + 'M';
 }
 
-/* ── Firestore mapping ──────────────────────────────────────────────────────
-   Reads the live `properties` collection via the client SDK (same pattern as
-   DesktopHome.tsx). Missing / unconfigured Firestore → empty array so callers
-   fall back to FALLBACK_LISTINGS. */
-function mapDoc(id: string, p: Record<string, unknown>): Listing {
+/* ── API mapping ────────────────────────────────────────────────────────────
+   Reads live inventory through the public /api/listings endpoint rather than
+   querying the database from the browser. That endpoint is what applies the
+   moderation filter — a row is public inventory only once staff set
+   publishToClient — so a direct table read here would surface unreviewed
+   submissions. Any failure → empty array, so callers fall back to
+   FALLBACK_LISTINGS. */
+function mapRow(id: string, p: Record<string, unknown>): Listing {
   const num = (v: unknown, d: number): number => (typeof v === 'number' ? v : d);
   const str = (v: unknown, d: string): string => (typeof v === 'string' ? v : d);
   const rawPrice = p.price;
@@ -164,9 +165,16 @@ function mapDoc(id: string, p: Record<string, unknown>): Listing {
 
 export async function fetchListings(max = 24): Promise<Listing[]> {
   try {
-    const snap = await getDocs(query(collection(db, 'listings'), fbLimit(max)));
-    if (snap.empty) return [];
-    return snap.docs.map((d) => mapDoc(d.id, d.data() as Record<string, unknown>));
+    const res = await fetch(`/api/listings?limit=${max}`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const body = (await res.json()) as {
+      success?: boolean;
+      listings?: Array<Record<string, unknown>>;
+    };
+    if (!body.success || !Array.isArray(body.listings)) return [];
+    return body.listings.map((row) =>
+      mapRow(typeof row.id === 'string' ? row.id : String(row.id ?? ''), row)
+    );
   } catch {
     return [];
   }

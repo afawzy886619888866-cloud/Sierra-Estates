@@ -1848,6 +1848,11 @@ ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS agent_name TEXT;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS furnishing_status TEXT;
 -- Map pin coordinates from the Property Finder feed (the client site renders
 -- listings on Leaflet). public.compounds already stores lat/lng this way.
+-- Written by /api/admin/ingest: the landlord-sheet code stamped onto each
+-- ingested unit, and the derived per-sqm price the admin inventory sorts on.
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS sbr_code TEXT;
+ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS price_per_sqm NUMERIC(15, 2);
+
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
 ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
 
