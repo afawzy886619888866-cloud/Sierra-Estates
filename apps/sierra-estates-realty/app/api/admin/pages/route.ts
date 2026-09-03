@@ -16,7 +16,7 @@
  *       testimonials: { title, items: [{quote, author, role, avatar}] },
  *       ...
  *     },
- *     updatedAt: Timestamp,
+ *     updatedAt: timestamptz,
  *     updatedBy: string (uid)
  *   }
  *
@@ -25,8 +25,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { listRecords, insertRecord, updateRecord, type WhereClause } from '@sierra-estates/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -56,15 +55,11 @@ export async function GET(req: NextRequest) {
     const slug = searchParams.get('slug');
     const locale = searchParams.get('locale');
 
-    let query: FirebaseFirestore.Query = adminDb.collection('pages');
-    if (slug) query = query.where('slug', '==', slug);
-    if (locale) query = query.where('locale', '==', locale);
+    const where: WhereClause[] = [];
+    if (slug) where.push({ column: 'slug', value: slug });
+    if (locale) where.push({ column: 'locale', value: locale });
 
-    const snap = await query.get();
-    const pages = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const pages = await listRecords('pages', { where });
 
     return NextResponse.json({ success: true, pages, count: pages.length });
   } catch (err) {
@@ -92,31 +87,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upsert by (slug, locale) — one page per slug per locale
-    const existing = await adminDb
-      .collection('pages')
-      .where('slug', '==', parsed.data.slug)
-      .where('locale', '==', parsed.data.locale)
-      .limit(1)
-      .get();
+    // Upsert by (slug, locale) — one page per slug per locale, which the table
+    // also enforces with a UNIQUE constraint. Read-then-write is kept rather
+    // than a bare upsert so the response can still report created vs updated.
+    const [existing] = await listRecords<{ id: string }>('pages', {
+      where: [
+        { column: 'slug', value: parsed.data.slug },
+        { column: 'locale', value: parsed.data.locale },
+      ],
+      limit: 1,
+    });
 
     const data = {
       ...parsed.data,
-      updatedAt: Timestamp.now(),
+      updatedAt: new Date().toISOString(),
       updatedBy: authResult.uid ?? 'system',
     };
 
-    if (!existing.empty) {
-      const ref = existing.docs[0].ref;
-      await ref.update(data);
-      return NextResponse.json({ success: true, id: ref.id, action: 'updated' });
+    if (existing) {
+      await updateRecord('pages', existing.id, data);
+      return NextResponse.json({ success: true, id: existing.id, action: 'updated' });
     }
 
-    const ref = await adminDb.collection('pages').add({
-      ...data,
-      createdAt: Timestamp.now(),
-    });
-    return NextResponse.json({ success: true, id: ref.id, action: 'created' }, { status: 201 });
+    const created = await insertRecord<{ id: string }>('pages', data);
+    return NextResponse.json({ success: true, id: created.id, action: 'created' }, { status: 201 });
   } catch (err) {
     logger.error('[pages] POST failed:', err);
     return NextResponse.json(

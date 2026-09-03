@@ -650,7 +650,9 @@ CREATE TABLE IF NOT EXISTS public.pages (
     locale TEXT NOT NULL DEFAULT 'en' CHECK (locale IN ('en', 'ar')),
     sections JSONB DEFAULT '{}'::jsonb,
     published BOOLEAN DEFAULT FALSE,
-    updated_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    -- TEXT, not a profiles FK: /api/admin/pages records the literal 'system'
+    -- when a page is saved by a service caller rather than a signed-in user.
+    updated_by TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     UNIQUE (slug, locale)
@@ -754,6 +756,15 @@ CREATE TABLE IF NOT EXISTS public.workflows (
     schedule TEXT,
     definition JSONB DEFAULT '{}'::jsonb,
     last_run_at TIMESTAMPTZ,
+    -- Admin automations board (/api/admin/workflows). The route's payload uses
+    -- `desc`/`descAr`, which are mapped to description/description_ar because
+    -- DESC is a SQL keyword; the API response keeps the original key names.
+    name_ar TEXT,
+    description_ar TEXT,
+    color TEXT DEFAULT '#6366f1',
+    status TEXT DEFAULT 'paused',
+    runs INT DEFAULT 0,
+    last_run_label TEXT DEFAULT 'never',
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
