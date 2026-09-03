@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { listRecords, insertRecord, getRecord, type RecordData } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
+import { TOOL_DEFINITIONS } from '@/lib/mcp/tool-bridge';
 
 const agentCreateSchema = z.object({
   name: z.string().min(1).max(200),
@@ -46,6 +47,26 @@ async function getWhatsappScraperAgent() {
   };
 }
 
+/**
+ * Real status of the Remote MCP Gateway (/api/mcp), providing Claude and remote agent
+ * interoperability across WhatsApp, Stripe, Deals, DocuSign, and Stage-9 Orchestration.
+ */
+function getRemoteMcpGatewayAgent() {
+  return {
+    id: 'remote-mcp-gateway',
+    name: 'Claude & Remote MCP Gateway',
+    desc: 'Streamable-HTTP / OAuth 2.1 MCP server hosting 11 enterprise tools (/api/mcp)',
+    emoji: '⚡',
+    color: '#8b5cf6',
+    status: 'Online',
+    load: 0,
+    tasks: TOOL_DEFINITIONS.size,
+    lastPulse: new Date().toISOString(),
+    lastError: null,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 /** Operational status of background workers (n8n flows, whatsapp-scraper, etc), not in-process agent personas. */
 export async function GET(req: NextRequest) {
   const authResult = await verifyAdminRequest(req);
@@ -57,6 +78,11 @@ export async function GET(req: NextRequest) {
     const rows = await listRecords('agents_registry');
     const agents: Record<string, unknown>[] = rows.map(rowToAgent);
 
+    // 1. Wire Remote MCP Gateway
+    const mcpAgent = getRemoteMcpGatewayAgent();
+    agents.unshift(mcpAgent);
+
+    // 2. Wire WhatsApp Scraper Bot
     const whatsappAgent = await getWhatsappScraperAgent();
     if (whatsappAgent) agents.unshift(whatsappAgent);
 

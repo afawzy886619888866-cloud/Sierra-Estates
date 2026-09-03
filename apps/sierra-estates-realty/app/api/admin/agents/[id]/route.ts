@@ -29,6 +29,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const { id } = await params;
+    if (id === 'remote-mcp-gateway' || id === 'whatsapp-scraper') {
+      return NextResponse.json({ error: `Cannot modify managed system agent '${id}'` }, { status: 400 });
+    }
     const parsed = agentPatchSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
