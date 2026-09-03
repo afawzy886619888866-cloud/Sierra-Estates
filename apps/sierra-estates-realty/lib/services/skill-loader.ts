@@ -3,8 +3,7 @@
  * Real implementations for all Nexus Agent tools.
  */
 
-import { adminDb } from '../server/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { countRecords, getRecord, listRecords, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '../models/schema';
 
 export interface SkillDefinition {
@@ -46,14 +45,16 @@ class SkillRegistry {
       },
       execute: async (args) => {
         try {
-          const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-            .where('name', '>=', args.name)
-            .where('name', '<=', args.name + '\uf8ff')
-            .limit(1).get();
-          if (snap.empty) return `No stakeholder found matching "${args.name}".`;
-          const l = snap.docs[0].data();
+          // Firestore emulated a prefix search with a >= / <= \uf8ff range;
+          // `ilike 'name%'` is the direct equivalent.
+          const rows = await listRecords<any>(COLLECTIONS.stakeholders, {
+            where: [{ column: 'fullName', op: 'ilike', value: `${args.name}%` }],
+            limit: 1,
+          });
+          if (rows.length === 0) return `No stakeholder found matching "${args.name}".`;
+          const l = rows[0];
           return [
-            `👤 Stakeholder: ${l.name}`,
+            `👤 Stakeholder: ${l.fullName ?? l.name}`,
             `📱 Phone: ${l.phone || 'N/A'}`,
             `💰 Budget: ${l.budget || 'N/A'} – ${l.budgetMax || 'N/A'}`,
             `📍 Interests: ${l.aiProfiling?.interests?.join(', ') || 'Not profiled'}`,
@@ -83,16 +84,18 @@ class SkillRegistry {
       },
       execute: async (args) => {
         try {
-          let q = adminDb.collection(COLLECTIONS.units).where('status', '==', 'available');
-          if (args.maxPrice) q = q.where('price', '<=', args.maxPrice) as any;
-          if (args.minPrice) q = q.where('price', '>=', args.minPrice) as any;
-          const snap = await (q as any).limit(5).get();
-          if (snap.empty) return 'No matching properties found for those criteria.';
-          let result = `Found ${snap.size} matching properties:\n\n`;
-          snap.forEach((d: any) => {
-            const u = d.data();
+          const where: Array<{ column: string; op?: any; value: unknown }> = [
+            { column: 'status', value: 'available' },
+          ];
+          if (args.maxPrice) where.push({ column: 'price', op: 'lte', value: args.maxPrice });
+          if (args.minPrice) where.push({ column: 'price', op: 'gte', value: args.minPrice });
+
+          const units = await listRecords<any>(COLLECTIONS.units, { where, limit: 5 });
+          if (units.length === 0) return 'No matching properties found for those criteria.';
+          let result = `Found ${units.length} matching properties:\n\n`;
+          for (const u of units) {
             result += `🏠 ${u.title || u.code} — EGP ${u.price?.toLocaleString()}\n📍 ${u.location || 'N/A'} | ${u.type || 'N/A'}\n\n`;
-          });
+          }
           return result.trim();
         } catch (err: any) {
           return `Error searching properties: ${err.message}`;
@@ -110,15 +113,15 @@ class SkillRegistry {
       execute: async () => {
         try {
           const [units, leads, sales] = await Promise.all([
-            adminDb.collection(COLLECTIONS.units).count().get(),
-            adminDb.collection(COLLECTIONS.stakeholders).count().get(),
-            adminDb.collection(COLLECTIONS.sales).count().get()
+            countRecords(COLLECTIONS.units),
+            countRecords(COLLECTIONS.stakeholders),
+            countRecords(COLLECTIONS.sales)
           ]);
           return [
             `📊 Sierra Estates Live Stats:`,
-            `🏢 Total Units: ${units.data().count}`,
-            `👤 Total Leads: ${leads.data().count}`,
-            `✅ Closed Sales: ${sales.data().count}`
+            `🏢 Total Units: ${units}`,
+            `👤 Total Leads: ${leads}`,
+            `✅ Closed Sales: ${sales}`
           ].join('\n');
         } catch (err: any) {
           return `Error fetching stats: ${err.message}`;
@@ -165,7 +168,7 @@ class SkillRegistry {
         parameters: {
           type: 'object',
           properties: {
-            leadId: { type: 'string', description: 'Firestore document ID of the lead' },
+            leadId: { type: 'string', description: 'Database ID of the lead' },
             stage: { type: 'string', description: 'New stage: S1, S2, S3, S4, S5, S6, S7, S8, S9, S10' }
           },
           required: ['leadId', 'stage']
@@ -173,10 +176,16 @@ class SkillRegistry {
       },
       execute: async (args) => {
         try {
-          await adminDb.collection(COLLECTIONS.stakeholders).doc(args.leadId).update({
-            'orchestrationState.stage': args.stage,
-            'orchestrationState.status': 'active',
-            updatedAt: FieldValue.serverTimestamp()
+          // `orchestrationState` is one JSONB column, so the dotted-path update
+          // becomes a read-merge-write; keys this call doesn't name survive.
+          const existing = await getRecord<any>(COLLECTIONS.stakeholders, args.leadId);
+          if (!existing) return `Lead ${args.leadId} not found.`;
+          await updateRecord(COLLECTIONS.stakeholders, args.leadId, {
+            orchestrationState: {
+              ...(existing.orchestrationState ?? {}),
+              stage: args.stage,
+              status: 'active',
+            },
           });
           return `✅ Lead ${args.leadId} advanced to stage ${args.stage}.`;
         } catch (err: any) {
@@ -193,16 +202,15 @@ class SkillRegistry {
         parameters: {
           type: 'object',
           properties: {
-            unitId: { type: 'string', description: 'Firestore document ID of the unit' }
+            unitId: { type: 'string', description: 'Database ID of the unit' }
           },
           required: ['unitId']
         }
       },
       execute: async (args) => {
         try {
-          const snap = await adminDb.collection(COLLECTIONS.units).doc(args.unitId).get();
-          if (!snap.exists) return `Unit ${args.unitId} not found.`;
-          const u = snap.data()!;
+          const u = await getRecord<any>(COLLECTIONS.units, args.unitId);
+          if (!u) return `Unit ${args.unitId} not found.`;
           const price = u.price || 0;
           const area = u.area || 0;
           const pricePerSqm = area > 0 ? Math.round(price / area) : 0;

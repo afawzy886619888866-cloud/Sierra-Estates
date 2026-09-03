@@ -26,8 +26,16 @@ jest.mock('@/lib/services/WhatsAppStatusService', () => ({
   WhatsAppStatusService: { recordHeartbeat: jest.fn() },
 }));
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: jest.fn() },
+const listRecordsMock = jest.fn();
+const insertRecordMock = jest.fn();
+const rpcMock = jest.fn();
+
+jest.mock('@sierra-estates/db', () => ({
+  listRecords: (...args: unknown[]) => listRecordsMock(...args),
+  insertRecord: (...args: unknown[]) => insertRecordMock(...args),
+  getSupabaseAdmin: () => ({
+    rpc: (...args: unknown[]) => rpcMock(...args),
+  }),
 }));
 
 import { OmnichannelChatService } from '@/lib/services/OmnichannelChatService';
@@ -67,17 +75,12 @@ describe('OmnichannelChatService.handleIncomingMessage — owner negotiation pri
 
     // adminDb.collection(...).where(...).limit(...).get() chain used by
     // resolveInvestmentStakeholder / logChatMessage downstream of the
-    // owner-negotiation check — stub it minimally so the fallthrough path
-    // (which we're not asserting the internals of) doesn't throw.
-    const chain: any = {
-      where: jest.fn(() => chain),
-      limit: jest.fn(() => chain),
-      get: jest.fn(async () => ({ empty: true, docs: [] })),
-      add: jest.fn(async () => ({ id: 'new-stakeholder' })),
-      doc: jest.fn(() => ({ collection: jest.fn(() => chain), update: jest.fn(), set: jest.fn() })),
-    };
-    const { adminDb } = require('@/lib/server/firebase-admin');
-    adminDb.collection.mockReturnValue(chain);
+    // owner-negotiation check — stub the data layer minimally so the
+    // fallthrough path (whose internals we're not asserting) doesn't throw.
+    // No stakeholder matches, so the service creates one and logs the message.
+    listRecordsMock.mockResolvedValue([]);
+    insertRecordMock.mockResolvedValue({ id: 'new-stakeholder' });
+    rpcMock.mockResolvedValue({ error: null });
 
     await OmnichannelChatService.handleIncomingMessage({
       platform: 'whatsapp',

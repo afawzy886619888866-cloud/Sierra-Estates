@@ -4,8 +4,7 @@
  * Strictly manages Investment Stakeholders, the Strategic Pipeline, and Portfolio Assets.
  */
 
-import { adminDb } from '../server/firebase-admin';
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { getSupabaseAdmin, insertRecord, listRecords } from '@sierra-estates/db';
 import { COLLECTIONS, type InvestmentStakeholder } from '../models/schema';
 import { processAgentCommand } from './antigravity-agent';
 import { WhatsAppParserService } from './WhatsAppParserService';
@@ -92,46 +91,26 @@ export class OmnichannelChatService {
   }
 
   /**
-   * Resolves or instantiates an Investment Stakeholder in Firestore.
+   * Resolves or instantiates an Investment Stakeholder.
    */
   private static async resolveInvestmentStakeholder(
     platform: 'whatsapp' | 'telegram' | 'web',
     senderId: string,
     senderName: string
   ): Promise<Partial<InvestmentStakeholder>> {
-    let querySnapshot;
-
-    if (platform === 'telegram') {
-      querySnapshot = await adminDb.collection(COLLECTIONS.stakeholders)
-        .where('automation.telegramId', '==', parseInt(senderId) || 0)
-        .limit(1)
-        .get();
-    } else if (platform === 'whatsapp') {
-      querySnapshot = await adminDb.collection(COLLECTIONS.stakeholders)
-        .where('phone', '==', senderId)
-        .limit(1)
-        .get();
-    } else {
-      querySnapshot = await adminDb.collection(COLLECTIONS.stakeholders)
-        .where('automation.sessionId', '==', senderId)
-        .limit(1)
-        .get();
-    }
-
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as InvestmentStakeholder;
-    }
+    const existing = await this.findStakeholder(platform, senderId);
+    if (existing) return existing;
 
     // Instantiate new Investment Stakeholder in the Strategic Pipeline
     logger.info(`👤 [Omnichannel] Creating new Investment Stakeholder for ${senderName} on ${platform}`);
     const newStakeholder: any = {
-      name: senderName || `Stakeholder-${senderId.substring(0, 6)}`,
+      // `fullName` is the column; the admin API is what maps it back to `name`
+      // for the client. Writing `name` here would be an unknown column and
+      // would also leave full_name (NOT NULL) unset.
+      fullName: senderName || `Stakeholder-${senderId.substring(0, 6)}`,
       phone: platform === 'whatsapp' ? senderId : `GATEWAY:${senderId}`,
       stage: 'inbound',
       source: platform as any,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
       interactionCount: 1,
       automation: {
         botInitiated: true,
@@ -143,8 +122,49 @@ export class OmnichannelChatService {
       }
     };
 
-    const docRef = await adminDb.collection(COLLECTIONS.stakeholders).add(newStakeholder);
-    return { id: docRef.id, ...newStakeholder };
+    const created = await insertRecord<{ id: string }>(COLLECTIONS.stakeholders, newStakeholder);
+    return { ...newStakeholder, id: created.id };
+  }
+
+  /**
+   * Looks the stakeholder up by whichever identifier the platform carries.
+   *
+   * Telegram and web sessions are addressed through keys inside the JSONB
+   * `automation` column, which the record layer cannot express — it snake_cases
+   * whole column names, which would corrupt a JSON path — so those two go
+   * through the client directly. The keys read snake_cased because the record
+   * layer converts payload keys recursively on write.
+   */
+  private static async findStakeholder(
+    platform: 'whatsapp' | 'telegram' | 'web',
+    senderId: string
+  ): Promise<InvestmentStakeholder | null> {
+    if (platform === 'whatsapp') {
+      const rows = await listRecords<InvestmentStakeholder>(COLLECTIONS.stakeholders, {
+        where: [{ column: 'phone', value: senderId }],
+        limit: 1,
+      });
+      return rows[0] ?? null;
+    }
+
+    const path = platform === 'telegram'
+      ? 'automation->>telegram_id'
+      : 'automation->>session_id';
+    const value = platform === 'telegram'
+      ? String(parseInt(senderId) || 0)
+      : senderId;
+
+    const { data, error } = await getSupabaseAdmin()
+      .from(COLLECTIONS.stakeholders)
+      .select('*')
+      .eq(path, value)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`[supabase:findStakeholder ${platform}] ${error.message}`);
+    }
+    return (data as InvestmentStakeholder | null) ?? null;
   }
 
   /**
@@ -168,22 +188,20 @@ export class OmnichannelChatService {
     platform: string
   ) {
     try {
-      await adminDb.collection(COLLECTIONS.stakeholders)
-        .doc(stakeholderId)
-        .collection('messages')
-        .add({
-          sender,
-          text,
-          platform,
-          timestamp: Timestamp.now()
-        });
-
-      // Update basic activity triggers
-      await adminDb.collection(COLLECTIONS.stakeholders).doc(stakeholderId).update({
-        lastContactAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        interactionCount: FieldValue.increment(1) as any
+      await insertRecord('lead_messages', {
+        leadId: stakeholderId,
+        sender,
+        text,
+        platform,
+        timestamp: new Date().toISOString(),
       });
+
+      // Update basic activity triggers. FieldValue.increment() was atomic;
+      // a read-modify-write here would drop a count whenever two messages land
+      // together, so the increment happens inside one SQL statement.
+      const { error } = await getSupabaseAdmin()
+        .rpc('bump_lead_interaction', { p_lead_id: stakeholderId });
+      if (error) throw new Error(error.message);
     } catch (err) {
       logger.error("❌ Failed to log chat message:", err);
     }

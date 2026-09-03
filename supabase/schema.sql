@@ -1114,6 +1114,32 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Lead chat history (lib/services/OmnichannelChatService.ts) ──────────────
+-- Firestore kept this as a `messages` SUBCOLLECTION under each lead so the
+-- transcript could grow past the 1 MB document limit. Postgres has no
+-- subcollections, so it becomes an append-only table with a foreign key.
+CREATE TABLE IF NOT EXISTS public.lead_messages (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    lead_id TEXT NOT NULL REFERENCES public.leads(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL CHECK (sender IN ('user', 'sierra')),
+    text TEXT,
+    platform TEXT,
+    timestamp TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_lead_messages_lead
+    ON public.lead_messages(lead_id, timestamp DESC);
+
+ALTER TABLE public.lead_messages ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "lead_messages_staff_access" ON public.lead_messages;
+    CREATE POLICY "lead_messages_staff_access" ON public.lead_messages
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
+
 -- ─── Orchestration history (lib/orchestration/StateManager.ts) ───────────────
 -- Firestore kept this as an `orchestrationHistory` SUBCOLLECTION under each
 -- pipeline row, so the log could grow without hitting the 1 MB document limit.
@@ -1586,6 +1612,35 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS automation JSONB DEFAULT '{}':
 -- Firestore set this with the dotted path 'orchestrationState.stage'; here the
 -- object is read, merged and written back (see lib/services/viewing-engine.ts).
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS orchestration_state JSONB DEFAULT '{}'::jsonb;
+
+-- Neural memory the Telegram agent accumulates per lead: extracted profile,
+-- negative signals, objections and the scoring matrix
+-- (lib/services/antigravity-agent.ts). Firestore addressed these with dotted
+-- paths and grew the arrays with arrayUnion; here it is one JSONB object that
+-- is read, merged and written back.
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS intelligence JSONB DEFAULT '{}'::jsonb;
+
+-- Omnichannel conversation counters (lib/services/OmnichannelChatService.ts).
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS interaction_count INT DEFAULT 0;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS last_contact_at TIMESTAMPTZ;
+
+-- Firestore's FieldValue.increment() was atomic; a read-modify-write through
+-- PostgREST is not, and two messages arriving together would lose a count.
+-- This does the increment inside a single statement instead.
+CREATE OR REPLACE FUNCTION public.bump_lead_interaction(p_lead_id TEXT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $fn$
+    UPDATE public.leads
+       SET interaction_count = COALESCE(interaction_count, 0) + 1,
+           last_contact_at = TIMEZONE('utc'::text, NOW()),
+           updated_at = TIMEZONE('utc'::text, NOW())
+     WHERE id = p_lead_id;
+$fn$;
+
+REVOKE ALL ON FUNCTION public.bump_lead_interaction(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.bump_lead_interaction(TEXT) TO service_role;
+
 
 -- Non-partial on purpose: the Property Finder webhook upserts on this column,
 -- and Postgres can only infer a PARTIAL unique index for ON CONFLICT when the
