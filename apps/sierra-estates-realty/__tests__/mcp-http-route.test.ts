@@ -5,8 +5,8 @@ describe('Streamable-HTTP MCP Transport Route (/api/mcp)', () => {
   let validToken: string;
 
   beforeAll(() => {
-    // Issue a valid bearer token for tests
-    const token = OAuthStore.issueToken('claude-test-connector', 'mcp:read mcp:tools');
+    // Issue a valid bearer token with write scope for tests
+    const token = OAuthStore.issueToken('claude-test-connector', 'mcp:read mcp:tools mcp:write');
     validToken = token.access_token;
   });
 
