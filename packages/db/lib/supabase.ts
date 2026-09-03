@@ -67,6 +67,19 @@ export function resolveSupabaseServiceRoleKey(): string {
     return key;
 }
 
+export function isSupabaseAdminConfigured(): boolean {
+    return Boolean(
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+    );
+}
+
+export function isSupabaseConfigured(): boolean {
+    return Boolean(
+        (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || process.env.POSTGRES_URL) &&
+            (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY)
+    );
+}
+
 let cachedClient: SupabaseClient | null = null;
 let cachedAdminClient: SupabaseClient | null = null;
 
