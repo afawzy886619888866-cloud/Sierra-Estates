@@ -9,9 +9,44 @@ Context and operational guidelines for Claude Code and AI assistant sessions.
 Sierra Estates is a luxury real-estate (PropTech) platform for the New Cairo market structured as a pnpm + Turborepo monorepo.
 
 - **Frontend**: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript 5 (strict) · Tailwind 4 · Leaflet maps · Custom i18n (en/ar via `lib/I18nContext.tsx`)
-- **Backend & Database**: Firebase (Client SDK 12 + Admin SDK 14: Firestore, Cloud Storage, Authentication) · Cloud Functions
+- **Backend & Database**: migrating Firebase → Supabase. Supabase (Postgres + Auth + RLS) is the target; Firebase (Client SDK 12 + Admin SDK 14: Firestore, Cloud Storage, Authentication) · Cloud Functions is still in place for most paths. See *Migration status* below.
 - **Automations & Agents**: Docker n8n Workflow Engine (`localhost:5678`) · Python API (Docker/Cloud Run) · Multi-agent memory engine (`@sierra-estates/memory-engine` with ECC & Obsidian vault)
 - **Observability**: OpenTelemetry + Arize semantic conventions
+
+---
+
+## 🔄 Migration Status: Firebase → Supabase
+
+Supabase is the target for both database and auth. The code has **not** fully moved
+— treat any claim that it has as out of date and check before relying on it.
+
+| Area | State |
+| :--- | :--- |
+| Listings reads | `readListings()` tries Supabase first, then falls back to Firestore, then Sheet → snapshot → seed |
+| Listings writes | Still Firestore (`houyez_listings` + `listings`) |
+| Auth | **Supabase Auth is the target.** `lib/AuthContext.tsx` uses `supabase.auth`; `apps/sierra-estates-realty/lib/auth.ts` and `/api/auth` are still Firebase and are legacy |
+| Everything else | Firebase (leads, contracts, cron, webhooks, memory-engine) |
+
+**Schema files.** `supabase/schema.sql` is authoritative — it is what
+`scripts/migrate-data-to-supabase.ts` tells operators to run, and it defines
+`profiles`/`listings`/`leads`/`deals`/`proposals`/`viewing_appointments`/
+`whatsapp_queue`/`unified_memory`/`agent_executions`/`system_metrics` plus RLS.
+The root `schema.sql` is an older, narrower 8-table version; `scripts/setup-supabase.sh`
+also references an `infra/schema.sql` that does not exist. Consolidate before
+relying on either.
+
+**Supabase clients.** Credential resolution lives once in `packages/db/lib/supabase.ts`.
+`apps/sierra-estates-realty/lib/supabase.ts` and root `lib/supabase.ts` are thin
+wrappers over it. Rules: the URL and anon key fall back to placeholders only
+outside production and throw in production; the **service-role key never falls
+back to anything** — `getSupabaseAdmin()` throws when it is missing, because a
+silent downgrade to the anon key turns "not authorized" into "no data". Browser
+clients are built lazily so those guards do not fire during `next build`.
+
+**RLS.** Staff-only tables are gated behind `public.is_staff()`, role changes on
+`profiles` behind `public.is_admin()`. Both are `SECURITY DEFINER` with a pinned
+`search_path`. Never reintroduce `FOR ALL TO authenticated USING (TRUE)` — sign-ups
+default to role `client`, so that grants every registered customer full access.
 
 ---
 
@@ -93,6 +128,7 @@ Workers — long-running/heavy workloads (isolated from Next.js request loop)
   - *Service + Token*: `admin/ingest`
   - *Webhook Secret*: `telegram/webhook`, `whatsapp/webhook`, `ingest/whatsapp`
   - *Public*: `listings`, `leads`, `leads/request-viewing`, `closer/initiate`, `concierge/[leadId]`
+  - *Public + moderated*: `listings/submit` — unauthenticated by design (owners submit without an account). Writes `status: 'Pending Review'`, `verified: false`, `publishToClient: false`; `/api/listings` filters those out of both response modes, so a submission is never public inventory until staff clear it.
 
 ---
 

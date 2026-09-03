@@ -1,40 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import {
+    createLazyBrowserClient,
+    getSupabaseAdmin as getSharedSupabaseAdmin,
+} from '@sierra-estates/db';
 
-// Automatically resolve from standard Vercel Supabase Integration or local env
-const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.SUPABASE_URL ||
-    process.env.POSTGRES_URL ||
-    'https://placeholder-project.supabase.co';
+/**
+ * Root Supabase client (used by lib/AuthContext.tsx).
+ *
+ * Credential resolution lives in @sierra-estates/db so the guards exist once.
+ * This file previously carried a third copy of that logic, including the
+ * service-role-to-anon fallback.
+ */
 
-const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    'placeholder-anon-key';
+/** Browser client — built on first use, session persisted across reloads. */
+export const supabase = createLazyBrowserClient();
 
-// Browser / Client-side Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-    },
-});
-
-// Admin / Server-side client using Service Role Key (bypasses RLS)
-export const getSupabaseAdmin = () => {
-    const serviceRoleKey =
-        process.env.SUPABASE_SERVICE_ROLE_KEY ||
-        process.env.SUPABASE_SERVICE_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.SUPABASE_ANON_KEY ||
-        'placeholder-key';
-
-    return createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        },
-    });
-};
+/** Server-side client using the service-role key (bypasses RLS). */
+export const getSupabaseAdmin = getSharedSupabaseAdmin;
 
 export default supabase;

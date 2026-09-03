@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { getRecord, insertRecord, updateRecord, upsertRecord } from '@sierra-estates/db';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
+
+/**
+ * CRM spreadsheet import (Property Finder export rows) → public.listings.
+ *
+ * The sha256 dedupe fingerprint is the listing's primary key, exactly as it was
+ * the Firestore document id, so re-importing the same row still updates rather
+ * than duplicates.
+ *
+ * Firestore → Postgres field mapping. Every field is preserved; those with a
+ * canonical column are written there rather than duplicated:
+ *   currency → price_currency     area   → area_sqm
+ *   status   → status, with 'available' written as 'active' (the value the
+ *              public listings read filters on) and the original kept in
+ *              raw_data.crmStatus so the translation is reversible.
+ */
 
 export async function POST(request: NextRequest) {
   const auth = await verifyRequest(request);
@@ -36,8 +49,7 @@ export async function POST(request: NextRequest) {
       const rawTokenSignature = `${location}-${spaceBua}-${codeField}-${ownerField}`.toLowerCase().trim();
       const computedSyncHash = crypto.createHash('sha256').update(rawTokenSignature).digest('hex');
 
-      const propertyRef = adminDb.collection(COLLECTIONS.units).doc(computedSyncHash);
-      const existingSnap = await propertyRef.get();
+      const existing = await getRecord('listings', computedSyncHash);
 
       // SBR uniform tracking code: Prefix-Rooms[Furnish]-Price
       const compPrefix = location.substring(0, 3).toUpperCase();
@@ -53,7 +65,8 @@ export async function POST(request: NextRequest) {
           : `${(parsedPrice / 1000).toFixed(0)}K`;
       const sbrUniformCode = `${compPrefix}-${row.BedRooms || '3'}${furnishTag}-${priceAbbrev}`;
 
-      const now = Timestamp.now();
+      const now = new Date().toISOString();
+      const crmStatus = String(row.Availability || '').toUpperCase() === 'RESALE' ? 'available' : 'rented';
 
       const unitPayload = {
         id: computedSyncHash,
@@ -62,44 +75,48 @@ export async function POST(request: NextRequest) {
         compound: location,
         title: row.Name || `Luxury Property in ${location}`,
         price: parsedPrice,
-        currency: 'EGP',
-        status: String(row.Availability || '').toUpperCase() === 'RESALE' ? 'available' : 'rented',
+        priceCurrency: 'EGP',
+        status: crmStatus === 'available' ? 'active' : 'rented',
         bedrooms: parseInt(String(row.BedRooms || '3')),
-        area: parseFloat(spaceBua),
+        areaSqm: parseFloat(spaceBua),
         furnishingStatus: furnishTag,
         syncHash: computedSyncHash,
         propertyType: String(row.PropertyType || 'apartment').toLowerCase(),
         ownerPhone: cleanMobileId,
         agentName: row.AgentName || 'Ahmed Fawzy',
         syncSource: 'crm-pf-import',
+        rawData: { crmStatus },
         updatedAt: now,
       };
 
-      if (existingSnap.exists) {
-        await propertyRef.update({ price: unitPayload.price, updatedAt: now });
+      if (existing) {
+        await updateRecord('listings', computedSyncHash, { price: unitPayload.price, updatedAt: now });
         migrationSummaryLogs.push({ sync_hash: computedSyncHash, state: 'DEDUPLICATION_PRICE_UPDATED' });
       } else {
-        await propertyRef.set({ ...unitPayload, createdAt: now });
+        await insertRecord('listings', { ...unitPayload, createdAt: now });
 
-        // Upsert owner record
+        // Upsert owner record — keyed on the phone, which was the document id
+        // in Firestore and is the natural key (primary_mobile) in Postgres.
         if (cleanMobileId) {
-          await adminDb.collection('owners').doc(cleanMobileId).set(
+          await upsertRecord(
+            'owners',
             {
               ownerName: ownerField,
               primaryMobile: cleanMobileId,
               lastSyncAt: now,
             },
-            { merge: true },
+            'primary_mobile',
           );
         }
 
         migrationSummaryLogs.push({ sync_hash: computedSyncHash, state: 'NEW_RECORD_COMMITTED' });
       }
 
-      // Short-lived 7-day TTL buffer log
+      // Short-lived 7-day TTL buffer log. Firestore expired these itself; in
+      // Postgres expire_at is recorded but nothing reaps it yet.
       const sessionLogId = `LOG-BUF-${computedSyncHash}-${Date.now()}`;
-      const expiresAt = Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      await adminDb.collection('SessionBufferLogs').doc(sessionLogId).set({
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      await insertRecord('session_buffer_logs', {
         id: sessionLogId,
         targetSyncHash: computedSyncHash,
         eventType: 'SPREADSHEET_ROW_INGESTION',
