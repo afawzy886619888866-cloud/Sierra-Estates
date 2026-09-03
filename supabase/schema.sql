@@ -1114,6 +1114,36 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Orchestration history (lib/orchestration/StateManager.ts) ───────────────
+-- Firestore kept this as an `orchestrationHistory` SUBCOLLECTION under each
+-- pipeline row, so the log could grow without hitting the 1 MB document limit.
+-- Postgres has no subcollections, so it becomes an append-only table keyed by
+-- (parent table, parent id) — the pipeline runs over more than one table
+-- (`leads` and `broker_listings` today), hence the table name is a column
+-- rather than a foreign key.
+CREATE TABLE IF NOT EXISTS public.orchestration_history (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    parent_table TEXT NOT NULL,
+    parent_id TEXT NOT NULL,
+    stage TEXT NOT NULL,
+    status TEXT NOT NULL,
+    engine_version TEXT,
+    details JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_orchestration_history_parent
+    ON public.orchestration_history(parent_table, parent_id, created_at DESC);
+
+ALTER TABLE public.orchestration_history ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "orchestration_history_staff_read" ON public.orchestration_history;
+    CREATE POLICY "orchestration_history_staff_read" ON public.orchestration_history
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.whatsapp_numbers (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     label TEXT,

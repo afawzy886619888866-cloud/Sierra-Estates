@@ -99,10 +99,15 @@ export class NexusAgent {
     // `automation` is a JSONB column, so this filters on a key inside it.
     // The record layer snake_cases column names, which would corrupt a JSON
     // path, so this one query goes through the client directly.
+    //
+    // The key is `telegram_id`, not `telegramId`: the record layer converts
+    // keys *recursively*, so a payload written as `{ telegramId }` is stored
+    // snake_cased and only converted back on read. A raw path filter sees the
+    // stored form.
     const { data, error } = await getSupabaseAdmin()
       .from(COLLECTIONS.stakeholders)
       .select('*')
-      .eq('automation->>telegramId', String(chatId))
+      .eq('automation->>telegram_id', String(chatId))
       .limit(1)
       .maybeSingle();
 
