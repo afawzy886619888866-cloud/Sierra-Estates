@@ -11,6 +11,8 @@ import {
   resolveSupabaseUrl,
   resolveSupabaseAnonKey,
   resolveSupabaseServiceRoleKey,
+  isSupabaseAdminConfigured,
+  isSupabaseConfigured,
 } from '@sierra-estates/db';
 
 const ENV_KEYS = [
@@ -93,5 +95,37 @@ describe('resolveSupabaseAnonKey', () => {
   it('allows the placeholder locally', () => {
     setEnv('NODE_ENV', 'development');
     expect(resolveSupabaseAnonKey()).toBe('placeholder-anon-key');
+  });
+});
+
+describe('isSupabaseAdminConfigured', () => {
+  it('returns false when no service key is set', () => {
+    setEnv('SUPABASE_SERVICE_ROLE_KEY', undefined);
+    setEnv('SUPABASE_SERVICE_KEY', undefined);
+    expect(isSupabaseAdminConfigured()).toBe(false);
+  });
+
+  it('returns true when service role key is set', () => {
+    setEnv('SUPABASE_SERVICE_ROLE_KEY', 'secret-service-role');
+    expect(isSupabaseAdminConfigured()).toBe(true);
+  });
+
+  it('returns true when legacy service key is set', () => {
+    setEnv('SUPABASE_SERVICE_KEY', 'legacy-key');
+    expect(isSupabaseAdminConfigured()).toBe(true);
+  });
+});
+
+describe('isSupabaseConfigured', () => {
+  it('returns false when url or anon key is missing', () => {
+    setEnv('NEXT_PUBLIC_SUPABASE_URL', undefined);
+    setEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', undefined);
+    expect(isSupabaseConfigured()).toBe(false);
+  });
+
+  it('returns true when url and anon key are both provided', () => {
+    setEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://proj.supabase.co');
+    setEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key-123');
+    expect(isSupabaseConfigured()).toBe(true);
   });
 });
