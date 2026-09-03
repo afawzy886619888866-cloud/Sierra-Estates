@@ -66,6 +66,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
+    if (id === 'remote-mcp-gateway' || id === 'whatsapp-scraper') {
+      return NextResponse.json({ error: `Cannot delete managed system agent '${id}'` }, { status: 400 });
+    }
     await deleteRecord('agents_registry', id);
     return NextResponse.json({ success: true });
   } catch (err) {
