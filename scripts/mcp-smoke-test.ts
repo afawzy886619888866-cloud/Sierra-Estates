@@ -36,16 +36,20 @@ async function runSmokeTest() {
     console.log('1. Checking OAuth 2.1 Authorization Server Metadata...');
     const authMetaRes = await fetch(`${BASE_URL}/.well-known/oauth-authorization-server`);
     assert(authMetaRes.status === 200, 'OAuth Auth Server Metadata', `Status ${authMetaRes.status}`);
-    const authMeta = await authMetaRes.json();
-    assert(!!authMeta.token_endpoint, 'Token Endpoint Advertised', 'Missing token_endpoint in metadata');
-    assert(!!authMeta.authorization_endpoint, 'Auth Endpoint Advertised', 'Missing authorization_endpoint');
+    if (authMetaRes.status === 200) {
+      const authMeta = await authMetaRes.json();
+      assert(!!authMeta.token_endpoint, 'Token Endpoint Advertised', 'Missing token_endpoint in metadata');
+      assert(!!authMeta.authorization_endpoint, 'Auth Endpoint Advertised', 'Missing authorization_endpoint');
+    }
 
     // 2. Probe Protected Resource Metadata (RFC 9728)
     console.log('\n2. Checking OAuth Protected Resource Metadata...');
     const resMetaRes = await fetch(`${BASE_URL}/.well-known/oauth-protected-resource`);
     assert(resMetaRes.status === 200, 'Protected Resource Metadata', `Status ${resMetaRes.status}`);
-    const resMeta = await resMetaRes.json();
-    assert(Array.isArray(resMeta.authorization_servers), 'Resource Auth Servers Array', 'Missing authorization_servers');
+    if (resMetaRes.status === 200) {
+      const resMeta = await resMetaRes.json();
+      assert(Array.isArray(resMeta.authorization_servers), 'Resource Auth Servers Array', 'Missing authorization_servers');
+    }
 
     // 3. Dynamic Client Registration (RFC 7591)
     console.log('\n3. Testing RFC 7591 Dynamic Client Registration...');
