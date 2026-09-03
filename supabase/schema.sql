@@ -1277,10 +1277,36 @@ CREATE TABLE IF NOT EXISTS public.system_status (
     last_error TEXT,
     last_command TEXT,
     last_command_at TIMESTAMPTZ,
+    -- Set by /api/admin/bots alongside last_command.
+    last_command_by TEXT,
+    last_config_update TIMESTAMPTZ,
+    last_config_updated_by TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    logs JSONB DEFAULT '[]'::jsonb,
     config JSONB DEFAULT '{}'::jsonb,   -- { interval, enabled }
     stats JSONB DEFAULT '{}'::jsonb,    -- { processedToday, errorsToday }
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Per-bot operator configuration, keyed by bot id. Kept separate from
+-- system_status because status is heartbeat data written by the bots while
+-- this is authored by admins in /api/admin/bots.
+CREATE TABLE IF NOT EXISTS public.bot_configs (
+    id TEXT PRIMARY KEY,
+    config JSONB DEFAULT '{}'::jsonb,
+    updated_by TEXT,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.bot_configs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "bot_configs_staff_access" ON public.bot_configs;
+    CREATE POLICY "bot_configs_staff_access" ON public.bot_configs
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_sales_created ON public.sales(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_sales_agent ON public.sales(agent_id);
