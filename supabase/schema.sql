@@ -1135,6 +1135,60 @@ BEGIN
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
+-- ─── Automation worker tables (apps/automations) ─────────────────────────────
+-- The n8n-style workers run outside the Vercel build and write here directly.
+-- `communications` is the outbound-message log shared by 03-owner-contact and
+-- 04-email-sender; it is distinct from whatsapp_queue, which is the dispatcher's
+-- work queue rather than a record of what was sent.
+CREATE TABLE IF NOT EXISTS public.communications (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    target_phone TEXT,
+    target_email TEXT,
+    direction TEXT DEFAULT 'outbound' CHECK (direction IN ('inbound', 'outbound')),
+    type TEXT DEFAULT 'whatsapp' CHECK (type IN ('whatsapp', 'email', 'sms', 'telegram', 'call')),
+    subject TEXT,
+    message TEXT,
+    context JSONB DEFAULT '{}'::jsonb,
+    campaign_id TEXT,
+    status TEXT DEFAULT 'sent' CHECK (status IN ('queued', 'sent', 'delivered', 'read', 'failed')),
+    sent_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()),
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_communications_target
+    ON public.communications(target_phone, sent_at DESC);
+
+-- The agent exchange bus (packages/exchange). Workers post progress events
+-- here; nothing reads them synchronously, so this is telemetry, not a queue.
+CREATE TABLE IF NOT EXISTS public.exchange (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    type TEXT NOT NULL,
+    source TEXT DEFAULT 'workflow',
+    status TEXT DEFAULT 'pending'
+        CHECK (status IN ('pending', 'running', 'done', 'error', 'cancelled')),
+    step_name TEXT,
+    progress INT DEFAULT 0,
+    payload JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_exchange_created ON public.exchange(created_at DESC);
+
+ALTER TABLE public.communications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exchange ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "communications_staff_access" ON public.communications;
+    CREATE POLICY "communications_staff_access" ON public.communications
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    DROP POLICY IF EXISTS "exchange_staff_read" ON public.exchange;
+    CREATE POLICY "exchange_staff_read" ON public.exchange
+        FOR SELECT TO authenticated USING (public.is_staff());
+END $$;
+
 -- ─── Memory engine durable store (packages/memory-engine) ────────────────────
 -- SupabaseMemoryStore keys agent profiles and per-agent context snapshots by
 -- (agent_id, key) in unified_memory and upserts on them. Without a unique
