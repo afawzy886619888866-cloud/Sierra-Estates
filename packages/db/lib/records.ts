@@ -219,6 +219,34 @@ export async function upsertRecord<T = RecordData>(
     return toRecord<T>(data);
 }
 
+/**
+ * Upsert many rows in one round trip.
+ *
+ * Firestore callers chunked these into batches because a WriteBatch caps at 500
+ * operations. Postgres has no such cap, but a very large payload still has to
+ * fit in one request body, so the rows are sent in chunks — larger than the
+ * Firestore limit, and each chunk is a single atomic statement.
+ */
+export async function upsertRecords<T = RecordData>(
+    table: string,
+    rows: RecordData[],
+    onConflict = 'id',
+    chunkSize = 500
+): Promise<T[]> {
+    const out: T[] = [];
+    for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize).map((row) => toColumns(row));
+        const { data, error } = await client()
+            .from(table)
+            .upsert(chunk, { onConflict })
+            .select();
+
+        raise(`upsert ${table} [${i}..${i + chunk.length})`, error);
+        for (const row of data ?? []) out.push(toRecord<T>(row));
+    }
+    return out;
+}
+
 export async function deleteRecord(
     table: string,
     id: string,
