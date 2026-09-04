@@ -3,9 +3,10 @@
 /** Port of deploy/properties.html. */
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Building } from 'lucide-react';
+import { Building, Radar, Grid } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
+import ListingNetMap from '@/components/site/ListingNetMap';
 import { useSite } from '@/lib/site/SiteContext';
 import { useReveal } from '@/lib/site/useReveal';
 import { HZDATA } from '@/lib/site/data';
@@ -13,6 +14,7 @@ import { HZDATA } from '@/lib/site/data';
 type TypeFilter = 'all' | 'Villa' | 'Apartment' | 'Town' | 'Pent';
 type ModeFilter = 'all' | 'sale' | 'rent';
 type SortBy = 'ai' | 'price-asc' | 'price-desc' | 'area-desc';
+type ViewMode = 'radar' | 'catalog';
 
 const TYPE_CHIPS: { v: TypeFilter; k: string }[] = [
   { v: 'all', k: 'filterAll' },
@@ -42,6 +44,7 @@ export default function PropertiesPage() {
   const [fCompound, setFCompound] = useState<string>('');
   const [fSegment, setFSegment] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('ai');
+  const [viewMode, setViewMode] = useState<ViewMode>('radar');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -49,11 +52,13 @@ export default function PropertiesPage() {
     const type = params.get('type');
     const compound = params.get('compound');
     const segment = params.get('segment');
+    const view = params.get('view');
 
     if (mode === 'sale' || mode === 'rent') setFMode(mode);
     if (type === 'Villa' || type === 'Apartment' || type === 'Town' || type === 'Pent') setFType(type);
     if (compound) setFCompound(compound);
     if (segment) setFSegment(segment);
+    if (view === 'catalog') setViewMode('catalog');
   }, []);
 
   const listings: CardListing[] = useMemo(() => {
@@ -172,19 +177,71 @@ export default function PropertiesPage() {
             </div>
           )}
 
-          <div className="toolbar rv">
-            <div className="chip-group" id="type-chips">
-              {TYPE_CHIPS.map((c) => (
-                <button
-                  key={c.v}
-                  type="button"
-                  className={`chip${fType === c.v ? ' on' : ''}`}
-                  onClick={() => setFType(c.v)}
-                >
-                  {t(c.k)}
-                </button>
-              ))}
-            </div>
+          {/* Radar Net View vs Catalog Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('radar')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 18px',
+                borderRadius: 12,
+                fontSize: 13,
+                fontWeight: 700,
+                border: viewMode === 'radar' ? '1px solid #c99436' : '1px solid rgba(255,255,255,0.15)',
+                background: viewMode === 'radar' ? 'linear-gradient(135deg, #002b4b, #00192e)' : 'rgba(255,255,255,0.05)',
+                color: viewMode === 'radar' ? '#e9c176' : 'rgba(255,255,255,0.7)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: viewMode === 'radar' ? '0 4px 14px rgba(201, 148, 54, 0.2)' : 'none',
+              }}
+            >
+              <Radar size={16} />
+              <span>رادار شبكة الوحدات والخريطة (Listing Net & Map)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode('catalog')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 18px',
+                borderRadius: 12,
+                fontSize: 13,
+                fontWeight: 700,
+                border: viewMode === 'catalog' ? '1px solid #0284c7' : '1px solid rgba(255,255,255,0.15)',
+                background: viewMode === 'catalog' ? 'linear-gradient(135deg, #002b4b, #00192e)' : 'rgba(255,255,255,0.05)',
+                color: viewMode === 'catalog' ? '#38bdf8' : 'rgba(255,255,255,0.7)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Grid size={16} />
+              <span>القائمة الكلاسيكية (Classic Catalog)</span>
+            </button>
+          </div>
+
+          {viewMode === 'radar' ? (
+            <ListingNetMap />
+          ) : (
+            <>
+              <div className="toolbar rv">
+                <div className="chip-group" id="type-chips">
+                  {TYPE_CHIPS.map((c) => (
+                    <button
+                      key={c.v}
+                      type="button"
+                      className={`chip${fType === c.v ? ' on' : ''}`}
+                      onClick={() => setFType(c.v)}
+                    >
+                      {t(c.k)}
+                    </button>
+                  ))}
+                </div>
 
             <span className="chip-sep" />
 
@@ -241,6 +298,8 @@ export default function PropertiesPage() {
               </button>
             </div>
           )}
+          </>
+        )}
         </div>
       </section>
     </SiteShell>

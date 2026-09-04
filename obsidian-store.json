@@ -91,17 +91,17 @@
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:30.949Z",
-    "updatedAt": "2026-09-04T16:20:31.125Z"
+    "updatedAt": "2026-09-04T16:58:37.183Z"
   },
   "Debug Workflow-initial-context": {
     "id": "Debug Workflow-initial-context",
-    "value": "Fix CORS issue in API",
+    "value": "Fix Vercel 429 Deployment Collision",
     "tags": [
       "shared-knowledge",
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:30.962Z",
-    "updatedAt": "2026-09-04T16:20:30.962Z"
+    "updatedAt": "2026-09-04T16:58:37.008Z"
   },
   "agent-task-penetration-tester-1788538830959": {
     "id": "agent-task-penetration-tester-1788538830959",
@@ -153,7 +153,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:30.997Z",
-    "updatedAt": "2026-09-04T16:20:31.193Z"
+    "updatedAt": "2026-09-04T16:58:37.215Z"
   },
   "agent-task-product-manager-1788538831000": {
     "id": "agent-task-product-manager-1788538831000",
@@ -205,7 +205,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:31.098Z",
-    "updatedAt": "2026-09-04T16:20:31.098Z"
+    "updatedAt": "2026-09-04T16:58:37.160Z"
   },
   "agent-task-project-planner-1788538831107": {
     "id": "agent-task-project-planner-1788538831107",
@@ -271,7 +271,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:31.146Z",
-    "updatedAt": "2026-09-04T16:20:31.146Z"
+    "updatedAt": "2026-09-04T16:58:37.199Z"
   },
   "agent-task-quality-inspector-1788538831151": {
     "id": "agent-task-quality-inspector-1788538831151",
@@ -393,7 +393,7 @@
       "pipeline-context"
     ],
     "createdAt": "2026-09-04T16:20:31.543Z",
-    "updatedAt": "2026-09-04T16:20:31.543Z"
+    "updatedAt": "2026-09-04T16:58:37.236Z"
   },
   "agent-task-orchestrator-1788538831547": {
     "id": "agent-task-orchestrator-1788538831547",
@@ -487,5 +487,1202 @@
     ],
     "createdAt": "2026-09-04T16:20:33.234Z",
     "updatedAt": "2026-09-04T16:20:33.234Z"
+  },
+  "availability_batch_sessions": {
+    "id": "availability_batch_sessions",
+    "value": {
+      "_meta": {
+        "author": "system"
+      },
+      "data": {
+        "req-net-1788541122995-2dsit": {
+          "id": "req-net-1788541122995-2dsit",
+          "clientName": "Hany Ramzy",
+          "clientPhone": "+201088776655",
+          "createdAt": 1788541122995,
+          "expiresAt": 1788544722995,
+          "status": "active",
+          "units": [
+            {
+              "unitId": "INV-MEM-0001",
+              "unitCode": "MI-S-4F-38M+G+P",
+              "compound": "Mivida",
+              "propertyType": "Standalone Villa",
+              "operation": "sale",
+              "priceLabel": "38,000,000 EGP",
+              "price": 38000000,
+              "contactPhone": "+201001234567",
+              "contactName": "Property Representative",
+              "ownerType": "broker",
+              "status": "available",
+              "sentAt": 1788541122995,
+              "expiresAt": 1788544722995,
+              "photoUrls": [
+                "https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=800&q=80"
+              ]
+            }
+          ],
+          "viewingProposed": false,
+          "viewingScheduled": true,
+          "scheduledViewingId": "viewing-1788541123020-bwnz"
+        }
+      }
+    },
+    "tags": [
+      "shared",
+      "system",
+      "availability",
+      "radar-net"
+    ],
+    "createdAt": "2026-09-04T16:56:13.488Z",
+    "updatedAt": "2026-09-04T16:58:43.022Z"
+  },
+  "API Workflow-initial-context": {
+    "id": "API Workflow-initial-context",
+    "value": "Listing CRUD endpoints",
+    "tags": [
+      "shared-knowledge",
+      "pipeline-context"
+    ],
+    "createdAt": "2026-09-04T16:56:42.256Z",
+    "updatedAt": "2026-09-04T16:58:37.061Z"
+  },
+  "agent-task-database-architect-1788541002261": {
+    "id": "agent-task-database-architect-1788541002261",
+    "value": {
+      "taskDescription": "Analyze requirements and design schema/models for: Implement Secure Leads Ingestion API",
+      "output": "Mock result from database-architect"
+    },
+    "tags": [
+      "shared-knowledge",
+      "database-architect",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.263Z",
+    "updatedAt": "2026-09-04T16:56:42.263Z"
+  },
+  "agent-task-backend-specialist-1788541002266": {
+    "id": "agent-task-backend-specialist-1788541002266",
+    "value": {
+      "taskDescription": "Implement endpoints and business logic based on the schema design for: Implement Secure Leads Ingestion API",
+      "output": "Mock result from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.267Z",
+    "updatedAt": "2026-09-04T16:56:42.267Z"
+  },
+  "agent-task-security-auditor-1788541002270": {
+    "id": "agent-task-security-auditor-1788541002270",
+    "value": {
+      "taskDescription": "Audit the implemented endpoints for SQL injection, auth issues, and vulnerability checks.",
+      "output": "Mock result from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.272Z",
+    "updatedAt": "2026-09-04T16:56:42.272Z"
+  },
+  "agent-task-documentation-writer-1788541002278": {
+    "id": "agent-task-documentation-writer-1788541002278",
+    "value": {
+      "taskDescription": "Generate API reference docs and update status.",
+      "output": "Mock result from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.281Z",
+    "updatedAt": "2026-09-04T16:56:42.281Z"
+  },
+  "agent-task-backend-specialist-1788541002282": {
+    "id": "agent-task-backend-specialist-1788541002282",
+    "value": {
+      "taskDescription": "Create a REST API for listings",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.286Z",
+    "updatedAt": "2026-09-04T16:56:42.286Z"
+  },
+  "agent-task-project-planner-1788541002293": {
+    "id": "agent-task-project-planner-1788541002293",
+    "value": {
+      "taskDescription": "Plan architecture",
+      "output": "[MockOutput by project-planner]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.297Z",
+    "updatedAt": "2026-09-04T16:56:42.297Z"
+  },
+  "agent-task-code-archaeologist-1788541002294": {
+    "id": "agent-task-code-archaeologist-1788541002294",
+    "value": {
+      "taskDescription": "Trace logs, search codebase, and isolate root cause for: Fix Vercel 429 Deployment Collision",
+      "output": "Mock result from code-archaeologist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "code-archaeologist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.302Z",
+    "updatedAt": "2026-09-04T16:56:42.302Z"
+  },
+  "agent-task-backend-specialist-1788541002308": {
+    "id": "agent-task-backend-specialist-1788541002308",
+    "value": {
+      "taskDescription": "Implement models",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.312Z",
+    "updatedAt": "2026-09-04T16:56:42.312Z"
+  },
+  "agent-task-debugger-1788541002309": {
+    "id": "agent-task-debugger-1788541002309",
+    "value": {
+      "taskDescription": "Develop fix, address syntax/logic issues, and refactor code.",
+      "output": "Mock result from debugger"
+    },
+    "tags": [
+      "shared-knowledge",
+      "debugger",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.313Z",
+    "updatedAt": "2026-09-04T16:56:42.313Z"
+  },
+  "agent-task-security-auditor-1788541002321": {
+    "id": "agent-task-security-auditor-1788541002321",
+    "value": {
+      "taskDescription": "Perform security review",
+      "output": "[MockOutput by security-auditor]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.324Z",
+    "updatedAt": "2026-09-04T16:56:42.324Z"
+  },
+  "agent-task-test-engineer-1788541002322": {
+    "id": "agent-task-test-engineer-1788541002322",
+    "value": {
+      "taskDescription": "Verify changes by running/generating test cases.",
+      "output": "Mock result from test-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "test-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.325Z",
+    "updatedAt": "2026-09-04T16:56:42.325Z"
+  },
+  "agent-task-penetration-tester-1788541002333": {
+    "id": "agent-task-penetration-tester-1788541002333",
+    "value": {
+      "taskDescription": "Identify attack vectors and check dependencies for CVEs: Audit SBR Secret Key and CRON Auth Guard",
+      "output": "Mock result from penetration-tester"
+    },
+    "tags": [
+      "shared-knowledge",
+      "penetration-tester",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.335Z",
+    "updatedAt": "2026-09-04T16:56:42.335Z"
+  },
+  "task-exec-1788541002336-6lzga": {
+    "id": "task-exec-1788541002336-6lzga",
+    "value": {
+      "prompt": "Analyze Mivida market",
+      "result": {
+        "topic": "Market Liquidity & Pricing Trends — Mivida",
+        "headline": "Strong Secondary Resale Demand Detected in Mivida",
+        "sentiment": "bullish",
+        "confidence": 0.94,
+        "dataPoints": [
+          {
+            "label": "Active Monitored Units",
+            "value": 150
+          },
+          {
+            "label": "Average Price / Sqm (Finished)",
+            "value": "62,500 EGP"
+          },
+          {
+            "label": "Projected 12M Capital Growth",
+            "value": "+24.5%"
+          },
+          {
+            "label": "Gross Rental Yield",
+            "value": "8.4%"
+          }
+        ],
+        "recommendedAction": "Target direct-owner cash buyers with high urgency listings in Mivida and Hyde Park."
+      }
+    },
+    "tags": [
+      "resale",
+      "compound-analysis"
+    ],
+    "createdAt": "2026-09-04T16:56:42.337Z",
+    "updatedAt": "2026-09-04T16:56:42.337Z"
+  },
+  "agent-task-security-auditor-1788541002339": {
+    "id": "agent-task-security-auditor-1788541002339",
+    "value": {
+      "taskDescription": "Review code changes against OWASP standards.",
+      "output": "Mock result from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.345Z",
+    "updatedAt": "2026-09-04T16:56:42.345Z"
+  },
+  "agent-task-backend-specialist-1788541002345": {
+    "id": "agent-task-backend-specialist-1788541002345",
+    "value": {
+      "taskDescription": "Valid step",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.349Z",
+    "updatedAt": "2026-09-04T16:56:42.349Z"
+  },
+  "agent-task-database-architect-1788541002364": {
+    "id": "agent-task-database-architect-1788541002364",
+    "value": {
+      "taskDescription": "Analyze requirements and design schema/models for: Listing CRUD endpoints",
+      "output": "Response from database-architect"
+    },
+    "tags": [
+      "shared-knowledge",
+      "database-architect",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.366Z",
+    "updatedAt": "2026-09-04T16:56:42.366Z"
+  },
+  "agent-task-backend-specialist-1788541002369": {
+    "id": "agent-task-backend-specialist-1788541002369",
+    "value": {
+      "taskDescription": "Implement endpoints and business logic based on the schema design for: Listing CRUD endpoints",
+      "output": "Response from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.380Z",
+    "updatedAt": "2026-09-04T16:56:42.380Z"
+  },
+  "agent-task-product-manager-1788541002381": {
+    "id": "agent-task-product-manager-1788541002381",
+    "value": {
+      "taskDescription": "Analyze user flow and define interactions/visual specs for: Redesign Luxury Compound Hero Section",
+      "output": "Mock result from product-manager"
+    },
+    "tags": [
+      "shared-knowledge",
+      "product-manager",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.384Z",
+    "updatedAt": "2026-09-04T16:56:42.384Z"
+  },
+  "agent-task-security-auditor-1788541002384": {
+    "id": "agent-task-security-auditor-1788541002384",
+    "value": {
+      "taskDescription": "Audit the implemented endpoints for SQL injection, auth issues, and vulnerability checks.",
+      "output": "Response from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.387Z",
+    "updatedAt": "2026-09-04T16:56:42.387Z"
+  },
+  "agent-task-frontend-specialist-1788541002389": {
+    "id": "agent-task-frontend-specialist-1788541002389",
+    "value": {
+      "taskDescription": "Implement responsive design, animations, and typography enhancements.",
+      "output": "Mock result from frontend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "frontend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.392Z",
+    "updatedAt": "2026-09-04T16:56:42.392Z"
+  },
+  "agent-task-documentation-writer-1788541002392": {
+    "id": "agent-task-documentation-writer-1788541002392",
+    "value": {
+      "taskDescription": "Generate API reference docs and update status.",
+      "output": "Response from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.396Z",
+    "updatedAt": "2026-09-04T16:56:42.396Z"
+  },
+  "agent-task-performance-optimizer-1788541002396": {
+    "id": "agent-task-performance-optimizer-1788541002396",
+    "value": {
+      "taskDescription": "Optimize bundles, images, and rendering performance.",
+      "output": "Mock result from performance-optimizer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "performance-optimizer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.398Z",
+    "updatedAt": "2026-09-04T16:56:42.398Z"
+  },
+  "agent-task-code-archaeologist-1788541002408": {
+    "id": "agent-task-code-archaeologist-1788541002408",
+    "value": {
+      "taskDescription": "Trace logs, search codebase, and isolate root cause for: Fix CORS issue in API",
+      "output": "Response from code-archaeologist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "code-archaeologist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.418Z",
+    "updatedAt": "2026-09-04T16:56:42.418Z"
+  },
+  "agent-task-backend-specialist-1788541002416": {
+    "id": "agent-task-backend-specialist-1788541002416",
+    "value": {
+      "taskDescription": "Execute core fallback logic",
+      "output": "Mock result from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.421Z",
+    "updatedAt": "2026-09-04T16:56:42.421Z"
+  },
+  "agent-task-debugger-1788541002429": {
+    "id": "agent-task-debugger-1788541002429",
+    "value": {
+      "taskDescription": "Develop fix, address syntax/logic issues, and refactor code.",
+      "output": "Response from debugger"
+    },
+    "tags": [
+      "shared-knowledge",
+      "debugger",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.431Z",
+    "updatedAt": "2026-09-04T16:56:42.431Z"
+  },
+  "agent-task-test-engineer-1788541002435": {
+    "id": "agent-task-test-engineer-1788541002435",
+    "value": {
+      "taskDescription": "Verify changes by running/generating test cases.",
+      "output": "Response from test-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "test-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.437Z",
+    "updatedAt": "2026-09-04T16:56:42.437Z"
+  },
+  "agent-task-project-planner-1788541002444": {
+    "id": "agent-task-project-planner-1788541002444",
+    "value": {
+      "taskDescription": "Decompose task into atomic list of subtasks, estimate constraints: New CRM Feature",
+      "output": "Response from project-planner"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.446Z",
+    "updatedAt": "2026-09-04T16:56:42.446Z"
+  },
+  "agent-task-orchestrator-1788541002450": {
+    "id": "agent-task-orchestrator-1788541002450",
+    "value": {
+      "taskDescription": "Review project architecture, dependencies, and verify alignment.",
+      "output": "Response from orchestrator"
+    },
+    "tags": [
+      "shared-knowledge",
+      "orchestrator",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.452Z",
+    "updatedAt": "2026-09-04T16:56:42.452Z"
+  },
+  "agent-task-penetration-tester-1788541002460": {
+    "id": "agent-task-penetration-tester-1788541002460",
+    "value": {
+      "taskDescription": "Identify attack vectors and check dependencies for CVEs: Audit auth tokens",
+      "output": "Response from penetration-tester"
+    },
+    "tags": [
+      "shared-knowledge",
+      "penetration-tester",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.461Z",
+    "updatedAt": "2026-09-04T16:56:42.461Z"
+  },
+  "agent-task-security-auditor-1788541002467": {
+    "id": "agent-task-security-auditor-1788541002467",
+    "value": {
+      "taskDescription": "Review code changes against OWASP standards.",
+      "output": "Response from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.469Z",
+    "updatedAt": "2026-09-04T16:56:42.469Z"
+  },
+  "agent-task-quality-inspector-1788541002478": {
+    "id": "agent-task-quality-inspector-1788541002478",
+    "value": {
+      "taskDescription": "Verify compliance of code changes, lint issues, and guidelines: Check code style",
+      "output": "Response from quality-inspector"
+    },
+    "tags": [
+      "shared-knowledge",
+      "quality-inspector",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.480Z",
+    "updatedAt": "2026-09-04T16:56:42.480Z"
+  },
+  "agent-task-qa-automation-engineer-1788541002484": {
+    "id": "agent-task-qa-automation-engineer-1788541002484",
+    "value": {
+      "taskDescription": "Run full test suite (lint, unit, build checks).",
+      "output": "Response from qa-automation-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "qa-automation-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.488Z",
+    "updatedAt": "2026-09-04T16:56:42.488Z"
+  },
+  "agent-task-product-manager-1788541002497": {
+    "id": "agent-task-product-manager-1788541002497",
+    "value": {
+      "taskDescription": "Analyze user flow and define interactions/visual specs for: Redesign Property card",
+      "output": "Response from product-manager"
+    },
+    "tags": [
+      "shared-knowledge",
+      "product-manager",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.498Z",
+    "updatedAt": "2026-09-04T16:56:42.498Z"
+  },
+  "agent-task-frontend-specialist-1788541002502": {
+    "id": "agent-task-frontend-specialist-1788541002502",
+    "value": {
+      "taskDescription": "Implement responsive design, animations, and typography enhancements.",
+      "output": "Response from frontend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "frontend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.503Z",
+    "updatedAt": "2026-09-04T16:56:42.503Z"
+  },
+  "agent-task-performance-optimizer-1788541002506": {
+    "id": "agent-task-performance-optimizer-1788541002506",
+    "value": {
+      "taskDescription": "Optimize bundles, images, and rendering performance.",
+      "output": "Response from performance-optimizer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "performance-optimizer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.508Z",
+    "updatedAt": "2026-09-04T16:56:42.508Z"
+  },
+  "agent-task-orchestrator-1788541002518": {
+    "id": "agent-task-orchestrator-1788541002518",
+    "value": {
+      "taskDescription": "Interpret NLP admin command, parse intent, and identify data entities for: Approve all wellness enrollments with >90% confidence",
+      "output": "Response from orchestrator"
+    },
+    "tags": [
+      "shared-knowledge",
+      "orchestrator",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.519Z",
+    "updatedAt": "2026-09-04T16:56:42.519Z"
+  },
+  "agent-task-backend-specialist-1788541002523": {
+    "id": "agent-task-backend-specialist-1788541002523",
+    "value": {
+      "taskDescription": "Execute predictive modeling, ML confidence scoring, and smart segmentation for: Approve all wellness enrollments with >90% confidence",
+      "output": "Response from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.525Z",
+    "updatedAt": "2026-09-04T16:56:42.525Z"
+  },
+  "agent-task-quality-inspector-1788541002532": {
+    "id": "agent-task-quality-inspector-1788541002532",
+    "value": {
+      "taskDescription": "Verify rule thresholds, safety guardrails, and auto-approval compliance.",
+      "output": "Response from quality-inspector"
+    },
+    "tags": [
+      "shared-knowledge",
+      "quality-inspector",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.533Z",
+    "updatedAt": "2026-09-04T16:56:42.533Z"
+  },
+  "agent-task-documentation-writer-1788541002537": {
+    "id": "agent-task-documentation-writer-1788541002537",
+    "value": {
+      "taskDescription": "Generate bilingual personalized notifications, explanation rationale, and audit logs.",
+      "output": "Response from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:56:42.538Z",
+    "updatedAt": "2026-09-04T16:56:42.538Z"
+  },
+  "agent-task-database-architect-1788541116973": {
+    "id": "agent-task-database-architect-1788541116973",
+    "value": {
+      "taskDescription": "Analyze requirements and design schema/models for: Implement Secure Leads Ingestion API",
+      "output": "Mock result from database-architect"
+    },
+    "tags": [
+      "shared-knowledge",
+      "database-architect",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:36.974Z",
+    "updatedAt": "2026-09-04T16:58:36.974Z"
+  },
+  "agent-task-backend-specialist-1788541116978": {
+    "id": "agent-task-backend-specialist-1788541116978",
+    "value": {
+      "taskDescription": "Implement endpoints and business logic based on the schema design for: Implement Secure Leads Ingestion API",
+      "output": "Mock result from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:36.980Z",
+    "updatedAt": "2026-09-04T16:58:36.980Z"
+  },
+  "agent-task-security-auditor-1788541116984": {
+    "id": "agent-task-security-auditor-1788541116984",
+    "value": {
+      "taskDescription": "Audit the implemented endpoints for SQL injection, auth issues, and vulnerability checks.",
+      "output": "Mock result from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:36.986Z",
+    "updatedAt": "2026-09-04T16:58:36.986Z"
+  },
+  "agent-task-documentation-writer-1788541116995": {
+    "id": "agent-task-documentation-writer-1788541116995",
+    "value": {
+      "taskDescription": "Generate API reference docs and update status.",
+      "output": "Mock result from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:36.997Z",
+    "updatedAt": "2026-09-04T16:58:36.997Z"
+  },
+  "agent-task-backend-specialist-1788541117002": {
+    "id": "agent-task-backend-specialist-1788541117002",
+    "value": {
+      "taskDescription": "Create a REST API for listings",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.004Z",
+    "updatedAt": "2026-09-04T16:58:37.004Z"
+  },
+  "agent-task-project-planner-1788541117011": {
+    "id": "agent-task-project-planner-1788541117011",
+    "value": {
+      "taskDescription": "Plan architecture",
+      "output": "[MockOutput by project-planner]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.016Z",
+    "updatedAt": "2026-09-04T16:58:37.016Z"
+  },
+  "agent-task-backend-specialist-1788541117026": {
+    "id": "agent-task-backend-specialist-1788541117026",
+    "value": {
+      "taskDescription": "Implement models",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.028Z",
+    "updatedAt": "2026-09-04T16:58:37.028Z"
+  },
+  "agent-task-code-archaeologist-1788541117030": {
+    "id": "agent-task-code-archaeologist-1788541117030",
+    "value": {
+      "taskDescription": "Trace logs, search codebase, and isolate root cause for: Fix Vercel 429 Deployment Collision",
+      "output": "Mock result from code-archaeologist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "code-archaeologist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.032Z",
+    "updatedAt": "2026-09-04T16:58:37.032Z"
+  },
+  "agent-task-debugger-1788541117037": {
+    "id": "agent-task-debugger-1788541117037",
+    "value": {
+      "taskDescription": "Develop fix, address syntax/logic issues, and refactor code.",
+      "output": "Mock result from debugger"
+    },
+    "tags": [
+      "shared-knowledge",
+      "debugger",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.040Z",
+    "updatedAt": "2026-09-04T16:58:37.040Z"
+  },
+  "agent-task-security-auditor-1788541117041": {
+    "id": "agent-task-security-auditor-1788541117041",
+    "value": {
+      "taskDescription": "Perform security review",
+      "output": "[MockOutput by security-auditor]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.044Z",
+    "updatedAt": "2026-09-04T16:58:37.044Z"
+  },
+  "agent-task-backend-specialist-1788541117052": {
+    "id": "agent-task-backend-specialist-1788541117052",
+    "value": {
+      "taskDescription": "Valid step",
+      "output": "[MockOutput by backend-specialist]: Completed stage execute-task"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.054Z",
+    "updatedAt": "2026-09-04T16:58:37.054Z"
+  },
+  "agent-task-test-engineer-1788541117062": {
+    "id": "agent-task-test-engineer-1788541117062",
+    "value": {
+      "taskDescription": "Verify changes by running/generating test cases.",
+      "output": "Mock result from test-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "test-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.064Z",
+    "updatedAt": "2026-09-04T16:58:37.064Z"
+  },
+  "agent-task-database-architect-1788541117067": {
+    "id": "agent-task-database-architect-1788541117067",
+    "value": {
+      "taskDescription": "Analyze requirements and design schema/models for: Listing CRUD endpoints",
+      "output": "Response from database-architect"
+    },
+    "tags": [
+      "shared-knowledge",
+      "database-architect",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.073Z",
+    "updatedAt": "2026-09-04T16:58:37.073Z"
+  },
+  "agent-task-penetration-tester-1788541117079": {
+    "id": "agent-task-penetration-tester-1788541117079",
+    "value": {
+      "taskDescription": "Identify attack vectors and check dependencies for CVEs: Audit SBR Secret Key and CRON Auth Guard",
+      "output": "Mock result from penetration-tester"
+    },
+    "tags": [
+      "shared-knowledge",
+      "penetration-tester",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.081Z",
+    "updatedAt": "2026-09-04T16:58:37.081Z"
+  },
+  "agent-task-backend-specialist-1788541117081": {
+    "id": "agent-task-backend-specialist-1788541117081",
+    "value": {
+      "taskDescription": "Implement endpoints and business logic based on the schema design for: Listing CRUD endpoints",
+      "output": "Response from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.085Z",
+    "updatedAt": "2026-09-04T16:58:37.085Z"
+  },
+  "agent-task-security-auditor-1788541117086": {
+    "id": "agent-task-security-auditor-1788541117086",
+    "value": {
+      "taskDescription": "Review code changes against OWASP standards.",
+      "output": "Mock result from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.089Z",
+    "updatedAt": "2026-09-04T16:58:37.089Z"
+  },
+  "agent-task-product-manager-1788541117100": {
+    "id": "agent-task-product-manager-1788541117100",
+    "value": {
+      "taskDescription": "Analyze user flow and define interactions/visual specs for: Redesign Luxury Compound Hero Section",
+      "output": "Mock result from product-manager"
+    },
+    "tags": [
+      "shared-knowledge",
+      "product-manager",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.103Z",
+    "updatedAt": "2026-09-04T16:58:37.103Z"
+  },
+  "agent-task-frontend-specialist-1788541117108": {
+    "id": "agent-task-frontend-specialist-1788541117108",
+    "value": {
+      "taskDescription": "Implement responsive design, animations, and typography enhancements.",
+      "output": "Mock result from frontend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "frontend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.110Z",
+    "updatedAt": "2026-09-04T16:58:37.110Z"
+  },
+  "agent-task-performance-optimizer-1788541117114": {
+    "id": "agent-task-performance-optimizer-1788541117114",
+    "value": {
+      "taskDescription": "Optimize bundles, images, and rendering performance.",
+      "output": "Mock result from performance-optimizer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "performance-optimizer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.115Z",
+    "updatedAt": "2026-09-04T16:58:37.115Z"
+  },
+  "agent-task-security-auditor-1788541117109": {
+    "id": "agent-task-security-auditor-1788541117109",
+    "value": {
+      "taskDescription": "Audit the implemented endpoints for SQL injection, auth issues, and vulnerability checks.",
+      "output": "Response from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.117Z",
+    "updatedAt": "2026-09-04T16:58:37.117Z"
+  },
+  "agent-task-documentation-writer-1788541117128": {
+    "id": "agent-task-documentation-writer-1788541117128",
+    "value": {
+      "taskDescription": "Generate API reference docs and update status.",
+      "output": "Response from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.131Z",
+    "updatedAt": "2026-09-04T16:58:37.131Z"
+  },
+  "agent-task-backend-specialist-1788541117134": {
+    "id": "agent-task-backend-specialist-1788541117134",
+    "value": {
+      "taskDescription": "Execute core fallback logic",
+      "output": "Mock result from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.138Z",
+    "updatedAt": "2026-09-04T16:58:37.138Z"
+  },
+  "agent-task-code-archaeologist-1788541117145": {
+    "id": "agent-task-code-archaeologist-1788541117145",
+    "value": {
+      "taskDescription": "Trace logs, search codebase, and isolate root cause for: Fix CORS issue in API",
+      "output": "Response from code-archaeologist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "code-archaeologist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.147Z",
+    "updatedAt": "2026-09-04T16:58:37.147Z"
+  },
+  "agent-task-debugger-1788541117150": {
+    "id": "agent-task-debugger-1788541117150",
+    "value": {
+      "taskDescription": "Develop fix, address syntax/logic issues, and refactor code.",
+      "output": "Response from debugger"
+    },
+    "tags": [
+      "shared-knowledge",
+      "debugger",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.151Z",
+    "updatedAt": "2026-09-04T16:58:37.151Z"
+  },
+  "agent-task-test-engineer-1788541117155": {
+    "id": "agent-task-test-engineer-1788541117155",
+    "value": {
+      "taskDescription": "Verify changes by running/generating test cases.",
+      "output": "Response from test-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "test-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.157Z",
+    "updatedAt": "2026-09-04T16:58:37.157Z"
+  },
+  "agent-task-project-planner-1788541117163": {
+    "id": "agent-task-project-planner-1788541117163",
+    "value": {
+      "taskDescription": "Decompose task into atomic list of subtasks, estimate constraints: New CRM Feature",
+      "output": "Response from project-planner"
+    },
+    "tags": [
+      "shared-knowledge",
+      "project-planner",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.165Z",
+    "updatedAt": "2026-09-04T16:58:37.165Z"
+  },
+  "agent-task-orchestrator-1788541117168": {
+    "id": "agent-task-orchestrator-1788541117168",
+    "value": {
+      "taskDescription": "Review project architecture, dependencies, and verify alignment.",
+      "output": "Response from orchestrator"
+    },
+    "tags": [
+      "shared-knowledge",
+      "orchestrator",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.171Z",
+    "updatedAt": "2026-09-04T16:58:37.171Z"
+  },
+  "agent-task-penetration-tester-1788541117188": {
+    "id": "agent-task-penetration-tester-1788541117188",
+    "value": {
+      "taskDescription": "Identify attack vectors and check dependencies for CVEs: Audit auth tokens",
+      "output": "Response from penetration-tester"
+    },
+    "tags": [
+      "shared-knowledge",
+      "penetration-tester",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.189Z",
+    "updatedAt": "2026-09-04T16:58:37.189Z"
+  },
+  "agent-task-security-auditor-1788541117193": {
+    "id": "agent-task-security-auditor-1788541117193",
+    "value": {
+      "taskDescription": "Review code changes against OWASP standards.",
+      "output": "Response from security-auditor"
+    },
+    "tags": [
+      "shared-knowledge",
+      "security-auditor",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.194Z",
+    "updatedAt": "2026-09-04T16:58:37.194Z"
+  },
+  "agent-task-quality-inspector-1788541117204": {
+    "id": "agent-task-quality-inspector-1788541117204",
+    "value": {
+      "taskDescription": "Verify compliance of code changes, lint issues, and guidelines: Check code style",
+      "output": "Response from quality-inspector"
+    },
+    "tags": [
+      "shared-knowledge",
+      "quality-inspector",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.205Z",
+    "updatedAt": "2026-09-04T16:58:37.205Z"
+  },
+  "agent-task-qa-automation-engineer-1788541117209": {
+    "id": "agent-task-qa-automation-engineer-1788541117209",
+    "value": {
+      "taskDescription": "Run full test suite (lint, unit, build checks).",
+      "output": "Response from qa-automation-engineer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "qa-automation-engineer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.211Z",
+    "updatedAt": "2026-09-04T16:58:37.211Z"
+  },
+  "agent-task-product-manager-1788541117219": {
+    "id": "agent-task-product-manager-1788541117219",
+    "value": {
+      "taskDescription": "Analyze user flow and define interactions/visual specs for: Redesign Property card",
+      "output": "Response from product-manager"
+    },
+    "tags": [
+      "shared-knowledge",
+      "product-manager",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.221Z",
+    "updatedAt": "2026-09-04T16:58:37.221Z"
+  },
+  "agent-task-frontend-specialist-1788541117224": {
+    "id": "agent-task-frontend-specialist-1788541117224",
+    "value": {
+      "taskDescription": "Implement responsive design, animations, and typography enhancements.",
+      "output": "Response from frontend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "frontend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.225Z",
+    "updatedAt": "2026-09-04T16:58:37.225Z"
+  },
+  "agent-task-performance-optimizer-1788541117229": {
+    "id": "agent-task-performance-optimizer-1788541117229",
+    "value": {
+      "taskDescription": "Optimize bundles, images, and rendering performance.",
+      "output": "Response from performance-optimizer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "performance-optimizer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.231Z",
+    "updatedAt": "2026-09-04T16:58:37.231Z"
+  },
+  "agent-task-orchestrator-1788541117241": {
+    "id": "agent-task-orchestrator-1788541117241",
+    "value": {
+      "taskDescription": "Interpret NLP admin command, parse intent, and identify data entities for: Approve all wellness enrollments with >90% confidence",
+      "output": "Response from orchestrator"
+    },
+    "tags": [
+      "shared-knowledge",
+      "orchestrator",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.244Z",
+    "updatedAt": "2026-09-04T16:58:37.244Z"
+  },
+  "agent-task-backend-specialist-1788541117254": {
+    "id": "agent-task-backend-specialist-1788541117254",
+    "value": {
+      "taskDescription": "Execute predictive modeling, ML confidence scoring, and smart segmentation for: Approve all wellness enrollments with >90% confidence",
+      "output": "Response from backend-specialist"
+    },
+    "tags": [
+      "shared-knowledge",
+      "backend-specialist",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.255Z",
+    "updatedAt": "2026-09-04T16:58:37.255Z"
+  },
+  "agent-task-quality-inspector-1788541117259": {
+    "id": "agent-task-quality-inspector-1788541117259",
+    "value": {
+      "taskDescription": "Verify rule thresholds, safety guardrails, and auto-approval compliance.",
+      "output": "Response from quality-inspector"
+    },
+    "tags": [
+      "shared-knowledge",
+      "quality-inspector",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.262Z",
+    "updatedAt": "2026-09-04T16:58:37.262Z"
+  },
+  "agent-task-documentation-writer-1788541117267": {
+    "id": "agent-task-documentation-writer-1788541117267",
+    "value": {
+      "taskDescription": "Generate bilingual personalized notifications, explanation rationale, and audit logs.",
+      "output": "Response from documentation-writer"
+    },
+    "tags": [
+      "shared-knowledge",
+      "documentation-writer",
+      "task-execution"
+    ],
+    "createdAt": "2026-09-04T16:58:37.269Z",
+    "updatedAt": "2026-09-04T16:58:37.269Z"
+  },
+  "task-exec-1788541119005-1rwpy": {
+    "id": "task-exec-1788541119005-1rwpy",
+    "value": {
+      "prompt": "Analyze Mivida market",
+      "result": {
+        "topic": "Market Liquidity & Pricing Trends — Mivida",
+        "headline": "Strong Secondary Resale Demand Detected in Mivida",
+        "sentiment": "bullish",
+        "confidence": 0.94,
+        "dataPoints": [
+          {
+            "label": "Active Monitored Units",
+            "value": 150
+          },
+          {
+            "label": "Average Price / Sqm (Finished)",
+            "value": "62,500 EGP"
+          },
+          {
+            "label": "Projected 12M Capital Growth",
+            "value": "+24.5%"
+          },
+          {
+            "label": "Gross Rental Yield",
+            "value": "8.4%"
+          }
+        ],
+        "recommendedAction": "Target direct-owner cash buyers with high urgency listings in Mivida and Hyde Park."
+      }
+    },
+    "tags": [
+      "resale",
+      "compound-analysis"
+    ],
+    "createdAt": "2026-09-04T16:58:39.007Z",
+    "updatedAt": "2026-09-04T16:58:39.007Z"
   }
 }
