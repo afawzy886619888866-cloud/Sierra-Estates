@@ -212,6 +212,10 @@ jobs:
           FB_APP_ID: ${{ vars['NEXT_PUBLIC_FIREBASE_APP_ID'] || '1:941030513456:web:56209a1495d69f217086f5' }}
           FB_MEASUREMENT: ${{ vars['NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'] || 'G-ZP054BPJ8Q' }}
           FB_DATABASE_URL: ${{ vars['NEXT_PUBLIC_FIREBASE_DATABASE_URL'] || 'https://sierra-blu-default-rtdb.firebaseio.com' }}
+          # Supabase Primary Database, Auth, Vector & Storage
+          SUPABASE_URL_VAL: ${{ secrets['NEXT_PUBLIC_SUPABASE_URL'] || secrets['SUPABASE_URL'] || vars['NEXT_PUBLIC_SUPABASE_URL'] || vars['SUPABASE_URL'] || 'https://REDACTED-PROJECT.supabase.co' }}
+          SUPABASE_ANON_VAL: ${{ secrets['NEXT_PUBLIC_SUPABASE_ANON_KEY'] || secrets['SUPABASE_ANON_KEY'] || vars['NEXT_PUBLIC_SUPABASE_ANON_KEY'] || vars['SUPABASE_ANON_KEY'] }}
+          SUPABASE_SERVICE_ROLE_VAL: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] || secrets['SUPABASE_SERVICE_KEY'] }}
           # AI & LLM
           AI_KEY: ${{ secrets['GOOGLE_AI_API_KEY'] || secrets['GEMINI_API_KEY'] }}
           GENAI_KEY: ${{ secrets['GOOGLE_GENAI_API_KEY'] || secrets['GOOGLE_AI_API_KEY'] }}
@@ -307,6 +311,13 @@ jobs:
           upsert NEXT_PUBLIC_DEFAULT_LOCALE            "${DEFAULT_LOCALE:-en}"
           upsert NEXT_PUBLIC_INTELLIGENCE_OS_URL       "$INT_OS_URL"
           upsert OPENMEMORY_URL                        "${OPENMEM_URL:-http://localhost:8080}"
+
+          # Supabase Primary Database, Auth, Vector & Storage
+          upsert NEXT_PUBLIC_SUPABASE_URL             "$SUPABASE_URL_VAL"
+          upsert SUPABASE_URL                         "$SUPABASE_URL_VAL"
+          upsert NEXT_PUBLIC_SUPABASE_ANON_KEY        "$SUPABASE_ANON_VAL"
+          upsert SUPABASE_ANON_KEY                    "$SUPABASE_ANON_VAL"
+          upsert SUPABASE_SERVICE_ROLE_KEY            "$SUPABASE_SERVICE_ROLE_VAL" encrypted
 
           # Firebase Client SDK
           upsert NEXT_PUBLIC_FIREBASE_API_KEY          "$FB_API_KEY"
