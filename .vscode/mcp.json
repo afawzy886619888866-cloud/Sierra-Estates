@@ -8,9 +8,9 @@
       "env": {}
     },
     "sierra-estates": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "tsx",
+        "node_modules/tsx/dist/cli.mjs",
         "scripts/sierra-mcp-server.ts"
       ],
       "env": {}

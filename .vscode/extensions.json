@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "active-twist.amphion-agent",
+    "supabase.postgrestools",
+    "ckolkman.vscode-postgres",
+    "mtxr.sqltools",
+    "dbaeumer.vscode-eslint",
+    "vitest.explorer",
+    "github.vscode-github-actions",
+    "redhat.vscode-yaml",
+    "mechatroner.rainbow-csv",
+    "eamodio.gitlens",
+    "ms-python.python"
+  ]
+}
