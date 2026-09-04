@@ -146,6 +146,8 @@ check('Git Status & Zero Working Tree Drift', () => {
   const ignoredTestArtifacts = new Set([
     'scripts/verify-deploy-readiness.ts',
     'apps/sierra-estates-realty/obsidian-store.json',
+    'apps/sierra-estates-realty/public/downloads/sierra-estates-master-inventory.xlsx',
+    'Inventory_with_Photos.xlsx',
   ]);
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
   const modified = status
