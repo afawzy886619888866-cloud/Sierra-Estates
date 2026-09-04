@@ -1062,5 +1062,72 @@
     ],
     "createdAt": "2026-08-30T06:29:47.855Z",
     "updatedAt": "2026-08-30T06:29:47.855Z"
+  },
+  "availability_batch_sessions": {
+    "id": "availability_batch_sessions",
+    "value": {
+      "_meta": {
+        "author": "system"
+      },
+      "data": {
+        "req-net-1788541039893-n88mo": {
+          "id": "req-net-1788541039893-n88mo",
+          "clientName": "Omar Khaled",
+          "clientPhone": "+201012345678",
+          "notes": "",
+          "createdAt": 1788541039893,
+          "expiresAt": 1788544639893,
+          "status": "active",
+          "units": [
+            {
+              "unitId": "INV-4F31AB8CB57C",
+              "unitCode": "NC-4U-95M+V",
+              "compound": "New Cairo",
+              "propertyType": "Apartment",
+              "operation": "rent",
+              "priceLabel": "95,000,000 EGP",
+              "price": 95000000,
+              "contactPhone": "+201100834387",
+              "contactName": "Property Representative",
+              "ownerType": "owner",
+              "status": "inquiry_sent",
+              "sentAt": 1788541039893,
+              "expiresAt": 1788544639893,
+              "photoUrls": [
+                "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80"
+              ]
+            },
+            {
+              "unitId": "INV-MEM-0001",
+              "unitCode": "MI-S-4F-38M+G+P",
+              "compound": "Mivida",
+              "propertyType": "Standalone Villa",
+              "operation": "sale",
+              "priceLabel": "38,000,000 EGP",
+              "price": 38000000,
+              "contactPhone": "+201001234567",
+              "contactName": "Property Representative",
+              "ownerType": "broker",
+              "status": "inquiry_sent",
+              "sentAt": 1788541039893,
+              "expiresAt": 1788544639893,
+              "photoUrls": [
+                "https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=800&q=80"
+              ]
+            }
+          ],
+          "viewingProposed": false,
+          "viewingScheduled": false
+        }
+      }
+    },
+    "tags": [
+      "shared",
+      "system",
+      "availability",
+      "radar-net"
+    ],
+    "createdAt": "2026-09-04T16:57:20.322Z",
+    "updatedAt": "2026-09-04T16:57:20.322Z"
   }
 }

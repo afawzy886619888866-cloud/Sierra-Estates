@@ -127,7 +127,41 @@ export async function POST(req: NextRequest) {
         processed_at: new Date().toISOString()
       });
     } else {
-      // Trigger Conversational AI for Direct Messages (ECC Memory)
+      // 1. Check if incoming message is an Owner/Broker replying to an Availability Request
+      const { AvailabilityVerificationService } = await import('@/lib/services/AvailabilityVerificationService');
+      const ownerReplyResult = await AvailabilityVerificationService.handleOwnerReply({
+        fromPhone: sender,
+        replyText: message,
+      });
+
+      if (ownerReplyResult) {
+        return NextResponse.json({
+          status: 'success',
+          type: 'availability_owner_reply_processed',
+          matchedUnitCode: ownerReplyResult.matchedUnitCode,
+          clientNotified: ownerReplyResult.clientNotified,
+          processed_at: new Date().toISOString(),
+        });
+      }
+
+      // 2. Check if incoming message is a Client confirming a viewing date
+      const lower = message.toLowerCase();
+      if (lower.includes('معاينة') || lower.includes('موعد') || lower.includes('بكرة') || lower.includes('viewing') || lower.includes('schedule') || lower.includes('visit')) {
+        const viewingResult = await AvailabilityVerificationService.handleClientViewingConfirmation({
+          clientPhone: sender,
+          clientMessage: message,
+        });
+        if (viewingResult.scheduled) {
+          return NextResponse.json({
+            status: 'success',
+            type: 'client_viewing_scheduled',
+            viewingId: viewingResult.viewingId,
+            processed_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      // 3. Fall back to standard Conversational AI for Direct Messages (ECC Memory)
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
       
