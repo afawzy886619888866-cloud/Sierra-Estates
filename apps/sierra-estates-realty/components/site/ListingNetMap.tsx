@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -83,18 +84,65 @@ const PROPERTY_TYPES = [
   'Studio',
 ];
 
-export default function ListingNetMap() {
+export interface ListingNetMapProps {
+  initialCompound?: string;
+  initialMode?: 'all' | 'rent' | 'buy' | 'sale';
+  initialType?: string;
+  initialSegment?: string;
+  initialBeds?: string;
+  initialQuery?: string;
+}
+
+function ListingNetMapContent({
+  initialCompound,
+  initialMode,
+  initialType,
+  initialSegment,
+  initialBeds,
+  initialQuery,
+}: ListingNetMapProps) {
+  const searchParams = useSearchParams();
   const [allUnits, setAllUnits] = useState<NetUnit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [query, setQuery] = useState('');
-  const [selectedCompound, setSelectedCompound] = useState('All Compounds');
-  const [selectedType, setSelectedType] = useState('All Types');
-  const [selectedMode, setSelectedMode] = useState<'all' | 'rent' | 'buy'>('all');
-  const [selectedSegment, setSelectedSegment] = useState<string>('all');
-  const [selectedBeds, setSelectedBeds] = useState<string>('all');
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  // Filters with props / URL searchParams fallback
+  const [query, setQuery] = useState(
+    initialQuery || searchParams?.get('q') || searchParams?.get('query') || ''
+  );
+  const [selectedCompound, setSelectedCompound] = useState(
+    initialCompound || searchParams?.get('compound') || 'All Compounds'
+  );
+  const [selectedType, setSelectedType] = useState(
+    initialType || searchParams?.get('type') || 'All Types'
+  );
+  const [selectedMode, setSelectedMode] = useState<'all' | 'rent' | 'buy'>(() => {
+    const m = initialMode || searchParams?.get('mode');
+    if (m === 'rent') return 'rent';
+    if (m === 'sale' || m === 'buy') return 'buy';
+    return 'all';
+  });
+  const [selectedSegment, setSelectedSegment] = useState<string>(
+    initialSegment || searchParams?.get('segment') || 'all'
+  );
+  const [selectedBeds, setSelectedBeds] = useState<string>(
+    initialBeds || searchParams?.get('beds') || 'all'
+  );
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>(
+    searchParams?.get('price') || 'all'
+  );
+
+  // Synchronize when initial props change
+  useEffect(() => {
+    if (initialCompound) setSelectedCompound(initialCompound);
+    if (initialMode) {
+      if (initialMode === 'rent') setSelectedMode('rent');
+      else if (initialMode === 'sale' || initialMode === 'buy') setSelectedMode('buy');
+    }
+    if (initialType) setSelectedType(initialType);
+    if (initialSegment) setSelectedSegment(initialSegment);
+    if (initialBeds) setSelectedBeds(initialBeds);
+    if (initialQuery) setQuery(initialQuery);
+  }, [initialCompound, initialMode, initialType, initialSegment, initialBeds, initialQuery]);
 
   // Net Selection (Max 40)
   const [selectedUnitIds, setSelectedUnitIds] = useState<Set<string>>(new Set());
@@ -740,5 +788,22 @@ export default function ListingNetMap() {
         onAutoPickN={(n) => selectTopN(n)}
       />
     </div>
+  );
+}
+
+export default function ListingNetMap(props: ListingNetMapProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-96 rounded-3xl bg-[#09152a]/60 border border-white/10 flex items-center justify-center text-white/50">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
+            <span>جاري تحميل رادار الوحدات...</span>
+          </div>
+        </div>
+      }
+    >
+      <ListingNetMapContent {...props} />
+    </Suspense>
   );
 }
