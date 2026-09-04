@@ -9,6 +9,23 @@ const path = require('path');
 const fs = require('fs');
 
 let db = null;
+let supabase = null;
+
+function getSupabase() {
+  if (supabase) return supabase;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (url && key && !url.includes('placeholder')) {
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+      return supabase;
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
 
 function initFirebase() {
   if (admin.apps && admin.apps.length > 0) {
@@ -57,6 +74,28 @@ function initFirebase() {
 }
 
 async function getPendingQueueMessages() {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from('whatsapp_queue')
+        .select('*')
+        .eq('status', 'pending')
+        .limit(10);
+      if (!error && data && data.length > 0) {
+        return data.map(d => ({
+          id: d.id,
+          recipient: d.recipient || d.phone,
+          message: d.message,
+          status: d.status,
+          ...d,
+        }));
+      }
+    } catch (err) {
+      console.warn('⚠️ Supabase getPendingQueueMessages fallback:', err.message);
+    }
+  }
+
   if (!db) db = initFirebase();
   if (!db) return [];
 
@@ -76,6 +115,19 @@ async function getPendingQueueMessages() {
 }
 
 async function markQueueMessageSent(id) {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb
+        .from('whatsapp_queue')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('id', id);
+      return;
+    } catch (err) {
+      console.warn('⚠️ Supabase markQueueMessageSent fallback:', err.message);
+    }
+  }
+
   if (!db) db = initFirebase();
   if (!db) return;
 
@@ -90,11 +142,27 @@ async function markQueueMessageSent(id) {
 }
 
 async function getLeadByPhone(phone) {
+  const clean = phone.replace(/\D/g, '');
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from('leads')
+        .select('*')
+        .ilike('phone', `%${clean}%`)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        return data[0];
+      }
+    } catch (err) {
+      console.warn('⚠️ Supabase getLeadByPhone fallback:', err.message);
+    }
+  }
+
   if (!db) db = initFirebase();
   if (!db) return null;
 
   try {
-    const clean = phone.replace(/\D/g, '');
     const snap = await db.collection('leads')
       .where('phone', '==', clean)
       .limit(1)
@@ -112,6 +180,24 @@ async function getLeadByPhone(phone) {
 const emailService = require('./email-service');
 
 async function updateLeadQualification(phone, qualData, clientName = '') {
+  const clean = phone.replace(/\D/g, '');
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb
+        .from('leads')
+        .update({
+          qualification: qualData,
+          status: 'qualified',
+          name: clientName || qualData.client_name,
+          updated_at: new Date().toISOString(),
+        })
+        .ilike('phone', `%${clean}%`);
+    } catch (err) {
+      console.warn('⚠️ Supabase updateLeadQualification warning:', err.message);
+    }
+  }
+
   if (!db) db = initFirebase();
   if (!db) return;
 

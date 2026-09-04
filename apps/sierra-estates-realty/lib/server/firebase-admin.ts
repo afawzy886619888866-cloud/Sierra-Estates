@@ -41,11 +41,13 @@ const makeUnavailable = (name: string): any =>
     }
   );
 
+import { createFirestoreCompat, createAuthCompat, createStorageCompat } from '@sierra-estates/db';
+
 let adminApp: any = makeUnavailable('App');
-let adminAuth: any = makeUnavailable('Auth');
-let adminDb: any = makeUnavailable('Firestore');
+let adminAuth: any = createAuthCompat();
+let adminDb: any = createFirestoreCompat();
 let adminAppCheck: any = makeUnavailable('AppCheck');
-let adminStorage: any = makeUnavailable('Storage');
+let adminStorage: any = createStorageCompat();
 let isAdminInitialized = false;
 
 let initPromise: Promise<void> | null = null;

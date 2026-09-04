@@ -16,6 +16,30 @@
  *   STRICT_FEATURES=1 node scripts/verify-env-readiness.mjs   # warnings -> failures
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Automatically load local .env files if present (for local developer verification)
+for (const envFile of ['.env', '.env.local', 'apps/sierra-estates-realty/.env.local']) {
+  const full = path.resolve(process.cwd(), envFile);
+  if (fs.existsSync(full)) {
+    const lines = fs.readFileSync(full, 'utf8').split('\n');
+    for (const line of lines) {
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        let val = match[2].trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key] && val) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+
 const env = process.env;
 const has = (k) => typeof env[k] === 'string' && env[k].trim() !== '';
 
