@@ -93,6 +93,8 @@ export default function ListingNetMap() {
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedMode, setSelectedMode] = useState<'all' | 'rent' | 'buy'>('all');
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
+  const [selectedBeds, setSelectedBeds] = useState<string>('all');
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
 
   // Net Selection (Max 40)
   const [selectedUnitIds, setSelectedUnitIds] = useState<Set<string>>(new Set());
@@ -157,9 +159,31 @@ export default function ListingNetMap() {
         if (u.segment !== selectedSegment) return false;
       }
 
+      // Bedrooms
+      if (selectedBeds !== 'all') {
+        const bedsNum = u.beds || 0;
+        if (selectedBeds === '4+') {
+          if (bedsNum < 4) return false;
+        } else {
+          if (bedsNum !== parseInt(selectedBeds, 10)) return false;
+        }
+      }
+
+      // Price Range
+      if (selectedPriceRange !== 'all') {
+        const p = u.price || 0;
+        if (selectedPriceRange === 'under10m' && p >= 10000000) return false;
+        if (selectedPriceRange === '10m-25m' && (p < 10000000 || p > 25000000)) return false;
+        if (selectedPriceRange === '25m-50m' && (p < 25000000 || p > 50000000)) return false;
+        if (selectedPriceRange === 'above50m' && p <= 50000000) return false;
+        if (selectedPriceRange === 'rent_under40k' && p >= 40000) return false;
+        if (selectedPriceRange === 'rent_40k_100k' && (p < 40000 || p > 100000)) return false;
+        if (selectedPriceRange === 'rent_above100k' && p <= 100000) return false;
+      }
+
       return true;
     });
-  }, [allUnits, query, selectedCompound, selectedType, selectedMode, selectedSegment]);
+  }, [allUnits, query, selectedCompound, selectedType, selectedMode, selectedSegment, selectedBeds, selectedPriceRange]);
 
   // Handle Mark / Unmark unit with 40-unit quota constraint
   const toggleUnitSelection = useCallback((unitId: string) => {
@@ -194,6 +218,25 @@ export default function ListingNetMap() {
   const clearSelection = () => {
     setSelectedUnitIds(new Set());
     setQuotaWarning(false);
+  };
+
+  const hasActiveFilters =
+    query.trim() !== '' ||
+    selectedCompound !== 'All Compounds' ||
+    selectedType !== 'All Types' ||
+    selectedMode !== 'all' ||
+    selectedSegment !== 'all' ||
+    selectedBeds !== 'all' ||
+    selectedPriceRange !== 'all';
+
+  const resetFilters = () => {
+    setQuery('');
+    setSelectedCompound('All Compounds');
+    setSelectedType('All Types');
+    setSelectedMode('all');
+    setSelectedSegment('all');
+    setSelectedBeds('all');
+    setSelectedPriceRange('all');
   };
 
   const selectedUnitsList = useMemo(() => {
@@ -323,16 +366,16 @@ export default function ListingNetMap() {
 
       {/* Filter Toolbar */}
       <div className="p-4 md:p-5 rounded-2xl bg-[#09152a]/90 border border-white/10 backdrop-blur-md space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
           {/* Keyword Search */}
-          <div className="relative">
+          <div className="relative xl:col-span-1">
             <Search className="w-4 h-4 text-white/40 absolute right-3.5 top-3.5" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="كود الوحدة، اسم الكمبوند، أو حي..."
-              className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#c99436] transition-colors"
+              placeholder="كود، كمبوند، حي..."
+              className="w-full pl-3 pr-9 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#c99436] transition-colors"
             />
           </div>
 
@@ -371,6 +414,35 @@ export default function ListingNetMap() {
                 {t}
               </option>
             ))}
+          </select>
+
+          {/* Bedrooms */}
+          <select
+            value={selectedBeds}
+            onChange={(e) => setSelectedBeds(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] border border-white/10 text-xs text-white focus:outline-none focus:border-[#c99436]"
+          >
+            <option value="all">كل الغرف (All Beds)</option>
+            <option value="1">1 غرفة نوم</option>
+            <option value="2">2 غرف نوم</option>
+            <option value="3">3 غرف نوم</option>
+            <option value="4+">4+ غرف نوم</option>
+          </select>
+
+          {/* Price Range */}
+          <select
+            value={selectedPriceRange}
+            onChange={(e) => setSelectedPriceRange(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] border border-white/10 text-xs text-white focus:outline-none focus:border-[#c99436]"
+          >
+            <option value="all">ميزانية السعر (الكل)</option>
+            <option value="under10m">أقل من 10 مليون ج.م</option>
+            <option value="10m-25m">10 إلى 25 مليون ج.م</option>
+            <option value="25m-50m">25 إلى 50 مليون ج.م</option>
+            <option value="above50m">أكثر من 50 مليون ج.م</option>
+            <option value="rent_under40k">إيجار: أقل من 40 ألف/شهر</option>
+            <option value="rent_40k_100k">إيجار: 40 - 100 ألف/شهر</option>
+            <option value="rent_above100k">إيجار: أكثر من 100 ألف/شهر</option>
           </select>
 
           {/* Segment Filter (Owners vs Brokers) */}
@@ -416,6 +488,15 @@ export default function ListingNetMap() {
               >
                 <Trash2 className="w-3 h-3" />
                 <span>إفراغ الشبكة</span>
+              </button>
+            )}
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-amber-300 border border-amber-400/30 flex items-center gap-1.5 transition-colors"
+              >
+                <Filter className="w-3 h-3" />
+                <span>إلغاء الفلاتر ({filteredUnits.length})</span>
               </button>
             )}
           </div>

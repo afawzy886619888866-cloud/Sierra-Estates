@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, CheckCircle2, Clock, Send, AlertCircle, Phone, User, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, CheckCircle2, Clock, Send, AlertCircle, Phone, User, ShieldCheck, Copy, Check, MessageCircle } from 'lucide-react';
 
 interface UnitSummary {
   id: string;
@@ -38,6 +38,32 @@ export default function AvailabilityInquiryModal({
     markedCount: number;
     expiresAt: string;
   } | null>(null);
+
+  const [secondsRemaining, setSecondsRemaining] = useState(3600);
+  const [copiedSession, setCopiedSession] = useState(false);
+
+  useEffect(() => {
+    if (!successData) return;
+    setSecondsRemaining(3600);
+    const interval = setInterval(() => {
+      setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [successData]);
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const copySessionId = () => {
+    if (successData?.sessionId && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(successData.sessionId);
+      setCopiedSession(true);
+      setTimeout(() => setCopiedSession(false), 2000);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -131,28 +157,85 @@ export default function AvailabilityInquiryModal({
         {/* Content */}
         <div className="p-6 max-h-[75vh] overflow-y-auto">
           {successData ? (
-            <div className="text-center py-8 space-y-4">
-              <div className="inline-flex p-4 rounded-full bg-emerald-500/20 text-emerald-400 mb-2">
+            <div className="text-center py-6 space-y-5">
+              <div className="inline-flex p-4 rounded-full bg-emerald-500/20 text-emerald-400">
                 <CheckCircle2 className="w-12 h-12" />
               </div>
-              <h4 className="text-xl font-bold text-white">تم إطلاق رادار التحقق بنجاح!</h4>
-              <p className="text-sm text-white/70 max-w-md mx-auto leading-relaxed">
-                تم التواصل آلياً عبر واتساب مع جهات الاتصال المسؤولة عن{' '}
-                <strong className="text-[#e9c176]">{successData.markedCount} وحدة</strong>.
-                ننتظر الرد وجمع أحدث الصور، وأي وحدة لا يتم الرد عليها خلال{' '}
-                <strong className="text-white">ساعة واحدة</strong> سيتم استبعادها تلقائياً.
-              </p>
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 max-w-md mx-auto text-xs text-white/60 space-y-1 text-right">
-                <div>• كود الجلسة: <span className="font-mono text-white/90">{successData.sessionId}</span></div>
-                <div>• رقم العميل المسجل: <span className="font-mono text-white/90">{clientPhone}</span></div>
-                <div>• ستصلك إشعارات فورية بالصور والتفاصيل بمجرد تأكيد أي وحدة.</div>
+              <h4 className="text-xl font-black text-white">تم إطلاق رادار التحقق بنجاح!</h4>
+              
+              {/* Animated Countdown SLA Box */}
+              <div className="p-4 rounded-2xl bg-[#002b4b]/60 border border-[#0077cc]/40 max-w-md mx-auto flex items-center justify-between">
+                <div className="text-right">
+                  <div className="text-xs text-sky-200 font-medium">العد التنازلي للمعيار الزمني (1 Hour SLA):</div>
+                  <div className="text-[11px] text-white/50">تُستبعد أي وحدة غير مجابة تلقائياً عند الصفر</div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-sky-400/30 text-sky-300 font-mono font-black text-lg">
+                  <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>{formatTime(secondsRemaining)}</span>
+                </div>
               </div>
-              <div className="pt-4">
+
+              <p className="text-xs text-white/70 max-w-md mx-auto leading-relaxed">
+                تم إرسال استفسارات آلية عبر واتساب لـ{' '}
+                <strong className="text-[#e9c176]">{successData.markedCount} وحدة</strong>.
+                فور رد المالك أو الوسيط بالصور والمواصفات، يقوم روبوت الذكاء الاصطناعي بتنقيح التفاصيل وإرسالها لك مباشرة عبر واتساب.
+              </p>
+
+              {/* Session Details Card */}
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 max-w-md mx-auto text-xs text-white/80 space-y-2 text-right">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={copySessionId}
+                    className="flex items-center gap-1 text-[11px] text-[#e9c176] hover:underline"
+                  >
+                    {copiedSession ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedSession ? 'تم النسخ!' : 'نسخ الكود'}</span>
+                  </button>
+                  <div>كود الجلسة: <span className="font-mono text-white font-bold">{successData.sessionId}</span></div>
+                </div>
+                <div className="text-white/60">• رقم الهاتف المسجل: <span className="font-mono text-white/90">{clientPhone}</span></div>
+                <div className="text-white/60">• حالة المتابعة: <span className="text-emerald-400 font-bold">نشطة الآن عبر واتساب</span></div>
+              </div>
+
+              {/* Units Preview in Report */}
+              <div className="max-w-md mx-auto text-right">
+                <div className="text-[11px] font-semibold text-white/60 mb-2">الوحدات قيد التحقق ({selectedUnits.length}):</div>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  {selectedUnits.slice(0, 6).map((u) => (
+                    <div key={u.id} className="shrink-0 p-2 rounded-lg bg-white/5 border border-white/10 text-[11px] w-28 text-right">
+                      <div className="font-bold text-[#e9c176] truncate">{u.code}</div>
+                      <div className="text-white/50 text-[10px] truncate">{u.compound}</div>
+                      <div className="text-amber-300 text-[9px] mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                        <span>قيد الانتظار</span>
+                      </div>
+                    </div>
+                  ))}
+                  {selectedUnits.length > 6 && (
+                    <div className="shrink-0 flex items-center justify-center p-2 rounded-lg bg-white/5 border border-dashed border-white/15 text-[10px] text-white/40 w-20">
+                      +{selectedUnits.length - 6} أخرى
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Direct WhatsApp Concierge Link */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href={`https://wa.me/201100834387?text=${encodeURIComponent(`مرحباً سييرا العقارية، أتابع رادار التحقق من الوحدات كود الجلسة: ${successData.sessionId}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>متابعة فورية مع المساعد عبر واتساب</span>
+                </a>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] font-bold text-sm hover:brightness-110 transition-all shadow-lg"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] font-bold text-xs hover:brightness-110 transition-all shadow-lg"
                 >
-                  تم، العودة للخريطة
+                  العودة للرادار
                 </button>
               </div>
             </div>
