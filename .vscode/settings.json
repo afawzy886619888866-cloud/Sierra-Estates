@@ -16,8 +16,6 @@
   "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.languageServer": "Jedi",
   "python.analysis.typeCheckingMode": "basic",
-  "vscode-edge-devtools.webhint": false,
-  "webhint.enable": false,
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
@@ -27,7 +25,6 @@
     "**/Thumbs.db": true,
     "**/.turbo": true
   },
-  "compilets.autoStart": false,
   "markdown.validate.enabled": true,
   "github-actions.workflows.validations.enabled": false,
   "github-actions.workflows.validations.context.access": "ignore",
@@ -37,5 +34,16 @@
   "yaml.validate": false,
   "yaml.schemas": {},
   "yaml.schemaStore.enable": false,
-  "abl.buildMode": 1
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "sqltools.useNodeRuntime": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.turbo": true,
+    "**/dist": true,
+    "**/coverage": true
+  }
 }
