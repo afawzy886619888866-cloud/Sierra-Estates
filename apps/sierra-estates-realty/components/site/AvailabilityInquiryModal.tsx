@@ -18,6 +18,7 @@ interface AvailabilityInquiryModalProps {
   onClose: () => void;
   selectedUnits: UnitSummary[];
   onClearSelection: () => void;
+  onAutoPickN?: (n: number) => void;
 }
 
 export default function AvailabilityInquiryModal({
@@ -25,6 +26,7 @@ export default function AvailabilityInquiryModal({
   onClose,
   selectedUnits,
   onClearSelection,
+  onAutoPickN,
 }: AvailabilityInquiryModalProps) {
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('+20 ');
@@ -167,27 +169,66 @@ export default function AvailabilityInquiryModal({
 
               {/* Units Preview Drawer */}
               <div>
-                <label className="block text-xs font-semibold text-white/70 mb-2">
-                  الوحدات المختارة في شبكتك ({selectedUnits.length} / 40 كحد أقصى):
-                </label>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                  {selectedUnits.slice(0, 8).map((u) => (
-                    <div
-                      key={u.id}
-                      className="shrink-0 w-36 p-2 rounded-xl bg-white/5 border border-white/10 text-right text-xs space-y-1"
-                    >
-                      <div className="font-bold text-[#e9c176] truncate">{u.code}</div>
-                      <div className="text-white/80 truncate">{u.compound}</div>
-                      <div className="text-[10px] text-white/50">{u.type} · {u.mode === 'rent' ? 'إيجار' : 'بيع'}</div>
-                      <div className="text-[11px] font-mono text-emerald-400 truncate">{u.priceLabel}</div>
+                {selectedUnits.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-right space-y-3">
+                    <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                      <span>لم تحدد وحدات بعينها في شبكتك بعد!</span>
                     </div>
-                  ))}
-                  {selectedUnits.length > 8 && (
-                    <div className="shrink-0 flex items-center justify-center w-28 p-2 rounded-xl bg-white/5 border border-dashed border-white/20 text-xs text-white/50 font-bold">
-                      +{selectedUnits.length - 8} وحدات أخرى
+                    <p className="text-xs text-amber-100/80 leading-relaxed">
+                      وفقاً لطلبك، يمكنك تفعيل الاختيار الذكي الفوري من رادار البحث (بحد أقصى 40 وحدة) لإرسال الاستفسارات بضغطة واحدة:
+                    </p>
+                    {onAutoPickN && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => onAutoPickN(10)}
+                          className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all"
+                        >
+                          🎯 أول 10 وحدات مطابقة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onAutoPickN(20)}
+                          className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all"
+                        >
+                          🎯 أول 20 وحدة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onAutoPickN(40)}
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] text-xs font-black hover:brightness-110 transition-all shadow-md"
+                        >
+                          ⚡ الحد الأقصى (أفضل 40 وحدة)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-semibold text-white/70 mb-2">
+                      الوحدات المختارة في شبكتك ({selectedUnits.length} / 40 كحد أقصى):
+                    </label>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                      {selectedUnits.slice(0, 8).map((u) => (
+                        <div
+                          key={u.id}
+                          className="shrink-0 w-36 p-2 rounded-xl bg-white/5 border border-white/10 text-right text-xs space-y-1"
+                        >
+                          <div className="font-bold text-[#e9c176] truncate">{u.code}</div>
+                          <div className="text-white/80 truncate">{u.compound}</div>
+                          <div className="text-[10px] text-white/50">{u.type} · {u.mode === 'rent' ? 'إيجار' : 'بيع'}</div>
+                          <div className="text-[11px] font-mono text-emerald-400 truncate">{u.priceLabel}</div>
+                        </div>
+                      ))}
+                      {selectedUnits.length > 8 && (
+                        <div className="shrink-0 flex items-center justify-center w-28 p-2 rounded-xl bg-white/5 border border-dashed border-white/20 text-xs text-white/50 font-bold">
+                          +{selectedUnits.length - 8} وحدات أخرى
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Client Form Fields */}
