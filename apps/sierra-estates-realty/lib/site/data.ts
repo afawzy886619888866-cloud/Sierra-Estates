@@ -1,4 +1,38 @@
 /* Ported from deploy/data.js — regenerate from source rather than hand-editing. */
+import snapshot from '@/lib/inventory/snapshot.json';
+
+const rawUnits: any[] = (snapshot as any)?.units || [];
+const defaultListings = rawUnits.length > 0
+  ? rawUnits.slice(0, 36).map((u: any, i: number) => ({
+      id: i + 1,
+      code: u.code || `SE-${String(i + 1).padStart(3, '0')}`,
+      cmp: u.compound || 'New Cairo',
+      zone: u.zone || '5th Settlement',
+      type: u.type || 'Apartment',
+      beds: u.beds || 3,
+      bath: u.bath || 2,
+      area: u.area || 160,
+      egpM: u.egpM || Number(((u.price || 8000000) / 1000000).toFixed(1)),
+      usd: u.usd || (u.mode === 'rent' ? Math.round((u.price || 40000) / 50) : Math.round((u.price || 8000000) / 5000)),
+      ai: u.aiScore || 9.2,
+      tag: u.tag || 'Verified Owner',
+      mode: u.mode || 'sale',
+      agent: u.agent || 'Sierra Direct Advisor',
+      ago: 'Master Inventory Sync',
+      img: u.img,
+      whatsapp: u.whatsapp,
+      segment: u.segment,
+    }))
+  : [
+      { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55' },
+      { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55' },
+      { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55' },
+      { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55' },
+      { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55' },
+      { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55' },
+      { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55' },
+      { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55' },
+    ];
 
 const DATA: any = {
   slides: [
@@ -18,16 +52,7 @@ const DATA: any = {
       main: 'Your Journey to Exceptional Homes Begins Here', mainAr: 'رحلتك نحو منزل استثنائي تبدأ هنا',
       img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=55' }
   ],
-  listings: [
-    { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55' },
-    { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55' },
-    { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55' },
-    { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55' },
-    { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55' },
-    { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55' },
-    { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55' },
-    { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55' }
-  ],
+  listings: defaultListings,
   rooms: [
     { id: 1, name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=900&q=55' },
     { id: 2, name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=55' },
@@ -197,8 +222,52 @@ const DATA: any = {
   const AREAS: any = { 'Apartment': [110, 220], 'Duplex': [200, 320], 'Twin House': [250, 340], 'Townhouse': [220, 300], 'Penthouse': [240, 380], 'Villa': [350, 620] };
   const MULT: any = { 'Apartment': 0.32, 'Duplex': 0.5, 'Twin House': 0.62, 'Townhouse': 0.55, 'Penthouse': 0.75, 'Villa': 1 };
 
+  function cleanCpd(s: any) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/\(.*?\)/g, '')
+      .replace(/\b(new cairo|residence|residences|district \d+|phase \d+)\b/g, '')
+      .trim();
+  }
+
   D.unitsFor = function (name: any) {
     if (cache[name]) return cache[name];
+    const target = cleanCpd(name);
+
+    // 1. Look up real master inventory units
+    const snapshotUnits: any[] = (snapshot as any)?.units || [];
+    const matched = snapshotUnits.filter((u: any) => {
+      const cmp = cleanCpd(u.compound || u.location);
+      if (!cmp) return false;
+      return cmp === target || cmp.startsWith(target) || target.startsWith(cmp);
+    });
+
+    if (matched.length > 0) {
+      const mapped = matched.map((u: any, idx: number) => ({
+        code: u.code || `SE-${String(idx + 1).padStart(4, '0')}`,
+        type: u.type || u.propertyType || 'Apartment',
+        beds: Number(u.beds || 3),
+        bath: Number(u.bath || 2),
+        area: Number(u.area || 160),
+        floor: u.type === 'Villa' || u.type === 'Twin House' || u.type === 'Townhouse' ? 'G+2' : `${(idx % 5) + 1}th Floor`,
+        mode: u.mode === 'rent' ? 'rent' : 'sale',
+        egpM: u.egpM || Number(((u.price || 8000000) / 1000000).toFixed(1)),
+        usd: u.usd || (u.mode === 'rent' ? Math.round((u.price || 40000) / 50) : Math.round((u.price || 8000000) / 5000)),
+        ai: u.aiScore || 9.0,
+        status: u.status || 'available',
+        delivery: idx % 3 === 0 ? 'under_construction' : 'ready',
+        agent: u.agent || (u.party === 'Owner' ? 'Sierra Direct Owner' : 'Sierra Partner Desk'),
+        img: u.img || IMGS[idx % IMGS.length],
+        whatsapp: u.whatsapp || '',
+        segment: u.segment || 'all',
+        segmentLabel: u.segmentLabel || 'Verified Inventory',
+        description: u.description || ''
+      }));
+      cache[name] = mapped;
+      return mapped;
+    }
+
+    // 2. Deterministic fallback for compounds pending catalog import
     const c = D.compounds.find(function (x: any) { return x.n === name; });
     if (!c) return [];
     const r = rng(hash(name));
