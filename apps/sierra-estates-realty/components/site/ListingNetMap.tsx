@@ -18,7 +18,8 @@ import {
   Layers,
   Sparkles,
   Phone,
-  Maximize2
+  Maximize2,
+  MessageCircle
 } from 'lucide-react';
 import AvailabilityInquiryModal from './AvailabilityInquiryModal';
 import { NEW_CAIRO_COMPOUNDS } from '@/components/Maps/compounds-data';
@@ -301,6 +302,16 @@ function ListingNetMapContent({
         img: u.img,
       }));
   }, [allUnits, selectedUnitIds]);
+
+  const shareOnWhatsApp = useCallback(() => {
+    if (selectedUnitsList.length === 0) return;
+    const summaryLines = selectedUnitsList.slice(0, 15).map(
+      (u, i) => `${i + 1}. [${u.code}] ${u.compound} - ${u.type} (${u.priceLabel})`
+    ).join('\n');
+    const msg = `مرحباً سييرا العقارية، أود الاستفسار عن توافر الوحدات التالية (${selectedUnitsList.length} وحدة):\n\n${summaryLines}${selectedUnitsList.length > 15 ? `\n... و ${selectedUnitsList.length - 15} وحدة أخرى` : ''}\n\nبرجاء موافاتي بالتفاصيل والصور المتاحة.`;
+    const url = `https://wa.me/201065582924?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  }, [selectedUnitsList]);
 
   // Compute coordinate pins for filtered units using compound registry
   const mapUnitPins = useMemo<MapUnitPin[]>(() => {
@@ -761,6 +772,7 @@ function ListingNetMapContent({
 
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={clearSelection}
                 className="px-3 py-2 rounded-xl text-xs text-white/60 hover:text-white hover:bg-white/10 transition-colors"
               >
@@ -768,6 +780,17 @@ function ListingNetMapContent({
               </button>
 
               <button
+                type="button"
+                onClick={shareOnWhatsApp}
+                className="hidden sm:inline-flex px-3.5 py-2.5 rounded-xl bg-[#25D366]/20 border border-[#25D366]/40 text-[#25D366] font-bold text-xs hover:bg-[#25D366]/30 transition-all items-center gap-1.5"
+                title="مشاركة الوحدات المختارة عبر واتساب"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>مشاركة واتساب</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setIsModalOpen(true)}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-lg flex items-center gap-2"
               >
