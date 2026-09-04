@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Metadata } from 'next';
 import '../../site-styles/career.css';
 import CareerPage from '../../(site)/career/CareerPage';

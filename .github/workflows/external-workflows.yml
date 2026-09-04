@@ -14,8 +14,8 @@ on:
     - cron: '0 10 * * *'
     # email-sender: Daily at 8am UTC (10am Cairo)
     - cron: '0 8 * * *'
-    # unit-adder: Every 30 minutes
-    - cron: '*/30 * * * *'
+    # unit-adder: Daily at 11am UTC (1pm Cairo)
+    - cron: '0 11 * * *'
 
   workflow_dispatch:
     inputs:
@@ -221,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'schedule' &&
-      github.event.schedule == '*/30 * * * *' ||
+      github.event.schedule == '0 11 * * *' ||
       github.event_name == 'workflow_dispatch' &&
       (github.event.inputs.workflow == 'all' || github.event.inputs.workflow == 'unit-adder')
 
