@@ -20,6 +20,8 @@ import {
   Maximize2
 } from 'lucide-react';
 import AvailabilityInquiryModal from './AvailabilityInquiryModal';
+import { NEW_CAIRO_COMPOUNDS } from '@/components/Maps/compounds-data';
+import type { MapUnitPin } from '@/components/Maps/LiveMap';
 
 // Dynamic import for Leaflet map to ensure 100% SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -209,6 +211,51 @@ export default function ListingNetMap() {
       }));
   }, [allUnits, selectedUnitIds]);
 
+  // Compute coordinate pins for filtered units using compound registry
+  const mapUnitPins = useMemo<MapUnitPin[]>(() => {
+    const DEFAULT_LAT = 30.02;
+    const DEFAULT_LNG = 31.54;
+
+    const lookup = new Map<string, { lat: number; lng: number }>();
+    for (const c of NEW_CAIRO_COMPOUNDS) {
+      lookup.set(c.nameEn.toLowerCase(), { lat: c.lat, lng: c.lng });
+      lookup.set(c.nameAr.toLowerCase(), { lat: c.lat, lng: c.lng });
+      lookup.set(c.code.toLowerCase(), { lat: c.lat, lng: c.lng });
+    }
+
+    return filteredUnits.map((u, index) => {
+      let coords = { lat: DEFAULT_LAT, lng: DEFAULT_LNG };
+      const compKey = (u.compound || '').toLowerCase().trim();
+
+      for (const [name, pos] of lookup.entries()) {
+        if (compKey.includes(name) || name.includes(compKey)) {
+          coords = pos;
+          break;
+        }
+      }
+
+      // Add deterministic small jitter so pins in same compound don't overlap completely
+      const charA = u.id ? u.id.charCodeAt(0) : index;
+      const charB = u.id ? u.id.charCodeAt(u.id.length - 1) : index * 3;
+      const jitterLat = (((charA * 17) % 30) - 15) * 0.00035;
+      const jitterLng = (((charB * 23) % 30) - 15) * 0.00035;
+
+      return {
+        id: u.id,
+        code: u.code,
+        compound: u.compound,
+        lat: coords.lat + jitterLat,
+        lng: coords.lng + jitterLng,
+        priceLabel: u.priceLabel,
+        type: u.type,
+        mode: u.mode,
+        beds: u.beds,
+        area: u.area,
+        img: u.img,
+      };
+    });
+  }, [filteredUnits]);
+
   return (
     <div className="w-full space-y-6 text-white">
       {/* Top Banner / Radar Introduction */}
@@ -230,19 +277,28 @@ export default function ListingNetMap() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
-            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-center min-w-[130px]">
+            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-center min-w-[120px]">
               <div className="text-2xl font-extrabold text-[#e9c176] font-mono">
                 {filteredUnits.length.toLocaleString()}
               </div>
               <div className="text-[11px] text-white/60">وحدة مطابقة للبحث</div>
             </div>
 
-            <div className="px-4 py-3 rounded-2xl bg-[#002b4b]/80 border border-[#0077cc]/30 text-center min-w-[130px]">
+            <div className="px-4 py-3 rounded-2xl bg-[#002b4b]/80 border border-[#0077cc]/30 text-center min-w-[120px]">
               <div className="text-2xl font-extrabold text-emerald-400 font-mono">
                 {selectedUnitIds.size} <span className="text-xs text-white/50">/ 40</span>
               </div>
               <div className="text-[11px] text-white/60">وحدة في شبكتك</div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-xl flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              <span>{selectedUnitIds.size > 0 ? `إرسال الشبكة (${selectedUnitIds.size})` : 'طلب توفر وصور'}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -419,6 +475,9 @@ export default function ListingNetMap() {
               <LiveMap
                 mode="dark"
                 onSelectCompound={(c) => setSelectedCompound(c.nameEn)}
+                units={mapUnitPins}
+                selectedUnitIds={selectedUnitIds}
+                onToggleUnit={toggleUnitSelection}
               />
             </div>
           </div>
@@ -597,6 +656,7 @@ export default function ListingNetMap() {
         onClose={() => setIsModalOpen(false)}
         selectedUnits={selectedUnitsList}
         onClearSelection={clearSelection}
+        onAutoPickN={(n) => selectTopN(n)}
       />
     </div>
   );
