@@ -22,6 +22,9 @@ on:
         required: false
         default: 'false'
 
+permissions:
+  contents: read
+
 jobs:
   deploy-schema:
     name: Apply Supabase Schema
