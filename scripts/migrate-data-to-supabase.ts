@@ -232,6 +232,64 @@ async function migrateData() {
     await supabase.from('leads').upsert(sampleLeads, { onConflict: 'phone' });
     console.log('✅ CRM Leads synchronized.');
 
+    // Seed Unified Memory with System Architecture State
+    console.log('🧠 Seeding Unified Memory in Supabase...');
+    const systemMemories = [
+        {
+            agent_id: 'system',
+            category: 'architecture',
+            key: 'system.backend.primary',
+            source: 'verified-system',
+            value: {
+                provider: 'supabase',
+                projectRef: 'REDACTED-PROJECT',
+                url: 'https://REDACTED-PROJECT.supabase.co',
+                replaces: 'firebase',
+                status: 'active-primary',
+                summary: 'Supabase PostgreSQL, Auth, and pgvector context engine is the primary authoritative system of record for Sierra Estates, replacing Firebase across all listings, leads, and agent memories.',
+                migratedAt: new Date().toISOString(),
+            },
+        },
+        {
+            agent_id: 'system',
+            category: 'guidelines',
+            key: 'system.ecc.guidelines',
+            source: 'verified-system',
+            value: {
+                eccVersion: '2.0.0',
+                instructions: 'Everything Claude Code (ECC) v2.0.0 agent instructions, test-driven development, security-first immutability',
+            },
+        },
+        {
+            agent_id: 'system',
+            category: 'database',
+            key: 'system.database.compat',
+            source: 'verified-system',
+            value: {
+                adapter: '@sierra-estates/db/firebase-compat-supabase',
+                supportedTables: [
+                    'listings',
+                    'leads',
+                    'profiles',
+                    'compounds',
+                    'unified_memory',
+                    'inquiries',
+                    'whatsapp_queue',
+                ],
+            },
+        },
+    ];
+
+    const { error: memErr } = await supabase
+        .from('unified_memory')
+        .upsert(systemMemories, { onConflict: 'agent_id,key' });
+
+    if (memErr) {
+        console.warn('⚠️ Unified Memory upsert warning:', memErr.message);
+    } else {
+        console.log('✅ Unified Memory synchronized in Supabase (3 system architecture records).');
+    }
+
     console.log('\n======================================================');
     console.log('🏁 End-to-End Supabase Migration Complete!');
     console.log('======================================================\n');

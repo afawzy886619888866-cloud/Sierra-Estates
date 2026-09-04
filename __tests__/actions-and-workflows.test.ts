@@ -130,7 +130,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       expect(content).toContain("- cron: '0 9 * * *'"); // Owner Search (9am)
       expect(content).toContain("- cron: '0 10 * * *'"); // Owner Contact (10am)
       expect(content).toContain("- cron: '0 8 * * *'"); // Email Sender (8am)
-      expect(content).toContain("- cron: '*/30 * * * *'"); // Unit Adder (every 30m)
+      expect(content).toContain("- cron: '0 11 * * *'"); // Unit Adder (11am)
     });
 
     it('must configure workflow_dispatch with choices', () => {
