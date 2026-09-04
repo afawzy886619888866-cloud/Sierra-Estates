@@ -48,9 +48,9 @@ async function generateEmbeddings() {
         return;
     }
 
-    console.log(`📊 Processing ${listings.length} listings with Gemini text-embedding-004...`);
+    console.log(`📊 Processing ${listings.length} listings with Gemini embedding-001 (768-dim)...`);
 
-    const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
     let successCount = 0;
 
     for (const listing of listings) {
@@ -67,12 +67,15 @@ async function generateEmbeddings() {
                 `Description: ${listing.description || ''}`,
             ].join(' | ');
 
-            const embeddingResult = await model.embedContent(contextText);
+            const embeddingResult = await model.embedContent({
+                content: { parts: [{ text: contextText }] },
+                outputDimensionality: 768,
+            });
             const embedding = Array.from(embeddingResult.embedding.values);
 
             const { error: updateErr } = await supabase
                 .from('listings')
-                .update({ embedding_768: embedding })
+                .update({ embedding_768: `[${embedding.join(',')}]` })
                 .eq('id', listing.id);
 
             if (!updateErr) {
