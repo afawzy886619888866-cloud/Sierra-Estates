@@ -30,6 +30,7 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
 const COMPOUND_PICKS = ['Hyde Park New Cairo', 'Mivida', 'Mountain View iCity', 'Eastown (SODIC)'];
 
 const AI_TOOLS = [
+  { k: 'radar', t: 'aiRadarT', s: 'aiRadarS', live: true, href: '/net' },
   { k: 'engine', t: 'ai1t', s: 'ai1s', live: true, href: '/ai-engine' },
   { k: 'match', t: 'ai2t', s: 'ai2s', href: '/matches' },
   { k: 'roi', t: 'ai3t', s: 'ai3s', href: '/roi' },
@@ -79,6 +80,16 @@ export default function HomePage() {
     if (search.price !== '0') params.set('price', search.price);
     const query = params.toString();
     return query ? `/properties?${query}` : '/properties';
+  }, [search, searchMode]);
+
+  const netRadarHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (searchMode !== 'buy') params.set('mode', searchMode === 'rent' ? 'rent' : 'sale');
+    if (search.compound.trim()) params.set('compound', search.compound.trim());
+    if (search.type) params.set('type', search.type);
+    if (search.beds !== '0') params.set('beds', search.beds);
+    const query = params.toString();
+    return query ? `/net?${query}` : '/net';
   }, [search, searchMode]);
 
   const compoundTiles = useMemo(
@@ -171,9 +182,12 @@ export default function HomePage() {
                 ))}
               </select>
             </div>
-            <div className="field searchbtn">
+            <div className="field searchbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <Link href={searchHref} className="btn btn-pri" id="hero-search-btn" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', cursor: 'pointer' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                 <Search className="i" /> <span>{t('search')}</span>
+              </Link>
+              <Link href={netRadarHref} className="btn" id="hero-radar-btn" title={isAr ? 'فتح رادار اصطياد وتأكيد الوحدات' : 'Open Listing Net Radar'} style={{ background: 'linear-gradient(135deg, #c99436, #e9c176)', color: '#0d0d0f', fontWeight: 800, whiteSpace: 'nowrap', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 16px', borderRadius: 12, height: 44, textDecoration: 'none' }}>
+                <Radar className="i" /> <span>{isAr ? 'رادار الوحدات' : 'Listing Net'}</span>
               </Link>
             </div>
           </div>

@@ -226,7 +226,12 @@ export default function PropertiesPage() {
           </div>
 
           {viewMode === 'radar' ? (
-            <ListingNetMap />
+            <ListingNetMap
+              initialCompound={fCompound || undefined}
+              initialMode={fMode}
+              initialType={fType !== 'all' ? fType : undefined}
+              initialSegment={fSegment !== 'all' ? fSegment : undefined}
+            />
           ) : (
             <>
               <div className="toolbar rv">
