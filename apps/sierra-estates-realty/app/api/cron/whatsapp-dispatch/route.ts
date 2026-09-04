@@ -13,14 +13,11 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
 /**
  * CRON: WhatsApp dispatch worker.
  *
- * ⚠️ Cross-store dependency: this worker now drains public.whatsapp_queue in
- * Postgres, but the enqueue side (enqueueWhatsAppJob in
- * lib/server/whatsapp-queue.ts) and the sender-number quota bookkeeping
- * (ensureNumbersSeeded / claimEligibleNumber, backed by the whatsapp_numbers
- * collection) still write Firestore. Until that helper is migrated, jobs
- * enqueued by the app will not be visible here. The mapping the helper must
- * adopt: toPhone → recipient_phone, body → message_body, everything else keeps
- * its own column (see supabase/schema.sql).
+ * End-to-end Supabase architecture:
+ * This worker drains `public.whatsapp_queue` in Supabase Postgres, and both
+ * the enqueue side (`enqueueWhatsAppJob` in `lib/server/whatsapp-queue.ts`) and
+ * the sender-number quota bookkeeping (`ensureNumbersSeeded` / `claimEligibleNumber`,
+ * backed by `public.whatsapp_numbers`) operate authoritatively on Supabase Postgres.
  *
  * Drains the queue subject to operating hours (10:00–10:59
  * Africa/Cairo, see DEFAULT_OUTREACH_CONFIG) and per-number quota (30/2hr,

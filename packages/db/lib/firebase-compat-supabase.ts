@@ -422,7 +422,7 @@ export function createStorageCompat(customClient?: SupabaseClient) {
                             });
                             if (error) throw new Error(`[SupabaseStorageCompat] ${error.message}`);
                         },
-                        async getSignedUrl(_options?: { expires?: number | Date }) {
+                        async getSignedUrl(_options?: { action?: string; expires?: number | Date }) {
                             if (!storageBucket) {
                                 return [`https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/${bucketName}/${filePath}`];
                             }

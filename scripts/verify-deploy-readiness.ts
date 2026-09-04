@@ -66,14 +66,16 @@ function isConfigured(value: string | undefined) {
 
 function validateProductionEnvironment() {
   const missing: string[] = [];
-  const hasFirebaseAdminCredentials = Boolean(
-    isConfigured(process.env.FIREBASE_SERVICE_ACCOUNT_JSON) ||
-    isConfigured(process.env.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU) ||
-    (isConfigured(process.env.FIREBASE_CLIENT_EMAIL) && isConfigured(process.env.FIREBASE_PRIVATE_KEY))
+  
+  // Supabase is the authoritative primary backend (Database, Auth, pgvector, Storage)
+  const hasSupabase = Boolean(
+    isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL) || isConfigured(process.env.SUPABASE_URL)
+  ) && Boolean(
+    isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY) || isConfigured(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   );
 
-  if (!hasFirebaseAdminCredentials) {
-    missing.push('FIREBASE_SERVICE_ACCOUNT_JSON / FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU');
+  if (!hasSupabase) {
+    missing.push('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (Supabase is Authoritative Primary Backend)');
   }
 
   for (const name of ['SESSION_SECRET', 'SBR_SECRET_KEY', 'CRON_SECRET']) {
@@ -116,16 +118,17 @@ check('Root Configuration Files', () => {
 });
 
 // 2. Check production-only configuration before spending time on builds.
-check('Production Environment Configuration', validateProductionEnvironment);
+check('Production Environment Configuration (Supabase Authoritative)', validateProductionEnvironment);
 
 // 3. Prevent public environment variables from carrying server credentials.
 check('Public Environment Safety', () => {
   execSync('node scripts/check-public-env-safety.mjs', { stdio: 'pipe', env: process.env });
 });
 
-// 4. Check that root and app Firebase configurations deploy the same rules.
-check('Firebase Rule Configuration', () => {
-  execSync('node scripts/check-firebase-rules.mjs', { stdio: 'pipe', env: process.env });
+// 4. Supabase Master Schema Validation (Replacing legacy Firebase rules)
+check('Supabase Master Schema Readiness', () => {
+  const schemaPath = path.resolve(process.cwd(), 'supabase/schema.sql');
+  if (!fs.existsSync(schemaPath)) throw new Error('Missing supabase/schema.sql master schema file');
 });
 
 // 5. Check packages compilation
