@@ -54,10 +54,12 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       // Routing & URLs
       expect(deployWf).toContain('NEXT_PUBLIC_CLIENT_URL');
       expect(deployWf).toContain('NEXT_PUBLIC_ADMIN_URL');
-      expect(deployWf).toContain('NEXT_PUBLIC_SITE_URL');
-      
-      // Firebase
-      expect(deployWf).toContain('NEXT_PUBLIC_FIREBASE_API_KEY');
+      // Supabase Primary Backend
+      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_URL');
+      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      expect(deployWf).toContain('SUPABASE_SERVICE_ROLE_KEY');
+
+      // Firebase Client & Legacy
       expect(deployWf).toContain('FIREBASE_PROJECT_ID');
       expect(deployWf).toContain('FIREBASE_SERVICE_ACCOUNT_JSON');
       
