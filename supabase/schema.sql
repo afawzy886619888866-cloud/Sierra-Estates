@@ -870,9 +870,12 @@ BEGIN
     -- ── Public submission forms: insert-only for anon, read for staff ─────
     -- These carry contact details, so the public may create a row but must
     -- never select one back — that would turn each form into a data export.
+    -- No anon INSERT: WITH CHECK (TRUE) accepts any payload of any size, with
+    -- no rate limit and no shape constraint. /api/leads/request-viewing is public but writes
+    -- through the service role, which bypasses RLS, so this granted nothing the
+    -- product uses. Re-add only alongside a real client-side writer, and gate it
+    -- on that writer's actual payload rather than TRUE.
     DROP POLICY IF EXISTS "viewing_requests_public_insert" ON public.viewing_requests;
-    CREATE POLICY "viewing_requests_public_insert" ON public.viewing_requests
-        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
     DROP POLICY IF EXISTS "viewing_requests_staff_access" ON public.viewing_requests;
     CREATE POLICY "viewing_requests_staff_access" ON public.viewing_requests
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
@@ -883,25 +886,38 @@ BEGIN
     CREATE POLICY "viewings_staff_access" ON public.viewings
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
-    -- A concierge portfolio is shared with the lead as a link, so it is
-    -- readable without an account; only staff (or the service role) write it.
+    -- A concierge portfolio was previously readable by `anon` with USING (TRUE).
+    -- Postgres has no get/list distinction, so that did not scope the read to a
+    -- link the recipient already holds: it authorises `SELECT * FROM
+    -- concierge_selections`, dumping lead_name, unit pricing, personal_note and
+    -- whatsapp_link for every lead to anyone with the anon key — which ships to
+    -- the browser as NEXT_PUBLIC_SUPABASE_ANON_KEY. There is no share-token
+    -- column to gate on, and no client reads this table (every access in the app
+    -- goes through the service role, which bypasses RLS), so the grant protected
+    -- nothing and exposed everything. Serve share links from a service-role API
+    -- route that looks up the single row by id — the same resolution the
+    -- Firestore rules reached for this collection.
     DROP POLICY IF EXISTS "concierge_selections_public_read" ON public.concierge_selections;
-    CREATE POLICY "concierge_selections_public_read" ON public.concierge_selections
-        FOR SELECT TO anon, authenticated USING (TRUE);
     DROP POLICY IF EXISTS "concierge_selections_staff_write" ON public.concierge_selections;
     CREATE POLICY "concierge_selections_staff_write" ON public.concierge_selections
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
+    -- No anon INSERT: WITH CHECK (TRUE) accepts any payload of any size, with
+    -- no rate limit and no shape constraint. /api/inquiries is public but writes
+    -- through the service role, which bypasses RLS, so this granted nothing the
+    -- product uses. Re-add only alongside a real client-side writer, and gate it
+    -- on that writer's actual payload rather than TRUE.
     DROP POLICY IF EXISTS "inquiries_public_insert" ON public.inquiries;
-    CREATE POLICY "inquiries_public_insert" ON public.inquiries
-        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
     DROP POLICY IF EXISTS "inquiries_staff_access" ON public.inquiries;
     CREATE POLICY "inquiries_staff_access" ON public.inquiries
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
+    -- No anon INSERT: WITH CHECK (TRUE) accepts any payload of any size, with
+    -- no rate limit and no shape constraint. /api/careers/apply is public but writes
+    -- through the service role, which bypasses RLS, so this granted nothing the
+    -- product uses. Re-add only alongside a real client-side writer, and gate it
+    -- on that writer's actual payload rather than TRUE.
     DROP POLICY IF EXISTS "career_applications_public_insert" ON public.career_applications;
-    CREATE POLICY "career_applications_public_insert" ON public.career_applications
-        FOR INSERT TO anon, authenticated WITH CHECK (TRUE);
     DROP POLICY IF EXISTS "career_applications_staff_access" ON public.career_applications;
     CREATE POLICY "career_applications_staff_access" ON public.career_applications
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
