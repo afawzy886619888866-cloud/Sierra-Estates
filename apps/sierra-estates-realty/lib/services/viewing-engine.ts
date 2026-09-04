@@ -53,9 +53,16 @@ export async function scheduleViewing(
     }
 
     // Notify Agent via Telegram (non-blocking)
-    sendTelegramMessage(
-      `🗓️ <b>Viewing Scheduled</b>\n\nStakeholder: ${leadId}\nUnit: ${unitId}\nTime: ${scheduledAt.toLocaleString()}`
-    ).catch(() => {});
+    try {
+      const tg = sendTelegramMessage(
+        `🗓️ <b>Viewing Scheduled</b>\n\nStakeholder: ${leadId}\nUnit: ${unitId}\nTime: ${scheduledAt.toLocaleString()}`
+      );
+      if (tg && typeof (tg as any).catch === 'function') {
+        (tg as any).catch(() => {});
+      }
+    } catch {
+      // Non-blocking
+    }
 
     return created.id;
   } catch (err) {

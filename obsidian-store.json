@@ -1684,5 +1684,19 @@
     ],
     "createdAt": "2026-09-04T16:58:39.007Z",
     "updatedAt": "2026-09-04T16:58:39.007Z"
+  },
+  "system-supabase-primary-backend": {
+    "id": "system-supabase-primary-backend",
+    "value": {
+      "provider": "supabase",
+      "status": "active-primary",
+      "replaces": "firebase",
+      "description": "Supabase is the primary authoritative backend"
+    },
+    "tags": [
+      "system",
+      "supabase",
+      "authoritative-backend"
+    ]
   }
 }
