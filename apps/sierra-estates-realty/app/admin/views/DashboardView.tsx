@@ -92,13 +92,11 @@ const RECENT_ACTIVITIES: ActivityFeedItem[] = [
 export default function DashboardView({
   lang = 'en',
   onNavigateAction,
-  onNavigate,
 }: {
   lang?: string;
   onNavigateAction?: (tab: string) => void;
-  onNavigate?: (tab: string) => void;
 }) {
-  const navigate = onNavigateAction || onNavigate;
+  const navigate = onNavigateAction;
   const isAr = lang === 'ar';
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [liveData, setLiveData] = useState<{

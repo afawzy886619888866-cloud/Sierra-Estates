@@ -1,4 +1,5 @@
 'use client';
+/* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
 
@@ -109,7 +110,7 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
       </div>
 
       {/* Comparative Heat-Map & Growth Trajectory Matrix */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/20 to-slate-900 border border-slate-800 space-y-4">
+      <div className="p-5 rounded-2xl bg-linear-to-r from-slate-900 via-cyan-950/20 to-slate-900 border border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <span>🗺️</span> {isAr ? 'مصفوفة نمو سعر المتر والعائد التأجيري (Heat-Map)' : 'Compound Price / m² & Yield Trajectory Matrix'}
@@ -135,7 +136,7 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
                 </div>
                 <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800/80">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500"
+                    className="h-full rounded-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500"
                     style={{ width: `${barWidth}%` }}
                   />
                 </div>
