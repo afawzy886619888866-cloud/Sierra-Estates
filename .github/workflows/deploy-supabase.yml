@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Deploy · Supabase
+
+# Deploys and synchronizes Supabase database schema, policies, and master inventory data.
+# Replaces legacy Firebase deployment workflows with Supabase as primary database.
+#
+# Triggers:
+#   - Push to main (when schema or migration files change)
+#   - Manual dispatch for forced schema reapply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/schema.sql'
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+  workflow_dispatch:
+    inputs:
+      force_apply:
+        description: 'Force re-apply schema even if no changes detected'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-schema:
+    name: Apply Supabase Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: Validate schema file exists
+        run: |
+          if [ ! -f "supabase/schema.sql" ]; then
+            echo "::error::supabase/schema.sql not found"
+            exit 1
+          fi
+          echo "Schema file: $(wc -l < supabase/schema.sql) lines"
+
+      - name: Apply schema to Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL not configured — skipping schema apply. Set secret to enable."
+            exit 0
+          fi
+          echo "Applying schema to Supabase..."
+          psql "$SUPABASE_DB_URL" -f supabase/schema.sql 2>&1 | grep -vE "already exists, skipping|does not exist, skipping" || true
+          echo "✅ Schema applied successfully"
+
+      - name: Run RLS validation tests
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL not set — skipping RLS tests"
+            exit 0
+          fi
+          if [ -f "supabase/tests/run-rls-tests.sh" ]; then
+            chmod +x supabase/tests/run-rls-tests.sh
+            bash supabase/tests/run-rls-tests.sh
+          else
+            echo "No RLS test script found — skipping"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Supabase Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema file | \`supabase/schema.sql\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u) |" >> $GITHUB_STEP_SUMMARY

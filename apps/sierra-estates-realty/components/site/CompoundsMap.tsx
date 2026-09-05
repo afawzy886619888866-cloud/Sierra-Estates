@@ -62,41 +62,53 @@ const COMPOUND_DEVELOPERS: Record<string, string> = {
   'El Patio 5 East (La Vista)': 'La Vista',
 };
 
+export type SegmentKey = 'all' | 'owners_rent' | 'owners_buy' | 'broker_rent' | 'broker_buy' | 'unknown';
+
+export interface SegmentTab {
+  key: SegmentKey;
+  label: string;
+  defaultBadge: string;
+  color: string;
+}
+
+export const SEGMENT_TABS: SegmentTab[] = [
+  { key: 'all', label: 'All Inventory', defaultBadge: '7,634', color: '#0284c7' },
+  { key: 'owners_rent', label: 'Owners Rent', defaultBadge: '302', color: '#10b981' },
+  { key: 'owners_buy', label: 'Owners Buy', defaultBadge: '262', color: '#0284c7' },
+  { key: 'broker_rent', label: 'Broker Rent', defaultBadge: '4,955', color: '#f59e0b' },
+  { key: 'broker_buy', label: 'Broker Buy', defaultBadge: '1,495', color: '#8b5cf6' },
+  { key: 'unknown', label: 'Unknown', defaultBadge: '620', color: '#64748b' },
+];
+
+function cleanCpdName(s: string): string {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/\(.*?\)/g, '')
+    .replace(/\b(new cairo|residence|residences|district \d+|phase \d+)\b/g, '')
+    .trim();
+}
+
 /**
  * Live per-compound available-unit counts from /api/inventory, matched by
  * compound name. Used as a fallback for any compound /api/inventory has no
- * units for yet (mirrors the previous static-table's estimate fallback so a
- * compound with no live data doesn't show "0").
+ * units for yet.
  */
 function estimateUnitsCount(aiScore: number): number {
   return Math.max(8, Math.round(aiScore * 2.2));
 }
 
-function useLiveUnitCounts(): Record<string, number> {
-  const [counts, setCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/inventory')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { units?: Array<{ location?: string; status?: string }> } | null) => {
-        if (cancelled || !data?.units) return;
-        const next: Record<string, number> = {};
-        for (const unit of data.units) {
-          if (unit.status && unit.status !== 'available') continue;
-          const key = (unit.location || '').trim().toLowerCase();
-          if (!key) continue;
-          next[key] = (next[key] || 0) + 1;
-        }
-        setCounts(next);
-      })
-      .catch((err) => console.warn('[CompoundsMap] Listings fetch failed:', err));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return counts;
+interface InventoryApiData {
+  count: number;
+  segments?: {
+    total: number;
+    owners_rent: number;
+    owners_buy: number;
+    broker_rent: number;
+    broker_buy: number;
+    unknown: number;
+  };
+  compoundCounts?: Record<string, number>;
+  compoundSegmentCounts?: Record<string, Record<string, number>>;
 }
 
 export interface CompoundsMapProps {
@@ -125,7 +137,59 @@ export default function CompoundsMap({
   const [ready, setReady] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
-  const liveUnitCounts = useLiveUnitCounts();
+  const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
+  const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
+
+  // Fetch full live inventory and segment aggregates
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: InventoryApiData | null) => {
+        if (cancelled || !data) return;
+        setInventoryData(data);
+      })
+      .catch((err) => console.warn('[CompoundsMap] Listings fetch failed:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Compute unit count for a given compound in the selected segment
+  const getCompoundCount = useCallback(
+    (compoundName: string): number => {
+      if (!inventoryData) return 0;
+      const target = cleanCpdName(compoundName);
+      if (!target) return 0;
+
+      const segmentCounts = inventoryData.compoundSegmentCounts || {};
+      const compoundCounts = inventoryData.compoundCounts || {};
+
+      // Match against pre-aggregated compound segment counts
+      for (const [key, segObj] of Object.entries(segmentCounts)) {
+        const cleanK = cleanCpdName(key);
+        if (cleanK === target || cleanK.startsWith(target) || target.startsWith(cleanK)) {
+          if (selectedSegment === 'all') {
+            return segObj.all || compoundCounts[key] || 0;
+          }
+          return segObj[selectedSegment] || 0;
+        }
+      }
+
+      // Fallback to general compound counts if 'all'
+      if (selectedSegment === 'all') {
+        for (const [key, count] of Object.entries(compoundCounts)) {
+          const cleanK = cleanCpdName(key);
+          if (cleanK === target || cleanK.startsWith(target) || target.startsWith(cleanK)) {
+            return count;
+          }
+        }
+      }
+
+      return 0;
+    },
+    [inventoryData, selectedSegment]
+  );
 
   // Filtered compounds based on smart filter
   const filteredCompounds = useMemo(() => {
@@ -200,9 +264,12 @@ export default function CompoundsMap({
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
         const isHot = c.ai >= 9.2;
-        const unitsCount = liveUnitCounts[c.n.trim().toLowerCase()] ?? c.units ?? estimateUnitsCount(c.ai);
+        const liveUnits = getCompoundCount(c.n);
+        const unitsCount = liveUnits > 0 ? liveUnits : (selectedSegment === 'all' ? (c.units ?? estimateUnitsCount(c.ai)) : 0);
         const devName = COMPOUND_DEVELOPERS[c.n] || '';
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
+        const activeSegmentObj = SEGMENT_TABS.find((s) => s.key === selectedSegment);
+        const activeSegmentLabel = activeSegmentObj?.label || 'All Inventory';
 
         const isPendingGps =
           c.n.toLowerCase().includes('unspecified') ||
@@ -256,7 +323,7 @@ export default function CompoundsMap({
             ${isPendingGps ? '<span style="font-size:12px;">⚠️</span>' : ''}
             <span>${c.n}</span>
             <span style="
-              background: ${isPendingGps ? '#d97706' : '#0284c7'};
+              background: ${isPendingGps ? '#d97706' : activeSegmentObj?.color || '#0284c7'};
               color: #ffffff;
               font-size: 10px;
               font-weight: 800;
@@ -280,8 +347,9 @@ export default function CompoundsMap({
           zIndexOffset: isPendingGps ? 800 : isSelected ? 1000 : isFeat ? 600 : 100,
         });
 
-        // Rich interactive popup matching screenshot 2
+        // Rich interactive popup
         const rentDisplay = c.rent ? `$${c.rent.toLocaleString()}` : `$${Math.round(c.priceM * 200).toLocaleString()}`;
+        const queryParamSeg = selectedSegment !== 'all' ? `&segment=${selectedSegment}` : '';
         const popupHtml = `
           <div class="compound-rich-popup" style="
             min-width: 250px;
@@ -290,14 +358,27 @@ export default function CompoundsMap({
             padding: 4px 2px;
           ">
             <div style="
-              font-size: 9.5px;
-              font-weight: 800;
-              text-transform: uppercase;
-              letter-spacing: 0.12em;
-              color: #0284c7;
-              margin-bottom: 2px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 4px;
             ">
-              ${c.z}
+              <span style="
+                font-size: 9.5px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: #0284c7;
+              ">${c.z}</span>
+              <span style="
+                font-size: 9px;
+                font-weight: 700;
+                padding: 1px 6px;
+                border-radius: 999px;
+                background: ${activeSegmentObj?.color ? `${activeSegmentObj.color}20` : '#e0f2fe'};
+                color: ${activeSegmentObj?.color || '#0284c7'};
+                border: 1px solid ${activeSegmentObj?.color ? `${activeSegmentObj.color}40` : '#bae6fd'};
+              ">${activeSegmentLabel}</span>
             </div>
             <h4 style="
               margin: 0 0 10px 0;
@@ -363,7 +444,7 @@ export default function CompoundsMap({
             }
 
             <a
-              href="/properties?compound=${encodeURIComponent(c.n)}"
+              href="/properties?compound=${encodeURIComponent(c.n)}${queryParamSeg}"
               style="
                 display: block;
                 width: 100%;
@@ -403,7 +484,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, liveUnitCounts]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment]);
 
   // Handle external selection
   useEffect(() => {
@@ -418,6 +499,7 @@ export default function CompoundsMap({
   const handleResetFilters = useCallback(() => {
     setFilterQuery('');
     setSelectedBed('any');
+    setSelectedSegment('all');
     if (mapRef.current) {
       mapRef.current.flyTo(NEW_CAIRO_CENTER, 12, { duration: 0.8 });
     }
@@ -435,6 +517,73 @@ export default function CompoundsMap({
           background: '#f8fafc',
         }}
       />
+
+      {/* Floating 5-Way Segment Bar at Top-Left */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 400,
+          background: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(15, 23, 42, 0.1)',
+          borderRadius: 14,
+          padding: '6px 8px',
+          boxShadow: '0 10px 25px -4px rgba(0,0,0,0.12), 0 6px 10px -6px rgba(0,0,0,0.06)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 6,
+          maxWidth: 'calc(100% - 320px)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        {SEGMENT_TABS.map((tab) => {
+          const isCurrent = selectedSegment === tab.key;
+          const badgeCount =
+            tab.key === 'all'
+              ? (inventoryData?.segments?.total ? inventoryData.segments.total.toLocaleString() : tab.defaultBadge)
+              : (inventoryData?.segments?.[tab.key] ? (inventoryData.segments[tab.key] as number).toLocaleString() : tab.defaultBadge);
+
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setSelectedSegment(tab.key)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 10px',
+                borderRadius: 999,
+                fontSize: 11.5,
+                fontWeight: isCurrent ? 800 : 600,
+                background: isCurrent ? tab.color : '#f1f5f9',
+                color: isCurrent ? '#ffffff' : '#334155',
+                border: isCurrent ? `1px solid ${tab.color}` : '1px solid #e2e8f0',
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+                boxShadow: isCurrent ? `0 2px 8px ${tab.color}50` : 'none',
+              }}
+            >
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  padding: '1px 5px',
+                  borderRadius: 999,
+                  background: isCurrent ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.08)',
+                  color: isCurrent ? '#ffffff' : '#475569',
+                }}
+              >
+                {badgeCount}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Floating Legend on Bottom-Left */}
       <div

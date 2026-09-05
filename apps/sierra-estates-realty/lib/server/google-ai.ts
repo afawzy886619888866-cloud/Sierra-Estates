@@ -26,6 +26,12 @@ export interface ChatOptions {
   tools?: any[];
 }
 
+function normalizeModelName(model?: string): string {
+  if (!model) return "gemini-3.6-flash";
+  if (model.includes("1.5") || model.includes("2.5")) return "gemini-3.6-flash";
+  return model;
+}
+
 export const GoogleAIService = {
   /**
    * Generates a text response using the selected Gemini model.
@@ -41,8 +47,7 @@ export const GoogleAIService = {
       throw new Error("GOOGLE_AI_API_KEY is not configured. Direct AI Studio integration disabled.");
     }
 
-    // Default to 'gemini-flash-latest' to avoid 404s on older version strings
-    const modelName = options.model || "gemini-flash-latest";
+    const modelName = normalizeModelName(options.model);
     
     try {
       const model = genAI.getGenerativeModel({
@@ -93,7 +98,7 @@ export const GoogleAIService = {
     }>;
   }> {
     return instrumentAgent(agentId, unitName, JSON.stringify(messages), async () => {
-      const modelName = options.model || 'gemini-flash-latest';
+      const modelName = normalizeModelName(options.model);
       
       try {
         const model = genAI.getGenerativeModel({ 

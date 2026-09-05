@@ -45,7 +45,8 @@ export function useT() {
   return { t: makeT(locale), locale };
 }
 
-function initials(name: string) {
+function initials(name?: string) {
+  if (!name) return 'SE';
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 }
 

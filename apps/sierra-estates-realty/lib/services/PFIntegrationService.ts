@@ -4,8 +4,7 @@
  */
 
 import { pfClient, PFListingRequest } from '../property-finder-client';
-import { adminDb } from '../server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
 import { Unit, Lead, COLLECTIONS } from '../models/schema';
 import { PFPropertyType } from '../property-finder/types';
 import { triggerNewListingNotification } from '../server/n8n';
@@ -23,20 +22,23 @@ export class PFIntegrationService {
     const pfLeads = await pfClient.fetchLeads({ perPage: '50' });
 
     for (const lead of pfLeads.data) {
-      const existing = await adminDb.collection(COLLECTIONS.stakeholders)
-        .where('pfLeadId', '==', lead.id)
-        .get();
+      const existing = await listRecords<{ id: string }>(COLLECTIONS.stakeholders, {
+        where: [{ column: 'pfLeadId', value: lead.id }],
+        select: 'id',
+        limit: 1,
+      });
 
       const phone = lead.sender?.contacts?.find(c => c.type === 'phone')?.value || '';
       const email = lead.sender?.contacts?.find(c => c.type === 'email')?.value || '';
 
-      if (!phone && existing.empty) {
+      if (!phone && existing.length === 0) {
         summary.skipped++;
         continue;
       }
 
       const payload: Partial<Lead> & Record<string, unknown> = {
-        name: lead.sender?.name || 'Property Finder Lead',
+        // `full_name` is the column; `name` is what the admin API maps it to.
+        fullName: lead.sender?.name || 'Property Finder Lead',
         phone,
         email,
         source: 'property-finder',
@@ -45,18 +47,16 @@ export class PFIntegrationService {
         originChannel: `Property Finder (${lead.channel})`,
         pfLeadId: lead.id,
         pfListingReferenceNumber: lead.listing?.reference || '',
-        updatedAt: Timestamp.now(),
       };
 
-      if (existing.empty) {
-        await adminDb.collection(COLLECTIONS.stakeholders).add({
+      if (existing.length === 0) {
+        await insertRecord(COLLECTIONS.stakeholders, {
           ...payload,
           automation: { botInitiated: false, scoringCompleted: false, whatsappFollowupSent: false, viewingReminderSent: false },
-          createdAt: Timestamp.now(),
         });
         summary.created++;
       } else {
-        await existing.docs[0].ref.update(payload);
+        await updateRecord(COLLECTIONS.stakeholders, existing[0].id, payload);
         summary.updated++;
       }
     }
@@ -75,9 +75,11 @@ export class PFIntegrationService {
 
     for (const listing of listings) {
       const ref = listing.reference || String(listing.id);
-      const existing = await adminDb.collection(COLLECTIONS.units)
-        .where('pfReferenceNumber', '==', ref)
-        .get();
+      const existing = await listRecords<{ id: string }>(COLLECTIONS.units, {
+        where: [{ column: 'pfReferenceNumber', value: ref }],
+        select: 'id',
+        limit: 1,
+      });
 
       const priceVal = listing.price?.amounts?.sale || listing.price?.amounts?.yearly || listing.price?.amounts?.monthly || 0;
 
@@ -104,23 +106,22 @@ export class PFIntegrationService {
         bathrooms: baths,
         area: listing.size || 0,
         pfReferenceNumber: ref,
-        updatedAt: Timestamp.now(),
         images: listing.media?.images?.map(i => i.original.url) || [],
       };
 
-      if (existing.empty) {
-        const newDocRef = await adminDb.collection(COLLECTIONS.units).add({ ...payload, createdAt: Timestamp.now() });
+      if (existing.length === 0) {
+        const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, payload);
         imported++;
 
         // Trigger n8n webhook for new listing matching
         await triggerNewListingNotification({
-          id: newDocRef.id,
+          id: newUnit.id,
           title: payload.title || '',
           price: payload.price || 0,
           compound: payload.compound || payload.location || payload.city || ''
         });
       } else {
-        await existing.docs[0].ref.update(payload);
+        await updateRecord(COLLECTIONS.units, existing[0].id, payload);
         updated++;
       }
     }
@@ -129,10 +130,8 @@ export class PFIntegrationService {
   }
 
   static async publishListing(unitId: string) {
-    const unitSnap = await adminDb.collection(COLLECTIONS.units).doc(unitId).get();
-    if (!unitSnap.exists) throw new Error('Unit not found');
-
-    const unit = { id: unitSnap.id, ...unitSnap.data() } as Unit;
+    const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
+    if (!unit) throw new Error('Unit not found');
     const locationId = await this.resolveLocationId(unit);
     const _publicProfileId = await this.resolvePublicProfileId();
 
@@ -160,10 +159,12 @@ export class PFIntegrationService {
 
     const result = await pfClient.createListing(pfListing);
 
-    await adminDb.collection(COLLECTIONS.units).doc(unitId).update({
-      'automation.isPublishedToPF': true,
+    // `automation` is one JSONB column, so the dotted-path update becomes a
+    // merge onto the object already on the unit.
+    await updateRecord(COLLECTIONS.units, unitId, {
+      automation: { ...((unit as any).automation ?? {}), isPublishedToPF: true },
       pfReferenceNumber: result.reference || String(result.id),
-      lastSyncAt: Timestamp.now(),
+      lastSyncAt: new Date().toISOString(),
       syncSource: 'property-finder',
     });
 

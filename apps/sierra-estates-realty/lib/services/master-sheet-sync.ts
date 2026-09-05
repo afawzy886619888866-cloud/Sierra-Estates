@@ -1,10 +1,10 @@
 import { google } from 'googleapis';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { upsertRecords } from '@sierra-estates/db';
 import { COLLECTIONS, Unit, PropertyStatus, PropertyType } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 import { resolveLocation } from '@/lib/inventory/gazetteer';
 
-export const MASTER_SHEET_ID_DEFAULT = '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
+export const MASTER_SHEET_ID_DEFAULT = '1VEOSYbXPNVWVzC8A_yhYYdsYMqJwAoEnOFGZcJqSzv4';
 
 export interface RawOwnerSheetRow {
   timestamp?: string;
@@ -183,19 +183,13 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
       pendingWrites.push({ docId: sanitizedDocId, data: unitDoc });
     }
 
-    // Write to Firestore in chunks of max 400 operations to respect 500 write limit
-    const BATCH_SIZE = 400;
-    const unitsCollection = adminDb.collection(COLLECTIONS.units);
-
-    for (let i = 0; i < pendingWrites.length; i += BATCH_SIZE) {
-      const batch = adminDb.batch();
-      const chunk = pendingWrites.slice(i, i + BATCH_SIZE);
-      for (const item of chunk) {
-        const docRef = unitsCollection.doc(item.docId);
-        batch.set(docRef, item.data, { merge: true });
-      }
-      await batch.commit();
-    }
+    // Firestore chunked these at 400 to stay under its 500-operation WriteBatch
+    // cap. Postgres has no such cap, so this is one upsert per chunk keyed on
+    // the sheet-derived id, and the chunking is only about request size.
+    await upsertRecords(
+      COLLECTIONS.units,
+      pendingWrites.map((item) => ({ id: item.docId, ...item.data })),
+    );
 
     logger.info(`[MasterSheetSync] Successfully synchronized ${parsedUnits.length} active inventory assets.`);
 

@@ -15,45 +15,63 @@ export interface InventoryUnit {
   id: string;
   /** Internal listing code (e.g. "MT-B14-3U-8.34M"), if present. */
   code: string | null;
+  compound?: string;
   mode: InventoryMode;
   status: InventoryStatus;
-  statusLabel: string;
+  statusLabel?: string;
   /** Canonical, display-ready location/compound name. */
   location: string;
   /** Original free-text location value from the source, if different. */
-  rawLocation: string | null;
+  rawLocation?: string | null;
   zone: string;
   lat: number;
   lng: number;
   /** true when the location couldn't be resolved and a zone centroid was used. */
-  approxLocation: boolean;
-  propertyType: string | null;
+  approxLocation?: boolean;
+  propertyType?: string | null;
+  type?: string;
   beds: number | null;
+  bath?: number | null;
   /** Built-up area in m². */
   area: number | null;
   /** Garden area in m², when applicable. */
-  garden: number | null;
-  pool: boolean;
-  furnished: string | null;
+  garden?: number | null;
+  pool?: boolean;
+  furnished?: string | null;
+  furnishing?: string | null;
   /** Numeric price in EGP (total for sale, monthly for rent); 0 = on request. */
   price: number;
-  priceLabel: string;
-  comment: string | null;
-  updatedAt: string | null;
+  priceLabel?: string;
+  egpM?: number;
+  usd?: number;
+  segment?: 'owners_rent' | 'owners_buy' | 'broker_rent' | 'broker_buy' | 'unknown' | string;
+  segmentLabel?: string;
+  party?: 'Owner' | 'Broker' | 'Unknown';
+  aiScore?: number;
+  tag?: string | null;
+  agent?: string;
+  whatsapp?: string;
+  img?: string;
+  description?: string | null;
+  comment?: string | null;
+  featured?: boolean;
+  updatedAt?: string | null;
 }
 
 export interface InventoryResponse {
   /** ISO timestamp of when this dataset was produced. */
   generatedAt: string;
-  /**
-   * Where the units came from:
-   * - "domain"   = the canonical `units` Firestore collection (populated by
-   *                master-sheet-sync.ts — the single source of truth also used
-   *                by the AI Closer Agent, semantic search, and admin),
-   * - "live"     = the owner sheet read live (units collection empty/down),
-   * - "snapshot" = the committed offline fallback.
-   */
   source: 'domain' | 'live' | 'snapshot';
   count: number;
+  segments?: {
+    total: number;
+    owners_rent: number;
+    owners_buy: number;
+    broker_rent: number;
+    broker_buy: number;
+    unknown: number;
+  };
+  compoundCounts?: Record<string, number>;
+  compoundSegmentCounts?: Record<string, Record<string, number>>;
   units: InventoryUnit[];
 }

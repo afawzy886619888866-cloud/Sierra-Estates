@@ -5,110 +5,150 @@
  * GET /api/auth
  *   → { signedIn: boolean, role?, name?, email? }
  *
- * When Firebase Admin is configured, "signin" verifies the Firebase ID
- * token (passed in `token` field) and reads the user's role from
- * Firestore /users/{uid}. When NOT configured, falls back to demo admin
- * (see lib/auth.ts tryDemoLogin).
+ * "signin" verifies the Supabase access token (passed in the `token` field)
+ * and reads the caller's role from public.profiles. When no token is supplied
+ * it falls back to the env-gated bootstrap login (see lib/auth.ts
+ * tryDemoLogin), which exists so the portal is reachable before the first
+ * Supabase account is provisioned.
  */
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies,
+  parseCookies, isAdminEmail,
 } from "@/lib/auth";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
 import type { Role, User } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
+
 export async function GET(req: Request) {
   const cookies = parseCookies(req.headers.get("cookie"));
   const sess = await verifySession(cookies[SESSION_COOKIE]);
-  if (!sess) return NextResponse.json({ signedIn: false });
-  return NextResponse.json({
-    signedIn: true,
-    role: sess.role,
-    name: sess.name,
-    email: sess.email,
-    uid: sess.uid,
-  });
+  if (!sess) {
+    return NextResponse.json({ signedIn: false }, { headers: NO_STORE_HEADERS });
+  }
+  return NextResponse.json(
+    {
+      signedIn: true,
+      role: sess.role,
+      name: sess.name,
+      email: sess.email,
+      uid: sess.uid,
+    },
+    { headers: NO_STORE_HEADERS }
+  );
 }
 
 export async function POST(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { body = {}; }
 
+  const reqHost = (() => {
+    try { return new URL(req.url).hostname; } catch { return req.headers.get("host") || undefined; }
+  })();
+
   if (body.action === "signout") {
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
     res.cookies.delete(SESSION_COOKIE);
     return res;
   }
 
   if (body.action === "signin") {
-    const { email, password, token: firebaseIdToken } = body;
-    if (!email || (!password && !firebaseIdToken)) {
-      return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
+    const { email, password, token: accessToken } = body;
+    if (!email && !accessToken) {
+      return NextResponse.json({ error: "Missing credentials" }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
-    // Path A — real Firebase: verify ID token, fetch role.
-    const db = await getAdminDb();
-    if (db && firebaseIdToken) {
+    const targetEmail = (email || "").trim().toLowerCase();
+
+    // Path A — verify the Supabase access token, then read the stored role.
+    if (accessToken) {
       try {
-        const { getAuth } = await import("firebase-admin/auth");
-        const decoded = await getAuth().verifyIdToken(firebaseIdToken);
-        const userDoc = await db.collection("users").doc(decoded.uid).get();
-        const userData = userDoc.data() as Partial<User> | undefined;
-        const rawRole = String(userData?.role ?? "viewer").trim().toLowerCase();
-        let role: Role = ["viewer", "owner", "agent", "manager", "admin", "superadmin"].includes(rawRole)
-          ? (rawRole as Role)
-          : "viewer";
+        const { data, error } = await getSupabaseAdmin().auth.getUser(accessToken);
+        const user = error ? null : data?.user;
 
-        if (!userDoc.exists) {
-          const anyUser = await db.collection("users").limit(1).get();
-          if (anyUser.empty) {
-            role = "admin";
+        if (user) {
+          const verifiedEmail = (user.email || targetEmail || "").trim().toLowerCase();
+          const profile = await getRecord<Partial<User> & { fullName?: string; role?: string }>(
+            "profiles",
+            user.id
+          );
+
+          if (!profile) {
+            return NextResponse.json(
+              { error: "This account is not provisioned for the admin portal." },
+              { status: 403, headers: NO_STORE_HEADERS }
+            );
           }
-          await db.collection("users").doc(decoded.uid).set({
-            email: decoded.email ?? email,
-            name: decoded.name ?? email,
+
+          const rawRole = String(profile.role ?? "").trim().toLowerCase();
+          if (!isAdminPortalRole(rawRole)) {
+            return NextResponse.json(
+              { error: "This account is not approved for the admin portal." },
+              { status: 403, headers: NO_STORE_HEADERS }
+            );
+          }
+
+          const role: Role = rawRole as Role;
+
+          try {
+            await updateRecord("profiles", user.id, { lastLogin: new Date().toISOString() });
+          } catch {
+            // Non-fatal if profile write fails
+          }
+
+          const sess = await signSession({
+            uid: user.id,
+            email: user.email ?? verifiedEmail,
+            name:
+              profile?.fullName ??
+              (user.user_metadata?.full_name as string | undefined) ??
+              verifiedEmail.split("@")[0] ??
+              "Sierra Staff",
             role,
-            createdAt: new Date().toISOString(),
-          }, { merge: true });
-        }
-        if (!isAdminPortalRole(role)) {
-          return NextResponse.json({ error: "This account is not approved for the admin portal." }, { status: 403 });
+          });
+          const res = NextResponse.json({ ok: true, role }, { headers: NO_STORE_HEADERS });
+          res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
+          return res;
         }
 
-        const sess = await signSession({
-          uid: decoded.uid,
-          email: decoded.email ?? email,
-          name: userData?.name ?? decoded.name ?? email,
-          role,
-        });
-        const res = NextResponse.json({ ok: true, role });
-        res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
-        return res;
-      } catch {
-        return NextResponse.json({ error: "Invalid Firebase token" }, { status: 401 });
+        console.warn("[api/auth] Supabase token verification failed:", error?.message);
+      } catch (err: any) {
+        console.warn("[api/auth] Supabase token verification threw:", err?.message);
       }
+
+      // A token was supplied and did not verify. Falling through to a
+      // password path here would let a caller bypass token verification by
+      // sending a bad token alongside credentials, so refuse outright.
+      return NextResponse.json(
+        { error: "Invalid or expired session token." },
+        { status: 401, headers: NO_STORE_HEADERS }
+      );
     }
 
-    // Path B — demo admin (sandbox only).
-    const demo = tryDemoLogin(email, password);
+    // Path C — Staff Admin Fallback (Email + Password)
+    const demo = tryDemoLogin(targetEmail, password || "");
     if (!demo) {
       return NextResponse.json(
-        { error: "Invalid credentials. In production, sign in via Firebase." },
-        { status: 401 }
+        { error: "Invalid credentials. Please verify your email and password or use Google Mail sign in." },
+        { status: 401, headers: NO_STORE_HEADERS }
       );
     }
     const sess = await signSession({
       uid: demo.uid, email: demo.email, name: demo.name, role: demo.role,
     });
-    const res = NextResponse.json({ ok: true, role: demo.role });
-    res.cookies.set(SESSION_COOKIE, sess, cookieOpts());
+    const res = NextResponse.json({ ok: true, role: demo.role }, { headers: NO_STORE_HEADERS });
+    res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
     return res;
   }
 
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  return NextResponse.json({ error: "Unknown action" }, { status: 400, headers: NO_STORE_HEADERS });
 }

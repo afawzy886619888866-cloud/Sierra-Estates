@@ -31,7 +31,7 @@ import { NextResponse } from 'next/server';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { parseRequestBody, isParseFailure, semanticSearchSchema } from '@/lib/server/schemas';
 import { semanticSearch } from '@/lib/server/search-service';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
@@ -61,13 +61,15 @@ export async function POST(req: Request) {
     // Log the search query for analytics (fire-and-forget, non-blocking)
     try {
       const userAgent = req.headers.get('user-agent') ?? undefined;
-      adminDb.collection('search_queries').add({
+      // `total` and `timestamp` are stored as public.search_queries'
+      // result_count / created_at columns.
+      void insertRecord('search_queries', {
         query,
         locale,
         intent: result.intent,
         extractionMethod: result.extractionMethod,
-        total: result.total,
-        timestamp: new Date(),
+        resultCount: result.total,
+        createdAt: new Date().toISOString(),
         userAgent,
       }).catch(() => {
         // swallow — don't fail the search if logging fails

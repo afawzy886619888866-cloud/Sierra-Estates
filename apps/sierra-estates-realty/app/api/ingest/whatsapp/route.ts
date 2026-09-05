@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import type { BrokerListing } from '@/lib/models/schema';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { insertRecord, listRecords } from '@sierra-estates/db';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
+import { WhatsAppConversationalService } from '@/lib/services/WhatsAppConversationalService';
 import { OrchestratorService } from '@/lib/services/orchestrator';
 import { GoogleSheetsSync } from '@/lib/services/sheets-sync';
 import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
-const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-
-async function verifyWebhookSecret(req: NextRequest): Promise<boolean> {
-  if (!SECRET_KEY) return true;
-  const secretHeader = req.headers.get('x-sbr-secret-key');
-  return secretHeader === SECRET_KEY;
+function verifyWebhookSecret(req: NextRequest) {
+  return verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
 }
 
 const extractRawMessage = (body: Record<string, any>) =>
@@ -51,7 +50,7 @@ const buildListingDocument = (
   sender: string,
   group: string,
   parsed: any
-): Omit<BrokerListing, 'id'> => {
+) => {
   const isListing = parsed?.isListing === true;
   
   // Use the pre-calculated sierraCode if available, else build it
@@ -70,7 +69,7 @@ const buildListingDocument = (
   return {
     rawMessage,
     sourceGroup: group,
-    sourcePlatform: 'whatsapp',
+    sourcePlatform: 'whatsapp' as const,
     senderInfo: sender,
     extractedData: {
       compound: parsed?.compound,
@@ -99,25 +98,24 @@ const buildListingDocument = (
       sentiment: parsed?.sentiment || 'neutral',
       matchingKeywords: parsed?.matchingKeywords || [],
       parserVersion: 'whatsapp-ingest/v2-unified',
-      lastUpdatedAt: Timestamp.now(),
+      lastUpdatedAt: new Date().toISOString(),
     },
     status: isListing ? 'parsed' : 'new',
     isVerified: false,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     orchestrationState: {
       stage: isListing ? 'S2' : 'S1',
       status: isListing ? 'completed' : 'pending',
       engineVersion: 'whatsapp-ingest/v2-unified',
-      lastTriggeredAt: Timestamp.now() as any,
+      lastTriggeredAt: new Date().toISOString(),
     },
   };
 };
 
 export async function POST(req: NextRequest) {
-  if (!await verifyWebhookSecret(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = verifyWebhookSecret(req);
+  if (denied) return denied;
 
   try {
     const body = await req.json() as Record<string, any>;
@@ -133,16 +131,15 @@ export async function POST(req: NextRequest) {
     // create duplicate broker_listings and re-run the pipeline. Short-circuit
     // on an exact (sender + message) repeat before spending an AI parse call.
     const dedupeHash = createHash('sha1').update(`${sender}|${rawMessage}`).digest('hex');
-    const existing = await adminDb
-      .collection(COLLECTIONS.brokerListings)
-      .where('dedupeHash', '==', dedupeHash)
-      .limit(1)
-      .get();
-    if (!existing.empty) {
+    const existing = await listRecords<{ id: string }>('broker_listings', {
+      where: [{ column: 'dedupeHash', value: dedupeHash }],
+      limit: 1,
+    });
+    if (existing.length > 0) {
       return NextResponse.json({
         success: true,
         deduped: true,
-        id: existing.docs[0].id,
+        id: existing[0].id,
         orchestration: 'Duplicate ignored',
       });
     }
@@ -152,26 +149,35 @@ export async function POST(req: NextRequest) {
     let leilaReply = null;
     if (parsed && !parsed.isListing) {
       try {
-        const responseText = await GoogleAIService.generateContent(
-          'SCRIBE', 'S1-WhatsApp-Intake',
-          {
-            system: LEILA_PROMPT.system,
-            user: rawMessage
-          },
-          { model: 'gemini-1.5-flash', temperature: 0.3 }
-        );
-        
+        const conversationalResponse = await WhatsAppConversationalService.processDirectMessage(rawMessage, sender);
         leilaReply = {
-          text: responseText.replace('[VIP_ALERT_TRIGGER]', '').trim(),
-          isVIP: responseText.includes('[VIP_ALERT_TRIGGER]')
+          text: conversationalResponse.trim(),
+          isVIP: conversationalResponse.includes('VIP') || conversationalResponse.includes('Portfolio Manager')
         };
       } catch (err) {
-        logger.warn('[WhatsApp Ingest] Leila response generation failed:', err);
+        logger.warn('[WhatsApp Ingest] Hermes conversational response generation failed, falling back to scribe:', err);
+        try {
+          const responseText = await GoogleAIService.generateContent(
+            'SCRIBE', 'S1-WhatsApp-Intake',
+            {
+              system: LEILA_PROMPT.system,
+              user: rawMessage
+            },
+            { model: 'gemini-1.5-flash', temperature: 0.3 }
+          );
+          
+          leilaReply = {
+            text: responseText.replace('[VIP_ALERT_TRIGGER]', '').trim(),
+            isVIP: responseText.includes('[VIP_ALERT_TRIGGER]')
+          };
+        } catch (fallbackErr) {
+          logger.warn('[WhatsApp Ingest] Leila response generation fallback failed:', fallbackErr);
+        }
       }
     }
 
     const listing = buildListingDocument(rawMessage, sender, group, parsed);
-    const docRef = await adminDb.collection(COLLECTIONS.brokerListings).add({ ...listing, dedupeHash });
+    const docRef = await insertRecord<{ id: string }>('broker_listings', { ...listing, dedupeHash });
 
     // Dual-Ingestion: Also append to Google Sheets Master Log
     try {

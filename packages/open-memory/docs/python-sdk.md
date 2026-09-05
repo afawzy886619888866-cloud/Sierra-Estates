@@ -16,19 +16,19 @@ mem = Memory()
 
 #### Methods
 
-*   `add(content: str, user_id: str = "default", metadata: dict = None) -> dict`
-    *   Stores a new memory.
-    *   **Returns**: The created memory object (including ID).
+* `add(content: str, user_id: str = "default", metadata: dict = None) -> dict`
+  * Stores a new memory.
+  * **Returns**: The created memory object (including ID).
 
-*   `search(query: str, user_id: str, limit: int = 5) -> list[dict]`
-    *   Retrieves relevant memories based on semantic similarity + recency.
-    *   **Returns**: List of memory objects, sorted by score.
+* `search(query: str, user_id: str, limit: int = 5) -> list[dict]`
+  * Retrieves relevant memories based on semantic similarity + recency.
+  * **Returns**: List of memory objects, sorted by score.
 
-*   `delete(memory_id: str) -> bool`
-    *   Removes a memory by ID.
+* `delete(memory_id: str) -> bool`
+  * Removes a memory by ID.
 
-*   `history(user_id: str) -> list[dict]`
-    *   Returns the temporal chain of interactions for a user.
+* `history(user_id: str) -> list[dict]`
+  * Returns the temporal chain of interactions for a user.
 
 ### `OpenAIWrapper`
 

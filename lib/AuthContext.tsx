@@ -1,11 +1,16 @@
 "use client";
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth, isFirebaseClientConfigured } from './firebase';
+import { supabase } from './supabase';
+
+export interface AppUser {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, any>;
+}
 
 interface AuthContextType {
-  user: User | null;
-  role: 'admin' | 'manager' | 'agent' | null;
+  user: AppUser | null;
+  role: 'admin' | 'manager' | 'agent' | 'client' | null;
   isAdmin: boolean;
   isGuest: boolean;
   loading: boolean;
@@ -27,8 +32,8 @@ const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<'admin' | 'manager' | 'agent' | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [role, setRole] = useState<'admin' | 'manager' | 'agent' | 'client' | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -41,87 +46,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSignOut = React.useCallback(async () => {
-    if (!isFirebaseClientConfigured) {
-      setUser(null);
-      setRole(null);
-      setIsGuest(false);
-      return;
-    }
-
     try {
-      await signOut(auth);
-      setUser(null);
-      setRole(null);
-      setIsGuest(false);
-    } catch (error) {
-      console.error('Sign-out failed:', error);
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
+        await supabase.auth.signOut();
+      }
+    } catch (err) {
+      console.error('Supabase sign-out error:', err);
     }
+    setUser(null);
+    setRole(null);
+    setIsGuest(false);
   }, []);
 
   const scheduleAutoSignOut = React.useCallback(() => {
     clearTimer();
-
-    if (!isGuest && (!isFirebaseClientConfigured || !auth.currentUser)) {
+    if (!isGuest && !user) {
       return;
     }
-
     timerRef.current = setTimeout(() => {
       void handleSignOut();
     }, INACTIVITY_TIMEOUT_MS);
-  }, [isGuest, handleSignOut, clearTimer]);
+  }, [isGuest, user, handleSignOut, clearTimer]);
 
   useEffect(() => {
-    if (!isFirebaseClientConfigured) {
-      setLoading(false);
-      clearTimer();
-      return;
+    let mounted = true;
+
+    async function initAuth() {
+      try {
+        const isSupabaseConfigured = Boolean(
+          process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')
+        );
+
+        if (isSupabaseConfigured) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user && mounted) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email,
+              user_metadata: session.user.user_metadata,
+            });
+            const userRole = (session.user.user_metadata?.role as any) || 'agent';
+            setRole(userRole);
+          }
+
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (!mounted) return;
+            if (session?.user) {
+              setUser({
+                id: session.user.id,
+                email: session.user.email,
+                user_metadata: session.user.user_metadata,
+              });
+              setRole((session.user.user_metadata?.role as any) || 'agent');
+              setIsGuest(false);
+              scheduleAutoSignOut();
+            } else {
+              setUser(null);
+              setRole(null);
+              clearTimer();
+            }
+            setLoading(false);
+          });
+
+          return () => {
+            subscription.unsubscribe();
+          };
+        } else {
+          // Fallback / Guest mode
+          if (mounted) {
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn("Auth initialization fallback:", err);
+        if (mounted) setLoading(false);
+      }
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        setIsGuest(false);
-        // Fetch role from Firestore
-        try {
-          const { db } = await import('./firebase');
-          const { doc, getDoc } = await import('firebase/firestore');
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setRole(userData.role || 'agent');
-          } else {
-            setRole('agent');
-          }
-        } catch (err) {
-          console.error("Error fetching user role:", err);
-          setRole('agent');
-        }
-      } else {
-        setRole(null);
-      }
-      setLoading(false);
-
-      if (currentUser) {
-        scheduleAutoSignOut();
-      } else {
-        clearTimer();
-      }
-    }, (error) => {
-      console.error("Auth error:", error);
-      setLoading(false);
-      clearTimer();
-    });
+    const unsubPromise = initAuth();
 
     return () => {
-      unsubscribe();
+      mounted = false;
       clearTimer();
+      unsubPromise.then(unsub => {
+        if (typeof unsub === 'function') unsub();
+      });
     };
   }, [scheduleAutoSignOut, clearTimer]);
 
   useEffect(() => {
-    if (!user && !isGuest) {
-      return;
-    }
+    if (!user && !isGuest) return;
 
     const handleActivity = () => scheduleAutoSignOut();
     ACTIVITY_EVENTS.forEach((eventName) => {
@@ -133,18 +147,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         window.removeEventListener(eventName, handleActivity);
       });
     };
-  }, [user, isGuest]);
-
+  }, [user, isGuest, scheduleAutoSignOut]);
 
   return (
     <AuthContext.Provider value={{
       user,
       role,
-      isAdmin: role === 'admin',
+      isAdmin: role === 'admin' || role === 'superadmin' as any,
       isGuest,
       loading,
       setGuest: setIsGuest,
-      signOut: handleSignOut
+      signOut: handleSignOut,
     }}>
       {children}
     </AuthContext.Provider>

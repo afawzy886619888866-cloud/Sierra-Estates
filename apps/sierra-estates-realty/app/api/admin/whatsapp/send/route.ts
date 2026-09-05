@@ -1,29 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { logger } from '@/lib/logger';
 
-// Force dynamic rendering — uses Firebase/auth at runtime
+// Force dynamic rendering — reads the caller's identity at runtime
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  const auth = await verifyRequest(request);
-  if (!auth.authenticated) return unauthorizedResponse();
-
-  // Enforce admin or manager role check
-  if (auth.method === 'firebase') {
-    try {
-      const userDoc = await adminDb.collection('users').doc(auth.uid!).get();
-      const role = userDoc.data()?.role;
-      if (role !== 'admin' && role !== 'manager' && role !== 'superadmin') {
-        return unauthorizedResponse('Authorized personnel only');
-      }
-    } catch {
-      return unauthorizedResponse('Auth validation failed');
-    }
-  }
+  // Bulk owner outreach requires a real admin identity. verifyAdminRequest
+  // resolves the Firestore role itself and rejects identity-less callers, so a
+  // holder of the shared SBR_SECRET_KEY (cron/webhook credential) can no longer
+  // trigger mass WhatsApp sends.
+  const auth = await verifyAdminRequest(request);
+  if (!auth.authenticated) return unauthorizedResponse('Authorized personnel only');
 
   try {
     const { leadIds, customMessage } = await request.json();
@@ -34,12 +24,10 @@ export async function POST(request: NextRequest) {
     // Fetch details of all requested leads
     const leadsList: any[] = [];
     for (const leadId of leadIds) {
-      const docSnap = await adminDb.collection('leads').doc(leadId).get();
-      if (docSnap.exists) {
-        const data = docSnap.data();
+      const lead = await getRecord<Record<string, unknown>>('leads', leadId);
+      if (lead) {
         leadsList.push({ 
-          id: docSnap.id, 
-          ...data,
+          ...lead,
           customMessage: customMessage || '' 
         });
       }
@@ -57,21 +45,29 @@ export async function POST(request: NextRequest) {
       const leadName = lead.name || 'Valued Lead';
       
       // Add Activity log
-      await adminDb.collection('activities').add({
+      const now = new Date().toISOString();
+
+      await insertRecord('activities', {
         type: 'whatsapp_outreach_queued',
         actorId: auth.uid || 'system',
         actorName: 'Intelligence OS Web Interface',
         description: `Staggered WhatsApp outreach initiated for **${leadName}**`,
         relatedId: lead.id,
         relatedType: 'lead',
-        createdAt: Timestamp.now(),
+        createdAt: now,
       });
 
-      // Update lead automation status
-      await adminDb.collection('leads').doc(lead.id).update({
-        'automation.whatsappFollowupSent': true,
-        'automation.lastWhatsAppSentAt': Timestamp.now(),
-        updatedAt: Timestamp.now(),
+      // Update lead automation status. Firestore could set nested keys with
+      // dotted paths; `automation` is a JSONB column here, so the existing
+      // object is merged rather than replaced — otherwise unrelated flags on
+      // it would be wiped.
+      await updateRecord('leads', lead.id, {
+        automation: {
+          ...(lead.automation as Record<string, unknown> | undefined),
+          whatsappFollowupSent: true,
+          lastWhatsAppSentAt: now,
+        },
+        updatedAt: now,
       });
     }
 

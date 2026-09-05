@@ -38,10 +38,10 @@ jobs:
     continue-on-error: true
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v4
       with:
         submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
-    - uses: actions/setup-dotnet@v6
+    - uses: actions/setup-dotnet@v4
       with:
         dotnet-version: |
           5.0.x

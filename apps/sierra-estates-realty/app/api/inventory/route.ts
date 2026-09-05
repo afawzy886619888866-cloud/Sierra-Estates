@@ -65,11 +65,59 @@ async function fetchLive(): Promise<InventoryResponse | null> {
   return { generatedAt: new Date().toISOString(), source: 'live', count: units.length, units };
 }
 
-export async function GET() {
-  const payload = (await fetchDomain()) ?? (await fetchLive()) ?? snapshotResponse();
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const filterCompound = searchParams.get('compound')?.trim().toLowerCase() || '';
+  const filterSegment = searchParams.get('segment')?.trim().toLowerCase() || '';
+  const filterMode = searchParams.get('mode')?.trim().toLowerCase() || '';
+  const filterLimit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 0;
+
+  const snapshotData = snapshot as unknown as {
+    generatedAt?: string;
+    count?: number;
+    segments?: any;
+    compoundCounts?: Record<string, number>;
+    compoundSegmentCounts?: Record<string, Record<string, number>>;
+    units?: InventoryUnit[];
+  };
+
+  const allUnits: InventoryUnit[] = Array.isArray(snapshotData)
+    ? (snapshotData as InventoryUnit[])
+    : snapshotData.units || [];
+
+  let filteredUnits = allUnits;
+
+  if (filterCompound) {
+    filteredUnits = filteredUnits.filter((u) => {
+      const cmp = (u.compound || u.location || '').toLowerCase();
+      return cmp.includes(filterCompound) || filterCompound.includes(cmp);
+    });
+  }
+
+  if (filterSegment && filterSegment !== 'all') {
+    filteredUnits = filteredUnits.filter((u) => u.segment === filterSegment);
+  }
+
+  if (filterMode && filterMode !== 'all') {
+    filteredUnits = filteredUnits.filter((u) => u.mode === filterMode);
+  }
+
+  if (filterLimit > 0 && filteredUnits.length > filterLimit) {
+    filteredUnits = filteredUnits.slice(0, filterLimit);
+  }
+
+  const payload: InventoryResponse = {
+    generatedAt: snapshotData.generatedAt || new Date().toISOString(),
+    source: 'snapshot',
+    count: filteredUnits.length,
+    segments: snapshotData.segments,
+    compoundCounts: snapshotData.compoundCounts,
+    compoundSegmentCounts: snapshotData.compoundSegmentCounts,
+    units: filteredUnits,
+  };
+
   return NextResponse.json(payload, {
     headers: {
-      // Let the CDN serve a cached copy while revalidating in the background.
       'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
     },
   });

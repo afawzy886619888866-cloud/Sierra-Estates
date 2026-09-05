@@ -6,9 +6,10 @@ import { ExecutiveTearSheet } from '@sierra-estates/agents-core/src/memo-generat
 
 interface PropertyTeaserBrochureProps {
   initialData?: Partial<ExecutiveTearSheet>;
+  lang?: string;
 }
 
-export function PropertyTeaserBrochure({ initialData }: PropertyTeaserBrochureProps) {
+export function PropertyTeaserBrochure({ initialData, lang: _lang }: PropertyTeaserBrochureProps) {
   const [formData, setFormData] = useState({
     referenceId: initialData?.referenceId || 'REF-HYD-042',
     title: initialData?.headline || 'Luxury Signature Villa · Prime Lake View',

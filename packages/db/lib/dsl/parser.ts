@@ -1,23 +1,21 @@
 // sierra-estates/lib/dsl/parser.ts
-// Sierra Estates DSL V2.0 — Full Parser + Firestore Query Builder
+// Sierra Estates DSL V2.0 — Full Parser + Supabase Query Builder
 //
 // Usage:
-//   import { parseDSL, buildFirestoreQuery } from "@/lib/dsl/parser";
-//   const view   = parseDSL(dsl, "listings");
-//   const query  = buildFirestoreQuery(view, db);
+//   import { parseDSL, buildSupabaseQuery } from "@sierra-estates/db";
+//   const view = parseDSL(dsl, "listings");
+//   const rows = await buildSupabaseQuery(view);
 
-import {
-  Firestore,
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  WhereFilterOp,
-  QueryConstraint,
-  Query,
-  DocumentData,
-} from "firebase/firestore";
+import { listRecords, type WhereClause } from "../records";
+
+/**
+ * The comparison operators the DSL accepts. This was Firestore's
+ * `WhereFilterOp`; the set is narrowed to what the DSL actually emits and
+ * what PostgREST can express, so the parser no longer depends on the
+ * Firebase SDK for a type.
+ */
+export type DslFilterOp =
+  | "==" | "!=" | "<" | "<=" | ">" | ">=" | "in";
 
 // ════════════════════════════════════════════════════════════════
 // TYPES
@@ -32,7 +30,7 @@ export type SortDir      = "asc" | "desc";
 
 export interface FilterClause {
   field: string;
-  operator: WhereFilterOp | "BETWEEN" | "IN";
+  operator: DslFilterOp | "BETWEEN" | "IN";
   value: unknown;
   value2?: unknown; // BETWEEN upper bound
 }
@@ -163,14 +161,14 @@ function parseFilterLine(line: string): FilterClause | null {
   const pct = line.match(/FILTER\s+"(.+?)"\s+(>=|<=|>|<|=|!=)\s+([\d.]+)\s+PERCENT/i);
   if (pct) {
     const op = pct[2] === "=" ? "==" : pct[2];
-    return { field: pct[1], operator: op as WhereFilterOp, value: parseFloat(pct[3]) };
+    return { field: pct[1], operator: op as DslFilterOp, value: parseFloat(pct[3]) };
   }
 
   // Standard: FILTER "Field" op "value" | number
   const std = line.match(/FILTER\s+"(.+?)"\s+(>=|<=|>|<|!=|=)\s+("?[^";\n]+"?)/i);
   if (std) {
     const op = std[2] === "=" ? "==" : std[2];
-    return { field: std[1], operator: op as WhereFilterOp, value: coerce(std[3]) };
+    return { field: std[1], operator: op as DslFilterOp, value: coerce(std[3]) };
   }
 
   return null;
@@ -314,63 +312,86 @@ export function parseDSL(dsl: string, collectionName = "listings"): ParsedView {
 }
 
 // ════════════════════════════════════════════════════════════════
-// FIRESTORE QUERY BUILDER
+// SUPABASE QUERY BUILDER
 // ════════════════════════════════════════════════════════════════
 
-export function buildFirestoreQuery(
-  parsed: ParsedView,
-  db: Firestore,
-  maxLimit = 50,
-): Query<DocumentData> {
-  const constraints: QueryConstraint[] = [];
+/** Map a DSL operator onto the record layer's clause vocabulary. */
+function toRecordOp(op: DslFilterOp): WhereClause["op"] {
+  switch (op) {
+    case "!=": return "neq";
+    case "<":  return "lt";
+    case "<=": return "lte";
+    case ">":  return "gt";
+    case ">=": return "gte";
+    case "in": return "in";
+    case "==":
+    default:   return "eq";
+  }
+}
+
+/**
+ * Translate a parsed view into record-layer where clauses.
+ *
+ * Exported separately from the fetch so callers can inspect or extend the
+ * clauses, and so this stays testable without a database.
+ */
+export function buildQueryClauses(parsed: ParsedView): WhereClause[] {
+  const clauses: WhereClause[] = [];
 
   // ── Filters ──────────────────────────────────────────────────
   for (const f of parsed.filters) {
     if (f.operator === "BETWEEN" && f.value2 !== undefined) {
-      constraints.push(where(f.field, ">=", f.value));
-      constraints.push(where(f.field, "<=", f.value2));
+      clauses.push({ column: f.field, op: "gte", value: f.value });
+      clauses.push({ column: f.field, op: "lte", value: f.value2 });
     } else if (f.operator === "IN" || f.operator === "in") {
-      // Firestore supports "in" for up to 30 values
-      const vals = Array.isArray(f.value) ? f.value : [f.value];
-      constraints.push(where(f.field, "in", vals));
+      clauses.push({
+        column: f.field,
+        op: "in",
+        value: Array.isArray(f.value) ? f.value : [f.value],
+      });
     } else if (f.operator !== "BETWEEN") {
-      constraints.push(where(f.field, f.operator as WhereFilterOp, f.value));
+      clauses.push({ column: f.field, op: toRecordOp(f.operator as DslFilterOp), value: f.value });
     }
   }
 
   // ── Compound scope ───────────────────────────────────────────
-  if (parsed.compounds.length > 0) {
-    const hasInFilter = parsed.filters.some(
-      ({ operator }) => operator === "IN" || operator === "in",
-    );
-
-    if (parsed.compounds.length === 1) {
-      constraints.push(where("Compound", "==", parsed.compounds[0]));
-    } else {
-      if (hasInFilter) {
-        throw new Error(
-          'Firestore queries cannot combine COMPOUND IN (...) with another IN filter unless exactly one compound is provided.',
-        );
-      }
-      constraints.push(where("Compound", "in", parsed.compounds));
-    }
+  // Firestore allowed only one array-membership filter per query, so
+  // COMPOUND IN (...) alongside another IN filter used to throw. Postgres has
+  // no such restriction, and both clauses are simply ANDed.
+  if (parsed.compounds.length === 1) {
+    clauses.push({ column: "Compound", op: "eq", value: parsed.compounds[0] });
+  } else if (parsed.compounds.length > 1) {
+    clauses.push({ column: "Compound", op: "in", value: parsed.compounds });
   }
 
-  // ── Ordering ─────────────────────────────────────────────────
-  // NOTE: Firestore requires any "where" field used in inequality
-  // to be the first orderBy field. Wrap in try/catch at call site.
-  for (const s of parsed.sortBy) {
-    constraints.push(orderBy(s.field, s.direction));
-  }
+  return clauses;
+}
 
-  // ── Limit ────────────────────────────────────────────────────
-  constraints.push(limit(maxLimit));
+/**
+ * Run a parsed view against its table.
+ *
+ * Firestore required any field used in an inequality to be the first orderBy
+ * field; Postgres does not, so the sort is applied as authored. Only the first
+ * sort key is passed down — the record layer takes a single orderBy, which is
+ * all any existing view config uses.
+ */
+export async function buildSupabaseQuery<T = Record<string, unknown>>(
+  parsed: ParsedView,
+  maxLimit = 50,
+): Promise<T[]> {
+  const primarySort = parsed.sortBy[0];
 
-  return query(collection(db, parsed.collectionName), ...constraints);
+  return listRecords<T>(parsed.collectionName, {
+    where: buildQueryClauses(parsed),
+    ...(primarySort
+      ? { orderBy: { column: primarySort.field, ascending: primarySort.direction === "asc" } }
+      : {}),
+    limit: maxLimit,
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
-// CLIENT-SIDE HELPERS (for fields Firestore cannot handle)
+// CLIENT-SIDE HELPERS (for fields the database query cannot handle)
 // ════════════════════════════════════════════════════════════════
 
 /** Filter displayed fields to only those in SHOW, minus HIDE */

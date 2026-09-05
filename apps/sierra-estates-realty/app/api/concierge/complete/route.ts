@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { generateCloserHandoff } from '@/lib/services/handoff-service';
+import { escapeTelegramHtml } from '@/lib/telegram';
 
 export async function POST(req: Request) {
   try {
-    const { leadId } = await req.json();
-    if (!leadId) return NextResponse.json({ error: 'Missing leadId' }, { status: 400 });
+    const { leadId } = await req.json().catch(() => ({}));
+    if (typeof leadId !== 'string' || leadId.length === 0 || leadId.length > 200) {
+      return NextResponse.json({ error: 'Missing or invalid leadId' }, { status: 400 });
+    }
 
     // 1. Generate the High-Fidelity Executive Summary
     const summary = await generateCloserHandoff(leadId);
@@ -14,7 +17,7 @@ export async function POST(req: Request) {
     const adminChatId = process.env.TELEGRAM_CHAT_ID;
 
     if (token && adminChatId) {
-      const message = `<b>🏆 STAGE 9: HANDOFF RECEIVED</b>\n\nStakeholder <b>${summary.leadName}</b> has finalized their selection.\n\n<b>Intelligence Profile:</b>\n${summary.intelligenceProfile}\n\n<b>High Interest:</b>\n${summary.highInterestAssets.map(a => `• ${a.code}`).join('\n')}\n\n<b>Strategic Intent:</b>\n${summary.strategicIntent}\n\n<i>Use the /ag handover command for full lead context.</i>`;
+      const message = `<b>🏆 STAGE 9: HANDOFF RECEIVED</b>\n\nStakeholder <b>${escapeTelegramHtml(summary.leadName)}</b> has finalized their selection.\n\n<b>Intelligence Profile:</b>\n${escapeTelegramHtml(summary.intelligenceProfile)}\n\n<b>High Interest:</b>\n${summary.highInterestAssets.map(a => `• ${escapeTelegramHtml(a.code)}`).join('\n')}\n\n<b>Strategic Intent:</b>\n${escapeTelegramHtml(summary.strategicIntent)}\n\n<i>Use the /ag handover command for full lead context.</i>`;
       
       await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: 'POST',

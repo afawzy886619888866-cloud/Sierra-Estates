@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, updateRecord, type RecordData } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 const patchSchema = z
@@ -23,11 +21,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const { id } = await params;
-    const snap = await adminDb.collection(COLLECTIONS.ownerNegotiations).doc(id).get();
-    if (!snap.exists) {
+    const negotiation = await getRecord('owner_negotiations', id);
+    if (!negotiation) {
       return NextResponse.json({ error: 'Owner negotiation not found' }, { status: 404 });
     }
-    return NextResponse.json({ negotiation: { id: snap.id, ...snap.data() } });
+    return NextResponse.json({ negotiation });
   } catch (err) {
     logger.error('Error fetching owner negotiation:', err);
     return NextResponse.json(
@@ -51,17 +49,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
-    const ref = adminDb.collection(COLLECTIONS.ownerNegotiations).doc(id);
-    const snap = await ref.get();
-    if (!snap.exists) {
+    const existing = await getRecord('owner_negotiations', id);
+    if (!existing) {
       return NextResponse.json({ error: 'Owner negotiation not found' }, { status: 404 });
     }
 
     // null is a valid PATCH value here — it clears interestedLeadId/assignedAgentId.
-    const patch: Record<string, any> = { ...parsed.data, updatedAt: Timestamp.now() };
-    await ref.update(patch);
-    const updated = await ref.get();
-    return NextResponse.json({ success: true, negotiation: { id: updated.id, ...updated.data() } });
+    const patch: RecordData = { ...parsed.data, updatedAt: new Date().toISOString() };
+    const updated = await updateRecord('owner_negotiations', id, patch);
+    return NextResponse.json({ success: true, negotiation: updated });
   } catch (err) {
     logger.error('Error updating owner negotiation:', err);
     return NextResponse.json(

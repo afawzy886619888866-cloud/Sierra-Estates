@@ -23,9 +23,6 @@ concurrency:
   group: firebase-deploy-admin-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
@@ -34,19 +31,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          # FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU or FIREBASE_SERVICE_ACCOUNT_JSON — set in: GitHub → Settings → Secrets → Actions
-          credentials_json: ${{ secrets['FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU'] || secrets['FIREBASE_SERVICE_ACCOUNT_JSON'] }}
-
-      - name: Deploy admin redirect (Firebase Hosting)
-        run: npx firebase-tools@latest deploy --only hosting:sierra-estates-admin --project sierra-blu --non-interactive
+      - name: Retirement Notice (Supabase is Authoritative)
+        run: |
+          echo "⚠️ Supabase is now the authoritative primary backend replacing Firebase."
+          echo "Firebase hosting and deployments are permanently retired. Exiting cleanly."
+          exit 0

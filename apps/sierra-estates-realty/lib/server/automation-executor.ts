@@ -1,9 +1,8 @@
 import 'server-only';
-import { adminDb } from './firebase-admin';
+import { getRecord, insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
 import { triggerN8nWebhook } from './n8n-client';
 import { AutomationRule, ExecutionLog, AUTOMATION_COLLECTIONS, WhatsAppAction, EmailAction } from '@/lib/models/automation';
 import { logger } from '@/lib/logger';
-import { Timestamp } from 'firebase-admin/firestore';
 
 /**
  * Automation Executor Service
@@ -61,7 +60,7 @@ export async function executeAutomationRule(
           actionType: action.type,
           status: actionSuccess ? 'success' : 'failed',
           message: actionSuccess ? 'Action executed successfully' : 'Action failed',
-          timestamp: Timestamp.now(),
+          timestamp: new Date().toISOString(),
         });
 
         if (actionSuccess) {
@@ -78,7 +77,7 @@ export async function executeAutomationRule(
           actionType: action.type,
           status: 'failed',
           message: errorMessage,
-          timestamp: Timestamp.now(),
+          timestamp: new Date().toISOString(),
         });
 
         failureCount++;
@@ -103,7 +102,7 @@ export async function executeAutomationRule(
       actionResults,
       durationMs,
       context,
-      startedAt: Timestamp.now(),
+      startedAt: new Date().toISOString(),
     });
 
     // Update rule stats
@@ -128,7 +127,7 @@ export async function executeAutomationRule(
       durationMs: Date.now() - executionStartTime,
       context,
       errorMessage,
-      startedAt: Timestamp.now(),
+      startedAt: new Date().toISOString(),
     });
 
     await updateRuleStats(rule.id, false, false);
@@ -289,16 +288,15 @@ async function createTaskAction(
   _rule: AutomationRule & { id: string }
 ): Promise<boolean> {
   try {
-    // Create a task in Firestore
-    await adminDb.collection('followups').add({
+    await insertRecord('followups', {
       leadId: context.triggeredBy,
       type: 'other',
       title: action.title,
       notes: action.description,
       priority: action.priority,
-      dueAt: Timestamp.fromDate(new Date(Date.now() + (action.dueDaysFromNow || 0) * 24 * 60 * 60 * 1000)),
+      dueAt: new Date(Date.now() + (action.dueDaysFromNow || 0) * 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending',
-      createdAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
       createdBy: 'automation',
     });
 
@@ -321,12 +319,9 @@ async function updateStatusAction(
     if (!context.triggeredBy) return false;
 
     // Update the lead/unit status
-    await adminDb
-      .collection('leads')
-      .doc(context.triggeredBy)
-      .update({
+    await updateRecord('leads', context.triggeredBy, {
         stage: action.newStatus,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
 
     return true;
@@ -348,12 +343,9 @@ async function addNoteAction(
     if (!context.triggeredBy) return false;
 
     // Add a note to the lead
-    await adminDb
-      .collection('leads')
-      .doc(context.triggeredBy)
-      .update({
+    await updateRecord('leads', context.triggeredBy, {
         notes: action.note,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
 
     return true;
@@ -378,20 +370,20 @@ async function assignAgentAction(
 
     // If using round-robin strategy, pick the agent with least assignments
     if (action.assignmentStrategy === 'round_robin') {
-      const agents = await adminDb.collection('users').where('role', '==', 'agent').get();
-      if (agents.empty) return false;
+      const agents = await listRecords<{ id: string }>('profiles', {
+        where: [{ column: 'role', value: 'agent' }],
+        select: 'id',
+      });
+      if (agents.length === 0) return false;
 
       // Simple round-robin: pick random agent
-      agentId = agents.docs[Math.floor(Math.random() * agents.size)].id;
+      agentId = agents[Math.floor(Math.random() * agents.length)].id;
     }
 
     // Assign agent to lead
-    await adminDb
-      .collection('leads')
-      .doc(context.triggeredBy)
-      .update({
+    await updateRecord('leads', context.triggeredBy, {
         assignedTo: agentId,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
 
     return true;
@@ -432,13 +424,23 @@ function evaluateConditions(
 }
 
 /**
- * Log execution to Firestore
+ * Log execution
  */
-async function logExecution(logData: Partial<ExecutionLog>): Promise<void> {
+async function logExecution(
+  logData: Partial<ExecutionLog> & { context?: ExecutionContext }
+): Promise<void> {
   try {
-    await adminDb.collection(AUTOMATION_COLLECTIONS.executionLogs).add({
-      ...logData,
-      completedAt: Timestamp.now(),
+    // Firestore accepted whatever shape it was handed. Postgres rejects unknown
+    // columns, so the trigger context is flattened onto the columns that exist
+    // rather than written as a nested `context` blob.
+    const { context, errorMessage, ...rest } = logData;
+    await insertRecord(AUTOMATION_COLLECTIONS.executionLogs, {
+      ...rest,
+      triggerType: context?.triggerType ?? null,
+      triggeredBy: context?.triggeredBy ?? null,
+      triggeredByObject: context?.triggeredByObject ?? {},
+      error: errorMessage ?? null,
+      completedAt: new Date().toISOString(),
     });
   } catch (err) {
     logger.error('Failed to log execution:', err);
@@ -450,18 +452,22 @@ async function logExecution(logData: Partial<ExecutionLog>): Promise<void> {
  */
 async function updateRuleStats(ruleId: string, success: boolean, executed: boolean): Promise<void> {
   try {
-    const ruleRef = adminDb.collection(AUTOMATION_COLLECTIONS.rules).doc(ruleId);
-    const ruleDoc = await ruleRef.get();
+    const rule = await getRecord<AutomationRule>(AUTOMATION_COLLECTIONS.rules, ruleId);
+    if (!rule) return;
 
-    if (!ruleDoc.exists) return;
-
-    const rule = ruleDoc.data() as AutomationRule;
-
-    await ruleRef.update({
-      'stats.totalRuns': (rule.stats.totalRuns || 0) + (executed ? 1 : 0),
-      'stats.successCount': (rule.stats.successCount || 0) + (success ? 1 : 0),
-      'stats.failureCount': (rule.stats.failureCount || 0) + (!success && executed ? 1 : 0),
-      'stats.lastExecutedAt': Timestamp.now(),
+    // `stats` is one JSONB column, so the counters are read-merge-written rather
+    // than addressed with Firestore's dotted paths. Two concurrent executions
+    // can therefore lose a count; the rule stats are advisory, and the execution
+    // log (one row per run) stays the authoritative record.
+    const stats = rule.stats ?? ({} as AutomationRule['stats']);
+    await updateRecord(AUTOMATION_COLLECTIONS.rules, ruleId, {
+      stats: {
+        ...stats,
+        totalRuns: (stats.totalRuns || 0) + (executed ? 1 : 0),
+        successCount: (stats.successCount || 0) + (success ? 1 : 0),
+        failureCount: (stats.failureCount || 0) + (!success && executed ? 1 : 0),
+        lastExecutedAt: new Date().toISOString(),
+      },
     });
   } catch (err) {
     logger.error('Failed to update rule stats:', err);
@@ -473,14 +479,12 @@ async function updateRuleStats(ruleId: string, success: boolean, executed: boole
  */
 export async function triggerRuleManually(ruleId: string, triggerData?: Record<string, unknown>): Promise<boolean> {
   try {
-    const ruleDoc = await adminDb.collection(AUTOMATION_COLLECTIONS.rules).doc(ruleId).get();
+    const rule = await getRecord<AutomationRule & { id: string }>(AUTOMATION_COLLECTIONS.rules, ruleId);
 
-    if (!ruleDoc.exists) {
+    if (!rule) {
       logger.error(`Rule not found: ${ruleId}`);
       return false;
     }
-
-    const rule = { id: ruleDoc.id, ...ruleDoc.data() } as AutomationRule & { id: string };
 
     return await executeAutomationRule(rule, {
       ruleId,

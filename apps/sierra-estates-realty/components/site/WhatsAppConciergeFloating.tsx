@@ -15,11 +15,13 @@ export default function WhatsAppConciergeFloating() {
 
   const quickPrompts = isAr
     ? [
+        { title: '🎯 تفعيل رادار اصطياد وتأكيد الوحدات', text: 'مرحباً، أود تفعيل رادار اصطياد الوحدات للتحقق الفوري من توافر الوحدات وجلب أحدث الصور خلال 60 دقيقة.' },
         { title: 'استفسار عن كمبوندات التجمع الخامس', text: 'مرحباً، أود الاستفسار عن الوحدات المتاحة في كمبوندات التجمع الخامس (ميفيدا، هايد بارك، ماونتن فيو).' },
         { title: 'حساب خطة السداد والعائد الاستثماري', text: 'مرحباً، أريد حساب خطة السداد والعائد الاستثماري المتوقع لوحدات كايرو بلازا.' },
         { title: 'طلب حجز موعد معاينة خاصة (VIP)', text: 'مرحباً، أود حجز موعد معاينة خاصة لوحدات مميزة.' },
       ]
     : [
+        { title: '🎯 Launch Listing Net Radar (1h SLA)', text: 'Hello, I want to activate the Listing Net Radar to verify unit availability and fetch live photos within 1 hour.' },
         { title: 'Inquire about New Cairo Compounds', text: 'Hello, I would like to inquire about available units in New Cairo compounds (Mivida, Hyde Park, MV iCity).' },
         { title: 'Calculate ROI & Installment Plans', text: 'Hello, I want to calculate installment plans and expected ROI for Cairo Plaza properties.' },
         { title: 'Book a Private VIP Tour', text: 'Hello, I would like to arrange a private VIP viewing tour for selected luxury properties.' },
@@ -152,6 +154,29 @@ export default function WhatsAppConciergeFloating() {
                 <ChevronRight size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
               </button>
             ))}
+
+            {/* Launch Listing Net Link */}
+            <a
+              href="/net"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '8px 10px',
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, rgba(201, 148, 54, 0.25), rgba(233, 193, 118, 0.12))',
+                border: '1px solid rgba(201, 148, 54, 0.45)',
+                color: '#e9c176',
+                fontSize: 11,
+                fontWeight: 700,
+                textDecoration: 'none',
+                marginTop: 2,
+                marginBottom: 2,
+              }}
+            >
+              <span>🎯 {isAr ? 'فتح رادار اصطياد الوحدات التفاعلي' : 'Open Interactive Listing Net'}</span>
+            </a>
 
             {/* Custom Input */}
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>

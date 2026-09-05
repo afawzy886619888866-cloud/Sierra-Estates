@@ -15,5 +15,8 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "lint": "eslint ."
   }
 }

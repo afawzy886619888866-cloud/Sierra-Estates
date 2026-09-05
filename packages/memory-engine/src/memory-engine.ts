@@ -6,7 +6,7 @@
 import type { Agent, Skill, Context, ExecutionLog, Pattern } from './types'
 import type { MemoryStore, ExecutionLogQuery } from './stores/types'
 import { InMemoryStore } from './stores/memory-store'
-import { FirestoreMemoryStore } from './stores/firestore-store'
+import { SupabaseMemoryStore } from './stores/supabase-store'
 
 export interface MemoryEngineConfig {
   persistenceLayer?: 'file' | 'memory' | 'database'
@@ -19,12 +19,15 @@ export interface MemoryEngineConfig {
   store?: MemoryStore
 }
 
+/** Pub/sub subscriber callback — receives the published message. */
+export type SubscriberHandler = (message: any) => void
+
 export class MemoryEngine {
   private contexts: Map<string, Context> = new Map()
   private skillRegistry: Map<string, Skill> = new Map()
   private agentProfiles: Map<string, Agent> = new Map()
   private executionLogs: ExecutionLog[] = []
-  private subscribers: Map<string, Set<Function>> = new Map()
+  private subscribers: Map<string, Set<SubscriberHandler>> = new Map()
   private pendingWrites = 0
   private lastStoreError: string | null = null
 
@@ -179,7 +182,7 @@ export class MemoryEngine {
     }
   }
 
-  subscribe(topic: string, handler: Function): () => void {
+  subscribe(topic: string, handler: SubscriberHandler): () => void {
     if (!this.subscribers.has(topic)) {
       this.subscribers.set(topic, new Set())
     }
@@ -289,8 +292,11 @@ export class MemoryEngine {
  * deployment silently ran memory-only. It is honoured now.
  */
 function resolveStore(layer: string): MemoryStore {
-  if (layer === 'database' || layer === 'firestore') {
-    return new FirestoreMemoryStore({ namespace: process.env.MEMORY_NAMESPACE })
+  // 'firestore' is still accepted so an existing MEMORY_PERSISTENCE value
+  // keeps selecting a durable store rather than silently falling back to
+  // in-memory; it resolves to Supabase like 'database' does.
+  if (layer === 'database' || layer === 'firestore' || layer === 'supabase') {
+    return new SupabaseMemoryStore()
   }
   return new InMemoryStore()
 }
