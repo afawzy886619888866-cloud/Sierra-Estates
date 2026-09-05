@@ -144,7 +144,11 @@
     "creds",
     "unconfigured",
     "adminsierra",
-    "fawzy"
+    "fawzy",
+    "circuitpythonsync",
+    "cpbaseversion",
+    "cpfullversion",
+    "curlibtag"
   ],
   "circuitpythonsync.cpbaseversion": "10",
   "circuitpythonsync.cpfullversion": "10.3.0",
