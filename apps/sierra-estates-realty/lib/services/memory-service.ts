@@ -1,20 +1,11 @@
-import { db } from '../firebase';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  arrayUnion, 
-  serverTimestamp, 
-  increment 
-} from 'firebase/firestore';
+import { getRecord, getSupabaseAdmin, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '../models/schema';
 import { sharedMemory, openMemoryClient } from '@sierra-estates/memory-engine';
 
 /**
  * SIERRA ESTATES NEURAL MEMORY HUB
  * Purpose: Global learning across all deals and lead rejections.
- * Wired with Firebase Firestore, SharedMemoryBus, and OpenMemory HSG.
+ * Wired with Supabase, SharedMemoryBus, and OpenMemory HSG.
  */
 export class MemoryService {
   
@@ -24,30 +15,39 @@ export class MemoryService {
   static async recordRejection(leadId: string, unitId: string, reason: string) {
     const category = this.categorizeReason(reason);
 
-    // 1. Update Lead's private memory in Firestore
+    // 1. Update the lead's private memory.
+    // `intelligence` is one JSONB column, so both dotted paths address the same
+    // object and arrayUnion becomes an explicit append. These entries each
+    // carry their own context, so they are not deduped — arrayUnion on object
+    // values never collapsed them either.
     try {
-      const leadRef = doc(db, COLLECTIONS.stakeholders, leadId);
-      await updateDoc(leadRef, {
-        'intelligence.objections': arrayUnion({
-          unitId,
-          reason,
-          timestamp: new Date()
-        }),
-        'intelligence.memory.negativeSignals': arrayUnion({
-          category,
-          description: reason,
-          importance: 0.8
-        })
-      });
+      const lead = await getRecord<{ intelligence?: Record<string, any> }>(
+        COLLECTIONS.stakeholders,
+        leadId
+      );
+      const intelligence: Record<string, any> = { ...(lead?.intelligence ?? {}) };
+      intelligence.objections = [
+        ...(intelligence.objections ?? []),
+        { unitId, reason, timestamp: new Date().toISOString() },
+      ];
+      intelligence.memory = {
+        ...(intelligence.memory ?? {}),
+        negativeSignals: [
+          ...(intelligence.memory?.negativeSignals ?? []),
+          { category, description: reason, importance: 0.8 },
+        ],
+      };
+      await updateRecord(COLLECTIONS.stakeholders, leadId, { intelligence });
 
-      // 2. Update Global Intelligence Patterns in Firestore
-      const globalRef = doc(db, COLLECTIONS.intelligence, 'global_patterns');
-      await setDoc(globalRef, {
-        [`rejectionStats.${category}`]: increment(1),
-        lastTrendUpdate: serverTimestamp()
-      }, { merge: true });
-    } catch (fsErr) {
-      console.warn('[MemoryService] Firestore update warning:', fsErr);
+      // 2. Update global intelligence patterns. increment() was atomic, so the
+      // counter is bumped inside a single statement rather than read-modify-write.
+      const { error } = await getSupabaseAdmin().rpc('bump_rejection_stat', {
+        p_id: 'global_patterns',
+        p_category: category,
+      });
+      if (error) throw new Error(error.message);
+    } catch (dbErr) {
+      console.warn('[MemoryService] Database update warning:', dbErr);
     }
 
     // 3. Wire into SharedMemoryBus
@@ -85,14 +85,15 @@ export class MemoryService {
       // Check shared memory bus cache first
       const cachedTrends = await sharedMemory.read('global:patterns');
       if (cachedTrends) return cachedTrends;
-    } catch {}
+    } catch (cacheErr) {
+      console.warn('[MemoryService] Cache read failed:', cacheErr);
+    }
 
     try {
-      const globalRef = doc(db, COLLECTIONS.intelligence, 'global_patterns');
-      const snap = await getDoc(globalRef);
-      const data = snap.exists() ? snap.data() : null;
+      const data = await getRecord(COLLECTIONS.intelligence, 'global_patterns');
       if (data) {
-        await sharedMemory.write('global:patterns', data, { author: 'admin', ttlSeconds: 300 }).catch(() => {});
+        await sharedMemory.write('global:patterns', data, { author: 'admin', ttlSeconds: 300 })
+          .catch((writeErr) => console.warn('[MemoryService] Cache write failed:', writeErr));
       }
       return data;
     } catch {

@@ -54,10 +54,12 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       // Routing & URLs
       expect(deployWf).toContain('NEXT_PUBLIC_CLIENT_URL');
       expect(deployWf).toContain('NEXT_PUBLIC_ADMIN_URL');
-      expect(deployWf).toContain('NEXT_PUBLIC_SITE_URL');
-      
-      // Firebase
-      expect(deployWf).toContain('NEXT_PUBLIC_FIREBASE_API_KEY');
+      // Supabase Primary Backend
+      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_URL');
+      expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      expect(deployWf).toContain('SUPABASE_SERVICE_ROLE_KEY');
+
+      // Firebase Client & Legacy
       expect(deployWf).toContain('FIREBASE_PROJECT_ID');
       expect(deployWf).toContain('FIREBASE_SERVICE_ACCOUNT_JSON');
       
@@ -121,8 +123,8 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
     it('fails deployments visibly when deployment credentials are absent', () => {
       const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf8');
       expect(deployWf).toContain('::error::VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required');
-      expect(deployWf).toContain('Validate deployment prerequisites');
-      expect(deployWf).toContain('Production deployment blocked. Missing GitHub secrets');
+      expect(deployWf).toContain('VERCEL_TOKEN or VERCEL_AUTH_TOKEN is required to deploy this repository');
+      expect(deployWf).toContain('exit 1');
     });
   });
 
@@ -149,7 +151,8 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       const verifyScript = path.join(ROOT_DIR, 'scripts', 'verify-deploy-readiness.ts');
       expect(fs.existsSync(verifyScript)).toBe(true);
       const code = fs.readFileSync(verifyScript, 'utf-8');
-      expect(code).toContain('sierra-estates-client-page');
+      // The script refers to the client app by path, not by package name.
+      expect(code).toContain('apps/sierra-estates-realty');
     });
   });
 });

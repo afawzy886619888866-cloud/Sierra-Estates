@@ -7,6 +7,10 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
+  // `build` (tsc, no outDir) emits .js next to each .ts source, and those
+  // artifacts are committed. Jest's default extension order resolves the ESM
+  // .js first and fails to parse it, so put .ts ahead of .js here.
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
   testMatch: ['**/__tests__/**/*.test.ts'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/server.ts'],
 };

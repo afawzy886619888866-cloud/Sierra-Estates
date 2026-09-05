@@ -7,6 +7,7 @@
 ## Pre-Deployment (Team Preparation)
 
 ### Engineering Team Setup
+
 - [ ] **Code Review**: Have 2+ senior engineers review all Phase 1 code in PR
 - [ ] **Environment Setup**: All engineers have `firebase` CLI installed + authenticated
 - [ ] **Backup**: Create backup of current Firestore rules (in case rollback needed)
@@ -15,6 +16,7 @@
 - [ ] **Rollback Plan**: Document exact steps to rollback each phase (saved in private docs)
 
 ### Stakeholder Notification
+
 - [ ] **Product Manager**: Notify of deployment window (recommend: Tuesday 10 AM, 4-hour window)
 - [ ] **Customer Support**: Alert team about potential monitoring delays during deploy
 - [ ] **Security Team**: Brief on RBAC implementation + audit trail activation
@@ -27,6 +29,7 @@
 **Risk Level**: 🟢 LOW — Read-only until rules are applied
 
 ### Step 1: Validate Rules Locally (5 min)
+
 ```bash
 cd H:\SE
 cat apps/sierra-estates-realty/firestore.rules  # Canonical rules — the path firebase.json deploys
@@ -34,11 +37,13 @@ firebase validate    # Check rule syntax
 ```
 
 **Checklist**:
+
 - [ ] `apps/sierra-estates-realty/firestore.rules` file exists and is readable
 - [ ] No syntax errors from `firebase validate`
 - [ ] `storage.rules` file also validated
 
 ### Step 2: Create Pre-Deployment Snapshot (5 min)
+
 ```bash
 # Export current Firestore data (safety backup)
 gcloud firestore export gs://sierra-estates-backup/pre-deploy-$(date +%s)
@@ -48,11 +53,13 @@ gcloud firestore describe --region=us-central1
 ```
 
 **Checklist**:
+
 - [ ] Export job started in GCP Console
 - [ ] Current rules documented (copy/paste into a text file)
 - [ ] Team notified: "Deploying Firestore rules in 5 min"
 
 ### Step 3: Deploy Rules (5 min)
+
 ```bash
 # Deploy both Firestore and Storage rules
 firebase deploy --only firestore:rules,storage
@@ -63,11 +70,13 @@ firebase deploy --only firestore:rules,storage
 ```
 
 **Checklist**:
+
 - [ ] Deploy command completed without errors
 - [ ] Both firestore:rules and storage rules show ✓
 - [ ] No rollback error messages in output
 
 ### Step 4: Verify Rules Active (5 min)
+
 ```bash
 # Test 1: Anonymous access should be DENIED
 curl -X GET "https://firestore.googleapis.com/v1/projects/sierra-blu/databases/(default)/documents/users" \
@@ -79,12 +88,14 @@ curl -X GET "https://firestore.googleapis.com/v1/projects/sierra-blu/databases/(
 ```
 
 **Checklist**:
+
 - [ ] Anonymous access returns 403 (expected)
 - [ ] Test user can read own profile
 - [ ] Test user cannot read other users' data
 - [ ] Rules appear in Firebase Console (⏱️ may take 30 seconds)
 
 ### Step 5: Monitor for 15 Minutes
+
 ```bash
 # Watch Cloud Logging for rule violations
 gcloud logging read "resource.type=cloud_firestore AND jsonPayload.message=~'FAILED|violation'" \
@@ -92,11 +103,13 @@ gcloud logging read "resource.type=cloud_firestore AND jsonPayload.message=~'FAI
 ```
 
 **Checklist**:
+
 - [ ] No rule violations in logs
 - [ ] No unexpected 403 errors
 - [ ] Team monitoring #sierra-estates-deployment
 
 **Decision Point**:
+
 - ✅ **Proceed to Phase 1.2** if rules are working correctly
 - ❌ **ROLLBACK** if unexpected errors: `firebase deploy --only firestore:rules` with previous rules
 
@@ -107,6 +120,7 @@ gcloud logging read "resource.type=cloud_firestore AND jsonPayload.message=~'FAI
 **Risk Level**: 🟡 MEDIUM — Agent workflow will be unavailable briefly
 
 ### Step 1: Pre-Deploy Verification (15 min)
+
 ```bash
 # Verify sanitizer code is in place
 cat functions/src/middleware/sanitizer.ts  # Should be ~200 lines
@@ -118,11 +132,13 @@ npm list @opentelemetry/api  # Should be installed
 ```
 
 **Checklist**:
+
 - [ ] Both files exist and have content
 - [ ] No TypeScript errors: `npm run type-check`
 - [ ] Unit tests for sanitizer exist: `npm test -- sanitizer`
 
 ### Step 2: Deploy Functions (30 min)
+
 ```bash
 # Build and deploy
 npm run build
@@ -133,6 +149,7 @@ firebase functions:log
 ```
 
 **Expected Output**:
+
 ```
 ✓  functions[agentWorkflow]: Successful deploy
 ✓  functions[sanitizedWorkflow]: Successful deploy
@@ -140,14 +157,17 @@ Time: 3m 45s
 ```
 
 **Checklist**:
+
 - [ ] Both functions deployed successfully
 - [ ] No "Quota exceeded" or timeout errors
 - [ ] Functions are available in Firebase Console
 
 ### Step 3: Test Injection Blocking (30 min)
+
 **Test Cases** (use Postman or curl):
 
 **Test 1**: Safe message (should pass)
+
 ```bash
 curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
   -H "Authorization: Bearer $TOKEN" \
@@ -160,6 +180,7 @@ curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
 ```
 
 **Test 2**: Injection attack (should block)
+
 ```bash
 curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
   -H "Authorization: Bearer $TOKEN" \
@@ -172,6 +193,7 @@ curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
 ```
 
 **Test 3**: XSS attempt (should block)
+
 ```bash
 curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
   -H "Authorization: Bearer $TOKEN" \
@@ -184,6 +206,7 @@ curl -X POST "https://your-region-project.cloudfunctions.net/agentWorkflow" \
 ```
 
 **Test 4**: Rate limit (100 req/min)
+
 ```bash
 # Send 101 requests in rapid succession
 for i in {1..101}; do
@@ -193,6 +216,7 @@ done
 ```
 
 **Checklist**:
+
 - [ ] Test 1 (safe): PASSES
 - [ ] Test 2 (injection): BLOCKED ✓
 - [ ] Test 3 (XSS): BLOCKED ✓
@@ -200,6 +224,7 @@ done
 - [ ] Audit logs show sanitization events
 
 ### Step 4: Production Traffic Validation (30 min)
+
 ```bash
 # Monitor real agent workflows
 firebase functions:log --limit=100 | grep -i "SANITIZE\|ERROR"
@@ -210,16 +235,19 @@ gcloud logging read "resource.type=cloud_function AND jsonPayload.function=agent
 ```
 
 **Acceptance Criteria**:
+
 - Agent success rate ≥ 98%
 - Zero false positives on legitimate traffic
 - No new error patterns
 
 **Checklist**:
+
 - [ ] Agent success rate ≥ 98%
 - [ ] Audit logs show no legitimate blocks
 - [ ] Team confirms agent responses still working
 
 **Decision Point**:
+
 - ✅ **Proceed to Phase 1.3** if all tests pass
 - ❌ **ROLLBACK** if >2% error rate: revert functions to previous version
 
@@ -232,6 +260,7 @@ gcloud logging read "resource.type=cloud_function AND jsonPayload.function=agent
 ### Step 1: Deploy Infrastructure (30 min)
 
 **Create Firestore Indexes**:
+
 ```bash
 firebase deploy --only firestore:indexes
 # Wait for index creation (may take 5-10 min)
@@ -239,11 +268,13 @@ firebase deploy --only firestore:indexes
 ```
 
 **Checklist**:
+
 - [ ] Firestore indexes deployed
 - [ ] `retry_queue` collection index is "Ready"
 - [ ] `dead_letter_queue` collection exists
 
 **Create Pub/Sub Topics**:
+
 ```bash
 gcloud pubsub topics create agent-workflow-retry
 gcloud pubsub topics create process-retries
@@ -254,10 +285,12 @@ gcloud pubsub topics list
 ```
 
 **Checklist**:
+
 - [ ] All 3 topics created
 - [ ] Topics visible in Cloud Console
 
 **Create Cloud Scheduler Jobs**:
+
 ```bash
 # Job 1: Process retries every 1 minute
 gcloud scheduler jobs create pubsub process-retries \
@@ -280,11 +313,13 @@ gcloud scheduler jobs list --location=us-central1
 ```
 
 **Checklist**:
+
 - [ ] Both scheduler jobs created
 - [ ] Jobs show "Next run" time within 1-2 minutes
 - [ ] Next run time is reasonable (not in past)
 
 ### Step 2: Deploy Retry Queue Service (15 min)
+
 ```bash
 npm install uuid  # Add dependency if not present
 firebase deploy --only functions
@@ -295,12 +330,14 @@ firebase functions:describe cleanupRetryQueue
 ```
 
 **Checklist**:
+
 - [ ] Functions deployed successfully
 - [ ] No new error messages
 
 ### Step 3: Test Retry Logic (1 day — Days 5)
 
 **Manual Test**: Trigger a failed task and verify retry
+
 ```typescript
 // In Firebase Console > Functions > Test
 // Call enqueueRetryTask with:
@@ -319,6 +356,7 @@ firebase functions:describe cleanupRetryQueue
 ```
 
 **Monitor Automatic Retry**:
+
 ```bash
 # Watch Firestore for status updates
 gcloud firestore databases list
@@ -330,6 +368,7 @@ firebase functions:log | grep -i "RETRY\|PROCESS"
 ```
 
 **Test Dead Letter Queue** (permanent failure):
+
 ```typescript
 // Enqueue task with invalid endpoint to force permanent failure
 {
@@ -348,12 +387,14 @@ firebase functions:log | grep -i "RETRY\|PROCESS"
 ```
 
 **Checklist**:
+
 - [ ] Successful task: pending → processing → completed
 - [ ] Failed task (after 5 retries): pending → deadletter
 - [ ] Retry backoff follows exponential pattern (1s, 2s, 4s, 8s, 16s)
 - [ ] Dead letter queue contains failed task
 
 ### Step 4: Ops Team Training (30 min — Day 6)
+
 ```bash
 # Show ops team how to manually retry a task
 gcloud firestore databases query \
@@ -366,11 +407,13 @@ gcloud firestore databases query \
 ```
 
 **Checklist**:
+
 - [ ] Ops team can query dead letter queue
 - [ ] Ops team can manually retry a task
 - [ ] Runbook created: `docs/ops-runbook-retry-queue.md`
 
 **Decision Point**:
+
 - ✅ **Proceed to Phase 1.4** if retry queue is working
 - ❌ **INVESTIGATE** if tasks aren't retrying: check Cloud Scheduler, Pub/Sub topic subscriptions, function logs
 
@@ -381,6 +424,7 @@ gcloud firestore databases query \
 **Risk Level**: 🟢 LOW — Observability only, doesn't affect functionality
 
 ### Step 1: Deploy Observability Middleware (30 min)
+
 ```bash
 # Install OTel dependencies
 npm install \
@@ -398,16 +442,19 @@ firebase functions:log | grep -i "OTEL\|OpenTelemetry"
 ```
 
 **Expected Output**:
+
 ```
 [OTEL] OpenTelemetry SDK started successfully
 ```
 
 **Checklist**:
+
 - [ ] Dependencies installed
 - [ ] Functions deployed without errors
 - [ ] "OpenTelemetry SDK started" appears in logs within 30 seconds
 
 ### Step 2: Create Monitoring Dashboard (30 min)
+
 ```bash
 # Create dashboard via gcloud
 gcloud monitoring dashboards create --config-from-file=- << 'EOF'
@@ -467,6 +514,7 @@ gcloud monitoring dashboards list
 ```
 
 **Checklist**:
+
 - [ ] Dashboard created successfully
 - [ ] Dashboard visible in Cloud Monitoring Console
 - [ ] At least 4 tiles visible (success rate, latency, error rate, DLQ size)
@@ -474,6 +522,7 @@ gcloud monitoring dashboards list
 ### Step 3: Set Up Alert Policies (30 min)
 
 **Alert 1: High Error Rate (>5%)**
+
 ```bash
 gcloud alpha monitoring policies create \
   --notification-channels=<CHANNEL_ID> \
@@ -485,6 +534,7 @@ gcloud alpha monitoring policies create \
 ```
 
 **Alert 2: High Latency (>5s P95)**
+
 ```bash
 gcloud alpha monitoring policies create \
   --notification-channels=<CHANNEL_ID> \
@@ -496,6 +546,7 @@ gcloud alpha monitoring policies create \
 ```
 
 **Alert 3: Dead Letter Queue Growth (>10 items)**
+
 ```bash
 gcloud alpha monitoring policies create \
   --notification-channels=<CHANNEL_ID> \
@@ -507,6 +558,7 @@ gcloud alpha monitoring policies create \
 ```
 
 **Checklist**:
+
 - [ ] 3 alert policies created
 - [ ] Each policy has notification channel configured
 - [ ] Policies visible in Cloud Monitoring Console
@@ -514,6 +566,7 @@ gcloud alpha monitoring policies create \
 ### Step 4: Test Alerts (30 min)
 
 **Generate Test Metrics**:
+
 ```bash
 # Send 10 successful agent requests
 for i in {1..10}; do
@@ -527,12 +580,14 @@ done
 ```
 
 **Checklist**:
+
 - [ ] Metrics appear on dashboard within 2 minutes
 - [ ] Success rate shows ~100%
 - [ ] Latency shows P95 <2s
 - [ ] Error rate shows 0%
 
 **Test Alert Firing**:
+
 ```bash
 # Trigger error rate alert by making requests to invalid endpoint
 # (This will cause errors, temporarily increasing error rate)
@@ -542,6 +597,7 @@ done
 ```
 
 **Checklist**:
+
 - [ ] Alert fired successfully
 - [ ] Notification received on Slack/email
 - [ ] Alert cleared after error rate dropped
@@ -552,6 +608,7 @@ done
 ## Post-Deployment (All Phases)
 
 ### Monitoring (First 24 Hours)
+
 ```bash
 # Monitor logs continuously
 firebase functions:log --follow
@@ -564,6 +621,7 @@ gcloud logging read "resource.type=cloud_function" --limit=100 --format=json | j
 ```
 
 **Checklist**:
+
 - [ ] No unexpected error patterns in logs
 - [ ] Success rate stable ≥98%
 - [ ] Latency stable <2s P95
@@ -571,6 +629,7 @@ gcloud logging read "resource.type=cloud_function" --limit=100 --format=json | j
 - [ ] DLQ empty or minimal (<5 items)
 
 ### Ops Team Handoff
+
 - [ ] Dashboard access confirmed for all ops engineers
 - [ ] Alert channels tested and working
 - [ ] Runbook location documented: `docs/ops-runbook-*.md`
@@ -579,12 +638,14 @@ gcloud logging read "resource.type=cloud_function" --limit=100 --format=json | j
 - [ ] Incident response plan updated
 
 ### Team Communication
+
 - [ ] #sierra-estates-deployment: "Phase 1 deployment complete ✅"
 - [ ] Product team: Summary of security improvements
 - [ ] Security team: RBAC + audit trail activation confirmed
 - [ ] Customer support: "No user-facing changes, backend security hardened"
 
 ### Documentation
+
 - [ ] Deployment completed in COMPLETE_PHASE_1_EXECUTION_SUMMARY.md
 - [ ] Any deviations documented in `docs/deployment-log.md`
 - [ ] Lessons learned captured for future deployments
@@ -594,6 +655,7 @@ gcloud logging read "resource.type=cloud_function" --limit=100 --format=json | j
 ## Rollback Procedures
 
 ### Phase 1.1 Rollback (Firestore Rules)
+
 ```bash
 # Revert to previous rules (you backed these up in Step 1)
 # Edit apps/sierra-estates-realty/firestore.rules with previous content
@@ -606,6 +668,7 @@ gcloud logging read "resource.type=cloud_firestore" --limit=50
 **Time to rollback**: <5 minutes
 
 ### Phase 1.2 Rollback (Agent Sanitization)
+
 ```bash
 # Revert functions to previous version
 # In Firebase Console > Functions
@@ -620,6 +683,7 @@ firebase deploy --only functions
 **Time to rollback**: <5 minutes
 
 ### Phase 1.3 Rollback (Retry Queue)
+
 ```bash
 # Stop Cloud Scheduler jobs
 gcloud scheduler jobs pause process-retries --location=us-central1
@@ -632,6 +696,7 @@ gcloud scheduler jobs pause cleanup-retry-queue --location=us-central1
 **Time to rollback**: <2 minutes
 
 ### Phase 1.4 Rollback (Observability)
+
 ```bash
 # This is observability only — safe to leave running
 # If needed, redeploy functions without OTel
@@ -646,7 +711,7 @@ firebase deploy --only functions
 ## Success Criteria (24 Hours Post-Deploy)
 
 | Metric | Target | How to Check |
-|--------|--------|-------------|
+| -------- | -------- | ------------- |
 | All 4 phases deployed | 100% | All functions deployed successfully |
 | Agent success rate | ≥98% | Dashboard: Agent Workflow Success Rate |
 | P95 latency | <2s | Dashboard: Agent Workflow Latency |
@@ -664,6 +729,7 @@ firebase deploy --only functions
 ## Final Checklist
 
 **Ready to Deploy?**
+
 - [ ] All code reviewed and approved (2+ engineers)
 - [ ] All tests passing: `npm test:ci`
 - [ ] Type-check passing: `npm run type-check`
@@ -675,6 +741,7 @@ firebase deploy --only functions
 - [ ] Rollback procedures documented and tested
 
 **GO / NO-GO Decision**:
+
 - ✅ **GO** - All checklist items complete, proceed with deployment
 - ❌ **NO-GO** - Resolve any blockers before proceeding
 
@@ -685,7 +752,7 @@ firebase deploy --only functions
 **Rollback Time**: <15 minutes (any phase)  
 **Post-Deployment Monitoring**: 24 hours (continuous)
 
-**Questions?** Contact @Ahmed (a.fawzy8866@gmail.com)
+**Questions?** Contact @Ahmed (<a.fawzy8866@gmail.com>)
 
 ---
 

@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord } from '@sierra-estates/db';
 import { AirtableIntegrationService } from '@/lib/services/AirtableIntegrationService';
 import { logger } from '@/lib/logger';
 
 /**
  * AIRTABLE SYNC API
  *
- * POST /api/sync/airtable                          — pull listings from Airtable into Firestore.
- * POST /api/sync/airtable {"direction":"export"}   — push Firestore listings + leads INTO Airtable
+ * POST /api/sync/airtable                          — pull listings from Airtable into the database.
+ * POST /api/sync/airtable {"direction":"export"}   — push listings + leads INTO Airtable
  *                                                    (upserts: listings merge on Code, leads on
- *                                                    Firestore ID — safe to re-run).
+ *                                                    record ID — safe to re-run).
  * GET  /api/sync/airtable                          — report whether Airtable is configured (no secrets).
  *
- * Auth mirrors /api/sync: Firebase admins, or service/cron callers presenting
- * the X-SBR-SECRET-KEY header (verifyRequest's "secret" method).
+ * Auth mirrors /api/sync: Supabase-authenticated admins, or service/cron callers
+ * presenting the X-SBR-SECRET-KEY header (verifyRequest's "secret" method).
  */
 
+/** Fails closed: any lookup error denies rather than admits. */
 async function isAdmin(uid: string): Promise<boolean> {
   try {
-    const userDoc = await adminDb.collection('users').doc(uid).get();
-    return userDoc.exists && userDoc.data()?.role === 'admin';
+    const profile = await getRecord<{ role?: string }>('profiles', uid);
+    return profile?.role === 'admin';
   } catch (error) {
     logger.error('[AIRTABLE_SYNC_AUTH_ERROR] Role check failed:', error);
     return false;
@@ -30,7 +31,7 @@ async function isAdmin(uid: string): Promise<boolean> {
 export async function GET(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
-  if (auth.method === 'firebase' && !(await isAdmin(auth.uid!))) {
+  if (auth.method === 'supabase' && !(await isAdmin(auth.uid!))) {
     return unauthorizedResponse('Admin privileges required');
   }
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await verifyRequest(request);
   if (!auth.authenticated) return unauthorizedResponse();
-  if (auth.method === 'firebase' && !(await isAdmin(auth.uid!))) {
+  if (auth.method === 'supabase' && !(await isAdmin(auth.uid!))) {
     return unauthorizedResponse('Admin privileges required');
   }
 

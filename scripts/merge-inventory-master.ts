@@ -30,7 +30,7 @@ interface UnifiedInventoryUnit {
 }
 
 const MASTER_SHEET_PATH = path.resolve(process.cwd(), 'apps/sierra-estates-realty/data/real-listings.json');
-const WA_EXTRACTED_PATH = path.resolve(process.cwd(), 'packages/whatsapp-agent/inventory_extracted_units.json');
+const WA_EXTRACTED_PATH = path.resolve(process.cwd(), 'packages/whatsapp-shared/inventory_extracted_units.json');
 const OBSIDIAN_STORE_PATH = path.resolve(process.cwd(), 'obsidian-store.json');
 const OUTPUT_CONSOLIDATED_PATH = path.resolve(process.cwd(), 'apps/sierra-estates-realty/data/consolidated-master-inventory.json');
 

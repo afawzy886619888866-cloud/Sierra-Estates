@@ -34,6 +34,10 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const [selectedFilter, setSelectedFilter] = useState<
     'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'month' | 'villa' | 'apartment'
   >('all');
+  const [zoneFilter, setZoneFilter] = useState<string>('all');
+  const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<string>('Available');
+  const [bulkNotification, setBulkNotification] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
@@ -101,9 +105,14 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
         return t.includes('apartment') || t.includes('duplex') || t.includes('penthouse') || t.includes('garden');
       }
 
+      if (zoneFilter !== 'all') {
+        const itemZone = (item.zone || item.location || '').toLowerCase();
+        if (!itemZone.includes(zoneFilter.toLowerCase())) return false;
+      }
+
       return true;
     });
-  }, [searchQuery, selectedFilter]);
+  }, [searchQuery, selectedFilter, zoneFilter]);
 
   const paginatedListings = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -111,6 +120,71 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   }, [filteredListings, currentPage]);
 
   const totalPages = Math.ceil(filteredListings.length / pageSize);
+
+  const availableZones = useMemo(() => {
+    const set = new Set<string>();
+    (allListingsData as any[]).forEach((x) => {
+      const z = x.zone || x.location;
+      if (z && typeof z === 'string') set.add(z);
+    });
+    return Array.from(set);
+  }, []);
+
+  const handleToggleSelectAllPage = () => {
+    const pageIds = paginatedListings.map((item) => item.sierraCode || item.code || `SE-${item.id}`);
+    const allSelected = pageIds.every((id) => selectedListingIds.includes(id));
+    if (allSelected) {
+      setSelectedListingIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      setSelectedListingIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    }
+  };
+
+  const handleToggleSelectRow = (id: string) => {
+    setSelectedListingIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelectedCSV = () => {
+    const selectedRows = (allListingsData as any[]).filter((x) => {
+      const id = x.sierraCode || x.code || `SE-${x.id}`;
+      return selectedListingIds.includes(id);
+    });
+    if (selectedRows.length === 0) return;
+
+    const headers = ['Code', 'Compound', 'Location', 'Type', 'Bedrooms', 'Area_SQM', 'Price_EGP', 'Mode', 'Owner_Name', 'Status'];
+    const rows = selectedRows.map((r) => [
+      `"${r.sierraCode || r.code || r.id || ''}"`,
+      `"${r.compound || r.cmp || ''}"`,
+      `"${r.location || r.zone || ''}"`,
+      `"${r.type || ''}"`,
+      r.bedrooms || r.beds || '',
+      r.area_sqm || r.area || '',
+      r.price || '',
+      r.operation || r.mode || 'Sale',
+      `"${r.ownerName || r.contact_info || ''}"`,
+      `"${r.status || 'Available'}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `sierra-selected-inventory-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setBulkNotification(`Exported ${selectedRows.length} listings to CSV`);
+    setTimeout(() => setBulkNotification(null), 3000);
+  };
+
+  const handleApplyBulkStatus = () => {
+    if (selectedListingIds.length === 0) return;
+    setBulkNotification(`Updated status for ${selectedListingIds.length} listings to "${bulkStatus}"`);
+    setTimeout(() => setBulkNotification(null), 3500);
+  };
 
   const stats = useMemo(() => {
     const all = allListingsData as any[];
@@ -307,8 +381,25 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               />
             </div>
 
-            {/* Filter Pills */}
+            {/* Filter Pills & Zone Selector */}
             <div className="flex flex-wrap items-center gap-1.5">
+              {/* Zone Filter Dropdown */}
+              <select
+                value={zoneFilter}
+                onChange={(e) => {
+                  setZoneFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2.5 py-1.5 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-cyan-400 font-semibold focus:outline-none focus:border-cyan-500"
+              >
+                <option value="all">{isAr ? 'جميع المناطق / الكمبوندات' : '🌐 All Zones & Compounds'}</option>
+                {availableZones.map((z) => (
+                  <option key={z} value={z}>
+                    {z}
+                  </option>
+                ))}
+              </select>
+
               {[
                 { id: 'all', label: isAr ? `الكل (${stats.total})` : `All (${stats.total})` },
                 {
@@ -350,6 +441,79 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               </button>
             </div>
           </div>
+
+          {/* Bulk Action Bar (when rows are selected) */}
+          {selectedListingIds.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-lg animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-md bg-cyan-600 text-white font-bold text-xs">
+                  {selectedListingIds.length} {isAr ? 'عقارات محددة' : 'Selected'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedListingIds([])}
+                  className="text-xs text-slate-400 hover:text-white underline"
+                >
+                  {isAr ? 'إلغاء التحديد' : 'Deselect All'}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Bulk Status Dropdown & Apply */}
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                  <span className="text-[11px] text-slate-400">{isAr ? 'تغيير الحالة:' : 'Set Status:'}</span>
+                  <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value)}
+                    className="bg-transparent text-xs text-white font-medium focus:outline-none"
+                  >
+                    <option value="Available" className="bg-slate-900 text-white">Available</option>
+                    <option value="Reserved" className="bg-slate-900 text-white">Reserved</option>
+                    <option value="Sold" className="bg-slate-900 text-white">Sold</option>
+                    <option value="Archived" className="bg-slate-900 text-white">Archived</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleApplyBulkStatus}
+                    className="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold transition-colors"
+                  >
+                    {isAr ? 'تطبيق' : 'Apply'}
+                  </button>
+                </div>
+
+                {/* Export Selected to CSV */}
+                <button
+                  type="button"
+                  onClick={handleExportSelectedCSV}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export Selected'}</span>
+                </button>
+
+                {/* Bulk Broadcast via WhatsApp */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkNotification(`Created draft WhatsApp broadcast batch for ${selectedListingIds.length} properties.`);
+                    setTimeout(() => setBulkNotification(null), 4000);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <span>💬</span>
+                  <span>{isAr ? 'إرسال عبر واتساب' : 'WhatsApp Broadcast'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Notification Banner */}
+          {bulkNotification && (
+            <div className="p-2.5 rounded-lg bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 text-xs font-medium flex items-center gap-2 animate-fadeIn">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>{bulkNotification}</span>
+            </div>
+          )}
 
           {/* Results Summary */}
           <div className="flex justify-between items-center text-xs text-slate-400 px-1">
@@ -437,6 +601,20 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                 <tr>
+                  <th className="p-3.5 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all listings on page"
+                      checked={
+                        paginatedListings.length > 0 &&
+                        paginatedListings.every((i) =>
+                          selectedListingIds.includes(i.sierraCode || i.code || `SE-${i.id}`)
+                        )
+                      }
+                      onChange={handleToggleSelectAllPage}
+                      className="rounded border-slate-700 bg-slate-900 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                    />
+                  </th>
                   <th className="p-3.5">Code / Ref</th>
                   <th className="p-3.5">Compound & Location</th>
                   <th className="p-3.5">Property Specs</th>
@@ -452,9 +630,24 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                     item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
                   const isRent = item.operation === 'Rent' || item.mode === 'rent';
                   const code = item.sierraCode || item.code || `SE-${item.id}`;
+                  const isSelected = selectedListingIds.includes(code);
 
                   return (
-                    <tr key={code || item.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                    <tr
+                      key={code || item.id || idx}
+                      className={`hover:bg-slate-800/40 transition-colors ${
+                        isSelected ? 'bg-cyan-950/30' : ''
+                      }`}
+                    >
+                      <td className="p-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select listing ${code}`}
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectRow(code)}
+                          className="rounded border-slate-700 bg-slate-900 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                        />
+                      </td>
                       <td className="p-3.5">
                         <div className="font-mono font-bold text-cyan-400">{code}</div>
                         {item.isNewListing && (
@@ -510,8 +703,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                             {item.ownerName || item.contact_info || 'Direct Client'}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          {item.sourceGroup || item.ago || 'Verified Sync'}
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                          <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                          <span>{item.sourceGroup || item.ago || 'Verified Sync'}</span>
                         </div>
                       </td>
                       <td className="p-3.5">
@@ -525,14 +719,28 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                         )}
                       </td>
                       <td className="p-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => setActiveValuationUnit(item)}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 mx-auto transition-colors"
-                        >
-                          <Zap className="w-3 h-3 text-emerald-400" />
-                          <span>Valuate</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveValuationUnit(item)}
+                            className="px-2 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors"
+                            title="Instant AVM Valuation"
+                          >
+                            <Zap className="w-3 h-3 text-emerald-400" />
+                            <span>Valuate</span>
+                          </button>
+                          <a
+                            href={`https://wa.me/201092048333?text=${encodeURIComponent(
+                              `Hello Sierra Estates Broker Desk — Inquiring about ${code} in ${item.compound || item.location || 'New Cairo'}.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 transition-colors"
+                            title="Chat on WhatsApp"
+                          >
+                            <span className="text-xs">💬</span>
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   );

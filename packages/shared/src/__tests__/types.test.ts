@@ -225,9 +225,9 @@ describe('Owner interface (PII)', () => {
       phone_number: '+201000000000',
       source_type: 'direct',
     };
-    // @ts-expect-error
+    // @ts-expect-error OwnerInput intentionally omits `id`
     expect(input.id).toBeUndefined();
-    // @ts-expect-error
+    // @ts-expect-error OwnerInput intentionally omits `created_at`
     expect(input.created_at).toBeUndefined();
   });
 });

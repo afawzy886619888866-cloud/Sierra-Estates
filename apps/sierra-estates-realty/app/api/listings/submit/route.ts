@@ -1,16 +1,24 @@
 /**
  * POST /api/listings/submit
  *
- * Owner / Admin Submit New Listing API Endpoint
+ * Public listing submission endpoint, reachable from the /add-listing form.
  *
- * Accepts a listing submission payload, validates fields via Zod,
- * and persists it to Firestore (and Google Sheets sync queue).
+ * Accepts a listing submission payload, validates fields via Zod, and persists
+ * it to Supabase (public.listings).
+ *
+ * Deliberately unauthenticated — property owners submit here without an
+ * account. Because anyone can post, a submission is NOT inventory: it is
+ * written with `status: LISTING_STATUS_PENDING_REVIEW` and `verified: false`,
+ * and /api/listings filters those out of both of its public response modes.
+ * Staff publish a listing by moving it off the pending status.
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
+import { toListingColumns } from '@/lib/server/listing-columns';
+import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -58,7 +66,8 @@ export async function POST(request: Request) {
       code: listingCode,
       ownerName: data.ownerName,
       mobile: data.mobile,
-      status: 'Available',
+      status: LISTING_STATUS_PENDING_REVIEW,
+      verified: false,
       cmp: data.compound,
       compound: data.compound,
       zone: data.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
@@ -74,7 +83,10 @@ export async function POST(request: Request) {
       finishing: data.finishing,
       ownerType: 'Owner',
       tag: 'Direct Submission',
-      aiScore: 9.0,
+      // An unreviewed submission is not ranked inventory: it scores 0 until a
+      // human grades it, and stays out of the client feed either way.
+      aiScore: 0,
+      publishToClient: false,
       agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
       ago: 'Just now',
       img: data.photos?.[0] || data.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
@@ -85,15 +97,23 @@ export async function POST(request: Request) {
       source: 'web-submission',
     };
 
-    const db = await getAdminDb();
     let id = listingCode;
 
-    if (db) {
-      const docRef = await db.collection('houyez_listings').add(listingDocument);
-      id = docRef.id;
-      await db.collection('listings').doc(id).set({ ...listingDocument, id }, { merge: true });
-      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Firestore`);
-    } else {
+    try {
+      // houyez_listings and listings are one table now, so this is a single
+      // insert rather than the old dual-write. `title` is NOT NULL in
+      // Postgres and the public form has no title field, so it is derived the
+      // same way the seed envelope derives one.
+      const created = await insertRecord<{ id: string }>('listings', {
+        ...toListingColumns(listingDocument),
+        title: `${data.propertyType} · ${data.compound}`,
+      });
+      id = created.id;
+      logger.info(`[LISTING_SUBMIT] Saved new listing ${id} (${listingCode}) to Supabase`);
+    } catch (writeError) {
+      // Local/sandbox development without Supabase credentials keeps the form
+      // flow working; production must surface the failure instead.
+      if (process.env.NODE_ENV === 'production') throw writeError;
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
     }
 

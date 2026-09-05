@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { insertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifyCronRequest } from '@/lib/server/cron-auth';
 
@@ -23,14 +21,14 @@ export async function GET(req: NextRequest) {
 
     // Log sync activity
     if (summary.created > 0 || summary.updated > 0) {
-      await adminDb.collection(COLLECTIONS.activities).add({
+      await insertRecord('activities', {
         type: 'sync_completed',
         actorId: 'system',
         actorName: 'Sync Gateway',
         description: `Property Finder sync: **${summary.created} new** leads imported, **${summary.updated}** refreshed.`,
         text: `Property Finder sync: **${summary.created} new** leads imported, **${summary.updated}** refreshed.`,
         color: 'var(--blue-light)',
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString(),
       });
     }
 

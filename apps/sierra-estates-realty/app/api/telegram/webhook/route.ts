@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, isAdminInitialized } from '@/lib/server/firebase-admin';
+import { countRecords, getSupabaseAdmin, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 export async function POST(req: NextRequest) {
   // Telegram sends X-Telegram-Bot-Api-Secret-Token when the webhook was registered
-  // with a secret_token (setWebhook). Enforced only when TELEGRAM_WEBHOOK_SECRET is set,
-  // so existing deployments keep working until the webhook is re-registered.
-  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (webhookSecret && req.headers.get('x-telegram-bot-api-secret-token') !== webhookSecret) {
-    return NextResponse.json({ ok: false, error: 'Invalid webhook secret' }, { status: 401 });
-  }
+  // with a secret_token (setWebhook). Register the webhook with a secret and set
+  // TELEGRAM_WEBHOOK_SECRET — in production an unset secret fails closed (503).
+  const denied = verifySharedSecret(req, {
+    header: 'x-telegram-bot-api-secret-token',
+    secret: process.env.TELEGRAM_WEBHOOK_SECRET,
+    name: 'TELEGRAM_WEBHOOK_SECRET',
+  });
+  if (denied) return denied;
 
   try {
     const body = await req.json();
@@ -38,12 +41,21 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    const isMockMode = !isAdminInitialized;
+    // Mock mode = no usable database credentials. getSupabaseAdmin() throws
+    // when the service-role key is missing (it never falls back to the anon
+    // key), which is exactly the "database not initialized" signal the old
+    // isAdminInitialized flag carried for Firebase Admin.
+    let isMockMode = false;
+    try {
+      getSupabaseAdmin();
+    } catch {
+      isMockMode = true;
+    }
 
     if (isMockMode && text === '/diag') {
         // Allow diagnostics even in mock mode
     } else if (isMockMode && (text === '/stats' || text === '/leads' || text === '/listings')) {
-        await sendMessage("💡 <b>System Notice:</b> Operating in <b>MOCK MODE</b> (Firebase Admin not initialized). Showing high-fidelity demonstration data.");
+        await sendMessage("💡 <b>System Notice:</b> Operating in <b>MOCK MODE</b> (database not initialized). Showing high-fidelity demonstration data.");
     }
 
     if (text === '/start') {
@@ -63,10 +75,10 @@ Commands:
     } else if (text === '/diag') {
       await sendMessage(`
 <b>🛠 SYSTEM DIAGNOSTICS</b>
-<b>Firebase Ready:</b> ${isAdminInitialized ? '✅' : '❌'}
+<b>Database Ready:</b> ${isMockMode ? '❌' : '✅'}
 <b>Bot Token:</b> ${token ? '✅' : '❌'}
-<b>Collection Units:</b> <code>listings</code>
-<b>Collection Leads:</b> <code>leads</code>
+<b>Table Units:</b> <code>listings</code>
+<b>Table Leads:</b> <code>leads</code>
 <b>Timestamp:</b> ${new Date().toISOString()}
       `);
     } else if (text === '/stats') {
@@ -80,11 +92,12 @@ Commands:
         return NextResponse.json({ ok: true });
       }
       try {
-        const snap = await adminDb.collection('listings').limit(100).get();
-        const activeCount = snap.size;
-        
-        const leadsSnap = await adminDb.collection('leads').get();
-        const leadCount = leadsSnap.size;
+        // Same shape as before: inventory is counted over at most 100 rows,
+        // leads over the whole table.
+        const inventory = await listRecords('listings', { select: 'id', limit: 100 });
+        const activeCount = inventory.length;
+
+        const leadCount = await countRecords('leads');
 
         await sendMessage(`
 <b>📊 Sierra Estates - Portfolio Stats</b>
@@ -119,22 +132,25 @@ Commands:
         return NextResponse.json({ ok: true });
       }
       try {
-        const snap = await adminDb.collection('leads')
-          .orderBy('createdAt', 'desc')
-          .limit(5)
-          .get();
+        const leads = await listRecords<Record<string, any>>('leads', {
+          orderBy: { column: 'createdAt', ascending: false },
+          limit: 5,
+        });
 
-        if (snap.empty) {
+        if (leads.length === 0) {
           await sendMessage("<b>PIPELINE STATUS</b>\n\nNo recent leads found.");
           return NextResponse.json({ ok: true });
         }
 
         let leadText = "<b>Latest 5 Leads:</b>\n\n";
-        snap.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) => {
-            const d = doc.data();
-            const dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : 'N/A';
-            leadText += `👤 ${d.name || 'Unknown'} (${d.phone || 'No Phone'})\n📅 ${dateStr}\n---\n`;
-        });
+        for (const d of leads) {
+            // createdAt is an ISO string in Postgres, a Timestamp in Firestore.
+            const created = d.createdAt ? new Date(d.createdAt) : null;
+            const dateStr = created && !Number.isNaN(created.getTime())
+              ? created.toLocaleDateString()
+              : 'N/A';
+            leadText += `👤 ${d.fullName || d.name || 'Unknown'} (${d.phone || 'No Phone'})\n📅 ${dateStr}\n---\n`;
+        }
         await sendMessage(leadText);
       } catch (err: any) {
         await sendMessage(`❌ <b>Database Error:</b> ${err.message}`);
@@ -163,21 +179,20 @@ Commands:
         return NextResponse.json({ ok: true });
       }
       try {
-        const snap = await adminDb.collection('listings')
-          .orderBy('createdAt', 'desc')
-          .limit(5)
-          .get();
+        const listings = await listRecords<Record<string, any>>('listings', {
+          orderBy: { column: 'createdAt', ascending: false },
+          limit: 5,
+        });
 
-        if (snap.empty) {
+        if (listings.length === 0) {
           await sendMessage("<b>INVENTORY STATUS</b>\n\nNo listings found.");
           return NextResponse.json({ ok: true });
         }
 
         let listingText = "<b>Latest 5 Listings:</b>\n\n";
-        snap.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>) => {
-            const d = doc.data();
-            listingText += `🏢 ${d.title || 'Untitled'} - EGP ${d.price || 0}\n📍 ${d.location || 'Unknown'}\n---\n`;
-        });
+        for (const d of listings) {
+            listingText += `🏢 ${d.title || 'Untitled'} - EGP ${d.price || 0}\n📍 ${d.locationArea || d.location || 'Unknown'}\n---\n`;
+        }
         await sendMessage(listingText);
       } catch (err: any) {
         await sendMessage(`❌ <b>Database Error:</b> ${err.message}`);

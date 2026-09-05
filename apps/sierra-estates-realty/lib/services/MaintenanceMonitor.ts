@@ -1,5 +1,4 @@
-import { adminDb } from '../server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { listRecords, updateRecord } from '@sierra-estates/db';
 
 /**
  * MaintenanceMonitor: Intelligence module to handle data freshness and hygiene.
@@ -15,29 +14,31 @@ export class MaintenanceMonitor {
     
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const threshold = Timestamp.fromDate(thirtyDaysAgo);
+    const threshold = thirtyDaysAgo.toISOString();
 
     const targetCollections = ['listings', 'broker_listings'];
     let totalFlagged = 0;
 
     for (const colName of targetCollections) {
       try {
-        const snapshot = await adminDb.collection(colName)
-          .where('updatedAt', '<', threshold)
-          .where('status', 'not-in', ['archived', 'sold'])
-          .get();
+        // Firestore's 'not-in' has no direct record-layer equivalent, so the
+        // archived/sold exclusion is applied in code after the date filter.
+        const rows = await listRecords<{ id: string; status?: string; updatedAt?: string }>(colName, {
+          where: [{ column: 'updatedAt', op: 'lt', value: threshold }],
+        });
+        const stale = rows.filter((r) => !['archived', 'sold'].includes(r.status ?? ''));
 
-        console.log(`Checking ${colName}: Found ${snapshot.size} potentially stale documents.`);
+        console.log(`Checking ${colName}: Found ${stale.length} potentially stale documents.`);
 
-        for (const docSnap of snapshot.docs) {
-          const docData = docSnap.data();
-          await docSnap.ref.update({
+        for (const row of stale) {
+          await updateRecord(colName, row.id, {
             isStale: true,
-            maintenanceNotes: `Automated hygiene flag: Updated more than 30 days ago (last update: ${docData.updatedAt?.toDate()?.toISOString() || 'unknown'}).`,
+            // updatedAt is already an ISO string — no Timestamp .toDate() hop.
+            maintenanceNotes: `Automated hygiene flag: Updated more than 30 days ago (last update: ${row.updatedAt || 'unknown'}).`,
             // For broker listings, we auto-archive to keep the feed clean.
             // For company listings, we just flag for the Portfolio Manager.
-            status: colName === 'broker_listings' ? 'archived' : (docData.status || 'active'),
-            updatedAt: Timestamp.now() // Record the audit timestamp
+            status: colName === 'broker_listings' ? 'archived' : (row.status || 'active'),
+            updatedAt: new Date().toISOString() // Record the audit timestamp
           });
           totalFlagged++;
         }
@@ -58,11 +59,12 @@ export class MaintenanceMonitor {
     console.log(`♻️ [MaintenanceMonitor] Reviving listing ${listingId} due to re-detection.`);
     
     try {
-      await adminDb.collection('broker_listings').doc(listingId).update({
+      const now = new Date().toISOString();
+      await updateRecord('broker_listings', listingId, {
         isStale: false,
-        revivedAt: Timestamp.now(),
+        revivedAt: now,
         status: 'parsed', // Move back to active status
-        updatedAt: Timestamp.now()
+        updatedAt: now
       });
       return true;
     } catch (error) {

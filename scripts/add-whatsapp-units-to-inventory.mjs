@@ -7,8 +7,8 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
 const REAL_LISTINGS_PATH = path.join(ROOT, 'apps/sierra-estates-realty/data/real-listings.json');
-const EXTRACTED_WA_PATH = path.join(ROOT, 'packages/whatsapp-agent/inventory_extracted_units.json');
-const WA_AGENT_LISTINGS_PATH = path.join(ROOT, 'packages/whatsapp-agent/data/listings.json');
+const EXTRACTED_WA_PATH = path.join(ROOT, 'packages/whatsapp-shared/inventory_extracted_units.json');
+const WA_AGENT_LISTINGS_PATH = path.join(ROOT, 'packages/whatsapp-shared/data/listings.json');
 
 const rawReal = JSON.parse(fs.readFileSync(REAL_LISTINGS_PATH, 'utf8'));
 console.log(`Current real-listings count: ${rawReal.length}`);
@@ -312,7 +312,7 @@ for (const unit of whatsappUnits) {
 fs.writeFileSync(REAL_LISTINGS_PATH, JSON.stringify(rawReal, null, 2), 'utf8');
 console.log(`✅ Appended ${addedCount} WhatsApp units to ${REAL_LISTINGS_PATH}. Total units now: ${rawReal.length}`);
 
-// Also update packages/whatsapp-agent/inventory_extracted_units.json and listings.json
+// Also update packages/whatsapp-shared/inventory_extracted_units.json and listings.json
 const extractedWA = JSON.parse(fs.readFileSync(EXTRACTED_WA_PATH, 'utf8'));
 const waCodes = new Set(extractedWA.map(x => x.id || x.code));
 
@@ -415,6 +415,7 @@ for (const u of extraWAPackageUnits) {
   }
 }
 
+fs.mkdirSync(path.dirname(WA_AGENT_LISTINGS_PATH), { recursive: true });
 fs.writeFileSync(EXTRACTED_WA_PATH, JSON.stringify(extractedWA, null, 2), 'utf8');
 fs.writeFileSync(WA_AGENT_LISTINGS_PATH, JSON.stringify(extractedWA, null, 2), 'utf8');
 console.log(`✅ Updated WhatsApp agent data stores (${EXTRACTED_WA_PATH} & ${WA_AGENT_LISTINGS_PATH}).`);

@@ -23,6 +23,7 @@
 ## 📋 Differentiated Units Directory
 
 ### 1. `UNIT-WA-001` · Madinaty Furnished Luxury Apartment
+
 - **Source Group:** `Owners August 2026`
 - **Date Unit Added:** `Aug 22, 2026 (1:47 PM)`
 - **Operation:** **Rent** — `35,000 EGP / Month`
@@ -36,6 +37,7 @@
 ---
 
 ### 2. `UNIT-WA-002` · Al Rehab City Ground Unit with Private Garden
+
 - **Source Group:** `Owners August 2026`
 - **Date Unit Added:** `Aug 22, 2026 (10:15 AM)`
 - **Operation:** **Sale** — `6,800,000 EGP`
@@ -49,6 +51,7 @@
 ---
 
 ### 3. `UNIT-WA-003` · Fifth Settlement Standalone Villa in Mivida Compound
+
 - **Source Group:** `Owners Units`
 - **Date Unit Added:** `Aug 21, 2026 (6:30 PM - Yesterday)`
 - **Operation:** **Sale** — `42,000,000 EGP`
@@ -62,6 +65,7 @@
 ---
 
 ### 4. `UNIT-WA-004` · Eastown Duplex with Roof Terrace
+
 - **Source Group:** `New units from owner`
 - **Date Unit Added:** `Jul 14, 2026 (2:22 PM)`
 - **Operation:** **Sale** — `18,500,000 EGP` (Negotiable / Down Payment Plans)
@@ -75,6 +79,7 @@
 ---
 
 ### 5. `UNIT-WA-005` · Hyde Park New Cairo Luxury Apartment
+
 - **Source Group:** `Group Data Owner`
 - **Date Unit Added:** `Jul 02, 2026 (11:00 AM)`
 - **Operation:** **Sale** — `9,200,000 EGP` (Equal Installments available)
@@ -88,6 +93,7 @@
 ---
 
 ### 6. `UNIT-WA-006` · Swan Lake Residences Twinhouse
+
 - **Source Group:** `Owners Project inventory`
 - **Date Unit Added:** `Jun 21, 2026 (9:40 AM)`
 - **Operation:** **Sale** — `38,000,000 EGP`
@@ -101,6 +107,7 @@
 ---
 
 ### 7. `UNIT-WA-007` · Badya Palm Hills Townhouse
+
 - **Source Group:** `Owners Inventory project`
 - **Date Unit Added:** `Aug 06, 2025 (4:15 PM)`
 - **Operation:** **Sale** — `14,200,000 EGP` (Installments to 2030)
@@ -114,6 +121,7 @@
 ---
 
 ## 💾 Persisted Storage Locations
+
 1. **ListingManager Live Store:** [`packages/whatsapp-agent/data/listings.json`](file:///h:/last/Main/SE-Vercel-deploy-main/packages/whatsapp-agent/data/listings.json)
 2. **Unified Extracted Dataset:** [`packages/whatsapp-agent/inventory_extracted_units.json`](file:///h:/last/Main/SE-Vercel-deploy-main/packages/whatsapp-agent/inventory_extracted_units.json)
 3. **Master Report Document:** [`INVENTORY_WHATSAPP_REPORT.md`](file:///h:/last/Main/SE-Vercel-deploy-main/INVENTORY_WHATSAPP_REPORT.md)

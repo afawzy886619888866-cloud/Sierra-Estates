@@ -5,7 +5,7 @@
 
 import { GoogleAIService } from '../server/google-ai';
 import { SkillLoader } from './skill-loader';
-import { adminDb } from '../server/firebase-admin';
+import { getSupabaseAdmin } from '@sierra-estates/db';
 import { COLLECTIONS, type Lead } from '../models/schema';
 
 export interface NexusResponse {
@@ -93,14 +93,25 @@ export class NexusAgent {
   }
 
   /**
-   * Memory Link: Resolves the Telegram Chat ID to a Firestore Lead.
+   * Memory Link: Resolves the Telegram Chat ID to a Lead.
    */
   private static async getLeadByChatId(chatId: number): Promise<Lead | null> {
-    const snap = await adminDb.collection(COLLECTIONS.stakeholders)
-      .where('automation.telegramId', '==', chatId)
+    // `automation` is a JSONB column, so this filters on a key inside it.
+    // The record layer snake_cases column names, which would corrupt a JSON
+    // path, so this one query goes through the client directly.
+    //
+    // The key is `telegram_id`, not `telegramId`: the record layer converts
+    // keys *recursively*, so a payload written as `{ telegramId }` is stored
+    // snake_cased and only converted back on read. A raw path filter sees the
+    // stored form.
+    const { data, error } = await getSupabaseAdmin()
+      .from(COLLECTIONS.stakeholders)
+      .select('*')
+      .eq('automation->>telegram_id', String(chatId))
       .limit(1)
-      .get();
-    if (snap.empty) return null;
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as Lead;
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as Lead;
   }
 }
