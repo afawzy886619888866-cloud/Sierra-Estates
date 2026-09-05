@@ -1,5 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
+/* cspell:disable */
 'use client';
 /**
  * SIERRA ESTATES 3.0 — ADMIN PORTAL (Intelligence OS)
