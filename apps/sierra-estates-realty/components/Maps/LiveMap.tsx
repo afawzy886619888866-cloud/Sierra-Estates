@@ -32,7 +32,12 @@ function useLiveUnitCounts(): Record<string, number> {
     fetch('/api/inventory', {
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (r.status === 401 || r.status === 403) {
+          console.error('[LiveMap] Authorization failure fetching inventory:', r.status);
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((data: { units?: Array<{ location?: string; status?: string }> } | null) => {
         if (cancelled || !data?.units) return;
         const next: Record<string, number> = {};
@@ -212,12 +217,12 @@ export default function LiveMap({
       />
 
       {/* Compound Cluster Node Markers */}
-      {NEW_CAIRO_COMPOUNDS.map((compound) => {
+      {NEW_CAIRO_COMPOUNDS.map((compound, idx) => {
         const isSelected = selectedCode === compound.code;
         const liveCount = liveCounts[compound.nameEn.trim().toLowerCase()] ?? null;
         return (
           <Marker
-            key={`compound-${compound.code}`}
+            key={`compound-${compound.code}-${idx}`}
             position={[compound.lat, compound.lng]}
             icon={createCompoundIcon(compound, isSelected, liveCount)}
             eventHandlers={{

@@ -251,7 +251,12 @@ export default function PropertiesPage() {
     fetch('/api/inventory', {
       headers: { 'X-Requested-With': 'XMLHttpRequest' },
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.status === 401 || res.status === 403) {
+          console.error('[PropertiesPage] Authorization failed fetching inventory:', res.status);
+        }
+        return res.ok ? res.json() : null;
+      })
       .then((data) => {
         if (!active || !data?.units || !Array.isArray(data.units)) return;
         setAllUnits(data.units.map(sanitizeUnit));
