@@ -82,23 +82,22 @@ export async function POST(req: Request) {
             user.id
           );
 
-          let role: Role = "admin";
-          if (profile) {
-            const rawRole = String(profile.role ?? "").trim().toLowerCase();
-            if (isAdminPortalRole(rawRole)) {
-              role = rawRole as Role;
-            } else if (!isAdminEmail(verifiedEmail)) {
-              return NextResponse.json(
-                { error: "This account is not approved for the admin portal." },
-                { status: 403, headers: NO_STORE_HEADERS }
-              );
-            }
-          } else if (!isAdminEmail(verifiedEmail)) {
+          if (!profile) {
             return NextResponse.json(
               { error: "This account is not provisioned for the admin portal." },
               { status: 403, headers: NO_STORE_HEADERS }
             );
           }
+
+          const rawRole = String(profile.role ?? "").trim().toLowerCase();
+          if (!isAdminPortalRole(rawRole)) {
+            return NextResponse.json(
+              { error: "This account is not approved for the admin portal." },
+              { status: 403, headers: NO_STORE_HEADERS }
+            );
+          }
+
+          const role: Role = rawRole as Role;
 
           try {
             await updateRecord("profiles", user.id, { lastLogin: new Date().toISOString() });
