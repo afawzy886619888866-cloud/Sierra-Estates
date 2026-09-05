@@ -26,12 +26,15 @@ import {
   ReportsView,
   ExcelMergerView,
   RealEstateProcessorView,
+  ContractsView,
+  HeatmapView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
+import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
@@ -1441,7 +1444,10 @@ function AdminApp() {
       case 'security':return <SecurityView lang={langKey}/>;
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsView lang={langKey}/>;
+      case 'contracts':return <ContractsView />;
+      case 'heatmap':return <HeatmapView />;
       case 'intelligence':return <AgentIntelligence />;
+      case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
       default:return <DashboardView lang={langKey}/>;
     }
@@ -1449,14 +1455,17 @@ function AdminApp() {
 
   const handleSignOut = async () => {
     try {
+      try {
+        sessionStorage.removeItem('sierra_admin_auth');
+        localStorage.removeItem('sierra_admin_auth');
+      } catch {}
       await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'signout' }),
       });
-      const { auth } = await import('@/lib/firebase');
-      const { signOut } = await import('firebase/auth');
-      await signOut(auth).catch((signOutErr) => console.warn('[AdminPortal] Firebase signOut failed:', signOutErr));
+      const { supabase } = await import('@/lib/supabase');
+      await supabase.auth.signOut().catch(() => {});
     } catch (e) {
       console.warn('Signout error:', e);
     } finally {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords, insertRecord } from '@sierra-estates/db';
+import { toWorkflowColumns, toWorkflowRecord } from '@/lib/server/workflow-columns';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 
@@ -20,8 +21,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const snap = await adminDb.collection(COLLECTIONS.automationWorkflows).get();
-    const workflows = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() }));
+    const rows = await listRecords(COLLECTIONS.automationWorkflows);
+    const workflows = rows.map(toWorkflowRecord);
 
     return NextResponse.json({ success: true, workflows });
   } catch (err) {
@@ -46,17 +47,20 @@ export async function POST(req: NextRequest) {
     }
     const { name, nameAr, desc, descAr, color } = parsed.data;
 
-    const ref = await adminDb.collection(COLLECTIONS.automationWorkflows).add({
-      name,
-      nameAr: nameAr || '',
-      desc: desc || '',
-      descAr: descAr || '',
-      color: color || '#6366f1',
-      status: 'paused',
-      runs: 0,
-      last: 'never',
-      updatedAt: new Date(),
-    });
+    const ref = await insertRecord<{ id: string }>(
+      COLLECTIONS.automationWorkflows,
+      toWorkflowColumns({
+        name,
+        nameAr: nameAr || '',
+        desc: desc || '',
+        descAr: descAr || '',
+        color: color || '#6366f1',
+        status: 'paused',
+        runs: 0,
+        last: 'never',
+        updatedAt: new Date().toISOString(),
+      })
+    );
 
     return NextResponse.json({ success: true, workflowId: ref.id });
   } catch (err) {

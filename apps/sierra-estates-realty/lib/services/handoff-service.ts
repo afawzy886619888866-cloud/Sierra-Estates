@@ -3,8 +3,7 @@
  * Generates the Executive Intelligence Summary for human closers.
  */
 
-import { db } from '../firebase';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { getRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, Lead, Unit } from '../models/schema';
 import { GoogleAIService } from '../server/google-ai';
 
@@ -21,22 +20,25 @@ export interface HandoffSummary {
   nextSteps: string;
 }
 
+/** The column is `full_name`; older documents carried `name`. */
+function stakeholderName(lead: Lead): string {
+  return (lead as { fullName?: string }).fullName ?? lead.name ?? '';
+}
+
 /**
  * Generates a high-fidelity context summary for the human closer.
  */
 export async function generateCloserHandoff(leadId: string): Promise<HandoffSummary> {
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) throw new Error('Lead not found');
-  const lead = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error('Lead not found');
 
   // 1. Analyze Interaction History (Stage 8 Feedback)
   const interestedUnits = lead.interactionHistory?.filter(i => i.action === 'interested') || [];
   
   const highInterestAssets: HandoffSummary['highInterestAssets'] = [];
   for (const interaction of interestedUnits) {
-    const unitSnap = await getDoc(doc(db, COLLECTIONS.units, interaction.unitId));
-    if (unitSnap.exists()) {
-      const unit = unitSnap.data() as Unit;
+    const unit = await getRecord<Unit>(COLLECTIONS.units, interaction.unitId);
+    if (unit) {
       const match = lead.aiProfiling?.topMatches?.find(m => m.unitId === interaction.unitId);
       highInterestAssets.push({
         code: unit.code || 'UNKNOWN',
@@ -51,7 +53,7 @@ export async function generateCloserHandoff(leadId: string): Promise<HandoffSumm
 
   // 3. Finalize Handoff
   const handoff: HandoffSummary = {
-    leadName: lead.name,
+    leadName: stakeholderName(lead),
     phone: lead.phone,
     intelligenceProfile: `Nationality: ${lead.intelligence?.profile?.nationality || 'N/A'}. Family: ${lead.intelligence?.profile?.familySize || 'X'}. Move-in: ${lead.intelligence?.profile?.moveInDate || 'Immediate'}.`,
     strategicIntent: summaryText,
@@ -60,11 +62,18 @@ export async function generateCloserHandoff(leadId: string): Promise<HandoffSumm
   };
 
   // 4. Update Orchestration State
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'orchestrationState.stage': 'S9',
-    'orchestrationState.status': 'completed',
-    'intelligence.handoffSummary': handoff,
-    updatedAt: serverTimestamp()
+  // `orchestrationState` and `intelligence` are single JSONB columns, so the
+  // dotted-path updates become merges onto the objects already on the row.
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    orchestrationState: {
+      ...(lead.orchestrationState ?? {}),
+      stage: 'S9',
+      status: 'completed',
+    },
+    intelligence: {
+      ...(lead.intelligence ?? {}),
+      handoffSummary: handoff,
+    },
   });
 
   return handoff;
@@ -82,7 +91,7 @@ INSTRUCTIONS: Focus on the stakeholder's 'Psychological Profile', 'Neural Memory
 PERSONA ALIGNMENT: Align the intelligence with "Sierra's" Editorial Luxury standards.`;
 
   const promptContent = `
-    Stakeholder: ${lead.name}. 
+    Stakeholder: ${stakeholderName(lead)}. 
     Assets of Interest: ${assets.map(a => a.code).join(', ')}. 
     Profile: ${JSON.stringify(lead.intelligence?.profile)}.
     Neural Memory (Negative Signals): ${JSON.stringify(lead.intelligence?.memory?.negativeSignals || [])}.

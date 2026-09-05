@@ -5,6 +5,7 @@
 ## Workflows
 
 ### 01 — Property Finder Lead Ingestion
+
 **File:** `01-property-finder-leads.json`
 
 Receives leads from Property Finder webhook → creates/updates client in Firestore → creates lead record → creates request ticket.
@@ -12,6 +13,7 @@ Receives leads from Property Finder webhook → creates/updates client in Firest
 **Webhook URL:** `POST http://your-vps:5678/webhook/property-finder-leads`
 
 **Expected payload:**
+
 ```json
 {
   "name": "Ahmed Ali",
@@ -23,6 +25,7 @@ Receives leads from Property Finder webhook → creates/updates client in Firest
 ```
 
 ### 02 — WhatsApp Bot Message Handler
+
 **File:** `02-whatsapp-bot-handler.json`
 
 Receives messages from the Baileys WhatsApp scraper → finds/creates client → appends to request chat history → generates Gemini AI reply → escalates to human agent if needed.
@@ -30,6 +33,7 @@ Receives messages from the Baileys WhatsApp scraper → finds/creates client →
 **Webhook URL:** `POST http://n8n:5678/webhook/whatsapp-incoming`
 
 **Flow:**
+
 1. Parse message from Baileys container
 2. Find existing client by phone (dedup)
 3. Create new client OR append to existing request's chat
@@ -38,6 +42,7 @@ Receives messages from the Baileys WhatsApp scraper → finds/creates client →
 6. Return reply to Baileys container (sends back to WhatsApp client)
 
 ### 03 — AI Listing Score Scheduler
+
 **File:** `03-ai-score-scheduler.json`
 
 Runs every 4 hours → fetches all active listings → scores each with Gemini AI → updates `ai_score` field in Firestore.
@@ -45,6 +50,7 @@ Runs every 4 hours → fetches all active listings → scores each with Gemini A
 **Schedule:** Every 4 hours (cron)
 
 **Scoring criteria (0-10):**
+
 - Location growth potential
 - Price competitiveness
 - Property type + size appeal
@@ -56,24 +62,29 @@ Runs every 4 hours → fetches all active listings → scores each with Gemini A
 ## Import Instructions
 
 ### 1. Access n8n
+
 Open `http://your-vps-ip:5678` and login with credentials from `.env`.
 
 ### 2. Import each workflow
+
 1. Click **"Workflows"** in the left sidebar
 2. Click **"Add Workflow"** → **"Import from File"**
 3. Select the JSON file (e.g., `01-property-finder-leads.json`)
 4. Repeat for each workflow
 
 ### 3. Configure credentials
+
 Each workflow uses Firebase + Gemini API. Configure these credentials in n8n:
 
 **Firebase:**
+
 1. Go to **Settings → Credentials**
 2. Click **"Add Credential"** → **"Firebase Realtime Database"**
 3. Upload the service account JSON (same as `secrets/firebase-service-account.json`)
 4. Name it: `Sierra Firebase`
 
 **Gemini API:**
+
 1. Go to **Settings → Credentials**
 2. Click **"Add Credential"** → **"HTTP Header Auth"**
 3. Name: `Gemini API`
@@ -81,9 +92,11 @@ Each workflow uses Firebase + Gemini API. Configure these credentials in n8n:
 5. Header value: your Gemini API key
 
 ### 4. Activate workflows
+
 Click the **"Active"** toggle on each workflow to enable it.
 
 ### 5. Test webhooks
+
 ```bash
 # Test Property Finder webhook
 curl -X POST http://your-vps:5678/webhook/property-finder-leads \
@@ -137,15 +150,18 @@ curl -X POST http://your-vps:5678/webhook/whatsapp-incoming \
 ## Troubleshooting
 
 ### Webhook not receiving
+
 - Check n8n is running: `docker compose ps n8n`
 - Check webhook URL is accessible from outside VPS (firewall)
 - Verify the webhook path matches the JSON file
 
 ### Firebase connection error
+
 - Verify service account JSON is mounted: `docker compose exec n8n ls /data/firebase-service-account.json`
 - Check credential is configured in n8n Settings → Credentials
 
 ### Gemini API errors
+
 - Verify `GEMINI_API_KEY` is set in `.env`
 - Check API quota in Google Cloud Console
 - Gemini 2.0 Flash free tier: 15 requests/minute, 1500/day

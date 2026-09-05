@@ -1,6 +1,5 @@
 import { Resend } from 'resend';
-import { FieldValue } from 'firebase-admin/firestore';
-import { getDb } from '../lib/firebase';
+import { assertDbConfigured, insertRecord } from '../lib/db';
 
 /**
  * 04-email-sender
@@ -14,10 +13,10 @@ export async function runEmailSender(campaignId: string) {
   console.log(`[Email Sender] Processing campaign: ${campaignId}`);
   
   try {
-    const db = getDb('Email Sender');
-    
+    const dbReady = assertDbConfigured('Email Sender');
+
     // 1. Fetch targeted investors from Matchmaker agent outputs (mocked)
-    // Normally we'd query: db.collection('investors').where('matchedCampaign', '==', campaignId)
+    // Normally we'd query leads on the matched campaign.
     const mockInvestors = [
       { email: 'investor1@example.com', name: 'VIP Investor 1' },
       { email: 'investor2@example.com', name: 'VIP Investor 2' }
@@ -40,15 +39,17 @@ export async function runEmailSender(campaignId: string) {
       */
       sentCount++;
       
-      // Log to CRM
-      await db.collection('communications').add({
-        targetEmail: investor.email,
-        direction: 'outbound',
-        type: 'email',
-        campaign: campaignId,
-        status: 'sent',
-        sentAt: FieldValue.serverTimestamp()
-      });
+      // Log to CRM. The column is `campaign_id`, not `campaign`.
+      if (dbReady) {
+        await insertRecord('communications', {
+          targetEmail: investor.email,
+          direction: 'outbound',
+          type: 'email',
+          campaignId,
+          status: 'sent',
+          sentAt: new Date().toISOString(),
+        });
+      }
     }
     
     return {

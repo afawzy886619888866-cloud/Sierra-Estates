@@ -23,7 +23,7 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy source (exclude tests and cache)
-COPY main.py ecc_memory_engine.py property_finder_sync.py valuation_agent_skill.py ./
+COPY main.py ecc_memory_engine.py property_finder_sync.py valuation_agent_skill.py hubspot_sync.py ./
 
 USER appuser
 

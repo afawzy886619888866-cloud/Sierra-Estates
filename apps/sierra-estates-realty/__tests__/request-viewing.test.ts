@@ -1,15 +1,11 @@
-const collectionMock = jest.fn();
-const addMock = jest.fn();
+const insertMock = jest.fn();
 const updateMock = jest.fn();
 const getMock = jest.fn();
-const docMock = jest.fn();
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: (...args: unknown[]) => collectionMock(...args) },
-}));
-
-jest.mock('firebase-admin/firestore', () => ({
-  Timestamp: { now: jest.fn(() => 'ts') },
+jest.mock('@sierra-estates/db', () => ({
+  insertRecord: (...args: unknown[]) => insertMock(...args),
+  updateRecord: (...args: unknown[]) => updateMock(...args),
+  getRecord: (...args: unknown[]) => getMock(...args),
 }));
 
 import { POST } from '@/app/api/leads/request-viewing/route';
@@ -23,11 +19,9 @@ const makeReq = (body: unknown) =>
 describe('POST /api/leads/request-viewing', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    docMock.mockReturnValue({ update: updateMock, get: getMock });
-    collectionMock.mockReturnValue({ add: addMock, doc: docMock });
-    addMock.mockResolvedValue({ id: 'viewing-abc' });
+    insertMock.mockResolvedValue({ id: 'viewing-abc' });
     updateMock.mockResolvedValue(undefined);
-    getMock.mockResolvedValue({ exists: true });
+    getMock.mockResolvedValue({ id: 'lead-1' });
   });
 
   test('creates viewing request with valid payload', async () => {
@@ -45,7 +39,7 @@ describe('POST /api/leads/request-viewing', () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBeDefined();
-    expect(addMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   test('returns 400 when unitId is missing', async () => {
@@ -54,7 +48,7 @@ describe('POST /api/leads/request-viewing', () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBeDefined();
-    expect(addMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   test('returns 400 when body is empty', async () => {
@@ -62,7 +56,7 @@ describe('POST /api/leads/request-viewing', () => {
     const _body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(addMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
   });
 
   test('accepts optional portfolioId', async () => {

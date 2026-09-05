@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
-import { FieldValue } from 'firebase-admin/firestore';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
 export async function POST(req: NextRequest) {
@@ -12,12 +11,12 @@ export async function POST(req: NextRequest) {
     const { type = 'patch' } = await req.json();
 
     // Log the deployment activity
-    await adminDb.collection(COLLECTIONS.activities).add({
+    await insertRecord(COLLECTIONS.activities, {
       type: 'SYSTEM_DEPLOY',
       description: `Deployment patch initiated: ${type}`,
       actorName: 'System Architect',
       actorRole: 'admin',
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: new Date().toISOString(),
       metadata: { deployType: type }
     });
 

@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords, type WhereClause } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: Request) {
@@ -21,18 +21,11 @@ export async function GET(req: Request) {
     const slug = searchParams.get('slug');
     const locale = searchParams.get('locale');
 
-    let query: FirebaseFirestore.Query = adminDb
-      .collection('pages')
-      .where('published', '==', true);
+    const where: WhereClause[] = [{ column: 'published', value: true }];
+    if (slug) where.push({ column: 'slug', value: slug });
+    if (locale) where.push({ column: 'locale', value: locale });
 
-    if (slug) query = query.where('slug', '==', slug);
-    if (locale) query = query.where('locale', '==', locale);
-
-    const snap = await query.get();
-    const pages = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const pages = await listRecords('pages', { where });
 
     return NextResponse.json({ success: true, pages, count: pages.length });
   } catch (err) {

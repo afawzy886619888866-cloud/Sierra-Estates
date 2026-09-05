@@ -189,15 +189,18 @@ export default function CompoundCity3D({
   compounds,
   mode,
   selected,
-  onSelect,
+  onSelectAction,
+  onSelect = onSelectAction,
   height = 560,
 }: {
   compounds: Compound[];
   mode: PriceMode;
   selected: Compound | null;
-  onSelect: (c: Compound) => void;
+  onSelectAction?: (c: Compound) => void;
+  onSelect?: (c: Compound) => void;
   height?: number;
 }) {
+  const handleSelect = onSelectAction || onSelect || (() => {});
   // Range is computed over the *filtered* set so the height ramp always uses
   // the full visual scale, even when the price filter narrows the results.
   const range = useMemo<[number, number]>(() => {
@@ -242,7 +245,7 @@ export default function CompoundCity3D({
             mode={mode}
             range={range}
             selected={selected?.n === c.n}
-            onSelect={onSelect}
+            onSelect={handleSelect}
           />
         ))}
 

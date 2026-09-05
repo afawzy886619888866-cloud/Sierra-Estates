@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { insertRecord } from '@sierra-estates/db';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { OrchestratorService } from '@/lib/services/orchestrator';
@@ -93,17 +91,17 @@ function buildListingDocument(rawMessage: string, sender: string, group: string,
       sentiment: parsed?.sentiment || 'neutral',
       matchingKeywords: parsed?.matchingKeywords || [],
       parserVersion: 'sheets-cron/v1',
-      lastUpdatedAt: Timestamp.now(),
+      lastUpdatedAt: new Date().toISOString(),
     },
     status: isListing ? 'parsed' : 'new',
     isVerified: false,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     orchestrationState: {
       stage: isListing ? 'S2' : 'S1',
       status: isListing ? 'completed' : 'pending',
       engineVersion: 'sheets-cron/v1',
-      lastTriggeredAt: Timestamp.now() as any,
+      lastTriggeredAt: new Date().toISOString(),
     },
   };
 }
@@ -164,7 +162,7 @@ export async function GET(req: NextRequest) {
       try {
         const parsed = await WhatsAppParserService.parseMessage(rawMessage);
         const listing = buildListingDocument(rawMessage, from || 'Unknown', groupName || 'Unknown', parsed);
-        const docRef = await adminDb.collection(COLLECTIONS.brokerListings).add(listing);
+        const docRef = await insertRecord<{ id: string }>('broker_listings', listing);
 
         // Dual-ingest: append to master Sheets log (non-blocking)
         GoogleSheetsSync.appendRow('Leads', {
@@ -206,16 +204,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Log to Firestore activities if anything was processed
+    // Log to the activity feed if anything was processed
     if (results.processed > 0) {
-      await adminDb.collection(COLLECTIONS.activities).add({
+      await insertRecord('activities', {
         type: 'sheets_ingest_completed',
         actorId: 'system',
         actorName: 'Sheets Ingest Cron',
         description: `Sheets buffer: **${results.processed} messages** ingested, **${results.failed}** failed.`,
         text: `Sheets buffer: **${results.processed} messages** ingested, **${results.failed}** failed.`,
         color: 'var(--green-light)',
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString(),
       });
     }
 

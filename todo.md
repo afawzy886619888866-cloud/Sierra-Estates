@@ -85,7 +85,6 @@
 - [x] Execute clean production build (79 Next.js static & dynamic routes compiled)
 - [x] Commit and push all milestones to GitHub `origin/main`
 
-
 ## Cairo Plaza additive integration — completed in this session
 
 - [x] Inspect the existing broker-site repository, routes, navigation, and Important Projects section
@@ -94,7 +93,6 @@
 - [x] Preserve bilingual RTL/LTR, light/dark theme, lightbox, contact form, directions CTA, and AI-concept disclosures
 - [x] Verify the existing English and Arabic Cairo Plaza routes and current main-site preservation
 - [x] Commit and push the non-destructive integration to GitHub (`cabf0f6`)
-
 
 ## Cairo Plaza native broker-site restyling and real imagery
 

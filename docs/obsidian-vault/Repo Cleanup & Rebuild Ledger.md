@@ -19,7 +19,7 @@ Related: [[Sierra Estates Memory Engine]] · [[Admin Console Map]] · [[Sourcing
 ## 1. Recovery anchors (git SHAs)
 
 | What | Anchor (merge SHA) | How to recover a path |
-|---|---|---|
+| --- | --- | --- |
 | Big cleanup — old frontend + `.archive` + design trees removed | `e064fce2` (PR #155) | `git checkout e064fce2^ -- <path>` |
 | Archived-snapshots removal | `69efde35` (PR #152) | `git checkout 69efde35^ -- <path>` |
 | Seed-hardening + dead-tree removal (this pass) | `ee5d50c6` (branch `chore/harden-seed-and-tidy`) | `git checkout ee5d50c6^ -- <path>` |
@@ -32,7 +32,7 @@ Related: [[Sierra Estates Memory Engine]] · [[Admin Console Map]] · [[Sourcing
 ## 2. Removed in this cleanup pass (recoverable)
 
 | Path | What it was | Why removed | Contained secrets? |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `_archived_repos/MANIFEST.json`, `_archived_repos/MANIFEST.md` | Archive manifests (original content replaced with redirect stubs) | Replaced with lightweight stubs that redirect readers to this ledger; full manifests remain recoverable from git history | No |
 | `backups/*.json` | `sierra-blu-…-ai-studio.json`, `…-remixed.json` — demo agent/activity data exports | Not referenced; superseded by live Firestore | **No** (scanned: 0 secret indicators) |
 | `public/assets/ui_kits/website/` | Static design kit (Header/Footer/PropertyCard .jsx + html) | Unreferenced by app code; superseded by the designer's new bundles | No |
@@ -63,6 +63,7 @@ Old public frontend (`app/page.tsx`, `app/clients/`, `app/listings/page.tsx`, `D
 ## 5. Rebuild plan — what still needs doing (no logic lost)
 
 ### 5a. Client site (public pages) — **not yet built**
+
 - Source design: the **houzez-portal** bundle (home hero-slider, compounds, properties, property
   detail, virtual tour; EN/AR) — the designer's static kit. Data is placeholder in its `data.js`
   (`window.HZDATA`).
@@ -73,6 +74,7 @@ Old public frontend (`app/page.tsx`, `app/clients/`, `app/listings/page.tsx`, `D
   `data/houyez-properties.ts`, `POST /api/houyez/seed` (now fail-closed in prod).
 
 ### 5b. Admin portal — **wired, on demo data**
+
 - `app/admin/AdminPortal.tsx` (1,399 lines, ported 1:1 from `admin3.0portalBLUE.html`), mounted at
   `/admin` via `app/admin/page.tsx`; client-side role guard in `app/admin/layout.tsx`
   (`users/{uid}.role` ∈ {admin, manager}). Has `@ts-nocheck` — excluded from the type gate.
@@ -80,6 +82,7 @@ Old public frontend (`app/page.tsx`, `app/clients/`, `app/listings/page.tsx`, `D
   the KPI queries are ready in `lib/services/dashboard-metrics.ts`. See [[Admin Console Map]].
 
 ### 5c. Open follow-ups (tracked in the audit)
+
 - Set `ADMIN_API_KEY` (Vercel) — seed endpoint now refuses in prod without it.
 - Set `CLIENT_VERCEL_PROJECT_ID` (repo variable) to activate client deploys.
 - Enable branch protection on `main` (merges over red CI have happened).
@@ -88,6 +91,7 @@ Old public frontend (`app/page.tsx`, `app/clients/`, `app/listings/page.tsx`, `D
 ---
 
 ## 6. Rules for future cleanups
+
 1. **Never hard-delete without a recovery SHA recorded here.**
 2. Verify unreferenced first: `grep -rn "<name>" --include=*.ts* apps packages` (exclude node_modules).
 3. Never remove a `packages/*` scaffold without checking workspace refs — empty ≠ unused.

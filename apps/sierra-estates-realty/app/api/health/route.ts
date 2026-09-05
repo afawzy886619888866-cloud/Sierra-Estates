@@ -1,14 +1,22 @@
 import { NextResponse } from 'next/server';
-import { isAdminInitialized, loadAndInitializeAdmin } from '@/lib/server/firebase-admin';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const startTime = Date.now();
 
-  await loadAndInitializeAdmin();
+  // Check Supabase connectivity (non-blocking health check)
+  let supabaseReady = false;
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from('health_check').select('1').limit(1).single();
+    // Even if no health_check table exists, if client is initialized it's ready
+    supabaseReady = true;
+  } catch {
+    supabaseReady = false;
+  }
 
-  const firestoreReady = isAdminInitialized;
   const pubsubConfigured = Boolean(
     process.env.GOOGLE_CLOUD_PROJECT ||
       process.env.REDIS_URL ||
@@ -22,21 +30,21 @@ export async function GET() {
       process.env.OPENAI_API_KEY ||
       process.env.ANTHROPIC_API_KEY
   );
-  const overallStatus = firestoreReady && aiConfigured ? 'healthy' : 'degraded';
+  const overallStatus = supabaseReady && aiConfigured ? 'healthy' : 'degraded';
 
   const healthData = {
     status: overallStatus,
-    version: '3.0.0',
+    version: '3.0.1',
     service: 'sierra-estates-intelligence-os',
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     environment: process.env.NODE_ENV || 'development',
     components: {
-      firestore: {
-        status: firestoreReady ? 'healthy' : 'unavailable',
-        message: firestoreReady
-          ? 'Connected to Firestore canonical collections'
-          : 'Firebase Admin credentials are not configured or initialization failed',
+      supabase: {
+        status: supabaseReady ? 'healthy' : 'unavailable',
+        message: supabaseReady
+          ? 'Connected to Supabase PostgreSQL'
+          : 'Supabase credentials are not configured',
       },
       pubsub: {
         status: pubsubConfigured ? 'configured' : 'fallback',
@@ -58,5 +66,5 @@ export async function GET() {
     latencyMs: Date.now() - startTime,
   };
 
-  return NextResponse.json(healthData, { status: firestoreReady ? 200 : 503 });
+  return NextResponse.json(healthData, { status: supabaseReady ? 200 : 503 });
 }

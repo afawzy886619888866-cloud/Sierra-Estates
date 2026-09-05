@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
-import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
 
-// Force dynamic rendering — uses Firebase/auth at runtime
+// Force dynamic rendering — uses Supabase/auth at runtime
 export const dynamic = 'force-dynamic';
+
+/** See app/api/admin/leads/route.ts — the SPA mappers still speak the old Firestore field names. */
+function rowToLeadDoc(row: RecordData): Record<string, unknown> {
+  const { fullName, summaryNotes, assignedAgentId, pipelineStage, ...rest } = row as Record<string, unknown>;
+  return { ...rest, name: fullName, notes: summaryNotes, assignedTo: assignedAgentId, stage: pipelineStage };
+}
+
+function leadPatchToColumns(patch: Record<string, unknown>): RecordData {
+  const { name, notes, assignedTo, stage, ...rest } = patch;
+  const out: RecordData = { ...rest };
+  if (name !== undefined) out.fullName = name;
+  if (notes !== undefined) out.summaryNotes = notes;
+  if (assignedTo !== undefined) out.assignedAgentId = assignedTo;
+  if (stage !== undefined) out.pipelineStage = stage;
+  return out;
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await verifyAdminRequest(req);
@@ -18,17 +32,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await req.json();
-    const patch = mapSpaToLeadPatch(body);
+    const patch = leadPatchToColumns(mapSpaToLeadPatch(body));
 
-    const ref = adminDb.collection(COLLECTIONS.stakeholders).doc(id);
-    await ref.update({ ...patch, updatedAt: Timestamp.now() });
-
-    const updated = await ref.get();
-    if (!updated.exists) {
+    const updated = await updateRecord('leads', id, { ...patch, updatedAt: new Date().toISOString() });
+    if (!updated) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, lead: mapLeadToSpa(id, updated.data()) });
+    return NextResponse.json({ success: true, lead: mapLeadToSpa(id, rowToLeadDoc(updated)) });
   } catch (err) {
     logger.error('Error updating lead:', err);
     return NextResponse.json(
@@ -46,7 +57,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
-    await adminDb.collection(COLLECTIONS.stakeholders).doc(id).delete();
+    await deleteRecord('leads', id);
     return NextResponse.json({ success: true });
   } catch (err) {
     logger.error('Error deleting lead:', err);

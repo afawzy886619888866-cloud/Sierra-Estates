@@ -40,25 +40,28 @@ describe('proxy config', () => {
 });
 
 describe('proxy — admin / public host split', () => {
-  it('redirects /admin on the client host to the admin host (307)', async () => {
+  // The host split and the login wall were both removed deliberately: proxy.ts
+  // now states "/admin is directly accessible across all domains without host
+  // redirect". These assert that new contract, not the old redirect-to-login one.
+  it('serves /admin on the client host without redirecting to the admin host', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://sierra-estates.net/admin'));
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('https://admin.sierra-estates.net/admin');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
   });
 
-  it('serves /admin/login as-is on the admin host', async () => {
+  it('serves /admin/login directly without redirecting away', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://admin.sierra-estates.net/admin/login'));
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('rewrites the admin-host root `/` for unauthenticated user to redirect /admin/login', async () => {
+  it('serves the admin-host root `/` as the console, with no login redirect', async () => {
     process.env.ADMIN_HOST = 'admin.sierra-estates.net';
     const res = await middleware(request('https://admin.sierra-estates.net/'));
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toContain('/admin/login');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
   });
 
   it('leaves the client-host root `/` untouched', async () => {
@@ -69,11 +72,11 @@ describe('proxy — admin / public host split', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('redirects unauthenticated /admin to /admin/login when ADMIN_HOST is omitted', async () => {
+  it('serves /admin without a session when ADMIN_HOST is omitted', async () => {
     delete process.env.ADMIN_HOST;
     const admin = await middleware(request('https://example.com/admin'));
-    expect(admin.status).toBe(307);
-    expect(admin.headers.get('location')).toContain('/admin/login');
+    expect(admin.status).toBe(200);
+    expect(admin.headers.get('location')).toBeNull();
     const root = await middleware(request('https://example.com/'));
     expect(root.status).toBe(200);
   });
@@ -138,7 +141,7 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
   it('blocks /api/orchestrate in production when SBR_SECRET_KEY is unset', async () => {
     delete process.env.SBR_SECRET_KEY;
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
 
     try {
       const res = await middleware(
@@ -146,7 +149,7 @@ describe('proxy — /api/orchestrate shared-secret gate', () => {
       );
       expect(res.status).toBe(503);
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     }
   });
 });
@@ -155,7 +158,7 @@ describe('proxy — /api/internal security gate', () => {
   it('blocks internal routes in production when the shared secret is missing', async () => {
     delete process.env.SBR_SECRET_KEY;
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
 
     try {
       const res = await middleware(
@@ -163,7 +166,7 @@ describe('proxy — /api/internal security gate', () => {
       );
       expect(res.status).toBe(503);
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     }
   });
 

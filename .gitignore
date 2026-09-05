@@ -13,8 +13,12 @@ graphify-out/
 # Vercel CLI cache & local configs
 .vercel/
 
-# TypeScript cache
+# TypeScript cache & compiled twins
 *.tsbuildinfo
+apps/sierra-estates-realty/lib/**/*.js
+apps/sierra-estates-realty/components/**/*.js
+apps/sierra-estates-realty/app/**/*.js
+apps/sierra-estates-realty/__tests__/**/*.js
 
 # Environment variables & secrets
 .env.local
@@ -57,3 +61,5 @@ coverage/
 # Archive files
 *.zip
 *.tar.gz
+
+.bruin.yml

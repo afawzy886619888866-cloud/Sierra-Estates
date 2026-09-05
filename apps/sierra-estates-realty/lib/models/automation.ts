@@ -3,7 +3,7 @@
  * Defines the structure for workflow automation rules, triggers, actions, and execution logs
  */
 
-import { Timestamp, FieldValue } from 'firebase/firestore';
+import type { WritableTimestamp } from './timestamps';
 import { BaseDocument } from './schema';
 
 // ─── Automation Triggers ─────────────────────────────────────────────
@@ -149,8 +149,8 @@ export interface AutomationRule extends BaseDocument {
     totalRuns: number;
     successCount: number;
     failureCount: number;
-    lastExecutedAt?: Timestamp | FieldValue;
-    nextScheduledAt?: Timestamp | FieldValue;
+    lastExecutedAt?: WritableTimestamp;
+    nextScheduledAt?: WritableTimestamp;
   };
 
   // Admin metadata
@@ -171,8 +171,8 @@ export interface ExecutionLog extends BaseDocument {
 
   // Execution details
   status: 'pending' | 'executing' | 'success' | 'partial_success' | 'failed';
-  startedAt: Timestamp | FieldValue;
-  completedAt?: Timestamp | FieldValue;
+  startedAt: WritableTimestamp;
+  completedAt?: WritableTimestamp;
   durationMs?: number;
 
   // Actions executed
@@ -182,7 +182,7 @@ export interface ExecutionLog extends BaseDocument {
     status: 'success' | 'failed';
     message?: string;
     externalId?: string;       // e.g., email ID, message SID
-    timestamp: Timestamp | FieldValue;
+    timestamp: WritableTimestamp;
   }>;
 
   // Error handling

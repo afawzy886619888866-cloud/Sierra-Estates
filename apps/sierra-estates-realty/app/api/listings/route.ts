@@ -6,24 +6,25 @@
  *   1. Legacy envelope mode — when `?id=` or `?limit=` is present.
  *      Returns { success, listing | listings, count }. Kept for the static
  *      public/client-page and lib/services/InventoryService.client.ts.
- *      Reads Firestore via the public REST key; if the key is missing, the
- *      read fails, or rules deny access, it falls back to seed data instead
- *      of erroring (INTEGRATION.md data-flow contract).
+ *      Reads public.listings; if the read fails or RLS denies access it falls
+ *      back to seed data instead of erroring (INTEGRATION.md data-flow
+ *      contract).
  *
  *   2. Filter mode (default) — used by lib/api-client `api.listings()`.
  *      Returns a bare Listing[] filtered by mode/compound/type/beds/maxUsd/q.
- *      Reads Firestore via the Admin SDK → falls back to SEED_LISTINGS.
+ *      Reads Supabase → Live Sheet → snapshot → SEED_LISTINGS.
  *
- * POST — create a listing (manager+). Writes to Firestore when the Admin SDK
- * is configured; in sandbox mode returns a demo id so the admin UI flow works.
+ * POST — create a listing (manager+). Writes to public.listings; if the write
+ * fails outside production it returns a demo id so the admin UI flow works.
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { COLLECTIONS } from '@/lib/models/schema';
+import { COLLECTIONS, isPubliclyVisibleListingStatus } from '@/lib/models/schema';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { SEED_LISTINGS } from '@/lib/seed';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { getRecord, insertRecord, listRecords } from '@sierra-estates/db';
+import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns';
 import { requireRole } from '@/lib/auth';
 import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
 import snapshot from '@/lib/inventory/snapshot.json';
@@ -71,101 +72,36 @@ const listingCreateSchema = z
   })
   .passthrough();
 
-const API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '';
-const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-estates';
-
-interface FirestoreValue {
-  [key: string]: any;
-}
-
-interface FirestoreDocument {
-  name?: string;
-  fields?: { [key: string]: FirestoreValue };
-}
-
-/** Extract value from a Firestore REST document field. */
-function extractValue(field: FirestoreValue): any {
-  if (!field) return undefined;
-  if (field.stringValue) return field.stringValue;
-  if (field.integerValue) return parseInt(field.integerValue, 10);
-  if (field.doubleValue) return field.doubleValue;
-  if (field.booleanValue) return field.booleanValue;
-  if (field.arrayValue?.values) {
-    return field.arrayValue.values.map(extractValue);
-  }
-  if (field.mapValue?.fields) {
-    const obj: any = {};
-    for (const [key, val] of Object.entries(field.mapValue.fields)) {
-      obj[key] = extractValue(val as FirestoreValue);
-    }
-    return obj;
-  }
-  return undefined;
-}
-
-/** Query Firestore via the public REST API (legacy envelope mode). */
-async function queryFirestoreRest(
-  collectionName: string,
-  limit?: number,
-  docId?: string
-): Promise<{ doc?: FirestoreDocument; docs: FirestoreDocument[] } | null> {
-  if (!API_KEY) return null;
-  try {
-    const url = new URL(
-      `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionName}`
-    );
-
-    if (docId) {
-      url.pathname += `/${docId}`;
-    } else if (limit) {
-      url.searchParams.append('pageSize', limit.toString());
-    }
-    url.searchParams.append('key', API_KEY);
-
-    const response = await fetch(url.toString(), { method: 'GET' });
-
-    if (!response.ok) {
-      logger.error(`[FIRESTORE_REST] ${response.status}: ${await response.text()}`);
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (docId) {
-      return { doc: data, docs: [] };
-    }
-    return { docs: data.documents || [] };
-  } catch (error: any) {
-    logger.error('[FIRESTORE_REST_ERROR]', error?.message || error);
-    return null;
-  }
-}
-
-/** Transform a Firestore REST document to the legacy envelope listing shape. */
-function transformToListing(doc: FirestoreDocument): any {
-  if (!doc || !doc.fields) return null;
-
-  const fields = doc.fields;
-  const id = doc.name?.split('/').pop() || '';
+/**
+ * Map a stored listing row to the legacy envelope shape.
+ *
+ * Same field set the Firestore REST transform produced, so the envelope
+ * response body is unchanged. `purpose` was previously inferred from the
+ * presence of a `monthlyRent` field; `deal_type` is the column that now
+ * carries that distinction.
+ */
+function rowToEnvelope(row: Record<string, unknown>) {
+  const r = toListingRecord(row) as any;
+  const images: string[] = Array.isArray(r.images) ? r.images : [];
 
   return {
-    id,
-    title: extractValue(fields.title) || 'Untitled Property',
-    titleAr: extractValue(fields.titleAr) || undefined,
-    price: extractValue(fields.price) || 0,
-    compound: extractValue(fields.compound) || extractValue(fields.location) || extractValue(fields.city) || '',
-    beds: extractValue(fields.bedrooms) || 0,
-    baths: extractValue(fields.bathrooms) || 0,
-    area: extractValue(fields.area) || 0,
-    image: (extractValue(fields.images)?.[0]) || undefined,
-    images: extractValue(fields.images) || [],
-    description: extractValue(fields.description) || undefined,
-    propertyType: extractValue(fields.propertyType) || extractValue(fields.type) || 'apartment',
-    status: extractValue(fields.status) || 'available',
-    amenities: extractValue(fields.amenities) || [],
-    purpose: extractValue(fields.monthlyRent) ? 'for-rent' : 'for-sale',
-    pfReferenceNumber: extractValue(fields.pfReferenceNumber) || null,
-    publishToClient: extractValue(fields.publishToClient) || false,
+    id: r.id,
+    title: r.title || 'Untitled Property',
+    titleAr: r.titleAr || undefined,
+    price: r.price || 0,
+    compound: r.compound || r.locationArea || r.city || '',
+    beds: r.bedrooms || 0,
+    baths: r.bathrooms || 0,
+    area: r.areaSqm || 0,
+    image: images[0] || r.img || undefined,
+    images,
+    description: r.description || undefined,
+    propertyType: r.propertyType || 'apartment',
+    status: r.status || 'available',
+    amenities: r.amenities || [],
+    purpose: r.dealType === 'rent' ? 'for-rent' : 'for-sale',
+    pfReferenceNumber: r.pfReferenceNumber || null,
+    publishToClient: r.publishToClient || false,
   };
 }
 
@@ -216,54 +152,46 @@ function inventoryUnitToListing(u: any): Listing {
   } as Listing;
 }
 
-/** Filter-mode read: Firebase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
+/** Filter-mode read: Supabase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
 async function readListings(): Promise<Listing[]> {
-  // Try Firebase Firestore first (reads houyez_listings + listings merged)
-  const db = await getAdminDb();
-  if (db) {
-    try {
-      const [snap1, snap2] = await Promise.all([
-        db.collection('houyez_listings').get(),
-        db.collection('listings').get(),
-      ]);
-      const map = new Map<string, Listing>();
-      if (!snap1.empty) {
-        snap1.docs.forEach((d) => {
-          const data = d.data();
-          map.set(d.id, {
-            id: d.id,
-            code: data.code || `SE-${d.id.slice(0, 4).toUpperCase()}`,
-            compound: data.compound || data.cmp || data.location || 'New Cairo',
-            zone: data.zone || '5th Settlement',
-            type: data.type || data.propertyType || 'Apartment',
-            beds: data.beds ?? data.bedrooms ?? 3,
-            bath: data.bath ?? data.bathrooms ?? 2,
-            area: data.area ?? 150,
-            egpM: data.egpM ?? (data.price ? data.price / 1e6 : 8),
-            usd: data.usd ?? (data.price && data.currency === 'USD' ? data.price : 1500),
-            aiScore: data.aiScore ?? data.ai ?? 8.5,
-            tag: data.tag ?? data.badge ?? null,
-            mode: data.mode ?? 'sale',
-            agent: data.agent ?? 'Sierra Broker',
-            img: data.img ?? data.featuredImage ?? '',
-            status: data.status ?? (data.active === false ? 'archived' : 'available'),
-            description: data.description ?? '',
-          } as Listing);
-        });
-      }
-      if (!snap2.empty) {
-        snap2.docs.forEach((d) => {
-          if (!map.has(d.id)) {
-            map.set(d.id, { id: d.id, ...(d.data() as any) });
-          }
-        });
-      }
-      if (map.size > 0) {
-        return Array.from(map.values());
-      }
-    } catch (err) {
-      console.warn('[listings] Admin SDK read failed, using sheet:', err);
+  // Try Supabase first (reads all active listings directly)
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data: supaListings, error: supaErr } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .limit(500);
+
+    if (!supaErr && supaListings && supaListings.length > 0) {
+      return supaListings.map((item: any) => {
+        const price = Number(item.price) || 0;
+        const egpM = price > 100000 ? price / 1_000_000 : price;
+        const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+
+        return {
+          id: item.id || item.ref_id,
+          code: item.code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
+          compound: item.compound || 'New Cairo',
+          zone: item.location_area || '5th Settlement',
+          type: item.property_type || 'Apartment',
+          beds: item.bedrooms || 3,
+          bath: item.bathrooms || 2,
+          area: Number(item.area_sqm) || 150,
+          egpM: Number(egpM.toFixed(2)),
+          usd: usd || 1500,
+          aiScore: item.roi_percentage ? 9.0 : 8.8,
+          tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner',
+          mode: item.deal_type === 'rent' ? 'rent' : 'sale',
+          agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
+          img: (item.images && item.images[0]) || '',
+          status: item.status || 'available',
+          description: item.description || '',
+        } as Listing;
+      });
     }
+  } catch (supaErr) {
+    console.warn('[listings] Supabase read failed, using sheet:', supaErr);
   }
 
   // Live Sheet fallback
@@ -314,9 +242,21 @@ export async function GET(request: Request) {
 
     // ── Legacy envelope mode (?id= / ?limit=) ──────────────────────────────
     if (id) {
-      const result = await queryFirestoreRest(COLLECTIONS.units, undefined, id);
-      if (result?.doc) {
-        return NextResponse.json({ success: true, listing: transformToListing(result.doc) });
+      let row: Record<string, unknown> | null = null;
+      try {
+        row = await getRecord<Record<string, unknown>>(COLLECTIONS.units, id);
+      } catch (err) {
+        // Unreachable / denied → fall through to seed, never a 5xx.
+        logger.error('[LISTINGS] fetch-by-id failed:', err);
+      }
+      if (row) {
+        const listing = rowToEnvelope(row);
+        // The submit endpoint hands the caller the new id, so fetch-by-id
+        // would otherwise be a direct link to an unverified submission.
+        if (isPubliclyVisibleListingStatus(listing.status)) {
+          return NextResponse.json({ success: true, listing });
+        }
+        return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
       const seed = SEED_LISTINGS.find((l) => l.id === id);
       if (!seed) {
@@ -326,20 +266,26 @@ export async function GET(request: Request) {
     }
 
     if (limit != null) {
-      const result = await queryFirestoreRest(COLLECTIONS.units, limit);
-      if (result) {
-        let listings = (result.docs || []).map(transformToListing).filter(Boolean);
-        listings = listings.filter((l: any) => l.publishToClient === true);
+      try {
+        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, { limit });
+        // publishToClient is the staff moderation switch: a row is only public
+        // inventory once someone has turned it on.
+        const listings = rows.map(rowToEnvelope).filter((l) => l.publishToClient === true);
         return NextResponse.json({ success: true, listings, count: listings.length });
+      } catch (err) {
+        // Unreachable / denied → seed fallback, never 5xx.
+        logger.error('[LISTINGS] envelope list failed:', err);
       }
-      // Firestore unreachable / denied / key missing → seed fallback, never 5xx.
       const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
       return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
     }
 
     // ── Filter mode (api-client contract): bare Listing[] ──────────────────
     let items = await readListings();
-    items = items.filter((l) => l.status !== 'archived');
+    // Excludes archived listings and unreviewed public submissions alike —
+    // /api/listings/submit is unauthenticated, so anything it wrote is only
+    // a claim until staff verify it.
+    items = items.filter((l) => isPubliclyVisibleListingStatus(l.status));
     if (mode) items = items.filter((l) => l.mode === mode);
     if (compound) items = items.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
     if (type) items = items.filter((l) => l.type === type);
@@ -392,24 +338,23 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const doc = { ...parsed.data, createdAt: now, updatedAt: now };
 
-    const db = await getAdminDb();
-    if (db) {
-      const ref = await db.collection('listings').add(doc);
-      // Dual-write to houyez_listings for real-time client page synchronization
-      await db.collection('houyez_listings').doc(ref.id).set({
-        ...doc,
-        id: ref.id,
-        cmp: doc.compound,
-        ai: doc.aiScore,
-        active: doc.status !== 'archived',
-      }, { merge: true });
+    try {
+      // One table replaces the listings + houyez_listings dual-write, so the
+      // denormalised cmp / ai / active aliases are no longer needed: compound,
+      // aiScore and status are the single source for all three.
+      const columns = toListingColumns(doc);
+      // title is NOT NULL in Postgres and the create form has no title field.
+      if (!columns.title) columns.title = `${doc.type} · ${doc.compound}`;
 
-      return NextResponse.json({ id: ref.id }, { status: 201 });
+      const created = await insertRecord<{ id: string }>('listings', columns);
+      return NextResponse.json({ id: created.id }, { status: 201 });
+    } catch (writeError) {
+      if (process.env.NODE_ENV === 'production') throw writeError;
+      // Sandbox mode (no Supabase credentials): acknowledge with a demo id so
+      // the UI flow completes; data is not persisted.
+      logger.warn('[LISTINGS_CREATE] Supabase write failed, returning sandbox id:', writeError);
+      return NextResponse.json({ id: `demo-${Date.now()}`, sandbox: true }, { status: 201 });
     }
-
-    // Sandbox mode (no Admin SDK): acknowledge with a demo id so the UI flow
-    // completes; data is not persisted (seed data is immutable).
-    return NextResponse.json({ id: `demo-${Date.now()}`, sandbox: true }, { status: 201 });
   } catch (error: any) {
     logger.error('[LISTINGS_CREATE_ERROR]', error?.message || error);
     return NextResponse.json(

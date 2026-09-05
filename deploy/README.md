@@ -34,7 +34,7 @@ Reduced-motion visitors get a static mark that fades at 0.8 s.
 ## How leads reach the admin
 
 | Client action | Written to | Shows in admin |
-|---|---|---|
+| --- | --- | --- |
 | **Request Now** → rent/resale, bedrooms, compounds, name + WhatsApp | `leads` (Firestore) + `sierra_leads` (localStorage) | **CRM · Leads**, newest first, `WEB` tag, WhatsApp reply pre-filled |
 | **Add Listing** (new tab) → `/add-listing` | `listing_submissions` + `sierra_broker_listings` | **Listings Hub** → "Submitted listings · brokers & owners", Approve / WA |
 
@@ -65,7 +65,7 @@ pays nothing for it. Same for Supabase, if you prefer Postgres: fill
 
 **Option A — drag and drop**
 
-1. https://vercel.com/new → bottom of the page → drop this `deploy` folder
+1. <https://vercel.com/new> → bottom of the page → drop this `deploy` folder
 2. Deploy (framework preset **Other**; leave build command and output empty)
 3. Settings → Domains → add `sierra-estates.net` + `www.sierra-estates.net`
 4. DNS: `A @ → 76.76.21.21`, `CNAME www → cname.vercel-dns.com`
@@ -99,7 +99,7 @@ public — with Firebase wired, staff read leads from Firestore instead.
 Edit the sources, then copy them over:
 
 | output | source |
-|---|---|
+| --- | --- |
 | `index.html` | `design_handoff_client_portal/design-reference/.min/index_standalone.html` |
 | `add-listing.html` | `…/.min/add-listing.html` |
 | `shared.*`, `data.standalone.js`, `firebase*.js`, `supabase*.js`, logos | `…/.min/` |
