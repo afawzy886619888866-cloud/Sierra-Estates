@@ -47,8 +47,9 @@ jest.mock('@/lib/services/master-sheet-sync', () => ({
   syncMasterOwnerSheet: (...args: unknown[]) => syncMasterOwnerSheet(...args),
 }));
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: () => ({ add: (...a: unknown[]) => activitiesAdd(...a) }) },
+jest.mock('@sierra-estates/db', () => ({
+  // The cron routes log an activity row after each run.
+  insertRecord: (...a: unknown[]) => activitiesAdd(...a),
 }));
 
 jest.mock('@/lib/logger', () => ({
@@ -125,7 +126,8 @@ describe.each(routes)('/api/cron/%s — auth', (_name, handler) => {
   it('returns 503 in production when CRON_SECRET is unset, rather than running', async () => {
     delete process.env.CRON_SECRET;
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    // NODE_ENV is typed read-only (Next augments ProcessEnv); assign via a widened cast.
+    (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
 
     try {
       const res = await handler(request());
@@ -133,7 +135,7 @@ describe.each(routes)('/api/cron/%s — auth', (_name, handler) => {
       expect(res.status).toBe(503);
       await expect(res.json()).resolves.toEqual({ error: 'Cron is not configured' });
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
     }
   });
 
@@ -166,6 +168,7 @@ describe('/api/cron/sync-leads', () => {
 
     expect(activitiesAdd).toHaveBeenCalledTimes(1);
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'sync_completed', actorId: 'system' }),
     );
   });
@@ -218,6 +221,7 @@ describe('/api/cron/sync-listings', () => {
     await syncListings(authed());
 
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'sync_completed' }),
     );
   });
@@ -263,6 +267,7 @@ describe('/api/cron/maintenance', () => {
     await maintenance(authed());
 
     expect(activitiesAdd).toHaveBeenCalledWith(
+      'activities',
       expect.objectContaining({ type: 'maintenance_completed' }),
     );
   });

@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Nav + mobile bottom bar — port of chromeHTML() in deploy/shared.js.
- * Class names match shared.css so the original styling applies unchanged.
+ * High-End Luxury Nav + Mobile Bottom Bar
+ * Designed with glassmorphism, gold accents in dark mode, and precision typography.
  */
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -11,10 +11,10 @@ import {
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
-export type ActiveNav = 'home' | 'cpds' | 'best' | 'contact' | 'projects' | null;
+export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'contact' | 'projects' | null;
 
 export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
-  const { t, theme, toggleTheme, toggleLang } = useSite();
+  const { t, theme, toggleTheme, toggleLang, lang } = useSite();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -25,12 +25,14 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
   }, []);
 
   const act = (k: ActiveNav) => (active === k ? 'active' : undefined);
+  const isAr = lang === 'ar';
+  const cairoPlazaHref = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
 
   return (
     <>
       <nav className={`nav${scrolled ? ' scrolled' : ''}`} id="main-nav">
         <div className="wrap">
-          <Link href="/" className="brand">
+          <Link href="/" className="brand" aria-label="Sierra Estates Homepage">
             <span className="mark logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/logo-mark.png" alt="Sierra Estates" />
@@ -45,7 +47,11 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             <Link href="/" className={act('home')}>{t('navHome')}</Link>
             <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
             <Link href="/properties" className={act('best')}>{t('navBest')}</Link>
-            <Link href="/cairo-plaza" className={act('projects')}>{t('navProjects')}</Link>
+            <Link href="/net" className={act('net')} style={active === 'net' ? { color: '#e9c176', fontWeight: 700 } : undefined}>
+              🎯 {isAr ? 'رادار الوحدات' : 'Listing Net'}
+            </Link>
+            <Link href={cairoPlazaHref} className={act('projects')}>{t('navProjects')}</Link>
+            <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'}>🏦 {isAr ? 'بنك المعلومات' : 'Information Bank'}</Link>
             <Link href="/#contact" className={act('contact')}>{t('navContact')}</Link>
           </div>
 
@@ -58,12 +64,32 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
             </Link>
-            <button className="tb-toggle" id="theme-toggle" type="button" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === 'dark' ? <Sun className="i" /> : <Moon className="i" />}
+            
+            {/* High-End Theme Switcher */}
+            <button
+              className="nav-control-pill nav-theme-pill"
+              id="theme-toggle"
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? (isAr ? 'التبديل إلى الوضع الفاتح' : 'Switch to Light Mode') : (isAr ? 'التبديل إلى الوضع الداكن' : 'Switch to Dark Mode')}
+            >
+              {theme === 'dark' ? <Sun className="i sun-i" /> : <Moon className="i moon-i" />}
+              <span className="pill-text">{theme === 'dark' ? (isAr ? 'فاتح' : 'Light') : (isAr ? 'داكن' : 'Dark')}</span>
             </button>
-            <button className="tb-toggle" id="lang-toggle" type="button" onClick={toggleLang} aria-label="Toggle language">
-              <Languages className="i" />
-              <span>{t('langBtn')}</span>
+
+            {/* High-End Language Switcher */}
+            <button
+              className="nav-control-pill nav-lang-pill"
+              id="lang-toggle"
+              type="button"
+              onClick={toggleLang}
+              aria-label={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
+              title={isAr ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+              <Languages className="i lang-i" />
+              <span className="pill-text">{isAr ? 'English' : 'عربي'}</span>
+              <span className="pill-badge">{isAr ? 'EN' : 'AR'}</span>
             </button>
           </div>
         </div>
@@ -79,11 +105,11 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
         <Link href="/compounds" className={`bn-item${active === 'cpds' ? ' active' : ''}`}>
           <Map className="i" /><span>{t('navCpds')}</span>
         </Link>
-        <Link href="/cairo-plaza" className={`bn-item${active === 'projects' ? ' active' : ''}`}>
+        <Link href={cairoPlazaHref} className={`bn-item${active === 'projects' ? ' active' : ''}`}>
           <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
         </Link>
-        <Link href="/#ai" className="bn-item">
-          <Sparkles className="i" /><span>{t('navAI')}</span>
+        <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'} className="bn-item">
+          <Sparkles className="i" /><span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
         </Link>
         <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`}>
           <Phone className="i" /><span>{t('navContact')}</span>
@@ -92,3 +118,4 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
     </>
   );
 }
+

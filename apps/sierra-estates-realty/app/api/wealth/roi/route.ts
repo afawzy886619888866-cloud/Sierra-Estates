@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS, Proposal, Unit } from '@/lib/models/schema';
+import { getRecord, updateRecord } from '@sierra-estates/db';
+import { Proposal, Unit } from '@/lib/models/schema';
 import { analyzeAssetFinancials } from '@/lib/services/roi-service';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
@@ -21,21 +21,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Proposal ID is required' }, { status: 400 });
     }
 
-    const proposalSnap = await adminDb.collection(COLLECTIONS.proposals).doc(proposalId).get();
-    if (!proposalSnap.exists) {
+    const proposal = await getRecord<Proposal>('proposals', proposalId);
+    if (!proposal) {
       return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
     }
 
-    const proposal = proposalSnap.data() as Proposal;
     const updatedUnits: Proposal['units'] = [];
     let totalROI = 0;
     let totalYield = 0;
 
     // Re-analyze each unit
     for (const unitItem of proposal.units) {
-      const unitSnap = await adminDb.collection(COLLECTIONS.units).doc(unitItem.id).get();
-      if (unitSnap.exists) {
-        const unit = { id: unitSnap.id, ...unitSnap.data() } as Unit;
+      const unitRecord = await getRecord<Record<string, unknown>>('listings', unitItem.id);
+      if (unitRecord) {
+        const unit = { ...unitRecord, id: unitItem.id } as unknown as Unit;
         const financials = await analyzeAssetFinancials(unit);
 
         updatedUnits.push({
@@ -60,11 +59,11 @@ export async function POST(req: NextRequest) {
       valuationAnalysis: `Real-time wealth re-analysis confirmed an average projected ROI of ${avgROI}% with a resilient ${avgYield}% net yield profile. Market liquidity benchmarks remain stable.`
     };
 
-    // Update Proposal in Firestore
-    await adminDb.collection(COLLECTIONS.proposals).doc(proposalId).update({
+    // Persist the re-analysis back onto the proposal
+    await updateRecord('proposals', proposalId, {
       units: updatedUnits,
       financialAnalysis,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     });
 
     return NextResponse.json({

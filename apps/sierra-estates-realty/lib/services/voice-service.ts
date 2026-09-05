@@ -1,5 +1,4 @@
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { insertRecord } from '@sierra-estates/db';
 
 /**
  * SIERRA ESTATES — VOICE SERVICE (V1.0)
@@ -11,7 +10,7 @@ export class VoiceService {
   private static VOICE_ID = process.env.LEILA_VOICE_ID || 'pNInz6obpg8nEByWQX7L'; // Default professional female voice
 
   /**
-   * Generates a voice note for a lead and stores the signal in Firestore.
+   * Generates a voice note for a lead and stores the signal as an activity.
    */
   static async generateSierraVoiceNote(leadId: string, text: string): Promise<string | null> {
     if (!this.ELEVENLABS_API_KEY) {
@@ -46,16 +45,18 @@ export class VoiceService {
         throw new Error(`ElevenLabs API error: ${response.statusText}`);
       }
 
-      // In a real implementation, we would upload the buffer to Firebase Storage.
+      // In a real implementation, we would upload the buffer to Supabase Storage.
       // For the "Sales Machine" prototype, we log the intent and return a mock URL.
       const _audioBuffer = await response.arrayBuffer();
       
-      await addDoc(collection(db, 'activities'), {
+      // `activities` has no lead_id column: the subject of an activity is
+      // (related_type, related_id), which is what the admin feed joins on.
+      await insertRecord('activities', {
         type: 'voice_note_generated',
-        leadId,
+        relatedType: 'lead',
+        relatedId: leadId,
         actorName: 'Sierra Concierge',
         text: `Generated personalized voice briefing for stakeholder.`,
-        createdAt: serverTimestamp(),
       });
 
       return `https://sierra-estates-assets.s3.amazonaws.com/voice/sierra_${Date.now()}.mp3`;

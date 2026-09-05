@@ -9,8 +9,8 @@
  */
 
 import { analyzeAssetFinancials } from '@/lib/services/roi-service';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, limit, where } from 'firebase/firestore';
+import { listRecords } from '@sierra-estates/db';
+import { COLLECTIONS } from '@/lib/models/schema';
 import type { Unit } from '@/lib/models/schema';
 
 /**
@@ -21,14 +21,11 @@ export async function validateROIProjections() {
 
   try {
     // Fetch up to 50 available units
-    const unitsQuery = query(
-      collection(db, 'units'),
-      where('status', '==', 'available'),
-      limit(50)
-    );
-
-    const unitsSnap = await getDocs(unitsQuery);
-    const units = unitsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Unit));
+    // COLLECTIONS.units, not the literal 'units': the table is `listings`.
+    const units = await listRecords<Unit>(COLLECTIONS.units, {
+      where: [{ column: 'status', value: 'available' }],
+      limit: 50,
+    });
 
     if (units.length === 0) {
       console.log('⚠️  No units found in database. Please seed test data first.\n');

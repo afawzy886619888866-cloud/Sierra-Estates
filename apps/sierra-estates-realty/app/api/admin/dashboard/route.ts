@@ -2,12 +2,12 @@
  * GET /api/admin/dashboard  (manager+)
  *   → DashboardKPIs  (totalListings, newInquiries7d, conversionRate, ...)
  *
- * Computes KPIs from Firestore when available, otherwise from seed.
+ * Computes KPIs from Supabase.
  */
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { listRecords, countRecords } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
-import type { DashboardKPIs, Inquiry, Lead, Listing, User } from "@/lib/types";
+import type { DashboardKPIs, Inquiry, Lead, Listing } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,33 +15,33 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   await requireRole(req, "manager");
 
-  const db = await getAdminDb();
   let listings: Listing[] = [];
   let inquiries: Inquiry[] = [];
   let leads: Lead[] = [];
-  let users: User[] = [];
+  let usersCount = 0;
   let compoundsCount = 0;
 
-  if (!db) {
-    throw new Error("Firestore admin not initialized");
-  }
-
   try {
-    const [lSnap, iSnap, ldSnap, uSnap, cSnap] = await Promise.all([
-      db.collection("listings").get(),
-      db.collection("inquiries").orderBy("createdAt", "desc").limit(100).get(),
-      db.collection("leads").orderBy("createdAt", "desc").limit(100).get(),
-      db.collection("users").get(),
-      db.collection("compounds").get(),
+    const [listingRows, inquiryRows, leadRows, uCount, cCount] = await Promise.all([
+      listRecords("listings"),
+      listRecords("inquiries", { orderBy: { column: "createdAt", ascending: false }, limit: 100 }),
+      listRecords("leads", { orderBy: { column: "createdAt", ascending: false }, limit: 100 }),
+      countRecords("profiles"),
+      countRecords("compounds"),
     ]);
-    if (!lSnap.empty) listings = lSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    if (!iSnap.empty) inquiries = iSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    if (!ldSnap.empty) leads = ldSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    if (!uSnap.empty) users = uSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-    compoundsCount = cSnap.size;
+
+    listings = listingRows as unknown as Listing[];
+    inquiries = inquiryRows as unknown as Inquiry[];
+    // leads.full_name is the Firestore `name` field (see app/api/admin/leads).
+    leads = leadRows.map((row) => {
+      const { fullName, ...rest } = row as Record<string, unknown>;
+      return { ...rest, name: fullName };
+    }) as unknown as Lead[];
+    usersCount = uCount;
+    compoundsCount = cCount;
   } catch (err) {
-    console.error("[dashboard] Firestore read failed:", err);
-    throw new Error("Failed to read from Firestore");
+    console.error("[dashboard] Supabase read failed:", err);
+    throw new Error("Failed to read from Supabase");
   }
 
   const activeListings = listings.filter((l) => l.status === "available");
@@ -98,11 +98,10 @@ export async function GET(req: Request) {
     newInquiries7d,
     conversionRate,
     activeCompounds: compoundsCount,
-    totalUsers: users.length,
+    totalUsers: usersCount,
     pendingApprovals,
     avgAiScore,
     recentActivity,
     topAgents,
   });
 }
-

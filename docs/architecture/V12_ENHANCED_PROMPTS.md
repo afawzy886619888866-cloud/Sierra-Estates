@@ -5,6 +5,7 @@ These prompts have been optimized with **Micro-Level Intelligence** to ensure th
 ---
 
 ### 🏛️ 1. ENHANCED SYSTEM INSTRUCTIONS
+
 *Use this as the global context/identity for the project:*
 
 "You are the Lead Developer for **SIERRA ESTATES REALTY (SBR)**.
@@ -19,9 +20,11 @@ These prompts have been optimized with **Micro-Level Intelligence** to ensure th
 ---
 
 ### 🚀 2. THE MASTER COMMAND (System Template)
+
 *Use this to build the entire framework:*
 
 "Build a comprehensive Next.js luxury real estate platform for **SIERRA ESTATES REALTY**. Architecture:
+
 1. **Hero**: Cinematic mouse-parallax with the 'Sky Blue & Sunset' theme.
 2. **Landing**: Headline: 'الموقع العقاري الأول في مصر المخصص في البيع والايجار في منطقة التجمع الخامس' and 'Smarter Decisions. AI-Driven.'
 3. **Inventory**: 21-Compound Grid. Use **'Adaptive Aspect Ratios'** (mix of tall/wide cards) for an editorial-magazine feel. Text overlays directly on realistic photography.
@@ -34,19 +37,24 @@ Palette: Sky Blue, Navy, Gold. Feel: Institutional, Exclusive, and Intelligent."
 ### 🖼️ 3. REFINED PAGE COMMANDS
 
 #### **A. The Cinematic Hero Section**
+
 "Create a Hero section for Sierra Estates. Background: Royal Blue gradient to Sunset Ivory. Features: Full-screen parallax with a Massive Gold 'S' faint in the background. Main Headline: 'Smarter Decisions. AI-Driven.' Slogan: 'Beyond Brokerage.' Interactive element: A subtle golden mouse-following trailer. Ensure every animation feels deliberate and smooth."
 
 #### **B. The Editorial Inventory Grid**
+
 "Design a property grid using large, borderless images of luxury New Cairo villas. Forget symmetric cards; use a **Fashion-Magazine Layout** with varied aspect ratios. Overlay text on images: Compound name (Playfair), Unit Type, and SBR Code price tag in Gold. On hover: Subtle 1.1x image zoom + brightness lift on gold text."
 
 #### **C. Leila’s Concierge Selection (S8)**
+
 "Build a mobile-first 'Selection Gallery' for a specific VIP lead. Show 3 curated properties. Each card features a **'Leila Logic' badge** explain-text (e.g., 'Matches your ROI goal of 8%'). Add a massive 'Direct to WhatsApp' gold button on each card. Use warm Levant branding tones."
 
 #### **D. Strategic Unit Analysis View**
+
 "Create a high-fidelity unit detail page. Hero image: Full-width. Strategic Sidebar: Display 'ROI Forecast,' 'Capital Appreciation,' and 'Supply Hot-spot' charts. All technical specs in Inter font with high contrast. Use Playfair Display for property titles. Must feel like a premium investment report."
 
 ---
 
 ### 🛠️ IMPLEMENTATION TIP
+
 If the AI output looks too simple, reply with:
 > *"Enhance the editorial precision. Remove all standard white containers. Let the typography and high-fidelity villa photography drive the UI. Use absolute Navy backgrounds for sections and Ivory for text."*

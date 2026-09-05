@@ -16,7 +16,6 @@ const __dirname = path.dirname(__filename);
 // Load local environment files
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../apps/admin-dashboard/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
@@ -116,6 +115,16 @@ export const CLIENT_ENV_VARS = {
 
   N8N_BASE_URL: process.env.N8N_BASE_URL,
   N8N_API_KEY: process.env.N8N_API_KEY,
+
+  // Supabase (Primary Database)
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
+  // Admin Portal Bootstrap Credentials
+  ADMIN_BOOTSTRAP_EMAIL: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net',
+  ADMIN_BOOTSTRAP_PASSWORD: process.env.ADMIN_BOOTSTRAP_PASSWORD || 'AdminSierra2026!',
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS || 'admin@sierra-estates.net,sierrablue8866@gmail.com,a.fawzy8866@gmail.com',
 };
 
 export const ADMIN_ENV_VARS = {

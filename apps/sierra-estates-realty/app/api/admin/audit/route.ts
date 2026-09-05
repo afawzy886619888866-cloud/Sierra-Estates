@@ -1,6 +1,6 @@
 /** GET /api/admin/audit  (manager+) → AuditLog[] (last 100, newest first) */
 import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { listRecords } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
 
 
@@ -10,20 +10,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   await requireRole(req, "manager");
-  const db = await getAdminDb();
-  if (db) {
-    try {
-      const snap = await db.collection("audit_logs")
-        .orderBy("createdAt", "desc")
-        .limit(100)
-        .get();
-      if (!snap.empty)
-        return NextResponse.json(
-          snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-        );
-    } catch (err) {
-      console.warn("[audit] Firestore read failed:", err);
-    }
+  try {
+    const rows = await listRecords("audit_logs", {
+      orderBy: { column: "createdAt", ascending: false },
+      limit: 100,
+    });
+    return NextResponse.json(rows);
+  } catch (err) {
+    // An unreadable audit log must not 500 the admin console; the previous
+    // Firestore path degraded to [] the same way.
+    console.warn("[audit] read failed:", err);
+    return NextResponse.json([]);
   }
-  return NextResponse.json([]);
 }

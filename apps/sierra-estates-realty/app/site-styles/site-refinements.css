@@ -498,11 +498,14 @@ button, a.btn, a.cp-btn, .topbar-pill, .tb-toggle, .add-listing-btn, .req-now-bt
 .cp-hero-photo-inner{position:relative;width:100%;height:clamp(360px,46vw,620px);}
 .cp-hero-photo figcaption{padding:12px 4px 3px;color:var(--muted,#64748b);font-size:12px;line-height:1.55;}
 .cp-evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
-.cp-evidence-card{background:var(--surface,#fff);}
+.cp-evidence-card{background:var(--surface,#fff);transition:transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);}
+.cp-evidence-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,0.15);}
 .cp-evidence-media img{object-position:center center;}
 .cp-tour{max-width:1200px;margin:clamp(42px,7vw,88px) auto 0;padding:0 24px;}
 .cp-tour .cp-section-heading{margin-bottom:24px;}
 .cp-tour .cp-tour-canvas,.cp-tour canvas{max-width:100%;}
+.cp-scene.is-fullscreen{position:fixed!important;top:0;left:0;right:0;bottom:0;width:100vw!important;height:100vh!important;z-index:99999;border-radius:0!important;}
+.cp-3d-pin:hover{transform:scale(1.12)!important;box-shadow:0 0 20px rgba(201,168,106,0.8)!important;}
 [data-theme="dark"] .cp-hero-photo{background:var(--surface,#111b27);border-color:rgba(233,193,118,.2);}
 [data-theme="dark"] .cp-hero-photo figcaption{color:var(--muted,#a8b4c2);}
 @media (max-width:900px){
@@ -598,3 +601,682 @@ section.block:has(.cta){background:linear-gradient(180deg,var(--white) 0%,var(--
 [data-theme="dark"] .cta{background:linear-gradient(135deg,#0b1929,#0f2236);border:1px solid rgba(233,193,118,.15);}
 [data-theme="dark"] .cta::before{background:radial-gradient(circle,rgba(233,193,118,.1),transparent 70%);}
 @media(max-width:860px){.cta{grid-template-columns:1fr;padding:36px 28px;}}
+
+
+/* ── 4. Luxury Header Control Pills ───────────────────────────────── */
+.nav-control-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--font, 'Plus Jakarta Sans', system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--line, rgba(0, 43, 75, 0.12));
+  background: var(--surface-2, #f8fafc);
+  color: var(--ink, #071523);
+  box-shadow: 0 2px 8px rgba(13, 33, 54, 0.04);
+  transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.nav-control-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--pri, #00aeff);
+  background: var(--pri-soft, #e9f8ff);
+  color: var(--pri-d, #0098e0);
+  box-shadow: 0 4px 14px rgba(0, 174, 255, 0.18);
+}
+
+.nav-control-pill:active {
+  transform: scale(0.96);
+}
+
+.nav-control-pill .i {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+.nav-control-pill .pill-badge {
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0, 43, 75, 0.08);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+[data-theme="dark"] .nav-control-pill {
+  background: rgba(11, 25, 41, 0.85);
+  border-color: rgba(233, 193, 118, 0.22);
+  color: #f5c96e;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .nav-control-pill:hover {
+  background: rgba(233, 193, 118, 0.14);
+  border-color: #f5c96e;
+  color: #fae0a2;
+  box-shadow: 0 4px 18px rgba(233, 193, 118, 0.25);
+}
+
+[data-theme="dark"] .nav-control-pill .pill-badge {
+  background: rgba(233, 193, 118, 0.2);
+  color: #f5c96e;
+}
+
+
+/* ── 5. Cairo Plaza Dedicated Section Styles ────────────────────────── */
+.cp-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--pri-soft, rgba(0, 174, 255, 0.1));
+  color: var(--pri, #00aeff);
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+.cp-card-icon .i {
+  width: 22px;
+  height: 22px;
+}
+[data-theme="dark"] .cp-card-icon {
+  background: rgba(233, 193, 118, 0.12);
+  color: #f5c96e;
+}
+
+/* Inventory schedule */
+.cp-inventory-section,
+.cp-investor-section,
+.cp-contact-section {
+  max-width: 1200px;
+  margin: clamp(36px, 6vw, 72px) auto 0;
+  padding: 0 24px;
+}
+
+.cp-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.cp-inventory-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, rgba(0, 43, 75, 0.1));
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-s, 0 2px 10px rgba(13, 33, 54, 0.06));
+  transition: transform 260ms var(--silk), box-shadow 260ms var(--silk), border-color 260ms;
+}
+
+.cp-inventory-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--pri);
+  box-shadow: var(--shadow-m, 0 12px 34px rgba(13, 33, 54, 0.1));
+}
+
+.cp-inv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cp-inv-code {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--pri-soft, #e9f8ff);
+  color: var(--pri-d, #0098e0);
+}
+
+.cp-inv-roi {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.cp-inv-title {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.cp-inv-specs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+}
+
+.cp-inv-specs span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cp-inv-specs strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.cp-inv-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cp-inv-status {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cp-inv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.cp-inv-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+}
+
+.cp-meeting-callout {
+  margin-top: 36px;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.cp-meeting-callout h3 {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cp-meeting-callout p {
+  color: var(--muted);
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+/* Investor & Contact grids */
+.cp-investor-grid,
+.cp-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.cp-investor-card,
+.cp-contact-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-s);
+}
+
+.cp-investor-card h3,
+.cp-contact-card h3 {
+  font-family: var(--display, Georgia, serif);
+  font-size: 18px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cp-investor-card p,
+.cp-contact-card p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.cp-contact-card .cp-btn {
+  margin-top: auto;
+  text-align: center;
+  justify-content: center;
+}
+
+.cp-investor-cta-box {
+  margin-top: 32px;
+  padding: 32px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--navy, #002b4b), #001f38);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.cp-investor-cta-text h3 {
+  color: #fff;
+  font-family: var(--display, Georgia, serif);
+  font-size: 22px;
+  margin: 0;
+}
+
+.cp-investor-cta-text p {
+  color: rgba(255, 255, 255, 0.75);
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.cp-investor-cta-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .cp-inventory-card,
+[data-theme="dark"] .cp-investor-card,
+[data-theme="dark"] .cp-contact-card {
+  background: #0b1929;
+  border-color: rgba(233, 193, 118, 0.16);
+}
+
+[data-theme="dark"] .cp-inv-specs {
+  background: #07121e;
+  border-color: rgba(233, 193, 118, 0.12);
+}
+
+[data-theme="dark"] .cp-inv-code {
+  background: rgba(233, 193, 118, 0.15);
+  color: #f5c96e;
+}
+
+[data-theme="dark"] .cp-investor-cta-box {
+  background: linear-gradient(135deg, #0b1929, #0f2236);
+  border: 1px solid rgba(233, 193, 118, 0.2);
+}
+
+@media (max-width: 900px) {
+  .cp-inventory-grid,
+  .cp-investor-grid,
+  .cp-contact-grid {
+    grid-template-columns: 1fr;
+  }
+  .cp-inv-specs {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 6. Cairo Plaza Subnav & Interactive Type Filters ─────────────── */
+.cp-shell-wrapper {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.cp-subnav-bar {
+  position: sticky;
+  top: 72px;
+  z-index: 35;
+  background: var(--surface, #ffffff);
+  border-bottom: 1px solid var(--line, rgba(0, 43, 75, 0.1));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(13, 33, 54, 0.03);
+}
+
+.cp-subnav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  overflow-x: auto;
+}
+
+.cp-subnav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cp-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font, 'Plus Jakarta Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted, #475569);
+  text-decoration: none;
+  transition: all 220ms ease;
+}
+
+.cp-subnav-link:hover {
+  color: var(--pri, #00aeff);
+  background: var(--pri-soft, #e9f8ff);
+}
+
+.cp-subnav-link.active {
+  color: #fff;
+  background: var(--pri, #00aeff);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 174, 255, 0.3);
+}
+
+.cp-subnav-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.cp-subnav-lang {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pri-d, #0098e0);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--pri-soft, #e9f8ff);
+  transition: opacity .2s;
+}
+
+.cp-subnav-lang:hover {
+  opacity: .85;
+}
+
+/* ── Interactive Category / Type Filters & Controls ───────────────── */
+.cp-filter-container {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cp-type-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cp-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: var(--font, 'Plus Jakarta Sans', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--line, #e2e8f0);
+  background: var(--surface-2, #f8fafc);
+  color: var(--ink, #071523);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 220ms ease;
+}
+
+.cp-type-pill:hover {
+  border-color: var(--pri);
+  color: var(--pri-d);
+  transform: translateY(-1px);
+}
+
+.cp-type-pill.active {
+  background: var(--navy, #002b4b);
+  border-color: var(--navy, #002b4b);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 43, 75, 0.25);
+}
+
+.cp-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cp-search-wrap {
+  flex: 1;
+  min-width: 240px;
+  position: relative;
+}
+
+.cp-search-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: 14px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.cp-search-input {
+  width: 100%;
+  padding: 10px 16px;
+  padding-inline-start: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.cp-search-input:focus {
+  border-color: var(--pri);
+}
+
+.cp-size-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.cp-select-pill {
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.cp-currency-toggle {
+  display: flex;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  padding: 2px;
+}
+
+.cp-curr-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.cp-curr-btn.active {
+  background: var(--pri);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 174, 255, 0.3);
+}
+
+/* ── Rich Unit Card Media & Specs ─────────────────────────────────── */
+.cp-inv-media-thumb {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cp-inv-code-badge {
+  position: absolute;
+  top: 12px;
+  inset-inline-start: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+.cp-inv-roi-badge {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #10b981;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.cp-inv-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cp-inv-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.cp-inv-price-val span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cp-inv-price-val b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--pri-d, #0098e0);
+}
+
+.cp-no-results {
+  text-align: center;
+  padding: 64px 24px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  margin-top: 32px;
+}
+
+.cp-no-results p {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 0;
+}
+
+/* ── Dark mode overrides for Subnav and Type Tabs ─────────────────── */
+[data-theme="dark"] .cp-subnav-bar {
+  background: rgba(11, 25, 41, 0.92);
+  border-color: rgba(233, 193, 118, 0.18);
+}
+
+[data-theme="dark"] .cp-type-pill {
+  background: #0b1929;
+  border-color: rgba(233, 193, 118, 0.2);
+  color: #f5c96e;
+}
+
+[data-theme="dark"] .cp-type-pill.active {
+  background: linear-gradient(135deg, #f5c96e, #d4af37);
+  border-color: #f5c96e;
+  color: #071523;
+  box-shadow: 0 4px 18px rgba(233, 193, 118, 0.35);
+}
+
+[data-theme="dark"] .cp-search-input,
+[data-theme="dark"] .cp-size-filter,
+[data-theme="dark"] .cp-currency-toggle {
+  background: #07121e;
+  border-color: rgba(233, 193, 118, 0.16);
+}
+
+[data-theme="dark"] .cp-inv-price-val b {
+  color: #f5c96e;
+}
+
+

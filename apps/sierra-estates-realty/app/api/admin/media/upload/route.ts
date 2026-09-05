@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminStorage } from '@/lib/server/firebase-admin';
+import { getSupabaseAdmin } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
+
+/**
+ * Supabase Storage bucket that replaces the Firebase Storage bucket. It must
+ * exist and be private — the route hands out short-lived signed URLs rather
+ * than public links.
+ */
+const MEDIA_BUCKET = process.env.SUPABASE_MEDIA_BUCKET || 'media';
 
 export async function POST(req: NextRequest) {
   // Verify admin authentication
@@ -20,22 +27,28 @@ export async function POST(req: NextRequest) {
 
     const buffer = await file.arrayBuffer();
     const fileName = `${Date.now()}_${file.name}`;
-    const bucket = adminStorage.bucket();
+    const objectPath = `media/${fileName}`;
+    const storage = getSupabaseAdmin().storage.from(MEDIA_BUCKET);
 
-    // Upload file to Firebase Storage
-    const fileRef = bucket.file(`media/${fileName}`);
-    await fileRef.save(Buffer.from(buffer), {
-      metadata: {
-        contentType: file.type,
-      },
+    // supabase-js returns { error } rather than throwing, so an ignored error
+    // here would report a successful upload that never happened.
+    const { error: uploadError } = await storage.upload(objectPath, buffer, {
+      contentType: file.type,
+      upsert: false,
     });
+    if (uploadError) {
+      throw new Error(`Upload to ${MEDIA_BUCKET} failed: ${uploadError.message}`);
+    }
 
-    // Generate signed URL (valid for 24 hours)
-    const [url] = await fileRef.getSignedUrl({
-      version: 'v4',
-      action: 'read',
-      expires: Date.now() + 24 * 60 * 60 * 1000,
-    });
+    // Signed URL, valid for 24 hours — same window as the Firebase version.
+    const { data: signed, error: signError } = await storage.createSignedUrl(
+      objectPath,
+      24 * 60 * 60
+    );
+    if (signError || !signed?.signedUrl) {
+      throw new Error(`Could not sign ${objectPath}: ${signError?.message ?? 'no URL returned'}`);
+    }
+    const url = signed.signedUrl;
 
     return NextResponse.json({
       success: true,

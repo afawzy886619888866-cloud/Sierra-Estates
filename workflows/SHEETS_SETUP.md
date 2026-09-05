@@ -2,7 +2,7 @@
 
 ## 1. Create the Master Sheet
 
-1. Go to https://sheets.google.com
+1. Go to <https://sheets.google.com>
 2. Create new spreadsheet: **"Sierra Estates - Broker Inbox"**
 3. Share with your Google Cloud Service Account email (ends with `@iam.gserviceaccount.com`)
 4. Copy the Sheet ID from URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`
@@ -17,7 +17,7 @@ Rename the default "Sheet1" and create these tabs:
 ### Tab 1: `raw_messages` (WhatsApp Scraper Output)
 
 | Column | Type | Purpose |
-|--------|------|---------|
+| -------- | ------ | --------- |
 | A | Timestamp | `=NOW()` |
 | B | From | WhatsApp group name |
 | C | Role | "broker" \| "subscriber" |
@@ -26,11 +26,13 @@ Rename the default "Sheet1" and create these tabs:
 | F | Status | "PENDING_REVIEW" (scraper writes) |
 
 **Header Row:**
+
 ```
 Timestamp | From | Role | Message | HasMedia | Status
 ```
 
 **Example Row:**
+
 ```
 2026-05-28T10:30:00Z | مجموعة وسطاء التجمع | broker | عرض شقة 3 غرف بقيمة 850K | YES | PENDING_REVIEW
 ```
@@ -40,7 +42,7 @@ Timestamp | From | Role | Message | HasMedia | Status
 ### Tab 2: `owner_leads` (Owner Search Output)
 
 | Column | Type | Purpose |
-|--------|------|---------|
+| -------- | ------ | --------- |
 | A | Timestamp | Search date |
 | B | Source | "property_finder" \| "olx" |
 | C | Title | Property name |
@@ -51,11 +53,13 @@ Timestamp | From | Role | Message | HasMedia | Status
 | H | URL | Link to listing |
 
 **Header Row:**
+
 ```
 Timestamp | Source | Title | Price | Location | Specs | OwnerContact | URL
 ```
 
 **Example Row:**
+
 ```
 2026-05-28T09:15:00Z | property_finder | Penthouse - New Cairo | 2500000 | New Cairo | 3 BR, 2 BA, 250 sqm | +201001234567 | https://pf.com/p/12345
 ```
@@ -65,28 +69,32 @@ Timestamp | Source | Title | Price | Location | Specs | OwnerContact | URL
 ### Tab 3: `email_campaigns` (Email Sender Input)
 
 | Column | Type | Purpose |
-|--------|------|---------|
+| -------- | ------ | --------- |
 | A | Email | Recipient email |
 | B | Template | Template key |
 | C | Variables | JSON object |
 | D | Status | "PENDING" → "SENT" \| "ERROR" |
 
 **Header Row:**
+
 ```
 Email | Template | Variables | Status
 ```
 
 **Example Row (Welcome email):**
+
 ```
 investor@example.com | welcome | {} | PENDING
 ```
 
 **Example Row (Property alert with variables):**
+
 ```
 investor@example.com | property_alert | {"property_title":"3BR Villa","property_price":"1.5M","property_location":"New Cairo","property_id":"unit_12345"} | PENDING
 ```
 
 **Available Templates:**
+
 - `welcome` — Welcome email
 - `property_alert` — New property match
 - `viewing_reminder` — Appointment reminder
@@ -96,7 +104,7 @@ investor@example.com | property_alert | {"property_title":"3BR Villa","property_
 ### Tab 4: `new_units` (Unit Adder Input)
 
 | Column | Type | Purpose |
-|--------|------|---------|
+| -------- | ------ | --------- |
 | A | Compound | Compound name |
 | B | Bedrooms | 1, 2, 3, 4, etc. |
 | C | Bathrooms | Number |
@@ -111,11 +119,13 @@ investor@example.com | property_alert | {"property_title":"3BR Villa","property_
 | L | Status | "PENDING" → "ADDED" \| "DEDUPLICATED" \| "ERROR" |
 
 **Header Row:**
+
 ```
 Compound | Bedrooms | Bathrooms | Area | Price | FinishingType | Furnishing | PropertyType | Address | Latitude | Longitude | Status
 ```
 
 **Example Row:**
+
 ```
 Mountain View Desert | 3 | 2 | 180 | 850000 | finished | furnished | apartment | Villa 5, Building 3, MVD | 30.0045 | 31.3567 | PENDING
 ```
@@ -124,11 +134,13 @@ Mountain View Desert | 3 | 2 | 180 | 850000 | finished | furnished | apartment |
 
 ## 3. Column Formatting (Optional but Recommended)
 
-### For `raw_messages` and `owner_leads`:
+### For `raw_messages` and `owner_leads`
+
 - Column A (Timestamp): Format → Number → Date time
 - Column D/E (Price): Format → Number → Currency (EGP)
 
-### For `new_units`:
+### For `new_units`
+
 - Column E (Price): Format → Currency (EGP)
 - Column J-K (Lat/Lng): Format → Number → Decimal (4 places)
 
@@ -136,16 +148,20 @@ Mountain View Desert | 3 | 2 | 180 | 850000 | finished | furnished | apartment |
 
 ## 4. Data Validation (Optional)
 
-### For `owner_leads` → Column B (Source):
+### For `owner_leads` → Column B (Source)
+
 - Data validation → List → property_finder, olx
 
-### For `new_units` → Column F (FinishingType):
+### For `new_units` → Column F (FinishingType)
+
 - Data validation → List → core-shell, semi-finished, finished
 
-### For `new_units` → Column G (Furnishing):
+### For `new_units` → Column G (Furnishing)
+
 - Data validation → List → furnished, unfurnished
 
-### For `new_units` → Column H (PropertyType):
+### For `new_units` → Column H (PropertyType)
+
 - Data validation → List → apartment, villa, townhouse, duplex, penthouse
 
 ---
@@ -227,9 +243,8 @@ SKIPPED       → Intentionally skipped
 ## 9. Troubleshooting
 
 | Issue | Solution |
-|-------|----------|
+| ------- | ---------- |
 | "❌ Sheet write failed" | Check service account has Editor access |
 | "❌ PERMISSION_DENIED" | Re-share Sheet with service account email |
 | "DEDUPLICATED" rows | Unit already exists (same compound+area+floor+unit number) |
 | Workflows not running | Check GitHub Actions → Workflows tab for errors |
-

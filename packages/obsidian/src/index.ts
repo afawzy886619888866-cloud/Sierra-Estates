@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 export interface MemoryEntry {
@@ -13,8 +14,18 @@ export class ObsidianMemory {
   private filePath: string;
 
   constructor(customPath?: string) {
-    // Write to root workspace by default, fallback to current dir
-    this.filePath = customPath || path.resolve(process.cwd(), 'obsidian-store.json');
+    // Under test, write to a per-process temp file rather than the committed
+    // store at the repo root. Every suite that exercises an agent persists
+    // through here, so pointing at the real file left the working tree dirty
+    // after any test run — for every developer and every concurrent agent.
+    // Mirrors the resolution order already used by
+    // packages/agents/tools/eccMemoryEngine.ts.
+    this.filePath =
+      customPath ||
+      process.env.OBSIDIAN_STORE_PATH ||
+      (process.env.NODE_ENV === 'test'
+        ? path.join(os.tmpdir(), `sierra-estates-obsidian-${process.pid}.json`)
+        : path.resolve(process.cwd(), 'obsidian-store.json'));
   }
 
   private readStore(): Record<string, MemoryEntry> {

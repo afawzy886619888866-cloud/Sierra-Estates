@@ -415,6 +415,7 @@ for (const u of extraWAPackageUnits) {
   }
 }
 
+fs.mkdirSync(path.dirname(WA_AGENT_LISTINGS_PATH), { recursive: true });
 fs.writeFileSync(EXTRACTED_WA_PATH, JSON.stringify(extractedWA, null, 2), 'utf8');
 fs.writeFileSync(WA_AGENT_LISTINGS_PATH, JSON.stringify(extractedWA, null, 2), 'utf8');
 console.log(`✅ Updated WhatsApp agent data stores (${EXTRACTED_WA_PATH} & ${WA_AGENT_LISTINGS_PATH}).`);

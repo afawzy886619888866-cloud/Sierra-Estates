@@ -1,0 +1,39 @@
+# Code owners — GitHub requests a review from the owner on any PR touching
+# these paths. On its own this is advisory; it becomes enforcement once
+# "Require review from Code Owners" is enabled in branch protection for main
+# (Settings → Branches → main → Require a pull request before merging).
+#
+# Why these paths: the deploy pipeline and security rules have each been
+# silently overwritten by unrelated work in this repo, reintroducing bugs that
+# fail quietly in production — a Vercel env upsert that 400s behind a warning,
+# an ungated admin endpoint, a lockfile that breaks CI install.
+
+# Default owner for everything not matched below.
+*                               @sierrablue8866-droid
+
+# Deploy pipeline and CI gates. Changes here decide what reaches production
+# and whether anything is checked before it does.
+/.github/workflows/             @sierrablue8866-droid
+/vercel.json                    @sierrablue8866-droid
+/turbo.json                     @sierrablue8866-droid
+
+# Security rules. These are the only thing standing between the public client
+# SDK and Firestore/Storage; the app-level copies were removed so these are the
+# single deployable source.
+/firestore.rules                @sierrablue8866-droid
+/storage.rules                  @sierrablue8866-droid
+/firestore.indexes.json         @sierrablue8866-droid
+/firebase.json                  @sierrablue8866-droid
+
+# Server-side auth: session signing, admin guards, cron and webhook secrets.
+/apps/sierra-estates-realty/lib/auth.ts             @sierrablue8866-droid
+/apps/sierra-estates-realty/lib/server/auth-guard.ts @sierrablue8866-droid
+/apps/sierra-estates-realty/lib/server/cron-auth.ts  @sierrablue8866-droid
+/apps/sierra-estates-realty/lib/server/cors.ts       @sierrablue8866-droid
+/apps/sierra-estates-realty/proxy.ts                 @sierrablue8866-droid
+
+# Dependency resolution — an out-of-sync lockfile fails `--frozen-lockfile`,
+# which is what CI and the Vercel build both run.
+/pnpm-lock.yaml                 @sierrablue8866-droid
+/pnpm-workspace.yaml            @sierrablue8866-droid
+/package.json                   @sierrablue8866-droid

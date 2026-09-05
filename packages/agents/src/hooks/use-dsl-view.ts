@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { onSnapshot, DocumentData, getFirestore } from 'firebase/firestore';
 
 import {
   parseDSL,
-  buildFirestoreQuery,
+  buildSupabaseQuery,
   applyFieldVisibility,
   groupDocuments,
   computeComparisonDelta,
@@ -25,6 +24,9 @@ export interface ComparisonResult {
   label: string;
   direction: 'up' | 'down' | 'neutral';
 }
+
+/** A row as it comes back from the database. */
+export type DocumentData = Record<string, unknown>;
 
 export type EnrichedDoc = DocumentData & {
   _id: string;
@@ -69,32 +71,27 @@ export function useDSLView(dsl: string, options: UseDSLViewOptions = {}): UseDSL
     setLoading(true);
     setError(null);
 
-    let unsub: (() => void) | undefined;
+    // Firestore's onSnapshot kept this live. Postgres reads are a one-shot
+    // fetch, so the view refreshes when `refresh()` bumps `tick` (or an option
+    // changes) rather than continuously. `cancelled` guards a resolve that
+    // lands after the effect was torn down.
+    let cancelled = false;
 
-    try {
-      const db = getFirestore();
-      const q = buildFirestoreQuery(parsedView, db, maxLimit);
+    buildSupabaseQuery<Record<string, unknown> & { id?: string }>(parsedView, maxLimit)
+      .then((rows) => {
+        if (cancelled) return;
+        setRaw(rows.map(({ id, ...rest }) => ({ _id: id, ...rest })));
+        setLoading(false);
+      })
+      .catch((queryError: unknown) => {
+        if (cancelled) return;
+        const message = queryError instanceof Error ? queryError.message : String(queryError);
+        console.error('[useDSLView] Query failed:', message);
+        setError(message);
+        setLoading(false);
+      });
 
-      unsub = onSnapshot(
-        q,
-        (snapshot) => {
-          setRaw(snapshot.docs.map((doc) => ({ _id: doc.id, ...doc.data() })));
-          setLoading(false);
-        },
-        (snapshotError) => {
-          console.error('[useDSLView] Firestore error:', snapshotError);
-          setError(snapshotError.message);
-          setLoading(false);
-        },
-      );
-    } catch (queryError) {
-      const message = queryError instanceof Error ? queryError.message : String(queryError);
-      console.error('[useDSLView] Query build error:', message);
-      setError(message);
-      setLoading(false);
-    }
-
-    return () => unsub?.();
+    return () => { cancelled = true; };
   }, [enabled, maxLimit, parsedView, tick]);
 
   const data: EnrichedDoc[] = useMemo(

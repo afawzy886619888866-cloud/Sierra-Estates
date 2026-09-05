@@ -27,6 +27,10 @@ export async function POST(req: NextRequest) {
       params[key] = String(value);
     }
 
+    // Signature validation used to be skipped whenever TWILIO_AUTH_TOKEN was
+    // unset (FAIL-OPEN), so an unconfigured deployment accepted forged inbound
+    // messages from anyone. Fail CLOSED in production, keep the unvalidated
+    // path in development — same shape as lib/server/cron-auth.ts.
     if (twilioConfigured) {
       const url = getTwilioInboundWebhookUrl();
       const signature = req.headers.get('x-twilio-signature');
@@ -34,8 +38,11 @@ export async function POST(req: NextRequest) {
         logger.warn('[twilio-inbound] rejected request with invalid/missing X-Twilio-Signature');
         return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      logger.error('[twilio-inbound] TWILIO_AUTH_TOKEN not set — rejecting all requests');
+      return NextResponse.json({ error: 'Webhook is not configured' }, { status: 503 });
     } else {
-      logger.warn('[twilio-inbound] TWILIO_AUTH_TOKEN not set — signature validation skipped');
+      logger.warn('[twilio-inbound] TWILIO_AUTH_TOKEN not set — signature validation skipped (development only)');
     }
 
     const from = (params.From || '').replace(/^whatsapp:/, '');

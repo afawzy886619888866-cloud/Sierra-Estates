@@ -1,12 +1,11 @@
-import { adminDb } from '../server/firebase-admin';
+import { insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, Unit } from '../models/schema';
 import { mapRowToUnit } from './listing-normalize';
-import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 /**
  * AIRTABLE INTEGRATION
  *
- * Pulls property listings from one or more Airtable tables into the Firestore
+ * Pulls property listings from one or more Airtable tables into the
  * inventory, mirroring the Google Sheets ingestion path. Records are upserted
  * by their reference code so re-syncing is idempotent.
  *
@@ -104,35 +103,36 @@ export class AirtableIntegrationService {
       const records = await this.fetchTableRecords(cfg, table);
       const ownerType = this.ownerTypeForTable(table);
 
-      const unitsCollection = adminDb.collection(COLLECTIONS.units);
-      const batch = adminDb.batch();
       let syncedCount = 0;
       let errorCount = 0;
 
+      // Firestore staged these in a WriteBatch and committed once. Each row here
+      // needs its own lookup on referenceNumber to decide insert vs update, so
+      // they are applied individually; a row that fails is counted and the rest
+      // of the sync still lands, which is what the batch did not do.
       for (const record of records) {
         try {
           const unit = mapRowToUnit(record.fields, { ownerType, syncSource: 'airtable' });
           if (!unit) continue;
 
-          let docRef;
-          if (unit.referenceNumber) {
-            const existing = await unitsCollection
-              .where('referenceNumber', '==', unit.referenceNumber)
-              .limit(1)
-              .get();
-            docRef = existing.empty ? unitsCollection.doc() : existing.docs[0].ref;
-          } else {
-            docRef = unitsCollection.doc();
-          }
+          const existing = unit.referenceNumber
+            ? await listRecords<{ id: string }>(COLLECTIONS.units, {
+                where: [{ column: 'referenceNumber', value: unit.referenceNumber }],
+                select: 'id',
+                limit: 1,
+              })
+            : [];
 
-          batch.set(docRef, unit, { merge: true });
+          if (existing.length > 0) {
+            await updateRecord(COLLECTIONS.units, existing[0].id, unit);
+          } else {
+            await insertRecord(COLLECTIONS.units, unit);
+          }
           syncedCount++;
         } catch (_err) {
           errorCount++;
         }
       }
-
-      await batch.commit();
       console.log(`[AirtableIntegrationService] "${table}": synced ${syncedCount}, errors ${errorCount}.`);
 
       return {
@@ -291,21 +291,20 @@ export class AirtableIntegrationService {
     }
 
     try {
-      const snap = await adminDb
-        .collection(COLLECTIONS.units)
-        .where('ownerType', '==', 'owner')
-        .get();
-      const records: Array<{ fields: Record<string, unknown> }> = [];
-      snap.docs.forEach((doc: QueryDocumentSnapshot) => {
-        const fields = this.unitToAirtableFields(doc.id, doc.data() as Partial<Unit>);
-        if (fields) records.push({ fields });
+      const units = await listRecords<Partial<Unit> & { id: string }>(COLLECTIONS.units, {
+        where: [{ column: 'ownerType', value: 'owner' }],
       });
+      const records: Array<{ fields: Record<string, unknown> }> = [];
+      for (const unit of units) {
+        const fields = this.unitToAirtableFields(unit.id, unit);
+        if (fields) records.push({ fields });
+      }
 
       const { written, errors } = await this.upsertRecords(cfg, table, records, ['Code']);
       return {
         success: errors.length === 0,
         table,
-        fetched: snap.size,
+        fetched: units.length,
         syncedCount: written,
         errorCount: errors.length,
         timestamp: new Date().toISOString(),
@@ -327,13 +326,15 @@ export class AirtableIntegrationService {
     }
 
     try {
-      const snap = await adminDb.collection(COLLECTIONS.stakeholders).get();
-      const records = snap.docs.map((doc: QueryDocumentSnapshot) => {
-        const d = doc.data() as Record<string, unknown>;
-        const createdAt = d.createdAt as { toDate?: () => Date } | undefined;
+      const leads = await listRecords<Record<string, unknown>>(COLLECTIONS.stakeholders);
+      const records = leads.map((d) => {
+        // timestamptz arrives as an ISO string, not a Firestore Timestamp.
+        const createdAt = d.createdAt as string | undefined;
         const fields: Record<string, unknown> = {
-          'Firestore ID': doc.id,
-          Name: d.name ?? '',
+          // Field name kept as-is: renaming it would orphan every existing
+          // Airtable row, since it is the key upsertRecords matches on.
+          'Firestore ID': d.id,
+          Name: d.fullName ?? d.name ?? '',
         };
         if (d.phone) fields['Phone'] = d.phone;
         if (d.email) fields['Email'] = d.email;
@@ -342,7 +343,7 @@ export class AirtableIntegrationService {
         if (d.priority) fields['Priority'] = d.priority;
         if (d.via) fields['Via'] = d.via;
         if (d.locale === 'en' || d.locale === 'ar') fields['Locale'] = d.locale;
-        if (createdAt?.toDate) fields['Created At'] = createdAt.toDate().toISOString();
+        if (createdAt) fields['Created At'] = new Date(createdAt).toISOString();
         return { fields };
       });
 
@@ -350,7 +351,7 @@ export class AirtableIntegrationService {
       return {
         success: errors.length === 0,
         table,
-        fetched: snap.size,
+        fetched: leads.length,
         syncedCount: written,
         errorCount: errors.length,
         timestamp: new Date().toISOString(),
