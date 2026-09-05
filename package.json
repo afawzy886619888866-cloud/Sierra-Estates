@@ -10,6 +10,8 @@
         "build": "turbo run build",
         "lint": "node scripts/check-no-compiled-twins.mjs && turbo run lint",
         "check:twins": "node scripts/check-no-compiled-twins.mjs",
+        "hint": "hint",
+        "hint:check": "hint .",
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
