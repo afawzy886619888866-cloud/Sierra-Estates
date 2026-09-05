@@ -39,8 +39,8 @@ import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
 
 // ── Configuration from env vars ──
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'http://n8n:5678/webhook/whatsapp-incoming';
-const BOT_NAME = process.env.BOT_NAME || 'Sierra Estates';
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || '';
+const BOT_NAME = process.env.BOT_NAME ? String(process.env.BOT_NAME) : 'Sierra Estates';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const QR_ONLY = process.argv.includes('--qr-only');
 
@@ -114,6 +114,9 @@ function isDuplicate(messageId) {
  * ────────────────────────────────────────────────────────────────────────── */
 
 async function forwardToN8n(payload) {
+  if (!N8N_WEBHOOK_URL) {
+    return null;
+  }
   try {
     const res = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
