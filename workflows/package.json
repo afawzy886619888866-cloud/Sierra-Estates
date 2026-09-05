@@ -4,6 +4,7 @@
   "description": "External automation workflows for Sierra Estates",
   "private": true,
   "scripts": {
+    "lint": "eslint .",
     "whatsapp-scraper": "node 01-whatsapp-scraper/index.js",
     "owner-search": "node 02-owner-search/search.js",
     "owner-contact": "node 03-owner-contact/contact.js",

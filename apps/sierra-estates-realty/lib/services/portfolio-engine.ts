@@ -4,16 +4,8 @@
  * and generates shareable mobile-first gallery links.
  */
 
-import { db } from '../firebase';
-import {
-  doc,
-  getDoc,
-  addDoc,
-  collection,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
+import type { IsoTimestamp } from '../models/timestamps';
 import { COLLECTIONS, type Lead, type Unit } from '../models/schema';
 import { GoogleAIService } from '../server/google-ai';
 import { analyzeAssetFinancials } from './roi-service';
@@ -39,7 +31,7 @@ export interface ConciergeSelection {
   id: string;
   leadId: string;
   leadName: string;
-  createdAt: Timestamp;
+  createdAt: IsoTimestamp;
   units: ConciergeUnit[];
   personalNote: string; // AI-written welcome message
   whatsappLink: string;
@@ -54,9 +46,8 @@ export interface ConciergeSelection {
  */
 export async function curateConciergePortfolio(leadId: string): Promise<ConciergeSelection> {
   // 1. Fetch Lead profile
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  if (!leadSnap.exists()) throw new Error('Lead not found');
-  const lead = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+  const lead = await getRecord<Lead & { fullName?: string }>(COLLECTIONS.stakeholders, leadId);
+  if (!lead) throw new Error('Lead not found');
 
   if (!lead.aiProfiling?.topMatches || lead.aiProfiling.topMatches.length === 0) {
     throw new Error('No matches found. Run Stage 6 (Matching) first.');
@@ -73,15 +64,14 @@ export async function curateConciergePortfolio(leadId: string): Promise<Concierg
   let matchSum = 0;
 
   for (const match of selectedMatches) {
-    const unitSnap = await getDoc(doc(db, COLLECTIONS.units, match.unitId));
-    if (!unitSnap.exists()) continue;
+    const unit = await getRecord<Unit>(COLLECTIONS.units, match.unitId);
+    if (!unit) continue;
 
-    const unit = { id: unitSnap.id, ...unitSnap.data() } as Unit;
     const financials = await analyzeAssetFinancials(unit);
     const description = await generateLuxuryDescription(lead, unit);
 
     conciergeUnits.push({
-      id: unit.id ?? unitSnap.id,
+      id: unit.id ?? match.unitId,
       title: unit.title,
       price: unit.price,
       matchScore: match.matchScore,
@@ -116,29 +106,28 @@ export async function curateConciergePortfolio(leadId: string): Promise<Concierg
   const whatsappLink = `${siteUrl}/concierge/${leadId}?gallery=true`;
 
   // 5. Create Concierge Selection document
-  const portfolioRef = await addDoc(collection(db, COLLECTIONS.conciergeSelections), {
+  const portfolio = await insertRecord<{ id: string }>(COLLECTIONS.conciergeSelections, {
     leadId,
-    leadName: lead.name,
+    leadName: lead.fullName ?? lead.name,
     units: conciergeUnits,
     personalNote,
     matchingScore,
     estimatedPortfolioROI,
-    createdAt: serverTimestamp(),
     status: 'generated',
     whatsappLink,
   });
 
   // 6. Update Lead record with a pointer to the new portfolio
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    conciergePortfolioId: portfolioRef.id,
-    lastCuratedAt: serverTimestamp(),
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    conciergePortfolioId: portfolio.id,
+    lastCuratedAt: new Date().toISOString(),
   });
 
   return {
-    id: portfolioRef.id,
+    id: portfolio.id,
     leadId,
-    leadName: lead.name,
-    createdAt: Timestamp.now(),
+    leadName: lead.fullName ?? lead.name,
+    createdAt: new Date().toISOString(),
     units: conciergeUnits,
     personalNote,
     whatsappLink,
@@ -226,7 +215,7 @@ Ready to explore? Reply "VIEWING" or click the gallery link above! ✨
 }
 
 /**
- * Marks a lead's portfolio as sent (client SDK). The real WhatsApp dispatch is
+ * Marks a lead's portfolio as sent. The real WhatsApp dispatch is
  * enqueued by the API route; this only records the send on the lead document.
  */
 export async function sendPortfolioViaWhatsApp(
@@ -234,8 +223,8 @@ export async function sendPortfolioViaWhatsApp(
   _portfolio: ConciergeSelection,
   _phoneNumber: string
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    conciergePortfolioSentAt: serverTimestamp(),
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    conciergePortfolioSentAt: new Date().toISOString(),
     conciergePortfolioSentVia: 'whatsapp',
   });
 }
@@ -247,7 +236,16 @@ export async function trackPortfolioEngagement(
   portfolioId: string,
   action: 'viewed' | 'unit_clicked' | 'requested_viewing'
 ): Promise<void> {
-  await updateDoc(doc(db, COLLECTIONS.conciergeSelections, portfolioId), {
-    [`engagement.${action}`]: serverTimestamp(),
+  // `engagement` is one JSONB column, so the dotted path becomes a merge —
+  // recording 'viewed' must not wipe an earlier 'unit_clicked'.
+  const portfolio = await getRecord<{ engagement?: Record<string, unknown> }>(
+    COLLECTIONS.conciergeSelections,
+    portfolioId
+  );
+  await updateRecord(COLLECTIONS.conciergeSelections, portfolioId, {
+    engagement: {
+      ...(portfolio?.engagement ?? {}),
+      [action]: new Date().toISOString(),
+    },
   });
 }

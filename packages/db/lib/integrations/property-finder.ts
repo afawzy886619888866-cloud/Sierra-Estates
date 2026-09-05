@@ -37,13 +37,17 @@ export async function pushListingToPF(listing: SBRListing): Promise<PFSyncResult
   if (!listing.id) return { success: false, error: 'listing.id is required' };
 
   // Test seam: unit tests inject a token via globalThis.__TEST_TOKEN__ so we
-  // don't need a live Firebase Auth session. Never set in production.
+  // don't need a live auth session. Never set in production.
   let token: string | undefined =
     (globalThis as { __TEST_TOKEN__?: string }).__TEST_TOKEN__;
   if (!token && typeof window !== 'undefined') {
+    // /api/sync/publish verifies a Supabase access token, so that is what the
+    // browser has to send. Resolved lazily so this module stays importable
+    // server-side, where there is no session to read.
     try {
-      const { getAuth } = await import('firebase/auth');
-      token = await getAuth().currentUser?.getIdToken();
+      const { getSupabase } = await import('../supabase');
+      const { data } = await getSupabase().auth.getSession();
+      token = data.session?.access_token;
     } catch { /* ignore */ }
   }
 
@@ -55,7 +59,7 @@ export async function pushListingToPF(listing: SBRListing): Promise<PFSyncResult
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({ unitId: listing.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { error?: string; id?: string };
     if (!res.ok) return { success: false, error: data.error };
     return { success: true, id: data.id ?? listing.id };
   } catch (err) {

@@ -2,25 +2,32 @@
     "name": "sierra-estates",
     "version": "1.0.0",
     "private": true,
-    "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
+    "description": "Sierra Estates \u2014 Luxury PropTech Platform for New Cairo",
     "scripts": {
         "dev": "turbo run dev",
         "dev:web": "pnpm --filter sierra-estates-client-page dev",
         "dev:all": "turbo run dev",
         "build": "turbo run build",
-        "lint": "turbo run lint",
-
+        "lint": "node scripts/check-no-compiled-twins.mjs && turbo run lint",
+        "check:twins": "node scripts/check-no-compiled-twins.mjs",
         "type-check": "turbo run type-check",
         "fetch:real-data": "node apps/sierra-estates-realty/scripts/fetch-real-data.mjs",
         "test": "turbo run test:ci",
         "test:ci": "turbo run test:ci",
+        "test:rls": "bash supabase/tests/run-rls-tests.sh",
+        "verify": "bash scripts/verify.sh",
+        "hooks:install": "git config core.hooksPath .githooks && echo \"pre-push hook installed\"",
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
         "deploy:prod": "vercel --prod",
-        "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
-        "deploy:firebase": "firebase deploy --only firestore:rules,storage,functions",
+        "test:prod": "node scripts/test-production.cjs",
+        "deploy:supabase": "node scripts/apply-supabase-schema.mjs",
+        "deploy:schema": "node scripts/apply-supabase-schema.mjs",
+        "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
         "vertex-agent": "tsx scripts/vertex-agent-runner.ts",
+        "telegram:bot": "tsx scripts/telegram-bot-runner.ts",
+        "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts",
         "run-harness": "tsx scripts/run-harness.ts",
         "harness:eval": "tsx scripts/run-harness.ts",
@@ -30,19 +37,21 @@
         "sync-propertyfinder": "tsx scripts/sync-propertyfinder.ts",
         "estimate-costs": "tsx scripts/estimate-costs.ts",
         "smoke:test": "tsx scripts/deploy-smoke-test.ts",
+        "mcp:smoke-test": "tsx scripts/mcp-smoke-test.ts",
         "check:firebase-rules": "node scripts/check-firebase-rules.mjs",
         "check:public-env": "node scripts/check-public-env-safety.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "deploy:check:env": "node scripts/verify-env-readiness.mjs",
-        "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds",
-        "hint": "hint"
+        "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.120.0",
-        "hint": "^7.1.13",
+        "eslint": "^10",
+        "eslint-plugin-unused-imports": "^4.4.1",
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
+        "typescript-eslint": "^8.67.0",
         "vitest": "^4.1.10"
     },
     "dependencies": {
@@ -50,8 +59,28 @@
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
     },
     "engines": {
-        "node": ">=22.0.0",
+        "node": ">=20.0.0",
         "pnpm": ">=9"
     },
-    "packageManager": "pnpm@9.15.4"
+    "packageManager": "pnpm@9.15.4",
+    "overrides": {
+        "tar": ">=7.5.22",
+        "tar-fs": ">=2.1.4",
+        "cross-spawn": ">=7.0.6",
+        "micromatch": ">=4.0.8",
+        "braces": ">=3.0.3",
+        "nanoid": ">=3.3.8",
+        "ws": ">=8.21.0",
+        "cookie": ">=0.7.2",
+        "body-parser": ">=1.20.3",
+        "express": ">=4.21.2",
+        "path-to-regexp": ">=0.1.12",
+        "send": ">=0.19.1",
+        "serve-static": ">=1.16.2",
+        "uuid": ">=11.1.1",
+        "esbuild": ">=0.25.0",
+        "fast-xml-parser": ">=5.7.0",
+        "file-type": ">=21.3.1",
+        "got": ">=11.8.5"
+    }
 }

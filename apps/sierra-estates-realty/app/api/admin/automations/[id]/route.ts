@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, updateRecord, deleteRecord } from '@sierra-estates/db';
 import { AUTOMATION_COLLECTIONS } from '@/lib/models/automation';
 import { logger } from '@/lib/logger';
-import { Timestamp } from 'firebase-admin/firestore';
 
 const automationUpdateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -25,9 +24,9 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const doc = await adminDb.collection(AUTOMATION_COLLECTIONS.rules).doc(id).get();
+    const rule = await getRecord(AUTOMATION_COLLECTIONS.rules, id);
 
-    if (!doc.exists) {
+    if (!rule) {
       return NextResponse.json(
         { error: 'Automation rule not found' },
         { status: 404 }
@@ -36,7 +35,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      rule: { id: doc.id, ...doc.data() },
+      rule,
     });
   } catch (err) {
     logger.error('Error fetching automation rule:', err);
@@ -78,7 +77,7 @@ export async function PUT(
     const updateData: Record<string, unknown> = {
       ...parsed.data,
       updatedBy: authResult.uid,
-      updatedAt: Timestamp.now(),
+      updatedAt: new Date().toISOString(),
     };
 
     // Remove undefined values
@@ -88,10 +87,7 @@ export async function PUT(
       }
     });
 
-    await adminDb
-      .collection(AUTOMATION_COLLECTIONS.rules)
-      .doc(id)
-      .update(updateData);
+    await updateRecord(AUTOMATION_COLLECTIONS.rules, id, updateData);
 
     logger.info(`✓ Updated automation rule: ${id}`);
 
@@ -123,10 +119,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    await adminDb
-      .collection(AUTOMATION_COLLECTIONS.rules)
-      .doc(id)
-      .delete();
+    await deleteRecord(AUTOMATION_COLLECTIONS.rules, id);
 
     logger.info(`✓ Deleted automation rule: ${id}`);
 

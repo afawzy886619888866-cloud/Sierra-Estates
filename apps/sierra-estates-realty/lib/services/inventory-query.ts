@@ -12,7 +12,7 @@
  * All methods are read-only. Write path lives in master-sheet-sync.ts.
  */
 import 'server-only';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, listRecords } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 
@@ -62,13 +62,11 @@ export interface InventoryQuery {
 
 export const InventoryQueryService = {
   /**
-   * Get a single unit by Firestore document ID or unit code.
+   * Get a single unit by row id or unit code.
    */
   async getById(id: string): Promise<InventoryUnit | null> {
     try {
-      const doc = await adminDb.collection(COLLECTIONS.units).doc(id).get();
-      if (!doc.exists) return null;
-      return { id: doc.id, ...(doc.data() as object) } as InventoryUnit;
+      return await getRecord<InventoryUnit>(COLLECTIONS.units, id);
     } catch (err: any) {
       logger.error('[InventoryQueryService] getById failed:', err.message);
       return null;
@@ -77,7 +75,7 @@ export const InventoryQueryService = {
 
   /**
    * Find matching units from the master sheet for a given query.
-   * Fetches up to 300 docs from Firestore, applies in-memory filters.
+   * Fetches up to 300 rows, then applies in-memory filters.
    */
   async query(criteria: InventoryQuery): Promise<InventoryUnit[]> {
     try {
@@ -85,18 +83,13 @@ export const InventoryQueryService = {
         ? Array.isArray(criteria.status) ? criteria.status : [criteria.status]
         : ['available'];
 
-      const snapshot = await adminDb
-        .collection(COLLECTIONS.units)
-        .where('status', 'in', statuses)
-        .limit(300)
-        .get();
+      let units = await listRecords<InventoryUnit>(COLLECTIONS.units, {
+        where: [{ column: 'status', op: 'in', value: statuses }],
+        limit: 300,
+      });
 
-      let units: InventoryUnit[] = snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-        id: doc.id,
-        ...(doc.data() as object),
-      })) as InventoryUnit[];
-
-      // In-memory filters for fields not supported in composite Firestore queries
+      // In-memory filters: the remaining predicates are fuzzy (substring
+      // compound match, budget bands) and not worth pushing into SQL here.
       if (criteria.propertyType) {
         const t = criteria.propertyType.toLowerCase();
         units = units.filter((u) => u.propertyType?.toLowerCase() === t);
@@ -199,8 +192,7 @@ export const InventoryQueryService = {
     broker: number;
   }> {
     try {
-      const snapshot = await adminDb.collection(COLLECTIONS.units).limit(500).get();
-      const units: InventoryUnit[] = snapshot.docs.map((d: FirebaseFirestore.QueryDocumentSnapshot) => d.data() as InventoryUnit);
+      const units = await listRecords<InventoryUnit>(COLLECTIONS.units, { limit: 500 });
       return {
         total: units.length,
         available: units.filter((u) => u.status === 'available').length,

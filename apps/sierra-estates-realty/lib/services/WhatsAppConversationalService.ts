@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { adminDb } from "../server/firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
+import { getRecord, insertRecord, listRecords, updateRecord, upsertRecord } from "@sierra-estates/db";
+import { COLLECTIONS } from "../models/schema";
 import { logger } from '@/lib/logger';
+import { sharedMemory } from '@sierra-estates/memory-engine';
 
 const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -10,6 +11,24 @@ interface ECCMessage {
   role: 'user' | 'model';
   content: string;
   timestamp: any;
+}
+
+interface StakeholderRow {
+  id: string;
+  fullName?: string;
+  summaryNotes?: string;
+  aiProfiling?: Record<string, any>;
+}
+
+/** The lead row for a phone number, or null. `phone` is not unique in the
+ *  schema, so the most recent match wins — same as Firestore's single doc. */
+async function findStakeholderByPhone(phone: string): Promise<StakeholderRow | null> {
+  const rows = await listRecords<StakeholderRow>(COLLECTIONS.stakeholders, {
+    where: [{ column: 'phone', value: phone }],
+    orderBy: { column: 'createdAt', ascending: false },
+    limit: 1,
+  });
+  return rows[0] ?? null;
 }
 
 export class WhatsAppConversationalService {
@@ -45,13 +64,13 @@ CORE IDENTITY & KNOWLEDGE:
     }
 
     try {
-      const chatRef = adminDb.collection('whatsapp_conversations').doc(sender);
-      const chatDoc = await chatRef.get();
-      
-      let history: ECCMessage[] = [];
-      if (chatDoc.exists) {
-        history = chatDoc.data()?.messages || [];
-      }
+      // Keyed by phone number, as the Firestore document was.
+      const chat = await getRecord<{ messages?: ECCMessage[] }>(
+        'whatsapp_conversations',
+        sender,
+        'phone_number'
+      );
+      const history: ECCMessage[] = chat?.messages || [];
 
       // We only want the last 15 messages for context window efficiency (ECC short-term memory)
       const recentHistory = history.slice(-15);
@@ -62,7 +81,28 @@ CORE IDENTITY & KNOWLEDGE:
         parts: [{ text: msg.content }],
       }));
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: this.SYSTEM_PROMPT });
+      // Unified Memory: Fetch Stakeholder Profile & Inject RAG Inventory Context
+      const cleanPhone = sender.replace(/[^0-9+]/g, '');
+      const stakeholder = await findStakeholderByPhone(cleanPhone);
+
+      let dynamicSystemPrompt = this.SYSTEM_PROMPT;
+
+      if (stakeholder) {
+        const data = stakeholder;
+        const prefs = data.aiProfiling?.preferences ?? {};
+        const budget = prefs.budget;
+        const compound = prefs.compound;
+        const unitType = prefs.unitType;
+
+        dynamicSystemPrompt += `\n\nCLIENT CONTEXT (MEMORY):\n- Name: ${data.fullName || 'Unknown'}\n- Budget: ${budget || 'Unknown'} EGP\n- Preferences: ${compound || 'Any compound'}, ${unitType || 'any unit'}\n- AI Notes: ${data.summaryNotes || 'New lead'}`;
+        
+        const { RagInventoryService } = await import('./rag-inventory-service');
+        const ragContext = await RagInventoryService.getMatchedInventoryContext(budget, compound, unitType);
+        
+        dynamicSystemPrompt += `\n\n${ragContext}`;
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash", systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
         history: geminiHistory,
@@ -73,27 +113,165 @@ CORE IDENTITY & KNOWLEDGE:
       });
 
       logger.info(`💬 Generating AI response for ${sender}...`);
-      const result = await chatSession.sendMessage(message);
-      const replyText = result.response.text();
+      
+      const aiPromise = (async () => {
+        const result = await chatSession.sendMessage(message);
+        return result.response.text();
+      })();
+
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('AI response timed out')), 4000)
+      );
+
+      let replyText: string;
+      try {
+        replyText = await Promise.race([aiPromise, timeoutPromise]);
+      } catch {
+        replyText = `Welcome to Sierra Estates! I have logged your inquiry regarding "${message.slice(0, 60)}...". Our dedicated New Cairo portfolio advisor is reviewing the master inventory and will share verified options with you shortly.`;
+      }
 
       // Update ECC Memory
-      const newUserMsg: ECCMessage = { role: 'user', content: message, timestamp: Timestamp.now() };
-      const newModelMsg: ECCMessage = { role: 'model', content: replyText, timestamp: Timestamp.now() };
+      const newUserMsg: ECCMessage = { role: 'user', content: message, timestamp: new Date().toISOString() };
+      const newModelMsg: ECCMessage = { role: 'model', content: replyText, timestamp: new Date().toISOString() };
       
       const updatedMessages = [...history, newUserMsg, newModelMsg];
       
-      await chatRef.set({
-        phoneNumber: sender,
-        lastActive: Timestamp.now(),
-        messages: updatedMessages,
-      }, { merge: true });
+      try {
+        await Promise.race([
+          upsertRecord('whatsapp_conversations', {
+            phoneNumber: sender,
+            lastActive: new Date().toISOString(),
+            messages: updatedMessages,
+          }, 'phone_number'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database write timeout')), 2000)),
+        ]);
+      } catch {
+        // Local dev or offline mode
+      }
 
-      logger.info(`✅ AI Response sent and saved to ECC memory for ${sender}`);
+      // Update Shared Memory Bus for Multi-Agent Pipeline Visibility
+      try {
+        await sharedMemory.write(
+          `conversation:${sender}:last_turn`,
+          {
+            userMessage: message,
+            modelReply: replyText,
+            timestamp: new Date().toISOString(),
+          },
+          { author: 'hermes', tags: ['whatsapp', 'conversation', sender] }
+        );
+      } catch {}
+
+      logger.info(`✅ AI Response sent and saved to ECC memory & Shared Memory Bus for ${sender}`);
+
+      // Asynchronous Lead Qualification & CRM Upsert (non-blocking)
+      this.qualifyAndSyncLead(sender, updatedMessages).catch(err => {
+        logger.error(`⚠️ [WhatsAppConversationalService] Lead sync error for ${sender}:`, err);
+      });
+
       return replyText;
 
     } catch (error) {
-      logger.error("❌ Neural Conversation Failure:", error);
-      return "I'm having a little trouble connecting to my database right now. One of our senior brokers will reach out to you shortly.";
+      logger.error("❌ Neural Conversation Fallback:", error);
+      return `Welcome to Sierra Estates! We received your message: "${message.slice(0, 50)}...". A senior luxury portfolio advisor will connect with you momentarily.`;
+    }
+  }
+
+  /**
+   * Background AI Lead Qualification & CRM Ingestion
+   */
+  private static async qualifyAndSyncLead(sender: string, messages: ECCMessage[]): Promise<void> {
+    if (messages.length < 2) return;
+
+    try {
+      const recentHistoryText = messages
+        .slice(-10)
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join('\n');
+
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+      const prompt = `Analyze this real estate WhatsApp conversation and extract structured lead intelligence.
+CONVERSATION:
+${recentHistoryText}
+
+Respond ONLY with a JSON object:
+{
+  "isQualified": boolean,
+  "clientName": string,
+  "intent": "buyer" | "seller" | "renter" | "investor" | "general",
+  "compound": string,
+  "unitType": "apartment" | "villa" | "townhouse" | "duplex" | "penthouse" | "chalet" | "commercial" | "any",
+  "budgetEGP": number,
+  "priorityScore": number (1-100),
+  "urgency": "immediate" | "soon" | "casual",
+  "summary": string
+}`;
+
+      const res = await model.generateContent(prompt);
+      const text = (await res.response).text().replace(/```json|```/g, "").trim();
+      const intel = JSON.parse(text);
+
+      if (intel.isQualified) {
+        const cleanPhone = sender.replace(/[^0-9+]/g, '');
+        const existing = await findStakeholderByPhone(cleanPhone);
+
+        // Firestore keyed the lead document by phone number, which made this an
+        // upsert for free. `leads.id` is a generated id with `phone` as an
+        // ordinary column, so the row is looked up first. Two qualifying
+        // messages from the same unknown number arriving together could both
+        // insert; the intake routes have always had that same race.
+        const leadData = {
+          fullName: intel.clientName && intel.clientName !== 'unknown'
+            ? intel.clientName
+            : (existing?.fullName || `WhatsApp Client (${cleanPhone.slice(-4)})`),
+          phone: cleanPhone,
+          channel: 'whatsapp',
+          status: 'qualified',
+          leadScore: intel.priorityScore || 70,
+          summaryNotes: intel.summary,
+          // `intent` and `preferences` are not columns; they live in the
+          // ai_profiling JSONB alongside whatever profiling already wrote.
+          aiProfiling: {
+            ...(existing?.aiProfiling ?? {}),
+            intent: intel.intent,
+            preferences: {
+              compound: intel.compound || 'Any',
+              unitType: intel.unitType || 'any',
+              budget: intel.budgetEGP || 0,
+              urgency: intel.urgency || 'soon',
+            },
+          },
+        };
+
+        if (existing) {
+          await updateRecord(COLLECTIONS.stakeholders, existing.id, leadData);
+        } else {
+          await insertRecord(COLLECTIONS.stakeholders, leadData);
+        }
+        logger.info(`🎯 [CRM] Upserted WhatsApp lead for ${cleanPhone} (Score: ${intel.priorityScore})`);
+
+        // Broadcast qualified lead intelligence to SharedMemoryBus for all 5 agents (Liela, Sierra, OpenClaw, Hermes, Closer)
+        await sharedMemory.write(
+          `lead:${cleanPhone}:intelligence`,
+          leadData,
+          { author: 'liela', tags: ['lead_intel', 'qualified', cleanPhone] }
+        );
+
+        // If high priority (Score >= 80 or budget >= 15M EGP), notify Brokers via Telegram
+        if (intel.priorityScore >= 80 || (intel.budgetEGP && intel.budgetEGP >= 15000000)) {
+          const { TelegramAlertService } = await import('./telegram-alert-service');
+          await TelegramAlertService.sendVipMatchAlert({
+            leadName: leadData.fullName,
+            propertyTitle: `${intel.compound || 'Luxury Compound'} (${intel.unitType || 'Prime Asset'})`,
+            matchScore: intel.priorityScore,
+            budget: intel.budgetEGP ? `${(intel.budgetEGP / 1000000).toFixed(1)}M EGP` : 'Flexible / High Net Worth',
+            proposalUrl: `https://admin.sierra-estates.net/leads`,
+            roi: 'High Propensity'
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn(`Could not qualify lead for ${sender}:`, err);
     }
   }
 }

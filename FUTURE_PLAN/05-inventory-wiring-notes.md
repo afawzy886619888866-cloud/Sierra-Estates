@@ -7,7 +7,7 @@ changed. Verified: strict tsc against the repo's actual `tsconfig.base.json`
 compiler options produces zero new errors on either file.
 
 | Route | Fields added | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `POST /api/admin/listings` | `dupeCheckHash` (real fingerprint), `syncSource: 'manual'` | fingerprint only computed when bedrooms+area+price are all present |
 | `POST /api/properties/sync` | `syncSource: 'property-finder'`, `lastSyncAt` | `dupeCheckHash` deliberately NOT set — see gap below |
 

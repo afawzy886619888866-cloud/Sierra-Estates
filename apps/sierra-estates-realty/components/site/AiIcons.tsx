@@ -2,6 +2,19 @@
 import React from 'react';
 
 export const AI_ICONS: Record<string, React.ReactElement> = {
+  radar: (
+    <svg viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="20" stroke="#E9C176" strokeWidth="1.2" strokeDasharray="3 3" opacity=".3" />
+      <circle cx="24" cy="24" r="14" stroke="#E9C176" strokeWidth="1.2" opacity=".5" />
+      <circle cx="24" cy="24" r="7" stroke="#E9C176" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="3" fill="#E9C176">
+        <animate attributeName="r" values="2;4;2" dur="1.5s" repeatCount="indefinite" />
+      </circle>
+      <line x1="24" y1="24" x2="24" y2="4" stroke="#E9C176" strokeWidth="1.8" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="3s" repeatCount="indefinite" />
+      </line>
+    </svg>
+  ),
   engine: (
     <svg viewBox="0 0 48 48" fill="none">
       <circle cx="24" cy="24" r="20" stroke="#C8961A" strokeWidth="1" strokeDasharray="4 3" opacity=".4">

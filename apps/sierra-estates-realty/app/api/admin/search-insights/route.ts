@@ -16,8 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 interface SearchQueryRecord {
@@ -33,8 +32,9 @@ interface SearchQueryRecord {
     currency: string;
   };
   extractionMethod: 'ai' | 'regex-fallback';
-  total: number;
-  timestamp: FirebaseFirestore.Timestamp;
+  /** public.search_queries stores these as result_count / created_at. */
+  resultCount: number;
+  createdAt: string;
   userAgent?: string;
 }
 
@@ -49,18 +49,11 @@ export async function GET(req: NextRequest) {
     const days = parseInt(searchParams.get('days') || '30', 10);
     const since = new Date();
     since.setDate(since.getDate() - days);
-    const sinceTs = Timestamp.fromDate(since);
-
-    const snap = await adminDb
-      .collection('search_queries')
-      .where('timestamp', '>=', sinceTs)
-      .orderBy('timestamp', 'desc')
-      .limit(5000)
-      .get();
-
-    const records = snap.docs.map(
-      (d: FirebaseFirestore.QueryDocumentSnapshot) => d.data() as SearchQueryRecord
-    );
+    const records = await listRecords<SearchQueryRecord>('search_queries', {
+      where: [{ column: 'createdAt', op: 'gte', value: since.toISOString() }],
+      orderBy: { column: 'createdAt', ascending: false },
+      limit: 5000,
+    });
 
     // Aggregate
     const totalQueries = records.length;
@@ -83,7 +76,7 @@ export async function GET(req: NextRequest) {
       const q = r.query.toLowerCase().trim();
       topQueries[q] = (topQueries[q] ?? 0) + 1;
 
-      if (r.total === 0) {
+      if (r.resultCount === 0) {
         noResultQueries[q] = (noResultQueries[q] ?? 0) + 1;
       }
 
@@ -94,7 +87,9 @@ export async function GET(req: NextRequest) {
         topCompounds[c] = (topCompounds[c] ?? 0) + 1;
       }
 
-      const day = r.timestamp.toDate().toISOString().slice(0, 10);
+      // createdAt is already an ISO string from the record layer, so the
+      // Firestore Timestamp .toDate() hop is gone.
+      const day = r.createdAt.slice(0, 10);
       queriesByDay[day] = (queriesByDay[day] ?? 0) + 1;
     }
 
@@ -125,11 +120,11 @@ export async function GET(req: NextRequest) {
     // Calculate averages
     const avgResultsPerQuery =
       totalQueries > 0
-        ? records.reduce((sum: number, r: SearchQueryRecord) => sum + (r.total ?? 0), 0) / totalQueries
+        ? records.reduce((sum: number, r: SearchQueryRecord) => sum + (r.resultCount ?? 0), 0) / totalQueries
         : 0;
     const noResultRate =
       totalQueries > 0
-        ? records.filter((r: SearchQueryRecord) => r.total === 0).length / totalQueries
+        ? records.filter((r: SearchQueryRecord) => r.resultCount === 0).length / totalQueries
         : 0;
 
     return NextResponse.json({

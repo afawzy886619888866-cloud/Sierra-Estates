@@ -14,6 +14,7 @@ jest.mock('@/lib/logger', () => ({
   logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() },
 }));
 
+export {};
 const ORIGINAL_URL = process.env.UPSTASH_REDIS_REST_URL;
 const ORIGINAL_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -246,3 +247,5 @@ describe('exported limiters and applyRateLimit', () => {
     expect(limiter).toHaveBeenCalledWith(req);
   });
 });
+
+export {};

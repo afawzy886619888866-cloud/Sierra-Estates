@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
 export async function GET(req: NextRequest) {
@@ -7,38 +7,26 @@ export async function GET(req: NextRequest) {
   if (!auth.authenticated) return unauthorizedResponse();
 
   try {
-    // 1. Try to fetch from Firestore first (Production mode)
-    const kbCollection = adminDb.collection('knowledge_base');
-    const snapshot = await kbCollection.get();
-    
-    let notes: any[] = [];
+    // last_modified is a timestamptz, so the record layer hands it back as an
+    // ISO string — no Firestore Timestamp .toDate() shim needed.
+    const notes = await listRecords<{
+      id: string;
+      title: string;
+      content: string;
+      tags?: string[];
+      lastModified?: string;
+      metadata?: Record<string, unknown>;
+    }>('knowledge_base');
 
-    if (!snapshot.empty) {
-      notes = snapshot.docs.map((doc: any) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          content: data.content,
-          tags: data.tags || [],
-          lastModified: data.lastModified?.toDate ? data.lastModified.toDate() : data.lastModified,
-          metadata: data.metadata || {}
-        };
-      });
-    } else {
-      // 2. Fallback to scanning the local drive vault (Local Dev mode)
-      // const sync = new ObsidianVaultSync();
-      // notes = await sync.scanVault();
-    }
     
     // For admin UI, we don't want to send the entire content of every note over the wire,
     // just the metadata.
-    const metadataList = notes.map((n: any) => ({
+    const metadataList = notes.map((n) => ({
       id: n.id,
       title: n.title,
-      tags: n.tags,
+      tags: n.tags ?? [],
       lastModified: n.lastModified,
-      metadata: n.metadata
+      metadata: n.metadata ?? {}
     }));
     
     return NextResponse.json({ notes: metadataList });

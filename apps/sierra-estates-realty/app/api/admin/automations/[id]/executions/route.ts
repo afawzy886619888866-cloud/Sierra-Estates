@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, listRecords } from '@sierra-estates/db';
 import { AUTOMATION_COLLECTIONS } from '@/lib/models/automation';
 import { logger } from '@/lib/logger';
-import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 export async function GET(
   _req: NextRequest,
@@ -19,12 +18,9 @@ export async function GET(
 
   try {
     // Verify rule exists
-    const ruleDoc = await adminDb
-      .collection(AUTOMATION_COLLECTIONS.rules)
-      .doc(id)
-      .get();
+    const rule = await getRecord(AUTOMATION_COLLECTIONS.rules, id);
 
-    if (!ruleDoc.exists) {
+    if (!rule) {
       return NextResponse.json(
         { error: 'Automation rule not found' },
         { status: 404 }
@@ -32,17 +28,11 @@ export async function GET(
     }
 
     // Fetch execution logs (sorted by most recent first)
-    const snap = await adminDb
-      .collection(AUTOMATION_COLLECTIONS.executionLogs)
-      .where('ruleId', '==', id)
-      .orderBy('startedAt', 'desc')
-      .limit(limit)
-      .get();
-
-    const executions = snap.docs.map((doc: QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const executions = await listRecords(AUTOMATION_COLLECTIONS.executionLogs, {
+      where: [{ column: 'ruleId', value: id }],
+      orderBy: { column: 'startedAt', ascending: false },
+      limit,
+    });
 
     return NextResponse.json({
       success: true,

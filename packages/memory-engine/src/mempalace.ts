@@ -28,11 +28,17 @@ export class MemoryPalace {
 
   private seedDefaultKnowledge() {
     this.store({
-      id: 'system-firebase-sierra-blu',
+      id: 'system-backend-authoritative-supabase',
       room: 'system',
-      drawer: 'credentials',
-      content: 'Official Firebase Project ID is sierra-blu, App ID 1:941030513456:web:56209a1495d69f217086f5',
-      metadata: { projectId: 'sierra-blu' },
+      drawer: 'architecture',
+      content: 'Supabase is the primary authoritative backend, PostgreSQL database, Auth, and Vector memory engine for Sierra Estates (Project Ref: REDACTED-PROJECT, URL: https://REDACTED-PROJECT.supabase.co), fully replacing Firebase across all listings, leads, profiles, and agent memory systems.',
+      metadata: {
+        provider: 'supabase',
+        projectRef: 'REDACTED-PROJECT',
+        url: 'https://REDACTED-PROJECT.supabase.co',
+        status: 'active-primary',
+        replaces: 'firebase',
+      },
       timestamp: new Date().toISOString(),
     });
 
