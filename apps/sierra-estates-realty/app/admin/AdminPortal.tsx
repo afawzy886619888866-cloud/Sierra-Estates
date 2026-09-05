@@ -1428,16 +1428,7 @@ function AdminApp() {
             name: data.name || 'Executive Admin',
           });
         } else {
-          const hasLocalAuth = typeof window !== 'undefined' && (sessionStorage.getItem('sierra_admin_auth') || localStorage.getItem('sierra_admin_auth'));
-          if (!hasLocalAuth) {
-            window.location.href = '/admin/login';
-          } else {
-            setCurrentUser({
-              email: 'admin@sierra-estates.net',
-              role: 'super_admin',
-              name: 'Executive Admin',
-            });
-          }
+          window.location.href = '/admin/login';
         }
       })
       .catch(() => {
@@ -1495,10 +1486,6 @@ function AdminApp() {
 
   const handleSignOut = async () => {
     try {
-      try {
-        sessionStorage.removeItem('sierra_admin_auth');
-        localStorage.removeItem('sierra_admin_auth');
-      } catch {}
       await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
