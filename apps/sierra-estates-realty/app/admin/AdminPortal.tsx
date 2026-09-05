@@ -156,7 +156,23 @@ function OverviewPage({ T }) {
                   <div style={{fontSize:12,fontWeight:600,color:'var(--tx)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.name}</div>
                   <div style={{fontSize:9.5,color:'var(--tx-f)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.interest}</div>
                 </div>
-                <span className="chip chip-amber">{l.stage}</span>
+                <div style={{display:'flex',alignItems:'center',gap:4}}>
+                  <span className="chip chip-amber">{l.stage}</span>
+                  {l.phone && (
+                    <button
+                      className="btn btn-green"
+                      style={{padding:'2px 6px',fontSize:9}}
+                      onClick={() => {
+                        const clean = l.phone.replace(/[^0-9]/g, '');
+                        const msg = encodeURIComponent(`مرحباً ${l.name}، مستشار سييرا العقاري معك بخصوص طلبك لـ ${l.interest}.`);
+                        window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      title="Direct WhatsApp"
+                    >
+                      💬
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -1116,7 +1132,7 @@ function ListingsHubPage({T}){
               <td style={{fontFamily:'JetBrains Mono',fontWeight:700,color:l.ai>=9.5?'var(--emerald)':l.ai>=9?'var(--gold)':'var(--tx-m)'}}>{l.ai}</td>
               <td><span className={`chip ${l.status==='Active'?'chip-green':l.status==='Review'?'chip-amber':'chip-red'}`}>{l.status}</span></td>
               <td><div style={{display:'flex',gap:5}}>
-                <button className="btn btn-ghost" onClick={()=>window.open(`/property/${l.code}`, '_blank')} style={{padding:'4px 9px',fontSize:10}}>View</button>
+                <button className="btn btn-ghost" onClick={()=>window.open(`/property/${l.code}`, '_blank', 'noopener,noreferrer')} style={{padding:'4px 9px',fontSize:10}}>View</button>
                 <button className="btn btn-green" onClick={()=>{
                   const msg = encodeURIComponent(`مرحباً، تفاصيل الوحدة ${l.code} في ${l.cmp} (${l.type} - ${l.price}): متاحة للمعاينة الآن.`);
                   window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
@@ -1527,7 +1543,7 @@ function AdminApp() {
             <button className="topbar-pill" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>
               {theme==='dark'?<Ic.Sun/>:<Ic.Moon/>}
             </button>
-            <a href="/" className="topbar-pill" style={{textDecoration:'none'}}>↗ {T('livesite')}</a>
+            <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
             <button
               className="topbar-pill"
