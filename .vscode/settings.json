@@ -59,7 +59,8 @@
     "**/.next/**",
     "**/.turbo/**",
     "**/dist/**",
-    "**/*.min.*"
+    "**/*.min.*",
+    "**/scripts/**"
   ],
   "cSpell.words": [
     "sierr",
