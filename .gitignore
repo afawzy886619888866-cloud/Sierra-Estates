@@ -18,6 +18,7 @@ graphify-out/
 apps/sierra-estates-realty/lib/**/*.js
 apps/sierra-estates-realty/components/**/*.js
 apps/sierra-estates-realty/app/**/*.js
+apps/sierra-estates-realty/__tests__/**/*.js
 
 # Environment variables & secrets
 .env.local
