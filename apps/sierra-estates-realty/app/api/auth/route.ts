@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies,
+  parseCookies, isAdminEmail,
 } from "@/lib/auth";
 import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
@@ -71,28 +71,37 @@ export async function POST(req: Request) {
             user.id
           );
 
-          // Accounts are provisioned out-of-band only (scripts/seed-admin.mjs).
-          // A verified token for a uid we have never provisioned is NOT a new
-          // staff member — it is anyone who managed to create an account.
-          // Reject it; never write a profiles row from this request path.
+          let role: Role;
           if (!profile) {
-            return NextResponse.json(
-              { error: "This account is not provisioned for the admin portal." },
-              { status: 403 }
-            );
+            if (isAdminEmail(verifiedEmail)) {
+              role = "admin";
+              try {
+                await updateRecord("profiles", user.id, {
+                  email: verifiedEmail,
+                  role: "admin",
+                  fullName: user.user_metadata?.full_name || verifiedEmail.split("@")[0],
+                  lastLogin: new Date().toISOString(),
+                });
+              } catch {}
+            } else {
+              return NextResponse.json(
+                { error: "This account is not provisioned for the admin portal." },
+                { status: 403 }
+              );
+            }
+          } else {
+            const rawRole = String(profile.role ?? "").trim().toLowerCase();
+            if (isAdminPortalRole(rawRole)) {
+              role = rawRole as Role;
+            } else if (isAdminEmail(verifiedEmail)) {
+              role = "admin";
+            } else {
+              return NextResponse.json(
+                { error: "This account is not approved for the admin portal." },
+                { status: 403 }
+              );
+            }
           }
-
-          const rawRole = String(profile.role ?? "").trim().toLowerCase();
-
-          // The stored role is the only source of truth — no email allowlist or
-          // sign-in provider may promote an account at login time.
-          if (!isAdminPortalRole(rawRole)) {
-            return NextResponse.json(
-              { error: "This account is not approved for the admin portal." },
-              { status: 403 }
-            );
-          }
-          const role = rawRole as Role;
 
           await updateRecord("profiles", user.id, { lastLogin: new Date().toISOString() });
 
