@@ -16,9 +16,24 @@ export const Ic = {
 };
 
 /* ── SHIELD LOGO ─────────────────────────────────────────────────────── */
-export function ShieldLogo({size=24}: {size?: number}) {
+export function ShieldLogo({size=28}: {size?: number}) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src="/assets/logo-gold.png" alt="Sierra Estates" width={size} height={size} className="brand-logo" style={{objectFit:'contain',display:'block',flexShrink:0}}/>;
+  return (
+    <img
+      src="/assets/sierra-estates-official-logo.png"
+      alt="Sierra Estates Official Emblem"
+      width={size}
+      height={size}
+      className="brand-logo"
+      style={{
+        objectFit: 'contain',
+        display: 'block',
+        flexShrink: 0,
+        borderRadius: 8,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+      }}
+    />
+  );
 }
 
 /* ── SPARKLINE ───────────────────────────────────────────────────────── */
