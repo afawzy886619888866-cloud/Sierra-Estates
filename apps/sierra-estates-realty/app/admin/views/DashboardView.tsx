@@ -69,7 +69,13 @@ const RECENT_ACTIVITIES: ActivityFeedItem[] = [
   },
 ];
 
-export default function DashboardView({ lang = 'en' }: { lang?: string }) {
+export default function DashboardView({
+  lang = 'en',
+  onNavigate,
+}: {
+  lang?: string;
+  onNavigate?: (tab: string) => void;
+}) {
   const isAr = lang === 'ar';
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [liveData, setLiveData] = useState<{
@@ -79,7 +85,7 @@ export default function DashboardView({ lang = 'en' }: { lang?: string }) {
     conversionRate?: number;
   } | null>(null);
 
-  React.useEffect(() => {
+  const fetchTelemetry = React.useCallback(() => {
     fetch('/api/admin/dashboard')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -87,6 +93,13 @@ export default function DashboardView({ lang = 'en' }: { lang?: string }) {
       })
       .catch((err) => console.warn('[DashboardView] Metrics fetch failed:', err));
   }, []);
+
+  React.useEffect(() => {
+    fetchTelemetry();
+    const handleTelemetryEvent = () => fetchTelemetry();
+    window.addEventListener('sierra:refresh-telemetry', handleTelemetryEvent);
+    return () => window.removeEventListener('sierra:refresh-telemetry', handleTelemetryEvent);
+  }, [fetchTelemetry]);
 
   const metrics = useMemo(() => {
     const total = liveData?.totalListings ? liveData.totalListings.toLocaleString() : '1,547';
@@ -162,6 +175,51 @@ export default function DashboardView({ lang = 'en' }: { lang?: string }) {
           <div className="text-xs text-slate-400 uppercase tracking-wider">{isAr ? 'دقة الذكاء الاصطناعي' : 'AI Match Precision'}</div>
           <div className="text-2xl font-extrabold text-purple-400 mt-1">98.4%</div>
           <div className="text-xs text-emerald-400 mt-1">AVM Tier 1 Verified</div>
+        </div>
+      </div>
+
+      {/* Executive Quick Actions Hub */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-white">⚡ {isAr ? 'إجراءات سريعة للتنفيذ' : 'Executive Quick Actions'}</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 text-cyan-400">OS 3.0</span>
+          </div>
+          <span className="text-xs text-slate-400">{isAr ? 'انتقل مباشرةً للأدوات التشغيلية الحية' : 'Direct shortcuts to operational tools'}</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <button
+            type="button"
+            onClick={() => onNavigate?.('listings')}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
+          >
+            <span>✦</span>
+            <span>{isAr ? 'إدخال عقار جديد' : 'Easy Listing Studio'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('automations')}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/70 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 hover:text-emerald-300 transition-all cursor-pointer shadow-sm"
+          >
+            <span>✉</span>
+            <span>{isAr ? 'حملات الواتساب' : 'WhatsApp Outreach'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('deep_insights')}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-purple-900/40 border border-slate-700/70 hover:border-purple-500/50 text-xs font-semibold text-slate-200 hover:text-purple-300 transition-all cursor-pointer shadow-sm"
+          >
+            <span>⚖</span>
+            <span>{isAr ? 'تقييم الصفقات' : 'Valuation & Arbitrage'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('heatmap')}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/70 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
+          >
+            <span>🗺</span>
+            <span>{isAr ? 'خريطة التجمع الحرارية' : 'New Cairo Heatmap'}</span>
+          </button>
         </div>
       </div>
 

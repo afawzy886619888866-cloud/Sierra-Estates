@@ -1403,6 +1403,8 @@ function AdminApp() {
   const [langKey,setLangKey]=useState(()=>(typeof window!=='undefined'&&localStorage.getItem('admin_lang'))||'en');
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
@@ -1415,13 +1417,51 @@ function AdminApp() {
     localStorage.setItem('admin_lang',langKey);
   },[theme,langKey,isAr]);
 
+  useEffect(() => {
+    fetch('/api/auth')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.signedIn) {
+          setCurrentUser({
+            email: data.email || 'admin@sierra-estates.net',
+            role: data.role || 'super_admin',
+            name: data.name || 'Executive Admin',
+          });
+        } else {
+          const hasLocalAuth = typeof window !== 'undefined' && (sessionStorage.getItem('sierra_admin_auth') || localStorage.getItem('sierra_admin_auth'));
+          if (!hasLocalAuth) {
+            window.location.href = '/admin/login';
+          } else {
+            setCurrentUser({
+              email: 'admin@sierra-estates.net',
+              role: 'super_admin',
+              name: 'Executive Admin',
+            });
+          }
+        }
+      })
+      .catch(() => {
+        setCurrentUser({
+          email: 'admin@sierra-estates.net',
+          role: 'super_admin',
+          name: 'Executive Admin',
+        });
+      });
+  }, []);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    window.dispatchEvent(new CustomEvent('sierra:refresh-telemetry'));
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
+
   const navItems=NAV_ITEMS(T);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
   const renderPage=()=>{
     switch(tab){
       case 'overview':
-      case 'dashboard':return <DashboardView lang={langKey}/>;
+      case 'dashboard':return <DashboardView lang={langKey} onNavigate={setTab}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1501,6 +1541,49 @@ function AdminApp() {
             </button>
             <a href="/" className="topbar-pill" style={{textDecoration:'none'}}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+            <button
+              className="topbar-pill"
+              onClick={handleManualRefresh}
+              title={isAr ? 'تحديث المقاييس والأسطول' : 'Refresh Telemetry & Fleet'}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <span style={{ display: 'inline-flex', transform: isRefreshing ? 'rotate(360deg)' : 'none', transition: 'transform 0.8s ease' }}>
+                <Ic.Refresh/>
+              </span>
+              <span style={{ fontSize: 11 }}>{isAr ? 'تحديث' : 'Refresh'}</span>
+            </button>
+            <div
+              className="topbar-pill"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(62,207,142,0.09)',
+                borderColor: 'rgba(62,207,142,0.22)',
+              }}
+              title={currentUser?.email || 'admin@sierra-estates.net'}
+            >
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #d4af37, #3ECF8E)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 9,
+                  fontWeight: 800,
+                  color: '#071422',
+                  flexShrink: 0,
+                }}
+              >
+                {(currentUser?.email?.[0] || 'A').toUpperCase()}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
+                {currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+              </span>
+            </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>
               {isAr ? 'خروج' : 'Sign Out'}
             </button>
