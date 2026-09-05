@@ -14,7 +14,7 @@ interface LoginTranslations {
   authBadge: string;
   googleBtn: string;
   divider: string;
-  tabPassword: string;
+  tabCredentialsTitle: string;
   tabMagic: string;
   emailLabel: string;
   emailPlaceholder: string;
@@ -42,7 +42,7 @@ const T_EN: LoginTranslations = {
   authBadge: 'Supabase Auth Engine',
   googleBtn: 'Sign In with Google',
   divider: 'OR CONTINUE WITH CREDENTIALS',
-  tabPassword: 'Password Sign-In',
+  tabCredentialsTitle: 'Password Sign-In',
   tabMagic: 'Magic Link OTP',
   emailLabel: 'Executive Email or ID',
   emailPlaceholder: 'admin@sierra-estates.net or admin',
@@ -70,7 +70,7 @@ const T_AR: LoginTranslations = {
   authBadge: 'محرك مصادقة سوبابيز',
   googleBtn: 'تسجيل الدخول عبر Google',
   divider: 'أو المتابعة ببيانات الدخول المعتمدة',
-  tabPassword: 'كلمة المرور',
+  tabCredentialsTitle: 'كلمة المرور',
   tabMagic: 'رابط الدخول السريع',
   emailLabel: 'البريد التنفيذي أو المعرف',
   emailPlaceholder: 'admin@sierra-estates.net أو admin',
@@ -147,8 +147,6 @@ export default function LoginForm() {
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
             }),
           });
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
         } catch (_e) {}
         router.replace('/admin');
       }
@@ -159,10 +157,6 @@ export default function LoginForm() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.signedIn && isAdminPortalRole(data.role)) {
-          try {
-            sessionStorage.setItem('sierra_admin_auth', 'true');
-            localStorage.setItem('sierra_admin_auth', 'true');
-          } catch (_e) {}
           router.replace('/admin');
         }
       })
@@ -185,8 +179,6 @@ export default function LoginForm() {
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
             }),
           });
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
         } catch (_e) {}
         router.replace('/admin');
         router.refresh();
@@ -250,11 +242,6 @@ export default function LoginForm() {
 
       // Check if Server Auth succeeded
       if (serverRes.ok && serverResult.ok) {
-        try {
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
-        } catch (_storageErr) {}
-
         router.replace('/admin');
         router.refresh();
         return;
@@ -619,7 +606,7 @@ export default function LoginForm() {
               fontFamily: 'inherit',
             }}
           >
-            {t.tabPassword}
+            {t.tabCredentialsTitle}
           </button>
           <button
             type="button"
