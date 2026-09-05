@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { isAdminPortalRole } from '@/lib/types';
@@ -10,6 +11,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState('admin@sierra-estates.net');
   const [password, setPassword] = useState('AdminSierra2026!');
+  const [showPassword, setShowPassword] = useState(false);
   const [isMagicLink, setIsMagicLink] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -226,8 +228,35 @@ export default function LoginForm() {
           backdropFilter: 'blur(20px)',
         }}
       >
+        {/* ── Official Brand Logo ─────────────────────────────── */}
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              padding: 4,
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, rgba(212,175,55,0.3), rgba(62,207,142,0.3))',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              marginBottom: 12,
+            }}
+          >
+            <Image
+              src="/assets/sierra-estates-official-logo.png"
+              alt="Sierra Estates Official Logo"
+              width={64}
+              height={64}
+              priority
+              style={{
+                borderRadius: 12,
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+
         {/* ── Brand & Supabase Header ─────────────────────────── */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div
             style={{
               display: 'inline-flex',
@@ -437,34 +466,127 @@ export default function LoginForm() {
 
           {!isMagicLink && (
             <>
-              <label
+              <div
                 style={{
-                  display: 'block',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '.15em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(240,237,229,.58)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: 6,
                 }}
               >
-                Password / كلمة المرور
-              </label>
-              <input
-                className="f-in"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: '.15em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(240,237,229,.58)',
+                  }}
+                >
+                  Password / كلمة المرور
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#3ECF8E',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  {showPassword ? (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                      <span>Hide / إخفاء</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>Show / إظهار</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: 10 }}>
+                <input
+                  className="f-in"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  style={{
+                    marginBottom: 0,
+                    paddingRight: 42,
+                    color: '#F0EDE5',
+                    border: '1px solid rgba(62,207,142,0.2)',
+                    background: 'rgba(0,0,0,0.25)',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: showPassword ? '#3ECF8E' : 'rgba(240,237,229,0.45)',
+                    padding: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {showPassword ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              <div
                 style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 11,
+                  color: 'rgba(240,237,229,0.45)',
                   marginBottom: 20,
-                  color: '#F0EDE5',
-                  border: '1px solid rgba(62,207,142,0.2)',
-                  background: 'rgba(0,0,0,0.25)',
+                  padding: '4px 2px',
                 }}
-              />
+              >
+                <span>Default Pass: <code style={{ color: '#3ECF8E', fontFamily: 'monospace' }}>AdminSierra2026!</code></span>
+                <span style={{ color: 'rgba(62,207,142,0.8)' }}>Constant-Time Verified</span>
+              </div>
             </>
           )}
 

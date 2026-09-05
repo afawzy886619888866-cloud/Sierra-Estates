@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // ssr:false — Next.js was otherwise generating BOTH a static prerendered shell
 // AND a dynamic serverless function for this route despite
@@ -37,6 +38,29 @@ const LoginForm = dynamic(() => import('./LoginForm'), {
       >
         {/* Brand */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              padding: 4,
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, rgba(212,175,55,0.25), rgba(62,207,142,0.25))',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              marginBottom: 10,
+            }}
+          >
+            <Image
+              src="/assets/sierra-estates-official-logo.png"
+              alt="Sierra Estates Official Logo"
+              width={56}
+              height={56}
+              priority
+              style={{
+                borderRadius: 12,
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
           <div
             style={{
               fontFamily: "'JetBrains Mono', monospace",
