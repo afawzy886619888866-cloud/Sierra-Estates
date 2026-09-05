@@ -1469,7 +1469,7 @@ function AdminApp() {
   const renderPage=()=>{
     switch(tab){
       case 'overview':
-      case 'dashboard':return <DashboardView lang={langKey} onNavigate={setTab}/>;
+      case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1497,7 +1497,7 @@ function AdminApp() {
       case 'intelligence':return <AgentIntelligence />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
-      default:return <DashboardView lang={langKey}/>;
+      default:return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
     }
   };
 
