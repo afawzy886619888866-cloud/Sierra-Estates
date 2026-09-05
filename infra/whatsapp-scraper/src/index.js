@@ -36,6 +36,7 @@ import qrcode from 'qrcode-terminal';
 import fetch from 'node-fetch';
 import admin from 'firebase-admin';
 import pino from 'pino';
+import { createClient } from '@supabase/supabase-js';
 
 // ── Configuration from env vars ──
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'http://n8n:5678/webhook/whatsapp-incoming';
@@ -46,7 +47,30 @@ const QR_ONLY = process.argv.includes('--qr-only');
 const logger = pino({ level: LOG_LEVEL, name: 'sierra-wa' });
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Firebase Admin Init (for direct Firestore writes from this container)
+ *  Supabase Client Init (Authoritative PropTech Database)
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+let supabase = null;
+if (SUPABASE_URL && SUPABASE_KEY) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    logger.info('Supabase Client initialized successfully as authoritative DB');
+  } catch (err) {
+    logger.error({ err: err.message }, 'Supabase Client init failed');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Firebase Admin Init (Legacy fallback)
  * ────────────────────────────────────────────────────────────────────────── */
 
 let firestore = null;
@@ -62,7 +86,7 @@ try {
     firestore = admin.firestore();
     logger.info('Firebase Admin initialized successfully');
   } else {
-    logger.warn('Firebase Admin not configured — Firestore writes disabled (n8n will handle them)');
+    logger.warn('Firebase Admin not configured — using Supabase for direct writes');
   }
 } catch (err) {
   logger.error({ err: err.message }, 'Firebase Admin init failed');
@@ -109,12 +133,78 @@ async function forwardToN8n(payload) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Create / update client + request in Firestore directly
+ *  Create / update client + request in Supabase & Firestore directly
  *  (fallback if n8n is down — ensures no lead is lost)
  * ────────────────────────────────────────────────────────────────────────── */
 
+async function writeClientToSupabase(phone, name) {
+  if (!supabase) return null;
+  try {
+    const { data: existing } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('phone', phone)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      return existing[0];
+    }
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([{
+        name: name || phone,
+        phone: phone,
+        source: 'whatsapp_bot',
+        stage: 'new',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+      .select();
+    if (error) {
+      logger.warn({ err: error.message }, 'Supabase lead write error');
+      return null;
+    }
+    return data?.[0] || null;
+  } catch (err) {
+    logger.error({ err: err.message }, 'Supabase lead write failed');
+    return null;
+  }
+}
+
+async function createRequestInSupabase(leadId, phone, messageText) {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('inquiries')
+      .insert([{
+        lead_id: leadId,
+        phone: phone,
+        channel: 'whatsapp',
+        message: messageText,
+        status: 'bot_handling',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }])
+      .select();
+    if (error) {
+      logger.warn({ err: error.message }, 'Supabase inquiry write error');
+      return null;
+    }
+    return data?.[0] || null;
+  } catch (err) {
+    logger.error({ err: err.message }, 'Supabase inquiry write failed');
+    return null;
+  }
+}
+
 async function writeClientToFirestore(phone, name) {
-  if (!firestore) return null;
+  // Always persist to authoritative Supabase leads table first
+  const supabaseLead = await writeClientToSupabase(phone, name);
+
+  if (!firestore) {
+    return supabaseLead || { id: `supa-${phone}`, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
+  }
+
   try {
     // Check if client already exists (dedup by phone)
     const existing = await firestore.collection('clients').where('phone_number', '==', phone).limit(1).get();
@@ -130,15 +220,21 @@ async function writeClientToFirestore(phone, name) {
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     });
-    return { id: ref.id, name: name || phone, phone_number: phone };
+    return { id: ref.id, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
   } catch (err) {
     logger.error({ err: err.message }, 'Firestore client write failed');
-    return null;
+    return supabaseLead || null;
   }
 }
 
-async function createRequestInFirestore(clientId, messageText) {
-  if (!firestore) return null;
+async function createRequestInFirestore(clientId, messageText, phone) {
+  // Always persist to authoritative Supabase inquiries table first
+  const supabaseInquiry = await createRequestInSupabase(clientId, phone, messageText);
+
+  if (!firestore) {
+    return supabaseInquiry || { id: `supa-inq-${Date.now()}` };
+  }
+
   try {
     const ref = await firestore.collection('requests').add({
       client_id: clientId,
@@ -156,7 +252,7 @@ async function createRequestInFirestore(clientId, messageText) {
     return { id: ref.id };
   } catch (err) {
     logger.error({ err: err.message }, 'Firestore request create failed');
-    return null;
+    return supabaseInquiry || null;
   }
 }
 
