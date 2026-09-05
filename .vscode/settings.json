@@ -17,6 +17,9 @@
   "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.languageServer": "Jedi",
   "python.analysis.typeCheckingMode": "basic",
+  "compilets.autoStart": false,
+  "compile-hero.disable-compile-files-on-did-save-code": true,
+  "typescript.compileOnSave": false,
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,
