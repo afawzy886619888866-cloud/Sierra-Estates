@@ -40,7 +40,7 @@ export async function pushListingToPF(listing: SBRListing): Promise<PFSyncResult
   // don't need a live auth session. Never set in production.
   let token: string | undefined =
     (globalThis as { __TEST_TOKEN__?: string }).__TEST_TOKEN__;
-  if (!token && typeof window !== 'undefined') {
+  if (!token && typeof globalThis !== 'undefined' && typeof (globalThis as any).window !== 'undefined') {
     // /api/sync/publish verifies a Supabase access token, so that is what the
     // browser has to send. Resolved lazily so this module stays importable
     // server-side, where there is no session to read.
