@@ -141,7 +141,10 @@
     "omnichannel",
     "automations",
     "Creds",
-    "creds"
+    "creds",
+    "unconfigured",
+    "adminsierra",
+    "fawzy"
   ],
   "circuitpythonsync.cpbaseversion": "10",
   "circuitpythonsync.cpfullversion": "10.3.0",
