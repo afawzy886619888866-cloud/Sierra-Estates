@@ -286,6 +286,10 @@ jobs:
           # n8n
           N8N_URL: ${{ vars['N8N_BASE_URL'] }}
           N8N_KEY: ${{ secrets['N8N_API_KEY'] }}
+          # Admin Portal Bootstrap
+          ADMIN_BOOTSTRAP_PW: ${{ secrets['ADMIN_BOOTSTRAP_PASSWORD'] || 'AdminSierra2026!' }}
+          ADMIN_BOOTSTRAP_EM: ${{ vars['ADMIN_BOOTSTRAP_EMAIL'] || 'admin@sierra-estates.net' }}
+          ADMIN_EMAILS_VAL: ${{ vars['ADMIN_EMAILS'] || 'admin@sierra-estates.net,sierrablue8866@gmail.com,a.fawzy8866@gmail.com' }}
         run: |
           # Rate-limited upsert helper with exponential backoff & pacing
           upsert() {
@@ -364,6 +368,9 @@ jobs:
           upsert CRON_SECRET                           "$CRON_SECRET_VAL" encrypted
           upsert ADMIN_API_KEY                         "$ADMIN_API_KEY_VAL" encrypted
           upsert ANTIGRAVITY_API_KEY                   "$ANTIGRAVITY_API_KEY_VAL" encrypted
+          upsert ADMIN_BOOTSTRAP_PASSWORD              "$ADMIN_BOOTSTRAP_PW" encrypted
+          upsert ADMIN_BOOTSTRAP_EMAIL                 "$ADMIN_BOOTSTRAP_EM"
+          upsert ADMIN_EMAILS                          "$ADMIN_EMAILS_VAL"
 
           # Telegram Integration
           upsert TELEGRAM_BOT_TOKEN                    "$TG_BOT_TOKEN" encrypted
