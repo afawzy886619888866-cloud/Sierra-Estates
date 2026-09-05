@@ -1,17 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  updateDoc,
-  doc,
-  serverTimestamp,
-  DocumentData,
-  QueryConstraint,
-} from 'firebase/firestore';
+import { listRecords, updateRecord, type WhereClause } from '@sierra-estates/db';
 
 import type { PFSyncResult, SBRListing } from './property-finder';
 import { getPFListingAnalytics, pushListingToPF } from './property-finder';
@@ -26,6 +14,9 @@ export type LeadStage =
   | 'closed_lost';
 
 export type LeadStatus = 'pending_review' | 'active' | 'warm' | 'hot' | 'cold';
+
+/** A row as it comes back from the database. */
+type DocumentData = Record<string, unknown>;
 
 export interface CRMLead extends DocumentData {
   id: string;
@@ -88,39 +79,40 @@ export function usePFLeads(options: {
   const [leads, setLeads] = useState<CRMLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const db = getFirestore();
 
   useEffect(() => {
-    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
+    // Firestore's onSnapshot kept this live; a Postgres read is one-shot, so
+    // the hook fetches on mount and whenever its inputs change.
+    let cancelled = false;
 
+    const where: WhereClause[] = [];
     if (sourceFilter === 'property_finder') {
-      constraints.unshift(where('source', '==', 'property_finder'));
+      where.push({ column: 'source', value: 'property_finder' });
     }
-
     if (agentId) {
-      constraints.unshift(where('agentAssigned', '==', agentId));
+      where.push({ column: 'agentAssigned', value: agentId });
     }
 
-    const leadsQuery = query(collection(db, 'leads'), ...constraints);
-
-    return onSnapshot(
-      leadsQuery,
-      (snapshot) => {
-        let docs = snapshot.docs.map((leadDoc) => ({ id: leadDoc.id, ...leadDoc.data() } as CRMLead));
-
-        if (minNeuralScore > 0) {
-          docs = docs.filter((lead) => (lead.neuralMatchScore ?? 0) >= minNeuralScore);
-        }
-
-        setLeads(docs.slice(0, maxLimit));
+    listRecords<CRMLead>('leads', {
+      where,
+      orderBy: { column: 'createdAt', ascending: false },
+    })
+      .then((rows) => {
+        if (cancelled) return;
+        const filtered = minNeuralScore > 0
+          ? rows.filter((lead) => (lead.neuralMatchScore ?? 0) >= minNeuralScore)
+          : rows;
+        setLeads(filtered.slice(0, maxLimit));
         setLoading(false);
-      },
-      (snapshotError) => {
-        setError(snapshotError.message);
+      })
+      .catch((queryError: unknown) => {
+        if (cancelled) return;
+        setError(queryError instanceof Error ? queryError.message : String(queryError));
         setLoading(false);
-      },
-    );
-  }, [agentId, db, maxLimit, minNeuralScore, sourceFilter]);
+      });
+
+    return () => { cancelled = true; };
+  }, [agentId, maxLimit, minNeuralScore, sourceFilter]);
 
   const grouped = useMemo(() => {
     const groups = new Map<LeadStage, CRMLead[]>();
@@ -151,33 +143,26 @@ export function usePFLeads(options: {
 
   const updateStage = useCallback(
     async (leadId: string, stage: LeadStage) => {
-      await updateDoc(doc(db, 'leads', leadId), {
+      await updateRecord('leads', leadId, {
         stage,
-        lastContact: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        lastContact: new Date().toISOString(),
       });
     },
-    [db],
+    [],
   );
 
   const updateStatus = useCallback(
     async (leadId: string, status: LeadStatus) => {
-      await updateDoc(doc(db, 'leads', leadId), {
-        status,
-        updatedAt: serverTimestamp(),
-      });
+      await updateRecord('leads', leadId, { status });
     },
-    [db],
+    [],
   );
 
   const assignAgent = useCallback(
     async (leadId: string, assignedAgentId: string) => {
-      await updateDoc(doc(db, 'leads', leadId), {
-        agentAssigned: assignedAgentId,
-        updatedAt: serverTimestamp(),
-      });
+      await updateRecord('leads', leadId, { agentAssigned: assignedAgentId });
     },
-    [db],
+    [],
   );
 
   return {
@@ -211,36 +196,36 @@ export function usePFListings(options: {
   const [listings, setListings] = useState<ListingWithAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const db = getFirestore();
 
   useEffect(() => {
-    const constraints: QueryConstraint[] = [where('status', '==', 'active'), orderBy('aiScore', 'desc')];
+    let cancelled = false;
 
+    const where: WhereClause[] = [{ column: 'status', value: 'active' }];
     if (syncedOnly) {
-      constraints.unshift(where('syncedToPF', '==', true));
+      where.push({ column: 'syncedToPF', value: true });
     }
-
     if (compound) {
-      constraints.unshift(where('compound', '==', compound));
+      where.push({ column: 'compound', value: compound });
     }
 
-    const listingsQuery = query(collection(db, 'listings'), ...constraints);
+    listRecords<ListingWithAnalytics>('listings', {
+      where,
+      orderBy: { column: 'aiScore', ascending: false },
+      limit: maxLimit,
+    })
+      .then((rows) => {
+        if (cancelled) return;
+        setListings(rows);
+        setLoading(false);
+      })
+      .catch((queryError: unknown) => {
+        if (cancelled) return;
+        setError(queryError instanceof Error ? queryError.message : String(queryError));
+        setLoading(false);
+      });
 
-    return onSnapshot(
-      listingsQuery,
-      (snapshot) => {
-        const docs = snapshot.docs
-          .slice(0, maxLimit)
-          .map((listingDoc) => ({ id: listingDoc.id, ...listingDoc.data() } as ListingWithAnalytics));
-        setListings(docs);
-        setLoading(false);
-      },
-      (snapshotError) => {
-        setError(snapshotError.message);
-        setLoading(false);
-      },
-    );
-  }, [compound, db, maxLimit, syncedOnly]);
+    return () => { cancelled = true; };
+  }, [compound, maxLimit, syncedOnly]);
 
   const syncListing = useCallback(async (listing: SBRListing): Promise<PFSyncResult> => pushListingToPF(listing), []);
   const fetchAnalytics = useCallback(async (pfListingId: string) => getPFListingAnalytics(pfListingId), []);

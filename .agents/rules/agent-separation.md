@@ -25,8 +25,8 @@ This project employs a multi-agent modular architecture. Each agent has specific
   - Dispatch tasks to Stage-9 Closer and OpenClaw.
 
 ## 4. Deployment & Infrastructure Agent
-- **Role**: CI/CD, Vercel Edge/Serverless, and Firebase Operations.
+- **Role**: CI/CD, Vercel Edge/Serverless, and Supabase Database & Vector Operations.
 - **Responsibilities**:
   - Deploy to Vercel preview/production.
-  - Validate and deploy Firestore security rules and storage rules.
+  - Apply and validate Supabase PostgreSQL schemas, pgvector indexes, and RLS policies.
   - Run smoke tests and regression checks.

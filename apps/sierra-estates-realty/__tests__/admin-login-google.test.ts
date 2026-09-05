@@ -36,16 +36,32 @@ describe('Admin Login & Google Mail Authentication', () => {
     });
   });
 
+  // The hardcoded staff-password list ("sierra2026", "admin", "password", …)
+  // was removed: it made the email check irrelevant and handed out signed
+  // admin cookies in production. These now exercise the replacement contract —
+  // a single operator-configured password. Full coverage, including the
+  // regression guard on the old passwords, lives in auth-bootstrap-login.test.ts.
   describe('tryDemoLogin with staff credentials', () => {
-    it('authenticates admin@sierra-estates.net with sierra2026', () => {
-      const session = tryDemoLogin('admin@sierra-estates.net', 'sierra2026');
+    const ORIGINAL_BOOTSTRAP_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+
+    beforeEach(() => {
+      process.env.ADMIN_BOOTSTRAP_PASSWORD = 'operator-configured-pass';
+    });
+
+    afterEach(() => {
+      if (ORIGINAL_BOOTSTRAP_PASSWORD === undefined) delete process.env.ADMIN_BOOTSTRAP_PASSWORD;
+      else process.env.ADMIN_BOOTSTRAP_PASSWORD = ORIGINAL_BOOTSTRAP_PASSWORD;
+    });
+
+    it('authenticates admin@sierra-estates.net with the configured password', () => {
+      const session = tryDemoLogin('admin@sierra-estates.net', 'operator-configured-pass');
       expect(session).not.toBeNull();
       expect(session?.role).toBe('admin');
       expect(session?.email).toBe('admin@sierra-estates.net');
     });
 
-    it('authenticates Google Mail admin account with staff password', () => {
-      const session = tryDemoLogin('admin@gmail.com', 'sierra2026');
+    it('authenticates a Google Mail admin account with the configured password', () => {
+      const session = tryDemoLogin('admin@gmail.com', 'operator-configured-pass');
       expect(session).not.toBeNull();
       expect(session?.role).toBe('admin');
     });
@@ -54,10 +70,19 @@ describe('Admin Login & Google Mail Authentication', () => {
       const session = tryDemoLogin('admin@sierra-estates.net', 'wrong-pass');
       expect(session).toBeNull();
     });
+
+    it('rejects the retired hardcoded staff password', () => {
+      expect(tryDemoLogin('admin@sierra-estates.net', 'sierra2026')).toBeNull();
+    });
   });
 
   describe('POST /api/auth endpoint', () => {
-    it('authenticates Google Mail sign-in with provider=google', async () => {
+    it('refuses a google sign-in claim that carries no verified token', async () => {
+      // This previously returned 200 with an admin cookie: `provider`, `email`
+      // and `name` all came from the request body and none was verified, so
+      // any caller could name themselves admin. Under Supabase Auth the client
+      // completes the Google flow and sends a real access token, which Path A
+      // verifies; a body-only claim has no way in.
       const req = new NextRequest('http://localhost:3000/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -70,31 +95,33 @@ describe('Admin Login & Google Mail Authentication', () => {
       });
 
       const res = await POST(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.ok).toBe(true);
-      expect(data.role).toBe('admin');
-      
-      const setCookie = res.headers.get('set-cookie');
-      expect(setCookie).toContain('sierra_sess=');
+      expect(res.status).not.toBe(200);
+      expect(res.headers.get('set-cookie')).toBeNull();
     });
 
-    it('authenticates standard staff login', async () => {
-      const req = new NextRequest('http://localhost:3000/api/auth', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'signin',
-          email: 'admin@sierra-estates.net',
-          password: 'sierra2026',
-        }),
-      });
+    it('authenticates standard staff login with the configured operator password', async () => {
+      const original = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+      process.env.ADMIN_BOOTSTRAP_PASSWORD = 'operator-configured-pass';
+      try {
+        const req = new NextRequest('http://localhost:3000/api/auth', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            action: 'signin',
+            email: 'admin@sierra-estates.net',
+            password: 'operator-configured-pass',
+          }),
+        });
 
-      const res = await POST(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.ok).toBe(true);
-      expect(data.role).toBe('admin');
+        const res = await POST(req);
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.ok).toBe(true);
+        expect(data.role).toBe('admin');
+      } finally {
+        if (original === undefined) delete process.env.ADMIN_BOOTSTRAP_PASSWORD;
+        else process.env.ADMIN_BOOTSTRAP_PASSWORD = original;
+      }
     });
 
     it('rejects unauthenticated requests without credentials', async () => {

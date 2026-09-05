@@ -1,8 +1,14 @@
 {
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
-  "files": [],
   "compilerOptions": {
+    // This config's `include` spans the whole monorepo, so a bare `tsc` run
+    // from the root (or from a package with no tsconfig of its own, which is
+    // how it happened) emitted a .js beside every .ts source. Those artifacts
+    // shadow their sources at resolution time — a stale next.config.js broke
+    // the build and stale *.test.js broke 147 jest suites. Packages that
+    // genuinely compile set their own outDir and override this.
+    "noEmit": true,
     "target": "ES2020",
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -10,8 +16,10 @@
       "ES2020"
     ],
     "paths": {
+      "@/*": [
+        "./apps/sierra-estates-realty/*"
+      ],
       "@sierra-estates/exchange": [
-        "./packages/exchange/dist/index.d.ts",
         "./packages/exchange/exchange-client.ts"
       ],
       "@sierra-estates/agents": [
@@ -21,11 +29,9 @@
         "./packages/agents-core/src/index.ts"
       ],
       "@sierra-estates/memory-engine": [
-        "./packages/memory-engine/dist/index.d.ts",
         "./packages/memory-engine/src/index.ts"
       ],
       "@sierra-estates/obsidian": [
-        "./packages/obsidian/dist/index.d.ts",
         "./packages/obsidian/src/index.ts"
       ],
       "@sierra-estates/db": [
@@ -33,6 +39,13 @@
       ]
     }
   },
+  "include": [
+    "packages/**/*",
+    "apps/**/*",
+    "scripts/**/*",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
   "exclude": [
     "node_modules",
     "dist",

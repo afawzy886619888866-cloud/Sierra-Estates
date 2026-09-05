@@ -6,8 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 export async function GET(
@@ -21,11 +20,11 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const doc = await adminDb.collection('followups').doc(id).get();
-    if (!doc.exists) {
+    const followup = await getRecord('followups', id);
+    if (!followup) {
       return NextResponse.json({ error: 'Follow-up not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, followup: { id: doc.id, ...doc.data() } });
+    return NextResponse.json({ success: true, followup });
   } catch (err) {
     logger.error('[followups] GET by id failed:', err);
     return NextResponse.json(
@@ -47,27 +46,25 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const ref = adminDb.collection('followups').doc(id);
-    const existing = await ref.get();
-    if (!existing.exists) {
+    const existing = await getRecord<RecordData>('followups', id);
+    if (!existing) {
       return NextResponse.json({ error: 'Follow-up not found' }, { status: 404 });
     }
 
-    const update: Record<string, unknown> = { ...body, updatedAt: Timestamp.now() };
+    const update: RecordData = { ...body, updatedAt: new Date().toISOString() };
 
     // If status is being set to 'completed', auto-set completedAt
-    if (body.status === 'completed' && !existing.data()?.completedAt) {
-      update.completedAt = Timestamp.now();
+    if (body.status === 'completed' && !existing.completedAt) {
+      update.completedAt = new Date().toISOString();
     }
 
-    // If dueAt is being updated as a string, convert to Timestamp
+    // If dueAt is being updated as a string, normalise it to a timestamp
     if (typeof body.dueAt === 'string') {
-      update.dueAt = Timestamp.fromDate(new Date(body.dueAt));
+      update.dueAt = new Date(body.dueAt).toISOString();
     }
 
-    await ref.update(update);
-    const updated = await ref.get();
-    return NextResponse.json({ success: true, followup: { id: updated.id, ...updated.data() } });
+    const updated = await updateRecord('followups', id, update);
+    return NextResponse.json({ success: true, followup: updated });
   } catch (err) {
     logger.error('[followups] PATCH failed:', err);
     return NextResponse.json(
@@ -88,7 +85,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    await adminDb.collection('followups').doc(id).delete();
+    await deleteRecord('followups', id);
     return NextResponse.json({ success: true, id });
   } catch (err) {
     logger.error('[followups] DELETE failed:', err);

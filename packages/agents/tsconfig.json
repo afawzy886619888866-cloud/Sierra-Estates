@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@sierra-estates/agents-core": [
+        "../agents-core/src/index.ts"
+      ],
+      "@sierra-estates/agents-core/*": [
+        "../agents-core/src/*"
+      ],
+      "@sierra-estates/memory-engine": [
+        "../memory-engine/src/index.ts"
+      ],
+      "@sierra-estates/obsidian": [
+        "../obsidian/src/index.ts"
+      ],
+      "@sierra-estates/db": [
+        "../db/lib/index.ts"
+      ]
+    },
+    "lib": [
+      "ES2020",
+      "DOM"
+    ]
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

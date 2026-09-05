@@ -47,7 +47,7 @@ jobs:
           5.0.x
           6.0.x
     - name: Run Microsoft Security DevOps
-      uses: microsoft/security-devops-action@v1
+      uses: microsoft/security-devops-action@v1.12.0
       id: msdo
       with:
         # bandit (Python/Bandit via Guardian's bandit_runner.exe) crashes on this

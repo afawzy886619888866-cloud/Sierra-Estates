@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    "active-twist.amphion-agent",
+    "supabase.postgrestools",
+    "ckolkman.vscode-postgres",
+    "mtxr.sqltools",
+    "dbaeumer.vscode-eslint",
+    "vitest.explorer",
+    "github.vscode-github-actions",
+    "redhat.vscode-yaml",
+    "mechatroner.rainbow-csv",
+    "eamodio.gitlens",
+    "ms-python.python",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "usernamehw.errorlens",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "formulahendry.auto-close-tag",
+    "mikestead.dotenv",
+    "streetsidesoftware.code-spell-checker",
+    "aaron-bond.better-comments",
+    "yoavbls.pretty-ts-errors"
+  ]
+}

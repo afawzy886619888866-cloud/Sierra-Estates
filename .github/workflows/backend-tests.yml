@@ -15,6 +15,7 @@ on:
       - 'functions/**'
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
+  workflow_dispatch: {}
 
 concurrency:
   group: backend-tests-${{ github.ref }}
@@ -42,3 +43,23 @@ jobs:
       - name: Run pytest
         working-directory: apps/api
         run: pytest -v
+
+  functions-backend:
+    name: Firebase Functions (functions/)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save --no-audit --no-fund --no-workspaces --install-strategy=nested
+              jest@^29 firebase-admin@^13 firebase-functions@^6 typescript@^5 @types/node@^20
+      - run: ./node_modules/.bin/tsc
+      - run: npx jest --ci
+

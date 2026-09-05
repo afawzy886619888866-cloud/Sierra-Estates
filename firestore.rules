@@ -59,13 +59,19 @@ service cloud.firestore {
     //     falls back to static data and leads never reach Firestore / Laila bot.
     match /houyez_listings/{id}  { allow read: if true;  allow write: if isStaff(); }
     match /houyez_compounds/{id} { allow read: if true;  allow write: if isStaff(); }
+    // Writes arrive via the Admin SDK in app/api/inquiries/route.ts and
+    // app/api/careers/apply/route.ts, which enforce zod validation and a 24 KB
+    // body cap. An anonymous `allow create` here bypasses both, and matched a
+    // payload shape nothing produces: the inquiries API writes status
+    // 'S1_NEW_LEAD' (not 'new'), and career applications are written to
+    // `career_applications`, not `careers`. Verified: no client-SDK or static
+    // page writes to either collection. Re-add only alongside a real
+    // client-side writer, and gate it on that writer's actual payload.
     match /inquiries/{id} {
-      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
-      allow read, update, delete: if isStaff();
+      allow read, write: if isStaff();
     }
     match /careers/{id} {
-      allow create: if request.resource.data.status == 'new' && request.resource.data.size() <= 40;
-      allow read, update, delete: if isStaff();
+      allow read, write: if isStaff();
     }
 
     // --- Share links. `allow read: if true` on a wildcard document match
@@ -95,15 +101,20 @@ service cloud.firestore {
     }
 
     // --- Users: a user may read their own profile; writes are constrained ---
-    // Staff may update user docs, but NOBODY may change the `role` field on
-    // their OWN document — that would be self privilege-escalation (an agent
-    // promoting itself to admin). Provisioning and removal are admin-only;
-    // server-side provisioning uses the Admin SDK, which bypasses these rules.
+    // `role` is writable by admins ONLY, on any document. An earlier version of
+    // this rule only blocked changing `role` on your OWN document, which still
+    // let any isStaff() caller — agents included — promote a colleague to admin
+    // (or demote every admin to viewer and lock the org out). Two agents could
+    // promote each other. Role is the privilege boundary, so it needs isAdmin()
+    // regardless of whose document it is.
+    // Non-role fields (name, phone, preferences) stay staff-writable.
+    // Provisioning and removal are admin-only; server-side provisioning uses the
+    // Admin SDK, which bypasses these rules.
     match /users/{uid} {
       allow read:   if isSignedIn() && (request.auth.uid == uid || isStaff());
-      allow update: if isStaff()
-        && (request.auth.uid != uid
-            || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      allow update: if (isStaff()
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+                    || isAdmin();
       allow create, delete: if isAdmin();
     }
 

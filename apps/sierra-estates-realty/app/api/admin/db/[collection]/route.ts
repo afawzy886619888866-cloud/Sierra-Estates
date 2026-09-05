@@ -1,8 +1,8 @@
 /**
  * GET /api/admin/db/:collection
  *
- * Database browser for admin super-users. Lists documents in any Firestore
- * collection with optional pagination + simple field filters.
+ * Database browser for admin super-users. Lists rows from any allowlisted
+ * Postgres table with optional pagination + simple field filters.
  *
  * SECURITY: this endpoint is gated behind verifyAdminRequest AND an
  * additional `role === 'superadmin'` check — regular admins cannot use it
@@ -11,7 +11,7 @@
  *
  * Query params:
  *   - limit  (default 100, max 500)
- *   - offset (default 0, handled by client since Firestore cursors are complex)
+ *   - offset (default 0)
  *   - where  (format: "field==value" — single filter, basic equality only)
  *   - order  (format: "field" or "field:desc" — single order by)
  *
@@ -24,20 +24,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest, AuthResult } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords, getRecord, insertRecord, type WhereClause } from '@sierra-estates/db';
+import { isBrowseableTable } from '@/lib/server/browseable-tables';
 import { logger } from '@/lib/logger';
-
-// Collections that are NEVER browseable, even for superadmins.
-const BLOCKED_COLLECTIONS = new Set([
-  'admin_credentials',
-  'service_accounts',
-  'system_secrets',
-]);
 
 async function callerIsSuperadmin(authResult: AuthResult): Promise<boolean> {
   if (!authResult.uid) return false;
-  const callerDoc = await adminDb.collection('users').doc(authResult.uid).get();
-  return callerDoc.data()?.role === 'superadmin';
+  const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
+  return caller?.role === 'superadmin';
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ collection: string }> }) {
@@ -54,9 +48,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
   }
 
   const { collection } = await params;
-  if (BLOCKED_COLLECTIONS.has(collection)) {
+  if (!isBrowseableTable(collection)) {
     return NextResponse.json(
-      { error: `Collection '${collection}' is not browseable` },
+      { error: `Table '${collection}' is not browseable` },
       { status: 403 }
     );
   }
@@ -67,7 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
     const where = searchParams.get('where');
     const order = searchParams.get('order');
 
-    let query: FirebaseFirestore.Query = adminDb.collection(collection);
+    const clauses: WhereClause[] = [];
 
     // Simple equality filter: "field==value"
     if (where) {
@@ -79,33 +73,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
         if (value === 'true') coerced = true;
         else if (value === 'false') coerced = false;
         else if (/^-?\d+(\.\d+)?$/.test(value)) coerced = Number(value);
-        query = query.where(field, '==', coerced);
+        clauses.push({ column: field, value: coerced });
       }
     }
 
     // Order: "field" or "field:desc"
-    if (order) {
-      const [field, direction] = order.split(':');
-      query = query.orderBy(field, direction === 'desc' ? 'desc' : 'asc');
-    }
+    const [orderField, orderDirection] = (order ?? '').split(':');
 
-    const snap = await query.limit(limit).get();
-
-    const docs = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
-      const data = doc.data();
-      // Serialize Firestore Timestamps to ISO strings for JSON transport
-      const serialized: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(data)) {
-        if (value && typeof value === 'object' && typeof (value as any).toDate === 'function') {
-          serialized[key] = (value as any).toDate().toISOString();
-        } else if (value && typeof value === 'object' && Array.isArray((value as any).values)) {
-          // Firestore arrayValue
-          serialized[key] = (value as any).values;
-        } else {
-          serialized[key] = value;
-        }
-      }
-      return { id: doc.id, ...serialized };
+    // No Timestamp serialisation step: timestamptz columns already arrive as
+    // ISO strings and JSONB as plain objects.
+    const docs = await listRecords(collection, {
+      where: clauses,
+      ...(orderField
+        ? { orderBy: { column: orderField, ascending: orderDirection !== 'desc' } }
+        : {}),
+      limit,
     });
 
     return NextResponse.json({
@@ -140,19 +122,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ col
   }
 
   const { collection } = await params;
-  if (BLOCKED_COLLECTIONS.has(collection)) {
-    return NextResponse.json({ error: `Collection '${collection}' is read-only` }, { status: 403 });
+  if (!isBrowseableTable(collection)) {
+    return NextResponse.json({ error: `Table '${collection}' is read-only` }, { status: 403 });
   }
 
   try {
     const body = await req.json();
-    const { Timestamp } = await import('firebase-admin/firestore');
-    const ref = await adminDb.collection(collection).add({
+    const created = await insertRecord<{ id: string }>(collection, {
       ...body,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
-    return NextResponse.json({ success: true, id: ref.id }, { status: 201 });
+    return NextResponse.json({ success: true, id: created.id }, { status: 201 });
   } catch (err) {
     logger.error(`[db-editor] Failed to create doc:`, err);
     return NextResponse.json(

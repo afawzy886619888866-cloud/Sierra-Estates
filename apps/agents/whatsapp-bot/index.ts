@@ -46,38 +46,30 @@ const adminPhones = (process.env.ADMIN_PHONES || '')
   .map(p => normalizePhone(p))
   .filter(Boolean);
 
-// Initialize Firebase Admin SDK for Firestore Lead Verification
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+// Supabase lead verification. Resolved through the shared record layer, which
+// owns credential resolution and refuses to fall back to the anon key.
+import { listRecords } from '@sierra-estates/db';
 
-if (getApps().length === 0) {
-  try {
-    initializeApp();
-    console.log('🔥 Firebase Admin SDK initialized in WhatsApp Bot.');
-  } catch (err) {
-    console.warn('⚠️ Failed to initialize Firebase Admin SDK. Firestore lead check will be bypassed:', err instanceof Error ? err.message : err);
-  }
-}
-
-const db = getApps().length > 0 ? getFirestore() : null;
-
-async function checkFirestoreLead(phoneStr: string): Promise<boolean> {
-  if (!db) return false;
+async function checkStoredLead(phoneStr: string): Promise<boolean> {
   try {
     const cleanPhone = normalizePhone(phoneStr);
-    const leadsRef = db.collection('inquiries');
 
     // Check every stored-phone form a lead might have been saved under:
-    // the raw string as received, plus the canonical variants.
+    // the raw string as received, plus the canonical variants. One `in` query
+    // rather than a request per candidate, which is what the Firestore version
+    // did because it could not express the disjunction.
     const candidates = [phoneStr, ...phoneLookupVariants(cleanPhone)];
-    for (const candidate of candidates) {
-      const q = await leadsRef.where('phone', '==', candidate).get();
-      if (!q.empty) return true;
-    }
+    const matches = await listRecords<{ id: string }>('inquiries', {
+      where: [{ column: 'phone', op: 'in', value: candidates }],
+      select: 'id',
+      limit: 1,
+    });
 
-    return false;
+    return matches.length > 0;
   } catch (err) {
-    console.error('⚠️ Firestore query error during lead verification:', err);
+    // Unconfigured or unreachable database → treat as "not a known lead"
+    // rather than crashing the bot, as the Firestore version did.
+    console.error('⚠️ Lead verification query failed:', err instanceof Error ? err.message : err);
     return false;
   }
 }
@@ -305,7 +297,7 @@ client.on('message', async (msg: any) => {
 
     if (!isAllowed && !isAdmin && config.enabled) {
       // Check if this contact exists as a lead in Firestore
-      const isLead = await checkFirestoreLead(phone);
+      const isLead = await checkStoredLead(phone);
       if (isLead) {
         console.log(`✅ [Auto-Whitelist] Lead found in Firestore for +${cleanSender}. Adding to whitelist.`);
         config.numbers.push(cleanSender);

@@ -6,7 +6,7 @@ console.log('══════════════════════�
 console.log('');
 console.log('  1. DeepSeek Reasoner API (150K calls / mo):      $18.50');
 console.log('  2. Google Vertex AI Multi-Modal Reasoning:       $12.00');
-console.log('  3. Cloud Firestore & Realtime Sync (320 units):   $4.50');
+console.log('  3. Supabase PostgreSQL & pgvector Database:        $5.00');
 console.log('  4. Cloud Run / Vercel Pro Hosting:               $20.00');
 console.log('  5. Twilio & WhatsApp Cloud API Message Routing:  $35.00');
 console.log('  ------------------------------------------------------------');

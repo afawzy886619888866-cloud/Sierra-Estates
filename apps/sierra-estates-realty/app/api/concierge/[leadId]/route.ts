@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -28,22 +28,19 @@ export const GET = async (
 
     const { leadId } = parseResult.data;
 
-    // Query Firestore for the concierge portfolio
-    const snapshot = await adminDb.collection(COLLECTIONS.conciergeSelections)
-      .where('leadId', '==', leadId)
-      .get();
+    // Query Supabase for the concierge portfolio
+    const portfolios = await listRecords(COLLECTIONS.conciergeSelections, {
+      where: [{ column: 'leadId', value: leadId }],
+    });
 
-    if (snapshot.empty) {
+    if (portfolios.length === 0) {
       return NextResponse.json(
         { error: 'Portfolio not found' },
         { status: 404 }
       );
     }
 
-    const portfolio = snapshot.docs[0].data();
-    portfolio.id = snapshot.docs[0].id;
-
-    return NextResponse.json(portfolio);
+    return NextResponse.json(portfolios[0]);
   } catch (error) {
     logger.error('Error fetching portfolio:', error);
     return NextResponse.json(

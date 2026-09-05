@@ -1,5 +1,14 @@
 [MASTER]
 ignore=CVS
+ignore-paths=^c:\\Users\\sierr\\AppData.*$
+[MESSAGES CONTROL]
+disable=import-error,
+        missing-module-docstring,
+        invalid-name,
+        line-too-long,
+        ...
+[MASTER]
+ignore=CVS
 
 [MESSAGES CONTROL]
 disable=import-error,

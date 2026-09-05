@@ -1,9 +1,9 @@
-const collectionMock = jest.fn();
-const getMock = jest.fn();
+const listRecordsMock = jest.fn();
 const verifyAdminRequestMock = jest.fn();
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: (...args: unknown[]) => collectionMock(...args) },
+jest.mock('@sierra-estates/db', () => ({
+  listRecords: (...args: unknown[]) => listRecordsMock(...args),
+  insertRecord: jest.fn(),
 }));
 
 jest.mock('@/lib/server/auth-guard', () => ({
@@ -19,7 +19,7 @@ describe('GET /api/admin/leads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     verifyAdminRequestMock.mockResolvedValue({ authenticated: true, uid: 'admin-1' });
-    collectionMock.mockReturnValue({ limit: () => ({ get: getMock }) });
+    listRecordsMock.mockResolvedValue([]);
   });
 
   test('rejects unauthenticated requests', async () => {
@@ -28,26 +28,24 @@ describe('GET /api/admin/leads', () => {
     const res = await GET(makeReq());
 
     expect(res.status).toBe(401);
-    expect(collectionMock).not.toHaveBeenCalled();
+    expect(listRecordsMock).not.toHaveBeenCalled();
   });
 
-  test('fetches the leads collection exactly once, not twice', async () => {
-    // Regression guard: this route used to also query adminDb.collection('leads')
-    // as if it were a second collection distinct from COLLECTIONS.stakeholders
-    // and merge the results - COLLECTIONS.stakeholders IS 'leads', so it was
-    // fetching and merging the exact same collection with itself.
-    getMock.mockResolvedValue({
-      docs: [
-        { id: 'lead-1', data: () => ({ name: 'Jane', phone: '+201000000000', source: 'website' }) },
-      ],
-    });
+  test('reads the leads table exactly once, not twice', async () => {
+    // Regression guard: this route used to query 'leads' a second time as if it
+    // were a collection distinct from COLLECTIONS.stakeholders and merge the
+    // results — COLLECTIONS.stakeholders IS 'leads', so it was fetching and
+    // merging the same data with itself.
+    listRecordsMock.mockResolvedValue([
+      { id: 'lead-1', fullName: 'Jane', phone: '+201000000000', source: 'website' },
+    ]);
 
     const res = await GET(makeReq());
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(collectionMock).toHaveBeenCalledTimes(1);
-    expect(collectionMock).toHaveBeenCalledWith('leads');
+    expect(listRecordsMock).toHaveBeenCalledTimes(1);
+    expect(listRecordsMock.mock.calls[0][0]).toBe('leads');
     expect(body.leads).toHaveLength(1);
     expect(body.leads[0].source).toBe('website');
   });

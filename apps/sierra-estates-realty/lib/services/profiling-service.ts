@@ -177,26 +177,40 @@ export async function extractFeedbackAndSentiment(transcript: string) {
 export async function conductPrecisionInterview(leadId: string, transcript: string) {
   const profile = await extractProfileFromChat(transcript);
   
-  // Dynamic import to avoid client/server conflicts in shared libs
-  const { db } = await import('../firebase');
-  const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
-  
+  const { getRecord, updateRecord } = await import('@sierra-estates/db');
   const { COLLECTIONS } = await import('../models/schema');
-  const leadRef = doc(db, COLLECTIONS.stakeholders, leadId);
-  await updateDoc(leadRef, {
-    'intelligence.profile': {
-      nationality: profile.nationality,
-      familySize: profile.familySize,
-      moveInDate: profile.moveInDate,
-      budget: profile.budget,
-      location: profile.location,
-      score: profile.score
+
+  // `intelligence`, `aiProfiling` and `orchestrationState` are three JSONB
+  // columns, so each group of dotted paths becomes a merge onto the object
+  // already on the row rather than a wholesale replace.
+  const lead = await getRecord<{
+    intelligence?: Record<string, unknown>;
+    aiProfiling?: Record<string, unknown>;
+    orchestrationState?: Record<string, unknown>;
+  }>(COLLECTIONS.stakeholders, leadId);
+
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    intelligence: {
+      ...(lead?.intelligence ?? {}),
+      profile: {
+        nationality: profile.nationality,
+        familySize: profile.familySize,
+        moveInDate: profile.moveInDate,
+        budget: profile.budget,
+        location: profile.location,
+        score: profile.score
+      },
     },
-    'aiProfiling.summary': profile.summary,
-    'aiProfiling.isQualified': profile.isQualified,
-    'orchestrationState.stage': profile.score && profile.score >= 8 ? 'S8' : 'S7',
-    'orchestrationState.status': 'completed',
-    updatedAt: serverTimestamp()
+    aiProfiling: {
+      ...(lead?.aiProfiling ?? {}),
+      summary: profile.summary,
+      isQualified: profile.isQualified,
+    },
+    orchestrationState: {
+      ...(lead?.orchestrationState ?? {}),
+      stage: profile.score && profile.score >= 8 ? 'S8' : 'S7',
+      status: 'completed',
+    },
   });
 
   // If high quality lead, trigger Concierge Page (S8)
