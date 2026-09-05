@@ -116,8 +116,8 @@ export function unauthorizedResponse(message = 'Authentication required') {
 /**
  * Verifies that the request comes from an authenticated admin user.
  * Supports:
- *   1. Verified session cookies carrying an admin/manager role
- *   2. Supabase identities with admin role on profiles or verified admin email
+ *   1. Verified session cookies carrying an admin/superadmin role
+ *   2. Supabase identities with admin/superadmin role on profiles
  */
 export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> {
   const result = await verifyRequest(req);
@@ -125,11 +125,11 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   // Session cookie callers already carry a verified role minted by /api/auth
   if (result.method === 'session-cookie') {
-    if (result.role === 'admin' || result.role === 'superadmin' || isAdminPortalRole(result.role as any)) {
+    if (result.role === 'admin' || result.role === 'superadmin') {
       return result;
     }
     if (result.email && isAdminEmail(result.email)) {
-      return { ...result, role: 'admin' };
+      return result;
     }
     return { authenticated: false, method: 'none' };
   }
@@ -138,19 +138,21 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
   // there is no profiles row to carry a role.
   if (!result.uid) return { authenticated: false, method: 'none' };
 
-  if (result.email && isAdminEmail(result.email)) {
-    return { ...result, role: 'admin' };
-  }
-
   try {
     const profile = await getRecord<{ role?: string }>('profiles', result.uid);
     const role = profile?.role;
-    if (role === 'admin' || role === 'superadmin' || isAdminPortalRole(role as any)) {
-      return { ...result, role };
+    if (role !== 'admin' && role !== 'superadmin') {
+      return { authenticated: false, method: 'none' };
     }
   } catch {
     // A lookup failure must deny, never admit.
+    return { authenticated: false, method: 'none' };
   }
 
-  return { authenticated: false, method: 'none' };
+  return {
+    authenticated: true,
+    uid: result.uid,
+    email: result.email,
+    method: result.method,
+  };
 }
