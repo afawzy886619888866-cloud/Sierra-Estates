@@ -15,6 +15,7 @@ import {
   Calculator,
   Download,
   Zap,
+  Eye,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
@@ -729,6 +730,15 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                             <Zap className="w-3 h-3 text-emerald-400" />
                             <span>Valuate</span>
                           </button>
+                          <a
+                            href={`/property/${encodeURIComponent(code)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 hover:bg-cyan-900 transition-colors"
+                            title="Preview on Client Portal"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </a>
                           <a
                             href={`https://wa.me/201092048333?text=${encodeURIComponent(
                               `Hello Sierra Estates Broker Desk — Inquiring about ${code} in ${item.compound || item.location || 'New Cairo'}.`
