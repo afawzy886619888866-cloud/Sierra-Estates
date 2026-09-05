@@ -261,7 +261,7 @@ function AgentsPage({ T }) {
         }).catch(console.error)
       );
       await Promise.all(promises);
-      setAgents(prev => prev.map(a => ({ ...a, status: 'Running', load: Math.floor(Math.random() * 40) + 55 })));
+      setAgents(prev => prev.map((a, idx) => ({ ...a, status: 'Running', load: 72 + (idx % 18) })));
     } catch (e) {
       console.error(e);
     } finally {
@@ -817,16 +817,18 @@ function NexusAIPage({ T }) {
 
   useEffect(()=>{
     const iv=setInterval(()=>{
-      const c=cpds.filter(x=>x!=='All')[Math.floor(Math.random()*(cpds.length-1))];
-      const types=['Apartment','Villa','Twin House','Duplex','Penthouse'];
-      const t=types[Math.floor(Math.random()*types.length)];
-      const d=new Date();const ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-      const area=Math.floor(Math.random()*280)+100;
-      const price=(Math.random()*22+3).toFixed(1);
       setCtr(n=>{
         const nn=n+1;
+        const availableCpds=cpds.filter(x=>x!=='All');
+        const c=availableCpds[nn % availableCpds.length];
+        const types=['Apartment','Villa','Twin House','Duplex','Penthouse'];
+        const t=types[(nn * 2) % types.length];
+        const d=new Date();
+        const ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        const area=120 + ((nn * 17) % 260);
+        const price=(4.5 + ((nn * 1.3) % 18)).toFixed(1);
         const pfx=c.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,3);
-        setFeed(f=>[{id:`WA-00${nn}`,ts,src:'WhatsApp Scraper',raw:`${t} ${c} · ${area}m² · EGP ${price}M`,compound:c,type:t,code:`SE-${pfx}-${t.slice(0,3).toUpperCase()}-${String(nn).padStart(4,'0')}-2026`,status:Math.random()>.15?'parsed':'processing'},...f].slice(0,12));
+        setFeed(f=>[{id:`WA-00${nn}`,ts,src:'WhatsApp Scraper',raw:`${t} ${c} · ${area}m² · EGP ${price}M`,compound:c,type:t,code:`SE-${pfx}-${t.slice(0,3).toUpperCase()}-${String(nn).padStart(4,'0')}-2026`,status:(nn % 7 !== 0)?'parsed':'processing'},...f].slice(0,12));
         return nn;
       });
     },3500);
