@@ -21,6 +21,7 @@ on:
       - '.github/workflows/ci-tests.yml'
   pull_request:
     branches: [main]
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-tests-${{ github.ref }}
@@ -33,7 +34,7 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
   PUPPETEER_SKIP_DOWNLOAD: "true"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: "true"
 
 jobs:
   # ─────────────────────────────────────────────────────────────

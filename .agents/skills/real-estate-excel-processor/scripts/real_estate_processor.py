@@ -82,8 +82,10 @@ def parse_price(v):
     t = m.group(0)
     if re.fullmatch(r"\d{1,3}(?:[.,]\d{3})+", t): t = re.sub(r"[.,]", "", t)
     else: t = t.replace(",", "")
-    try: n = float(t)
-    except: return (np.nan, cur)
+    try:
+        n = float(t)
+    except (ValueError, TypeError):
+        return (np.nan, cur)
     tail = s[m.end():m.end()+10]
     if re.match(r"\s*(مليون|ملون|million)\b", tail, re.I) or re.match(r"\s*m(?![2²0-9])", tail, re.I):
         n *= 1_000_000
@@ -103,8 +105,10 @@ def parse_date(v):
     s = str(v).strip()
     if s.lower() in ("", "nan", "none", "nat", "*", "unknown"): return pd.NaT
     for kw in ({"dayfirst": True}, {"dayfirst": False}, {"format": "mixed"}):
-        try: return pd.to_datetime(s, errors="raise", **kw)
-        except: pass
+        try:
+            return pd.to_datetime(s, errors="raise", **kw)
+        except (ValueError, TypeError, pd.errors.ParserError):
+            pass
     return pd.NaT
 
 def normalize_code(v):
@@ -387,9 +391,11 @@ class Redirector:
 
 def check_deps():
     miss = []
-    for m in ("numpy","pandas","openpyxl"):
-        try: importlib.import_module(m)
-        except: miss.append(m)
+    for m in ("numpy", "pandas", "openpyxl"):
+        try:
+            importlib.import_module(m)
+        except ImportError:
+            miss.append(m)
     return miss
 
 def install_deps(log, status):

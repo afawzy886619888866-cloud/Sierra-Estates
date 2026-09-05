@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords } from '@sierra-estates/db';
 import { COLLECTIONS, type WhatsAppMessagePurpose } from '@/lib/models/schema';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
-import { verifyRequest } from '@/lib/server/auth-guard';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,9 +41,14 @@ const scheduleMessageSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = await verifyRequest(req);
-    // Allow service/internal or authenticated admin requests
-    if (!auth.authenticated && process.env.NODE_ENV === 'production') {
+    // Was `verifyRequest` gated on NODE_ENV === 'production'. Two problems:
+    // verifyRequest accepts ANY valid Firebase ID token in the project with no
+    // users/{uid}.role check, so any self-registered account could enqueue bulk
+    // outreach from the company number; and the guard was skipped entirely on
+    // preview deployments. The sibling app/api/admin/whatsapp/send/route.ts was
+    // hardened to verifyAdminRequest for exactly this reason — match it.
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authenticated) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -123,27 +128,36 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Number(searchParams.get('limit') || 50), 100);
     const status = searchParams.get('status') || 'queued';
 
-    const snap = await adminDb
-      .collection(COLLECTIONS.whatsappMessageQueue)
-      .where('status', '==', status)
-      .limit(limit)
-      .get();
-
-    const jobs = snap.docs.map((doc: any) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        toPhone: data.toPhone,
-        purpose: data.purpose,
-        body: data.body,
-        status: data.status,
-        scheduledFor: data.scheduledFor ? data.scheduledFor.toDate().toISOString() : null,
-        createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : null,
-        sentAt: data.sentAt ? data.sentAt.toDate().toISOString() : null,
-        attempts: data.attempts || 0,
-        errorMessage: data.errorMessage,
-      };
+    const rows = await listRecords<{
+      id: string;
+      toPhone?: string;
+      purpose?: string;
+      body?: string;
+      status?: string;
+      scheduledFor?: string | null;
+      createdAt?: string | null;
+      sentAt?: string | null;
+      attempts?: number;
+      errorMessage?: string;
+    }>(COLLECTIONS.whatsappMessageQueue, {
+      where: [{ column: 'status', value: status }],
+      limit,
     });
+
+    // The timestamp columns come back as ISO strings already, so the Firestore
+    // .toDate().toISOString() hops are gone; the response shape is unchanged.
+    const jobs = rows.map((data) => ({
+      id: data.id,
+      toPhone: data.toPhone,
+      purpose: data.purpose,
+      body: data.body,
+      status: data.status,
+      scheduledFor: data.scheduledFor ?? null,
+      createdAt: data.createdAt ?? null,
+      sentAt: data.sentAt ?? null,
+      attempts: data.attempts || 0,
+      errorMessage: data.errorMessage,
+    }));
 
     return NextResponse.json({
       success: true,

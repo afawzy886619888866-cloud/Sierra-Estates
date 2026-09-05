@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { COLLECTIONS } from '@/lib/models/schema';
-import { Timestamp } from 'firebase-admin/firestore';
+import { insertRecord, listRecords, updateRecord, upsertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifyHmacSignature } from '@/lib/server/webhook-auth';
+
+/**
+ * Property Finder outbound webhook.
+ *
+ * Firestore → Postgres field mapping (nothing is dropped):
+ *   leads.name   → leads.full_name       leads.notes → leads.summary_notes
+ *   the PF lead id keeps its own indexed column, leads.pf_lead_id, because the
+ *   upsert below matches on it.
+ *   The auto-reply job's `source`/`propertyRef` live in whatsapp_queue.metadata;
+ *   `phone`/`clientName`/`text` map onto recipient_phone/recipient_name/message_body.
+ */
 
 const WEBHOOK_SECRET = process.env.PF_WEBHOOK_SECRET || '';
 
@@ -26,49 +35,45 @@ export async function POST(request: NextRequest) {
       case 'lead.updated':
       case 'lead.assigned': {
         const lead = event.data || event.payload;
-        const existing = await adminDb.collection('leads')
-          .where('pfLeadId', '==', lead.id)
-          .get();
 
         const clientName = lead.sender?.name || lead.name || 'Client';
         const clientPhone = lead.sender?.phone || lead.phone || '';
         const listingRef = lead.listing?.reference || lead.property?.reference || '';
 
-        const payload = {
-          name: clientName,
-          phone: clientPhone,
-          email: lead.sender?.email || lead.email || '',
-          source: 'property-finder',
-          status: 'new',
-          stage: 'inbound',
-          mode: 'sale',
-          pfLeadId: lead.id,
-          notes: `PF Listing Ref: ${listingRef}`,
-          updatedAt: new Date().toISOString(),
-        };
-
-        if (existing.empty) {
-          await adminDb.collection('leads').add({
-            ...payload,
-            createdAt: new Date().toISOString(),
-          });
-        } else {
-          await existing.docs[0].ref.update(payload);
-        }
+        // One upsert on pf_lead_id replaces the previous read-then-branch: the
+        // same fields are written whether the lead is new or already known, so
+        // there is nothing for the insert path to add beyond created_at, which
+        // the column default supplies.
+        await upsertRecord(
+          'leads',
+          {
+            fullName: clientName,
+            phone: clientPhone,
+            email: lead.sender?.email || lead.email || '',
+            channel: 'property_finder',
+            source: 'property-finder',
+            status: 'new',
+            stage: 'inbound',
+            mode: 'sale',
+            pfLeadId: lead.id,
+            summaryNotes: `PF Listing Ref: ${listingRef}`,
+            updatedAt: new Date().toISOString(),
+          },
+          'pf_lead_id',
+        );
 
         // Automated WhatsApp Response Queue:
         // When client submits inquiry on Property Finder, queue an immediate tailored greeting
         if (clientPhone) {
           const autoMessage = `مرحباً بك يا ${clientName} في سييرا إستيتس! 🌟\nوصلنا استفسارك عبر Property Finder بخصوص العقار (مرجع: ${listingRef || 'المميز'}).\nيسعدنا تزويدك بكافة تفاصيل الوحدة، المخططات الهندسية، وخطط السداد المتاحة.\n\nهل تود التواصل هنا عبر واتساب أو تحديد موعد لزيارة ومعاينة العقار؟\n\n*Sierra Estates — Beyond Brokerage*`;
 
-          await adminDb.collection('whatsapp_queue').add({
-            phone: clientPhone,
-            clientName,
-            source: 'property-finder',
-            propertyRef: listingRef,
-            text: autoMessage,
+          await insertRecord('whatsapp_queue', {
+            recipientPhone: clientPhone,
+            recipientName: clientName,
+            messageBody: autoMessage,
             status: 'pending',
-            createdAt: Timestamp.now(),
+            metadata: { source: 'property-finder', propertyRef: listingRef },
+            createdAt: new Date().toISOString(),
           });
         }
         break;
@@ -79,15 +84,19 @@ export async function POST(request: NextRequest) {
       case 'listing.action': {
         const listing = event.data || event.payload;
         const ref = listing.reference || String(listing.id);
-        const units = await adminDb.collection(COLLECTIONS.units)
-          .where('pfReferenceNumber', '==', ref)
-          .get();
+        const units = await listRecords<{ id: string; automation?: Record<string, unknown> }>('listings', {
+          where: [{ column: 'pfReferenceNumber', value: ref }],
+          limit: 1,
+        });
 
-        if (!units.empty) {
-          await units.docs[0].ref.update({
-            'automation.isPublishedToPF': eventType === 'listing.published',
+        if (units.length > 0) {
+          // Firestore's dotted 'automation.isPublishedToPF' path merged into the
+          // existing map; a JSONB column is replaced wholesale, so merge here to
+          // keep any other automation flags on the row.
+          await updateRecord('listings', units[0].id, {
+            automation: { ...(units[0].automation ?? {}), isPublishedToPF: eventType === 'listing.published' },
             pfStatus: eventType === 'listing.published' ? 'published' : 'unpublished',
-            updatedAt: Timestamp.now(),
+            updatedAt: new Date().toISOString(),
           });
         }
         break;

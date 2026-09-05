@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { listRecords, insertRecord } from '@sierra-estates/db';
 import { AUTOMATION_COLLECTIONS } from '@/lib/models/automation';
 import { logger } from '@/lib/logger';
-import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 const automationCreateSchema = z.object({
   name: z.string().min(1).max(200),
@@ -48,11 +47,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const snap = await adminDb.collection(AUTOMATION_COLLECTIONS.rules).get();
-    const rules = snap.docs.map((doc: QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const rules = await listRecords(AUTOMATION_COLLECTIONS.rules);
 
     return NextResponse.json({
       success: true,
@@ -93,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const { name, name_ar, description, description_ar, templateId, trigger, actions, enabled, conditions, executionSettings } = parsed.data;
 
-    const ref = await adminDb.collection(AUTOMATION_COLLECTIONS.rules).add({
+    const ref = await insertRecord<{ id: string }>(AUTOMATION_COLLECTIONS.rules, {
       name,
       name_ar: name_ar || '',
       description: description || '',
@@ -114,8 +109,8 @@ export async function POST(req: NextRequest) {
       createdBy: authResult.uid,
       updatedBy: authResult.uid,
       tags: [],
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     logger.info(`✓ Created automation rule: ${ref.id} (${name})`);

@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
+    "lint": "eslint .",
     "build": "tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
@@ -23,6 +24,7 @@
   "author": "Sierra Estates Team",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "@sierra-estates/obsidian": "workspace:*"
   },
   "devDependencies": {

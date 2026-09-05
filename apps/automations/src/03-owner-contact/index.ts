@@ -1,5 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
-import { getDb } from '../lib/firebase';
+import { assertDbConfigured, insertRecord } from '../lib/db';
 
 /**
  * 03-owner-contact
@@ -38,17 +37,18 @@ export async function runOwnerContact(ownerPhone: string, propertyContext: any) 
 
     console.log(`[Owner Contact] Hook sent via API. Receiver: ${ownerPhone}, Msg: ${message}`);
 
-    // 2. Log interaction in Firestore CRM
-    const db = getDb('Owner Contact');
-    await db.collection('communications').add({
-      targetPhone: ownerPhone,
-      direction: 'outbound',
-      type: 'whatsapp',
-      message: message,
-      context: propertyContext,
-      status: 'sent',
-      sentAt: FieldValue.serverTimestamp()
-    });
+    // 2. Log interaction in the CRM
+    if (assertDbConfigured('Owner Contact')) {
+      await insertRecord('communications', {
+        targetPhone: ownerPhone,
+        direction: 'outbound',
+        type: 'whatsapp',
+        message,
+        context: propertyContext,
+        status: 'sent',
+        sentAt: new Date().toISOString(),
+      });
+    }
     
     return {
       success: true,

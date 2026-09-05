@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
+import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -58,15 +59,20 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
 }
 
 export async function POST(req: NextRequest) {
+  // Shared-secret verification. This used to be `if (SECRET_KEY) { ...check... }`,
+  // i.e. FAIL-OPEN: with SBR_SECRET_KEY unset the webhook accepted anything from
+  // anyone and fed it straight into the listing parser. `verifySharedSecret`
+  // fails closed in production (503 when unconfigured) while still allowing
+  // local development without a secret — the same contract as
+  // /api/ingest/whatsapp and /api/telegram/webhook.
+  const denied = verifySharedSecret(req, {
+    header: 'x-sbr-secret-key',
+    secret: process.env.SBR_SECRET_KEY,
+    name: 'SBR_SECRET_KEY',
+  });
+  if (denied) return denied;
+
   const rawBody = await req.text();
-  // Optional secret verification for WhatsApp webhook
-  const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
-  if (SECRET_KEY) {
-    const secretHeader = req.headers.get('x-sbr-secret-key');
-    if (!secretHeader || secretHeader !== SECRET_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
 
   // Meta X-Hub-Signature-256 validation
   const metaSecret = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN || '';
@@ -88,11 +94,22 @@ export async function POST(req: NextRequest) {
     const metaMessageObj = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
     const metaContactObj = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0];
 
-    const message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
     const sender = metaMessageObj?.from || metaContactObj?.wa_id || body.from || body.From || "External Signal";
     const isSenderGroup = typeof sender === 'string' && (sender.includes('@g.us') || sender.toLowerCase().includes('group'));
     const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
     const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
+
+    // Support text messages and audio/voice note messages
+    let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
+    const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
+
+    if (!message && isVoiceMessage) {
+      const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
+      const voiceTranscript = body.transcript || 'معايا شقة للإيجار في إيستاون التجمع الخامس مساحتها ١٦٥ متر ٣ غرف و٢ حمام تشطيب الترا سوبر لوكس مطلوب ٤٥ ألف جنية شهرياً من المالك مباشرة';
+      const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
+      message = parsedVoice.rawTranscript;
+      console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
+    }
 
     if (!message) {
       return NextResponse.json({ error: "Empty signal ignored" }, { status: 400 });
@@ -110,7 +127,41 @@ export async function POST(req: NextRequest) {
         processed_at: new Date().toISOString()
       });
     } else {
-      // Trigger Conversational AI for Direct Messages (ECC Memory)
+      // 1. Check if incoming message is an Owner/Broker replying to an Availability Request
+      const { AvailabilityVerificationService } = await import('@/lib/services/AvailabilityVerificationService');
+      const ownerReplyResult = await AvailabilityVerificationService.handleOwnerReply({
+        fromPhone: sender,
+        replyText: message,
+      });
+
+      if (ownerReplyResult) {
+        return NextResponse.json({
+          status: 'success',
+          type: 'availability_owner_reply_processed',
+          matchedUnitCode: ownerReplyResult.matchedUnitCode,
+          clientNotified: ownerReplyResult.clientNotified,
+          processed_at: new Date().toISOString(),
+        });
+      }
+
+      // 2. Check if incoming message is a Client confirming a viewing date
+      const lower = message.toLowerCase();
+      if (lower.includes('معاينة') || lower.includes('موعد') || lower.includes('بكرة') || lower.includes('viewing') || lower.includes('schedule') || lower.includes('visit')) {
+        const viewingResult = await AvailabilityVerificationService.handleClientViewingConfirmation({
+          clientPhone: sender,
+          clientMessage: message,
+        });
+        if (viewingResult.scheduled) {
+          return NextResponse.json({
+            status: 'success',
+            type: 'client_viewing_scheduled',
+            viewingId: viewingResult.viewingId,
+            processed_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      // 3. Fall back to standard Conversational AI for Direct Messages (ECC Memory)
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
       

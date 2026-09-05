@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BookOpen,
   Headphones,
@@ -8,20 +8,14 @@ import {
   Send,
   FileText,
   Layers,
-  Volume2,
-  VolumeX,
   Play,
   Pause,
-  CheckCircle,
   ExternalLink,
-  ShieldCheck,
-  Building,
   DollarSign,
   TrendingUp,
-  Radio,
-  FileCode,
-  ArrowRight,
   RefreshCw,
+  Building2,
+  MapPin,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
@@ -108,8 +102,8 @@ export default function NotebookLMStudio() {
         id: 'welcome',
         role: 'ai',
         content: isAr
-          ? 'مرحباً بك في Google NotebookLM الخاص بشركة سييرا العقارية. تم ربط جميع أبحاث السوق، الماستر إنفنتوري (9,000+ وحدة)، ومخططات كايرو بلازا المالية. يمكنك طرح أي استفسار للتحقق الموثق بالمصادر، أو توليد بودكاست صوتي ذكي (Audio Overview) بنقرة واحدة.'
-          : 'Welcome to Google NotebookLM by Sierra Estates. Grounded across verified master inventory (9,000+ units), Cairo Plaza blueprints, and market pricing. Ask any investment question with direct citations, or generate a 2-person Deep Dive Audio Overview.',
+          ? 'مرحباً بك في بنك معلومات سييرا العقاري (Information Bank) — الموسوعة الذكية الشاملة لكافة كمبوندات ووحدات وفرص القاهرة الجديدة (التجمع الخامس، المربع الذهبي، ومدينة المستقبل). تم ربط جميع المخططات المعتمدة، أسعار المتر لعام 2026، عوائد الإيجار، وتفاصيل الأقساط والاستلام الفوري. اسألني عن أي وحدة أو كمبوند أو ميزانية وسأقترح لك الخيار الأفضل بدقة متناهية.'
+          : 'Welcome to the Sierra Information Bank — the all-knowing AI Real Estate authority for New Cairo (Fifth Settlement, Golden Square, & Mostakbal City). Grounded across 9,000+ verified units, price/sqm benchmarks, payment plans, and rental yields. Ask anything to receive the best property recommendations tailored to your exact budget and goals.',
         citations: [],
         groundingScore: 1.0,
       },
@@ -271,16 +265,16 @@ export default function NotebookLMStudio() {
 
   const suggestedQuestions = isAr
     ? [
-        'قارن بين متوسط سعر المتر في ميفيدا وهايد بارك لعام 2026',
-        'ما هي عوائد الإيجار المتوقعة في أبراج كايرو بلازا ومواصفات البرج؟',
-        'ما هي قواعد خصم الكاش والتحكيم العقاري (Arbitrage) في سييرا؟',
-        'ما هي مواصفات وتسهيلات كمبوند بالم هيلز القاهرة الجديدة؟',
+        'أفضل شقة 3 غرف في التجمع الخامس بأقل من 12 مليون مع خطة تقسيط 7 سنوات',
+        'قارن بين ميفيدا (إعمار) وفيليت (سوديك) وبالم هيلز من حيث العائد وجودة المعيشة',
+        'ما هي أفضل وحدات آي فيلا (iVilla) في ماونتن فيو آي سيتي التجمع ومزاياها؟',
+        'ما هي خيارات الاستلام الفوري كاش مع خصم مباشر في المربع الذهبي؟',
       ]
     : [
-        'Compare 2026 price per sqm between Mivida and Hyde Park.',
-        'What are the projected rental yields for Cairo Plaza Towers?',
-        'Explain the Sierra Estates Underpriced Arbitrage rule.',
-        'Summarize villa pricing and payment terms in Palm Hills.',
+        'Best 3-bedroom apartment in New Cairo under 12M with 7-year installment plan.',
+        'Compare Mivida vs Villette vs Palm Hills New Cairo in yields and lifestyle.',
+        'What are the best iVilla options and payment plans in Mountain View iCity?',
+        'Show me underpriced immediate-delivery resale units in Golden Square.',
       ];
 
   return (
@@ -289,16 +283,16 @@ export default function NotebookLMStudio() {
         {/* Header Banner */}
         <header className="nlm-header">
           <div className="nlm-badge">
-            <Sparkles className="w-4 h-4 text-[#d4af37]" />
-            <span>Google NotebookLM Grounded Studio · Sierra Intelligence</span>
+            <Building2 className="w-4 h-4 text-[#d4af37]" />
+            <span>{isAr ? 'بنك المعلومات العقاري الشامل · القاهرة الجديدة' : 'Information Bank · New Cairo Real Estate Intelligence'}</span>
           </div>
           <h1 className="nlm-title">
-            {isAr ? 'استوديو نوت بوك إل إم العقاري الذكي' : 'Grounded Real Estate Research Studio'}
+            {isAr ? 'بنك المعلومات العقاري — القاهرة الجديدة' : 'New Cairo Information Bank & Unit Advisory'}
           </h1>
           <p className="nlm-subtitle">
             {isAr
-              ? 'تحليل استثماري موثق 100% بالمصادر والأرقام الحقيقية، مع توليد بودكاست صوتي ذكي (Audio Overview) وملخصات تنفيذية من ملفات الماستر إنفنتوري وكايرو بلازا.'
-              : 'Grounded intelligence across 9,000+ master units, Cairo Plaza blueprints, and market yield models with 2-host audio podcast synthesis.'}
+              ? 'الموسوعة الذكية المتكاملة لعقارات التجمع الخامس والمربع الذهبي. اسأل عن أي وحدة، كمبوند، ميزانية، أو خطة سداد وسيقترح لك بنك المعلومات أفضل خيار استثماري وسكني موثق بالأرقام والمصادر.'
+              : 'The comprehensive real estate intelligence engine for New Cairo & Golden Square. Ask any question about units, compounds, budgets, or installment plans to get the ultimate data-backed recommendations.'}
           </p>
         </header>
 
@@ -309,7 +303,7 @@ export default function NotebookLMStudio() {
             onClick={() => setActiveTab('chat')}
           >
             <BookOpen className="w-4 h-4" />
-            <span>{isAr ? 'المحادثة الموثقة (Grounded Q&A)' : 'Grounded Q&A'}</span>
+            <span>{isAr ? 'مستشار الوحدات الذكي (Unit Advisor)' : 'Intelligent Unit Advisor'}</span>
           </button>
           <button
             className={`nlm-tab-btn ${activeTab === 'audio' ? 'active' : ''}`}
@@ -319,7 +313,7 @@ export default function NotebookLMStudio() {
             }}
           >
             <Headphones className="w-4 h-4" />
-            <span>{isAr ? 'البودكاست الصوتي الذكي (Audio Overview)' : 'Audio Overview'}</span>
+            <span>{isAr ? 'بودكاست بنك المعلومات (Audio Overview)' : 'Audio Overview Podcast'}</span>
           </button>
           <button
             className={`nlm-tab-btn ${activeTab === 'guide' ? 'active' : ''}`}
@@ -329,14 +323,14 @@ export default function NotebookLMStudio() {
             }}
           >
             <FileText className="w-4 h-4" />
-            <span>{isAr ? 'الدليل والملخص التنفيذي (Study Guide)' : 'Executive Study Guide'}</span>
+            <span>{isAr ? 'الدليل والملخص الاستثماري (Market Guide)' : 'Executive Market Guide'}</span>
           </button>
           <button
             className={`nlm-tab-btn ${activeTab === 'sources' ? 'active' : ''}`}
             onClick={() => setActiveTab('sources')}
           >
             <Layers className="w-4 h-4" />
-            <span>{isAr ? `المصادر الموثقة (${sources.length})` : `Grounded Sources (${sources.length})`}</span>
+            <span>{isAr ? `قاعدة البيانات المعتمدة (${sources.length})` : `Verified Knowledge Base (${sources.length})`}</span>
           </button>
         </div>
 
@@ -346,10 +340,10 @@ export default function NotebookLMStudio() {
           <aside className="nlm-sources-card">
             <div className="nlm-sources-header">
               <span className="nlm-sources-title">
-                <ShieldCheck className="w-5 h-5 text-[#d4af37]" />
-                {isAr ? 'المستندات النشطة' : 'Active Sources'}
+                <MapPin className="w-5 h-5 text-[#d4af37]" />
+                {isAr ? 'مستندات بنك المعلومات' : 'Information Bank Sources'}
               </span>
-              <span className="text-xs text-[#94a3b8]">{sources.length} {isAr ? 'ملفات' : 'docs'}</span>
+              <span className="text-xs text-[#94a3b8]">{sources.length} {isAr ? 'أدلة' : 'guides'}</span>
             </div>
 
             {sources.map((s) => (
@@ -379,7 +373,7 @@ export default function NotebookLMStudio() {
                   {messages.map((m) => (
                     <div key={m.id} className={`nlm-message ${m.role}`}>
                       <div className="nlm-avatar">
-                        {m.role === 'ai' ? <Sparkles className="w-5 h-5" /> : '👤'}
+                        {m.role === 'ai' ? <Building2 className="w-5 h-5 text-[#d4af37]" /> : '👤'}
                       </div>
                       <div className="nlm-bubble">
                         <div className="whitespace-pre-wrap">{m.content}</div>
@@ -388,7 +382,7 @@ export default function NotebookLMStudio() {
                         {m.citations && m.citations.length > 0 && (
                           <div className="nlm-citations-container">
                             <span className="text-xs text-[#94a3b8] font-bold block w-full mb-1">
-                              {isAr ? '📑 المصادر المباشرة:' : '📑 Direct Citations:'}
+                              {isAr ? '📑 المصادر المباشرة من بنك المعلومات:' : '📑 Verified Information Bank Citations:'}
                             </span>
                             {m.citations.map((c, i) => (
                               <button
@@ -407,7 +401,7 @@ export default function NotebookLMStudio() {
 
                         {m.keyTakeaways && m.keyTakeaways.length > 0 && (
                           <div className="mt-3 pt-2 border-t border-white/10 text-xs text-[#cbd5e1]">
-                            <b>{isAr ? '💡 أبرز النقاط:' : '💡 Key Takeaways:'}</b>
+                            <b>{isAr ? '💡 خلاصة التوصية والخطوات القادمة:' : '💡 Key Recommendations & Action Steps:'}</b>
                             <ul className="list-disc list-inside mt-1">
                               {m.keyTakeaways.map((t, idx) => (
                                 <li key={idx}>{t}</li>
@@ -422,7 +416,7 @@ export default function NotebookLMStudio() {
                     <div className="nlm-message ai">
                       <div className="nlm-avatar"><Sparkles className="w-5 h-5" /></div>
                       <div className="nlm-bubble text-[#94a3b8] animate-pulse">
-                        {isAr ? 'جاري الفحص الموثق عبر مستندات المصادر والأرقام...' : 'Synthesizing grounded response from verified sources...'}
+                        {isAr ? 'جاري فحص قاعدة بيانات القاهرة الجديدة ومطابقة أفضل الوحدات لك...' : 'Querying New Cairo Information Bank for the best matching properties...'}
                       </div>
                     </div>
                   )}
@@ -443,14 +437,14 @@ export default function NotebookLMStudio() {
                     onChange={(e) => setInputQuery(e.target.value)}
                     placeholder={
                       isAr
-                        ? 'اسأل عن أسعار المتر، عوائد كايرو بلازا، أو مقارنات ميفيدا وهايد بارك...'
-                        : 'Ask about price/sqm, Cairo Plaza yields, or compound comparisons...'
+                        ? 'اسأل بنك المعلومات: ما أفضل فيلا أو شقة بميزانيتي في القاهرة الجديدة؟...'
+                        : 'Ask Information Bank: What is the best villa or apartment for my budget in New Cairo?...'
                     }
                     disabled={isQuerying}
                   />
                   <button type="submit" className="nlm-send-btn" disabled={isQuerying || !inputQuery.trim()}>
                     <Send className="w-4 h-4" />
-                    <span>{isAr ? 'استفسار' : 'Ask'}</span>
+                    <span>{isAr ? 'استشارة' : 'Consult'}</span>
                   </button>
                 </form>
 
@@ -476,12 +470,12 @@ export default function NotebookLMStudio() {
                 <div className="nlm-podcast-card">
                   <div className="nlm-podcast-header">
                     <div>
-                      <span className="nlm-badge">🎙️ Google Deep Dive Audio Overview</span>
+                      <span className="nlm-badge">🎙️ New Cairo Intelligence Deep Dive</span>
                       <h3 className="text-xl font-bold text-white mt-2">
-                        {podcastData ? podcastData.title : (isAr ? 'جاري إعداد حلقة البودكاست الاستثمارية...' : 'Preparing Deep Dive Episode...')}
+                        {podcastData ? podcastData.title : (isAr ? 'جاري إعداد حلقة بودكاست بنك المعلومات...' : 'Preparing Information Bank Podcast...')}
                       </h3>
                       <p className="text-sm text-[#94a3b8] mt-1">
-                        {podcastData?.summary || (isAr ? 'حوار تحليلي ثنائي بين المذيع ومحللة الاستثمار العقاري لفك شفرة الفرص الاستثمارية.' : '2-host deep dive unpacking yields, price arbitrage, and master inventory.')}
+                        {podcastData?.summary || (isAr ? 'حوار تحليلي ثنائي بين المذيع ومحللة الاستثمار العقاري لفك شفرة الفرص وأفضل كمبوندات القاهرة الجديدة.' : '2-host deep dive analyzing yields, price per sqm, and top New Cairo compounds.')}
                       </p>
                     </div>
 
@@ -516,7 +510,7 @@ export default function NotebookLMStudio() {
                 {isGeneratingPodcast && (
                   <div className="text-center py-16 text-[#d4af37] animate-pulse">
                     <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3" />
-                    <p>{isAr ? 'جاري كتابة وتوليد حلقة البودكاست الصوتية بواسطة Gemini...' : 'Generating podcast dialogue turns with Gemini...'}</p>
+                    <p>{isAr ? 'جاري كتابة وتوليد حلقة البودكاست الصوتية بواسطة الذكاء الاصطناعي...' : 'Generating audio podcast turns with Gemini AI...'}</p>
                   </div>
                 )}
 
@@ -548,7 +542,7 @@ export default function NotebookLMStudio() {
                 {isGeneratingGuide && (
                   <div className="text-center py-16 text-[#d4af37] animate-pulse">
                     <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3" />
-                    <p>{isAr ? 'جاري تلخيص وتوليد الدليل التنفيذي...' : 'Generating executive study guide...'}</p>
+                    <p>{isAr ? 'جاري تلخيص وتوليد الدليل التنفيذي لعقارات القاهرة الجديدة...' : 'Synthesizing New Cairo market guide...'}</p>
                   </div>
                 )}
 
@@ -567,7 +561,7 @@ export default function NotebookLMStudio() {
                     <div className="nlm-guide-section">
                       <h4 className="nlm-guide-title">
                         <DollarSign className="w-5 h-5 text-[#d4af37]" />
-                        <span>{isAr ? 'المؤشرات المالية الرئيسية' : 'Key Investment Metrics'}</span>
+                        <span>{isAr ? 'مؤشرات أسعار المتر والعوائد (2026)' : 'Key Price & Yield Metrics'}</span>
                       </h4>
                       <div className="nlm-metrics-grid">
                         {studyGuide.keyInvestmentMetrics.map((m, idx) => (
@@ -583,7 +577,7 @@ export default function NotebookLMStudio() {
                     <div className="nlm-guide-section">
                       <h4 className="nlm-guide-title">
                         <BookOpen className="w-5 h-5 text-[#d4af37]" />
-                        <span>{isAr ? 'الأسئلة الشائعة الموثقة' : 'Grounded FAQs'}</span>
+                        <span>{isAr ? 'أهم إجابات بنك المعلومات عن عقارات التجمع' : 'Grounded FAQs'}</span>
                       </h4>
                       <div className="space-y-3">
                         {studyGuide.faqs.map((f, idx) => (
@@ -605,7 +599,7 @@ export default function NotebookLMStudio() {
               <div>
                 <h3 className="nlm-guide-title">
                   <Layers className="w-5 h-5 text-[#d4af37]" />
-                  <span>{isAr ? 'قاعدة المستندات الموثقة (Verified Grounded Vault)' : 'Grounded Documents Vault'}</span>
+                  <span>{isAr ? 'أدلة ومستندات بنك المعلومات (Verified Knowledge Vault)' : 'Information Bank Knowledge Vault'}</span>
                 </h3>
                 <div className="space-y-4 mt-4">
                   {sources.map((s, idx) => (

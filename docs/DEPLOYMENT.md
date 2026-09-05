@@ -13,10 +13,10 @@
 
 ## 0. Golden rules (the policy in 8 lines)
 
-1. **One front door per concern.** Public site + admin → **Vercel** (isolated projects: `sierra-estates` and `sierra-admin-dashboard`). Database/auth/jobs → **Firebase**. Heavy/long work → **workers** (Cloud Run / n8n / GitHub Actions).
+1. **One front door per concern.** Public site + admin → **Vercel** (isolated projects: `sierra-estates` and `sierra-admin-dashboard`). Primary Database, Auth, Vector Engine, & Storage → **Supabase** (`https://REDACTED-PROJECT.supabase.co`). Heavy/long work → **workers** (Cloud Run / n8n / GitHub Actions).
 2. **Heavy or long-running work NEVER runs inside a Next.js request or Vercel function.** Scrapers, browser automation, multi-minute agents, bulk sends → a worker. The web app only *triggers/monitors* them through typed clients (`lib/server/n8n-client.ts`, `lib/server/python-api-client.ts`).
 3. **One canonical admin:** `apps/sierra-estates-realty/app/admin/`. No second admin UI, ever.
-4. **Firebase is backend-only.** No app hosting on Firebase except the single legacy-admin **redirect**. Never host the Next.js app on Firebase.
+4. **Supabase is the primary authoritative backend.** All database tables, Auth, embeddings, and real-time state live in Supabase Postgres. Legacy Firebase deployments are retired.
 5. **`main` is protected.** Every change ships via a PR from a feature branch; CI must be green; squash-merge.
 6. **Vercel git auto-deploy stays OFF** (`git.deploymentEnabled: false`). The `deploy-vercel.yml` GitHub Action is the *only* path to production.
 7. **One production root domain: `sierra-estates.net`.** Every new surface is a **subdomain** (`*.sierra-estates.net`), never a new root domain.
@@ -38,16 +38,16 @@
                       │    Domain: admin.sierra-estates.net                    │
                       │    Surface: Staff console, agents hub, orchestrator    │
                       └───────────────────┬────────────────┬───────────────────┘
-                                          │ Admin SDK/REST │ typed triggers
+                                          │ Supabase REST  │ typed triggers
                                           ▼                ▼
 ┌─────────────────────────────────────────┐   ┌───────────────────────────────────────────┐
-│  Firebase  (Project: sierra-blu)        │   │  Workers — where heavy work actually runs │
-│   Firestore  (rules-gated via CI)       │   │   n8n            Docker/VPS :5678           │
-│   Storage    (rules-gated via CI)       │   │     WhatsApp scraping + automation         │
-│   Auth       (Identity Platform)        │   │   apps/api       Cloud Run (FastAPI :8000) │
-│   Functions  (europe-west1, Node.js 20) │   │     PropertyFinder sync + bot integration  │
-│   Hosting    redirect → /admin          │   │   Intelligence OS Cloud Run (europe-west2) │
-│   (NOT an app host)                     │   │     Remix console (embedded in /admin)     │
+│  Supabase (Authoritative Primary)       │   │  Workers — where heavy work actually runs │
+│   PostgreSQL (7 core tables)            │   │   n8n            Docker/VPS :5678           │
+│   pgvector   (1536d semantic embeddings)│   │     WhatsApp scraping + automation         │
+│   Auth       (GoTrue Admin & Profiles)  │   │   apps/api       Cloud Run (FastAPI :8000) │
+│   Storage    (Media & Documents buckets)│   │     PropertyFinder sync + bot integration  │
+│   Queue      (WhatsApp outbound engine) │   │   Intelligence OS Cloud Run (europe-west2) │
+│   (deploy via deploy-supabase.yml)      │   │     Remix console (embedded in /admin)     │
 └─────────────────────────────────────────┘   │   GitHub Actions (Scheduled / Event Cron)  │
                                               │     external-workflows.yml                 │
                                               │     whatsapp-dispatch-cron.yml             │
@@ -107,6 +107,33 @@
 | **GitHub Actions** | Repository Secrets & Variables | `VERCEL_TOKEN`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU` |
 
 **Security Guardrail:** Service account private keys, API secrets, and signing tokens must never be committed to source control. Canonical templates: `.env.example` and `apps/sierra-estates-realty/.env.local.example`.
+
+### 4.1 Seeding the first admin
+
+`POST /api/auth` never provisions accounts. A Firebase ID token whose uid has no
+pre-existing `users/{uid}` document is rejected with **403**, and a document whose
+`role` is not an admin-portal role is rejected the same way. There is no
+self-service bootstrap — anyone who can register in Firebase Auth would otherwise
+be able to claim the console.
+
+Admin access is granted out-of-band with the seeding script, which writes
+`users/{uid}` via the Admin SDK. The person must already exist in Firebase
+Authentication (they sign in once and get the 403, or an operator creates them in
+the Firebase console).
+
+```bash
+# credentials come from the environment only — never pass a key as an argument
+export FIREBASE_SERVICE_ACCOUNT_JSON="$(cat /secure/path/sierra-blu-sa.json)"
+
+pnpm --filter sierra-estates-client-page seed:admin -- ops@sierra-estates.net
+# or by uid, or with an explicit role/name:
+#   ... seed:admin -- <firebase-uid> --role manager --name "Ops Lead"
+```
+
+The script refuses to run without `FIREBASE_SERVICE_ACCOUNT_JSON`,
+`FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU`, `FIREBASE_SERVICE_ACCOUNT`, or
+`GOOGLE_APPLICATION_CREDENTIALS`, prints exactly what it wrote, and is safe to
+re-run (it preserves `createdAt` and only updates the role).
 
 ---
 

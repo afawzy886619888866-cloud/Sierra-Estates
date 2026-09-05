@@ -9,33 +9,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest, AuthResult } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, updateRecord, deleteRecord } from '@sierra-estates/db';
+import { isBrowseableTable } from '@/lib/server/browseable-tables';
 import { logger } from '@/lib/logger';
 
-const BLOCKED_COLLECTIONS = new Set([
-  'admin_credentials',
-  'service_accounts',
-  'system_secrets',
-]);
-
 async function callerIsSuperadmin(authResult: AuthResult): Promise<boolean> {
-  if (authResult.method === 'secret-key') return true;
   if (!authResult.uid) return false;
-  const callerDoc = await adminDb.collection('users').doc(authResult.uid).get();
-  return callerDoc.data()?.role === 'superadmin';
-}
-
-function serialize(data: FirebaseFirestore.DocumentData): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    if (value && typeof value === 'object' && typeof (value as any).toDate === 'function') {
-      out[key] = (value as any).toDate().toISOString();
-    } else {
-      out[key] = value;
-    }
-  }
-  return out;
+  const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
+  return caller?.role === 'superadmin';
 }
 
 export async function GET(
@@ -51,12 +32,19 @@ export async function GET(
   }
 
   const { collection, id } = await params;
+  // The Firestore version checked the denylist on PATCH and DELETE but not on
+  // GET, so a blocked collection was still readable by id. The allowlist is
+  // applied to all three.
+  if (!isBrowseableTable(collection)) {
+    return NextResponse.json({ error: `Table '${collection}' is not browseable` }, { status: 403 });
+  }
+
   try {
-    const doc = await adminDb.collection(collection).doc(id).get();
-    if (!doc.exists) {
+    const doc = await getRecord(collection, id);
+    if (!doc) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, doc: { id: doc.id, ...serialize(doc.data()!) } });
+    return NextResponse.json({ success: true, doc });
   } catch (err) {
     logger.error('[db-editor] GET failed:', err);
     return NextResponse.json(
@@ -79,25 +67,23 @@ export async function PATCH(
   }
 
   const { collection, id } = await params;
-  if (BLOCKED_COLLECTIONS.has(collection)) {
-    return NextResponse.json({ error: `Collection '${collection}' is read-only` }, { status: 403 });
+  if (!isBrowseableTable(collection)) {
+    return NextResponse.json({ error: `Table '${collection}' is read-only` }, { status: 403 });
   }
 
   try {
     const body = await req.json();
-    const ref = adminDb.collection(collection).doc(id);
-    const existing = await ref.get();
-    if (!existing.exists) {
+    // updateRecord returns the updated row, so the separate re-read the
+    // Firestore version needed is gone; a missing row comes back null.
+    const updated = await updateRecord(collection, id, {
+      ...body,
+      updatedAt: new Date().toISOString(),
+    });
+    if (!updated) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    await ref.update({
-      ...body,
-      updatedAt: Timestamp.now(),
-    });
-
-    const updated = await ref.get();
-    return NextResponse.json({ success: true, doc: { id: updated.id, ...serialize(updated.data()!) } });
+    return NextResponse.json({ success: true, doc: updated });
   } catch (err) {
     logger.error('[db-editor] PATCH failed:', err);
     return NextResponse.json(
@@ -120,12 +106,12 @@ export async function DELETE(
   }
 
   const { collection, id } = await params;
-  if (BLOCKED_COLLECTIONS.has(collection)) {
-    return NextResponse.json({ error: `Collection '${collection}' is read-only` }, { status: 403 });
+  if (!isBrowseableTable(collection)) {
+    return NextResponse.json({ error: `Table '${collection}' is read-only` }, { status: 403 });
   }
 
   try {
-    await adminDb.collection(collection).doc(id).delete();
+    await deleteRecord(collection, id);
     return NextResponse.json({ success: true, id });
   } catch (err) {
     logger.error('[db-editor] DELETE failed:', err);

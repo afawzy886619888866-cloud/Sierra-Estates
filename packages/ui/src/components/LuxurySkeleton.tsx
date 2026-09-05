@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @next/next/no-server-actions-in-client-components */
 
 /**
  * SIERRA ESTATES — LUXURY UI SKELETON (V12.0)

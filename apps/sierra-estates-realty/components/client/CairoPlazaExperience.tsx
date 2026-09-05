@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Building2, Phone, MessageSquare, ShieldCheck, FileText,
-  TrendingUp, Search, Filter, Layers, Sparkles, CheckCircle2,
+  TrendingUp, Search, Filter, Layers,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';

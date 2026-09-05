@@ -3,9 +3,9 @@ import '../../site-styles/notebookllm.css';
 import NotebookLMPage from './NotebookLMPage';
 
 export const metadata: Metadata = {
-  title: 'Google NotebookLM Studio · Grounded Real Estate Intelligence',
+  title: 'Information Bank — New Cairo Real Estate Intelligence & Unit Advisory | Sierra Estates',
   description:
-    'Sierra Estates Google NotebookLM Grounded Research Studio. Strict source-grounded real estate synthesis, 2-host audio overview deep dive podcasts, and executive investment study guides.',
+    'Sierra Estates Information Bank. Comprehensive real estate intelligence for New Cairo and Golden Square. Instant unit matching, price/sqm benchmarks, payment plans, and audio podcasts.',
 };
 
 export default function Page() {

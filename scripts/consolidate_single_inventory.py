@@ -12,12 +12,8 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.formatting.rule import CellIsRule
 
-SOURCE = Path(
-    '/home/ubuntu/whatsapp_inventory/merged_inventory/merged_rental_inventory.xlsx'
-)
-OUT = Path(
-    '/home/ubuntu/whatsapp_inventory/merged_inventory/Sierra_Estates_All_Inventory_One_Sheet.xlsx'
-)
+SOURCE = Path('/home/ubuntu/whatsapp_inventory/merged_inventory/merged_rental_inventory.xlsx')
+OUT = Path('/home/ubuntu/whatsapp_inventory/merged_inventory/Sierra_Estates_All_Inventory_One_Sheet.xlsx')
 
 
 def read_formatted_sheet(worksheet):
@@ -55,8 +51,8 @@ def read_formatted_sheet(worksheet):
         if not any(v not in (None, '') for v in row):
             continue
         row_data = {}
-        for key, ci in header_map.items():
-            row_data[key] = row[ci] if ci < len(row) else None
+        for key, col_idx in header_map.items():
+            row_data[key] = row[col_idx] if col_idx < len(row) else None
         if row_data.get('RecordID') or row_data.get('UnitFingerprint'):
             records.append(row_data)
     return records

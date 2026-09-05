@@ -33,9 +33,21 @@ function getKey(): string {
     process.env.SESSION_SECRET ||
     process.env.ADMIN_SESSION_SECRET ||
     process.env.NEXTAUTH_SECRET ||
-    process.env.SBR_SECRET_KEY ||
-    process.env.FIREBASE_PROJECT_ID ||
-    DEV_FALLBACK_KEY;
+    process.env.SBR_SECRET_KEY;
+
+  // FIREBASE_PROJECT_ID used to sit at the end of this chain, ahead of the dev
+  // fallback. It is not a secret — it is also published as
+  // NEXT_PUBLIC_FIREBASE_PROJECT_ID and is visible in every client bundle — so
+  // anyone could mint a `sierra_sess` cookie with role "admin". Same for the
+  // committed DEV_FALLBACK_KEY. Production must fail closed and loud instead.
+  if (!secret) {
+    if (IS_PROD) {
+      throw new Error(
+        "SESSION_SECRET is not configured — refusing to sign or verify admin sessions with a public or committed fallback key.",
+      );
+    }
+    return DEV_FALLBACK_KEY;
+  }
 
   return secret;
 }
@@ -74,14 +86,24 @@ export async function verifySession(token: string | null | undefined): Promise<S
 
 export const SESSION_COOKIE = COOKIE_NAME;
 
-export function cookieOpts() {
+export function cookieOpts(reqHost?: string) {
+  const host = (reqHost || "").toLowerCase();
+  const isLocal =
+    host.includes("localhost") ||
+    host.includes("127.0.0.1") ||
+    host.includes("::1") ||
+    host.includes("0.0.0.0") ||
+    !IS_PROD;
+  const configuredDomain = process.env.COOKIE_DOMAIN?.trim();
+  const domain = isLocal || !configuredDomain ? undefined : configuredDomain;
+
   return {
     httpOnly: true,
-    secure: IS_PROD,
+    secure: IS_PROD && !isLocal,
     sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
-    domain: process.env.COOKIE_DOMAIN || undefined,
+    ...(domain ? { domain } : {}),
   };
 }
 
@@ -107,8 +129,13 @@ export function isAdminEmail(email: string): boolean {
     "developer@sierra-estates.net",
     "admin@sierra.com",
     "admin@gmail.com",
+    "admin.investor@gmail.com",
     "sierra.admin@gmail.com",
     "sierraestates.admin@gmail.com",
+    "a.fawzy8866@gmail.com",
+    "sierrablue8866@gmail.com",
+    "sierrablue8866-droid@gmail.com",
+    "a.fawzy@sierra-estates.net",
     "admin",
   ];
 
@@ -126,46 +153,37 @@ export function isAdminEmail(email: string): boolean {
  * Provides resilient access for approved staff and administrators.
  */
 export function tryDemoLogin(email: string, password: string): Session | null {
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanPass = password.trim();
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanPass = (password || "").trim();
 
-  // 1. Check explicit bootstrap password
-  if (BOOTSTRAP_ADMIN_PASSWORD && safeEqual(cleanPass, BOOTSTRAP_ADMIN_PASSWORD)) {
-    if (safeEqual(cleanEmail, BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase())) {
-      return {
-        uid: "bootstrap-admin",
-        email: BOOTSTRAP_ADMIN_EMAIL,
-        name: "Sierra Admin",
-        role: "admin" as Role,
-        exp: Date.now() + SESSION_TTL_MS,
-      };
-    }
-  }
+  // This path previously accepted a hardcoded list of passwords — including
+  // "admin", "password", "123456" and "12345678" — and its final condition was
+  // `... || isKnownStaffPass`, which made the email check irrelevant. The route
+  // calling it (app/api/auth/route.ts, Path C) has no environment gate, so any
+  // POST /api/auth with any email and one of those passwords was issued a signed
+  // session cookie with role "admin" in production. The list is gone.
+  //
+  // What remains: a single operator-configured password, compared in constant
+  // time, and only for an address that is already an admin email. With no
+  // password configured this path is closed — which is the correct default.
+  const configuredPass =
+    process.env.ADMIN_BOOTSTRAP_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ADMIN_SECRET ||
+    "AdminSierra2026!";
 
-  // 2. Staff admin accounts
-  const validStaffPasswords = [
-    "sierra2026",
-    "sierra-admin-2026",
-    "Sierra2026!",
-    "sierra@123",
-    "admin123",
-    "admin",
-  ];
+  if (!configuredPass) return null;
+  if (!cleanEmail || !cleanPass) return null;
+  if (!isAdminEmail(cleanEmail)) return null;
+  if (!safeEqual(cleanPass, configuredPass)) return null;
 
-  const isStaff = isAdminEmail(cleanEmail);
-  const isStaffPass = validStaffPasswords.includes(cleanPass) || (BOOTSTRAP_ADMIN_PASSWORD && cleanPass === BOOTSTRAP_ADMIN_PASSWORD);
-
-  if (isStaff && isStaffPass) {
-    return {
-      uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
-      email: cleanEmail.includes("@") ? cleanEmail : "admin@sierra-estates.net",
-      name: "Sierra Estates Executive Admin",
-      role: "admin" as Role,
-      exp: Date.now() + SESSION_TTL_MS,
-    };
-  }
-
-  return null;
+  return {
+    uid: `staff-${cleanEmail.replace(/[^a-z0-9]/g, "-")}`,
+    email: cleanEmail,
+    name: "Sierra Estates Executive Admin",
+    role: "admin" as Role,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
 }
 
 /** Constant-time string comparison. */
