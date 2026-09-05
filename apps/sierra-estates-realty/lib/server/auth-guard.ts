@@ -10,6 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
+import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail } from '@/lib/auth';
+import { isAdminPortalRole } from '@/lib/types';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
@@ -25,22 +27,25 @@ export interface AuthResult {
   authenticated: boolean;
   uid?: string;
   email?: string;
+  role?: string;
   /**
    * How the caller proved who they are.
    *
-   * 'supabase'   — a real user identity, carrying a uid and a profiles row.
-   * 'secret-key' — the shared service credential. Authenticates the *caller*
-   *                but carries NO identity and NO role, so it can never
-   *                satisfy an admin check.
+   * 'supabase'       — a real user identity, carrying a uid and a profiles row.
+   * 'session-cookie' — authenticated browser session cookie (sierra_sess).
+   * 'secret-key'     — the shared service credential. Authenticates the *caller*
+   *                    but carries NO identity and NO role, so it can never
+   *                    satisfy an admin check.
    */
-  method: 'supabase' | 'secret-key' | 'none';
+  method: 'supabase' | 'session-cookie' | 'secret-key' | 'none';
 }
 
 /**
  * Verifies an incoming API request.
- * Supports two auth methods:
+ * Supports three auth methods:
  *   1. Supabase access token via `Authorization: Bearer <token>`
- *   2. Internal secret key via `X-SBR-SECRET-KEY` header (for cron/webhooks)
+ *   2. Server session cookie via `sierra_sess` (for Admin Portal browser requests)
+ *   3. Internal secret key via `X-SBR-SECRET-KEY` header (for cron/webhooks)
  */
 export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
   // Method 1: Supabase access token.
@@ -59,11 +64,34 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
       }
     } catch {
       // Token invalid, expired, or Supabase unreachable — fall through to the
-      // secret-key check. Never treat a verification failure as success.
+      // session cookie / secret-key check. Never treat a verification failure as success.
     }
   }
 
-  // Method 2: Internal Secret Key (for server-to-server, cron, webhooks).
+  // Method 2: Server session cookie (sierra_sess) from Admin Portal login
+  try {
+    const cookieHeader = req.headers.get('cookie');
+    const sessionToken =
+      req.cookies?.get?.(SESSION_COOKIE)?.value ||
+      parseCookies(cookieHeader)[SESSION_COOKIE];
+
+    if (sessionToken) {
+      const sess = await verifySession(sessionToken);
+      if (sess) {
+        return {
+          authenticated: true,
+          uid: sess.uid,
+          email: sess.email,
+          role: sess.role,
+          method: 'session-cookie',
+        };
+      }
+    }
+  } catch {
+    // Session token invalid or verification failed — fall through
+  }
+
+  // Method 3: Internal Secret Key (for server-to-server, cron, webhooks).
   const secretHeader = req.headers.get('x-sbr-secret-key');
   if (SECRET_KEY && secretHeader && safeEqual(secretHeader, SECRET_KEY)) {
     return {
@@ -87,31 +115,42 @@ export function unauthorizedResponse(message = 'Authentication required') {
 
 /**
  * Verifies that the request comes from an authenticated admin user.
- * Requires a Supabase identity AND `role in (admin, superadmin)` on the
- * caller's public.profiles row.
+ * Supports:
+ *   1. Verified session cookies carrying an admin/manager role
+ *   2. Supabase identities with admin role on profiles or verified admin email
  */
 export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> {
   const result = await verifyRequest(req);
   if (!result.authenticated) return result;
 
+  // Session cookie callers already carry a verified role minted by /api/auth
+  if (result.method === 'session-cookie') {
+    if (result.role === 'admin' || result.role === 'superadmin' || isAdminPortalRole(result.role as any)) {
+      return result;
+    }
+    if (result.email && isAdminEmail(result.email)) {
+      return { ...result, role: 'admin' };
+    }
+    return { authenticated: false, method: 'none' };
+  }
+
   // A caller authenticated by the shared secret has no identity (no uid), so
-  // there is no profiles row to carry a role. Previously this early-returned
-  // the *authenticated* result, which meant any holder of SBR_SECRET_KEY
-  // cleared every admin-only gate without a role check — and that secret is
-  // also the service/cron/webhook credential, so it is shared far more widely
-  // than admin access. Admin requires a real identity.
+  // there is no profiles row to carry a role.
   if (!result.uid) return { authenticated: false, method: 'none' };
+
+  if (result.email && isAdminEmail(result.email)) {
+    return { ...result, role: 'admin' };
+  }
 
   try {
     const profile = await getRecord<{ role?: string }>('profiles', result.uid);
     const role = profile?.role;
-    if (role !== 'admin' && role !== 'superadmin') {
-      return { authenticated: false, method: 'none' };
+    if (role === 'admin' || role === 'superadmin' || isAdminPortalRole(role as any)) {
+      return { ...result, role };
     }
   } catch {
     // A lookup failure must deny, never admit.
-    return { authenticated: false, method: 'none' };
   }
 
-  return result;
+  return { authenticated: false, method: 'none' };
 }

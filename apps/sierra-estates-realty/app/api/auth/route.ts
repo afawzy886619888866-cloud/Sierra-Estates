@@ -71,37 +71,22 @@ export async function POST(req: Request) {
             user.id
           );
 
-          let role: Role;
           if (!profile) {
-            if (isAdminEmail(verifiedEmail)) {
-              role = "admin";
-              try {
-                await updateRecord("profiles", user.id, {
-                  email: verifiedEmail,
-                  role: "admin",
-                  fullName: user.user_metadata?.full_name || verifiedEmail.split("@")[0],
-                  lastLogin: new Date().toISOString(),
-                });
-              } catch {}
-            } else {
-              return NextResponse.json(
-                { error: "This account is not provisioned for the admin portal." },
-                { status: 403 }
-              );
-            }
-          } else {
-            const rawRole = String(profile.role ?? "").trim().toLowerCase();
-            if (isAdminPortalRole(rawRole)) {
-              role = rawRole as Role;
-            } else if (isAdminEmail(verifiedEmail)) {
-              role = "admin";
-            } else {
-              return NextResponse.json(
-                { error: "This account is not approved for the admin portal." },
-                { status: 403 }
-              );
-            }
+            return NextResponse.json(
+              { error: "This account is not provisioned for the admin portal." },
+              { status: 403 }
+            );
           }
+
+          const rawRole = String(profile.role ?? "").trim().toLowerCase();
+          if (!isAdminPortalRole(rawRole)) {
+            return NextResponse.json(
+              { error: "This account is not approved for the admin portal." },
+              { status: 403 }
+            );
+          }
+
+          const role: Role = rawRole as Role;
 
           await updateRecord("profiles", user.id, { lastLogin: new Date().toISOString() });
 
