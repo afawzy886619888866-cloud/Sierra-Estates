@@ -1,4 +1,5 @@
 'use client';
+/* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
 
@@ -90,11 +91,14 @@ const RECENT_ACTIVITIES: ActivityFeedItem[] = [
 
 export default function DashboardView({
   lang = 'en',
+  onNavigateAction,
   onNavigate,
 }: {
   lang?: string;
+  onNavigateAction?: (tab: string) => void;
   onNavigate?: (tab: string) => void;
 }) {
+  const navigate = onNavigateAction || onNavigate;
   const isAr = lang === 'ar';
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [liveData, setLiveData] = useState<{
@@ -129,7 +133,7 @@ export default function DashboardView({
               interest: l.interest || 'New Cairo Luxury Residence',
               stage: l.stage || 'Initial Contact',
               hot: true,
-              score: 90 + Math.floor(Math.random() * 9),
+              score: 93 + (i % 6),
               budget: l.budget ? `${(l.budget / 1000000).toFixed(1)}M EGP` : '15-25M EGP',
               color: l.color || ['#00AEFF', '#10B981', '#8B5CF6', '#F59E0B'][i % 4],
             }));
@@ -261,7 +265,7 @@ export default function DashboardView({
       </div>
 
       {/* Executive Quick Actions Hub */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 shadow-lg">
+      <div className="p-4 rounded-xl bg-linear-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white">⚡ {isAr ? 'إجراءات سريعة للتنفيذ' : 'Executive Quick Actions'}</span>
@@ -272,7 +276,7 @@ export default function DashboardView({
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <button
             type="button"
-            onClick={() => onNavigate?.('listings')}
+            onClick={() => navigate?.('listings')}
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
           >
             <span>✦</span>
@@ -280,7 +284,7 @@ export default function DashboardView({
           </button>
           <button
             type="button"
-            onClick={() => onNavigate?.('automations')}
+            onClick={() => navigate?.('automations')}
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/70 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 hover:text-emerald-300 transition-all cursor-pointer shadow-sm"
           >
             <span>✉</span>
@@ -288,7 +292,7 @@ export default function DashboardView({
           </button>
           <button
             type="button"
-            onClick={() => onNavigate?.('deep_insights')}
+            onClick={() => navigate?.('deep_insights')}
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-purple-900/40 border border-slate-700/70 hover:border-purple-500/50 text-xs font-semibold text-slate-200 hover:text-purple-300 transition-all cursor-pointer shadow-sm"
           >
             <span>⚖</span>
@@ -296,7 +300,7 @@ export default function DashboardView({
           </button>
           <button
             type="button"
-            onClick={() => onNavigate?.('heatmap')}
+            onClick={() => navigate?.('heatmap')}
             className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/70 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
           >
             <span>🗺</span>
@@ -319,7 +323,7 @@ export default function DashboardView({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onNavigate?.('leads')}
+              onClick={() => navigate?.('leads')}
               className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span>{isAr ? 'عرض كافة العملاء في الـ CRM' : 'View Full CRM Pipeline'}</span>
@@ -374,7 +378,7 @@ export default function DashboardView({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onNavigate?.('leads')}
+                  onClick={() => navigate?.('leads')}
                   className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs transition-colors cursor-pointer"
                   title="CRM Lead Details"
                 >
@@ -461,7 +465,7 @@ export default function DashboardView({
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate?.('agents')}
+                onClick={() => navigate?.('agents')}
                 className="px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-semibold transition-colors cursor-pointer"
               >
                 {isAr ? 'إدارة الأسطول →' : 'Fleet Command →'}
