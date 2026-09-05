@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { insertRecord } from '@sierra-estates/db';
 import { verifyRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { COLLECTIONS, type StakeholderAcquisitionSource } from '@/lib/models/schema';
+import { type StakeholderAcquisitionSource } from '@/lib/models/schema';
 
 /**
  * AI lead-scoring & VIP routing intake. Used to write to a separate,
@@ -16,6 +16,21 @@ import { COLLECTIONS, type StakeholderAcquisitionSource } from '@/lib/models/sch
  * The sierra_ai_score/pipeline_stage/assigned_specialist fields are kept
  * as-is alongside the standard name/phone/source/notes fields rather than
  * force-fit into the full Lead/Stakeholder schema.
+ *
+ * Firestore → Postgres field mapping. Every field this route used to write is
+ * still written; four of them land on their canonical `public.leads` column
+ * because the value is identical and a second column would just be a copy:
+ *
+ *   name                     → full_name
+ *   mobile                   → phone                (same value as `phone`)
+ *   notes                    → summary_notes
+ *   interaction_logs_summary → summary_notes        (same value as `notes`)
+ *   target_location          → target_compound
+ *   budget_ceiling           → budget_max
+ *   timestamp                → created_at           (same value as `createdAt`)
+ *
+ * source / sierra_ai_score / pipeline_stage / assigned_specialist keep their
+ * own columns — see supabase/schema.sql.
  */
 
 const KNOWN_SOURCES: StakeholderAcquisitionSource[] = [
@@ -69,22 +84,19 @@ export async function POST(request: NextRequest) {
 
     const structuredLeadRecord = {
       id: leadDocumentId,
-      name: client_name,
+      fullName: client_name,
       phone: client_mobile,
-      mobile: client_mobile,
       source,
-      notes: conversation_summary,
-      sierra_ai_score: leadScoreValue,
-      target_location: extracted_metrics.compound_target,
-      budget_ceiling: extracted_metrics.capital_budget,
-      pipeline_stage: leadScoreValue >= 8 ? 'VIP_QUALIFIED_CORRIDOR' : 'LEAD_SOURCED',
-      assigned_specialist: selectedSalesCloserRepId,
-      interaction_logs_summary: conversation_summary,
+      summaryNotes: conversation_summary,
+      sierraAiScore: leadScoreValue,
+      targetCompound: extracted_metrics.compound_target,
+      budgetMax: extracted_metrics.capital_budget,
+      pipelineStage: leadScoreValue >= 8 ? 'VIP_QUALIFIED_CORRIDOR' : 'LEAD_SOURCED',
+      assignedSpecialist: selectedSalesCloserRepId,
       createdAt: new Date().toISOString(),
-      timestamp: new Date().toISOString()
     };
 
-    await adminDb.collection(COLLECTIONS.stakeholders).doc(leadDocumentId).set(structuredLeadRecord);
+    await insertRecord('leads', structuredLeadRecord);
 
     if (leadScoreValue >= 8 && process.env.ZAPIER_CALENDAR_WEBHOOK_URL) {
       await fetch(process.env.ZAPIER_CALENDAR_WEBHOOK_URL, {
@@ -95,7 +107,7 @@ export async function POST(request: NextRequest) {
           description: `Investor Profile: ${client_name} | Assigned Specialist: ${selectedSalesCloserRepId}`,
           phone_number: client_mobile
         })
-      }).catch(() => {});
+      }).catch((zapErr) => console.warn('[CRM:leads] Zapier webhook failed:', zapErr));
     }
 
     return NextResponse.json({ success: true, lead_id: leadDocumentId, metrics_score: `${leadScoreValue}/10`, rep_owner: selectedSalesCloserRepId });

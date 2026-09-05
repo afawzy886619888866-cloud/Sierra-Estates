@@ -1,0 +1,26 @@
+# Antigravity Project Guidelines · Sierra Estates (`SE-Vercel-deploy-main`)
+
+## 1. Authoritative Backend & Architecture
+- **Supabase is the Sole Authoritative Backend**: All database tables, Auth, pgvector embeddings, real-time queues, and media storage live in Supabase Postgres (`https://REDACTED-PROJECT.supabase.co`).
+- **Legacy Deployments Retired**: Firebase deployments are permanently deactivated. Never deploy to Firebase or reintroduce Firebase hosting/rules workflows.
+- **Environment & Secrets**: Never commit or expose service role keys, database secrets, or API tokens client-side. Always use `process.env.SUPABASE_SERVICE_ROLE_KEY` in server-only contexts and `NEXT_PUBLIC_*` strictly for public values.
+
+## 2. Next.js App Router & TypeScript Standards
+- **Server Components by Default**: Data fetching, metadata, and security-critical logic reside in Server Components.
+- **Client Components**: Explicitly add `"use client"` only when hooks (`useState`, `useEffect`, `useCallback`) or browser events are required.
+- **Type Safety**: Strictly avoid `any`. All schemas and RPC calls must be typed against Supabase definitions or Zod models.
+- **Verification First**: Always verify type checking (`pnpm --filter sierra-estates-client-page type-check`) and test suites (`pnpm test:ci`) before concluding changes.
+
+## 3. Design & User Experience
+- **Aesthetics & Polish**: Use the `impeccable` and `frontend-design` skills for UI work. Ensure high-polish luxury real estate aesthetic, responsive layouts, smooth transitions, and accessible contrast.
+- **Tailwind CSS**: Follow `tailwind-patterns`. Do not write ad-hoc utility soups where reusable component patterns or CVA tokens are established.
+
+## 4. Installed Local & Global Skills
+The following project skills are configured in `.agents/skills/` and globally:
+- `impeccable` — Frontend UI/UX refinement, micro-interactions, layout polish.
+- `clean-code` & `code-reviewer` — Static code quality, idiomatic refactoring, regression safety.
+- `nextjs-best-practices` & `react-best-practices` — App Router performance, caching, and hydration optimization.
+- `nextjs-supabase-auth` — Session management, middleware gates, protected routes, and RLS policies.
+- `security-audit` — OWASP audit, secret leaks detection, RLS boundary verification.
+- `database-design` — PostgreSQL indexing, schema relationships, query optimization.
+- `debugging-strategies` & `performance-optimizer` — Systematic root-cause debugging and Core Web Vitals optimization.

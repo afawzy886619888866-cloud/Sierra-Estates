@@ -1,112 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
 
-// Lazy initialize Firebase Admin SDK at runtime only
-let initialized = false;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-function initializeFirebaseAdmin() {
-  if (initialized || getApps().length > 0) return;
+/** Roles allowed into the admin console. */
+const ADMIN_CONSOLE_ROLES = ['admin', 'manager', 'superadmin'];
 
-  try {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    if (!serviceAccountJson) {
-      console.warn('FIREBASE_SERVICE_ACCOUNT_JSON not set - Admin operations will fail');
-      return;
-    }
-
-    initializeApp({
-      credential: cert(JSON.parse(serviceAccountJson)),
-    });
-    initialized = true;
-  } catch (error) {
-    console.error('Failed to initialize Firebase Admin:', error);
-  }
+interface VerifiedCaller {
+  uid: string;
+  email?: string;
+  role: string | null;
 }
 
 /**
- * POST /api/admin/auth/verify
- * Verify Firebase ID token and check admin role
+ * Verify a Supabase access token and read the caller's stored role.
+ *
+ * Returns null when the token does not verify. The role comes from
+ * public.profiles and is the only source of truth — nothing in the token
+ * itself may grant console access.
+ */
+async function verifyCaller(token: string): Promise<VerifiedCaller | null> {
+  const { data, error } = await getSupabaseAdmin().auth.getUser(token);
+  if (error || !data?.user) return null;
+
+  const profile = await getRecord<{ role?: string }>('profiles', data.user.id);
+  return {
+    uid: data.user.id,
+    email: data.user.email ?? undefined,
+    role: profile?.role ?? null,
+  };
+}
+
+/**
+ * POST /api/admin/auth
+ * Verify a Supabase access token and check the caller holds a console role.
  */
 export async function POST(req: NextRequest) {
-  initializeFirebaseAdmin();
   try {
     const { token } = await req.json();
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Token required' }, { status: 400 });
     }
 
-    // Verify token with Firebase Admin SDK
-    const decodedToken = await getAuth().verifyIdToken(token);
-    const uid = decodedToken.uid;
+    const caller = await verifyCaller(token);
+    if (!caller) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
-    // Check user role in Firestore
-    const db = getFirestore();
-    const userDoc = await db.collection('users').doc(uid).get();
-    const userRole = userDoc.data()?.role;
-
-    // Only admin, manager, and superadmin can access admin console
-    if (!['admin', 'manager', 'superadmin'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions' },
-        { status: 403 }
-      );
+    if (!caller.role || !ADMIN_CONSOLE_ROLES.includes(caller.role)) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
     return NextResponse.json({
       valid: true,
-      uid,
-      role: userRole,
-      email: decodedToken.email,
+      uid: caller.uid,
+      role: caller.role,
+      email: caller.email,
     });
   } catch (error) {
     console.error('Token verification error:', error);
-    return NextResponse.json(
-      { error: 'Invalid token' },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 }
 
 /**
- * POST /api/admin/auth/check-role
- * Simple role check for frontend
+ * GET /api/admin/auth
+ * Simple role check for the frontend.
  */
 export async function GET(req: NextRequest) {
-  initializeFirebaseAdmin();
   try {
     const token = req.headers.get('authorization')?.split('Bearer ')[1];
 
     if (!token) {
-      return NextResponse.json(
-        { authorized: false },
-        { status: 401 }
-      );
+      return NextResponse.json({ authorized: false }, { status: 401 });
     }
 
-    const decodedToken = await getAuth().verifyIdToken(token);
-    const uid = decodedToken.uid;
-
-    const db = getFirestore();
-    const userDoc = await db.collection('users').doc(uid).get();
-    const userRole = userDoc.data()?.role;
-
-    const authorized = ['admin', 'manager', 'superadmin'].includes(userRole);
+    const caller = await verifyCaller(token);
+    if (!caller) {
+      return NextResponse.json({ authorized: false }, { status: 401 });
+    }
 
     return NextResponse.json({
-      authorized,
-      uid,
-      role: userRole,
+      authorized: Boolean(caller.role && ADMIN_CONSOLE_ROLES.includes(caller.role)),
+      uid: caller.uid,
+      role: caller.role,
     });
   } catch {
-    return NextResponse.json(
-      { authorized: false },
-      { status: 401 }
-    );
+    return NextResponse.json({ authorized: false }, { status: 401 });
   }
 }

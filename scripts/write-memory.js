@@ -1,15 +1,24 @@
-#!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { obsidian } from '../packages/obsidian/src/index.js';
+import pino from 'pino';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const target = path.join(__dirname, 'write-memory.ts');
+const logger = pino({ name: 'write-memory-script' });
 
-const result = spawnSync('npx', ['tsx', target, ...process.argv.slice(2)], {
-  stdio: 'inherit',
-  shell: true,
-});
+async function main() {
+  const memoryId = `mem-test-${Date.now()}`;
+  const payload = {
+    event: 'manual_operator_memory_sync',
+    agent: 'openclaw',
+    compoundPreferences: ['Mivida', 'Hyde Park', 'Mountain View iCity'],
+    note: 'System-wide unified memory checkpoint created successfully.',
+    recordedAt: new Date().toISOString(),
+  };
 
-process.exit(result.status ?? 0);
+  logger.info({ msg: `Writing memory entry: ${memoryId}` });
+  await obsidian.set(memoryId, payload, ['system-checkpoint', 'harness-coordinator']);
+
+  console.log(`\n[✓] Memory entry written to Obsidian store.`);
+  console.log(`    Memory ID: ${memoryId}`);
+  console.log(`    Tags:      system-checkpoint, harness-coordinator\n`);
+}
+
+main();

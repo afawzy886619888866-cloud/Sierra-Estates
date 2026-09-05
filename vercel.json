@@ -3,6 +3,7 @@
   "buildCommand": "pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
+  "outputDirectory": "apps/sierra-estates-realty/.next",
   "regions": ["fra1"],
   "git": {
     "deploymentEnabled": false
@@ -23,14 +24,6 @@
     {
       "path": "/api/cron/maintenance",
       "schedule": "0 23 * * *"
-    },
-    {
-      "path": "/api/cron/sync-master-sheet",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/whatsapp-dispatch",
-      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [

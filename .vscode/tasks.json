@@ -64,6 +64,30 @@
       "type": "npm",
       "script": "run-harness",
       "problemMatcher": []
+    },
+    {
+      "label": "Apply Supabase Master Schema",
+      "type": "shell",
+      "command": "node scripts/apply-supabase-schema.mjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Verify Production Deployment Readiness",
+      "type": "shell",
+      "command": "node_modules/.bin/tsx scripts/verify-deploy-readiness.ts",
+      "problemMatcher": []
+    },
+    {
+      "label": "Verify Production Environment Readiness",
+      "type": "shell",
+      "command": "node scripts/verify-env-readiness.mjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Supabase Embeddings",
+      "type": "shell",
+      "command": "node_modules/.bin/tsx scripts/generate-supabase-embeddings.ts",
+      "problemMatcher": []
     }
   ]
 }

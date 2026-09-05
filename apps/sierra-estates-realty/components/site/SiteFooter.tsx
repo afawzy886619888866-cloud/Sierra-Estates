@@ -8,7 +8,7 @@ import { Facebook, Instagram, Linkedin, Twitter } from './SocialIcons';
 import { useSite } from '@/lib/site/SiteContext';
 
 export default function SiteFooter() {
-  const { t } = useSite();
+  const { t, lang } = useSite();
 
   return (
     <footer id="site-footer">
@@ -39,7 +39,9 @@ export default function SiteFooter() {
             <Link href="/properties">{t('fBuy')}</Link>
             <Link href="/properties">{t('fRent')}</Link>
             <Link href="/properties">{t('fNew')}</Link>
+            <Link href="/net" style={{ color: '#e9c176', fontWeight: 600 }}>🎯 {lang === 'ar' ? 'رادار الوحدات (Net)' : 'Listing Net'}</Link>
             <Link href="/compounds">{t('fCpds')}</Link>
+            <Link href="/notebookllm" style={{ color: '#d4af37', fontWeight: 600 }}>🏦 Information Bank</Link>
             <Link href="#">{t('fAgent')}</Link>
           </div>
 

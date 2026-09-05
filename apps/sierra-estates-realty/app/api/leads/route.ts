@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { insertRecord } from '@sierra-estates/db';
 import { COLLECTIONS } from '@/lib/models/schema';
-import { sendTelegramMessage } from '@/lib/telegram';
+import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { leadCreateSchema, parseRequestBody, isParseFailure } from '@/lib/server/schemas';
@@ -18,13 +17,19 @@ export async function POST(req: Request) {
 
     const { name, email, phone, message, locale } = parseResult.data;
 
-    // 1. Add to Firestore
-    const leadRef = await adminDb.collection(COLLECTIONS.stakeholders).add({
-      name,
+    // 1. Add to Supabase (public.leads; `name` and the free-text message are
+    //    stored as full_name / summary_notes, the table's column names).
+    const now = new Date().toISOString();
+    const lead = await insertRecord<{ id: string }>(COLLECTIONS.stakeholders, {
+      fullName: name,
       email: email || undefined,
       phone: phone || undefined,
-      notes: message || undefined,
+      summaryNotes: message || undefined,
       status: 'new',
+      // channel is the normalised intake channel and defaults to 'whatsapp';
+      // a web contact form is not that, so it is set explicitly alongside the
+      // raw attribution string in `source`.
+      channel: 'web',
       mode: 'sale', // default
       source: 'website',
       zone: locale || undefined,
@@ -37,25 +42,25 @@ export async function POST(req: Request) {
       aiProfiling: {
         interests: ['General Inquiry'],
         topMatches: [],
-        lastAnalyzedAt: Timestamp.now(),
+        lastAnalyzedAt: now,
       },
       automation: {
         followupReminderEnabled: true,
         interactionFrequency: 'medium',
       },
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      createdAt: now,
+      updatedAt: now,
     });
 
     // 2. Send Telegram Notification
     const text = `
 <b>🚀 New Lead - Sierra Estates Realty</b>
-<b>Name:</b> ${name}
-<b>Email:</b> ${email || 'n/a'}
-<b>Phone:</b> ${phone || 'n/a'}
+<b>Name:</b> ${escapeTelegramHtml(name)}
+<b>Email:</b> ${escapeTelegramHtml(email || 'n/a')}
+<b>Phone:</b> ${escapeTelegramHtml(phone || 'n/a')}
 <b>Interest:</b> General Inquiry
-<b>Message:</b> ${message || 'n/a'}
-<b>Locale:</b> ${locale || 'n/a'}
+<b>Message:</b> ${escapeTelegramHtml(message || 'n/a')}
+<b>Locale:</b> ${escapeTelegramHtml(locale || 'n/a')}
     `.trim();
 
     await sendTelegramMessage(text);
@@ -68,14 +73,14 @@ export async function POST(req: Request) {
           purpose: 'general-outreach',
           toPhone: notifyNumber,
           body: `New lead from sierra-estates.net\nName: ${name}\nEmail: ${email}\nPhone: ${phone ?? 'n/a'}\nMessage: ${message ?? 'n/a'}`,
-          leadId: leadRef.id,
+          leadId: lead.id,
         });
       } catch (error) {
         logger.error('Failed to enqueue lead WhatsApp notification:', error);
       }
     }
 
-    return NextResponse.json({ success: true, id: leadRef.id });
+    return NextResponse.json({ success: true, id: lead.id });
   } catch (error) {
     logger.error("Lead submission error:", error);
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });

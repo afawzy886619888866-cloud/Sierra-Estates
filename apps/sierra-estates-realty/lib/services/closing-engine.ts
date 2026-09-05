@@ -3,8 +3,7 @@
  * Orchestrates contract synthesis, stakeholder verification, and commission processing.
  */
 
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { getRecord, insertRecord, updateRecord } from '@sierra-estates/db';
 import { COLLECTIONS, type Sale, type Lead, type Unit } from '../models/schema';
 import { sendTelegramMessage } from './telegram-controller';
 import { initiateFeedbackLoop } from './feedback-engine';
@@ -23,9 +22,8 @@ export async function initiateClosing(
   commissionPercent: number = 2.5
 ): Promise<string> {
   // ─── VALIDATION: Ensure Asset Availability ──────────────────────
-  const unitRef = doc(db, COLLECTIONS.units, unitId);
-  const unitSnap = await getDoc(unitRef);
-  if (unitSnap.exists() && (unitSnap.data() as Unit).status === 'sold') {
+  const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
+  if (unit?.status === 'sold') {
     throw new Error(`[Strategic Acquisition Error] Asset ${unitId} is already marked as SOLD.`);
   }
 
@@ -39,51 +37,44 @@ export async function initiateClosing(
     commissionPercent,
     commissionAmount,
     status: 'pending',
-    closingDate: Timestamp.now(), 
-    createdAt: serverTimestamp(),
+    closingDate: new Date().toISOString(),
   };
 
-  const docRef = await addDoc(collection(db, COLLECTIONS.sales), saleData);
+  const sale = await insertRecord<{ id: string }>(COLLECTIONS.sales, saleData);
 
   // Generate Contract Preview URL (Simulated)
-  const contractUrl = `https://sierraestates.luxury/contracts/preview/${docRef.id}`;
+  const contractUrl = `https://sierraestates.luxury/contracts/preview/${sale.id}`;
 
-  // Update unit status to 'reserved' 
-  await updateDoc(doc(db, COLLECTIONS.units, unitId), {
-    status: 'reserved',
-    updatedAt: serverTimestamp(),
-  });
+  // Update unit status to 'reserved'
+  await updateRecord(COLLECTIONS.units, unitId, { status: 'reserved' });
 
-  // Update Stakeholder (Lead) State
-  await updateDoc(doc(db, COLLECTIONS.stakeholders, leadId), {
-    'orchestrationState.stage': 'S9_ACQUISITION_IN_PROGRESS',
-    'intelligence.contractUrl': contractUrl
+  // Update Stakeholder (Lead) State. `orchestrationState` and `intelligence`
+  // are single JSONB columns, so the dotted paths become merges.
+  const lead = await getRecord<Lead>(COLLECTIONS.stakeholders, leadId);
+  await updateRecord(COLLECTIONS.stakeholders, leadId, {
+    orchestrationState: {
+      ...(lead?.orchestrationState ?? {}),
+      stage: 'S9_ACQUISITION_IN_PROGRESS',
+    },
+    intelligence: { ...(lead?.intelligence ?? {}), contractUrl },
   });
 
   await sendTelegramMessage(`💎 <b>Strategic Acquisition Initiated</b>\nContract synthesised for Asset: ${unitId}. Awaiting stakeholder affirmation.`);
 
-  return docRef.id;
+  return sale.id;
 }
 
 /**
  * Finalizes the sale, marks unit as sold, and triggers the feedback loop.
  */
 export async function finalizeSale(saleId: string) {
-  const saleRef = doc(db, COLLECTIONS.sales, saleId);
-  const saleSnap = await getDoc(saleRef);
-  if (!saleSnap.exists()) return;
-  const sale = saleSnap.data() as Sale;
+  const sale = await getRecord<Sale>(COLLECTIONS.sales, saleId);
+  if (!sale) return;
 
-  await updateDoc(saleRef, {
-    status: 'completed',
-    updatedAt: serverTimestamp(),
-  });
+  await updateRecord(COLLECTIONS.sales, saleId, { status: 'completed' });
 
   // Mark Signature Asset as Sold in Global Registry
-  await updateDoc(doc(db, COLLECTIONS.units, sale.unitId), {
-    status: 'sold',
-    updatedAt: serverTimestamp(),
-  });
+  await updateRecord(COLLECTIONS.units, sale.unitId, { status: 'sold' });
 
   // Trigger Stage 10: High-Fidelity Feedback Loop
   await initiateFeedbackLoop(sale.leadId, saleId);
@@ -96,18 +87,17 @@ export async function finalizeSale(saleId: string) {
  * Uses Sierra persona to affirm the deal value.
  */
 export async function generateContractPreview(leadId: string, unitId: string): Promise<string> {
-  const leadSnap = await getDoc(doc(db, COLLECTIONS.stakeholders, leadId));
-  const unitSnap = await getDoc(doc(db, COLLECTIONS.units, unitId));
-  
-  if (!leadSnap.exists() || !unitSnap.exists()) return "Strategic acquisition context pending.";
+  const [lead, unit] = await Promise.all([
+    getRecord<Lead & { fullName?: string }>(COLLECTIONS.stakeholders, leadId),
+    getRecord<Unit>(COLLECTIONS.units, unitId),
+  ]);
 
-  const lead = leadSnap.data() as Lead;
-  const unit = unitSnap.data() as Unit;
+  if (!lead || !unit) return "Strategic acquisition context pending.";
 
   const systemPrompt = `ROLE: You are "Sierra," the Executive Closer for Sierra Estates Realty.
 TASK: Write a high-fidelity "Affirmation of Strategic Alignment" for this property acquisition.
 TONE: Congratulations, institutional precision, and Levantine professional warmth.
-CONTEXT: Stakeholder ${lead.name} is acquiring Asset ${unit.title} (${unit.compound}).
+CONTEXT: Stakeholder ${lead.fullName ?? lead.name} is acquiring Asset ${unit.title} (${unit.compound}).
 INTENT: Briefly summarize why this acquisition is a masterstroke of investment fidelity.
 
 Output as 2-3 powerful sentences in the 'Sierra' persona.`;

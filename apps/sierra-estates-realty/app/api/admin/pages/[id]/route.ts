@@ -6,15 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest, AuthResult } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getRecord, updateRecord, deleteRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 async function callerIsSuperadmin(authResult: AuthResult): Promise<boolean> {
-  if (authResult.method === 'secret-key') return true;
   if (!authResult.uid) return false;
-  const callerDoc = await adminDb.collection('users').doc(authResult.uid).get();
-  return callerDoc.data()?.role === 'superadmin';
+  const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
+  return caller?.role === 'superadmin';
 }
 
 export async function GET(
@@ -28,11 +26,11 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const doc = await adminDb.collection('pages').doc(id).get();
-    if (!doc.exists) {
+    const page = await getRecord('pages', id);
+    if (!page) {
       return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, page: { id: doc.id, ...doc.data() } });
+    return NextResponse.json({ success: true, page });
   } catch (err) {
     logger.error('[pages] GET by id failed:', err);
     return NextResponse.json(
@@ -54,20 +52,18 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-    const ref = adminDb.collection('pages').doc(id);
-    const existing = await ref.get();
-    if (!existing.exists) {
+    // updateRecord returns the updated row, so the separate re-read the
+    // Firestore version needed is gone; a missing row comes back null.
+    const updated = await updateRecord('pages', id, {
+      ...body,
+      updatedAt: new Date().toISOString(),
+      updatedBy: authResult.uid ?? 'system',
+    });
+    if (!updated) {
       return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     }
 
-    await ref.update({
-      ...body,
-      updatedAt: Timestamp.now(),
-      updatedBy: authResult.uid ?? 'system',
-    });
-
-    const updated = await ref.get();
-    return NextResponse.json({ success: true, page: { id: updated.id, ...updated.data() } });
+    return NextResponse.json({ success: true, page: updated });
   } catch (err) {
     logger.error('[pages] PATCH failed:', err);
     return NextResponse.json(
@@ -91,7 +87,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    await adminDb.collection('pages').doc(id).delete();
+    await deleteRecord('pages', id);
     return NextResponse.json({ success: true, id });
   } catch (err) {
     logger.error('[pages] DELETE failed:', err);

@@ -12,23 +12,21 @@
  */
 import { NextRequest } from 'next/server';
 
-const verifyIdToken = jest.fn();
-const userGet = jest.fn();
-const doc = jest.fn(() => ({ get: userGet }));
-const collection = jest.fn(() => ({ doc }));
+const getUser = jest.fn();
+const getRecord = jest.fn();
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminAuth: {
-    get verifyIdToken() {
-      return verifyIdToken;
-    },
-  },
-  adminDb: {
-    get collection() {
-      return collection;
-    },
-  },
+jest.mock('@sierra-estates/db', () => ({
+  getSupabaseAdmin: () => ({ auth: { getUser: (...a: unknown[]) => getUser(...a) } }),
+  getRecord: (...a: unknown[]) => getRecord(...a),
 }));
+
+/** Shape a Supabase getUser() success for a given identity. */
+function supabaseUser(id: string, email?: string) {
+  return { data: { user: { id, email } }, error: null };
+}
+
+/** Shape a Supabase getUser() rejection. */
+const supabaseInvalid = { data: null, error: { message: 'invalid JWT' } };
 
 const ORIGINAL_SECRET = process.env.SBR_SECRET_KEY;
 
@@ -53,25 +51,25 @@ afterEach(() => {
   else process.env.SBR_SECRET_KEY = ORIGINAL_SECRET;
 });
 
-describe('verifyRequest — Firebase ID token', () => {
+describe('verifyRequest — Supabase access token', () => {
   it('authenticates a valid Bearer token and returns uid/email', async () => {
     const { verifyRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'user-1', email: 'a@b.com' });
+    getUser.mockResolvedValueOnce(supabaseUser('user-1', 'a@b.com'));
 
     const result = await verifyRequest(request({ authorization: 'Bearer good-token' }));
 
-    expect(verifyIdToken).toHaveBeenCalledWith('good-token');
+    expect(getUser).toHaveBeenCalledWith('good-token');
     expect(result).toEqual({
       authenticated: true,
       uid: 'user-1',
       email: 'a@b.com',
-      method: 'firebase',
+      method: 'supabase',
     });
   });
 
   it('passes through a token with no email claim', async () => {
     const { verifyRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'user-2' });
+    getUser.mockResolvedValueOnce(supabaseUser('user-2'));
 
     const result = await verifyRequest(request({ authorization: 'Bearer t' }));
 
@@ -85,13 +83,13 @@ describe('verifyRequest — Firebase ID token', () => {
 
     const result = await verifyRequest(request({ authorization: 'Basic abc' }));
 
-    expect(verifyIdToken).not.toHaveBeenCalled();
+    expect(getUser).not.toHaveBeenCalled();
     expect(result).toEqual({ authenticated: false, method: 'none' });
   });
 
   it('falls through to the secret-key check when the token is rejected', async () => {
     const { verifyRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockRejectedValueOnce(new Error('expired'));
+    getUser.mockResolvedValueOnce(supabaseInvalid);
 
     const result = await verifyRequest(
       request({ authorization: 'Bearer expired-token', 'x-sbr-secret-key': 's3cret' }),
@@ -102,7 +100,7 @@ describe('verifyRequest — Firebase ID token', () => {
 
   it('returns unauthenticated when the token is rejected and no secret is sent', async () => {
     const { verifyRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockRejectedValueOnce(new Error('expired'));
+    getUser.mockResolvedValueOnce(supabaseInvalid);
 
     const result = await verifyRequest(request({ authorization: 'Bearer bad' }));
 
@@ -172,27 +170,26 @@ describe('unauthorizedResponse', () => {
 });
 
 describe('verifyAdminRequest', () => {
-  it('grants access to a user whose Firestore role is admin', async () => {
+  it('grants access to a user whose profiles role is admin', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'admin-1', email: 'admin@b.com' });
-    userGet.mockResolvedValueOnce({ data: () => ({ role: 'admin' }) });
+    getUser.mockResolvedValueOnce(supabaseUser('admin-1', 'admin@b.com'));
+    getRecord.mockResolvedValueOnce({ role: 'admin' });
 
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
-    expect(collection).toHaveBeenCalledWith('users');
-    expect(doc).toHaveBeenCalledWith('admin-1');
+    expect(getRecord).toHaveBeenCalledWith('profiles', 'admin-1');
     expect(result).toEqual({
       authenticated: true,
       uid: 'admin-1',
       email: 'admin@b.com',
-      method: 'firebase',
+      method: 'supabase',
     });
   });
 
   it('grants access to a superadmin', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'su-1' });
-    userGet.mockResolvedValueOnce({ data: () => ({ role: 'superadmin' }) });
+    getUser.mockResolvedValueOnce(supabaseUser('su-1'));
+    getRecord.mockResolvedValueOnce({ role: 'superadmin' });
 
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
@@ -203,8 +200,8 @@ describe('verifyAdminRequest', () => {
     'denies a user whose role is %s',
     async (role) => {
       const { verifyAdminRequest } = await loadGuard('s3cret');
-      verifyIdToken.mockResolvedValueOnce({ uid: 'u-1' });
-      userGet.mockResolvedValueOnce({ data: () => (role ? { role } : {}) });
+      getUser.mockResolvedValueOnce(supabaseUser('u-1'));
+      getRecord.mockResolvedValueOnce(role ? { role } : {});
 
       const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
@@ -214,8 +211,8 @@ describe('verifyAdminRequest', () => {
 
   it('denies when the user document does not exist', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'ghost' });
-    userGet.mockResolvedValueOnce({ data: () => undefined });
+    getUser.mockResolvedValueOnce(supabaseUser('ghost'));
+    getRecord.mockResolvedValueOnce(null);
 
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
@@ -224,20 +221,20 @@ describe('verifyAdminRequest', () => {
 
   it('denies (rather than throwing) when the Firestore lookup fails', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'u-1' });
-    userGet.mockRejectedValueOnce(new Error('firestore down'));
+    getUser.mockResolvedValueOnce(supabaseUser('u-1'));
+    getRecord.mockRejectedValueOnce(new Error('supabase unreachable'));
 
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
     expect(result).toEqual({ authenticated: false, method: 'none' });
   });
 
-  it('returns the unauthenticated result without hitting Firestore', async () => {
+  it('returns the unauthenticated result without hitting the database', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
 
     const result = await verifyAdminRequest(request());
 
-    expect(collection).not.toHaveBeenCalled();
+    expect(getRecord).not.toHaveBeenCalled();
     expect(result).toEqual({ authenticated: false, method: 'none' });
   });
 
@@ -255,22 +252,22 @@ describe('verifyAdminRequest', () => {
     expect(result).toEqual({ authenticated: false, method: 'none' });
   });
 
-  it('does not hit Firestore for a caller with no uid', async () => {
+  it('does not hit the database for a caller with no uid', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
 
     await verifyAdminRequest(request({ 'x-sbr-secret-key': 's3cret' }));
 
-    expect(collection).not.toHaveBeenCalled();
+    expect(getRecord).not.toHaveBeenCalled();
   });
 
-  it('still admits a Firebase-authenticated admin after the tightening', async () => {
+  it('still admits a Supabase-authenticated admin after the tightening', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');
-    verifyIdToken.mockResolvedValueOnce({ uid: 'admin-1', email: 'admin@b.com' });
-    userGet.mockResolvedValueOnce({ data: () => ({ role: 'admin' }) });
+    getUser.mockResolvedValueOnce(supabaseUser('admin-1', 'admin@b.com'));
+    getRecord.mockResolvedValueOnce({ role: 'admin' });
 
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
     expect(result.authenticated).toBe(true);
-    expect(result.method).toBe('firebase');
+    expect(result.method).toBe('supabase');
   });
 });

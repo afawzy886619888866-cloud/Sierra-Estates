@@ -87,3 +87,98 @@ export async function syncPortfolioAssetsViaPythonApi(
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+/**
+ * Records an episodic interaction via the Python ECC Memory microservice.
+ */
+export async function recordEccEpisodeViaPythonApi(episode: {
+  type?: string;
+  entityId: string;
+  actor?: string;
+  summary?: string;
+  data?: Record<string, any>;
+}): Promise<{ success: boolean; episode?: any; error?: string }> {
+  if (!PYTHON_API_BASE_URL) {
+    return { success: false, error: 'PYTHON_API_BASE_URL not configured' };
+  }
+
+  try {
+    const response = await fetch(`${PYTHON_API_BASE_URL}/ecc/episodes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(episode),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      return { success: false, error: `HTTP ${response.status}: ${errText}` };
+    }
+
+    const data = await response.json();
+    return { success: true, episode: data.episode };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Tracks a price drop and calculates hot deal propensity via Python ECC engine.
+ */
+export async function trackPriceReductionViaPythonApi(payload: {
+  sierraCode: string;
+  oldPrice: number;
+  newPrice: number;
+  source?: string;
+}): Promise<{ success: boolean; data?: any; error?: string }> {
+  if (!PYTHON_API_BASE_URL) {
+    return { success: false, error: 'PYTHON_API_BASE_URL not configured' };
+  }
+
+  try {
+    const response = await fetch(`${PYTHON_API_BASE_URL}/ecc/price-reduction`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      return { success: false, error: `HTTP ${response.status}: ${errText}` };
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/**
+ * Performs valuation analysis via Python Real Estate Valuation Agent.
+ */
+export async function analyzeValuationViaPythonApi(
+  payload: Record<string, any>
+): Promise<{ success: boolean; valuation?: any; error?: string }> {
+  if (!PYTHON_API_BASE_URL) {
+    return { success: false, error: 'PYTHON_API_BASE_URL not configured' };
+  }
+
+  try {
+    const response = await fetch(`${PYTHON_API_BASE_URL}/valuation/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      return { success: false, error: `HTTP ${response.status}: ${errText}` };
+    }
+
+    const data = await response.json();
+    return { success: true, valuation: data.valuation };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+

@@ -1,9 +1,9 @@
 /**
  * Concrete Repository Implementations
- * Each repository is a singleton instance for its collection
+ * Each repository is a singleton instance for its table.
  */
 
-import { FirestoreRepository } from './repository';
+import { SupabaseRepository } from './repository';
 
 // Type definitions for domain models
 export interface Lead extends Record<string, unknown> {
@@ -38,6 +38,7 @@ export interface Deal extends Record<string, unknown> {
 }
 
 // Singleton instances
-export const LeadRepository = new FirestoreRepository<Lead>('leads');
-export const PropertyRepository = new FirestoreRepository<Property>('properties');
-export const DealRepository = new FirestoreRepository<Deal>('deals');
+export const LeadRepository = new SupabaseRepository<Lead>('leads');
+// 'properties' was a Firestore collection name; the table is public.listings.
+export const PropertyRepository = new SupabaseRepository<Property>('listings');
+export const DealRepository = new SupabaseRepository<Deal>('deals');

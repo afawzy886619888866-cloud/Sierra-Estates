@@ -307,7 +307,7 @@ export interface ClientNeeds {
  * what they can see and do.
  */
 export interface Agent {
-  /** Same as Firebase Auth UID. */
+  /** Same as Supabase Auth UID (or legacy Firebase UID). */
   id: string;
 
   /** Role — super_admin can do everything, agent has limited scope. */
@@ -316,7 +316,7 @@ export interface Agent {
   /** Display name. */
   name: string;
 
-  /** Login email (must match Firebase Auth email). */
+  /** Login email (matches Supabase Auth email). */
   email: string;
 
   /** Optional: phone for WhatsApp contact. */
@@ -335,10 +335,10 @@ export interface Agent {
 export type AgentInput = Omit<Agent, 'id' | 'created_at' | 'updated_at'>;
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  FIRESTORE TIMESTAMP TYPE
+ *  DATABASE TIMESTAMP TYPE (Supabase & Firestore compatible)
  * ──────────────────────────────────────────────────────────────────────────
- *  We use a structural type that matches firebase.firestore.Timestamp
- *  without importing the SDK (keeps the types file framework-agnostic
+ *  We use a structural type that matches ISO strings or timestamp representations
+ *  without importing any external vendor SDK (keeps the types file framework-agnostic
  *  so it can be shared between admin + client + infra).
  * ────────────────────────────────────────────────────────────────────────── */
 

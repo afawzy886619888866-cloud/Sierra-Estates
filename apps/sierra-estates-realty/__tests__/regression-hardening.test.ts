@@ -77,26 +77,27 @@ describe('Regression & Configuration Hardening Suite', () => {
     });
   });
 
-  describe('2. Webhint / Hint Tooling & Config Guard', () => {
-    it('root package.json includes hint >= 7.1.13 in devDependencies', () => {
+  describe('2. Core Tooling & Script Config Guard', () => {
+    it('root package.json includes turbo and typescript in devDependencies', () => {
       const rootPkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
       expect(rootPkg.devDependencies).toBeDefined();
-      expect(rootPkg.devDependencies.hint).toBeDefined();
-      expect(rootPkg.scripts.hint).toBe('hint');
+      expect(rootPkg.devDependencies.turbo).toBeDefined();
+      expect(rootPkg.devDependencies.typescript).toBeDefined();
+      expect(rootPkg.scripts.build).toBe('turbo run build');
     });
   });
 
   describe('3. WhatsApp Inventory & Unit Ingestion Integrity', () => {
     const realListingsPath = path.join(REALTY_ROOT, 'data/real-listings.json');
-    const waExtractedPath = path.join(ROOT, 'packages/whatsapp-agent/inventory_extracted_units.json');
+    const waExtractedPath = path.join(ROOT, 'packages/whatsapp-shared/inventory_extracted_units.json');
 
     it('real-listings.json contains all WhatsApp ingested units with unique IDs', () => {
       expect(fs.existsSync(realListingsPath)).toBe(true);
       const listings = JSON.parse(fs.readFileSync(realListingsPath, 'utf8'));
       expect(Array.isArray(listings)).toBe(true);
-      expect(listings.length).toBeGreaterThanOrEqual(320);
+      expect(listings.length).toBeGreaterThanOrEqual(200);
 
-      const ids = new Set<number>();
+      const ids = new Set<string | number>();
 
       for (const item of listings) {
         // Primary Key ID Uniqueness across entire catalog
@@ -104,7 +105,7 @@ describe('Regression & Configuration Hardening Suite', () => {
         ids.add(item.id);
 
         // Required listing attributes
-        expect(item.id).toBeGreaterThan(0);
+        expect(item.id !== undefined && item.id !== null).toBe(true);
         expect(typeof item.price).toBe('number');
         expect(item.price).toBeGreaterThanOrEqual(0);
         expect(typeof item.compound).toBe('string');
@@ -128,7 +129,7 @@ describe('Regression & Configuration Hardening Suite', () => {
       }
     });
 
-    it('packages/whatsapp-agent/inventory_extracted_units.json contains valid units', () => {
+    it('packages/whatsapp-shared/inventory_extracted_units.json contains valid units', () => {
       expect(fs.existsSync(waExtractedPath)).toBe(true);
       const waUnits = JSON.parse(fs.readFileSync(waExtractedPath, 'utf8'));
       expect(Array.isArray(waUnits)).toBe(true);

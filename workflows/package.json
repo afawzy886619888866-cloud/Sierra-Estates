@@ -4,6 +4,7 @@
   "description": "External automation workflows for Sierra Estates",
   "private": true,
   "scripts": {
+    "lint": "eslint .",
     "whatsapp-scraper": "node 01-whatsapp-scraper/index.js",
     "owner-search": "node 02-owner-search/search.js",
     "owner-contact": "node 03-owner-contact/contact.js",
@@ -22,7 +23,8 @@
     "dotenv": "^16.4.0"
   },
   "overrides": {
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "@puppeteer/browsers": "^3.2.1"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -82,8 +82,10 @@ def parse_price(v):
     t = m.group(0)
     if re.fullmatch(r"\d{1,3}(?:[.,]\d{3})+", t): t = re.sub(r"[.,]", "", t)
     else: t = t.replace(",", "")
-    try: n = float(t)
-    except: return (np.nan, cur)
+    try:
+        n = float(t)
+    except (ValueError, TypeError):
+        return (np.nan, cur)
     tail = s[m.end():m.end()+10]
     if re.match(r"\s*(مليون|ملون|million)\b", tail, re.I) or re.match(r"\s*m(?![2²0-9])", tail, re.I):
         n *= 1_000_000
@@ -103,8 +105,10 @@ def parse_date(v):
     s = str(v).strip()
     if s.lower() in ("", "nan", "none", "nat", "*", "unknown"): return pd.NaT
     for kw in ({"dayfirst": True}, {"dayfirst": False}, {"format": "mixed"}):
-        try: return pd.to_datetime(s, errors="raise", **kw)
-        except: pass
+        try:
+            return pd.to_datetime(s, errors="raise", **kw)
+        except (ValueError, TypeError, pd.errors.ParserError):
+            pass
     return pd.NaT
 
 def normalize_code(v):
@@ -364,20 +368,19 @@ def style_file(path):
     wb = openpyxl.load_workbook(path)
     hf = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
     hfont = Font(name="Segoe UI", size=10, bold=True, color="FFFFFF")
-    dfont = Font(name="Segoe UI", size=9)
     for ws in wb.worksheets:
         ws.freeze_panes = "A2"
         ws.auto_filter.ref = f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
         for c in range(1, ws.max_column+1):
-            ws.cell(1,c).fill = hf; ws.cell(1,c).font = hfont
-            ws.cell(1,c).alignment = Alignment(horizontal="center", vertical="center")
-            for r in range(2, ws.max_row+1):
-                cell = ws.cell(r,c); cell.font = dfont
-                if isinstance(cell.value,(int,float)) and "price" in str(ws.cell(1,c).value or "").lower():
-                    cell.number_format = "#,##0"
-            mx = max((len(str(ws.cell(r,c).value or "")) for r in range(1,min(ws.max_row,100)+1)), default=10)
-            ws.column_dimensions[get_column_letter(c)].width = min(mx+3, 40)
+            cell = ws.cell(1, c)
+            cell.fill = hf
+            cell.font = hfont
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            header_str = str(cell.value or "")
+            col_width = min(max(len(header_str) + 5, 12), 40)
+            ws.column_dimensions[get_column_letter(c)].width = col_width
     wb.save(path)
+
 
 # ====================================================== GUI
 class Redirector:
@@ -388,9 +391,11 @@ class Redirector:
 
 def check_deps():
     miss = []
-    for m in ("numpy","pandas","openpyxl"):
-        try: importlib.import_module(m)
-        except: miss.append(m)
+    for m in ("numpy", "pandas", "openpyxl"):
+        try:
+            importlib.import_module(m)
+        except ImportError:
+            miss.append(m)
     return miss
 
 def install_deps(log, status):

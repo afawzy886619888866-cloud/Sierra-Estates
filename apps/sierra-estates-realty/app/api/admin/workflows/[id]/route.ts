@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { adminDb } from '@/lib/server/firebase-admin';
+import { getRecord, updateRecord, upsertRecord, insertRecord, deleteRecord } from '@sierra-estates/db';
+import { toWorkflowColumns, toWorkflowRecord } from '@/lib/server/workflow-columns';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { logger } from '@/lib/logger';
 // Force dynamic rendering — uses Firebase/auth at runtime
@@ -32,11 +33,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const { id } = await params;
-    const doc = await adminDb.collection(COLLECTIONS.automationWorkflows).doc(id).get();
-    if (!doc.exists) {
+    const row = await getRecord(COLLECTIONS.automationWorkflows, id);
+    if (!row) {
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, workflow: { id: doc.id, ...doc.data() } });
+    return NextResponse.json({ success: true, workflow: toWorkflowRecord(row) });
   } catch (err) {
     logger.error('Error fetching workflow:', err);
     return NextResponse.json(
@@ -54,32 +55,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { id } = await params;
-    const docRef = adminDb.collection(COLLECTIONS.automationWorkflows).doc(id);
-    const doc = await docRef.get();
+    const existing = await getRecord<{ runs?: number; nodes?: unknown[] }>(
+      COLLECTIONS.automationWorkflows,
+      id
+    );
 
-    if (!doc.exists) {
+    if (!existing) {
       return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
     }
 
-    const currentRuns = (doc.data()?.runs || 0) + 1;
-    const now = new Date();
+    const currentRuns = (existing.runs || 0) + 1;
+    const now = new Date().toISOString();
 
-    await docRef.update({
-      status: 'active',
-      runs: currentRuns,
-      last: 'just now',
-      lastRunAt: now,
-      updatedAt: now,
-    });
+    await updateRecord(
+      COLLECTIONS.automationWorkflows,
+      id,
+      toWorkflowColumns({
+        status: 'active',
+        runs: currentRuns,
+        last: 'just now',
+        lastRunAt: now,
+        updatedAt: now,
+      })
+    );
 
-    // Record execution event
-    await adminDb.collection('workflow_executions').add({
+    // Record execution event. This and the counter bump are two statements
+    // rather than one Firestore batch, so a crash between them can leave the
+    // run counted with no execution row; the admin board tolerates that.
+    await insertRecord('workflow_executions', {
       workflowId: id,
       triggeredBy: authResult.uid ?? 'admin',
-      executedAt: now,
+      startedAt: now,
+      finishedAt: now,
       status: 'completed',
-      durationMs: Math.floor(Math.random() * 400) + 250,
-      stepsExecuted: (doc.data()?.nodes?.length || 4),
+      payload: {
+        durationMs: Math.floor(Math.random() * 400) + 250,
+        stepsExecuted: existing.nodes?.length || 4,
+      },
     });
 
     return NextResponse.json({
@@ -112,12 +124,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    await adminDb.collection(COLLECTIONS.automationWorkflows).doc(id).set(
-      {
+    await upsertRecord(
+      COLLECTIONS.automationWorkflows,
+      toWorkflowColumns({
+        id,
         ...parsed.data,
-        updatedAt: new Date(),
-      },
-      { merge: true }
+        updatedAt: new Date().toISOString(),
+      })
     );
 
     return NextResponse.json({ success: true, message: 'Workflow updated successfully.' });
@@ -138,7 +151,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
-    await adminDb.collection(COLLECTIONS.automationWorkflows).doc(id).delete();
+    await deleteRecord(COLLECTIONS.automationWorkflows, id);
     return NextResponse.json({ success: true, message: 'Workflow deleted successfully.' });
   } catch (err) {
     logger.error('Error deleting workflow:', err);

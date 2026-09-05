@@ -29,7 +29,7 @@ async function simulatePropertyFinderLead() {
   console.log(`   Message:  "${testPayload.inquiry_message}"`);
 
   // Verify property matching
-  const propertyMatcher = require('../packages/whatsapp-agent/src/property-matcher');
+  const propertyMatcher = require('../packages/whatsapp-shared/src/property-matcher');
   const matches = await propertyMatcher.findMatches({
     locations: ['Mivida', 'Fifth Settlement'],
     bedrooms: '3 Bedrooms',

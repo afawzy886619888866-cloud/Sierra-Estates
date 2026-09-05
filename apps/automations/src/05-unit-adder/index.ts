@@ -1,5 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
-import { getDb } from '../lib/firebase';
+import { assertDbConfigured, insertRecord, listRecords } from '../lib/db';
 
 /**
  * 05-unit-adder
@@ -29,7 +28,14 @@ export async function runUnitAdder(rawUnitData: any) {
   console.log(`[Unit Adder] Processing new unit payload for ${rawUnitData.compound}`);
   
   try {
-    const db = getDb('Unit Adder');
+    if (!assertDbConfigured('Unit Adder')) {
+      return {
+        success: false,
+        status: 'skipped',
+        error: 'Supabase is not configured',
+        timestamp: new Date().toISOString(),
+      };
+    }
     
     // Hardcoded Rule 1: Currency Threshold
     // Price < 10,000 → USD ($). Price >= 10,000 → EGP.
@@ -44,12 +50,13 @@ export async function runUnitAdder(rawUnitData: any) {
     const sbrCode = generateSBRCode(compound, rooms, isFurnished, rawPrice, currency);
     
     // Check for deduplication
-    const existingUnitQuery = await db.collection('listings')
-      .where('sbrCode', '==', sbrCode)
-      .limit(1)
-      .get();
-      
-    if (!existingUnitQuery.empty) {
+    const existingUnits = await listRecords<{ id: string }>('listings', {
+      where: [{ column: 'sbrCode', value: sbrCode }],
+      select: 'id',
+      limit: 1,
+    });
+
+    if (existingUnits.length > 0) {
       console.log(`[Unit Adder] Unit ${sbrCode} already exists. Skipping.`);
       return {
         success: true,
@@ -60,34 +67,36 @@ export async function runUnitAdder(rawUnitData: any) {
       };
     }
     
-    // Insert new unit
-    const newUnit = {
-      ...rawUnitData,
+    // Insert new unit. `currency` is `price_currency` on the table, and
+    // whatever else the scraper handed us goes in `raw_data` rather than being
+    // spread onto columns that may not exist — Firestore accepted any shape,
+    // Postgres rejects an unknown column and would lose the whole unit.
+    const unit = await insertRecord<{ id: string }>('listings', {
+      compound,
+      bedrooms: rooms,
       price: rawPrice,
-      currency,
+      priceCurrency: currency,
       sbrCode,
       status: 'available',
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    };
-    
-    const docRef = await db.collection('listings').add(newUnit);
-    console.log(`[Unit Adder] Unit added with ID: ${docRef.id} and SBR: ${sbrCode}`);
-    
+      syncSource: 'unit-adder',
+      rawData: rawUnitData,
+    });
+    console.log(`[Unit Adder] Unit added with ID: ${unit.id} and SBR: ${sbrCode}`);
+
     // Dispatch exchange event (optional telemetry)
-    await db.collection('exchange').add({
+    await insertRecord('exchange', {
       type: 'agent_task',
+      source: 'workflow',
       status: 'done',
       stepName: 'Unit Adder',
       progress: 100,
-      createdAt: FieldValue.serverTimestamp(),
-      payload: { sbrCode, id: docRef.id },
+      payload: { sbrCode, id: unit.id },
     });
     
     return {
       success: true,
       status: 'inserted',
-      id: docRef.id,
+      id: unit.id,
       sbrCode,
       currency,
       timestamp: new Date().toISOString()
