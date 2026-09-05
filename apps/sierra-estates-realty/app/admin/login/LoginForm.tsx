@@ -27,7 +27,8 @@ export default function LoginForm() {
             credentials: 'same-origin',
             body: JSON.stringify({
               action: 'signin',
-              provider: 'google',
+              provider: 'supabase',
+              token: session.access_token,
               email: session.user.email,
               uid: session.user.id,
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
@@ -65,6 +66,7 @@ export default function LoginForm() {
             body: JSON.stringify({
               action: 'signin',
               provider: 'google',
+              token: session.access_token,
               email: session.user.email,
               uid: session.user.id,
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
@@ -94,7 +96,21 @@ export default function LoginForm() {
     const supaEmail = cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@sierra-estates.net`;
 
     try {
-      // 1. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
+      // 1. Authenticate with Supabase Auth Client in background if possible
+      let supaToken: string | undefined = undefined;
+      try {
+        const res = await supabase.auth.signInWithPassword({
+          email: supaEmail,
+          password,
+        });
+        if (res.data?.session?.access_token) {
+          supaToken = res.data.session.access_token;
+        }
+      } catch (_sErr) {
+        // Fallback to server bootstrap auth
+      }
+
+      // 2. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
       const serverRes = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -103,25 +119,14 @@ export default function LoginForm() {
           action: 'signin',
           email: cleanEmail,
           password,
+          token: supaToken,
         }),
       });
 
       const serverResult = await serverRes.json().catch(() => ({}));
 
-      // 2. Also authenticate with Supabase Auth Client in background
-      let supaData: any = null;
-      try {
-        const res = await supabase.auth.signInWithPassword({
-          email: supaEmail,
-          password,
-        });
-        supaData = res.data;
-      } catch (_sErr) {
-        // Server auth is primary for configured admin roles
-      }
-
-      // Check if either Server Auth or Supabase succeeded
-      if ((serverRes.ok && serverResult.ok) || supaData?.session) {
+      // Check if Server Auth succeeded
+      if (serverRes.ok && serverResult.ok) {
         try {
           sessionStorage.setItem('sierra_admin_auth', 'true');
           localStorage.setItem('sierra_admin_auth', 'true');
