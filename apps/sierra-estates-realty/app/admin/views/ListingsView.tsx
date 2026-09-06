@@ -284,8 +284,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           </h2>
           <p className="text-sm text-slate-400 mt-1">
             {isAr
-              ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر واتساب، الملاك المباشرين وشيت المخزون'
-              : 'Unified architectural portfolio with verified direct owners, live WhatsApp ingestion, and master inventory.'}
+              ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر محفظة سييرا وشبكة الوسطاء المعتمدة'
+              : 'Unified architectural portfolio with verified Sierra inventory and broker network.'}
           </p>
         </div>
 
@@ -393,10 +393,10 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="text-xs text-emerald-400 flex items-center gap-1">
                 <UserCheck className="w-3.5 h-3.5" />
-                <span>{isAr ? 'ملاك مباشرين' : 'Direct Owners'}</span>
+                <span>{isAr ? 'محفظة حصرية' : 'Exclusive Portfolio'}</span>
               </div>
               <div className="text-xl font-bold text-emerald-400 mt-1">
-                {stats.owners} {isAr ? 'ملاك' : 'Units'}
+                {stats.owners} {isAr ? 'وحدة' : 'Units'}
               </div>
             </div>
             <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
