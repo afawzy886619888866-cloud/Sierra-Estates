@@ -332,10 +332,10 @@ const DATA: any = {
         ai: Number(raw.aiScore || 9.2),
         tag: raw.tag || (raw.mode === 'rent' ? 'Verified Rent' : 'Verified Sale'),
         mode: raw.mode || 'sale',
-        agent: raw.agent || 'Sierra Direct Advisor',
+        agent: 'Sierra Advisor Desk',
         ago: 'Master Inventory Sync',
         img: raw.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
-        whatsapp: raw.whatsapp,
+        whatsapp: 'https://wa.me/201092048333',
         segment: raw.segment,
       };
     }
