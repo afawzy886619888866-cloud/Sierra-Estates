@@ -350,14 +350,37 @@ export function createAuthCompat(customClient?: SupabaseClient) {
                     customClaims: { role: 'agent' },
                 };
             }
-            const { data, error } = await client.auth.admin.getUserById(uid);
-            if (error || !data.user) throw new Error(error?.message || 'User not found');
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid);
+            if (isUUID) {
+                try {
+                    const { data, error } = await client.auth.admin.getUserById(uid);
+                    if (!error && data?.user) {
+                        const profile = await getRecord<any>('profiles', uid).catch(() => null);
+                        return {
+                            uid: data.user.id,
+                            email: data.user.email,
+                            displayName: profile?.fullName || data.user.user_metadata?.full_name,
+                            customClaims: { role: profile?.role || 'client' },
+                        };
+                    }
+                } catch {
+                    // Fall through to profile lookup
+                }
+            }
             const profile = await getRecord<any>('profiles', uid).catch(() => null);
+            if (profile) {
+                return {
+                    uid,
+                    email: profile.email || `${uid}@sierraestates.com`,
+                    displayName: profile.fullName || 'User',
+                    customClaims: { role: profile.role || 'client' },
+                };
+            }
             return {
-                uid: data.user.id,
-                email: data.user.email,
-                displayName: profile?.fullName || data.user.user_metadata?.full_name,
-                customClaims: { role: profile?.role || 'client' },
+                uid,
+                email: `${uid}@sierraestates.com`,
+                displayName: 'User',
+                customClaims: { role: 'client' },
             };
         },
         async getUserByEmail(email: string) {

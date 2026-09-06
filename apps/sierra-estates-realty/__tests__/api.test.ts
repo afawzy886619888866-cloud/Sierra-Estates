@@ -3,24 +3,11 @@
  * All Firebase/external services are mocked so no real credentials needed.
  */
 
-// Mock firebase-admin before any app code is imported
-jest.mock('firebase-admin/app', () => ({ initializeApp: jest.fn(), getApps: jest.fn(() => []) }));
-jest.mock('firebase-admin/firestore', () => ({
-  getFirestore: jest.fn(() => ({})),
-  Timestamp: { now: jest.fn(() => ({ toDate: () => new Date() })) },
-}));
-jest.mock('firebase-admin/auth', () => ({ getAuth: jest.fn(() => ({ verifyIdToken: jest.fn().mockRejectedValue(new Error('No token')) })) }));
-
 // Mock heavy service modules so tests don't need their dependencies
 jest.mock('@/lib/services/orchestrator', () => ({ OrchestratorService: { runPipeline: jest.fn().mockResolvedValue(undefined) } }));
 jest.mock('@/lib/services/WhatsAppParserService', () => ({ WhatsAppParserService: { parse: jest.fn() } }));
 jest.mock('@/lib/services/sheets-sync', () => ({ GoogleSheetsSync: jest.fn() }));
 jest.mock('@/lib/services/coding-algorithm', () => ({ buildSierraCodeMetadata: jest.fn(() => ({})) }));
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: new Proxy({}, { get: () => jest.fn() }),
-  adminAuth: { verifyIdToken: jest.fn().mockRejectedValue(new Error('No token')) },
-  isAdminInitialized: false,
-}));
 jest.mock('googleapis', () => ({ google: { auth: { GoogleAuth: jest.fn() }, sheets: jest.fn(() => ({ spreadsheets: { values: { get: jest.fn(), update: jest.fn() } } })) } }));
 
 import { NextRequest } from 'next/server';
