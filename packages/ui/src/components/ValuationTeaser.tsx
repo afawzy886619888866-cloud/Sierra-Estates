@@ -11,7 +11,7 @@ interface ValuationTeaserProps {
 export default function ValuationTeaser({ isArabic = false }: ValuationTeaserProps) {
   const [compound, setCompound] = useState('Mivida');
   const [area, setArea] = useState(300);
-  const [beds, setBeds] = useState(4);
+  const beds = 4;
   const [valResult, setValResult] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 

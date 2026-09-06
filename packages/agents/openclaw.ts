@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import pino from 'pino';
 import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
 import * as XLSX from 'xlsx';
@@ -18,8 +17,6 @@ import {
   isNewListing,
   findGroup,
   GroupSourceType,
-  WhatsAppGroup,
-  WHATSAPP_GROUP_REGISTRY,
 } from './tools/whatsappGroupRegistry';
 
 const logger = pino({ name: 'openclaw-agent' });
@@ -81,7 +78,7 @@ export class OpenClawAgent {
     if (config.aiApiKey) {
       try {
         this.ai = new GoogleGenAI({ apiKey: config.aiApiKey });
-      } catch (e) {
+      } catch (_e) {
         logger.warn({ msg: 'GoogleGenAI initialization skipped' });
       }
     }
@@ -312,6 +309,8 @@ export class OpenClawAgent {
       bathrooms: Math.max(1, bedrooms - 1),
       finishing,
       sierraCode,
+      valuationScore,
+      urgencyScore,
       contact_info: sender,
       sourceType,
       whatsappGroupId: groupId,

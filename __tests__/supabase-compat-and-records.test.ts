@@ -7,7 +7,6 @@ import {
 } from '../packages/db/lib/records';
 import {
   resolveTableName,
-  TABLE_COLLECTION_MAP,
   serverTimestamp,
   arrayUnion,
   arrayRemove,

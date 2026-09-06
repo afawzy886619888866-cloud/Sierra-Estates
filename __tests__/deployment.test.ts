@@ -108,16 +108,10 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       }
     });
 
-    it('uses one canonical Firebase rule set and keeps mirrors synchronized', () => {
-      const firebaseConfig = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'firebase.json'), 'utf8'));
-      expect(firebaseConfig.firestore.rules).toBe('apps/sierra-estates-realty/firestore.rules');
-      expect(firebaseConfig.storage.rules).toBe('apps/sierra-estates-realty/storage.rules');
-
-      for (const ruleFile of ['firestore.rules', 'storage.rules']) {
-        const rootRules = fs.readFileSync(path.join(ROOT_DIR, ruleFile), 'utf8').replace(/\r\n/g, '\n');
-        const appRules = fs.readFileSync(path.join(REALTY_APP_DIR, ruleFile), 'utf8').replace(/\r\n/g, '\n');
-        expect(rootRules).toBe(appRules);
-      }
+    it('ensures legacy Firebase deployment configs remain decommissioned in favor of Supabase', () => {
+      expect(fs.existsSync(path.join(ROOT_DIR, 'firebase.json'))).toBe(false);
+      expect(fs.existsSync(path.join(ROOT_DIR, '.firebaserc'))).toBe(false);
+      expect(fs.existsSync(path.join(WORKFLOWS_DIR, 'deploy-supabase.yml'))).toBe(true);
     });
 
     it('fails deployments visibly when deployment credentials are absent', () => {

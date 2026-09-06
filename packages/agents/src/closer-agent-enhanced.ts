@@ -80,12 +80,12 @@ Property: ${context.propertyCode} (${JSON.stringify(context.propertyData)})
 Previous offers: ${context.previousOffers.length > 0 ? context.previousOffers.map(o => `${o.amount} EGP on ${o.date}`).join(', ') : 'None'}
 Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fresh negotiation'}`;
 
-      if (process.env.ANTHROPIC_API_KEY) {
+      if (anthropicKey) {
         try {
           // Dynamic safe require to prevent bundler errors when SDK is absent
           const anthropicModule = typeof require !== 'undefined' ? eval('require')('@anthropic-ai/sdk') : null;
           if (anthropicModule && anthropicModule.Anthropic) {
-            const anthropic = new anthropicModule.Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+            const anthropic = new anthropicModule.Anthropic({ apiKey: anthropicKey });
             const message = await anthropic.messages.create({
               model: 'claude-3-5-sonnet-20241022',
               max_tokens: 1500,
@@ -204,7 +204,7 @@ Negotiation history: ${context.negotiationHistory.slice(-3).join(' → ') || 'Fr
   /**
    * Initiate signing with personalized follow-up message
    */
-  async initiateSigning(dealId: string, leadPhone: string): Promise<{ envelopeId: string; message: string }> {
+  async initiateSigning(dealId: string, _leadPhone: string): Promise<{ envelopeId: string; message: string }> {
     const envelopeId = `ENV-${dealId}-${Date.now()}`;
     const signingMessage = `تهانينا! تم إعداد عقد الوحدة للتعاقد الإكتروني/المباشر. معرف العقد: ${envelopeId}`;
 

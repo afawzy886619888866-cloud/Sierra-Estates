@@ -25,16 +25,17 @@ describe('Backend Services, Cloud Functions & APIs Test Suite', () => {
 
   });
 
-  describe('Firebase Cloud Functions Pipeline', () => {
-    it('should have index.js, package.json, and data processing handlers in functions/', () => {
-      expect(fs.existsSync(path.join(FUNCTIONS_DIR, 'package.json'))).toBe(true);
-      expect(fs.existsSync(path.join(FUNCTIONS_DIR, 'processData.js'))).toBe(true);
-      expect(fs.existsSync(path.join(FUNCTIONS_DIR, 'transform.js'))).toBe(true);
+  describe('Authoritative Backend Services Pipeline', () => {
+    it('should have canonical Supabase schema and apply scripts in place', () => {
+      expect(fs.existsSync(path.join(ROOT_DIR, 'supabase', 'schema.sql'))).toBe(true);
+      expect(fs.existsSync(path.join(ROOT_DIR, 'scripts', 'apply-supabase-schema.mjs'))).toBe(true);
+      expect(fs.existsSync(FUNCTIONS_DIR)).toBe(false);
     });
 
-    it('transform.js should normalize real estate payload records', () => {
-      const transformJs = fs.readFileSync(path.join(FUNCTIONS_DIR, 'transform.js'), 'utf-8');
-      expect(transformJs).toContain('transform');
+    it('Supabase schema should define listings, leads, and pgvector extensions', () => {
+      const schemaSql = fs.readFileSync(path.join(ROOT_DIR, 'supabase', 'schema.sql'), 'utf-8');
+      expect(schemaSql).toContain('CREATE TABLE IF NOT EXISTS public.listings');
+      expect(schemaSql).toContain('vector');
     });
   });
 
