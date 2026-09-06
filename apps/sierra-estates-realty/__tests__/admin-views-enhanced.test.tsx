@@ -176,7 +176,7 @@ describe('Enhanced Admin Views Test Suite', () => {
     it('renders subsystems and diagnostic controls', () => {
       const html = render(<HealthView lang="en" />);
       expect(html).toContain('System Health &amp; Telemetry');
-      expect(html).toContain('Firestore Database');
+      expect(html).toContain('Supabase PostgreSQL Database');
       expect(html).toContain('Pub/Sub Message Bus');
       expect(html).toContain('AI Reasoning API');
       expect(html).toContain('Run Diagnostic Ping');
