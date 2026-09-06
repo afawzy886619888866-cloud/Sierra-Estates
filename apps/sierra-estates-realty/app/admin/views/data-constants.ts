@@ -34,6 +34,7 @@ export const LANG: Record<string, Record<string, string>> = {
     monthlyDeals:'📊 Monthly Deals Closed', revPipeline:'💰 Revenue Pipeline',
     perfByCompound:'🗺️ Performance by Compound',
     excelMerger:'Excel Merger', processor:'Real Estate Processor',
+    all_apps:'All Apps Hub', deployment:'Deployment CI/CD', api_gateway:'API Gateway',
     saveConfig:'Save Configuration', saved:'✓ Saved!', githubIntegration:'🔗 GitHub Integration',
     pullLatest:'Pull Latest', openRepo:'Open Repo', pushChanges:'Push Changes',
   },
@@ -65,6 +66,7 @@ export const LANG: Record<string, Record<string, string>> = {
     monthlyDeals:'📊 الصفقات الشهرية', revPipeline:'💰 خط الإيرادات',
     perfByCompound:'🗺️ الأداء حسب المجمع',
     excelMerger:'دمج الإكسل', processor:'معالج العقارات',
+    all_apps:'دليل التطبيقات', deployment:'خطوط النشر', api_gateway:'بوابة الـ API',
     saveConfig:'حفظ الإعدادات', saved:'✓ تم الحفظ!', githubIntegration:'🔗 تكامل GitHub',
     pullLatest:'سحب آخر التحديثات', openRepo:'فتح المستودع', pushChanges:'رفع التغييرات',
   }
@@ -132,6 +134,7 @@ export interface NavItem {
 
 export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'overview',label:T('overview'),icon:'🏠',section:T('main')},
+  {id:'all_apps',label:T('all_apps'),icon:'✨',section:T('main'),badge:'APPS',badgeCls:'nb-green'},
   {id:'health',label:T('lang')==='ar'?'صحة النظام':'System Health',icon:'🩺',section:T('main'),badge:'OK',badgeCls:'nb-green'},
   {id:'monitoring',label:T('lang')==='ar'?'المراقبة المباشرة':'Live Monitoring',icon:'📡',section:T('main'),badge:'LIVE',badgeCls:'nb-blue'},
   {id:'recommendations',label:T('lang')==='ar'?'التوصيات الذكية':'Recommendations',icon:'✨',section:T('main'),badge:'AI',badgeCls:'nb-green'},
@@ -152,6 +155,8 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
   {id:'roles',label:T('lang')==='ar'?'الصلاحيات':'Role Manager',icon:'🛡️',section:T('system')},
   {id:'security',label:T('lang')==='ar'?'الأمان والتدقيق':'Security & Audit',icon:'🔒',section:T('system')},
+  {id:'deployment',label:T('deployment'),icon:'🚀',section:T('system'),badge:'CI/CD',badgeCls:'nb-green'},
+  {id:'api_gateway',label:T('api_gateway'),icon:'🌐',section:T('system'),badge:'REST',badgeCls:'nb-blue'},
   {id:'deep_insights',label:T('lang')==='ar'?'الرؤى العميقة':'Deep Insights',icon:'📈',section:T('analytics')},
   {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
   {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},

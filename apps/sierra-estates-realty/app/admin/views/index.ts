@@ -13,5 +13,8 @@ export { default as ExcelMergerView } from './ExcelMergerView';
 export { default as RealEstateProcessorView } from './RealEstateProcessorView';
 export { ContractsView } from './ContractsView';
 export { HeatmapView } from './HeatmapView';
+export { default as AppsDirectoryView } from './AppsDirectoryView';
+export { default as DeploymentPipelineView } from './DeploymentPipelineView';
+export { default as ApiGatewayView } from './ApiGatewayView';
 
 
