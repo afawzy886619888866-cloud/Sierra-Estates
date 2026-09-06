@@ -56,6 +56,7 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
       'deploy-smoke-test.ts',
       'generate-daily-briefing.ts',
       'verify-deploy-readiness.ts',
+      'check-legacy-runtime-boundary.mjs',
       'publish-recommendation.ts',
       'write-memory.ts',
       'merge-inventory-master.ts',
@@ -69,6 +70,11 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
         expect(fs.existsSync(fullPath), `File scripts/${file} must exist`).toBe(true);
         const stats = fs.statSync(fullPath);
         expect(stats.size).toBeGreaterThan(50);
+      });
+
+      it('deployment readiness must enforce the legacy runtime boundary', () => {
+        const content = fs.readFileSync(path.join(SCRIPTS_DIR, 'verify-deploy-readiness.ts'), 'utf-8');
+        expect(content).toContain("node scripts/check-legacy-runtime-boundary.mjs");
       });
     }
   });
