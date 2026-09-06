@@ -32,9 +32,16 @@ export const dynamic = 'force-dynamic';
 function snapshotResponse(): InventoryResponse {
   const snapshotData = snapshot as unknown;
   const isArray = Array.isArray(snapshotData);
-  const units: InventoryUnit[] = isArray
+  const rawUnits: InventoryUnit[] = isArray
     ? (snapshotData as InventoryUnit[])
     : ((snapshotData as { units?: InventoryUnit[] })?.units || []);
+  const units = rawUnits.filter((u: any) =>
+    u.party !== 'Owner' &&
+    u.sourceType !== 'owner' &&
+    u.segment !== 'owners_rent' &&
+    u.segment !== 'owners_buy' &&
+    u.tag !== 'Direct Owner'
+  );
   const generatedAt = !isArray && typeof (snapshotData as { generatedAt?: string })?.generatedAt === 'string'
     ? (snapshotData as { generatedAt: string }).generatedAt
     : new Date().toISOString();
@@ -138,7 +145,13 @@ export async function GET(request: Request) {
     await fetchDomain() ??
     await fetchLive() ??
     snapshotResponse();
-  let filteredUnits = sourceResponse.units;
+  let filteredUnits = (sourceResponse.units || []).filter((u: any) =>
+    u.party !== 'Owner' &&
+    u.sourceType !== 'owner' &&
+    u.segment !== 'owners_rent' &&
+    u.segment !== 'owners_buy' &&
+    u.tag !== 'Direct Owner'
+  );
 
   if (filterCompound) {
     filteredUnits = filteredUnits.filter((u) => {
