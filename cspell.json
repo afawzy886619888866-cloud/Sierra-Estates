@@ -358,6 +358,10 @@
     "Nuyuc",
     "WCAG",
     "backoff",
-    "backoffs"
+    "backoffs",
+    "tmpl",
+    "omnibox",
+    "Omnibox",
+    "OMNIBOX"
   ]
 }
