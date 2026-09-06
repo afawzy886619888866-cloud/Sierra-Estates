@@ -54,24 +54,11 @@ jobs:
       - name: Apply schema to Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::warning::SUPABASE_DB_URL not configured — skipping schema apply. Set secret to enable."
-            exit 0
-          fi
-          echo "Applying schema to Supabase..."
-          psql "$SUPABASE_DB_URL" -f supabase/schema.sql 2>&1 | grep -vE "already exists, skipping|does not exist, skipping" || true
-          echo "✅ Schema applied successfully"
+          node scripts/apply-supabase-schema.mjs
 
       - name: Run RLS validation tests
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::warning::SUPABASE_DB_URL not set — skipping RLS tests"
-            exit 0
-          fi
           if [ -f "supabase/tests/run-rls-tests.sh" ]; then
             chmod +x supabase/tests/run-rls-tests.sh
             bash supabase/tests/run-rls-tests.sh
