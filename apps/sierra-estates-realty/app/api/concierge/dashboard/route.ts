@@ -12,8 +12,8 @@ export async function GET(_req: NextRequest) {
       fullName: 'Eng. Tamer Hegazy',
       tier: 'tier_1_ultra_hnw',
       totalPortfolioValueEGP: 145000000,
-      assignedCloser: 'Leila Stage-9 Closer AI & Karim El-Shazly',
-      conciergeWhatsAppChannel: '+201000000000',
+      assignedCloser: 'Sierra VIP Advisory Desk',
+      conciergeWhatsAppChannel: '+201092048333',
     };
 
     const negotiations: VipNegotiationSummary[] = [

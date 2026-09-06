@@ -127,7 +127,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Phone
   const phoneMatch = rawText.match(/(?:\+?20|0)?1[0125]\d{8}/);
-  const mobile = phoneMatch ? phoneMatch[0] : '+201000000000';
+  const mobile = phoneMatch ? phoneMatch[0] : '+201092048333';
 
   // SBR Code
   const codeMeta = buildSierraCodeMetadata({
@@ -230,8 +230,8 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
           price: Number(extracted.price) || 8000000,
           downpayment: extracted.downpayment ? Number(extracted.downpayment) : undefined,
           finishing: extracted.finishing || 'Fully Finished',
-          ownerName: extracted.ownerName || 'Verified Owner',
-          mobile: extracted.mobile || '+201000000000',
+          ownerName: extracted.ownerName || 'Sierra Verified Portfolio',
+          mobile: extracted.mobile || '+201092048333',
           features: Array.isArray(extracted.features) ? extracted.features : ['Prime Location'],
           sierraCode: codeMeta?.code || `SE-AIR-${Date.now().toString().slice(-4)}`,
           aiScore: 9.6,

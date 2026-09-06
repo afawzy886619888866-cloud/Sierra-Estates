@@ -1,7 +1,14 @@
 /* Ported from deploy/data.js — regenerate from source rather than hand-editing. */
 import snapshot from '@/lib/inventory/snapshot.json';
 
-const rawUnits: any[] = (snapshot as any)?.units || [];
+const rawUnits: any[] = ((snapshot as any)?.units || []).filter(
+  (u: any) =>
+    u.party !== 'Owner' &&
+    u.sourceType !== 'owner' &&
+    u.segment !== 'owners_rent' &&
+    u.segment !== 'owners_buy' &&
+    u.tag !== 'Direct Owner'
+);
 const defaultListings = rawUnits.length > 0
   ? rawUnits.slice(0, 36).map((u: any, i: number) => ({
       id: i + 1,
@@ -15,12 +22,12 @@ const defaultListings = rawUnits.length > 0
       egpM: u.egpM || Number(((u.price || 8000000) / 1000000).toFixed(1)),
       usd: u.usd || (u.mode === 'rent' ? Math.round((u.price || 40000) / 50) : Math.round((u.price || 8000000) / 5000)),
       ai: u.aiScore || 9.2,
-      tag: u.tag || 'Verified Owner',
+      tag: u.tag && u.tag !== 'Verified Owner' && u.tag !== 'Direct Owner' ? u.tag : 'Verified Portfolio',
       mode: u.mode || 'sale',
-      agent: u.agent || 'Sierra Direct Advisor',
+      agent: 'Sierra Advisor Desk',
       ago: 'Master Inventory Sync',
       img: u.img,
-      whatsapp: u.whatsapp,
+      whatsapp: 'https://wa.me/201092048333',
       segment: u.segment,
     }))
   : [
@@ -256,9 +263,9 @@ const DATA: any = {
         ai: u.aiScore || 9.0,
         status: u.status || 'available',
         delivery: idx % 3 === 0 ? 'under_construction' : 'ready',
-        agent: u.agent || (u.party === 'Owner' ? 'Sierra Direct Owner' : 'Sierra Partner Desk'),
+        agent: 'Sierra Advisor Desk',
         img: u.img || IMGS[idx % IMGS.length],
-        whatsapp: u.whatsapp || '',
+        whatsapp: 'https://wa.me/201092048333',
         segment: u.segment || 'all',
         segmentLabel: u.segmentLabel || 'Verified Inventory',
         description: u.description || ''

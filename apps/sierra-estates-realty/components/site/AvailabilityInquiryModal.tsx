@@ -223,7 +223,7 @@ export default function AvailabilityInquiryModal({
               {/* Direct WhatsApp Concierge Link */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
-                  href={`https://wa.me/201100834387?text=${encodeURIComponent(`مرحباً سييرا العقارية، أتابع رادار التحقق من الوحدات كود الجلسة: ${successData.sessionId}`)}`}
+                  href={`https://wa.me/201092048333?text=${encodeURIComponent(`مرحباً سييرا العقارية، أتابع رادار التحقق من الوحدات كود الجلسة: ${successData.sessionId}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg"
