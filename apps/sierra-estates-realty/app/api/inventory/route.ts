@@ -20,6 +20,8 @@ import { logger } from '@/lib/logger';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
 import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
 import { queryUnitToMapUnit } from '@/lib/inventory/domain-map';
+import { resolveLocation } from '@/lib/inventory/gazetteer';
+import { getSupabaseAdmin } from '@sierra-estates/db';
 import snapshot from '@/lib/inventory/snapshot.json';
 import type { InventoryResponse, InventoryUnit } from '@/lib/inventory/types';
 
@@ -58,6 +60,56 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
   }
 }
 
+/** Canonical Supabase listings, mapped to the public-safe map shape. */
+async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
+  try {
+    const { data, error } = await getSupabaseAdmin()
+      .from('listings')
+      .select('id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, area_sqm, status, description, updated_at')
+      .in('status', ['active', 'available'])
+      .order('updated_at', { ascending: false })
+      .limit(300);
+
+    if (error) throw new Error(error.message);
+
+    const units: InventoryUnit[] = (data ?? []).map((listing) => {
+      const location = listing.location_area || listing.compound || 'New Cairo';
+      const resolved = resolveLocation(location);
+      const price = Number(listing.price) || 0;
+      const mode = listing.deal_type === 'rent' || price > 0 && price < 1_000_000 ? 'rent' : 'sale';
+
+      return {
+        id: listing.id,
+        code: listing.code || listing.ref_id || listing.id,
+        compound: listing.compound || resolved.label,
+        mode,
+        status: 'available',
+        statusLabel: 'Available',
+        location: listing.compound || resolved.label,
+        rawLocation: location,
+        zone: resolved.zone,
+        lat: resolved.lat,
+        lng: resolved.lng,
+        approxLocation: resolved.approx,
+        propertyType: listing.property_type,
+        beds: listing.bedrooms,
+        area: Number(listing.area_sqm) || null,
+        price,
+        priceLabel: price ? `EGP ${price.toLocaleString('en-US')}` : 'Price on request',
+        description: listing.description,
+        updatedAt: listing.updated_at,
+      };
+    });
+
+    return units.length
+      ? { generatedAt: new Date().toISOString(), source: 'supabase', count: units.length, units }
+      : null;
+  } catch (err) {
+    logger.warn(`[inventory] Supabase listings read failed, falling back: ${(err as Error).message}`);
+    return null;
+  }
+}
+
 /** Owner sheet read live. */
 async function fetchLive(): Promise<InventoryResponse | null> {
   const units = await fetchSheetUnits({ revalidate: 300 });
@@ -81,11 +133,12 @@ export async function GET(request: Request) {
     units?: InventoryUnit[];
   };
 
-  const allUnits: InventoryUnit[] = Array.isArray(snapshotData)
-    ? (snapshotData as InventoryUnit[])
-    : snapshotData.units || [];
-
-  let filteredUnits = allUnits;
+  const sourceResponse =
+    await fetchSupabaseListings() ??
+    await fetchDomain() ??
+    await fetchLive() ??
+    snapshotResponse();
+  let filteredUnits = sourceResponse.units;
 
   if (filterCompound) {
     filteredUnits = filteredUnits.filter((u) => {
@@ -107,12 +160,12 @@ export async function GET(request: Request) {
   }
 
   const payload: InventoryResponse = {
-    generatedAt: snapshotData.generatedAt || new Date().toISOString(),
-    source: 'snapshot',
+    generatedAt: sourceResponse.generatedAt || new Date().toISOString(),
+    source: sourceResponse.source,
     count: filteredUnits.length,
-    segments: snapshotData.segments,
-    compoundCounts: snapshotData.compoundCounts,
-    compoundSegmentCounts: snapshotData.compoundSegmentCounts,
+    segments: sourceResponse.segments,
+    compoundCounts: sourceResponse.compoundCounts,
+    compoundSegmentCounts: sourceResponse.compoundSegmentCounts,
     units: filteredUnits,
   };
 
