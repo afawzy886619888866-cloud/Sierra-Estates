@@ -4,7 +4,12 @@
  * and syncs lead interaction context.
  */
 
-const admin = require('firebase-admin');
+let admin = null;
+try {
+  admin = require('firebase-admin');
+} catch (e) {
+  // Pure Supabase mode - firebase-admin omitted
+}
 const path = require('path');
 const fs = require('fs');
 
@@ -28,6 +33,7 @@ function getSupabase() {
 }
 
 function initFirebase() {
+  if (!admin) return null;
   if (admin.apps && admin.apps.length > 0) {
     db = admin.firestore();
     return db;

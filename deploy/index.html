@@ -21,15 +21,12 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<!-- Backends: config first, then the adapters. Neither SDK is fetched unless its
-     ENABLED flag is on — an unconfigured site pays nothing for them. -->
+<!-- Backend: Supabase config and adapter. SDK is fetched only when enabled. -->
 <script src="supabase-config.js"></script>
-<script src="firebase-config.js"></script>
 <script>window.SR=function(u){return (window.__urlmap&&window.__urlmap[u])||u;};(function(){window.__urlmap={};var ms=document.querySelectorAll('meta[name="ext-resource-dependency"]');for(var i=0;i<ms.length;i++){var c=ms[i].getAttribute("content"),id=ms[i].getAttribute("data-resource-id");if(window.__resources&&window.__resources[id])window.__urlmap[c]=window.__resources[id];}})();</script>
 <script src="data.standalone.js"></script>
 <script src="shared.js"></script>
 <script src="supabase.js"></script>
-<script src="firebase.js"></script>
 <style>
 /* ── First-paint loader: a surveyor's scan across the mark ───────────────────
    The page underneath is fully rendered; this is a cover, never a gate. A CSS

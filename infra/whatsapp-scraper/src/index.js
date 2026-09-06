@@ -34,7 +34,6 @@ import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeys
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
 import fetch from 'node-fetch';
-import admin from 'firebase-admin';
 import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
 

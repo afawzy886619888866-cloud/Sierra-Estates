@@ -59,9 +59,8 @@ export async function POST(req: NextRequest) {
 
   // ─── Run seed ────────────────────────────────────────────────────────────
   try {
-    // Dynamic import so the Firestore client isn't pulled into the build
-    // graph for routes that don't need it.
-    const { seedHouyezPortal } = await import('@/lib/houyez/firestore');
+    // Dynamic import for content seeder
+    const { seedHouyezPortal } = await import('@/lib/houyez/content');
     const result = await seedHouyezPortal({ overwrite });
     logger.info('[houyez/seed] seed completed', result);
     return NextResponse.json({ success: true, result });

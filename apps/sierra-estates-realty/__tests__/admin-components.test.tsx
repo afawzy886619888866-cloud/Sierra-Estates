@@ -17,6 +17,10 @@ import { HarnessBenchmarkCard } from '../components/admin/HarnessBenchmarkCard';
 import { NegotiationSimulator } from '../components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '../components/admin/PropertyTeaserBrochure';
 import WhatsAppScheduledSender from '../components/admin/WhatsAppScheduledSender';
+import DataPipelineTelemetryCard from '../components/admin/DataPipelineTelemetryCard';
+import DatabaseHealthCard from '../components/admin/DatabaseHealthCard';
+import AccidentalDataLossGuardModal from '../components/admin/AccidentalDataLossGuardModal';
+import AdminCopilotDrawer from '../components/admin/AdminCopilotDrawer';
 
 function render(el: React.ReactElement): string {
   return renderToStaticMarkup(el);
@@ -106,6 +110,92 @@ describe('Admin Components Suite', () => {
     it('contains WhatsApp messaging scheduler UI elements', () => {
       const html = render(<WhatsAppScheduledSender lang="en" />);
       expect(html).toContain('WhatsApp');
+    });
+  });
+
+  describe('DataPipelineTelemetryCard', () => {
+    it('renders without throwing in English', () => {
+      expect(() => render(<DataPipelineTelemetryCard lang="en" />)).not.toThrow();
+    });
+
+    it('renders without throwing in Arabic', () => {
+      expect(() => render(<DataPipelineTelemetryCard lang="ar" />)).not.toThrow();
+    });
+
+    it('contains pipeline and BigQuery DTS information', () => {
+      const html = render(<DataPipelineTelemetryCard lang="en" />);
+      expect(html).toContain('Data Pipelines &amp; Ingestion Telemetry');
+      expect(html).toContain('Watermark Freshness');
+      expect(html).toContain('BigQuery DTS Transfer');
+    });
+  });
+
+  describe('DatabaseHealthCard', () => {
+    it('renders without throwing in English', () => {
+      expect(() => render(<DatabaseHealthCard lang="en" />)).not.toThrow();
+    });
+
+    it('renders without throwing in Arabic', () => {
+      expect(() => render(<DatabaseHealthCard lang="ar" />)).not.toThrow();
+    });
+
+    it('displays pgvector HNSW Recall and latency', () => {
+      const html = render(<DatabaseHealthCard lang="en" />);
+      expect(html).toContain('Database &amp; Vector Index Health');
+      expect(html).toContain('pgvector HNSW Recall');
+      expect(html).toContain('P95 Query Latency');
+    });
+  });
+
+  describe('AccidentalDataLossGuardModal', () => {
+    it('renders nothing when isOpen is false', () => {
+      const html = render(
+        <AccidentalDataLossGuardModal
+          isOpen={false}
+          title={{ en: 'Delete', ar: 'حذف' }}
+          actionDescription={{ en: 'Test', ar: 'تجربة' }}
+          impactSummary={{ en: 'Loss', ar: 'فقد' }}
+          onConfirm={() => {}}
+          onCancel={() => {}}
+        />
+      );
+      expect(html).toBe('');
+    });
+
+    it('renders safety guardrail when isOpen is true', () => {
+      const html = render(
+        <AccidentalDataLossGuardModal
+          isOpen={true}
+          title={{ en: 'Purge Staging Cache', ar: 'تفريغ الكاش' }}
+          actionDescription={{ en: 'Purge test cache', ar: 'حذف الكاش' }}
+          impactSummary={{ en: 'Irreversible deletion', ar: 'حذف لا رجعة فيه' }}
+          affectedCount={460}
+          onConfirm={() => {}}
+          onCancel={() => {}}
+        />
+      );
+      expect(html).toContain('Data Loss Prevention Shield');
+      expect(html).toContain('Purge Staging Cache');
+      expect(html).toContain('460');
+      expect(html).toContain('CONFIRM');
+    });
+  });
+
+  describe('AdminCopilotDrawer', () => {
+    it('renders nothing when isOpen is false', () => {
+      const html = render(
+        <AdminCopilotDrawer isOpen={false} onClose={() => {}} />
+      );
+      expect(html).toBe('');
+    });
+
+    it('renders Gemini Data Analytics copilot interface when isOpen is true', () => {
+      const html = render(
+        <AdminCopilotDrawer isOpen={true} onClose={() => {}} lang="en" />
+      );
+      expect(html).toContain('Sierra Copilot');
+      expect(html).toContain('Gemini Analytics');
+      expect(html).toContain('Suggested Analytical Inquiries:');
     });
   });
 });
