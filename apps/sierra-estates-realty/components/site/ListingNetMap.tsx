@@ -309,7 +309,7 @@ function ListingNetMapContent({
       (u, i) => `${i + 1}. [${u.code}] ${u.compound} - ${u.type} (${u.priceLabel})`
     ).join('\n');
     const msg = `مرحباً سييرا العقارية، أود الاستفسار عن توافر الوحدات التالية (${selectedUnitsList.length} وحدة):\n\n${summaryLines}${selectedUnitsList.length > 15 ? `\n... و ${selectedUnitsList.length - 15} وحدة أخرى` : ''}\n\nبرجاء موافاتي بالتفاصيل والصور المتاحة.`;
-    const url = `https://wa.me/201065582924?text=${encodeURIComponent(msg)}`;
+    const url = `https://wa.me/201092048333?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   }, [selectedUnitsList]);
 

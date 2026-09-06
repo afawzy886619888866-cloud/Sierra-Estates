@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { MessageSquare, X, Send, Sparkles, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
-const DEFAULT_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+201032206443';
+const DEFAULT_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+201092048333';
 
 export default function WhatsAppConciergeFloating() {
   const { isAr } = useSite();

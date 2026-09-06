@@ -278,7 +278,7 @@ export default function LiveMap({
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <a
-                    href={`https://wa.me/201065582924?text=${waMsg}`}
+                    href={`https://wa.me/201092048333?text=${waMsg}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

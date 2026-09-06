@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
       downPaymentPercent: Number(body.downPaymentPercent) || 10,
       installmentTenureYears: Number(body.installmentTenureYears) || 8,
       deliveryYear: Number(body.deliveryYear) || 2026,
-      brokerName: body.brokerName || 'Karim El-Shazly',
-      brokerPhone: body.brokerPhone || '+201000000000',
+      brokerName: body.brokerName || 'Sierra Advisor Desk',
+      brokerPhone: body.brokerPhone || '+201092048333',
     };
 
     const sheet = TearSheetGenerator.generateTearSheet(input);

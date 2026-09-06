@@ -25,7 +25,7 @@ export function PropertyTeaserBrochure({ initialData, lang: _lang }: PropertyTea
     installmentTenureYears: '7',
     deliveryYear: '2026',
     brokerName: 'Sierra Elite Desk',
-    brokerPhone: '+201032206443',
+    brokerPhone: '+201092048333',
   });
 
   const [loading, setLoading] = useState(false);

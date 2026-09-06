@@ -180,12 +180,12 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     egpM,
     usd,
     ai: Number(raw.aiScore || (9.1 + ((index * 7) % 8) / 10).toFixed(1)),
-    tag: raw.tag || (raw.party === 'Owner' || raw.sourceType === 'owner' ? 'Direct Owner' : 'Verified Partner'),
+    tag: raw.tag && raw.tag !== 'Direct Owner' && raw.tag !== 'Verified Owner' ? raw.tag : 'Verified Portfolio',
     mode: isRent ? 'rent' : 'sale',
-    agent: raw.agent || (raw.party === 'Owner' ? 'Sierra Direct Owner' : 'Sierra Advisor Desk'),
+    agent: 'Sierra Advisor Desk',
     ago: raw.ago || 'Verified Master Sync',
     img: raw.img || FALLBACK_IMGS[index % FALLBACK_IMGS.length],
-    whatsapp: raw.whatsapp || 'https://wa.me/201065582924',
+    whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.lat || 30.02 + (((index * 13) % 40) - 20) * 0.003),
     lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
     segment: raw.segment,
@@ -197,10 +197,18 @@ export default function PropertiesPage() {
   const { t, isAr, theme } = useSite();
   const listingsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initial load directly from snapshot for instant zero-delay render
+  // Initial load directly from snapshot for instant zero-delay render (excluding owner listings)
   const initialUnits: RealListing[] = useMemo(() => {
     const rawList: any[] = (snapshot as any)?.units || [];
-    return rawList.map(sanitizeUnit);
+    return rawList
+      .filter((raw: any) =>
+        raw.party !== 'Owner' &&
+        raw.sourceType !== 'owner' &&
+        raw.segment !== 'owners_rent' &&
+        raw.segment !== 'owners_buy' &&
+        raw.tag !== 'Direct Owner'
+      )
+      .map(sanitizeUnit);
   }, []);
 
   const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
@@ -785,7 +793,7 @@ export default function PropertiesPage() {
                   <div className="props-cards-subgrid">
                     {paginatedListings.map((p) => {
                       const isSelected = activeUnit?.id === p.id;
-                      const waLink = `https://wa.me/201065582924?text=${encodeURIComponent(
+                      const waLink = `https://wa.me/201092048333?text=${encodeURIComponent(
                         `مرحباً سييرا العقارية، أود الاستفسار عن الوحدة [${p.code}] في ${p.compound} (${p.priceLabel}). هل هي متاحة للمعاينة؟`
                       )}`;
 
@@ -943,7 +951,7 @@ export default function PropertiesPage() {
               <div className="props-full-grid">
                 {paginatedListings.map((p) => {
                   const isSelected = activeUnit?.id === p.id;
-                  const waLink = `https://wa.me/201065582924?text=${encodeURIComponent(
+                  const waLink = `https://wa.me/201092048333?text=${encodeURIComponent(
                     `مرحباً سييرا العقارية، أود الاستفسار عن الوحدة [${p.code}] في ${p.compound} (${p.priceLabel}). هل هي متاحة للمعاينة؟`
                   )}`;
 
