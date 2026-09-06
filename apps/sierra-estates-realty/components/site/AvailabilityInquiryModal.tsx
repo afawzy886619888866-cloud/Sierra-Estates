@@ -126,10 +126,10 @@ export default function AvailabilityInquiryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl bg-[#0e1626] border border-[#c99436]/40 rounded-2xl shadow-2xl overflow-hidden text-white">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-gradient-to-r from-[#002b4b]/60 via-[#0e1626] to-[#0e1626]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-linear-to-r from-[#002b4b]/60 via-[#0e1626] to-[#0e1626]">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-[#c99436]/20 text-[#e9c176]">
               <Send className="w-5 h-5" />
@@ -233,7 +233,7 @@ export default function AvailabilityInquiryModal({
                 </a>
                 <button
                   onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] font-bold text-xs hover:brightness-110 transition-all shadow-lg"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-linear-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] font-bold text-xs hover:brightness-110 transition-all shadow-lg"
                 >
                   العودة للرادار
                 </button>
@@ -280,7 +280,7 @@ export default function AvailabilityInquiryModal({
                         <button
                           type="button"
                           onClick={() => onAutoPickN(40)}
-                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] text-xs font-black hover:brightness-110 transition-all shadow-md"
+                          className="px-3.5 py-1.5 rounded-lg bg-linear-to-r from-[#c99436] to-[#e9c176] text-[#0d0d0f] text-xs font-black hover:brightness-110 transition-all shadow-md"
                         >
                           ⚡ الحد الأقصى (أفضل 40 وحدة)
                         </button>
@@ -317,7 +317,7 @@ export default function AvailabilityInquiryModal({
               {/* Client Form Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-white/80 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-white/80 mb-1.5 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#c99436]" />
                     الاسم بالكامل <span className="text-red-400">*</span>
                   </label>
@@ -332,7 +332,7 @@ export default function AvailabilityInquiryModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-white/80 mb-1.5 flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-white/80 mb-1.5 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-emerald-400" />
                     رقم الواتساب <span className="text-red-400">*</span>
                   </label>
@@ -387,7 +387,7 @@ export default function AvailabilityInquiryModal({
                   <button
                     type="submit"
                     disabled={isSubmitting || selectedUnits.length === 0}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-bold text-xs hover:brightness-110 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 rounded-xl bg-linear-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-bold text-xs hover:brightness-110 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>

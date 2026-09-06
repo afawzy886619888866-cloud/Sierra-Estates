@@ -29,7 +29,7 @@ import type { MapUnitPin } from '@/components/Maps/LiveMap';
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[450px] rounded-2xl bg-[#080d18] border border-white/10 flex items-center justify-center text-white/50 text-sm">
+    <div className="w-full h-112.5 rounded-2xl bg-[#080d18] border border-white/10 flex items-center justify-center text-white/50 text-sm">
       <div className="flex items-center gap-2">
         <div className="w-4 h-4 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
         <span>جاري تحميل رادار الخريطة...</span>
@@ -361,7 +361,7 @@ function ListingNetMapContent({
   return (
     <div className="w-full space-y-6 text-white">
       {/* Top Banner / Radar Introduction */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#002b4b] via-[#09152a] to-[#040914] border border-[#c99436]/30 p-6 md:p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#002b4b] via-[#09152a] to-[#040914] border border-[#c99436]/30 p-6 md:p-8 shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c99436]/20 border border-[#c99436]/30 text-xs font-bold text-[#e9c176]">
@@ -379,14 +379,14 @@ function ListingNetMapContent({
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
-            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-center min-w-[120px]">
+            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-center min-w-30">
               <div className="text-2xl font-extrabold text-[#e9c176] font-mono">
                 {filteredUnits.length.toLocaleString()}
               </div>
               <div className="text-[11px] text-white/60">وحدة مطابقة للبحث</div>
             </div>
 
-            <div className="px-4 py-3 rounded-2xl bg-[#002b4b]/80 border border-[#0077cc]/30 text-center min-w-[120px]">
+            <div className="px-4 py-3 rounded-2xl bg-[#002b4b]/80 border border-[#0077cc]/30 text-center min-w-30">
               <div className="text-2xl font-extrabold text-emerald-400 font-mono">
                 {selectedUnitIds.size} <span className="text-xs text-white/50">/ 40</span>
               </div>
@@ -396,7 +396,7 @@ function ListingNetMapContent({
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-xl flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-linear-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-xl flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
               <span>{selectedUnitIds.size > 0 ? `إرسال الشبكة (${selectedUnitIds.size})` : 'طلب توفر وصور'}</span>
@@ -611,7 +611,7 @@ function ListingNetMapContent({
               </span>
               <span className="text-[11px] text-white/40">انقر على أي كمبوند لتصفية الوحدات</span>
             </div>
-            <div className="h-[520px] rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-[#080d18]">
+            <div className="h-130 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-[#080d18]">
               <LiveMap
                 mode="dark"
                 onSelectCompound={(c) => setSelectedCompound(c.nameEn)}
@@ -641,14 +641,14 @@ function ListingNetMapContent({
             </div>
 
             {loading ? (
-              <div className="h-[520px] rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-sm text-white/50">
+              <div className="h-130 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-sm text-white/50">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
                   <span>جاري تحميل بيانات الوحدات...</span>
                 </div>
               </div>
             ) : filteredUnits.length === 0 ? (
-              <div className="h-[520px] rounded-2xl border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center p-6 space-y-3">
+              <div className="h-130 rounded-2xl border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center p-6 space-y-3">
                 <Home className="w-10 h-10 text-white/30" />
                 <h4 className="text-base font-bold text-white">لا توجد وحدات مطابقة للفلتر المحدد</h4>
                 <p className="text-xs text-white/50 max-w-sm">
@@ -668,7 +668,7 @@ function ListingNetMapContent({
                 </button>
               </div>
             ) : (
-              <div className="h-[520px] overflow-y-auto pr-1 space-y-2.5 scrollbar-thin">
+              <div className="h-130 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin">
                 {filteredUnits.slice(0, 100).map((unit) => {
                   const isMarked = selectedUnitIds.has(unit.id);
                   return (
@@ -751,7 +751,7 @@ function ListingNetMapContent({
 
       {/* Floating Bottom Net Bar (When at least 1 unit is marked) */}
       {selectedUnitIds.size > 0 && (
-        <div className="fixed bottom-6 inset-x-4 max-w-3xl mx-auto z-[999] animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-6 inset-x-4 max-w-3xl mx-auto z-999 animate-in slide-in-from-bottom duration-300">
           <div className="p-4 rounded-2xl bg-[#0e1626]/95 border border-[#c99436]/60 backdrop-blur-xl shadow-2xl flex items-center justify-between gap-4 text-white">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-[#c99436] text-[#0d0d0f] font-black">
@@ -792,7 +792,7 @@ function ListingNetMapContent({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-lg flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#c99436] via-[#e9c176] to-[#c99436] text-[#0d0d0f] font-extrabold text-xs hover:brightness-110 transition-all shadow-lg flex items-center gap-2"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>إرسال للتحقق الفوري ({selectedUnitIds.size})</span>
