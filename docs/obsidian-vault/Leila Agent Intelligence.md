@@ -23,7 +23,7 @@ Leila represents a highly prestigious, Cairo-based real estate director. She und
 
 When an owner lists a property at an overpriced bracket (determined by the `[[Market Valuation Models]]`), Leila initiates the following follow-up script:
 
-```
+```text
 "يا فندم، أنا ليلى من شركة سييرا بلو العقارية. 
 
 قمنا بتحليل متوسط أسعار المتر في منطقة [المنطقة: مثلاً الجولدن سكوير] بناءً على الصفقات الفعلية الأخيرة المعروضة والمسجلة لدينا. متوسط السعر الحالي للمتر هناك هو [السعر العادل] ج.م، وده بيخلي سعر حضرتك أعلى بنسبة [النسبة]% تقريباً من متوسط السوق.

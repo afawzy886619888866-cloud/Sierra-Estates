@@ -1,6 +1,6 @@
-# Sierra Estatese: Automated Technical Workflow (n8n / Claude Code Guide)
+# Sierra Estates: Automated Technical Workflow (n8n / Claude Code Guide)
 
-This document outlines the technical architecture and automation flows for the Sierra Estatese PropTech system. It is designed to be fed into automation engines (like n8n, Make, or Claude Code) to build the operational pipelines.
+This document outlines the technical architecture and automation flows for the Sierra Estates PropTech system. It is designed to be fed into automation engines (like n8n, Make, or Claude Code) to build the operational pipelines.
 
 ## System Architecture Overview
 
@@ -24,7 +24,7 @@ The system relies on a seamless handoff between AI automation and Human validati
 - **Pacing:** Every 2 hours, each number sends to 30 owners.
 - **Daily Capacity:** 4 numbers *30 messages* 4 batches = 480 owners contacted daily.
 
-### n8n / Workflow Logic
+### Phase 1 Workflow Logic
 
 1. **Trigger:** Cron Job (Scheduled Trigger) running at 12 PM, 2 PM, 4 PM, 6 PM, and 8 PM.
 2. **Action (Google Sheets Node - Read):**
@@ -43,7 +43,7 @@ The system relies on a seamless handoff between AI automation and Human validati
 
 **Objective:** Human operator verifies the raw lead after the owner replies to the bot, enriches it, and pushes it to the CRM.
 
-### n8n / Workflow Logic
+### Phase 2 Workflow Logic
 
 1. **Trigger:** Polling Google Sheets for changes where `Status` changes from `Pending_Human_Validation` to `Verified_Publish`.
 2. **Action (Firestore Node):**
@@ -54,17 +54,17 @@ The system relies on a seamless handoff between AI automation and Human validati
 
 ---
 
-## 3. Phase 3: Intelligent Triage (The Liela Bot Flow)
+## 3. Phase 3: Intelligent Triage (The Leila Bot Flow)
 
 **Objective:** Handle inbound leads coming from the published ads, qualify them, and sync to the CRM.
 
-### n8n / Workflow Logic
+### Phase 3 Workflow Logic
 
 1. **Trigger:** Webhook from WhatsApp/Telegram (Client responding to ad).
 2. **Router Node (OpenClaw):**
-   - Route message to the `Liela` Agent.
-3. **LLM Node (Liela - High Tier LLM):**
-   - **System Prompt:** "You are Liela, Sierra Estatese's luxury virtual assistant. Keep responses under 40 words. Ask discovery questions: {Apartment/Villa?, Furnishing?, Location?, Move-in date?}. Offer the Elite Voucher for serious clients."
+   - Route message to the `Leila` Agent.
+3. **LLM Node (Leila - High Tier LLM):**
+   - **System Prompt:** "You are Leila, Sierra Estates's luxury virtual assistant. Keep responses under 40 words. Ask discovery questions: {Apartment/Villa?, Furnishing?, Location?, Move-in date?}. Offer the Elite Voucher for serious clients."
 4. **Action (Firestore Node):**
    - Update/Upsert the `clients` collection.
    - Set status to `Hot_Lead`.
@@ -76,7 +76,7 @@ The system relies on a seamless handoff between AI automation and Human validati
 
 **Objective:** Human Closer takes over, schedules viewing, and system handles follow-ups.
 
-### n8n / Workflow Logic
+### Phase 4 Workflow Logic
 
 1. **Trigger:** Firestore trigger when a `viewing_appointment` is created by the Closer in the CRM.
 2. **Action (Google Calendar Node):**

@@ -30,6 +30,8 @@
     "**/.turbo": true
   },
   "markdown.validate.enabled": true,
+  "markdown.validate.referenceLinks.enabled": "ignore",
+  "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
   "github-actions.workflows.validations.enabled": false,
   "github-actions.workflows.validations.context.access": "off",
   "github-actions.workflows.validations.undefined.context": "off",
@@ -55,5 +57,5 @@
   "circuitpythonsync.cpfullversion": "10.3.0",
   "circuitpythonsync.curlibtag": "20260901",
   "circuitpythonsync.doNotShowWelcome": true,
-  "circuitpythonsync.drivepath": "serialfs:/"
+  "circuitpythonsync.drivepath": ""
 }

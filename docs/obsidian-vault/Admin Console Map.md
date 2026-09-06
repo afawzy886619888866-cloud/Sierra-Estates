@@ -33,7 +33,7 @@ Worth flagging before wiring more manager-facing actions.
 
 ## 🧭 The four rooms (current routes)
 
-```
+```text
 /admin                    Dashboard   — live counts, quick actions
 /admin/leads               Leads      — investment-stakeholder pipeline
 /admin/listings            Listings   — portfolio / property inventory
@@ -93,7 +93,7 @@ helpers enforce this split:
 - `lib/server/python-api-client.ts` → calls the Python `apps/api` service (Cloud Run) for
   PropertyFinder sync and bot integration.
 
-```
+```text
 Admin UI click
     └─→ Next.js API route (auth-checked)
             └─→ triggerN8nWebhook() ───────→ n8n (Docker :5678)   [scraping / automation]
