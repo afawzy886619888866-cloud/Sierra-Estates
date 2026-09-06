@@ -59,9 +59,9 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       expect(deployWf).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
       expect(deployWf).toContain('SUPABASE_SERVICE_ROLE_KEY');
 
-      // Firebase Client & Legacy
-      expect(deployWf).toContain('FIREBASE_PROJECT_ID');
-      expect(deployWf).toContain('FIREBASE_SERVICE_ACCOUNT_JSON');
+      // Legacy Firebase environment synchronization must remain retired.
+      expect(deployWf).not.toContain('FIREBASE_PROJECT_ID');
+      expect(deployWf).not.toContain('FIREBASE_SERVICE_ACCOUNT_JSON');
       
       // AI & LLMs
       expect(deployWf).toContain('GOOGLE_AI_API_KEY');

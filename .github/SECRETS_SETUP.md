@@ -1,104 +1,37 @@
-# 🔐 GitHub Secrets Setup Guide — Sierra Estates
+# GitHub Actions environment setup
 
-This file documents every secret required by the GitHub Actions workflows.
-Go to: **GitHub → Your Repo → Settings → Secrets and variables → Actions → New repository secret**
+The active deployment uses Vercel + Supabase. Do not add Firebase credentials or
+any other provider credentials to the active workflow.
 
----
+## Required values
 
-## ✅ REQUIRED FOR BUILD TO PASS
+Configure these in GitHub repository **Secrets and variables → Actions**:
 
-These secrets are needed by both `ci.yml` and `deploy-vercel.yml`.
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `CLIENT_VERCEL_PROJECT_ID`
+- `ADMIN_VERCEL_PROJECT_ID`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SESSION_SECRET`
+- `SBR_SECRET_KEY`
+- `CRON_SECRET`
 
-Without them the build will still pass (it uses `ci-placeholder` fallbacks),
-but the live app will not connect to Firebase.
+Add integration-specific secrets only when the corresponding worker is enabled.
+Use the names in `scripts/setup-github-secrets.js`; it reads values from the
+operator environment and never contains credentials itself.
 
-| Secret Name | Where to get it | Notes |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Console → Project Settings → Web App | Public key, safe to expose |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Console → Project Settings | e.g. `yourproject.firebaseapp.com` |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase Console → Project Settings | e.g. `sierra-estates-12345` |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Console → Project Settings | e.g. `yourproject.appspot.com` |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase Console → Project Settings | Numeric ID |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase Console → Project Settings | Starts with `1:` |
+## Validation
 
----
+Run the following before enabling production deployment:
 
-## 🚀 REQUIRED FOR VERCEL DEPLOY
+```bash
+pnpm check:public-env
+pnpm check:backend
+pnpm deploy:check:env
+pnpm deploy:check
+```
 
-| Secret Name | Where to get it | Notes |
-| :--- | :--- | :--- |
-| `VERCEL_TOKEN` | vercel.com → Account Settings → Tokens → Create | Personal access token — keep private |
-
-> The `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` are already committed in
-> `.vercel/project.json` (non-secret, safe to commit).
-
----
-
-## 📊 REQUIRED FOR GOOGLE SHEETS / AUTOMATION WORKFLOWS
-
-Only needed if you want the automated data sync workflows to run.
-
-| Secret Name | Description |
-| :--- | :--- |
-| `GOOGLE_SERVICE_ACCOUNT_KEY` | Full JSON key from GCP → IAM → Service Accounts → Create Key |
-| `BROKER_INBOX_SHEET_ID` | The Google Sheets ID from the URL (between `/d/` and `/edit`) |
-| `FIREBASE_PROJECT_ID` | Same as `NEXT_PUBLIC_FIREBASE_PROJECT_ID` |
-| `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK private key (from service account JSON) |
-| `FIREBASE_CLIENT_EMAIL` | Firebase Admin SDK client email |
-
----
-
-## 📲 REQUIRED FOR WHATSAPP AUTOMATION
-
-| Secret Name | Description |
-| :--- | :--- |
-| `WHATSAPP_API_TOKEN` | WhatsApp Business API Bearer token |
-| `WHATSAPP_API_URL` | API base URL (e.g. `REDACTED_WHATSAPP_API_URL/YOUR_PHONE_ID`) |
-
----
-
-## 📧 REQUIRED FOR EMAIL AUTOMATION
-
-| Secret Name | Description |
-| :--- | :--- |
-| `SENDGRID_API_KEY` | SendGrid → Settings → API Keys → Create |
-| `SENDGRID_FROM_EMAIL` | Verified sender email in SendGrid |
-
----
-
-## 🔑 REQUIRED FOR PROPERTY FINDER SCRAPING
-
-| Secret Name | Description |
-| :--- | :--- |
-| `PROPERTY_FINDER_JWT_TOKEN` | JWT from PropertyFinder API authentication |
-| `PROPERTY_FINDER_API_BASE` | API base URL e.g. `https://api.propertyfinder.ae` |
-
----
-
-## 🧠 REQUIRED FOR DEEPSEEK HARNESS EVALUATION
-
-| Secret Name | Description |
-| :--- | :--- |
-| `DEEPSEEK_API_KEY` | DeepSeek API key for running automated reasoning & AVM harness evaluations in CI (`harness-eval.yml`) |
-
----
-
-## ⏱️ REQUIRED FOR CRON & DISPATCH WORKFLOWS
-
-| Secret Name | Description |
-| :--- | :--- |
-| `CRON_SECRET` | Secret token guarding `/api/cron/*` endpoints, used by `vercel-cron-bridge.yml` and `whatsapp-dispatch-cron.yml` |
-
----
-
-## How to add secrets
-
-1. Go to your repo on GitHub
-2. Click **Settings** (top tab)
-3. Click **Secrets and variables** → **Actions** (left sidebar)
-4. Click **New repository secret**
-5. Paste the name and value exactly as shown above
-
-> 💡 **Tip**: If a workflow shows "skipped" in GitHub Actions (yellow circle),
-> it means the required secrets for that job are missing — this is safe and
-> by design. The workflow won't fail, it just won't run that job.
+Service-role keys and integration tokens must remain encrypted GitHub secrets.
+Only public Supabase configuration may be stored as a repository variable.

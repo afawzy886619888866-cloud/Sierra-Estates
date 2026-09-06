@@ -60,6 +60,16 @@ jobs:
       - name: Type-check realty app
         run: pnpm --filter sierra-estates-client-page type-check
 
+      - name: Canonical backend policy
+        run: pnpm check:backend
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
+
+      - name: Public environment safety
+        run: pnpm check:public-env
+
       - name: Lint realty app
         run: pnpm --filter sierra-estates-client-page lint
 
@@ -69,19 +79,13 @@ jobs:
       - name: Unit tests (realty app)
         run: pnpm --filter sierra-estates-client-page test:ci
         env:
-          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
-          NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
 
       - name: Build realty app
         run: pnpm --filter sierra-estates-client-page build
         env:
-          NEXT_PUBLIC_FIREBASE_API_KEY: dummy
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: dummy.firebaseapp.com
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: dummy
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
-          NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key

@@ -25,7 +25,6 @@ interface LoginTranslations {
   rememberMe: string;
   defaultPassNotice: string;
   constantTimeVerified: string;
-  quickFillBtn: string;
   submitBtn: string;
   submitMagicBtn: string;
   authenticating: string;
@@ -51,9 +50,8 @@ const T_EN: LoginTranslations = {
   showPass: 'Show',
   hidePass: 'Hide',
   rememberMe: 'Remember this workstation',
-  defaultPassNotice: 'Default Key:',
+  defaultPassNotice: 'Operator-configured key:',
   constantTimeVerified: 'Constant-Time Verified',
-  quickFillBtn: '✦ Quick Fill Executive Credentials (AdminSierra2026!)',
   submitBtn: 'Sign In to Executive OS',
   submitMagicBtn: 'Send One-Time Magic Link',
   authenticating: 'Authenticating Sovereign Session…',
@@ -79,9 +77,8 @@ const T_AR: LoginTranslations = {
   showPass: 'إظهار',
   hidePass: 'إخفاء',
   rememberMe: 'تذكّر مساحة العمل هذه',
-  defaultPassNotice: 'المفتاح الافتراضي:',
+  defaultPassNotice: 'مفتاح المشغّل المُهيّأ:',
   constantTimeVerified: 'فحص زمني مؤمّن',
-  quickFillBtn: '✦ ملء بيانات المشرف التنفيذي (AdminSierra2026!)',
   submitBtn: 'دخول نظام الاستخبارات',
   submitMagicBtn: 'إرسال رابط الدخول السحري',
   authenticating: 'جاري تأكيد الجلسة السيادية…',
@@ -96,7 +93,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [email, setEmail] = useState('admin@sierra-estates.net');
-  const [password, setPassword] = useState('AdminSierra2026!');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isMagicLink, setIsMagicLink] = useState(false);
@@ -895,31 +892,6 @@ export default function LoginForm() {
               t.submitBtn
             )}
           </button>
-
-          {/* ── Quick Fill Pill ──────────────────────────────── */}
-          <div style={{ marginTop: 14, textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsMagicLink(false);
-                setEmail('admin@sierra-estates.net');
-                setPassword('AdminSierra2026!');
-              }}
-              style={{
-                background: 'rgba(62,207,142,0.08)',
-                border: '1px solid rgba(62,207,142,0.25)',
-                borderRadius: 20,
-                color: '#3ECF8E',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: '5px 14px',
-                transition: 'all .2s ease',
-              }}
-            >
-              {t.quickFillBtn}
-            </button>
-          </div>
 
           {/* ── Security Trust Badges ────────────────────────── */}
           <div

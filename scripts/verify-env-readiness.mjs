@@ -4,7 +4,7 @@
  *
  * Fails (exit 1) BEFORE a deploy/build when required production environment
  * variables are missing, so a build can no longer "succeed" while lead writes,
- * admin auth, cron, and Firestore-backed features silently run in limited mode.
+ * admin auth, cron, and Supabase-backed features silently run in limited mode.
  * Closes REPO_AUDIT_REPORT.md P0 ("pre-deploy environment validator").
  *
  * Runtime-only: reads process.env (Vercel/CI inject vars there). Feature creds
@@ -50,17 +50,10 @@ const REQUIRED = [
   'CRON_SECRET',
 ];
 
-// Database providers: Either Supabase (Primary) OR Firebase
+// Supabase is the only supported production backend.
 const hasSupabase = (has('NEXT_PUBLIC_SUPABASE_URL') || has('SUPABASE_URL')) &&
-                    (has('NEXT_PUBLIC_SUPABASE_ANON_KEY') || has('SUPABASE_ANON_KEY') || has('SUPABASE_SERVICE_ROLE_KEY'));
-
-const hasFirebase = has('NEXT_PUBLIC_FIREBASE_API_KEY') && has('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
-
-// Exactly one of these credential shapes must be fully present (Firebase Admin) if using Firebase.
-const ONE_OF_FIREBASE = [
-  { name: 'Firebase Admin (service-account JSON)', all: ['FIREBASE_SERVICE_ACCOUNT_JSON'] },
-  { name: 'Firebase Admin (split credentials)', all: ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'] },
-];
+                    has('NEXT_PUBLIC_SUPABASE_ANON_KEY') &&
+                    has('SUPABASE_SERVICE_ROLE_KEY');
 
 // Feature integrations — warn (or fail under STRICT_FEATURES) if absent.
 const FEATURES = [
@@ -77,20 +70,11 @@ for (const key of REQUIRED) {
 }
 
 // Database validation
-if (!hasSupabase && !hasFirebase) {
-  errors.push('No primary database configured. Set NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY (Supabase) or Firebase credentials.');
-} else if (hasSupabase) {
-  // Supabase is primary — service role key is recommended for server writes
-  if (!has('SUPABASE_SERVICE_ROLE_KEY') && !has('SUPABASE_SERVICE_KEY')) {
-    warnings.push('SUPABASE_SERVICE_ROLE_KEY not set — using anon key for server operations (set for full CRM access)');
-  }
-} else {
-  // Firebase validation
-  const satisfied = ONE_OF_FIREBASE.find((g) => g.all.every(has));
-  if (!satisfied) {
-    const shapes = ONE_OF_FIREBASE.map((g) => `[${g.all.join(' + ')}]`).join('  OR  ');
-    errors.push(`No complete Firebase Admin credential set. Provide one of: ${shapes}`);
-  }
+if (!hasSupabase) {
+  errors.push(
+    'Supabase is not fully configured. Set NEXT_PUBLIC_SUPABASE_URL, ' +
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY.'
+  );
 }
 
 for (const f of FEATURES) {
@@ -102,9 +86,7 @@ for (const f of FEATURES) {
 
 console.log('\n🔐 Sierra Estates — production ENV readiness\n');
 console.log(`   required present : ${REQUIRED.filter(has).length}/${REQUIRED.length}`);
-const dbStatus = hasSupabase
-  ? `Supabase (${has('SUPABASE_SERVICE_ROLE_KEY') ? 'Service Role' : 'Anon Key'})`
-  : (ONE_OF_FIREBASE.find((g) => g.all.every(has))?.name || 'NOT SATISFIED');
+const dbStatus = hasSupabase ? 'Supabase (Service Role)' : 'NOT SATISFIED';
 console.log(`   Database Backend : ${dbStatus}`);
 for (const w of warnings) console.log(`   ⚠️  ${w}`);
 for (const e of errors) console.log(`   ❌ ${e}`);
