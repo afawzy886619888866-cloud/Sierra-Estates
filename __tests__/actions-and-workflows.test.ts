@@ -7,6 +7,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
   const WORKFLOWS_DIR = path.join(ROOT_DIR, '.github', 'workflows');
 
   const EXPECTED_WORKFLOWS = [
+    'agent-fleet.yml',
     'auto-assign.yml',
     'backend-tests.yml',
     'ci.yml',
@@ -32,6 +33,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       const nodeWorkflows = [
         'ci.yml',
         'deploy-vercel.yml',
+        'agent-fleet.yml',
       ];
 
       for (const wf of nodeWorkflows) {
@@ -45,6 +47,7 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         'ci.yml',
         'deploy-vercel.yml',
         'backend-tests.yml',
+        'agent-fleet.yml',
       ];
 
       for (const wf of submodulesWorkflows) {
@@ -55,6 +58,18 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
   });
 
   describe('Workflow Concurrency & Permission Scopes', () => {
+    it('production agent fleet must validate Supabase and select tasks explicitly', () => {
+      const content = fs.readFileSync(path.join(WORKFLOWS_DIR, 'agent-fleet.yml'), 'utf-8');
+      expect(content).toContain('name: Production agent fleet');
+      expect(content).toContain('pnpm check:backend');
+      expect(content).toContain('pnpm check:legacy-runtime');
+      expect(content).toContain('workflow_dispatch:');
+      expect(content).toContain("briefing:daily");
+      expect(content).toContain("fleet:run-all");
+      expect(content).toContain('concurrency:');
+      expect(content).toContain('cancel-in-progress: false');
+    });
+
     it('CI and deployment workflows must declare concurrency groups to cancel obsolete runs', () => {
       const cancelConcurrencyWorkflows = [
         'ci.yml',
