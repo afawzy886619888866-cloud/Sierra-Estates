@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import ValuationArbitrageStudio from '@/components/admin/ValuationArbitrageStudio';
@@ -22,8 +22,9 @@ import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
 import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 
-// Use consolidated inventory when available, with fallback to realListingsRaw
-const allListingsData =
+// Use consolidated inventory as the immediate fallback while the canonical
+// Supabase/admin feed loads.
+const FALLBACK_LISTINGS_DATA =
   consolidatedRaw && Array.isArray(consolidatedRaw) && consolidatedRaw.length > 0
     ? consolidatedRaw
     : realListingsRaw;
@@ -41,9 +42,38 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const [bulkNotification, setBulkNotification] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
+  const [allListingsData, setAllListingsData] = useState<any[]>(FALLBACK_LISTINGS_DATA as any[]);
+  const [isLoadingLiveListings, setIsLoadingLiveListings] = useState(true);
+  const [liveListingsError, setLiveListingsError] = useState<string | null>(null);
 
   // Quick valuation preview state
   const [activeValuationUnit, setActiveValuationUnit] = useState<any | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/admin/listings?limit=500', { cache: 'no-store' })
+      .then(async (response) => {
+        const payload = await response.json() as { listings?: any[]; error?: string };
+        if (!response.ok) throw new Error(payload.error || 'Failed to load live listings');
+        return payload;
+      })
+      .then((payload) => {
+        if (!active) return;
+        if (Array.isArray(payload.listings)) setAllListingsData(payload.listings);
+        setLiveListingsError(null);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setLiveListingsError(error instanceof Error ? error.message : 'Live listings unavailable');
+      })
+      .finally(() => {
+        if (active) setIsLoadingLiveListings(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Filter listings
   const filteredListings = useMemo(() => {
@@ -124,12 +154,12 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
   const availableZones = useMemo(() => {
     const set = new Set<string>();
-    (allListingsData as any[]).forEach((x) => {
+    allListingsData.forEach((x) => {
       const z = x.zone || x.location;
       if (z && typeof z === 'string') set.add(z);
     });
     return Array.from(set);
-  }, []);
+  }, [allListingsData]);
 
   const handleToggleSelectAllPage = () => {
     const pageIds = paginatedListings.map((item) => item.sierraCode || item.code || `SE-${item.id}`);
@@ -312,6 +342,19 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <span>{isAr ? 'بروشور PDF' : 'PDF Teaser'}</span>
             </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="text-slate-400">
+            {isLoadingLiveListings
+              ? (isAr ? 'جاري جلب بيانات Property Finder...' : 'Fetching live Property Finder inventory...')
+              : liveListingsError
+                ? (isAr ? 'يتم عرض النسخة المحلية الاحتياطية' : 'Showing the committed fallback inventory')
+                : (isAr ? 'متصل بالمخزون الموحد من Property Finder وSupabase' : 'Live Property Finder / Supabase inventory connected')}
+          </span>
+          <span className="px-2 py-1 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-300">
+            {allListingsData.filter((item) => item.syncSource === 'property-finder').length} Property Finder
+          </span>
         </div>
       </div>
 
