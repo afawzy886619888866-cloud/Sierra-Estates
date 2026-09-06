@@ -20,7 +20,8 @@ on:
       force_apply:
         description: 'Force re-apply schema even if no changes detected'
         required: false
-        default: 'false'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
