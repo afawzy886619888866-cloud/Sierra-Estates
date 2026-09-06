@@ -14,7 +14,6 @@ import { getSupabaseAdmin } from './supabase';
 import {
     snakeCaseKey,
     toColumns,
-    toRecord,
     getRecord,
     insertRecord,
     updateRecord,
