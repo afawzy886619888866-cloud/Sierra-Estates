@@ -12,7 +12,11 @@
     "**/dist/**",
     "**/*.min.*",
     "**/scripts/**",
-    "**/pnpm-lock.yaml"
+    "**/pnpm-lock.yaml",
+    "**/*.lock",
+    "**/uv.lock",
+    "**/pnpm-workspace.yaml",
+    "**/.github/workflows/**"
   ],
   "ignoreRegExpList": [
     "[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]+"
@@ -208,6 +212,38 @@
     "Propertyfinder",
     "PropertyFinder",
     "subdocumentation",
-    "subdocs"
+    "subdocs",
+    "arizeai",
+    "openinference",
+    "gsap",
+    "pangea",
+    "drei",
+    "splinetool",
+    "papaparse",
+    "tanstack",
+    "vitejs",
+    "clsx",
+    "lucide",
+    "wouter",
+    "esbuild",
+    "unrs",
+    "genai",
+    "protobufjs",
+    "lightningcss",
+    "rollup",
+    "vitest",
+    "sendgrid",
+    "deepseek",
+    "openmem",
+    "openmemory",
+    "pytest",
+    "psql",
+    "nextjs",
+    "undeployed",
+    "elif",
+    "esac",
+    "firebaseapp",
+    "firebasestorage",
+    "appspot"
   ]
 }
