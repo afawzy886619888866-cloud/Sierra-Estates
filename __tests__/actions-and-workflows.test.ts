@@ -14,8 +14,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
     'defender-for-devops.yml',
     'dependency-review.yml',
     'deploy-cloud-run.yml',
-    'deploy-firebase-rules.yml',
-    'deploy-firebase.yml',
     'deploy-vercel.yml',
     'external-workflows.yml',
     'harness-eval.yml',
@@ -58,8 +56,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
         'ci.yml',
         'deploy-vercel.yml',
         'backend-tests.yml',
-        'deploy-firebase.yml',
-        'deploy-firebase-rules.yml',
         'external-workflows.yml',
         'harness-eval.yml',
         'nightly.yml',
@@ -78,8 +74,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       const cancelConcurrencyWorkflows = [
         'ci.yml',
         'deploy-vercel.yml',
-        'deploy-firebase.yml',
-        'deploy-firebase-rules.yml',
       ];
 
       for (const wf of cancelConcurrencyWorkflows) {

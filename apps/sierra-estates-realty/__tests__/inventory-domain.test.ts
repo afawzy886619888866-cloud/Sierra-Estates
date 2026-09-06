@@ -91,6 +91,18 @@ function fakeDb() {
 }
 
 describe('InventoryDomainService', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
   const payload = {
     title: '3BR in Mivida', compound: 'Mivida', propertyType: 'Apartment',
     offerType: 'sale' as const, bedrooms: 3, area: 165, price: 12_500_000,
@@ -136,5 +148,15 @@ describe('InventoryDomainService', () => {
     await svc.verifyAndPublish(id, 'ahmed');
     await expect(svc.transition(id, 'reserved', 'ahmed')).rejects.toThrow(/reservationRef/);
     await svc.transition(id, 'reserved', 'ahmed', 'pi_123');
+  });
+
+  it('refuses writes when the canonical backend is not configured', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const { db } = fakeDb();
+    const svc = new InventoryDomainService(db);
+    await expect(svc.upsertFromSource('admin_manual', payload)).rejects.toThrow(/Canonical backend is supabase/i);
   });
 });

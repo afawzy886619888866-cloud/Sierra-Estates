@@ -5,7 +5,7 @@ import { assertDbConfigured, insertRecord } from '../lib/db';
  * 01-whatsapp-scraper
  *
  * Sets up an Express webhook to receive incoming WhatsApp messages (e.g. from n8n or Cloud API),
- * parses them, and saves raw leads to Firestore.
+ * parses them, and saves raw leads to the canonical Supabase broker listings table.
  */
 
 export function startWhatsAppWebhookServer(port = 3000) {
@@ -32,8 +32,8 @@ export function startWhatsAppWebhookServer(port = 3000) {
 
       if (isPropertyLead && assertDbConfigured('WhatsApp Scraper')) {
         // Mapped onto the broker_listings columns: the raw text is
-        // `raw_message` and the group is `source_platform`; `originalMessage`
-        // and `source` were free-form Firestore fields with no column.
+        // `raw_message` and the group is `source_platform`; the remaining
+        // provider payload is kept in the typed database columns.
         await insertRecord('broker_listings', {
           senderInfo: sender,
           rawMessage: messageBody,
@@ -60,5 +60,4 @@ export function startWhatsAppWebhookServer(port = 3000) {
 if (require.main === module) {
   startWhatsAppWebhookServer(process.env.PORT ? parseInt(process.env.PORT) : 3000);
 }
-
 

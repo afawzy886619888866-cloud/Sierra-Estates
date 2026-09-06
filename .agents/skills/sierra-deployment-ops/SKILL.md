@@ -19,13 +19,15 @@ Automates and validates deployments for the Sierra Estates platform across Verce
 
 ### 2. Supabase Schemas, Migrations & Database Operations
 
-- Supabase Master Schema: `node scripts/apply-supabase-schema.mjs`
-- Supabase Data & Inventory Sync: `npx tsx scripts/migrate-data-to-supabase.ts`
-- Direct Supabase Compatibility Adapter: `@sierra-estates/db/firebase-compat-supabase`
-- Legacy Firebase Rules (Archived / Superseded): `pnpm deploy:rules`
+- Supabase policy check: `pnpm check:backend`
+- Supabase readiness check: `pnpm deploy:check`
+- Supabase Master Schema: `pnpm deploy:supabase`
+- Supabase Data & Inventory Sync: `pnpm migrate:supabase`
 
 ### 3. Pre-Deploy Validation Checklist
 
-1. `pnpm turbo run type-check`
-2. `pnpm turbo run lint`
-3. `pnpm turbo run test:ci`
+1. `pnpm type-check`
+2. `pnpm lint`
+3. `pnpm test:ci`
+4. `pnpm check:backend`
+5. `pnpm deploy:check`

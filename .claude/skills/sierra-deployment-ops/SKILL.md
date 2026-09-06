@@ -1,13 +1,14 @@
 ---
 name: sierra-deployment-ops
-description: Deployment and infrastructure management for Vercel, Firebase Firestore rules, and Cloud Storage.
+description: Deployment and infrastructure management for Vercel, Supabase, and worker services.
 ---
 
 # Sierra Deployment Ops Skill
 
 ## Overview
 
-Automates and validates deployments for the Sierra Estates platform across Vercel and Firebase infrastructure.
+Automates and validates deployments for the Sierra Estates platform across Vercel,
+Supabase, and worker infrastructure. Firebase deployment is retired.
 
 ## Deployment Workflows
 
@@ -17,13 +18,17 @@ Automates and validates deployments for the Sierra Estates platform across Verce
 - Production Deployment: `pnpm deploy:prod`
 - Vercel Link / Environment Sync: `pnpm link:vercel`
 
-### 2. Firebase Rules & Storage
+### 2. Supabase Schema and Data
 
-- Deploy security rules & storage: `pnpm deploy:rules`
-- Full Firebase Deploy (rules, storage, functions): `pnpm deploy:firebase`
+- Validate backend policy: `pnpm check:backend`
+- Validate deployment readiness: `pnpm deploy:check`
+- Apply the canonical schema: `pnpm deploy:supabase`
+- Migrate data into Supabase: `pnpm migrate:supabase`
 
 ### 3. Pre-Deploy Validation Checklist
 
-1. `pnpm turbo run type-check`
-2. `pnpm turbo run lint`
-3. `pnpm turbo run test:ci`
+1. `pnpm type-check`
+2. `pnpm lint`
+3. `pnpm test:ci`
+4. `pnpm check:backend`
+5. `pnpm deploy:check`

@@ -15,6 +15,10 @@
 
 ## Core Frameworks & Libraries
 
+> This memory-bank note is informational. The authoritative architecture and
+> command contract live in the repository-root `ARCHITECTURE.md`,
+> `DEPLOYMENT.md`, and `package.json`.
+
 ### Next.js App (`apps/sierra-estates-realty`)
 
 - **Next.js** ^16.3.1 — App Router, React Server Components, API routes
@@ -141,11 +145,11 @@ pnpm harness:run            # Execute 10-scenario DeepSeek Reasoning & Benchmark
 # Deployment
 pnpm deploy:preview         # Vercel preview deploy
 pnpm deploy:prod            # Vercel production deploy
-pnpm deploy:firebase        # Firebase rules + functions deploy
-
-# Firebase manual
-pnpm deploy:rules           # Firestore + Storage rules only
-pnpm deploy:functions       # Cloud Functions only
+pnpm check:public-env       # Public environment safety check
+pnpm check:backend          # Canonical Supabase backend policy
+pnpm deploy:check           # Deployment readiness validation
+pnpm deploy:supabase        # Apply the Supabase schema
+pnpm migrate:supabase       # Migrate data into Supabase
 
 # n8n
 docker-compose -f docker-compose.n8n.yml up -d   # n8n on :5678
@@ -160,8 +164,8 @@ Copy to `apps/sierra-estates-realty/.env.local` — never commit.
 
 Key variable groups:
 
-- `NEXT_PUBLIC_FIREBASE_*` — Firebase client SDK config
-- `FIREBASE_*` — Firebase Admin SDK (server-only)
+- `NEXT_PUBLIC_SUPABASE_*` — public Supabase client configuration
+- `SUPABASE_SERVICE_ROLE_KEY` — Supabase server-only service credential
 - `GOOGLE_AI_API_KEY` / `GOOGLE_GENAI_API_KEY` — Gemini
 - `WHATSAPP_*` / `WABA_NUMBER_*` — WhatsApp Cloud API
 - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` — Telegram bot

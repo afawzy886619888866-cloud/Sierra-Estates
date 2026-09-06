@@ -1,34 +1,54 @@
-# Sierra Estates — Realty (Public Client Hub)
+# Sierra Estates Realty
 
-**Package:** `sierra-estates-realty` · **Surface:** Public, read-only
+This app is the main Next.js codebase for Sierra Estates. The active deployment model is a Vercel-hosted web app backed by Supabase, with worker jobs isolated from the request path.
 
-This is the public-facing Sierra Estates client hub. It is a **read-only** view over
-the live Firestore data streams — listings, compounds, ROI/market intelligence, and
-virtual tours. It performs **no privileged writes**: all write/control operations are
-owned by the private admin portal and the Anti-Gravity backend engine.
+## Current runtime model
 
-## Role in the two-app layout
+- Public site: `sierra-estates.net`
+- Admin surface: `admin.sierra-estates.net`
+- Canonical backend: Supabase (database, auth, storage, RLS, pgvector)
+- External automation: n8n, `apps/api`, and scheduled GitHub Action jobs
 
-| App | Package | Surface | Responsibility |
-|-----|---------|---------|----------------|
-| **`apps/web`** (this app) | `sierra-estates-realty` | Public | Read-only client hub over Firestore streams |
-| `apps/admin` | `sierra-estates-admin-portal` | Private | Master write/control admin CRM & bot telemetry |
+Legacy Firebase deployment instructions are not part of the active runtime contract.
 
-## Data boundary (Anti-Gravity)
+## Monorepo role
 
-- The client reads from Firestore via the **client SDK** (`@/lib/firebase`) — staff-gated
-  collections stay protected by Firestore security rules.
-- Privileged server work uses the **Admin SDK** (`@/lib/server/firebase-admin`), which
-  bypasses rules and is only invoked from authenticated API routes.
-- The browser never holds `CRON_SECRET` / `SBR_SECRET_KEY` — secret-gated routes are
-  proxied server-side.
+```text
+apps/sierra-estates-realty/
+├── app/                 # Next.js app routes and UI
+├── components/          # reusable UI blocks
+├── lib/                 # app logic, service layers, and integrations
+├── scripts/             # app-specific tooling
+├── public/              # static assets
+├── tests/               # app-level validation
+└── ...
+```
 
-## Commands
+## Key engineering principles
 
-From the repo root:
+- Keep the app surface thin and deterministic.
+- Put heavy jobs in workers instead of request handlers.
+- Prefer Supabase for canonical state and auth.
+- Fail loudly when canonical backend configuration is missing.
+
+## Canonical commands
+
+Run from the repo root:
 
 ```bash
-pnpm dev:web      # run this app
-pnpm build:web    # production build
-pnpm type-check   # tsc --noEmit (real CI gate)
+pnpm install
+pnpm dev
+pnpm build
+pnpm lint
+pnpm type-check
+pnpm test:ci
+pnpm check:public-env
+pnpm check:backend
+pnpm deploy:check
+pnpm deploy:supabase
+pnpm migrate:supabase
 ```
+
+## Notes
+
+This is not a Firebase-hosted web app. The active architecture is Vercel + Supabase with isolated worker automation.
