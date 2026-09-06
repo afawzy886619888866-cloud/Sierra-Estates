@@ -35,10 +35,10 @@ interface ParsedListingData {
 }
 
 export default function EasyListingStudio({
-  onListingPublished,
+  onListingPublishedAction,
   lang = "en",
 }: {
-  onListingPublished?: (listing: any) => void;
+  onListingPublishedAction?: (listing: any) => void;
   lang?: string;
 }) {
   const isAr = lang === "ar";
@@ -157,7 +157,7 @@ export default function EasyListingStudio({
           ? `✓ تم نشر العقار بنجاح! كود العقار: ${json.listingCode || formData.sierraCode}`
           : `✓ Successfully published to inventory! Ref: ${json.listingCode || formData.sierraCode}`,
       );
-      if (onListingPublished) onListingPublished(json);
+      if (onListingPublishedAction) onListingPublishedAction(json);
     } catch (err: any) {
       setErrorMsg(err.message || "Error publishing listing");
     } finally {
