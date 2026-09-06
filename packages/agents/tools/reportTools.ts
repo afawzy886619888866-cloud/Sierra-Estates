@@ -1,6 +1,6 @@
 import pino from 'pino';
 import { obsidian } from '../../obsidian/src/index';
-import { getSupabaseAdmin } from '@sierra-estates/db';
+import { getSupabaseAdmin, toRecord } from '@sierra-estates/db';
 
 const logger = pino({ name: 'reportTools' });
 
@@ -65,14 +65,14 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
 
     const { data: supabaseListings, error } = await getSupabaseAdmin()
       .from('listings')
-      .select('*')
+      .select('id, ref_id, code, property_type, compound, location_area, price, price_currency, bedrooms, area_sqm')
       .eq('status', 'active')
       .limit(15);
 
     if (error) throw new Error(`Supabase inventory query failed: ${error.message}`);
     if (supabaseListings && supabaseListings.length > 0) {
       let report = `📊 *Sierra Estates — Supabase Inventory Report (${supabaseListings.length} Active Properties)*\n\n`;
-      supabaseListings.forEach((item: Record<string, unknown>, i: number) => {
+      supabaseListings.map((listing) => toRecord<Record<string, unknown>>(listing)).forEach((item, i) => {
         const code = item.sierraCode || item.code || item.id || `listing-${i + 1}`;
         const price = item.price ? Number(item.price).toLocaleString() : 'N/A';
         const type = item.type || item.propertyType || 'Unit';
