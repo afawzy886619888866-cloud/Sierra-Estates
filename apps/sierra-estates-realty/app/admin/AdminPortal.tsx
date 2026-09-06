@@ -29,6 +29,9 @@ import {
   RealEstateProcessorView,
   ContractsView,
   HeatmapView,
+  AppsDirectoryView,
+  DeploymentPipelineView,
+  ApiGatewayView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -37,6 +40,7 @@ import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochur
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
 import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
+import CommandPalette, { CommandItem } from '@/components/admin/CommandPalette';
 import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
