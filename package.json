@@ -38,7 +38,6 @@
         "estimate-costs": "tsx scripts/estimate-costs.ts",
         "smoke:test": "tsx scripts/deploy-smoke-test.ts",
         "mcp:smoke-test": "tsx scripts/mcp-smoke-test.ts",
-        "check:firebase-rules": "node scripts/check-firebase-rules.mjs",
         "check:public-env": "node scripts/check-public-env-safety.mjs",
         "check:backend": "node scripts/check-backend-policy.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
@@ -65,4 +64,3 @@
     },
     "packageManager": "pnpm@9.15.4"
 }
-

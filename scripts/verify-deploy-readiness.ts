@@ -47,10 +47,6 @@ for (const loc of envLocations) {
 if (!process.env.SESSION_SECRET) process.env.SESSION_SECRET = 'local-dev-session-secret-32-chars-min!!';
 if (!process.env.SBR_SECRET_KEY) process.env.SBR_SECRET_KEY = 'local-dev-sbr-secret';
 if (!process.env.CRON_SECRET) process.env.CRON_SECRET = 'local-dev-cron-secret';
-if (!process.env.FIREBASE_CLIENT_EMAIL) process.env.FIREBASE_CLIENT_EMAIL = 'admin@sierra-blu.iam.gserviceaccount.com';
-if (!process.env.FIREBASE_PRIVATE_KEY && !process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-  process.env.FIREBASE_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...\n-----END PRIVATE KEY-----';
-}
 
 interface CheckResult {
   name: string;
@@ -70,12 +66,12 @@ function validateProductionEnvironment() {
   // Supabase is the authoritative primary backend (Database, Auth, pgvector, Storage)
   const hasSupabase = Boolean(
     isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL) || isConfigured(process.env.SUPABASE_URL)
-  ) && Boolean(
-    isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY) || isConfigured(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  );
+  ) &&
+    isConfigured(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
+    isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   if (!hasSupabase) {
-    missing.push('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (Supabase is Authoritative Primary Backend)');
+    missing.push('Supabase URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY (Supabase is authoritative)');
   }
 
   for (const name of ['SESSION_SECRET', 'SBR_SECRET_KEY', 'CRON_SECRET']) {
