@@ -326,7 +326,9 @@ xlsx.utils.book_append_sheet(singleSheetWb, ws, 'Master_Inventory');
 // 6. Save to target Excel destinations
 const excelDestinations = [
   path.join(ROOT, 'apps/sierra-estates-realty/public/downloads/sierra-estates-master-inventory.xlsx'),
-  path.join(ROOT, 'Inventory_with_Photos.xlsx')
+  path.join(ROOT, 'Inventory_with_Photos.xlsx'),
+  path.join(ROOT, 'data/sierra-estates-master-inventory.xlsx'),
+  path.join(ROOT, 'apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx')
 ];
 
 excelDestinations.forEach(p => {
@@ -339,7 +341,9 @@ excelDestinations.forEach(p => {
 const csvContent = '\uFEFF' + xlsx.utils.sheet_to_csv(ws);
 const csvDestinations = [
   path.join(ROOT, 'apps/sierra-estates-realty/public/downloads/sierra-estates-clean-inventory.csv'),
-  path.join(ROOT, 'inventory_master_unified.csv')
+  path.join(ROOT, 'inventory_master_unified.csv'),
+  path.join(ROOT, 'data/sierra-estates-master-inventory.csv'),
+  path.join(ROOT, 'apps/sierra-estates-realty/data/sierra-estates-master-inventory.csv')
 ];
 
 csvDestinations.forEach(p => {

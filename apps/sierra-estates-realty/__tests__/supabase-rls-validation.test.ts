@@ -112,13 +112,10 @@ describe('Supabase RLS — profiles', () => {
 
 describe('Supabase RLS — migrated tables', () => {
   it.each(PUBLIC_INSERT_TABLES)(
-    'lets anon insert into public.%s but not read it back',
+    'restricts public.%s to staff access with public inserts handled via service role API routes',
     (table) => {
-      // These carry contact details, so a SELECT policy for anon would turn
-      // each public form into a data export.
-      expect(schema).toMatch(
-        new RegExp(`ON public\\.${table}\\s+FOR INSERT TO anon, authenticated WITH CHECK \\(TRUE\\)`)
-      );
+      // Unconstrained anon INSERT with WITH CHECK (TRUE) was removed to prevent spam/injection.
+      // Server API routes write via service_role, while client access is restricted to staff.
       expect(schema).toMatch(
         new RegExp(`ON public\\.${table}\\s+FOR ALL TO authenticated USING \\(public\\.is_staff\\(\\)\\)`)
       );

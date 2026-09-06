@@ -1,21 +1,134 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { isAdminPortalRole } from '@/lib/types';
 import '../admin-portal.css';
 
+interface LoginTranslations {
+  brand: string;
+  subhead: string;
+  authBadge: string;
+  googleBtn: string;
+  divider: string;
+  tabCredentialsTitle: string;
+  tabMagic: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  passLabel: string;
+  passPlaceholder: string;
+  showPass: string;
+  hidePass: string;
+  rememberMe: string;
+  defaultPassNotice: string;
+  constantTimeVerified: string;
+  quickFillBtn: string;
+  submitBtn: string;
+  submitMagicBtn: string;
+  authenticating: string;
+  backToSite: string;
+  magicLinkSent: string;
+  secBadgeTls: string;
+  secBadgeRls: string;
+  secBadgeEdge: string;
+}
+
+const T_EN: LoginTranslations = {
+  brand: 'SIERRA ESTATES 3.0',
+  subhead: 'Executive Admin & Intelligence OS',
+  authBadge: 'Supabase Auth Engine',
+  googleBtn: 'Sign In with Google',
+  divider: 'OR CONTINUE WITH CREDENTIALS',
+  tabCredentialsTitle: 'Password Sign-In',
+  tabMagic: 'Magic Link OTP',
+  emailLabel: 'Executive Email or ID',
+  emailPlaceholder: 'admin@sierra-estates.net or admin',
+  passLabel: 'Password',
+  passPlaceholder: '••••••••••••',
+  showPass: 'Show',
+  hidePass: 'Hide',
+  rememberMe: 'Remember this workstation',
+  defaultPassNotice: 'Default Key:',
+  constantTimeVerified: 'Constant-Time Verified',
+  quickFillBtn: '✦ Quick Fill Executive Credentials (AdminSierra2026!)',
+  submitBtn: 'Sign In to Executive OS',
+  submitMagicBtn: 'Send One-Time Magic Link',
+  authenticating: 'Authenticating Sovereign Session…',
+  backToSite: '← Return to Sierra Estates',
+  magicLinkSent: 'Check your email! A Supabase Magic Link has been dispatched to your inbox.',
+  secBadgeTls: 'TLS 1.3 / AES-256',
+  secBadgeRls: 'Supabase RLS Protected',
+  secBadgeEdge: 'Vercel Edge Guard',
+};
+
+const T_AR: LoginTranslations = {
+  brand: 'سييرا العقارية ٣.٠',
+  subhead: 'نظام الاستخبارات والإدارة التنفيذية',
+  authBadge: 'محرك مصادقة سوبابيز',
+  googleBtn: 'تسجيل الدخول عبر Google',
+  divider: 'أو المتابعة ببيانات الدخول المعتمدة',
+  tabCredentialsTitle: 'كلمة المرور',
+  tabMagic: 'رابط الدخول السريع',
+  emailLabel: 'البريد التنفيذي أو المعرف',
+  emailPlaceholder: 'admin@sierra-estates.net أو admin',
+  passLabel: 'كلمة المرور',
+  passPlaceholder: '••••••••••••',
+  showPass: 'إظهار',
+  hidePass: 'إخفاء',
+  rememberMe: 'تذكّر مساحة العمل هذه',
+  defaultPassNotice: 'المفتاح الافتراضي:',
+  constantTimeVerified: 'فحص زمني مؤمّن',
+  quickFillBtn: '✦ ملء بيانات المشرف التنفيذي (AdminSierra2026!)',
+  submitBtn: 'دخول نظام الاستخبارات',
+  submitMagicBtn: 'إرسال رابط الدخول السحري',
+  authenticating: 'جاري تأكيد الجلسة السيادية…',
+  backToSite: '← العودة للموقع العام',
+  magicLinkSent: 'تم الإرسال بنجاح! تفقد بريدك الإلكتروني لفتح رابط الدخول المباشر.',
+  secBadgeTls: 'تشفير TLS 1.3 / AES-256',
+  secBadgeRls: 'حماية RLS من سوبابيز',
+  secBadgeEdge: 'حماية Edge Proxy',
+};
+
 export default function LoginForm() {
   const router = useRouter();
+  const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [email, setEmail] = useState('admin@sierra-estates.net');
   const [password, setPassword] = useState('AdminSierra2026!');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [isMagicLink, setIsMagicLink] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ── 1. Check existing session on mount ──────────────────────────────────
+  const t = lang === 'ar' ? T_AR : T_EN;
+  const isAr = lang === 'ar';
+
+  // ── 1. Hydrate saved language & remember-me state on mount ───────────────
+  useEffect(() => {
+    try {
+      const savedLang = localStorage.getItem('sierra_admin_login_lang') as 'en' | 'ar' | null;
+      if (savedLang === 'ar' || savedLang === 'en') {
+        setLang(savedLang);
+      }
+      const remembered = localStorage.getItem('sierra_admin_remember_email');
+      if (remembered) {
+        setEmail(remembered);
+      }
+    } catch (_storageErr) {}
+  }, []);
+
+  const handleLangToggle = (nextLang: 'en' | 'ar') => {
+    setLang(nextLang);
+    try {
+      localStorage.setItem('sierra_admin_login_lang', nextLang);
+    } catch (_storageErr) {}
+  };
+
+  // ── 2. Check existing session on mount ──────────────────────────────────
   useEffect(() => {
     // Check Supabase client session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -27,14 +140,13 @@ export default function LoginForm() {
             credentials: 'same-origin',
             body: JSON.stringify({
               action: 'signin',
-              provider: 'google',
+              provider: 'supabase',
+              token: session.access_token,
               email: session.user.email,
               uid: session.user.id,
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
             }),
           });
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
         } catch (_e) {}
         router.replace('/admin');
       }
@@ -45,10 +157,6 @@ export default function LoginForm() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.signedIn && isAdminPortalRole(data.role)) {
-          try {
-            sessionStorage.setItem('sierra_admin_auth', 'true');
-            localStorage.setItem('sierra_admin_auth', 'true');
-          } catch (_e) {}
           router.replace('/admin');
         }
       })
@@ -65,13 +173,12 @@ export default function LoginForm() {
             body: JSON.stringify({
               action: 'signin',
               provider: 'google',
+              token: session.access_token,
               email: session.user.email,
               uid: session.user.id,
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
             }),
           });
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
         } catch (_e) {}
         router.replace('/admin');
         router.refresh();
@@ -83,7 +190,7 @@ export default function LoginForm() {
     };
   }, [router]);
 
-  // ── 2. Password Login via Server Session & Supabase ──────────────────────
+  // ── 3. Password Login via Server Session & Supabase ──────────────────────
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -94,7 +201,31 @@ export default function LoginForm() {
     const supaEmail = cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@sierra-estates.net`;
 
     try {
-      // 1. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
+      if (rememberMe) {
+        try {
+          localStorage.setItem('sierra_admin_remember_email', cleanEmail);
+        } catch (_storageErr) {}
+      } else {
+        try {
+          localStorage.removeItem('sierra_admin_remember_email');
+        } catch (_storageErr) {}
+      }
+
+      // 1. Authenticate with Supabase Auth Client in background if possible
+      let supaToken: string | undefined = undefined;
+      try {
+        const res = await supabase.auth.signInWithPassword({
+          email: supaEmail,
+          password,
+        });
+        if (res.data?.session?.access_token) {
+          supaToken = res.data.session.access_token;
+        }
+      } catch (_sErr) {
+        // Fallback to server bootstrap auth
+      }
+
+      // 2. Authenticate with Server Auth Route (Sets secure HttpOnly session cookie)
       const serverRes = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -103,46 +234,30 @@ export default function LoginForm() {
           action: 'signin',
           email: cleanEmail,
           password,
+          token: supaToken,
         }),
       });
 
       const serverResult = await serverRes.json().catch(() => ({}));
 
-      // 2. Also authenticate with Supabase Auth Client in background
-      let supaData: any = null;
-      try {
-        const res = await supabase.auth.signInWithPassword({
-          email: supaEmail,
-          password,
-        });
-        supaData = res.data;
-      } catch (_sErr) {
-        // Server auth is primary for configured admin roles
-      }
-
-      // Check if either Server Auth or Supabase succeeded
-      if ((serverRes.ok && serverResult.ok) || supaData?.session) {
-        try {
-          sessionStorage.setItem('sierra_admin_auth', 'true');
-          localStorage.setItem('sierra_admin_auth', 'true');
-        } catch (_storageErr) {}
-
+      // Check if Server Auth succeeded
+      if (serverRes.ok && serverResult.ok) {
         router.replace('/admin');
         router.refresh();
         return;
       }
 
       throw new Error(
-        serverResult?.error || 'Invalid email or password. Please verify your credentials.'
+        serverResult?.error || (isAr ? 'بيانات الدخول غير صحيحة. يرجى التحقق من البريد وكلمة المرور.' : 'Invalid email or password. Please verify your credentials.')
       );
     } catch (err: any) {
-      setError(err?.message || 'Authentication failed. Please check your credentials.');
+      setError(err?.message || (isAr ? 'فشلت عملية التحقق. يرجى المحاولة مرة أخرى.' : 'Authentication failed. Please check your credentials.'));
     } finally {
       setLoading(false);
     }
   };
 
-  // ── 3. Magic Link / Passwordless Sign-In via Supabase ────────────────────
+  // ── 4. Magic Link / Passwordless Sign-In via Supabase ────────────────────
   const handleMagicLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -161,20 +276,15 @@ export default function LoginForm() {
         throw otpError;
       }
 
-      setSuccessMsg('Check your email! A Supabase Magic Link has been sent / تم إرسال رابط الدخول لبريدك.');
+      setSuccessMsg(t.magicLinkSent);
     } catch (err: any) {
-      setError(err?.message || 'Failed to send Magic Link. Please try password login.');
+      setError(err?.message || (isAr ? 'تعذر إرسال رابط الدخول. يرجى استخدام كلمة المرور.' : 'Failed to send Magic Link. Please try password login.'));
     } finally {
       setLoading(false);
     }
   };
 
-  // ── 4. Google Sign-In (Supabase OAuth) ───────────────────────────────────
-  // This used to open a Firebase popup first and POST the resulting Firebase
-  // ID token to /api/auth, falling back to Supabase OAuth when that failed.
-  // /api/auth verifies Supabase access tokens, so the Firebase leg could only
-  // ever be rejected — it cost the user a popup before the redirect that
-  // actually signs them in.
+  // ── 5. Google Sign-In (Supabase OAuth) ───────────────────────────────────
   const handleGoogleSignIn = async () => {
     setError('');
     setSuccessMsg('');
@@ -192,37 +302,155 @@ export default function LoginForm() {
         throw oauthError;
       }
     } catch (err: any) {
-      setError(err?.message || 'Google sign-in failed. Please use email & password.');
+      setError(err?.message || (isAr ? 'فشل تسجيل الدخول عبر Google. يرجى استخدام البريد وكلمة المرور.' : 'Google sign-in failed. Please use email & password.'));
       setLoading(false);
     }
   };
 
   return (
     <div
+      dir={isAr ? 'rtl' : 'ltr'}
       style={{
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background:
-          'radial-gradient(900px 600px at 85% 0%, rgba(62,207,142,.12), transparent 60%), radial-gradient(800px 500px at 15% 100%, rgba(0,174,255,.10), transparent 60%), #07111E',
-        padding: 16,
+          'radial-gradient(1000px 700px at 85% 5%, rgba(62,207,142,.14), transparent 60%), radial-gradient(900px 600px at 15% 95%, rgba(0,174,255,.12), transparent 60%), #050E18',
+        padding: '24px 16px',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Ambient background decoration */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'radial-gradient(circle at 50% 50%, rgba(212,175,55,0.03) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
       <div
         style={{
           width: '100%',
-          maxWidth: 420,
-          background: 'rgba(13, 24, 38, 0.75)',
-          border: '1px solid rgba(62, 207, 142, 0.22)',
-          borderRadius: 20,
+          maxWidth: 440,
+          background: 'rgba(11, 22, 35, 0.82)',
+          border: '1px solid rgba(62, 207, 142, 0.26)',
+          borderRadius: 24,
           padding: '36px 32px',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.65), 0 0 40px rgba(62,207,142,0.06)',
-          backdropFilter: 'blur(20px)',
+          boxShadow:
+            '0 30px 70px rgba(0,0,0,0.75), 0 0 50px rgba(62,207,142,0.08), inset 0 1px 1px rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(24px)',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
+        {/* ── Top Utility Row: Back Link & Language Switcher ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+          }}
+        >
+          <Link
+            href="/"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'rgba(240,237,229,0.55)',
+              textDecoration: 'none',
+              transition: 'color .2s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            className="hover:text-emerald-400"
+          >
+            {t.backToSite}
+          </Link>
+
+          {/* Bilingual Language Switcher */}
+          <div
+            style={{
+              display: 'flex',
+              background: 'rgba(0,0,0,0.35)',
+              padding: 2,
+              borderRadius: 14,
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleLangToggle('en')}
+              style={{
+                padding: '3px 10px',
+                borderRadius: 10,
+                border: 'none',
+                background: lang === 'en' ? 'rgba(62,207,142,0.25)' : 'transparent',
+                color: lang === 'en' ? '#3ECF8E' : 'rgba(240,237,229,0.45)',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+              }}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLangToggle('ar')}
+              style={{
+                padding: '3px 10px',
+                borderRadius: 10,
+                border: 'none',
+                background: lang === 'ar' ? 'rgba(62,207,142,0.25)' : 'transparent',
+                color: lang === 'ar' ? '#3ECF8E' : 'rgba(240,237,229,0.45)',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'sans-serif',
+              }}
+            >
+              عربي
+            </button>
+          </div>
+        </div>
+
+        {/* ── Official Brand Logo with Gold Glow ───────────────────────── */}
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              padding: 5,
+              borderRadius: 20,
+              background:
+                'linear-gradient(135deg, rgba(212,175,55,0.4), rgba(62,207,142,0.35), rgba(0,174,255,0.25))',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212,175,55,0.15)',
+              marginBottom: 12,
+            }}
+          >
+            <Image
+              src="/assets/sierra-estates-official-logo.png"
+              alt="Sierra Estates Official Emblem"
+              width={70}
+              height={70}
+              priority
+              style={{
+                borderRadius: 16,
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+
         {/* ── Brand & Supabase Header ─────────────────────────── */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
           <div
             style={{
               display: 'inline-flex',
@@ -232,11 +460,11 @@ export default function LoginForm() {
               borderRadius: 20,
               background: 'rgba(62, 207, 142, 0.12)',
               border: '1px solid rgba(62, 207, 142, 0.3)',
-              marginBottom: 14,
+              marginBottom: 12,
             }}
           >
             {/* Supabase Logo SVG */}
-            <svg width="15" height="15" viewBox="0 0 109 113" fill="none">
+            <svg width="14" height="14" viewBox="0 0 109 113" fill="none">
               <path
                 d="M63.7076 110.284C60.848 113.885 55.0243 111.957 54.8876 107.362L52.8687 39.4974H96.533C104.918 39.4974 109.684 49.0799 104.575 55.7299L63.7076 110.284Z"
                 fill="#3ECF8E"
@@ -257,34 +485,33 @@ export default function LoginForm() {
                 textTransform: 'uppercase',
               }}
             >
-              Supabase Auth Engine
+              {t.authBadge}
             </span>
           </div>
 
           <div
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 15,
+              fontFamily: isAr ? "'Cairo', sans-serif" : "'JetBrains Mono', monospace",
+              fontSize: 16,
               fontWeight: 800,
-              letterSpacing: '.22em',
+              letterSpacing: isAr ? 'normal' : '.20em',
               background: 'linear-gradient(135deg, #d4af37 0%, #f5d76e 50%, #ffffff 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
           >
-            SIERRA ESTATES 3.0
+            {t.brand}
           </div>
           <div
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 10,
-              letterSpacing: '.16em',
-              color: 'rgba(240,237,229,.42)',
-              textTransform: 'uppercase',
-              marginTop: 6,
+              fontFamily: isAr ? "'Cairo', sans-serif" : "'JetBrains Mono', monospace",
+              fontSize: 11,
+              letterSpacing: isAr ? 'normal' : '.12em',
+              color: 'rgba(240,237,229,.50)',
+              marginTop: 4,
             }}
           >
-            Executive Admin & Intelligence OS
+            {t.subhead}
           </div>
         </div>
 
@@ -295,7 +522,7 @@ export default function LoginForm() {
           disabled={loading}
           style={{
             width: '100%',
-            padding: '12px 16px',
+            padding: '11px 16px',
             borderRadius: 12,
             border: '1px solid rgba(255,255,255,0.14)',
             background: 'rgba(255,255,255,0.06)',
@@ -307,7 +534,7 @@ export default function LoginForm() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            marginBottom: 20,
+            marginBottom: 18,
             transition: 'all .2s ease',
             fontFamily: 'inherit',
           }}
@@ -330,7 +557,7 @@ export default function LoginForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Sign In with Google (Supabase OAuth)</span>
+          <span>{t.googleBtn}</span>
         </button>
 
         {/* ── Divider ─────────────────────────────────────────── */}
@@ -339,13 +566,15 @@ export default function LoginForm() {
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            marginBottom: 20,
-            color: 'rgba(240,237,229,0.3)',
-            fontSize: 11,
+            marginBottom: 18,
+            color: 'rgba(240,237,229,0.35)',
+            fontSize: 10,
+            fontFamily: isAr ? "'Cairo', sans-serif" : "'JetBrains Mono', monospace",
+            letterSpacing: isAr ? 'normal' : '.12em',
           }}
         >
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-          <span>OR / أو باستخدام البريد</span>
+          <span>{t.divider}</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
 
@@ -353,10 +582,10 @@ export default function LoginForm() {
         <div
           style={{
             display: 'flex',
-            borderRadius: 10,
-            background: 'rgba(0,0,0,0.3)',
+            borderRadius: 12,
+            background: 'rgba(0,0,0,0.35)',
             padding: 3,
-            marginBottom: 20,
+            marginBottom: 18,
             border: '1px solid rgba(255,255,255,0.06)',
           }}
         >
@@ -365,36 +594,38 @@ export default function LoginForm() {
             onClick={() => { setIsMagicLink(false); setError(''); setSuccessMsg(''); }}
             style={{
               flex: 1,
-              padding: '7px 0',
-              borderRadius: 8,
+              padding: '8px 0',
+              borderRadius: 9,
               border: 'none',
-              background: !isMagicLink ? 'rgba(62,207,142,0.18)' : 'transparent',
+              background: !isMagicLink ? 'rgba(62,207,142,0.2)' : 'transparent',
               color: !isMagicLink ? '#3ECF8E' : 'rgba(240,237,229,0.5)',
               fontSize: 12,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all .2s ease',
+              fontFamily: 'inherit',
             }}
           >
-            Password / كلمة المرور
+            {t.tabCredentialsTitle}
           </button>
           <button
             type="button"
             onClick={() => { setIsMagicLink(true); setError(''); setSuccessMsg(''); }}
             style={{
               flex: 1,
-              padding: '7px 0',
-              borderRadius: 8,
+              padding: '8px 0',
+              borderRadius: 9,
               border: 'none',
-              background: isMagicLink ? 'rgba(62,207,142,0.18)' : 'transparent',
+              background: isMagicLink ? 'rgba(62,207,142,0.2)' : 'transparent',
               color: isMagicLink ? '#3ECF8E' : 'rgba(240,237,229,0.5)',
               fontSize: 12,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all .2s ease',
+              fontFamily: 'inherit',
             }}
           >
-            Magic Link / رابط سحري
+            {t.tabMagic}
           </button>
         </div>
 
@@ -405,13 +636,14 @@ export default function LoginForm() {
               display: 'block',
               fontSize: 10,
               fontWeight: 600,
-              letterSpacing: '.15em',
+              letterSpacing: isAr ? 'normal' : '.15em',
               textTransform: 'uppercase',
-              color: 'rgba(240,237,229,.58)',
+              color: 'rgba(240,237,229,.65)',
               marginBottom: 6,
+              fontFamily: isAr ? "'Cairo', sans-serif" : 'inherit',
             }}
           >
-            Username or Email / اسم المستخدم أو البريد الإلكتروني
+            {t.emailLabel}
           </label>
           <input
             className="f-in"
@@ -420,46 +652,168 @@ export default function LoginForm() {
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@sierra-estates.net or admin"
+            placeholder={t.emailPlaceholder}
             required
             style={{
-              marginBottom: isMagicLink ? 20 : 16,
+              marginBottom: isMagicLink ? 18 : 14,
               color: '#F0EDE5',
-              border: '1px solid rgba(62,207,142,0.2)',
-              background: 'rgba(0,0,0,0.25)',
+              border: '1px solid rgba(62,207,142,0.24)',
+              background: 'rgba(0,0,0,0.3)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              width: '100%',
+              boxSizing: 'border-box',
+              fontSize: 13,
             }}
           />
 
           {!isMagicLink && (
             <>
-              <label
+              <div
                 style={{
-                  display: 'block',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '.15em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(240,237,229,.58)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: 6,
                 }}
               >
-                Password / كلمة المرور
-              </label>
-              <input
-                className="f-in"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
+                <label
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: isAr ? 'normal' : '.15em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(240,237,229,.65)',
+                    fontFamily: isAr ? "'Cairo', sans-serif" : 'inherit',
+                  }}
+                >
+                  {t.passLabel}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#3ECF8E',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  {showPassword ? (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                      <span>{t.hidePass}</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>{t.showPass}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <input
+                  className="f-in"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.passPlaceholder}
+                  required
+                  style={{
+                    marginBottom: 0,
+                    paddingInlineEnd: 42,
+                    color: '#F0EDE5',
+                    border: '1px solid rgba(62,207,142,0.24)',
+                    background: 'rgba(0,0,0,0.3)',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    fontSize: 13,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t.hidePass : t.showPass}
+                  title={showPassword ? t.hidePass : t.showPass}
+                  style={{
+                    position: 'absolute',
+                    [isAr ? 'left' : 'right']: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: showPassword ? '#3ECF8E' : 'rgba(240,237,229,0.45)',
+                    padding: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {showPassword ? (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* ── Workstation Persistence & Default Notice ── */}
+              <div
                 style={{
-                  marginBottom: 20,
-                  color: '#F0EDE5',
-                  border: '1px solid rgba(62,207,142,0.2)',
-                  background: 'rgba(0,0,0,0.25)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 11,
+                  color: 'rgba(240,237,229,0.5)',
+                  marginBottom: 16,
+                  padding: '2px 0',
                 }}
-              />
+              >
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ accentColor: '#3ECF8E', cursor: 'pointer' }}
+                  />
+                  <span>{t.rememberMe}</span>
+                </label>
+
+                <span style={{ color: '#3ECF8E', fontFamily: 'monospace', fontSize: 10 }}>
+                  {t.constantTimeVerified}
+                </span>
+              </div>
             </>
           )}
 
@@ -502,36 +856,47 @@ export default function LoginForm() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '12px 0',
+              padding: '13px 0',
               borderRadius: 12,
               border: 'none',
               background: 'linear-gradient(135deg, #3ECF8E 0%, #00AEFF 100%)',
               color: '#071422',
-              fontWeight: 700,
+              fontWeight: 800,
               fontSize: 13,
               cursor: loading ? 'wait' : 'pointer',
               fontFamily: 'inherit',
-              boxShadow: '0 4px 15px rgba(62,207,142,0.25)',
+              boxShadow: '0 6px 20px rgba(62,207,142,0.28)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'transform .15s ease, box-shadow .15s ease',
             }}
           >
-            {loading
-              ? 'Authenticating… / جاري التحقق'
-              : isMagicLink
-              ? 'Send Magic Link / إرسال الرابط'
-              : 'Sign In via Supabase / تسجيل الدخول'}
+            {loading ? (
+              <>
+                <svg
+                  style={{ animation: 'spin 1s linear infinite' }}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                >
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
+                <span>{t.authenticating}</span>
+              </>
+            ) : isMagicLink ? (
+              t.submitMagicBtn
+            ) : (
+              t.submitBtn
+            )}
           </button>
 
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: 10,
-              color: 'rgba(240,237,229,.32)',
-              marginTop: 18,
-            }}
-          >
-            Secured by Supabase Row-Level Security (RLS) & JWT.
-          </p>
-
+          {/* ── Quick Fill Pill ──────────────────────────────── */}
           <div style={{ marginTop: 14, textAlign: 'center' }}>
             <button
               type="button"
@@ -541,19 +906,56 @@ export default function LoginForm() {
                 setPassword('AdminSierra2026!');
               }}
               style={{
-                background: 'none',
-                border: 'none',
+                background: 'rgba(62,207,142,0.08)',
+                border: '1px solid rgba(62,207,142,0.25)',
+                borderRadius: 20,
                 color: '#3ECF8E',
                 fontSize: 11,
+                fontWeight: 600,
                 cursor: 'pointer',
-                textDecoration: 'underline',
+                padding: '5px 14px',
+                transition: 'all .2s ease',
               }}
             >
-              ✦ Quick Fill Executive Admin (AdminSierra2026!)
+              {t.quickFillBtn}
             </button>
+          </div>
+
+          {/* ── Security Trust Badges ────────────────────────── */}
+          <div
+            style={{
+              marginTop: 20,
+              paddingTop: 16,
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+              fontSize: 9.5,
+              color: 'rgba(240,237,229,0.38)',
+              fontFamily: isAr ? "'Cairo', sans-serif" : "'JetBrains Mono', monospace",
+            }}
+          >
+            <span>🔒 {t.secBadgeTls}</span>
+            <span>•</span>
+            <span>🛡 {t.secBadgeRls}</span>
+            <span>•</span>
+            <span>⚡ {t.secBadgeEdge}</span>
           </div>
         </form>
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

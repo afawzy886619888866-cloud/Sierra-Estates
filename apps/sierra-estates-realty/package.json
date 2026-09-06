@@ -1,13 +1,13 @@
 {
     "name": "sierra-estates-client-page",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "private": true,
     "scripts": {
         "dev": "next dev",
         "build": "pnpm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
         "start": "next start",
         "lint": "eslint . && node scripts/validate-configs.mjs",
-        "type-check": "tsc --noEmit",
+        "type-check": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
         "seed:admin": "node scripts/seed-admin.mjs",
