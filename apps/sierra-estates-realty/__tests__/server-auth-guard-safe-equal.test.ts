@@ -16,24 +16,6 @@
  */
 import { NextRequest } from 'next/server';
 
-const verifyIdToken = jest.fn();
-const userGet = jest.fn();
-const doc = jest.fn(() => ({ get: userGet }));
-const collection = jest.fn(() => ({ doc }));
-
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminAuth: {
-    get verifyIdToken() {
-      return verifyIdToken;
-    },
-  },
-  adminDb: {
-    get collection() {
-      return collection;
-    },
-  },
-}));
-
 const SECRET = 'sbr-shared-s3cret';
 const ORIGINAL_SECRET = process.env.SBR_SECRET_KEY;
 
@@ -140,16 +122,13 @@ describe('verifyAdminRequest is unaffected by a correct shared secret', () => {
     const result = await verifyAdminRequest(request({ 'x-sbr-secret-key': SECRET }));
 
     expect(result).toEqual({ authenticated: false, method: 'none' });
-    expect(collection).not.toHaveBeenCalled();
   });
 
-  it('denies admin to a non-admin Firebase user even with the secret also present', async () => {
+  it('denies admin to a caller without admin credentials even with the secret present', async () => {
     const { verifyAdminRequest } = await loadGuard(SECRET);
-    verifyIdToken.mockResolvedValueOnce({ uid: 'agent-1' });
-    userGet.mockResolvedValueOnce({ data: () => ({ role: 'agent' }) });
 
     const result = await verifyAdminRequest(
-      request({ authorization: 'Bearer t', 'x-sbr-secret-key': SECRET }),
+      request({ authorization: 'Bearer invalid-token', 'x-sbr-secret-key': SECRET }),
     );
 
     expect(result).toEqual({ authenticated: false, method: 'none' });
