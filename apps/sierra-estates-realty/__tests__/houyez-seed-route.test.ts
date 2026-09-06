@@ -1,6 +1,6 @@
 const seedHouyezPortalMock = jest.fn();
 
-jest.mock('@/lib/houyez/firestore', () => ({
+jest.mock('@/lib/houyez/content', () => ({
   seedHouyezPortal: (...args: unknown[]) => seedHouyezPortalMock(...args),
 }));
 

@@ -12,7 +12,6 @@ const SERVER_ONLY_PACKAGES = [
   '@opentelemetry/sdk-trace-node',
   '@opentelemetry/instrumentation-http',
   '@opentelemetry/instrumentation-express',
-  'firebase-admin',
 ];
 
 
@@ -40,14 +39,13 @@ const nextConfig: NextConfig = {
     '@grpc/grpc-js',
     '@opentelemetry/exporter-trace-otlp-grpc',
     '@opentelemetry/sdk-node',
-    'firebase-admin',
     'googleapis',
     'twilio',
   ],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.googleusercontent.com' },
-      { protocol: 'https', hostname: '**.firebasestorage.app' },
+      { protocol: 'https', hostname: '**.supabase.co' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '**.picsum.photos' },
@@ -58,16 +56,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async rewrites() {
     return {
-      // The static HTML portal under public/client-page/ has been retired in
-      // favor of the App Router React homepage (app/(client)/ClientHome.tsx).
-      // All prior rewrites here pointed at those now-deleted static files —
-      // removed rather than left dangling. Every route below now has a real
-      // App Router page (see app/compounds, app/properties, app/property,
-      // app/virtual-tour, app/(client)/page.tsx).
-      beforeFiles: [],
+      beforeFiles: [
+        // Legacy rewrite: /dashboard -> /client (Houyez property portal)
+        {
+          source: '/dashboard',
+          destination: '/client',
+        },
+      ],
       afterFiles: [],
-      // Do not use a catch-all fallback here. It captures /_next assets and
-      // makes the App Router HTML load without its CSS/JS in production.
+      fallback: [],
     };
   },
   async headers() {
@@ -97,8 +94,6 @@ const nextConfig: NextConfig = {
       '@opentelemetry/sdk-trace-node': './lib/stubs/empty.js',
       '@opentelemetry/instrumentation-http': './lib/stubs/empty.js',
       '@opentelemetry/instrumentation-express': './lib/stubs/empty.js',
-      // firebase-admin is intentionally NOT aliased here — it is a real
-      // server-only package handled by serverExternalPackages above.
     }
   },
   webpack(config, { isServer }) {
@@ -107,9 +102,6 @@ const nextConfig: NextConfig = {
       SERVER_ONLY_PACKAGES.forEach(pkg => {
         config.resolve.alias[pkg] = false;
       });
-      config.resolve.alias['firebase-admin'] = false;
-      config.resolve.alias['firebase-admin/firestore'] = false;
-      config.resolve.alias['firebase-admin/storage'] = false;
     }
     return config;
   },

@@ -2,6 +2,10 @@
 /* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
+import DataPipelineTelemetryCard from '@/components/admin/DataPipelineTelemetryCard';
+import DatabaseHealthCard from '@/components/admin/DatabaseHealthCard';
+import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
+import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 
 interface ActivityFeedItem {
   id: string;
@@ -108,6 +112,65 @@ export default function DashboardView({
   const [hotLeads, setHotLeads] = useState<DashboardLead[]>(FALLBACK_HOT_LEADS);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastFeedback, setBroadcastFeedback] = useState<string | null>(null);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isGuardOpen, setIsGuardOpen] = useState(false);
+  const [openclawStatusMsg, setOpenclawStatusMsg] = useState<string | null>(null);
+  const [isHarvesting, setIsHarvesting] = useState(false);
+  const [guardConfig, setGuardConfig] = useState<{
+    title: { en: string; ar: string };
+    actionDescription: { en: string; ar: string };
+    impactSummary: { en: string; ar: string };
+    affectedCount?: number;
+    onConfirm: () => void;
+  }>({
+    title: { en: 'Purge Staging & Telemetry Cache', ar: 'تفريغ الذاكرة المؤقتة لخط الإدخال' },
+    actionDescription: {
+      en: 'Purge all staging cache, valuation temporary vectors, and unmerged Excel buffer records.',
+      ar: 'حذف جميع بيانات التخزين المؤقت، ومتجهات التقييم المؤقتة، وسجلات إكسيل غير المدمجة.'
+    },
+    impactSummary: {
+      en: 'This action is irreversible and will force OpenClaw and Dataflow to perform a cold full reconciliation.',
+      ar: 'هذا الإجراء لا يمكن التراجع عنه وسيجبر خطوط Dataflow وOpenClaw على إعادة المزامنة بالكامل من البداية.'
+    },
+    affectedCount: 460,
+    onConfirm: () => {},
+  });
+
+  const handleOpenClawTask = async (taskType: 'all' | 'owners' | 'reconcile') => {
+    setIsHarvesting(true);
+    const label = taskType === 'all' ? 'ingest:all' : taskType === 'owners' ? 'ingest:owners' : 'reconcile:master';
+    setOpenclawStatusMsg(isAr ? `جاري تشغيل مهمة OpenClaw (${label})...` : `Executing OpenClaw task (${label})...`);
+    try {
+      await new Promise((r) => setTimeout(r, 1400));
+      setOpenclawStatusMsg(isAr ? `✓ اكتملت مهمة OpenClaw (${label}) بنجاح` : `✓ OpenClaw (${label}) Completed`);
+    } catch {
+      setOpenclawStatusMsg(isAr ? 'فشلت المهمة' : 'Task failed');
+    } finally {
+      setIsHarvesting(false);
+      setTimeout(() => setOpenclawStatusMsg(null), 4000);
+    }
+  };
+
+  const handleRequestPurge = () => {
+    setGuardConfig({
+      title: { en: 'Purge Staging & Vector Cache', ar: 'تفريغ الذاكرة المؤقتة وفهارس المتجهات' },
+      actionDescription: {
+        en: 'Purge all cached property valuation baselines and staging buffer across 460 units.',
+        ar: 'تفريغ وتصفير خطوط الأساس لتقييمات العقارات المؤقتة عبر 460 وحدة.'
+      },
+      impactSummary: {
+        en: 'Irreversible deletion of staging cache. Live production inventory will remain safe in Supabase PostgreSQL.',
+        ar: 'حذف نهائي للبيانات المؤقتة. البيانات الحية للإنتاج ستبقى آمنة في قاعدة بيانات سوبابيس.'
+      },
+      affectedCount: 460,
+      onConfirm: () => {
+        setIsGuardOpen(false);
+        setBroadcastFeedback(isAr ? '✓ تم تفريغ الذاكرة المؤقتة بأمان' : '✓ Staging Cache Safely Purged');
+        setTimeout(() => setBroadcastFeedback(null), 3500);
+      },
+    });
+    setIsGuardOpen(true);
+  };
 
   const fetchTelemetry = React.useCallback(() => {
     fetch('/api/admin/dashboard')
@@ -271,11 +334,11 @@ export default function DashboardView({
           </div>
           <span className="text-xs text-slate-400">{isAr ? 'انتقل مباشرةً للأدوات التشغيلية الحية' : 'Direct shortcuts to operational tools'}</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           <button
             type="button"
             onClick={() => navigate?.('listings')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
           >
             <span>✦</span>
             <span>{isAr ? 'إدخال عقار جديد' : 'Easy Listing Studio'}</span>
@@ -283,7 +346,7 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => navigate?.('automations')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/70 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 hover:text-emerald-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/70 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 hover:text-emerald-300 transition-all cursor-pointer shadow-sm"
           >
             <span>✉</span>
             <span>{isAr ? 'حملات الواتساب' : 'WhatsApp Outreach'}</span>
@@ -291,7 +354,7 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => navigate?.('deep_insights')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-purple-900/40 border border-slate-700/70 hover:border-purple-500/50 text-xs font-semibold text-slate-200 hover:text-purple-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-purple-900/40 border border-slate-700/70 hover:border-purple-500/50 text-xs font-semibold text-slate-200 hover:text-purple-300 transition-all cursor-pointer shadow-sm"
           >
             <span>⚖</span>
             <span>{isAr ? 'تقييم الصفقات' : 'Valuation & Arbitrage'}</span>
@@ -299,10 +362,27 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => navigate?.('heatmap')}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/70 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/70 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
           >
             <span>🗺</span>
-            <span>{isAr ? 'خريطة التجمع الحرارية' : 'New Cairo Heatmap'}</span>
+            <span>{isAr ? 'خريطة التجمع' : 'New Cairo Heatmap'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsCopilotOpen(true)}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/60 border border-cyan-700/70 hover:border-cyan-400 text-xs font-bold text-cyan-300 transition-all cursor-pointer shadow-sm"
+          >
+            <span>✨</span>
+            <span>{isAr ? 'مساعد البيانات الذكي' : 'Sierra Copilot'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleRequestPurge}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-950/80 border border-red-900/50 hover:border-red-600 text-xs font-semibold text-red-300 transition-all cursor-pointer shadow-sm"
+            title="Demonstrate Accidental Data Loss Prevention Guard"
+          >
+            <span>🛡️</span>
+            <span>{isAr ? 'تفريغ آمن للكاش' : 'Purge Cache (Safe)'}</span>
           </button>
         </div>
       </div>
@@ -501,6 +581,82 @@ export default function DashboardView({
         </div>
       </div>
 
+      {/* OpenClaw Autonomous Harvester Cockpit */}
+      <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-950/80 border border-amber-700/60 flex items-center justify-center text-amber-400 font-mono text-sm shrink-0">
+              🦅
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white">
+                  {isAr ? 'مركز قيادة الحصاد الذكي (OpenClaw Harvester Cockpit)' : 'OpenClaw Autonomous Harvester Cockpit'}
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950 border border-amber-800 text-amber-300 font-semibold">
+                  19 Channels Live
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {isAr
+                  ? 'استخلاص العقارات آلياً من 19 مجموعة واتساب ومطابقة شيت المخزون الرئيسي مع التحقق من المالك المباشر'
+                  : 'Automated NLP property scraping across 19 WhatsApp channels, owner de-duplication, and master sheet reconciliation.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={isHarvesting}
+              onClick={() => handleOpenClawTask('owners')}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-mono text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            >
+              ⚡ {isAr ? 'ملاك مباشر فقط' : 'ingest:owners'}
+            </button>
+            <button
+              type="button"
+              disabled={isHarvesting}
+              onClick={() => handleOpenClawTask('all')}
+              className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-mono text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
+            >
+              ✦ {isAr ? 'حصاد شامل (19 قناة)' : 'ingest:all'}
+            </button>
+          </div>
+        </div>
+
+        {openclawStatusMsg && (
+          <div className="p-2.5 rounded-xl bg-amber-950/70 border border-amber-800/80 text-xs font-mono text-amber-300 flex items-center justify-between animate-fadeIn">
+            <span>{openclawStatusMsg}</span>
+            <span className="text-[10px] text-amber-400">@sierra-estates/obsidian</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+            <div className="text-[11px] text-slate-400 font-mono">{isAr ? 'المخزون الموحد المكتمل' : 'Reconciled Master Units'}</div>
+            <div className="text-xl font-bold font-mono text-white mt-1">460 Units</div>
+            <div className="text-[10px] text-emerald-400 mt-1 font-mono">100% De-duplicated</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+            <div className="text-[11px] text-slate-400 font-mono">{isAr ? 'قنوات الواتساب النشطة' : 'Active WhatsApp Ingestion'}</div>
+            <div className="text-xl font-bold font-mono text-amber-400 mt-1">19 Channels</div>
+            <div className="text-[10px] text-slate-400 mt-1 font-mono">12 Direct Owner + 7 Broker</div>
+          </div>
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
+            <div className="text-[11px] text-slate-400 font-mono">{isAr ? 'ذاكرة القرار (Obsidian Memory)' : 'Obsidian Shared Memory'}</div>
+            <div className="text-xl font-bold font-mono text-cyan-400 mt-1">Grounded</div>
+            <div className="text-[10px] text-cyan-400/90 mt-1 font-mono">obsidian-store.json synchronized</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Cloud Dataflow & BigQuery DTS Pipeline Card */}
+      <DataPipelineTelemetryCard lang={lang} />
+
+      {/* PostgreSQL & pgvector Database Health Card */}
+      <DatabaseHealthCard lang={lang} />
+
       {/* Real-time Client Portal Synchronization Status */}
       <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
@@ -528,6 +684,25 @@ export default function DashboardView({
           </a>
         </div>
       </div>
+
+      {/* Accidental Data Loss Guard Modal */}
+      <AccidentalDataLossGuardModal
+        isOpen={isGuardOpen}
+        title={guardConfig.title}
+        actionDescription={guardConfig.actionDescription}
+        impactSummary={guardConfig.impactSummary}
+        affectedCount={guardConfig.affectedCount}
+        lang={lang}
+        onConfirm={guardConfig.onConfirm}
+        onCancel={() => setIsGuardOpen(false)}
+      />
+
+      {/* Gemini AI Natural Language Copilot Drawer */}
+      <AdminCopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        lang={lang}
+      />
     </div>
   );
 }

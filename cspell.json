@@ -244,6 +244,12 @@
     "esac",
     "firebaseapp",
     "firebasestorage",
-    "appspot"
+    "appspot",
+    "pgvector",
+    "HNSW",
+    "Supavisor",
+    "Deadletter",
+    "deadletter",
+    "elems"
   ]
 }

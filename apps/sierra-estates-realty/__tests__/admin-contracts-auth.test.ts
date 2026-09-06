@@ -6,10 +6,6 @@ jest.mock('@/lib/server/auth-guard', () => ({
     new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
 }));
 
-jest.mock('@/lib/server/firebase-admin', () => ({
-  adminDb: { collection: () => { throw new Error('no firestore in test'); } },
-}));
-
 import { GET, POST } from '@/app/api/admin/contracts/route';
 import type { NextRequest } from 'next/server';
 

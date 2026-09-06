@@ -69,7 +69,6 @@ packages:
   # packages/open-memory is a standalone third-party project — excluded from
   # workspace to prevent its heavy dependencies and vitest config from
   # polluting the Sierra Estates build and CI pipeline.
-  - functions
   - lib/*
   - lib/integrations/*
   - scripts
@@ -108,7 +107,6 @@ onlyBuiltDependencies:
   - esbuild
   - msw
   - unrs-resolver
-  - '@firebase/util'
   - '@google/genai'
   - '@parcel/watcher'
   - core-js
@@ -243,7 +241,6 @@ overrides:
 
 
 allowBuilds:
-  '@firebase/util': true
   '@google/genai': true
   '@parcel/watcher': true
   '@swc/core': true

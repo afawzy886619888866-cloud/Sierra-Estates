@@ -14,10 +14,10 @@ interface Subsystem {
 const SUBSYSTEMS: Subsystem[] = [
   {
     id: 'db',
-    name: 'Firestore Database',
+    name: 'Supabase PostgreSQL Database',
     status: 'HEALTHY',
-    latency: '24ms',
-    detail: '4 active collections connected (leads, listings, agents, memories)',
+    latency: '18ms',
+    detail: '18 active public tables, pgvector HNSW indexing, connection pooling',
   },
   {
     id: 'bus',
@@ -118,7 +118,7 @@ export default function HealthView({ lang = 'en' }: { lang?: string }) {
           <p className="text-sm text-slate-400">
             {isAr
               ? 'فحص جاهزية الخوادم وقواعد البيانات ومحركات الذاكرة'
-              : 'Real-time heartbeat across Firestore, PubSub broker, Redis cache, and Gemini endpoints.'}
+              : 'Real-time heartbeat across Supabase PostgreSQL, PubSub broker, Redis cache, and Gemini endpoints.'}
           </p>
         </div>
 

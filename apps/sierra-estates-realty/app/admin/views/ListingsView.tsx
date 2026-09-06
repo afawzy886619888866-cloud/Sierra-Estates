@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import ValuationArbitrageStudio from '@/components/admin/ValuationArbitrageStudio';
+import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
 import {
   Sparkles,
   ListFilter,
@@ -40,6 +41,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<string>('Available');
   const [bulkNotification, setBulkNotification] = useState<string | null>(null);
+  const [isGuardModalOpen, setIsGuardModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
   const [allListingsData, setAllListingsData] = useState<any[]>(FALLBACK_LISTINGS_DATA as any[]);
@@ -143,7 +145,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
       return true;
     });
-  }, [searchQuery, selectedFilter, zoneFilter]);
+  }, [allListingsData, searchQuery, selectedFilter, zoneFilter]);
 
   const paginatedListings = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -213,7 +215,17 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
   const handleApplyBulkStatus = () => {
     if (selectedListingIds.length === 0) return;
+    if (bulkStatus === 'Archived') {
+      setIsGuardModalOpen(true);
+      return;
+    }
+    executeBulkStatusUpdate();
+  };
+
+  const executeBulkStatusUpdate = () => {
     setBulkNotification(`Updated status for ${selectedListingIds.length} listings to "${bulkStatus}"`);
+    setSelectedListingIds([]);
+    setIsGuardModalOpen(false);
     setTimeout(() => setBulkNotification(null), 3500);
   };
 
@@ -257,7 +269,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       new: newCount,
       month: monthCount,
     };
-  }, []);
+  }, [allListingsData]);
 
   return (
     <div className="space-y-6" data-testid="admin-listings-view">
@@ -826,6 +838,27 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           )}
         </div>
       )}
+
+      {/* Accidental Data Loss Guard Modal for Bulk Operations */}
+      <AccidentalDataLossGuardModal
+        isOpen={isGuardModalOpen}
+        title={{
+          en: 'Bulk Archive Listings Safeguard',
+          ar: 'حاجز الأمان لأرشفة العقارات جماعياً',
+        }}
+        actionDescription={{
+          en: `You are about to set status to "${bulkStatus}" across ${selectedListingIds.length} properties.`,
+          ar: `أنت على وشك تغيير الحالة إلى "${bulkStatus}" لـ ${selectedListingIds.length} عقاراً.`,
+        }}
+        impactSummary={{
+          en: 'Archived listings will be hidden from public catalog discovery and Property Finder sync feed.',
+          ar: 'العقارات المؤرشفة سيتم إخفاؤها من كتالوج البحث العام ومزامنة بروبرتي فايندر.',
+        }}
+        affectedCount={selectedListingIds.length}
+        lang={lang}
+        onConfirm={executeBulkStatusUpdate}
+        onCancel={() => setIsGuardModalOpen(false)}
+      />
     </div>
   );
 }

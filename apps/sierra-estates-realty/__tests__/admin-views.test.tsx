@@ -131,6 +131,19 @@ describe('DashboardView', () => {
   it('shows Active Catalog value 1,547', () => {
     expect(render(<DashboardView lang="en" />)).toContain('1,547');
   });
+
+  it('shows OpenClaw Autonomous Harvester Cockpit with 19 channels', () => {
+    const html = render(<DashboardView lang="en" />);
+    expect(html).toContain('OpenClaw Autonomous Harvester Cockpit');
+    expect(html).toContain('19 Channels Live');
+    expect(html).toContain('ingest:all');
+  });
+
+  it('shows Dataflow & BigQuery DTS telemetry and Database Health cards', () => {
+    const html = render(<DashboardView lang="en" />);
+    expect(html).toContain('Data Pipelines &amp; Ingestion Telemetry');
+    expect(html).toContain('Database &amp; Vector Index Health');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -145,9 +158,9 @@ describe('HealthView', () => {
     expect(() => render(<HealthView lang="ar" />)).not.toThrow();
   });
 
-  it('shows Firestore as HEALTHY', () => {
+  it('shows Supabase PostgreSQL as HEALTHY', () => {
     const html = render(<HealthView lang="en" />);
-    expect(html).toContain('Firestore Database');
+    expect(html).toContain('Supabase PostgreSQL Database');
     expect(html).toContain('HEALTHY');
   });
 

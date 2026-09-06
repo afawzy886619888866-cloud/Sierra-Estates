@@ -36,6 +36,7 @@ import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
 import NotebookLMStudio from '@/components/client/NotebookLMStudio';
+import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
@@ -1424,6 +1425,7 @@ function AdminApp() {
   const [mobileOpen,setMobileOpen]=useState(false);
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
@@ -1549,6 +1551,24 @@ function AdminApp() {
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
             <button
               className="topbar-pill"
+              onClick={() => setIsCopilotOpen(true)}
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                color: 'var(--cyan, #00AEFF)',
+                borderColor: 'rgba(0,174,255,0.3)',
+                background: 'rgba(0,174,255,0.08)',
+                fontWeight: 600,
+              }}
+              title={isAr ? 'فتح مساعد البيانات الذكي' : 'Open AI Data Copilot'}
+            >
+              <span>✦</span>
+              <span style={{ fontSize: 11 }}>{isAr ? 'مساعد البيانات' : 'Copilot'}</span>
+            </button>
+            <button
+              className="topbar-pill"
               onClick={handleManualRefresh}
               title={isAr ? 'تحديث المقاييس والأسطول' : 'Refresh Telemetry & Fleet'}
               style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -1596,6 +1616,11 @@ function AdminApp() {
           </div>
         </div>
         <div id="content">{renderPage()}</div>
+        <AdminCopilotDrawer
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
+          lang={langKey}
+        />
       </main>
     </>
   );

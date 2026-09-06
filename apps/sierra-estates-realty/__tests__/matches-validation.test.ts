@@ -1,8 +1,3 @@
-jest.mock('@/lib/firebase-admin', () => ({
-  // Force the seed-listing path so scoring is deterministic and offline.
-  getAdminDb: jest.fn(async () => null),
-}));
-
 import { POST } from '@/app/api/matches/route';
 
 function post(body: unknown) {
