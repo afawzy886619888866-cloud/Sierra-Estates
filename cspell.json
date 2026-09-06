@@ -250,6 +250,11 @@
     "Supavisor",
     "Deadletter",
     "deadletter",
-    "elems"
+    "elems",
+    "Postg",
+    "houyez",
+    "sierraestates",
+    "nosniff",
+    "SAMEORIGIN"
   ]
 }
