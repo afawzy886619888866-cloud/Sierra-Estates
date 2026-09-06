@@ -375,7 +375,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
       {/* Tab 2: Easy Listing Studio */}
       {activeTab === 'easy-listing' && (
-        <EasyListingStudio lang={lang} onListingPublished={() => setActiveTab('inventory')} />
+        <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />
       )}
 
       {/* Tab 3: PDF Brochure & Teaser */}
