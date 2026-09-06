@@ -17,7 +17,7 @@ describe('Luxury Property Brochure & Investment Teaser Suite', () => {
       installmentTenureYears: 7,
       deliveryYear: 2026,
       brokerName: 'Sierra Elite Desk',
-      brokerPhone: '+201032206443',
+      brokerPhone: '+201092048333',
     };
 
     const sheet = TearSheetGenerator.generateTearSheet(input);
