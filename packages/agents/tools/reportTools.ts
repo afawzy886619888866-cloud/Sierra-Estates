@@ -9,6 +9,28 @@ export interface AirtableConfig {
   tableName?: string;
 }
 
+export function isRealInventoryListing(memory: { tags?: string[]; value?: Record<string, unknown> }): boolean {
+  const tags = new Set(memory.tags ?? []);
+  if (!tags.has('inventory-listing') || tags.has('task-execution') || tags.has('shared-knowledge')) {
+    return false;
+  }
+
+  const item = memory.value ?? {};
+  return Boolean(
+    item.sourceType === 'owner' ||
+    item.sourceType === 'broker' ||
+    item.sourceType === 'archive' ||
+    item.price ||
+    item.egpM ||
+    item.area_sqm ||
+    item.area ||
+    item.bedrooms ||
+    item.beds ||
+    item.compound ||
+    item.propertyType,
+  );
+}
+
 /**
  * Generates an executive inventory report from Obsidian memory & Airtable.
  */
@@ -16,7 +38,8 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
   logger.info({ msg: 'Tool: generateInventoryReport' });
   
   try {
-    const memoryListings = await obsidian.search('', ['inventory-listing']);
+    const memoryListings = (await obsidian.search('', ['inventory-listing']))
+      .filter(isRealInventoryListing);
     
     if (memoryListings && memoryListings.length > 0) {
       let report = `📊 *Sierra Estates — Strategic Real Inventory Report (${memoryListings.length} Active Real Properties)*\n\n`;
