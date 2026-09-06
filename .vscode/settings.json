@@ -57,5 +57,6 @@
   "circuitpythonsync.cpfullversion": "10.3.0",
   "circuitpythonsync.curlibtag": "20260901",
   "circuitpythonsync.doNotShowWelcome": true,
-  "circuitpythonsync.drivepath": ""
+  "circuitpythonsync.drivepath": "",
+  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu"
 }
