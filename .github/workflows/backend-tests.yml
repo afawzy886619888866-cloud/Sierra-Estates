@@ -15,7 +15,7 @@ on:
       - 'functions/**'
       - '.github/workflows/backend-tests.yml'
       - 'scripts/test-backend.sh'
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 concurrency:
   group: backend-tests-${{ github.ref }}
@@ -57,7 +57,7 @@ jobs:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
       - run: npm install --no-save --no-audit --no-fund --no-workspaces --install-strategy=nested
               jest@^29 firebase-admin@^13 firebase-functions@^6 typescript@^5 @types/node@^20
       - run: ./node_modules/.bin/tsc
