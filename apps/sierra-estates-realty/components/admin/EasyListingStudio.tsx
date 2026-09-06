@@ -179,7 +179,7 @@ export default function EasyListingStudio({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/40 border border-cyan-500/20 backdrop-blur-md shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-linear-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/40 border border-cyan-500/20 backdrop-blur-md shadow-xl">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
@@ -208,13 +208,13 @@ export default function EasyListingStudio({
       {/* Alerts */}
       {errorMsg && (
         <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
       {successMsg && (
         <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -260,7 +260,7 @@ export default function EasyListingStudio({
               type="button"
               onClick={handleAIParse}
               disabled={isParsing || !rawText.trim()}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
             >
               {isParsing ? (
                 <>
@@ -401,7 +401,7 @@ export default function EasyListingStudio({
 
               {/* Price */}
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 block mb-1 flex items-center gap-1">
+                <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
                   <DollarSign className="w-3 h-3 text-emerald-400" />
                   {isAr ? "السعر المطلوب (EGP)" : "Price (EGP)"}
                 </label>
@@ -529,7 +529,7 @@ export default function EasyListingStudio({
 
               {/* Owner Contact */}
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 block mb-1 flex items-center gap-1">
+                <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
                   <Phone className="w-3 h-3 text-cyan-400" />
                   {isAr ? "هاتف المالك / الوسيط" : "Contact Mobile"}
                 </label>

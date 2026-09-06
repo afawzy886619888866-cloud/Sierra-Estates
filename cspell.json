@@ -250,6 +250,25 @@
     "Supavisor",
     "Deadletter",
     "deadletter",
-    "elems"
+    "elems",
+    "downpayment",
+    "nosniff",
+    "SAMEORIGIN",
+    "maxage",
+    "glassmorphism",
+    "fcol",
+    "webui",
+    "Docstrings",
+    "serde",
+    "clippy",
+    "ifdef",
+    "Kconfig",
+    "LFSR",
+    "stdlib",
+    "worktree",
+    "rssi",
+    "lfsr",
+    "RAII",
+    "HMAC"
   ]
 }
