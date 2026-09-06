@@ -45,9 +45,7 @@ jobs:
         with:
           submodules: false
       - name: actionlint
-        uses: docker://rhysd/actionlint:1.7.7
-        with:
-          args: -color
+        uses: rhysd/actionlint-action@v1
 
   monorepo:
     name: Realty app + packages · Type-check + Lint + Test + Build
