@@ -269,6 +269,8 @@
     "rssi",
     "lfsr",
     "RAII",
-    "HMAC"
+    "HMAC",
+    "circuitpython",
+    "drivepath"
   ]
 }
