@@ -42,6 +42,7 @@ describe('Monorepo Commands & CLI Scripts Test Suite', () => {
       for (const s of requiredScripts) {
         expect(scripts[s], `Missing script "${s}" in package.json`).toBeDefined();
       }
+      expect(scripts.lint).toContain('check-legacy-runtime-boundary.mjs');
     });
   });
 
