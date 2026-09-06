@@ -98,6 +98,7 @@ export function mapListingToSpa(id: string, data: Record<string, any>) {
     img: data.images?.length ?? 0,
     images: data.images || [],
     publishToClient: data.publishToClient ?? false,
+    syncSource: data.syncSource || null,
     isPublishedToPF: isPF,
     pfReferenceNumber: data.pfReferenceNumber || data.code || null,
     pfStatus: data.pfStatus || (isPF ? 'published' : 'draft'),
