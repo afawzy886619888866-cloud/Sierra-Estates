@@ -8,6 +8,7 @@
  * Firestore is injected (admin SDK instance) so this module has zero coupling
  * to app initialization and is unit-testable with a fake.
  */
+import { assertCanonicalBackendForWrites } from '@sierra-estates/db';
 import type {
   InventoryListing,
   IngestionSource,
@@ -46,6 +47,7 @@ export class InventoryDomainService {
    * - known fingerprint   → merge fields, keep lifecycle state, log source
    */
   async upsertFromSource(source: IngestionSource, payload: UpsertPayload, actor = 'system'): Promise<UpsertResult> {
+    assertCanonicalBackendForWrites('inventory-listing-write');
     const fp = fingerprint({
       compound: payload.compound,
       propertyType: payload.propertyType,

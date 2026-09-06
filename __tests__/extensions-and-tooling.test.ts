@@ -76,21 +76,12 @@ describe('IDE Extensions, Tooling & Workflow Verification Suite', () => {
   });
 
   describe('Supabase Dominance & Firebase Retirement in CI/CD', () => {
-    it('Firebase deployment workflows must contain retirement notices and clean exits', () => {
+    it('Firebase deployment workflows must be retired from active CI', () => {
       const firebaseDeployPath = path.join(WORKFLOWS_DIR, 'deploy-firebase.yml');
       const firebaseRulesPath = path.join(WORKFLOWS_DIR, 'deploy-firebase-rules.yml');
 
-      expect(fs.existsSync(firebaseDeployPath)).toBe(true);
-      expect(fs.existsSync(firebaseRulesPath)).toBe(true);
-
-      const deployContent = fs.readFileSync(firebaseDeployPath, 'utf-8');
-      const rulesContent = fs.readFileSync(firebaseRulesPath, 'utf-8');
-
-      expect(deployContent).toContain('Supabase is now the authoritative primary backend');
-      expect(deployContent).toContain('exit 0');
-
-      expect(rulesContent).toContain('Supabase is now the authoritative primary backend');
-      expect(rulesContent).toContain('exit 0');
+      expect(fs.existsSync(firebaseDeployPath)).toBe(false);
+      expect(fs.existsSync(firebaseRulesPath)).toBe(false);
     });
 
     it('deploy-supabase.yml must declare explicit permissions block', () => {

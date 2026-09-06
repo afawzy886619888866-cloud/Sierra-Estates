@@ -3,7 +3,7 @@ import { assertDbConfigured, insertRecord, listRecords } from '../lib/db';
 /**
  * 05-unit-adder
  *
- * Cleans and deduplicates new units into Firestore.
+ * Cleans and deduplicates new units into the canonical Supabase listings table.
  */
 
 function generateSBRCode(compound: string, rooms: number, isFurnished: boolean, price: number, currency: string) {
@@ -69,8 +69,7 @@ export async function runUnitAdder(rawUnitData: any) {
     
     // Insert new unit. `currency` is `price_currency` on the table, and
     // whatever else the scraper handed us goes in `raw_data` rather than being
-    // spread onto columns that may not exist — Firestore accepted any shape,
-    // Postgres rejects an unknown column and would lose the whole unit.
+    // spread onto columns that may not exist.
     const unit = await insertRecord<{ id: string }>('listings', {
       compound,
       bedrooms: rooms,
@@ -122,5 +121,4 @@ if (require.main === module) {
     description: 'Beautiful apartment in Mivida'
   }).then(res => console.log(res)).catch(console.error);
 }
-
 

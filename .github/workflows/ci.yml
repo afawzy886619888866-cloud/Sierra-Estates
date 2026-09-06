@@ -85,31 +85,3 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: dummy.appspot.com
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:dummy"
-
-  # The repo keeps TWO firestore.rules: a root copy (required to exist by
-  # __tests__/repo-integrity-and-hygiene.test.ts and reviewed at the root) and
-  # apps/sierra-estates-realty/firestore.rules — the one both firebase.json
-  # files actually deploy. They are byte-identical today; this guard makes sure
-  # they never silently drift, so the deployed rules always match the reviewed
-  # root copy. (Audit REPO_AUDIT_REPORT.md P2.)
-  firestore-rules-drift:
-    name: Firestore rules in sync
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: false
-
-      - name: Root and app firestore.rules must be byte-identical
-        run: |
-          root="firestore.rules"
-          app="apps/sierra-estates-realty/firestore.rules"
-          if ! diff -q "$root" "$app" >/dev/null 2>&1; then
-            echo "::error title=Firestore rules drift::$root and $app differ"
-            echo "The root copy is reviewed and required by repo-integrity tests;"
-            echo "the app copy is what firebase.json deploys. Keep them identical."
-            diff "$root" "$app" || true
-            exit 1
-          fi
-          echo "firestore.rules root and app copies are identical."

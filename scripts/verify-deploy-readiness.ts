@@ -125,23 +125,28 @@ check('Public Environment Safety', () => {
   execSync('node scripts/check-public-env-safety.mjs', { stdio: 'pipe', env: process.env });
 });
 
-// 4. Supabase Master Schema Validation (Replacing legacy Firebase rules)
+// 4. Enforce the canonical backend policy before any writes are attempted.
+check('Canonical Supabase Backend Policy', () => {
+  execSync('node scripts/check-backend-policy.mjs', { stdio: 'pipe', env: process.env });
+});
+
+// 5. Supabase Master Schema Validation (Replacing legacy Firebase rules)
 check('Supabase Master Schema Readiness', () => {
   const schemaPath = path.resolve(process.cwd(), 'supabase/schema.sql');
   if (!fs.existsSync(schemaPath)) throw new Error('Missing supabase/schema.sql master schema file');
 });
 
-// 5. Check packages compilation
+// 6. Check packages compilation
 check('Packages Compilation & Type-Check', () => {
   execSync('pnpm turbo run build --filter="./packages/*"', { stdio: 'pipe', env: process.env });
 });
 
-// 6. Check client tests
+// 7. Check client tests
 check('Client Unit & Integration Tests', () => {
   execSync('pnpm test:ci', { stdio: 'pipe', env: process.env });
 });
 
-// 7. A deployment must be reproducible from the checked-out commit.
+// 8. A deployment must be reproducible from the checked-out commit.
 check('Git Status & Zero Working Tree Drift', () => {
   const ignoredTestArtifacts = new Set([
     'scripts/verify-deploy-readiness.ts',

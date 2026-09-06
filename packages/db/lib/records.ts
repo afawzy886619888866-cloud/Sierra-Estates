@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { assertCanonicalBackendForWrites } from './backend-policy';
 import { getSupabaseAdmin } from './supabase';
 
 /**
@@ -78,6 +79,11 @@ export interface ListOptions {
 }
 
 function client(): SupabaseClient {
+    return getSupabaseAdmin();
+}
+
+function writeClient(): SupabaseClient {
+    assertCanonicalBackendForWrites('supabase-record-write');
     return getSupabaseAdmin();
 }
 
@@ -176,7 +182,7 @@ export async function insertRecord<T = RecordData>(
     table: string,
     values: RecordData
 ): Promise<T> {
-    const { data, error } = await client()
+    const { data, error } = await writeClient()
         .from(table)
         .insert(toColumns(values))
         .select()
@@ -192,7 +198,7 @@ export async function updateRecord<T = RecordData>(
     values: RecordData,
     idColumn = 'id'
 ): Promise<T | null> {
-    const { data, error } = await client()
+    const { data, error } = await writeClient()
         .from(table)
         .update(toColumns(values))
         .eq(idColumn, id)
@@ -209,7 +215,7 @@ export async function upsertRecord<T = RecordData>(
     values: RecordData,
     onConflict = 'id'
 ): Promise<T> {
-    const { data, error } = await client()
+    const { data, error } = await writeClient()
         .from(table)
         .upsert(toColumns(values), { onConflict })
         .select()
@@ -228,7 +234,7 @@ export async function insertRecords<T = RecordData>(
     const out: T[] = [];
     for (let i = 0; i < rows.length; i += chunkSize) {
         const chunk = rows.slice(i, i + chunkSize).map((row) => toColumns(row));
-        const { data, error } = await client().from(table).insert(chunk).select();
+        const { data, error } = await writeClient().from(table).insert(chunk).select();
 
         raise(`insert ${table} [${i}..${i + chunk.length})`, error);
         for (const row of data ?? []) out.push(toRecord<T>(row));
@@ -253,7 +259,7 @@ export async function upsertRecords<T = RecordData>(
     const out: T[] = [];
     for (let i = 0; i < rows.length; i += chunkSize) {
         const chunk = rows.slice(i, i + chunkSize).map((row) => toColumns(row));
-        const { data, error } = await client()
+        const { data, error } = await writeClient()
             .from(table)
             .upsert(chunk, { onConflict })
             .select();
@@ -269,7 +275,7 @@ export async function deleteRecord(
     id: string,
     idColumn = 'id'
 ): Promise<void> {
-    const { error } = await client().from(table).delete().eq(idColumn, id);
+    const { error } = await writeClient().from(table).delete().eq(idColumn, id);
     raise(`delete ${table}`, error);
 }
 
