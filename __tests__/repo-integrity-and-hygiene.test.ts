@@ -109,9 +109,8 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
       'package.json',
       'pnpm-workspace.yaml',
       'turbo.json',
-      'firestore.rules',
-      'storage.rules',
-      'firebase.json',
+      'tsconfig.json',
+      'vercel.json',
       '.env.example',
       'README.md',
     ];

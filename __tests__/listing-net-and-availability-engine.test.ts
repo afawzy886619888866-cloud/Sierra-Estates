@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   AvailabilityVerificationService,
-  type BatchAvailabilitySession,
 } from '../apps/sierra-estates-realty/lib/services/AvailabilityVerificationService';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 

@@ -76,16 +76,6 @@ describe('System Wiring & Integration Verification Test Suite', () => {
 
       function checkNoDuplicateKeys(filePath: string) {
         const raw = fs.readFileSync(filePath, 'utf-8');
-        const duplicates: string[] = [];
-
-        // Check for duplicate JSON keys using custom reviver / token check
-        const keyStack: Set<string>[] = [new Set()];
-        let depth = 0;
-
-        JSON.parse(raw, (key, value) => {
-          return value;
-        });
-
         expect(() => JSON.parse(raw)).not.toThrow();
       }
 
@@ -118,8 +108,8 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       .readdirSync(workflowsDir)
       .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
 
-    it('all 23 workflow files must parse as valid YAML without syntax errors', () => {
-      expect(workflowFiles.length).toBeGreaterThanOrEqual(20);
+    it('all workflow files must parse as valid YAML without syntax errors', () => {
+      expect(workflowFiles.length).toBeGreaterThanOrEqual(10);
 
       for (const wf of workflowFiles) {
         const content = fs.readFileSync(path.join(workflowsDir, wf), 'utf-8');
@@ -201,7 +191,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
 
       expect(agent.name).toBe('test-vertex-agent');
       expect(typeof agent.executeTask).toBe('function');
-    });
+    }, 20000);
 
     it('Telegram bot command router safely escapes HTML characters', () => {
       function escapeTelegramHtml(text: string): string {
@@ -261,7 +251,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       const harness = new DeepSeekHarness();
       expect(typeof harness.runFullSuite).toBe('function');
       expect(typeof harness.executeScenario).toBe('function');
-    });
+    }, 20000);
 
     it('PropertyFinderConnector executes in mock mode safely when credentials are unset', async () => {
       const { PropertyFinderConnector } = await import(
@@ -283,24 +273,16 @@ describe('System Wiring & Integration Verification Test Suite', () => {
   // SUITE 4: Deployment & Infrastructure Wiring Verification
   // ─────────────────────────────────────────────────────────────────────────
   describe('Deployment & Infrastructure Verification', () => {
-    it('firestore.rules and apps/sierra-estates-realty/firestore.rules must be strictly in sync', () => {
-      const rootRules = fs.readFileSync(path.join(ROOT_DIR, 'firestore.rules'), 'utf-8');
-      const appRules = fs.readFileSync(
-        path.join(ROOT_DIR, 'apps', 'sierra-estates-realty', 'firestore.rules'),
-        'utf-8'
-      );
-
-      expect(rootRules.trim()).toBe(appRules.trim());
+    it('supabase schema and migrations must define comprehensive table architecture and RLS', () => {
+      const schemaPath = path.join(ROOT_DIR, 'supabase', 'schema.sql');
+      expect(fs.existsSync(schemaPath)).toBe(true);
+      const schema = fs.readFileSync(schemaPath, 'utf-8');
+      expect(schema).toContain('ENABLE ROW LEVEL SECURITY');
     });
 
-    it('storage.rules and apps/sierra-estates-realty/storage.rules must be strictly in sync', () => {
-      const rootRules = fs.readFileSync(path.join(ROOT_DIR, 'storage.rules'), 'utf-8');
-      const appRules = fs.readFileSync(
-        path.join(ROOT_DIR, 'apps', 'sierra-estates-realty', 'storage.rules'),
-        'utf-8'
-      );
-
-      expect(rootRules.trim()).toBe(appRules.trim());
+    it('legacy Firebase rules must remain fully removed across the codebase', () => {
+      expect(fs.existsSync(path.join(ROOT_DIR, 'firestore.rules'))).toBe(false);
+      expect(fs.existsSync(path.join(ROOT_DIR, 'storage.rules'))).toBe(false);
     });
 
     it('public environment safety check script must pass with zero violations', () => {

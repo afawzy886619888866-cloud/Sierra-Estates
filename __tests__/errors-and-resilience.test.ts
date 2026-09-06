@@ -80,7 +80,7 @@ describe('Errors, Resilience & Edge-Case Protection Test Suite', () => {
           const result = await fn();
           this.onSuccess();
           return result;
-        } catch (e) {
+        } catch (_e) {
           this.onFailure();
           return fallback();
         }

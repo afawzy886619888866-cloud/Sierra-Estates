@@ -3,8 +3,6 @@ export * from './connector';
 
 const API_BASE = process.env.PROPERTY_FINDER_API_GATEWAY || '';
 const API_KEY = process.env.PROPERTY_FINDER_API_KEY || '';
-const CLIENT_ID = process.env.PROPERTY_FINDER_CLIENT_ID || '';
-const CLIENT_SECRET = process.env.PROPERTY_FINDER_CLIENT_SECRET || '';
 
 /**
  * Placeholder — returns the raw API key with no OAuth/JWT exchange, even though

@@ -17,8 +17,8 @@ import {
   COLLECTIONS,
 } from '../types';
 import type {
-  Listing, ListingInput, Owner, OwnerInput, Client, ClientInput,
-  Request, RequestInput, Agent, AgentInput, ChatMessage, ClientNeeds,
+  Listing, ListingInput, Owner, OwnerInput, Client,
+  Request, Agent, ChatMessage, ClientNeeds,
   ListingStatus, PropertyType, FinishingLevel, LeadSource,
   OwnerSourceType, RequestStatus, AgentRole, DeliveryStatus, ListingMode,
   CreateListingWithOwnerPayload, Timestamp,
