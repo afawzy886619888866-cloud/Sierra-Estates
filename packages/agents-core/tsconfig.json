@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "lib": ["esnext", "dom"],
     "paths": {
       "@sierra-estates/exchange": ["../exchange/src/exchange-client.ts", "../exchange/dist/exchange-client"],
       "@sierra-estates/exchange/*": ["../exchange/src/*", "../exchange/dist/*"],

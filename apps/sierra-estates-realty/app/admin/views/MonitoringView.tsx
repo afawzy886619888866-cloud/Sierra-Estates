@@ -1,4 +1,5 @@
 'use client';
+/* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
 

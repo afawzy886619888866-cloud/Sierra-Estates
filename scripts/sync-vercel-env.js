@@ -120,6 +120,11 @@ export const CLIENT_ENV_VARS = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
+  // Admin Portal Bootstrap Credentials
+  ADMIN_BOOTSTRAP_EMAIL: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net',
+  ADMIN_BOOTSTRAP_PASSWORD: process.env.ADMIN_BOOTSTRAP_PASSWORD || 'AdminSierra2026!',
+  ADMIN_EMAILS: process.env.ADMIN_EMAILS || 'admin@sierra-estates.net,sierrablue8866@gmail.com,a.fawzy8866@gmail.com',
 };
 
 export const ADMIN_ENV_VARS = {

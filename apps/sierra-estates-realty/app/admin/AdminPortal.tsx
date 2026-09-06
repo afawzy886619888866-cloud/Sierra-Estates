@@ -1,5 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
+/* cspell:disable */
 'use client';
 /**
  * SIERRA ESTATES 3.0 — ADMIN PORTAL (Intelligence OS)
@@ -155,7 +156,23 @@ function OverviewPage({ T }) {
                   <div style={{fontSize:12,fontWeight:600,color:'var(--tx)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.name}</div>
                   <div style={{fontSize:9.5,color:'var(--tx-f)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.interest}</div>
                 </div>
-                <span className="chip chip-amber">{l.stage}</span>
+                <div style={{display:'flex',alignItems:'center',gap:4}}>
+                  <span className="chip chip-amber">{l.stage}</span>
+                  {l.phone && (
+                    <button
+                      className="btn btn-green"
+                      style={{padding:'2px 6px',fontSize:9}}
+                      onClick={() => {
+                        const clean = l.phone.replace(/[^0-9]/g, '');
+                        const msg = encodeURIComponent(`مرحباً ${l.name}، مستشار سييرا العقاري معك بخصوص طلبك لـ ${l.interest}.`);
+                        window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      title="Direct WhatsApp"
+                    >
+                      💬
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -244,7 +261,7 @@ function AgentsPage({ T }) {
         }).catch(console.error)
       );
       await Promise.all(promises);
-      setAgents(prev => prev.map(a => ({ ...a, status: 'Running', load: Math.floor(Math.random() * 40) + 55 })));
+      setAgents(prev => prev.map((a, idx) => ({ ...a, status: 'Running', load: 72 + (idx % 18) })));
     } catch (e) {
       console.error(e);
     } finally {
@@ -800,16 +817,18 @@ function NexusAIPage({ T }) {
 
   useEffect(()=>{
     const iv=setInterval(()=>{
-      const c=cpds.filter(x=>x!=='All')[Math.floor(Math.random()*(cpds.length-1))];
-      const types=['Apartment','Villa','Twin House','Duplex','Penthouse'];
-      const t=types[Math.floor(Math.random()*types.length)];
-      const d=new Date();const ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-      const area=Math.floor(Math.random()*280)+100;
-      const price=(Math.random()*22+3).toFixed(1);
       setCtr(n=>{
         const nn=n+1;
+        const availableCpds=cpds.filter(x=>x!=='All');
+        const c=availableCpds[nn % availableCpds.length];
+        const types=['Apartment','Villa','Twin House','Duplex','Penthouse'];
+        const t=types[(nn * 2) % types.length];
+        const d=new Date();
+        const ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        const area=120 + ((nn * 17) % 260);
+        const price=(4.5 + ((nn * 1.3) % 18)).toFixed(1);
         const pfx=c.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,3);
-        setFeed(f=>[{id:`WA-00${nn}`,ts,src:'WhatsApp Scraper',raw:`${t} ${c} · ${area}m² · EGP ${price}M`,compound:c,type:t,code:`SE-${pfx}-${t.slice(0,3).toUpperCase()}-${String(nn).padStart(4,'0')}-2026`,status:Math.random()>.15?'parsed':'processing'},...f].slice(0,12));
+        setFeed(f=>[{id:`WA-00${nn}`,ts,src:'WhatsApp Scraper',raw:`${t} ${c} · ${area}m² · EGP ${price}M`,compound:c,type:t,code:`SE-${pfx}-${t.slice(0,3).toUpperCase()}-${String(nn).padStart(4,'0')}-2026`,status:(nn % 7 !== 0)?'parsed':'processing'},...f].slice(0,12));
         return nn;
       });
     },3500);
@@ -1115,7 +1134,7 @@ function ListingsHubPage({T}){
               <td style={{fontFamily:'JetBrains Mono',fontWeight:700,color:l.ai>=9.5?'var(--emerald)':l.ai>=9?'var(--gold)':'var(--tx-m)'}}>{l.ai}</td>
               <td><span className={`chip ${l.status==='Active'?'chip-green':l.status==='Review'?'chip-amber':'chip-red'}`}>{l.status}</span></td>
               <td><div style={{display:'flex',gap:5}}>
-                <button className="btn btn-ghost" onClick={()=>window.open(`/property/${l.code}`, '_blank')} style={{padding:'4px 9px',fontSize:10}}>View</button>
+                <button className="btn btn-ghost" onClick={()=>window.open(`/property/${l.code}`, '_blank', 'noopener,noreferrer')} style={{padding:'4px 9px',fontSize:10}}>View</button>
                 <button className="btn btn-green" onClick={()=>{
                   const msg = encodeURIComponent(`مرحباً، تفاصيل الوحدة ${l.code} في ${l.cmp} (${l.type} - ${l.price}): متاحة للمعاينة الآن.`);
                   window.open(`https://wa.me/201092048333?text=${msg}`, '_blank', 'noopener,noreferrer');
@@ -1403,6 +1422,8 @@ function AdminApp() {
   const [langKey,setLangKey]=useState(()=>(typeof window!=='undefined'&&localStorage.getItem('admin_lang'))||'en');
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
@@ -1415,13 +1436,42 @@ function AdminApp() {
     localStorage.setItem('admin_lang',langKey);
   },[theme,langKey,isAr]);
 
+  useEffect(() => {
+    fetch('/api/auth')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.signedIn) {
+          setCurrentUser({
+            email: data.email || 'admin@sierra-estates.net',
+            role: data.role || 'super_admin',
+            name: data.name || 'Executive Admin',
+          });
+        } else {
+          window.location.href = '/admin/login';
+        }
+      })
+      .catch(() => {
+        setCurrentUser({
+          email: 'admin@sierra-estates.net',
+          role: 'super_admin',
+          name: 'Executive Admin',
+        });
+      });
+  }, []);
+
+  const handleManualRefresh = () => {
+    setIsRefreshing(true);
+    window.dispatchEvent(new CustomEvent('sierra:refresh-telemetry'));
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
+
   const navItems=NAV_ITEMS(T);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
   const renderPage=()=>{
     switch(tab){
       case 'overview':
-      case 'dashboard':return <DashboardView lang={langKey}/>;
+      case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1449,16 +1499,12 @@ function AdminApp() {
       case 'intelligence':return <AgentIntelligence />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'settings':return <SettingsPage T={T}/>;
-      default:return <DashboardView lang={langKey}/>;
+      default:return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
     }
   };
 
   const handleSignOut = async () => {
     try {
-      try {
-        sessionStorage.removeItem('sierra_admin_auth');
-        localStorage.removeItem('sierra_admin_auth');
-      } catch {}
       await fetch('/api/auth', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -1499,8 +1545,51 @@ function AdminApp() {
             <button className="topbar-pill" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>
               {theme==='dark'?<Ic.Sun/>:<Ic.Moon/>}
             </button>
-            <a href="/" className="topbar-pill" style={{textDecoration:'none'}}>↗ {T('livesite')}</a>
+            <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+            <button
+              className="topbar-pill"
+              onClick={handleManualRefresh}
+              title={isAr ? 'تحديث المقاييس والأسطول' : 'Refresh Telemetry & Fleet'}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <span style={{ display: 'inline-flex', transform: isRefreshing ? 'rotate(360deg)' : 'none', transition: 'transform 0.8s ease' }}>
+                <Ic.Refresh/>
+              </span>
+              <span style={{ fontSize: 11 }}>{isAr ? 'تحديث' : 'Refresh'}</span>
+            </button>
+            <div
+              className="topbar-pill"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(62,207,142,0.09)',
+                borderColor: 'rgba(62,207,142,0.22)',
+              }}
+              title={currentUser?.email || 'admin@sierra-estates.net'}
+            >
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #d4af37, #3ECF8E)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 9,
+                  fontWeight: 800,
+                  color: '#071422',
+                  flexShrink: 0,
+                }}
+              >
+                {(currentUser?.email?.[0] || 'A').toUpperCase()}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
+                {currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+              </span>
+            </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>
               {isAr ? 'خروج' : 'Sign Out'}
             </button>

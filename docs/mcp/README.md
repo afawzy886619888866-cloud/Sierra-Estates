@@ -68,9 +68,11 @@ Access tokens carry explicit scopes to prevent unauthorized financial operations
 To connect Claude to Sierra Estates:
 
 1. **Connector URL**: Point Claude Custom Connector to:
-   ```
+
+   ```text
    https://sierra-estates.net/api/mcp
    ```
+
 2. **Zero-Config OAuth Registration**:
    Claude automatically queries `/.well-known/oauth-authorization-server`, dynamically registers via `/api/mcp/oauth/register`, performs the PKCE authorization flow, and receives an authorized Bearer token.
 3. **Domain Exemption**:
@@ -81,12 +83,14 @@ To connect Claude to Sierra Estates:
 ## 5. Available Tools Reference
 
 ### WhatsApp Messaging (`whatsapp-messaging`)
+
 - `send_message`: Sends template-based notification to buyers/brokers. Requires `mcp:write`.
   - Parameters: `leadPhone` (string), `template` (string), `variables` (object, optional).
 - `send_document`: Sends verified PDF proposals or contracts. Requires `mcp:write`.
   - Parameters: `leadPhone` (string), `documentUrl` (string URL).
 
 ### Sierra Strategic Deals (`sierra-strategic-pipeline`)
+
 - `create_pipeline_entry`: Initiates transaction deal record. Requires `mcp:write`.
   - Parameters: `stakeholderId` (string), `portfolioAssetCode` (string), `terms` (object).
 - `update_pipeline_status`: Transitions deal negotiation stage. Requires `mcp:write`.
@@ -95,18 +99,21 @@ To connect Claude to Sierra Estates:
   - Parameters: `pipelineId` (string).
 
 ### Stripe Payments (`stripe-payments`)
+
 - `create_payment_intent`: Generates deposit payment intent. Requires elevated `mcp:spend`.
   - Parameters: `amount` (number > 0), `currency` (3-char ISO code), `leadId` (string).
 - `verify_payment`: Validates settlement of intent. Allowed on `mcp:read`.
   - Parameters: `intentId` (string).
 
 ### DocuSign Digital Signing (`docusign-signing`)
+
 - `initiate_envelope`: Initiates legal digital signature envelope. Requires `mcp:write`.
   - Parameters: `documentUrl` (URL), `recipients` (array of {name, email}), `callbackUrl` (URL).
 - `get_signature_status`: Checks envelope signing status. Allowed on `mcp:read`.
   - Parameters: `envelopeId` (string).
 
 ### Stage-9 Deal Closer (`stage-9-orchestration`)
+
 - `calculate_split`: Calculates brokerage commission net yields. Allowed on `mcp:read`.
   - Parameters: `commissionTotal` (number > 0), `brokerRate` (0..1), `agentRate` (0..1).
 - `generate_agreement`: Formats bilingual sales/rental agreement memo. Requires `mcp:write`.
@@ -117,11 +124,14 @@ To connect Claude to Sierra Estates:
 ## 6. Verification & Health Probe
 
 Run the automated smoke test against production or local development:
+
 ```bash
 npx tsx scripts/mcp-smoke-test.ts
 ```
+
 Expected output:
-```
+
+```text
 [PASS] OAuth 2.1 Metadata Probe (/.well-known/oauth-authorization-server)
 [PASS] Dynamic Client Registration (/api/mcp/oauth/register)
 [PASS] PKCE Authorization Code Grant (/api/mcp/oauth/authorize & /token)
@@ -130,3 +140,4 @@ Expected output:
 [PASS] Read-Only Tool Execution (get_pipeline_summary)
 [PASS] Scope Protection Barrier (create_payment_intent refused on read-only token)
 ```
+

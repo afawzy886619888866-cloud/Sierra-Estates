@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20pgvector-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![CI/CD](https://img.shields.io/badge/Vercel-Production%20Ready-000000?style=flat&logo=vercel)](https://vercel.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#)
+[![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainer)
 
 > **Sierra Estates Realty** is an enterprise-grade, omnichannel real estate intelligence and transaction platform engineered for the luxury Egyptian property market. It unifies client discovery, administrative asset governance, algorithmic valuation, automated WhatsApp/Telegram lead concierges, and multi-agent AI orchestration.
 
@@ -39,7 +39,7 @@ graph TD
 
 ## 📦 Workspace Package Structure
 
-```
+```text
 ├── apps/
 │   └── sierra-estates-realty/     # Next.js 16 Full-Stack Dual-Domain Application
 ├── packages/
@@ -80,10 +80,12 @@ graph TD
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Node.js**: `v24+` or `v26+`
 - **pnpm**: `v9+` or `v10+`
 
 ### Installation
+
 ```bash
 # Clone repository
 git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
@@ -94,20 +96,26 @@ pnpm install
 ```
 
 ### Environment Configuration
+
 Copy the example environment template:
+
 ```bash
 cp .env.example .env.local
 ```
+
 Or run the automated secrets provisioner if using GitHub CLI:
+
 ```bash
 node scripts/setup-github-secrets.js
 ```
 
 ### Development Server
+
 ```bash
 # Start Next.js development server
 pnpm dev
 ```
+
 The application will be accessible at `http://localhost:3000`.
 
 ---

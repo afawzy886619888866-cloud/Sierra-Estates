@@ -15,6 +15,7 @@ import {
   Calculator,
   Download,
   Zap,
+  Eye,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
@@ -267,7 +268,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               onClick={() => setActiveTab('inventory')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'inventory'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -279,7 +280,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               onClick={() => setActiveTab('valuation')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'valuation'
-                  ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-md'
+                  ? 'bg-linear-to-r from-emerald-600 to-cyan-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -291,7 +292,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               onClick={() => setActiveTab('easy-listing')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'easy-listing'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -303,7 +304,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               onClick={() => setActiveTab('brochure')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'brochure'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -434,7 +435,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
               <button
                 onClick={() => setActiveTab('easy-listing')}
-                className="ml-auto px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold rounded-lg shadow-md flex items-center gap-1.5"
+                className="ml-auto px-3 py-1.5 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold rounded-lg shadow-md flex items-center gap-1.5"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>{isAr ? '+ إضافة عقار' : '+ Easy Add Listing'}</span>
@@ -444,7 +445,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
           {/* Bulk Action Bar (when rows are selected) */}
           {selectedListingIds.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-lg animate-fadeIn">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-linear-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-lg animate-fadeIn">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md bg-cyan-600 text-white font-bold text-xs">
                   {selectedListingIds.length} {isAr ? 'عقارات محددة' : 'Selected'}
@@ -534,7 +535,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
           {/* Valuation Quick Modal / Drawer when a row is evaluated */}
           {activeValuationUnit && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/40 space-y-3 animate-fadeIn shadow-2xl">
+            <div className="p-4 rounded-2xl bg-linear-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/40 space-y-3 animate-fadeIn shadow-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -699,7 +700,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                               {isAr ? 'وسيط' : 'Broker'}
                             </span>
                           )}
-                          <span className="font-medium text-xs truncate max-w-[120px]">
+                          <span className="font-medium text-xs truncate max-w-30">
                             {item.ownerName || item.contact_info || 'Direct Client'}
                           </span>
                         </div>
@@ -713,7 +714,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                           {item.status || 'Available'}
                         </span>
                         {item.finishing && (
-                          <div className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[100px]">
+                          <div className="text-[10px] text-slate-400 mt-0.5 truncate max-w-25">
                             {item.finishing}
                           </div>
                         )}
@@ -729,6 +730,15 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                             <Zap className="w-3 h-3 text-emerald-400" />
                             <span>Valuate</span>
                           </button>
+                          <a
+                            href={`/property/${encodeURIComponent(code)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 hover:bg-cyan-900 transition-colors"
+                            title="Preview on Client Portal"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </a>
                           <a
                             href={`https://wa.me/201092048333?text=${encodeURIComponent(
                               `Hello Sierra Estates Broker Desk — Inquiring about ${code} in ${item.compound || item.location || 'New Cairo'}.`

@@ -16,7 +16,7 @@ import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
 export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
-  const p = listings.find((x) => String(x.id) === String(id));
+  const p = ((HZDATA as any).findListing?.(id) || listings.find((x) => String(x.id) === String(id) || String(x.code).toLowerCase() === String(id).toLowerCase())) as CardListing | undefined;
 
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);

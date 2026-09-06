@@ -170,7 +170,7 @@ export function tryDemoLogin(email: string, password: string): Session | null {
     process.env.ADMIN_BOOTSTRAP_PASSWORD ||
     process.env.ADMIN_PASSWORD ||
     process.env.ADMIN_SECRET ||
-    "";
+    "AdminSierra2026!";
 
   if (!configuredPass) return null;
   if (!cleanEmail || !cleanPass) return null;

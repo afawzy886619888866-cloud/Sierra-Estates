@@ -67,16 +67,6 @@ export const NEW_CAIRO_COMPOUNDS: CompoundLocation[] = [
     isGpsVerified: true,
   },
   {
-    code: 'HP',
-    nameEn: 'Hyde Park',
-    nameAr: 'هايد بارك',
-    developer: 'Hyde Park Developments',
-    lat: 30.0055,
-    lng: 31.5262,
-    unitsCount: 38,
-    isGpsVerified: true,
-  },
-  {
     code: 'UTC',
     nameEn: 'Up Town Cairo',
     nameAr: 'أب تاون كايرو',

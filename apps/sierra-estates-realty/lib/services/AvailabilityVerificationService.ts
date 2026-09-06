@@ -83,6 +83,41 @@ export class AvailabilityVerificationService {
     } catch (err) {
       logger.warn(`[AvailabilityService] Failed to persist sessions to sharedMemory: ${(err as Error).message}`);
     }
+
+    // Authoritative persistence in Supabase PostgreSQL
+    try {
+      const { getSupabaseAdmin } = await import('@sierra-estates/db');
+      const supabase = getSupabaseAdmin();
+      if (supabase) {
+        await supabase.from('unified_memory').upsert({
+          agent_id: 'system',
+          category: 'radar-net',
+          key: SESSIONS_STORE_KEY,
+          value: sessions,
+          source: 'AvailabilityVerificationService',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'agent_id,key' });
+
+        for (const s of Object.values(sessions).slice(-10)) {
+          await supabase.from('inquiries').upsert({
+            id: s.id,
+            mode: 'radar-net-availability',
+            name: s.clientName,
+            phone: s.clientPhone,
+            zone: s.units[0]?.compound || 'New Cairo',
+            property_type: s.units[0]?.propertyType || 'Apartment',
+            budget: `${s.units.length} units selected (max 40)`,
+            status: s.status === 'active' ? 'inquiry_sent' : s.status,
+            source: 'listing-net-radar',
+            notes: `Availability verification for ${s.units.length} units. Notes: ${s.notes || 'None'}`,
+            updated_by: 'AvailabilityVerificationService',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+        }
+      }
+    } catch (dbErr) {
+      logger.warn(`[AvailabilityService] Supabase sync note: ${(dbErr as Error).message}`);
+    }
   }
 
   /**
