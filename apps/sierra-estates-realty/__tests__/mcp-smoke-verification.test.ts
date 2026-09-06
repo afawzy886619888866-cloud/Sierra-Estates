@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { GET as getAuthMetadata } from '../app/.well-known/oauth-authorization-server/route';
-import { GET as getResourceMetadata } from '../app/.well-known/oauth-protected-resource/route';
+import { GET as getAuthMetadata } from '../app/api/well-known/oauth-authorization-server/route';
+import { GET as getResourceMetadata } from '../app/api/well-known/oauth-protected-resource/route';
 import { POST as registerRoute } from '../app/api/mcp/oauth/register/route';
 import { GET as authorizeRoute } from '../app/api/mcp/oauth/authorize/route';
 import { POST as tokenRoute } from '../app/api/mcp/oauth/token/route';

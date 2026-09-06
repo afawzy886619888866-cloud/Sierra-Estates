@@ -14,7 +14,6 @@ const SERVER_ONLY_PACKAGES = [
   '@opentelemetry/instrumentation-express',
 ];
 
-
 const nextConfig: NextConfig = {
   // Pin the monorepo root so output file tracing (which produces the
   // serverless function file list for `vercel build`) resolves pnpm's
@@ -61,6 +60,15 @@ const nextConfig: NextConfig = {
         {
           source: '/dashboard',
           destination: '/client',
+        },
+        // RFC 5785 rewrites: Map .well-known endpoints to /api/well-known to ensure clean Vercel deployments
+        {
+          source: '/.well-known/oauth-authorization-server',
+          destination: '/api/well-known/oauth-authorization-server',
+        },
+        {
+          source: '/.well-known/oauth-protected-resource',
+          destination: '/api/well-known/oauth-protected-resource',
         },
       ],
       afterFiles: [],
