@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { obsidian } from '../../obsidian/src/index';
+import { getSupabaseAdmin } from '@sierra-estates/db';
 
 const logger = pino({ name: 'reportTools' });
 
@@ -59,6 +60,28 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
         report += `   ⭐ Valuation Score: ${score}/100 | Source: ${item.source || item.sourceGroup || 'Master Sheet'}\n\n`;
       });
 
+      return report.trim();
+    }
+
+    const { data: supabaseListings, error } = await getSupabaseAdmin()
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .limit(15);
+
+    if (error) throw new Error(`Supabase inventory query failed: ${error.message}`);
+    if (supabaseListings && supabaseListings.length > 0) {
+      let report = `📊 *Sierra Estates — Supabase Inventory Report (${supabaseListings.length} Active Properties)*\n\n`;
+      supabaseListings.forEach((item: Record<string, unknown>, i: number) => {
+        const code = item.sierraCode || item.code || item.id || `listing-${i + 1}`;
+        const price = item.price ? Number(item.price).toLocaleString() : 'N/A';
+        const type = item.type || item.propertyType || 'Unit';
+        const loc = item.location || item.compound || 'New Cairo';
+        const beds = item.bedrooms || item.beds || item.rooms || '-';
+        const area = item.area_sqm || item.area || '-';
+        report += `${i + 1}. *[${code}]* ${type} in *${loc}*\n`;
+        report += `   💰 Price: ${price} ${item.currency || 'EGP'} | 📐 ${area} sqm | 🛏️ ${beds} Beds\n\n`;
+      });
       return report.trim();
     }
 
