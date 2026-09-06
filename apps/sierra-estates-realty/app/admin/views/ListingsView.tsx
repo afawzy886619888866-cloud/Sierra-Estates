@@ -464,7 +464,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                 },
                 {
                   id: 'owners',
-                  label: isAr ? `🟢 ملاك مباشرين (${stats.owners})` : `🟢 Direct Owners (${stats.owners})`,
+                  label: isAr ? `🟢 محفظة حصرية (${stats.owners})` : `🟢 Exclusive Portfolio (${stats.owners})`,
                 },
                 { id: 'sale', label: isAr ? `للبيع (${stats.sale})` : `For Sale (${stats.sale})` },
                 { id: 'rent', label: isAr ? `للإيجار (${stats.rent})` : `For Rent (${stats.rent})` },
