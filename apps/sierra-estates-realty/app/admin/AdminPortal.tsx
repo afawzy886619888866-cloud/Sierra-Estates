@@ -1430,9 +1430,22 @@ function AdminApp() {
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isAppSwitcherOpen, setIsAppSwitcherOpen] = useState(false);
 
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   useEffect(()=>{
     document.documentElement.setAttribute('data-theme',theme);
@@ -1474,10 +1487,62 @@ function AdminApp() {
   const navItems=NAV_ITEMS(T);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
+  const commandItems = useMemo<CommandItem[]>(() => {
+    const items: CommandItem[] = navItems.map((n) => ({
+      id: `nav-${n.id}`,
+      title: n.label,
+      category: n.section,
+      icon: n.icon,
+      badge: n.badge,
+      action: () => setTab(n.id),
+    }));
+
+    items.push(
+      {
+        id: 'act-copilot',
+        title: isAr ? 'فتح مساعد الذكاء الاصطناعي (Copilot)' : 'Open AI Data Copilot',
+        category: isAr ? 'إجراءات سريعة' : 'Quick Actions',
+        icon: '✦',
+        action: () => setIsCopilotOpen(true),
+      },
+      {
+        id: 'act-refresh',
+        title: isAr ? 'تحديث المقاييس والأسطول' : 'Refresh Telemetry & Fleet',
+        category: isAr ? 'إجراءات سريعة' : 'Quick Actions',
+        icon: '🔄',
+        action: handleManualRefresh,
+      },
+      {
+        id: 'act-lang',
+        title: isAr ? 'التبديل إلى الإنجليزية' : 'التبديل إلى العربية',
+        category: isAr ? 'النظام' : 'System',
+        icon: '🌐',
+        action: () => setLangKey((l) => (l === 'en' ? 'ar' : 'en')),
+      },
+      {
+        id: 'act-theme',
+        title: isAr ? 'تبديل المظهر (فاتح / داكن)' : 'Toggle Theme (Dark / Light)',
+        category: isAr ? 'النظام' : 'System',
+        icon: theme === 'dark' ? '☀️' : '🌙',
+        action: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+      },
+      {
+        id: 'act-livesite',
+        title: isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal',
+        category: isAr ? 'الموقع' : 'Site',
+        icon: '↗️',
+        action: () => window.open('/', '_blank'),
+      }
+    );
+
+    return items;
+  }, [navItems, isAr, theme]);
+
   const renderPage=()=>{
     switch(tab){
       case 'overview':
       case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
+      case 'all_apps':return <AppsDirectoryView lang={langKey} onNavigate={setTab}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -1498,6 +1563,8 @@ function AdminApp() {
       case 'closer':return <Stage9CloserPage T={T}/>;
       case 'roles':return <RoleManagerView lang={langKey}/>;
       case 'security':return <SecurityView lang={langKey}/>;
+      case 'deployment':return <DeploymentPipelineView lang={langKey}/>;
+      case 'api_gateway':return <ApiGatewayView lang={langKey}/>;
       case 'deep_insights':return <DeepInsightsView lang={langKey}/>;
       case 'reports':return <ReportsView lang={langKey}/>;
       case 'contracts':return <ContractsView />;
@@ -1543,8 +1610,96 @@ function AdminApp() {
       <main id="main">
         <div id="topbar">
           <button className="hamburger-btn" onClick={()=>setMobileOpen(true)}><Ic.Menu/></button>
-          <h1 className="topbar-title" style={isAr?{fontFamily:"'Cairo',sans-serif"}:{}}>{pageTitles[tab]||'Sierra Estates'}</h1>
+          
+          {/* Breadcrumb Navigation */}
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+            <h1 className="topbar-title" style={isAr?{fontFamily:"'Cairo',sans-serif"}:{}}>
+              {pageTitles[tab]||'Sierra Estates'}
+            </h1>
+            <div className="topbar-breadcrumb">
+              <span>/</span>
+              <span className="topbar-breadcrumb-item">Sierra OS</span>
+              <span>/</span>
+              <span className="topbar-breadcrumb-active">{pageTitles[tab] || tab}</span>
+            </div>
+          </div>
+
+          {/* Omnibox Command Search */}
+          <div
+            className="topbar-omnibox"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            title={isAr ? 'البحث في التطبيقات والأوامر (⌘K)' : 'Search apps & actions (⌘K)'}
+          >
+            <span>🔍</span>
+            <span style={{ fontSize: 11.5 }}>{isAr ? 'بحث سريع...' : 'Search or jump to...'}</span>
+            <kbd>⌘K</kbd>
+          </div>
+
           <div style={{marginInlineStart:'auto',display:'flex',gap:8,alignItems:'center'}}>
+            {/* Quick App Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="app-switcher-btn"
+                onClick={() => setIsAppSwitcherOpen((o) => !o)}
+                title={isAr ? 'التبديل السريع بين التطبيقات' : 'Quick App Switcher'}
+              >
+                <span>✨</span>
+                <span>{isAr ? 'التطبيقات' : 'All Apps'}</span>
+                <span style={{ fontSize: 8 }}>▼</span>
+              </button>
+              {isAppSwitcherOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    [isAr ? 'left' : 'right']: 0,
+                    width: 250,
+                    background: 'linear-gradient(180deg, #102339 0%, #081424 100%)',
+                    border: '1px solid rgba(0, 174, 255, 0.3)',
+                    borderRadius: 12,
+                    padding: 8,
+                    boxShadow: '0 16px 36px rgba(0,0,0,0.6), 0 0 20px rgba(0, 174, 255, 0.15)',
+                    zIndex: 500,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                  onClick={() => setIsAppSwitcherOpen(false)}
+                >
+                  {[
+                    { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
+                    { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
+                    { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
+                    { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
+                    { id: 'contracts', label: isAr ? 'العقود الإلكترونية' : 'Digital Contracts Desk', icon: '📜' },
+                    { id: 'deployment', label: isAr ? 'خطوط النشر والإنتاج' : 'CI/CD Deployment Console', icon: '🚀' },
+                    { id: 'api_gateway', label: isAr ? 'بوابة واجهات البرمجة' : 'RESTful API Gateway', icon: '🌐' },
+                  ].map((app) => (
+                    <div
+                      key={app.id}
+                      onClick={() => setTab(app.id)}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 12,
+                        color: tab === app.id ? '#00AEFF' : '#F0EDE5',
+                        background: tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent')}
+                    >
+                      <span>{app.icon}</span>
+                      <span style={{ fontWeight: tab === app.id ? 700 : 500 }}>{app.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button className="topbar-pill" onClick={()=>setLangKey(l=>l==='en'?'ar':'en')}>
               {isAr?'EN':'ع'}
             </button>
@@ -1623,6 +1778,12 @@ function AdminApp() {
         <AdminCopilotDrawer
           isOpen={isCopilotOpen}
           onClose={() => setIsCopilotOpen(false)}
+          lang={langKey}
+        />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          items={commandItems}
           lang={langKey}
         />
       </main>
