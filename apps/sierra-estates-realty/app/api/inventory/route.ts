@@ -131,15 +131,6 @@ export async function GET(request: Request) {
   const filterMode = searchParams.get('mode')?.trim().toLowerCase() || '';
   const filterLimit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 0;
 
-  const snapshotData = snapshot as unknown as {
-    generatedAt?: string;
-    count?: number;
-    segments?: any;
-    compoundCounts?: Record<string, number>;
-    compoundSegmentCounts?: Record<string, Record<string, number>>;
-    units?: InventoryUnit[];
-  };
-
   const sourceResponse =
     await fetchSupabaseListings() ??
     await fetchDomain() ??
