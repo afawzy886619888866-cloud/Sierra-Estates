@@ -1,4 +1,11 @@
-#!/usr/bin/env node
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+dotenv.config({ path: path.join(ROOT, '.env.local') });
+dotenv.config({ path: path.join(ROOT, '.env') });
 
 const env = process.env;
 const url = env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL || env.POSTGRES_URL || null;
