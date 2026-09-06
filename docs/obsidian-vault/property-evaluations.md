@@ -8,7 +8,7 @@
 ## 1. Valuation & Priority Scoring Formula
 
 The total priority score is calculated dynamically based on:
-$$\text{Priority Score} = \min(100, [(\text{Compound Tier} \times 0.5) + (\text{Price Competitiveness} \times 0.4) + (\text{Finishing Bonus} \times 2)] \times \text{Owner Multiplier})$$
+$$\text{Priority Score} = \min(100, \left[(\text{Compound Tier} \times 0.5) + (\text{Price Competitiveness} \times 0.4) + (\text{Finishing Bonus} \times 2)\right] \times \text{Owner Multiplier})$$
 
 - **Tier 1 Compounds (Base Score: 88–94)**:
   - *Mivida (Emaar)*: 92 Base · Avg Rent/m²: 380 EGP · High Demand (95%)

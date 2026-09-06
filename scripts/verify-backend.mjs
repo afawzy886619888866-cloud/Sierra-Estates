@@ -8,6 +8,17 @@
  * deploy gate used by CI and release workflows.
  */
 
+if (typeof process.loadEnvFile === 'function') {
+  for (const envFile of ['.env.local', '.env']) {
+    try {
+      process.loadEnvFile(envFile);
+      break;
+    } catch {
+      // Ignore if file doesn't exist
+    }
+  }
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

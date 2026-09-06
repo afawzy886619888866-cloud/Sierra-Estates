@@ -12,7 +12,7 @@ Our system is designed to operate like a precision machine, where each phase sea
 
 1. **Automated Scraping (The Hunter):** Continuous scanning of WhatsApp groups to automatically extract owner listings and populate them into Google Sheets.
 2. **Human Validation:** Inside Sales Specialists filter the data, contact the owners for verification, and publish authenticated ads.
-3. **Intelligent Triage (Liela Bot):** Our virtual assistant "Liela" instantly receives inbound ad inquiries, qualifies client requirements, and suggests top 3 matching units.
+3. **Intelligent Triage (Leila Bot):** Our virtual assistant "Leila" instantly receives inbound ad inquiries, qualifies client requirements, and suggests top 3 matching units.
 4. **Field Closing:** The human closer receives a fully qualified "Hot Lead", meets them on the ground, and successfully closes the deal.
 
 ---
@@ -22,7 +22,7 @@ Our system is designed to operate like a precision machine, where each phase sea
 We rely on a primary KPI for our bots: **(Lowest Token Consumption = Highest Efficiency & Intelligence)**.
 
 - **Scraper Bot:** Reads thousands of messages, filters out brokers, and extracts only genuine owners' data to an Excel sheet.
-- **Liela Triage Bot:** Responds within 3 seconds, qualifies clients, and offers the "Elite Voucher" to highly serious clients.
+- **Leila Triage Bot:** Responds within 3 seconds, qualifies clients, and offers the "Elite Voucher" to highly serious clients.
 
 ---
 
