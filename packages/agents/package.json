@@ -8,6 +8,7 @@
   "dependencies": {
     "@google/genai": "^2.17.1",
     "@sierra-estates/agents-core": "workspace:*",
+    "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
     "firebase": "^12.18",
     "firebase-admin": "^14.3.0",
