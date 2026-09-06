@@ -267,7 +267,15 @@ export default function PropertiesPage() {
       })
       .then((data) => {
         if (!active || !data?.units || !Array.isArray(data.units)) return;
-        setAllUnits(data.units.map(sanitizeUnit));
+        const validUnits = data.units.filter(
+          (raw: any) =>
+            raw.party !== 'Owner' &&
+            raw.sourceType !== 'owner' &&
+            raw.segment !== 'owners_rent' &&
+            raw.segment !== 'owners_buy' &&
+            raw.tag !== 'Direct Owner'
+        );
+        setAllUnits(validUnits.map(sanitizeUnit));
       })
       .catch((err) => {
         console.warn('[PropertiesPage] Using committed snapshot inventory:', err);
