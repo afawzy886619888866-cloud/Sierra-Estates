@@ -70,6 +70,9 @@ jobs:
       - name: Public environment safety
         run: pnpm check:public-env
 
+      - name: Legacy runtime boundary
+        run: pnpm check:legacy-runtime
+
       - name: Lint realty app
         run: pnpm --filter sierra-estates-client-page lint
 
