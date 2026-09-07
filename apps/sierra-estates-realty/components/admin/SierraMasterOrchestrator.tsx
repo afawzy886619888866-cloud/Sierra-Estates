@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import AgentOrchestratorCard from './AgentOrchestratorCard';
 
 export interface SierraMasterOrchestratorProps {
@@ -109,7 +109,13 @@ export default function SierraMasterOrchestrator({
         },
       ];
 
-      const chosen = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+      let randomIndex = 0;
+      if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+        const randBuffer = new Uint32Array(1);
+        window.crypto.getRandomValues(randBuffer);
+        randomIndex = randBuffer[0] % randomEvents.length;
+      }
+      const chosen = randomEvents[randomIndex];
       setLogs((prev) => [
         {
           id: `log-${Date.now()}`,
