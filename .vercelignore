@@ -20,6 +20,7 @@ __pycache__
 
 # Large data archives not needed for cloud web deployment
 *.xlsx
+!apps/sierra-estates-realty/public/downloads/*.xlsx
 *.zip
 *.tar.gz
 Inventory_with_Photos_Airtable.csv
