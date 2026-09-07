@@ -248,6 +248,30 @@ export default function AgentOrchestratorCard({
             <span>{isAr ? 'إطلاق جلسة عمل متوازية' : 'Spawn AO Worker'}</span>
           </button>
 
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('agents')}
+              className="btn"
+              style={{
+                padding: '6px 12px',
+                fontSize: 11,
+                fontWeight: 600,
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#E5E7EB',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+              title="Jump to Autonomous Agents Fleet"
+            >
+              <span>🤖</span>
+              <span>{isAr ? 'أسطول الوكلاء' : 'Agent Fleet'}</span>
+            </button>
+          )}
+
           <button
             onClick={refreshAoStatus}
             disabled={isLoading}
