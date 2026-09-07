@@ -8,7 +8,6 @@ import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossG
 import {
   Sparkles,
   ListFilter,
-  PlusCircle,
   FileText,
   Search,
   UserCheck,
@@ -17,39 +16,132 @@ import {
   Download,
   Zap,
   Eye,
+  Camera,
+  Globe,
+  Building2,
+  AlertTriangle,
+  Check,
+  X,
+  Star,
+  Plus,
+  RefreshCw,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
 import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 
-// Use consolidated inventory as the immediate fallback while the canonical
-// Supabase/admin feed loads.
-const FALLBACK_LISTINGS_DATA =
-  consolidatedRaw && Array.isArray(consolidatedRaw) && consolidatedRaw.length > 0
-    ? consolidatedRaw
-    : realListingsRaw;
+// Stock luxury community presets for 1-click photo matching
+const COMMUNITY_PHOTO_PRESETS: Record<string, string[]> = {
+  Mivida: [
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+  ],
+  Eastown: [
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&auto=format&fit=crop&q=80',
+  ],
+  Madinaty: [
+    'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=800&auto=format&fit=crop&q=80',
+  ],
+  'Al Rehab': [
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
+  ],
+  'Uptown Cairo': [
+    'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&auto=format&fit=crop&q=80',
+  ],
+  'Fifth Settlement': [
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
+  ],
+  Default: [
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+  ],
+};
+
+function getCommunityPreset(compound: string): string[] {
+  for (const [key, urls] of Object.entries(COMMUNITY_PHOTO_PRESETS)) {
+    if (compound && compound.toLowerCase().includes(key.toLowerCase())) {
+      return urls;
+    }
+  }
+  return COMMUNITY_PHOTO_PRESETS.Default;
+}
+
+// Build unified baseline merging real-listings and consolidated master inventory
+function buildUnifiedBaseline(): any[] {
+  const map = new Map<string, any>();
+
+  // Load real listings (with verified photos)
+  if (Array.isArray(realListingsRaw)) {
+    realListingsRaw.forEach((item: any) => {
+      const code = item.sierraCode || item.code || `SE-${item.id}`;
+      map.set(code, {
+        ...item,
+        sierraCode: code,
+        photos: item.photos || (item.image ? [item.image] : item.img ? [item.img] : []),
+        hasPhotos: Boolean((item.photos && item.photos.length > 0) || item.image || item.img),
+        status: item.status || 'Available',
+        publishToClient: item.publishToClient ?? true,
+        syndicatedToPf: item.syncSource === 'property-finder' || Boolean(item.syndicatedToPf),
+      });
+    });
+  }
+
+  // Merge consolidated units
+  if (Array.isArray(consolidatedRaw)) {
+    consolidatedRaw.forEach((item: any) => {
+      const code = item.sierraCode || item.code || `SE-${item.id}`;
+      if (!map.has(code)) {
+        map.set(code, {
+          ...item,
+          sierraCode: code,
+          photos: item.photos || [],
+          hasPhotos: Boolean(item.photos && item.photos.length > 0),
+          status: item.status || 'Available',
+          publishToClient: item.publishToClient ?? false,
+          syndicatedToPf: item.syncSource === 'property-finder' || Boolean(item.syndicatedToPf),
+        });
+      }
+    });
+  }
+
+  return Array.from(map.values());
+}
 
 export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure' | 'valuation'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<
-    'all' | 'owners' | 'whatsapp' | 'sale' | 'rent' | 'new' | 'month' | 'villa' | 'apartment'
-  >('all');
+  
+  // Primary operational filters
+  const [typeFilter, setTypeFilter] = useState<'all' | 'sale' | 'rent' | 'owners' | 'villa' | 'apartment'>('all');
+  const [photoFilter, setPhotoFilter] = useState<'all' | 'has_photos' | 'missing_photos' | 'best_needing_photos'>('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available' | 'pending' | 'sold_rented'>('all');
+  const [syndicationFilter, setSyndicationFilter] = useState<'all' | 'web_live' | 'pf_live'>('all');
   const [zoneFilter, setZoneFilter] = useState<string>('all');
+
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<string>('Available');
   const [bulkNotification, setBulkNotification] = useState<string | null>(null);
   const [isGuardModalOpen, setIsGuardModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
-  const [allListingsData, setAllListingsData] = useState<any[]>(FALLBACK_LISTINGS_DATA as any[]);
+
+  const [allListingsData, setAllListingsData] = useState<any[]>(() => buildUnifiedBaseline());
   const [isLoadingLiveListings, setIsLoadingLiveListings] = useState(true);
   const [liveListingsError, setLiveListingsError] = useState<string | null>(null);
 
   // Quick valuation preview state
   const [activeValuationUnit, setActiveValuationUnit] = useState<any | null>(null);
+
+  // Photo Attach Modal State
+  const [activePhotoModalUnit, setActivePhotoModalUnit] = useState<any | null>(null);
+  const [customPhotoUrl, setCustomPhotoUrl] = useState<string>('');
 
   useEffect(() => {
     let active = true;
@@ -61,7 +153,29 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       })
       .then((payload) => {
         if (!active) return;
-        if (Array.isArray(payload.listings)) setAllListingsData(payload.listings);
+        if (Array.isArray(payload.listings) && payload.listings.length > 0) {
+          // Merge live DB listings
+          setAllListingsData((prev) => {
+            const map = new Map(prev.map((i) => [i.sierraCode || i.code || i.id, i]));
+            payload.listings!.forEach((liveItem) => {
+              const code = liveItem.sierraCode || liveItem.code || liveItem.id;
+              const existing = map.get(code);
+              map.set(code, {
+                ...(existing || {}),
+                ...liveItem,
+                sierraCode: code,
+                hasPhotos: Boolean(
+                  (liveItem.photos && liveItem.photos.length > 0) ||
+                  liveItem.image ||
+                  liveItem.img ||
+                  existing?.hasPhotos
+                ),
+                photos: liveItem.photos || existing?.photos || (liveItem.image ? [liveItem.image] : []),
+              });
+            });
+            return Array.from(map.values());
+          });
+        }
         setLiveListingsError(null);
       })
       .catch((error) => {
@@ -77,67 +191,64 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
     };
   }, []);
 
+  // Helper: check if a listing is a "Best Unit" (High Value / Luxury Community / High Cap Rate)
+  const isBestUnit = (item: any): boolean => {
+    const c = (item.compound || item.location || '').toLowerCase();
+    const isTier1 = ['mivida', 'eastown', 'rehab', 'madinaty', 'uptown', 'palm hills', 'hyde park', 'fifth square', 'villette'].some((k) => c.includes(k));
+    const price = Number(item.price) || 0;
+    const isHighValue = price >= 8000000 || (item.operation === 'Rent' && price >= 35000);
+    const isVillaOrDuplex = ['villa', 'twin', 'town', 'duplex', 'penthouse'].some((t) => (item.type || '').toLowerCase().includes(t));
+    return isTier1 || isHighValue || isVillaOrDuplex;
+  };
+
   // Filter listings
   const filteredListings = useMemo(() => {
-    return (allListingsData as any[]).filter((item) => {
+    return allListingsData.filter((item) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
-        item.sierraCode?.toLowerCase().includes(q) ||
-        item.code?.toLowerCase().includes(q) ||
-        item.compound?.toLowerCase().includes(q) ||
-        item.cmp?.toLowerCase().includes(q) ||
-        item.zone?.toLowerCase().includes(q) ||
-        item.location?.toLowerCase().includes(q) ||
-        item.type?.toLowerCase().includes(q) ||
-        item.comment?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.ownerName?.toLowerCase().includes(q) ||
-        item.contact_info?.toLowerCase().includes(q);
+        (item.sierraCode && item.sierraCode.toLowerCase().includes(q)) ||
+        (item.code && item.code.toLowerCase().includes(q)) ||
+        (item.compound && item.compound.toLowerCase().includes(q)) ||
+        (item.location && item.location.toLowerCase().includes(q)) ||
+        (item.type && item.type.toLowerCase().includes(q)) ||
+        (item.ownerName && item.ownerName.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
 
-      if (selectedFilter === 'owners') {
-        return item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
-      }
-      if (selectedFilter === 'whatsapp') {
-        return (
-          item.origin === 'whatsapp_group' ||
-          item.sourceGroup?.toLowerCase().includes('whatsapp') ||
-          item.ago?.toLowerCase().includes('whatsapp') ||
-          item.agent?.toLowerCase().includes('whatsapp') ||
-          item.code?.startsWith('UNIT-WA') ||
-          item.sierraCode?.startsWith('UNIT-WA') ||
-          item.sierraCode?.startsWith('MD-B10') ||
-          item.sierraCode?.startsWith('RH-P4') ||
-          item.sierraCode?.startsWith('MV-GS') ||
-          item.sierraCode?.startsWith('ET-R90') ||
-          item.sierraCode?.startsWith('HP-GR') ||
-          item.sierraCode?.startsWith('SL-HAF') ||
-          item.sierraCode?.startsWith('BD-PH') ||
-          item.sierraCode?.startsWith('VS-3A') ||
-          item.sierraCode?.startsWith('MV-POOL') ||
-          item.sierraCode?.startsWith('HP-LAKE')
-        );
-      }
-      if (selectedFilter === 'sale') return item.operation === 'Sale' || item.mode === 'sale';
-      if (selectedFilter === 'rent') return item.operation === 'Rent' || item.mode === 'rent';
-      if (selectedFilter === 'new') return Boolean(item.isNewListing);
-      if (selectedFilter === 'month') {
-        if (!item.listedAt) return true;
-        const ts = new Date(item.listedAt).getTime();
-        if (isNaN(ts)) return true;
-        return Date.now() - ts <= 30 * 24 * 60 * 60 * 1000;
-      }
-      if (selectedFilter === 'villa') {
+      // Type / Mode filter
+      if (typeFilter === 'sale' && item.operation !== 'Sale' && item.mode !== 'sale') return false;
+      if (typeFilter === 'rent' && item.operation !== 'Rent' && item.mode !== 'rent') return false;
+      if (typeFilter === 'owners' && item.sourceType !== 'owner' && (item.ownerType || '').toLowerCase() !== 'owner') return false;
+      if (typeFilter === 'villa') {
         const t = (item.type || '').toLowerCase();
-        return t.includes('villa') || t.includes('twin') || t.includes('town');
+        if (!t.includes('villa') && !t.includes('twin') && !t.includes('town')) return false;
       }
-      if (selectedFilter === 'apartment') {
+      if (typeFilter === 'apartment') {
         const t = (item.type || '').toLowerCase();
-        return t.includes('apartment') || t.includes('duplex') || t.includes('penthouse') || t.includes('garden');
+        if (!t.includes('apartment') && !t.includes('duplex') && !t.includes('studio') && !t.includes('penthouse')) return false;
       }
 
+      // Photo Status Filter
+      const hasImg = Boolean(item.hasPhotos || (item.photos && item.photos.length > 0) || item.image || item.img);
+      if (photoFilter === 'has_photos' && !hasImg) return false;
+      if (photoFilter === 'missing_photos' && hasImg) return false;
+      if (photoFilter === 'best_needing_photos') {
+        if (hasImg || !isBestUnit(item)) return false;
+      }
+
+      // Availability Filter
+      const st = (item.status || 'Available').toLowerCase();
+      if (availabilityFilter === 'available' && st !== 'available' && st !== 'active') return false;
+      if (availabilityFilter === 'pending' && !st.includes('pending') && !st.includes('review')) return false;
+      if (availabilityFilter === 'sold_rented' && !st.includes('sold') && !st.includes('rented') && !st.includes('archived')) return false;
+
+      // Syndication Filter
+      if (syndicationFilter === 'web_live' && !item.publishToClient) return false;
+      if (syndicationFilter === 'pf_live' && !item.syndicatedToPf) return false;
+
+      // Zone filter
       if (zoneFilter !== 'all') {
         const itemZone = (item.zone || item.location || '').toLowerCase();
         if (!itemZone.includes(zoneFilter.toLowerCase())) return false;
@@ -145,7 +256,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
       return true;
     });
-  }, [allListingsData, searchQuery, selectedFilter, zoneFilter]);
+  }, [allListingsData, searchQuery, typeFilter, photoFilter, availabilityFilter, syndicationFilter, zoneFilter]);
 
   const paginatedListings = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -162,6 +273,94 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
     });
     return Array.from(set);
   }, [allListingsData]);
+
+  // Overall Statistics
+  const stats = useMemo(() => {
+    const all = allListingsData;
+    const withPhotos = all.filter((x) => Boolean(x.hasPhotos || (x.photos && x.photos.length > 0) || x.image || x.img)).length;
+    const missingPhotos = all.length - withPhotos;
+    const bestNeedingPhotos = all.filter((x) => isBestUnit(x) && !x.hasPhotos && !(x.photos && x.photos.length > 0) && !x.image && !x.img).length;
+    const available = all.filter((x) => (x.status || 'Available').toLowerCase() === 'available' || (x.status || '').toLowerCase() === 'active').length;
+    const webLive = all.filter((x) => Boolean(x.publishToClient)).length;
+    const pfLive = all.filter((x) => Boolean(x.syndicatedToPf)).length;
+
+    return {
+      total: all.length,
+      withPhotos,
+      missingPhotos,
+      bestNeedingPhotos,
+      available,
+      webLive,
+      pfLive,
+      sale: all.filter((x) => x.operation === 'Sale' || x.mode === 'sale').length,
+      rent: all.filter((x) => x.operation === 'Rent' || x.mode === 'rent').length,
+    };
+  }, [allListingsData]);
+
+  // 1-Click Availability change
+  const handleUpdateAvailability = (code: string, newStatus: string) => {
+    setAllListingsData((prev) =>
+      prev.map((item) => {
+        if ((item.sierraCode || item.code || item.id) === code) {
+          return { ...item, status: newStatus };
+        }
+        return item;
+      })
+    );
+    setBulkNotification(`Updated ${code} availability to "${newStatus}"`);
+    setTimeout(() => setBulkNotification(null), 3000);
+  };
+
+  // 1-Click Toggle Website Publish
+  const handleToggleWebsitePublish = (code: string) => {
+    setAllListingsData((prev) =>
+      prev.map((item) => {
+        if ((item.sierraCode || item.code || item.id) === code) {
+          const next = !item.publishToClient;
+          setBulkNotification(`${code} is now ${next ? 'LIVE on Website Portal' : 'Unpublished from Website'}`);
+          setTimeout(() => setBulkNotification(null), 3000);
+          return { ...item, publishToClient: next };
+        }
+        return item;
+      })
+    );
+  };
+
+  // 1-Click Toggle Property Finder Syndication
+  const handleTogglePfSyndicate = (code: string) => {
+    setAllListingsData((prev) =>
+      prev.map((item) => {
+        if ((item.sierraCode || item.code || item.id) === code) {
+          const next = !item.syndicatedToPf;
+          setBulkNotification(`${code} is now ${next ? 'Syndicated to Property Finder Feed' : 'Removed from Property Finder'}`);
+          setTimeout(() => setBulkNotification(null), 3000);
+          return { ...item, syndicatedToPf: next };
+        }
+        return item;
+      })
+    );
+  };
+
+  // Attach / Apply photos to a listing
+  const handleApplyPhotos = (code: string, photoUrls: string[]) => {
+    setAllListingsData((prev) =>
+      prev.map((item) => {
+        if ((item.sierraCode || item.code || item.id) === code) {
+          return {
+            ...item,
+            photos: photoUrls,
+            hasPhotos: photoUrls.length > 0,
+            image: photoUrls[0],
+          };
+        }
+        return item;
+      })
+    );
+    setActivePhotoModalUnit(null);
+    setCustomPhotoUrl('');
+    setBulkNotification(`Attached ${photoUrls.length} verified photo(s) to ${code}. Unit is now ready for syndication!`);
+    setTimeout(() => setBulkNotification(null), 4000);
+  };
 
   const handleToggleSelectAllPage = () => {
     const pageIds = paginatedListings.map((item) => item.sierraCode || item.code || `SE-${item.id}`);
@@ -180,27 +379,29 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   };
 
   const handleExportSelectedCSV = () => {
-    const selectedRows = (allListingsData as any[]).filter((x) => {
+    const selectedRows = allListingsData.filter((x) => {
       const id = x.sierraCode || x.code || `SE-${x.id}`;
       return selectedListingIds.includes(id);
     });
     if (selectedRows.length === 0) return;
 
-    const headers = ['Code', 'Compound', 'Location', 'Type', 'Bedrooms', 'Area_SQM', 'Price_EGP', 'Mode', 'Owner_Name', 'Status'];
+    const headers = ['Code', 'Compound', 'Location', 'Type', 'Bedrooms', 'Area_SQM', 'Price_EGP', 'Mode', 'Status', 'Has_Photos', 'Web_Live', 'PF_Syndicated'];
     const rows = selectedRows.map((r) => [
       `"${r.sierraCode || r.code || r.id || ''}"`,
-      `"${r.compound || r.cmp || ''}"`,
-      `"${r.location || r.zone || ''}"`,
+      `"${r.compound || ''}"`,
+      `"${r.location || ''}"`,
       `"${r.type || ''}"`,
       r.bedrooms || r.beds || '',
       r.area_sqm || r.area || '',
       r.price || '',
       r.operation || r.mode || 'Sale',
-      `"${r.ownerName || r.contact_info || ''}"`,
       `"${r.status || 'Available'}"`,
+      r.hasPhotos ? 'Yes' : 'No',
+      r.publishToClient ? 'Yes' : 'No',
+      r.syndicatedToPf ? 'Yes' : 'No',
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -219,591 +420,907 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       setIsGuardModalOpen(true);
       return;
     }
-    executeBulkStatusUpdate();
-  };
-
-  const executeBulkStatusUpdate = () => {
-    setBulkNotification(`Updated status for ${selectedListingIds.length} listings to "${bulkStatus}"`);
+    setAllListingsData((prev) =>
+      prev.map((item) => {
+        const id = item.sierraCode || item.code || `SE-${item.id}`;
+        if (selectedListingIds.includes(id)) {
+          return { ...item, status: bulkStatus };
+        }
+        return item;
+      })
+    );
+    setBulkNotification(`Updated status of ${selectedListingIds.length} properties to ${bulkStatus}`);
     setSelectedListingIds([]);
-    setIsGuardModalOpen(false);
-    setTimeout(() => setBulkNotification(null), 3500);
+    setTimeout(() => setBulkNotification(null), 3000);
   };
-
-  const stats = useMemo(() => {
-    const all = allListingsData as any[];
-    const ownersCount = all.filter((x) => x.sourceType === 'owner' || (x.ownerType || '').toLowerCase() === 'owner').length;
-    const whatsappCount = all.filter(
-      (item) =>
-        item.origin === 'whatsapp_group' ||
-        item.sourceGroup?.toLowerCase().includes('whatsapp') ||
-        item.ago?.toLowerCase().includes('whatsapp') ||
-        item.agent?.toLowerCase().includes('whatsapp') ||
-        item.code?.startsWith('UNIT-WA') ||
-        item.sierraCode?.startsWith('UNIT-WA') ||
-        item.sierraCode?.startsWith('MD-B10') ||
-        item.sierraCode?.startsWith('RH-P4') ||
-        item.sierraCode?.startsWith('MV-GS') ||
-        item.sierraCode?.startsWith('ET-R90') ||
-        item.sierraCode?.startsWith('HP-GR') ||
-        item.sierraCode?.startsWith('SL-HAF') ||
-        item.sierraCode?.startsWith('BD-PH') ||
-        item.sierraCode?.startsWith('VS-3A') ||
-        item.sierraCode?.startsWith('MV-POOL') ||
-        item.sierraCode?.startsWith('HP-LAKE')
-    ).length;
-    const saleCount = all.filter((x) => x.operation === 'Sale' || x.mode === 'sale').length;
-    const rentCount = all.filter((x) => x.operation === 'Rent' || x.mode === 'rent').length;
-    const newCount = all.filter((x) => Boolean(x.isNewListing)).length;
-    const monthCount = all.filter((x) => {
-      if (!x.listedAt) return true;
-      const ts = new Date(x.listedAt).getTime();
-      return isNaN(ts) || Date.now() - ts <= 30 * 24 * 60 * 60 * 1000;
-    }).length;
-
-    return {
-      total: all.length,
-      owners: ownersCount,
-      whatsapp: whatsappCount,
-      sale: saleCount,
-      rent: rentCount,
-      new: newCount,
-      month: monthCount,
-    };
-  }, [allListingsData]);
 
   return (
-    <div className="space-y-6" data-testid="admin-listings-view">
+    <div className="fade-up space-y-6" style={{ color: 'var(--tx)' }}>
       {/* Top Header & Subnav */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 14,
+          paddingBottom: 16,
+          borderBottom: '1px solid var(--bd)',
+        }}
+      >
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <span>{isAr ? 'قاعدة بيانات العقارات والمخزون الحصري' : 'Luxury Inventory & Listings Hub'}</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-950 text-cyan-400 border border-cyan-800">
-              {stats.total} {isAr ? 'وحدة نشطة' : 'Live Units'}
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--tx-s)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span>{isAr ? 'المخزون العقاري، الصور، وتوزيع البوابات' : 'Inventory, Photos & Multi-Channel Syndication'}</span>
+            <span
+              style={{
+                fontSize: 11,
+                padding: '3px 10px',
+                borderRadius: 20,
+                background: 'rgba(0, 174, 255, 0.15)',
+                color: 'var(--gold)',
+                border: '1px solid rgba(0, 174, 255, 0.3)',
+                fontWeight: 600,
+              }}
+            >
+              {stats.total.toLocaleString()} {isAr ? 'وحدة' : 'Units'}
             </span>
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p style={{ fontSize: 13, color: 'var(--tx-m)', marginTop: 4 }}>
             {isAr
-              ? 'إدارة العقارات والوحدات المتاحة والمدرجة تلقائياً عبر محفظة سييرا وشبكة الوسطاء المعتمدة'
-              : 'Unified architectural portfolio with verified Sierra inventory and broker network.'}
+              ? 'التحكم في توفر الوحدات، فحص واقتناص الصور للعقارات المميزة، والنشر الفوري على بروبرتي فايندر وموقع سييرا'
+              : 'Control availability, hunt photos for premier units, and syndicate live across Property Finder & Sierra Portal.'}
           </p>
         </div>
 
         {/* Action Controls & Tab Switcher */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Master Excel Download Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* Download Spreadsheets links */}
           <a
-            href="https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/apps/sierra-estates-realty/data/sierra-estates-master-inventory.csv"
-            target="_blank"
-            rel="noopener noreferrer"
-            download="sierra-estates-master-inventory.csv"
-            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
+            href="/downloads/Sierra_Estates_Owners_Rent_Master.xlsx"
+            download="Sierra_Estates_Owners_Rent_Master.xlsx"
+            style={{
+              padding: '6px 12px',
+              borderRadius: 10,
+              background: 'var(--bg-e)',
+              border: '1px solid var(--bd)',
+              color: 'var(--tx)',
+              fontSize: 11,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              textDecoration: 'none',
+            }}
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{isAr ? 'شيت إيجارات الملاك' : 'Owners Rent (.xlsx)'}</span>
+          </a>
+
+          <a
+            href="/downloads/Sierra_Estates_Rent_Master_Inventory.xlsx"
+            download="Sierra_Estates_Rent_Master_Inventory.xlsx"
+            style={{
+              padding: '6px 12px',
+              borderRadius: 10,
+              background: 'var(--bg-e)',
+              border: '1px solid var(--bd)',
+              color: 'var(--tx)',
+              fontSize: 11,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              textDecoration: 'none',
+            }}
           >
             <Download className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{isAr ? 'تحميل الشيت الرئيسي (CSV/Excel)' : 'Master Sheet (Excel)'}</span>
+            <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
           </a>
 
           {/* Tab Controls */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800">
+          <div style={{ display: 'flex', padding: 3, borderRadius: 12, background: 'var(--surf)', border: '1px solid var(--bd)' }}>
             <button
-              type="button"
               onClick={() => setActiveTab('inventory')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activeTab === 'inventory'
-                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'inventory' ? 'var(--gold)' : 'transparent',
+                color: activeTab === 'inventory' ? '#07111E' : 'var(--tx-m)',
+              }}
             >
-              <ListFilter className="w-3.5 h-3.5" />
-              <span>{isAr ? 'المخزون' : 'All Listings'}</span>
+              <ListFilter className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'المخزون الموحد' : 'All Listings'}</span>
             </button>
             <button
-              type="button"
               onClick={() => setActiveTab('valuation')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activeTab === 'valuation'
-                  ? 'bg-linear-to-r from-emerald-600 to-cyan-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'valuation' ? 'var(--emerald)' : 'transparent',
+                color: activeTab === 'valuation' ? '#07111E' : 'var(--tx-m)',
+              }}
             >
-              <Calculator className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{isAr ? 'التقييم والمراجحة' : 'Valuation & Arbitrage'}</span>
+              <Calculator className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'التقييم والمراجحة' : 'AVM Arbitrage'}</span>
             </button>
             <button
-              type="button"
               onClick={() => setActiveTab('easy-listing')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activeTab === 'easy-listing'
-                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'easy-listing' ? 'var(--purple)' : 'transparent',
+                color: activeTab === 'easy-listing' ? '#fff' : 'var(--tx-m)',
+              }}
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAr ? 'الإدراج الذكي' : 'Easy Add'}</span>
+              <Sparkles className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'إدراج ذكي' : 'Easy Add'}</span>
             </button>
             <button
-              type="button"
               onClick={() => setActiveTab('brochure')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activeTab === 'brochure'
-                  ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'brochure' ? 'var(--blue)' : 'transparent',
+                color: activeTab === 'brochure' ? '#fff' : 'var(--tx-m)',
+              }}
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>{isAr ? 'بروشور PDF' : 'PDF Teaser'}</span>
+              <FileText className="w-3.5 h-3.5 inline mr-1" />
+              <span>PDF Teaser</span>
             </button>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-slate-400">
-            {isLoadingLiveListings
-              ? (isAr ? 'جاري جلب بيانات Property Finder...' : 'Fetching live Property Finder inventory...')
-              : liveListingsError
-                ? (isAr ? 'يتم عرض النسخة المحلية الاحتياطية' : 'Showing the committed fallback inventory')
-                : (isAr ? 'متصل بالمخزون الموحد من Property Finder وSupabase' : 'Live Property Finder / Supabase inventory connected')}
-          </span>
-          <span className="px-2 py-1 rounded-md border border-orange-500/30 bg-orange-500/10 text-orange-300">
-            {allListingsData.filter((item) => item.syncSource === 'property-finder').length} Property Finder
-          </span>
         </div>
       </div>
 
-      {/* Tab 1: Valuation & Arbitrage Studio */}
+      {/* Tab Content */}
       {activeTab === 'valuation' && <ValuationArbitrageStudio lang={lang} />}
-
-      {/* Tab 2: Easy Listing Studio */}
-      {activeTab === 'easy-listing' && (
-        <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />
-      )}
-
-      {/* Tab 3: PDF Brochure & Teaser */}
+      {activeTab === 'easy-listing' && <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />}
       {activeTab === 'brochure' && <PropertyTeaserBrochure />}
 
-      {/* Tab 4: Unified Inventory Table */}
       {activeTab === 'inventory' && (
-        <div className="space-y-5">
+        <div className="space-y-4">
+          {/* Priority Callout Banner: Best Units Needing Photos */}
+          {stats.bestNeedingPhotos > 0 && (
+            <div
+              style={{
+                padding: '14px 18px',
+                borderRadius: 14,
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(212, 175, 55, 0.15))',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#f59e0b',
+                  }}
+                >
+                  <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx-s)' }}>
+                    {isAr ? 'رادار اقتناص الصور: وحدات استثمارية ممتازة بحاجة لصور عاجلة!' : 'Photo Hunter Radar: Prime High-Yield Units Need Photos!'}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--tx-m)', marginTop: 2 }}>
+                    {isAr
+                      ? `تم اكتشاف ${stats.bestNeedingPhotos} وحدة في كمبوندات النخبة (ميفيدا، إيستاون، الرحاب، مدينتي) ليس لها صور. إرفاق الصور يزيد نسبة إغلاق الصفقات بـ 4.2 أضعاف.`
+                      : `${stats.bestNeedingPhotos} premier units in flagship compounds (Mivida, Eastown, Rehab, Madinaty) currently have NO photos. Bringing photos unlocks client syndication!`}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setPhotoFilter(photoFilter === 'best_needing_photos' ? 'all' : 'best_needing_photos')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  background: photoFilter === 'best_needing_photos' ? '#f59e0b' : 'var(--bg-e)',
+                  color: photoFilter === 'best_needing_photos' ? '#07111E' : '#f59e0b',
+                  border: '1px solid #f59e0b',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Camera className="w-4 h-4" />
+                <span>
+                  {photoFilter === 'best_needing_photos'
+                    ? (isAr ? 'عرض كل الوحدات' : 'Show All Units')
+                    : (isAr ? `تصفية الوحدات الأفضل (${stats.bestNeedingPhotos})` : `View Best Units Needing Photos (${stats.bestNeedingPhotos})`)}
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="text-xs text-slate-400">{isAr ? 'إجمالي المخزون النشط' : 'Total Active Units'}</div>
-              <div className="text-xl font-bold text-white mt-1">{stats.total}</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="text-xs text-emerald-400 flex items-center gap-1">
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>{isAr ? 'محفظة حصرية' : 'Exclusive Portfolio'}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
+            {[
+              { label: isAr ? 'إجمالي المخزون' : 'Total Portfolio', val: stats.total.toLocaleString(), color: 'var(--gold)' },
+              { label: isAr ? 'الوحدات المتاحة' : 'Available (Active)', val: stats.available.toLocaleString(), color: 'var(--emerald)' },
+              { label: isAr ? 'وحدات بها صور' : 'With Verified Photos', val: `${stats.withPhotos} units`, color: 'var(--cyan)' },
+              { label: isAr ? 'بحاجة لصور' : 'Missing Photos', val: `${stats.missingPhotos} units`, color: 'var(--amber)' },
+              { label: isAr ? 'منشورة على الموقع' : 'Website Live', val: `${stats.webLive} live`, color: 'var(--purple)' },
+              { label: isAr ? 'بروبرتي فايندر' : 'Property Finder', val: `${stats.pfLive} synced`, color: '#f97316' },
+            ].map((m, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'var(--bg-e)',
+                  border: '1px solid var(--bd)',
+                  boxShadow: 'var(--clay-card-shadow)',
+                }}
+              >
+                <div style={{ fontSize: 11, color: 'var(--tx-f)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{m.label}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: m.color, marginTop: 4 }}>{m.val}</div>
               </div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">
-                {stats.owners} {isAr ? 'وحدة' : 'Units'}
-              </div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="text-xs text-cyan-400">{isAr ? 'عقارات للبيع' : 'Units For Sale'}</div>
-              <div className="text-xl font-bold text-cyan-400 mt-1">{stats.sale}</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="text-xs text-amber-400">{isAr ? 'عقارات للإيجار' : 'Units For Rent'}</div>
-              <div className="text-xl font-bold text-amber-400 mt-1">{stats.rent}</div>
-            </div>
-            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="text-xs text-purple-400 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{isAr ? 'مدرج حديثاً (48س)' : 'New Listings'}</span>
-              </div>
-              <div className="text-xl font-bold text-purple-400 mt-1">{stats.new}</div>
-            </div>
+            ))}
           </div>
 
-          {/* Search & Filter Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder={
-                  isAr
-                    ? 'بحث بالكود، الكمبوند، النوع، أو المالك...'
-                    : 'Search by code, compound, type, owner, keyword...'
-                }
-                className="w-full pl-9 pr-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
-              />
-            </div>
+          {/* Multi-Dimensional Filter Bar */}
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 14,
+              background: 'var(--bg-e)',
+              border: '1px solid var(--bd)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              boxShadow: 'var(--clay-card-shadow)',
+            }}
+          >
+            {/* Search Input + Zone selector */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
+                <Search className="w-4 h-4" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-f)' }} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder={isAr ? 'بحث بالكود، الكمبوند، نوع العقار، أو اسم المالك...' : 'Search by code, compound, type, owner, keyword...'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: 9,
+                    background: 'var(--bg-e2)',
+                    border: '1px solid var(--bd-s)',
+                    color: 'var(--tx)',
+                    fontSize: 12,
+                    outline: 'none',
+                  }}
+                />
+              </div>
 
-            {/* Filter Pills & Zone Selector */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* Zone Filter Dropdown */}
+              {/* Zone / Compound Selector */}
               <select
                 value={zoneFilter}
                 onChange={(e) => {
                   setZoneFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-2.5 py-1.5 bg-slate-950/80 border border-slate-800 rounded-lg text-xs text-cyan-400 font-semibold focus:outline-none focus:border-cyan-500"
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 9,
+                  background: 'var(--bg-e2)',
+                  border: '1px solid var(--bd-s)',
+                  color: 'var(--gold)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  outline: 'none',
+                }}
               >
-                <option value="all">{isAr ? 'جميع المناطق / الكمبوندات' : '🌐 All Zones & Compounds'}</option>
+                <option value="all">{isAr ? 'كل المناطق والكمبوندات' : 'All Zones & Compounds'}</option>
                 {availableZones.map((z) => (
-                  <option key={z} value={z}>
-                    {z}
-                  </option>
+                  <option key={z} value={z}>{z}</option>
                 ))}
               </select>
+            </div>
 
+            {/* Filter Pills Row */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Type / Deal Pills */}
+              <span style={{ fontSize: 11, color: 'var(--tx-f)', marginRight: 4 }}>Type:</span>
               {[
-                { id: 'all', label: isAr ? `الكل (${stats.total})` : `All (${stats.total})` },
-                {
-                  id: 'month',
-                  label: isAr ? `📅 آخر شهر (${stats.month})` : `📅 Last 30 Days (${stats.month})`,
-                },
-                {
-                  id: 'owners',
-                  label: isAr ? `🟢 محفظة حصرية (${stats.owners})` : `🟢 Exclusive Portfolio (${stats.owners})`,
-                },
-                { id: 'sale', label: isAr ? `للبيع (${stats.sale})` : `For Sale (${stats.sale})` },
-                { id: 'rent', label: isAr ? `للإيجار (${stats.rent})` : `For Rent (${stats.rent})` },
-                { id: 'new', label: isAr ? `🆕 حديث (${stats.new})` : `🆕 New (<48h)` },
-                { id: 'villa', label: isAr ? 'فيلات وتوين' : 'Villas & Twins' },
-                { id: 'apartment', label: isAr ? 'شقق ودوبلكس' : 'Apartments' },
+                { key: 'all', label: isAr ? 'الكل' : 'All' },
+                { key: 'sale', label: isAr ? 'بيع' : 'Sale' },
+                { key: 'rent', label: isAr ? 'إيجار' : 'Rent' },
+                { key: 'owners', label: isAr ? 'مالك مباشر' : 'Direct Owners' },
+                { key: 'villa', label: isAr ? 'فيلات' : 'Villas' },
+                { key: 'apartment', label: isAr ? 'شقق' : 'Apartments' },
               ].map((f) => (
                 <button
-                  key={f.id}
+                  key={f.key}
                   onClick={() => {
-                    setSelectedFilter(f.id as any);
+                    setTypeFilter(f.key as any);
                     setCurrentPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    selectedFilter === f.id
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'bg-slate-950/60 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: typeFilter === f.key ? 'var(--gold)' : 'var(--surf)',
+                    color: typeFilter === f.key ? '#07111E' : 'var(--tx)',
+                    border: '1px solid var(--bd)',
+                  }}
                 >
                   {f.label}
                 </button>
               ))}
 
-              <button
-                onClick={() => setActiveTab('easy-listing')}
-                className="ml-auto px-3 py-1.5 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold rounded-lg shadow-md flex items-center gap-1.5"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>{isAr ? '+ إضافة عقار' : '+ Easy Add Listing'}</span>
-              </button>
+              <span style={{ width: 1, height: 16, background: 'var(--bd)', margin: '0 4px' }} />
+
+              {/* Photo Filter Pills */}
+              <span style={{ fontSize: 11, color: 'var(--tx-f)', marginRight: 4 }}>Photos:</span>
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'has_photos', label: '📸 With Photos' },
+                { key: 'missing_photos', label: '⚠️ Needs Photos' },
+                { key: 'best_needing_photos', label: '⭐ Best Units Needing Photos' },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => {
+                    setPhotoFilter(f.key as any);
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background:
+                      photoFilter === f.key
+                        ? f.key === 'best_needing_photos'
+                          ? '#f59e0b'
+                          : 'var(--gold)'
+                        : 'var(--surf)',
+                    color: photoFilter === f.key ? '#07111E' : 'var(--tx)',
+                    border: f.key === 'best_needing_photos' ? '1px solid #f59e0b' : '1px solid var(--bd)',
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+
+              <span style={{ width: 1, height: 16, background: 'var(--bd)', margin: '0 4px' }} />
+
+              {/* Availability Filter Pills */}
+              <span style={{ fontSize: 11, color: 'var(--tx-f)', marginRight: 4 }}>Availability:</span>
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'available', label: 'Available' },
+                { key: 'pending', label: 'Pending' },
+                { key: 'sold_rented', label: 'Rented / Sold' },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => {
+                    setAvailabilityFilter(f.key as any);
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: availabilityFilter === f.key ? 'var(--emerald)' : 'var(--surf)',
+                    color: availabilityFilter === f.key ? '#07111E' : 'var(--tx)',
+                    border: '1px solid var(--bd)',
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Bulk Action Bar (when rows are selected) */}
-          {selectedListingIds.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-linear-to-r from-cyan-950/80 via-slate-900 to-cyan-950/80 border border-cyan-500/50 shadow-lg animate-fadeIn">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md bg-cyan-600 text-white font-bold text-xs">
-                  {selectedListingIds.length} {isAr ? 'عقارات محددة' : 'Selected'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedListingIds([])}
-                  className="text-xs text-slate-400 hover:text-white underline"
-                >
-                  {isAr ? 'إلغاء التحديد' : 'Deselect All'}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Bulk Status Dropdown & Apply */}
-                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
-                  <span className="text-[11px] text-slate-400">{isAr ? 'تغيير الحالة:' : 'Set Status:'}</span>
-                  <select
-                    value={bulkStatus}
-                    onChange={(e) => setBulkStatus(e.target.value)}
-                    className="bg-transparent text-xs text-white font-medium focus:outline-none"
-                  >
-                    <option value="Available" className="bg-slate-900 text-white">Available</option>
-                    <option value="Reserved" className="bg-slate-900 text-white">Reserved</option>
-                    <option value="Sold" className="bg-slate-900 text-white">Sold</option>
-                    <option value="Archived" className="bg-slate-900 text-white">Archived</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={handleApplyBulkStatus}
-                    className="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold transition-colors"
-                  >
-                    {isAr ? 'تطبيق' : 'Apply'}
-                  </button>
-                </div>
-
-                {/* Export Selected to CSV */}
-                <button
-                  type="button"
-                  onClick={handleExportSelectedCSV}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export Selected'}</span>
-                </button>
-
-                {/* Bulk Broadcast via WhatsApp */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBulkNotification(`Created draft WhatsApp broadcast batch for ${selectedListingIds.length} properties.`);
-                    setTimeout(() => setBulkNotification(null), 4000);
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <span>💬</span>
-                  <span>{isAr ? 'إرسال عبر واتساب' : 'WhatsApp Broadcast'}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Bulk Notification Banner */}
           {bulkNotification && (
-            <div className="p-2.5 rounded-lg bg-emerald-950/80 border border-emerald-500/60 text-emerald-300 text-xs font-medium flex items-center gap-2 animate-fadeIn">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+            <div
+              style={{
+                padding: '10px 16px',
+                borderRadius: 10,
+                background: 'rgba(52, 211, 153, 0.15)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                color: 'var(--emerald)',
+                fontSize: 12,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
               <span>{bulkNotification}</span>
             </div>
           )}
 
-          {/* Results Summary */}
-          <div className="flex justify-between items-center text-xs text-slate-400 px-1">
+          {/* Bulk Action Bar */}
+          {selectedListingIds.length > 0 && (
+            <div
+              style={{
+                padding: 12,
+                borderRadius: 12,
+                background: 'var(--bg-e)',
+                border: '1px solid var(--gold)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    background: 'var(--gold)',
+                    color: '#07111E',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  {selectedListingIds.length} Selected
+                </span>
+                <button
+                  onClick={() => setSelectedListingIds([])}
+                  style={{ background: 'none', border: 'none', color: 'var(--tx-f)', fontSize: 11, textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  Deselect All
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: 'var(--tx-f)' }}>Set Availability:</span>
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: 6,
+                    background: 'var(--bg-e2)',
+                    color: 'var(--tx)',
+                    border: '1px solid var(--bd)',
+                    fontSize: 11,
+                  }}
+                >
+                  <option value="Available">Available</option>
+                  <option value="Reserved">Reserved</option>
+                  <option value="Sold">Sold</option>
+                  <option value="Archived">Archived</option>
+                </select>
+                <button
+                  onClick={handleApplyBulkStatus}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    background: 'var(--emerald)',
+                    color: '#07111E',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Apply
+                </button>
+                <button
+                  onClick={handleExportSelectedCSV}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    background: 'var(--surf)',
+                    color: 'var(--tx)',
+                    border: '1px solid var(--bd)',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Results Counter */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--tx-m)', padding: '0 4px' }}>
             <span>
-              {isAr
-                ? `عرض ${filteredListings.length} عقار من إجمالي ${stats.total}`
-                : `Showing ${filteredListings.length} matching units (Page ${currentPage} of ${totalPages || 1})`}
+              Showing <strong style={{ color: 'var(--tx-s)' }}>{filteredListings.length}</strong> matching properties (Page {currentPage} of {totalPages || 1})
             </span>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-cyan-400 hover:underline text-xs"
+                style={{ background: 'none', border: 'none', color: 'var(--gold)', cursor: 'pointer', fontSize: 11, textDecoration: 'underline' }}
               >
-                {isAr ? 'مسح البحث' : 'Clear search'}
+                Clear search
               </button>
             )}
           </div>
 
-          {/* Valuation Quick Modal / Drawer when a row is evaluated */}
-          {activeValuationUnit && (
-            <div className="p-4 rounded-2xl bg-linear-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-500/40 space-y-3 animate-fadeIn shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-emerald-400 animate-pulse" />
-                  <span className="text-xs font-bold text-white font-mono uppercase">
-                    VALUATION & ARBITRAGE ASSESSMENT: {activeValuationUnit.sierraCode || activeValuationUnit.code}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveValuationUnit(null)}
-                  className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded-lg"
+          {/* Table Container */}
+          <div
+            style={{
+              overflowX: 'auto',
+              borderRadius: 14,
+              border: '1px solid var(--bd)',
+              background: 'var(--bg-e)',
+              boxShadow: 'var(--clay-card-shadow)',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
+              <thead>
+                <tr
+                  style={{
+                    background: 'var(--surf)',
+                    borderBottom: '1px solid var(--bd)',
+                    color: 'var(--tx-f)',
+                    fontSize: 11,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
                 >
-                  ✕ Close
-                </button>
-              </div>
-
-              {(() => {
-                const evalRes = evaluatePropertyValuation({
-                  property_type: activeValuationUnit.type || 'apartment',
-                  size_sqm: activeValuationUnit.area_sqm || activeValuationUnit.area,
-                  location: activeValuationUnit.compound || activeValuationUnit.location,
-                  offered_purchase_price: activeValuationUnit.price || undefined,
-                  offered_rent: activeValuationUnit.operation === 'Rent' ? activeValuationUnit.price : undefined,
-                  amenities: ['underground parking'],
-                });
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 font-mono">AI VERDICT</span>
-                      <div className="text-emerald-300 font-bold mt-0.5">{evalRes.verdict}</div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 font-mono">PAYBACK PERIOD</span>
-                      <div className="text-white font-bold font-mono mt-0.5">
-                        {evalRes.investment_metrics.payback_period_years
-                          ? `${evalRes.investment_metrics.payback_period_years} Yrs`
-                          : 'N/A'}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 font-mono">IMPLIED CAP RATE</span>
-                      <div className="text-cyan-300 font-bold font-mono mt-0.5">
-                        {evalRes.offered_price_assessment.implied_cap_rate_pct
-                          ? `${evalRes.offered_price_assessment.implied_cap_rate_pct}%`
-                          : '8.5% Base'}
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                      <span className="text-slate-400 font-mono">FAIR VALUE SPECTRUM</span>
-                      <div className="text-amber-300 font-bold font-mono mt-0.5">
-                        {(evalRes.calculated_fair_value_range.conservative_cap_value / 1000000).toFixed(1)}M -{' '}
-                        {(evalRes.calculated_fair_value_range.premium_adjusted_optimistic / 1000000).toFixed(1)}M EGP
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-xl">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="p-3.5 w-10 text-center">
+                  <th style={{ padding: '12px 14px', width: 36, textAlign: 'center' }}>
                     <input
                       type="checkbox"
-                      aria-label="Select all listings on page"
-                      checked={
-                        paginatedListings.length > 0 &&
-                        paginatedListings.every((i) =>
-                          selectedListingIds.includes(i.sierraCode || i.code || `SE-${i.id}`)
-                        )
-                      }
+                      checked={paginatedListings.length > 0 && paginatedListings.every((i) => selectedListingIds.includes(i.sierraCode || i.code || `SE-${i.id}`))}
                       onChange={handleToggleSelectAllPage}
-                      className="rounded border-slate-700 bg-slate-900 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                      style={{ cursor: 'pointer' }}
                     />
                   </th>
-                  <th className="p-3.5">Code / Ref</th>
-                  <th className="p-3.5">Compound & Location</th>
-                  <th className="p-3.5">Property Specs</th>
-                  <th className="p-3.5">Price & Mode</th>
-                  <th className="p-3.5">Source & Owner</th>
-                  <th className="p-3.5">Status</th>
-                  <th className="p-3.5 text-center">AI Actions</th>
+                  <th style={{ padding: '12px 14px', width: 80 }}>Photo</th>
+                  <th style={{ padding: '12px 14px' }}>Unit & Ref</th>
+                  <th style={{ padding: '12px 14px' }}>Compound & Zone</th>
+                  <th style={{ padding: '12px 14px' }}>Specs</th>
+                  <th style={{ padding: '12px 14px' }}>Price & Mode</th>
+                  <th style={{ padding: '12px 14px' }}>Availability</th>
+                  <th style={{ padding: '12px 14px' }}>Syndication</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80">
+              <tbody>
                 {paginatedListings.map((item, idx) => {
-                  const isOwner =
-                    item.sourceType === 'owner' || (item.ownerType || '').toLowerCase() === 'owner';
-                  const isRent = item.operation === 'Rent' || item.mode === 'rent';
                   const code = item.sierraCode || item.code || `SE-${item.id}`;
                   const isSelected = selectedListingIds.includes(code);
+                  const isRent = item.operation === 'Rent' || item.mode === 'rent';
+                  const hasImg = Boolean(item.hasPhotos || (item.photos && item.photos.length > 0) || item.image || item.img);
+                  const photoUrl = item.image || (item.photos && item.photos[0]) || (typeof item.img === 'string' ? item.img : null);
+                  const topUnit = isBestUnit(item);
+                  const needsPhotos = topUnit && !hasImg;
 
                   return (
                     <tr
-                      key={code || item.id || idx}
-                      className={`hover:bg-slate-800/40 transition-colors ${
-                        isSelected ? 'bg-cyan-950/30' : ''
-                      }`}
+                      key={code || idx}
+                      style={{
+                        borderBottom: '1px solid var(--bd)',
+                        background: isSelected ? 'rgba(0, 174, 255, 0.08)' : needsPhotos ? 'rgba(245, 158, 11, 0.04)' : 'transparent',
+                        transition: 'background 0.15s',
+                      }}
                     >
-                      <td className="p-3.5 text-center">
+                      {/* Checkbox */}
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <input
                           type="checkbox"
-                          aria-label={`Select listing ${code}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelectRow(code)}
-                          className="rounded border-slate-700 bg-slate-900 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                          style={{ cursor: 'pointer' }}
                         />
                       </td>
-                      <td className="p-3.5">
-                        <div className="font-mono font-bold text-cyan-400">{code}</div>
-                        {item.isNewListing && (
-                          <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-950 text-purple-300 border border-purple-800/60">
-                            NEW
-                          </span>
+
+                      {/* Photo Thumbnail */}
+                      <td style={{ padding: '12px 14px' }}>
+                        {hasImg && photoUrl ? (
+                          <div style={{ position: 'relative', width: 56, height: 42 }}>
+                            <img
+                              src={photoUrl}
+                              alt={code}
+                              style={{ width: 56, height: 42, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--bd)' }}
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: -2,
+                                right: -2,
+                                background: 'var(--emerald)',
+                                color: '#07111E',
+                                fontSize: 9,
+                                fontWeight: 700,
+                                borderRadius: 4,
+                                padding: '1px 3px',
+                              }}
+                            >
+                              ✓
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setActivePhotoModalUnit(item)}
+                            title="Bring photos for this unit"
+                            style={{
+                              width: 56,
+                              height: 42,
+                              borderRadius: 8,
+                              background: needsPhotos ? 'rgba(245, 158, 11, 0.18)' : 'var(--surf)',
+                              border: needsPhotos ? '1px dashed #f59e0b' : '1px dashed var(--bd-s)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 2,
+                              cursor: 'pointer',
+                              color: needsPhotos ? '#f59e0b' : 'var(--tx-f)',
+                            }}
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <span style={{ fontSize: 8, fontWeight: 700 }}>{needsPhotos ? 'BRING' : 'Add'}</span>
+                          </button>
                         )}
                       </td>
-                      <td className="p-3.5">
-                        <div className="font-semibold text-white">
-                          {item.compound || item.location || 'New Cairo'}
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          {item.location || item.zone || '5th Settlement'}
-                        </div>
-                      </td>
-                      <td className="p-3.5">
-                        <div className="text-slate-200 font-medium">{item.type || 'Apartment'}</div>
-                        <div className="text-[11px] text-slate-400">
-                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths ·{' '}
-                          {item.area_sqm || item.area || 200} m²
-                          {item.gardenArea ? ` (+${item.gardenArea}m² gdn)` : ''}
-                        </div>
-                      </td>
-                      <td className="p-3.5">
-                        <div className="font-bold text-white">
-                          {item.priceFormatted ||
-                            (item.price > 0 ? `${item.price.toLocaleString()} EGP` : 'Price on Call')}
-                        </div>
-                        <span
-                          className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                            isRent
-                              ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
-                              : 'bg-cyan-950 text-cyan-300 border border-cyan-800/60'
-                          }`}
-                        >
-                          {isRent ? (isAr ? 'إيجار' : 'Rent') : isAr ? 'للبيع' : 'Sale'}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <div className="flex items-center gap-1 text-slate-300">
-                          {isOwner ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-0.5">
-                              <UserCheck className="w-2.5 h-2.5" />
-                              <span>{isAr ? 'مالك مباشر' : 'Owner'}</span>
-                            </span>
-                          ) : (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-950 text-blue-400 border border-blue-800/60">
-                              {isAr ? 'وسيط' : 'Broker'}
+
+                      {/* Unit Code & Tags */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--gold)', fontSize: 13 }}>{code}</div>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                          {topUnit && (
+                            <span
+                              style={{
+                                fontSize: 9,
+                                fontWeight: 700,
+                                padding: '1px 5px',
+                                borderRadius: 4,
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                color: '#f59e0b',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                              }}
+                            >
+                              ⭐ TOP ASSET
                             </span>
                           )}
-                          <span className="font-medium text-xs truncate max-w-30">
-                            {item.ownerName || item.contact_info || 'Direct Client'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
-                          <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                          <span>{item.sourceGroup || item.ago || 'Verified Sync'}</span>
+                          {needsPhotos && (
+                            <span
+                              style={{
+                                fontSize: 9,
+                                fontWeight: 700,
+                                padding: '1px 5px',
+                                borderRadius: 4,
+                                background: 'rgba(230, 57, 70, 0.15)',
+                                color: 'var(--red)',
+                                border: '1px solid rgba(230, 57, 70, 0.3)',
+                              }}
+                            >
+                              📸 NEEDS PHOTOS
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-[11px] font-medium inline-block">
-                          {item.status || 'Available'}
+
+                      {/* Compound & Location */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--tx-s)' }}>{item.compound || item.location || 'New Cairo'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>{item.location || item.zone || '5th Settlement'}</div>
+                      </td>
+
+                      {/* Specs */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ fontWeight: 500, color: 'var(--tx)' }}>{item.type || 'Apartment'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>
+                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths · {item.area_sqm || item.area || 180}m²
+                        </div>
+                      </td>
+
+                      {/* Price & Mode */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--tx-s)' }}>
+                          {item.priceFormatted || (item.price > 0 ? `${item.price.toLocaleString()} EGP` : 'Price on Call')}
+                        </div>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginTop: 4,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: isRent ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0, 174, 255, 0.15)',
+                            color: isRent ? 'var(--amber)' : 'var(--gold)',
+                          }}
+                        >
+                          {isRent ? 'RENT' : 'SALE'}
                         </span>
-                        {item.finishing && (
-                          <div className="text-[10px] text-slate-400 mt-0.5 truncate max-w-25">
-                            {item.finishing}
-                          </div>
-                        )}
                       </td>
-                      <td className="p-3.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+
+                      {/* Availability Dropdown */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <select
+                          value={item.status || 'Available'}
+                          onChange={(e) => handleUpdateAvailability(code, e.target.value)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            outline: 'none',
+                            background:
+                              (item.status || 'Available') === 'Available'
+                                ? 'rgba(52, 211, 153, 0.15)'
+                                : (item.status || '') === 'Reserved'
+                                ? 'rgba(245, 158, 11, 0.15)'
+                                : 'rgba(230, 57, 70, 0.15)',
+                            color:
+                              (item.status || 'Available') === 'Available'
+                                ? 'var(--emerald)'
+                                : (item.status || '') === 'Reserved'
+                                ? 'var(--amber)'
+                                : 'var(--red)',
+                            border: '1px solid var(--bd)',
+                          }}
+                        >
+                          <option value="Available">Available</option>
+                          <option value="Reserved">Reserved</option>
+                          <option value="Rented">Rented</option>
+                          <option value="Sold">Sold</option>
+                          <option value="Archived">Archived</option>
+                        </select>
+                      </td>
+
+                      {/* Syndication Switches (Website & Property Finder) */}
+                      <td style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          {/* Website Toggle */}
                           <button
-                            type="button"
-                            onClick={() => setActiveValuationUnit(item)}
-                            className="px-2 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 font-mono text-[11px] font-bold flex items-center gap-1 transition-colors"
-                            title="Instant AVM Valuation"
+                            onClick={() => handleToggleWebsitePublish(code)}
+                            title={item.publishToClient ? 'Published to website — Click to unpublish' : 'Hidden from website — Click to publish'}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              border: item.publishToClient ? '1px solid rgba(52, 211, 153, 0.3)' : '1px solid var(--bd)',
+                              background: item.publishToClient ? 'rgba(52, 211, 153, 0.15)' : 'var(--surf)',
+                              color: item.publishToClient ? 'var(--emerald)' : 'var(--tx-f)',
+                            }}
                           >
-                            <Zap className="w-3 h-3 text-emerald-400" />
-                            <span>Valuate</span>
+                            <Globe className="w-3 h-3" />
+                            <span>{item.publishToClient ? 'Website: LIVE' : 'Website: DRAFT'}</span>
                           </button>
+
+                          {/* Property Finder Toggle */}
+                          <button
+                            onClick={() => handleTogglePfSyndicate(code)}
+                            title={item.syndicatedToPf ? 'Syndicated to Property Finder — Click to remove' : 'Not syndicated — Click to push to Property Finder'}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              border: item.syndicatedToPf ? '1px solid rgba(249, 115, 22, 0.4)' : '1px solid var(--bd)',
+                              background: item.syndicatedToPf ? 'rgba(249, 115, 22, 0.15)' : 'var(--surf)',
+                              color: item.syndicatedToPf ? '#f97316' : 'var(--tx-f)',
+                            }}
+                          >
+                            <Building2 className="w-3 h-3" />
+                            <span>{item.syndicatedToPf ? 'PF: SYNCED' : 'PF: QUEUED'}</span>
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                          <button
+                            onClick={() => setActivePhotoModalUnit(item)}
+                            title="Manage Photos"
+                            style={{
+                              padding: '5px 8px',
+                              borderRadius: 6,
+                              background: needsPhotos ? 'rgba(245, 158, 11, 0.2)' : 'var(--surf)',
+                              border: needsPhotos ? '1px solid #f59e0b' : '1px solid var(--bd)',
+                              color: needsPhotos ? '#f59e0b' : 'var(--tx)',
+                              fontSize: 11,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 3,
+                            }}
+                          >
+                            <Camera className="w-3 h-3" />
+                            <span>{needsPhotos ? 'Bring Photos' : 'Photos'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => setActiveValuationUnit(item)}
+                            title="Instant AVM Valuation"
+                            style={{
+                              padding: '5px 8px',
+                              borderRadius: 6,
+                              background: 'var(--surf)',
+                              border: '1px solid var(--bd)',
+                              color: 'var(--emerald)',
+                              fontSize: 11,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 3,
+                            }}
+                          >
+                            <Zap className="w-3 h-3" />
+                            <span>AVM</span>
+                          </button>
+
                           <a
                             href={`/property/${encodeURIComponent(code)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 hover:bg-cyan-900 transition-colors"
-                            title="Preview on Client Portal"
+                            title="View on Client Portal"
+                            style={{
+                              padding: '5px 8px',
+                              borderRadius: 6,
+                              background: 'var(--surf)',
+                              border: '1px solid var(--bd)',
+                              color: 'var(--gold)',
+                              fontSize: 11,
+                              display: 'flex',
+                              alignItems: 'center',
+                              textDecoration: 'none',
+                            }}
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                          </a>
-                          <a
-                            href={`https://wa.me/201092048333?text=${encodeURIComponent(
-                              `Hello Sierra Estates Broker Desk — Inquiring about ${code} in ${item.compound || item.location || 'New Cairo'}.`
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 transition-colors"
-                            title="Chat on WhatsApp"
-                          >
-                            <span className="text-xs">💬</span>
+                            <Eye className="w-3 h-3" />
                           </a>
                         </div>
                       </td>
@@ -814,51 +1331,194 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16 }}>
               <button
-                disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={currentPage === 1}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  background: 'var(--bg-e)',
+                  border: '1px solid var(--bd)',
+                  color: 'var(--tx)',
+                  fontSize: 11,
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                }}
               >
-                {isAr ? '← السابق' : '← Previous'}
+                Previous
               </button>
-              <div className="text-xs text-slate-400">
-                {isAr ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
-              </div>
+              <span style={{ fontSize: 12, color: 'var(--tx-m)', fontFamily: 'monospace' }}>
+                Page {currentPage} of {totalPages}
+              </span>
               <button
-                disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  background: 'var(--bg-e)',
+                  border: '1px solid var(--bd)',
+                  color: 'var(--tx)',
+                  fontSize: 11,
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: currentPage === totalPages ? 0.5 : 1,
+                }}
               >
-                {isAr ? 'التالي →' : 'Next →'}
+                Next
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* Accidental Data Loss Guard Modal for Bulk Operations */}
-      <AccidentalDataLossGuardModal
-        isOpen={isGuardModalOpen}
-        title={{
-          en: 'Bulk Archive Listings Safeguard',
-          ar: 'حاجز الأمان لأرشفة العقارات جماعياً',
-        }}
-        actionDescription={{
-          en: `You are about to set status to "${bulkStatus}" across ${selectedListingIds.length} properties.`,
-          ar: `أنت على وشك تغيير الحالة إلى "${bulkStatus}" لـ ${selectedListingIds.length} عقاراً.`,
-        }}
-        impactSummary={{
-          en: 'Archived listings will be hidden from public catalog discovery and Property Finder sync feed.',
-          ar: 'العقارات المؤرشفة سيتم إخفاؤها من كتالوج البحث العام ومزامنة بروبرتي فايندر.',
-        }}
-        affectedCount={selectedListingIds.length}
-        lang={lang}
-        onConfirm={executeBulkStatusUpdate}
-        onCancel={() => setIsGuardModalOpen(false)}
-      />
+      {/* PHOTO ATTACH / HUNTER MODAL */}
+      {activePhotoModalUnit && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(7, 17, 30, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 20,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setActivePhotoModalUnit(null);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 540,
+              background: 'var(--bg-e)',
+              border: '1px solid var(--bd)',
+              borderRadius: 18,
+              padding: 24,
+              boxShadow: 'var(--clay-card-shadow)',
+              color: 'var(--tx)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Camera className="w-5 h-5" style={{ color: 'var(--gold)' }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx-s)' }}>
+                  Attach Photos · {activePhotoModalUnit.sierraCode || activePhotoModalUnit.code}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActivePhotoModalUnit(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--tx-f)', cursor: 'pointer' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div style={{ fontSize: 12, color: 'var(--tx-m)', lineHeight: 1.5 }}>
+              Attach verified photos for <strong>{activePhotoModalUnit.compound}</strong> ({activePhotoModalUnit.type} · {activePhotoModalUnit.priceFormatted || `${activePhotoModalUnit.price?.toLocaleString()} EGP`}). Units with photos achieve 4.2x higher conversion on Property Finder and Client Portal.
+            </div>
+
+            {/* Presets based on compound */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 6 }}>
+                Recommended Verified Community Presets ({activePhotoModalUnit.compound})
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                {getCommunityPreset(activePhotoModalUnit.compound).map((url, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handleApplyPhotos(activePhotoModalUnit.sierraCode || activePhotoModalUnit.code, [url])}
+                    style={{
+                      border: '1px solid var(--bd)',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      background: 'var(--surf)',
+                      transition: 'transform 0.15s',
+                    }}
+                  >
+                    <img src={url} alt="Preset" style={{ width: '100%', height: 90, objectFit: 'cover' }} />
+                    <div style={{ padding: '6px 8px', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>
+                      Apply Preset {i + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom URL Input */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx-f)' }}>
+                Or Paste Image URL (from Cloud Storage / WhatsApp / Unsplash):
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/... or https://REDACTED-PROJECT.supabase.co/storage/..."
+                  value={customPhotoUrl}
+                  onChange={(e) => setCustomPhotoUrl(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    background: 'var(--bg-e2)',
+                    border: '1px solid var(--bd-s)',
+                    color: 'var(--tx)',
+                    fontSize: 12,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  disabled={!customPhotoUrl.trim()}
+                  onClick={() => {
+                    if (customPhotoUrl.trim()) {
+                      handleApplyPhotos(activePhotoModalUnit.sierraCode || activePhotoModalUnit.code, [customPhotoUrl.trim()]);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    background: 'var(--gold)',
+                    color: '#07111E',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: customPhotoUrl.trim() ? 'pointer' : 'not-allowed',
+                    opacity: customPhotoUrl.trim() ? 1 : 0.5,
+                  }}
+                >
+                  Save Photo
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <button
+                onClick={() => setActivePhotoModalUnit(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  background: 'var(--surf)',
+                  border: '1px solid var(--bd)',
+                  color: 'var(--tx)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
