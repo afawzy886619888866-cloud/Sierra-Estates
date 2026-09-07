@@ -372,6 +372,7 @@
     "googleusercontent",
     "picsum",
     "istockphoto",
-    "worktrees"
+    "worktrees",
+    "vercelignore"
   ]
 }
