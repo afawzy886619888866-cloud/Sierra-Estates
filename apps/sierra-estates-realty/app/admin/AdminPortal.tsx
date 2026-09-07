@@ -1607,54 +1607,406 @@ function PipelinePage({ T }: { T: any }) {
   );
 }
 
-const TASKS_INIT = [
-  {t:'Call Ahmed Al-Rashid — confirm Hyde Park viewing',due:'Today 15:00',pr:'high',done:false,ag:'Sierra Bot'},
-  {t:'Send Uptown Cairo contract draft to Khalid (Stage-9)',due:'Today 17:30',pr:'high',done:false,ag:'Stage-9'},
-  {t:'Follow up بالعربي with Gulf lead — Leila',due:'Tomorrow 10:00',pr:'med',done:false,ag:'Leila'},
-  {t:'Review 23 scraped listings pending AVM pricing',due:'Tomorrow',pr:'med',done:false,ag:'Curator'},
-  {t:'Publish weekly compound performance report',due:'Friday',pr:'low',done:false,ag:'—'},
-  {t:'Verify Madinaty B10 owner-direct listing photos',due:'Done · Yesterday',pr:'low',done:true,ag:'Scribe'},
+interface TaskItem {
+  id: string;
+  t: string;
+  due: string;
+  pr: 'high' | 'med' | 'low';
+  done: boolean;
+  ag: string;
+  phone?: string;
+  tag?: string;
+}
+
+const TASKS_INIT: TaskItem[] = [
+  {
+    id: 'TSK-01',
+    t: '📸 Photo Hunter: Dispatch photographer to Mivida Villa (SE-MVD-VLA-0006) — high-yield luxury unit missing photos',
+    due: 'Today 14:00',
+    pr: 'high',
+    done: false,
+    ag: 'Photo Team',
+    tag: 'Photo Hunter',
+  },
+  {
+    id: 'TSK-02',
+    t: '🏢 Property Finder: Verify and syndicate 14 newly photographed units to Property Finder feed',
+    due: 'Today 16:00',
+    pr: 'high',
+    done: false,
+    ag: 'Property Finder',
+    tag: 'Syndication',
+  },
+  {
+    id: 'TSK-03',
+    t: 'Call Ahmed Al-Rashid — confirm Hyde Park viewing (PF Lead)',
+    due: 'Today 15:00',
+    pr: 'high',
+    done: false,
+    ag: 'Sierra Bot',
+    phone: '+201001112233',
+    tag: 'Viewing',
+  },
+  {
+    id: 'TSK-04',
+    t: 'Send Uptown Cairo contract draft to Khalid (Stage-9 Closer)',
+    due: 'Today 17:30',
+    pr: 'high',
+    done: false,
+    ag: 'Stage-9',
+    phone: '+971503334455',
+    tag: 'Closer',
+  },
+  {
+    id: 'TSK-05',
+    t: 'Follow up بالعربي with Gulf VIP lead on WhatsApp — Leila',
+    due: 'Tomorrow 10:00',
+    pr: 'med',
+    done: false,
+    ag: 'Leila',
+    phone: '+971503334455',
+    tag: 'Outreach',
+  },
+  {
+    id: 'TSK-06',
+    t: 'Review 23 scraped WhatsApp listings pending AVM pricing',
+    due: 'Tomorrow 12:00',
+    pr: 'med',
+    done: false,
+    ag: 'Curator',
+    tag: 'Inventory',
+  },
+  {
+    id: 'TSK-07',
+    t: 'Verify Madinaty B10 owner-direct listing photos and pricing',
+    due: 'Yesterday',
+    pr: 'low',
+    done: true,
+    ag: 'Scribe',
+    tag: 'Inventory',
+  },
 ];
-function TasksPage({ T }) {
+
+function TasksPage({ T }: { T: any }) {
   const ar = T('lang')==='ar';
-  const [tasks,setTasks]=useState(TASKS_INIT);
-  const [view,setView]=useState('active');
-  const [q,setQ]=useState('');
-  const toggle=i=>setTasks(p=>p.map((t,j)=>j===i?{...t,done:!t.done}:t));
-  const shown=tasks.map((t,i)=>({...t,i})).filter(t=>(view==='active'?!t.done:t.done)&&t.t.toLowerCase().includes(q.toLowerCase()));
-  const stats=[[tasks.length,ar?'إجمالي المهام':'Total Tasks','#1E88D9'],[tasks.filter(t=>t.done).length,ar?'مكتملة':'Completed','#34D399'],[1,ar?'متأخرة':'Overdue','#E63946'],[tasks.filter(t=>!t.done).length,ar?'قيد التنفيذ':'To Do','#00AEFF']];
-  const prC={high:'#E63946',med:'#f59e0b',low:'#1E88D9'};
+  const [tasks, setTasks] = useState<TaskItem[]>(TASKS_INIT);
+  const [view, setView] = useState<'all' | 'active' | 'done'>('active');
+  const [q, setQ] = useState('');
+  const [agentFilter, setAgentFilter] = useState('All');
+  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  // New task form state
+  const [newTitle, setNewTitle] = useState('');
+  const [newDue, setNewDue] = useState('Today 18:00');
+  const [newPr, setNewPr] = useState<'high' | 'med' | 'low'>('high');
+  const [newAg, setNewAg] = useState('Photo Team');
+  const [newPhone, setNewPhone] = useState('');
+
+  const toggle = (id: string) => setTasks(p => p.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const deleteTask = (id: string) => setTasks(p => p.filter(t => t.id !== id));
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    const newTask: TaskItem = {
+      id: `TSK-${String(tasks.length + 1).padStart(2, '0')}`,
+      t: newTitle.trim(),
+      due: newDue.trim() || 'Today',
+      pr: newPr,
+      done: false,
+      ag: newAg,
+      phone: newPhone.trim() || undefined,
+      tag: newAg === 'Photo Team' ? 'Photo Hunter' : newAg === 'Property Finder' ? 'Syndication' : 'Operations',
+    };
+    setTasks(p => [newTask, ...p]);
+    setNewTitle('');
+    setNewPhone('');
+    setShowNewModal(false);
+  };
+
+  const generatePhotoRadarTasks = () => {
+    const radarTasks: TaskItem[] = [
+      {
+        id: `TSK-RDR-${Date.now()}-1`,
+        t: '📸 Photo Hunter: Photograph Hyde Park Twin House (SE-HYP-TWH-0002) — high demand',
+        due: 'Today 15:30',
+        pr: 'high',
+        done: false,
+        ag: 'Photo Team',
+        tag: 'Photo Hunter',
+      },
+      {
+        id: `TSK-RDR-${Date.now()}-2`,
+        t: '📸 Photo Hunter: Schedule video tour for Uptown Cairo Duplex (SE-UPC-DPX-0009)',
+        due: 'Tomorrow 11:00',
+        pr: 'high',
+        done: false,
+        ag: 'Photo Team',
+        tag: 'Photo Hunter',
+      }
+    ];
+    setTasks(p => [...radarTasks, ...p]);
+  };
+
+  const handleWhatsApp = (t: TaskItem) => {
+    if (!t.phone) return;
+    const clean = t.phone.replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent(`مرحباً، مستشار سييرا العقاري معك بخصوص: ${t.t}`);
+    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const shown = tasks.filter(t => {
+    if (view === 'active' && t.done) return false;
+    if (view === 'done' && !t.done) return false;
+    if (agentFilter !== 'All' && t.ag !== agentFilter) return false;
+    if (priorityFilter !== 'All' && t.pr !== priorityFilter.toLowerCase()) return false;
+    if (q && !t.t.toLowerCase().includes(q.toLowerCase()) && !t.ag.toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  });
+
+  const stats = [
+    [tasks.length, ar ? 'إجمالي المهام' : 'Total Tasks', '#1E88D9'],
+    [tasks.filter(t => t.done).length, ar ? 'مكتملة' : 'Completed', '#34D399'],
+    [tasks.filter(t => !t.done && t.pr === 'high').length, ar ? 'عاجلة' : 'High Priority', '#E63946'],
+    [tasks.filter(t => !t.done).length, ar ? 'قيد التنفيذ' : 'Pending', '#00AEFF'],
+  ];
+
+  const prC: Record<string, string> = { high: '#E63946', med: '#f59e0b', low: '#1E88D9' };
+  const agentsList = ['All', 'Photo Team', 'Property Finder', 'Sierra Bot', 'Leila', 'Stage-9', 'Curator', 'Scribe'];
+
   return (
     <div className="fade-up">
-      <div className="kpi-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))'}}>
+      {/* KPIs */}
+      <div className="kpi-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',marginBottom:16}}>
         {stats.map(([v,l,c],i)=>(
           <div key={i} className="kpi-card">
-            <div style={{position:'absolute',top:0,left:0,width:3,height:'100%',background:c}}/>
-            <div className="kpi-val" style={{color:c}}>{v}</div>
+            <div style={{position:'absolute',top:0,left:0,width:3,height:'100%',background:c as string}}/>
+            <div className="kpi-val" style={{color:c as string}}>{v}</div>
             <div className="kpi-lbl">{l}</div>
           </div>
         ))}
       </div>
-      <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder={ar?'ابحث في المهام…':'Search tasks…'} style={{flex:1,minWidth:200,padding:'10px 14px',borderRadius:11,border:'1px solid var(--bd)',background:'var(--bg-e)',color:'var(--tx)',fontSize:12,outline:'none'}}/>
-        {[['active',(ar?'النشطة ':'Active')+' ('+tasks.filter(t=>!t.done).length+')'],['done',(ar?'الأرشيف ':'Archive')+' ('+tasks.filter(t=>t.done).length+')']].map(([k,l])=>(
-          <button key={k} onClick={()=>setView(k)} className="topbar-pill" style={view===k?{background:'var(--tx-s)',color:'var(--bg-e)',borderColor:'var(--tx-s)'}:{}}>{l}</button>
-        ))}
-        <button className="topbar-pill on">+ {ar?'مهمة جديدة':'New Task'}</button>
+
+      {/* Action Row & Filters */}
+      <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <input 
+          value={q} 
+          onChange={e=>setQ(e.target.value)} 
+          placeholder={ar?'ابحث في المهام أو الوكيل…':'Search tasks or assignee…'} 
+          style={{flex:1,minWidth:200,padding:'10px 14px',borderRadius:11,border:'1px solid var(--bd)',background:'var(--bg-e)',color:'var(--tx)',fontSize:12,outline:'none'}}
+        />
+
+        {/* View toggles */}
+        <div style={{display:'flex',gap:6}}>
+          {[
+            ['all', (ar?'الكل ':'All') + ` (${tasks.length})`],
+            ['active', (ar?'النشطة ':'Active') + ` (${tasks.filter(t=>!t.done).length})`],
+            ['done', (ar?'المكتملة ':'Done') + ` (${tasks.filter(t=>t.done).length})`]
+          ].map(([k,l])=>(
+            <button key={k} onClick={()=>setView(k as any)} className="topbar-pill" style={view===k?{background:'var(--tx-s)',color:'var(--bg-e)',borderColor:'var(--tx-s)'}:{}}>{l}</button>
+          ))}
+        </div>
+
+        {/* Generate Photo Tasks button */}
+        <button 
+          className="btn btn-ghost" 
+          onClick={generatePhotoRadarTasks}
+          style={{fontSize:11,borderColor:'rgba(245,158,11,.4)',color:'#f59e0b'}}
+          title="Auto-generate photo tasks for luxury units without images"
+        >
+          ⭐ + Photo Radar Tasks
+        </button>
+
+        {/* New Task button */}
+        <button className="topbar-pill on" onClick={()=>setShowNewModal(true)} style={{background:'linear-gradient(135deg,var(--gold),var(--gold-lt))',color:'#071422',fontWeight:700}}>
+          + {ar?'مهمة جديدة':'New Task'}
+        </button>
       </div>
+
+      {/* Sub-Filters for Assignee Agent & Priority */}
+      <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontSize:10.5,color:'var(--tx-f)',fontFamily:'JetBrains Mono',textTransform:'uppercase',letterSpacing:'.08em'}}>Assignee:</span>
+        {agentsList.map(a => (
+          <button 
+            key={a} 
+            onClick={()=>setAgentFilter(a)} 
+            className="topbar-pill" 
+            style={{
+              padding:'4px 10px',
+              fontSize:10,
+              background: agentFilter === a ? 'var(--gold)' : 'var(--surf)',
+              color: agentFilter === a ? '#071422' : 'var(--tx-m)',
+              borderColor: agentFilter === a ? 'var(--gold)' : 'var(--bd)',
+            }}
+          >
+            {a}
+          </button>
+        ))}
+
+        <div style={{marginInlineStart:'auto',display:'flex',gap:6,alignItems:'center'}}>
+          <span style={{fontSize:10.5,color:'var(--tx-f)',fontFamily:'JetBrains Mono',textTransform:'uppercase',letterSpacing:'.08em'}}>Priority:</span>
+          {['All', 'High', 'Med', 'Low'].map(p => (
+            <button 
+              key={p} 
+              onClick={()=>setPriorityFilter(p)} 
+              className="topbar-pill" 
+              style={{
+                padding:'3px 8px',
+                fontSize:9.5,
+                background: priorityFilter === p ? (p === 'High' ? '#E63946' : p === 'Med' ? '#f59e0b' : 'var(--tx-s)') : 'transparent',
+                color: priorityFilter === p ? '#fff' : 'var(--tx-m)',
+              }}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Task List */}
       <div className="card">
         {shown.map(t=>(
-          <div key={t.i} className="task-row">
-            <button className={'task-check '+(t.done?'done':'')} onClick={()=>toggle(t.i)}>{t.done?'✓':''}</button>
+          <div key={t.id} className="task-row" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',borderBottom:'1px solid var(--bd)'}}>
+            <button 
+              className={'task-check '+(t.done?'done':'')} 
+              onClick={()=>toggle(t.id)}
+              style={{cursor:'pointer'}}
+              title={t.done ? 'Mark as incomplete' : 'Mark as complete'}
+            >
+              {t.done ? '✓' : ''}
+            </button>
+
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12.5,fontWeight:600,color:'var(--tx)',textDecoration:t.done?'line-through':'none',opacity:t.done?.55:1}}>{t.t}</div>
-              <div style={{fontSize:10,color:'var(--tx-f)',marginTop:3}}>{t.due} · {t.ag}</div>
+              <div style={{fontSize:12.5,fontWeight:600,color:'var(--tx)',textDecoration:t.done?'line-through':'none',opacity:t.done?.55:1,lineHeight:1.4}}>
+                {t.t}
+              </div>
+              <div style={{fontSize:10,color:'var(--tx-f)',marginTop:4,display:'flex',gap:8,alignItems:'center'}}>
+                <span>⏰ {t.due}</span>
+                <span>•</span>
+                <span style={{color:'var(--gold)',fontWeight:600}}>🤖 {t.ag}</span>
+                {t.tag && <span className="chip chip-blue" style={{fontSize:8,padding:'1px 5px'}}>{t.tag}</span>}
+              </div>
             </div>
-            <span style={{background:prC[t.pr]+'1a',color:prC[t.pr],fontSize:8.5,fontWeight:700,padding:'3px 9px',borderRadius:12,textTransform:'uppercase',letterSpacing:'.08em'}}>{t.pr}</span>
+
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{background:(prC[t.pr]||'#1E88D9')+'1a',color:prC[t.pr]||'#1E88D9',fontSize:8.5,fontWeight:700,padding:'3px 9px',borderRadius:12,textTransform:'uppercase',letterSpacing:'.08em'}}>
+                {t.pr}
+              </span>
+
+              {t.phone && (
+                <button 
+                  className="btn btn-green" 
+                  onClick={()=>handleWhatsApp(t)} 
+                  style={{padding:'3px 8px',fontSize:10}}
+                  title="Direct WhatsApp follow-up"
+                >
+                  💬 WA
+                </button>
+              )}
+
+              <button 
+                onClick={()=>deleteTask(t.id)} 
+                style={{background:'none',border:'none',color:'var(--tx-f)',cursor:'pointer',fontSize:12,padding:'4px'}}
+                title="Delete task"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         ))}
-        {shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام — ابدأ بإنشاء مهمة':'No tasks — start by creating one'}</div>}
+        {shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام مطابقة للفلتر':'No tasks matching current filter'}</div>}
       </div>
+
+      {/* New Task Creation Modal */}
+      {showNewModal && (
+        <div className="modal-ov" onClick={e=>e.target===e.currentTarget&&setShowNewModal(false)}>
+          <div className="modal-box" style={{maxWidth:500}}>
+            <div className="modal-hd">
+              <span style={{fontFamily:'JetBrains Mono',fontSize:11,fontWeight:700,color:'var(--gold)'}}>+ CREATE NEW OPERATIONAL TASK</span>
+              <button onClick={()=>setShowNewModal(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--tx-f)'}}><Ic.X/></button>
+            </div>
+            <form onSubmit={handleCreateTask} style={{padding:20,display:'flex',flexDirection:'column',gap:14}}>
+              <div>
+                <label style={{fontSize:11,color:'var(--tx-m)',display:'block',marginBottom:4}}>Task Title / Objective *</label>
+                <input 
+                  className="f-in" 
+                  style={{width:'100%'}} 
+                  placeholder="e.g. Photograph Mivida Villa or Follow up with Khalid..." 
+                  value={newTitle} 
+                  onChange={e=>setNewTitle(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div>
+                  <label style={{fontSize:11,color:'var(--tx-m)',display:'block',marginBottom:4}}>Due Date / Time</label>
+                  <input 
+                    className="f-in" 
+                    style={{width:'100%'}} 
+                    placeholder="e.g. Today 17:00" 
+                    value={newDue} 
+                    onChange={e=>setNewDue(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label style={{fontSize:11,color:'var(--tx-m)',display:'block',marginBottom:4}}>Assignee / Agent</label>
+                  <select 
+                    className="f-in" 
+                    style={{width:'100%'}} 
+                    value={newAg} 
+                    onChange={e=>setNewAg(e.target.value)}
+                  >
+                    <option value="Photo Team">📸 Photo Hunter Team</option>
+                    <option value="Property Finder">🏢 Property Finder Syndicator</option>
+                    <option value="Sierra Bot">🤖 Sierra Bot (Orchestrator)</option>
+                    <option value="Leila">👩 Leila (Bilingual Closer)</option>
+                    <option value="Stage-9">💼 Stage-9 Closer</option>
+                    <option value="Curator">🎨 The Curator</option>
+                    <option value="Scribe">✍️ The Scribe</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div>
+                  <label style={{fontSize:11,color:'var(--tx-m)',display:'block',marginBottom:4}}>Priority Level</label>
+                  <select 
+                    className="f-in" 
+                    style={{width:'100%'}} 
+                    value={newPr} 
+                    onChange={e=>setNewPr(e.target.value as any)}
+                  >
+                    <option value="high">🔴 High Priority (Immediate)</option>
+                    <option value="med">🟡 Medium Priority</option>
+                    <option value="low">🔵 Low Priority</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{fontSize:11,color:'var(--tx-m)',display:'block',marginBottom:4}}>Client Phone (Optional WhatsApp)</label>
+                  <input 
+                    className="f-in" 
+                    style={{width:'100%'}} 
+                    placeholder="+20 100 000 0000" 
+                    value={newPhone} 
+                    onChange={e=>setNewPhone(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div style={{display:'flex',gap:8,marginTop:6}}>
+                <button type="submit" className="btn btn-gold" style={{flex:1}}>
+                  ✓ Add Task to Fleet
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={()=>setShowNewModal(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
