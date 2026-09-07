@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
+import AgentOrchestratorCard from '@/components/admin/AgentOrchestratorCard';
 import {
   Bot,
   Sparkles,
@@ -401,6 +402,9 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
           </button>
         </div>
       </div>
+
+      {/* ── WINDOWS AGENT ORCHESTRATOR BRIDGE ── */}
+      <AgentOrchestratorCard lang={lang} />
 
       {statusMessage && (
         <div
