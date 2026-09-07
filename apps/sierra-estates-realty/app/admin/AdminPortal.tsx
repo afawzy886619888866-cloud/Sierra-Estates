@@ -41,6 +41,7 @@ import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
 import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import CommandPalette, { CommandItem } from '@/components/admin/CommandPalette';
+import SierraMasterOrchestrator from '@/components/admin/SierraMasterOrchestrator';
 import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
@@ -2420,7 +2421,10 @@ function AdminApp() {
             </button>
           </div>
         </div>
-        <div id="content">{renderPage()}</div>
+        <div id="content">
+          <SierraMasterOrchestrator lang={langKey} onNavigate={setTab} />
+          {renderPage()}
+        </div>
         <AdminCopilotDrawer
           isOpen={isCopilotOpen}
           onClose={() => setIsCopilotOpen(false)}
