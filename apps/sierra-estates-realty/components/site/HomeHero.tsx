@@ -88,6 +88,14 @@ export default function HomeHero() {
 
       <div className="wrap">
         <div className="hero-col">
+          {/* Glowing Laser Tag */}
+          <div className="laser-badge" style={captionStyle}>
+            <span className="laser-badge-dot" />
+            <span className="laser-badge-text">
+              {isAr ? '⚡ رادار الذكاء الاصطناعي · القاهرة الجديدة' : '⚡ AI LASER RADAR · NEW CAIRO LUXURY'}
+            </span>
+          </div>
+
           <div className="h-eyebrow" id="hero-pre" style={captionStyle}>
             {isAr ? s.preAr : s.pre}
           </div>
@@ -118,6 +126,12 @@ export default function HomeHero() {
             onClick={() => go(i)}
           />
         ))}
+      </div>
+
+      {/* Scroll-down indicator (animated laser line tag) */}
+      <div className="scroll-cue" aria-hidden="true">
+        <span className="scroll-cue-line" />
+        <span className="scroll-cue-label">SCROLL</span>
       </div>
 
       <div className="page-laser" aria-hidden="true">
