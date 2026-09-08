@@ -12,12 +12,9 @@ import {
   Send,
   RefreshCw,
   Power,
-  Settings2,
-  ExternalLink,
   CheckCircle2,
   Clock,
   Camera,
-  Layers,
   MessageSquareText,
 } from 'lucide-react';
 
@@ -219,7 +216,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt, agentId: agent.id }),
       });
-      const data = await res.json().catch(() => ({}));
+      const _data = await res.json().catch(() => ({}));
       setStatusMessage(
         isAr
           ? `✓ تم إكمال مهمة ${agent.name} بنجاح!`
