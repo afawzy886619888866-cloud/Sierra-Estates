@@ -75,30 +75,55 @@ function normalizePhone(raw) {
 
 function normalizeCompound(raw) {
   const c = (raw || '').toLowerCase().trim();
-  if (!c) return 'New Cairo';
+  if (!c || c === 'other' || c === 'other compound' || c === 'غير مذكور' || c === 'المتوسط العام للبيانات') return 'New Cairo';
   if (c.includes('madinaty') || c.includes('مدينتي')) return 'Madinaty';
   if (c.includes('mevida') || c.includes('mivida') || c.includes('ميفيدا')) return 'Mivida';
   if (c.includes('fifth square') || c.includes('المراسم')) return 'Fifth Square';
-  if (c.includes('sodic') || c.includes('سوديك') || c.includes('east town') || c.includes('eastown')) return 'Eastown (SODIC)';
+  if (c.includes('eastown') || c.includes('east town') || c.includes('sodic') || c.includes('سوديك')) {
+    if (c.includes('sodic east') && !c.includes('town')) return 'SODIC East';
+    return 'Eastown';
+  }
+  if (c.includes('villette') || c.includes('فيليت')) return 'Villette';
   if (c.includes('cfc') || c.includes('cairo festival') || c.includes('كايرو فيستيفال')) return 'Cairo Festival City';
   if (c.includes('up town') || c.includes('uptown') || c.includes('أب تاون')) return 'Uptown Cairo';
   if (c.includes('gardina') || c.includes('gardenia') || c.includes('جاردينيا')) return 'Gardenia City';
-  if (c.includes('lake view') || c.includes('ليك فيو')) return 'Lake View Residence';
+  if (c.includes('lake view') || c.includes('lakeview') || c.includes('ليك فيو')) return 'Lake View Residence';
   if (c.includes('waterway') || c.includes('واتر واي')) return 'The Waterway';
-  if (c.includes('hyde park') || c.includes('هايد بارك')) return 'Hyde Park';
-  if (c.includes('oriana') || c.includes('أوريانا')) return 'Oriana (CFC)';
+  if (c.includes('hyde park') || c.includes('haid bark') || c.includes('hayd park') || c.includes('هايد بارك')) return 'Hyde Park';
+  if (c.includes('oriana') || c.includes('أوريانا')) return 'Oriana';
   if (c.includes('galleria') || c.includes('جاليريا')) return 'Galleria Moon Valley';
   if (c.includes('narges') || c.includes('النرجس')) return 'Al Narges';
-  if (c.includes('banfcg') || c.includes('البنفسج')) return 'Al Banafsaj';
-  if (c.includes('andlos') || c.includes('الأندلس')) return 'Al Andalus';
-  if (c.includes('south academ') || c.includes('جنوب الاكاديمية')) return 'South Academy';
+  if (c.includes('banfcg') || c.includes('banafseg') || c.includes('البنفسج')) return 'Al Banafsaj';
+  if (c.includes('andlos') || c.includes('andalus') || c.includes('الأندلس')) return 'Al Andalus';
+  if (c.includes('south academ') || c.includes('جنوب الاكاديمية') || c.includes('جنوب الأكاديمية')) return 'South Academy';
   if (c.includes('north 90') || c.includes('التسعين الشمالي')) return 'North 90th';
   if (c.includes('rehab') || c.includes('الرحاب')) return 'Al Rehab';
-  if (c.includes('palm-hills') || c.includes('بالم هيلز')) return 'Palm Hills New Cairo';
-  if (c.includes('eypet hose') || c.includes('elkurfenl') || c.includes('القرنفل')) return 'Dar Misr (El Koronfel)';
-  if (c.includes('new-capital') || c.includes('العاصمة')) return 'New Capital';
+  if (c.includes('palm-hills') || c.includes('palm hills') || c.includes('بالم هيلز')) return 'Palm Hills New Cairo';
+  if (c.includes('eypet hose') || c.includes('elkurfenl') || c.includes('القرنفل') || c.includes('garanfol') || c.includes('qaranfel')) return 'Dar Misr (El Koronfel)';
+  if (c.includes('new-capital') || c.includes('new capital') || c.includes('العاصمة')) return 'New Capital';
   if (c.includes('shorouk') || c.includes('الشروق')) return 'El Shorouk City';
-  if (c.includes('zaid') || c.includes('زايد')) return 'Sheikh Zayed';
+  if (c.includes('zaid') || c.includes('zayed') || c.includes('زايد')) return 'Sheikh Zayed';
+  if (c.includes('mountain view') || c.includes('ماونتن فيو')) return 'Mountain View iCity';
+  if (c.includes('katameya heights') || c.includes('قطامية هايتس')) return 'Katameya Heights';
+  if (c.includes('katameya dunes') || c.includes('قطامية ديونز')) return 'Katameya Dunes';
+  if (c.includes('katameya') || c.includes('قطامية')) return 'Katameya Heights';
+  if (c.includes('swan lake') || c.includes('سوان ليك')) return 'Swan Lake Residence';
+  if (c.includes('stone residence') || c.includes('ستون ريزيدنس')) return 'Stone Residence';
+  if (c.includes('the square') || c.includes('ذا سكوير')) return 'The Square';
+  if (c.includes('el patio oro') || c.includes('باتيو أورو')) return 'El Patio Oro';
+  if (c.includes('el patio 7') || c.includes('باتيو 7')) return 'El Patio 7';
+  if (c.includes('el patio') || c.includes('باتيو')) return 'El Patio Oro';
+  if (c.includes('90 avenue') || c.includes('90 أفينيو')) return '90 Avenue';
+  if (c.includes('district 5') || c.includes('ديستريكت 5')) return 'District 5';
+  if (c.includes('the brooks') || c.includes('ذا بروكس')) return 'The Brooks';
+  if (c.includes('stei8ht') || c.includes('ستييت')) return 'STEI8HT';
+  if (c.includes('the crest') || c.includes('ذا كريست')) return 'The Crest';
+  if (c.includes('sarai') || c.includes('ساراي')) return 'Sarai';
+  if (c.includes('bloomfields') || c.includes('بلومفيلدز')) return 'Bloomfields';
+  if (c.includes('taj city') || c.includes('تاج سيتي')) return 'Taj City';
+  if (c.includes('taj sultan') || c.includes('تاج سلطان')) return 'Taj Sultan';
+  if (c.includes('jayd') || c.includes('جايد')) return 'Jayd';
+  if (c.includes('zed east') || c.includes('زد إيست')) return 'Zed East';
   if (c.includes('new cairo') || c.includes('القاهرة الجديدة')) return 'New Cairo';
   return raw.trim();
 }

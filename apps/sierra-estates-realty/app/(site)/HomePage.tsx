@@ -27,7 +27,7 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
-const COMPOUND_PICKS = ['Hyde Park New Cairo', 'Mivida', 'Mountain View iCity', 'Eastown (SODIC)'];
+const COMPOUND_PICKS = ['Hyde Park', 'Mivida', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City', 'Al Rehab', 'Madinaty'];
 
 const AI_TOOLS = [
   { k: 'radar', t: 'aiRadarT', s: 'aiRadarS', live: true, href: '/net' },
@@ -55,27 +55,34 @@ const SUGGESTED_COMPOUNDS = [
   'Mivida',
   'Hyde Park',
   'Mountain View iCity',
-  'Eastown (SODIC)',
-  'Villette (SODIC)',
+  'Eastown',
+  'Villette',
   'Palm Hills New Cairo',
   'Cairo Festival City',
-  'Katameya Heights',
-  'Lake View Residence',
-  'Swan Lake Residence',
-  'Taj City',
-  'Zed East',
   'Al Rehab',
   'Madinaty',
+  'Uptown Cairo',
+  'The Waterway',
+  'Fifth Square',
+  'Lake View Residence',
+  'Swan Lake Residence',
+  'Stone Residence',
+  'Taj City',
+  'Zed East',
+  'Katameya Heights',
 ];
 
 const POPULAR_COMPOUND_CHIPS = [
   { en: 'All Compounds', ar: 'كل الكمبوندات', val: '' },
   { en: 'Mivida', ar: 'ميفيدا', val: 'Mivida' },
   { en: 'Hyde Park', ar: 'هايد بارك', val: 'Hyde Park' },
-  { en: 'Mountain View', ar: 'ماونتن فيو', val: 'Mountain View' },
+  { en: 'Mountain View iCity', ar: 'ماونتن فيو', val: 'Mountain View iCity' },
   { en: 'Eastown', ar: 'إيستاون', val: 'Eastown' },
   { en: 'Villette', ar: 'فيليت', val: 'Villette' },
-  { en: 'Palm Hills', ar: 'بالم هيلز', val: 'Palm Hills' },
+  { en: 'Palm Hills', ar: 'بالم هيلز', val: 'Palm Hills New Cairo' },
+  { en: 'Al Rehab', ar: 'الرحاب', val: 'Al Rehab' },
+  { en: 'Madinaty', ar: 'مدينتي', val: 'Madinaty' },
+  { en: 'Uptown Cairo', ar: 'أب تاون', val: 'Uptown Cairo' },
 ];
 
 const RENT_PRICES = [

@@ -6,14 +6,14 @@
       30.03,
       31.47
     ],
-    "totalUnits": 3178,
+    "totalUnits": 3201,
     "saleUnits": 0,
     "rentUnits": 0,
-    "ownersUnits": 143,
+    "ownersUnits": 162,
     "brokerUnits": 2950,
-    "unknownUnits": 85,
+    "unknownUnits": 89,
     "avgSaleEgpM": 1.1,
-    "avgRentUsd": 2796,
+    "avgRentUsd": 2870,
     "avgAiScore": 0
   },
   "Madinaty": {
@@ -40,14 +40,14 @@
       30.025,
       31.578
     ],
-    "totalUnits": 142,
+    "totalUnits": 146,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 5,
     "brokerUnits": 118,
-    "unknownUnits": 19,
+    "unknownUnits": 23,
     "avgSaleEgpM": 0.6,
-    "avgRentUsd": 5104,
+    "avgRentUsd": 4976,
     "avgAiScore": 0
   },
   "Al Rehab": {
@@ -67,38 +67,21 @@
     "avgRentUsd": 3110,
     "avgAiScore": 0
   },
-  "other": {
-    "name": "other",
+  "Cairo Festival City": {
+    "name": "Cairo Festival City",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.016,
+      31.469
     ],
-    "totalUnits": 2,
+    "totalUnits": 124,
     "saleUnits": 0,
     "rentUnits": 0,
-    "ownersUnits": 1,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 150000,
-    "avgAiScore": 0
-  },
-  "CFC": {
-    "name": "CFC",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 5,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 3,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 2,
-    "avgRentUsd": 13349,
+    "ownersUnits": 10,
+    "brokerUnits": 104,
+    "unknownUnits": 10,
+    "avgSaleEgpM": 0.5,
+    "avgRentUsd": 2553,
     "avgAiScore": 0
   },
   "Eastown": {
@@ -108,14 +91,14 @@
       30.018,
       31.587
     ],
-    "totalUnits": 451,
+    "totalUnits": 452,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 13,
     "brokerUnits": 425,
-    "unknownUnits": 13,
+    "unknownUnits": 14,
     "avgSaleEgpM": 2.3,
-    "avgRentUsd": 2146,
+    "avgRentUsd": 2140,
     "avgAiScore": 0
   },
   "Oriana": {
@@ -135,23 +118,6 @@
     "avgRentUsd": 1695,
     "avgAiScore": 0
   },
-  "Cairo Festival City": {
-    "name": "Cairo Festival City",
-    "zone": "5th Settlement",
-    "coords": [
-      30.016,
-      31.469
-    ],
-    "totalUnits": 119,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 7,
-    "brokerUnits": 104,
-    "unknownUnits": 8,
-    "avgSaleEgpM": 0.3,
-    "avgRentUsd": 2149,
-    "avgAiScore": 0
-  },
   "5th Settlement": {
     "name": "5th Settlement",
     "zone": "5th Settlement",
@@ -159,12 +125,12 @@
       30.02,
       31.52
     ],
-    "totalUnits": 240,
+    "totalUnits": 242,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 11,
     "brokerUnits": 229,
-    "unknownUnits": 0,
+    "unknownUnits": 2,
     "avgSaleEgpM": 0.6,
     "avgRentUsd": 1417,
     "avgAiScore": 0
@@ -176,14 +142,14 @@
       30.011,
       31.297
     ],
-    "totalUnits": 66,
+    "totalUnits": 67,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 31,
     "brokerUnits": 27,
-    "unknownUnits": 8,
+    "unknownUnits": 9,
     "avgSaleEgpM": 0.4,
-    "avgRentUsd": 1430,
+    "avgRentUsd": 1421,
     "avgAiScore": 0
   },
   "Villette": {
@@ -244,14 +210,14 @@
       30.022,
       31.532
     ],
-    "totalUnits": 246,
+    "totalUnits": 251,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 6,
     "brokerUnits": 227,
-    "unknownUnits": 13,
+    "unknownUnits": 18,
     "avgSaleEgpM": 0.4,
-    "avgRentUsd": 2370,
+    "avgRentUsd": 2351,
     "avgAiScore": 0
   },
   "Hyde Park": {
@@ -261,31 +227,31 @@
       30.008,
       31.645
     ],
-    "totalUnits": 422,
+    "totalUnits": 424,
     "saleUnits": 0,
     "rentUnits": 0,
-    "ownersUnits": 7,
+    "ownersUnits": 9,
     "brokerUnits": 369,
     "unknownUnits": 46,
     "avgSaleEgpM": 3.6,
     "avgRentUsd": 1724,
     "avgAiScore": 0
   },
-  "Zaid": {
-    "name": "Zaid",
-    "zone": "5th Settlement",
+  "Sheikh Zayed": {
+    "name": "Sheikh Zayed",
+    "zone": "Sheikh Zayed",
     "coords": [
-      30.03,
-      31.47
+      30.06,
+      30.98
     ],
-    "totalUnits": 2,
+    "totalUnits": 39,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 1,
     "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1180,
+    "unknownUnits": 38,
+    "avgSaleEgpM": 7.3,
+    "avgRentUsd": 568,
     "avgAiScore": 0
   },
   "Galleria Moon Valley": {
@@ -322,12 +288,12 @@
     "avgRentUsd": 1735,
     "avgAiScore": 0
   },
-  "El Shorouk": {
-    "name": "El Shorouk",
+  "El Shorouk City": {
+    "name": "El Shorouk City",
     "zone": "Shorouk",
     "coords": [
-      30.132,
-      31.635
+      30.121,
+      31.616
     ],
     "totalUnits": 15,
     "saleUnits": 0,
@@ -339,9 +305,26 @@
     "avgRentUsd": 1232,
     "avgAiScore": 0
   },
-  "new-capital": {
-    "name": "new-capital",
+  "New Capital": {
+    "name": "New Capital",
     "zone": "New Capital",
+    "coords": [
+      30.005,
+      31.74
+    ],
+    "totalUnits": 7,
+    "saleUnits": 0,
+    "rentUnits": 0,
+    "ownersUnits": 6,
+    "brokerUnits": 1,
+    "unknownUnits": 0,
+    "avgSaleEgpM": 8.5,
+    "avgRentUsd": 1800,
+    "avgAiScore": 0
+  },
+  "Palm Hills New Cairo": {
+    "name": "Palm Hills New Cairo",
+    "zone": "5th Settlement",
     "coords": [
       30.03,
       31.47
@@ -349,32 +332,15 @@
     "totalUnits": 6,
     "saleUnits": 0,
     "rentUnits": 0,
-    "ownersUnits": 6,
-    "brokerUnits": 0,
-    "unknownUnits": 0,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "palm-hills": {
-    "name": "palm-hills",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
     "ownersUnits": 1,
     "brokerUnits": 0,
-    "unknownUnits": 0,
+    "unknownUnits": 5,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
+    "avgRentUsd": 700,
     "avgAiScore": 0
   },
-  "Swan Lake": {
-    "name": "Swan Lake",
+  "Swan Lake Residence": {
+    "name": "Swan Lake Residence",
     "zone": "5th Settlement",
     "coords": [
       30.045,
@@ -394,8 +360,8 @@
     "name": "Badya",
     "zone": "6th of October",
     "coords": [
-      29.93,
-      30.95
+      30.002,
+      31.608
     ],
     "totalUnits": 2,
     "saleUnits": 0,
@@ -407,40 +373,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "new-cairo": {
-    "name": "new-cairo",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 18,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 18,
-    "brokerUnits": 0,
-    "unknownUnits": 0,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "haid bark": {
-    "name": "haid bark",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 1,
-    "brokerUnits": 0,
-    "unknownUnits": 0,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "6th of October": {
     "name": "6th of October",
     "zone": "6th of October",
@@ -448,31 +380,14 @@
       29.97,
       30.94
     ],
-    "totalUnits": 2,
+    "totalUnits": 10,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 2,
     "brokerUnits": 0,
-    "unknownUnits": 0,
+    "unknownUnits": 8,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Hayd Park": {
-    "name": "Hayd Park",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 1,
-    "brokerUnits": 0,
-    "unknownUnits": 0,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
+    "avgRentUsd": 900,
     "avgAiScore": 0
   },
   "Capital way by Water way": {
@@ -509,21 +424,21 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "El Patio Hills": {
-    "name": "El Patio Hills",
+  "El Patio Oro": {
+    "name": "El Patio Oro",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.029,
+      31.56
     ],
-    "totalUnits": 1,
+    "totalUnits": 3,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 1,
-    "brokerUnits": 0,
-    "unknownUnits": 0,
+    "brokerUnits": 1,
+    "unknownUnits": 1,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
+    "avgRentUsd": 1500,
     "avgAiScore": 0
   },
   "Koun Ras El Hekma": {
@@ -543,8 +458,8 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Mountain View": {
-    "name": "Mountain View",
+  "Mountain View iCity": {
+    "name": "Mountain View iCity",
     "zone": "5th Settlement",
     "coords": [
       30.014,
@@ -560,12 +475,12 @@
     "avgRentUsd": 1454,
     "avgAiScore": 0
   },
-  "Katameya": {
-    "name": "Katameya",
+  "Katameya Heights": {
+    "name": "Katameya Heights",
     "zone": "Katameya",
     "coords": [
-      29.985,
-      31.492
+      29.99,
+      31.48
     ],
     "totalUnits": 49,
     "saleUnits": 0,
@@ -628,29 +543,12 @@
     "avgRentUsd": 1640,
     "avgAiScore": 0
   },
-  "El Patio Oro": {
-    "name": "El Patio Oro",
-    "zone": "5th Settlement",
-    "coords": [
-      30.029,
-      31.56
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 1,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1500,
-    "avgAiScore": 0
-  },
   "The Address East": {
     "name": "The Address East",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.045,
+      31.565
     ],
     "totalUnits": 4,
     "saleUnits": 0,
@@ -662,8 +560,8 @@
     "avgRentUsd": 755,
     "avgAiScore": 0
   },
-  "El Narges": {
-    "name": "El Narges",
+  "Al Narges": {
+    "name": "Al Narges",
     "zone": "5th Settlement",
     "coords": [
       30.052,
@@ -679,63 +577,29 @@
     "avgRentUsd": 725,
     "avgAiScore": 0
   },
-  "New Capital": {
-    "name": "New Capital",
-    "zone": "New Capital",
-    "coords": [
-      30.005,
-      31.74
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 1,
-    "unknownUnits": 0,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Sheikh Zayed, typical": {
-    "name": "Sheikh Zayed, typical",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 7.3,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Banafseg 5 Villas": {
-    "name": "El-Banafseg 5 Villas",
+  "Al Banafsaj": {
+    "name": "Al Banafsaj",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.045,
+      31.485
     ],
-    "totalUnits": 2,
+    "totalUnits": 18,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 2,
+    "unknownUnits": 18,
     "avgSaleEgpM": 0.3,
-    "avgRentUsd": 700,
+    "avgRentUsd": 775,
     "avgAiScore": 0
   },
-  "Fifth District Villas": {
-    "name": "Fifth District Villas",
+  "Fifth District": {
+    "name": "Fifth District",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.028,
+      31.455
     ],
     "totalUnits": 3,
     "saleUnits": 0,
@@ -764,40 +628,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Lake View": {
-    "name": "Lake View",
-    "zone": "5th Settlement",
-    "coords": [
-      30.022,
-      31.532
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1400,
-    "avgAiScore": 0
-  },
-  "Lake view": {
-    "name": "Lake view",
-    "zone": "5th Settlement",
-    "coords": [
-      30.022,
-      31.532
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1500,
-    "avgAiScore": 0
-  },
   "V Residence": {
     "name": "V Residence",
     "zone": "5th Settlement",
@@ -813,91 +643,6 @@
     "unknownUnits": 1,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1500,
-    "avgAiScore": 0
-  },
-  "O West, 6 October": {
-    "name": "O West, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1400,
-    "avgAiScore": 0
-  },
-  "Lake View Res.": {
-    "name": "Lake View Res.",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1300,
-    "avgAiScore": 0
-  },
-  "Aeon Towers, Sheikh Zayed": {
-    "name": "Aeon Towers, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.03,
-      31.58
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1200,
-    "avgAiScore": 0
-  },
-  "Yasmine Compound, Sheikh Zayed": {
-    "name": "Yasmine Compound, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 950,
-    "avgAiScore": 0
-  },
-  "Up Town Cairo": {
-    "name": "Up Town Cairo",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1200,
     "avgAiScore": 0
   },
   "فاميلي المستثمرين": {
@@ -917,89 +662,38 @@
     "avgRentUsd": 1100,
     "avgAiScore": 0
   },
-  "banfcg": {
-    "name": "banfcg",
+  "El Yasmine": {
+    "name": "El Yasmine",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.048,
+      31.478
     ],
-    "totalUnits": 2,
+    "totalUnits": 8,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 2,
+    "unknownUnits": 8,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
+    "avgRentUsd": 900,
     "avgAiScore": 0
   },
-  "El-Yasmine 5 Villas": {
-    "name": "El-Yasmine 5 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 850,
-    "avgAiScore": 0
-  },
-  "El-Yasmine 6 Villas": {
-    "name": "El-Yasmine 6 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1000,
-    "avgAiScore": 0
-  },
-  "Other Compound": {
-    "name": "Other Compound",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1000,
-    "avgAiScore": 0
-  },
-  "South Academy W": {
-    "name": "South Academy W",
+  "South Academy": {
+    "name": "South Academy",
     "zone": "5th Settlement",
     "coords": [
       30.005,
       31.44
     ],
-    "totalUnits": 1,
+    "totalUnits": 9,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 9,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1000,
+    "avgRentUsd": 760,
     "avgAiScore": 0
   },
   "Top View": {
@@ -1017,23 +711,6 @@
     "unknownUnits": 1,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1000,
-    "avgAiScore": 0
-  },
-  "المراسم": {
-    "name": "المراسم",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 4,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 4,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 925,
     "avgAiScore": 0
   },
   "الميراج جاردن": {
@@ -1087,216 +764,46 @@
     "avgRentUsd": 900,
     "avgAiScore": 0
   },
-  "The Crown, Palm Hills": {
-    "name": "The Crown, Palm Hills",
+  "Jayd": {
+    "name": "Jayd",
     "zone": "5th Settlement",
     "coords": [
-      30.002,
-      31.608
+      30.045,
+      31.665
     ],
-    "totalUnits": 3,
+    "totalUnits": 2,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 900,
-    "avgAiScore": 0
-  },
-  "ZED West, Sheikh Zayed": {
-    "name": "ZED West, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 900,
-    "avgAiScore": 0
-  },
-  "غير مذكور": {
-    "name": "غير مذكور",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 900,
-    "avgAiScore": 0
-  },
-  "South Academ": {
-    "name": "South Academ",
-    "zone": "5th Settlement",
-    "coords": [
-      30.005,
-      31.44
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 840,
-    "avgAiScore": 0
-  },
-  "El-Banafseg 2 Villas": {
-    "name": "El-Banafseg 2 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
+    "unknownUnits": 2,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 800,
     "avgAiScore": 0
   },
-  "El-Banafseg 6 Villas": {
-    "name": "El-Banafseg 6 Villas",
+  "Dar Misr (El Koronfel)": {
+    "name": "Dar Misr (El Koronfel)",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.065,
+      31.495
     ],
-    "totalUnits": 1,
+    "totalUnits": 5,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
-    "avgAiScore": 0
-  },
-  "El-Banafseg Villas": {
-    "name": "El-Banafseg Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
-    "avgAiScore": 0
-  },
-  "Palm Parks, 6 October": {
-    "name": "Palm Parks, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
-    "avgAiScore": 0
-  },
-  "The Address, Sheikh Zayed": {
-    "name": "The Address, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
-    "avgAiScore": 0
-  },
-  "كمبوند جايد": {
-    "name": "كمبوند جايد",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 800,
-    "avgAiScore": 0
-  },
-  "El-Banafseg 1 Villas": {
-    "name": "El-Banafseg 1 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 5,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 700,
     "avgAiScore": 0
   },
-  "eypet hose elkurfenl": {
-    "name": "eypet hose elkurfenl",
+  "Gardenia City": {
+    "name": "Gardenia City",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 700,
-    "avgAiScore": 0
-  },
-  "gardina city": {
-    "name": "gardina city",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
+      30.082,
+      31.412
     ],
     "totalUnits": 1,
     "saleUnits": 0,
@@ -1325,40 +832,6 @@
     "avgRentUsd": 700,
     "avgAiScore": 0
   },
-  "Sheikh Zayed, District 7": {
-    "name": "Sheikh Zayed, District 7",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 567,
-    "avgAiScore": 0
-  },
-  "South Academy": {
-    "name": "South Academy",
-    "zone": "5th Settlement",
-    "coords": [
-      30.005,
-      31.44
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 700,
-    "avgAiScore": 0
-  },
   "The Square": {
     "name": "The Square",
     "zone": "5th Settlement",
@@ -1366,31 +839,14 @@
       30.033,
       31.542
     ],
-    "totalUnits": 5,
+    "totalUnits": 6,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 5,
+    "unknownUnits": 6,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 567,
-    "avgAiScore": 0
-  },
-  "ZED Towers, Sheikh Zayed": {
-    "name": "ZED Towers, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 700,
     "avgAiScore": 0
   },
   "فيلات جنوب الاكاديميه": {
@@ -1427,23 +883,6 @@
     "avgRentUsd": 600,
     "avgAiScore": 0
   },
-  "Sheikh Zayed, District 10": {
-    "name": "Sheikh Zayed, District 10",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 600,
-    "avgAiScore": 0
-  },
   "La Mirada": {
     "name": "La Mirada",
     "zone": "5th Settlement",
@@ -1461,97 +900,12 @@
     "avgRentUsd": 560,
     "avgAiScore": 0
   },
-  "Garden Hills, 6 October": {
-    "name": "Garden Hills, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 500,
-    "avgAiScore": 0
-  },
-  "Palm Hills Capital Gardens": {
-    "name": "Palm Hills Capital Gardens",
-    "zone": "New Capital",
-    "coords": [
-      30.002,
-      31.608
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 500,
-    "avgAiScore": 0
-  },
-  "Sheikh Zayed, District 11": {
-    "name": "Sheikh Zayed, District 11",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 340,
-    "avgAiScore": 0
-  },
-  "South Academy A": {
-    "name": "South Academy A",
+  "El Lotus": {
+    "name": "El Lotus",
     "zone": "5th Settlement",
     "coords": [
-      30.005,
-      31.44
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 500,
-    "avgAiScore": 0
-  },
-  "اللوتس": {
-    "name": "اللوتس",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 500,
-    "avgAiScore": 0
-  },
-  "El Khamaiel, Sheikh Zayed": {
-    "name": "El Khamaiel, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
+      30.038,
+      31.512
     ],
     "totalUnits": 2,
     "saleUnits": 0,
@@ -1560,22 +914,22 @@
     "brokerUnits": 0,
     "unknownUnits": 2,
     "avgSaleEgpM": 8.5,
-    "avgRentUsd": 440,
+    "avgRentUsd": 500,
     "avgAiScore": 0
   },
-  "andlos": {
-    "name": "andlos",
+  "Al Andalus": {
+    "name": "Al Andalus",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.052,
+      31.49
     ],
-    "totalUnits": 1,
+    "totalUnits": 7,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 7,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 400,
     "avgAiScore": 0
@@ -1597,57 +951,6 @@
     "avgRentUsd": 400,
     "avgAiScore": 0
   },
-  "Sheikh Zayed, District 1": {
-    "name": "Sheikh Zayed, District 1",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 5,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 5,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 252,
-    "avgAiScore": 0
-  },
-  "Hadaiq El Mohandessin, Sheikh Zayed": {
-    "name": "Hadaiq El Mohandessin, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 360,
-    "avgAiScore": 0
-  },
-  "Silver Gate Mall, Sheikh Zayed": {
-    "name": "Silver Gate Mall, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 360,
-    "avgAiScore": 0
-  },
   "Marassi, North Coast": {
     "name": "Marassi, North Coast",
     "zone": "5th Settlement",
@@ -1665,76 +968,8 @@
     "avgRentUsd": 260,
     "avgAiScore": 0
   },
-  "Sheikh Zayed, District 13": {
-    "name": "Sheikh Zayed, District 13",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 200,
-    "avgAiScore": 0
-  },
-  "Sheikh Zayed, District 3": {
-    "name": "Sheikh Zayed, District 3",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 160,
-    "avgAiScore": 0
-  },
-  "East town": {
-    "name": "East town",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 0,
-    "avgAiScore": 0
-  },
-  "North 90": {
-    "name": "North 90",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "المتوسط العام للبيانات": {
-    "name": "المتوسط العام للبيانات",
+  "North 90th": {
+    "name": "North 90th",
     "zone": "5th Settlement",
     "coords": [
       30.03,
@@ -1780,23 +1015,6 @@
     "ownersUnits": 0,
     "brokerUnits": 0,
     "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Green 3, Sheikh Zayed": {
-    "name": "Green 3, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1800,
     "avgAiScore": 0
@@ -2005,57 +1223,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Darah Gardens, 6 October": {
-    "name": "Darah Gardens, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Yasmeen Compound, Sheikh Zayed": {
-    "name": "Yasmeen Compound, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Tagamoa 5th": {
-    "name": "Tagamoa 5th",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "Front of AUC": {
     "name": "Front of AUC",
     "zone": "5th Settlement",
@@ -2077,25 +1244,8 @@
     "name": "Village Gate",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Banafseg villas 1": {
-    "name": "Banafseg villas 1",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
+      30.022,
+      31.505
     ],
     "totalUnits": 1,
     "saleUnits": 0,
@@ -2109,40 +1259,6 @@
   },
   "Yasmeen 4": {
     "name": "Yasmeen 4",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Andalus 2": {
-    "name": "Andalus 2",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 3,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 3,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Andalus New": {
-    "name": "Andalus New",
     "zone": "5th Settlement",
     "coords": [
       30.03,
@@ -2192,57 +1308,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Banafseg buildings": {
-    "name": "Banafseg buildings",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Lotus Northern": {
-    "name": "Lotus Northern",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Jayd": {
-    "name": "Jayd",
-    "zone": "5th Settlement",
-    "coords": [
-      30.045,
-      31.665
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "Solay": {
     "name": "Solay",
     "zone": "5th Settlement",
@@ -2264,8 +1329,8 @@
     "name": "The Icon Residence",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.042,
+      31.535
     ],
     "totalUnits": 1,
     "saleUnits": 0,
@@ -2328,8 +1393,8 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Shalya Taj City": {
-    "name": "Shalya Taj City",
+  "Taj City": {
+    "name": "Taj City",
     "zone": "5th Settlement",
     "coords": [
       30.065,
@@ -2345,59 +1410,8 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Dar Masr El-Qaranfel": {
-    "name": "Dar Masr El-Qaranfel",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "Acacia": {
     "name": "Acacia",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Qaranfel villas": {
-    "name": "El-Qaranfel villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Dar Masr Andalus 2": {
-    "name": "Dar Masr Andalus 2",
     "zone": "5th Settlement",
     "coords": [
       30.03,
@@ -2468,8 +1482,8 @@
     "name": "Trio Gardens",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.065,
+      31.625
     ],
     "totalUnits": 2,
     "saleUnits": 0,
@@ -2485,42 +1499,8 @@
     "name": "Promenade Wadi Degla",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Lakeview": {
-    "name": "Lakeview",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Standalone in Tagamoa": {
-    "name": "Standalone in Tagamoa",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
+      30.038,
+      31.525
     ],
     "totalUnits": 1,
     "saleUnits": 0,
@@ -2587,15 +1567,15 @@
     "name": "City Gate",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.015,
+      31.545
     ],
-    "totalUnits": 1,
+    "totalUnits": 2,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 2,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1800,
     "avgAiScore": 0
@@ -2621,32 +1601,15 @@
     "name": "Amorada",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.025,
+      31.595
     ],
-    "totalUnits": 2,
+    "totalUnits": 4,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Bliss Gate, Sheikh Zayed": {
-    "name": "Bliss Gate, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 4,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1800,
     "avgAiScore": 0
@@ -2654,142 +1617,6 @@
   "IL Monte Galala, Ain Sokhna": {
     "name": "IL Monte Galala, Ain Sokhna",
     "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Mostasmer Saghira, Sheikh Zayed": {
-    "name": "Mostasmer Saghira, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Dar مصر, Sheikh Zayed": {
-    "name": "Dar مصر, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Sheikh Zayed, District 16": {
-    "name": "Sheikh Zayed, District 16",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Canaria Compound, Sheikh Zayed": {
-    "name": "Canaria Compound, Sheikh Zayed",
-    "zone": "Sheikh Zayed",
-    "coords": [
-      30.06,
-      30.98
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "جنوب الأحياء, 6 October": {
-    "name": "جنوب الأحياء, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "زهراء أكتوبر الجديدة": {
-    "name": "زهراء أكتوبر الجديدة",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "الحي الثاني, 6 October": {
-    "name": "الحي الثاني, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "6 October, Unspecified": {
-    "name": "6 October, Unspecified",
-    "zone": "6th of October",
     "coords": [
       30.03,
       31.47
@@ -2855,23 +1682,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "Palm Hills old phases, 6 October": {
-    "name": "Palm Hills old phases, 6 October",
-    "zone": "6th of October",
-    "coords": [
-      30.002,
-      31.608
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "الهضبة الوسطي, المقطم": {
     "name": "الهضبة الوسطي, المقطم",
     "zone": "5th Settlement",
@@ -2923,74 +1733,6 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "[Broker / وسيط عقاري] - South Academy": {
-    "name": "[Broker / وسيط عقاري] - South Academy",
-    "zone": "5th Settlement",
-    "coords": [
-      30.005,
-      31.44
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "[Broker / وسيط عقاري] - Amorada": {
-    "name": "[Broker / وسيط عقاري] - Amorada",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "[Broker / وسيط عقاري] - Andalus 2": {
-    "name": "[Broker / وسيط عقاري] - Andalus 2",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "[Broker / وسيط عقاري] - The Square": {
-    "name": "[Broker / وسيط عقاري] - The Square",
-    "zone": "5th Settlement",
-    "coords": [
-      30.033,
-      31.542
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
   "[Broker / وسيط عقاري] - Front of AUC, Lake Residence Al Marasem": {
     "name": "[Broker / وسيط عقاري] - Front of AUC, Lake Residence Al Marasem",
     "zone": "5th Settlement",
@@ -3008,12 +1750,29 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "[Broker / وسيط عقاري] - City Gate": {
-    "name": "[Broker / وسيط عقاري] - City Gate",
+  "First District": {
+    "name": "First District",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.015,
+      31.435
+    ],
+    "totalUnits": 3,
+    "saleUnits": 0,
+    "rentUnits": 0,
+    "ownersUnits": 0,
+    "brokerUnits": 0,
+    "unknownUnits": 3,
+    "avgSaleEgpM": 8.5,
+    "avgRentUsd": 1800,
+    "avgAiScore": 0
+  },
+  "El Choueifat": {
+    "name": "El Choueifat",
+    "zone": "5th Settlement",
+    "coords": [
+      30.015,
+      31.425
     ],
     "totalUnits": 1,
     "saleUnits": 0,
@@ -3025,189 +1784,19 @@
     "avgRentUsd": 1800,
     "avgAiScore": 0
   },
-  "El-Banafseg 11 Villas": {
-    "name": "El-Banafseg 11 Villas",
+  "Second District": {
+    "name": "Second District",
     "zone": "5th Settlement",
     "coords": [
-      30.03,
-      31.47
+      30.022,
+      31.442
     ],
-    "totalUnits": 1,
+    "totalUnits": 5,
     "saleUnits": 0,
     "rentUnits": 0,
     "ownersUnits": 0,
     "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Banafseg 3 Villas": {
-    "name": "El-Banafseg 3 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 4,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 4,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Banafseg 10 Villas": {
-    "name": "El-Banafseg 10 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Yasmine 4 Villas": {
-    "name": "El-Yasmine 4 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Yasmine 7 Villas": {
-    "name": "El-Yasmine 7 Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "First District Villas": {
-    "name": "First District Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "El-Garanfol Villas": {
-    "name": "El-Garanfol Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 2,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 2,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Choueifat Villas": {
-    "name": "Choueifat Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Second District Villas": {
-    "name": "Second District Villas",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 4,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 4,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "First District - Area 6": {
-    "name": "First District - Area 6",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
-    "avgSaleEgpM": 8.5,
-    "avgRentUsd": 1800,
-    "avgAiScore": 0
-  },
-  "Second District - Area 4": {
-    "name": "Second District - Area 4",
-    "zone": "5th Settlement",
-    "coords": [
-      30.03,
-      31.47
-    ],
-    "totalUnits": 1,
-    "saleUnits": 0,
-    "rentUnits": 0,
-    "ownersUnits": 0,
-    "brokerUnits": 0,
-    "unknownUnits": 1,
+    "unknownUnits": 5,
     "avgSaleEgpM": 8.5,
     "avgRentUsd": 1800,
     "avgAiScore": 0

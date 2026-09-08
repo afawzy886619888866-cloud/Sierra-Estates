@@ -67,11 +67,17 @@ const COMPOUNDS_LIST = [
   'Madinaty',
   'Hyde Park',
   'Villette',
-  'Lake View Residence',
-  '5th Settlement',
-  'Mountain View',
-  'Fifth Square',
+  'Mountain View iCity',
+  'Palm Hills New Cairo',
   'Cairo Festival City',
+  'Uptown Cairo',
+  'Fifth Square',
+  'The Waterway',
+  'Lake View Residence',
+  'Stone Residence',
+  'Taj City',
+  'Zed East',
+  '5th Settlement',
 ];
 
 const PROPERTY_TYPES = [
