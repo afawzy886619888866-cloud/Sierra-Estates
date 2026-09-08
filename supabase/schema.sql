@@ -7,6 +7,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "vector";
+CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- ------------------------------------------------------------------------------
 -- 2. User Profiles & Roles (Linked to auth.users)
@@ -106,6 +107,10 @@ CREATE TABLE IF NOT EXISTS public.listings (
     floor_plan_url TEXT,
     virtual_tour_url TEXT,
     amenities TEXT[] DEFAULT ARRAY[]::TEXT[],
+    reference_code TEXT UNIQUE,
+    location_coords geometry(Point, 4326),
+    latitude NUMERIC,
+    longitude NUMERIC,
     raw_data JSONB DEFAULT '{}'::jsonb,
     embedding vector(1536),
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
@@ -311,6 +316,7 @@ CREATE INDEX IF NOT EXISTS idx_whatsapp_status ON public.whatsapp_queue(status, 
 CREATE INDEX IF NOT EXISTS idx_unified_memory_agent ON public.unified_memory(agent_id, key);
 CREATE INDEX IF NOT EXISTS idx_unified_memory_embedding ON public.unified_memory USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS idx_listings_embedding ON public.listings USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS listings_geo_idx ON public.listings USING gist (location_coords);
 
 -- ------------------------------------------------------------------------------
 -- 11. Automatic updated_at Trigger
@@ -2149,4 +2155,72 @@ BEGIN
         CREATE TRIGGER trigger_update_proposals BEFORE UPDATE ON public.proposals
             FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
+END $$;
+
+-- ─── 46. Staged Scraped Listings & Task Dispatch (PostGIS Ecosystem) ─────────
+CREATE TABLE IF NOT EXISTS public.raw_feed (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamptz DEFAULT now(),
+    raw_text text NOT NULL,
+    source_channel text NOT NULL, -- 'whatsapp_group', 'dubizzle'
+    sender_phone text,
+    extracted_data jsonb,
+    is_reviewed boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS public.bot_runs (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamptz DEFAULT now(),
+    bot_name text NOT NULL,
+    status text DEFAULT 'idle',
+    task_type text,
+    metrics jsonb DEFAULT '{}'::jsonb,
+    last_run_at timestamptz DEFAULT now(),
+    rate_limit_counter int DEFAULT 0
+);
+
+ALTER TABLE public.raw_feed ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bot_runs ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "raw_feed_staff_access" ON public.raw_feed;
+    CREATE POLICY "raw_feed_staff_access" ON public.raw_feed FOR ALL USING (true);
+
+    DROP POLICY IF EXISTS "bot_runs_staff_access" ON public.bot_runs;
+    CREATE POLICY "bot_runs_staff_access" ON public.bot_runs FOR ALL USING (true);
+END $$;
+
+-- ─── 47. Proximity Search Function (New Capital & Compound Radius) ────────────
+CREATE OR REPLACE FUNCTION get_listings_near_capital(capital_lat numeric, capital_lng numeric, radius_meters numeric)
+RETURNS SETOF public.listings AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM public.listings
+  WHERE location_coords IS NOT NULL
+    AND ST_DWithin(
+      location_coords,
+      ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
+      radius_meters::float8
+    )
+    AND (status = 'available' OR status = 'active');
+END;
+$$ LANGUAGE plpgsql;
+
+-- ─── 48. Supabase Realtime Publication ────────────────────────────────────────
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.listings;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.raw_feed;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
 END $$;
