@@ -43,6 +43,7 @@ export default function AgentOrchestratorCard({
   const [customPrompt, setCustomPrompt] = useState('');
   const [selectedHarness, setSelectedHarness] = useState<'agy' | 'claude-code' | 'copilot'>('agy');
   const [showSpawnModal, setShowSpawnModal] = useState(false);
+  const [showTechDetails, setShowTechDetails] = useState(false);
 
   // Poll live status from API
   const refreshAoStatus = async () => {
@@ -194,16 +195,38 @@ export default function AgentOrchestratorCard({
                 {aoState.running ? (isAr ? 'متصل (Port :3001)' : 'DAEMON READY (:3001)') : (isAr ? 'في وضع الاستعداد' : 'STANDBY')}
               </span>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: 11, color: 'rgba(255, 255, 255, 0.65)' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: 11, color: 'rgba(255, 255, 255, 0.7)' }}>
               {isAr
-                ? 'تنسيق متوازي لجلسات الوكلاء عبر مساحات عمل Git المنفصلة (Claude Code + Antigravity/Agy + Copilot)'
-                : 'Parallel coding-agent supervisor across git worktrees (Claude Code + Antigravity/Agy + Copilot)'}
+                ? 'محرك الأتمتة المركزي الذي يدير روبوتات الواتساب، فحص الصور، ومزامنة العقارات في الخلفية'
+                : 'Sierra Automation Core — powers background bots, WhatsApp auto-replies, and property syndication.'}
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowTechDetails(!showTechDetails)}
+            className="btn"
+            style={{
+              padding: '6px 12px',
+              fontSize: 11,
+              fontWeight: 600,
+              background: showTechDetails ? 'rgba(0, 174, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+              color: showTechDetails ? '#38BDF8' : '#D1D5DB',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+            title="Toggle Technical Details"
+          >
+            <span>⚙️</span>
+            <span>{showTechDetails ? (isAr ? 'إخفاء التفاصيل الفنية' : 'Hide Tech Specs') : (isAr ? 'التفاصيل الفنية' : 'Tech Specs')}</span>
+          </button>
+
           <button
             onClick={handleLaunchDesktopApp}
             className="btn"
@@ -316,91 +339,168 @@ export default function AgentOrchestratorCard({
       )}
 
       {/* ── STATUS PILLS & TELEMETRY ROW ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 10,
-          marginTop: 12,
-        }}
-      >
-        {/* Project Card */}
+      {!showTechDetails ? (
         <div
           style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 10,
+            marginTop: 12,
           }}
         >
-          <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {isAr ? 'المشروع المسجل في AO' : 'Registered AO Project'}
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 20 }}>🟢</span>
+            <div>
+              <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase' }}>
+                {isAr ? 'حالة محرك الأتمتة' : 'Automation Engine'}
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#34D399' }}>
+                {isAr ? 'يعمل بنشاط وتزامن تام' : 'Active & Synchronized'}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
-            se-vercel-deploy-main
-          </div>
-          <div style={{ fontSize: 9.5, color: 'rgba(255, 255, 255, 0.4)', marginTop: 2, fontFamily: 'monospace' }}>
-            H:\last\Main\SE-Vercel-deploy-main
-          </div>
-        </div>
 
-        {/* Installed Harnesses */}
-        <div
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-          }}
-        >
-          <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {isAr ? 'محركات الذكاء المرخصة' : 'Authorized AI Harnesses'}
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 20 }}>🤖</span>
+            <div>
+              <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase' }}>
+                {isAr ? 'الخدمات الذكية' : 'Autonomous Fleet'}
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--gold)' }}>
+                {isAr ? '6 وكلاء ذكاء اصطناعي متصلين' : '6 Live AI Assistants'}
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-            {[
-              { id: 'agy', label: 'Agy (Antigravity)', color: '#34D399' },
-              { id: 'claude-code', label: 'Claude Code', color: '#A78BFA' },
-              { id: 'copilot', label: 'Copilot', color: '#60A5FA' },
-            ].map((h) => (
-              <span
-                key={h.id}
-                style={{
-                  fontSize: 10,
-                  padding: '2px 7px',
-                  borderRadius: 6,
-                  background: `${h.color}18`,
-                  color: h.color,
-                  border: `1px solid ${h.color}35`,
-                  fontWeight: 600,
-                }}
-              >
-                ✓ {h.label}
-              </span>
-            ))}
-          </div>
-        </div>
 
-        {/* Sessions & Daemon Port */}
-        <div
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-          }}
-        >
-          <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            {isAr ? 'منفذ الخادم وحالة الجلسات' : 'Daemon Port & Sessions'}
-          </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#F0EDE5', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>Port 3001</span>
-            <span style={{ fontSize: 10, color: '#34D399', fontWeight: 600 }}>• Daemon Ready</span>
-          </div>
-          <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', marginTop: 2 }}>
-            Branch: <code style={{ color: 'var(--gold)', fontSize: 10 }}>ao/se-vercel-de-orchestrator</code>
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 20 }}>⚡</span>
+            <div>
+              <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase' }}>
+                {isAr ? 'المتابعة الحية' : 'Background Tasks'}
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#38BDF8' }}>
+                {isAr ? 'واتساب + بروبرتي فايندر + صور' : 'WhatsApp + Feeds + Vision'}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
+          {/* Project Card */}
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
+            <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              {isAr ? 'المشروع المسجل في AO' : 'Registered AO Project'}
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
+              se-vercel-deploy-main
+            </div>
+            <div style={{ fontSize: 9.5, color: 'rgba(255, 255, 255, 0.4)', marginTop: 2, fontFamily: 'monospace' }}>
+              H:\last\Main\SE-Vercel-deploy-main
+            </div>
+          </div>
+
+          {/* Installed Harnesses */}
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
+            <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              {isAr ? 'محركات الذكاء المرخصة' : 'Authorized AI Harnesses'}
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+              {[
+                { id: 'agy', label: 'Agy (Antigravity)', color: '#34D399' },
+                { id: 'claude-code', label: 'Claude Code', color: '#A78BFA' },
+                { id: 'copilot', label: 'Copilot', color: '#60A5FA' },
+              ].map((h) => (
+                <span
+                  key={h.id}
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 7px',
+                    borderRadius: 6,
+                    background: `${h.color}18`,
+                    color: h.color,
+                    border: `1px solid ${h.color}35`,
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ {h.label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Sessions & Daemon Port */}
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
+            <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              {isAr ? 'منفذ الخادم وحالة الجلسات' : 'Daemon Port & Sessions'}
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#F0EDE5', marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>Port 3001</span>
+              <span style={{ fontSize: 10, color: '#34D399', fontWeight: 600 }}>• Daemon Ready</span>
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.5)', marginTop: 2 }}>
+              Branch: <code style={{ color: 'var(--gold)', fontSize: 10 }}>ao/se-vercel-de-orchestrator</code>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── SPAWN WORKER MODAL / POPUP ── */}
       {showSpawnModal && (
