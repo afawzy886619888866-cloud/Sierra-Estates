@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import type { FleetRepairReport } from '@/lib/services/agent-repair';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import AgentOrchestratorCard from '@/components/admin/AgentOrchestratorCard';
 import {
@@ -173,7 +174,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isRepairingAll, setIsRepairingAll] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
-  const [repairReport, setRepairReport] = useState<any>(null);
+  const [repairReport, setRepairReport] = useState<FleetRepairReport | null>(null);
 
   // Playground state
   const [chatInput, setChatInput] = useState('');
@@ -641,6 +642,60 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
             ? 'وكلاء سييرا الستة يعملون في الخلفية على مدار 24 ساعة للترحيب بزوار الموقع، متابعة المشترين عبر الواتساب، فحص جودة صور العقارات، ومزامنة إعلانات بروبرتي فايندر. إذا واجهت أي توقف أو استفسار، اضغط زر "إصلاح وفحص كافة الوكلاء" بالأعلى لإعادة الاتصال والتشغيل الذاتي فوراً.'
             : "Sierra's 6 autonomous assistants work 24/7 in the background to capture buyer leads, follow up on WhatsApp, audit property photo quality, and sync portal feeds. If any agent appears slow or unresponsive, click 'Auto-Repair Fleet' above to run instant self-healing and reconnect all channels."}
         </p>
+
+        {repairReport && (
+          <div
+            style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: 'rgba(52, 211, 153, 0.08)',
+              border: '1px solid rgba(52, 211, 153, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              fontSize: 12,
+              color: 'var(--emerald)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>
+                {isAr
+                  ? `تم اكتمال الفحص والإصلاح: ${repairReport.summary}`
+                  : `Diagnostics & Auto-Repair Complete: ${repairReport.summary}`}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  padding: '2px 8px',
+                  borderRadius: 12,
+                  background: 'rgba(52, 211, 153, 0.2)',
+                  fontWeight: 700,
+                }}
+              >
+                {repairReport.overallHealth}% Health
+              </span>
+              <button
+                onClick={() => setRepairReport(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--tx-m)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  padding: '0 4px',
+                }}
+                title={isAr ? 'إغلاق' : 'Dismiss'}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── PLAIN-LANGUAGE HELP & EXPLANATION MODAL ── */}
