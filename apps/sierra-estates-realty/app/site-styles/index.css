@@ -92,7 +92,7 @@ a:hover{color:var(--pri-d);}
 /* ── LASER BEAM — appears fast, descends slowly (like video: ~3s sweep) ──
      Inside hero only. z-index 6 (above scrim, below search card). */
 .page-laser{position:absolute;top:0;left:0;right:0;height:100%;z-index:6;pointer-events:none;overflow:hidden;border-radius:inherit;}
-.page-laser-beam{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 5%,rgba(52,211,153,.4) 15%,#34d399 35%,#fff 50%,#34d399 65%,rgba(52,211,153,.4) 85%,transparent 95%);border-radius:3px;box-shadow:0 0 20px rgba(52,211,153,1),0 0 40px rgba(16,185,129,.7),0 0 60px rgba(16,185,129,.3),0 0 80px rgba(16,185,129,.15);animation:laserSweepDown 5s ease-in-out infinite;}
+.page-laser-beam{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 5%,rgba(233,193,118,.4) 15%,#e9c176 35%,#fff 50%,#e9c176 65%,rgba(233,193,118,.4) 85%,transparent 95%);border-radius:3px;box-shadow:0 0 24px rgba(233,193,118,1),0 0 48px rgba(200,150,26,.8),0 0 72px rgba(200,150,26,.4),0 0 96px rgba(200,150,26,.2);animation:laserSweepDown 4.5s ease-in-out infinite;}
 /* Laser: pause at top (0-15%), descend (15-75%), pause at bottom (75-100%)
    This creates a visible "rest" at the top before the beam sweeps down. */
 @keyframes laserSweepDown{
@@ -103,8 +103,26 @@ a:hover{color:var(--pri-d);}
   85%{top:100%;opacity:0;}
   100%{top:0;opacity:0;}
 }
-@media(max-width:768px){.page-laser-beam{height:2px;box-shadow:0 0 14px rgba(52,211,153,.9),0 0 28px rgba(16,185,129,.5),0 0 42px rgba(16,185,129,.2);}}
-@media(prefers-reduced-motion:reduce){.page-laser-beam{animation:none;opacity:0;}}
+@media(max-width:768px){.page-laser-beam{height:2px;box-shadow:0 0 14px rgba(233,193,118,.9),0 0 28px rgba(200,150,26,.5),0 0 42px rgba(200,150,26,.2);}}
+@media(prefers-reduced-motion:reduce){.page-laser-beam{animation:none;opacity:.4;top:50%;}}
+
+/* ── scroll-down indicator (laser line tag) ── */
+.scroll-cue{position:absolute;bottom:28px;right:36px;z-index:10;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;}
+.scroll-cue-line{position:relative;width:2px;height:54px;background:rgba(255,255,255,.22);border-radius:2px;overflow:hidden;}
+.scroll-cue-line::after{content:"";position:absolute;top:0;left:0;width:100%;height:18px;background:linear-gradient(180deg,transparent,#e9c176,#fff,#e9c176,transparent);border-radius:2px;animation:scrollLaser 1.8s var(--silk) infinite;box-shadow:0 0 12px rgba(233,193,118,.9);}
+.scroll-cue-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.28em;color:rgba(255,255,255,.7);text-transform:uppercase;writing-mode:vertical-rl;text-orientation:mixed;}
+@keyframes scrollLaser{0%{transform:translateY(-18px);opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{transform:translateY(54px);opacity:0;}}
+@media(max-width:680px){.scroll-cue{bottom:18px;right:20px;}.scroll-cue-line{height:40px;}.scroll-cue-line::after{height:14px;}@keyframes scrollLaser{0%{transform:translateY(-14px);opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{transform:translateY(40px);opacity:0;}}}
+@media(prefers-reduced-motion:reduce){.scroll-cue-line::after{animation:none;opacity:.6;}}
+[dir="rtl"] .scroll-cue{right:auto;left:36px;}
+@media(max-width:680px){[dir="rtl"] .scroll-cue{right:auto;left:20px;}}
+
+/* ── Glowing Laser Tag Badge in Hero ── */
+.laser-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:rgba(10,22,34,.75);border:1px solid rgba(233,193,118,.5);box-shadow:0 0 18px rgba(233,193,118,.3),inset 0 1px 0 rgba(255,255,255,.25);margin-bottom:16px;backdrop-filter:blur(12px);width:fit-content;transition:all .3s ease;}
+.laser-badge-dot{width:7px;height:7px;border-radius:50%;background:#e9c176;box-shadow:0 0 8px #e9c176,0 0 16px #e9c176;animation:laserPulse 1.8s ease-in-out infinite;}
+@keyframes laserPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.4);opacity:.5;}}
+.laser-badge-text{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#e9c176;text-shadow:0 0 10px rgba(233,193,118,.5);}
+[dir="rtl"] .laser-badge-text{font-family:'Cairo',sans-serif;letter-spacing:0;}
 
 /* ── TWEAKS PANEL — accent color + corner style customization ── */
 /* ── expressive feel controls (Atmosphere / Depth / Motion) ── */

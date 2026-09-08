@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail,
+  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -51,6 +51,51 @@ const TICKER_AR = [
   'بالم هيلز AI 9.2', 'إيستاون طلب متزايد', 'البروج نمو سنوي +18%',
 ];
 
+const SUGGESTED_COMPOUNDS = [
+  'Mivida',
+  'Hyde Park',
+  'Mountain View iCity',
+  'Eastown (SODIC)',
+  'Villette (SODIC)',
+  'Palm Hills New Cairo',
+  'Cairo Festival City',
+  'Katameya Heights',
+  'Lake View Residence',
+  'Swan Lake Residence',
+  'Taj City',
+  'Zed East',
+  'Al Rehab',
+  'Madinaty',
+];
+
+const POPULAR_COMPOUND_CHIPS = [
+  { en: 'All Compounds', ar: 'كل الكمبوندات', val: '' },
+  { en: 'Mivida', ar: 'ميفيدا', val: 'Mivida' },
+  { en: 'Hyde Park', ar: 'هايد بارك', val: 'Hyde Park' },
+  { en: 'Mountain View', ar: 'ماونتن فيو', val: 'Mountain View' },
+  { en: 'Eastown', ar: 'إيستاون', val: 'Eastown' },
+  { en: 'Villette', ar: 'فيليت', val: 'Villette' },
+  { en: 'Palm Hills', ar: 'بالم هيلز', val: 'Palm Hills' },
+];
+
+const RENT_PRICES = [
+  { val: '0', en: 'Any Rent Budget', ar: 'أي ميزانية إيجار' },
+  { val: '35k', en: 'Up to 35k EGP/mo', ar: 'حتى 35 ألف/شهر' },
+  { val: '60k', en: 'Up to 60k EGP/mo', ar: 'حتى 60 ألف/شهر' },
+  { val: '100k', en: 'Up to 100k EGP/mo', ar: 'حتى 100 ألف/شهر' },
+  { val: '150k', en: 'Up to 150k EGP/mo', ar: 'حتى 150 ألف/شهر' },
+  { val: '250k', en: '250k+ EGP/mo', ar: 'أكثر من 250 ألف/شهر' },
+];
+
+const SALE_PRICES = [
+  { val: '0', en: 'Any Price Budget', ar: 'أي ميزانية شراء' },
+  { val: '7m', en: 'Up to 7M EGP', ar: 'حتى 7 مليون' },
+  { val: '15m', en: 'Up to 15M EGP', ar: 'حتى 15 مليون' },
+  { val: '25m', en: 'Up to 25M EGP', ar: 'حتى 25 مليون' },
+  { val: '40m', en: 'Up to 40M EGP', ar: 'حتى 40 مليون' },
+  { val: '60m', en: '60M+ EGP', ar: 'أكثر من 60 مليون' },
+];
+
 export default function HomePage() {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
@@ -60,6 +105,7 @@ export default function HomePage() {
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
+  const [showCompoundDropdown, setShowCompoundDropdown] = useState(false);
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
@@ -102,6 +148,30 @@ export default function HomePage() {
     []
   );
 
+  const matchingCount = useMemo(() => {
+    return listings.filter((item) => {
+      if (searchMode === 'rent' && item.mode !== 'rent') return false;
+      if (searchMode === 'buy' && item.mode === 'rent') return false;
+      if (search.compound.trim()) {
+        const cpd = (item.cmp || item.zone || '').toLowerCase();
+        if (!cpd.includes(search.compound.toLowerCase().trim())) return false;
+      }
+      if (search.type && item.type) {
+        if (!item.type.toLowerCase().includes(search.type.toLowerCase())) return false;
+      }
+      if (search.beds !== '0' && item.beds) {
+        if (item.beds < parseInt(search.beds, 10)) return false;
+      }
+      return true;
+    }).length;
+  }, [listings, searchMode, search]);
+
+  const hasActiveFilters = Boolean(search.compound || search.type || search.beds !== '0' || search.price !== '0');
+  const handleResetFilters = () => {
+    setSearch({ compound: '', type: '', beds: '0', price: '0' });
+    setShowCompoundDropdown(false);
+  };
+
   async function submitInquiry(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -123,75 +193,349 @@ export default function HomePage() {
 
       {/* SEARCH CARD */}
       <div className="wrap searchbar">
-        <div className="search-card rv" style={{ padding: '6px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '24px', backdropFilter: 'blur(24px)', border: '1px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
-          <div className="search-card-inner" style={{ background: 'rgba(15, 23, 42, 0.65)', borderRadius: '18px', padding: '16px', boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)' }}>
-            <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'}>
-              {(['buy', 'rent', 'new'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  className={searchMode === mode ? 'active' : undefined}
-                  type="button"
-                  role="tab"
-                  aria-selected={searchMode === mode}
-                  onClick={() => setSearchMode(mode)}
-                  style={{ transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease' }}
-                >
-                  {t(mode === 'buy' ? 'tabBuy' : mode === 'rent' ? 'tabRent' : 'tabNew')}
-                </button>
-              ))}
-            </div>
-            <div className="search-fields">
-            <div className="field">
-              <label htmlFor="hero-compound-search">{t('fLoc')}</label>
-              <input
-                type="text"
-                id="hero-compound-search"
-                name="compound"
-                className="hero-search-input"
-                placeholder={t('heroCpdPh')}
-                value={search.compound}
-                onChange={(e) => setSearch({ ...search, compound: e.target.value })}
-                autoComplete="off"
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="hero-type">{t('fType')}</label>
-              <select id="hero-type" name="type" className="hero-select" value={search.type} onChange={(e) => setSearch({ ...search, type: e.target.value })}>
-                <option value="">{t('anyType')}</option>
-                <option value="Apartment">{t('tApt')}</option>
-                <option value="Villa">{t('tVilla')}</option>
-                <option value="Townhouse">{t('tTown')}</option>
-                <option value="Twin House">{t('tTwinH')}</option>
-                <option value="Penthouse">{t('tPent')}</option>
-                <option value="Duplex">{t('tDuplex')}</option>
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="hero-beds">{t('fBeds')}</label>
-              <select id="hero-beds" name="beds" className="hero-select" value={search.beds} onChange={(e) => setSearch({ ...search, beds: e.target.value })}>
-                <option value="0">{t('reqAny')}</option>
-                {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}+</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="hero-price">{t('fPrice')}</label>
-              <select id="hero-price" name="price" className="hero-select" value={search.price} onChange={(e) => setSearch({ ...search, price: e.target.value })}>
-                <option value="0">{t('anyPrice')}</option>
-                {[5, 10, 20, 30, 50].map((n) => (
-                  <option key={n} value={n}>Up to {n}M EGP</option>
+        <div
+          className="search-card rv"
+          style={{
+            padding: '6px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '24px',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <div
+            className="search-card-inner"
+            style={{
+              background: 'rgba(15, 23, 42, 0.72)',
+              borderRadius: '18px',
+              padding: '18px',
+              boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)',
+            }}
+          >
+            {/* Top Bar: Tabs + Live Match Counter + Reset Button */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+                marginBottom: 14,
+              }}
+            >
+              <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'} style={{ margin: 0 }}>
+                {(['buy', 'rent', 'new'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    className={searchMode === mode ? 'active' : undefined}
+                    type="button"
+                    role="tab"
+                    aria-selected={searchMode === mode}
+                    onClick={() => {
+                      setSearchMode(mode);
+                      setSearch((prev) => ({ ...prev, price: '0' }));
+                    }}
+                    style={{ transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease' }}
+                  >
+                    {t(mode === 'buy' ? 'tabBuy' : mode === 'rent' ? 'tabRent' : 'tabNew')}
+                  </button>
                 ))}
-              </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                {/* Live Match Counter Pill */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    background: 'rgba(201, 148, 54, 0.12)',
+                    border: '1px solid rgba(201, 148, 54, 0.3)',
+                    color: '#e9c176',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                  }}
+                >
+                  <Sparkles style={{ width: 13, height: 13 }} />
+                  <span>
+                    {isAr
+                      ? `${matchingCount || listings.length} وحدة متوفرة ومؤكدة`
+                      : `${matchingCount || listings.length} Verified Units Available`}
+                  </span>
+                </div>
+
+                {/* Reset Filters */}
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: '5px 10px',
+                      borderRadius: 999,
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: 'rgba(255, 255, 255, 0.75)',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    title={isAr ? 'إعادة ضبط كل الفلاتر' : 'Reset all search filters'}
+                  >
+                    <RotateCcw style={{ width: 11, height: 11 }} />
+                    <span>{isAr ? 'إعادة ضبط' : 'Reset'}</span>
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="field searchbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Link href={searchHref} className="btn btn-pri" id="hero-search-btn" style={{ transform: 'translateZ(0)', transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', cursor: 'pointer' }} onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
-                <Search className="i" /> <span>{t('search')}</span>
-              </Link>
-              <Link href={netRadarHref} className="btn" id="hero-radar-btn" title={isAr ? 'فتح رادار اصطياد وتأكيد الوحدات' : 'Open Listing Net Radar'} style={{ background: 'linear-gradient(135deg, #c99436, #e9c176)', color: '#0d0d0f', fontWeight: 800, whiteSpace: 'nowrap', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 16px', borderRadius: 12, height: 44, textDecoration: 'none' }}>
-                <Radar className="i" /> <span>{isAr ? 'رادار الوحدات' : 'Listing Net'}</span>
-              </Link>
+
+            {/* Quick Compound Chips */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                overflowX: 'auto',
+                paddingBottom: 10,
+                marginBottom: 10,
+                scrollbarWidth: 'none',
+              }}
+            >
+              {POPULAR_COMPOUND_CHIPS.map((chip) => {
+                const isSelected = chip.val === '' ? !search.compound : search.compound.toLowerCase().includes(chip.val.toLowerCase());
+                return (
+                  <button
+                    key={chip.en}
+                    type="button"
+                    onClick={() => {
+                      setSearch({ ...search, compound: chip.val });
+                      setShowCompoundDropdown(false);
+                    }}
+                    style={{
+                      padding: '4px 11px',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: isSelected ? 700 : 500,
+                      whiteSpace: 'nowrap',
+                      background: isSelected ? 'rgba(201, 148, 54, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
+                      border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {isAr ? chip.ar : chip.en}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="search-fields">
+              {/* Compound search with autocomplete */}
+              <div className="field" style={{ position: 'relative' }}>
+                <label htmlFor="hero-compound-search">{t('fLoc')}</label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input
+                    type="text"
+                    id="hero-compound-search"
+                    name="compound"
+                    className="hero-search-input"
+                    placeholder={t('heroCpdPh')}
+                    value={search.compound}
+                    onChange={(e) => {
+                      setSearch({ ...search, compound: e.target.value });
+                      setShowCompoundDropdown(true);
+                    }}
+                    onFocus={() => setShowCompoundDropdown(true)}
+                    autoComplete="off"
+                    style={{ paddingInlineEnd: search.compound ? 32 : 12 }}
+                  />
+                  {search.compound && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch({ ...search, compound: '' });
+                        setShowCompoundDropdown(false);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        insetInlineEnd: 8,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        cursor: 'pointer',
+                        padding: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title="Clear"
+                    >
+                      <X style={{ width: 13, height: 13 }} />
+                    </button>
+                  )}
+
+                  {/* Autocomplete Suggestions Dropdown */}
+                  {showCompoundDropdown && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        insetInlineStart: 0,
+                        width: '100%',
+                        minWidth: 220,
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                        background: '#0d1522',
+                        border: '1px solid rgba(201, 148, 54, 0.3)',
+                        borderRadius: 12,
+                        boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
+                        zIndex: 100,
+                        padding: '6px',
+                      }}
+                    >
+                      {SUGGESTED_COMPOUNDS.filter((c) =>
+                        !search.compound.trim() || c.toLowerCase().includes(search.compound.toLowerCase().trim())
+                      ).slice(0, 8).map((c) => (
+                        <div
+                          key={c}
+                          onMouseDown={() => {
+                            setSearch({ ...search, compound: c });
+                            setShowCompoundDropdown(false);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#FFFFFF',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'background 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 148, 54, 0.15)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <span>{c}</span>
+                          {search.compound.toLowerCase() === c.toLowerCase() && (
+                            <Check style={{ width: 13, height: 13, color: '#e9c176' }} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Property Type Dropdown */}
+              <div className="field">
+                <label htmlFor="hero-type">{t('fType')}</label>
+                <select
+                  id="hero-type"
+                  name="type"
+                  className="hero-select"
+                  value={search.type}
+                  onChange={(e) => setSearch({ ...search, type: e.target.value })}
+                >
+                  <option value="">{t('anyType')}</option>
+                  <option value="Apartment">{t('tApt')}</option>
+                  <option value="Villa">{t('tVilla')}</option>
+                  <option value="Townhouse">{t('tTown')}</option>
+                  <option value="Twin House">{t('tTwinH')}</option>
+                  <option value="Penthouse">{t('tPent')}</option>
+                  <option value="Duplex">{t('tDuplex')}</option>
+                  <option value="Studio">{isAr ? 'استوديو' : 'Studio'}</option>
+                  <option value="Chalet">{isAr ? 'شاليه' : 'Chalet'}</option>
+                </select>
+              </div>
+
+              {/* Bedrooms Dropdown */}
+              <div className="field">
+                <label htmlFor="hero-beds">{t('fBeds')}</label>
+                <select
+                  id="hero-beds"
+                  name="beds"
+                  className="hero-select"
+                  value={search.beds}
+                  onChange={(e) => setSearch({ ...search, beds: e.target.value })}
+                >
+                  <option value="0">{t('reqAny')}</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n}+ {isAr ? 'غرف' : 'Beds'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Dynamic Price Dropdown (Buy vs Rent) */}
+              <div className="field">
+                <label htmlFor="hero-price">{t('fPrice')}</label>
+                <select
+                  id="hero-price"
+                  name="price"
+                  className="hero-select"
+                  value={search.price}
+                  onChange={(e) => setSearch({ ...search, price: e.target.value })}
+                >
+                  {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => (
+                    <option key={p.val} value={p.val}>
+                      {isAr ? p.ar : p.en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="field searchbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Link
+                  href={searchHref}
+                  className="btn btn-pri"
+                  id="hero-search-btn"
+                  style={{
+                    transform: 'translateZ(0)',
+                    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+                  onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <Search className="i" /> <span>{t('search')}</span>
+                </Link>
+                <Link
+                  href={netRadarHref}
+                  className="btn"
+                  id="hero-radar-btn"
+                  title={isAr ? 'فتح رادار اصطياد وتأكيد الوحدات' : 'Open Listing Net Radar'}
+                  style={{
+                    background: 'linear-gradient(135deg, #c99436, #e9c176)',
+                    color: '#0d0d0f',
+                    fontWeight: 800,
+                    whiteSpace: 'nowrap',
+                    border: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '0 16px',
+                    borderRadius: 12,
+                    height: 44,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Radar className="i" /> <span>{isAr ? 'رادار الوحدات' : 'Listing Net'}</span>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
 
