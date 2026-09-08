@@ -54,16 +54,20 @@ const COMPOUND_COORDS = {
   'SODIC East': [30.018, 31.587],
   'Hyde Park': [30.008, 31.645],
   'Lake View Residence': [30.022, 31.532],
-  'El Narges': [30.052, 31.47],
+  'Al Narges': [30.052, 31.47],
+  'Al Banafsaj': [30.045, 31.485],
+  'Al Andalus': [30.052, 31.49],
+  'South Academy': [30.005, 31.44],
+  'North 90th': [30.03, 31.47],
+  'Gardenia City': [30.082, 31.412],
   'Eastown': [30.018, 31.587],
   'Villette': [30.053, 31.598],
-  'Swan Lake': [30.045, 31.635],
+  'Swan Lake Residence': [30.045, 31.635],
   '90 Avenue': [30.028, 31.572],
   'Katameya Dunes': [29.985, 31.492],
   'Katameya Heights': [29.99, 31.48],
   'Katameya Gardens': [29.992, 31.488],
   'Village Gardens Katameya': [29.988, 31.484],
-  'Katameya': [29.99, 31.48],
   'District 5': [30.012, 31.5],
   'Stone Residence': [30.028, 31.557],
   'The Square': [30.033, 31.542],
@@ -86,32 +90,114 @@ const COMPOUND_COORDS = {
   'Green Square': [30.148, 31.61],
   'Layan Residence': [30.01, 31.655],
   'Jayd': [30.045, 31.665],
-  'Mountain View': [30.014, 31.618],
   'Mountain View iCity': [30.014, 31.618],
   'Mountain View Executive': [30.018, 31.61],
   'Zed East': [30.095, 31.61],
   'The Waterway': [30.028, 31.612],
-  'Palm Hills': [30.002, 31.608],
-  'El Shorouk': [30.121, 31.616],
+  'Palm Hills New Cairo': [30.002, 31.608],
+  'El Shorouk City': [30.121, 31.616],
   'El Shorouk Springs': [30.135, 31.615],
   'Oriana': [30.033, 31.492],
   'Galleria Moon Valley': [30.02, 31.55],
-  'South Academy': [30.005, 31.44],
-  'North 90th': [30.03, 31.47],
-  'El Andalus': [30.052, 31.49],
   'Midtown': [30.015, 31.515],
   'Mostakbal City': [30.05, 31.65],
   'Badya': [29.93, 30.95],
   'Sheikh Zayed': [30.06, 30.98],
   '6th of October': [29.97, 30.94],
   'North Coast': [30.92, 28.85],
-  'El Banafseg': [30.045, 31.485],
   'El Yasmine': [30.048, 31.478],
   'El Choueifat': [30.015, 31.425],
   'El Lotus': [30.038, 31.512],
   'El Koronfel': [30.065, 31.495],
+  'Dar Misr (El Koronfel)': [30.065, 31.495],
   '5th Settlement': [30.02, 31.52],
+  'Amorada': [30.025, 31.595],
+  'City Gate': [30.015, 31.545],
+  'Trio Gardens': [30.065, 31.625],
+  'The Address East': [30.045, 31.565],
+  'Village Gate': [30.022, 31.505],
+  'Promenade Wadi Degla': [30.038, 31.525],
+  'The Icon Residence': [30.042, 31.535],
+  'Beit Al Watan': [30.045, 31.615],
+  'First District': [30.015, 31.435],
+  'Second District': [30.022, 31.442],
+  'Fifth District': [30.028, 31.455],
+  'El Defaa El Watany': [30.035, 31.465],
 };
+
+function normalizeCompound(raw) {
+  const c = String(raw || '').toLowerCase().trim();
+  if (!c || c === 'other' || c === 'other compound' || c === 'غير مذكور' || c === 'المتوسط العام للبيانات') return 'New Cairo';
+  if (c.includes('madinaty') || c.includes('مدينتي')) return 'Madinaty';
+  if (c.includes('mevida') || c.includes('mivida') || c.includes('ميفيدا')) return 'Mivida';
+  if (c.includes('fifth square') || c.includes('المراسم')) return 'Fifth Square';
+  if (c.includes('eastown') || c.includes('east town') || c.includes('sodic') || c.includes('سوديك')) {
+    if (c.includes('sodic east') && !c.includes('town')) return 'SODIC East';
+    return 'Eastown';
+  }
+  if (c.includes('villette') || c.includes('فيليت')) return 'Villette';
+  if (c.includes('cfc') || c.includes('cairo festival') || c.includes('كايرو فيستيفال')) return 'Cairo Festival City';
+  if (c.includes('up town') || c.includes('uptown') || c.includes('أب تاون')) return 'Uptown Cairo';
+  if (c.includes('gardina') || c.includes('gardenia') || c.includes('جاردينيا')) return 'Gardenia City';
+  if (c.includes('lake view') || c.includes('lakeview') || c.includes('ليك فيو')) return 'Lake View Residence';
+  if (c.includes('waterway') || c.includes('واتر واي')) return 'The Waterway';
+  if (c.includes('hyde park') || c.includes('haid bark') || c.includes('hayd park') || c.includes('هايد بارك')) return 'Hyde Park';
+  if (c.includes('oriana') || c.includes('أوريانا')) return 'Oriana';
+  if (c.includes('galleria') || c.includes('جاليريا')) return 'Galleria Moon Valley';
+  if (c.includes('narges') || c.includes('النرجس')) return 'Al Narges';
+  if (c.includes('banfcg') || c.includes('banafseg') || c.includes('البنفسج')) return 'Al Banafsaj';
+  if (c.includes('andlos') || c.includes('andalus') || c.includes('الأندلس')) return 'Al Andalus';
+  if (c.includes('south academ') || c.includes('جنوب الاكاديمية') || c.includes('جنوب الأكاديمية')) return 'South Academy';
+  if (c.includes('north 90') || c.includes('التسعين الشمالي')) return 'North 90th';
+  if (c.includes('rehab') || c.includes('الرحاب')) return 'Al Rehab';
+  if (c.includes('palm-hills') || c.includes('palm hills') || c.includes('بالم هيلز')) return 'Palm Hills New Cairo';
+  if (c.includes('eypet hose') || c.includes('elkurfenl') || c.includes('القرنفل') || c.includes('garanfol') || c.includes('qaranfel')) return 'Dar Misr (El Koronfel)';
+  if (c.includes('new-capital') || c.includes('new capital') || c.includes('العاصمة')) return 'New Capital';
+  if (c.includes('shorouk') || c.includes('الشروق')) return 'El Shorouk City';
+  if (c.includes('zaid') || c.includes('zayed') || c.includes('زايد')) return 'Sheikh Zayed';
+  if (c.includes('mountain view') || c.includes('ماونتن فيو')) return 'Mountain View iCity';
+  if (c.includes('katameya heights') || c.includes('قطامية هايتس')) return 'Katameya Heights';
+  if (c.includes('katameya dunes') || c.includes('قطامية ديونز')) return 'Katameya Dunes';
+  if (c.includes('katameya') || c.includes('قطامية')) return 'Katameya Heights';
+  if (c.includes('swan lake') || c.includes('سوان ليك')) return 'Swan Lake Residence';
+  if (c.includes('stone residence') || c.includes('ستون ريزيدنس')) return 'Stone Residence';
+  if (c.includes('the square') || c.includes('ذا سكوير')) return 'The Square';
+  if (c.includes('el patio oro') || c.includes('باتيو أورو')) return 'El Patio Oro';
+  if (c.includes('el patio 7') || c.includes('باتيو 7')) return 'El Patio 7';
+  if (c.includes('el patio') || c.includes('باتيو')) return 'El Patio Oro';
+  if (c.includes('90 avenue') || c.includes('90 أفينيو')) return '90 Avenue';
+  if (c.includes('district 5') || c.includes('ديستريكت 5')) return 'District 5';
+  if (c.includes('the brooks') || c.includes('ذا بروكس')) return 'The Brooks';
+  if (c.includes('stei8ht') || c.includes('ستييت')) return 'STEI8HT';
+  if (c.includes('the crest') || c.includes('ذا كريست')) return 'The Crest';
+  if (c.includes('sarai') || c.includes('ساراي')) return 'Sarai';
+  if (c.includes('bloomfields') || c.includes('بلومفيلدز')) return 'Bloomfields';
+  if (c.includes('taj city') || c.includes('تاج سيتي') || c.includes('shalya taj')) return 'Taj City';
+  if (c.includes('taj sultan') || c.includes('تاج سلطان')) return 'Taj Sultan';
+  if (c.includes('jayd') || c.includes('جايد')) return 'Jayd';
+  if (c.includes('zed east') || c.includes('زد إيست')) return 'Zed East';
+  if (c.includes('amorada')) return 'Amorada';
+  if (c.includes('city gate')) return 'City Gate';
+  if (c.includes('trio gardens')) return 'Trio Gardens';
+  if (c.includes('the address east')) return 'The Address East';
+  if (c.includes('village gate')) return 'Village Gate';
+  if (c.includes('promenade wadi degla')) return 'Promenade Wadi Degla';
+  if (c.includes('the icon residence')) return 'The Icon Residence';
+  if (c.includes('beit al watan')) return 'Beit Al Watan';
+  if (c.includes('first district')) return 'First District';
+  if (c.includes('second district')) return 'Second District';
+  if (c.includes('fifth district')) return 'Fifth District';
+  if (c.includes('el defaa el watany')) return 'El Defaa El Watany';
+  if (c.includes('october') || c.includes('أكتوبر')) return '6th of October';
+  if (c.includes('badya') || c.includes('بادية')) return 'Badya';
+  if (c.includes('midtown') || c.includes('ميدتاون')) return 'Midtown';
+  if (c.includes('yasmine') || c.includes('ياسمين')) return 'El Yasmine';
+  if (c.includes('choueifat') || c.includes('شويفات')) return 'El Choueifat';
+  if (c.includes('lotus') || c.includes('لوتس')) return 'El Lotus';
+  if (c.includes('5th settlement') || c.includes('fifth settlement') || c.includes('التجمع الخامس') || c.includes('tagamoa')) return '5th Settlement';
+  if (c.includes('new cairo') || c.includes('القاهرة الجديدة') || c.includes('new-cairo')) return 'New Cairo';
+  return raw.trim();
+}
 
 function resolveCoords(compound, location) {
   const norm = (str) => String(str || '').toLowerCase().trim();
@@ -216,8 +302,10 @@ for (const seg of SEGMENTS) {
     const areaNum = parseFloat(String(r['Area (sqm)'] || '0').replace(/,/g, '')) || 160;
     const bedNum = parseInt(String(r.Bedrooms || '3'), 10) || 3;
     const bathNum = parseInt(String(r.Bathrooms || '2'), 10) || 2;
-    const compound = r.Compound || 'New Cairo';
-    const location = r.Location || compound;
+    const compound = normalizeCompound(r.Compound || r.Location || 'New Cairo');
+    const location = r.Location ? normalizeCompound(r.Location) : compound;
+    r.Compound = compound;
+    r.Location = location;
     const zone = cleanZone(compound, location);
     const coords = resolveCoords(compound, location);
 
@@ -268,6 +356,8 @@ for (const seg of SEGMENTS) {
       updatedAt: r['Updated At'] || new Date().toISOString()
     });
   });
+
+  fs.writeFileSync(filePath, Papa.unparse(rows), 'utf8');
 }
 
 // 2. Aggregate statistics by compound

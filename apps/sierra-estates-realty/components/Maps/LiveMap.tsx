@@ -38,14 +38,19 @@ function useLiveUnitCounts(): Record<string, number> {
         }
         return r.ok ? r.json() : null;
       })
-      .then((data: { units?: Array<{ location?: string; status?: string }> } | null) => {
+      .then((data: { units?: Array<{ location?: string; compound?: string; status?: string }> } | null) => {
         if (cancelled || !data?.units) return;
         const next: Record<string, number> = {};
         for (const unit of data.units) {
           if (unit.status && unit.status !== 'available') continue;
-          const key = (unit.location || '').trim().toLowerCase();
-          if (!key) continue;
-          next[key] = (next[key] || 0) + 1;
+          const cmp = (unit.compound || unit.location || '').trim().toLowerCase();
+          if (cmp) {
+            next[cmp] = (next[cmp] || 0) + 1;
+          }
+          const loc = (unit.location || '').trim().toLowerCase();
+          if (loc && loc !== cmp) {
+            next[loc] = (next[loc] || 0) + 1;
+          }
         }
         setCounts(next);
       })
@@ -219,7 +224,15 @@ export default function LiveMap({
       {/* Compound Cluster Node Markers */}
       {NEW_CAIRO_COMPOUNDS.map((compound, idx) => {
         const isSelected = selectedCode === compound.code;
-        const liveCount = liveCounts[compound.nameEn.trim().toLowerCase()] ?? null;
+        const target = compound.nameEn.trim().toLowerCase();
+        let liveCount = liveCounts[target] ?? null;
+        if (liveCount === null) {
+          for (const [k, count] of Object.entries(liveCounts)) {
+            if (k.length >= 4 && (k.includes(target) || target.includes(k))) {
+              liveCount = (liveCount || 0) + count;
+            }
+          }
+        }
         return (
           <Marker
             key={`compound-${compound.code}-${idx}`}
