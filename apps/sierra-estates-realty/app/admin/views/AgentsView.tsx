@@ -359,7 +359,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
               }}
             >
               <Activity className="w-3.5 h-3.5 inline mr-1.5" />
-              {isAr ? 'أسطول الوكلاء' : 'Fleet Controls'}
+              {isAr ? 'مراقبة الأسطول' : 'Fleet Controls'}
             </button>
             <button
               onClick={() => setActiveTab('scheduler')}
