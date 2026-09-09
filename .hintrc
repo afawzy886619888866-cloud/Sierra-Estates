@@ -28,13 +28,13 @@
     "no-inline-styles": "off"
   },
   "ignoredUrls": [
-    "**/public/client-page/.min/**",
-    "**/.min/**",
-    "**/client-page/.min/**",
-    "**/deploy/**",
-    "**/.next/**",
-    "**/node_modules/**",
-    "**/out/**",
-    "**/dist/**"
+    { "domain": ".*\\.min\\..*", "hints": ["all"] },
+    { "domain": ".*/_next/.*", "hints": ["all"] },
+    { "domain": ".*/\\.next/.*", "hints": ["all"] },
+    { "domain": ".*/node_modules/.*", "hints": ["all"] },
+    { "domain": ".*/dist/.*", "hints": ["all"] },
+    { "domain": ".*/out/.*", "hints": ["all"] },
+    { "domain": ".*/deploy/.*", "hints": ["all"] },
+    { "domain": ".*/public/client-page/.*", "hints": ["all"] }
   ]
 }
