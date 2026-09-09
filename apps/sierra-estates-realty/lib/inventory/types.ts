@@ -37,6 +37,12 @@ export interface InventoryUnit {
   /** Garden area in m², when applicable. */
   garden?: number | null;
   pool?: boolean;
+  /** Original intake timestamp from the CRM/Google Form. */
+  timestamp?: string | null;
+  /** Raw availability text before normalization (e.g. "No answer", "Follow up"). */
+  availabilityRaw?: string | null;
+  /** Explicit deal type when known: rent, sale, furnished_rent. */
+  dealType?: 'rent' | 'sale' | 'furnished_rent' | string | null;
   furnished?: string | null;
   furnishing?: string | null;
   /** Numeric price in EGP (total for sale, monthly for rent); 0 = on request. */
