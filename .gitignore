@@ -21,10 +21,17 @@ apps/sierra-estates-realty/app/**/*.js
 apps/sierra-estates-realty/__tests__/**/*.js
 
 # Environment variables & secrets
+.env
 .env.local
 .env.*.local
+**/.env
 **/.env.local
 **/.env.*.local
+# Agent-specific env files
+apps/agents/**/.env
+apps/agents/**/.env.*
+# pnpm local config (contains machine-specific store path)
+.pnpmrc
 
 # WhatsApp & Browser automation session caches
 **/wa_sessions/
