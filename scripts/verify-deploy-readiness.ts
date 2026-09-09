@@ -154,6 +154,8 @@ check('Git Status & Zero Working Tree Drift', () => {
     'obsidian-store.json',
     'apps/sierra-estates-realty/obsidian-store.json',
     'apps/sierra-estates-realty/public/downloads/sierra-estates-master-inventory.xlsx',
+    'apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx',
+    'apps/sierra-estates-realty/data/sierra-estates-master-inventory.csv',
     'Inventory_with_Photos.xlsx',
   ]);
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
