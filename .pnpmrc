@@ -1,0 +1,6 @@
+# pnpm-specific settings — lives here so npm never sees them
+# See: https://pnpm.io/npmrc
+shamefully-hoist=true
+strict-peer-dependencies=false
+auto-install-peers=false
+store-dir=H:\.pnpm-store
