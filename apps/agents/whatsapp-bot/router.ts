@@ -248,7 +248,7 @@ export class WhatsAppBotRouter {
       const elapsed = Date.now() - startedAt
 
       // Feed the shared memory so this run counts toward what the fleet knows.
-      memoryEngine.logExecution({
+      memoryEngine?.logExecution?.({
         agentId: route.primaryAgent,
         action: `whatsapp:${intent}`,
         timestamp: new Date(),
@@ -266,7 +266,7 @@ export class WhatsAppBotRouter {
 
       // The caller gets a graceful fallback, but the failure must still be
       // recorded — a learning loop fed only successes concludes nothing breaks.
-      memoryEngine.logExecution({
+      memoryEngine?.logExecution?.({
         agentId: 'router',
         action: 'whatsapp:handle',
         timestamp: new Date(),
@@ -280,7 +280,7 @@ export class WhatsAppBotRouter {
     } finally {
       // Serverless can freeze the process the moment the handler returns;
       // give the durable write a chance to land.
-      await memoryEngine.flush(1500)
+      await memoryEngine?.flush?.(1500)
     }
   }
 
