@@ -167,15 +167,19 @@ export default function CompoundsMap({
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
+  const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
 
   // Fetch full live inventory and segment aggregates
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/inventory')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: InventoryApiData | null) => {
-        if (cancelled || !data) return;
-        setInventoryData(data);
+    Promise.all([
+      fetch('/api/inventory').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/inventory?mode=rent').then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([allData, rentData]: [InventoryApiData | null, InventoryApiData | null]) => {
+        if (cancelled) return;
+        if (allData) setInventoryData(allData);
+        if (rentData?.compoundCounts) setRentCounts(rentData.compoundCounts);
       })
       .catch((err) => console.warn('[CompoundsMap] Listings fetch failed:', err));
     return () => {
@@ -288,12 +292,24 @@ export default function CompoundsMap({
       layer.clearLayers();
       markersMapRef.current.clear();
 
+      // Helper: look up rent count for a compound from the rent-specific fetch
+      const getRentCount = (name: string): number => {
+        const target = cleanCpdName(name);
+        for (const [key, count] of Object.entries(rentCounts)) {
+          const k = cleanCpdName(key);
+          if (k === target || k.startsWith(target) || target.startsWith(k)) return count;
+        }
+        return 0;
+      };
+
       filteredCompounds.forEach((c) => {
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
         const isHot = c.ai >= 9.2;
         const liveUnits = getCompoundCount(c.n);
         const unitsCount = liveUnits > 0 ? liveUnits : (selectedSegment === 'all' ? (c.units ?? estimateUnitsCount(c.ai)) : 0);
+        const liveRentCount = getRentCount(c.n);
+        const hasRentInventory = liveRentCount > 0;
         const devName = COMPOUND_DEVELOPERS[c.n] || '';
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
         const activeSegmentObj = SEGMENT_TABS.find((s) => s.key === selectedSegment);
@@ -362,6 +378,18 @@ export default function CompoundsMap({
               justify-content: center;
               min-width: 18px;
             ">${unitsCount}</span>
+            ${hasRentInventory ? `<span style="
+              background: #b45309;
+              color: #ffffff;
+              font-size: 9px;
+              font-weight: 800;
+              padding: 1px 5px;
+              border-radius: 999px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-left: -2px;
+            ">R·${liveRentCount}</span>` : ''}
           </div>
         `;
 

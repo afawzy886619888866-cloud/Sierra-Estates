@@ -162,6 +162,7 @@ export async function GET(request: Request) {
     searchParams.get("compound")?.trim().toLowerCase() || "";
   const filterSegment = searchParams.get("segment")?.trim().toLowerCase() || "";
   const filterMode = searchParams.get("mode")?.trim().toLowerCase() || "";
+  const filterStatus = searchParams.get("status")?.trim().toLowerCase() || "";
   const filterLimit = searchParams.get("limit")
     ? parseInt(searchParams.get("limit")!, 10)
     : 0;
@@ -195,8 +196,22 @@ export async function GET(request: Request) {
     filteredUnits = filteredUnits.filter((u) => u.mode === filterMode);
   }
 
+  // Status filter — default to available-only unless admin passes ?status=all
+  if (filterStatus && filterStatus !== "all") {
+    filteredUnits = filteredUnits.filter((u) => u.status === filterStatus);
+  }
+
   if (filterLimit > 0 && filteredUnits.length > filterLimit) {
     filteredUnits = filteredUnits.slice(0, filterLimit);
+  }
+
+  // Compute live compound counts from filtered set
+  const compoundCounts: Record<string, number> =
+    sourceResponse.compoundCounts || {};
+  for (const u of filteredUnits) {
+    const cmp = u.compound || u.location || "Unknown";
+    if (!compoundCounts[cmp]) compoundCounts[cmp] = 0;
+    compoundCounts[cmp]++;
   }
 
   const payload: InventoryResponse = {
@@ -204,7 +219,7 @@ export async function GET(request: Request) {
     source: sourceResponse.source,
     count: filteredUnits.length,
     segments: sourceResponse.segments,
-    compoundCounts: sourceResponse.compoundCounts,
+    compoundCounts,
     compoundSegmentCounts: sourceResponse.compoundSegmentCounts,
     units: filteredUnits,
   };
