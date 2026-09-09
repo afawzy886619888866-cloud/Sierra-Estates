@@ -35,6 +35,9 @@ apps/agents/**/.env.*
 
 # WhatsApp & Browser automation session caches
 **/wa_sessions/
+**/.wwebjs_auth/
+**/qr.png
+**/qr.html
 testrun/
 output/
 work-items-out/

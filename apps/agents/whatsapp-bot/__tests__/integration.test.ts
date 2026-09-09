@@ -30,6 +30,10 @@ jest.mock('@sierra-estates/memory-engine', () => ({
     getLeadProfile: jest.fn().mockResolvedValue(null),
     write: jest.fn().mockResolvedValue(undefined),
   },
+  memoryEngine: {
+    logExecution: jest.fn(),
+    flush: jest.fn().mockResolvedValue(undefined),
+  },
 }))
 
 describe('Integration: Full WhatsApp Message Flow', () => {
