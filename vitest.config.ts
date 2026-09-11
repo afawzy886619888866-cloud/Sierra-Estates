@@ -15,6 +15,7 @@ export default defineConfig({
       'infra/n8n-workflows/__tests__/**/*.test.ts',
       'infra/whatsapp-scraper/__tests__/**/*.test.ts',
       'apps/agents/__tests__/**/*.test.ts',
+      'apps/sierra-estates-realty/__tests__/**/*.test.ts',
       'workflows/__tests__/**/*.test.ts',
       'deploy/__tests__/**/*.test.ts',
       '__tests__/**/*.test.ts',

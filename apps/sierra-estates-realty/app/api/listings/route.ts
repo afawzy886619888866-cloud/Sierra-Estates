@@ -29,8 +29,7 @@ import { requireRole } from '@/lib/auth';
 import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
 import snapshot from '@/lib/inventory/snapshot.json';
 import type { Listing } from '@/lib/types';
-
-
+import { calculateHaversineDistanceKm } from '@/lib/server/spatial-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +48,9 @@ const listingsQuerySchema = z.object({
   beds: z.coerce.number().int().min(0).optional(),
   maxUsd: z.coerce.number().min(0).optional(),
   q: z.string().optional(),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+  radiusKm: z.coerce.number().positive().max(100).optional(),
 });
 
 const listingCreateSchema = z
@@ -238,7 +240,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const { id, limit, mode, compound, type, beds, maxUsd, q } = parseResult.data;
+    const { id, limit, mode, compound, type, beds, maxUsd, q, lat, lng, radiusKm } = parseResult.data;
 
     // ── Legacy envelope mode (?id= / ?limit=) ──────────────────────────────
     if (id) {
@@ -278,6 +280,75 @@ export async function GET(request: Request) {
       }
       const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
       return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
+    }
+
+    // ── Proximity mode (?lat= & ?lng=): PostGIS radius search ─────────────
+    if (lat != null && lng != null) {
+      const radiusMeters = (radiusKm || 25) * 1000;
+      let spatialItems: (Listing & { distanceKm: number })[] = [];
+
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_listings_near_capital', {
+          capital_lat: lat,
+          capital_lng: lng,
+          radius_meters: radiusMeters,
+        });
+
+        if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+          spatialItems = rpcData.map((item: any) => {
+            const price = Number(item.price) || 0;
+            const egpM = price > 100000 ? price / 1_000_000 : price;
+            const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+            const dist = calculateHaversineDistanceKm(lat, lng, Number(item.latitude), Number(item.longitude));
+
+            return {
+              id: item.id || item.ref_id,
+              code: item.code || item.reference_code || `SE-${item.id?.substring(0, 4)}`,
+              compound: item.compound || 'New Cairo',
+              zone: item.location_area || '5th Settlement',
+              type: item.property_type || 'Apartment',
+              beds: item.bedrooms || 3,
+              bath: item.bathrooms || 2,
+              area: Number(item.area_sqm) || 150,
+              egpM: Number(egpM.toFixed(2)),
+              usd: usd || 1500,
+              aiScore: item.roi_percentage ? 9.0 : 8.8,
+              tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Location',
+              mode: item.deal_type === 'rent' ? 'rent' : 'sale',
+              agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
+              img: (item.images && item.images[0]) || '',
+              status: item.status || 'available',
+              description: item.description || '',
+              distanceKm: dist,
+              latitude: Number(item.latitude),
+              longitude: Number(item.longitude),
+            } as Listing & { distanceKm: number };
+          });
+        }
+      } catch (rpcErr) {
+        logger.warn('[LISTINGS_PROXIMITY] Supabase spatial RPC failed:', rpcErr);
+      }
+
+      if (spatialItems.length > 0) {
+        let filtered = spatialItems.filter((l) => isPubliclyVisibleListingStatus(l.status));
+        if (mode) filtered = filtered.filter((l) => l.mode === mode);
+        if (compound) filtered = filtered.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
+        if (type) filtered = filtered.filter((l) => l.type === type);
+        if (beds != null) filtered = filtered.filter((l) => l.beds >= beds);
+        if (maxUsd != null) filtered = filtered.filter((l) => l.usd <= maxUsd);
+        if (q) {
+          const needle = q.toLowerCase();
+          filtered = filtered.filter((l) =>
+            [l.code, l.compound, l.agent, l.type, l.description ?? '']
+              .join(' ')
+              .toLowerCase()
+              .includes(needle)
+          );
+        }
+        filtered.sort((a, b) => a.distanceKm - b.distanceKm);
+        return NextResponse.json(filtered);
+      }
     }
 
     // ── Filter mode (api-client contract): bare Listing[] ──────────────────
