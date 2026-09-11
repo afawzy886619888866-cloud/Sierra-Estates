@@ -137,14 +137,16 @@ check('Supabase Master Schema Readiness', () => {
   if (!fs.existsSync(schemaPath)) throw new Error('Missing supabase/schema.sql master schema file');
 });
 
+const pnpmRunner = process.platform === 'win32' ? 'corepack.cmd pnpm' : 'pnpm';
+
 // 7. Check packages compilation
 check('Packages Compilation & Type-Check', () => {
-  execSync('pnpm turbo run build --filter="./packages/*"', { stdio: 'pipe', env: process.env });
+  execSync(`${pnpmRunner} turbo run build --filter="./packages/*"`, { stdio: 'pipe', env: process.env });
 });
 
 // 8. Check client tests
 check('Client Unit & Integration Tests', () => {
-  execSync('pnpm test:ci', { stdio: 'pipe', env: process.env });
+  execSync(`${pnpmRunner} test:ci`, { stdio: 'pipe', env: process.env });
 });
 
 // 9. A deployment must be reproducible from the checked-out commit.
