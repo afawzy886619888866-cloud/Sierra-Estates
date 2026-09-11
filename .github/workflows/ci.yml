@@ -3,10 +3,9 @@ name: CI
 # Gates the app that actually deploys to production (deploy-vercel.yml →
 # apps/sierra-estates-realty) plus the workspace packages it consumes.
 #
-# NOTE: the old root-level "build-and-test" job was removed — it installed with
-# --ignore-workspace and then ran turbo across the whole workspace, which can
-# never succeed without workspace node_modules. The realty app + its packages
-# are the deployable surface and are fully gated below.
+# Trigger philosophy: run only on main branch pushes/PRs and on manual dispatch.
+# Scheduled scans, PR-size labels, and auto-assign are removed to preserve
+# GitHub Free-plan minute quota. CodeQL runs on a separate weekly schedule only.
 
 on:
   push:
