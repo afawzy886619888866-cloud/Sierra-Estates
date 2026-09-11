@@ -31,6 +31,7 @@ import { useReveal } from '@/lib/site/useReveal';
 import snapshot from '@/lib/inventory/snapshot.json';
 import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
+import { useListingsRealtime } from '@/hooks/useListingsRealtime';
 
 // Dynamic import for Leaflet map to guarantee SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -225,6 +226,17 @@ export default function PropertiesPage() {
   }, []);
 
   const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
+  const [realtimeLive, setRealtimeLive] = useState(false);
+
+  // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
+  // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
+  useListingsRealtime(setAllUnits);
+
+  // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
+  useEffect(() => {
+    const t = setTimeout(() => setRealtimeLive(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
