@@ -188,6 +188,10 @@ export interface LiveMapProps {
   flyToZoom?: number;
   maxPins?: number;
   height?: string;
+  radiusKm?: number | null;
+  onRadiusChange?: (radius: number | null) => void;
+  centerCoords?: [number, number] | null;
+  onCenterChange?: (coords: [number, number]) => void;
 }
 
 export default function LiveMap({
@@ -203,6 +207,10 @@ export default function LiveMap({
   flyToZoom = 14,
   maxPins = 150,
   height = '100%',
+  radiusKm = null,
+  onRadiusChange,
+  centerCoords = [30.045, 31.59],
+  onCenterChange,
 }: LiveMapProps) {
   const isDark = mode === 'dark';
   const liveCounts = useLiveUnitCounts();
@@ -214,18 +222,85 @@ export default function LiveMap({
   const displayUnits = units.slice(0, maxPins);
 
   return (
-    <MapContainer
-      center={[30.02, 31.54]}
-      zoom={12}
-      scrollWheelZoom={false}
-      style={{ height, width: '100%' }}
-    >
-      <MapController flyToCoords={flyToCoords} flyToZoom={flyToZoom} />
-      <TileLayer
-        url={tileUrl}
-        attribution="&copy; OpenStreetMap &copy; CARTO"
-        maxZoom={18}
-      />
+    <div style={{ position: 'relative', width: '100%', height }}>
+      {/* Floating Radius Quick Control Overlay */}
+      {onRadiusChange && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            zIndex: 1000,
+            background: isDark ? 'rgba(13, 20, 36, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(12px)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 43, 75, 0.12)',
+            borderRadius: 12,
+            padding: '6px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            fontSize: 11,
+            color: isDark ? '#ffffff' : '#002b4b',
+            fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+          }}
+        >
+          <span style={{ color: '#c99436', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+            📍 النطاق (Radius):
+          </span>
+          {[null, 5, 10, 25, 50].map((r) => {
+            const isSelected = r === radiusKm || (r === null && !radiusKm);
+            return (
+              <button
+                key={r === null ? 'any' : `${r}km`}
+                type="button"
+                onClick={() => onRadiusChange(r)}
+                style={{
+                  background: isSelected ? '#c99436' : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                  color: isSelected ? '#0d0d0f' : isDark ? '#ffffff' : '#002b4b',
+                  fontWeight: isSelected ? 800 : 600,
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '3px 8px',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {r === null ? 'الكل' : `${r} كم`}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <MapContainer
+        center={centerCoords || [30.02, 31.54]}
+        zoom={12}
+        scrollWheelZoom={false}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <MapController flyToCoords={flyToCoords} flyToZoom={flyToZoom} />
+        <TileLayer
+          url={tileUrl}
+          attribution="&copy; OpenStreetMap &copy; CARTO"
+          maxZoom={18}
+        />
+
+        {/* PostGIS Proximity Radius Circle Overlay */}
+        {radiusKm && radiusKm > 0 && (
+          <Circle
+            center={centerCoords || [30.045, 31.59]}
+            radius={radiusKm * 1000}
+            pathOptions={{
+              color: '#c99436',
+              fillColor: '#c99436',
+              fillOpacity: 0.12,
+              weight: 2,
+              dashArray: '6, 6',
+            }}
+          />
+        )}
 
       {/* Compound Cluster Node Markers */}
       {NEW_CAIRO_COMPOUNDS.map((compound, idx) => {
