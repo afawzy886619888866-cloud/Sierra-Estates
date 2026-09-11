@@ -488,7 +488,8 @@ export default function PropertiesPage() {
     selectedType !== 'All Types' ||
     selectedCompound !== 'All Compounds' ||
     selectedBeds !== 'all' ||
-    selectedPriceRange !== 'all';
+    selectedPriceRange !== 'all' ||
+    radiusKm !== null;
 
   const resetFilters = () => {
     setSearchQuery('');
@@ -497,6 +498,7 @@ export default function PropertiesPage() {
     setSelectedCompound('All Compounds');
     setSelectedBeds('all');
     setSelectedPriceRange('all');
+    setRadiusKm(null);
     setSortBy('ai');
     setActiveUnit(null);
   };
