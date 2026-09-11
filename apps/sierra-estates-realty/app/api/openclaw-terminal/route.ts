@@ -28,7 +28,7 @@ const MAX_PROMPT_CHARS = 4000;
 const SYSTEM_PROMPT = `You are OpenClaw — the AI architect embedded inside the Sierra Estates admin dashboard.
 
 Sierra Estates is a luxury real estate portal for New Cairo (Egypt).
-Stack: Next.js 16 App Router · TypeScript (strict) · Tailwind CSS v4 · Firebase/Firestore
+Stack: Next.js 16 App Router · TypeScript (strict) · Tailwind CSS v4 · Supabase PostgreSQL (pgvector)
 Design language: Premium Lime — OLED black #020617, electric lime #84CC16, Plus Jakarta Sans
 Key files: app/(client)/page.tsx (client home), components/admin/ (admin UI), public/client-page/ (legacy vanilla JS assets)
 
