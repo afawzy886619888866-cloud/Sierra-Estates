@@ -320,7 +320,10 @@ export default function LiveMap({
             position={[compound.lat, compound.lng]}
             icon={createCompoundIcon(compound, isSelected, liveCount)}
             eventHandlers={{
-              click: () => onSelectCompound?.(compound),
+              click: () => {
+                onSelectCompound?.(compound);
+                onCenterChange?.([compound.lat, compound.lng]);
+              },
             }}
           />
         );
@@ -365,6 +368,11 @@ export default function LiveMap({
                 </div>
                 <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>
                   {unit.type} · {unit.beds || 3} غرف · {unit.area || 160} م²
+                  {unit.distanceKm != null && (
+                    <span style={{ color: '#c99436', fontWeight: 700, marginLeft: 4 }}>
+                      · 📍 {unit.distanceKm.toFixed(1)} كم
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#059669', marginBottom: 8 }}>
                   {unit.priceLabel}
@@ -420,5 +428,6 @@ export default function LiveMap({
         );
       })}
     </MapContainer>
+    </div>
   );
 }
