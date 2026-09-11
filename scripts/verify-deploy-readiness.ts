@@ -177,6 +177,9 @@ console.log(`📊 Result: ${passedCount}/${RESULTS.length} verification stages p
 console.log('======================================================\n');
 
 if (passedCount < RESULTS.length) {
+  for (const r of RESULTS.filter((r) => !r.passed)) {
+    console.error(`  ❌ [${r.name}] -> ${r.message}\n`);
+  }
   process.exitCode = 1;
 } else {
   console.log('🎉 SYSTEM READY FOR VERCEL PRODUCTION DEPLOYMENT!\n');
