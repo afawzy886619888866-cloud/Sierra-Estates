@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Marker, Popup, MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { Marker, Popup, MapContainer, TileLayer, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -21,6 +21,7 @@ export type MapUnitPin = {
   beds?: number;
   area?: number;
   img?: string;
+  distanceKm?: number;
 };
 
 
@@ -128,6 +129,10 @@ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean =
     ? '#38bdf8'
     : '#c99436';
 
+  const distBadge = unit.distanceKm != null
+    ? `<span style="opacity:0.9;font-size:9.5px;font-weight:700;margin-left:3px;color:${isActive ? '#0d0d0f' : '#e9c176'};">· ${unit.distanceKm.toFixed(1)}km</span>`
+    : '';
+
   return L.divIcon({
     className: '',
     html: `
@@ -152,6 +157,7 @@ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean =
       ">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isActive ? '#0d0d0f' : isRent ? '#38bdf8' : '#10b981'};"></span>
         <span>${shortPrice}</span>
+        ${distBadge}
       </div>
     `,
     iconSize: undefined,
