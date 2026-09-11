@@ -36,4 +36,4 @@ Older Firebase-era deployment notes, emulator playbooks, and direct Firebase-hos
 
 1. Consider enabling GitHub Actions spending limit or self-hosted runner to resume automated CI runs on PRs.
 2. Keep the architecture docs synchronized with code-level implementation.
-3. Deploy latest commits to Vercel production to update `sierra-estates.net` with the client-side spatial map features.
+3. Deploy latest commits to Vercel production to update `sierra-estates.net` with the client-side spatial map features.

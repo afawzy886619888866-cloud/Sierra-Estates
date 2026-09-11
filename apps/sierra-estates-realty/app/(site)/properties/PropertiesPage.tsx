@@ -616,6 +616,8 @@ export default function PropertiesPage() {
                   value={selectedCompound}
                   onChange={(e) => setSelectedCompound(e.target.value)}
                   className="props-select"
+                  title={isAr ? 'اختر الكمبوند' : 'Select Compound'}
+                  aria-label={isAr ? 'اختر الكمبوند' : 'Select Compound'}
                 >
                   {MAJOR_COMPOUNDS.map((c) => (
                     <option key={c} value={c}>
@@ -631,6 +633,8 @@ export default function PropertiesPage() {
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                   className="props-select"
+                  title={isAr ? 'نوع العقار' : 'Property Type'}
+                  aria-label={isAr ? 'نوع العقار' : 'Property Type'}
                 >
                   {PROPERTY_TYPES.map((pt) => (
                     <option key={pt} value={pt}>
@@ -664,6 +668,8 @@ export default function PropertiesPage() {
                   onChange={(e) => setSelectedPriceRange(e.target.value)}
                   className="props-select"
                   style={{ width: 'auto', minWidth: 150 }}
+                  title={isAr ? 'نطاق السعر' : 'Price Range'}
+                  aria-label={isAr ? 'نطاق السعر' : 'Price Range'}
                 >
                   {(selectedMode === 'rent' ? RENT_PRICE_RANGES : SALE_PRICE_RANGES).map((r) => (
                     <option key={r.value} value={r.value}>
@@ -678,6 +684,8 @@ export default function PropertiesPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="props-select"
                   style={{ width: 'auto', minWidth: 150 }}
+                  title={isAr ? 'ترتيب حسب' : 'Sort by'}
+                  aria-label={isAr ? 'ترتيب حسب' : 'Sort by'}
                 >
                   {SORT_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>
@@ -948,6 +956,8 @@ export default function PropertiesPage() {
                       disabled={currentPage <= 1}
                       onClick={() => handlePageChange(currentPage - 1)}
                       className="props-page-btn"
+                      title={isAr ? 'الصفحة السابقة' : 'Previous page'}
+                      aria-label={isAr ? 'الصفحة السابقة' : 'Previous page'}
                     >
                       <ChevronLeft style={{ width: 16, height: 16 }} />
                     </button>
@@ -977,6 +987,8 @@ export default function PropertiesPage() {
                       disabled={currentPage >= totalPages}
                       onClick={() => handlePageChange(currentPage + 1)}
                       className="props-page-btn"
+                      title={isAr ? 'الصفحة التالية' : 'Next page'}
+                      aria-label={isAr ? 'الصفحة التالية' : 'Next page'}
                     >
                       <ChevronRight style={{ width: 16, height: 16 }} />
                     </button>
@@ -1103,6 +1115,8 @@ export default function PropertiesPage() {
                     disabled={currentPage <= 1}
                     onClick={() => handlePageChange(currentPage - 1)}
                     className="props-page-btn"
+                    title={isAr ? 'الصفحة السابقة' : 'Previous page'}
+                    aria-label={isAr ? 'الصفحة السابقة' : 'Previous page'}
                   >
                     <ChevronLeft style={{ width: 16, height: 16 }} />
                   </button>
@@ -1132,6 +1146,8 @@ export default function PropertiesPage() {
                     disabled={currentPage >= totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                     className="props-page-btn"
+                    title={isAr ? 'الصفحة التالية' : 'Next page'}
+                    aria-label={isAr ? 'الصفحة التالية' : 'Next page'}
                   >
                     <ChevronRight style={{ width: 16, height: 16 }} />
                   </button>
