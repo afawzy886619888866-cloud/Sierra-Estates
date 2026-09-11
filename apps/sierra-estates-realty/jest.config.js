@@ -5,6 +5,8 @@
 // local zone. CI runs UTC anyway; this makes local runs match it.
 process.env.TZ = 'UTC';
 
+const path = require('path');
+
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'node',
@@ -31,7 +33,7 @@ const config = {
     '!**/*.test.{ts,tsx}',
   ],
   coverageReporters: ['text-summary', 'lcov', 'json'],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',

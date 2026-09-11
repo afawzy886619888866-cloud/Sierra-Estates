@@ -228,7 +228,10 @@ overrides:
   undici: '>=6.28.0 <7'
   typescript: ^5.8.2
   tar: 7.5.22
+  'tar@6': 7.5.22
+  'tar@^6': 7.5.22
   '@mapbox/node-pre-gyp>tar': 7.5.22
+  'cacache>tar': 7.5.22
   cross-spawn: '>=7.0.6'
   micromatch: '>=4.0.8'
   braces: '>=3.0.3'
