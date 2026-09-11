@@ -71,6 +71,7 @@ export interface RealListing {
   lng: number;
   segment?: string;
   description?: string;
+  distanceKm?: number;
 }
 
 type ViewMode = 'split' | 'grid' | 'map';
