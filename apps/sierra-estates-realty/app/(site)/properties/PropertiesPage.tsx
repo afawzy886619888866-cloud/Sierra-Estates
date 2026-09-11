@@ -558,12 +558,29 @@ export default function PropertiesPage() {
               </p>
             </div>
 
-            {/* Total verified units badge */}
-            <div className="props-badge-verified">
-              <CheckCircle2 style={{ width: 16, height: 16 }} />
-              <span>
-                {filteredListings.length.toLocaleString()} {isAr ? 'وحدة مطابقة' : 'verified units found'}
-              </span>
+            {/* Total verified units badge + realtime live indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div className="props-badge-verified">
+                <CheckCircle2 style={{ width: 16, height: 16 }} />
+                <span>
+                  {filteredListings.length.toLocaleString()} {isAr ? 'وحدة مطابقة' : 'verified units found'}
+                </span>
+              </div>
+              {realtimeLive && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.35)',
+                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#4ade80', fontWeight: 600,
+                }}>
+                  <span style={{
+                    width: 7, height: 7, borderRadius: '50%', background: '#22c55e',
+                    boxShadow: '0 0 0 0 rgba(34,197,94,0.4)',
+                    animation: 'pulse-live 1.8s infinite',
+                    display: 'inline-block',
+                  }} />
+                  {isAr ? 'مباشر' : 'Live'}
+                </div>
+              )}
             </div>
           </div>
         </div>
