@@ -763,8 +763,14 @@ export default function PropertiesPage() {
                 )}
                 {selectedBeds !== 'all' && (
                   <span className="props-active-pill">
-                    <span>{selectedBeds} {isAr ? 'غرف' : 'Beds'}</span>
+                    <span>{selectedBeds === '5+' ? (isAr ? '5+ غرف' : '5+ Beds') : `${selectedBeds} ${isAr ? 'غرف' : 'Beds'}`}</span>
                     <button type="button" onClick={() => setSelectedBeds('all')} className="props-active-pill-remove">×</button>
+                  </span>
+                )}
+                {radiusKm !== null && (
+                  <span className="props-active-pill">
+                    <span>📍 {isAr ? `نطاق: ${radiusKm} كم` : `Radius: ${radiusKm} km`}</span>
+                    <button type="button" onClick={() => setRadiusKm(null)} className="props-active-pill-remove">×</button>
                   </span>
                 )}
               </div>
@@ -782,6 +788,10 @@ export default function PropertiesPage() {
                 flyToCoords={flyToCoords}
                 onSelectUnit={handleSelectUnit}
                 onSelectCompound={handleMapSelectCompound}
+                radiusKm={radiusKm}
+                onRadiusChange={setRadiusKm}
+                centerCoords={centerCoords}
+                onCenterChange={setCenterCoords}
                 maxPins={180}
                 height="100%"
               />
@@ -807,6 +817,11 @@ export default function PropertiesPage() {
                       <h4 style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{activeUnit.compound}</h4>
                       <div style={{ fontSize: 12, color: 'var(--muted)' }}>
                         {activeUnit.type} · {activeUnit.beds} bds · {activeUnit.area} m²
+                        {activeUnit.distanceKm != null && (
+                          <span style={{ color: '#c99436', fontWeight: 700, marginLeft: 6 }}>
+                            · 📍 {activeUnit.distanceKm.toFixed(1)} km
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: '#10b981', marginTop: 4, fontFamily: 'var(--mono)' }}>
                         {activeUnit.priceLabel}
@@ -979,6 +994,10 @@ export default function PropertiesPage() {
                     flyToCoords={flyToCoords}
                     onSelectUnit={handleSelectUnit}
                     onSelectCompound={handleMapSelectCompound}
+                    radiusKm={radiusKm}
+                    onRadiusChange={setRadiusKm}
+                    centerCoords={centerCoords}
+                    onCenterChange={setCenterCoords}
                     maxPins={180}
                     height="100%"
                   />
