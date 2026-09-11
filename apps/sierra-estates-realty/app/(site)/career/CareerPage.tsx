@@ -442,6 +442,8 @@ export default function CareerPage() {
   const [selectedPosition, setSelectedPosition] = useState('');
   const [expandedJob, setExpandedJob] = useState<string | null>('sales-senior-consultant');
   const [isSent, setIsSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form inputs
   const [formData, setFormData] = useState({
@@ -530,14 +532,50 @@ export default function CareerPage() {
     window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSent(true);
-    // Auto-open WhatsApp with form details as well for instant delivery
-    const text = isAr
-      ? `طلب توظيف جديد:\nالاسم: ${formData.name}\nالهاتف: ${formData.phone}\nالبريد: ${formData.email}\nالوظيفة: ${formData.position || selectedPosition}\nسنوات الخبرة: ${formData.experience}\nرسالة: ${formData.message}`
-      : `New Career Application:\nName: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nPosition: ${formData.position || selectedPosition}\nExperience: ${formData.experience} years\nMessage: ${formData.message}`;
-    window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const position = formData.position || selectedPosition;
+
+    try {
+      const res = await fetch('/api/careers/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: JOBS.find((j) =>
+            j.titleEn === position || j.titleAr === position
+          )?.dept === 'admin' ? 'admin' : 'sales',
+          fullName: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          experience: formData.experience || '',
+          realEstateKnowledge: '',
+          availability: 'Immediately',
+          notes: formData.message || `Applied for: ${position}`,
+        }),
+      });
+
+      const json = await res.json().catch(() => ({ success: false, error: 'Unexpected server response.' }));
+
+      if (!res.ok || !json.success) {
+        setSubmitError(json.error || (isAr ? 'حدث خطأ. يرجى المحاولة لاحقاً.' : 'Submission failed. Please try again.'));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success — persist confirmed, now also open WhatsApp for instant delivery
+      setIsSent(true);
+      const text = isAr
+        ? `طلب توظيف جديد:\nالاسم: ${formData.name}\nالهاتف: ${formData.phone}\nالبريد: ${formData.email}\nالوظيفة: ${position}\nسنوات الخبرة: ${formData.experience}\nرسالة: ${formData.message}`
+        : `New Career Application:\nName: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nPosition: ${position}\nExperience: ${formData.experience} years\nMessage: ${formData.message}`;
+      window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
+    } catch {
+      setSubmitError(isAr ? 'تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت.' : 'Network error. Check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -956,17 +994,32 @@ export default function CareerPage() {
                   <input type="file" id="f-cv" accept=".pdf,.doc,.docx" className="cr-file-input" />
                 </div>
 
-                <button type="submit" className="cr-submit-btn">
-                  <Send style={{ width: 16, height: 16 }} />
-                  {isAr ? 'إرسال طلب التوظيف الآن' : 'Submit Application'}
+                <button type="submit" className="cr-submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 16, height: 16, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                      {isAr ? 'جاري الإرسال...' : 'Sending...'}
+                    </span>
+                  ) : (
+                    <>
+                      <Send style={{ width: 16, height: 16 }} />
+                      {isAr ? 'إرسال طلب التوظيف الآن' : 'Submit Application'}
+                    </>
+                  )}
                 </button>
+
+                {submitError && (
+                  <div className="cr-success-msg" style={{ background: 'rgba(220, 38, 38, 0.12)', borderColor: 'rgba(220, 38, 38, 0.4)', color: '#f87171' }}>
+                    ⚠️ {submitError}
+                  </div>
+                )}
 
                 {isSent && (
                   <div className="cr-success-msg">
                     <CheckCircle style={{ width: 20, height: 20 }} />
                     {isAr
                       ? 'تم استلام طلبك بنجاح! سيتواصل معك مسؤول التوظيف خلال 48 ساعة لتحديد موعد المقابلة.'
-                      : "Application submitted successfully! Our recruitment team will contact you within 48 hours."}
+                      : 'Application submitted successfully! Our recruitment team will contact you within 48 hours.'}
                   </div>
                 )}
               </form>
