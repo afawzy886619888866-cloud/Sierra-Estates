@@ -330,25 +330,37 @@ export async function GET(request: Request) {
         logger.warn('[LISTINGS_PROXIMITY] Supabase spatial RPC failed:', rpcErr);
       }
 
-      if (spatialItems.length > 0) {
-        let filtered = spatialItems.filter((l) => isPubliclyVisibleListingStatus(l.status));
-        if (mode) filtered = filtered.filter((l) => l.mode === mode);
-        if (compound) filtered = filtered.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
-        if (type) filtered = filtered.filter((l) => l.type === type);
-        if (beds != null) filtered = filtered.filter((l) => l.beds >= beds);
-        if (maxUsd != null) filtered = filtered.filter((l) => l.usd <= maxUsd);
-        if (q) {
-          const needle = q.toLowerCase();
-          filtered = filtered.filter((l) =>
-            [l.code, l.compound, l.agent, l.type, l.description ?? '']
-              .join(' ')
-              .toLowerCase()
-              .includes(needle)
-          );
-        }
-        filtered.sort((a, b) => a.distanceKm - b.distanceKm);
-        return NextResponse.json(filtered);
+      if (spatialItems.length === 0) {
+        spatialItems = SEED_LISTINGS.map((l) => {
+          const itemLat = (l as any).latitude ?? 30.045;
+          const itemLng = (l as any).longitude ?? 31.59;
+          const dist = calculateHaversineDistanceKm(lat, lng, itemLat, itemLng);
+          return {
+            ...l,
+            distanceKm: dist,
+            latitude: itemLat,
+            longitude: itemLng,
+          } as Listing & { distanceKm: number };
+        });
       }
+
+      let filtered = spatialItems.filter((l) => isPubliclyVisibleListingStatus(l.status));
+      if (mode) filtered = filtered.filter((l) => l.mode === mode);
+      if (compound) filtered = filtered.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
+      if (type) filtered = filtered.filter((l) => l.type === type);
+      if (beds != null) filtered = filtered.filter((l) => l.beds >= beds);
+      if (maxUsd != null) filtered = filtered.filter((l) => l.usd <= maxUsd);
+      if (q) {
+        const needle = q.toLowerCase();
+        filtered = filtered.filter((l) =>
+          [l.code, l.compound, l.agent, l.type, l.description ?? '']
+            .join(' ')
+            .toLowerCase()
+            .includes(needle)
+        );
+      }
+      filtered.sort((a, b) => a.distanceKm - b.distanceKm);
+      return NextResponse.json(filtered);
     }
 
     // ── Filter mode (api-client contract): bare Listing[] ──────────────────
