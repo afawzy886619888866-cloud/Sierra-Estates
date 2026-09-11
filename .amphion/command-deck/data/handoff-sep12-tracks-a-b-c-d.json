@@ -1,1 +1,16 @@
-{"bucket":"ref","value":{"issueNumber":"sierra-tracks-abcd-sep12","outcomeArtifactId":null,"cardTitle":"Security Remediation (tar), Remote MCP Verification, CI/CD Health & Canonical Supabase Enforcement","commitSha":"14519830","summary":"Remediated critical vulnerability CVE-2026-59873 (tar 6.2.1 -> 7.5.22, dropping alerts from 31 to 19 with 0 critical); validated remote MCP server & OAuth 2.1 live on sierra-estates.net (19/19 smoke assertions + 29 unit tests pass); diagnosed GitHub Actions startup_failure root cause (free tier minutes exhausted); enforced canonical Supabase PostgreSQL write policies.","residualNotes":"Amphion Command Deck (port 8888) remains offline locally. Codebase is clean and fully pushed to main. Next session can expand PostGIS spatial query integration in client view.","completedAt":"2026-09-12T01:23:45+03:00"},"sourceType":"verified-system","memoryKey":"task.sierra-tracks-abcd-sep12.handoff","ttlSeconds":604800,"eventType":"upsert"}
+{
+  "bucket": "ref",
+  "value": {
+    "issueNumber": "sierra-tracks-abcd-sep12",
+    "outcomeArtifactId": null,
+    "cardTitle": "Security Remediation (tar), Remote MCP Verification, CI/CD Health & Canonical Supabase Enforcement",
+    "commitSha": "14519830",
+    "summary": "Remediated critical vulnerability CVE-2026-59873 (tar 6.2.1 -> 7.5.22, dropping alerts from 31 to 19 with 0 critical); validated remote MCP server & OAuth 2.1 live on sierra-estates.net (19/19 smoke assertions + 29 unit tests pass); diagnosed GitHub Actions startup_failure root cause (free tier minutes exhausted); enforced canonical Supabase PostgreSQL write policies.",
+    "residualNotes": "Amnion Command Deck (port 8888) remains offline locally. Codebase is clean and fully pushed to main. Next session can expand PostGIS spatial query integration in client view.",
+    "completedAt": "2026-09-12T01:23:45+03:00"
+  },
+  "sourceType": "verified-system",
+  "memoryKey": "task.sierra-tracks-abcd-sep12.handoff",
+  "ttlSeconds": 604800,
+  "eventType": "upsert"
+}
