@@ -231,6 +231,9 @@ export async function GET(request: Request) {
       beds: searchParams.get('beds') ?? undefined,
       maxUsd: searchParams.get('maxUsd') ?? undefined,
       q: searchParams.get('q') ?? undefined,
+      lat: searchParams.get('lat') ?? undefined,
+      lng: searchParams.get('lng') ?? undefined,
+      radiusKm: searchParams.get('radiusKm') ?? undefined,
     });
 
     if (!parseResult.success) {

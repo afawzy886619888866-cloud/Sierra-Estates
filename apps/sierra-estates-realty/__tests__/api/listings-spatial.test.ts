@@ -1,10 +1,59 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   calculateHaversineDistanceKm,
   calculateBoundingBox,
   toGeoJsonFeature,
   toGeoJsonFeatureCollection,
 } from '../../lib/server/spatial-utils';
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    rpc: vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'prop-test-1',
+          title: '3 Bed Apartment in Swan Lake',
+          compound: 'Swan Lake',
+          property_type: 'Apartment',
+          deal_type: 'sale',
+          price: 5000000,
+          bedrooms: 3,
+          bathrooms: 2,
+          area_sqm: 160,
+          latitude: 30.045,
+          longitude: 31.635,
+          status: 'available',
+          images: ['https://images.unsplash.com/sample.jpg'],
+        },
+        {
+          id: 'prop-test-2',
+          title: '4 Bed Villa in City Gate',
+          compound: 'City Gate',
+          property_type: 'Villa',
+          deal_type: 'sale',
+          price: 12000000,
+          bedrooms: 4,
+          bathrooms: 4,
+          area_sqm: 320,
+          latitude: 30.015,
+          longitude: 31.545,
+          status: 'available',
+          images: [],
+        },
+      ],
+      error: null,
+    }),
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    }),
+  },
+  getSupabaseAdmin: vi.fn(),
+}));
+
 import { GET as spatialGET } from '../../app/api/listings/spatial/route';
 import { GET as listingsGET } from '../../app/api/listings/route';
 
