@@ -21,14 +21,6 @@ import { execFileSync } from 'node:child_process';
 
 /** Twins that predate this check. Shrink this list; never grow it. */
 const ALLOWED = new Set([
-  'apps/agents/whatsapp-bot/__tests__/integration.test.js',
-  'apps/agents/whatsapp-bot/__tests__/router.test.js',
-  'apps/agents/whatsapp-bot/chat-hermes.js',
-  'apps/agents/whatsapp-bot/import-whitelist.js',
-  'apps/agents/whatsapp-bot/index.js',
-  'apps/agents/whatsapp-bot/phone.js',
-  'apps/agents/whatsapp-bot/property-finder.js',
-  'apps/agents/whatsapp-bot/router.js',
   'apps/automations/src/01-whatsapp-scraper/index.js',
   'apps/automations/src/02-owner-search/index.js',
   'apps/automations/src/03-owner-contact/index.js',
