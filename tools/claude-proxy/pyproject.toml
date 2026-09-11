@@ -39,7 +39,7 @@ voice = [
 voice_local = [
     "torch>=2.13.0",
     "transformers>=5.10.0",
-    "accelerate>=1.13.0",
+    "accelerate>=1.15.0",
     "librosa>=0.10.0",
 ]
 
