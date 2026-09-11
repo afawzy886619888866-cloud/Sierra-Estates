@@ -235,6 +235,8 @@ export default function PropertiesPage() {
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('ai');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [radiusKm, setRadiusKm] = useState<number | null>(null);
+  const [centerCoords, setCenterCoords] = useState<[number, number]>([30.045, 31.59]);
 
   // Pagination & Active Selection
   const [currentPage, setCurrentPage] = useState(1);
@@ -253,6 +255,7 @@ export default function PropertiesPage() {
     const beds = params.get('beds');
     const price = params.get('price');
     const view = params.get('view');
+    const radius = params.get('radius');
 
     if (q) setSearchQuery(q);
     if (mode === 'sale' || mode === 'rent') setSelectedMode(mode);
@@ -264,6 +267,7 @@ export default function PropertiesPage() {
     if (beds) setSelectedBeds(beds);
     if (price) setSelectedPriceRange(price);
     if (view === 'grid' || view === 'map' || view === 'split') setViewMode(view);
+    if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
 
   // Fetch freshest inventory from server in background
@@ -298,6 +302,35 @@ export default function PropertiesPage() {
       active = false;
     };
   }, []);
+
+  // Fetch proximity listings from spatial endpoint when radiusKm is active
+  useEffect(() => {
+    if (!radiusKm) return;
+    let active = true;
+    const [lat, lng] = centerCoords;
+    fetch(`/api/listings/spatial?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}&format=listings`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.listings || !Array.isArray(data.listings)) return;
+        const validUnits = data.listings.map((item: any, idx: number) => {
+          const u = sanitizeUnit(item, idx);
+          if (item.latitude) u.lat = Number(item.latitude);
+          if (item.longitude) u.lng = Number(item.longitude);
+          u.distanceKm = item.distanceKm;
+          return u;
+        });
+        setAllUnits(validUnits);
+      })
+      .catch((err) => {
+        console.warn('[PropertiesPage] Spatial listings fetch fallback:', err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [radiusKm, centerCoords]);
 
   // Filtering Logic
   const filteredListings = useMemo(() => {
@@ -430,6 +463,7 @@ export default function PropertiesPage() {
       beds: u.beds,
       area: u.area,
       img: u.img,
+      distanceKm: u.distanceKm,
     }));
   }, [paginatedListings, sortedListings]);
 
