@@ -27,9 +27,10 @@ Older Firebase-era deployment notes, emulator playbooks, and direct Firebase-hos
 - **Track C (CI/CD Diagnostics)**: Root-caused GitHub Actions `startup_failure` (2,000 monthly quota exhaustion on private repo under GitHub Free plan). Verified local pre-flight gates (`type-check`, `check-backend-policy`, `check-public-env-safety`, `check-no-compiled-twins`).
 - **Track D (Canonical Supabase Enforcement)**: Verified Supabase Postgres/pgvector as the sole authoritative backend for all writes (`InventoryDomainService`, `records.ts`, `listings`). Cleaned residual legacy references in system prompts.
 - **Track E (Complete Dependabot Backlog Elimination)**: Traced and purged obsolete `hint` linter devDependency tree, permanently closing 13 npm vulnerabilities (`ws`, `tar-fs`, `extract-zip`, `image-size`, `fast-xml-parser`, `file-type`, `got`). Overrode `sharp: 0.35.4`, `js-yaml: 3.15.2`, `vitest: 4.1.11`, and `uuid: 11.1.1`. Upgraded `accelerate` to `1.15.0` in `tools/claude-proxy`. **18 out of 18 alerts in `pnpm-lock.yaml` are closed** (repository alerts reduced from 31 down to 1).
+- **Track F (PostGIS Spatial & Proximity API)**: Created spatial utility functions (`calculateHaversineDistanceKm`, `calculateBoundingBox`, `toGeoJsonFeature`, `toGeoJsonFeatureCollection`) in `spatial-utils.ts`. Built dedicated `/api/listings/spatial` endpoint returning GeoJSON FeatureCollections and metadata with distance calculations. Integrated PostGIS RPC `get_listings_near_capital` into the unified `/api/listings` endpoint (`?lat=...&lng=...&radiusKm=...`). Added comprehensive unit test suite covering math, validation, and endpoint integration with 10/10 passing tests.
 
 ## Immediate next steps
 
 1. Consider enabling GitHub Actions spending limit or self-hosted runner to resume automated CI runs on PRs.
 2. Keep the architecture docs synchronized with code-level implementation.
-3. Continue expanding PostGIS spatial queries into client-side map filtering and recommendation feeds.
+3. Integrate `/api/listings/spatial` into client-side map filtering and recommendation feeds when frontend updates are requested.
