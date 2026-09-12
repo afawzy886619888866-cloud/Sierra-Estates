@@ -13,6 +13,8 @@ secrets/
 !firebase-blueprint.json
 # Don't ignore n8n workflow JSON files (they're source code, not secrets)
 !n8n-workflows/*.json
+# Don't ignore OpenWA plugin configs (they're config, not secrets)
+!openwa/plugins/*.json
 
 # 📦 n8n data (workflows + credentials)
 n8n-data/
