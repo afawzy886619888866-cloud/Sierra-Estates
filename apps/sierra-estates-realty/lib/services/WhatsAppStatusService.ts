@@ -51,4 +51,22 @@ export class WhatsAppStatusService {
       console.error("❌ Failed to record node error:", error);
     }
   }
+
+  /**
+   * Retrieves the current node status from system_status.
+   */
+  static async getStatus(): Promise<{ status: string; lastPulse?: string }> {
+    try {
+      const record = await getRecord<{ status?: string; lastPulse?: string }>(
+        'system_status',
+        STATUS_ROW_ID
+      );
+      return {
+        status: record?.status || 'active',
+        lastPulse: record?.lastPulse,
+      };
+    } catch {
+      return { status: 'active' };
+    }
+  }
 }
