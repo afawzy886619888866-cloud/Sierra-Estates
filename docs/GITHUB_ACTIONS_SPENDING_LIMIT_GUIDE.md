@@ -1,7 +1,9 @@
 # GitHub Actions Spending Limit & Billing Recovery Guide
 
 ## 1. Root Cause: Why Actions Stop Running
+
 On GitHub Free accounts, public and private repositories share a pool of included CI/CD runner minutes (2,000 minutes/month for personal free accounts). When those minutes are consumed:
+
 1. GitHub enforces a **default spending limit of $0.00**, immediately pausing all incoming workflow runs.
 2. Commits show pending or cancelled workflow states with the message:
    > *"GitHub Actions has encountered an error: The job was not started because the account associated with the repository has exceeded its spending limit."*
@@ -12,6 +14,7 @@ On GitHub Free accounts, public and private repositories share a pool of include
 ## 2. Step-by-Step: Enabling a Spending Limit
 
 ### For Personal Accounts
+
 1. Log in to [GitHub](https://github.com).
 2. Click your **profile picture** in the top-right corner and select **Settings**.
 3. In the left sidebar under **Access**, click **Billing and plans** (or **Billing & licensing**).
@@ -25,6 +28,7 @@ On GitHub Free accounts, public and private repositories share a pool of include
 9. Ensure a valid credit card or PayPal account is attached under **Payment methods**.
 
 ### For Organizations (if repo is in an org)
+
 1. Go to your Organization page on GitHub (`https://github.com/<org-name>`).
 2. Click **Settings** (tab at the top).
 3. In the left sidebar, click **Billing and plans** -> **Plans and usage**.
@@ -47,6 +51,7 @@ To ensure you stay well within the monthly free tier moving forward, the reposit
 ---
 
 ## 4. How to Verify Usage in Real Time
+
 1. Go to **Settings** -> **Billing and plans** -> **Plans and usage**.
 2. Under **Usage this month**, inspect the **Actions** progress bar to see minutes used vs. total included minutes.
 3. You can download a detailed CSV usage report via the **Usage report** button to identify any outlier jobs.
