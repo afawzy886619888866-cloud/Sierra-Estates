@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OwnerOutreachService } from '@/lib/services/OwnerOutreachService';
-import { requireAdminSession } from '@/lib/server-auth-guard';
+import { OwnerOutreachService, generateOwnerOutreachMessage } from '@/lib/services/OwnerOutreachService';
+import { verifyRequest, verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { logger } from '@/lib/logger';
 
+async function checkAuth(req: NextRequest) {
+  const auth = await verifyRequest(req);
+  if (auth.authenticated && auth.method === 'secret-key') {
+    return null; // internal secret key authorized
+  }
+  const adminAuth = await verifyAdminRequest(req);
+  if (adminAuth.authenticated) {
+    return null; // admin authorized
+  }
+  return unauthorizedResponse();
+}
+
 export async function GET(req: NextRequest) {
-  const authErr = await requireAdminSession(req);
+  const authErr = await checkAuth(req);
   if (authErr) return authErr;
 
   try {
@@ -21,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authErr = await requireAdminSession(req);
+  const authErr = await checkAuth(req);
   if (authErr) return authErr;
 
   try {
@@ -33,7 +45,7 @@ export async function POST(req: NextRequest) {
       const previewCount = Math.min(Number(body.limit) || 5, 20);
       const preview = inventory.slice(0, previewCount).map((item) => ({
         ...item,
-        generatedMessage: require('@/lib/services/OwnerOutreachService').generateOwnerOutreachMessage(item),
+        generatedMessage: generateOwnerOutreachMessage(item),
       }));
 
       return NextResponse.json({
