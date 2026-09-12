@@ -5,6 +5,12 @@
  */
 
 import http from 'http';
+import path from 'path';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/sierra-estates-realty/.env.local') });
 
 const BASE_URL = process.env.SMOKE_TARGET_URL || 'http://localhost:3000';
 
@@ -17,8 +23,9 @@ interface Probe {
   expectedStatus: number;
 }
 
-const internalHeaders = process.env.SBR_SECRET_KEY
-  ? { 'X-SBR-SECRET-KEY': process.env.SBR_SECRET_KEY }
+const secretKey = process.env.SBR_SECRET_KEY || process.env.INTERNAL_API_SECRET;
+const internalHeaders = secretKey
+  ? { 'X-SBR-SECRET-KEY': secretKey }
   : undefined;
 
 const PROBES: Probe[] = [
