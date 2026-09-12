@@ -106,8 +106,3 @@ export class SupabaseRepository<T> implements Repository<T> {
   }
 }
 
-/**
- * @deprecated Kept so existing imports keep working during the migration.
- * Prefer SupabaseRepository — this is the same class, not Firestore.
- */
-export const FirestoreRepository = SupabaseRepository;

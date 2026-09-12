@@ -461,63 +461,123 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Property Type Dropdown */}
-              <div className="field">
-                <label htmlFor="hero-type">{t('fType')}</label>
-                <select
-                  id="hero-type"
-                  name="type"
-                  className="hero-select"
-                  value={search.type}
-                  onChange={(e) => setSearch({ ...search, type: e.target.value })}
-                >
-                  <option value="">{t('anyType')}</option>
-                  <option value="Apartment">{t('tApt')}</option>
-                  <option value="Villa">{t('tVilla')}</option>
-                  <option value="Townhouse">{t('tTown')}</option>
-                  <option value="Twin House">{t('tTwinH')}</option>
-                  <option value="Penthouse">{t('tPent')}</option>
-                  <option value="Duplex">{t('tDuplex')}</option>
-                  <option value="Studio">{isAr ? 'استوديو' : 'Studio'}</option>
-                  <option value="Chalet">{isAr ? 'شاليه' : 'Chalet'}</option>
-                </select>
+              {/* Property Type Pills */}
+              <div className="field" style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fType')}</label>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                  {[
+                    { val: '', l: t('anyType') },
+                    { val: 'Apartment', l: t('tApt') },
+                    { val: 'Villa', l: t('tVilla') },
+                    { val: 'Townhouse', l: t('tTown') },
+                    { val: 'Twin House', l: t('tTwinH') },
+                    { val: 'Penthouse', l: t('tPent') },
+                    { val: 'Duplex', l: t('tDuplex') },
+                  ].map((pt) => {
+                    const isSelected = search.type === pt.val;
+                    return (
+                      <button
+                        key={pt.val || 'any'}
+                        type="button"
+                        onClick={() => setSearch({ ...search, type: pt.val })}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: isSelected ? 700 : 500,
+                          whiteSpace: 'nowrap',
+                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {pt.l}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Bedrooms Dropdown */}
-              <div className="field">
-                <label htmlFor="hero-beds">{t('fBeds')}</label>
-                <select
-                  id="hero-beds"
-                  name="beds"
-                  className="hero-select"
-                  value={search.beds}
-                  onChange={(e) => setSearch({ ...search, beds: e.target.value })}
-                >
-                  <option value="0">{t('reqAny')}</option>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}+ {isAr ? 'غرف' : 'Beds'}
-                    </option>
-                  ))}
-                </select>
+              {/* Bedrooms Pills */}
+              <div className="field" style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fBeds')}</label>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSearch({ ...search, beds: '0' })}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: search.beds === '0' ? 700 : 500,
+                      whiteSpace: 'nowrap',
+                      background: search.beds === '0' ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                      color: search.beds === '0' ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
+                      border: search.beds === '0' ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {t('reqAny')}
+                  </button>
+                  {[1, 2, 3, 4, 5].map((n) => {
+                    const isSelected = search.beds === String(n);
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setSearch({ ...search, beds: String(n) })}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: isSelected ? 700 : 500,
+                          whiteSpace: 'nowrap',
+                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {n}+ {isAr ? 'غرف' : 'Beds'}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Dynamic Price Dropdown (Buy vs Rent) */}
-              <div className="field">
-                <label htmlFor="hero-price">{t('fPrice')}</label>
-                <select
-                  id="hero-price"
-                  name="price"
-                  className="hero-select"
-                  value={search.price}
-                  onChange={(e) => setSearch({ ...search, price: e.target.value })}
-                >
-                  {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => (
-                    <option key={p.val} value={p.val}>
-                      {isAr ? p.ar : p.en}
-                    </option>
-                  ))}
-                </select>
+              {/* Dynamic Price Pills */}
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fPrice')}</label>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                  {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => {
+                    const isSelected = search.price === p.val;
+                    return (
+                      <button
+                        key={p.val}
+                        type="button"
+                        onClick={() => setSearch({ ...search, price: p.val })}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: isSelected ? 700 : 500,
+                          whiteSpace: 'nowrap',
+                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {isAr ? p.ar : p.en}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -884,20 +944,66 @@ export default function HomePage() {
                     value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
                 <div>
-                  <label htmlFor="inq-zone">{t('inqZone')}</label>
-                  <select id="inq-zone" name="zone" value={form.zone}
-                    onChange={(e) => setForm({ ...form, zone: e.target.value })}>
-                    {['z1', 'z2', 'z3', 'z4'].map((k) => <option key={k}>{t(k)}</option>)}
-                  </select>
+                  <label id="inq-zone-label" style={{ display: 'block', marginBottom: 8 }}>{t('inqZone')}</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-labelledby="inq-zone-label">
+                    {['z1', 'z2', 'z3', 'z4'].map((k) => {
+                      const val = t(k);
+                      const isSelected = form.zone === val;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setForm({ ...form, zone: val })}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: isSelected ? 700 : 500,
+                            background: isSelected ? 'rgba(201, 148, 54, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                            color: isSelected ? '#e9c176' : 'inherit',
+                            border: isSelected ? '1px solid #c99436' : '1px solid rgba(255, 255, 255, 0.12)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {val}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input type="hidden" name="zone" value={form.zone} />
                 </div>
               </div>
               <div className="frow">
                 <div>
-                  <label htmlFor="inq-type">{t('inqType2')}</label>
-                  <select id="inq-type" name="type" value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                    {['lVilla', 'lApt', 'lTwin', 'lPent'].map((k) => <option key={k}>{t(k)}</option>)}
-                  </select>
+                  <label id="inq-type-label" style={{ display: 'block', marginBottom: 8 }}>{t('inqType2')}</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-labelledby="inq-type-label">
+                    {['lVilla', 'lApt', 'lTwin', 'lPent'].map((k) => {
+                      const val = t(k);
+                      const isSelected = form.type === val;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setForm({ ...form, type: val })}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: isSelected ? 700 : 500,
+                            background: isSelected ? 'rgba(201, 148, 54, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                            color: isSelected ? '#e9c176' : 'inherit',
+                            border: isSelected ? '1px solid #c99436' : '1px solid rgba(255, 255, 255, 0.12)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {val}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input type="hidden" name="type" value={form.type} />
                 </div>
                 <div>
                   <label htmlFor="inq-budget">{t('inqBudget')}</label>

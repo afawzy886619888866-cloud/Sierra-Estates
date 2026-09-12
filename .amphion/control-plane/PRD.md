@@ -25,13 +25,25 @@ Sierra Estates delivers an end-to-end luxury proptech monorepo powering the high
 - **Role-Based Access Control (RBAC)**: Enforced roles (`admin`, `manager`, `agent`, `auditor`) matching `docs/roles.md`.
 - **Live Chat Manager & Proxy**: Direct internal inference interface routing through `/api/internal/chat`.
 
-### 2.4 Data Syndication & Integration
-
+### 2.4 Data Syndication & Authoritative Database
 - **PropertyFinder API Gateway**: Automated catalog sync mapping external feeds into unified compound schemas.
-- **Airtable / Firestore Dual-Sync**: Resilient database synchronizer with schema validation and rate limiting.
+- **Supabase PostgreSQL & pgvector Engine**: Sole authoritative datastore with real-time subscriptions, RLS policies, and pgvector semantic similarity search.
+
+### 2.5 Interactive Spatial Intelligence & Masterplans Engine
+- **Compound Boundary Polygons**: High-precision GPS polygon boundaries for key New Cairo masterplans (Mivida, Hyde Park, Mountain View, Katameya Heights, Eastown, Villette, Swan Lake, etc.).
+- **District & Phase Inspection**: Multi-phase boundary mapping, amenity overlays (golf, lagoons, international schools), and live inventory synchronization.
+- **Deterministic Luxury Media**: Algorithmic image resolution mapping high-res architectural photos without duplication or layout shifts.
+
+### 2.6 WhatsApp Lead Concierge & Inventory Harvester
+- **Automated WhatsApp Pipeline**: Harvester for broker broadcasts and direct owner listings, extracting price, BUA, bedrooms, and compound codes into the master inventory.
+- **Bilingual Lead Concierge**: High-agency WhatsApp/Telegram conversational agent for client qualification, automated inquiry intake, and CRM synchronization.
+
+### 2.7 Grounded Audio & NotebookLM Briefing Engine
+- **NotebookLM Real Estate Briefing**: Citation-grounded compound guides, market trends, and automated podcast-style audio overviews.
 
 ## 3. Non-Functional Requirements
 
-- **Performance**: Edge-rendered App Router pages with < 1.2s Largest Contentful Paint (LCP).
-- **Security**: Strict environment isolation, token-validated internal routes (`/api/internal/*`), and App Check enforcement.
+- **Performance**: Edge-rendered Next.js App Router pages with < 1.2s Largest Contentful Paint (LCP) and sub-500ms p95 API latency.
+- **Security**: Strict environment isolation, Supabase PostgreSQL RLS, token-validated internal routes (`/api/internal/*`), and zero client-side service keys.
 - **Reliability**: 100% CI pass rate with zero unhandled exceptions.
+
