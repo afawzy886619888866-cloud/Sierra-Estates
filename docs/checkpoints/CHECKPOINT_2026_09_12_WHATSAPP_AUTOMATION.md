@@ -2,7 +2,7 @@
 
 **Date**: September 12, 2026  
 **Git Tag**: [`checkpoint-whatsapp-automation`](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main/releases/tag/checkpoint-whatsapp-automation)  
-**Commit**: `e7d49e58163816722b2b89b629466514ec167a78`  
+**Commit**: `92afb7a361397ce42245e2ff262e194b070a0e24`  
 **Authoritative Backend**: Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`)  
 **Public Contact**: `+201092048333` (`https://wa.me/201092048333`)
 
