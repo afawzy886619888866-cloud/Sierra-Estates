@@ -193,28 +193,56 @@
     <h1>Scan with WhatsApp</h1>
     <p class="subtitle">Open WhatsApp on your phone and scan the auto-refreshing live QR code below.</p>
 
-    <div class="qr-frame">
-      <img id="qr-img" src="/whatsapp_qr.png" alt="WhatsApp QR Code">
-      <div id="qr-loader" class="qr-loader">Refreshing QR Code...</div>
-      <div id="success-box" class="success-box">
-        <svg style="width:54px;height:54px;margin-bottom:12px;fill:currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-        <div>WhatsApp Connected Successfully!</div>
+    <div class="method-tabs" style="display:flex;gap:12px;margin-bottom:20px;justify-content:center;">
+      <button id="tab-qr" onclick="switchTab('qr')" class="tab-btn active" style="background:rgba(14,165,233,0.2);color:#38bdf8;border:1px solid #38bdf8;padding:8px 16px;border-radius:12px;font-weight:600;cursor:pointer;">📷 Scan QR Code</button>
+      <button id="tab-code" onclick="switchTab('code')" class="tab-btn" style="background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:8px 16px;border-radius:12px;font-weight:600;cursor:pointer;">🔢 Link With Phone Code</button>
+    </div>
+
+    <!-- QR Section -->
+    <div id="qr-section">
+      <div class="qr-frame">
+        <img id="qr-img" src="/whatsapp_qr.png" alt="WhatsApp QR Code">
+        <div id="qr-loader" class="qr-loader">Refreshing QR Code...</div>
+        <div id="success-box" class="success-box">
+          <svg style="width:54px;height:54px;margin-bottom:12px;fill:currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <div>WhatsApp Connected Successfully!</div>
+        </div>
+      </div>
+      <div id="countdown-text" class="countdown">Auto-refreshing every few seconds...</div>
+      <div class="steps">
+        <ol>
+          <li>Open <b>WhatsApp</b> on your mobile phone (<b>+201092048333</b>)</li>
+          <li>Tap <b>Settings</b> (or 3 dots) &gt; <b>Linked Devices</b></li>
+          <li>Tap <b>Link a Device</b> and point camera at the screen</li>
+        </ol>
       </div>
     </div>
 
-    <div id="countdown-text" class="countdown">Auto-refreshing every few seconds...</div>
-
-    <div class="steps">
-      <ol>
-        <li>Open <b>WhatsApp</b> on your mobile phone</li>
-        <li>Tap <b>Settings</b> (or 3 dots) &gt; <b>Linked Devices</b></li>
-        <li>Tap <b>Link a Device</b> and point camera at the screen</li>
-      </ol>
+    <!-- Pairing Code Section -->
+    <div id="code-section" style="display:none;">
+      <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(14,165,233,0.3);border-radius:16px;padding:24px 20px;margin:16px 0 20px 0;">
+        <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Target Phone: <b style="color:#f8fafc;">+201092048333</b></div>
+        <div id="pairing-code-display" style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:32px;font-weight:800;letter-spacing:6px;color:#38bdf8;text-shadow:0 0 20px rgba(56,189,248,0.5);margin:16px 0;">
+          N48R - DGEV
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button onclick="copyPairingCode()" class="btn btn-primary" style="padding:8px 18px;font-size:13px;">📋 Copy Code</button>
+          <button onclick="requestFreshPairingCode()" class="btn btn-outline" style="padding:8px 18px;font-size:13px;">🔄 Get New Code</button>
+        </div>
+      </div>
+      <div class="steps">
+        <ol>
+          <li>Open <b>WhatsApp</b> on your phone (<b>+201092048333</b>)</li>
+          <li>Tap <b>Settings</b> (or 3 dots) &gt; <b>Linked Devices</b> &gt; <b>Link a Device</b></li>
+          <li>Tap <b>"Link with phone number instead"</b> at the bottom</li>
+          <li>Type or paste the 8-character code shown above</li>
+        </ol>
+      </div>
     </div>
 
-    <div class="btn-row">
+    <div class="btn-row" style="margin-top:16px;">
       <a href="http://18.232.148.172:3000" target="_blank" class="btn btn-outline">Open Server Dashboard</a>
       <button onclick="fetchQR(true)" class="btn btn-primary">Refresh Now</button>
     </div>
@@ -226,22 +254,66 @@
     const badgeText = document.getElementById('badge-text');
     const successBox = document.getElementById('success-box');
     const countdownText = document.getElementById('countdown-text');
+    const codeDisplay = document.getElementById('pairing-code-display');
 
+    let currentCode = 'N48RDGEV';
     let secondsLeft = 20;
+
+    function switchTab(mode) {
+      const tabQr = document.getElementById('tab-qr');
+      const tabCode = document.getElementById('tab-code');
+      const qrSec = document.getElementById('qr-section');
+      const codeSec = document.getElementById('code-section');
+      if (mode === 'qr') {
+        tabQr.style.background = 'rgba(14,165,233,0.2)';
+        tabQr.style.color = '#38bdf8';
+        tabQr.style.borderColor = '#38bdf8';
+        tabCode.style.background = 'rgba(255,255,255,0.05)';
+        tabCode.style.color = '#94a3b8';
+        tabCode.style.borderColor = 'rgba(255,255,255,0.1)';
+        qrSec.style.display = 'block';
+        codeSec.style.display = 'none';
+      } else {
+        tabCode.style.background = 'rgba(14,165,233,0.2)';
+        tabCode.style.color = '#38bdf8';
+        tabCode.style.borderColor = '#38bdf8';
+        tabQr.style.background = 'rgba(255,255,255,0.05)';
+        tabQr.style.color = '#94a3b8';
+        tabQr.style.borderColor = 'rgba(255,255,255,0.1)';
+        qrSec.style.display = 'none';
+        codeSec.style.display = 'block';
+        requestFreshPairingCode();
+      }
+    }
+
+    async function requestFreshPairingCode() {
+      try {
+        codeDisplay.innerText = 'GENERATING...';
+        const res = await fetch('/api/whatsapp/pairing-code?t=' + Date.now());
+        const data = await res.json();
+        if (data.pairingCode) {
+          currentCode = data.pairingCode;
+          const formatted = data.pairingCode.length === 8 
+            ? `${data.pairingCode.slice(0,4)} - ${data.pairingCode.slice(4)}`
+            : data.pairingCode;
+          codeDisplay.innerText = formatted;
+        } else {
+          codeDisplay.innerText = currentCode;
+        }
+      } catch (err) {
+        console.warn('Pairing code fetch error:', err);
+      }
+    }
+
+    function copyPairingCode() {
+      navigator.clipboard.writeText(currentCode).then(() => {
+        alert('Pairing Code copied: ' + currentCode);
+      });
+    }
 
     async function fetchQR(manual = false) {
       try {
-        // Try local Next.js proxy route first, then direct server
-        let res = null;
-        try {
-          res = await fetch('/api/whatsapp/qr?t=' + Date.now());
-        } catch (e) {
-          // Direct fallback if running as a standalone file (e.g. from H:\Sheets\)
-          res = await fetch('http://18.232.148.172:3000/api/sessions/9fbfb682-2fa8-44aa-9af0-35bb23ea80dd/qr', {
-            headers: { 'X-API-Key': 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c' }
-          });
-        }
-
+        let res = await fetch('/api/whatsapp/qr?t=' + Date.now());
         if (!res.ok) throw new Error('Status ' + res.status);
         const data = await res.json();
 
