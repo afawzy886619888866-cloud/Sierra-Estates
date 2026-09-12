@@ -16,4 +16,5 @@ export * from './arbitrage-scanner';
 export * from './vip-concierge';
 export * from './notebookllm-engine';
 export * from './voice-briefing';
+export * from './video-teaser';
 
