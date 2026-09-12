@@ -18,13 +18,16 @@ export async function POST(req: Request) {
     const { name, email, phone, message, locale, zone, type, budget, intent, source } = parseResult.data;
 
     // Construct structured summary notes
-    const formattedNotes = [
+    const structuredPrefix = [
       intent ? `[Intent: ${intent.toUpperCase()}]` : null,
       zone ? `[Preferred Zone: ${zone}]` : null,
       type ? `[Property Type: ${type}]` : null,
       budget ? `[Budget: ${budget} EGP]` : null,
-      message ? `Message: ${message}` : null,
     ].filter(Boolean).join(' | ');
+
+    const formattedNotes = structuredPrefix
+      ? `${structuredPrefix}${message ? ` | ${message}` : ''}`
+      : message || undefined;
 
     // 1. Add to Supabase (public.leads; `name` and the free-text message are
     //    stored as full_name / summary_notes, the table's column names).

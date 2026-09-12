@@ -19,6 +19,8 @@ import { logger } from '@/lib/logger';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
+import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
+import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -115,6 +117,39 @@ export async function POST(request: Request) {
       // flow working; production must surface the failure instead.
       if (process.env.NODE_ENV === 'production') throw writeError;
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
+    }
+
+    // 1. Send immediate notification to the Agency Telegram Bot
+    try {
+      const telegramText = `
+<b>🏡 New Property Submission — Sierra Estates Easy Listing</b>
+<b>Compound:</b> ${escapeTelegramHtml(data.compound)}
+<b>Type:</b> ${escapeTelegramHtml(data.propertyType)} (${data.mode.toUpperCase()})
+<b>Price:</b> EGP ${Number(data.price).toLocaleString('en-US')}
+<b>Specs:</b> ${data.beds} Beds · ${data.baths} Baths · ${data.area} m²
+<b>Finishing:</b> ${escapeTelegramHtml(data.finishing || 'Standard')}
+<b>Contact:</b> ${escapeTelegramHtml(data.ownerName)} (${data.ownerType || 'Owner'})
+<b>Phone:</b> ${escapeTelegramHtml(data.mobile)}
+<b>Code:</b> ${listingCode}
+<b>Notes:</b> ${escapeTelegramHtml(data.comment || 'None')}
+      `.trim();
+      await sendTelegramMessage(telegramText);
+    } catch (teleErr) {
+      logger.warn('[LISTING_SUBMIT] Telegram alert skipped:', teleErr);
+    }
+
+    // 2. Enqueue automated WhatsApp notification for the agency concierge
+    const notifyNumber = process.env.LEAD_NOTIFY_WHATSAPP_NUMBER;
+    if (notifyNumber) {
+      try {
+        await enqueueWhatsAppJob({
+          purpose: 'general-outreach',
+          toPhone: notifyNumber,
+          body: `🏡 New Property Submitted via Easy Listing!\n📍 Compound: ${data.compound}\n🏠 Type: ${data.propertyType} (${data.mode.toUpperCase()})\n💰 Price: EGP ${Number(data.price).toLocaleString('en-US')}\n📐 Specs: ${data.beds}B / ${data.baths}B (${data.area} m²)\n👤 Owner/Broker: ${data.ownerName} (${data.ownerType || 'Owner'})\n📱 Contact: ${data.mobile}\n🔖 Code: ${listingCode}`,
+        });
+      } catch (waErr) {
+        logger.warn('[LISTING_SUBMIT] WhatsApp dispatch skipped:', waErr);
+      }
     }
 
     return NextResponse.json(
