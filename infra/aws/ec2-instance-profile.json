@@ -1,0 +1,23 @@
+{
+  "instanceId": "i-0be8ff8c5cfba7363",
+  "name": "sierra-estates-openwa",
+  "region": "us-east-1",
+  "publicIp": "18.232.148.172",
+  "privateIp": "172.31.17.51",
+  "publicDns": "ec2-18-232-148-172.compute-1.amazonaws.com",
+  "instanceType": "t3.micro",
+  "vcpus": 2,
+  "memoryGb": 1,
+  "state": "running",
+  "amiId": "ami-01edba92f9036f76e",
+  "amiName": "al2023-ami-2023.12.20260710.0-kernel-6.18-x86_64",
+  "os": "Amazon Linux 2023",
+  "sshUser": "ec2-user",
+  "keyName": "sierra-estates-key",
+  "vpcId": "vpc-0d4959003057de146",
+  "subnetId": "subnet-0cc8cbee5df685506",
+  "accountId": "453195924104",
+  "openwaUrl": "http://18.232.148.172:3000",
+  "n8nUrl": "http://18.232.148.172:5678",
+  "requiredPorts": [22, 3000, 5678]
+}
