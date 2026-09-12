@@ -31,7 +31,7 @@ const config = {
     '!**/*.test.{ts,tsx}',
   ],
   coverageReporters: ['text-summary', 'lcov', 'json'],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
