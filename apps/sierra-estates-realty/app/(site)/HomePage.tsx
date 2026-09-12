@@ -255,7 +255,7 @@ export default function HomePage() {
                     className={searchMode === mode ? 'active' : undefined}
                     type="button"
                     role="tab"
-                    aria-selected={searchMode === mode}
+                    aria-selected={searchMode === mode ? 'true' : 'false'}
                     onClick={() => {
                       setSearchMode(mode);
                       setSearch((prev) => ({ ...prev, price: '0' }));

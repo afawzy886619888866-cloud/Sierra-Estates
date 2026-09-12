@@ -89,7 +89,7 @@
   text-shadow: 0 2px 18px rgba(0, 0, 0, .34);
 }
 .hero .sub {
-  text-wrap: pretty;
+  text-wrap: balance;
   max-width: 54ch;
 }
 
@@ -100,8 +100,8 @@
 
 .nav.scrolled {
   background: rgba(0, 43, 75, 0.88);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -197,8 +197,8 @@
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   padding: 6px 12px;
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -224,8 +224,8 @@
 
 .pcard .heart {
   border-radius: 50%;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -292,8 +292,8 @@
   min-height: 64px;
   padding-bottom: env(safe-area-inset-bottom, 8px);
   background: rgba(0, 43, 75, 0.94);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
   z-index: 1000;
@@ -965,8 +965,8 @@ section.block:has(.cta){background:linear-gradient(180deg,var(--white) 0%,var(--
   z-index: 35;
   background: var(--surface, #ffffff);
   border-bottom: 1px solid var(--line, rgba(0, 43, 75, 0.1));
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 4px 20px rgba(13, 33, 54, 0.03);
 }
 

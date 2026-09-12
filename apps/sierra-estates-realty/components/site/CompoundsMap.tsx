@@ -897,6 +897,8 @@ export default function CompoundsMap({
               {filterQuery && (
                 <button
                   type="button"
+                  title="Clear search query"
+                  aria-label="Clear search query"
                   onClick={() => setFilterQuery('')}
                   style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
                 >
