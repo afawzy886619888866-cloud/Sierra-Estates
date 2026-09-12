@@ -1,4 +1,4 @@
-﻿version: '3.9'
+version: '3.9'
 
 services:
   openwa:
@@ -33,7 +33,7 @@ services:
     networks:
       - sierra-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q ok || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health | grep -q ok || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

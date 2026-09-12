@@ -65,11 +65,22 @@ async function runVerification() {
     console.log(`${RED}✗ OFFLINE${RESET} (Status: ${openwaHealth.status})`);
   }
 
+  // 2b. Check EC2 n8n Engine
+  total++;
+  process.stdout.write('2b. EC2 n8n Automation Engine (18.232.148.172:5678)... ');
+  const n8nHealth = await checkUrl('http://18.232.148.172:5678/healthz');
+  if (n8nHealth.ok) {
+    console.log(`${GREEN}✓ ONLINE${RESET} (Status: 200 OK)`);
+    passed++;
+  } else {
+    console.log(`${RED}✗ OFFLINE${RESET} (Status: ${n8nHealth.status})`);
+  }
+
   // 3. Check WhatsApp Session & QR Generation
   total++;
   process.stdout.write('3. WhatsApp Session QR Endpoint (sierra-main)... ');
-  const qrRes = await checkUrl('http://18.232.148.172:3000/api/sessions/bfd8dee0-8047-4a9b-9bca-f99909f2ea1e/qr', {
-    'X-API-Key': 'owa_k1_a06231362ac8f1279ef68794cf02010ac08d74b97adc295ce26ebceba29a617e',
+  const qrRes = await checkUrl('http://18.232.148.172:3000/api/sessions/3e5c5f78-da22-4793-bd51-d648b552cd17/qr', {
+    'X-API-Key': 'owa_k1_ced32b1c630618c321e9249439b7da90e5408506b7979a7da3e3ff71d375dbbe',
   });
   if (qrRes.ok) {
     try {
