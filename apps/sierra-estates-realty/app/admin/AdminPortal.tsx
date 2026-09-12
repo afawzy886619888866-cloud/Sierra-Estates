@@ -2292,6 +2292,11 @@ function AdminApp() {
       case 'heatmap':return <HeatmapView />;
       case 'intelligence':return <AgentIntelligence />;
       case 'notebookllm':return <NotebookLMStudio />;
+      case 'easy_listing':return (
+        <div className="fade-up" style={{paddingTop:4}}>
+          <EasyListingStudio />
+        </div>
+      );
       case 'settings':return <SettingsPage T={T}/>;
       default:return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
     }
