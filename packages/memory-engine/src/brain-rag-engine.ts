@@ -223,11 +223,11 @@ export class MemoryBrainEngine {
     // 2. Retrieve Entity Profile from ECC
     let entityContext: EntityProfile | null = null;
     if (entityId) {
-      entityContext = this.ecc.getEntityProfile(entityId);
+      entityContext = this.ecc.getEntity(entityId);
     }
 
     // 3. Retrieve relevant episodes (price reductions, offers, inspections)
-    const recentEpisodes = this.ecc.getRecentEpisodes(entityId, maxEpisodes);
+    const recentEpisodes = this.ecc.getRecentEpisodes(maxEpisodes, entityId);
     const hotDeals = this.ecc.getHotDeals(maxEpisodes);
 
     // 4. Synthesize unified formatted directive
