@@ -23,7 +23,7 @@
  */
 
 import { AgentOrchestrator } from '@sierra-estates/agents-core'
-import { sharedMemory, memoryEngine } from '@sierra-estates/memory-engine'
+import { sharedMemory, memoryEngine, brainRAG } from '@sierra-estates/memory-engine'
 import { stripWhatsAppSuffix } from './phone'
 import { buildListingsDigest, type ListingFetchResult } from './property-finder'
 
