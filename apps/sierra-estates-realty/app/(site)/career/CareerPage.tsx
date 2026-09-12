@@ -733,8 +733,8 @@ export default function CareerPage() {
               {isAr ? 'اختر الدور المناسب لخبراتك' : 'Find Your Next Role'}
             </h2>
 
-            {/* Department Filter Tabs */}
-            <div className="cr-dept-filters" role="tablist" aria-label={isAr ? 'أقسام الوظائف' : 'Department filters'}>
+            {/* Department Filter Buttons */}
+            <div className="cr-dept-filters" aria-label={isAr ? 'أقسام الوظائف' : 'Department filters'}>
               {[
                 { id: 'all', labelEn: 'All Openings', labelAr: 'جميع الوظائف الشاغرة' },
                 { id: 'sales', labelEn: 'Sales & Advisory (4)', labelAr: 'المبيعات والاستشارات (4)' },
@@ -744,7 +744,6 @@ export default function CareerPage() {
                   key={tab.id}
                   type="button"
                   title={isAr ? tab.labelAr : tab.labelEn}
-                  aria-pressed={deptFilter === tab.id}
                   className={`cr-dept-btn ${deptFilter === tab.id ? 'cr-dept-btn--active' : ''}`}
                   onClick={() => setDeptFilter(tab.id as any)}
                 >
