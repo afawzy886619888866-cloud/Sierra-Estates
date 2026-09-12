@@ -8,7 +8,7 @@ set -e
 
 echo "=== 1. Setting up 4GB Swap Space (Critical for t3.micro 1GB RAM) ==="
 if ! swapon --show | grep -q "/swapfile"; then
-  sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+  sudo fallocate -l 4G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 status=none
   sudo chmod 600 /swapfile
   sudo mkswap /swapfile
   sudo swapon /swapfile
