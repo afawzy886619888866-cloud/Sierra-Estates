@@ -8,11 +8,9 @@ name: CI
 # GitHub Free-plan minute quota. CodeQL runs on a separate weekly schedule only.
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
   pull_request:
     branches: [main]
-  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

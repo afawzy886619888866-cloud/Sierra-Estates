@@ -277,7 +277,7 @@ function parseListingMessage(
     area,
     price,
     finishing,
-    sierraCode: sbr.sierraCode,
+    sierraCode: sbr.code,
     rawText: msg.text,
     isOwner,
     confidence: isOwner ? 95 : 82,
@@ -340,13 +340,12 @@ export async function POST(request: NextRequest) {
             comment: `Imported via WhatsApp Mobile Chat Scanner [${groupName}] at ${unit.timestamp}\nOriginal text: ${unit.rawText.slice(0, 300)}`,
             photos: [],
             images: [],
-          };
-
-          const cols = toListingColumns(payload as any, {
             status: 'available',
             verified: unit.isOwner,
             source: `WhatsApp: ${groupName}`,
-          });
+          };
+
+          const cols = toListingColumns(payload as Record<string, unknown>);
 
           await insertRecord('listings', cols);
           ingestedCount++;
