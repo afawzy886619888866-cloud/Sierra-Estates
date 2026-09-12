@@ -182,12 +182,13 @@
 }
 
 .pcard .photo img {
-  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pcard:hover .photo img {
-  transform: scale(1.05);
+  transform: none !important;
 }
 
 /* Micro-Badges & Floating Tags */
