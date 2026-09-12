@@ -214,7 +214,12 @@ export function parseCookies(header: string | null): Record<string, string> {
     if (idx === -1) continue;
     const k = pair.slice(0, idx).trim();
     const v = pair.slice(idx + 1).trim();
-    out[k] = decodeURIComponent(v);
+    try {
+      out[k] = decodeURIComponent(v);
+    } catch {
+      // Malformed URI/percent-encoding must fail closed gracefully without throwing.
+      out[k] = v;
+    }
   }
   return out;
 }
