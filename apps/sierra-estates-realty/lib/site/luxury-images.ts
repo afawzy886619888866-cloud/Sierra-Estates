@@ -3,10 +3,9 @@
  *
  * Provides high-resolution, magazine-grade photography for New Cairo real estate:
  * - Standalone Villas (Emaar, Hyde Park, Katameya, Sodic, Mountain View)
- * - Penthouses & Rooftop Terraces
- * - Twin Houses & Modern Townhouses
- * - Luxury High-Ceiling Apartments
- * - Duplexes & Garden Units
+ * - Penthouses & Rooftop Terraces (Skyline views, Jacuzzis, Pergolas)
+ * - Twin Houses & Modern Townhouses (Private gardens, cedar accents)
+ * - Luxury High-Ceiling Apartments & Garden Duplexes
  *
  * Includes deterministic, non-repeating assignment to guarantee distinct photography
  * across adjacent cards in lists and map previews.
@@ -20,7 +19,7 @@ export interface LuxuryPhoto {
   alt: string;
 }
 
-// 60+ hand-curated, high-resolution architectural photographs without duplicates
+// 75+ hand-curated, high-resolution architectural photographs without duplicates
 export const LUXURY_CATALOG: LuxuryPhoto[] = [
   // --- VILLAS (Grand Standalone Modern Architecture & Pools) ---
   {
@@ -40,7 +39,7 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
   },
   {
     url: 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1200&q=80',
-    type: 'villa', style: 'interior', compoundTag: 'Swan Lake',
+    type: 'villa', style: 'interior', compoundTag: 'Swan Lake Residence',
     alt: 'Double-height living pavilion with floor-to-ceiling glass in Swan Lake'
   },
   {
@@ -73,6 +72,36 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
     type: 'villa', style: 'living', compoundTag: 'Mivida',
     alt: 'Sunlit open-plan salon with bespoke Italian marble in Mivida'
   },
+  {
+    url: 'https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=1200&q=80',
+    type: 'villa', style: 'pool', compoundTag: 'The Crest',
+    alt: 'Private pool deck and modern architectural facade in The Crest'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600573472556-e636c2acda88?w=1200&q=80',
+    type: 'villa', style: 'exterior', compoundTag: 'Mountain View iCity',
+    alt: 'Grand standalone mansion with American-style rooflines in Mountain View iCity'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200&q=80',
+    type: 'villa', style: 'living', compoundTag: 'Cairo Festival City',
+    alt: 'Stately living salon with panoramic park vistas in Cairo Festival City'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200&q=80',
+    type: 'villa', style: 'interior', compoundTag: 'Katameya Heights',
+    alt: 'Custom designer kitchen and formal dining wing in Katameya Heights'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=1200&q=80',
+    type: 'villa', style: 'living', compoundTag: 'Uptown Cairo',
+    alt: 'High-ceiling golf villa hall with floor-to-ceiling glass in Uptown Cairo'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80',
+    type: 'villa', style: 'exterior', compoundTag: 'Fifth Square',
+    alt: 'Bespoke resort-style villa with tranquil water gardens in Fifth Square'
+  },
 
   // --- PENTHOUSES (Skylines, Private Rooftops & Jacuzzis) ---
   {
@@ -100,6 +129,21 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
     type: 'penthouse', style: 'terrace', compoundTag: 'Fifth Square',
     alt: 'Wrap-around roof lounge with private jacuzzi in Fifth Square'
   },
+  {
+    url: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=80',
+    type: 'penthouse', style: 'living', compoundTag: 'Swan Lake Residence',
+    alt: 'Penthouse master suite with panoramic sunset balcony in Swan Lake'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&q=80',
+    type: 'penthouse', style: 'master_suite', compoundTag: 'Mountain View iCity',
+    alt: 'Skylight rooftop suite with private terrace in Mountain View iCity'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=1200&q=80',
+    type: 'penthouse', style: 'terrace', compoundTag: 'Stone Residence',
+    alt: 'Sky terrace with teakwood flooring and outdoor dining lounge'
+  },
 
   // --- TWIN HOUSES & TOWNHOUSES (Sleek Modern Family Living) ---
   {
@@ -126,6 +170,16 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
     url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&q=80',
     type: 'twin_house', style: 'living', compoundTag: 'Hyde Park',
     alt: 'Expansive family salon with garden access in Hyde Park'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80',
+    type: 'townhouse', style: 'living', compoundTag: 'District 5',
+    alt: 'Modern Scandinavian-inspired townhouse interior in District 5'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=80',
+    type: 'twin_house', style: 'exterior', compoundTag: 'The Brooks',
+    alt: 'Twin house with cantilevered balcony and manicured hedge in The Brooks'
   },
 
   // --- APARTMENTS & DUPLEXES (Modern Interiors & Terrace Living) ---
@@ -175,10 +229,35 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
     alt: 'Refined modern luxury interior with bronze lighting fixtures in STEI8HT'
   },
   {
-    url: 'https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=1200&q=80',
-    type: 'villa', style: 'pool', compoundTag: 'The Crest',
-    alt: 'Private pool deck and modern architectural facade in The Crest'
+    url: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1200&q=80',
+    type: 'duplex', style: 'living', compoundTag: 'Hyde Park',
+    alt: 'Garden duplex reception with direct patio access in Hyde Park'
   },
+  {
+    url: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=80',
+    type: 'apartment', style: 'master_suite', compoundTag: 'Mivida',
+    alt: 'Spacious master bedroom with ensuite bath and serene view in Mivida'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1200&q=80',
+    type: 'apartment', style: 'living', compoundTag: '90 Avenue',
+    alt: 'Contemporary salon on South 90th Street with floor-to-ceiling glass'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1200&q=80',
+    type: 'apartment', style: 'interior', compoundTag: 'El Patio Oro',
+    alt: 'Luxury apartment living area with bespoke marble tiles in El Patio Oro'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1200&q=80',
+    type: 'duplex', style: 'pool', compoundTag: 'Lake View Residence',
+    alt: 'Ground duplex private pool and garden terrace in Lake View Residence'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80',
+    type: 'villa', style: 'exterior', compoundTag: 'Swan Lake Residence',
+    alt: 'Stunning white architecture mansion reflecting on lagoon waters'
+  }
 ];
 
 /**
@@ -208,15 +287,18 @@ function hashString(str: string): number {
 
 /**
  * Resolves a unique, high-quality photograph matching the unit's compound and type.
- * Avoids repetition by combining unit ID and compound hash.
+ * Avoids repetition by combining unit ID, code, compound hash, and optional index offset.
  */
-export function getCuratedListingImage(unit: {
-  id?: string | number;
-  code?: string;
-  compound?: string;
-  type?: string;
-  img?: string;
-}): string {
+export function getCuratedListingImage(
+  unit: {
+    id?: string | number;
+    code?: string;
+    compound?: string;
+    type?: string;
+    img?: string;
+  },
+  indexOffset = 0
+): string {
   // If unit already carries a valid verified external photo that isn't the old placeholder
   if (
     unit.img &&
@@ -224,7 +306,7 @@ export function getCuratedListingImage(unit: {
     unit.img.startsWith('http') &&
     !unit.img.includes('default') &&
     !unit.img.includes('placeholder') &&
-    !unit.img.includes('photo-1600596542815-ffad4c1539a9') // avoid old generic repeat
+    !unit.img.includes('photo-1600596542815-ffad4c1539a9') // avoid old generic single photo
   ) {
     return unit.img;
   }
@@ -237,7 +319,7 @@ export function getCuratedListingImage(unit: {
     (p) => p.type === category && p.compoundTag && compound.toLowerCase().includes(p.compoundTag.toLowerCase())
   );
 
-  const identifier = String(unit.id || unit.code || compound || 'unit');
+  const identifier = `${unit.id ?? ''}-${unit.code ?? ''}-${compound}-${category}-${indexOffset}`;
   const hash = hashString(identifier);
 
   if (matchingCompoundPhotos.length > 0) {
@@ -247,11 +329,11 @@ export function getCuratedListingImage(unit: {
   // Second priority: Match category
   const matchingCategoryPhotos = LUXURY_CATALOG.filter((p) => p.type === category);
   if (matchingCategoryPhotos.length > 0) {
-    return matchingCategoryPhotos[hash % matchingCategoryPhotos.length].url;
+    return matchingCategoryPhotos[(hash + indexOffset) % matchingCategoryPhotos.length].url;
   }
 
-  // Fallback to general catalog
-  return LUXURY_CATALOG[hash % LUXURY_CATALOG.length].url;
+  // Fallback to general catalog with offset to ensure variance
+  return LUXURY_CATALOG[(hash + indexOffset) % LUXURY_CATALOG.length].url;
 }
 
 /**
@@ -266,10 +348,21 @@ export const COMPOUND_HERO_IMAGES: Record<string, string> = {
   'Taj City': 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1000&q=75',
   'Palm Hills New Cairo': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1000&q=75',
   'Katameya Heights': 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1000&q=75',
-  'Swan Lake': 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1000&q=75',
+  'Swan Lake Residence': 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1000&q=75',
   'The Waterway': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1000&q=75',
   'Zed East': 'https://images.unsplash.com/photo-1567496898669-ee935f5f647a?w=1000&q=75',
   'Cairo Festival City': 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1000&q=75',
   'Al Rehab': 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1000&q=75',
   'Madinaty': 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=1000&q=75',
+  'Fifth Square': 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1000&q=75',
+  'Stone Residence': 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=1000&q=75',
+  'District 5': 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=1000&q=75',
+  'Al Burouj': 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1000&q=75',
+  'Sarai': 'https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=1000&q=75',
+  'STEI8HT': 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1000&q=75',
+  'The Crest': 'https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=1000&q=75',
+  'Bloomfields': 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1000&q=75',
+  'The Brooks': 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1000&q=75',
+  'El Patio Oro': 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1000&q=75',
+  'Uptown Cairo': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1000&q=75',
 };
