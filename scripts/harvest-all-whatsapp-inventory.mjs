@@ -588,64 +588,68 @@ async function main() {
 
   console.log(`\n💾 Exporting Master Files...`);
 
-  // A. Master CSVs
-  writeCsv(unifiedRecords, HEADERS, path.join(PUBLIC_DOWNLOADS, 'Master_Inventory_Clean_No_Duplicates.csv'));
+  // A. Full Internal Master Datasets (stored in data/ and H:/Sheets/ with raw contacts)
   writeCsv(unifiedRecords, HEADERS, path.join(ROOT_DIR, 'data', 'master_inventory_clean_no_duplicates.csv'));
   if (fs.existsSync('H:/Sheets')) {
     writeCsv(unifiedRecords, HEADERS, 'H:/Sheets/Master_Inventory_Clean_No_Duplicates.csv');
   }
-  console.log(`   ✓ Master_Inventory_Clean_No_Duplicates.csv written (${unifiedRecords.length} units)`);
 
-  // B. 5 Segment CSVs in public/downloads
-  writeCsv(ownersRent, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-owners-rent.csv'));
-  writeCsv(ownersBuy, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-owners-buy.csv'));
-  writeCsv(brokersRent, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-broker-rent.csv'));
-  writeCsv(brokersBuy, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-broker-buy.csv'));
-  writeCsv(unknownOrUnassigned, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-unknown-broker-owner.csv'));
-  console.log(`   ✓ 5 segmented CSV downloads written to public/downloads/`);
+  // B. Sanitized Public Datasets (Strict Privacy: only +201092048333 permitted in public/downloads/)
+  const sanitizeForPublic = (records) => records.map(r => ({
+    ...r,
+    mobile: '+201092048333',
+    name: r.owner_party === 'Owner' ? 'Property Owner' : 'Verified Broker',
+    notes: (r.notes || '').replace(/(?:\+?201|01)[0-9]{8,9}/g, '+201092048333')
+  }));
 
-  // C. Multi-sheet Excel Workbook (xlsx)
-  const wb = XLSX.utils.book_new();
+  const publicUnified = sanitizeForPublic(unifiedRecords);
+  const publicOwnersRent = sanitizeForPublic(ownersRent);
+  const publicOwnersBuy = sanitizeForPublic(ownersBuy);
+  const publicBrokersRent = sanitizeForPublic(brokersRent);
+  const publicBrokersBuy = sanitizeForPublic(brokersBuy);
+  const publicUnknown = sanitizeForPublic(unknownOrUnassigned);
 
-  // Summary Sheet
-  const summaryData = [
-    ['SIERRA ESTATES — MASTER INVENTORY AUDIT & RECONCILIATION'],
-    ['Generated At', new Date().toISOString()],
-    ['Total Verified Units', unifiedRecords.length],
-    [],
-    ['Segment', 'Unit Count', 'Percentage'],
-    ['Owners Rent', ownersRent.length, `${((ownersRent.length / unifiedRecords.length) * 100).toFixed(1)}%`],
-    ['Owners Sale', ownersBuy.length, `${((ownersBuy.length / unifiedRecords.length) * 100).toFixed(1)}%`],
-    ['Brokers Rent', brokersRent.length, `${((brokersRent.length / unifiedRecords.length) * 100).toFixed(1)}%`],
-    ['Brokers Sale', brokersBuy.length, `${((brokersBuy.length / unifiedRecords.length) * 100).toFixed(1)}%`],
-    ['Unassigned Channels', unknownOrUnassigned.length, `${((unknownOrUnassigned.length / unifiedRecords.length) * 100).toFixed(1)}%`],
-    [],
-    ['Top WhatsApp Sources', 'Extracted Listings'],
-    ...Array.from(candidateFiles.keys()).slice(0, 15).map(k => [k.replace('.txt', ''), 'Active Channel'])
-  ];
-  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+  writeCsv(publicUnified, HEADERS, path.join(PUBLIC_DOWNLOADS, 'Master_Inventory_Clean_No_Duplicates.csv'));
+  writeCsv(publicOwnersRent, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-owners-rent.csv'));
+  writeCsv(publicOwnersBuy, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-owners-buy.csv'));
+  writeCsv(publicBrokersRent, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-broker-rent.csv'));
+  writeCsv(publicBrokersBuy, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-broker-buy.csv'));
+  writeCsv(publicUnknown, HEADERS, path.join(PUBLIC_DOWNLOADS, 'sierra-estates-unknown-broker-owner.csv'));
+  console.log(`   ✓ Master & 5 Segment CSVs written to public/downloads/ (Privacy Audited: +201092048333)`);
 
-  // All Units Sheet
-  const wsAll = XLSX.utils.json_to_sheet(unifiedRecords, { header: HEADERS });
-  XLSX.utils.book_append_sheet(wb, wsAll, 'All_Units');
-
-  // Segment Sheets
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ownersRent, { header: HEADERS }), 'Owners_Rent');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ownersBuy, { header: HEADERS }), 'Owners_Sale');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brokersRent, { header: HEADERS }), 'Brokers_Rent');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brokersBuy, { header: HEADERS }), 'Brokers_Sale');
-
-  // Write Excel workbooks
-  const excelDest1 = path.join(PUBLIC_DOWNLOADS, 'Master_Inventory_Clean_No_Duplicates.xlsx');
-  XLSX.writeFile(wb, excelDest1);
-  console.log(`   ✓ Master_Inventory_Clean_No_Duplicates.xlsx written to public/downloads/`);
-
+  // C. Multi-sheet Excel Workbook (xlsx) for operator storage in H:/Sheets/
   if (fs.existsSync('H:/Sheets')) {
+    const wb = XLSX.utils.book_new();
+
+    const summaryData = [
+      ['SIERRA ESTATES — MASTER INVENTORY AUDIT & RECONCILIATION'],
+      ['Generated At', new Date().toISOString()],
+      ['Total Verified Units', unifiedRecords.length],
+      [],
+      ['Segment', 'Unit Count', 'Percentage'],
+      ['Owners Rent', ownersRent.length, `${((ownersRent.length / unifiedRecords.length) * 100).toFixed(1)}%`],
+      ['Owners Sale', ownersBuy.length, `${((ownersBuy.length / unifiedRecords.length) * 100).toFixed(1)}%`],
+      ['Brokers Rent', brokersRent.length, `${((brokersRent.length / unifiedRecords.length) * 100).toFixed(1)}%`],
+      ['Brokers Sale', brokersBuy.length, `${((brokersBuy.length / unifiedRecords.length) * 100).toFixed(1)}%`],
+      ['Unassigned Channels', unknownOrUnassigned.length, `${((unknownOrUnassigned.length / unifiedRecords.length) * 100).toFixed(1)}%`],
+      [],
+      ['Top WhatsApp Sources', 'Extracted Listings'],
+      ...Array.from(candidateFiles.keys()).slice(0, 15).map(k => [k.replace('.txt', ''), 'Active Channel'])
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(unifiedRecords, { header: HEADERS }), 'All_Units');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ownersRent, { header: HEADERS }), 'Owners_Rent');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ownersBuy, { header: HEADERS }), 'Owners_Sale');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brokersRent, { header: HEADERS }), 'Brokers_Rent');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brokersBuy, { header: HEADERS }), 'Brokers_Sale');
+
+    const excelBuf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     const excelDest2 = 'H:/Sheets/Final_RealEstate_Database.xlsx';
     const excelDest3 = 'H:/Sheets/Master_Inventory_Clean_No_Duplicates.xlsx';
-    XLSX.writeFile(wb, excelDest2);
-    XLSX.writeFile(wb, excelDest3);
+    fs.writeFileSync(excelDest2, excelBuf);
+    fs.writeFileSync(excelDest3, excelBuf);
     console.log(`   ✓ Final_RealEstate_Database.xlsx and Master_Inventory_Clean_No_Duplicates.xlsx written to H:/Sheets/`);
   }
 
