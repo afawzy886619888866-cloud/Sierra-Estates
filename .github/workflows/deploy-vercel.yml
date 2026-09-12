@@ -41,6 +41,11 @@ on:
         options:
           - production
           - preview
+      emergency_override:
+        description: 'Audited bypass reason for production emergency deployment'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: vercel-deploy-${{ github.ref }}
@@ -55,9 +60,58 @@ env:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
+  gate:
+    name: gate (ci-check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CI completion or emergency override
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          TARGET_ENV: ${{ github.event.inputs.environment || 'production' }}
+          EMERGENCY_OVERRIDE: ${{ github.event.inputs.emergency_override || '' }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+              echo "::error::Automated deploy triggered by workflow_run requires successful CI. Conclusion: ${{ github.event.workflow_run.conclusion }}"
+              exit 1
+            fi
+            echo "✅ Verified: Automated deployment triggered by successful CI workflow_run."
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$TARGET_ENV" = "preview" ]; then
+              echo "ℹ️ Preview deployment: CI production gate bypassed for preview environment."
+              exit 0
+            fi
+
+            if [ -n "$EMERGENCY_OVERRIDE" ]; then
+              echo "⚠️ AUDIT ALERT: Production deployment initiated with emergency override."
+              echo "⚠️ Audit Reason: $EMERGENCY_OVERRIDE"
+              exit 0
+            fi
+
+            echo "🔍 Checking CI workflow status for commit $COMMIT_SHA..."
+            CI_STATUS=$(gh run list --workflow=ci.yml --commit="$COMMIT_SHA" --json conclusion,status -q '.[0]')
+            CONCLUSION=$(echo "$CI_STATUS" | jq -r '.conclusion // empty')
+            STATUS=$(echo "$CI_STATUS" | jq -r '.status // empty')
+
+            if [ "$CONCLUSION" = "success" ]; then
+              echo "✅ Verified: CI completed successfully for commit $COMMIT_SHA."
+              exit 0
+            fi
+
+            echo "::error::Manual production deploy blocked: CI has not passed for commit $COMMIT_SHA (Status: $STATUS, Conclusion: $CONCLUSION). Provide an 'emergency_override' input if deploying an audited hotfix."
+            exit 1
+          fi
+
   deploy:
+    needs: [gate]
     strategy:
       fail-fast: false
       max-parallel: 1
