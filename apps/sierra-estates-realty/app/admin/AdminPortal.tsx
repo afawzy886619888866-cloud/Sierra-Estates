@@ -57,7 +57,7 @@ function SidebarContent({ T, tab, setTab, collapsed, setCollapsed, onClose }) {
       <div className="brand">
         <ShieldLogo size={28}/>
         {!collapsed && <div className="brand-text"><div className="brand-name">{T('brand')}</div><div className="brand-sub">{T('brandSub')}</div></div>}
-        {onClose && <button onClick={onClose} style={{marginInlineStart:'auto',background:'none',border:'none',color:'var(--tx-f)',cursor:'pointer'}}><Ic.X/></button>}
+        {onClose && <button onClick={onClose} title="Close sidebar" aria-label="Close sidebar" style={{marginInlineStart:'auto',background:'none',border:'none',color:'var(--tx-f)',cursor:'pointer'}}><Ic.X/></button>}
       </div>
       <div style={{flex:1,overflowY:'auto',paddingBottom:8}}>
         {sections.map(sec => (
@@ -851,8 +851,8 @@ export function LeadsPage({ T }: { T: any }) {
       </div>
 
       <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-        <input value={q} onChange={e=>setQ(e.target.value)} className="f-in" style={{flex:1,minWidth:160}} placeholder={T('search')}/>
-        <select value={sourceFilter} onChange={e=>setSourceFilter(e.target.value)} className="f-in" style={{minWidth:150}}>
+        <input value={q} onChange={e=>setQ(e.target.value)} className="f-in" style={{flex:1,minWidth:160}} placeholder={T('search') || 'Search leads'} title={T('search') || 'Search leads'} aria-label={T('search') || 'Search leads'}/>
+        <select value={sourceFilter} onChange={e=>setSourceFilter(e.target.value)} className="f-in" style={{minWidth:150}} title={T('allSources') || 'Filter by source'} aria-label={T('allSources') || 'Filter by source'}>
           <option value="all">{T('allSources')}</option>
           {sourcesPresent.map(s=><option key={s} value={s}>{sourceMeta(s).label}</option>)}
         </select>
@@ -935,11 +935,11 @@ export function LeadsPage({ T }: { T: any }) {
           <div className="modal-box">
             <div className="modal-hd">
               <span style={{fontFamily:'JetBrains Mono',fontSize:11,fontWeight:700,color:'var(--gold)'}}>IMPORT CSV · LEADS</span>
-              <button onClick={()=>setImportModal(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--tx-f)'}}><Ic.X/></button>
+              <button onClick={()=>setImportModal(false)} title="Close modal" aria-label="Close modal" style={{background:'none',border:'none',cursor:'pointer',color:'var(--tx-f)'}}><Ic.X/></button>
             </div>
             <div style={{padding:22,display:'flex',flexDirection:'column',gap:14}}>
               <p style={{fontSize:12,color:'var(--tx-m)',lineHeight:1.6}}>Upload a CSV with columns: Name, Phone, Interest, Stage, Hot</p>
-              <input type="file" accept=".csv" style={{background:'var(--surf)',border:'1px dashed var(--bd-s)',borderRadius:10,padding:'14px',color:'var(--tx-m)',fontSize:12,cursor:'pointer'}}/>
+              <input type="file" accept=".csv" title="Upload CSV File" placeholder="Select CSV file" aria-label="Upload CSV File" style={{background:'var(--surf)',border:'1px dashed var(--bd-s)',borderRadius:10,padding:'14px',color:'var(--tx-m)',fontSize:12,cursor:'pointer'}}/>
               <div style={{display:'flex',gap:8}}>
                 <button className="btn btn-gold" style={{flex:1}}>⬆ Import Leads</button>
                 <button className="btn btn-ghost" onClick={()=>setImportModal(false)}>Cancel</button>
@@ -972,7 +972,7 @@ function CuratorPage({ T }) {
     <div className="fade-up">
       <div style={{marginBottom:16,display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
         <h2 style={{fontFamily:'Cormorant Garamond',fontSize:'1.3rem',fontWeight:500,color:'var(--tx)',flex:1}}>{T('curator_title')}</h2>
-        <select className="f-in" style={{width:'auto'}} value={selectedCpd} onChange={e=>setSelectedCpd(e.target.value)}>
+        <select className="f-in" style={{width:'auto'}} value={selectedCpd} onChange={e=>setSelectedCpd(e.target.value)} title="Select Compound" aria-label="Select Compound">
           {cpds.map(([n])=><option key={n}>{n}</option>)}
         </select>
         <button className="btn btn-gold">⬇ {T('exportCSV')}</button>
@@ -1004,7 +1004,7 @@ function CuratorPage({ T }) {
                 <span style={{fontFamily:'JetBrains Mono',fontWeight:700,color:priceAdj>0?'var(--emerald)':priceAdj<0?'var(--red)':'var(--tx-m)'}}>{priceAdj>0?'+':''}{priceAdj}%</span>
               </div>
               <div className="slider-wrap">
-                <input type="range" min="-20" max="20" value={priceAdj} onChange={e=>{setPriceAdj(+e.target.value);e.target.style.setProperty('--pct',`${(+e.target.value+20)/40*100}%`);}} style={{'--pct':`${(priceAdj+20)/40*100}%`}}/>
+                <input type="range" min="-20" max="20" value={priceAdj} onChange={e=>{setPriceAdj(+e.target.value);e.target.style.setProperty('--pct',`${(+e.target.value+20)/40*100}%`);}} style={{'--pct':`${(priceAdj+20)/40*100}%`}} title="Price Adjustment Percentage" aria-label="Price Adjustment Percentage"/>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'var(--tx-f)',marginTop:4}}>
                 <span>-20%</span><span>0%</span><span>+20%</span>
@@ -1249,7 +1249,7 @@ function SettingsPage({ T }) {
           {[['Firebase Project ID','sierra-blu-2026','text'],['Gemini API Key','AIza••••••••••••••','password'],['WhatsApp Cloud API Token','EAAx••••••••••','password'],['n8n Webhook URL','https://n8n.sierra-blu.com/webhook','text'],['Telegram Bot Token','6847••••••:AAH•••••','password']].map(([l,v,t],i)=>(
             <div key={i}>
               <label style={{fontFamily:'JetBrains Mono',fontSize:9,textTransform:'uppercase',letterSpacing:'.16em',color:'var(--gold)',display:'block',marginBottom:5}}>{l}</label>
-              <input type={t} defaultValue={v} className="f-in"/>
+              <input type={t} defaultValue={v} className="f-in" title={l} placeholder={l} aria-label={l}/>
             </div>
           ))}
           <button className="btn btn-gold" style={{alignSelf:'flex-start'}} onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}}>
@@ -1362,11 +1362,11 @@ function ListingsHubPage({T}){
         </div>
       )}
       <div style={{display:'flex',gap:10,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-        <input className="f-in" placeholder={T('search')} value={q} onChange={e=>setQ(e.target.value)} style={{maxWidth:220}}/>
-        <select className="f-in" value={cmpF} onChange={e=>setCmpF(e.target.value)} style={{maxWidth:180}}>
+        <input className="f-in" placeholder={T('search') || 'Search listings'} title={T('search') || 'Search listings'} aria-label={T('search') || 'Search listings'} value={q} onChange={e=>setQ(e.target.value)} style={{maxWidth:220}}/>
+        <select className="f-in" value={cmpF} onChange={e=>setCmpF(e.target.value)} style={{maxWidth:180}} title="Filter by Compound" aria-label="Filter by Compound">
           {cmps.map(c=><option key={c}>{c}</option>)}
         </select>
-        <select className="f-in" value={statusF} onChange={e=>setStatusF(e.target.value)} style={{maxWidth:130}}>
+        <select className="f-in" value={statusF} onChange={e=>setStatusF(e.target.value)} style={{maxWidth:130}} title="Filter by Status" aria-label="Filter by Status">
           {['All','Active','Review','Sold'].map(s=><option key={s}>{s}</option>)}
         </select>
         <span style={{fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)'}}>{filtered.length} / {liveListings.length}</span>
@@ -2016,6 +2016,8 @@ function TasksPage({ T }: { T: any }) {
                     style={{width:'100%'}} 
                     value={newAg} 
                     onChange={e=>setNewAg(e.target.value)}
+                    title="Assignee or Agent"
+                    aria-label="Assignee or Agent"
                   >
                     <option value="Photo Team">📸 Photo Hunter Team</option>
                     <option value="Property Finder">🏢 Property Finder Syndicator</option>
@@ -2036,6 +2038,8 @@ function TasksPage({ T }: { T: any }) {
                     style={{width:'100%'}} 
                     value={newPr} 
                     onChange={e=>setNewPr(e.target.value as any)}
+                    title="Priority Level"
+                    aria-label="Priority Level"
                   >
                     <option value="high">🔴 High Priority (Immediate)</option>
                     <option value="med">🟡 Medium Priority</option>
@@ -2320,7 +2324,7 @@ function AdminApp() {
       {/* Main */}
       <main id="main">
         <div id="topbar">
-          <button className="hamburger-btn" onClick={()=>setMobileOpen(true)}><Ic.Menu/></button>
+          <button className="hamburger-btn" onClick={()=>setMobileOpen(true)} title="Open navigation menu" aria-label="Open navigation menu"><Ic.Menu/></button>
           
           {/* Breadcrumb Navigation */}
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -2411,10 +2415,10 @@ function AdminApp() {
               )}
             </div>
 
-            <button className="topbar-pill" onClick={()=>setLangKey(l=>l==='en'?'ar':'en')}>
+            <button className="topbar-pill" onClick={()=>setLangKey(l=>l==='en'?'ar':'en')} title="Toggle Language / تبديل اللغة" aria-label="Toggle Language / تبديل اللغة">
               {isAr?'EN':'ع'}
             </button>
-            <button className="topbar-pill" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>
+            <button className="topbar-pill" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} title={theme==='dark'?'Switch to Light Mode':'Switch to Dark Mode'} aria-label={theme==='dark'?'Switch to Light Mode':'Switch to Dark Mode'}>
               {theme==='dark'?<Ic.Sun/>:<Ic.Moon/>}
             </button>
             <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>

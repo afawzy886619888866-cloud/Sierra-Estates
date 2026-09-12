@@ -325,6 +325,63 @@ export default function DashboardView({
         </div>
       </div>
 
+      {/* Google Drive & Master Inventory Executive Repository Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-emerald-950/40 border border-cyan-800/40 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-700/60 flex items-center justify-center text-xl shrink-0 shadow-inner">
+            📂
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white tracking-wide">
+                {isAr ? 'مستودع المخزون المعتمد ومجلد جوجل درايف' : 'Master Verified Inventory & Google Drive Repository'}
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 font-semibold">
+                CANONICAL
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isAr
+                ? 'مجلد جوجل درايف الأساسي (عقارات الملاك، البيع، الإيجار) ومزامنة شيت المخزون الفورية'
+                : 'Canonical Google Drive source folder, owner spreadsheets, and live synchronized Master Google Sheet.'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <a
+            href="https://drive.google.com/drive/folders/1RGuki2ECPK4DHNXgzlinQ2QTFAMBnC1z"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-bold font-mono transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
+            title="Open Master Google Drive Folder"
+            aria-label="Open Master Google Drive Folder"
+          >
+            <span>📁 {isAr ? 'مجلد جوجل درايف' : 'Drive Folder'}</span>
+            <span>↗</span>
+          </a>
+          <a
+            href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-emerald-700/60 text-emerald-300 text-xs font-bold font-mono transition-all inline-flex items-center gap-1.5 cursor-pointer"
+            title="Open Master Google Sheet"
+            aria-label="Open Master Google Sheet"
+          >
+            <span>📊 {isAr ? 'الشيت الرئيسي' : 'Master Sheet'}</span>
+            <span>↗</span>
+          </a>
+          <a
+            href="/downloads/sierra-estates-master-inventory.xlsx"
+            download
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-mono transition-all inline-flex items-center gap-1.5 cursor-pointer"
+            title="Download Excel Workbook (12MB)"
+            aria-label="Download Excel Workbook (12MB)"
+          >
+            <span>📥 {isAr ? 'إكسيل (12MB)' : 'Excel (12MB)'}</span>
+          </a>
+        </div>
+      </div>
+
       {/* Executive Quick Actions Hub */}
       <div className="p-4 rounded-xl bg-linear-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800/90 shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
@@ -339,38 +396,48 @@ export default function DashboardView({
             type="button"
             onClick={() => navigate?.('listings')}
             className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
+            title="Easy Listing Studio"
+            aria-label="Easy Listing Studio"
           >
             <span>✦</span>
             <span>{isAr ? 'إدخال عقار جديد' : 'Easy Listing Studio'}</span>
           </button>
           <button
             type="button"
-            onClick={() => navigate?.('automations')}
+            onClick={() => navigate?.('whatsapp_outreach')}
             className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/70 hover:border-emerald-500/50 text-xs font-semibold text-slate-200 hover:text-emerald-300 transition-all cursor-pointer shadow-sm"
+            title="WhatsApp Campaigns & Outreach"
+            aria-label="WhatsApp Campaigns & Outreach"
           >
-            <span>✉</span>
-            <span>{isAr ? 'حملات الواتساب' : 'WhatsApp Outreach'}</span>
+            <span>💬</span>
+            <span>{isAr ? 'مرسل الواتساب' : 'WhatsApp Sender'}</span>
           </button>
           <button
             type="button"
-            onClick={() => navigate?.('deep_insights')}
+            onClick={() => navigate?.('workflows')}
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-blue-900/40 border border-slate-700/70 hover:border-blue-500/50 text-xs font-semibold text-slate-200 hover:text-blue-300 transition-all cursor-pointer shadow-sm"
+            title="Workflows & Automation Hub"
+            aria-label="Workflows & Automation Hub"
+          >
+            <span>⚡</span>
+            <span>{isAr ? 'مسارات العمل' : 'Workflows Hub'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate?.('agents')}
             className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-purple-900/40 border border-slate-700/70 hover:border-purple-500/50 text-xs font-semibold text-slate-200 hover:text-purple-300 transition-all cursor-pointer shadow-sm"
+            title="AI Agents Fleet Command"
+            aria-label="AI Agents Fleet Command"
           >
-            <span>⚖</span>
-            <span>{isAr ? 'تقييم الصفقات' : 'Valuation & Arbitrage'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate?.('heatmap')}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/70 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
-          >
-            <span>🗺</span>
-            <span>{isAr ? 'خريطة التجمع' : 'New Cairo Heatmap'}</span>
+            <span>🤖</span>
+            <span>{isAr ? 'أسطول الوكلاء' : 'AI Agents Fleet'}</span>
           </button>
           <button
             type="button"
             onClick={() => setIsCopilotOpen(true)}
             className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/60 border border-cyan-700/70 hover:border-cyan-400 text-xs font-bold text-cyan-300 transition-all cursor-pointer shadow-sm"
+            title="Open Sierra AI Copilot"
+            aria-label="Open Sierra AI Copilot"
           >
             <span>✨</span>
             <span>{isAr ? 'مساعد البيانات الذكي' : 'Sierra Copilot'}</span>
@@ -380,6 +447,7 @@ export default function DashboardView({
             onClick={handleRequestPurge}
             className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-950/80 border border-red-900/50 hover:border-red-600 text-xs font-semibold text-red-300 transition-all cursor-pointer shadow-sm"
             title="Demonstrate Accidental Data Loss Prevention Guard"
+            aria-label="Demonstrate Accidental Data Loss Prevention Guard"
           >
             <span>🛡️</span>
             <span>{isAr ? 'تفريغ آمن للكاش' : 'Purge Cache (Safe)'}</span>
