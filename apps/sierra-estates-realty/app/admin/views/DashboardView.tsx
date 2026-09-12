@@ -326,7 +326,7 @@ export default function DashboardView({
       </div>
 
       {/* Google Drive & Master Inventory Executive Repository Banner */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-emerald-950/40 border border-cyan-800/40 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 rounded-xl bg-linear-to-r from-cyan-950/40 via-slate-900/90 to-emerald-950/40 border border-cyan-800/40 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-700/60 flex items-center justify-center text-xl shrink-0 shadow-inner">
             📂
