@@ -15,7 +15,7 @@
 - **Service**: `apps/sierra-estates-realty/lib/services/OwnerOutreachService.ts`
 - **Scheduler Daemon**: `scripts/run-owner-outreach-scheduler.ts`
 - **Operating Hours**: **12:00 PM – 8:00 PM Africa/Cairo** (Strictly enforced)
-- **Batch Cadence**: **40 unique, uncontacted owners per hour** (maximum **320 contacts/day**)
+- **Batch Cadence**: **40 unique, un contacted owners per hour** (maximum **320 contacts/day**)
 - **Pacing**: Top-of-the-hour alignment with self-correcting drift prevention
 - **Inventory Source**: 261 clean, deduplicated property owners loaded from internal storage (`data/`)
 
@@ -63,5 +63,5 @@ npx.cmd tsx scripts/test-e2e-owner-outreach.ts
 npx.cmd tsx scripts/run-owner-outreach-scheduler.ts --dry-run --once
 
 # Request fresh phone pairing code for +201092048333:
-python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:3000/api/whatsapp/pairing-code').read().decode())"
+python -c "import urllib.request; print(urllib.request.url open('http://localhost:3000/api/whatsapp/pairing-code').read().decode())"
 ```
