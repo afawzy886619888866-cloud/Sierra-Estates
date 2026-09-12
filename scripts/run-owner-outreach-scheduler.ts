@@ -87,9 +87,19 @@ async function main() {
   await runHourlyCycle();
 
   if (!ONCE) {
-    console.log(`🕒 Scheduler running. Checking again at the top of the next hour...`);
-    const intervalMs = 60 * 60 * 1000; // 1 hour
-    setInterval(runHourlyCycle, intervalMs);
+    function scheduleNextRun() {
+      const now = new Date();
+      const nextHour = new Date(now);
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      const msUntilNextHour = Math.max(1000, nextHour.getTime() - now.getTime());
+      const minutesLeft = Math.round(msUntilNextHour / 60000);
+      console.log(`🕒 Next hourly cycle scheduled in ${minutesLeft}m (at ${nextHour.toISOString()})...`);
+      setTimeout(async () => {
+        await runHourlyCycle();
+        scheduleNextRun();
+      }, msUntilNextHour);
+    }
+    scheduleNextRun();
   }
 }
 
