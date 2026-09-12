@@ -14,7 +14,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
-import { Search, RotateCcw, Map as MapIcon, SlidersHorizontal, Sparkles, Navigation, X, Building2 } from 'lucide-react';
+import { Search, RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
 
 export interface MapCompound {
   n: string;
@@ -287,7 +287,6 @@ export default function CompoundsMap({
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
   const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   // Fetch full live inventory and segment aggregates
   useEffect(() => {
@@ -652,7 +651,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts]);
 
   // Handle external selection & smooth zoom
   useEffect(() => {
