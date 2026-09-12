@@ -21,11 +21,9 @@ import { execFileSync } from 'node:child_process';
 
 /** Twins that predate this check. Shrink this list; never grow it. */
 const ALLOWED = new Set([
-  'apps/automations/src/01-whatsapp-scraper/index.js',
   'apps/automations/src/02-owner-search/index.js',
   'apps/automations/src/03-owner-contact/index.js',
   'apps/automations/src/04-email-sender/index.js',
-  'apps/automations/src/05-unit-adder/index.js',
   'apps/sierra-estates-realty/config/views.js',
   'apps/sierra-estates-realty/data/houyez-properties.js',
   'apps/sierra-estates-realty/data/mock-properties.js',
