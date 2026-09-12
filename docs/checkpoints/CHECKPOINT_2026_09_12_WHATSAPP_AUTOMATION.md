@@ -63,5 +63,5 @@ npx.cmd tsx scripts/test-e2e-owner-outreach.ts
 npx.cmd tsx scripts/run-owner-outreach-scheduler.ts --dry-run --once
 
 # Request fresh phone pairing code for +201092048333:
-python -c "import urllib.request; print(urllib.request.url open('http://localhost:3000/api/whatsapp/pairing-code').read().decode())"
+curl -s http://localhost:3000/api/whatsapp/pairing-code
 ```
