@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
+  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check, MapPin,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -118,6 +118,23 @@ export default function HomePage() {
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
   });
+
+  const handleLocateOnMap = (compoundName: string) => {
+    setSelectedMapCompound(compoundName);
+    const el = document.getElementById('interactive-map');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const matchingCompoundListings = useMemo(() => {
+    if (!selectedMapCompound) return [];
+    const target = selectedMapCompound.toLowerCase().trim();
+    return listings.filter((p) => {
+      const cmp = (p.cmp || '').toLowerCase();
+      return cmp.includes(target) || target.includes(cmp);
+    });
+  }, [listings, selectedMapCompound]);
 
   const ticker = useMemo(() => {
     const items = isAr ? TICKER_AR : TICKER_EN;
@@ -322,6 +339,9 @@ export default function HomePage() {
                     onClick={() => {
                       setSearch({ ...search, compound: chip.val });
                       setShowCompoundDropdown(false);
+                      if (chip.val) {
+                        handleLocateOnMap(chip.val);
+                      }
                     }}
                     style={{
                       padding: '4px 11px',
@@ -415,6 +435,7 @@ export default function HomePage() {
                           onMouseDown={() => {
                             setSearch({ ...search, compound: c });
                             setShowCompoundDropdown(false);
+                            handleLocateOnMap(c);
                           }}
                           style={{
                             padding: '8px 12px',
