@@ -11,7 +11,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
 import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail } from '@/lib/auth';
-import { isAdminPortalRole } from '@/lib/types';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 

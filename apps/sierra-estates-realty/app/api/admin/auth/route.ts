@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
-import { ADMIN_CONSOLE_ROLES, isAdminConsoleRole } from '@/lib/server/auth-guard';
+import { isAdminConsoleRole } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

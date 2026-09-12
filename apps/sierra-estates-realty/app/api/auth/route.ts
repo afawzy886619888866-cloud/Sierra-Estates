@@ -14,7 +14,7 @@
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies, isAdminEmail,
+  parseCookies,
 } from "@/lib/auth";
 import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";

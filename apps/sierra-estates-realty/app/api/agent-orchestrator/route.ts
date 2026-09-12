@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import path from 'path';
 import fs from 'fs';
 
 const execFileAsync = promisify(execFile);

@@ -15,10 +15,8 @@ import {
   Home,
   CheckCircle2,
   AlertTriangle,
-  Layers,
   Sparkles,
   Phone,
-  Maximize2,
   MessageCircle
 } from 'lucide-react';
 import AvailabilityInquiryModal from './AvailabilityInquiryModal';
