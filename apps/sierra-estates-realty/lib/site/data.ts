@@ -92,7 +92,6 @@ const DATA: any = {
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55'
   ],
   agentImg: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=55',
-  compoundImgs: COMPOUND_HERO_IMAGES,
   compounds: [
     { id: 1, n: 'Katameya Heights', c: [29.99, 31.48], g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000, dev: 'Katameya Group' },
     { id: 2, n: 'Katameya Dunes', c: [29.985, 31.492], g: '+12%', ai: 8.8, z: 'Katameya', priceM: 18, rent: 3400, dev: 'Katameya Group' },
@@ -254,25 +253,7 @@ const DATA: any = {
   },
   // ═══ Featured compounds — these pulse/glow on the home page map ═══
   featured: ['Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette', 'Madinaty', 'Al Rehab', 'Taj City'],
-  compoundImgs: {
-    'Hyde Park': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
-    'Hyde Park New Cairo': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
-    'Mivida': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55',
-    'Mountain View iCity': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55',
-    'Eastown': 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55',
-    'Eastown (SODIC)': 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55',
-    'Taj City': 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55',
-    'Villette': 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55',
-    'Villette (SODIC)': 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55',
-    'Palm Hills New Cairo': 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55',
-    'Katameya Heights': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55',
-    'Al Rehab': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=55',
-    'Madinaty': 'https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=800&q=55',
-    'Uptown Cairo': 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=55',
-    'Fifth Square': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=55',
-    'The Waterway': 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=55',
-    'Cairo Festival City': 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=55'
-  },
+  compoundImgs: COMPOUND_HERO_IMAGES,
   price: function (p: any) {
     return p.mode === 'rent' ? '$' + p.usd.toLocaleString() + '/mo' : 'EGP ' + p.egpM.toFixed(1) + 'M';
   }
