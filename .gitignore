@@ -110,3 +110,10 @@ temp/
 
 # Bruin / Tools
 .bruin.yml
+
+# Test coverage & nested worktrees / agent workspaces
+coverage/
+**/coverage/
+.amazonq/
+.claude/settings.local.json
+SE-Vercel-deploy-main*/
