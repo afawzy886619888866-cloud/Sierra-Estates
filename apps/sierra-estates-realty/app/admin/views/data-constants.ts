@@ -148,6 +148,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'pipeline',label:T('lang')==='ar'?'الصفقات':'Pipeline',icon:'💼',section:T('operations')},
   {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+  {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('operations'),badge:'PRO',badgeCls:'nb-green'},
   {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'real_estate_processor',label:T('processor'),icon:'🏘️',section:T('operations'),badge:'SKILL',badgeCls:'nb-blue'},
   {id:'curator',label:T('curator'),icon:'🎨',section:T('operations')},
