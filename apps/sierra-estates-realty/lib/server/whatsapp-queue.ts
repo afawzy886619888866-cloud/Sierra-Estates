@@ -27,20 +27,16 @@ import { logger } from '@/lib/logger';
  * Timestamp/FieldValue hops are gone.
  */
 
-// Single daily dispatch window: 10:00–10:59 Africa/Cairo. The dispatch cron
-// (.github/workflows/whatsapp-dispatch-cron.yml) fires once a day and relies
-// on this 1-hour window to (a) actually let that run through and (b) reject
-// the other UTC-offset firing used to cover Cairo's DST switch, so exactly
-// one run per day sends. dailyCapPerNumber/dailyCapTotal below are still the
-// per-run ceiling since there's only one run to spend them in.
+// Daily outreach dispatch window: 12:00–20:00 Africa/Cairo (12:00 PM to 8:00 PM).
+// Drains 40 contacts every hour across the 8-hour window (320 owners max per day).
 export const DEFAULT_OUTREACH_CONFIG: WhatsAppOutreachConfig = {
-  operatingHourStart: 10,
-  operatingHourEnd: 11,
+  operatingHourStart: 12,
+  operatingHourEnd: 20,
   timezone: 'Africa/Cairo',
-  batchSizePerNumber: 30,
-  windowMinutes: 120,
-  dailyCapPerNumber: 120,
-  dailyCapTotal: 480,
+  batchSizePerNumber: 40,
+  windowMinutes: 60,
+  dailyCapPerNumber: 80,
+  dailyCapTotal: 320,
 };
 
 /**

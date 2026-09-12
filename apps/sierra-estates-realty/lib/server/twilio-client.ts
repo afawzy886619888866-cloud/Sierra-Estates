@@ -100,51 +100,40 @@ export async function sendWhatsApp(
   body: string,
   statusCallback?: string,
 ): Promise<TwilioSendResult> {
-  // 1. Direct custom WhatsApp Gateway (AWS EC2 / Lambda / Baileys / WPP / Open-WA)
-  if (WHATSAPP_API_URL) {
-    try {
-      const endpoint = WHATSAPP_API_URL.endsWith('/send') || WHATSAPP_API_URL.endsWith('/messages')
-        ? WHATSAPP_API_URL
-        : `${WHATSAPP_API_URL.replace(/\/+$/, '')}/send`;
+  // 1. Direct custom WhatsApp Gateway (AWS EC2 OpenWA / Custom URL)
+  const openwaUrl = WHATSAPP_API_URL || `http://${process.env.OPENWA_HOST || '18.232.148.172'}:${process.env.OPENWA_PORT || '3000'}`;
+  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_ced32b1c630618c321e9249439b7da90e5408506b7979a7da3e3ff71d375dbbe';
+  const openwaSession = process.env.OPENWA_SESSION_ID || '3e5c5f78-da22-4793-bd51-d648b552cd17';
 
-      const headers: Record<string, string> = {
+  try {
+    const rawDigits = toPhone.replace(/\D/g, '');
+    const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
+    const openwaEndpoint = `${openwaUrl.replace(/\/+$/, '')}/api/sessions/${openwaSession}/messages/send-text`;
+
+    const res = await fetch(openwaEndpoint, {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
-      };
-      if (WHATSAPP_API_TOKEN) {
-        headers['Authorization'] = `Bearer ${WHATSAPP_API_TOKEN}`;
-        headers['x-api-key'] = WHATSAPP_API_TOKEN;
-      }
+        'X-API-Key': openwaKey,
+      },
+      body: JSON.stringify({
+        chatId,
+        text: body,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          to: toPhone.replace(/^whatsapp:/, ''),
-          from: fromPhone.replace(/^whatsapp:/, ''),
-          body,
-          text: body,
-          message: body,
-          statusCallback,
-        }),
-        signal: AbortSignal.timeout(12000),
-      });
-
+    if (res.ok) {
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(`WhatsApp Gateway (${endpoint}) failed with status ${res.status}: ${JSON.stringify(data)}`);
-      }
-
-      const sid = data.id || data.sid || data.messageId || `WA_GW_${Date.now()}`;
-      logger.info(`[WhatsApp Gateway] Message sent successfully to ${toPhone} (SID: ${sid})`);
+      const sid = data.id || data.messageId || `OPENWA_${Date.now()}`;
+      logger.info(`[OpenWA Gateway] Message sent successfully to ${toPhone} (SID: ${sid})`);
       return { sid, simulated: false };
-    } catch (err: any) {
-      logger.error(`[WhatsApp Gateway] Error sending to ${toPhone}:`, err);
-      // If Twilio is also configured, let it fall through, otherwise rethrow
-      if (!twilioConfigured) {
-        throw err;
-      }
-      logger.warn(`[WhatsApp Gateway] Falling back to Twilio for ${toPhone}...`);
     }
+
+    const errData = await res.json().catch(() => ({}));
+    logger.warn(`[OpenWA Gateway] (${res.status}): ${errData.message || 'client not connected'}`);
+  } catch (err: any) {
+    logger.debug(`[OpenWA Gateway] Connection failed: ${err.message}`);
   }
 
   // 2. Twilio WhatsApp REST API

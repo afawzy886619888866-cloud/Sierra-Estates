@@ -1,0 +1,80 @@
+{
+  "name": "Sierra Estates — Hourly Owner Outreach (12pm-8pm Cairo)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12-19 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule (Hourly 12pm-8pm Cairo)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://admin.sierra-estates.net/api/admin/whatsapp/owner-outreach",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"action\": \"enqueue\",\n  \"batchSize\": 40\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Enqueue 40 Owners",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://admin.sierra-estates.net/api/cron/whatsapp-dispatch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "name": "Trigger WhatsApp Dispatch Worker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Schedule (Hourly 12pm-8pm Cairo)": {
+      "main": [
+        [
+          {
+            "node": "Enqueue 40 Owners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enqueue 40 Owners": {
+      "main": [
+        [
+          {
+            "node": "Trigger WhatsApp Dispatch Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Cairo"
+  }
+}
