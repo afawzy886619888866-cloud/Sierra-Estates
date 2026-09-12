@@ -59,6 +59,7 @@
 [data-theme="dark"] .tag.sale{background:rgba(233,193,118,.15);color:#e9c176;border:1px solid rgba(233,193,118,.3);}
 [data-theme="dark"] .pcard .price-float{background:rgba(7,21,35,.92);color:#e9c176;border:1px solid rgba(233,193,118,.25);}
 [data-theme="dark"] .pcard .ai-score{background:rgba(7,21,35,.95);color:#e9c176;border:1px solid rgba(233,193,118,.25);}
+[data-theme="dark"] .pcard:hover{box-shadow:0 24px 50px -12px rgba(223, 173, 58, 0.25), 0 12px 24px -8px rgba(0,0,0,0.8); border-color:rgba(223, 173, 58, 0.5);}
 [data-theme="dark"] .nav-icon .dot{color:#071523;background:#e9c176;}
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
@@ -187,11 +188,11 @@ section.block.well{background:var(--bg);}
 .tag.rent{background:var(--green);}
 .tag.hot{background:var(--red);}
 .grid-props{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
-.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--d-panel) var(--ease-out),box-shadow var(--d-panel) var(--ease-out),border-color var(--d-panel) var(--ease-out);}
-.pcard:hover{box-shadow:var(--shadow-m);transform:translateY(-5px);border-color:rgba(0,174,255,.4);}
-.pcard .photo{position:relative;height:224px;overflow:hidden;background:var(--bg);}
-.pcard .photo img{width:100%;height:100%;object-fit:cover;transition:transform .45s var(--ease-out);}
-.pcard:hover .photo img{transform:scale(1.06);}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column;transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);}
+.pcard:hover{box-shadow:0 16px 40px -8px rgba(223, 173, 58, 0.15), 0 8px 16px -4px rgba(0,0,0,0.1);transform:translateY(-6px);border-color:rgba(223, 173, 58, 0.4);}
+.pcard .photo{position:relative;height:230px;overflow:hidden;background:var(--bg);}
+.pcard .photo img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(0.16, 1, 0.3, 1);}
+.pcard:hover .photo img{transform:scale(1.08);}
 .pcard .badges{position:absolute;top:14px;inset-inline-start:14px;display:flex;gap:8px;z-index:3;}
 .pcard .heart{position:absolute;top:12px;inset-inline-end:12px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;color:var(--navy);cursor:pointer;transition:background-color var(--d-hover) var(--ease-out),color var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
 .pcard .heart:hover{background:#fff;color:var(--red);transform:scale(1.08);}

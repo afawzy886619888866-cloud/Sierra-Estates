@@ -257,6 +257,102 @@ export const LUXURY_CATALOG: LuxuryPhoto[] = [
     url: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80',
     type: 'villa', style: 'exterior', compoundTag: 'Swan Lake Residence',
     alt: 'Stunning white architecture mansion reflecting on lagoon waters'
+  },
+  // --- NEW ADDITIONS FOR INCREASED DIVERSITY ---
+  {
+    url: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=1200&q=80',
+    type: 'villa', style: 'exterior', compoundTag: 'Hyde Park',
+    alt: 'Sprawling luxury estate with circular driveway and classic architecture'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600607688969-a5bfcd64bd05?w=1200&q=80',
+    type: 'apartment', style: 'interior', compoundTag: 'Mivida',
+    alt: 'Sleek, minimalist open-concept living area with premium marble flooring'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=1200&q=80',
+    type: 'apartment', style: 'living', compoundTag: 'Villette',
+    alt: 'Warm, inviting living room with expansive park views and modern furnishings'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1593696140826-c58b021acf8b?w=1200&q=80',
+    type: 'penthouse', style: 'terrace', compoundTag: 'Zed East',
+    alt: 'Exclusive penthouse terrace with panoramic sunset city views and lounge seating'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1501183638710-841dd1904471?w=1200&q=80',
+    type: 'villa', style: 'interior', compoundTag: 'Katameya Heights',
+    alt: 'Grand foyer with sweeping staircase and exquisite chandelier lighting'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600607686527-6fb886090705?w=1200&q=80',
+    type: 'twin_house', style: 'exterior', compoundTag: 'Palm Hills New Cairo',
+    alt: 'Modern twin house featuring striking geometric lines and large glass facades'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80',
+    type: 'townhouse', style: 'living', compoundTag: 'Eastown',
+    alt: 'Chic townhouse living space seamlessly integrating indoor and outdoor areas'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',
+    type: 'duplex', style: 'living', compoundTag: 'Mountain View iCity',
+    alt: 'Spacious duplex interior with double-height ceilings and abundant natural light'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=80',
+    type: 'apartment', style: 'master_suite', compoundTag: 'Taj City',
+    alt: 'Luxurious master bedroom suite with plush textures and private balcony access'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=1200&q=80',
+    type: 'villa', style: 'pool', compoundTag: 'Swan Lake Residence',
+    alt: 'Tranquil private pool area surrounded by lush, manicured tropical gardens'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+    type: 'penthouse', style: 'living', compoundTag: 'Cairo Festival City',
+    alt: 'Sophisticated penthouse living room featuring bespoke art and designer furniture'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&q=80',
+    type: 'townhouse', style: 'exterior', compoundTag: 'Al Burouj',
+    alt: 'Elegant townhouse with classic brick facade and charming front courtyard'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80',
+    type: 'villa', style: 'exterior', compoundTag: 'Fifth Square',
+    alt: 'Stunning contemporary villa at dusk, showcasing architectural lighting'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1200&q=80',
+    type: 'apartment', style: 'living', compoundTag: 'Stone Residence',
+    alt: 'Open-plan apartment living space with modern kitchen and dining integration'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80',
+    type: 'duplex', style: 'exterior', compoundTag: 'District 5',
+    alt: 'Modern duplex building exterior with expansive terraces and green surroundings'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=1200&q=80',
+    type: 'penthouse', style: 'master_suite', compoundTag: 'Uptown Cairo',
+    alt: 'Opulent penthouse master suite with floor-to-ceiling windows and city skyline views'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=1200&q=80',
+    type: 'villa', style: 'living', compoundTag: 'Madinaty',
+    alt: 'Expansive villa living room featuring elegant decor and high-end finishes'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=1200&q=80',
+    type: 'apartment', style: 'interior', compoundTag: 'The Waterway',
+    alt: 'Ultra-modern apartment interior with smart home features and sleek design'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=1200&q=80',
+    type: 'twin_house', style: 'exterior', compoundTag: 'Al Rehab',
+    alt: 'Beautiful twin house with a well-maintained garden and welcoming entryway'
   }
 ];
 

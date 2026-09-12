@@ -8,18 +8,20 @@ Sierra Estates is the premier AI-orchestrated luxury real estate intelligence an
 
 - **Automated Sourcing & Ingestion**: Real-time extraction and schema normalization of WhatsApp broker broadcasts and direct owner listings into verified Sierra Code inventory (`[Compound]-[Type]-[Bedrooms][Finishing]-[Price]M+[Features]`).
 - **Deterministic AVM Valuation**: Sub-second automated valuation model indexing price divergence, compound growth rates, and market liquidity.
-- **Omni-Channel Lead Routing**: Bilingual Arabic/English client qualification, automated viewing scheduling, and instant DocuSign/Stripe closing.
+- **Interactive Spatial Intelligence & Masterplans**: Precision GPS-indexed compound polygon footprints, district phase overlays, and 3D architectural exploration.
+- **Omni-Channel Lead Routing**: Bilingual Arabic/English client qualification, automated viewing scheduling, and instant transaction closing.
 - **Resilient AI Fleet**: Fallback-resilient orchestration across Google Cloud Vertex AI, DeepSeek V3/R1, Anthropic Claude, and local in-memory event buses.
 
 ## Key Stakeholders & Governance
 
 - **Product Owner / Operator**: Ahmed Fawzy (`a.fawzy8866@gmail.com`)
 - **Engineering & Architecture**: Antigravity Autonomous Agent Fleet (`Sierra`)
-- **Compliance & Security**: MCD Deterministic Protocol, SAIF Cloud Security, and Firestore granular security rules.
+- **Compliance & Security**: MCD Deterministic Protocol, SAIF Cloud Security, Supabase PostgreSQL Row Level Security (RLS), and zero-tolerance public credential leakage policy.
 
 ## Operating Constraints
 
 - Maximum p95 API response time < 500ms.
 - 100% test pass rate across all monorepo test suites.
+- Supabase Postgres as the sole authoritative backend for data, Auth, pgvector embeddings, and real-time events.
 - Zero-drift between local branches and remote origin (`main`).
 - Strict deterministic boundary between research (`EVALUATE`), planning (`CONTRACT`), and execution (`EXECUTE`).

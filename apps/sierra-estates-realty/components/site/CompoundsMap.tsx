@@ -194,6 +194,40 @@ export const COMPOUND_POLYGONS: Record<string, [number, number][]> = {
     [30.080, 31.665],
     [30.085, 31.615],
   ],
+  'Taj City': [
+    [30.082, 31.390],
+    [30.080, 31.412],
+    [30.065, 31.410],
+    [30.067, 31.388],
+  ],
+  'Uptown Cairo': [
+    [30.038, 31.295],
+    [30.035, 31.320],
+    [30.015, 31.318],
+    [30.018, 31.292],
+  ],
+};
+
+// Masterplan recognized phases, districts, and lifestyle quarters
+export const COMPOUND_PHASES: Record<string, string[]> = {
+  'Hyde Park': ['Park Corner', 'Hyde Park Central', 'The Residence', 'HydeOut Lifestyle'],
+  'Mivida': ['The Boulevard', 'The Greens', 'Twin Valley', 'Mivida Business Park'],
+  'Mountain View iCity': ['Lagoon Beach Park', 'Club Park', 'Mountain Park', 'Royal Park'],
+  'Katameya Heights': ['Golf Villas Phase 1', 'Fairway Residences', 'Clubhouse Quarter'],
+  'Eastown': ['Eastown Residences', 'The Commercial Spine', 'Spectra'],
+  'Villette': ['Sky Condos', 'The Pocket Parks', 'Villette Central'],
+  'Palm Hills New Cairo': ['Phase 1 Enclave', 'Palm Hills Club', 'The Botanical Valley'],
+  'Swan Lake Residence': ['The Phoenix', 'The Scarlet', 'Selena', 'The Iris'],
+  'Zed East': ['Club Residences', 'Park View Apartments', 'The Commercial Strip'],
+  'The Waterway': ['Waterway Villas', 'The Commercial Promenade', 'Waterway Central'],
+  'Cairo Festival City': ['Oriana Villas', 'Aura Apartments', 'Festival Tower District'],
+  'District 5': ['Mindhaus Business', 'District 5 Villas', 'Plaza Concourse'],
+  'Stone Residence': ['Stone Park Villas', 'Stone Residence West', 'The Boulevard Promenade'],
+  'Fifth Square': ['Fifth Square Park Villas', 'The Mall Concourse', 'Clubhouse Central'],
+  'Al Rehab': ['Phase 1-5 Residences', 'Phase 2 Extension', 'Rehab City Avenue'],
+  'Madinaty': ['South Park', 'Golf Residences', 'Craft Zone District', 'Madinaty Central'],
+  'Taj City': ['Shalya', 'Taj Sultan', 'Zone T', 'Elect'],
+  'Uptown Cairo': ['Celesta Hills', 'Aurora', 'The Sierras', 'Uptown Golf Clubhouse'],
 };
 
 export interface ZonePreset {
@@ -278,7 +312,7 @@ export default function CompoundsMap({
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const layerRef = useRef<any>(null);
-  const markersMapRef = useRef<Map<string, { marker: any; coords: [number, number] }>>(new Map());
+  const markersMapRef = useRef<Map<string, { marker: any; coords: [number, number]; polygon?: any }>>(new Map());
 
   const [ready, setReady] = useState(false);
   const [filterQuery, setFilterQuery] = useState('');
@@ -589,6 +623,21 @@ export default function CompoundsMap({
               </div>
             </div>
 
+            ${(() => {
+              const phases = COMPOUND_PHASES[c.n] || [];
+              if (phases.length === 0) return '';
+              return `
+                <div style="margin: 8px 0 10px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
+                  <div style="font-size: 9.5px; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 4px;">
+                    <span>🏛️ MASTERPLAN PHASES & DISTRICTS</span>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    ${phases.map((p) => `<span style="font-size: 10px; background: rgba(223, 173, 58, 0.12); color: #78350f; border: 1px solid rgba(223, 173, 58, 0.35); padding: 2px 7px; border-radius: 6px; font-weight: 600;">${p}</span>`).join('')}
+                  </div>
+                </div>
+              `;
+            })()}
+
             <a
               href="/properties?compound=${encodeURIComponent(c.n)}${queryParamSeg}"
               style="
@@ -625,6 +674,7 @@ export default function CompoundsMap({
 
         // Render Masterplan Boundary Polygon (if available)
         const polyCoords = COMPOUND_POLYGONS[c.n];
+        let polygonRef: any = null;
         if (polyCoords) {
           const polygon = L.polygon(polyCoords, {
             color: isSelected ? '#dfad3a' : isFeat ? '#10b981' : '#64748b',
@@ -637,14 +687,22 @@ export default function CompoundsMap({
 
           polygon.on('click', () => {
             handleSelect?.(c.n);
+            if (mapRef.current) {
+              mapRef.current.flyToBounds(polygon.getBounds(), {
+                padding: [50, 50],
+                maxZoom: 15,
+                duration: 0.9,
+              });
+            }
             marker.openPopup();
           });
 
           polygon.addTo(layer);
+          polygonRef = polygon;
         }
 
         marker.addTo(layer);
-        markersMapRef.current.set(c.n, { marker, coords: c.c });
+        markersMapRef.current.set(c.n, { marker, coords: c.c, polygon: polygonRef });
       });
     })();
 
@@ -658,7 +716,16 @@ export default function CompoundsMap({
     if (!ready || !selectedName || !mapRef.current) return;
     const target = markersMapRef.current.get(selectedName);
     if (target) {
-      mapRef.current.flyTo(target.coords, 14, { duration: 0.9, easeLinearity: 0.25 });
+      if (target.polygon && mapRef.current) {
+        mapRef.current.flyToBounds(target.polygon.getBounds(), {
+          padding: [50, 50],
+          maxZoom: 15,
+          duration: 0.9,
+          easeLinearity: 0.25,
+        });
+      } else {
+        mapRef.current.flyTo(target.coords, 14, { duration: 0.9, easeLinearity: 0.25 });
+      }
       target.marker.openPopup();
     }
   }, [ready, selectedName]);

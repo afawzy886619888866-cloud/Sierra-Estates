@@ -23,4 +23,3 @@ export const supabase = createLazyBrowserClient();
  */
 export const getSupabaseAdmin = getSharedSupabaseAdmin;
 
-export default supabase;
