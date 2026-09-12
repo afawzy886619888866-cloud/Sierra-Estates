@@ -230,6 +230,93 @@ export const COMPOUND_PHASES: Record<string, string[]> = {
   'Uptown Cairo': ['Celesta Hills', 'Aurora', 'The Sierras', 'Uptown Golf Clubhouse'],
 };
 
+export interface MasterplanSubfeature {
+  name: string;
+  type: 'park' | 'lagoon' | 'club';
+  coords: [number, number][];
+}
+
+export const COMPOUND_SUBFEATURES: Record<string, MasterplanSubfeature[]> = {
+  'Hyde Park': [
+    {
+      name: 'Central Park (600,000 sqm Green Spine)',
+      type: 'park',
+      coords: [
+        [30.012, 31.568],
+        [30.010, 31.580],
+        [30.003, 31.578],
+        [30.005, 31.566],
+      ],
+    },
+    {
+      name: 'HydeOut Lifestyle Concourse',
+      type: 'club',
+      coords: [
+        [30.018, 31.570],
+        [30.017, 31.577],
+        [30.013, 31.575],
+        [30.014, 31.568],
+      ],
+    },
+  ],
+  'Mountain View iCity': [
+    {
+      name: 'Crystal Lagoon Beach Park',
+      type: 'lagoon',
+      coords: [
+        [30.058, 31.554],
+        [30.057, 31.565],
+        [30.051, 31.563],
+        [30.052, 31.552],
+      ],
+    },
+    {
+      name: 'Central Club Park & Islands',
+      type: 'park',
+      coords: [
+        [30.061, 31.556],
+        [30.060, 31.568],
+        [30.055, 31.566],
+        [30.056, 31.554],
+      ],
+    },
+  ],
+  'Mivida': [
+    {
+      name: 'Mivida Central Greens & Botanical Valley',
+      type: 'park',
+      coords: [
+        [30.022, 31.530],
+        [30.020, 31.542],
+        [30.014, 31.540],
+        [30.016, 31.528],
+      ],
+    },
+    {
+      name: 'The Lake District Water Feature',
+      type: 'lagoon',
+      coords: [
+        [30.025, 31.533],
+        [30.024, 31.539],
+        [30.021, 31.538],
+        [30.022, 31.532],
+      ],
+    },
+  ],
+  'Katameya Heights': [
+    {
+      name: 'Championship Golf Course & Lakes',
+      type: 'park',
+      coords: [
+        [29.992, 31.418],
+        [29.990, 31.432],
+        [29.982, 31.430],
+        [29.984, 31.416],
+      ],
+    },
+  ],
+};
+
 export interface ZonePreset {
   key: string;
   label: string;
@@ -699,6 +786,24 @@ export default function CompoundsMap({
 
           polygon.addTo(layer);
           polygonRef = polygon;
+
+          // Render Masterplan Internal Subfeatures (lagoons, green spines, golf courses)
+          const subfeatures = COMPOUND_SUBFEATURES[c.n];
+          if (subfeatures && (isSelected || isFeat)) {
+            subfeatures.forEach((sub) => {
+              const subColor = sub.type === 'lagoon' ? '#0ea5e9' : sub.type === 'park' ? '#10b981' : '#f59e0b';
+              const subFill = sub.type === 'lagoon' ? '#38bdf8' : sub.type === 'park' ? '#34d399' : '#fbbf24';
+              const subPoly = L.polygon(sub.coords, {
+                color: subColor,
+                weight: 1.5,
+                fillColor: subFill,
+                fillOpacity: 0.35,
+                smoothFactor: 1,
+              });
+              subPoly.bindTooltip(sub.name, { sticky: true });
+              subPoly.addTo(layer);
+            });
+          }
         }
 
         marker.addTo(layer);
