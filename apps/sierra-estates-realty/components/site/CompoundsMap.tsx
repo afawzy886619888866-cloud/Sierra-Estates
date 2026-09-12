@@ -96,6 +96,106 @@ export const COMPOUND_DEVELOPERS: Record<string, string> = {
   'Azzar New Cairo': 'Reedy Group',
 };
 
+// Masterplan footprint polygons for top New Cairo luxury compounds
+export const COMPOUND_POLYGONS: Record<string, [number, number][]> = {
+  'Hyde Park': [
+    [30.021, 31.562],
+    [30.018, 31.588],
+    [29.997, 31.586],
+    [30.000, 31.560],
+  ],
+  'Mivida': [
+    [30.028, 31.525],
+    [30.025, 31.547],
+    [30.008, 31.544],
+    [30.011, 31.522],
+  ],
+  'Mountain View iCity': [
+    [30.064, 31.550],
+    [30.062, 31.572],
+    [30.047, 31.569],
+    [30.049, 31.547],
+  ],
+  'Katameya Heights': [
+    [29.999, 31.413],
+    [29.996, 31.438],
+    [29.977, 31.435],
+    [29.980, 31.410],
+  ],
+  'Swan Lake Residence': [
+    [30.050, 31.507],
+    [30.048, 31.525],
+    [30.034, 31.523],
+    [30.036, 31.505],
+  ],
+  'Eastown': [
+    [30.022, 31.497],
+    [30.020, 31.514],
+    [30.006, 31.512],
+    [30.008, 31.495],
+  ],
+  'Villette': [
+    [30.033, 31.539],
+    [30.031, 31.558],
+    [30.017, 31.556],
+    [30.019, 31.537],
+  ],
+  'Palm Hills New Cairo': [
+    [30.031, 31.571],
+    [30.029, 31.591],
+    [30.013, 31.589],
+    [30.015, 31.569],
+  ],
+  'Zed East': [
+    [30.011, 31.546],
+    [30.009, 31.566],
+    [29.993, 31.564],
+    [29.995, 31.544],
+  ],
+  'The Waterway': [
+    [30.045, 31.488],
+    [30.043, 31.503],
+    [30.031, 31.501],
+    [30.033, 31.486],
+  ],
+  'Cairo Festival City': [
+    [30.041, 31.398],
+    [30.039, 31.420],
+    [30.021, 31.418],
+    [30.023, 31.396],
+  ],
+  'District 5': [
+    [30.004, 31.446],
+    [30.002, 31.465],
+    [29.986, 31.463],
+    [29.988, 31.444],
+  ],
+  'Stone Residence': [
+    [30.007, 31.403],
+    [30.005, 31.422],
+    [29.989, 31.420],
+    [29.991, 31.401],
+  ],
+  'Fifth Square': [
+    [30.035, 31.520],
+    [30.033, 31.535],
+    [30.022, 31.533],
+    [30.024, 31.518],
+  ],
+  'Al Rehab': [
+    [30.075, 31.480],
+    [30.072, 31.515],
+    [30.050, 31.512],
+    [30.053, 31.477],
+  ],
+  'Madinaty': [
+    [30.125, 31.620],
+    [30.120, 31.670],
+    [30.080, 31.665],
+    [30.085, 31.615],
+  ],
+};
+
 export interface ZonePreset {
   key: string;
   label: string;
@@ -523,6 +623,26 @@ export default function CompoundsMap({
         marker.on('click', () => {
           handleSelect?.(c.n);
         });
+
+        // Render Masterplan Boundary Polygon (if available)
+        const polyCoords = COMPOUND_POLYGONS[c.n];
+        if (polyCoords) {
+          const polygon = L.polygon(polyCoords, {
+            color: isSelected ? '#dfad3a' : isFeat ? '#10b981' : '#64748b',
+            weight: isSelected ? 2.5 : isFeat ? 1.5 : 1,
+            dashArray: isSelected ? undefined : isFeat ? '4, 4' : '3, 6',
+            fillColor: isSelected ? '#dfad3a' : isFeat ? '#059669' : '#0f172a',
+            fillOpacity: isSelected ? 0.22 : isFeat ? 0.12 : 0.04,
+            smoothFactor: 1,
+          });
+
+          polygon.on('click', () => {
+            handleSelect?.(c.n);
+            marker.openPopup();
+          });
+
+          polygon.addTo(layer);
+        }
 
         marker.addTo(layer);
         markersMapRef.current.set(c.n, { marker, coords: c.c });

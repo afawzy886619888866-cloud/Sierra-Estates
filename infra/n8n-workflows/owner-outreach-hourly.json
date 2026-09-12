@@ -12,6 +12,7 @@
           ]
         }
       },
+      "id": "schedule-trigger",
       "name": "Schedule (Hourly 12pm-8pm Cairo)",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -29,6 +30,7 @@
           "timeout": 30000
         }
       },
+      "id": "enqueue-owners",
       "name": "Enqueue 40 Owners",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -43,6 +45,7 @@
           "timeout": 60000
         }
       },
+      "id": "dispatch-worker",
       "name": "Trigger WhatsApp Dispatch Worker",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -73,8 +76,13 @@
       ]
     }
   },
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "timezone": "Africa/Cairo"
-  }
+  },
+  "tags": [
+    { "name": "sierra-estates" },
+    { "name": "whatsapp-outreach" }
+  ]
 }
