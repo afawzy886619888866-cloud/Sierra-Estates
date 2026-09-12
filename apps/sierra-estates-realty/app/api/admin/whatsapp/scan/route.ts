@@ -232,9 +232,8 @@ function parseListingMessage(
   // 9. Sierra SBR code
   const sbr = buildSierraCodeMetadata({
     compound: detectedCompound,
-    propertyType,
-    bedrooms: beds,
-    finishing,
+    rooms: beds,
+    furnishingStatus: finishing,
     price,
   });
 
