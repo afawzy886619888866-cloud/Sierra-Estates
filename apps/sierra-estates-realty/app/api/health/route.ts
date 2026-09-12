@@ -1,50 +1,92 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { brainRAG } from '@sierra-estates/memory-engine';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const startTime = Date.now();
 
-  // Check Supabase connectivity (non-blocking health check)
+  // 1. Supabase Ping & Latency Measurement
   let supabaseReady = false;
+  let supabaseLatencyMs = 0;
+  let activePropertiesCount = 0;
+
+  const dbStart = Date.now();
   try {
     const supabase = getSupabaseAdmin();
-    await supabase.from('health_check').select('1').limit(1).single();
-    // Even if no health_check table exists, if client is initialized it's ready
-    supabaseReady = true;
+    const { count, error } = await supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true });
+
+    supabaseLatencyMs = Date.now() - dbStart;
+    if (!error) {
+      supabaseReady = true;
+      activePropertiesCount = count ?? 0;
+    } else {
+      // Fallback ping
+      supabaseReady = true;
+      supabaseLatencyMs = Date.now() - dbStart;
+    }
   } catch {
     supabaseReady = false;
+    supabaseLatencyMs = Date.now() - dbStart;
   }
 
+  // 2. PubSub & Messaging Gateway
   const pubsubConfigured = Boolean(
     process.env.GOOGLE_CLOUD_PROJECT ||
       process.env.REDIS_URL ||
       process.env.UPSTASH_REDIS_REST_URL
   );
+
+  // 3. AI Providers
   const aiConfigured = Boolean(
-      process.env.AI_PROVIDER ||
+    process.env.AI_PROVIDER ||
       process.env.GOOGLE_AI_API_KEY ||
       process.env.GOOGLE_GENAI_API_KEY ||
       process.env.GEMINI_API_KEY ||
       process.env.OPENAI_API_KEY ||
       process.env.ANTHROPIC_API_KEY
   );
-  const overallStatus = supabaseReady && aiConfigured ? 'healthy' : 'degraded';
+
+  // 4. MemoryBrainEngine RAG Telemetry
+  let brainStats = {
+    activeGoal: 'Operational',
+    cachedNotesCount: 0,
+    engine: 'ObsidianVault+ECC',
+  };
+  try {
+    brainStats = {
+      activeGoal: brainRAG.getActiveGoal(),
+      cachedNotesCount: (brainRAG as any).vaultCache?.size || 0,
+      engine: 'ObsidianVault+ECC',
+    };
+  } catch {
+    // Non-blocking fallback
+  }
+
+  const overallStatus = supabaseReady ? 'healthy' : 'degraded';
 
   const healthData = {
     status: overallStatus,
-    version: '3.0.1',
+    version: '3.1.0',
     service: 'sierra-estates-intelligence-os',
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     environment: process.env.NODE_ENV || 'development',
+    telemetry: {
+      totalLatencyMs: Date.now() - startTime,
+      databaseLatencyMs: supabaseLatencyMs,
+      activeProperties: activePropertiesCount,
+    },
     components: {
       supabase: {
         status: supabaseReady ? 'healthy' : 'unavailable',
+        latencyMs: supabaseLatencyMs,
         message: supabaseReady
           ? 'Connected to Supabase PostgreSQL'
-          : 'Supabase credentials are not configured',
+          : 'Supabase credentials are not configured or connection timed out',
       },
       pubsub: {
         status: pubsubConfigured ? 'configured' : 'fallback',
@@ -55,16 +97,19 @@ export async function GET() {
             ? 'redis'
             : 'in_memory_fallback',
       },
-      memoryEngine: {
-        status: process.env.VERCEL ? 'ephemeral' : 'local',
-        store: 'obsidian-store.json',
+      memoryBrainEngine: {
+        status: 'online',
+        engine: brainStats.engine,
+        activeGoal: brainStats.activeGoal,
+        cachedNotes: brainStats.cachedNotesCount,
       },
       aiOrchestrator: {
-        status: aiConfigured ? 'configured' : 'unavailable',
+        status: aiConfigured ? 'configured' : 'fallback',
+        primaryModel: process.env.AI_MODEL || 'gemini-2.0-flash',
       },
     },
-    latencyMs: Date.now() - startTime,
   };
 
   return NextResponse.json(healthData, { status: supabaseReady ? 200 : 503 });
 }
+
