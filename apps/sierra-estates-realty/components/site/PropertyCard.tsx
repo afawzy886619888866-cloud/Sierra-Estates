@@ -17,8 +17,14 @@ export interface CardListing {
   yield?: number;
 }
 
-export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number }) {
-  const { t } = useSite();
+export interface PropertyCardProps {
+  p: CardListing;
+  i?: number;
+  onLocate?: (compoundName: string) => void;
+}
+
+export default function PropertyCard({ p, i = 0, onLocate }: PropertyCardProps) {
+  const { t, isAr } = useSite();
   const [liked, setLiked] = useState(false);
 
   const initials = p.agent.split(' ').map((w) => w[0]).join('');
@@ -62,7 +68,23 @@ export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number 
       <div className="body">
         <div className="ptype">{p.code} · {p.type}</div>
         <h3><Link href={href}>{p.type} in {p.cmp}</Link></h3>
-        <div className="addr"><MapPin className="i" /> {p.cmp}, {p.zone}</div>
+        {onLocate ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onLocate(p.cmp);
+            }}
+            className="addr"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'inherit', font: 'inherit', color: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
+            title={isAr ? `تحديد ${p.cmp} على الخريطة` : `Locate ${p.cmp} on Masterplan Map`}
+          >
+            <MapPin className="i" style={{ color: '#c8961a', flexShrink: 0 }} /> <span>{p.cmp}, {p.zone}</span>
+          </button>
+        ) : (
+          <div className="addr"><MapPin className="i" /> {p.cmp}, {p.zone}</div>
+        )}
         <div className="specs">
           <div><BedDouble className="i" /><b>{p.beds}</b><span>{t('beds')}</span></div>
           <div><Bath className="i" /><b>{p.bath}</b><span>{t('baths')}</span></div>
@@ -76,6 +98,17 @@ export default function PropertyCard({ p, i = 0 }: { p: CardListing; i?: number 
           <small><b>{p.agent}</b>{p.ago}</small>
         </div>
         <div className="foot-icons">
+          {onLocate && (
+            <button
+              type="button"
+              onClick={() => onLocate(p.cmp)}
+              aria-label={isAr ? 'عرض على الخريطة' : 'Locate on Map'}
+              title={isAr ? 'عرض على الخريطة' : 'Locate on Masterplan Map'}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#c8961a', display: 'inline-flex', alignItems: 'center', padding: 2 }}
+            >
+              <MapPin className="i" style={{ width: 16, height: 16 }} />
+            </button>
+          )}
           <a href="#" aria-label="Compare"><GitCompare className="i" /></a>
           <a href="#" aria-label="Share"><Share2 className="i" /></a>
         </div>
