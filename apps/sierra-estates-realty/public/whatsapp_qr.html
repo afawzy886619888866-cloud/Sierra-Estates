@@ -225,7 +225,7 @@
       <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(14,165,233,0.3);border-radius:16px;padding:24px 20px;margin:16px 0 20px 0;">
         <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">Target Phone: <b style="color:#f8fafc;">+201092048333</b></div>
         <div id="pairing-code-display" style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:32px;font-weight:800;letter-spacing:6px;color:#38bdf8;text-shadow:0 0 20px rgba(56,189,248,0.5);margin:16px 0;">
-          N48R - DGEV
+          FJ46 - PD11
         </div>
         <div style="display:flex;gap:10px;justify-content:center;">
           <button onclick="copyPairingCode()" class="btn btn-primary" style="padding:8px 18px;font-size:13px;">📋 Copy Code</button>
@@ -243,7 +243,7 @@
     </div>
 
     <div class="btn-row" style="margin-top:16px;">
-      <a href="http://18.232.148.172:3000" target="_blank" class="btn btn-outline">Open Server Dashboard</a>
+      <a href="http://18.232.148.172:3000" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Open Server Dashboard</a>
       <button onclick="fetchQR(true)" class="btn btn-primary">Refresh Now</button>
     </div>
   </div>
@@ -256,7 +256,7 @@
     const countdownText = document.getElementById('countdown-text');
     const codeDisplay = document.getElementById('pairing-code-display');
 
-    let currentCode = 'N48RDGEV';
+    let currentCode = 'FJ46PD11';
     let secondsLeft = 20;
 
     function switchTab(mode) {
