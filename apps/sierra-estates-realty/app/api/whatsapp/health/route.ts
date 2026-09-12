@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const status = await WhatsAppStatusService.getStatus();
   return NextResponse.json({
     status: status.status || 'healthy',
-    lastHeartbeat: status.lastHeartbeat,
+    lastPulse: status.lastPulse,
     ok: true,
     service: 'sierra-whatsapp-bridge',
     timestamp: new Date().toISOString(),
