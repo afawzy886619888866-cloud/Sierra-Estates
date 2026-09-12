@@ -26,14 +26,32 @@ class EpisodicContextCache:
         self.storage_path = storage_path or "obsidian-store.json"
 
     def record_episode(self, episode: Dict[str, Any]) -> Dict[str, Any]:
-        """Record an episode in journal and update the associated entity."""
+        """Record an episode in journal with idempotency deduplication and update entity graph."""
+        ep_id = episode.get("id")
+        timestamp = episode.get("timestamp", time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        entity_id = episode.get("entityId", "unknown")
+        ep_type = episode.get("type", "generic")
+        summary = episode.get("summary", "")
+
+        # Check existing journal for idempotency (matching ID or matching entity+type+timestamp)
+        for existing in self.episodic_journal:
+            if ep_id and existing.get("id") == ep_id:
+                return existing
+            if (
+                existing.get("entityId") == entity_id
+                and existing.get("type") == ep_type
+                and existing.get("timestamp") == timestamp
+                and existing.get("summary") == summary
+            ):
+                return existing
+
         full_episode = {
-            "id": episode.get("id", f"ep-{int(time.time()*1000)}"),
-            "timestamp": episode.get("timestamp", time.strftime("%Y-%m-%dT%H:%M:%SZ")),
-            "type": episode.get("type", "generic"),
-            "entityId": episode.get("entityId", "unknown"),
+            "id": ep_id or f"ep-{int(time.time()*1000)}",
+            "timestamp": timestamp,
+            "type": ep_type,
+            "entityId": entity_id,
             "actor": episode.get("actor", "Agent"),
-            "summary": episode.get("summary", ""),
+            "summary": summary,
             "data": episode.get("data", {}),
         }
         self.episodic_journal.append(full_episode)
@@ -47,7 +65,19 @@ class EpisodicContextCache:
         new_price: float,
         source: str = "WhatsApp Drop",
     ) -> Dict[str, Any]:
-        """Track price reduction for an asset and flag hot deals."""
+        """Track price reduction for an asset and flag hot deals with robust validation."""
+        if not sierra_code or not isinstance(sierra_code, str):
+            raise ValueError("sierra_code must be a non-empty string")
+
+        try:
+            old_price = float(old_price)
+            new_price = float(new_price)
+        except (ValueError, TypeError):
+            raise ValueError("old_price and new_price must be valid numeric values")
+
+        if old_price <= 0 or new_price <= 0:
+            raise ValueError("Prices must be positive numbers greater than 0")
+
         drop_amount = old_price - new_price
         drop_pct = round((drop_amount / old_price) * 100, 1) if old_price else 0.0
         is_hot = drop_pct >= HOT_DEAL_THRESHOLD_PCT
@@ -82,10 +112,19 @@ class EpisodicContextCache:
         })
 
         if episode["type"] == "price_drop" and "newPrice" in episode.get("data", {}):
-            entity["historicalPrices"].append({
-                "price": episode["data"]["newPrice"],
-                "timestamp": episode["timestamp"],
-            })
+            price_val = episode["data"]["newPrice"]
+            ts_val = episode["timestamp"]
+            # Deduplicate historical price entries by timestamp
+            already_recorded = any(
+                p.get("timestamp") == ts_val and p.get("price") == price_val
+                for p in entity["historicalPrices"]
+            )
+            if not already_recorded:
+                entity["historicalPrices"].append({
+                    "price": price_val,
+                    "timestamp": ts_val,
+                })
+
             if episode["data"].get("isHotDeal"):
                 if "HOT_DISTRESSED_DEAL" not in entity["tags"]:
                     entity["tags"].append("HOT_DISTRESSED_DEAL")

@@ -341,7 +341,7 @@ export class WhatsAppBotRouter {
 
     // If the primary agent is OpenClaw (handling owners directly)
     if (route.primaryAgent === 'openclaw') {
-      const openclawResult = await this.orchestrator.runAgentTask(
+      const openclawResult = await this.runTaskWithRetry(
         'openclaw',
         `You are talking directly to a property owner. Extract property details (if any), encourage them to provide more info, and generate a warm, professional WhatsApp response in Egyptian Arabic: "${userMessage}"`,
         context
@@ -370,7 +370,7 @@ export class WhatsAppBotRouter {
     }
 
     if (needsData) {
-      const dataResult = await this.orchestrator.runAgentTask(
+      const dataResult = await this.runTaskWithRetry(
         'openclaw',
         `Retrieve property data relevant to this client inquiry: ${userMessage}`,
         context
@@ -381,7 +381,7 @@ export class WhatsAppBotRouter {
     }
 
     if (needsAnalysis) {
-      const analysisResult = await this.orchestrator.runAgentTask(
+      const analysisResult = await this.runTaskWithRetry(
         'sierra',
         `Analyze client message and generate the best 1-3 property recommendations with response strategy: ${userMessage}`,
         enrichedContext
@@ -392,7 +392,7 @@ export class WhatsAppBotRouter {
     }
 
     // Hermes always generates the final client-facing response
-    const hermesResult = await this.orchestrator.runAgentTask(
+    const hermesResult = await this.runTaskWithRetry(
       'hermes',
       `Generate a warm, professional WhatsApp response in Egyptian Arabic to this client message: "${userMessage}"`,
       enrichedContext
