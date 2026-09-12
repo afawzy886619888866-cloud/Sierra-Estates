@@ -11,6 +11,7 @@ import {
   type WhatsAppOutreachConfig,
   type OwnerNegotiation,
 } from '@/lib/models/schema';
+export type { WhatsAppOutreachConfig };
 import { logger } from '@/lib/logger';
 
 /**
