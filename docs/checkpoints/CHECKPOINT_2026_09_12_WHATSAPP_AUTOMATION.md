@@ -1,4 +1,5 @@
 # Checkpoint: WhatsApp Automation & Owner Outreach Pipeline
+
 **Date**: September 12, 2026  
 **Git Tag**: [`checkpoint-whatsapp-automation`](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main/releases/tag/checkpoint-whatsapp-automation)  
 **Commit**: `e7d49e58163816722b2b89b629466514ec167a78`  
@@ -10,6 +11,7 @@
 ## 1. Summary of Architecture & Implemented Capabilities
 
 ### A. Automated Hourly Owner Outreach Engine
+
 - **Service**: `apps/sierra-estates-realty/lib/services/OwnerOutreachService.ts`
 - **Scheduler Daemon**: `scripts/run-owner-outreach-scheduler.ts`
 - **Operating Hours**: **12:00 PM – 8:00 PM Africa/Cairo** (Strictly enforced)
@@ -18,6 +20,7 @@
 - **Inventory Source**: 261 clean, deduplicated property owners loaded from internal storage (`data/`)
 
 ### B. AWS EC2 OpenWA & n8n Gateway
+
 - **EC2 Instance**: `i-0be8ff8c5cfba7363` (`18.232.148.172`) in `us-east-1`
 - **OpenWA Service**: `http://18.232.148.172:3000` (Container: `sierra-openwa`, status: healthy)
 - **Active Session**: `sierra-main` (`9fbfb682-2fa8-44aa-9af0-35bb23ea80dd`)
@@ -25,11 +28,13 @@
 - **Global Webhook**: Configured to `https://sierra-estates.net/api/webhooks/whatsapp` with HMAC secret `sierra-secure-2028`
 
 ### C. Privacy Boundary Hardening
+
 - **Zero Owner Numbers in Public**: 41/41 public files audited with 0 violations.
 - **Master Data**: Real owner numbers kept strictly in `data/` and Supabase tables.
 - **Client Facing**: All public downloads, contact links, and headers set strictly to `+201092048333`.
 
 ### D. Dual Authentication / Pairing Options
+
 - **Method 1 (QR Scanner)**: Auto-refreshing portal at `http://localhost:3000/whatsapp_qr.html` backed by proxy `/api/whatsapp/qr`.
 - **Method 2 (Phone Number Pairing Code)**: REST endpoint `/api/whatsapp/pairing-code` allowing one-click 8-character pairing codes on WhatsApp without camera scanning.
 
