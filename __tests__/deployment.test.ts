@@ -149,4 +149,51 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       expect(code).toContain('apps/sierra-estates-realty');
     });
   });
+
+  describe('CI-Gated Deployment & Emergency Override Safety', () => {
+    it('deploy-vercel.yml must configure workflow_dispatch with emergency_override input and actions:read permission', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
+      expect(deployWf).toContain('emergency_override:');
+      expect(deployWf).toContain('actions: read');
+    });
+
+    it('deploy-vercel.yml must define a gate job that blocks production deploys without successful CI or audited override', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
+      expect(deployWf).toContain('gate:');
+      expect(deployWf).toContain('needs: [gate]');
+      expect(deployWf).toContain('gh run list --workflow=ci.yml');
+      expect(deployWf).toContain('EMERGENCY_OVERRIDE');
+      expect(deployWf).toContain('AUDIT ALERT');
+    });
+
+    it('deploy-vercel.yml must preserve preview deployment behavior without requiring production CI gate', () => {
+      const deployWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'deploy-vercel.yml'), 'utf-8');
+      expect(deployWf).toContain('"$TARGET_ENV" = "preview"');
+      expect(deployWf).toContain('CI production gate bypassed for preview environment');
+    });
+
+    it('ci.yml must trigger on push to main, pull_request, and workflow_dispatch', () => {
+      const ciWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'ci.yml'), 'utf-8');
+      expect(ciWf).toContain('branches: [main]');
+      expect(ciWf).toContain('pull_request:');
+      expect(ciWf).toContain('workflow_dispatch:');
+    });
+
+    it('ci.yml must execute the full release validation suite across deployable surface', () => {
+      const ciWf = fs.readFileSync(path.join(WORKFLOWS_DIR, 'ci.yml'), 'utf-8');
+      expect(ciWf).toContain('type-check');
+      expect(ciWf).toContain('pnpm check:backend');
+      expect(ciWf).toContain('pnpm check:public-env');
+      expect(ciWf).toContain('pnpm check:legacy-runtime');
+      expect(ciWf).toContain('lint');
+      expect(ciWf).toContain('test:ci');
+      expect(ciWf).toContain('build');
+    });
+
+    it('package.json deploy:prod must enforce pre-flight readiness checks', () => {
+      const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
+      expect(pkg.scripts['deploy:prod']).toContain('deploy:check');
+      expect(pkg.scripts['deploy:prod']).toContain('vercel --prod');
+    });
+  });
 });

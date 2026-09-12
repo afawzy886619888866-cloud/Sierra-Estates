@@ -20,7 +20,7 @@
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
-        "deploy:prod": "vercel --prod",
+        "deploy:prod": "pnpm deploy:check && vercel --prod",
         "test:prod": "node scripts/test-production.cjs",
         "deploy:supabase": "node scripts/apply-supabase-schema.mjs",
         "deploy:schema": "node scripts/apply-supabase-schema.mjs",
