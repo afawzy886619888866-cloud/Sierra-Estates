@@ -9,13 +9,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   Users,
-  Building2,
-  ArrowRight,
   Database,
   RefreshCw,
   Sparkles,
   ShieldCheck,
-  Zap,
 } from 'lucide-react';
 import { WHATSAPP_GROUP_REGISTRY } from '../../../../packages/agents/tools/whatsappGroupRegistry';
 
@@ -286,6 +283,8 @@ export default function WhatsAppChatScanner({
             {isAr ? 'مجموعات الملاك المباشرين (أولوية قصوى ⭐):' : 'Direct Owner Groups (Highest Priority ⭐):'}
           </label>
           <select
+            aria-label={isAr ? 'اختر مجموعة الواتساب المستهدفة' : 'Select Target WhatsApp Group'}
+            title={isAr ? 'اختر مجموعة الواتساب المستهدفة' : 'Select Target WhatsApp Group'}
             value={selectedGroup}
             onChange={(e) => handleGroupSelect(e.target.value)}
             style={{
@@ -386,6 +385,8 @@ export default function WhatsAppChatScanner({
               ref={fileInputRef}
               type="file"
               accept=".txt"
+              aria-label={isAr ? 'رفع ملف محادثة واتساب' : 'Upload WhatsApp chat export file'}
+              title={isAr ? 'رفع ملف محادثة واتساب' : 'Upload WhatsApp chat export file'}
               onChange={handleFileUpload}
               style={{ display: 'none' }}
             />

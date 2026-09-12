@@ -12,8 +12,6 @@ import {
   ListFilter,
   FileText,
   Search,
-  UserCheck,
-  ShieldCheck,
   Calculator,
   Download,
   Zap,
@@ -21,19 +19,14 @@ import {
   Camera,
   Globe,
   Building2,
-  AlertTriangle,
-  Check,
   X,
   Star,
-  Plus,
-  RefreshCw,
   Send,
   Smartphone,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 import realListingsRaw from '@/data/real-listings.json';
-import { evaluatePropertyValuation } from '@/lib/valuationArbitrageEngine';
 
 // Stock luxury community presets for 1-click photo matching
 const COMMUNITY_PHOTO_PRESETS: Record<string, string[]> = {
@@ -126,7 +119,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const [typeFilter, setTypeFilter] = useState<'all' | 'sale' | 'rent' | 'owners' | 'villa' | 'apartment'>('all');
   const [photoFilter, setPhotoFilter] = useState<'all' | 'has_photos' | 'missing_photos' | 'best_needing_photos'>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available' | 'pending' | 'sold_rented'>('all');
-  const [syndicationFilter, setSyndicationFilter] = useState<'all' | 'web_live' | 'pf_live'>('all');
+  const [syndicationFilter] = useState<'all' | 'web_live' | 'pf_live'>('all');
   const [zoneFilter, setZoneFilter] = useState<string>('all');
 
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
@@ -137,11 +130,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const pageSize = 15;
 
   const [allListingsData, setAllListingsData] = useState<any[]>(() => buildUnifiedBaseline());
-  const [isLoadingLiveListings, setIsLoadingLiveListings] = useState(true);
-  const [liveListingsError, setLiveListingsError] = useState<string | null>(null);
 
   // Quick valuation preview state
-  const [activeValuationUnit, setActiveValuationUnit] = useState<any | null>(null);
+  const [_activeValuationUnit, setActiveValuationUnit] = useState<any | null>(null);
 
   // Photo Attach Modal State
   const [activePhotoModalUnit, setActivePhotoModalUnit] = useState<any | null>(null);
@@ -180,14 +171,10 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             return Array.from(map.values());
           });
         }
-        setLiveListingsError(null);
       })
-      .catch((error) => {
-        if (!active) return;
-        setLiveListingsError(error instanceof Error ? error.message : 'Live listings unavailable');
+      .catch((_error) => {
       })
       .finally(() => {
-        if (active) setIsLoadingLiveListings(false);
       });
 
     return () => {
@@ -787,6 +774,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
               {/* Zone / Compound Selector */}
               <select
+                aria-label={isAr ? 'تصفية حسب المنطقة أو الكمبوند' : 'Filter by Zone or Compound'}
+                title={isAr ? 'تصفية حسب المنطقة أو الكمبوند' : 'Filter by Zone or Compound'}
                 value={zoneFilter}
                 onChange={(e) => {
                   setZoneFilter(e.target.value);
@@ -972,6 +961,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ fontSize: 11, color: 'var(--tx-f)' }}>Set Availability:</span>
                 <select
+                  aria-label={isAr ? 'تغيير حالة التوفر المجمعة' : 'Set Bulk Availability Status'}
+                  title={isAr ? 'تغيير حالة التوفر المجمعة' : 'Set Bulk Availability Status'}
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value)}
                   style={{
@@ -1066,6 +1057,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                   <th style={{ padding: '12px 14px', width: 36, textAlign: 'center' }}>
                     <input
                       type="checkbox"
+                      aria-label="Select all listings on this page"
+                      title="Select all listings on this page"
                       checked={paginatedListings.length > 0 && paginatedListings.every((i) => selectedListingIds.includes(i.sierraCode || i.code || `SE-${i.id}`))}
                       onChange={handleToggleSelectAllPage}
                       style={{ cursor: 'pointer' }}
@@ -1104,6 +1097,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                       <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                         <input
                           type="checkbox"
+                          aria-label={`Select listing ${code}`}
+                          title={`Select listing ${code}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelectRow(code)}
                           style={{ cursor: 'pointer' }}
@@ -1114,6 +1109,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                       <td style={{ padding: '12px 14px' }}>
                         {hasImg && photoUrl ? (
                           <div style={{ position: 'relative', width: 56, height: 42 }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={photoUrl}
                               alt={code}
@@ -1238,6 +1234,8 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                       {/* Availability Dropdown */}
                       <td style={{ padding: '12px 14px' }}>
                         <select
+                          aria-label={`Update status for unit ${code}`}
+                          title={`Update status for unit ${code}`}
                           value={item.status || 'Available'}
                           onChange={(e) => handleUpdateAvailability(code, e.target.value)}
                           style={{
@@ -1474,6 +1472,9 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                 </h3>
               </div>
               <button
+                type="button"
+                aria-label="Close"
+                title="Close"
                 onClick={() => setActivePhotoModalUnit(null)}
                 style={{ background: 'none', border: 'none', color: 'var(--tx-f)', cursor: 'pointer' }}
               >
@@ -1504,6 +1505,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
                       transition: 'transform 0.15s',
                     }}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt="Preset" style={{ width: '100%', height: 90, objectFit: 'cover' }} />
                     <div style={{ padding: '6px 8px', fontSize: 11, textAlign: 'center', fontWeight: 600 }}>
                       Apply Preset {i + 1}
@@ -1578,6 +1580,41 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           </div>
         </div>
       )}
+
+      {/* ACCIDENTAL DATA LOSS GUARD MODAL FOR BULK ARCHIVE */}
+      <AccidentalDataLossGuardModal
+        isOpen={isGuardModalOpen}
+        lang={lang}
+        affectedCount={selectedListingIds.length}
+        title={{
+          en: 'Confirm Bulk Archive Listings',
+          ar: 'تأكيد أرشفة العقارات المحددة',
+        }}
+        actionDescription={{
+          en: 'You are about to archive multiple selected listings. Archived listings will be hidden from client feeds.',
+          ar: 'أنت على وشك أرشفة مجموعة من العقارات. سيتم إخفاء العقارات المؤرشفة من واجهة العملاء.',
+        }}
+        impactSummary={{
+          en: `${selectedListingIds.length} property listing(s) will be marked as Archived.`,
+          ar: `سيتم تحديد ${selectedListingIds.length} عقار كعقارات مؤرشفة.`,
+        }}
+        onConfirm={() => {
+          setAllListingsData((prev) =>
+            prev.map((item) => {
+              const id = item.sierraCode || item.code || `SE-${item.id}`;
+              if (selectedListingIds.includes(id)) {
+                return { ...item, status: 'Archived' };
+              }
+              return item;
+            })
+          );
+          setBulkNotification(`Archived ${selectedListingIds.length} properties`);
+          setSelectedListingIds([]);
+          setIsGuardModalOpen(false);
+          setTimeout(() => setBulkNotification(null), 3000);
+        }}
+        onCancel={() => setIsGuardModalOpen(false)}
+      />
     </div>
   );
 }

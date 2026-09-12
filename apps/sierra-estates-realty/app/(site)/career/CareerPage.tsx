@@ -743,8 +743,8 @@ export default function CareerPage() {
                 <button
                   key={tab.id}
                   type="button"
-                  role="tab"
-                  aria-selected={deptFilter === tab.id}
+                  title={isAr ? tab.labelAr : tab.labelEn}
+                  aria-pressed={deptFilter === tab.id}
                   className={`cr-dept-btn ${deptFilter === tab.id ? 'cr-dept-btn--active' : ''}`}
                   onClick={() => setDeptFilter(tab.id as any)}
                 >

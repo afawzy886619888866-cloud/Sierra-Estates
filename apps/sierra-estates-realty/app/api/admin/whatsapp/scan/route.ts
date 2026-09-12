@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
@@ -38,8 +37,6 @@ export interface ParsedWhatsAppUnit {
   duplicateOf?: string;
   summary: string;
 }
-
-const API_KEY = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 /**
  * Parses raw WhatsApp exported chat log lines into structured message records.
