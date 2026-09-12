@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       phone: phone || undefined,
       summaryNotes: formattedNotes || undefined,
       status: 'new',
-      // channel is the normalised intake channel and defaults to 'whatsapp';
+      // channel is the normalized intake channel and defaults to 'whatsapp';
       // a web contact form is not that, so it is set explicitly alongside the
       // raw attribution string in `source`.
       channel: 'web',
