@@ -614,7 +614,7 @@ export default function HomePage() {
           </div>
 
           {/* Interactive Map Canvas */}
-          <div className="map-shell rv" style={{ height: 560, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 36px rgba(0,0,0,0.08)', border: '1px solid var(--line, rgba(0,0,0,0.1))' }}>
+          <div className="map-shell rv" style={{ height: 580, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(223, 173, 58, 0.25)' }}>
             <CompoundsMap
               compounds={allCompounds}
               featured={featuredCompounds}
@@ -623,6 +623,67 @@ export default function HomePage() {
               showControls={true}
             />
           </div>
+
+          {/* Synchronized Properties Deck for Active Compound */}
+          {selectedMapCompound && (
+            <div className="active-compound-deck rv" style={{ marginTop: 28 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#c8961a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles style={{ width: 14, height: 14 }} />
+                    <span>{isAr ? 'وحدات معتمدة ومطابقة على الخريطة' : 'Verified Units Matching Selected Masterplan'}</span>
+                  </div>
+                  <h3 style={{ fontSize: 'clamp(20px, 2.4vw, 28px)', fontFamily: 'var(--display)', color: 'var(--ink, #0f172a)', margin: '4px 0 0' }}>
+                    {selectedMapCompound} {isAr ? '— الوحدات المتاحة حالياً' : '— Active Inventory'}
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Link
+                    href={`/properties?compound=${encodeURIComponent(selectedMapCompound)}`}
+                    className="btn btn-pri"
+                    style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+                  >
+                    <span>{isAr ? `تصفح كل وحدات ${selectedMapCompound}` : `Browse All in ${selectedMapCompound}`}</span>
+                    <ArrowRight style={{ width: 14, height: 14 }} />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMapCompound(null)}
+                    style={{ background: 'transparent', border: '1px solid rgba(0,0,0,0.15)', padding: '7px 12px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: 'var(--muted, #64748b)', cursor: 'pointer' }}
+                  >
+                    {isAr ? 'إلغاء التحديد' : 'Clear Selection'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid of properties for selected compound */}
+              <div className="grid-props">
+                {matchingCompoundListings.length > 0 ? (
+                  matchingCompoundListings.slice(0, 4).map((p, i) => (
+                    <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />
+                  ))
+                ) : (
+                  <div style={{ gridColumn: '1 / -1', padding: '32px 24px', background: 'rgba(200, 150, 26, 0.05)', border: '1px dashed rgba(200, 150, 26, 0.35)', borderRadius: 14, textAlign: 'center' }}>
+                    <p style={{ margin: '0 0 14px', fontSize: 14.5, color: 'var(--ink, #0f172a)', fontWeight: 600 }}>
+                      {isAr
+                        ? `يتم مزامنة وحدات جديدة في ${selectedMapCompound} حالياً مع المكتب الاستشاري. يمكنك تصفح العقارات أو طلب استفسار فوري.`
+                        : `Live units in ${selectedMapCompound} are being synchronized with the advisory desk. Browse our master directory or request an instant portfolio match.`}
+                    </p>
+                    <a
+                      href={`https://wa.me/201092048333?text=${encodeURIComponent(`Hello Sierra Estates, I am inquiring about available resale & rental units in ${selectedMapCompound}.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-pri"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 13, textDecoration: 'none', background: '#059669', color: '#fff' }}
+                    >
+                      <Phone style={{ width: 15, height: 15 }} />
+                      <span>{isAr ? `استفسار فوري عن ${selectedMapCompound}` : `Instant WhatsApp Inquiry for ${selectedMapCompound}`}</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -640,7 +701,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid-props" id="prop-grid">
-            {listings.slice(0, 6).map((p, i) => <PropertyCard key={p.id} p={p} i={i} />)}
+            {listings.slice(0, 8).map((p, i) => <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />)}
           </div>
         </div>
       </section>
