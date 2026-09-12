@@ -1,8 +1,4 @@
-/**
- * WhatsApp QR Gateway Route — Unit & Integration Tests
- * File: apps/sierra-estates-realty/__tests__/whatsapp-qr-gateway.test.ts
- */
-
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { GET } from '@/app/api/whatsapp/qr/route';
 
 describe('/api/whatsapp/qr Route', () => {
@@ -10,7 +6,7 @@ describe('/api/whatsapp/qr Route', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns qrCode and status when OpenWA returns valid QR data', async () => {
@@ -19,10 +15,10 @@ describe('/api/whatsapp/qr Route', () => {
       qrCode: 'data:image/png;base64,mockValidBase64QrCodeString',
     };
 
-    global.fetch = jest.fn().mockResolvedValueOnce({
+    global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => mockQrData,
-    } as Response);
+    } as unknown as Response);
 
     const response = await GET();
     expect(response.status).toBe(200);
@@ -37,16 +33,16 @@ describe('/api/whatsapp/qr Route', () => {
   it('returns connected status payload when session is already authenticated', async () => {
     // 1st call to /qr fails (e.g. 404 because device is already linked)
     // 2nd call to session details returns connected
-    global.fetch = jest
+    global.fetch = vi
       .fn()
       .mockResolvedValueOnce({
         ok: false,
         status: 404,
-      } as Response)
+      } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ status: 'connected' }),
-      } as Response);
+      } as unknown as Response);
 
     const response = await GET();
     expect(response.status).toBe(200);
@@ -58,7 +54,7 @@ describe('/api/whatsapp/qr Route', () => {
   });
 
   it('returns 502 Bad Gateway when fetch throws network error', async () => {
-    global.fetch = jest.fn().mockRejectedValueOnce(new Error('Connection refused to OpenWA'));
+    global.fetch = vi.fn().mockRejectedValueOnce(new Error('Connection refused to OpenWA'));
 
     const response = await GET();
     expect(response.status).toBe(502);
