@@ -598,7 +598,13 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
                   <p style={{fontSize:9.5,color:'var(--tx-f)',fontFamily:'JetBrains Mono'}}>{w.runs.toLocaleString()} runs · {w.last}</p>
                 </div>
                 <span className={`chip ${w.status==='active'?'chip-green':w.status==='warning'?'chip-amber':'chip-red'}`}>{w.status}</span>
-                <button onClick={()=>toggle(i)} className="btn btn-ghost" style={{padding:'4px 8px',fontSize:10,marginInlineStart:4}}>
+                <button 
+                  onClick={()=>toggle(i)} 
+                  className="btn btn-ghost" 
+                  style={{padding:'4px 8px',fontSize:10,marginInlineStart:4}}
+                  title={w.status==='paused' ? 'Resume workflow' : 'Pause workflow'}
+                  aria-label={w.status==='paused' ? 'Resume workflow' : 'Pause workflow'}
+                >
                   {w.status==='paused'?<Ic.Play/>:<Ic.Pause/>}
                 </button>
               </div>
@@ -1983,7 +1989,7 @@ function TasksPage({ T }: { T: any }) {
           <div className="modal-box" style={{maxWidth:500}}>
             <div className="modal-hd">
               <span style={{fontFamily:'JetBrains Mono',fontSize:11,fontWeight:700,color:'var(--gold)'}}>+ CREATE NEW OPERATIONAL TASK</span>
-              <button onClick={()=>setShowNewModal(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--tx-f)'}}><Ic.X/></button>
+              <button onClick={()=>setShowNewModal(false)} title="Close modal" aria-label="Close modal" style={{background:'none',border:'none',cursor:'pointer',color:'var(--tx-f)'}}><Ic.X/></button>
             </div>
             <form onSubmit={handleCreateTask} style={{padding:20,display:'flex',flexDirection:'column',gap:14}}>
               <div>
