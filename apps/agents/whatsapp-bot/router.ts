@@ -196,6 +196,7 @@ export function routeMessage(intent: MessageIntent, urgency: string, isNewClient
 export class WhatsAppBotRouter {
   private orchestrator: AgentOrchestrator
   private listingsProvider?: (message: string, intent: string) => Promise<ListingFetchResult>
+  private processedMessages = new Map<string, { response: string; timestamp: number }>()
 
   constructor(
     apiKey?: string,
@@ -207,12 +208,39 @@ export class WhatsAppBotRouter {
   }
 
   /**
+   * Run an orchestrator agent task with bounded retry on transient failure.
+   */
+  private async runTaskWithRetry(agent: string, task: string, context?: string, maxAttempts: number = 2) {
+    let attempt = 0;
+    while (attempt < maxAttempts) {
+      try {
+        attempt++;
+        return await this.orchestrator.runAgentTask(agent, task, context);
+      } catch (err) {
+        console.warn(`[WhatsAppBotRouter] Task attempt ${attempt} for agent ${agent} failed:`, (err as Error).message);
+        if (attempt >= maxAttempts) throw err;
+        await new Promise((res) => setTimeout(res, 350 * attempt));
+      }
+    }
+    return { status: 'error' as const, output: '' };
+  }
+
+  /**
    * Main entry point. Call this for every incoming WhatsApp message.
    * Returns the response text to send back to the client.
    */
   async handle(msg: IncomingMessage): Promise<string> {
     const phone = stripWhatsAppSuffix(msg.from)
     const startedAt = Date.now()
+
+    // Deduplicate incoming webhook re-deliveries
+    if (msg.messageId && this.processedMessages.has(msg.messageId)) {
+      const cached = this.processedMessages.get(msg.messageId)!
+      if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
+        console.log(`[WhatsAppBotRouter] Duplicate message ${msg.messageId} skipped; returning cached response.`)
+        return cached.response
+      }
+    }
 
     try {
       // 1. Record inbound message in shared memory
@@ -236,7 +264,11 @@ export class WhatsAppBotRouter {
       // 5. If human escalation needed, alert team and send holding message
       if (route.primaryAgent === 'human') {
         await this.escalateToHuman(phone, msg, context)
-        return 'سيتواصل معك أحد مستشارينا في أقرب وقت. نعتذر عن أي إزعاج.'
+        const response = 'سيتواصل معك أحد مستشارينا في أقرب وقت. نعتذر عن أي إزعاج.'
+        if (msg.messageId) {
+          this.processedMessages.set(msg.messageId, { response, timestamp: Date.now() })
+        }
+        return response
       }
 
       // 6. Run the pipeline through agents
@@ -244,6 +276,15 @@ export class WhatsAppBotRouter {
 
       // 7. Record outbound response in shared memory
       await sharedMemory.recordConversationTurn(phone, route.primaryAgent, 'outbound', response)
+
+      // Cache processed response to deduplicate incoming retries
+      if (msg.messageId) {
+        this.processedMessages.set(msg.messageId, { response, timestamp: Date.now() })
+        if (this.processedMessages.size > 2000) {
+          const oldest = Array.from(this.processedMessages.keys()).slice(0, 200)
+          oldest.forEach((k) => this.processedMessages.delete(k))
+        }
+      }
 
       const elapsed = Date.now() - startedAt
 
