@@ -121,6 +121,27 @@ export class EpisodicContextCache {
       .slice(0, limit);
   }
 
+  public getRecentEpisodes(limit = 10, entityId?: string): Episode[] {
+    const list = entityId
+      ? this.episodicJournal.filter((ep) => ep.entityId.toLowerCase() === entityId.toLowerCase())
+      : this.episodicJournal;
+    return [...list]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+  }
+
+  public getHotDeals(limit = 10): Episode[] {
+    return this.episodicJournal
+      .filter(
+        (ep) =>
+          ep.type === 'price_drop' &&
+          (ep.data?.isHotDeal === true || (ep.data?.dropPct && ep.data.dropPct >= HOT_DEAL_THRESHOLD_PCT))
+      )
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+  }
+
+
   public trackPriceReduction(
     sierraCode: string,
     oldPrice: number,
