@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
+import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import ValuationArbitrageStudio from '@/components/admin/ValuationArbitrageStudio';
 import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
@@ -25,6 +27,8 @@ import {
   Star,
   Plus,
   RefreshCw,
+  Send,
+  Smartphone,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
@@ -115,7 +119,7 @@ function buildUnifiedBaseline(): any[] {
 
 export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'brochure' | 'valuation'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'whatsapp-sender' | 'whatsapp-scanner' | 'brochure' | 'valuation'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Primary operational filters
@@ -568,6 +572,38 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <span>{isAr ? 'إدراج ذكي' : 'Easy Add'}</span>
             </button>
             <button
+              onClick={() => setActiveTab('whatsapp-sender')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'whatsapp-sender' ? '#25D366' : 'transparent',
+                color: activeTab === 'whatsapp-sender' ? '#07111E' : 'var(--tx-m)',
+              }}
+            >
+              <Send className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'مرسل واتساب' : 'WhatsApp Outreach'}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('whatsapp-scanner')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'whatsapp-scanner' ? 'var(--emerald)' : 'transparent',
+                color: activeTab === 'whatsapp-scanner' ? '#07111E' : 'var(--tx-m)',
+              }}
+            >
+              <Smartphone className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'ماسح الموبايل' : 'Mobile Harvester'}</span>
+            </button>
+            <button
               onClick={() => setActiveTab('brochure')}
               style={{
                 padding: '6px 12px',
@@ -590,6 +626,29 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
       {/* Tab Content */}
       {activeTab === 'valuation' && <ValuationArbitrageStudio lang={lang} />}
       {activeTab === 'easy-listing' && <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />}
+      {activeTab === 'whatsapp-sender' && <WhatsAppScheduledSender lang={lang} />}
+      {activeTab === 'whatsapp-scanner' && (
+        <WhatsAppChatScanner
+          lang={lang}
+          onUnitsIngested={() => {
+            fetch('/api/admin/listings?limit=500', { cache: 'no-store' })
+              .then((r) => r.json())
+              .then((d: any) => {
+                if (Array.isArray(d?.listings) && d.listings.length > 0) {
+                  setAllListingsData((prev) => {
+                    const map = new Map(prev.map((i) => [i.sierraCode || i.code || i.id, i]));
+                    d.listings.forEach((item: any) => {
+                      const code = item.sierraCode || item.code || item.id;
+                      map.set(code, { ...(map.get(code) || {}), ...item });
+                    });
+                    return Array.from(map.values());
+                  });
+                }
+              })
+              .catch(() => {});
+          }}
+        />
+      )}
       {activeTab === 'brochure' && <PropertyTeaserBrochure />}
 
       {activeTab === 'inventory' && (
