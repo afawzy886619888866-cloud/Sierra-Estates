@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { isAdminPortalRole } from '../apps/sierra-estates-realty/lib/types';
+import { isAdminConsoleRole } from '../apps/sierra-estates-realty/lib/server/auth-guard';
 
 describe('Admin Page & Portal Architecture Test Suite', () => {
   const ROOT_DIR = path.resolve(__dirname, '..');
@@ -40,6 +41,14 @@ describe('Admin Page & Portal Architecture Test Suite', () => {
       expect(isAdminPortalRole('Owner')).toBe(true);
       expect(isAdminPortalRole('viewer')).toBe(false);
       expect(isAdminPortalRole('customer')).toBe(false);
+    });
+
+    it('defines consistent ADMIN_CONSOLE_ROLES admitting manager, admin, superadmin', () => {
+      expect(isAdminConsoleRole('admin')).toBe(true);
+      expect(isAdminConsoleRole('manager')).toBe(true);
+      expect(isAdminConsoleRole('superadmin')).toBe(true);
+      expect(isAdminConsoleRole('agent')).toBe(false);
+      expect(isAdminConsoleRole('viewer')).toBe(false);
     });
 
     type UserRole = 'super_admin' | 'broker_manager' | 'sales_agent' | 'viewer';
