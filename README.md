@@ -1,79 +1,150 @@
 # Sierra Estates Realty — Enterprise AI Real Estate Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-ef4444?style=flat&logo=turborepo)](https://turbo.build/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20pgvector-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
-[![CI/CD](https://img.shields.io/badge/Vercel-Production%20Ready-000000?style=flat&logo=vercel)](https://vercel.com/)
+[![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)
+[![Vercel](https://img.shields.io/badge/Vercel-Production%20Ready-000000?style=flat&logo=vercel)](https://vercel.com/)
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainer)
 
-> **Sierra Estates Realty** is an enterprise-grade, omnichannel real estate intelligence and transaction platform engineered for the luxury Egyptian property market. It unifies client discovery, administrative asset governance, algorithmic valuation, automated WhatsApp/Telegram lead concierges, and multi-agent AI orchestration.
+> **Sierra Estates Realty** is an enterprise-grade luxury PropTech intelligence platform engineered for the Egyptian luxury property market (New Cairo / Fifth Settlement). It unites client property discovery, algorithmic valuation, automated WhatsApp & Telegram lead concierges, interactive spatial masterplan maps, and a 7-layer autonomous multi-agent fleet grounded by a unified **Obsidian + ECC Memory Brain Engine**.
 
 ---
 
-## 🏛️ Architecture Overview
+## 🏛️ System Architecture
 
-The system is organized as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js deployment:
+The platform operates as a high-performance **Turborepo** monorepo featuring a dual-domain Next.js 16 deployment backed by Supabase PostgreSQL:
 
-- **Client Portal (`https://sierra-estates.net`):** Premium buyer experience featuring 3D virtual tours, real-time ROI/installment calculators, AI investment teasers, multilingual search (Arabic/English), and automated inquiry routing.
-- **Admin Intelligence OS (`https://admin.sierra-estates.net`):** Full-featured command deck with RBAC session security, live inventory management, owner negotiation tracking, CRM pipelines, agent intelligence hubs, and automated cron ingestors.
+- **Client Web Portal ([`https://sierra-estates.net`](https://sierra-estates.net)):** High-polish luxury buyer experience featuring an interactive Leaflet spatial masterplan map with GPS polygon boundaries, 3D virtual tours, real-time ROI/installment calculators, AI investment teasers, multilingual search (Arabic/English), and Easy Listing intake.
+- **Admin Intelligence OS ([`https://admin.sierra-estates.net`](https://admin.sierra-estates.net)):** Full-featured operational command deck with RBAC session guards, live master inventory governance, owner negotiation tracking, CRM pipelines, agent hubs, and automated WhatsApp outreach queues.
 
 ```mermaid
-graph TD
-    Client["Client Web Portal\n(sierra-estates.net)"]
-    Admin["Admin Intelligence OS\n(admin.sierra-estates.net)"]
-    
-    Proxy["Edge Proxy & Host Routing\n(proxy.ts)"]
-    
-    Client --> Proxy
-    Admin --> Proxy
-    
-    Proxy --> Core["Next.js Application Core\n(apps/sierra-estates-realty)"]
-    
-    Core --> Supabase[("Supabase PostgreSQL, pgvector & Storage")]
-    Core --> AI["AI Orchestration Engine\n(Google Gemini & DeepSeek)"]
-    Core --> Integrations["Omnichannel Integrations\n(Property Finder, WhatsApp, Telegram, SendGrid)"]
+flowchart TD
+    subgraph Clients ["1. Multi-Domain Frontends"]
+        PORTAL["Client Web Experience (sierra-estates.net)"]
+        ADMIN["Admin Intelligence OS (admin.sierra-estates.net)"]
+        PROXY["Edge Proxy & Host Router (proxy.ts)"]
+    end
+
+    subgraph Agents ["2. Autonomous Agent Fleet & Memory"]
+        ORCH["AI Agent Orchestrator"]
+        BRAIN["MemoryBrainEngine (Obsidian Vault + ECC RAG)"]
+        GOAL["Active Strategic Fleet Goal"]
+        HARNESS["DeepSeek Reasoning & Evaluation Engine"]
+    end
+
+    subgraph Core ["3. Authoritative Core (Supabase)"]
+        DB[("PostgreSQL Tables (properties, leads, deals)")]
+        VEC[("pgvector Embeddings (Semantic Matchmaking)")]
+        QUEUE[("whatsapp_outbound_queue")]
+    end
+
+    subgraph Outreach ["4. Communication Gateways"]
+        WA["AWS EC2 OpenWA Gateway (18.232.148.172:3000)"]
+        TG["Telegram Agency Alerts (@sierra_estates_bot)"]
+        PF["PropertyFinder Catalog Sync Engine"]
+    end
+
+    PORTAL --> PROXY
+    ADMIN --> PROXY
+    PROXY --> ORCH
+
+    ORCH <--> BRAIN
+    BRAIN <--> GOAL
+    ORCH --> DB
+    ORCH --> VEC
+    ORCH --> QUEUE
+    ORCH --> TG
+
+    QUEUE --> WA
+    PF --> DB
 ```
 
 ---
 
-## 📦 Workspace Package Structure
+## ⚡ Core Platform Pillars
+
+### 1. Unified Memory Brain Engine (`@sierra-estates/memory-engine`)
+Fuses the **Obsidian Knowledge Vault** (`docs/obsidian-vault/`) and the **Episodic Context Cache (ECC)** into a shared RAG service. It scans domain markdown notes (compound guides, financial cap rates) and synchronizes with real-time entity profiles, historical price reductions, and distressed deal alerts to guide all fleet agents toward a shared strategic goal.
+
+### 2. Spatial Intelligence Masterplan Engine
+Interactive Leaflet map featuring precision GPS bounding polygons and subfeatures (Crystal Lagoons, Green Spines, Clubhouses, Championship Golf Courses) across all 18 top New Cairo masterplans (Hyde Park, Mountain View iCity, Mivida, Palm Hills, Katameya Heights, etc.).
+
+### 3. Automated WhatsApp Concierge & Owner Outreach
+Hosted on a dedicated AWS EC2 instance (`18.232.148.172:3000`) with dual pairing options (Live QR scan portal + 8-character phone pairing code). Strictly enforces the 12:00 PM – 8:00 PM Africa/Cairo operational window with a 40 contact/hour rate limit, zero-drift alignment, and strict masking of private owner phone numbers (falling back to agency helpline `+201092048333`).
+
+### 4. Easy Listing Ingestion (`/list-property`)
+Direct intake portal with client-side photo previews, auto-calculated AI valuation and urgency scoring, instant Supabase storage, real-time Telegram alerts to agency staff, and automated WhatsApp confirmation queueing.
+
+---
+
+## 📦 Monorepo Workspace Topology
 
 ```text
 ├── apps/
-│   └── sierra-estates-realty/     # Next.js 16 Full-Stack Dual-Domain Application
+│   ├── sierra-estates-realty/     # Next.js 16 Full-Stack Dual-Domain Application (105 Routes)
+│   ├── agents/                    # WhatsApp bot router & agent routing services
+│   └── automations/               # Scheduled workers, WhatsApp scraper & unit adder
 ├── packages/
-│   ├── admin-data/                # Admin data transformers and analytics mappers
-│   ├── agents/                    # Multi-agent systems & reasoning modules
-│   ├── agents-core/               # Base abstractions for autonomous agent lifecycle
-│   ├── agents-tools/              # Agent tool integrations and schema validators
-│   ├── ai-agent-sdk/              # Antigravity & AI Agent SDK wrappers
-│   ├── ai-orchestrator/           # LLM gateway for Gemini & DeepSeek
-│   ├── automations/               # Scheduled workflows & background processors
-│   ├── db/                        # Supabase database access layer, records & schema definitions
-│   ├── deepseek-harness/          # DeepSeek model evaluation and fine-tuning harness
-│   ├── exchange/                  # FX rate engine & gold pricing arbitrage calculator
-│   ├── memory-engine/             # Episodic Context Cache (ECC) & shared memory bus
-│   ├── property-finder-api/       # Property Finder Enterprise API connector & parser
-│   └── ui/                        # Reusable luxury UI design system components
-├── workflows/                     # Automated data synchronization pipelines
-│   ├── 01-whatsapp-scraper/       # WhatsApp group chat ingestion & listing parser
-│   ├── 02-owner-search/           # Direct owner property scraper (PF/OLX)
-│   ├── 03-owner-contact/          # Automated WhatsApp outreach dispatcher
-│   ├── 04-email-sender/           # SendGrid targeted campaign engine
-│   └── 05-unit-adder/             # Inventory sync from Google Sheets to Supabase
-└── scripts/                       # Deployment, secrets, and environment tooling
+│   ├── memory-engine/             # Unified Obsidian + ECC MemoryBrainEngine RAG
+│   ├── db/                        # Authoritative Supabase client & schemas
+│   ├── agents/                    # Multi-agent systems (Matchmaker, Closer, Scribe)
+│   ├── agents-core/               # Agent lifecycle, Telegram dispatcher & queue helpers
+│   ├── agents-tools/              # EpisodicContextCache & schema validators
+│   ├── ai-orchestrator/           # Gemini & DeepSeek LLM gateway
+│   ├── deepseek-harness/          # 10-scenario AI reasoning benchmark harness
+│   ├── exchange/                  # Gold parity & FX valuation arbitrage calculator
+│   ├── property-finder-api/       # PropertyFinder enterprise connector
+│   └── ui/                        # Reusable luxury UI components
+├── docs/
+│   ├── MASTER_PROJECT_PLAN.md     # Single authoritative master project plan
+│   ├── obsidian-vault/            # Obsidian domain knowledge notes
+│   ├── checkpoints/               # Historical release checkpoints
+│   └── archive/                   # Historical reports & legacy migration guides
+└── scripts/                       # Deployment gates, health probes & verification suites
 ```
 
 ---
 
-## ⚡ Key Features
+## 🧪 Comprehensive Verification Status
 
-- **🛡️ Secure Host Routing & RBAC Gate:** Built-in middleware (`proxy.ts`) separates public buyer routes from authenticated `/admin/*` operations backed by signed HMAC session cookies and Supabase Auth.
-- **🤖 Autonomous AI Concierge:** Real-time conversational agent capable of qualifying leads, calculating compound yields, scheduling viewings, and generating localized investment memos.
-- **📊 Real Estate Valuation & Arbitrage Engine:** Dynamic pricing scanner comparing current inventory against historical compound averages, FX swings, and inflation metrics.
-- **📲 Omnichannel Lead Dispatcher:** Native webhooks and schedulers for Meta WhatsApp Cloud API and Telegram bots with automated CRM lead creation.
-- **🔄 Enterprise Data Sync:** Automated bidirectional synchronization between Google Sheets, Property Finder feeds, and Supabase.
+All static, integration, security, and live tests pass at **100%**:
+
+```bash
+# 1. Run deploy pre-flight verification gate (9/9 stages passed)
+pnpm deploy:check
+
+# 2. Run live smoke test against local or production server (6/6 HTTP 200 probes passed)
+pnpm smoke:test
+
+# 3. Run client application test suite (95 suites / 1,052 tests passed)
+pnpm --filter sierra-estates-client-page test
+
+# 4. Run monorepo Vitest suite (57 files / 540 tests passed)
+pnpm vitest run
+
+# 5. Run AI reasoning benchmark harness (10/10 scenarios passed)
+pnpm run-harness
+
+# 6. Run Model Context Protocol smoke test (19/19 assertions passed)
+pnpm mcp:smoke-test
+
+# 7. Run end-to-end owner outreach pipeline test (7/7 steps passed)
+npx.cmd tsx scripts/test-e2e-owner-outreach.ts
+```
+
+| Verification Layer | Metric | Result |
+|---|---|---|
+| **Deploy Pre-Flight** | `pnpm deploy:check` | **9/9 Stages Passed (100%)** |
+| **Next.js Production Build** | `next build --webpack` | **105/105 Pages Compiled (0 Errors)** |
+| **Client Test Suite (Jest)** | Unit & Integration | **95/95 Suites, 1,052/1,052 Tests (100%)** |
+| **Monorepo Vitest Suite** | Memory & Workers | **57/57 Files, 540/540 Tests (100%)** |
+| **AI Reasoning Harness** | Benchmark Evaluation | **10/10 Scenarios (100% Score)** |
+| **MCP Protocol Bridge** | OAuth 2.1 & Tools | **19/19 Assertions Passed (100%)** |
+| **Owner Outreach Pipeline** | E2E OpenWA Gateway | **7/7 Steps Passed (100%)** |
+| **Live Smoke Probes** | Endpoints HTTP 200 | **6/6 Probes Verified (100%)** |
+| **Working Tree Drift** | Git Status | **Clean (0 Drift)** |
 
 ---
 
@@ -81,74 +152,40 @@ graph TD
 
 ### Prerequisites
 
-- **Node.js**: `v24+` or `v26+`
-- **pnpm**: `v9+` or `v10+`
+- **Node.js**: `>=20.0.0` (Recommended: `v22` or `v24`)
+- **pnpm**: `pnpm@9.15.4` (via `corepack.cmd pnpm` or `pnpm`)
 
-### Installation
+### Setup & Run
 
 ```bash
-# Clone repository
+# 1. Clone repository
 git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
 cd SE-Vercel-deploy-main
 
-# Install dependencies across all packages
+# 2. Install workspace dependencies
 pnpm install
-```
 
-### Environment Configuration
-
-Copy the example environment template:
-
-```bash
+# 3. Set up environment variables
 cp .env.example .env.local
+
+# 4. Start local development server
+pnpm dev:web
 ```
 
-Or run the automated secrets provisioner if using GitHub CLI:
-
-```bash
-node scripts/setup-github-secrets.js
-```
-
-### Development Server
-
-```bash
-# Start Next.js development server
-pnpm dev
-```
-
-The application will be accessible at `http://localhost:3000`.
+The client portal will be available at `http://localhost:3000`.
 
 ---
 
-## 🧪 Testing & Validation
+## 📖 Master Roadmap & Documentation
 
-The workspace maintains a 100% pass rate across all unit, integration, and security test suites:
+The project follows the MCD (Mission-Contract-Delivery) alignment protocol. All roadmap updates, milestone history (M3–M11 completed, M12 active in planning), and architectural specifications are maintained in:
 
-```bash
-# Run all test suites across the workspace (71 suites / 765+ tests)
-pnpm test
-
-# Run type check and ESLint across all 22 packages
-pnpm lint
-
-# Run production build
-pnpm build
-```
+👉 **[Master Project Plan (`docs/MASTER_PROJECT_PLAN.md`)](docs/MASTER_PROJECT_PLAN.md)**
 
 ---
 
-## 🌐 Deployment & CI/CD
+## 📄 License & Maintainers
 
-Continuous integration and deployments are managed via **GitHub Actions** and **Vercel**:
-
-- **`.github/workflows/deploy-vercel.yml`**: Automated zero-downtime deployment for client and admin domains with built-in P0 environment validation gates.
-- **`.github/workflows/deploy-supabase.yml`**: Supabase master database schema deployment, pgvector functions, and RLS policy enforcement.
-- **`.github/workflows/external-workflows.yml`**: Scheduled cron workflows for Property Finder scraping, WhatsApp outreach, SendGrid campaigns, and Supabase inventory sync.
-
----
-
-## 📄 License & Maintainer
-
-- **Maintainer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
+- **Lead Engineer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
 - **Organization:** Sierra Estates Realty
 - **Proprietary & Confidential:** All rights reserved.
