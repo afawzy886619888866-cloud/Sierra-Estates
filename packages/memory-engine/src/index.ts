@@ -38,3 +38,16 @@ export {
 
 /* Agent instrumentation. */
 export { instrument, recordRun, type InstrumentedResult } from './instrument'
+
+/* Unified Memory Brain Engine (Obsidian + ECC RAG) */
+export {
+  MemoryBrainEngine,
+  memoryBrain,
+  brainRAG,
+  getMemoryBrain,
+  type VaultNote,
+  type RAGMatch,
+  type BrainRAGOptions,
+  type GoalAlignedContextDirective,
+} from './brain-rag-engine'
+
