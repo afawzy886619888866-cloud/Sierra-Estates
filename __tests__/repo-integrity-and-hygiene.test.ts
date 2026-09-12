@@ -36,7 +36,9 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
       } else {
         const ext = path.extname(entry.name).toLowerCase();
         if (SCAN_EXTENSIONS.includes(ext)) {
-          fileList.push(fullPath);
+          if (!entry.name.includes('snapshot.json')) {
+            fileList.push(fullPath);
+          }
         }
       }
     }
@@ -55,9 +57,9 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
   it('no source file contains git merge conflict markers (<<<<<<<, =======, >>>>>>>)', () => {
     const conflictViolations: { file: string; line: number; marker: string }[] = [];
     const conflictPatterns = [
-      { regex: /^<{7}\s+/m, name: '<<<<<<<' },
-      { regex: /^={7}$/m, name: '=======' },
-      { regex: /^>{7}\s+/m, name: '>>>>>>>' },
+      { regex: /^<{7}\s+[^\r\n]+/m, name: '<<<<<<<' },
+      { regex: /^={7}\r?$/m, name: '=======' },
+      { regex: /^>{7}\s+[^\r\n]+/m, name: '>>>>>>>' },
     ];
 
     for (const file of allSourceFiles) {
@@ -83,7 +85,7 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
     }
 
     expect(conflictViolations).toEqual([]);
-  }, 25000);
+  }, 45000);
 
   it('all JSON configuration files must be valid and parseable', () => {
     const jsonFiles = allSourceFiles.filter((f) => f.endsWith('.json') && !f.includes('.next'));

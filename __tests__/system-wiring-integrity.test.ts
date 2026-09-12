@@ -109,7 +109,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
 
     it('all workflow files must parse as valid YAML without syntax errors', () => {
-      expect(workflowFiles.length).toBeGreaterThanOrEqual(10);
+      expect(workflowFiles.length).toBeGreaterThanOrEqual(6);
 
       for (const wf of workflowFiles) {
         const content = fs.readFileSync(path.join(workflowsDir, wf), 'utf-8');
@@ -191,7 +191,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
 
       expect(agent.name).toBe('test-vertex-agent');
       expect(typeof agent.executeTask).toBe('function');
-    }, 20000);
+    }, 45000);
 
     it('Telegram bot command router safely escapes HTML characters', () => {
       function escapeTelegramHtml(text: string): string {

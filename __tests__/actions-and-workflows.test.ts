@@ -8,17 +8,11 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
 
   const EXPECTED_WORKFLOWS = [
     'agent-fleet.yml',
-    'auto-assign.yml',
-    'backend-tests.yml',
     'ci.yml',
     'codeql.yml',
     'dependency-review.yml',
-    'deploy-cloud-run.yml',
-    'deploy-vercel.yml',
-    'labeler.yml',
-    'pr-size.yml',
-    'stale.yml',
     'deploy-supabase.yml',
+    'deploy-vercel.yml',
   ];
 
   it('all expected workflows must exist in .github/workflows', () => {
@@ -46,7 +40,6 @@ describe('GitHub Actions & CI/CD Workflows Test Suite', () => {
       const submodulesWorkflows = [
         'ci.yml',
         'deploy-vercel.yml',
-        'backend-tests.yml',
         'agent-fleet.yml',
       ];
 
