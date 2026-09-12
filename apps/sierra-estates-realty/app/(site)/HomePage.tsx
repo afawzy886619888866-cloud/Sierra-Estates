@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
-  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check, MapPin,
+  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -248,14 +248,12 @@ export default function HomePage() {
                 marginBottom: 14,
               }}
             >
-              <div className="search-tabs" role="tablist" aria-label={isAr ? 'نوع البحث' : 'Search type'} style={{ margin: 0 }}>
+              <div className="search-tabs" role="group" aria-label={isAr ? 'نوع البحث' : 'Search type'} style={{ margin: 0 }}>
                 {(['buy', 'rent', 'new'] as const).map((mode) => (
                   <button
                     key={mode}
                     className={searchMode === mode ? 'active' : undefined}
                     type="button"
-                    role="tab"
-                    aria-selected={searchMode === mode ? 'true' : 'false'}
                     onClick={() => {
                       setSearchMode(mode);
                       setSearch((prev) => ({ ...prev, price: '0' }));
