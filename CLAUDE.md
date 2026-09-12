@@ -87,7 +87,7 @@ Do not rely on legacy Firebase commands such as `pnpm deploy:rules` or `pnpm dep
 - Validate before shipping: `pnpm lint`, `pnpm type-check`, `pnpm test:ci`, `pnpm check:backend`.
 
 <!-- BEGIN AWS Agent Toolkit rules -->
-# AWS Guidance
+## AWS Guidance
 
 - Where these AWS rules conflict with the project's own instructions, the
   project's instructions take precedence.

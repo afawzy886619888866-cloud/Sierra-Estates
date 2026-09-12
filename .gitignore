@@ -1,6 +1,11 @@
+# ==============================================================================
+# Sierra Estates — Comprehensive Git Ignore Policy
+# ==============================================================================
+
 # Dependencies
 node_modules/
 .pnpm-store/
+.pnpmrc
 
 # Next.js & Turborepo build outputs
 .next/
@@ -20,56 +25,88 @@ apps/sierra-estates-realty/components/**/*.js
 apps/sierra-estates-realty/app/**/*.js
 apps/sierra-estates-realty/__tests__/**/*.js
 
-# Environment variables & secrets
+# Environment variables & secrets (CRITICAL: NEVER COMMIT SECRETS)
 .env
 .env.local
 .env.*.local
 **/.env
 **/.env.local
 **/.env.*.local
-# Agent-specific env files
 apps/agents/**/.env
 apps/agents/**/.env.*
-# pnpm local config (contains machine-specific store path)
-.pnpmrc
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*aws_credentials*
 
-# WhatsApp & Browser automation session caches
+# WhatsApp, OpenWA & Container runtime data
+**/openwa-data/
+**/whatsapp-auth/
+**/n8n-data/
 **/wa_sessions/
 **/.wwebjs_auth/
-**/qr.png
-**/qr.html
-testrun/
-output/
-work-items-out/
+**/.wwebjs_cache/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
-# Python & virtual environments
+# Python & Virtual Environments
 venv/
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 *.pkl
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Robocorp / RPA
-temp/
-.rpa/
+# Logs & Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+scratch/
 
-# IDE & OS files
-.idea/
+# OS & Editor artifacts
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
 .~lock*
 
-# Logs & Test Coverage
-*.log
-coverage/
-.pytest_cache/
+# Archives & Temporary Dumps
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.tmp
+*.bak
+testrun/
+output/
+work-items-out/
+temp/
+.rpa/
 
 # Jupyter
 .ipynb_checkpoints/
 .virtual_documents/
 
-# Archive files
-*.zip
-*.tar.gz
-
+# Bruin / Tools
 .bruin.yml
