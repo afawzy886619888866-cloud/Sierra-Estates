@@ -27,6 +27,7 @@ This document records the exact configuration, credentials, and connection instr
 ## 2. Inbound Firewall (Security Group) Requirements
 
 Ensure the Security Group attached to this instance permits these inbound ports:
+
 - **Port 22 (SSH)**: Source `My IP` or `0.0.0.0/0` (for command-line access)
 - **Port 3000 (OpenWA Web UI)**: Source `0.0.0.0/0` (for linking WhatsApp via QR code)
 - **Port 5678 (n8n Automation)**: Source `0.0.0.0/0` (for workflow management)
@@ -36,6 +37,7 @@ Ensure the Security Group attached to this instance permits these inbound ports:
 ## 3. How to Connect via SSH
 
 From PowerShell on Windows:
+
 ```powershell
 ssh -i "path\to\sierra-estates-key.pem" ec2-user@18.232.148.172
 ```
@@ -45,12 +47,14 @@ ssh -i "path\to\sierra-estates-key.pem" ec2-user@18.232.148.172
 ## 4. Run Automated Setup on EC2
 
 Once logged in via SSH:
+
 ```bash
 # Download and execute the automated Amazon Linux 2023 setup
 curl -sSL https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/infra/aws/setup-al2023-ec2.sh | bash
 ```
 
 Or step-by-step:
+
 ```bash
 # 1. Enter the OpenWA directory
 cd /opt/sierra-estates/infra/openwa
