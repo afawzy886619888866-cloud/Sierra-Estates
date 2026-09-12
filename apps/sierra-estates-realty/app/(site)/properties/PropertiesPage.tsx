@@ -32,6 +32,7 @@ import snapshot from '@/lib/inventory/snapshot.json';
 import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { useListingsRealtime } from '@/hooks/useListingsRealtime';
+import { getCuratedListingImage } from '@/lib/site/luxury-images';
 
 // Dynamic import for Leaflet map to guarantee SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -198,7 +199,7 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     mode: isRent ? 'rent' : 'sale',
     agent: 'Sierra Advisor Desk',
     ago: raw.ago || 'Verified Master Sync',
-    img: raw.img || FALLBACK_IMGS[index % FALLBACK_IMGS.length],
+    img: getCuratedListingImage(raw, index),
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.lat || 30.02 + (((index * 13) % 40) - 20) * 0.003),
     lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
@@ -214,15 +215,20 @@ export default function PropertiesPage() {
   // Initial load directly from snapshot for instant zero-delay render (excluding owner listings)
   const initialUnits: RealListing[] = useMemo(() => {
     const rawList: any[] = (snapshot as any)?.units || [];
-    return rawList
-      .filter((raw: any) =>
-        raw.party !== 'Owner' &&
-        raw.sourceType !== 'owner' &&
-        raw.segment !== 'owners_rent' &&
-        raw.segment !== 'owners_buy' &&
-        raw.tag !== 'Direct Owner'
-      )
-      .map(sanitizeUnit);
+    const valid = rawList.filter((raw: any) =>
+      raw.party !== 'Owner' &&
+      raw.sourceType !== 'owner' &&
+      raw.segment !== 'owners_rent' &&
+      raw.segment !== 'owners_buy' &&
+      raw.tag !== 'Direct Owner'
+    );
+    // Prioritize units with defined price and clean compound name
+    valid.sort((a: any, b: any) => {
+      const aScore = (a.price > 0 ? 100 : 0) + (a.compound && a.compound !== 'New Cairo' ? 50 : 0);
+      const bScore = (b.price > 0 ? 100 : 0) + (b.compound && b.compound !== 'New Cairo' ? 50 : 0);
+      return bScore - aScore;
+    });
+    return valid.map(sanitizeUnit);
   }, []);
 
   const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
