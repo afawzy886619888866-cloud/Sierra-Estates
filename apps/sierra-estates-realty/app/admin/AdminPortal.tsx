@@ -400,7 +400,8 @@ function AgentsPage({ T }) {
 }
 
 /* ── WORKFLOWS PAGE ───────────────────────────────────────────────────── */
-function WorkflowsPage({ T }: { T: any }) {
+function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (tab: string) => void; lang?: string }) {
+  const isAr = lang === 'ar' || T('lang') === 'ar';
   const [wfs, setWfs] = useState(WORKFLOWS_DATA.map(w => ({ ...w })));
   const [running, setRunning] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
@@ -410,14 +411,14 @@ function WorkflowsPage({ T }: { T: any }) {
 
   const handleRunAll = async () => {
     setRunning(true);
-    setStatusMsg('Triggering multi-stage pipeline orchestration (/api/orchestrate)...');
+    setStatusMsg(isAr ? 'جاري تشغيل خط الأتمتة الشامل (/api/orchestrate)...' : 'Triggering multi-stage pipeline orchestration (/api/orchestrate)...');
     try {
       const res = await fetch('/api/orchestrate', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
-      setStatusMsg(res.ok ? '✓ Pipeline orchestration completed across S1–S10 stages!' : (data?.error || 'Orchestration completed with warnings.'));
-      setWfs(p => p.map(w => ({ ...w, runs: w.runs + 1, last: 'Just now' })));
+      setStatusMsg(res.ok ? (isAr ? '✓ اكتمل تشغيل خط الأتمتة بنجاح عبر المراحل S1-S10!' : '✓ Pipeline orchestration completed across S1–S10 stages!') : (data?.error || 'Orchestration completed with warnings.'));
+      setWfs(p => p.map(w => ({ ...w, runs: w.runs + 1, last: isAr ? 'الآن' : 'Just now' })));
     } catch {
-      setStatusMsg('✓ Pipeline executed successfully.');
+      setStatusMsg(isAr ? '✓ تم إرسال أمر التشغيل بنجاح.' : '✓ Pipeline executed successfully.');
     } finally {
       setRunning(false);
       setTimeout(() => setStatusMsg(''), 4000);
@@ -426,17 +427,17 @@ function WorkflowsPage({ T }: { T: any }) {
 
   const triggerOp = async (opName: string, endpoint?: string) => {
     setRunning(true);
-    setActionOutput(`[~] Executing ${opName}...`);
+    setActionOutput(`[~] ${isAr ? 'جاري تنفيذ' : 'Executing'} ${opName}...`);
     try {
       if (endpoint) {
         await fetch(endpoint, { method: 'POST' }).catch(() => {});
       }
       setTimeout(() => {
-        setActionOutput(`[✓] ${opName} completed successfully at ${new Date().toLocaleTimeString()}. Database & queues updated.`);
+        setActionOutput(`[✓] ${opName} ${isAr ? 'اكتملت بنجاح في' : 'completed successfully at'} ${new Date().toLocaleTimeString()}. ${isAr ? 'تم تحديث قاعدة البيانات وقوائم الانتظار.' : 'Database & queues updated.'}`);
         setRunning(false);
       }, 1000);
-    } catch (e: any) {
-      setActionOutput(`[✓] ${opName} triggered in background.`);
+    } catch {
+      setActionOutput(`[✓] ${opName} ${isAr ? 'تم تشغيلها في الخلفية.' : 'triggered in background.'}`);
       setRunning(false);
     }
   };
@@ -446,12 +447,69 @@ function WorkflowsPage({ T }: { T: any }) {
       {/* Action Header */}
       <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
         <button className="btn btn-gold" onClick={handleRunAll} disabled={running}>
-          <Ic.Play/> {running ? 'Running Pipeline…' : 'Run All Active Workflows'}
+          <Ic.Play/> {running ? (isAr ? 'جاري تشغيل الخط…' : 'Running Pipeline…') : (isAr ? 'تشغيل جميع مسارات العمل' : 'Run All Active Workflows')}
         </button>
-        <button className="btn btn-ghost" onClick={()=>setStatusMsg('Workflows refreshed.')}><Ic.Refresh/> Refresh</button>
+        <button className="btn btn-ghost" onClick={()=>setStatusMsg(isAr ? 'تم تحديث مسارات العمل.' : 'Workflows refreshed.')}>
+          <Ic.Refresh/> {isAr ? 'تحديث' : 'Refresh'}
+        </button>
+        {onNavigate && (
+          <button 
+            className="btn btn-ghost" 
+            style={{borderColor:'rgba(62,207,142,.3)',color:'var(--emerald)'}}
+            onClick={() => onNavigate('whatsapp_outreach')}
+          >
+            💬 {isAr ? 'فتح مرسل الواتساب' : 'Open WhatsApp Sender'}
+          </button>
+        )}
         {statusMsg && (
           <span style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--gold)',marginLeft:8}}>{statusMsg}</span>
         )}
+      </div>
+
+      {/* Google Drive & Master Inventory Central Banner */}
+      <div className="card" style={{padding:'14px 18px',marginBottom:18,background:'linear-gradient(135deg, rgba(0,174,255,0.06), rgba(62,207,142,0.06))',border:'1px solid rgba(0,174,255,0.25)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <span style={{fontSize:28}}>📂</span>
+            <div>
+              <div style={{fontWeight:700,fontSize:14,color:'var(--tx)',display:'flex',alignItems:'center',gap:8}}>
+                {isAr ? 'مستودع المخزون الرئيسي ومجلد جوجل درايف' : 'Master Inventory Repository & Google Drive Folder'}
+                <span className="chip chip-green">LIVE SYNC</span>
+              </div>
+              <div style={{fontSize:11,color:'var(--tx-m)',marginTop:2}}>
+                {isAr ? 'مجلد جوجل درايف يحتوي على شيتات الملاك، الإيجار، البيع والمخزون المجمع المحدث.' : 'Canonical Google Drive source folder containing direct owner sheets, sales, rent, and verified inventory.'}
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            <a 
+              href="https://drive.google.com/drive/folders/1RGuki2ECPK4DHNXgzlinQ2QTFAMBnC1z" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="btn btn-gold"
+              style={{fontSize:11,textDecoration:'none',padding:'6px 14px'}}
+            >
+              📁 {isAr ? 'فتح جوجل درايف' : 'Open Google Drive Folder'} ↗
+            </a>
+            <a 
+              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="btn btn-ghost"
+              style={{fontSize:11,textDecoration:'none',padding:'6px 14px',borderColor:'rgba(62,207,142,.4)',color:'var(--emerald)'}}
+            >
+              📊 {isAr ? 'شيت المخزون الرئيسي' : 'Master Google Sheet'} ↗
+            </a>
+            <a 
+              href="/downloads/sierra-estates-master-inventory.xlsx" 
+              download 
+              className="btn btn-ghost"
+              style={{fontSize:11,textDecoration:'none',padding:'6px 14px'}}
+            >
+              📥 {isAr ? 'تحميل إكسيل (12MB)' : 'Download Excel (12MB)'}
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Instant Operations Triggers */}
@@ -461,46 +519,46 @@ function WorkflowsPage({ T }: { T: any }) {
             <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>🏢 Property Finder Sync</span>
             <span className="chip chip-blue">Feed v2</span>
           </div>
-          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>Push verified active listings to Property Finder XML/JSON portal & capture leads.</p>
+          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'مزامنة الوحدات المعتمدة مع خلاصة بروبرتي فايندر واستقبال العملاء.' : 'Push verified active listings to Property Finder XML/JSON portal & capture leads.'}</p>
           <button 
             className="btn btn-ghost" 
             style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}
             onClick={() => triggerOp('Property Finder Feed Syndication', '/api/sync')}
             disabled={running}
           >
-            ⚡ Sync Property Finder
-          </button>
-        </div>
-
-        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #f59e0b'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-            <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>📸 Photo Hunter Radar</span>
-            <span className="chip chip-amber">High Yield</span>
-          </div>
-          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>Detect luxury villas & high-demand units lacking photos and create photo task tickets.</p>
-          <button 
-            className="btn btn-ghost" 
-            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(245,158,11,.3)',color:'#f59e0b'}}
-            onClick={() => triggerOp('Photo Hunter Scan (Prioritizing best units needing photos)')}
-            disabled={running}
-          >
-            ⭐ Run Photo Radar
+            ⚡ {isAr ? 'مزامنة بروبرتي فايندر' : 'Sync Property Finder'}
           </button>
         </div>
 
         <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #34D399'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-            <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>📱 WhatsApp Harvester</span>
-            <span className="chip chip-green">Active</span>
+            <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>💬 WhatsApp Scheduled Sender</span>
+            <span className="chip chip-green">Active Hub</span>
           </div>
-          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>Ingest unread broker & owner WhatsApp groups, deduping into master database.</p>
+          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'جدولة وإرسال رسائل وحملات الواتساب للعملاء والملاك بذكاء.' : 'Schedule automated buyer campaigns and direct owner outreach staggered over time.'}</p>
           <button 
             className="btn btn-ghost" 
             style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(52,211,153,.3)',color:'#34D399'}}
-            onClick={() => triggerOp('WhatsApp Scraper Intake', '/api/admin/bots')}
+            onClick={() => onNavigate ? onNavigate('whatsapp_outreach') : triggerOp('WhatsApp Outreach Queue', '/api/admin/whatsapp/schedule')}
             disabled={running}
           >
-            📥 Ingest WhatsApp Now
+            🚀 {isAr ? 'فتح أداة الإرسال' : 'Open Sender Studio'}
+          </button>
+        </div>
+
+        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #f59e0b'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>📱 WhatsApp Mobile Harvester</span>
+            <span className="chip chip-amber">High Yield</span>
+          </div>
+          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'استيراد ملفات محادثات الواتساب من الموبايل واستخراج عروض الملاك المباشرة.' : 'Ingest exported mobile WhatsApp chats (.txt), prioritizing direct owner groups.'}</p>
+          <button 
+            className="btn btn-ghost" 
+            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(245,158,11,.3)',color:'#f59e0b'}}
+            onClick={() => onNavigate ? onNavigate('listings') : triggerOp('WhatsApp Chat Scanner', '/api/admin/whatsapp/scan')}
+            disabled={running}
+          >
+            📥 {isAr ? 'فتح مستخرج المحادثات' : 'Open Chat Scanner'}
           </button>
         </div>
 
@@ -509,14 +567,14 @@ function WorkflowsPage({ T }: { T: any }) {
             <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>🤖 Autonomous Bots Sweep</span>
             <span className="chip chip-purple">6 Agents</span>
           </div>
-          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>Trigger Leila, Sierra-Bot, and Stage-9 Closer to follow up with active leads.</p>
+          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'تفعيل وكلاء الذكاء الاصطناعي الستة لمتابعة العملاء وتنسيق الصفقات.' : 'Trigger Leila, Sierra-Bot, and Stage-9 Closer to follow up with active leads.'}</p>
           <button 
             className="btn btn-ghost" 
             style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(124,58,237,.3)',color:'#7C3AED'}}
             onClick={() => triggerOp('Autonomous Agent Fleet Sweep', '/api/orchestrate')}
             disabled={running}
           >
-            🚀 Dispatch Agents
+            🚀 {isAr ? 'إطلاق الأسطول' : 'Dispatch Agents'}
           </button>
         </div>
       </div>
@@ -2195,7 +2253,13 @@ function AdminApp() {
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
       case 'alerts':return <AlertsView lang={langKey}/>;
       case 'agents':return <AgentsView lang={langKey}/>;
-      case 'workflows':return <WorkflowsPage T={T}/>;
+      case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
+      case 'whatsapp_outreach':
+      case 'whatsapp_sender':return (
+        <div className="fade-up" style={{paddingTop: 4}}>
+          <WhatsAppScheduledSender lang={langKey} />
+        </div>
+      );
       case 'openclaw':return <OpenClawPage T={T}/>;
       case 'nexus':return <NexusAIPage T={T}/>;
       case 'leads':return <LeadsPage T={T}/>;
