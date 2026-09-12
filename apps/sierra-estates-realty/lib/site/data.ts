@@ -364,7 +364,7 @@ const DATA: any = {
     );
     if (foundDef) return foundDef;
 
-    const raw = rawUnits.find(
+    const raw = validUnits.find(
       (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
     );
     if (raw) {
@@ -374,17 +374,17 @@ const DATA: any = {
         cmp: raw.compound || raw.location || 'New Cairo',
         zone: raw.zone || '5th Settlement',
         type: raw.type || 'Apartment',
-        beds: Number(raw.beds || 3),
-        bath: Number(raw.bath || 2),
-        area: Number(raw.area || 160),
+        beds: Number(raw.bedrooms || raw.beds || 3),
+        bath: Number(raw.bathrooms || raw.bath || 2),
+        area: Number(raw.area_sqm || raw.area || 160),
         egpM: raw.egpM || Number(((raw.price || 8000000) / 1000000).toFixed(1)),
         usd: raw.usd || (raw.mode === 'rent' ? Math.round((raw.price || 40000) / 50) : Math.round((raw.price || 8000000) / 5000)),
         ai: Number(raw.aiScore || 9.2),
         tag: raw.tag || (raw.mode === 'rent' ? 'Verified Rent' : 'Verified Sale'),
         mode: raw.mode || 'sale',
         agent: 'Sierra Advisor Desk',
-        ago: 'Master Inventory Sync',
-        img: raw.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
+        ago: raw.listedAt || 'Master Inventory Sync',
+        img: getCuratedListingImage(raw),
         whatsapp: 'https://wa.me/201092048333',
         segment: raw.segment,
       };
