@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eccMemory, Episode } from '@/lib/eccMemoryEngine';
+import { brainRAG } from '@sierra-estates/memory-engine';
 import {
   recordEccEpisodeViaPythonApi,
   trackPriceReductionViaPythonApi,
@@ -9,6 +10,18 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const entityId = searchParams.get('entityId');
+    const query = searchParams.get('query');
+
+    if (query) {
+      const rag = brainRAG.queryBrainRAG(query, {
+        entityId: entityId || undefined,
+        compound: searchParams.get('compound') || undefined,
+      });
+      return NextResponse.json({
+        success: true,
+        rag,
+      });
+    }
 
     if (entityId) {
       const episodes = eccMemory.getEpisodesForEntity(entityId);
@@ -22,7 +35,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'ECC Memory Engine is online.',
+      message: 'ECC Memory Engine & Unified Brain RAG are online.',
+      activeGoal: brainRAG.getActiveGoal(),
     });
   } catch (error) {
     return NextResponse.json(
@@ -71,6 +85,24 @@ export async function POST(req: NextRequest) {
     if (body.action === 'find_matching_buyers') {
       const matches = eccMemory.findMatchingBuyers(body.property);
       return NextResponse.json({ success: true, matches });
+    }
+
+    if (body.action === 'query_rag' || body.action === 'rag_context') {
+      const rag = brainRAG.queryBrainRAG(body.query || '', {
+        entityId: body.entityId,
+        compound: body.compound,
+        maxVaultResults: body.maxVaultResults || 3,
+        maxEpisodes: body.maxEpisodes || 4,
+      });
+      return NextResponse.json({ success: true, rag });
+    }
+
+    if (body.action === 'set_goal') {
+      if (!body.goal || typeof body.goal !== 'string') {
+        return NextResponse.json({ success: false, error: 'Goal string required' }, { status: 400 });
+      }
+      brainRAG.setActiveGoal(body.goal);
+      return NextResponse.json({ success: true, activeGoal: brainRAG.getActiveGoal() });
     }
 
     return NextResponse.json(

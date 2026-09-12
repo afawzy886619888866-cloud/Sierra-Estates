@@ -499,7 +499,11 @@ export class WhatsAppBotRouter {
     history: unknown[],
     leadProfile: Record<string, unknown> | null
   ): string {
+    const ragDirective = brainRAG.queryBrainRAG(msg.body, { entityId: phone });
+
     return `
+${ragDirective.formattedDirective}
+
 CLIENT CONTEXT:
 - Phone: ${phone}
 - Message Timestamp: ${new Date(msg.timestamp * 1000).toISOString()}
