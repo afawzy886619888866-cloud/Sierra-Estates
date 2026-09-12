@@ -17,21 +17,21 @@ cmd = [
 res = subprocess.run(cmd, capture_output=True, text=True)
 cmd_id = res.stdout.strip()
 
-wait_cmd = [
-    'aws', '--profile', 'sierra-estates', '--region', 'us-east-1', 'ssm', 'wait',
-    'command-executed', '--command-id', cmd_id, '--instance-id', 'i-0be8ff8c5cfba7363'
-]
-subprocess.run(wait_cmd)
-
-out_cmd = [
-    'aws', '--profile', 'sierra-estates', '--region', 'us-east-1', 'ssm', 'get-command-invocation',
-    '--command-id', cmd_id, '--instance-id', 'i-0be8ff8c5cfba7363'
-]
-out_res = subprocess.run(out_cmd, capture_output=True, text=True)
-try:
-    data = json.loads(out_res.stdout)
-    print("STDOUT:", data.get("StandardOutputContent", ""))
-    print("STDERR:", data.get("StandardErrorContent", ""))
-    print("STATUS:", data.get("Status", ""))
-except Exception as e:
-    print(out_res.stdout)
+import time
+for _ in range(30):
+    time.sleep(2)
+    out_cmd = [
+        'aws', '--profile', 'sierra-estates', '--region', 'us-east-1', 'ssm', 'get-command-invocation',
+        '--command-id', cmd_id, '--instance-id', 'i-0be8ff8c5cfba7363'
+    ]
+    out_res = subprocess.run(out_cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+    try:
+        data = json.loads(out_res.stdout)
+        status = data.get('Status')
+        if status in ['Success', 'Failed', 'Cancelled', 'TimedOut']:
+            print(data.get('StandardOutputContent', ''))
+            if data.get('StandardErrorContent'):
+                print("STDERR:", data.get('StandardErrorContent'))
+            sys.exit(0 if status == 'Success' else 1)
+    except Exception:
+        pass

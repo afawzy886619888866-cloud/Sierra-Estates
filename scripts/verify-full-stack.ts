@@ -79,8 +79,8 @@ async function runVerification() {
   // 3. Check WhatsApp Session & QR Generation
   total++;
   process.stdout.write('3. WhatsApp Session QR Endpoint (sierra-main)... ');
-  const qrRes = await checkUrl('http://18.232.148.172:3000/api/sessions/3e5c5f78-da22-4793-bd51-d648b552cd17/qr', {
-    'X-API-Key': 'owa_k1_ced32b1c630618c321e9249439b7da90e5408506b7979a7da3e3ff71d375dbbe',
+  const qrRes = await checkUrl('http://18.232.148.172:3000/api/sessions/9fbfb682-2fa8-44aa-9af0-35bb23ea80dd/qr', {
+    'X-API-Key': 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c',
   });
   if (qrRes.ok) {
     try {
