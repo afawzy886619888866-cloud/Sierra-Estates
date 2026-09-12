@@ -12,6 +12,7 @@
 import { getSupabaseAdmin } from '@sierra-estates/db';
 
 export { insertRecord, listRecords, updateRecord } from '@sierra-estates/db';
+export * from './reliability';
 
 /**
  * Fail loudly at startup rather than on the first write.
