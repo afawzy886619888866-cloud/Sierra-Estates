@@ -2,6 +2,7 @@
     "name": "sierra-estates",
     "version": "1.0.0",
     "private": true,
+    "packageManager": "pnpm@9.15.4",
     "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
     "scripts": {
         "dev": "turbo run dev",
