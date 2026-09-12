@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import {
   calculateHaversineDistanceKm,
   calculateBoundingBox,
@@ -6,9 +5,9 @@ import {
   toGeoJsonFeatureCollection,
 } from '../../lib/server/spatial-utils';
 
-vi.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/supabase', () => ({
   supabase: {
-    rpc: vi.fn().mockResolvedValue({
+    rpc: jest.fn().mockResolvedValue({
       data: [
         {
           id: 'prop-test-1',
@@ -43,15 +42,15 @@ vi.mock('@/lib/supabase', () => ({
       ],
       error: null,
     }),
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          limit: jest.fn().mockResolvedValue({ data: [], error: null }),
         }),
       }),
     }),
   },
-  getSupabaseAdmin: vi.fn(),
+  getSupabaseAdmin: jest.fn(),
 }));
 
 import { GET as spatialGET } from '../../app/api/listings/spatial/route';
@@ -131,7 +130,7 @@ describe('GET /api/listings/spatial Endpoint', () => {
     expect(body.meta).toBeDefined();
     expect(body.meta.center.lat).toBe(30.045);
     expect(body.meta.center.lng).toBe(31.59);
-    expect(body.listings).toBeInstanceOf(Array);
+    expect(Array.isArray(body.listings)).toBe(true);
     expect(body.geojson.type).toBe('FeatureCollection');
   });
 
@@ -142,7 +141,7 @@ describe('GET /api/listings/spatial Endpoint', () => {
     const body = await res.json();
 
     expect(body.type).toBe('FeatureCollection');
-    expect(body.features).toBeInstanceOf(Array);
+    expect(Array.isArray(body.features)).toBe(true);
     if (body.features.length > 0) {
       expect(body.features[0].geometry.type).toBe('Point');
       expect(body.features[0].properties.distanceKm).toBeDefined();
@@ -157,7 +156,7 @@ describe('GET /api/listings with Proximity Parameters', () => {
     expect(res.status).toBe(200);
     const listings = await res.json();
 
-    expect(listings).toBeInstanceOf(Array);
+    expect(Array.isArray(listings)).toBe(true);
     if (listings.length > 0) {
       expect(listings[0].distanceKm).toBeDefined();
     }
