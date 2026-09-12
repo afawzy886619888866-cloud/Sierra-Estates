@@ -31,10 +31,10 @@ const config = {
     '!**/*.test.{ts,tsx}',
   ],
   coverageReporters: ['text-summary', 'lcov', 'json'],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  setupFilesAfterEnv: [require.resolve('./__tests__/setup.ts')],
   transform: {
     '^.+\\.tsx?$': [
-      'ts-jest',
+      require.resolve('ts-jest'),
       {
         tsconfig: {
           jsx: 'react',
