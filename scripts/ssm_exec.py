@@ -25,8 +25,13 @@ subprocess.run(wait_cmd)
 
 out_cmd = [
     'aws', '--profile', 'sierra-estates', '--region', 'us-east-1', 'ssm', 'get-command-invocation',
-    '--command-id', cmd_id, '--instance-id', 'i-0be8ff8c5cfba7363',
-    '--query', 'StandardOutputContent', '--output', 'text'
+    '--command-id', cmd_id, '--instance-id', 'i-0be8ff8c5cfba7363'
 ]
 out_res = subprocess.run(out_cmd, capture_output=True, text=True)
-print(out_res.stdout)
+try:
+    data = json.loads(out_res.stdout)
+    print("STDOUT:", data.get("StandardOutputContent", ""))
+    print("STDERR:", data.get("StandardErrorContent", ""))
+    print("STATUS:", data.get("Status", ""))
+except Exception as e:
+    print(out_res.stdout)
