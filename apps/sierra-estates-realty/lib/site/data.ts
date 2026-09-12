@@ -92,6 +92,7 @@ const DATA: any = {
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55'
   ],
   agentImg: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=55',
+  compoundImgs: COMPOUND_HERO_IMAGES,
   compounds: [
     { id: 1, n: 'Katameya Heights', c: [29.99, 31.48], g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000, dev: 'Katameya Group' },
     { id: 2, n: 'Katameya Dunes', c: [29.985, 31.492], g: '+12%', ai: 8.8, z: 'Katameya', priceM: 18, rent: 3400, dev: 'Katameya Group' },
