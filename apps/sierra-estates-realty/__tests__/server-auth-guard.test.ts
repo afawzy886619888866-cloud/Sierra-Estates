@@ -194,9 +194,21 @@ describe('verifyAdminRequest', () => {
     const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
 
     expect(result.authenticated).toBe(true);
+    expect(result.method).toBe('supabase');
   });
 
-  it.each(['agent', 'manager', undefined])(
+  it('grants access to a manager', async () => {
+    const { verifyAdminRequest } = await loadGuard('s3cret');
+    getUser.mockResolvedValueOnce(supabaseUser('mgr-1'));
+    getRecord.mockResolvedValueOnce({ role: 'manager' });
+
+    const result = await verifyAdminRequest(request({ authorization: 'Bearer t' }));
+
+    expect(result.authenticated).toBe(true);
+    expect(result.method).toBe('supabase');
+  });
+
+  it.each(['agent', 'owner', 'viewer', undefined])(
     'denies a user whose role is %s',
     async (role) => {
       const { verifyAdminRequest } = await loadGuard('s3cret');
@@ -208,6 +220,17 @@ describe('verifyAdminRequest', () => {
       expect(result).toEqual({ authenticated: false, method: 'none' });
     },
   );
+
+  it('fails closed without throwing when given malformed cookie values', async () => {
+    const { verifyRequest, verifyAdminRequest } = await loadGuard('s3cret');
+    const malformedReq = request({ cookie: 'sierra_sess=%E0%A4%A; malformed=%80; valid=123' });
+
+    const reqResult = await verifyRequest(malformedReq);
+    expect(reqResult).toEqual({ authenticated: false, method: 'none' });
+
+    const adminResult = await verifyAdminRequest(malformedReq);
+    expect(adminResult).toEqual({ authenticated: false, method: 'none' });
+  });
 
   it('denies when the user document does not exist', async () => {
     const { verifyAdminRequest } = await loadGuard('s3cret');

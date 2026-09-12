@@ -15,6 +15,20 @@ import { isAdminPortalRole } from '@/lib/types';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
+/**
+ * Canonical roles permitted to access administrative APIs and console operations.
+ * Single source of truth for both verifyAdminRequest and /api/admin/auth.
+ */
+export const ADMIN_CONSOLE_ROLES = ['admin', 'manager', 'superadmin'] as const;
+export type AdminConsoleRole = (typeof ADMIN_CONSOLE_ROLES)[number];
+
+export function isAdminConsoleRole(role: unknown): boolean {
+  return (
+    typeof role === 'string' &&
+    ADMIN_CONSOLE_ROLES.includes(role.trim().toLowerCase() as AdminConsoleRole)
+  );
+}
+
 /** Constant-time string comparison to prevent timing attacks. */
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -71,9 +85,16 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
   // Method 2: Server session cookie (sierra_sess) from Admin Portal login
   try {
     const cookieHeader = req.headers.get('cookie');
-    const sessionToken =
-      req.cookies?.get?.(SESSION_COOKIE)?.value ||
-      parseCookies(cookieHeader)[SESSION_COOKIE];
+    let sessionToken: string | undefined;
+
+    try {
+      sessionToken =
+        req.cookies?.get?.(SESSION_COOKIE)?.value ||
+        parseCookies(cookieHeader)[SESSION_COOKIE];
+    } catch {
+      // Cookie reading or malformed percent-encoding failed — fall back safely
+      sessionToken = parseCookies(cookieHeader)[SESSION_COOKIE];
+    }
 
     if (sessionToken) {
       const sess = await verifySession(sessionToken);
@@ -116,8 +137,8 @@ export function unauthorizedResponse(message = 'Authentication required') {
 /**
  * Verifies that the request comes from an authenticated admin user.
  * Supports:
- *   1. Verified session cookies carrying an admin/superadmin role
- *   2. Supabase identities with admin/superadmin role on profiles
+ *   1. Verified session cookies carrying an admin console role (admin, manager, superadmin)
+ *   2. Supabase identities with an admin console role on profiles
  */
 export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> {
   const result = await verifyRequest(req);
@@ -125,7 +146,7 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   // Session cookie callers already carry a verified role minted by /api/auth
   if (result.method === 'session-cookie') {
-    if (result.role === 'admin' || result.role === 'superadmin') {
+    if (isAdminConsoleRole(result.role)) {
       return result;
     }
     if (result.email && isAdminEmail(result.email)) {
@@ -138,10 +159,11 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
   // there is no profiles row to carry a role.
   if (!result.uid) return { authenticated: false, method: 'none' };
 
+  let profileRole: string | undefined;
   try {
     const profile = await getRecord<{ role?: string }>('profiles', result.uid);
-    const role = profile?.role;
-    if (role !== 'admin' && role !== 'superadmin') {
+    profileRole = profile?.role;
+    if (!isAdminConsoleRole(profileRole)) {
       return { authenticated: false, method: 'none' };
     }
   } catch {

@@ -95,6 +95,14 @@ describe('API Routes, Cron Jobs & Server Auth Contracts Test Suite', () => {
       expect(parseCookies(null)).toEqual({});
     });
 
+    it('parseCookies gracefully handles malformed percent-encoded cookies without throwing', () => {
+      const header = 'sierra_sess=%E0%A4%A; broken=%80; valid=ok%20val';
+      const cookies = parseCookies(header);
+      expect(cookies.valid).toBe('ok val');
+      expect(cookies.sierra_sess).toBe('%E0%A4%A');
+      expect(cookies.broken).toBe('%80');
+    });
+
     it('tryDemoLogin enforces configured password and admin email requirement', () => {
       const originalPass = process.env.ADMIN_BOOTSTRAP_PASSWORD;
       process.env.ADMIN_BOOTSTRAP_PASSWORD = 'DemoAdminSecurePassword2026!';

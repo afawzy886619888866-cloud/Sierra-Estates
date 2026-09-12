@@ -223,6 +223,16 @@ describe('parseCookies / getSessionFromRequest', () => {
     });
     expect(parseCookies(null)).toEqual({});
   });
+
+  it('parses cookies safely without throwing on malformed percent-encoded values', async () => {
+    clearSecrets();
+    const { parseCookies } = await loadAuth();
+
+    const result = parseCookies('malformed=%E0%A4%A; test=%80; regular=hello%20world');
+    expect(result.regular).toBe('hello world');
+    expect(result.malformed).toBe('%E0%A4%A');
+    expect(result.test).toBe('%80');
+  });
 });
 
 describe('requireRole', () => {

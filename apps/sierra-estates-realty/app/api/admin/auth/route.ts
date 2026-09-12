@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
+import { ADMIN_CONSOLE_ROLES, isAdminConsoleRole } from '@/lib/server/auth-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/** Roles allowed into the admin console. */
-const ADMIN_CONSOLE_ROLES = ['admin', 'manager', 'superadmin'];
 
 interface VerifiedCaller {
   uid: string;
@@ -49,7 +47,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    if (!caller.role || !ADMIN_CONSOLE_ROLES.includes(caller.role)) {
+    if (!caller.role || !isAdminConsoleRole(caller.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
@@ -83,7 +81,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      authorized: Boolean(caller.role && ADMIN_CONSOLE_ROLES.includes(caller.role)),
+      authorized: Boolean(caller.role && isAdminConsoleRole(caller.role)),
       uid: caller.uid,
       role: caller.role,
     });
