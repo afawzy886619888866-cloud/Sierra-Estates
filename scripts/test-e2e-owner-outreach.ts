@@ -77,7 +77,7 @@ async function runEndToEndVerification() {
   // STEP 4: EC2 OpenWA Gateway Connectivity
   console.log('\n🔹 [Step 4/7] Checking EC2 OpenWA Gateway & Session Status...');
   const openwaUrl = process.env.OPENWA_URL || 'http://18.232.148.172:3000';
-  const openwaKey = process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_ced32b1c630618c321e9249439b7da90e5408506b7979a7da3e3ff71d375dbbe';
+  const openwaKey = process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c';
   try {
     const healthRes = await fetch(`${openwaUrl}/api/health`, { signal: AbortSignal.timeout(5000) });
     const healthData = await healthRes.json();
