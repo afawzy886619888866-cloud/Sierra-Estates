@@ -1,0 +1,12 @@
+﻿{
+  "plugin": "gsheets-logger",
+  "description": "Logs every incoming WhatsApp message to the Sierra Estates master inventory Google Sheet",
+  "config": {
+    "spreadsheetId": "${INVENTORY_SHEET_ID}",
+    "sheetTab": "WA_Inbox",
+    "serviceAccountJson": "<paste-service-account-json-here>",
+    "columns": ["timestamp", "from", "groupName", "isGroup", "messageType", "body"],
+    "dateFormat": "dd/MM/yyyy HH:mm:ss",
+    "timezone": "Africa/Cairo"
+  }
+}

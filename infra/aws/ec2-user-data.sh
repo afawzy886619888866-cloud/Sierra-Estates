@@ -4,31 +4,22 @@
 # File: SE/infra/aws/ec2-user-data.sh
 # ═══════════════════════════════════════════════════════════════════════════
 #
-#  This script runs AUTOMATICALLY when the EC2 instance first boots.
-#  Paste it into the "User data" field when launching the EC2 instance.
+#  Runs automatically on first EC2 boot. Installs:
+#    • Docker + Docker Compose
+#    • OpenWA WhatsApp Gateway (replaces legacy whatsapp-scraper)
+#    • n8n Workflow Automation
+#    • 4 Sierra Estates plugins: gsheets-logger, http-action, after-hours, faq-bot
 #
-#  It will:
-#    1. Install Docker + Docker Compose
-#    2. Create swap (t3.micro has only 1GB RAM — needs swap for n8n)
-#    3. Clone the SE repo
-#    4. Start n8n + WhatsApp scraper
-#    5. Configure firewall (iptables)
+#  After boot (~5 min):
+#    Dashboard: http://<EC2_IP>:3000   (OpenWA — scan QR here)
+#    n8n:       http://<EC2_IP>:5678
 #
-#  LAUNCH COMMAND (AWS CLI):
-#    aws ec2 run-instances \
-#      --image-id ami-0c7217cdde317cfec \
-#      --instance-type t3.small \
-#      --user-data file://infra/aws/ec2-user-data.sh \
-#      --key-name your-key-pair \
-#      --security-group-ids sg-xxxxx \
-#      --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=sierra-estates}]"
 # ═══════════════════════════════════════════════════════════════════════════
 
 #!/bin/bash
 set -ex
 
-# ── Log everything ──
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+exec >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "=== Sierra Estates EC2 Setup Starting ==="
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -38,7 +29,7 @@ apt-get update -y
 apt-get upgrade -y
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 2: Create swap (critical for t3.micro — 1GB RAM is not enough for n8n)
+#  STEP 2: Create swap (critical for t3.micro — wwebjs needs Chromium)
 # ═══════════════════════════════════════════════════════════════════════════
 if [ ! -f /swapfile ]; then
   fallocate -l 2G /swapfile
@@ -57,87 +48,104 @@ fi
 curl -fsSL https://get.docker.com | sh
 systemctl enable docker
 systemctl start docker
-
-# Install docker-compose plugin (v2)
 apt-get install -y docker-compose-plugin
-
-# Add ubuntu user to docker group
 usermod -aG docker ubuntu
-
 echo "✓ Docker installed"
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 4: Clone SE repo
+#  STEP 4: Clone SE repo (dispatch branch)
 # ═══════════════════════════════════════════════════════════════════════════
 SE_DIR="/opt/sierra-estates"
 apt-get install -y git
 git clone -b dispatch https://github.com/ahmedfawzy8866/SE.git "$SE_DIR"
-cd "$SE_DIR/infra"
-
 echo "✓ Repo cloned to $SE_DIR"
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 5: Create .env from template (with sensible defaults)
+#  STEP 5: Configure OpenWA environment
 # ═══════════════════════════════════════════════════════════════════════════
+OPENWA_DIR="$SE_DIR/infra/openwa"
+cd "$OPENWA_DIR"
 cp .env.example .env
-
-# Generate a random n8n password
-N8N_PASS=$(openssl rand -base64 16)
-sed -i "s/N8N_BASIC_AUTH_PASSWORD=.*/N8N_BASIC_AUTH_PASSWORD=$N8N_PASS/" .env
 
 # Get instance public IP
 PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo "localhost")
-sed -i "s|WEBHOOK_URL=.*|WEBHOOK_URL=http://$PUBLIC_IP:5678|" .env
-sed -i "s|N8N_EDITOR_BASE_URL=.*|N8N_EDITOR_BASE_URL=http://$PUBLIC_IP:5678|" .env
 
-# Set timezone
+# Generate secure keys
+ADMIN_KEY=$(openssl rand -hex 32)
+OPERATOR_KEY=$(openssl rand -hex 32)
+N8N_PASS=$(openssl rand -base64 16)
+
+# Patch .env
+sed -i "s|OPENWA_ADMIN_API_KEY=.*|OPENWA_ADMIN_API_KEY=${ADMIN_KEY}|" .env
+sed -i "s|OPENWA_OPERATOR_KEY=.*|OPENWA_OPERATOR_KEY=${OPERATOR_KEY}|" .env
+sed -i "s|N8N_BASIC_AUTH_PASSWORD=.*|N8N_BASIC_AUTH_PASSWORD=${N8N_PASS}|" .env
+sed -i "s|WEBHOOK_URL=.*|WEBHOOK_URL=http://${PUBLIC_IP}:5678|" .env
+sed -i "s|N8N_EDITOR_BASE_URL=.*|N8N_EDITOR_BASE_URL=http://${PUBLIC_IP}:5678|" .env
 sed -i "s|TIMEZONE=.*|TIMEZONE=Africa/Cairo|" .env
 
-echo "✓ .env configured (n8n password: $N8N_PASS)"
+echo "✓ OpenWA environment configured"
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 6: Create directories for persistence
+#  STEP 6: Migrate any existing session data
 # ═══════════════════════════════════════════════════════════════════════════
-mkdir -p n8n-data whatsapp-auth secrets
+mkdir -p "$OPENWA_DIR/whatsapp-auth" "$OPENWA_DIR/openwa-data" "$OPENWA_DIR/n8n-data"
+bash "$OPENWA_DIR/migrate-session.sh" || echo "No existing session to migrate — fresh QR needed"
+echo "✓ Session migration complete"
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 7: Start containers
+#  STEP 7: Start OpenWA + n8n stack
 # ═══════════════════════════════════════════════════════════════════════════
-docker compose up -d --build
+docker compose up -d --pull always
+echo "✓ OpenWA + n8n containers started"
 
-echo "✓ Containers started"
+# ═══════════════════════════════════════════════════════════════════════════
+#  STEP 8: Wait for OpenWA health then install plugins
+# ═══════════════════════════════════════════════════════════════════════════
+echo "Waiting 60s for OpenWA to initialize..."
+sleep 60
+bash "$OPENWA_DIR/setup.sh" || echo "Plugin setup will retry on next login. Run: bash $OPENWA_DIR/setup.sh"
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 8: Configure iptables (in case security group isn't enough)
+#  STEP 9: Configure firewall
 # ═══════════════════════════════════════════════════════════════════════════
-# Allow SSH, n8n, WhatsApp QR
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-iptables -A INPUT -p tcp --dport 5678 -j ACCEPT
-iptables -A INPUT -p tcp --dport 3000 -j ACCEPT
+iptables -A INPUT -p tcp --dport 3000 -j ACCEPT   # OpenWA dashboard
+iptables -A INPUT -p tcp --dport 5678 -j ACCEPT   # n8n
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 9: Write access info to /etc/motd (shows on SSH login)
+#  STEP 10: Write MOTD (shown on SSH login)
 # ═══════════════════════════════════════════════════════════════════════════
 cat > /etc/motd << EOF
 
 ╔════════════════════════════════════════════════════════════╗
-║   Sierra Estates — AWS EC2 is running!                     ║
+║   Sierra Estates — OpenWA Gateway is running!              ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                            ║
-║  n8n Dashboard:  http://$PUBLIC_IP:5678                    ║
-║  Login:          admin / $N8N_PASS                         ║
+║  OpenWA Dashboard: http://${PUBLIC_IP}:3000                ║
+║  Admin Key:        ${ADMIN_KEY}                            ║
 ║                                                            ║
-║  WhatsApp QR:    docker compose -f $SE_DIR/infra/docker-compose.yml \\
-║                  logs whatsapp-scraper | grep -A 25 "Scan"  ║
+║  n8n Dashboard:   http://${PUBLIC_IP}:5678                 ║
+║  n8n Login:       admin / ${N8N_PASS}                      ║
 ║                                                            ║
-║  Workflows:      /opt/sierra-estates/infra/n8n-workflows/   ║
+║  Scan QR:  Open dashboard → Sessions → sierra-main         ║
 ║                                                            ║
-║  Logs:           docker compose -f $SE_DIR/infra/docker-compose.yml logs ║
+║  Logs:     docker compose -f ${OPENWA_DIR}/docker-compose.yml logs -f openwa  ║
+║                                                            ║
+║  Plugins installed:                                        ║
+║    ✓ gsheets-logger  (auto-log to Google Sheets)           ║
+║    ✓ http-action     (!status, !listings, !price)          ║
+║    ✓ after-hours     (auto-reply outside business hours)   ║
+║    ✓ faq-bot         (Arabic/English listing FAQ)          ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 
 EOF
 
 echo "=== Sierra Estates EC2 Setup Complete ==="
-echo "n8n URL: http://$PUBLIC_IP:5678"
-echo "n8n Password: $N8N_PASS"
+echo "OpenWA URL: http://${PUBLIC_IP}:3000"
+echo "Admin Key: ${ADMIN_KEY}"
+echo "n8n URL: http://${PUBLIC_IP}:5678"
+echo "n8n Password: ${N8N_PASS}"
+
