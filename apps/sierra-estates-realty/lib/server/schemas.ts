@@ -37,10 +37,15 @@ export const currencySchema = z.enum(['EGP', 'USD', 'EUR', 'AED', 'SAR']);
 
 export const leadCreateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(120),
-  email: emailSchema,
-  phone: phoneSchema.optional(),
+  email: emailSchema.optional().or(z.literal('')),
+  phone: phoneSchema.optional().or(z.literal('')),
   message: z.string().max(2000).optional(),
   locale: localeSchema,
+  zone: z.string().max(120).optional(),
+  type: z.string().max(120).optional(),
+  budget: z.string().max(120).optional(),
+  intent: z.enum(['buy', 'rent', 'sell']).optional(),
+  source: z.string().max(120).optional(),
 });
 
 export const viewingRequestSchema = z.object({

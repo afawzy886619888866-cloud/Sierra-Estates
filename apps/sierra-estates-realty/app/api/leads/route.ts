@@ -15,7 +15,16 @@ export async function POST(req: Request) {
     const parseResult = await parseRequestBody(req, leadCreateSchema);
     if (isParseFailure(parseResult)) return parseResult.errorResponse;
 
-    const { name, email, phone, message, locale } = parseResult.data;
+    const { name, email, phone, message, locale, zone, type, budget, intent, source } = parseResult.data;
+
+    // Construct structured summary notes
+    const formattedNotes = [
+      intent ? `[Intent: ${intent.toUpperCase()}]` : null,
+      zone ? `[Preferred Zone: ${zone}]` : null,
+      type ? `[Property Type: ${type}]` : null,
+      budget ? `[Budget: ${budget} EGP]` : null,
+      message ? `Message: ${message}` : null,
+    ].filter(Boolean).join(' | ');
 
     // 1. Add to Supabase (public.leads; `name` and the free-text message are
     //    stored as full_name / summary_notes, the table's column names).
@@ -24,23 +33,23 @@ export async function POST(req: Request) {
       fullName: name,
       email: email || undefined,
       phone: phone || undefined,
-      summaryNotes: message || undefined,
+      summaryNotes: formattedNotes || undefined,
       status: 'new',
       // channel is the normalised intake channel and defaults to 'whatsapp';
       // a web contact form is not that, so it is set explicitly alongside the
       // raw attribution string in `source`.
       channel: 'web',
-      mode: 'sale', // default
-      source: 'website',
-      zone: locale || undefined,
+      mode: intent === 'rent' ? 'rent' : 'sale',
+      source: source || 'website',
+      zone: zone || locale || undefined,
       phase: 'acquisition',
       priority: 'warm',
       via: 'Website',
-      interest: 'General Inquiry',
-      capitalAllocation: 'To be determined',
+      interest: type || 'General Inquiry',
+      capitalAllocation: budget || 'To be determined',
       locale: locale || undefined,
       aiProfiling: {
-        interests: ['General Inquiry'],
+        interests: [type || 'General Inquiry'],
         topMatches: [],
         lastAnalyzedAt: now,
       },
@@ -54,13 +63,15 @@ export async function POST(req: Request) {
 
     // 2. Send Telegram Notification
     const text = `
-<b>🚀 New Lead - Sierra Estates Realty</b>
+<b>🚀 New Inquiry - Sierra Estates Concierge</b>
 <b>Name:</b> ${escapeTelegramHtml(name)}
-<b>Email:</b> ${escapeTelegramHtml(email || 'n/a')}
 <b>Phone:</b> ${escapeTelegramHtml(phone || 'n/a')}
-<b>Interest:</b> General Inquiry
+<b>Email:</b> ${escapeTelegramHtml(email || 'n/a')}
+<b>Intent:</b> ${escapeTelegramHtml((intent || 'Inquiry').toUpperCase())}
+<b>Zone:</b> ${escapeTelegramHtml(zone || 'Any')}
+<b>Type:</b> ${escapeTelegramHtml(type || 'Any')}
+<b>Budget:</b> ${escapeTelegramHtml(budget ? `${budget} EGP` : 'Not specified')}
 <b>Message:</b> ${escapeTelegramHtml(message || 'n/a')}
-<b>Locale:</b> ${escapeTelegramHtml(locale || 'n/a')}
     `.trim();
 
     await sendTelegramMessage(text);
@@ -72,7 +83,7 @@ export async function POST(req: Request) {
         await enqueueWhatsAppJob({
           purpose: 'general-outreach',
           toPhone: notifyNumber,
-          body: `New lead from sierra-estates.net\nName: ${name}\nEmail: ${email}\nPhone: ${phone ?? 'n/a'}\nMessage: ${message ?? 'n/a'}`,
+          body: `🚀 New Lead from sierra-estates.net\n👤 Name: ${name}\n📱 Phone: ${phone ?? 'n/a'}\n📧 Email: ${email ?? 'n/a'}\n🎯 Intent: ${(intent || 'Inquiry').toUpperCase()}\n📍 Zone: ${zone || 'Any'}\n🏠 Type: ${type || 'Any'}\n💰 Budget: ${budget ? `${budget} EGP` : 'Not specified'}\n📝 Message: ${message ?? 'n/a'}`,
           leadId: lead.id,
         });
       } catch (error) {
