@@ -318,11 +318,13 @@ export default function HomePage() {
 
             {/* Quick Compound Chips */}
             <div
+              className="compounds-chip-rail"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
                 overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
                 paddingBottom: 10,
                 marginBottom: 10,
                 scrollbarWidth: 'none',
@@ -342,9 +344,10 @@ export default function HomePage() {
                       }
                     }}
                     style={{
-                      padding: '4px 11px',
+                      flex: 'none',
+                      padding: '5px 12px',
                       borderRadius: 999,
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: isSelected ? 700 : 500,
                       whiteSpace: 'nowrap',
                       background: isSelected ? 'rgba(201, 148, 54, 0.25)' : 'rgba(255, 255, 255, 0.04)',
