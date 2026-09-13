@@ -247,6 +247,7 @@ jobs:
         if: steps.proj.outputs.skip != 'true'
         env:
           # Supabase Primary Database, Auth, Vector & Storage
+          SUPABASE_URL_VAL: ${{ secrets['NEXT_PUBLIC_SUPABASE_URL'] || vars['NEXT_PUBLIC_SUPABASE_URL'] }}
           SUPABASE_ANON_VAL: ${{ secrets['SUPABASE_ANON_KEY'] || secrets['NEXT_PUBLIC_SUPABASE_ANON_KEY'] }}
           SUPABASE_SERVICE_ROLE_VAL: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
           # AI & LLM
