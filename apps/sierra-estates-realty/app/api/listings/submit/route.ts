@@ -134,8 +134,8 @@ export async function POST(request: Request) {
 <b>Notes:</b> ${escapeTelegramHtml(data.comment || 'None')}
       `.trim();
       await sendTelegramMessage(telegramText);
-    } catch (teleErr) {
-      logger.warn('[LISTING_SUBMIT] Telegram alert skipped:', teleErr);
+    } catch (telegramErr) {
+      logger.warn('[LISTING_SUBMIT] Telegram alert skipped:', telegramErr);
     }
 
     // 2. Enqueue automated WhatsApp notification for the agency concierge
