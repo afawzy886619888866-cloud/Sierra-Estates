@@ -7,7 +7,7 @@
 [![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)
 [![Production](https://img.shields.io/badge/Status-100%25%20Production%20Ready-gold.svg)](https://sierra-estates.net)
 [![Deploy](https://img.shields.io/badge/Deploy%20Gates-9%2F9%20Passed-brightgreen)](https://sierra-estates.net)
-[![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainer)
+[![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainers)
 
 > **Sierra Estates Realty** is the premier enterprise luxury PropTech intelligence platform engineered for the Egyptian luxury property market (New Cairo / Fifth Settlement). It unites client property discovery, algorithmic valuation, automated WhatsApp & Telegram lead concierges, interactive spatial masterplan maps, and an autonomous multi-agent fleet grounded by a unified **Obsidian + ECC Memory Brain Engine**.
 
@@ -67,20 +67,25 @@ flowchart TD
 ## ⚡ Core Platform Pillars
 
 ### 1. High-End Luxury UI & Contrast Typography
+
 - **Header Navigation:** Deep obsidian glassmorphism (`rgba(6, 17, 34, 0.90)` with `backdrop-filter: blur(20px)`). All menu navigation links render in **luminous high-contrast text (`rgba(255, 255, 255, 0.88)`)** using **Plus Jakarta Sans**, with glowing cyan/gold active pills.
 - **Hero Search & Filter Card:** Refined obsidian glass container (`rgba(11, 23, 42, 0.82)`) with high-contrast ice-blue labels (`#93c5fd`, 800-weight), custom dark glass select dropdowns with sleek SVG chevrons, and elevated Search + Listing Net action buttons.
 - **Admin Dashboard Typography:** Unified **Plus Jakarta Sans / Inter** typography stack across all admin metrics, tables, headers, and form inputs, with full bilingual **Cairo** support for Arabic.
 
 ### 2. Unified Memory Brain Engine (`@sierra-estates/memory-engine`)
+
 Fuses the **Obsidian Knowledge Vault** (`docs/obsidian-vault/`) and the **Episodic Context Cache (ECC)** into a shared RAG service. It scans domain markdown notes (compound guides, financial cap rates) and synchronizes with real-time entity profiles, historical price reductions, and distressed deal alerts to guide all fleet agents toward a shared strategic goal.
 
 ### 3. Spatial Intelligence Masterplan Engine
+
 Interactive Leaflet map featuring precision GPS bounding polygons and subfeatures (Crystal Lagoons, Green Spines, Clubhouses, Championship Golf Courses) across all top New Cairo masterplans (Hyde Park, Mountain View iCity, Mivida, Palm Hills, Katameya Heights, etc.).
 
 ### 4. Automated WhatsApp Concierge & Owner Outreach
+
 Hosted on a dedicated AWS EC2 instance (`18.232.148.172:3000`) with dual pairing options (Live QR scan portal + 8-character phone pairing code). Strictly enforces the 12:00 PM – 8:00 PM Africa/Cairo operational window with a 40 contact/hour rate limit, zero-drift alignment, and strict masking of private owner phone numbers (falling back to agency helpline `+201092048333`).
 
 ### 5. Easy Listing Ingestion (`/list-property`)
+
 Direct intake portal with client-side photo previews, auto-calculated AI valuation and urgency scoring, instant Supabase storage, real-time Telegram alerts to agency staff, and automated WhatsApp confirmation queueing.
 
 ---
@@ -202,6 +207,8 @@ Authoritative documentation:
 
 ---
 
+<a id="license--maintainers"></a>
+<a id="license--maintainer"></a>
 ## 📄 License & Maintainers
 
 - **Lead Engineer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
