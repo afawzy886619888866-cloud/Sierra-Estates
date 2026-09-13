@@ -125,7 +125,7 @@ h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.2;letter-spacing:-.01
 .tb-toggle .i{width:13px;height:13px;}
 
 /* ── nav ────────────────────────────────── */
-.nav{background:rgba(6,17,34,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:600;transition:box-shadow .3s,background .3s;}
+.nav{background:rgba(6,17,34,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:600;transition:box-shadow .3s,background .3s;}
 .nav.scrolled{box-shadow:0 8px 32px -4px rgba(0,0,0,.45);background:rgba(4,12,24,.96);}
 .nav .wrap{display:flex;align-items:center;height:76px;gap:34px;}
 .brand{display:flex;align-items:center;gap:11px;white-space:nowrap;}
