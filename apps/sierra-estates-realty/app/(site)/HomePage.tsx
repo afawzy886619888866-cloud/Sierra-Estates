@@ -463,7 +463,7 @@ export default function HomePage() {
 
               {/* Property Type Pills */}
               <div className="field" style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fType')}</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fType')}</label>
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
                   {[
                     { val: '', l: t('anyType') },
@@ -502,7 +502,7 @@ export default function HomePage() {
 
               {/* Bedrooms Pills */}
               <div className="field" style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fBeds')}</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fBeds')}</label>
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
                   <button
                     type="button"
@@ -551,7 +551,7 @@ export default function HomePage() {
 
               {/* Dynamic Price Pills */}
               <div className="field" style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('fPrice')}</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fPrice')}</label>
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
                   {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => {
                     const isSelected = search.price === p.val;
