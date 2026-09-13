@@ -96,43 +96,279 @@
 
 /* ── 2. Floating Island Navigation & Glassmorphism ─────────────────── */
 .nav {
+  background: rgba(6, 17, 34, 0.90) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav.scrolled {
-  background: rgba(0, 43, 75, 0.88);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(4, 12, 24, 0.96) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .nav {
+  background: rgba(4, 10, 18, 0.92) !important;
+  border-bottom: 1px solid rgba(233, 193, 118, 0.15) !important;
 }
 
 [data-theme="dark"] .nav.scrolled {
-  background: rgba(5, 12, 20, 0.90);
-  border-bottom: 1px solid rgba(233, 193, 118, 0.15);
-  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(233, 193, 118, 0.18);
+  background: rgba(3, 8, 14, 0.98) !important;
+  border-bottom: 1px solid rgba(233, 193, 118, 0.22) !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(233, 193, 118, 0.18);
+}
+
+.nav .brand b {
+  color: #ffffff !important;
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.nav .brand small {
+  color: #94a3b8 !important;
+  font-family: var(--mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.nav .menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav .menu a {
   position: relative;
-  transition: color 200ms ease, transform 200ms ease;
-  padding: 6px 12px;
-  border-radius: 8px;
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88) !important;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .nav .menu a:hover {
-  color: var(--pri);
+  color: #38bdf8 !important;
+  background: rgba(0, 174, 255, 0.12);
+  border-color: rgba(0, 174, 255, 0.28);
   transform: translateY(-1px);
 }
 
 .nav .menu a.active {
-  color: var(--pri);
+  color: #38bdf8 !important;
   font-weight: 700;
-  background: rgba(0, 174, 255, 0.1);
+  background: linear-gradient(135deg, rgba(0, 174, 255, 0.22), rgba(0, 174, 255, 0.08)) !important;
+  border-color: rgba(0, 174, 255, 0.45) !important;
+  box-shadow: 0 0 18px rgba(0, 174, 255, 0.22);
+}
+
+[data-theme="dark"] .nav .menu a {
+  color: rgba(240, 237, 229, 0.9) !important;
+}
+
+[data-theme="dark"] .nav .menu a:hover {
+  color: #f5c96e !important;
+  background: rgba(233, 193, 118, 0.12);
+  border-color: rgba(233, 193, 118, 0.3);
 }
 
 [data-theme="dark"] .nav .menu a.active {
-  color: #f5c96e;
-  background: rgba(233, 193, 118, 0.12);
+  color: #f5c96e !important;
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.22), rgba(233, 193, 118, 0.08)) !important;
+  border-color: rgba(233, 193, 118, 0.45) !important;
+  box-shadow: 0 0 18px rgba(233, 193, 118, 0.2);
+}
+
+/* ── 2b. Hero Search Card & Filter Inputs Architecture ───────────────── */
+.searchbar {
+  position: relative;
+  z-index: 20;
+}
+
+.search-card {
+  background: rgba(11, 23, 42, 0.82) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  overflow: visible !important;
+}
+
+.search-card-inner {
+  background: rgba(8, 18, 33, 0.72) !important;
+  border-radius: 18px !important;
+  padding: 18px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Search Tabs */
+.search-tabs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  gap: 6px !important;
+}
+
+.search-tabs button {
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.search-tabs button:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+.search-tabs button.active {
+  color: #38bdf8 !important;
+  background: rgba(0, 174, 255, 0.14) !important;
+  border-color: rgba(0, 174, 255, 0.35) !important;
+  box-shadow: 0 0 14px rgba(0, 174, 255, 0.2) !important;
+}
+
+[data-theme="dark"] .search-tabs button.active {
+  color: #f5c96e !important;
+  background: rgba(233, 193, 118, 0.14) !important;
+  border-color: rgba(233, 193, 118, 0.35) !important;
+  box-shadow: 0 0 14px rgba(233, 193, 118, 0.2) !important;
+}
+
+/* Filter Labels */
+.search-fields .field label,
+.search-card label {
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  color: #93c5fd !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+[data-theme="dark"] .search-fields .field label,
+[data-theme="dark"] .search-card label {
+  color: #fcd34d !important;
+}
+
+/* Filter Inputs & Selects */
+.hero-search-input,
+.hero-select,
+.search-fields select,
+.search-fields input[type="text"] {
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  width: 100% !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+}
+
+.hero-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+  font-weight: 500 !important;
+}
+
+.hero-search-input:focus,
+.hero-select:focus,
+.search-fields select:focus,
+.search-fields input[type="text"]:focus {
+  border-color: #38bdf8 !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .hero-search-input:focus,
+[data-theme="dark"] .hero-select:focus,
+[data-theme="dark"] .search-fields select:focus,
+[data-theme="dark"] .search-fields input[type="text"]:focus {
+  border-color: #f5c96e !important;
+  box-shadow: 0 0 0 3px rgba(245, 201, 110, 0.22), inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Custom dropdown chevron for selects */
+.hero-select,
+.search-fields select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-inline-end: 36px !important;
+  cursor: pointer !important;
+}
+
+[dir="rtl"] .hero-select,
+[dir="rtl"] .search-fields select {
+  background-position: left 12px center !important;
+}
+
+.hero-select option,
+.search-fields select option {
+  background: #0b1728 !important;
+  color: #ffffff !important;
+  padding: 8px 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+/* Action Buttons */
+#hero-search-btn {
+  background: linear-gradient(135deg, #00aeff 0%, #0070f3 100%) !important;
+  color: #ffffff !important;
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 174, 255, 0.42) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#hero-search-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 26px rgba(0, 174, 255, 0.55) !important;
+}
+
+#hero-radar-btn {
+  background: linear-gradient(135deg, #f5c96e 0%, #d4af37 100%) !important;
+  color: #050c14 !important;
+  font-family: var(--font, 'Plus Jakarta Sans', sans-serif) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#hero-radar-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 26px rgba(212, 175, 55, 0.5) !important;
 }
 
 /* ── 3. Double-Bezel (Doppelrand) Property Card Architecture ─────────── */
