@@ -57,6 +57,28 @@ Runs every 4 hours → fetches all active listings → scores each with Gemini A
 - Finishing quality
 - Rental yield potential
 
+### 04 — Jira Lead Ticket Sync
+
+**File:** `04-jira-lead-sync.json`
+
+Receives qualified buyer/owner leads from webhooks or internal bots → prepares structured ADF (Atlassian Document Format) payload → creates a tracked issue in Jira Cloud.
+
+**Webhook URL:** `POST http://your-vps:5678/webhook/jira-lead-sync`
+
+**Expected payload:**
+
+```json
+{
+  "name": "Mostafa Mansour",
+  "phone": "+201012345678",
+  "intent": "viewing_request",
+  "propertyCode": "SE-502",
+  "budget": "15,000,000 EGP",
+  "urgency": "high",
+  "message": "Interested in private viewing tomorrow at Mivida"
+}
+```
+
 ---
 
 ## Import Instructions

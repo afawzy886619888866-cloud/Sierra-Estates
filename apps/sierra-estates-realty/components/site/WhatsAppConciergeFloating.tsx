@@ -35,10 +35,14 @@ export default function WhatsAppConciergeFloating() {
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: 28, [isAr ? 'left' : 'right']: 28, zIndex: 9999, fontFamily: 'inherit' }}>
+    <div
+      className="wa-floating-container"
+      style={{ position: 'fixed', bottom: 28, [isAr ? 'left' : 'right']: 28, zIndex: 9999, fontFamily: 'inherit' }}
+    >
       {/* Concierge Micro Drawer */}
       {isOpen && (
         <div
+          className="wa-concierge-drawer"
           style={{
             position: 'absolute',
             bottom: 74,

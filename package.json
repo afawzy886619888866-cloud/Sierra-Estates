@@ -45,6 +45,8 @@
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "deploy:check:env": "node scripts/verify-env-readiness.mjs",
+        "env:sync": "node scripts/sync-vercel-env.js",
+        "env:push": "node scripts/setup-github-secrets.js",
         "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
     },
     "devDependencies": {
@@ -63,6 +65,5 @@
     "engines": {
         "node": ">=20.0.0",
         "pnpm": ">=9"
-    },
-    "packageManager": "pnpm@9.15.4"
+    }
 }

@@ -792,3 +792,74 @@
   font-family: var(--mono, monospace);
   margin: 0 8px;
 }
+
+/* ── Mobile Responsive Optimizations for Properties Page ── */
+@media (max-width: 768px) {
+  .props-hero {
+    padding: 24px 0 16px;
+  }
+  .props-hero-title {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+  .props-hero-sub {
+    font-size: 13.5px;
+  }
+  .props-badge-verified {
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 11.5px;
+  }
+  .props-filter-box {
+    padding: 14px;
+    border-radius: 16px;
+    margin: 16px 0;
+    gap: 12px;
+  }
+  .props-filter-row-1 {
+    gap: 10px;
+  }
+  .props-filter-row-2 {
+    gap: 10px;
+    padding-top: 10px;
+  }
+  .props-chip-group {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+  .props-chip-group::-webkit-scrollbar {
+    display: none;
+  }
+  .props-chip {
+    flex: none;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .props-mode-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .props-sticky-map-inner {
+    min-height: 320px;
+    height: 340px;
+    border-radius: 14px;
+  }
+  .props-full-map-wrap {
+    min-height: 400px;
+    height: 55vh;
+  }
+  .props-pagination {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .props-page-btn {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
