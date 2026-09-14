@@ -865,8 +865,9 @@ export default function CompoundsMap({
         }}
       />
 
-      {/* Floating Header Control Deck at Top-Left */}
+      {/* Top-Left Floating Controls: Segment Bar & Zone Bar */}
       <div
+        className="map-top-left-controls"
         style={{
           position: 'absolute',
           top: 16,
@@ -881,6 +882,7 @@ export default function CompoundsMap({
       >
         {/* Segment Filter Bar */}
         <div
+          className="map-segment-bar"
           style={{
             background: 'rgba(7, 21, 35, 0.92)',
             backdropFilter: 'blur(16px)',
@@ -942,6 +944,7 @@ export default function CompoundsMap({
 
         {/* Zone Fast-Pill Navigation Bar */}
         <div
+          className="map-zone-bar"
           style={{
             background: 'rgba(7, 21, 35, 0.88)',
             backdropFilter: 'blur(12px)',
@@ -990,6 +993,7 @@ export default function CompoundsMap({
       {/* Floating Smart Filter Panel on Top-Right */}
       {showControls && (
         <div
+          className="map-smart-filter-panel"
           style={{
             position: 'absolute',
             top: 16,
@@ -1139,6 +1143,7 @@ export default function CompoundsMap({
 
       {/* Floating Legend on Bottom-Left */}
       <div
+        className="map-floating-legend"
         style={{
           position: 'absolute',
           bottom: 20,
@@ -1178,6 +1183,7 @@ export default function CompoundsMap({
 
       {/* Center Bottom Floating CTA: Open Full Map */}
       <div
+        className="map-center-cta"
         style={{
           position: 'absolute',
           bottom: 20,

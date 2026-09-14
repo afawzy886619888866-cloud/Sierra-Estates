@@ -109,7 +109,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
         </Link>
         <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'} className="bn-item">
-          <Sparkles className="i" /><span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
+          <Sparkles className="i" /><span>{isAr ? 'المعلومات' : 'Info Bank'}</span>
         </Link>
         <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`}>
           <Phone className="i" /><span>{t('navContact')}</span>
