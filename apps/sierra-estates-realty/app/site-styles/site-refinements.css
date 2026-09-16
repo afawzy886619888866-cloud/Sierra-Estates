@@ -1858,9 +1858,6 @@ html, body {
     border-radius: 16px !important;
     margin: 10px auto;
   }
-  .rq-head {
-    padding: 16px 18px;
-  }
   .rq-head h3 {
     font-size: 18px;
   }
@@ -1868,5 +1865,236 @@ html, body {
     padding: 16px 18px;
   }
 }
+
+/* ── 8. Impeccable Client Design Polish (WCAG Contrast, Silk Motion, Typography Rhythm) ── */
+.sec-hd h2,
+.sec-hd h3,
+.hero h1,
+.pcard .title,
+.ai-tool-card h4,
+.story-card h3 {
+  text-wrap: balance;
+  letter-spacing: -0.018em;
+}
+
+.sec-hd p,
+.hero .sub,
+.ai-tool-card p,
+.story-card p,
+.pcard .meta {
+  text-wrap: pretty;
+  max-width: 68ch;
+}
+
+/* High-clarity contrast for body & labels */
+.sub,
+.sec-hd p,
+.pcard .desc,
+.pcard-amenity {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+[data-theme="light"] .sub,
+[data-theme="light"] .sec-hd p,
+[data-theme="light"] .pcard .desc,
+[data-theme="light"] .pcard-amenity {
+  color: rgba(15, 23, 42, 0.88) !important;
+}
+
+/* Silk transitions for interactive chips and buttons */
+.compounds-chip-rail button {
+  transition: background 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.compounds-chip-rail button:hover {
+  transform: translateY(-1.5px);
+}
+
+.compounds-chip-rail button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Property card refined hover lighting (no image scale per Impeccable rule) */
+.pcard {
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 320ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pcard:hover {
+  border-color: rgba(0, 174, 255, 0.38) !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 174, 255, 0.12) !important;
+  transform: translateY(-4px) !important;
+}
+
+[data-theme="dark"] .pcard:hover {
+  border-color: rgba(233, 193, 118, 0.45) !important;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.85), 0 0 24px rgba(233, 193, 118, 0.16) !important;
+}
+
+/* Impeccable accessibility: keyboard focus rings */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent, #38bdf8) !important;
+  outline-offset: 3px !important;
+}
+
+/* Reduced motion preference compliance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── 9. Ultra Mobile-Friendly Polish & Touch Ergonomics ────────────────────── */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling and content bleeding */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    position: relative;
+  }
+
+  /* Safe Area Padding for mobile browsers */
+  body {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  /* Container ergonomics */
+  .wrap, .container, main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box;
+  }
+
+  /* Mobile Tap Targets (WCAG 2.2 Level AA / Apple HIG: min 44x44px) */
+  button,
+  .btn,
+  .nav-item,
+  .topbar-pill,
+  .search-tabs button,
+  .compounds-chip-rail button,
+  .pcard .pc-act a,
+  .pcard .pc-act button,
+  .nav-control-pill,
+  .add-listing-btn,
+  .req-now-btn {
+    min-height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  /* Floating WhatsApp concierge elevated above bottom navigation bar */
+  .wa-floating-wrap,
+  .wa-fab,
+  #wa-concierge-btn,
+  .whatsapp-float {
+    bottom: calc(68px + env(safe-area-inset-bottom, 8px)) !important;
+    right: 16px !important;
+    z-index: 9980 !important;
+  }
+
+  [dir="rtl"] .wa-floating-wrap,
+  [dir="rtl"] .wa-fab,
+  [dir="rtl"] #wa-concierge-btn,
+  [dir="rtl"] .whatsapp-float {
+    right: auto !important;
+    left: 16px !important;
+  }
+
+  /* Search Card on Small Screens */
+  .search-card {
+    padding: 14px 12px !important;
+    border-radius: 18px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+
+  .search-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    gap: 4px !important;
+    padding-bottom: 6px !important;
+  }
+  .search-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .search-tabs button {
+    flex: 1 0 auto !important;
+    white-space: nowrap !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+
+  /* Inputs & Filter Dropdowns */
+  .hero-search-input,
+  .hero-select,
+  .search-fields input,
+  .search-fields select {
+    min-height: 48px !important;
+    font-size: 16px !important; /* Prevents unwanted iOS zoom on focus */
+    border-radius: 12px !important;
+  }
+
+  /* Single-column collapse for listing cards on phone viewports */
+  .prop-grid,
+  .listings-grid,
+  .properties-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Compound Chips Rail swipe feedback */
+  .compounds-chip-rail {
+    padding-left: 2px;
+    padding-right: 2px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .compounds-chip-rail button {
+    scroll-snap-align: start;
+  }
+
+  /* Hero Display Typography scaling */
+  .hero h1 {
+    font-size: clamp(22px, 6.4vw, 34px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .hero .sub {
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    min-height: auto !important;
+    padding: 36px 0 70px !important;
+  }
+
+  .pcard .meta {
+    font-size: 11.5px !important;
+  }
+
+  .pcard .title {
+    font-size: 15px !important;
+  }
+}
+
+
 
 
