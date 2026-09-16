@@ -161,7 +161,7 @@ async function handleToolCall(name: string, args: any): Promise<any> {
     case 'get_inventory': {
       if (supabase) {
         try {
-          let query = supabase.table('listings').select('code, compound, property_type, bedrooms, area_sqm, price, deal_type, status');
+          let query = supabase.from('listings').select('code, compound, property_type, bedrooms, area_sqm, price, deal_type, status');
           if (args.compound) {
             query = query.ilike('compound', `%${args.compound}%`);
           }
@@ -203,7 +203,7 @@ async function handleToolCall(name: string, args: any): Promise<any> {
       if (supabase) {
         try {
           const { data } = await supabase
-            .table('listings')
+            .from('listings')
             .select('price, area_sqm')
             .ilike('compound', `%${args.compound}%`)
             .gt('area_sqm', 0);
