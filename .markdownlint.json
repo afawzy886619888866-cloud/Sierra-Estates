@@ -3,5 +3,14 @@
   "MD024": {
     "siblings_only": true
   },
+  "MD033": {
+    "allowed_elements": [
+      "a",
+      "img",
+      "br",
+      "details",
+      "summary"
+    ]
+  },
   "MD060": false
 }

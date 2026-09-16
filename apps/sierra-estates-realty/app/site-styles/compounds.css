@@ -150,7 +150,7 @@
   #cpd-map{height:340px !important;}
   .af-bar{gap:12px;padding:14px;}
   .af-search{min-width:140px;}
-  .zone-chips{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:6px;margin-bottom:12px;}
+  .zone-chips{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:6px;margin-bottom:12px;}
   .zone-chips::-webkit-scrollbar{display:none;}
   .zchip{flex:none;padding:6px 12px;font-size:12px;}
   .cpd-toolbar{gap:8px;margin-bottom:16px;}
