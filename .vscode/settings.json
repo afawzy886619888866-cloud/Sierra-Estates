@@ -59,5 +59,16 @@
   "circuitpythonsync.curlibtag": "20260901",
   "circuitpythonsync.doNotShowWelcome": true,
   "circuitpythonsync.drivepath": "",
-  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu"
+  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu",
+  "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
+  "git.enabled": true,
+  "git.autorefresh": true,
+  "git.autoRepositoryDetection": true,
+  "gitlens.git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
+  "gitlens.codeLens.enabled": true,
+  "gitlens.currentLine.enabled": true,
+  "gitlens.hovers.enabled": true,
+  "gitlens.statusBar.enabled": true,
+  "gitlens.showWelcomeOnInstall": false,
+  "gitlens.showWhatsNewAfterUpgrades": false
 }
