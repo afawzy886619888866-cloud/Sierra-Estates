@@ -2261,6 +2261,31 @@ textarea:focus-visible {
   }
 }
 
+/* Luxury Header Action Suite Responsive Polish */
+@media (max-width: 900px) {
+  .nav-right {
+    gap: 6px !important;
+  }
+  .req-now-btn,
+  .add-listing-btn {
+    padding: 7px 12px !important;
+    min-height: 36px !important;
+  }
+  .req-now-btn .req-note,
+  .add-listing-btn .al-note {
+    display: none !important;
+  }
+}
 
-
-
+@media (max-width: 640px) {
+  .add-listing-btn {
+    display: none !important;
+  }
+  .nav-control-pill .pill-text {
+    display: none !important;
+  }
+  .nav-control-pill {
+    padding: 7px 10px !important;
+    min-height: 36px !important;
+  }
+}
