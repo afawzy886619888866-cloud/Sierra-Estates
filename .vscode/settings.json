@@ -32,6 +32,7 @@
   "markdown.validate.enabled": true,
   "markdown.validate.referenceLinks.enabled": "ignore",
   "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
+  "css.lint.vendorPrefix": "ignore",
   "github-actions.workflows.validations.enabled": false,
   "github-actions.workflows.validations.context.access": "off",
   "github-actions.workflows.validations.undefined.context": "off",
