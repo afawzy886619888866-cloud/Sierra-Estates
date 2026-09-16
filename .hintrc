@@ -10,9 +10,14 @@
           "text-wrap",
           "text-wrap: balance",
           "scrollbar-width",
+          "scrollbar-width: none",
           "scrollbar-color",
           "backdrop-filter",
-          "field-sizing"
+          "field-sizing",
+          "text-size-adjust",
+          "text-size-adjust: 100%",
+          "-webkit-text-size-adjust",
+          "-webkit-text-size-adjust: 100%"
         ]
       }
     ],
