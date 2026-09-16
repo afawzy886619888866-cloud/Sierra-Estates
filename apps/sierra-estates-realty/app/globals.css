@@ -23,6 +23,7 @@ body {
   overflow-x: hidden;
   max-width: 100vw;
   -webkit-text-size-adjust: 100%;
+  /* hint-disable-next-line compat-api/css */
   text-size-adjust: 100%;
 }
 

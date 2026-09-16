@@ -51,7 +51,7 @@ GitHub Actions Workflow (.github/workflows/test.yml):
 
 #### 0b. Monitoring & Observability
 
-```
+```text
 Real-Time Monitoring:
 ├── Sentry (error tracking)
 │   ├── Alert if Errors > 5/min
@@ -77,7 +77,7 @@ Real-Time Monitoring:
 
 #### 0c. Performance Baselines
 
-```
+```text
 Measure before Phase 1:
 ├── Admin page load: _____ ms (target: <2000ms)
 ├── Client page load: _____ ms (target: <3000ms)
@@ -90,7 +90,7 @@ Track these metrics throughout migration to catch regressions.
 
 #### 0d. Security Hardening
 
-```
+```text
 API Security:
 ├── Rate limiting: 100 req/min per IP
 ├── CORS whitelist: github.io, sierra-estates.net only
@@ -112,7 +112,7 @@ Audit Logging:
 
 #### 0e. Database Optimization
 
-```
+```text
 Firestore Indexes:
 ├── leads: (stage, createdAt) DESC
 ├── listings: (compound, price) DESC
@@ -135,7 +135,7 @@ Data Retention:
 
 #### 0f. Documentation
 
-```
+```text
 Create 4 documents:
 
 1. API Contract (API_SPEC.md)
@@ -168,7 +168,7 @@ Create 4 documents:
 
 #### 0g. Feature Flags
 
-```
+```text
 Feature flag system (Firebase Remote Config):
 ├── admin_alerts_enabled: false → true
 ├── workflow_monitoring_enabled: false → true
@@ -202,7 +202,7 @@ Kill-switch available if error rate > 5%
 
 #### 1b. New Pages to Create
 
-```
+```text
 SE/apps/admin/src/components/
 ├── CompoundsPage.tsx          [NEW] — 8 compounds, units, pricing, AI scores
 ├── PipelinePage.tsx           [NEW] — S1→S10 stages, lead progression
@@ -213,7 +213,7 @@ SE/apps/admin/src/components/
 
 #### 1c. Firestore Schema
 
-```
+```text
 Collections:
 ├── compounds/
 │   ├── compound_id
@@ -286,7 +286,7 @@ Collections:
 
 #### 2b. Real-Time Data Flow
 
-```
+```text
 Firestore → Listeners → React State → UI Updates (live)
 ├── Agents collection → agentStatus updates every 5s
 ├── Workflows collection → workflowStatus updates every 10s
@@ -297,7 +297,7 @@ Firestore → Listeners → React State → UI Updates (live)
 
 #### 2c. Alert System
 
-```
+```text
 Alert Types:
 ├── AGENT_ERROR: "Stage-9 Closer crashed"
 ├── AGENT_SLOW: "Curator taking 45s (avg 5s)"
@@ -323,7 +323,7 @@ Color Map:
 
 #### 3a. Client Page Enhancements
 
-```
+```text
 Current: Static HTML pages
 ├── index.html → add Firebase SDK
 ├── properties.html → live listing data from Firestore
@@ -343,7 +343,7 @@ New Features:
 
 #### 3b. Data Flow: Client → Admin
 
-```
+```text
 Client Page Actions:
 ├── Submit lead form → writes to leads/{leadId}
 ├── Request viewing → writes to viewingRequests/{requestId}
@@ -360,7 +360,7 @@ Admin Dashboard:
 
 #### 3c. Authentication Flow
 
-```
+```text
 Client Page:
 ├── Optional signup/login → Firebase Auth
 ├── Anonymous users → can browse, can submit leads
@@ -381,7 +381,7 @@ Admin Page:
 
 #### 4a. Agent Integration
 
-```
+```text
 6 Agents in Admin:
 ├── Sierra Bot (🤖) — Concierge, handles queries
 ├── Leila/Lola (🐪) — Bilingual, Arabic negotiations  
@@ -401,7 +401,7 @@ Status Tracking:
 
 #### 4b. Workflow Integration
 
-```
+```text
 8 Workflows:
 ├── Lead Ingestion → Firestore (active)
 ├── WhatsApp Scraper (30m cron) (active)
@@ -423,7 +423,7 @@ Status Tracking:
 
 #### 4c. Real-Time Monitoring
 
-```
+```text
 Admin dashboard shows:
 ├── Agent status every 5 seconds
 ├── Workflow status every 10 seconds
@@ -543,7 +543,7 @@ Admin dashboard shows:
 
 ## Technical Stack (Finalized)
 
-```
+```text
 Frontend:
 ├── React 19 (SE admin base)
 ├── Vite (fast build)

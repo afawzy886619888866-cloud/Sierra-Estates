@@ -38,10 +38,11 @@ JIRA_ISSUE_TYPE=Task
 ```
 
 ### Features
-* **Dry-Run Mode**: If credentials are missing, the bot runs safely in mock/dry-run mode without crashing.
-* **Smart Deduplication**: Prevents duplicate Jira tickets within a 15-minute window for the same client phone and intent.
-* **Atlassian Document Format (ADF)**: Generates structured ticket descriptions containing client phone, intent, property code, budget, and chat context.
-* **Automatic Urgency Mapping**: Maps lead urgency to Jira priorities (`Highest`, `High`, `Medium`, `Low`).
+
+- **Dry-Run Mode**: If credentials are missing, the bot runs safely in mock/dry-run mode without crashing.
+- **Smart Deduplication**: Prevents duplicate Jira tickets within a 15-minute window for the same client phone and intent.
+- **Atlassian Document Format (ADF)**: Generates structured ticket descriptions containing client phone, intent, property code, budget, and chat context.
+- **Automatic Urgency Mapping**: Maps lead urgency to Jira priorities (`Highest`, `High`, `Medium`, `Low`).
 
 ---
 
@@ -52,8 +53,8 @@ JIRA_ISSUE_TYPE=Task
 1. In n8n, navigate to **Workflows** $\rightarrow$ **Add Workflow** $\rightarrow$ **Import from File**.
 2. Select [`infra/n8n-workflows/04-jira-lead-sync.json`](file:///h:/last/Main/SE-Vercel-deploy-main/infra/n8n-workflows/04-jira-lead-sync.json).
 3. In n8n **Credentials**, create a `Basic Auth` credential:
-   * **User**: Your Atlassian email.
-   * **Password**: Your Atlassian API token.
+   - **User**: Your Atlassian email.
+   - **Password**: Your Atlassian API token.
 4. Attach this credential to the **Create Jira Issue** node.
 5. Toggle the workflow to **Active**.
 
@@ -61,8 +62,9 @@ JIRA_ISSUE_TYPE=Task
 
 Clients submitting private viewing requests or web contact forms can dispatch directly into Jira via:
 
-* **Endpoint**: `POST /api/integrations/jira`
-* **Payload**:
+- **Endpoint**: `POST /api/integrations/jira`
+- **Payload**:
+
 ```json
 {
   "phone": "+201012345678",
@@ -97,8 +99,8 @@ To enable automated comment posting when PRs and commits are pushed:
 
 1. Go to your GitHub Repository: **Settings** $\rightarrow$ **Secrets and variables** $\rightarrow$ **Actions**.
 2. Add the following repository secrets:
-   * `JIRA_BASE_URL`: `https://your-domain.atlassian.net`
-   * `JIRA_USER_EMAIL`: your Atlassian email
-   * `JIRA_API_TOKEN`: your Atlassian API token
+   - `JIRA_BASE_URL`: `https://your-domain.atlassian.net`
+   - `JIRA_USER_EMAIL`: your Atlassian email
+   - `JIRA_API_TOKEN`: your Atlassian API token
 
 Whenever a branch name (`SE-101-new-feature`), PR title (`[SE-101] Add WhatsApp bot`), or commit message mentions a Jira key, the workflow posts a comment on the ticket linking to the GitHub activity.
