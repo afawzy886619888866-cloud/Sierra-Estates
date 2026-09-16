@@ -2048,6 +2048,7 @@ html, body {
 .ai-tool-card p,
 .story-card p,
 .pcard .meta {
+  text-wrap: balance; /* fallback for Firefox / older browsers */
   text-wrap: pretty;
   max-width: 68ch;
 }
@@ -2227,7 +2228,6 @@ textarea:focus-visible {
   .compounds-chip-rail {
     padding-left: 2px;
     padding-right: 2px;
-    -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
   }
   .compounds-chip-rail button {
@@ -2248,6 +2248,7 @@ textarea:focus-visible {
 
 @media (max-width: 480px) {
   .hero {
+    min-height: 0; /* Firefox fallback: auto is unsupported pre-FF 22 */
     min-height: auto !important;
     padding: 36px 0 70px !important;
   }
