@@ -6,9 +6,9 @@
 
 import * as readline from 'readline';
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 import { obsidian } from '../packages/obsidian/src/index';
 import { OpenClawAgent } from '../packages/agents/openclaw';
+import { brainRAG, mempalace, memoryEngine } from '../packages/memory-engine/src/index';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -89,6 +89,57 @@ const TOOLS = [
       },
       required: ['prompt']
     }
+  },
+  {
+    name: 'get_distressed_deals',
+    description: 'Retrieve active hot deals and distressed price drops (dropPct >= 8.0%) from Episodic Context Cache (ECC).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Maximum number of distressed deals to return (default: 10)' }
+      }
+    }
+  },
+  {
+    name: 'search_memory_palace',
+    description: 'Search Memory Palace multi-room vector & keyword store across listings, leads, negotiations, and system architecture.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        keyword: { type: 'string', description: 'Search keywords or query terms' },
+        room: { type: 'string', enum: ['listings', 'leads', 'negotiations', 'system', 'general'], description: 'Optional memory palace room' },
+        drawer: { type: 'string', description: 'Optional drawer identifier' },
+        limit: { type: 'number', description: 'Max results to return' }
+      }
+    }
+  },
+  {
+    name: 'query_brain_rag',
+    description: 'Execute a goal-aligned RAG query across Obsidian Vault notes and ECC Episodic/Entity Memory.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search inquiry or question' },
+        compound: { type: 'string', description: 'Optional compound filter' },
+        entityId: { type: 'string', description: 'Optional entity ID (buyer phone, owner phone, or Sierra code)' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'track_ecc_price_drop',
+    description: 'Track an owner price reduction in ECC and generate an episode and hot deal alert.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        sierraCode: { type: 'string', description: 'Listing identifier or unit code' },
+        oldPrice: { type: 'number', description: 'Previous asking price in EGP' },
+        newPrice: { type: 'number', description: 'New asking price in EGP' },
+        source: { type: 'string', description: 'Source channel (e.g. WhatsApp, direct, broker)' },
+        ownerName: { type: 'string', description: 'Owner name or phone number' }
+      },
+      required: ['sierraCode', 'oldPrice', 'newPrice']
+    }
   }
 ];
 
@@ -138,6 +189,47 @@ async function handleToolCall(name: string, args: any): Promise<any> {
 
     case 'execute_openclaw_task': {
       const result = await openclaw.queryVertexAgent(args.prompt);
+      return result;
+    }
+
+    case 'get_distressed_deals': {
+      const deals = brainRAG.ecc.getHotDeals(args.limit || 10);
+      return { count: deals.length, deals };
+    }
+
+    case 'search_memory_palace': {
+      const results = mempalace.search({
+        keyword: args.keyword,
+        room: args.room,
+        drawer: args.drawer,
+        limit: args.limit || 10
+      });
+      return { count: results.length, results };
+    }
+
+    case 'query_brain_rag': {
+      const directive = brainRAG.queryBrainRAG(args.query, {
+        compound: args.compound,
+        entityId: args.entityId
+      });
+      return directive;
+    }
+
+    case 'track_ecc_price_drop': {
+      const result = brainRAG.ecc.trackPriceReduction(
+        args.sierraCode,
+        args.oldPrice,
+        args.newPrice,
+        args.source || 'Direct Intake',
+        args.ownerName
+      );
+      mempalace.store({
+        id: `price-drop-${args.sierraCode}-${Date.now()}`,
+        room: 'listings',
+        drawer: 'distressed-deals',
+        content: `Unit ${args.sierraCode} price drop: ${args.oldPrice} -> ${args.newPrice} EGP (${result.dropPct}%). Hot deal: ${result.isHotDeal}`,
+        timestamp: new Date().toISOString()
+      });
       return result;
     }
 
