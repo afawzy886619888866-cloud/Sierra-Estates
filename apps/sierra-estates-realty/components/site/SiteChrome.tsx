@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
-export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'contact' | 'projects' | null;
+export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'contact' | 'projects' | 'career' | null;
 
 export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
   const { t, theme, toggleTheme, toggleLang, lang } = useSite();
@@ -27,6 +27,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
   const act = (k: ActiveNav) => (active === k ? 'active' : undefined);
   const isAr = lang === 'ar';
   const cairoPlazaHref = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
+  const careerHref = isAr ? '/ar/career' : '/career';
 
   return (
     <>
@@ -48,19 +49,20 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
             <Link href="/properties" className={act('best')}>{t('navBest')}</Link>
             <Link href="/net" className={act('net')} style={active === 'net' ? { color: '#e9c176', fontWeight: 700 } : undefined}>
-              🎯 {isAr ? 'رادار الوحدات' : 'Listing Net'}
+              {isAr ? 'رادار الوحدات' : 'Listing Net'}
             </Link>
             <Link href={cairoPlazaHref} className={act('projects')}>{t('navProjects')}</Link>
-            <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'}>🏦 {isAr ? 'بنك المعلومات' : 'Information Bank'}</Link>
+            <Link href={careerHref} className={act('career')}>{t('navCareer')}</Link>
+            <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'}>{isAr ? 'بنك المعلومات' : 'Info Bank'}</Link>
             <Link href="/#contact" className={act('contact')}>{t('navContact')}</Link>
           </div>
 
           <div className="nav-right">
-            <Link href="/add-listing" className="add-listing-btn">
+            <Link href="/add-listing" className="add-listing-btn" title={t('addListingNote')}>
               <span className="al-text">{t('addListing')}</span>
               <span className="al-note">{t('addListingNote')}</span>
             </Link>
-            <Link href="/#contact" className="req-now-btn">
+            <Link href="/#contact" className="req-now-btn" title={t('reqNote')}>
               <span className="req-text">{t('reqNow')}</span>
               <span className="req-note">{t('reqNote')}</span>
             </Link>
@@ -108,8 +110,8 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
         <Link href={cairoPlazaHref} className={`bn-item${active === 'projects' ? ' active' : ''}`}>
           <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
         </Link>
-        <Link href={isAr ? '/ar/notebookllm' : '/notebookllm'} className="bn-item">
-          <Sparkles className="i" /><span>{isAr ? 'المعلومات' : 'Info Bank'}</span>
+        <Link href={careerHref} className={`bn-item${active === 'career' ? ' active' : ''}`}>
+          <Sparkles className="i" /><span>{t('navCareer')}</span>
         </Link>
         <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`}>
           <Phone className="i" /><span>{t('navContact')}</span>
