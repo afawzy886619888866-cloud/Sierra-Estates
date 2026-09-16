@@ -795,6 +795,7 @@ table, th, td {
   outline: none;
   font-family: inherit;
   box-shadow: var(--clay-btn-shadow);
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1375,6 +1376,7 @@ select.f-in option {
   cursor: pointer;
   box-shadow: var(--clay-btn-shadow);
   transition: var(--clay-trans);
+  -webkit-user-select: none;
   user-select: none;
 }
 
