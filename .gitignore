@@ -117,3 +117,5 @@ coverage/
 .amazonq/
 .claude/settings.local.json
 SE-Vercel-deploy-main*/
+tools/deer-flow/
+tools/openai-agents-python/
