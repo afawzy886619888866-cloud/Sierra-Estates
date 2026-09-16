@@ -135,7 +135,7 @@ curl -X POST http://your-vps:5678/webhook/whatsapp-incoming \
 
 ## Architecture
 
-```
+```text
                     Property Finder
                          │
                          ▼
