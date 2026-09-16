@@ -2049,8 +2049,17 @@ html, body {
 .story-card p,
 .pcard .meta {
   text-wrap: balance; /* fallback for Firefox / older browsers */
-  text-wrap: pretty;
   max-width: 68ch;
+}
+
+@supports (text-wrap: pretty) {
+  .sec-hd p,
+  .hero .sub,
+  .ai-tool-card p,
+  .story-card p,
+  .pcard .meta {
+    text-wrap: pretty;
+  }
 }
 
 /* High-clarity contrast for body & labels */
@@ -2248,8 +2257,7 @@ textarea:focus-visible {
 
 @media (max-width: 480px) {
   .hero {
-    min-height: 0; /* Firefox fallback: auto is unsupported pre-FF 22 */
-    min-height: auto !important;
+    min-height: 0 !important;
     padding: 36px 0 70px !important;
   }
 
