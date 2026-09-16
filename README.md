@@ -208,7 +208,7 @@ Authoritative documentation:
 ---
 
 <a id="license--maintainers"></a>
-<a id="license--maintainer"></a>
+
 ## 📄 License & Maintainers
 
 - **Lead Engineer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
