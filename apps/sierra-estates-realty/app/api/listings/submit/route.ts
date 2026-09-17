@@ -21,6 +21,7 @@ import { toListingColumns } from '@/lib/server/listing-columns';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { appendToExcelInventory } from '@/lib/services/ExcelInventoryService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -117,6 +118,28 @@ export async function POST(request: Request) {
       // flow working; production must surface the failure instead.
       if (process.env.NODE_ENV === 'production') throw writeError;
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
+    }
+
+    // Append newly submitted unit to the Master Excel Inventory workbook
+    try {
+      await appendToExcelInventory({
+        recordId: listingCode,
+        code: listingCode,
+        compound: data.compound,
+        propertyType: data.propertyType,
+        operation: data.mode === 'rent' ? 'Rent' : 'Sale',
+        price: data.price,
+        areaSqm: data.area,
+        bedrooms: data.beds,
+        bathrooms: data.baths,
+        contactName: data.ownerName,
+        contactPhone: data.mobile,
+        sourceType: data.ownerType === 'Broker' ? 'broker' : 'owner',
+        photoUrls: data.photos || data.images || [],
+        description: data.comment,
+      });
+    } catch (excelErr) {
+      logger.warn(`[LISTING_SUBMIT] Excel append error (non-fatal): ${(excelErr as Error).message}`);
     }
 
     // 1. Send immediate notification to the Agency Telegram Bot
