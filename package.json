@@ -17,6 +17,7 @@
         "test:ci": "turbo run test:ci",
         "test:rls": "bash supabase/tests/run-rls-tests.sh",
         "verify": "bash scripts/verify.sh",
+        "verify:routing": "node scripts/verify-action-routing.mjs",
         "hooks:install": "git config core.hooksPath .githooks && echo \"pre-push hook installed\"",
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
