@@ -1,7 +1,7 @@
 'use client';
 
 /** Port of deploy/index.html with direct 3D virtual tour and embedded interactive masterplan map. */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
@@ -16,6 +16,7 @@ import VirtualTourBanner from '@/components/site/VirtualTourBanner';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { getCuratedListingImage } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
@@ -129,14 +130,66 @@ export default function HomePage() {
     }
   };
 
+  const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>([]);
+
+  useEffect(() => {
+    if (!selectedMapCompound) {
+      setLiveCompoundUnits([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/inventory?compound=${encodeURIComponent(selectedMapCompound)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.units || !Array.isArray(data.units)) return;
+        const mapped: CardListing[] = data.units.map((u: any, i: number) => {
+          const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
+          const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
+          return {
+            id: u.id || `LIVE-${i + 1}`,
+            code: u.code || `SE-LIVE-${i + 1}`,
+            cmp: u.compound || selectedMapCompound,
+            zone: u.zone || 'New Cairo',
+            type: u.propertyType || u.type || 'Apartment',
+            beds: u.beds || 3,
+            bath: u.bath || 2,
+            area: u.area || 165,
+            egpM: egpM > 0 ? egpM : 8.5,
+            usd: usd > 0 ? usd : 175000,
+            ai: u.aiScore || 9.5,
+            tag: u.isNewListing ? 'New Listing' : 'Verified WhatsApp / Live Sync',
+            mode: u.mode || 'sale',
+            agent: 'Sierra Advisor Desk',
+            ago: 'Live Sync',
+            img: u.img || getCuratedListingImage(u, i),
+            whatsapp: 'https://wa.me/201092048333',
+            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+          };
+        });
+        setLiveCompoundUnits(mapped);
+      })
+      .catch((err) => console.warn('[HomePage] live compound units fetch error:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedMapCompound]);
+
   const matchingCompoundListings = useMemo(() => {
     if (!selectedMapCompound) return [];
     const target = selectedMapCompound.toLowerCase().trim();
-    return listings.filter((p) => {
+    const staticMatches = listings.filter((p) => {
       const cmp = (p.cmp || '').toLowerCase();
       return cmp.includes(target) || target.includes(cmp);
     });
-  }, [listings, selectedMapCompound]);
+    const all = [...liveCompoundUnits, ...staticMatches];
+    const seen = new Set<string>();
+    return all.filter((item) => {
+      const key = item.code || String(item.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [listings, selectedMapCompound, liveCompoundUnits]);
 
   const ticker = useMemo(() => {
     const items = isAr ? TICKER_AR : TICKER_EN;
