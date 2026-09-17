@@ -1,11 +1,10 @@
+from __future__ import annotations
+
 """main.py.
 
 Consolidated FastAPI backend for Sierra Estates PropTech integrations,
 ECC Memory Engine, CRM synchronization, and Valuation Services.
 """
-
-from dotenv import load_dotenv
-from __future__ import annotations
 
 import logging
 import os
@@ -13,10 +12,11 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 # pylint: disable=import-error,no-name-in-module
 try:
-    import dotenv
-    dotenv.load_dotenv()
+    from dotenv import load_dotenv
+    load_dotenv()
 except ImportError:
-    pass
+    def load_dotenv() -> None:
+        pass
 
 if TYPE_CHECKING:
     from fastapi import FastAPI

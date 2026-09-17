@@ -60,7 +60,7 @@ async function embedWithRetry(contextText: string, maxRetries = 4): Promise<numb
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = await model.embedContent({
-                content: { parts: [{ text: contextText }] },
+                content: { role: 'user', parts: [{ text: contextText }] },
                 outputDimensionality: 768,
             });
             return Array.from(result.embedding.values);
