@@ -142,13 +142,22 @@ def search_inventory(compound: str = "", deal_type: str = "sale", limit: int = 5
             elif deal_type == "sale":
                 q = q.eq("deal_type", "sale")
             resp = q.limit(limit).execute()
-            listings = resp.data or []
+            raw_listings = resp.data
+            listings: list[dict[str, Any]] = (
+                [u for u in raw_listings if isinstance(u, dict)]
+                if isinstance(raw_listings, list)
+                else []
+            )
             if not listings:
                 return f"No listings found for compound='{compound}', deal_type='{deal_type}'."
             lines = []
             for u in listings:
+                price = u.get("price")
+                area = u.get("area_sqm")
+                p_num = float(price) if isinstance(price, (int, float)) else 0.0
+                a_num = float(area) if isinstance(area, (int, float)) and float(area) > 0 else 0.0
                 psqm = u.get("price_per_sqm") or (
-                    round(u["price"] / u["area_sqm"]) if u.get("price") and u.get("area_sqm") else "?"
+                    round(p_num / a_num) if p_num and a_num else "?"
                 )
                 lines.append(
                     f"[{u.get('code', u.get('id', '?'))}] {u.get('compound', '?')} | "
@@ -199,12 +208,19 @@ def calculate_valuation(
                 .limit(30)
                 .execute()
             )
-            comps = resp.data or []
-            comp_psqm = [
-                c.get("price_per_sqm") or (c["price"] / max(c["area_sqm"], 1))
-                for c in comps
-                if c.get("price") and c.get("area_sqm")
-            ]
+            raw_comps = resp.data
+            comps: list[dict[str, Any]] = (
+                [c for c in raw_comps if isinstance(c, dict)]
+                if isinstance(raw_comps, list)
+                else []
+            )
+            comp_psqm: list[float] = []
+            for c in comps:
+                p = c.get("price")
+                a = c.get("area_sqm")
+                if isinstance(p, (int, float)) and isinstance(a, (int, float)) and a > 0:
+                    sqm_val = c.get("price_per_sqm")
+                    comp_psqm.append(float(sqm_val) if isinstance(sqm_val, (int, float)) else float(p) / float(a))
             if comp_psqm:
                 avg = sum(comp_psqm) / len(comp_psqm)
                 delta = ((price_per_sqm - avg) / avg) * 100
@@ -269,7 +285,7 @@ def schedule_property_viewing(
                 "notes": notes,
                 "status": "pending",
             }).execute()
-            if resp.data:
+            if resp.data and isinstance(resp.data, list) and len(resp.data) > 0 and isinstance(resp.data[0], dict):
                 booking_id = resp.data[0].get("id", "N/A")
                 return (
                     f"Viewing confirmed and logged.\n"
@@ -506,9 +522,18 @@ async def run(query: str):
 
     if not os.getenv("OPENAI_API_KEY"):
         print("[Dry-run] Agent topology ready:")
-        print(f"  Entry   : {triage_agent.name}")
-        print(f"  Handoffs: {[a.name for a in triage_agent.handoffs]}")
-        print(f"  Tools   : {[getattr(t, '__name__', str(t)) for t in triage_agent.tools]}")
+        entry_name = getattr(triage_agent, "name", str(triage_agent))
+        handoffs_list = [
+            getattr(getattr(a, "target", getattr(a, "agent", a)), "name", str(a))
+            for a in getattr(triage_agent, "handoffs", [])
+        ]
+        tools_list = [
+            getattr(t, "__name__", str(t))
+            for t in getattr(triage_agent, "tools", [])
+        ]
+        print(f"  Entry   : {entry_name}")
+        print(f"  Handoffs: {handoffs_list}")
+        print(f"  Tools   : {tools_list}")
         print(f"\n  Valuation tools : {[getattr(t, '__name__', str(t)) for t in valuation_agent.tools]}")
         print(f"  Viewing tools   : {[getattr(t, '__name__', str(t)) for t in viewing_scheduler_agent.tools]}")
         print("\n  To run live: set OPENAI_API_KEY=sk-... && python scripts/openai-agent-sierra.py")

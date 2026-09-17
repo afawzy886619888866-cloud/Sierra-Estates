@@ -2,6 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+
+    {
       "name": "🚀 Next.js: Dev Server (sierra-estates-realty)",
       "type": "node",
       "request": "launch",
@@ -24,7 +32,9 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": [
+        "dev"
+      ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -120,7 +130,6 @@
       "name": "🌐 Edge: Launch (localhost:3000)",
       "type": "msedge",
       "request": "launch",
-      "version": "stable",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/apps/sierra-estates-realty"
     }
