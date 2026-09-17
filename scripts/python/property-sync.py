@@ -23,9 +23,45 @@ except ImportError:  # pragma: no cover - optional dependency
     credentials = None
     firestore = None
 
+load_dotenv('.env.local')
 load_dotenv()
 
 DEFAULT_PF_BASE_URL = 'https://api.property-finder.eg/v2'
+
+
+def sync_to_supabase(normalized: dict[str, Any]) -> str:
+    """Sync a normalized Property Finder listing to Supabase public.listings."""
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    if not supabase_key:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')
+    headers = {
+        'apikey': supabase_key,
+        'Authorization': f'Bearer {supabase_key}',
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+    }
+    record = {
+        'code': normalized.get('sync_hash'),
+        'title': normalized.get('title') or normalized.get('compound_name'),
+        'compound': normalized.get('compound_name'),
+        'price': normalized.get('price_egp') or 0,
+        'bedrooms': normalized.get('bedrooms') or 0,
+        'bathrooms': normalized.get('bathrooms') or 0,
+        'area': normalized.get('area_sqm') or 0,
+        'property_type': (normalized.get('property_type') or 'apartment').lower(),
+        'status': 'available',
+        'source': 'property_finder',
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    resp = requests.post(
+        f'{supabase_url}/rest/v1/listings',
+        headers=headers,
+        json=[record],
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return 'synced'
 
 
 def _load_firestore_client(project_id: str | None):
