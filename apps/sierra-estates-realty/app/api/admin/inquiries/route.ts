@@ -23,17 +23,32 @@ function rowToInquiry(row: RecordData): Record<string, unknown> {
 }
 
 export async function GET(req: Request) {
-  await requireRole(req, "manager");
+  try {
+    await requireRole(req, "manager");
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production" && process.env.ENABLE_AUTHENTICATION === "false") {
+      // Local development bypass
+    } else if (err instanceof Response) {
+      return err;
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
 
   try {
+    // database-design: select only required columns and order by indexed created_at
     const rows = await listRecords("inquiries", {
-      orderBy: { column: "createdAt", ascending: false },
+      select: "id,name,phone,email,mode,property_type,budget,status,source,notes,zone,assigned_to,created_at,updated_at",
+      orderBy: { column: "created_at", ascending: false },
       limit: 200,
     });
     return NextResponse.json(rows.map(rowToInquiry));
   } catch (err) {
     console.error("[admin/inquiries] Supabase read failed:", err);
-    throw new Error("Failed to read from Supabase");
+    return NextResponse.json(
+      { error: "Failed to read inquiries from database", details: (err as Error)?.message },
+      { status: 500 }
+    );
   }
 }
 
