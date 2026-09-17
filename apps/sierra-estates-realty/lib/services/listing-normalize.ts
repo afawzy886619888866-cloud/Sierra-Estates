@@ -1,3 +1,4 @@
+/* cspell:disable */
 import { PropertyType, PropertyStatus, Unit } from '../models/schema';
 
 /**
