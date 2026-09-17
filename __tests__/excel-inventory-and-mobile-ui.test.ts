@@ -11,6 +11,7 @@ import {
 
 describe('Excel Master Inventory & Real Data Integration Suite', () => {
   const masterPath = getMasterExcelPath();
+  const loadWorkbook = (p: string) => XLSX.read(fs.readFileSync(p), { type: 'buffer' });
 
   it('verifies that the master Inventory_with_Photos.xlsx exists and has valid size', () => {
     expect(fs.existsSync(masterPath)).toBe(true);
@@ -19,7 +20,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
   });
 
   it('contains the canonical sheets in Inventory_with_Photos.xlsx', () => {
-    const wb = XLSX.readFile(masterPath);
+    const wb = loadWorkbook(masterPath);
     expect(wb.SheetNames).toContain('Owners Rent');
     expect(wb.SheetNames).toContain('Owners Buy');
     expect(wb.SheetNames).toContain('Broker Rent');
@@ -27,7 +28,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
   });
 
   it('verifies canonical column headers exist in sheets', () => {
-    const wb = XLSX.readFile(masterPath);
+    const wb = loadWorkbook(masterPath);
     const sampleWs = wb.Sheets['Owners Rent'];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sampleWs);
     expect(rows.length).toBeGreaterThan(0);
@@ -88,7 +89,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(result.sheetName).toBe('Owners Buy');
 
     // Verify row was written to the sheet
-    const wb = XLSX.readFile(result.filePath);
+    const wb = loadWorkbook(result.filePath);
     const ws = wb.Sheets['Owners Buy'];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
     const found = rows.find((r) => r.RecordID === testRecordId);
