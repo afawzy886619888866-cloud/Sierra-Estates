@@ -159,11 +159,8 @@ def merge_all():
     print(f"📁 Airtable CSV saved: {AIRTABLE_CSV}")
 
     # 8. Save Excel Workbook
-    jls_extract_var = "openpyxl"
-    jls_extract_var = "openpyxl"jls_extract_var) as writer:
-        # Summar
-        jls_etract_var = DataFrame
-        s.Excel = pd.jls_extract_var
+    with pd.ExcelWriter(MASTER_EXCEL, engine="openpyxl") as writer:
+        # Summary
         summary = pd.DataFrame({
             "Metric": [
                 "Total Master Units",

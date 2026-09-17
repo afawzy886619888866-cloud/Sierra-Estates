@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pyright: reportAttributeAccessIssue=false, reportCallIssue=false, reportArgumentType=false
 """
 Robust Master Inventory Consolidator for Sierra Estates.
 Merges Master_Inventory_Clean_No_Duplicates.xlsx (37,941 units) and
@@ -8,10 +9,12 @@ and professional styling.
 
 import os
 import sys
+from typing import Any
+
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+    getattr(sys.stdout, "reconfigure")(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8")
+    getattr(sys.stderr, "reconfigure")(encoding="utf-8")
 
 import json
 import time
@@ -102,9 +105,9 @@ def run_consolidation():
 
     # Combine dataframes
     if not df_owners.empty:
-        combined = pd.concat([df_owners, df_base], ignore_index=True, sort=False)
+        combined: Any = pd.concat([df_owners, df_base], ignore_index=True, sort=False)
     else:
-        combined = df_base.copy()
+        combined: Any = df_base.copy()
 
     total_combined = len(combined)
     print(f"📊 Combined records before deduplication: {total_combined}")
@@ -123,20 +126,20 @@ def run_consolidation():
 
     # Dedup pass 1: By code (if code exists and not empty)
     has_code_mask = combined["code_clean"].str.len() > 3
-    with_code = combined[has_code_mask].drop_duplicates(subset=["code_clean"], keep="first")
-    without_code = combined[~has_code_mask]
-    step1_df = pd.concat([with_code, without_code], ignore_index=True)
+    with_code: Any = combined[has_code_mask].drop_duplicates(subset=["code_clean"], keep="first")
+    without_code: Any = combined[~has_code_mask]
+    step1_df: Any = pd.concat([with_code, without_code], ignore_index=True)
 
     # Dedup pass 2: By valid phone + price_egp + deal_type
     has_valid_phone = step1_df["phone_clean"].str.len() >= 9
-    phone_records = step1_df[has_valid_phone].copy()
-    no_phone_records = step1_df[~has_valid_phone].copy()
+    phone_records: Any = step1_df[has_valid_phone].copy()
+    no_phone_records: Any = step1_df[~has_valid_phone].copy()
 
     price_rounded = phone_records["price_egp"].fillna(0).round(-2).astype(str)
     phone_records["dedup_key"] = phone_records["phone_clean"].str[-7:] + "|" + price_rounded + "|" + phone_records["deal_type"].str.lower()
-    deduped_phone = phone_records.drop_duplicates(subset=["dedup_key"], keep="first").drop(columns=["dedup_key"])
+    deduped_phone: Any = phone_records.drop_duplicates(subset=["dedup_key"], keep="first").drop(columns=["dedup_key"])
 
-    final_df = pd.concat([deduped_phone, no_phone_records], ignore_index=True)
+    final_df: Any = pd.concat([deduped_phone, no_phone_records], ignore_index=True)
     final_df = final_df.drop(columns=["phone_clean", "code_clean", "has_photos_upper", "photo_score"], errors="ignore")
 
     # Re-assign sequential numbering
