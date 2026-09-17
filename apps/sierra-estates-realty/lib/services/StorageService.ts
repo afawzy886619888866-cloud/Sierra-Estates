@@ -17,7 +17,7 @@ const PROPERTY_MEDIA_BUCKET =
 
 /**
  * SIERRA ESTATES STORAGE SERVICE
- * Manages institutional asset storage with high-integrity pathing.
+ * Manages institutional asset storage with high-integrity paths.
  */
 export class StorageService {
   /**

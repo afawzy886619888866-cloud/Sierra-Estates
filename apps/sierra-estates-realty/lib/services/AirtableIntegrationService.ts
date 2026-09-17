@@ -6,7 +6,7 @@ import { mapRowToUnit } from './listing-normalize';
  * AIRTABLE INTEGRATION
  *
  * Pulls property listings from one or more Airtable tables into the
- * inventory, mirroring the Google Sheets ingestion path. Records are upserted
+ * inventory, mirroring the Google Sheets ingestion path. Records are synced
  * by their reference code so re-syncing is idempotent.
  *
  * Configuration (env):
