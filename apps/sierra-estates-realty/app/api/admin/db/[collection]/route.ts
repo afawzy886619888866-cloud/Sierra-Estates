@@ -87,7 +87,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
     // Order: "field" or "field:desc"
     const [orderField, orderDirection] = (order ?? '').split(':');
 
-    // No Timestamp serialisation step: timestamptz columns already arrive as
+    // No Timestamp serialization step: timestamptz columns already arrive as
     // ISO strings and JSONB as plain objects.
     const docs = await listRecords(collection, {
       where: clauses,
