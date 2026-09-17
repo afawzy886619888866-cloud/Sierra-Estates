@@ -290,7 +290,8 @@ export async function appendToExcelInventory(input: NewExcelListingInput): Promi
       wb.SheetNames.push(sheetName);
     }
 
-    XLSX.writeFile(wb, filePath);
+    const outBuf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    fs.writeFileSync(filePath, outBuf);
     logger.info(`[ExcelInventory] Successfully appended unit ${recordId} to sheet "${sheetName}" in ${filePath}`);
 
     // Synchronize to Supabase database (fire and forget / graceful fallback)
