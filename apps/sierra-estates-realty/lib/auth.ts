@@ -120,7 +120,7 @@ export function isAdminEmail(email: string): boolean {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  const bootstrapEmail = (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net").trim().toLowerCase();
+  const bootstrapEmail = BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
 
   const standardAdminEmails = [
     "admin@sierra-estates.net",
