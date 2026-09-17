@@ -15,6 +15,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
 import { Search, RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
+import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
 
 export interface MapCompound {
   n: string;
@@ -696,6 +697,12 @@ export default function CompoundsMap({
         // Rich Interactive Popup
         const rentDisplay = c.rent ? `$${c.rent.toLocaleString()}` : `$${Math.round(c.priceM * 200).toLocaleString()}`;
         const queryParamSeg = selectedSegment !== 'all' ? `&segment=${selectedSegment}` : '';
+        const matchingUnit = inventoryData?.units?.find((u) => {
+          const cName = cleanCpdName(u.compound || u.location || '');
+          const target = cleanCpdName(c.n);
+          return cName === target || cName.startsWith(target) || target.startsWith(cName);
+        });
+        const previewImg = matchingUnit?.img || (COMPOUND_HERO_IMAGES as Record<string, string>)[c.n];
         const popupHtml = `
           <div class="compound-rich-popup" style="
             min-width: 260px;
@@ -735,6 +742,12 @@ export default function CompoundsMap({
             ">
               ${displayName}
             </h4>
+            ${previewImg ? `
+              <div style="width: 100%; height: 115px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; background: #0b1c2d; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                <img src="${previewImg}" alt="${displayName}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.parentElement.style.display='none'" />
+                ${matchingUnit?.code ? `<span style="position: absolute; bottom: 6px; left: 6px; background: rgba(7, 21, 35, 0.88); color: #e2e8f0; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(223, 173, 58, 0.5); backdrop-filter: blur(4px);">${matchingUnit.code}</span>` : ''}
+              </div>
+            ` : ''}
 
             <div style="
               background: #f8fafc;
