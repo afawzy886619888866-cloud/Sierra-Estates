@@ -28,6 +28,7 @@ except ImportError:  # pragma: no cover - optional dependency
     credentials = None
     firestore = None
 
+load_dotenv('.env.local')
 load_dotenv()
 
 KNOWN_PREMIUM_COMPOUNDS = {

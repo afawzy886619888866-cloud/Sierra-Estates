@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover - optional dependency
     credentials = None
     firestore = None
 
+load_dotenv('.env.local')
 load_dotenv()
 
 
@@ -31,6 +32,21 @@ class SafeTemplateDict(dict[str, str]):
 
     def __missing__(self, key: str) -> str:
         return '{' + key + '}'
+
+
+def _read_supabase_leads() -> list[dict[str, Any]]:
+    """Read leads from Supabase PostgreSQL public.leads."""
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    if not supabase_key:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')
+    headers = {
+        'apikey': supabase_key,
+        'Authorization': f'Bearer {supabase_key}',
+    }
+    resp = requests.get(f'{supabase_url}/rest/v1/leads?select=*', headers=headers, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def _load_firestore_client(project_id: str | None):
@@ -63,7 +79,7 @@ def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
 
 
 def _read_firestore_leads(project_id: str | None, collection_name: str) -> list[dict[str, Any]]:
-    """Read leads from Firestore."""
+    """Read leads from Firestore (legacy fallback)."""
     client = _load_firestore_client(project_id)
     documents = client.collection(collection_name).stream()
     return [{**(document.to_dict() or {}), 'id': document.id} for document in documents]
