@@ -254,6 +254,7 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
   const area = parseNumeric(pick(row, ['Space', 'Area', 'area', 'المساحه', 'المساحة', 'size', 'Size']));
   const bedrooms = parseNumeric(pick(row, ['bedrooms', 'Bedrooms', 'beds', 'غرف', 'الغرف']));
   const bathrooms = parseNumeric(pick(row, ['bathrooms', 'Bathrooms', 'baths', 'حمام', 'حمامات', 'الحمامات', 'دورات المياه']));
+  const garden = parseNumeric(pick(row, ['Garden', 'garden', 'الحديقة', 'الحديقه']));
   const rawImages = pick(row, [
     'Photos', 'photos', 'Photo', 'photo', 'Image URL', 'imageUrl', 'Images', 'images',
     'Image', 'image', 'Pictures', 'pictures', 'Attachments', 'attachments', 'صورة', 'الصورة', 'الصوره'
