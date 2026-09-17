@@ -27,8 +27,8 @@ export interface ExtractedChatMessage {
 export function extractAttachedPhotos(text: string, baseDir?: string): string[] {
   const photos: string[] = [];
 
-  // 1. Direct URLs
-  const urlRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|webp|avif)(?:\?[^\s]*)?)/gi;
+  // 1. Direct URLs and image CDN URLs
+  const urlRegex = /(https?:\/\/\S*(?:images\.unsplash\.com|airtableusercontent\.com|\.(?:jpg|jpeg|png|webp|avif))\S*)/gi;
   let match: RegExpExecArray | null;
   while ((match = urlRegex.exec(text)) !== null) {
     photos.push(match[1]);
