@@ -19,7 +19,7 @@ import json
 import asyncio
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 # ── Env loading ────────────────────────────────────────────────────────────────
 try:
