@@ -105,9 +105,9 @@ def run_consolidation():
 
     # Combine dataframes
     if not df_owners.empty:
-        combined: Any = pd.concat([df_owners, df_base], ignore_index=True, sort=False)
+        combined = pd.concat([df_owners, df_base], ignore_index=True, sort=False)
     else:
-        combined: Any = df_base.copy()
+        combined = df_base.copy()
 
     total_combined = len(combined)
     print(f"📊 Combined records before deduplication: {total_combined}")
