@@ -27,3 +27,14 @@ Inventory_with_Photos_Airtable.csv
 Sierra_Estates_Units_With_Photos.csv
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
+
+# Tool artifacts and redundant local clones
+.amazonq
+.amazonq/**
+SE-Vercel-deploy-main*
+SE-Vercel-deploy-main*/**
+.reports/**
+libArchive/**
+stubArchive/**
+.amphion/**
+*.tsbuildinfo

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
@@ -296,6 +297,11 @@ function parseListingMessage(
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyAdminRequest(request);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const parseResult = scanRequestSchema.safeParse(body);
