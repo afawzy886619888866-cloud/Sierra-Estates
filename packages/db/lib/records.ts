@@ -1,3 +1,4 @@
+/* cspell:words ilike Postgrest */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { assertCanonicalBackendForWrites } from './backend-policy';
 import { getSupabaseAdmin } from './supabase';
