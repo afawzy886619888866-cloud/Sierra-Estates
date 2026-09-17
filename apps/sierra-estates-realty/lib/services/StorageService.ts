@@ -35,7 +35,8 @@ export class StorageService {
     const filePath = `properties/${docId}/${filename}`;
     const storage = getSupabaseAdmin().storage.from(PROPERTY_MEDIA_BUCKET);
 
-    const buffer = Buffer.from(base64Data, 'base64');
+    const cleanBase64 = (base64Data || '').replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
 
     // supabase-js resolves with { error } rather than throwing, so an ignored
     // error would hand back a URL for an object that was never written.
@@ -47,6 +48,13 @@ export class StorageService {
     if (error && (error.message?.toLowerCase().includes('bucket not found') || error.message?.toLowerCase().includes('does not exist'))) {
       // Auto-ensure bucket exists on Supabase (e.g. fresh environment or Vercel production deployment)
       await getSupabaseAdmin().storage.createBucket(PROPERTY_MEDIA_BUCKET, { public: true }).catch(() => {});
+      const retry = await storage.upload(filePath, buffer, {
+        contentType: mimeType,
+        upsert: true,
+      });
+      error = retry.error;
+    } else if (error && (error.message?.toLowerCase().includes('fetch failed') || error.message?.toLowerCase().includes('network') || error.message?.toLowerCase().includes('timeout'))) {
+      // Retry once on transient Vercel serverless network failure
       const retry = await storage.upload(filePath, buffer, {
         contentType: mimeType,
         upsert: true,
