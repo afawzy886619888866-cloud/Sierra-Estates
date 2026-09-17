@@ -1,8 +1,13 @@
 /**
  * Sierra Estates — Vector Embeddings Generator for Supabase
  *
- * Uses Gemini text-embedding-004 to create 768-dimensional semantic
- * embeddings for all properties in the Supabase database.
+ * Uses Gemini gemini-embedding-001 (with outputDimensionality: 768) to create
+ * high-precision semantic embeddings for all property listings in Supabase.
+ *
+ * Usage:
+ *   npx tsx scripts/generate-supabase-embeddings.ts
+ *   npx tsx scripts/generate-supabase-embeddings.ts --batch=200
+ *   npx tsx scripts/generate-supabase-embeddings.ts --continuous
  */
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -13,6 +18,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 dotenv.config();
 
@@ -21,57 +27,110 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_P
 const GEMINI_KEY = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 if (!SUPABASE_KEY) {
-    console.error('❌ SUPABASE_SERVICE_ROLE_KEY missing in .env.local');
+    console.error('❌ SUPABASE_SERVICE_ROLE_KEY missing in environment');
     process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+if (!GEMINI_KEY) {
+    console.error('❌ GEMINI_API_KEY missing in environment');
+    process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+});
+
 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 
-async function generateEmbeddings() {
-    console.log('🧠 Starting AI Vector Embedding Generation for Supabase Listings...');
+// Parse command line arguments
+const args = process.argv.slice(2);
+const batchArg = args.find(a => a.startsWith('--batch='));
+const delayArg = args.find(a => a.startsWith('--delay='));
+const isContinuous = args.includes('--continuous');
 
-    // Fetch listings that don't have embeddings yet
+const BATCH_SIZE = batchArg ? parseInt(batchArg.split('=')[1], 10) : 100;
+const PACING_DELAY_MS = delayArg ? parseInt(delayArg.split('=')[1], 10) : 120;
+
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function embedWithRetry(contextText: string, maxRetries = 4): Promise<number[]> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const result = await model.embedContent({
+                content: { parts: [{ text: contextText }] },
+                outputDimensionality: 768,
+            });
+            return Array.from(result.embedding.values);
+        } catch (err: any) {
+            const isRateLimit = err?.message?.includes('429') || err?.message?.includes('quota');
+            if (isRateLimit && attempt < maxRetries) {
+                const backoff = attempt * 2000;
+                console.warn(`\n⏳ Rate limit encountered (429). Retrying in ${backoff / 1000}s...`);
+                await sleep(backoff);
+                continue;
+            }
+            if (attempt === maxRetries) throw err;
+            await sleep(attempt * 1000);
+        }
+    }
+    throw new Error('Failed to embed content after maximum retries');
+}
+
+async function processBatch(batchSize: number): Promise<number> {
+    // 1. Check counts
+    const { count: pendingCount, error: countErr } = await supabase
+        .from('listings')
+        .select('*', { count: 'exact', head: true })
+        .is('embedding_768', null);
+
+    if (countErr) {
+        console.error('❌ Error checking pending count:', countErr.message);
+        return 0;
+    }
+
+    if (!pendingCount || pendingCount === 0) {
+        console.log('\n🎉 All catalog listings already have 768-dim vector embeddings!');
+        return 0;
+    }
+
+    console.log(`\n📦 Pending catalog listings: ${pendingCount.toLocaleString()}`);
+    console.log(`🚀 Fetching next batch of up to ${batchSize} listings...`);
+
+    // Prioritize listings with rich compounds and pricing first
     const { data: listings, error } = await supabase
         .from('listings')
         .select('id, ref_id, title, compound, property_type, deal_type, price, bedrooms, bathrooms, area_sqm, finishing_type, description')
         .is('embedding_768', null)
-        .limit(100);
+        .order('compound', { ascending: true, nullsFirst: false })
+        .limit(batchSize);
 
-    if (error) {
-        console.error('❌ Error fetching listings:', error.message);
-        return;
-    }
-
-    if (!listings || listings.length === 0) {
-        console.log('✅ All listings already have embeddings generated!');
-        return;
+    if (error || !listings || listings.length === 0) {
+        if (error) console.error('❌ Error fetching listings:', error.message);
+        return 0;
     }
 
     console.log(`📊 Processing ${listings.length} listings with Gemini embedding-001 (768-dim)...`);
+    let batchSuccess = 0;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-    let successCount = 0;
-
-    for (const listing of listings) {
+    for (let i = 0; i < listings.length; i++) {
+        const listing = listings[i];
         try {
             const contextText = [
-                `Title: ${listing.title}`,
-                `Compound: ${listing.compound}`,
-                `Type: ${listing.property_type}`,
-                `Deal: ${listing.deal_type}`,
-                `Price: ${listing.price} EGP`,
-                `Bedrooms: ${listing.bedrooms}`,
-                `Area: ${listing.area_sqm} sqm`,
+                `Title: ${listing.title || 'Luxury Unit'}`,
+                `Compound: ${listing.compound || 'New Cairo'}`,
+                `Type: ${listing.property_type || 'Apartment'}`,
+                `Deal: ${listing.deal_type || 'sale'}`,
+                `Price: ${listing.price ? Number(listing.price).toLocaleString() + ' EGP' : 'Price on request'}`,
+                `Bedrooms: ${listing.bedrooms || '3'}`,
+                `Area: ${listing.area_sqm || '200'} sqm`,
                 `Finishing: ${listing.finishing_type || 'Finished'}`,
                 `Description: ${listing.description || ''}`,
             ].join(' | ');
 
-            const embeddingResult = await model.embedContent({
-                content: { parts: [{ text: contextText }] },
-                outputDimensionality: 768,
-            });
-            const embedding = Array.from(embeddingResult.embedding.values);
+            const embedding = await embedWithRetry(contextText);
 
             const { error: updateErr } = await supabase
                 .from('listings')
@@ -79,17 +138,51 @@ async function generateEmbeddings() {
                 .eq('id', listing.id);
 
             if (!updateErr) {
-                successCount++;
-                process.stdout.write('.');
+                batchSuccess++;
+                const percent = Math.round(((i + 1) / listings.length) * 100);
+                process.stdout.write(`\r[${i + 1}/${listings.length}] (${percent}%) - ${listing.compound || 'New Cairo'}: ${listing.title?.slice(0, 35)}...`);
+            }
+
+            // Pacing delay to avoid burst rate limits
+            if (PACING_DELAY_MS > 0) {
+                await sleep(PACING_DELAY_MS);
             }
         } catch (e: any) {
-            console.warn(`\n⚠️ Failed for ${listing.ref_id}:`, e.message);
+            console.warn(`\n⚠️ Failed for ${listing.ref_id || listing.id}:`, e.message);
         }
     }
 
-    console.log(`\n🎉 Successfully generated embeddings for ${successCount} listings!`);
+    console.log(`\n✅ Completed batch: ${batchSuccess} / ${listings.length} embeddings generated and saved to Supabase.`);
+    return batchSuccess;
 }
 
-generateEmbeddings().catch(err => {
-    console.error('Fatal error in embeddings generation:', err);
+async function main() {
+    console.log('═══════════════════════════════════════════════════════════════════════');
+    console.log('  SIERRA ESTATES — GEMINI 768-DIM VECTOR EMBEDDING GENERATOR');
+    console.log('═══════════════════════════════════════════════════════════════════════');
+    console.log(`- Supabase URL: ${SUPABASE_URL}`);
+    console.log(`- Model: gemini-embedding-001 (768 dimensions)`);
+    console.log(`- Batch Size: ${BATCH_SIZE}`);
+    console.log(`- Pacing Delay: ${PACING_DELAY_MS}ms`);
+    console.log(`- Mode: ${isContinuous ? 'Continuous (Loop until finished)' : 'Single Batch'}`);
+
+    if (isContinuous) {
+        let totalEmbedded = 0;
+        let round = 1;
+        while (true) {
+            console.log(`\n--- Cycle #${round} ---`);
+            const processed = await processBatch(BATCH_SIZE);
+            if (processed === 0) break;
+            totalEmbedded += processed;
+            round++;
+            await sleep(1000);
+        }
+        console.log(`\n🎉 Continuous execution complete! Total new embeddings generated: ${totalEmbedded.toLocaleString()}`);
+    } else {
+        await processBatch(BATCH_SIZE);
+    }
+}
+
+main().catch(err => {
+    console.error('Fatal error in embeddings generator:', err);
 });
