@@ -141,7 +141,7 @@ def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description='Broadcast templated WhatsApp messages to Sierra Estates leads.')
     parser.add_argument('--template', required=True, help='Message template, e.g. "Hi {name}".')
-    parser.add_argument('--source', choices=('csv', 'firestore'), required=True, help='Lead source to read from.')
+    parser.add_argument('--source', choices=('csv', 'firestore', 'supabase'), default='supabase', help='Lead source to read from (default: supabase).')
     parser.add_argument('--dry-run', action='store_true', help='Preview messages without sending them.')
     parser.add_argument('--min-score', type=int, default=0, help='Only send to leads at or above this score.')
     parser.add_argument('--input', default='leads.csv', help='CSV input path when --source=csv.')
@@ -156,11 +156,12 @@ def main() -> int:
     args = parse_args()
 
     try:
-        leads = (
-            _read_csv_leads(Path(args.input))
-            if args.source == 'csv'
-            else _read_firestore_leads(args.project_id, args.collection)
-        )
+        if args.source == 'csv':
+            leads = _read_csv_leads(Path(args.input))
+        elif args.source == 'supabase':
+            leads = _read_supabase_leads()
+        else:
+            leads = _read_firestore_leads(args.project_id, args.collection)
         report_rows: list[dict[str, Any]] = []
         for lead in leads:
             if _score_value(lead) < args.min_score:
