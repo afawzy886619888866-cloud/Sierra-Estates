@@ -215,16 +215,20 @@ def fetch_property_finder_listings(limit: int | None, compound: str | None) -> l
 
 def main() -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Firestore.')
-    parser.add_argument('--dry-run', action='store_true', help='Show sync actions without writing to Firestore.')
+    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Supabase or Firestore.')
+    parser.add_argument('--target', choices=('supabase', 'firestore'), default='supabase', help='Database target (default: supabase).')
+    parser.add_argument('--dry-run', action='store_true', help='Show sync actions without writing.')
     parser.add_argument('--limit', type=int, default=None, help='Maximum number of Property Finder listings to fetch.')
     parser.add_argument('--compound', default=None, help='Optional compound name filter.')
-    parser.add_argument('--project-id', default=None, help='Optional Firebase project id override.')
+    parser.add_argument('--project-id', default=None, help='Optional Firebase project id override when target=firestore.')
     args = parser.parse_args()
 
     try:
         listings = fetch_property_finder_listings(args.limit, args.compound)
-        client = None if args.dry_run else _load_firestore_client(args.project_id)
+        client = None
+        if not args.dry_run and args.target == 'firestore':
+            client = _load_firestore_client(args.project_id)
+
         new_records = 0
         updated_records = 0
         skipped_duplicates = 0
@@ -235,22 +239,26 @@ def main() -> int:
                 print(f"[DRY RUN] Would upsert {normalized['sync_hash']} ({normalized['compound_name']})")
                 continue
 
-            assert client is not None
-            document_ref = client.collection('Properties').document(normalized['sync_hash'])
-            snapshot = document_ref.get()
-            incoming_comparable = {key: value for key, value in normalized.items() if key != 'last_sync_timestamp'}
-
-            if snapshot.exists:
-                existing_data = snapshot.to_dict() or {}
-                existing_comparable = {key: value for key, value in existing_data.items() if key != 'last_sync_timestamp'}
-                if existing_comparable == incoming_comparable:
-                    skipped_duplicates += 1
-                    continue
-                document_ref.set(normalized, merge=True)
-                updated_records += 1
-            else:
-                document_ref.set(normalized, merge=True)
+            if args.target == 'supabase':
+                sync_to_supabase(normalized)
                 new_records += 1
+            else:
+                assert client is not None
+                document_ref = client.collection('Properties').document(normalized['sync_hash'])
+                snapshot = document_ref.get()
+                incoming_comparable = {key: value for key, value in normalized.items() if key != 'last_sync_timestamp'}
+
+                if snapshot.exists:
+                    existing_data = snapshot.to_dict() or {}
+                    existing_comparable = {key: value for key, value in existing_data.items() if key != 'last_sync_timestamp'}
+                    if existing_comparable == incoming_comparable:
+                        skipped_duplicates += 1
+                        continue
+                    document_ref.set(normalized, merge=True)
+                    updated_records += 1
+                else:
+                    document_ref.set(normalized, merge=True)
+                    new_records += 1
 
         print('Sync summary')
         print(f'  New records: {new_records}')
