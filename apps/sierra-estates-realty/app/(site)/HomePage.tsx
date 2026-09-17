@@ -230,6 +230,17 @@ export default function HomePage() {
     });
   }, [listings, selectedMapCompound, liveCompoundUnits]);
 
+  const displayedFeatured = useMemo(() => {
+    // Prioritize units with real verified photos and high AI recommendation scores
+    const sorted = [...listings].sort((a, b) => {
+      const aPhoto = a.img && !a.img.includes('placeholder') ? 1 : 0;
+      const bPhoto = b.img && !b.img.includes('placeholder') ? 1 : 0;
+      if (bPhoto !== aPhoto) return bPhoto - aPhoto;
+      return (b.ai || 0) - (a.ai || 0);
+    });
+    return sorted.slice(0, 8);
+  }, [listings]);
+
   const ticker = useMemo(() => {
     const items = isAr ? TICKER_AR : TICKER_EN;
     return items.concat(items);
