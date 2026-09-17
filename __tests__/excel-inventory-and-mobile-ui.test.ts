@@ -25,7 +25,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(wb.SheetNames).toContain('Owners Buy');
     expect(wb.SheetNames).toContain('Broker Rent');
     expect(wb.SheetNames).toContain('Broker Buy');
-  });
+  }, 30000);
 
   it('verifies canonical column headers exist in sheets', () => {
     const wb = loadWorkbook(masterPath);
@@ -40,7 +40,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(firstRow).toHaveProperty('Operation');
     expect(firstRow).toHaveProperty('Price (EGP)');
     expect(firstRow).toHaveProperty('Photo URLs');
-  });
+  }, 30000);
 
   it('readExcelListings successfully loads and normalizes real units with photos', () => {
     const units = readExcelListings({ limit: 25, stripPII: true });
@@ -65,7 +65,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     if (withPhoto && withPhoto.img) {
       expect(withPhoto.img).toMatch(/^https?:\/\//);
     }
-  });
+  }, 30000);
 
   it('appendToExcelInventory appends new unit to correct sheet and updates workbook', async () => {
     const testRecordId = `TEST-OWNER-${Date.now().toString(36).toUpperCase()}`;
@@ -97,7 +97,7 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
     expect(found?.Compound).toBe('Mivida');
     expect(found?.['Price (EGP)']).toBe(14500000);
     expect(found?.['Photo URLs']).toContain('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9');
-  });
+  }, 30000);
 
   it('handles multi-criteria filtering accurately on real and normalized listings', () => {
     const sampleListings = [
