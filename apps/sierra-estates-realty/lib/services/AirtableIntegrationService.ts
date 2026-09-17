@@ -272,7 +272,12 @@ export class AirtableIntegrationService {
       fields['Availability'] = availability[String(unit.status).toLowerCase()] ?? 'Available';
     }
     if (unit.description) fields['Comment'] = unit.description;
-    if (unit.featuredImage) fields['Image URL'] = unit.featuredImage;
+    const primaryImg = unit.featuredImage || (unit.images && unit.images[0]);
+    if (primaryImg) {
+      fields['Image URL'] = primaryImg;
+      const allImgs = unit.images && unit.images.length > 0 ? unit.images : [primaryImg];
+      fields['Photos'] = allImgs.map((url) => ({ url }));
+    }
     return fields;
   }
 
