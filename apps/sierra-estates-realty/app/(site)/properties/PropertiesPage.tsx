@@ -488,7 +488,7 @@ export default function PropertiesPage() {
       }
     }
     for (const u of additional) {
-      if (combined.length >= 150) break;
+      if (combined.length >= 250) break;
       if (!seen[u.id]) {
         seen[u.id] = true;
         combined.push(u);
@@ -511,12 +511,18 @@ export default function PropertiesPage() {
     }));
   }, [paginatedListings, sortedListings]);
 
-  // Handle focusing unit on map
+  // Handle focusing unit on map and scrolling card into view
   const handleSelectUnit = useCallback((unit: RealListing | MapUnitPin) => {
     const found = allUnits.find((u) => u.id === unit.id || u.code === unit.code);
     if (found) {
       setActiveUnit(found);
       setFlyToCoords([found.lat, found.lng]);
+
+      // Bidirectional scroll: smoothly scroll to listing card in list column if present
+      const el = document.getElementById(`listing-card-${found.id}`) || document.getElementById(`listing-card-${found.code}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   }, [allUnits]);
 
@@ -861,7 +867,7 @@ export default function PropertiesPage() {
                 onRadiusChange={setRadiusKm}
                 centerCoords={centerCoords}
                 onCenterChange={setCenterCoords}
-                maxPins={180}
+                maxPins={250}
                 height="100%"
               />
 
@@ -941,6 +947,7 @@ export default function PropertiesPage() {
                       return (
                         <article
                           key={p.id}
+                          id={`listing-card-${p.id}`}
                           onClick={() => handleSelectUnit(p)}
                           className={`pcard ${isSelected ? 'active-unit' : ''}`}
                           style={{ cursor: 'pointer' }}
@@ -1071,7 +1078,7 @@ export default function PropertiesPage() {
                     onRadiusChange={setRadiusKm}
                     centerCoords={centerCoords}
                     onCenterChange={setCenterCoords}
-                    maxPins={180}
+                    maxPins={250}
                     height="100%"
                   />
                 </div>
