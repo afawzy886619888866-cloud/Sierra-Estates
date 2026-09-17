@@ -1,8 +1,8 @@
-import pino from 'pino';
-import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
-import * as XLSX from 'xlsx';
-import { obsidian } from '../obsidian/src/index';
-import { VertexAgent } from '@sierra-estates/agents-core';
+import pino from "pino";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+import * as XLSX from "xlsx";
+import { obsidian } from "../obsidian/src/index";
+import { VertexAgent } from "@sierra-estates/agents-core";
 import {
   addListing,
   batchIngestListings,
@@ -10,16 +10,16 @@ import {
   AirtableConfig,
   UnitListingData,
   BatchIngestResult,
-} from './tools/inventoryTools';
-import { generateInventoryReport } from './tools/reportTools';
+} from "./tools/inventoryTools";
+import { generateInventoryReport } from "./tools/reportTools";
 import {
   classifySourceType,
   isNewListing,
   findGroup,
   GroupSourceType,
-} from './tools/whatsappGroupRegistry';
+} from "./tools/whatsappGroupRegistry";
 
-const logger = pino({ name: 'openclaw-agent' });
+const logger = pino({ name: "openclaw-agent" });
 
 /** A raw WhatsApp message ready for batch ingestion */
 export interface WhatsAppMessage {
@@ -70,59 +70,63 @@ export class OpenClawAgent {
     aiApiKey?: string;
   }) {
     this.airtableConfig = {
-      apiKey: config.airtableApiKey || '',
-      baseId: config.airtableBaseId || '',
-      tableName: config.airtableTableName || 'Listings',
+      apiKey: config.airtableApiKey || "",
+      baseId: config.airtableBaseId || "",
+      tableName: config.airtableTableName || "Listings",
     };
 
     if (config.aiApiKey) {
       try {
         this.ai = new GoogleGenAI({ apiKey: config.aiApiKey });
       } catch (_e) {
-        logger.warn({ msg: 'GoogleGenAI initialization skipped' });
+        logger.warn({ msg: "GoogleGenAI initialization skipped" });
       }
     }
 
     this.vertexAgent = new VertexAgent({
-      name: 'openclaw-vertex-agent',
+      name: "openclaw-vertex-agent",
       description:
-        'OpenClaw Enterprise Vertex AI Agent wired with Gemini multi-modal reasoning and project memory',
+        "OpenClaw Enterprise Vertex AI Agent wired with Gemini multi-modal reasoning and project memory",
       systemInstruction:
-        'You are OpenClaw, the intelligent Sierra Estates real-estate agent powered by Google Vertex AI and Gemini. Learn from shared project memory and perform tasks cleanly.',
+        "You are OpenClaw, the intelligent Sierra Estates real-estate agent powered by Google Vertex AI and Gemini. Learn from shared project memory and perform tasks cleanly.",
     });
   }
 
   /**
    * Search and retrieve shared project memory from Obsidian store
    */
-  async getProjectMemory(query: string = ''): Promise<string> {
+  async getProjectMemory(query: string = ""): Promise<string> {
     try {
       const memories = await this.memoryStore.search(query, []);
-      if (!memories || memories.length === 0) return '';
+      if (!memories || memories.length === 0) return "";
 
       const formatted = memories
         .slice(-15) // Keep most recent 15 entries for context window efficiency
         .map(
           (m) =>
-            `- [${m.id}] (${m.tags.join(', ')}): ${typeof m.value === 'string' ? m.value : JSON.stringify(m.value)}`,
+            `- [${m.id}] (${m.tags.join(", ")}): ${typeof m.value === "string" ? m.value : JSON.stringify(m.value)}`,
         )
-        .join('\n');
+        .join("\n");
 
       return `\n\n[Shared Project Memory]\n${formatted}`;
     } catch (err) {
-      logger.error({ err, msg: 'Failed to retrieve project memory' });
-      return '';
+      logger.error({ err, msg: "Failed to retrieve project memory" });
+      return "";
     }
   }
 
   /**
    * Record conversation or action memory into Obsidian store
    */
-  async saveProjectMemory(id: string, value: unknown, tags: string[] = ['whatsapp-log']): Promise<void> {
+  async saveProjectMemory(
+    id: string,
+    value: unknown,
+    tags: string[] = ["whatsapp-log"],
+  ): Promise<void> {
     try {
       await this.memoryStore.set(id, value, tags);
     } catch (err) {
-      logger.error({ err, msg: 'Failed to save project memory' });
+      logger.error({ err, msg: "Failed to save project memory" });
     }
   }
 
@@ -130,7 +134,10 @@ export class OpenClawAgent {
    * Delegate complex tasks directly to Google Vertex AI Agent
    */
   async queryVertexAgent(prompt: string, context?: Record<string, unknown>) {
-    logger.info({ msg: 'Delegating task to Google Vertex AI Agent', promptLength: prompt.length });
+    logger.info({
+      msg: "Delegating task to Google Vertex AI Agent",
+      promptLength: prompt.length,
+    });
     const memory = await this.getProjectMemory(prompt);
     const fullPrompt = `${prompt}${memory}`;
 
@@ -139,7 +146,7 @@ export class OpenClawAgent {
       await this.saveProjectMemory(
         `vertex-execution-${Date.now()}`,
         { prompt, result: result.data },
-        ['vertex-execution'],
+        ["vertex-execution"],
       );
     }
     return result;
@@ -152,57 +159,66 @@ export class OpenClawAgent {
    */
   parseWhatsAppRealEstateText(
     rawText: string,
-    sender: string = 'WhatsApp Broker',
-    groupName: string = 'Broker Group',
+    sender: string = "WhatsApp Broker",
+    groupName: string = "Broker Group",
     groupId?: string,
     timestamp?: string,
   ): UnitListingData {
     // Normalize Arabic-Indic digits (٠-٩) to standard ASCII digits (0-9)
-    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    const normalizedRawText = rawText.replace(/[٠-٩]/g, (char) => arabicDigits.indexOf(char).toString());
+    const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+    const normalizedRawText = rawText.replace(/[٠-٩]/g, (char) =>
+      arabicDigits.indexOf(char).toString(),
+    );
     const textLower = normalizedRawText.toLowerCase();
 
     // 1. Detect Compound / Location
     const compoundMap: Record<string, string> = {
-      mivida: 'Mivida',
-      ميفيدا: 'Mivida',
-      'hyde park': 'Hyde Park',
-      'هايد بارك': 'Hyde Park',
-      'palm hills': 'Palm Hills',
-      'بالم هيلز': 'Palm Hills',
-      'mountain view': 'Mountain View',
-      'ماونتن فيو': 'Mountain View',
-      marassi: 'Marassi',
-      مراسي: 'Marassi',
-      'swan lake': 'Swan Lake',
-      'سوان ليك': 'Swan Lake',
-      cfc: 'Cairo Festival City',
-      'كايرو فيستيفال': 'Cairo Festival City',
-      madinaty: 'Madinaty',
-      مدينتي: 'Madinaty',
-      rehab: 'Al Rehab',
-      الرحاب: 'Al Rehab',
-      zed: 'Zed East',
-      زد: 'Zed East',
-      badya: 'Badya',
-      بادية: 'Badya',
-      'tag sultan': 'Tag Sultan',
-      'تاج سلطان': 'Tag Sultan',
-      'new cairo': 'New Cairo',
-      التجمع: 'New Cairo',
-      'التجمع الخامس': 'New Cairo - 5th Settlement',
-      eastown: 'Eastown',
-      villette: 'Villette',
-      sodic: 'SODIC',
-      emaar: 'Emaar',
-      'cairo festival': 'Cairo Festival City',
-      'uptown cairo': 'Uptown Cairo',
-      'أبتاون': 'Uptown Cairo',
-      katameya: 'Katameya Heights',
-      كتاميا: 'Katameya Heights',
+      mivida: "Mivida",
+      ميفيدا: "Mivida",
+      "hyde park": "Hyde Park",
+      "هايد بارك": "Hyde Park",
+      "palm hills": "Palm Hills",
+      "بالم هيلز": "Palm Hills",
+      "mountain view": "Mountain View",
+      "ماونتن فيو": "Mountain View",
+      marassi: "Marassi",
+      مراسي: "Marassi",
+      "swan lake": "Swan Lake",
+      "سوان ليك": "Swan Lake",
+      cfc: "Cairo Festival City",
+      "كايرو فيستيفال": "Cairo Festival City",
+      madinaty: "Madinaty",
+      مدينتي: "Madinaty",
+      rehab: "Al Rehab",
+      الرحاب: "Al Rehab",
+      zed: "Zed East",
+      زد: "Zed East",
+      badya: "Badya",
+      بادية: "Badya",
+      "tag sultan": "Tag Sultan",
+      "تاج سلطان": "Tag Sultan",
+      "new cairo": "New Cairo",
+      التجمع: "New Cairo",
+      "التجمع الخامس": "New Cairo - 5th Settlement",
+      eastown: "Eastown",
+      ايستاون: "Eastown",
+      إيستاون: "Eastown",
+      "ايست تاون": "Eastown",
+      villette: "Villette",
+      فيليت: "Villette",
+      sodic: "SODIC",
+      سوديك: "SODIC",
+      emaar: "Emaar",
+      إعمار: "Emaar",
+      "cairo festival": "Cairo Festival City",
+      "uptown cairo": "Uptown Cairo",
+      أبتاون: "Uptown Cairo",
+      katameya: "Katameya Heights",
+      كتاميا: "Katameya Heights",
+      القطامية: "Katameya Heights",
     };
 
-    let detectedCompound = 'New Cairo';
+    let detectedCompound = "New Cairo";
     for (const [key, val] of Object.entries(compoundMap)) {
       if (normalizedRawText.includes(key) || textLower.includes(key)) {
         detectedCompound = val;
@@ -211,33 +227,49 @@ export class OpenClawAgent {
     }
 
     // 2. Detect Operation (Rent vs Sale)
-    let operation = 'Sale';
-    if (/(للايجار|للإيجار|إيجار|ايجار|rent|شهريا|شهري|سنوي|سنويا|monthly|per month)/i.test(normalizedRawText)) {
-      operation = 'Rent';
+    let operation = "Sale";
+    if (
+      /(للايجار|للإيجار|إيجار|ايجار|rent|شهريا|شهري|سنوي|سنويا|monthly|per month)/i.test(
+        normalizedRawText,
+      )
+    ) {
+      operation = "Rent";
     }
 
     // 3. Detect Property Type
-    let propertyType = 'Apartment';
-    if (/(فيلا مستقلة|standalone|villa|فيلا)/i.test(normalizedRawText)) propertyType = 'Standalone Villa';
-    else if (/(تاون هاوس|townhouse|town house)/i.test(normalizedRawText)) propertyType = 'Townhouse';
-    else if (/(توين هاوس|twinhouse|twin house)/i.test(normalizedRawText)) propertyType = 'Twinhouse';
-    else if (/(بنتهاوس|penthouse|روف)/i.test(normalizedRawText)) propertyType = 'Penthouse';
-    else if (/(دوبلكس|duplex)/i.test(normalizedRawText)) propertyType = 'Duplex';
-    else if (/(شالية|chalet|شاليه)/i.test(normalizedRawText)) propertyType = 'Chalet';
-    else if (/(مكتب|office|تجاري|commercial|محل|clinic|عيادة)/i.test(normalizedRawText)) propertyType = 'Commercial/Office';
-    else if (/(شقة|apartment|شقه)/i.test(normalizedRawText)) propertyType = 'Apartment';
+    let propertyType = "Apartment";
+    if (/(فيلا مستقلة|standalone|villa|فيلا)/i.test(normalizedRawText))
+      propertyType = "Standalone Villa";
+    else if (/(تاون هاوس|townhouse|town house)/i.test(normalizedRawText))
+      propertyType = "Townhouse";
+    else if (/(توين هاوس|twinhouse|twin house)/i.test(normalizedRawText))
+      propertyType = "Twinhouse";
+    else if (/(بنتهاوس|penthouse|روف)/i.test(normalizedRawText))
+      propertyType = "Penthouse";
+    else if (/(دوبلكس|duplex)/i.test(normalizedRawText))
+      propertyType = "Duplex";
+    else if (/(شالية|chalet|شاليه)/i.test(normalizedRawText))
+      propertyType = "Chalet";
+    else if (
+      /(مكتب|office|تجاري|commercial|محل|clinic|عيادة)/i.test(normalizedRawText)
+    )
+      propertyType = "Commercial/Office";
+    else if (/(شقة|apartment|شقه)/i.test(normalizedRawText))
+      propertyType = "Apartment";
 
     // 4. Extract Area (sqm)
     let area_sqm = 200;
-    const areaMatch = normalizedRawText.match(/(\d{2,4})\s*(?:متر|م²|م2|sqm|sq\.m|m2|meter)/i);
+    const areaMatch = normalizedRawText.match(
+      /(\d{2,4})\s*(?:متر|م²|م2|م(?!\p{L})|sqm|sq\.m|m2|meter)/iu,
+    );
     if (areaMatch) {
       area_sqm = parseInt(areaMatch[1], 10);
     }
 
     // 5. Extract Currency
-    let currency = 'EGP';
+    let currency = "EGP";
     if (/(دولار|\$|usd)/i.test(normalizedRawText)) {
-      currency = 'USD';
+      currency = "USD";
     }
 
     // 6. Extract Price with Advanced Arabic Idioms
@@ -252,26 +284,37 @@ export class OpenClawAgent {
       price = 2_000_000;
     } else {
       // Pattern B: Compound "X مليون و Y الف" (e.g. "11 مليون و 500 الف" -> 11,500,000)
-      const compoundPriceMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*مليون\s*(?:و)?\s*(\d+)?\s*(?:الف|ألف)?/i);
+      const compoundPriceMatch = normalizedRawText.match(
+        /(\d+(?:\.\d+)?)\s*مليون\s*(?:و)?\s*(\d+)?\s*(?:الف|ألف)?/i,
+      );
       if (compoundPriceMatch && compoundPriceMatch[2]) {
         const millions = parseFloat(compoundPriceMatch[1]) * 1_000_000;
         const thousands = parseFloat(compoundPriceMatch[2]) * 1_000;
         price = millions + thousands;
       } else {
         // Pattern C: Standard Million match: "11.5 مليون" or "48M"
-        const priceMillionMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*(?:مليون|million|m\b)/i);
+        const priceMillionMatch = normalizedRawText.match(
+          /(\d+(?:\.\d+)?)\s*(?:مليون|million|m\b)/i,
+        );
         if (priceMillionMatch) {
           price = parseFloat(priceMillionMatch[1]) * 1_000_000;
         } else {
           // Pattern D: Thousand match: "38 الف" or "45 ألف" or "45k" (frequent for rentals or installment amounts)
-          const priceThousandMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i);
-          if (priceThousandMatch && (operation === 'Rent' || parseFloat(priceThousandMatch[1]) < 1000)) {
+          const priceThousandMatch = normalizedRawText.match(
+            /(\d+(?:\.\d+)?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i,
+          );
+          if (
+            priceThousandMatch &&
+            (operation === "Rent" || parseFloat(priceThousandMatch[1]) < 1000)
+          ) {
             price = parseFloat(priceThousandMatch[1]) * 1_000;
           } else {
             // Pattern E: Explicit price keyword label "سعر: 11,500,000"
-            const priceRawMatch = normalizedRawText.match(/(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]+)/i);
+            const priceRawMatch = normalizedRawText.match(
+              /(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]+)/i,
+            );
             if (priceRawMatch) {
-              price = parseFloat(priceRawMatch[1].replace(/,/g, ''));
+              price = parseFloat(priceRawMatch[1].replace(/,/g, ""));
             } else {
               // Pattern F: Standalone 6-9 digit numbers
               const numbers = normalizedRawText.match(/\b\d{6,9}\b/g);
@@ -283,46 +326,69 @@ export class OpenClawAgent {
         }
       }
     }
-    if (price === 0) price = operation === 'Rent' ? 35_000 : 12_500_000;
+    if (price === 0) price = operation === "Rent" ? 35_000 : 12_500_000;
 
     // 7. Extract Bedrooms
     let bedrooms = 3;
-    const bedMatch = normalizedRawText.match(/(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i);
+    const bedMatch = normalizedRawText.match(
+      /(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i,
+    );
     if (bedMatch) {
       bedrooms = parseInt(bedMatch[1], 10);
     }
 
     // 8. Finishing Grade
-    let finishing = 'semi_finished';
-    if (/(الترا سوبر لوكس|ultra super lux|fully finished|مفروش|تشطيب كامل|سوبر لوكس)/i.test(normalizedRawText)) {
-      finishing = 'fully_finished';
-    } else if (/(نصف تشطيب|semi finished|محارة وحلوق)/i.test(normalizedRawText)) {
-      finishing = 'semi_finished';
-    } else if (/(core and shell|طوب احمر|بدون تشطيب)/i.test(normalizedRawText)) {
-      finishing = 'core_and_shell';
+    let finishing = "semi_finished";
+    if (
+      /(الترا سوبر لوكس|ultra super lux|fully finished|مفروش|تشطيب كامل|سوبر لوكس)/i.test(
+        normalizedRawText,
+      )
+    ) {
+      finishing = "fully_finished";
+    } else if (
+      /(نصف تشطيب|semi finished|محارة وحلوق)/i.test(normalizedRawText)
+    ) {
+      finishing = "semi_finished";
+    } else if (
+      /(core and shell|طوب احمر|بدون تشطيب)/i.test(normalizedRawText)
+    ) {
+      finishing = "core_and_shell";
     }
 
     // 9. Furnishing Status
-    let furnishing = 'Unknown';
-    if (/(مفروش بالكامل|مفروش|شامل الفرش|fully furnished)/i.test(normalizedRawText)) {
-      furnishing = 'Furnished';
+    let furnishing = "Unknown";
+    if (
+      /(مفروش بالكامل|مفروش|شامل الفرش|fully furnished)/i.test(
+        normalizedRawText,
+      )
+    ) {
+      furnishing = "Furnished";
     } else if (/(غير مفروش|بدون فرش|unfurnished)/i.test(normalizedRawText)) {
-      furnishing = 'Unfurnished';
+      furnishing = "Unfurnished";
     }
 
     // 10. Payment Plan (Downpayment, Installment Years, Delivery Date)
-    let paymentPlan: { downpayment?: number; installments?: number; deliveryDate?: string } | undefined;
-    const dpMatch = normalizedRawText.match(/(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(مليون|الف|ألف|%|k)?/i);
-    const instMatch = normalizedRawText.match(/(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d+)\s*(?:سنوات|سنة|سنين|years)/i);
-    const delivMatch = normalizedRawText.match(/(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d+\s*شهور|immediate)/i);
+    let paymentPlan:
+      | { downpayment?: number; installments?: number; deliveryDate?: string }
+      | undefined;
+    const dpMatch = normalizedRawText.match(
+      /(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(مليون|الف|ألف|%|k)?/i,
+    );
+    const instMatch = normalizedRawText.match(
+      /(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d+)\s*(?:سنوات|سنة|سنين|years)/i,
+    );
+    const deliMatch = normalizedRawText.match(
+      /(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d+\s*شهور|immediate)/i,
+    );
 
     if (dpMatch || instMatch || delivMatch) {
       paymentPlan = {};
       if (dpMatch) {
         let dpVal = parseFloat(dpMatch[1]);
-        const unit = (dpMatch[2] || '').toLowerCase();
-        if (unit === 'مليون') dpVal *= 1_000_000;
-        else if (unit === 'الف' || unit === 'ألف' || unit === 'k') dpVal *= 1_000;
+        const unit = (dpMatch[2] || "").toLowerCase();
+        if (unit === "مليون") dpVal *= 1_000_000;
+        else if (unit === "الف" || unit === "ألف" || unit === "k")
+          dpVal *= 1_000;
         paymentPlan.downpayment = dpVal;
       }
       if (instMatch) {
@@ -335,16 +401,21 @@ export class OpenClawAgent {
 
     // 11. Extract Features
     const features: string[] = [];
-    if (/(حديقة|garden|جاردن)/i.test(normalizedRawText)) features.push('G');
-    if (/(حمام سباحة|pool|بسين)/i.test(normalizedRawText)) features.push('P');
-    if (/(روف|roof|سطح)/i.test(normalizedRawText)) features.push('R');
-    if (/(بحيرة|lake view|فيو بحيرات|water view)/i.test(normalizedRawText)) features.push('L');
-    if (/(كورنر|corner|ناصية)/i.test(normalizedRawText)) features.push('C');
+    if (/(حديقة|garden|جاردن)/i.test(normalizedRawText)) features.push("G");
+    if (/(حمام سباحة|pool|بسين)/i.test(normalizedRawText)) features.push("P");
+    if (/(روف|roof|سطح)/i.test(normalizedRawText)) features.push("R");
+    if (/(بحيرة|lake view|فيو بحيرات|water view)/i.test(normalizedRawText))
+      features.push("L");
+    if (/(كورنر|corner|ناصية)/i.test(normalizedRawText)) features.push("C");
 
     // 12. Valuation & Urgency Scores
     let urgencyScore = 60;
     let valuationScore = 75;
-    if (/(لقطة|سعر محروق|فرصة|distress|urgent|مستعجل|اقل من سعر السوق|أقل من السوق)/i.test(normalizedRawText)) {
+    if (
+      /(لقطة|سعر محروق|فرصة|distress|urgent|مستعجل|اقل من سعر السوق|أقل من السوق)/i.test(
+        normalizedRawText,
+      )
+    ) {
       urgencyScore = 95;
       valuationScore = 90;
     }
@@ -353,15 +424,19 @@ export class OpenClawAgent {
     const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
     const typePrefix = propertyType.slice(0, 1).toUpperCase();
     const finishPrefix =
-      finishing === 'fully_finished' ? 'F' : finishing === 'semi_finished' ? 'S' : 'U';
-    const priceM = (price / 1_000_000).toFixed(1).replace(/\.0$/, '');
-    const featSuffix = features.length > 0 ? `+${features.join('+')}` : '';
+      finishing === "fully_finished"
+        ? "F"
+        : finishing === "semi_finished"
+          ? "S"
+          : "U";
+    const priceM = (price / 1_000_000).toFixed(1).replace(/\.0$/, "");
+    const featSuffix = features.length > 0 ? `+${features.join("+")}` : "";
     const sierraCode = `${locPrefix}-${typePrefix}-${bedrooms}${finishPrefix}-${priceM}M${featSuffix}`;
 
     // 14. Source Type & Group Classification
     const registryGroup = groupId ? findGroup(groupId) : findGroup(groupName);
     const sourceType: GroupSourceType = registryGroup
-      ? registryGroup.type === 'mixed'
+      ? registryGroup.type === "mixed"
         ? classifySourceType(sender, groupName)
         : registryGroup.type
       : classifySourceType(sender, groupName);
@@ -404,14 +479,24 @@ export class OpenClawAgent {
    */
   async ingestWhatsAppGroupMessage(
     rawText: string,
-    sender: string = 'WhatsApp Broker Group',
-    groupName: string = 'New Cairo Broker Network',
+    sender: string = "WhatsApp Broker Group",
+    groupName: string = "New Cairo Broker Network",
     groupId?: string,
     timestamp?: string,
   ) {
-    logger.info({ msg: 'OpenClaw: Ingesting WhatsApp real estate listing', sender, groupName });
+    logger.info({
+      msg: "OpenClaw: Ingesting WhatsApp real estate listing",
+      sender,
+      groupName,
+    });
 
-    const parsedData = this.parseWhatsAppRealEstateText(rawText, sender, groupName, groupId, timestamp);
+    const parsedData = this.parseWhatsAppRealEstateText(
+      rawText,
+      sender,
+      groupName,
+      groupId,
+      timestamp,
+    );
     const addResult = await addListing(this.airtableConfig, parsedData);
 
     const memoryKey = `whatsapp-ingest-${Date.now()}`;
@@ -425,7 +510,11 @@ export class OpenClawAgent {
         sourceType: parsedData.sourceType,
         ingestedAt: new Date().toISOString(),
       },
-      ['whatsapp-ingest', 'inventory-created', parsedData.location.toLowerCase().replace(/\s+/g, '-')],
+      [
+        "whatsapp-ingest",
+        "inventory-created",
+        parsedData.location.toLowerCase().replace(/\s+/g, "-"),
+      ],
     );
 
     return {
@@ -456,13 +545,26 @@ export class OpenClawAgent {
     messages: WhatsAppMessage[],
     options: { concurrency?: number; deduplicate?: boolean } = {},
   ): Promise<BatchIngestResult> {
-    logger.info({ msg: 'OpenClaw: Batch ingesting WhatsApp messages', count: messages.length });
+    logger.info({
+      msg: "OpenClaw: Batch ingesting WhatsApp messages",
+      count: messages.length,
+    });
 
     const units: UnitListingData[] = messages.map((msg) =>
-      this.parseWhatsAppRealEstateText(msg.text, msg.sender, msg.groupName, msg.groupId, msg.timestamp),
+      this.parseWhatsAppRealEstateText(
+        msg.text,
+        msg.sender,
+        msg.groupName,
+        msg.groupId,
+        msg.timestamp,
+      ),
     );
 
-    const result = await batchIngestListings(this.airtableConfig, units, options);
+    const result = await batchIngestListings(
+      this.airtableConfig,
+      units,
+      options,
+    );
 
     await this.saveProjectMemory(
       `batch-ingest-${Date.now()}`,
@@ -473,7 +575,7 @@ export class OpenClawAgent {
         duplicates: result.duplicates,
         ingestedAt: new Date().toISOString(),
       },
-      ['batch-ingest', 'inventory-bulk'],
+      ["batch-ingest", "inventory-bulk"],
     );
 
     return result;
@@ -486,39 +588,48 @@ export class OpenClawAgent {
    * @param masterSheetUnits Array of units from real-listings.json
    * @returns BatchIngestResult
    */
-  async ingestMasterSheet(masterSheetUnits: MasterSheetUnit[]): Promise<BatchIngestResult> {
-    logger.info({ msg: 'OpenClaw: Ingesting master sheet', count: masterSheetUnits.length });
+  async ingestMasterSheet(
+    masterSheetUnits: MasterSheetUnit[],
+  ): Promise<BatchIngestResult> {
+    logger.info({
+      msg: "OpenClaw: Ingesting master sheet",
+      count: masterSheetUnits.length,
+    });
 
     const units: UnitListingData[] = masterSheetUnits
       .filter((u) => u.price && u.price > 0)
       .map((u): UnitListingData => {
-        const ownerType = (u.ownerType || '').toLowerCase();
-        const sourceType: GroupSourceType = ownerType === 'owner' ? 'owner' : 'broker';
+        const ownerType = (u.ownerType || "").toLowerCase();
+        const sourceType: GroupSourceType =
+          ownerType === "owner" ? "owner" : "broker";
         const listedAt = u.updatedAt || new Date().toISOString();
 
         return {
-          type: u.type || 'Apartment',
-          location: u.compound || u.cmp || u.zone || 'New Cairo',
-          compound: u.compound || u.cmp || 'New Cairo',
+          type: u.type || "Apartment",
+          location: u.compound || u.cmp || u.zone || "New Cairo",
+          compound: u.compound || u.cmp || "New Cairo",
           price: u.price || 0,
-          currency: 'EGP',
+          currency: "EGP",
           area_sqm: u.area || 0,
           bedrooms: u.beds || 3,
           bathrooms: u.baths || 2,
-          contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName || '',
-          notes: u.comment || u.tag || '',
+          contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName || "",
+          notes: u.comment || u.tag || "",
           sierraCode: u.code || undefined,
-          finishing: u.finishing || 'semi_finished',
+          finishing: u.finishing || "semi_finished",
           sourceType,
-          whatsappGroupName: 'Master Sheet Import',
-          operation: u.mode === 'rent' ? 'Rent' : 'Sale',
+          whatsappGroupName: "Master Sheet Import",
+          operation: u.mode === "rent" ? "Rent" : "Sale",
           listedAt,
           isNewListing: isNewListing(listedAt),
           fromArchivedGroup: false,
         };
       });
 
-    return batchIngestListings(this.airtableConfig, units, { concurrency: 20, deduplicate: true });
+    return batchIngestListings(this.airtableConfig, units, {
+      concurrency: 20,
+      deduplicate: true,
+    });
   }
 
   /**
@@ -529,44 +640,115 @@ export class OpenClawAgent {
    * @returns BatchIngestResult
    */
   async ingestSpreadsheet(filePath: string): Promise<BatchIngestResult> {
-    logger.info({ msg: 'OpenClaw: Ingesting spreadsheet workbook', filePath });
+    logger.info({ msg: "OpenClaw: Ingesting spreadsheet workbook", filePath });
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     if (!sheetName) {
-      return { total: 0, succeeded: 0, failed: 0, duplicates: 0, errors: ['Workbook contains no sheets'], sierraCodes: [] };
+      return {
+        total: 0,
+        succeeded: 0,
+        failed: 0,
+        duplicates: 0,
+        errors: ["Workbook contains no sheets"],
+        sierraCodes: [],
+      };
     }
 
-    const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-    logger.info({ msg: 'OpenClaw: Parsed rows from sheet', sheetName, rowCount: rows.length });
+    const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(
+      workbook.Sheets[sheetName],
+      { defval: "" },
+    );
+    logger.info({
+      msg: "OpenClaw: Parsed rows from sheet",
+      sheetName,
+      rowCount: rows.length,
+    });
 
     const units: MasterSheetUnit[] = rows.map((row, idx) => {
       // Helper to find value from possible keys
       const getVal = (keys: string[]): any => {
         for (const k of keys) {
-          if (row[k] !== undefined && row[k] !== '') return row[k];
+          if (row[k] !== undefined && row[k] !== "") return row[k];
           // Try case-insensitive matching
-          const matchKey = Object.keys(row).find((rk) => rk.trim().toLowerCase() === k.trim().toLowerCase());
-          if (matchKey && row[matchKey] !== undefined && row[matchKey] !== '') return row[matchKey];
+          const matchKey = Object.keys(row).find(
+            (rk) => rk.trim().toLowerCase() === k.trim().toLowerCase(),
+          );
+          if (matchKey && row[matchKey] !== undefined && row[matchKey] !== "")
+            return row[matchKey];
         }
         return undefined;
       };
 
-      const compound = getVal(['compound', 'cmp', 'المشروع', 'الكمبوند', 'الموقع', 'Location']) || 'New Cairo';
-      const priceRaw = getVal(['price', 'total price', 'السعر', 'المطلوب', 'Price', 'TotalPrice']) || 0;
-      const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw).replace(/[^0-9.]/g, '')) || 0;
-      const type = getVal(['type', 'unit type', 'نوع الوحدة', 'Type', 'UnitType']) || 'Apartment';
-      const areaRaw = getVal(['area', 'area_sqm', 'المساحة', 'BUA', 'Area']) || 0;
-      const area = typeof areaRaw === 'number' ? areaRaw : parseFloat(String(areaRaw).replace(/[^0-9.]/g, '')) || 0;
-      const bedsRaw = getVal(['beds', 'bedrooms', 'غرف', 'غرف النوم', 'Bedrooms', 'Beds']) || 3;
-      const beds = typeof bedsRaw === 'number' ? bedsRaw : parseInt(String(bedsRaw).replace(/[^0-9]/g, ''), 10) || 3;
-      const bathsRaw = getVal(['baths', 'bathrooms', 'حمامات', 'Bathrooms', 'Baths']) || 2;
-      const baths = typeof bathsRaw === 'number' ? bathsRaw : parseInt(String(bathsRaw).replace(/[^0-9]/g, ''), 10) || 2;
-      const finishing = getVal(['finishing', 'تشطيب', 'حالة التشطيب', 'Finishing']) || 'semi_finished';
-      const ownerType = getVal(['ownerType', 'sourceType', 'المالك / وسيط', 'الصفة', 'OwnerType']) || 'broker';
-      const mode = getVal(['mode', 'operation', 'العملية', 'Sale/Rent', 'Mode']) || 'sale';
-      const mobile = String(getVal(['mobile', 'phone', 'contact_info', 'رقم الهاتف', 'Mobile', 'Phone']) || '');
-      const code = getVal(['code', 'sierraCode', 'الكود', 'Code']) || undefined;
-      const comment = getVal(['comment', 'notes', 'ملاحظات', 'Comment', 'Notes']) || '';
+      const compound =
+        getVal([
+          "compound",
+          "cmp",
+          "المشروع",
+          "الكمبوند",
+          "الموقع",
+          "Location",
+        ]) || "New Cairo";
+      const priceRaw =
+        getVal([
+          "price",
+          "total price",
+          "السعر",
+          "المطلوب",
+          "Price",
+          "TotalPrice",
+        ]) || 0;
+      const price =
+        typeof priceRaw === "number"
+          ? priceRaw
+          : parseFloat(String(priceRaw).replace(/[^0-9.]/g, "")) || 0;
+      const type =
+        getVal(["type", "unit type", "نوع الوحدة", "Type", "UnitType"]) ||
+        "Apartment";
+      const areaRaw =
+        getVal(["area", "area_sqm", "المساحة", "BUA", "Area"]) || 0;
+      const area =
+        typeof areaRaw === "number"
+          ? areaRaw
+          : parseFloat(String(areaRaw).replace(/[^0-9.]/g, "")) || 0;
+      const bedsRaw =
+        getVal(["beds", "bedrooms", "غرف", "غرف النوم", "Bedrooms", "Beds"]) ||
+        3;
+      const beds =
+        typeof bedsRaw === "number"
+          ? bedsRaw
+          : parseInt(String(bedsRaw).replace(/[^0-9]/g, ""), 10) || 3;
+      const bathsRaw =
+        getVal(["baths", "bathrooms", "حمامات", "Bathrooms", "Baths"]) || 2;
+      const baths =
+        typeof bathsRaw === "number"
+          ? bathsRaw
+          : parseInt(String(bathsRaw).replace(/[^0-9]/g, ""), 10) || 2;
+      const finishing =
+        getVal(["finishing", "تشطيب", "حالة التشطيب", "Finishing"]) ||
+        "semi_finished";
+      const ownerType =
+        getVal([
+          "ownerType",
+          "sourceType",
+          "المالك / وسيط",
+          "الصفة",
+          "OwnerType",
+        ]) || "broker";
+      const mode =
+        getVal(["mode", "operation", "العملية", "Sale/Rent", "Mode"]) || "sale";
+      const mobile = String(
+        getVal([
+          "mobile",
+          "phone",
+          "contact_info",
+          "رقم الهاتف",
+          "Mobile",
+          "Phone",
+        ]) || "",
+      );
+      const code = getVal(["code", "sierraCode", "الكود", "Code"]) || undefined;
+      const comment =
+        getVal(["comment", "notes", "ملاحظات", "Comment", "Notes"]) || "";
 
       return {
         id: idx + 1,
@@ -614,40 +796,48 @@ export class OpenClawAgent {
       description: string;
     }>,
   ): Promise<BatchIngestResult> {
-    logger.info({ msg: 'OpenClaw: Ingesting extracted WhatsApp units', count: extractedUnits.length });
-
-    const units: UnitListingData[] = extractedUnits.map((u): UnitListingData => {
-      const registryGroup = findGroup(u.groupId) || findGroup(u.groupName);
-      const sourceType: GroupSourceType = registryGroup
-        ? registryGroup.type === 'mixed'
-          ? classifySourceType(u.sender, u.groupName)
-          : registryGroup.type
-        : classifySourceType(u.sender, u.groupName);
-
-      return {
-        type: u.type,
-        location: u.compound || u.location,
-        compound: u.compound,
-        price: u.price,
-        currency: u.currency || 'EGP',
-        area_sqm: u.area_sqm,
-        bedrooms: u.bedrooms,
-        bathrooms: u.bathrooms,
-        contact_info: u.sender,
-        notes: u.description?.slice(0, 250),
-        sierraCode: u.id, // use extracted ID as sierra code seed
-        sourceType,
-        whatsappGroupId: u.groupId,
-        whatsappGroupName: u.groupName,
-        operation: u.operation,
-        furnishing: u.furnishing,
-        listedAt: u.dateAdded,
-        isNewListing: isNewListing(u.dateAdded),
-        fromArchivedGroup: registryGroup?.archived ?? false,
-      };
+    logger.info({
+      msg: "OpenClaw: Ingesting extracted WhatsApp units",
+      count: extractedUnits.length,
     });
 
-    return batchIngestListings(this.airtableConfig, units, { concurrency: 10, deduplicate: true });
+    const units: UnitListingData[] = extractedUnits.map(
+      (u): UnitListingData => {
+        const registryGroup = findGroup(u.groupId) || findGroup(u.groupName);
+        const sourceType: GroupSourceType = registryGroup
+          ? registryGroup.type === "mixed"
+            ? classifySourceType(u.sender, u.groupName)
+            : registryGroup.type
+          : classifySourceType(u.sender, u.groupName);
+
+        return {
+          type: u.type,
+          location: u.compound || u.location,
+          compound: u.compound,
+          price: u.price,
+          currency: u.currency || "EGP",
+          area_sqm: u.area_sqm,
+          bedrooms: u.bedrooms,
+          bathrooms: u.bathrooms,
+          contact_info: u.sender,
+          notes: u.description?.slice(0, 250),
+          sierraCode: u.id, // use extracted ID as sierra code seed
+          sourceType,
+          whatsappGroupId: u.groupId,
+          whatsappGroupName: u.groupName,
+          operation: u.operation,
+          furnishing: u.furnishing,
+          listedAt: u.dateAdded,
+          isNewListing: isNewListing(u.dateAdded),
+          fromArchivedGroup: registryGroup?.archived ?? false,
+        };
+      },
+    );
+
+    return batchIngestListings(this.airtableConfig, units, {
+      concurrency: 10,
+      deduplicate: true,
+    });
   }
 
   /**
@@ -661,7 +851,7 @@ export class OpenClawAgent {
     groupId?: string,
   ): Promise<string> {
     logger.info({
-      msg: 'Received WhatsApp message',
+      msg: "Received WhatsApp message",
       hasSender: sender.length > 0,
       messageLength: messageText.length,
       isGroup,
@@ -671,7 +861,7 @@ export class OpenClawAgent {
       const ingestResult = await this.ingestWhatsAppGroupMessage(
         messageText,
         sender,
-        groupName || 'WhatsApp Luxury Group',
+        groupName || "WhatsApp Luxury Group",
         groupId,
       );
       return (
@@ -679,8 +869,8 @@ export class OpenClawAgent {
         `📌 *Code:* [${ingestResult.sierraCode}]\n` +
         `📍 *Compound:* ${ingestResult.compound}\n` +
         `💰 *Price:* ${ingestResult.priceFormatted}\n` +
-        `🏷️ *Source:* ${ingestResult.sourceType === 'owner' ? '🟢 Direct Owner' : '🔵 Broker'}\n` +
-        `🆕 *New Listing:* ${ingestResult.isNewListing ? 'Yes' : 'No'}`
+        `🏷️ *Source:* ${ingestResult.sourceType === "owner" ? "🟢 Direct Owner" : "🔵 Broker"}\n` +
+        `🆕 *New Listing:* ${ingestResult.isNewListing ? "Yes" : "No"}`
       );
     }
 
@@ -699,49 +889,70 @@ export class OpenClawAgent {
       `Be extremely polite, concise, and professional. Use emojis appropriately.${memoryContext}`;
 
     const addListingDeclaration: FunctionDeclaration = {
-      name: 'addListing',
-      description: 'Adds a new real estate listing to the database.',
+      name: "addListing",
+      description: "Adds a new real estate listing to the database.",
       parameters: {
         type: Type.OBJECT,
         properties: {
-          type: { type: Type.STRING, description: 'Property type (e.g., Villa, Apartment, Office)' },
-          location: { type: Type.STRING, description: 'Location (e.g., Mivida, New Cairo)' },
-          price: { type: Type.NUMBER, description: 'Price' },
-          currency: { type: Type.STRING, description: 'Currency (e.g., EGP, USD)' },
-          area_sqm: { type: Type.NUMBER, description: 'Area in square meters' },
-          bedrooms: { type: Type.NUMBER, description: 'Number of bedrooms' },
-          bathrooms: { type: Type.NUMBER, description: 'Number of bathrooms' },
-          contact_info: { type: Type.STRING, description: 'Contact info (defaults to sender)' },
-          notes: { type: Type.STRING, description: 'Additional notes' },
+          type: {
+            type: Type.STRING,
+            description: "Property type (e.g., Villa, Apartment, Office)",
+          },
+          location: {
+            type: Type.STRING,
+            description: "Location (e.g., Mivida, New Cairo)",
+          },
+          price: { type: Type.NUMBER, description: "Price" },
+          currency: {
+            type: Type.STRING,
+            description: "Currency (e.g., EGP, USD)",
+          },
+          area_sqm: { type: Type.NUMBER, description: "Area in square meters" },
+          bedrooms: { type: Type.NUMBER, description: "Number of bedrooms" },
+          bathrooms: { type: Type.NUMBER, description: "Number of bathrooms" },
+          contact_info: {
+            type: Type.STRING,
+            description: "Contact info (defaults to sender)",
+          },
+          notes: { type: Type.STRING, description: "Additional notes" },
         },
-        required: ['type', 'location'],
+        required: ["type", "location"],
       },
     };
 
     const editInventoryDeclaration: FunctionDeclaration = {
-      name: 'editInventory',
-      description: 'Edits the price of an existing real estate listing based on location.',
+      name: "editInventory",
+      description:
+        "Edits the price of an existing real estate listing based on location.",
       parameters: {
         type: Type.OBJECT,
         properties: {
-          location: { type: Type.STRING, description: 'Location of the property' },
-          newPrice: { type: Type.NUMBER, description: 'The new price to set' },
+          location: {
+            type: Type.STRING,
+            description: "Location of the property",
+          },
+          newPrice: { type: Type.NUMBER, description: "The new price to set" },
         },
-        required: ['location', 'newPrice'],
+        required: ["location", "newPrice"],
       },
     };
 
     const generateReportDeclaration: FunctionDeclaration = {
-      name: 'generateInventoryReport',
-      description: 'Generates a report of the current real estate inventory.',
+      name: "generateInventoryReport",
+      description: "Generates a report of the current real estate inventory.",
       parameters: { type: Type.OBJECT, properties: {} },
     };
 
     try {
       // Step 1: Call Gemini
       let response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{ role: 'user', parts: [{ text: `[Sender: ${sender}]\n\n${messageText}` }] }],
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `[Sender: ${sender}]\n\n${messageText}` }],
+          },
+        ],
         config: {
           systemInstruction: systemInstruction,
           tools: [
@@ -757,32 +968,50 @@ export class OpenClawAgent {
       });
 
       // Step 2: Handle Tool Calls
-      let finalResponseText = response.text || '';
+      let finalResponseText = response.text || "";
 
       if (response.functionCalls && response.functionCalls.length > 0) {
         const call = response.functionCalls[0];
-        let toolResponseStr = '';
+        let toolResponseStr = "";
 
-        if (call.name === 'addListing') {
-          const args = (call.args || {}) as unknown as UnitListingData & { contact_info?: string };
+        if (call.name === "addListing") {
+          const args = (call.args || {}) as unknown as UnitListingData & {
+            contact_info?: string;
+          };
           if (!args.contact_info) args.contact_info = sender;
           toolResponseStr = await addListing(this.airtableConfig, args);
-        } else if (call.name === 'editInventory') {
-          const args = (call.args || {}) as unknown as { location: string; newPrice: number };
-          toolResponseStr = await editInventory(this.airtableConfig, args.location, args.newPrice);
-        } else if (call.name === 'generateInventoryReport') {
+        } else if (call.name === "editInventory") {
+          const args = (call.args || {}) as unknown as {
+            location: string;
+            newPrice: number;
+          };
+          toolResponseStr = await editInventory(
+            this.airtableConfig,
+            args.location,
+            args.newPrice,
+          );
+        } else if (call.name === "generateInventoryReport") {
           toolResponseStr = await generateInventoryReport(this.airtableConfig);
         }
 
-
         response = await this.ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: "gemini-2.5-flash",
           contents: [
-            { role: 'user', parts: [{ text: `[Sender: ${sender}]\n\n${messageText}` }] },
-            { role: 'model', parts: [{ functionCall: call }] },
             {
-              role: 'user',
-              parts: [{ functionResponse: { name: call.name!, response: { result: toolResponseStr } } }],
+              role: "user",
+              parts: [{ text: `[Sender: ${sender}]\n\n${messageText}` }],
+            },
+            { role: "model", parts: [{ functionCall: call }] },
+            {
+              role: "user",
+              parts: [
+                {
+                  functionResponse: {
+                    name: call.name!,
+                    response: { result: toolResponseStr },
+                  },
+                },
+              ],
             },
           ],
           config: {
@@ -806,13 +1035,13 @@ export class OpenClawAgent {
       await this.saveProjectMemory(
         `whatsapp-msg-${Date.now()}`,
         { sender, message: messageText, reply: finalResponseText },
-        ['whatsapp-interaction'],
+        ["whatsapp-interaction"],
       );
 
       return finalResponseText;
     } catch (error) {
-      logger.error({ err: error, msg: 'Gemini API Error' });
-      return 'Sorry, I encountered an internal error while processing your request. Please try again.';
+      logger.error({ err: error, msg: "Gemini API Error" });
+      return "Sorry, I encountered an internal error while processing your request. Please try again.";
     }
   }
 }
