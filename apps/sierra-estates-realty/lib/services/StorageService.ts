@@ -39,10 +39,21 @@ export class StorageService {
 
     // supabase-js resolves with { error } rather than throwing, so an ignored
     // error would hand back a URL for an object that was never written.
-    const { error } = await storage.upload(filePath, buffer, {
+    let { error } = await storage.upload(filePath, buffer, {
       contentType: mimeType,
-      upsert: false,
+      upsert: true,
     });
+
+    if (error && (error.message?.toLowerCase().includes('bucket not found') || error.message?.toLowerCase().includes('does not exist'))) {
+      // Auto-ensure bucket exists on Supabase (e.g. fresh environment or Vercel production deployment)
+      await getSupabaseAdmin().storage.createBucket(PROPERTY_MEDIA_BUCKET, { public: true }).catch(() => {});
+      const retry = await storage.upload(filePath, buffer, {
+        contentType: mimeType,
+        upsert: true,
+      });
+      error = retry.error;
+    }
+
     if (error) {
       throw new Error(
         `Upload of ${originalName} to ${PROPERTY_MEDIA_BUCKET}/${filePath} failed: ${error.message}`
