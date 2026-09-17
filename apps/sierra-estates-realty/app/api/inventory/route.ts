@@ -139,7 +139,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
     const { data, error } = await getSupabaseAdmin()
       .from("listings")
       .select(
-        "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, area_sqm, status, description, updated_at",
+        "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, area_sqm, status, description, updated_at, img, photos, images",
       )
       .in("status", ["active", "available"])
       .order("updated_at", { ascending: false })
@@ -147,7 +147,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
 
     if (error) throw new Error(error.message);
 
-    const units: InventoryUnit[] = (data ?? []).map((listing) => {
+    const units: InventoryUnit[] = (data ?? []).map((listing: any) => {
       const location = listing.location_area || listing.compound || "New Cairo";
       const resolved = resolveLocation(location);
       const price = Number(listing.price) || 0;
@@ -155,6 +155,11 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         listing.deal_type === "rent" || (price > 0 && price < 1_000_000)
           ? "rent"
           : "sale";
+      const primaryImg =
+        listing.img ||
+        (Array.isArray(listing.photos) && listing.photos[0] ? listing.photos[0] : null) ||
+        (Array.isArray(listing.images) && listing.images[0] ? listing.images[0] : null) ||
+        null;
 
       return {
         id: listing.id,
@@ -176,6 +181,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         priceLabel: price
           ? `EGP ${price.toLocaleString("en-US")}`
           : "Price on request",
+        img: primaryImg,
         description: listing.description,
         updatedAt: listing.updated_at,
       };
