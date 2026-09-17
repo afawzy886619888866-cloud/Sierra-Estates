@@ -450,9 +450,13 @@ export default function HomePage() {
                     }}
                     style={{
                       flex: 'none',
-                      padding: '5px 12px',
+                      padding: '6px 14px',
+                      minHeight: 42,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       borderRadius: 999,
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: isSelected ? 700 : 500,
                       whiteSpace: 'nowrap',
                       background: isSelected ? 'rgba(201, 148, 54, 0.25)' : 'rgba(255, 255, 255, 0.04)',
@@ -460,6 +464,7 @@ export default function HomePage() {
                       border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
+                      touchAction: 'manipulation',
                     }}
                   >
                     {isAr ? chip.ar : chip.en}
@@ -572,7 +577,7 @@ export default function HomePage() {
               {/* Property Type Pills */}
               <div className="field" style={{ marginBottom: 12 }}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fType')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                   {[
                     { val: '', l: t('anyType') },
                     { val: 'Apartment', l: t('tApt') },
@@ -590,6 +595,10 @@ export default function HomePage() {
                         onClick={() => setSearch({ ...search, type: pt.val })}
                         style={{
                           padding: '6px 14px',
+                          minHeight: 42,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           borderRadius: 999,
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
@@ -599,6 +608,7 @@ export default function HomePage() {
                           border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
+                          touchAction: 'manipulation',
                         }}
                       >
                         {pt.l}
@@ -611,12 +621,16 @@ export default function HomePage() {
               {/* Bedrooms Pills */}
               <div className="field" style={{ marginBottom: 12 }}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fBeds')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                   <button
                     type="button"
                     onClick={() => setSearch({ ...search, beds: '0' })}
                     style={{
                       padding: '6px 14px',
+                      minHeight: 42,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       borderRadius: 999,
                       fontSize: 12,
                       fontWeight: search.beds === '0' ? 700 : 500,
@@ -626,6 +640,7 @@ export default function HomePage() {
                       border: search.beds === '0' ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
+                      touchAction: 'manipulation',
                     }}
                   >
                     {t('reqAny')}
@@ -639,6 +654,10 @@ export default function HomePage() {
                         onClick={() => setSearch({ ...search, beds: String(n) })}
                         style={{
                           padding: '6px 14px',
+                          minHeight: 42,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           borderRadius: 999,
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
@@ -648,6 +667,7 @@ export default function HomePage() {
                           border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
+                          touchAction: 'manipulation',
                         }}
                       >
                         {n}+ {isAr ? 'غرف' : 'Beds'}
@@ -660,7 +680,7 @@ export default function HomePage() {
               {/* Dynamic Price Pills */}
               <div className="field" style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fPrice')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                   {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => {
                     const isSelected = search.price === p.val;
                     return (
@@ -670,6 +690,10 @@ export default function HomePage() {
                         onClick={() => setSearch({ ...search, price: p.val })}
                         style={{
                           padding: '6px 14px',
+                          minHeight: 42,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           borderRadius: 999,
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
@@ -679,6 +703,7 @@ export default function HomePage() {
                           border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
+                          touchAction: 'manipulation',
                         }}
                       >
                         {isAr ? p.ar : p.en}

@@ -238,6 +238,32 @@ export default function PropertiesPage() {
   // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
   useListingsRealtime(setAllUnits);
 
+  // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory?limit=500')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.units || !Array.isArray(data.units) || data.units.length === 0) return;
+        setAllUnits((prev) => {
+          const seen = new Set(prev.map((u) => u.code || u.id));
+          const additions: RealListing[] = [];
+          data.units.forEach((rawUnit: any, idx: number) => {
+            const id = rawUnit.code || rawUnit.id;
+            if (id && !seen.has(id)) {
+              seen.add(id);
+              additions.push(sanitizeUnit(rawUnit, prev.length + idx));
+            }
+          });
+          return additions.length > 0 ? [...additions, ...prev] : prev;
+        });
+      })
+      .catch((err) => console.warn('[PropertiesPage] Live inventory fetch error:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
   useEffect(() => {
     const t = setTimeout(() => setRealtimeLive(true), 2500);
