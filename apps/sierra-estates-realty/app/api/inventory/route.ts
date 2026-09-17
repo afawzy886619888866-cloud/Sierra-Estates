@@ -265,7 +265,14 @@ export async function GET(request: Request) {
 
   // Strip private owner PII for public API response while keeping the real property data
   let filteredUnits: InventoryUnit[] = deduplicatedUnits.map((u: any) => {
-    const { contactPhone, ownerContact, phone, contactName, whatsAppDirect, ...publicSafe } = u;
+    const {
+      contactPhone: _contactPhone,
+      ownerContact: _ownerContact,
+      phone: _phone,
+      contactName: _contactName,
+      whatsAppDirect: _whatsAppDirect,
+      ...publicSafe
+    } = u;
     return publicSafe as InventoryUnit;
   });
 
