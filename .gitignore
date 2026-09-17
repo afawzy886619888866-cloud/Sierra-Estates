@@ -108,8 +108,35 @@ temp/
 .ipynb_checkpoints/
 .virtual_documents/
 
-# Bruin / Tools
+# Data files — inventory lives in Supabase, NOT git
+# Allowlist: apps/sierra-estates-realty/public/downloads/*.xlsx (client downloads)
+data/
+*.xlsx
+!apps/sierra-estates-realty/public/downloads/*.xlsx
+Inventory_with_Photos_Airtable.csv
+inventory_*.csv
+memory_*.csv
+Sierra_Estates_*.csv
+owner_media_matches.json
+obsidian-store.json
+apps/sierra-estates-realty/lib/inventory/snapshot.json
+apps/sierra-estates-realty/data/master-inventory-9k.json
+
+# Stale agent workspaces & configs
+.claude-flow/
+.factory/
+.qwen/
+.zencoder/
+
+# CircuitPython / hardware artifacts (wrong repo)
+libArchive/
+stubArchive/
+
+# Unused automation tool configs
 .bruin.yml
+conda.yaml
+robot.yaml
+tasks.py
 
 # Test coverage & nested worktrees / agent workspaces
 coverage/

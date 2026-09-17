@@ -19,12 +19,14 @@ tmp
 __pycache__
 
 # Large data archives not needed for cloud web deployment
+data/**
 *.xlsx
 !apps/sierra-estates-realty/public/downloads/*.xlsx
 *.zip
 *.tar.gz
-Inventory_with_Photos_Airtable.csv
-Sierra_Estates_Units_With_Photos.csv
+*.csv
+!apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv
+apps/sierra-estates-realty/lib/inventory/snapshot.json
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
 
@@ -37,4 +39,9 @@ SE-Vercel-deploy-main*/**
 libArchive/**
 stubArchive/**
 .amphion/**
+.claude-flow/**
+.factory/**
+.qwen/**
+.zencoder/**
+graphify-out/**
 *.tsbuildinfo
