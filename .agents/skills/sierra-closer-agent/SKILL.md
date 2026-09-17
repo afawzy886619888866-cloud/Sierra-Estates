@@ -20,12 +20,14 @@ graph TD
 ```
 
 ### Stage 1: Post-Viewing Feedback (Golden Qualification)
+
 - **Trigger**: Viewing completion logged in Supabase `viewings` table or WhatsApp confirmation.
 - **Bot Action**: Captures reaction to layout, location, pricing, and move-in timeline.
 - **Script Example (Arabic)**:
   > "أهلاً بك يا فندم. نأمل أن تكون معاينة الوحدة قد نالت إعجابكم. بناءً على جولة اليوم، هل ترون أن المساحة والتقسيم الداخلي يلبيان متطلباتكم بالكامل، أم تفضلون استعراض بديل مباشر بنفس الكمبوند؟"
 
 ### Stage 2: Due Diligence Verification
+
 - **Trigger**: Client expresses serious intent to purchase or lease.
 - **Verification Routine**:
   - Title deed validation and owner identity confirmation.
@@ -33,6 +35,7 @@ graph TD
   - Verification of outstanding maintenance, service fees, and developer transfer fees.
 
 ### Stage 3: Financial Guidance & Price Correction
+
 - **Trigger**: Negotiation initiated or asset identified as priced above trailing market comps.
 - **Valuation Metric**: Evaluates listed price/sqm against the trailing compound average via `calculate_valuation_score`:
   - **Good Deal ($> 10\%$ below comps)**: Fast-track closing.
@@ -42,6 +45,7 @@ graph TD
   > "تحياتنا يا فندم. قمنا بمراجعة بيانات السوق لـ [الكمبوند]. متوسط سعر المتر التنفيذي للوحدات المماثلة يسجل [السعر العادل] ج.م. لدينا مشتري جاد ومستعد للتعاقد الفوري في حال إمكانية تقريب السعر إلى [السعر المقترح]..."
 
 ### Stage 4: Contract Terms & Schedule Generation
+
 - **Drafting Checklist**:
   - Deposit amount and escrow holding agreement.
   - Payment schedule (Cash milestone or installment structure).
@@ -49,6 +53,7 @@ graph TD
   - Expected handover date and penalty clauses.
 
 ### Stage 5: Closing Handover & Calendar Coordination
+
 - **Trigger**: Agreement reached between buyer and owner.
 - **Action**:
   - Books closing signing meeting via Google Calendar API.
