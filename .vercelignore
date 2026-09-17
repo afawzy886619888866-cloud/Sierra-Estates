@@ -6,6 +6,8 @@
 .next
 .turbo
 .venv
+.vercel
+**/.vercel/**
 node_modules
 **/node_modules/**
 **/.next/**
@@ -17,6 +19,18 @@ tmp
 *.log
 *.pyc
 __pycache__
+
+# Non-web applications and backend tools
+apps/api/**
+infra/**
+workflows/**
+tools/**
+notebooks/**
+FUTURE_PLAN/**
+.pytest_cache/**
+ops/**
+scripts/test-results/**
+docs/**
 
 # Large data archives not needed for cloud web deployment
 data/**
