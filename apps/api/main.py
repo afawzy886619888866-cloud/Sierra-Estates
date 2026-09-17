@@ -4,6 +4,7 @@ Consolidated FastAPI backend for Sierra Estates PropTech integrations,
 ECC Memory Engine, CRM synchronization, and Valuation Services.
 """
 
+from dotenv import load_dotenv
 from __future__ import annotations
 
 import logging
