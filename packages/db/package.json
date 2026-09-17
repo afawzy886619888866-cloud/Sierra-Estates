@@ -7,8 +7,6 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
-    "firebase": "^12.18",
-    "firebase-admin": "^14.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

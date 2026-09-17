@@ -258,6 +258,27 @@ async function updateLeadQualification(phone, qualData, clientName = '') {
       });
     }
 
+    // ── Supabase Activity Log for Lead Qualification ──
+    if (sb) {
+      try {
+        const locText = Array.isArray(qualData.locations) ? qualData.locations.join(', ') : (qualData.locations || 'New Cairo');
+        await sb.from('activities').insert({
+          id: `act-qual-${clean}-${Date.now()}`,
+          type: 'lead_qualified',
+          actor_id: 'whatsapp-agent',
+          actor_name: 'Hermes WhatsApp Concierge',
+          description: `Client ${resolvedName || 'Client'} (+${clean}) is ready for viewing: ${qualData.preferred_viewing || 'Flexible'} (${locText})`,
+          text: `🎯 Hot Lead Ready for Viewing: ${resolvedName || 'Client'} (+${clean})`,
+          color: '#22c55e',
+          related_type: 'lead',
+          related_id: clean,
+          metadata: { qualData, locations: locText },
+        });
+      } catch (actErr) {
+        console.warn('⚠️ Could not insert Supabase activity log:', actErr.message);
+      }
+    }
+
     // ── 1. Real-Time Admin Dashboard Alert (Ring bell on localhost:3001) ──
     try {
       const locText = Array.isArray(qualData.locations) ? qualData.locations.join(', ') : (qualData.locations || 'New Cairo');
