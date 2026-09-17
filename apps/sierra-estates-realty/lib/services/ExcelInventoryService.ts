@@ -180,11 +180,18 @@ export function readExcelListings(options?: {
         }
 
         units.push(unit);
-
-        if (options?.limit && units.length >= options.limit) {
-          return units;
-        }
       }
+    }
+
+    // Prioritize units that have photos so they appear first
+    units.sort((a, b) => {
+      const aPhoto = a.img && a.img.startsWith('http') ? 1 : 0;
+      const bPhoto = b.img && b.img.startsWith('http') ? 1 : 0;
+      return bPhoto - aPhoto;
+    });
+
+    if (options?.limit && units.length > options.limit) {
+      return units.slice(0, options.limit);
     }
 
     return units;
