@@ -29,14 +29,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    // database-design: select only required profile fields
+    // database-design: select only existing profile columns in Supabase
     const rows = await listRecords("profiles", {
-      select: "id,full_name,email,role,status,avatar_url,created_at,updated_at",
+      select: "id,full_name,email,role,avatar_url,phone,created_at,updated_at",
     });
     return NextResponse.json(
       rows.map((row) => {
         const { id, fullName, ...rest } = row as Record<string, unknown>;
-        return { uid: id, ...rest, name: fullName };
+        return { uid: id, ...rest, name: fullName, status: "active" };
       })
     );
   } catch (err) {
