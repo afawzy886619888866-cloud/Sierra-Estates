@@ -35,6 +35,7 @@ import {
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
+import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -2253,6 +2254,123 @@ function AdminApp() {
     return items;
   }, [navItems, isAr, theme]);
 
+  function WhatsAppHubWrapper({ lang }: { lang: string }) {
+    const isArabic = lang === 'ar';
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach'>('scan');
+
+    return (
+      <div className="fade-up" style={{ paddingTop: 4 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            marginBottom: 20,
+            borderBottom: '1px solid var(--bd-s)',
+            paddingBottom: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <button
+            onClick={() => setSubTab('scan')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'scan' ? '1px solid #25D366' : '1px solid var(--bd)',
+              background: subTab === 'scan' ? 'rgba(37, 211, 102, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'scan' ? '#25D366' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📥</span>
+            <span>{isArabic ? 'ماسح محادثات الموبايل ومزامنة العقارات' : 'Mobile Chat Scanner & Ingestion'}</span>
+          </button>
+
+          <button
+            onClick={() => setSubTab('qr')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'qr' ? '1px solid #00AEFF' : '1px solid var(--bd)',
+              background: subTab === 'qr' ? 'rgba(0, 174, 255, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'qr' ? '#00AEFF' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📱</span>
+            <span>{isArabic ? 'ربط الموبايل المباشر (QR وكود الاقتران)' : 'Live Mobile Gateway (QR & Code)'}</span>
+          </button>
+
+          <button
+            onClick={() => setSubTab('outreach')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outreach' ? '1px solid #D4AF37' : '1px solid var(--bd)',
+              background: subTab === 'outreach' ? 'rgba(212, 175, 55, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outreach' ? '#D4AF37' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>🚀</span>
+            <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
+          </button>
+        </div>
+
+        {subTab === 'scan' && <WhatsAppChatScanner lang={lang} />}
+        {subTab === 'qr' && (
+          <div
+            style={{
+              background: 'var(--bg-e)',
+              borderRadius: 16,
+              border: '1px solid var(--bd)',
+              padding: 24,
+              textAlign: 'center',
+            }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--tx)', marginBottom: 8 }}>
+              {isArabic ? 'بوابة ربط واتساب الحية للهاتف المحمول' : 'Live Mobile WhatsApp Device Gateway'}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--tx-m)', maxWidth: 640, margin: '0 auto 20px auto' }}>
+              {isArabic
+                ? 'قم بربط هاتف الواتساب (+201092048333) لاستقبال كافة الرسائل والوسائط والمجموعات لحظياً ومزامنتها مع قاعدة البيانات.'
+                : 'Link your mobile phone (+201092048333) to continuously receive all inbound WhatsApp group messages, media, and owner listings into Sierra Estates in real-time.'}
+            </p>
+            <iframe
+              src="/whatsapp_qr.html"
+              title="WhatsApp Live QR Gateway"
+              style={{
+                width: '100%',
+                maxWidth: 520,
+                height: 640,
+                border: 'none',
+                borderRadius: 16,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                margin: '0 auto',
+                display: 'block',
+              }}
+            />
+          </div>
+        )}
+        {subTab === 'outreach' && <WhatsAppScheduledSender lang={lang} />}
+      </div>
+    );
+  }
+
   const renderPage=()=>{
     switch(tab){
       case 'overview':
@@ -2265,11 +2383,8 @@ function AdminApp() {
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
       case 'whatsapp_outreach':
-      case 'whatsapp_sender':return (
-        <div className="fade-up" style={{paddingTop: 4}}>
-          <WhatsAppScheduledSender lang={langKey} />
-        </div>
-      );
+      case 'whatsapp_sync':
+      case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;
       case 'openclaw':return <OpenClawPage T={T}/>;
       case 'nexus':return <NexusAIPage T={T}/>;
       case 'leads':return <LeadsPage T={T}/>;
