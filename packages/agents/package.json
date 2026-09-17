@@ -10,8 +10,6 @@
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
-    "firebase": "^12.18",
-    "firebase-admin": "^14.3.0",
     "pino": "^10.3",
     "react": "19.2.8",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",

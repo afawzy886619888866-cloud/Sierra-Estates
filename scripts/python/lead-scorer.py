@@ -174,8 +174,24 @@ def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
         return list(csv.DictReader(handle))
 
 
+def _read_supabase_leads() -> list[dict[str, Any]]:
+    """Read leads from Supabase PostgreSQL public.leads."""
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    if not supabase_key:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')
+    import requests
+    headers = {
+        'apikey': supabase_key,
+        'Authorization': f'Bearer {supabase_key}',
+    }
+    resp = requests.get(f'{supabase_url}/rest/v1/leads?select=*', headers=headers, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
 def _read_firestore_leads(project_id: str | None, collection_name: str) -> list[dict[str, Any]]:
-    """Read leads from Firestore."""
+    """Read leads from Firestore (legacy fallback)."""
     client = _load_firestore_client(project_id)
     documents = client.collection(collection_name).stream()
     return [{**(document.to_dict() or {}), 'id': document.id} for document in documents]
@@ -211,8 +227,8 @@ def _render_summary(total: int, kept: int, score_distribution: Counter[int]) -> 
 
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
-    parser = argparse.ArgumentParser(description='Score Sierra Estates leads from CSV or Firestore.')
-    parser.add_argument('--source', choices=('csv', 'firestore'), required=True, help='Lead source to read from.')
+    parser = argparse.ArgumentParser(description='Score Sierra Estates leads from CSV, Firestore, or Supabase.')
+    parser.add_argument('--source', choices=('csv', 'firestore', 'supabase'), default='supabase', help='Lead source to read from (default: supabase).')
     parser.add_argument('--output', required=True, help='Path to the scored CSV report.')
     parser.add_argument('--min-score', type=int, default=1, help='Only include leads at or above this score.')
     parser.add_argument('--input', default='leads.csv', help='CSV input path when --source=csv.')
@@ -227,11 +243,12 @@ def main() -> int:
     scorer = LeadScorer()
 
     try:
-        leads = (
-            _read_csv_leads(Path(args.input))
-            if args.source == 'csv'
-            else _read_firestore_leads(args.project_id, args.collection)
-        )
+        if args.source == 'csv':
+            leads = _read_csv_leads(Path(args.input))
+        elif args.source == 'supabase':
+            leads = _read_supabase_leads()
+        else:
+            leads = _read_firestore_leads(args.project_id, args.collection)
         scored_rows: list[dict[str, Any]] = []
         distribution: Counter[int] = Counter()
         for lead in leads:

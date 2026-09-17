@@ -1,11 +1,11 @@
 /**
  * Auth helpers — server-side session cookie (JWT-like, signed via HMAC).
  * No external JWT lib required: small HS256 impl. The session is stored
- * in the `sierra_sess` httpOnly cookie. Admin SDK verifies the Firebase
- * ID token at sign-in time, then we mint our own session cookie.
+ * in the `sierra_sess` httpOnly cookie. Supabase Admin verifies the Supabase
+ * access token at sign-in time, then we mint our own session cookie.
  *
- * For dev / sandbox (no FIREBASE_SERVICE_ACCOUNT), we accept a hardcoded
- * demo admin so the admin page is reachable without Firebase credentials.
+ * For dev / sandbox, we accept an env-configured bootstrap password so the
+ * admin portal is reachable without live auth credentials.
  */
 import { isAdminPortalRole } from "./types";
 import type { Session, Role } from "./types";
@@ -195,13 +195,6 @@ export function safeEqual(a: string, b: string): boolean {
 
 /** True when a bootstrap admin account is available to sign in with. */
 export function bootstrapLoginAvailable(): boolean {
-  if (
-    process.env.FIREBASE_SERVICE_ACCOUNT ||
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    process.env.GOOGLE_APPLICATION_CREDENTIALS
-  ) {
-    return false;
-  }
   return Boolean(BOOTSTRAP_ADMIN_PASSWORD);
 }
 
