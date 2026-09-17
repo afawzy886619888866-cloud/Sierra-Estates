@@ -62,7 +62,7 @@ async function embedWithRetry(contextText: string, maxRetries = 4): Promise<numb
             const result = await model.embedContent({
                 content: { role: 'user', parts: [{ text: contextText }] },
                 outputDimensionality: 768,
-            });
+            } as any);
             return Array.from(result.embedding.values);
         } catch (err: any) {
             const isRateLimit = err?.message?.includes('429') || err?.message?.includes('quota');
