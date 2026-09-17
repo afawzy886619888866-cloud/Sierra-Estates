@@ -28,6 +28,10 @@ describe('Excel Master Inventory & Real Data Integration Suite', () => {
   }, 30000);
 
   it('verifies canonical column headers exist in sheets', () => {
+    expect(EXCEL_COLUMNS).toContain('RecordID');
+    expect(EXCEL_COLUMNS).toContain('Compound');
+    expect(EXCEL_COLUMNS).toContain('Price (EGP)');
+
     const wb = loadWorkbook(masterPath);
     const sampleWs = wb.Sheets['Owners Rent'];
     const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sampleWs);

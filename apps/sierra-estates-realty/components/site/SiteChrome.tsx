@@ -125,7 +125,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open navigation menu'}
-              aria-expanded={mobileMenuOpen}
+              {...(mobileMenuOpen ? { 'aria-expanded': true } : { 'aria-expanded': false })}
               title={mobileMenuOpen ? 'Close Menu' : 'Navigation Menu'}
             >
               {mobileMenuOpen ? <X className="i" style={{ width: 22, height: 22 }} /> : <Menu className="i" style={{ width: 22, height: 22 }} />}
