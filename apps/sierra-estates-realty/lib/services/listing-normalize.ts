@@ -210,8 +210,10 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
   const area = parseNumeric(pick(row, ['Space', 'Area', 'area', 'المساحه', 'المساحة', 'size', 'Size']));
   const bedrooms = parseNumeric(pick(row, ['bedrooms', 'Bedrooms', 'beds', 'غرف', 'الغرف']));
   const bathrooms = parseNumeric(pick(row, ['bathrooms', 'Bathrooms', 'baths', 'حمام', 'حمامات', 'الحمامات', 'دورات المياه']));
-  const garden = parseNumeric(pick(row, ['Garden', 'garden', 'الحديقة', 'الحديقه']));
-  const imageUrl = pick(row, ['Image URL', 'imageUrl', 'Image', 'image', 'Photo', 'photo', 'صورة', 'الصورة', 'الصوره']);
+  const rawImages = pick(row, [
+    'Photos', 'photos', 'Photo', 'photo', 'Image URL', 'imageUrl', 'Images', 'images',
+    'Image', 'image', 'Pictures', 'pictures', 'Attachments', 'attachments', 'صورة', 'الصورة', 'الصوره'
+  ]);
   const mobile = pick(row, ['Mobile', 'mobile', 'Phone', 'phone', 'تليفون', 'موبايل', 'رقم']);
   const comment = pick(row, ['Comment', 'comment', 'بيان الوحده', 'تفاصيل الوحده', 'ملحوظة', 'ملاحظات', 'Description', 'description']);
   const finishing = normalizeFinishing(pick(row, ['Furnished or not', 'Furnished', 'التشطيب', 'finishing', 'finishingType']));
@@ -245,12 +247,10 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
   if (garden > 0) {
     unit.amenities = ['garden', ...(unit.amenities ?? [])];
   }
-  if (imageUrl) {
-    const url = String(imageUrl).trim();
-    if (url) {
-      unit.featuredImage = url;
-      unit.images = [url, ...(unit.images ?? [])];
-    }
+  const extractedImages = extractImageUrls(rawImages);
+  if (extractedImages.length > 0) {
+    unit.featuredImage = extractedImages[0];
+    unit.images = Array.from(new Set(extractedImages));
   }
 
   return unit;
