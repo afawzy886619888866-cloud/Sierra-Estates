@@ -16,41 +16,94 @@ export interface ExtractedChatMessage {
   attachedPhotos?: string[];
 }
 
+export interface AttachedMediaItem {
+  type: 'image' | 'video' | 'audio';
+  url: string;
+  filename: string;
+}
+
 /**
- * Extracts photo attachments from WhatsApp chat text.
+ * Extracts photo and media attachments from WhatsApp chat text.
  * Matches:
  * - <attached: 00000012-PHOTO-2026-08-24-10-15-22.jpg> (iOS export)
  * - IMG-20260824-WA0001.jpg (file attached) (Android export)
- * - [photo: filename.jpg]
- * - Direct HTTP(S) image URLs: https://.../image.jpg
+ * - [photo: filename.jpg] or [image: filename.jpg]
+ * - [video: filename.mp4] or VID-20260824-WA0002.mp4 (file attached)
+ * - Direct HTTP(S) image/media URLs
  */
 export function extractAttachedPhotos(text: string, baseDir?: string): string[] {
-  const photos: string[] = [];
+  const media = extractAttachedMedia(text, baseDir);
+  return media.filter((m) => m.type === 'image').map((m) => m.url);
+}
+
+/**
+ * Extracts all media attachments (photos, videos, voice notes) from WhatsApp chat text.
+ */
+export function extractAttachedMedia(text: string, baseDir?: string): AttachedMediaItem[] {
+  const items: AttachedMediaItem[] = [];
+
+  const getMediaType = (filename: string): 'image' | 'video' | 'audio' => {
+    if (/\.(mp4|mov|avi|mkv)$/i.test(filename)) return 'video';
+    if (/\.(opus|mp3|m4a|aac|ogg|wav)$/i.test(filename)) return 'audio';
+    return 'image';
+  };
 
   // 1. Direct URLs and image CDN URLs
-  const urlRegex = /(https?:\/\/\S*(?:images\.unsplash\.com|airtableusercontent\.com|\.(?:jpg|jpeg|png|webp|avif))\S*)/gi;
+  const urlRegex = /(https?:\/\/\S*(?:images\.unsplash\.com|airtableusercontent\.com|\.(?:jpg|jpeg|png|webp|avif|heic|mp4))\S*)/gi;
   let match: RegExpExecArray | null;
   while ((match = urlRegex.exec(text)) !== null) {
-    photos.push(match[1]);
+    const url = match[1];
+    items.push({
+      type: getMediaType(url),
+      url,
+      filename: path.basename(url.split('?')[0]),
+    });
   }
 
-  // 2. iOS attachment tags: <attached: filename.jpg>
+  // 2. iOS attachment tags: <attached: filename.ext>
   const iosRegex = /<attached:\s*([^>]+)>/gi;
   while ((match = iosRegex.exec(text)) !== null) {
     const filename = match[1].trim();
-    if (/\.(jpg|jpeg|png|webp)$/i.test(filename)) {
-      photos.push(resolveMediaFilePath(filename, baseDir));
+    if (/\.(jpg|jpeg|png|webp|avif|heic|mp4|mov|opus|m4a)$/i.test(filename)) {
+      items.push({
+        type: getMediaType(filename),
+        url: resolveMediaFilePath(filename, baseDir),
+        filename,
+      });
     }
   }
 
-  // 3. Android attachment tags: filename.jpg (file attached)
-  const androidRegex = /([A-Za-z0-9_.-]+\.(?:jpg|jpeg|png|webp))\s*(?:\(file attached\))/gi;
+  // 3. Android attachment tags: filename.ext (file attached)
+  const androidRegex = /([A-Za-z0-9_.-]+\.(?:jpg|jpeg|png|webp|avif|heic|mp4|mov|opus|m4a))\s*(?:\(file attached\))/gi;
   while ((match = androidRegex.exec(text)) !== null) {
     const filename = match[1].trim();
-    photos.push(resolveMediaFilePath(filename, baseDir));
+    items.push({
+      type: getMediaType(filename),
+      url: resolveMediaFilePath(filename, baseDir),
+      filename,
+    });
   }
 
-  return Array.from(new Set(photos));
+  // 4. Bracketed attachment tags: [photo: filename.ext] or [video: filename.ext] or [image: filename.ext]
+  const bracketRegex = /\[(?:photo|image|video|file):\s*([^\]]+)\]/gi;
+  while ((match = bracketRegex.exec(text)) !== null) {
+    const filename = match[1].trim();
+    if (/\.(jpg|jpeg|png|webp|avif|heic|mp4|mov|opus|m4a)$/i.test(filename)) {
+      items.push({
+        type: getMediaType(filename),
+        url: resolveMediaFilePath(filename, baseDir),
+        filename,
+      });
+    }
+  }
+
+  // Deduplicate by URL
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.url)) return false;
+    seen.add(item.url);
+    return true;
+  });
 }
 
 /**
