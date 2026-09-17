@@ -224,6 +224,7 @@ export async function GET(request: Request) {
     (await fetchSupabaseListings()) ??
     (await fetchDomain()) ??
     (await fetchLive()) ??
+    snapshotResponse();
   const whatsAppUnits = fetchWhatsAppIngestedUnits();
   const baseUnits = [...whatsAppUnits, ...(sourceResponse.units || [])];
   const seenCodes = new Set<string>();
