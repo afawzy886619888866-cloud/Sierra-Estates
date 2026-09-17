@@ -91,7 +91,8 @@ export function readExcelListings(options?: {
   }
 
   try {
-    const wb = XLSX.readFile(filePath);
+    const buf = fs.readFileSync(filePath);
+    const wb = XLSX.read(buf, { type: 'buffer' });
     const targetSheets = options?.sheetName
       ? [options.sheetName]
       : wb.SheetNames.filter((name) =>
