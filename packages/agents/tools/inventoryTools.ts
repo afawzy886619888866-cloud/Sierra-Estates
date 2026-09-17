@@ -41,6 +41,10 @@ export interface UnitListingData {
   operation?: string;
   /** Furnishing status */
   furnishing?: string;
+  /** Primary photo URL */
+  photoUrl?: string;
+  /** List of photo URLs */
+  images?: string[];
   paymentPlan?: {
     downpayment?: number;
     installments?: number;
