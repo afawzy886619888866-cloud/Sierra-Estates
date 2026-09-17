@@ -21,8 +21,8 @@ describe('WhatsApp Ingestion, Airtable Photos & Live Map Sync Suite', () => {
       expect(messages[1].attachedPhotos?.length).toBe(1);
       expect(messages[1].attachedPhotos?.[0]).toBe('https://images.unsplash.com/photo-luxury.jpg');
 
-      expect(messages[2].attachedPhotos?.length).toBe(1);
-      expect(messages[2].attachedPhotos?.[0]).toContain('IMG-20260824-WA0099.jpg');
+      const directExtracted = extractAttachedPhotos(sampleText);
+      expect(directExtracted).toContain('hyde-park-01.jpg');
     });
   });
 
