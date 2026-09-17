@@ -33,7 +33,7 @@ Before implementing:
 
 When editing existing code:
 - **Preserve surrounding code**: Do not alter adjacent formatting, comments, or unrelated logic.
-- **Do not refactor unrequested areas**: Avoid rewriting working subsystems or changing idioms outside the task scope.
+- **Do not refactor out-of-scope areas**: Avoid rewriting working subsystems or changing idioms outside the task scope.
 - **Match repository conventions**: Follow the file's existing TypeScript/Python style and linting standards.
 - **Clean up introduced orphans**: If your edits render an import or local variable unused, remove it. Leave pre-existing unused code intact unless explicitly asked.
 - **Traceability**: Every line changed must trace directly back to the objective.
