@@ -69,7 +69,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const activeListings = listings.filter((l) => l.status === "available" || l.status === "active");
+  const activeListings = listings.filter((l) => l.status === "available" || (l.status as string) === "active");
   const now = Date.now();
   const weekAgo = now - 7 * 86400_000;
   const newInquiries7d = inquiries.filter(
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
   const conversionRate = inquiries.length
     ? (closed / inquiries.length) * 100
     : 0;
-  const pendingApprovals = inquiries.filter((i) => i.status === "new" || i.status === "pending").length;
+  const pendingApprovals = inquiries.filter((i) => i.status === "new" || (i.status as string) === "pending").length;
   const avgAiScore = listings.length
     ? listings.reduce((s, l: any) => s + (l.aiScore || (l.valuationStatus === 'Underpriced' ? 9.5 : 8.5)), 0) / listings.length
     : 8.8;

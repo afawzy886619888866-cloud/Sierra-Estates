@@ -3,11 +3,26 @@
 /** Hero slideshow — port of the hero block + slide logic in deploy/index.html. */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BadgeCheck, Map, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Map, ShieldCheck } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 
-interface Slide { pre: string; preAr: string; main: string; mainAr: string; img: string }
+interface Slide {
+  id?: number | string;
+  pre: string;
+  preAr: string;
+  main: string;
+  mainAr: string;
+  sub?: string;
+  subAr?: string;
+  img: string;
+  objectPosition?: string;
+  href?: string;
+  badge?: string;
+  badgeAr?: string;
+  cta?: string;
+  ctaAr?: string;
+}
 
 /** Last three words of the headline render in the gold highlight span. */
 function splitHeadline(text: string) {
@@ -79,7 +94,11 @@ export default function HomeHero() {
             className={`slide${i === cur ? ' on' : ''}${leaving === i ? ' leaving' : ''}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={sl.img} alt="" />
+            <img
+              src={sl.img}
+              alt=""
+              style={sl.objectPosition ? { objectPosition: sl.objectPosition } : undefined}
+            />
           </div>
         ))}
       </div>
@@ -92,7 +111,9 @@ export default function HomeHero() {
           <div className="laser-badge" style={captionStyle}>
             <span className="laser-badge-dot" />
             <span className="laser-badge-text">
-              {isAr ? '⚡ رادار الذكاء الاصطناعي · القاهرة الجديدة' : '⚡ AI LASER RADAR · NEW CAIRO LUXURY'}
+              {isAr
+                ? (s.badgeAr || '⚡ رادار الذكاء الاصطناعي · القاهرة الجديدة')
+                : (s.badge || '⚡ AI LASER RADAR · NEW CAIRO LUXURY')}
             </span>
           </div>
 
@@ -102,12 +123,61 @@ export default function HomeHero() {
           <h1 id="hero-main" style={captionStyle}>
             {lead} <span className="hl">{hl}</span>
           </h1>
-          <p className="sub">{t('heroSub')}</p>
-          <div className="quick">
-            <span><BadgeCheck className="i" /> <span>{t('q1')}</span></span>
-            <span><Map className="i" /> <span>{t('q2')}</span></span>
-            <span><ShieldCheck className="i" /> <span>{t('q3')}</span></span>
-          </div>
+          <p className="sub" style={captionStyle}>
+            {isAr ? (s.subAr || t('heroSub')) : (s.sub || t('heroSub'))}
+          </p>
+
+          {s.href ? (
+            <div style={{ marginTop: '22px', display: 'flex', gap: '12px', flexWrap: 'wrap', ...captionStyle }}>
+              <Link
+                href={isAr ? `/ar${s.href}` : s.href}
+                className="btn-hero-cinematic"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #DFAD3A 0%, #B38624 100%)',
+                  color: '#0a1622',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  boxShadow: '0 8px 24px rgba(223, 173, 58, 0.35)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <span>{isAr ? (s.ctaAr || 'عرض تفاصيل المشروع') : (s.cta || 'Explore Project Evidence')}</span>
+                <ArrowRight className="i" style={{ width: 16, height: 16 }} />
+              </Link>
+              <Link
+                href={isAr ? `/ar${s.href}/inventory` : `${s.href}/inventory`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 20px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <span>{isAr ? 'الوحدات المتاحة والأسعار' : 'Available Inventory & Yields'}</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="quick">
+              <span><BadgeCheck className="i" /> <span>{t('q1')}</span></span>
+              <span><Map className="i" /> <span>{t('q2')}</span></span>
+              <span><ShieldCheck className="i" /> <span>{t('q3')}</span></span>
+            </div>
+          )}
         </div>
       </div>
 
