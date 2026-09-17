@@ -377,7 +377,7 @@ export class OpenClawAgent {
     const instMatch = normalizedRawText.match(
       /(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d+)\s*(?:سنوات|سنة|سنين|years)/i,
     );
-    const deliMatch = normalizedRawText.match(
+    const delivMatch = normalizedRawText.match(
       /(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d+\s*شهور|immediate)/i,
     );
 
