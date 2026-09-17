@@ -498,6 +498,13 @@
     "authorises",
     "Postg",
     "SUBCOLLECTION",
-    "SRID"
+    "SRID",
+    "cowork",
+    "vills",
+    "ivilla",
+    "reserv",
+    "airtableusercontent",
+    "Tybe",
+    "Availablty"
   ]
 }
