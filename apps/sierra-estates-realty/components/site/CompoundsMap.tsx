@@ -395,6 +395,14 @@ interface InventoryApiData {
   };
   compoundCounts?: Record<string, number>;
   compoundSegmentCounts?: Record<string, Record<string, number>>;
+  units?: Array<{
+    id?: string;
+    code?: string | null;
+    compound?: string;
+    location?: string;
+    img?: string;
+    price?: number;
+  }>;
 }
 
 export interface CompoundsMapProps {
