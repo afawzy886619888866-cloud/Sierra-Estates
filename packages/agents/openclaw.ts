@@ -157,7 +157,10 @@ export class OpenClawAgent {
     groupId?: string,
     timestamp?: string,
   ): UnitListingData {
-    const textLower = rawText.toLowerCase();
+    // Normalize Arabic-Indic digits (٠-٩) to standard ASCII digits (0-9)
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const normalizedRawText = rawText.replace(/[٠-٩]/g, (char) => arabicDigits.indexOf(char).toString());
+    const textLower = normalizedRawText.toLowerCase();
 
     // 1. Detect Compound / Location
     const compoundMap: Record<string, string> = {
@@ -201,82 +204,152 @@ export class OpenClawAgent {
 
     let detectedCompound = 'New Cairo';
     for (const [key, val] of Object.entries(compoundMap)) {
-      if (rawText.includes(key) || textLower.includes(key)) {
+      if (normalizedRawText.includes(key) || textLower.includes(key)) {
         detectedCompound = val;
         break;
       }
     }
 
-    // 2. Detect Property Type
-    let propertyType = 'Apartment';
-    if (/(فيلا مستقلة|standalone|villa|فيلا)/i.test(rawText)) propertyType = 'Standalone Villa';
-    else if (/(تاون هاوس|townhouse|town house)/i.test(rawText)) propertyType = 'Townhouse';
-    else if (/(توين هاوس|twinhouse|twin house)/i.test(rawText)) propertyType = 'Twinhouse';
-    else if (/(بنتهاوس|penthouse|روف)/i.test(rawText)) propertyType = 'Penthouse';
-    else if (/(دوبلكس|duplex)/i.test(rawText)) propertyType = 'Duplex';
-    else if (/(شالية|chalet|شاليه)/i.test(rawText)) propertyType = 'Chalet';
-    else if (/(مكتب|office|تجاري|commercial|محل|clinic|عيادة)/i.test(rawText)) propertyType = 'Commercial/Office';
-    else if (/(شقة|apartment|شقه)/i.test(rawText)) propertyType = 'Apartment';
+    // 2. Detect Operation (Rent vs Sale)
+    let operation = 'Sale';
+    if (/(للايجار|للإيجار|إيجار|ايجار|rent|شهريا|شهري|سنوي|سنويا|monthly|per month)/i.test(normalizedRawText)) {
+      operation = 'Rent';
+    }
 
-    // 3. Extract Area (sqm)
+    // 3. Detect Property Type
+    let propertyType = 'Apartment';
+    if (/(فيلا مستقلة|standalone|villa|فيلا)/i.test(normalizedRawText)) propertyType = 'Standalone Villa';
+    else if (/(تاون هاوس|townhouse|town house)/i.test(normalizedRawText)) propertyType = 'Townhouse';
+    else if (/(توين هاوس|twinhouse|twin house)/i.test(normalizedRawText)) propertyType = 'Twinhouse';
+    else if (/(بنتهاوس|penthouse|روف)/i.test(normalizedRawText)) propertyType = 'Penthouse';
+    else if (/(دوبلكس|duplex)/i.test(normalizedRawText)) propertyType = 'Duplex';
+    else if (/(شالية|chalet|شاليه)/i.test(normalizedRawText)) propertyType = 'Chalet';
+    else if (/(مكتب|office|تجاري|commercial|محل|clinic|عيادة)/i.test(normalizedRawText)) propertyType = 'Commercial/Office';
+    else if (/(شقة|apartment|شقه)/i.test(normalizedRawText)) propertyType = 'Apartment';
+
+    // 4. Extract Area (sqm)
     let area_sqm = 200;
-    const areaMatch = rawText.match(/(\d{2,4})\s*(?:متر|م²|م2|sqm|sq\.m|m2|meter)/i);
+    const areaMatch = normalizedRawText.match(/(\d{2,4})\s*(?:متر|م²|م2|sqm|sq\.m|m2|meter)/i);
     if (areaMatch) {
       area_sqm = parseInt(areaMatch[1], 10);
     }
 
-    // 4. Extract Price
+    // 5. Extract Currency
+    let currency = 'EGP';
+    if (/(دولار|\$|usd)/i.test(normalizedRawText)) {
+      currency = 'USD';
+    }
+
+    // 6. Extract Price with Advanced Arabic Idioms
     let price = 0;
-    const priceMillionMatch = rawText.match(/(\d+(?:\.\d+)?)\s*(?:مليون|million|m\b)/i);
-    if (priceMillionMatch) {
-      price = parseFloat(priceMillionMatch[1]) * 1_000_000;
+
+    // Pattern A: "مليون ونصف" or "مليون ونص" (1.5M) / "مليون وربع" (1.25M)
+    if (/(مليون\s+ونصف|مليون\s+ونص)/i.test(normalizedRawText)) {
+      price = 1_500_000;
+    } else if (/مليون\s+وربع/i.test(normalizedRawText)) {
+      price = 1_250_000;
+    } else if (/(مليونين|مليونان)/i.test(normalizedRawText)) {
+      price = 2_000_000;
     } else {
-      const priceRawMatch = rawText.match(/(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]+)/i);
-      if (priceRawMatch) {
-        price = parseFloat(priceRawMatch[1].replace(/,/g, ''));
+      // Pattern B: Compound "X مليون و Y الف" (e.g. "11 مليون و 500 الف" -> 11,500,000)
+      const compoundPriceMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*مليون\s*(?:و)?\s*(\d+)?\s*(?:الف|ألف)?/i);
+      if (compoundPriceMatch && compoundPriceMatch[2]) {
+        const millions = parseFloat(compoundPriceMatch[1]) * 1_000_000;
+        const thousands = parseFloat(compoundPriceMatch[2]) * 1_000;
+        price = millions + thousands;
       } else {
-        const numbers = rawText.match(/\b\d{6,9}\b/g);
-        if (numbers) {
-          price = parseInt(numbers[0], 10);
+        // Pattern C: Standard Million match: "11.5 مليون" or "48M"
+        const priceMillionMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*(?:مليون|million|m\b)/i);
+        if (priceMillionMatch) {
+          price = parseFloat(priceMillionMatch[1]) * 1_000_000;
+        } else {
+          // Pattern D: Thousand match: "38 الف" or "45 ألف" or "45k" (frequent for rentals or installment amounts)
+          const priceThousandMatch = normalizedRawText.match(/(\d+(?:\.\d+)?)\s*(?:الف|ألف|الاف|ألاف|k\b)/i);
+          if (priceThousandMatch && (operation === 'Rent' || parseFloat(priceThousandMatch[1]) < 1000)) {
+            price = parseFloat(priceThousandMatch[1]) * 1_000;
+          } else {
+            // Pattern E: Explicit price keyword label "سعر: 11,500,000"
+            const priceRawMatch = normalizedRawText.match(/(?:سعر|price|إجمالي|total|مطلوب)\s*[:=]?\s*([\d,]+)/i);
+            if (priceRawMatch) {
+              price = parseFloat(priceRawMatch[1].replace(/,/g, ''));
+            } else {
+              // Pattern F: Standalone 6-9 digit numbers
+              const numbers = normalizedRawText.match(/\b\d{6,9}\b/g);
+              if (numbers) {
+                price = parseInt(numbers[0], 10);
+              }
+            }
+          }
         }
       }
     }
-    if (price === 0) price = 12_500_000; // Sensible default luxury benchmark
+    if (price === 0) price = operation === 'Rent' ? 35_000 : 12_500_000;
 
-    // 5. Extract Bedrooms
+    // 7. Extract Bedrooms
     let bedrooms = 3;
-    const bedMatch = rawText.match(/(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i);
+    const bedMatch = normalizedRawText.match(/(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i);
     if (bedMatch) {
       bedrooms = parseInt(bedMatch[1], 10);
     }
 
-    // 6. Finishing Grade
+    // 8. Finishing Grade
     let finishing = 'semi_finished';
-    if (/(الترا سوبر لوكس|ultra super lux|fully finished|مفروش|تشطيب كامل|سوبر لوكس)/i.test(rawText)) {
+    if (/(الترا سوبر لوكس|ultra super lux|fully finished|مفروش|تشطيب كامل|سوبر لوكس)/i.test(normalizedRawText)) {
       finishing = 'fully_finished';
-    } else if (/(نصف تشطيب|semi finished|محارة وحلوق)/i.test(rawText)) {
+    } else if (/(نصف تشطيب|semi finished|محارة وحلوق)/i.test(normalizedRawText)) {
       finishing = 'semi_finished';
-    } else if (/(core and shell|طوب احمر|بدون تشطيب)/i.test(rawText)) {
+    } else if (/(core and shell|طوب احمر|بدون تشطيب)/i.test(normalizedRawText)) {
       finishing = 'core_and_shell';
     }
 
-    // 7. Extract Features
-    const features: string[] = [];
-    if (/(حديقة|garden|جاردن)/i.test(rawText)) features.push('G');
-    if (/(حمام سباحة|pool|بسين)/i.test(rawText)) features.push('P');
-    if (/(روف|roof|سطح)/i.test(rawText)) features.push('R');
-    if (/(بحيرة|lake view|فيو بحيرات|water view)/i.test(rawText)) features.push('L');
-    if (/(كورنر|corner|ناصية)/i.test(rawText)) features.push('C');
+    // 9. Furnishing Status
+    let furnishing = 'Unknown';
+    if (/(مفروش بالكامل|مفروش|شامل الفرش|fully furnished)/i.test(normalizedRawText)) {
+      furnishing = 'Furnished';
+    } else if (/(غير مفروش|بدون فرش|unfurnished)/i.test(normalizedRawText)) {
+      furnishing = 'Unfurnished';
+    }
 
-    // 8. Valuation & Urgency Scores
+    // 10. Payment Plan (Downpayment, Installment Years, Delivery Date)
+    let paymentPlan: { downpayment?: number; installments?: number; deliveryDate?: string } | undefined;
+    const dpMatch = normalizedRawText.match(/(?:مقدم|دفعة اولى|down\s*payment)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(مليون|الف|ألف|%|k)?/i);
+    const instMatch = normalizedRawText.match(/(?:اقساط|أقساط|تقسيط|installments)\s*(?:على|علي)?\s*(\d+)\s*(?:سنوات|سنة|سنين|years)/i);
+    const delivMatch = normalizedRawText.match(/(?:استلام|delivery)\s*[:=]?\s*(فوري|سنتين|سنة|\d{4}|خلال\s*\d+\s*شهور|immediate)/i);
+
+    if (dpMatch || instMatch || delivMatch) {
+      paymentPlan = {};
+      if (dpMatch) {
+        let dpVal = parseFloat(dpMatch[1]);
+        const unit = (dpMatch[2] || '').toLowerCase();
+        if (unit === 'مليون') dpVal *= 1_000_000;
+        else if (unit === 'الف' || unit === 'ألف' || unit === 'k') dpVal *= 1_000;
+        paymentPlan.downpayment = dpVal;
+      }
+      if (instMatch) {
+        paymentPlan.installments = parseInt(instMatch[1], 10);
+      }
+      if (delivMatch) {
+        paymentPlan.deliveryDate = delivMatch[1].trim();
+      }
+    }
+
+    // 11. Extract Features
+    const features: string[] = [];
+    if (/(حديقة|garden|جاردن)/i.test(normalizedRawText)) features.push('G');
+    if (/(حمام سباحة|pool|بسين)/i.test(normalizedRawText)) features.push('P');
+    if (/(روف|roof|سطح)/i.test(normalizedRawText)) features.push('R');
+    if (/(بحيرة|lake view|فيو بحيرات|water view)/i.test(normalizedRawText)) features.push('L');
+    if (/(كورنر|corner|ناصية)/i.test(normalizedRawText)) features.push('C');
+
+    // 12. Valuation & Urgency Scores
     let urgencyScore = 60;
     let valuationScore = 75;
-    if (/(لقطة|سعر محروق|فرصة|distress|urgent|مستعجل|اقل من سعر السوق|أقل من السوق)/i.test(rawText)) {
+    if (/(لقطة|سعر محروق|فرصة|distress|urgent|مستعجل|اقل من سعر السوق|أقل من السوق)/i.test(normalizedRawText)) {
       urgencyScore = 95;
       valuationScore = 90;
     }
 
-    // 9. Sierra Code Synthesis
+    // 13. Sierra Code Synthesis
     const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
     const typePrefix = propertyType.slice(0, 1).toUpperCase();
     const finishPrefix =
@@ -285,7 +358,7 @@ export class OpenClawAgent {
     const featSuffix = features.length > 0 ? `+${features.join('+')}` : '';
     const sierraCode = `${locPrefix}-${typePrefix}-${bedrooms}${finishPrefix}-${priceM}M${featSuffix}`;
 
-    // 10. Source Type & Group Classification
+    // 14. Source Type & Group Classification
     const registryGroup = groupId ? findGroup(groupId) : findGroup(groupName);
     const sourceType: GroupSourceType = registryGroup
       ? registryGroup.type === 'mixed'
@@ -294,7 +367,7 @@ export class OpenClawAgent {
       : classifySourceType(sender, groupName);
     const fromArchivedGroup = registryGroup?.archived ?? false;
 
-    // 11. New Listing Detection
+    // 15. New Listing Detection
     const listedAt = timestamp || new Date().toISOString();
     const newListing = isNewListing(listedAt);
 
@@ -303,11 +376,14 @@ export class OpenClawAgent {
       location: detectedCompound,
       compound: detectedCompound,
       price,
-      currency: 'EGP',
+      currency,
       area_sqm,
       bedrooms,
       bathrooms: Math.max(1, bedrooms - 1),
       finishing,
+      furnishing,
+      operation,
+      paymentPlan,
       sierraCode,
       valuationScore,
       urgencyScore,
