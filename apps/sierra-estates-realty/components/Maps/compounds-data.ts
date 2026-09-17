@@ -57,6 +57,17 @@ export const NEW_CAIRO_COMPOUNDS: CompoundLocation[] = [
     isGpsVerified: true,
   },
   {
+    code: 'CPZ',
+    nameEn: 'Cairo Plaza',
+    nameAr: 'كايرو بلازا',
+    developer: 'Commercial Transit',
+    lat: 30.129,
+    lng: 31.312,
+    unitsCount: 16,
+    isGpsVerified: true,
+    notes: 'Directly in front of Al-Mataria Metro Station. Commercial Podium with Banque Misr & Elite Scan.',
+  },
+  {
     code: 'RH',
     nameEn: 'Al Rehab',
     nameAr: 'الرحاب',

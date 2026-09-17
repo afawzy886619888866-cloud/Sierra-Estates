@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
-  ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search,
+  ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
@@ -52,6 +52,7 @@ const TICKER_AR = [
 ];
 
 const SUGGESTED_COMPOUNDS = [
+  'Cairo Plaza',
   'Mivida',
   'Hyde Park',
   'Mountain View iCity',
@@ -74,6 +75,7 @@ const SUGGESTED_COMPOUNDS = [
 
 const POPULAR_COMPOUND_CHIPS = [
   { en: 'All Compounds', ar: 'كل الكمبوندات', val: '' },
+  { en: 'Cairo Plaza', ar: 'كايرو بلازا', val: 'Cairo Plaza' },
   { en: 'Mivida', ar: 'ميفيدا', val: 'Mivida' },
   { en: 'Hyde Park', ar: 'هايد بارك', val: 'Hyde Park' },
   { en: 'Mountain View iCity', ar: 'ماونتن فيو', val: 'Mountain View iCity' },
@@ -600,6 +602,39 @@ export default function HomePage() {
                 >
                   <Search className="i" /> <span>{t('search')}</span>
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (search.compound.trim()) {
+                      handleLocateOnMap(search.compound.trim());
+                    } else {
+                      const el = document.getElementById('interactive-map');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="btn"
+                  id="hero-map-locate-btn"
+                  title={isAr ? 'عرض وتحديد النتائج على الخريطة التفاعلية' : 'Explore Results on Interactive Masterplan Map'}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#e2e8f0',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '0 14px',
+                    borderRadius: 12,
+                    height: 44,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <MapIcon className="i" style={{ width: 15, height: 15, color: '#38bdf8' }} />
+                  <span>{isAr ? 'الخريطة' : 'Map View'}</span>
+                </button>
                 <Link
                   href={netRadarHref}
                   className="btn"
@@ -680,8 +715,16 @@ export default function HomePage() {
               compounds={allCompounds}
               featured={featuredCompounds}
               selectedName={selectedMapCompound}
-              onSelectAction={setSelectedMapCompound}
+              onSelectAction={(name) => {
+                setSelectedMapCompound(name);
+                setSearch((prev) => ({ ...prev, compound: name }));
+              }}
               showControls={true}
+              filterCompound={search.compound}
+              filterPrice={search.price}
+              filterType={search.type}
+              filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
+              isAr={isAr}
             />
           </div>
 

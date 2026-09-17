@@ -94,6 +94,7 @@ export const COMPOUND_DEVELOPERS: Record<string, string> = {
   'Jayd': 'IWAN',
   'Galleria Moon Valley': 'Arabia Holding',
   'Azzar New Cairo': 'Reedy Group',
+  'Cairo Plaza': 'Commercial Transit',
 };
 
 // Masterplan footprint polygons for top New Cairo luxury compounds
@@ -333,6 +334,23 @@ export const NEW_CAIRO_ZONES: ZonePreset[] = [
   { key: 'North 90th', label: 'North 90th St', center: [30.035, 31.56], zoom: 13 },
   { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 12 },
   { key: 'TMG', label: 'Al Rehab & Madinaty', center: [30.08, 31.60], zoom: 12 },
+  { key: 'Transit', label: 'Cairo Plaza Metro', center: [30.129, 31.312], zoom: 14 },
+];
+
+export interface MapPricePreset {
+  val: string;
+  labelEn: string;
+  labelAr: string;
+  minM?: number;
+  maxM?: number;
+}
+
+export const MAP_PRICE_PRESETS: MapPricePreset[] = [
+  { val: 'any', labelEn: 'Any Budget', labelAr: 'أي ميزانية' },
+  { val: 'under10', labelEn: '< 10M', labelAr: '< 10 مليون', maxM: 10 },
+  { val: '10-20', labelEn: '10-20M', labelAr: '10-20 مليون', minM: 10, maxM: 20 },
+  { val: '20-35', labelEn: '20-35M', labelAr: '20-35 مليون', minM: 20, maxM: 35 },
+  { val: '35+', labelEn: '35M+', labelAr: '35+ مليون', minM: 35 },
 ];
 
 export type SegmentKey = 'all' | 'owners_rent' | 'owners_buy' | 'broker_rent' | 'broker_buy' | 'unknown';
@@ -385,6 +403,11 @@ export interface CompoundsMapProps {
   onSelectAction?: (name: string) => void;
   onSelect?: (name: string) => void;
   showControls?: boolean;
+  filterCompound?: string;
+  filterPrice?: string;
+  filterType?: string;
+  filterBed?: number | 'any';
+  isAr?: boolean;
 }
 
 export default function CompoundsMap({
@@ -394,6 +417,11 @@ export default function CompoundsMap({
   onSelectAction,
   onSelect,
   showControls = true,
+  filterCompound,
+  filterPrice,
+  filterType: _filterType,
+  filterBed: _filterBed,
+  isAr = false,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
   const hostRef = useRef<HTMLDivElement>(null);
@@ -405,7 +433,9 @@ export default function CompoundsMap({
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
+  const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
   const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
 
@@ -461,30 +491,54 @@ export default function CompoundsMap({
     [inventoryData, selectedSegment]
   );
 
-  // Filtered compounds based on query and zone
+  // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
     return compounds.filter((c) => {
-      if (filterQuery.trim()) {
-        const q = filterQuery.toLowerCase().trim();
-        const matchesName = c.n.toLowerCase().includes(q);
-        const matchesZone = c.z.toLowerCase().includes(q);
+      // 1. Text query filter (local state or external prop)
+      const effectiveQuery = (filterQuery || filterCompound || '').toLowerCase().trim();
+      if (effectiveQuery) {
+        const matchesName = c.n.toLowerCase().includes(effectiveQuery);
+        const matchesZone = c.z.toLowerCase().includes(effectiveQuery);
         const dev = COMPOUND_DEVELOPERS[c.n] || '';
-        const matchesDev = dev.toLowerCase().includes(q);
+        const matchesDev = dev.toLowerCase().includes(effectiveQuery);
         if (!matchesName && !matchesZone && !matchesDev) return false;
       }
+
+      // 2. Zone preset filter
       if (selectedZone !== 'all') {
         if (selectedZone === 'Golden Square') {
           const isGolden = c.z.includes('5th') && (c.n.includes('Mivida') || c.n.includes('Villette') || c.n.includes('Palm') || c.n.includes('Mountain View') || c.n.includes('Eastown') || c.n.includes('Fifth Square'));
           if (!isGolden) return false;
         } else if (selectedZone === 'TMG') {
           if (!c.n.includes('Rehab') && !c.n.includes('Madinaty')) return false;
+        } else if (selectedZone === 'Transit') {
+          if (!c.n.includes('Cairo Plaza') && !c.z.includes('Metro') && !c.z.includes('Mataria')) return false;
         } else if (!c.z.toLowerCase().includes(selectedZone.toLowerCase()) && !c.n.toLowerCase().includes(selectedZone.toLowerCase())) {
           return false;
         }
       }
+
+      // 3. Price preset filter (local on map)
+      if (selectedPriceBudget !== 'any') {
+        const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
+        if (preset) {
+          if (preset.minM !== undefined && c.priceM < preset.minM) return false;
+          if (preset.maxM !== undefined && c.priceM > preset.maxM) return false;
+        }
+      }
+
+      // 4. External Price filter (from homepage search e.g. '7m', '15m', '25m', '40m', '60m', '35k', etc.)
+      if (filterPrice && filterPrice !== '0') {
+        const numVal = parseInt(filterPrice.replace(/[^0-9]/g, ''), 10);
+        if (!isNaN(numVal) && numVal > 0) {
+          if (filterPrice.toLowerCase().endsWith('m') && c.priceM > numVal) return false;
+          if (filterPrice.toLowerCase().endsWith('k') && (c.rent || 2000) > numVal * 1000) return false;
+        }
+      }
+
       return true;
     });
-  }, [compounds, filterQuery, selectedZone]);
+  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -846,11 +900,21 @@ export default function CompoundsMap({
     setFilterQuery('');
     setSelectedZone('all');
     setSelectedBed('any');
+    setSelectedPriceBudget('any');
     setSelectedSegment('all');
     if (mapRef.current) {
       mapRef.current.flyTo(NEW_CAIRO_CENTER, 12, { duration: 0.8 });
     }
   }, []);
+
+  const activeFilterCount =
+    (filterQuery ? 1 : 0) +
+    (selectedZone !== 'all' ? 1 : 0) +
+    (selectedBed !== 'any' ? 1 : 0) +
+    (selectedPriceBudget !== 'any' ? 1 : 0) +
+    (selectedSegment !== 'all' ? 1 : 0) +
+    (filterCompound ? 1 : 0) +
+    (filterPrice && filterPrice !== '0' ? 1 : 0);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
@@ -922,6 +986,7 @@ export default function CompoundsMap({
                   cursor: 'pointer',
                   transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   boxShadow: isCurrent ? '0 2px 10px rgba(223, 173, 58, 0.4)' : 'none',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <span>{tab.label}</span>
@@ -929,10 +994,10 @@ export default function CompoundsMap({
                   style={{
                     fontSize: 10,
                     fontWeight: 800,
-                    padding: '1px 5px',
+                    padding: '1px 6px',
                     borderRadius: 999,
-                    background: isCurrent ? '#071523' : 'rgba(255, 255, 255, 0.14)',
-                    color: isCurrent ? '#dfad3a' : '#ffffff',
+                    background: isCurrent ? '#071523' : 'rgba(255, 255, 255, 0.12)',
+                    color: isCurrent ? '#dfad3a' : '#cbd5e1',
                   }}
                 >
                   {badgeCount}
@@ -942,11 +1007,11 @@ export default function CompoundsMap({
           })}
         </div>
 
-        {/* Zone Fast-Pill Navigation Bar */}
+        {/* Zone Fast-Switching Rail */}
         <div
-          className="map-zone-bar"
+          className="map-zone-rail"
           style={{
-            background: 'rgba(7, 21, 35, 0.88)',
+            background: 'rgba(7, 21, 35, 0.85)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -990,23 +1055,73 @@ export default function CompoundsMap({
         </div>
       </div>
 
-      {/* Floating Smart Filter Panel on Top-Right */}
+      {/* Floating Filter Toggle Button on Top-Right */}
       {showControls && (
-        <div
-          className="map-smart-filter-panel"
+        <button
+          type="button"
+          onClick={() => setIsFilterPanelOpen((prev) => !prev)}
           style={{
             position: 'absolute',
             top: 16,
             right: 16,
+            zIndex: 401,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: isFilterPanelOpen ? '#dfad3a' : 'rgba(7, 21, 35, 0.94)',
+            color: isFilterPanelOpen ? '#071523' : '#ffffff',
+            border: '1px solid rgba(223, 173, 58, 0.35)',
+            padding: '7px 14px',
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(12px)',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <SlidersHorizontal style={{ width: 13, height: 13 }} />
+          <span>{isFilterPanelOpen ? (isAr ? 'إخفاء الفلاتر' : 'Hide Filters') : (isAr ? 'فلاتر الخريطة' : 'Smart Filters')}</span>
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                background: isFilterPanelOpen ? '#071523' : '#dfad3a',
+                color: isFilterPanelOpen ? '#ffffff' : '#071523',
+                fontSize: 10,
+                fontWeight: 900,
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                display: 'inline-grid',
+                placeItems: 'center',
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Floating Smart Filter Panel on Top-Right */}
+      {showControls && isFilterPanelOpen && (
+        <div
+          className="map-smart-filter-panel"
+          style={{
+            position: 'absolute',
+            top: 54,
+            right: 16,
             zIndex: 400,
-            width: 280,
-            background: 'rgba(7, 21, 35, 0.94)',
+            width: 290,
+            maxHeight: 'calc(100% - 70px)',
+            overflowY: 'auto',
+            background: 'rgba(7, 21, 35, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(223, 173, 58, 0.25)',
             borderRadius: 14,
             padding: 16,
-            boxShadow: '0 16px 36px -4px rgba(0,0,0,0.4)',
+            boxShadow: '0 20px 40px -4px rgba(0,0,0,0.45)',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", sans-serif',
             color: '#ffffff',
           }}
@@ -1024,24 +1139,34 @@ export default function CompoundsMap({
               <SlidersHorizontal style={{ width: 14, height: 14 }} />
               <span>Smart Masterplan Filter</span>
             </div>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#e2e8f0',
-                background: 'rgba(255, 255, 255, 0.1)',
-                padding: '2px 8px',
-                borderRadius: 999,
-              }}
-            >
-              {filteredCompounds.length} compounds
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#e2e8f0',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                }}
+              >
+                {filteredCompounds.length} compounds
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsFilterPanelOpen(false)}
+                style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: 2 }}
+                title="Close"
+              >
+                <X style={{ width: 14, height: 14 }} />
+              </button>
+            </div>
           </div>
 
           {/* Search Input */}
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 4 }}>
-              FIND COMPOUND
+              FIND COMPOUND OR DEVELOPER
             </label>
             <div
               style={{
@@ -1083,10 +1208,39 @@ export default function CompoundsMap({
             </div>
           </div>
 
-          {/* Bedrooms Selector */}
+          {/* Price Budget Range Selector */}
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>
-              BEDROOMS
+              PRICE BUDGET
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {MAP_PRICE_PRESETS.map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => setSelectedPriceBudget(p.val)}
+                  style={{
+                    padding: '4px 8px',
+                    border: selectedPriceBudget === p.val ? '1px solid #dfad3a' : '1px solid rgba(255, 255, 255, 0.12)',
+                    background: selectedPriceBudget === p.val ? 'rgba(223, 173, 58, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    color: selectedPriceBudget === p.val ? '#dfad3a' : '#cbd5e1',
+                    borderRadius: 6,
+                    fontSize: 10.5,
+                    fontWeight: selectedPriceBudget === p.val ? 800 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {isAr ? p.labelAr : p.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bedrooms Selector */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>
+              MIN BEDROOMS
             </label>
             <div style={{ display: 'flex', gap: 4 }}>
               {(['any', 1, 2, 3, 4, 5] as const).map((b) => (
@@ -1114,7 +1268,7 @@ export default function CompoundsMap({
           </div>
 
           {/* Reset Action */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <span style={{ fontSize: 10.5, color: '#94a3b8' }}>
               {selectedName ? `Selected: ${selectedName}` : 'Click any pin to inspect'}
             </span>
