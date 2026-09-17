@@ -212,6 +212,43 @@ export function extractImageUrls(raw: unknown): string[] {
   return [];
 }
 
+/**
+ * Extracts photo attachments and direct image links from WhatsApp chat text.
+ * Matches:
+ * - <attached: 00000012-PHOTO-2026-08-24-10-15-22.jpg> (iOS export)
+ * - IMG-20260824-WA0001.jpg (file attached) (Android export)
+ * - Direct HTTP(S) image URLs: https://.../image.jpg
+ */
+export function extractAttachedPhotos(text: string): string[] {
+  if (!text) return [];
+  const photos: string[] = [];
+
+  // 1. Direct URLs and image CDN URLs
+  const urlRegex = /(https?:\/\/\S*(?:images\.unsplash\.com|airtableusercontent\.com|\.(?:jpg|jpeg|png|webp|avif))\S*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = urlRegex.exec(text)) !== null) {
+    photos.push(match[1]);
+  }
+
+  // 2. iOS attachment tags: <attached: filename.jpg>
+  const iosRegex = /<attached:\s*([^>]+)>/gi;
+  while ((match = iosRegex.exec(text)) !== null) {
+    const filename = match[1].trim();
+    if (/\.(jpg|jpeg|png|webp)$/i.test(filename)) {
+      photos.push(`/media/whatsapp/${encodeURIComponent(filename)}`);
+    }
+  }
+
+  // 3. Android attachment tags: filename.jpg (file attached)
+  const androidRegex = /([A-Za-z0-9_.-]+\.(?:jpg|jpeg|png|webp))\s*(?:\(file attached\))/gi;
+  while ((match = androidRegex.exec(text)) !== null) {
+    const filename = match[1].trim();
+    photos.push(`/media/whatsapp/${encodeURIComponent(filename)}`);
+  }
+
+  return Array.from(new Set(photos));
+}
+
 /** Reads the first present value across a list of candidate header keys. */
 function pick(row: Raw, keys: string[]): unknown {
   for (const k of keys) {
