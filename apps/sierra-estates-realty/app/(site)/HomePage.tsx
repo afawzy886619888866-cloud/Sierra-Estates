@@ -908,7 +908,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid-props" id="prop-grid">
-            {listings.slice(0, 8).map((p, i) => <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />)}
+            {displayedFeatured.map((p, i) => <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />)}
           </div>
         </div>
       </section>
