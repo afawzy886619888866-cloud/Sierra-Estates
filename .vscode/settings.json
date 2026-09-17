@@ -54,6 +54,17 @@
     "**/coverage": true
   },
   "cSpell.configFile": "${workspaceFolder}/cspell.json",
+  "cSpell.words": [
+    "Andrej",
+    "ilike",
+    "karpathy",
+    "Karpathy",
+    "pathing",
+    "Postgrest",
+    "serialisation",
+    "unrequested",
+    "upserted"
+  ],
   "circuitpythonsync.cpbaseversion": "10",
   "circuitpythonsync.cpfullversion": "10.3.0",
   "circuitpythonsync.curlibtag": "20260901",
