@@ -371,37 +371,42 @@ export async function POST(request: NextRequest) {
             path.join(process.cwd(), 'data/whatsapp-ingested-units.json'),
           ];
           for (const sp of stagedPaths) {
-            let existing: any[] = [];
-            if (fs.existsSync(sp)) {
-              try { existing = JSON.parse(fs.readFileSync(sp, 'utf-8')); } catch {}
+            try {
+              let existing: any[] = [];
+              if (fs.existsSync(sp)) {
+                try { existing = JSON.parse(fs.readFileSync(sp, 'utf-8')); } catch {}
+              }
+              const newlyStaged = unitsToIngest.map((u) => ({
+                type: u.propertyType,
+                location: u.compound,
+                compound: u.compound,
+                price: u.price,
+                currency: 'EGP',
+                area_sqm: u.area,
+                bedrooms: u.beds,
+                bathrooms: u.baths,
+                finishing: u.finishing,
+                sierraCode: u.sierraCode,
+                valuationScore: 85,
+                urgencyScore: 70,
+                contact_info: `${u.sender} (${u.phone})`,
+                sourceType: u.isOwner ? 'owner' : 'broker',
+                whatsappGroupName: groupName,
+                listedAt: u.timestamp,
+                isNewListing: true,
+                fromArchivedGroup: false,
+                notes: u.rawText,
+                photoUrl: u.photoUrl || null,
+                images: u.images || (u.photoUrl ? [u.photoUrl] : []),
+              }));
+              const merged = [...newlyStaged, ...existing];
+              const deduped = Array.from(new Map(merged.map((m) => [m.sierraCode, m])).values());
+              fs.mkdirSync(path.dirname(sp), { recursive: true });
+              fs.writeFileSync(sp, JSON.stringify(deduped, null, 2), 'utf-8');
+            } catch (fsErr) {
+              // Serverless (Vercel) filesystem is read-only; canonical data lives in Supabase
+              logger.info(`[whatsapp-scan] Serverless filesystem write skipped: ${(fsErr as Error).message}`);
             }
-            const newlyStaged = unitsToIngest.map((u) => ({
-              type: u.propertyType,
-              location: u.compound,
-              compound: u.compound,
-              price: u.price,
-              currency: 'EGP',
-              area_sqm: u.area,
-              bedrooms: u.beds,
-              bathrooms: u.baths,
-              finishing: u.finishing,
-              sierraCode: u.sierraCode,
-              valuationScore: 85,
-              urgencyScore: 70,
-              contact_info: `${u.sender} (${u.phone})`,
-              sourceType: u.isOwner ? 'owner' : 'broker',
-              whatsappGroupName: groupName,
-              listedAt: u.timestamp,
-              isNewListing: true,
-              fromArchivedGroup: false,
-              notes: u.rawText,
-              photoUrl: u.photoUrl || null,
-              images: u.images || (u.photoUrl ? [u.photoUrl] : []),
-            }));
-            const merged = [...newlyStaged, ...existing];
-            const deduped = Array.from(new Map(merged.map((m) => [m.sierraCode, m])).values());
-            fs.mkdirSync(path.dirname(sp), { recursive: true });
-            fs.writeFileSync(sp, JSON.stringify(deduped, null, 2), 'utf-8');
           }
         } catch (stageErr) {
           logger.warn('Failed to stage newly ingested WhatsApp units to JSON:', stageErr);
