@@ -24,6 +24,7 @@ import { fetchSheetUnits } from "@/lib/inventory/fetch-sheet";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { getSupabaseAdmin } from "@sierra-estates/db";
+import { readExcelListings, appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import snapshot from "@/lib/inventory/snapshot.json";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
@@ -232,7 +233,8 @@ export async function GET(request: Request) {
     (await fetchLive()) ??
     snapshotResponse();
   const whatsAppUnits = fetchWhatsAppIngestedUnits();
-  const baseUnits = [...whatsAppUnits, ...(sourceResponse.units || [])];
+  const excelUnits = readExcelListings({ stripPII: true });
+  const baseUnits = [...excelUnits, ...whatsAppUnits, ...(sourceResponse.units || [])];
   const seenCodes = new Set<string>();
   const deduplicatedUnits: InventoryUnit[] = [];
   for (const u of baseUnits) {
@@ -242,14 +244,11 @@ export async function GET(request: Request) {
     deduplicatedUnits.push(u);
   }
 
-  let filteredUnits = deduplicatedUnits.filter(
-    (u: any) =>
-      u.party !== "Owner" &&
-      u.sourceType !== "owner" &&
-      u.segment !== "owners_rent" &&
-      u.segment !== "owners_buy" &&
-      u.tag !== "Direct Owner",
-  );
+  // Strip private owner PII for public API response while keeping the real property data
+  let filteredUnits: InventoryUnit[] = deduplicatedUnits.map((u: any) => {
+    const { contactPhone, ownerContact, phone, contactName, whatsAppDirect, ...publicSafe } = u;
+    return publicSafe as InventoryUnit;
+  });
 
   if (filterCompound) {
     filteredUnits = filteredUnits.filter((u) => {
@@ -286,7 +285,7 @@ export async function GET(request: Request) {
 
   const payload: InventoryResponse = {
     generatedAt: sourceResponse.generatedAt || new Date().toISOString(),
-    source: sourceResponse.source,
+    source: excelUnits.length ? "excel-hybrid" : sourceResponse.source,
     count: filteredUnits.length,
     segments: sourceResponse.segments,
     compoundCounts,
@@ -299,4 +298,39 @@ export async function GET(request: Request) {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
     },
   });
+}
+
+/**
+ * POST /api/inventory → Append newly submitted listing to Excel inventory sheet and Supabase
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    if (!body || !body.compound || !body.price) {
+      return NextResponse.json(
+        { error: "Missing required listing fields: compound and price are mandatory" },
+        { status: 400 }
+      );
+    }
+
+    const result = await appendToExcelInventory(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to append unit to Excel inventory workbook" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Listing successfully appended to sheet "${result.sheetName}" and synced to database`,
+      recordId: result.recordId,
+      sheetName: result.sheetName,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: (err as Error).message },
+      { status: 500 }
+    );
+  }
 }
