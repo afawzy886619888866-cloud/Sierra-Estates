@@ -12,11 +12,10 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 # pylint: disable=import-error,no-name-in-module
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    def load_dotenv() -> None:
-        pass
+    import dotenv
+    dotenv.load_dotenv()
+except Exception:
+    pass
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -53,7 +52,6 @@ from ecc_memory_engine import EpisodicContextCache
 from valuation_agent_skill import RealEstateValuationAgent
 from hubspot_sync import HubSpotSyncHub
 
-load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
