@@ -2341,8 +2341,8 @@ textarea:focus-visible {
   position: fixed;
   inset: 0;
   background: rgba(5, 10, 18, 0.82);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   z-index: 99999;
   display: flex;
   justify-content: flex-end;
@@ -2364,7 +2364,7 @@ textarea:focus-visible {
   flex-direction: column;
   padding: 22px 18px;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   animation: drawerSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
