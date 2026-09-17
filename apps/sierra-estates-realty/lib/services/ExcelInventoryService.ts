@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as XLSX from 'xlsx';
-import { logger } from '@/lib/logger';
-import { resolveLocation } from '@/lib/inventory/gazetteer';
+import { logger } from '../logger';
+import { resolveLocation } from '../inventory/gazetteer';
 import { getSupabaseAdmin } from '@sierra-estates/db';
-import type { InventoryUnit } from '@/lib/inventory/types';
+import type { InventoryUnit } from '../inventory/types';
 
 export const EXCEL_COLUMNS = [
   'RecordID',
