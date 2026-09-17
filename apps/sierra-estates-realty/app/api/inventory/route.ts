@@ -137,20 +137,38 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
 /** Canonical Supabase listings, mapped to the public-safe map shape. */
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
   try {
-    const { data, error } = await getSupabaseAdmin()
-      .from("listings")
-      .select(
-        "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, area_sqm, status, description, updated_at, img, photos, images",
-      )
-      .in("status", ["active", "available"])
-      .order("updated_at", { ascending: false })
-      .limit(300);
+    const supabase = getSupabaseAdmin();
+    const [listingsRes, compoundsRes] = await Promise.all([
+      supabase
+        .from("listings")
+        .select(
+          "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, updated_at, img, photos, images",
+        )
+        .in("status", ["active", "available"])
+        .order("updated_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("compounds")
+        .select("name, lat, lng, zone, price_m, rent, ai_score"),
+    ]);
 
-    if (error) throw new Error(error.message);
+    if (listingsRes.error) throw new Error(listingsRes.error.message);
 
-    const units: InventoryUnit[] = (data ?? []).map((listing: any) => {
+    const compoundGeo = new Map<string, { lat: number; lng: number; zone?: string }>();
+    for (const c of compoundsRes.data ?? []) {
+      if (c.name && c.lat && c.lng) {
+        compoundGeo.set(c.name.trim().toLowerCase(), { lat: c.lat, lng: c.lng, zone: c.zone });
+      }
+    }
+
+    const units: InventoryUnit[] = (listingsRes.data ?? []).map((listing: any) => {
       const location = listing.location_area || listing.compound || "New Cairo";
       const resolved = resolveLocation(location);
+      const matchedGeo = listing.compound ? compoundGeo.get(listing.compound.trim().toLowerCase()) : null;
+      const lat = matchedGeo ? matchedGeo.lat : resolved.lat;
+      const lng = matchedGeo ? matchedGeo.lng : resolved.lng;
+      const zone = matchedGeo?.zone || resolved.zone;
+
       const price = Number(listing.price) || 0;
       const mode =
         listing.deal_type === "rent" || (price > 0 && price < 1_000_000)
@@ -171,12 +189,13 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         statusLabel: "Available",
         location: listing.compound || resolved.label,
         rawLocation: location,
-        zone: resolved.zone,
-        lat: resolved.lat,
-        lng: resolved.lng,
-        approxLocation: resolved.approx,
+        zone,
+        lat,
+        lng,
+        approxLocation: !matchedGeo && resolved.approx,
         propertyType: listing.property_type,
         beds: listing.bedrooms,
+        baths: listing.bathrooms,
         area: Number(listing.area_sqm) || null,
         price,
         priceLabel: price
