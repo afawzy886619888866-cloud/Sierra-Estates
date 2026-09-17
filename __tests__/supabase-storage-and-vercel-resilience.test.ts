@@ -30,6 +30,23 @@ describe("Supabase Storage & Vercel Resilience Suite", () => {
     expect(publicUrl).toContain("properties/unit-test-101/");
   });
 
+  it("StorageService handles base64 with data URI prefix and uploads successfully", async () => {
+    const dataUri =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const publicUrl = await StorageService.uploadPropertyMedia(
+      "unit-test-101",
+      dataUri,
+      "image/png",
+      "test-data-uri.png",
+    );
+
+    expect(publicUrl).toBeDefined();
+    expect(publicUrl).toContain(
+      "https://REDACTED-PROJECT.supabase.co/storage/v1/object/public/property-media/",
+    );
+    expect(publicUrl).toContain("properties/unit-test-101/");
+  });
+
   it("verifies public Supabase storage bucket configuration", () => {
     const bucket =
       process.env.SUPABASE_PROPERTY_MEDIA_BUCKET || "property-media";

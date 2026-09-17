@@ -107,10 +107,12 @@ export const CLIENT_ENV_VARS = {
   N8N_BASE_URL: process.env.N8N_BASE_URL,
   N8N_API_KEY: process.env.N8N_API_KEY,
 
-  // Supabase (Primary Database)
+  // Supabase (Primary Database & Storage)
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_PROPERTY_MEDIA_BUCKET: process.env.SUPABASE_PROPERTY_MEDIA_BUCKET || 'property-media',
+  SUPABASE_MEDIA_BUCKET: process.env.SUPABASE_MEDIA_BUCKET || 'media',
 
   // Admin Portal Bootstrap Credentials
   ADMIN_BOOTSTRAP_EMAIL: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net',
