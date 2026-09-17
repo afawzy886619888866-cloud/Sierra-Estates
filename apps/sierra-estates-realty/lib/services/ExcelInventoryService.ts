@@ -210,7 +210,8 @@ export async function appendToExcelInventory(input: NewExcelListingInput): Promi
   try {
     let wb: XLSX.WorkBook;
     if (fs.existsSync(filePath)) {
-      wb = XLSX.readFile(filePath);
+      const buf = fs.readFileSync(filePath);
+      wb = XLSX.read(buf, { type: 'buffer' });
     } else {
       wb = XLSX.utils.book_new();
     }
