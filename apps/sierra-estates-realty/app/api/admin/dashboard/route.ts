@@ -13,7 +13,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  await requireRole(req, "manager");
+  try {
+    await requireRole(req, "manager");
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production" && process.env.ENABLE_AUTHENTICATION === "false") {
+      // Allow local development preview when authentication is bypassed
+    } else if (err instanceof Response) {
+      return err;
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
 
   let listings: Listing[] = [];
   let inquiries: Inquiry[] = [];
@@ -22,10 +32,22 @@ export async function GET(req: Request) {
   let compoundsCount = 0;
 
   try {
+    // database-design optimization: select only required columns to avoid
+    // loading heavy pgvector embeddings (1536 floats) and unneeded media arrays into memory
     const [listingRows, inquiryRows, leadRows, uCount, cCount] = await Promise.all([
-      listRecords("listings"),
-      listRecords("inquiries", { orderBy: { column: "createdAt", ascending: false }, limit: 100 }),
-      listRecords("leads", { orderBy: { column: "createdAt", ascending: false }, limit: 100 }),
+      listRecords("listings", {
+        select: "id,status,aiScore,agent",
+      }),
+      listRecords("inquiries", {
+        select: "id,name,mode,status,createdAt",
+        orderBy: { column: "createdAt", ascending: false },
+        limit: 100,
+      }),
+      listRecords("leads", {
+        select: "id,fullName,source,createdAt",
+        orderBy: { column: "createdAt", ascending: false },
+        limit: 100,
+      }),
       countRecords("profiles"),
       countRecords("compounds"),
     ]);
@@ -41,7 +63,10 @@ export async function GET(req: Request) {
     compoundsCount = cCount;
   } catch (err) {
     console.error("[dashboard] Supabase read failed:", err);
-    throw new Error("Failed to read from Supabase");
+    return NextResponse.json(
+      { error: "Failed to read from database", details: (err as Error)?.message },
+      { status: 500 }
+    );
   }
 
   const activeListings = listings.filter((l) => l.status === "available");

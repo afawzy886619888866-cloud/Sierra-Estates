@@ -142,7 +142,10 @@ export async function listRecords<T = RecordData>(
     table: string,
     options: ListOptions = {}
 ): Promise<T[]> {
-    let query = client().from(table).select(options.select ?? '*');
+    const selectClause = options.select
+        ? options.select.split(',').map((s) => snakeCaseKey(s.trim())).join(',')
+        : '*';
+    let query = client().from(table).select(selectClause);
 
     for (const clause of options.where ?? []) {
         query = applyWhere(query, clause);
