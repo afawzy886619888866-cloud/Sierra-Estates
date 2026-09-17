@@ -17,6 +17,8 @@
  */
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import fs from "node:fs";
+import path from "node:path";
 import { InventoryQueryService } from "@/lib/services/inventory-query";
 import { fetchSheetUnits } from "@/lib/inventory/fetch-sheet";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
@@ -27,6 +29,57 @@ import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Load newly ingested WhatsApp listings with photos. */
+function fetchWhatsAppIngestedUnits(): InventoryUnit[] {
+  try {
+    const candidates = [
+      path.join(process.cwd(), "apps/sierra-estates-realty/data/whatsapp-ingested-units.json"),
+      path.join(process.cwd(), "data/whatsapp-ingested-units.json"),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
+        if (Array.isArray(raw)) {
+          return raw.map((u: any) => {
+            const loc = u.compound || u.location || "New Cairo";
+            const resolved = resolveLocation(loc);
+            const price = Number(u.price) || 0;
+            const mode =
+              u.operation?.toLowerCase() === "rent" || (price > 0 && price < 1_000_000)
+                ? "rent"
+                : "sale";
+            const primaryImg = u.photoUrl || (Array.isArray(u.images) ? u.images[0] : null) || u.img;
+            return {
+              id: u.sierraCode || u.id || `WA-${Date.now()}`,
+              code: u.sierraCode || null,
+              compound: u.compound || resolved.label,
+              mode,
+              status: "available" as const,
+              statusLabel: "Available",
+              location: u.compound || resolved.label,
+              rawLocation: loc,
+              zone: resolved.zone,
+              lat: resolved.lat,
+              lng: resolved.lng,
+              propertyType: u.type || "Apartment",
+              beds: u.bedrooms || null,
+              area: u.area_sqm || null,
+              price,
+              priceLabel: price ? `EGP ${price.toLocaleString("en-US")}` : "Price on request",
+              img: primaryImg,
+              description: u.notes || null,
+              segment: mode === "rent" ? "broker_rent" : "broker_buy",
+            };
+          });
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn(`[inventory] Error reading whatsapp-ingested-units: ${(err as Error).message}`);
+  }
+  return [];
+}
 
 /** Committed snapshot fallback. */
 function snapshotResponse(): InventoryResponse {
@@ -171,8 +224,18 @@ export async function GET(request: Request) {
     (await fetchSupabaseListings()) ??
     (await fetchDomain()) ??
     (await fetchLive()) ??
-    snapshotResponse();
-  let filteredUnits = (sourceResponse.units || []).filter(
+  const whatsAppUnits = fetchWhatsAppIngestedUnits();
+  const baseUnits = [...whatsAppUnits, ...(sourceResponse.units || [])];
+  const seenCodes = new Set<string>();
+  const deduplicatedUnits: InventoryUnit[] = [];
+  for (const u of baseUnits) {
+    const key = u.code || u.id;
+    if (key && seenCodes.has(key)) continue;
+    if (key) seenCodes.add(key);
+    deduplicatedUnits.push(u);
+  }
+
+  let filteredUnits = deduplicatedUnits.filter(
     (u: any) =>
       u.party !== "Owner" &&
       u.sourceType !== "owner" &&

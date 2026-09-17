@@ -127,9 +127,12 @@ export async function addListing(config: AirtableConfig, unitData: UnitListingDa
           records: [
             {
               fields: {
+                Code: sierraCode,
                 'Property Type': unitData.type,
                 Location: unitData.location,
+                Compound: unitData.compound || unitData.location,
                 Price: unitData.price,
+                'Unit Price': unitData.price,
                 Currency: unitData.currency || 'EGP',
                 'Area (sqm)': unitData.area_sqm,
                 Bedrooms: unitData.bedrooms,
@@ -139,6 +142,12 @@ export async function addListing(config: AirtableConfig, unitData: UnitListingDa
                 'WA Group': unitData.whatsappGroupName || '',
                 'Is New': unitData.isNewListing ? 'Yes' : 'No',
                 Notes: unitData.notes,
+                ...(unitData.photoUrl || (unitData.images && unitData.images.length > 0)
+                  ? {
+                      'Image URL': unitData.photoUrl || unitData.images![0],
+                      Photos: (unitData.images || [unitData.photoUrl!]).map((u) => ({ url: u })),
+                    }
+                  : {}),
               },
             },
           ],
