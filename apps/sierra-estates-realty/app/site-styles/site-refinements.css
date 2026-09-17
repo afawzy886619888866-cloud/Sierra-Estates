@@ -2295,6 +2295,166 @@ textarea:focus-visible {
   }
   .nav-control-pill {
     padding: 7px 10px !important;
-    min-height: 36px !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .req-now-btn {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
+
+/* ── 5. Mobile Navigation Drawer & Hamburger Toggle ───────────── */
+.mobile-nav-toggle {
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--gold, #e9c176);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+}
+
+.mobile-nav-toggle:hover {
+  background: rgba(201, 148, 54, 0.18);
+  border-color: rgba(201, 148, 54, 0.45);
+  color: #f7dfa5;
+}
+
+@media (max-width: 980px) {
+  .mobile-nav-toggle {
+    display: inline-flex !important;
+  }
+}
+
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 18, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 99999;
+  display: flex;
+  justify-content: flex-end;
+  animation: drawerFadeIn 0.25s ease-out;
+}
+
+[dir="rtl"] .mobile-drawer-overlay {
+  justify-content: flex-start;
+}
+
+.mobile-drawer {
+  width: 86%;
+  max-width: 360px;
+  height: 100%;
+  background: #0d1522;
+  border-inline-start: 1px solid rgba(233, 193, 118, 0.25);
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 18px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: drawerSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes drawerSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+[dir="rtl"] .mobile-drawer {
+  animation: drawerSlideInRtl 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes drawerSlideInRtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.mobile-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+  min-height: 46px;
+  touch-action: manipulation;
+}
+
+.mobile-drawer-link:hover,
+.mobile-drawer-link.active {
+  background: rgba(201, 148, 54, 0.16);
+  border-color: rgba(201, 148, 54, 0.38);
+  color: #f7dfa5;
+}
+
+.mobile-drawer-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 6. Mobile Touch-Friendly Filter Polish ──────────────────── */
+@media (max-width: 768px) {
+  .search-tabs button {
+    min-height: 44px !important;
+    padding: 8px 18px !important;
+    touch-action: manipulation !important;
+  }
+  .search-fields {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .field.searchbtn {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .field.searchbtn .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 46px !important;
+  }
+}
+
