@@ -29,7 +29,7 @@ interface DashboardLead {
 }
 
 const FALLBACK_HOT_LEADS: DashboardLead[] = [
-  { id: 'lead-1', name: 'Dr. Tarek El-Mansy', phone: '+201001234567', interest: 'Mivida · 3B Standalone Villa', stage: 'Negotiating', score: 98, budget: '18.5M EGP', color: '#00AEFF' },
+  { id: 'lead-1', name: 'Dr. Tarek El-Mansy', phone: '+201001234567', interest: 'Mivida · 3B Standalone Villa', stage: 'Negotiating', score: 98, budget: '18.5M EGP', color: '#C8961A' },
   { id: 'lead-2', name: 'Eng. Mona Al-Shorbagy', phone: '+201098765432', interest: 'Hyde Park · Lake Penthouse', stage: 'Viewing Scheduled', score: 95, budget: '14.2M EGP', color: '#10B981' },
   { id: 'lead-3', name: 'Karim Abdel-Aziz', phone: '+201123456789', interest: 'Swan Lake · Signature Villa', stage: 'Contract Draft', score: 94, budget: '32.0M EGP', color: '#8B5CF6' },
   { id: 'lead-4', name: 'Dina El-Gohary', phone: '+201201122334', interest: 'Eastown · Duplex + Garden', stage: 'Initial Contact', score: 91, budget: '9.8M EGP', color: '#F59E0B' },
@@ -196,7 +196,7 @@ export default function DashboardView({
               hot: true,
               score: 93 + (i % 6),
               budget: l.budget ? `${(l.budget / 1000000).toFixed(1)}M EGP` : '15-25M EGP',
-              color: l.color || ['#00AEFF', '#10B981', '#8B5CF6', '#F59E0B'][i % 4],
+              color: l.color || ['#C8961A', '#10B981', '#8B5CF6', '#F59E0B'][i % 4],
             }));
           if (mapped.length > 0) {
             setHotLeads(mapped);
@@ -284,7 +284,7 @@ export default function DashboardView({
                 key={r}
                 onClick={() => setTimeRange(r)}
                 className={`px-2.5 py-1 text-xs rounded-md font-mono transition-colors uppercase ${
-                  timeRange === r ? 'bg-cyan-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  timeRange === r ? 'bg-[#C8961A] text-white font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {r}
@@ -302,7 +302,7 @@ export default function DashboardView({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors">
           <div className="text-xs text-slate-400 uppercase tracking-wider">{isAr ? 'إجمالي العقارات' : 'Active Catalog'}</div>
-          <div className="text-2xl font-extrabold text-cyan-400 mt-1">{metrics.catalog}</div>
+          <div className="text-2xl font-extrabold text-[#E9C176] mt-1">{metrics.catalog}</div>
           <div className="text-xs text-emerald-400 mt-1">{metrics.catalogGrowth}</div>
         </div>
 
@@ -326,9 +326,9 @@ export default function DashboardView({
       </div>
 
       {/* Google Drive & Master Inventory Executive Repository Banner */}
-      <div className="p-4 rounded-xl bg-linear-to-r from-cyan-950/40 via-slate-900/90 to-emerald-950/40 border border-cyan-800/40 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 rounded-xl bg-linear-to-r from-[#211A0D]/40 via-slate-900/90 to-emerald-950/40 border border-[#C8961A]/30 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-700/60 flex items-center justify-center text-xl shrink-0 shadow-inner">
+          <div className="w-10 h-10 rounded-xl bg-[#211A0D]/80 border border-[#C8961A]/55 flex items-center justify-center text-xl shrink-0 shadow-inner">
             📂
           </div>
           <div>
@@ -352,7 +352,7 @@ export default function DashboardView({
             href="https://drive.google.com/drive/folders/1RGuki2ECPK4DHNXgzlinQ2QTFAMBnC1z"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-bold font-mono transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-[#C8961A] hover:bg-[#C8961A] text-slate-950 text-xs font-bold font-mono transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
             title="Open Master Google Drive Folder"
             aria-label="Open Master Google Drive Folder"
           >
@@ -387,7 +387,7 @@ export default function DashboardView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white">⚡ {isAr ? 'إجراءات سريعة للتنفيذ' : 'Executive Quick Actions'}</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/60 text-cyan-400">OS 3.0</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#211A0D]/80 border border-[#C8961A]/40 text-[#E9C176]">OS 3.0</span>
           </div>
           <span className="text-xs text-slate-400">{isAr ? 'انتقل مباشرةً للأدوات التشغيلية الحية' : 'Direct shortcuts to operational tools'}</span>
         </div>
@@ -395,7 +395,7 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => navigate?.('listings')}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-cyan-900/40 border border-slate-700/70 hover:border-cyan-500/50 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-slate-800/80 hover:bg-[#2A2113]/40 border border-slate-700/70 hover:border-[#C8961A]/50 text-xs font-semibold text-slate-200 hover:text-[#F5D78E] transition-all cursor-pointer shadow-sm"
             title="Easy Listing Studio"
             aria-label="Easy Listing Studio"
           >
@@ -435,7 +435,7 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => setIsCopilotOpen(true)}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/60 border border-cyan-700/70 hover:border-cyan-400 text-xs font-bold text-cyan-300 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-[#211A0D]/80 hover:bg-[#2A2113]/60 border border-[#C8961A]/55 hover:border-[#E9C176] text-xs font-bold text-[#F5D78E] transition-all cursor-pointer shadow-sm"
             title="Open Sierra AI Copilot"
             aria-label="Open Sierra AI Copilot"
           >
@@ -470,7 +470,7 @@ export default function DashboardView({
             <button
               type="button"
               onClick={() => navigate?.('leads')}
-              className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#E9C176] hover:text-[#F5D78E] transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span>{isAr ? 'عرض كافة العملاء في الـ CRM' : 'View Full CRM Pipeline'}</span>
               <span>→</span>
@@ -489,7 +489,7 @@ export default function DashboardView({
                   <div className="flex items-center gap-2 min-w-0">
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm"
-                      style={{ background: lead.color || '#00AEFF' }}
+                      style={{ background: lead.color || '#C8961A' }}
                     >
                       {lead.name[0]}
                     </div>
@@ -548,10 +548,10 @@ export default function DashboardView({
             <div>
               <div className="flex justify-between text-slate-300 mb-1">
                 <span>1. Ingested Inquiries</span>
-                <span className="font-mono text-cyan-400">1,240 (100%)</span>
+                <span className="font-mono text-[#E9C176]">1,240 (100%)</span>
               </div>
               <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 rounded-full" style={{ width: '100%' }}></div>
+                <div className="h-full bg-[#C8961A] rounded-full" style={{ width: '100%' }}></div>
               </div>
             </div>
 
@@ -603,7 +603,7 @@ export default function DashboardView({
                 type="button"
                 onClick={handleBroadcastFleet}
                 disabled={isBroadcasting}
-                className="px-2.5 py-1 text-xs rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-mono flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                className="px-2.5 py-1 text-xs rounded-lg bg-[#211A0D] hover:bg-[#2A2113] border border-[#C8961A]/40 text-[#F5D78E] font-mono flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                 title="Broadcast fleet pulse"
               >
                 <span>⚡</span>
@@ -616,8 +616,8 @@ export default function DashboardView({
               >
                 {isAr ? 'إدارة الأسطول →' : 'Fleet Command →'}
               </button>
-              <span className="text-xs font-mono text-cyan-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <span className="text-xs font-mono text-[#E9C176] flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#E9C176] animate-ping"></span>
                 LIVE SYNC
               </span>
             </div>
@@ -631,7 +631,7 @@ export default function DashboardView({
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-cyan-400">{act.agent}</span>
+                    <span className="font-mono text-[11px] text-[#E9C176]">{act.agent}</span>
                     <span className="text-slate-600">•</span>
                     <span className="text-slate-400 font-medium">{act.compound}</span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
@@ -713,8 +713,8 @@ export default function DashboardView({
           </div>
           <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80">
             <div className="text-[11px] text-slate-400 font-mono">{isAr ? 'ذاكرة القرار (Obsidian Memory)' : 'Obsidian Shared Memory'}</div>
-            <div className="text-xl font-bold font-mono text-cyan-400 mt-1">Grounded</div>
-            <div className="text-[10px] text-cyan-400/90 mt-1 font-mono">obsidian-store.json synchronized</div>
+            <div className="text-xl font-bold font-mono text-[#E9C176] mt-1">Grounded</div>
+            <div className="text-[10px] text-[#E9C176]/90 mt-1 font-mono">obsidian-store.json synchronized</div>
           </div>
         </div>
       </div>
@@ -745,7 +745,7 @@ export default function DashboardView({
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[#F5D78E] font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           >
             <span>{isAr ? 'معاينة الموقع الحي' : 'Preview Live Portal'}</span>
             <span>↗</span>

@@ -1,5 +1,7 @@
 /* ── Sierra Estates Properties & Live Map Catalog ── */
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+/* Leaflet CSS ships with the npm package (imported by components/Maps/LiveMap.tsx).
+   The former unpkg CDN @import was removed — it duplicated the npm copy and made
+   the page depend on a third-party CDN at runtime. */
 
 .props-page-shell {
   min-height: 100vh;

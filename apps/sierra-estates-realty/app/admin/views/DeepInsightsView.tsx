@@ -96,7 +96,7 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
               onClick={() => setSelectedRegion(reg)}
               className={`px-3 py-1 text-xs rounded-md font-medium transition-colors whitespace-nowrap ${
                 selectedRegion === reg
-                  ? 'bg-cyan-600 text-white font-semibold'
+                  ? 'bg-[#C8961A] text-white font-semibold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -110,12 +110,12 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
       </div>
 
       {/* Comparative Heat-Map & Growth Trajectory Matrix */}
-      <div className="p-5 rounded-2xl bg-linear-to-r from-slate-900 via-cyan-950/20 to-slate-900 border border-slate-800 space-y-4">
+      <div className="p-5 rounded-2xl bg-linear-to-r from-slate-900 via-[#211A0D]/25 to-slate-900 border border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <span>🗺️</span> {isAr ? 'مصفوفة نمو سعر المتر والعائد التأجيري (Heat-Map)' : 'Compound Price / m² & Yield Trajectory Matrix'}
           </h3>
-          <span className="text-[11px] text-cyan-400 font-mono font-semibold">
+          <span className="text-[11px] text-[#E9C176] font-mono font-semibold">
             {isAr ? 'بيانات السوق المحدثة · 2026' : 'Live Normalized Benchmark · 2026'}
           </span>
         </div>
@@ -129,14 +129,14 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
                 <div className="flex justify-between items-center text-slate-300">
                   <span className="font-semibold text-white">{c.name}</span>
                   <div className="flex items-center gap-3 font-mono">
-                    <span className="text-cyan-400">{c.pricePerSqm}</span>
+                    <span className="text-[#E9C176]">{c.pricePerSqm}</span>
                     <span className="text-emerald-400">{c.appreciation.split(' ')[0]}</span>
                     <span className="text-purple-400">{c.rentalYield.split(' ')[0]}</span>
                   </div>
                 </div>
                 <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800/80">
                   <div
-                    className="h-full rounded-full bg-linear-to-r from-cyan-500 via-blue-500 to-purple-500 transition-all duration-500"
+                    className="h-full rounded-full bg-linear-to-r from-[#E9C176] via-blue-500 to-purple-500 transition-all duration-500"
                     style={{ width: `${barWidth}%` }}
                   />
                 </div>
@@ -156,11 +156,11 @@ export default function DeepInsightsView({ lang = 'en' }: { lang?: string }) {
             <div>
               <div className="flex justify-between items-start">
                 <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#211A0D] text-[#F5D78E] border border-[#C8961A]/40">
                   {item.demandIndex}
                 </span>
               </div>
-              <div className="text-xl font-bold text-cyan-400 mt-1">{item.avgPrice}</div>
+              <div className="text-xl font-bold text-[#E9C176] mt-1">{item.avgPrice}</div>
               <div className="text-xs text-emerald-400 mt-1">{item.appreciation}</div>
             </div>
 

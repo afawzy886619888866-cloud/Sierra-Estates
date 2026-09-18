@@ -856,7 +856,7 @@ export default function LoginForm() {
               padding: '13px 0',
               borderRadius: 12,
               border: 'none',
-              background: 'linear-gradient(135deg, #3ECF8E 0%, #00AEFF 100%)',
+              background: 'linear-gradient(135deg, #3ECF8E 0%, #C8961A 100%)',
               color: '#071422',
               fontWeight: 800,
               fontSize: 13,

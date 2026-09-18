@@ -95,7 +95,7 @@ export default function SecurityView({ lang = 'en' }: { lang?: string }) {
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <span className="text-xs text-slate-400 font-mono">API SECRETS ROTATION</span>
-          <div className="text-lg font-bold text-cyan-400">Valid (Next in 24d)</div>
+          <div className="text-lg font-bold text-[#E9C176]">Valid (Next in 24d)</div>
           <p className="text-[11px] text-slate-500">Resend, Firebase Admin, and AI Provider keys</p>
         </div>
 
@@ -117,7 +117,7 @@ export default function SecurityView({ lang = 'en' }: { lang?: string }) {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value as any)}
-              className="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded px-2.5 py-1 focus:outline-none focus:border-cyan-500"
+              className="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded px-2.5 py-1 focus:outline-none focus:border-[#C8961A]"
             >
               <option value="all">{isAr ? 'جميع التصنيفات' : 'All Categories'}</option>
               <option value="auth">Auth & Session</option>
@@ -129,7 +129,7 @@ export default function SecurityView({ lang = 'en' }: { lang?: string }) {
             <select
               value={decisionFilter}
               onChange={(e) => setDecisionFilter(e.target.value as any)}
-              className="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded px-2.5 py-1 focus:outline-none focus:border-cyan-500"
+              className="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded px-2.5 py-1 focus:outline-none focus:border-[#C8961A]"
             >
               <option value="all">{isAr ? 'الكل (ALLOW/DENY)' : 'All Decisions'}</option>
               <option value="ALLOW">ALLOW</option>
@@ -146,7 +146,7 @@ export default function SecurityView({ lang = 'en' }: { lang?: string }) {
               className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-2"
             >
               <div className="flex items-center gap-3">
-                <span className="text-cyan-400 shrink-0">[{log.timestamp}]</span>
+                <span className="text-[#E9C176] shrink-0">[{log.timestamp}]</span>
                 <span className="text-slate-400 shrink-0 uppercase text-[10px] bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
                   {log.category}
                 </span>

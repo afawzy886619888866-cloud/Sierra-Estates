@@ -32,6 +32,8 @@ import {
   AppsDirectoryView,
   DeploymentPipelineView,
   ApiGatewayView,
+  InventoryCommandView,
+  WorkflowStudioView,
   MemoryBrainView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
@@ -148,7 +150,7 @@ function OverviewPage({ T }) {
             <div className="bar-chart">
               {['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'].map((s,i) => {
                 const h=[95,88,82,79,74,68,61,55,42,28][i];
-                const c=['#00AEFF','#5FC9FF','#1E88D9','#34D399','#7C3AED','#E63946','#00AEFF','#1E88D9','#34D399','#00AEFF'][i];
+                const c=['#C8961A','#E9C176','#1E88D9','#34D399','#7C3AED','#E63946','#C8961A','#1E88D9','#34D399','#C8961A'][i];
                 return (<div key={s} className="bar-col"><div className="bar-fill" style={{height:`${h}%`,background:`linear-gradient(180deg,${c},${c}44)`}}/><span className="bar-lbl">{s}</span></div>);
               })}
             </div>
@@ -516,7 +518,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
 
       {/* Instant Operations Triggers */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:18}}>
-        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #00AEFF'}}>
+        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #C8961A'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
             <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>🏢 Property Finder Sync</span>
             <span className="chip chip-blue">Feed v2</span>
@@ -524,7 +526,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
           <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'مزامنة الوحدات المعتمدة مع خلاصة بروبرتي فايندر واستقبال العملاء.' : 'Push verified active listings to Property Finder XML/JSON portal & capture leads.'}</p>
           <button 
             className="btn btn-ghost" 
-            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}
+            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}
             onClick={() => triggerOp('Property Finder Feed Syndication', '/api/sync')}
             disabled={running}
           >
@@ -616,7 +618,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
         <div className="card">
           <div className="card-hd"><span className="card-title">Lead Pipeline · Stage Funnel</span></div>
           <div className="card-body">
-            {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#00AEFF'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
+            {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#C8961A'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
               <div key={i} style={{marginBottom:12}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
                   <span style={{fontSize:11,color:'var(--tx)'}}><strong style={{color:row.color,fontFamily:'JetBrains Mono'}}>{row.s}</strong> · {row.label}</span>
@@ -838,7 +840,7 @@ export function LeadsPage({ T }: { T: any }) {
         <button 
           onClick={()=>setSourceFilter('property-finder')} 
           className="topbar-pill" 
-          style={sourceFilter==='property-finder'?{background:'#00AEFF',color:'#fff',borderColor:'#00AEFF'}:{borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}
+          style={sourceFilter==='property-finder'?{background:'#C8961A',color:'#fff',borderColor:'#C8961A'}:{borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}
         >
           🏢 Property Finder ({pfCount})
         </button>
@@ -891,7 +893,7 @@ export function LeadsPage({ T }: { T: any }) {
                 <tr key={i}>
                   <td>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <div className="lead-avatar" style={{background:l.color || '#00AEFF',width:28,height:28,fontSize:11}}>
+                      <div className="lead-avatar" style={{background:l.color || '#C8961A',width:28,height:28,fontSize:11}}>
                         {(l.name || 'C')[0]}
                       </div>
                       <span style={{color:'var(--tx)',fontWeight:600}}>{l.name}</span>
@@ -989,7 +991,7 @@ function CuratorPage({ T }) {
       {/* Compound Summary */}
       {selected && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:10,marginBottom:20}}>
-          {[['AI Score',`${selected.ai}/10`,selected.color],['Avg Price',selected.avgM,'#00AEFF'],['Units',selected.units.toLocaleString(),'#1E88D9'],['Growth',selected.growth,'#34D399'],['Zone',selected.zone,'#7C3AED']].map(([l,v,c],i)=>(
+          {[['AI Score',`${selected.ai}/10`,selected.color],['Avg Price',selected.avgM,'#C8961A'],['Units',selected.units.toLocaleString(),'#1E88D9'],['Growth',selected.growth,'#34D399'],['Zone',selected.zone,'#7C3AED']].map(([l,v,c],i)=>(
             <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',borderTop:`3px solid ${c}`}}>
               <div style={{fontFamily:'JetBrains Mono',fontSize:13,fontWeight:700,color:c,marginBottom:3}}>{v}</div>
               <div style={{fontSize:9,color:'var(--tx-f)',textTransform:'uppercase',letterSpacing:'.12em'}}>{l}</div>
@@ -1028,7 +1030,7 @@ function CuratorPage({ T }) {
           <div className="card-hd"><span className="card-title">📊 {T('qualityScore')} Distribution</span></div>
           <div className="card-body">
             <div className="bar-chart">
-              {[['90-100',4,'#34D399'],['80-90',8,'#00AEFF'],['70-80',6,'#1E88D9'],['60-70',3,'#7C3AED'],['<60',1,'#E63946']].map(([l,v,c],i)=>(
+              {[['90-100',4,'#34D399'],['80-90',8,'#C8961A'],['70-80',6,'#1E88D9'],['60-70',3,'#7C3AED'],['<60',1,'#E63946']].map(([l,v,c],i)=>(
                 <div key={i} className="bar-col">
                   <div className="bar-fill" style={{height:`${v*9}%`,background:`linear-gradient(180deg,${c},${c}55)`}}/>
                   <span className="bar-lbl">{l}</span>
@@ -1115,7 +1117,7 @@ function NexusAIPage({ T }) {
       <HarnessBenchmarkCard />
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
-        {[[ctr,'Ingested Today','#00AEFF'],[Math.round(ctr*.93),'Parsed','#34D399'],[Math.max(0,Math.round(ctr*.06)),'Processing','#f59e0b'],[Math.max(0,Math.round(ctr*.01)),'Failed','#E63946']].map(([v,l,c],i)=>(
+        {[[ctr,'Ingested Today','#C8961A'],[Math.round(ctr*.93),'Parsed','#34D399'],[Math.max(0,Math.round(ctr*.06)),'Processing','#f59e0b'],[Math.max(0,Math.round(ctr*.01)),'Failed','#E63946']].map(([v,l,c],i)=>(
           <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',borderTop:`3px solid ${c}`}}>
             <div style={{fontFamily:'JetBrains Mono',fontSize:22,fontWeight:700,color:c,marginBottom:4}}>{typeof v==='number'?v.toLocaleString():v}</div>
             <div style={{fontSize:9,color:'var(--tx-f)',textTransform:'uppercase',letterSpacing:'.1em'}}>{l}</div>
@@ -1152,7 +1154,7 @@ function NexusAIPage({ T }) {
         <div className="card">
           <div className="card-hd"><span className="card-title">📊 Parse Stats · Live</span></div>
           <div className="card-body" style={{display:'flex',flexDirection:'column',gap:10}}>
-            {[['Parsed OK',93,'#34D399'],['Processing',6,'#f59e0b'],['Failed',1,'#E63946'],['Arabic entries',38,'#00AEFF'],['English entries',62,'#1E88D9']].map(([l,v,c],i)=>(
+            {[['Parsed OK',93,'#34D399'],['Processing',6,'#f59e0b'],['Failed',1,'#E63946'],['Arabic entries',38,'#C8961A'],['English entries',62,'#1E88D9']].map(([l,v,c],i)=>(
               <div key={i}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,fontSize:11}}>
                   <span style={{color:'var(--tx-m)'}}>{l}</span>
@@ -1201,7 +1203,7 @@ function ReportsPage({ T }) {
           <div className="card-body">
             <div className="bar-chart">
               {MONTHS.map((m,i)=>(
-                <div key={m} className="bar-col"><div className="bar-fill" style={{height:`${VALS[i]}%`,background:'linear-gradient(180deg,#00AEFF,#00AEFF55)'}}/><span className="bar-lbl">{m}</span></div>
+                <div key={m} className="bar-col"><div className="bar-fill" style={{height:`${VALS[i]}%`,background:'linear-gradient(180deg,#C8961A,#C8961A55)'}}/><span className="bar-lbl">{m}</span></div>
               ))}
             </div>
           </div>
@@ -1209,7 +1211,7 @@ function ReportsPage({ T }) {
         <div className="card">
           <div className="card-hd"><span className="card-title">{T('revPipeline')}</span></div>
           <div className="card-body" style={{display:'flex',flexDirection:'column',gap:10}}>
-            {[['Closed This Month','EGP 601M',100,'#34D399'],['Pipeline Value','EGP 2.1B',78,'#00AEFF'],['Avg Deal','EGP 6.2M',55,'#1E88D9'],['Commissions Due','EGP 18.4M',30,'#7C3AED']].map(([l,v,p,c],i)=>(
+            {[['Closed This Month','EGP 601M',100,'#34D399'],['Pipeline Value','EGP 2.1B',78,'#C8961A'],['Avg Deal','EGP 6.2M',55,'#1E88D9'],['Commissions Due','EGP 18.4M',30,'#7C3AED']].map(([l,v,p,c],i)=>(
               <div key={i}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,fontSize:11}}>
                   <span style={{color:'var(--tx-m)'}}>{l}</span>
@@ -1422,7 +1424,7 @@ function ListingsHubPage({T}){
 
 /* ── STAGE-9 CLOSER ──────────────────────────────────────────────────── */
 const DEALS_DATA=[
-  {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#00AEFF'},
+  {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#C8961A'},
   {id:'DL-0096',client:'Khalid Mansour',phone:'+971 50 333 4455',prop:'Penthouse Uptown · 4 Beds · 320m²',value:'EGP 28M',stage:'negotiation',prog:60,signed:false,deposit:false,c:'#1E88D9'},
   {id:'DL-0095',client:'Omar Farouk',phone:'+20 100 555 6677',prop:'Twin House Mountain View · 4 Beds',value:'EGP 22M',stage:'contract',prog:72,signed:true,deposit:true,c:'#34D399'},
   {id:'DL-0094',client:'Rania Nasser',phone:'+20 102 777 8899',prop:'Villa Villette · 5 Beds · 380m²',value:'EGP 31M',stage:'closed',prog:100,signed:true,deposit:true,c:'#7C3AED'},
@@ -1524,7 +1526,7 @@ const PIPE_STAGES = [
   {k:'New',ar:'جديد',c:'#1E88D9'},
   {k:'Qualifying',ar:'تأهيل',c:'#7C3AED'},
   {k:'Viewing',ar:'معاينة',c:'#f59e0b'},
-  {k:'Negotiation',ar:'تفاوض',c:'#00AEFF'},
+  {k:'Negotiation',ar:'تفاوض',c:'#C8961A'},
   {k:'Closed Won',ar:'مغلقة ـ فوز',c:'#34D399'},
   {k:'Closed Lost',ar:'مغلقة ـ خسارة',c:'#E63946'},
 ];
@@ -1599,7 +1601,7 @@ function PipelinePage({ T }: { T: any }) {
 
         <div style={{display:'flex',gap:6,marginInlineStart:8}}>
           <button onClick={()=>setSourceFilter('all')} className="topbar-pill" style={sourceFilter==='all'?{background:'var(--gold)',color:'#071422'}:{}}>All Sources</button>
-          <button onClick={()=>setSourceFilter('Property Finder')} className="topbar-pill" style={sourceFilter==='Property Finder'?{background:'#00AEFF',color:'#fff'}:{borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}>🏢 Property Finder</button>
+          <button onClick={()=>setSourceFilter('Property Finder')} className="topbar-pill" style={sourceFilter==='Property Finder'?{background:'#C8961A',color:'#fff'}:{borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}>🏢 Property Finder</button>
           <button onClick={()=>setSourceFilter('WhatsApp')} className="topbar-pill" style={sourceFilter==='WhatsApp'?{background:'#34D399',color:'#071422'}:{borderColor:'rgba(52,211,153,.3)',color:'#34D399'}}>💬 WhatsApp</button>
         </div>
 
@@ -1836,7 +1838,7 @@ function TasksPage({ T }: { T: any }) {
     [tasks.length, ar ? 'إجمالي المهام' : 'Total Tasks', '#1E88D9'],
     [tasks.filter(t => t.done).length, ar ? 'مكتملة' : 'Completed', '#34D399'],
     [tasks.filter(t => !t.done && t.pr === 'high').length, ar ? 'عاجلة' : 'High Priority', '#E63946'],
-    [tasks.filter(t => !t.done).length, ar ? 'قيد التنفيذ' : 'Pending', '#00AEFF'],
+    [tasks.filter(t => !t.done).length, ar ? 'قيد التنفيذ' : 'Pending', '#C8961A'],
   ];
 
   const prC: Record<string, string> = { high: '#E63946', med: '#f59e0b', low: '#1E88D9' };
@@ -2097,7 +2099,7 @@ function AutomationsPage({ T }) {
     {ic:'🔔',bg:'#E63946',n:ar?'تنبيه صفقة كبيرة':'Big Deal Alert',d:ar?'مهمة للمدير للصفقات > 15م':'Task for manager on deals > 15M'},
     {ic:'✦',bg:'#34D399',n:ar?'فوز بالصفقة':'Deal Won',d:ar?'تهنئة عند إغلاق الصفقة':'Celebration email when deal closes'},
   ];
-  const stats=[[autos.length,ar?'إجمالي القواعد':'Total Rules','#00AEFF'],[autos.filter(a=>a.on).length,ar?'نشطة':'Active','#34D399'],[autos.filter(a=>!a.on).length,ar?'موقوفة':'Disabled','#E63946'],['98.4%',ar?'نسبة النجاح':'Success Rate','#1E88D9']];
+  const stats=[[autos.length,ar?'إجمالي القواعد':'Total Rules','#C8961A'],[autos.filter(a=>a.on).length,ar?'نشطة':'Active','#34D399'],[autos.filter(a=>!a.on).length,ar?'موقوفة':'Disabled','#E63946'],['98.4%',ar?'نسبة النجاح':'Success Rate','#1E88D9']];
   return (
     <div className="fade-up">
       <div className="kpi-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))'}}>
@@ -2299,9 +2301,9 @@ function AdminApp() {
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
-              border: subTab === 'qr' ? '1px solid #00AEFF' : '1px solid var(--bd)',
+              border: subTab === 'qr' ? '1px solid #C8961A' : '1px solid var(--bd)',
               background: subTab === 'qr' ? 'rgba(0, 174, 255, 0.15)' : 'var(--bg-e)',
-              color: subTab === 'qr' ? '#00AEFF' : 'var(--tx-m)',
+              color: subTab === 'qr' ? '#C8961A' : 'var(--tx-m)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -2383,6 +2385,7 @@ function AdminApp() {
       case 'alerts':return <AlertsView lang={langKey}/>;
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
+      case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
       case 'whatsapp_outreach':
       case 'whatsapp_sync':
       case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;
@@ -2392,6 +2395,7 @@ function AdminApp() {
       case 'pipeline':return <PipelinePage T={T}/>;
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
+      case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
@@ -2532,7 +2536,7 @@ function AdminApp() {
                         alignItems: 'center',
                         gap: 8,
                         fontSize: 12,
-                        color: tab === app.id ? '#00AEFF' : '#F0EDE5',
+                        color: tab === app.id ? '#C8961A' : '#F0EDE5',
                         background: tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
@@ -2562,7 +2566,7 @@ function AdminApp() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                color: 'var(--cyan, #00AEFF)',
+                color: 'var(--cyan, #C8961A)',
                 borderColor: 'rgba(0,174,255,0.3)',
                 background: 'rgba(0,174,255,0.08)',
                 fontWeight: 600,

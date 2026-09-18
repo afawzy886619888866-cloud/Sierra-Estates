@@ -99,7 +99,7 @@ export default function AgentIntelligence() {
               padding: '7px 14px',
               borderRadius: 9,
               cursor: 'pointer',
-              border: `1px solid ${hours === h ? '#00AEFF' : 'rgba(128,128,128,.3)'}`,
+              border: `1px solid ${hours === h ? '#C8961A' : 'rgba(128,128,128,.3)'}`,
               background: hours === h ? 'rgba(0,174,255,.12)' : 'transparent',
               color: 'inherit',
               fontSize: 12.5,

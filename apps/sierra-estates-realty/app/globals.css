@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Brand families are now self-hosted via next/font in app/layout.tsx
+   (--font-jakarta / --font-inter / --font-cairo / --font-mono /
+   --font-cormorant / --font-playfair). No Google Fonts @import needed. */
 
 /* Minimal global reset. Surface-specific styling lives with each surface
    (e.g. app/admin/admin-portal.css); keep this file lean so the client site

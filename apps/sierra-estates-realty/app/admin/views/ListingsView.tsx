@@ -504,7 +504,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               textDecoration: 'none',
             }}
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-[#E9C176]" />
             <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
           </a>
 

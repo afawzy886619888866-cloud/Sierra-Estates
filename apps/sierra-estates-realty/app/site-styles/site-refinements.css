@@ -431,7 +431,7 @@
 /* Micro-Badges & Floating Tags */
 .pcard .price-float {
   border-radius: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
   font-weight: 700;
   padding: 6px 12px;
   -webkit-backdrop-filter: blur(10px);
@@ -442,7 +442,7 @@
 
 .pcard .ai-score {
   border-radius: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
   font-weight: 700;
   padding: 5px 10px;
   background: linear-gradient(135deg, rgba(0, 174, 255, 0.9), rgba(0, 120, 215, 0.9));
