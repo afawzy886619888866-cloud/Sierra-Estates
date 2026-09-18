@@ -56,6 +56,21 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // Route admin subdomain or admin-mode deployments to /admin
+        ...(process.env.NEXT_PUBLIC_SITE_MODE === 'admin'
+          ? [
+              {
+                source: '/',
+                destination: '/admin',
+              },
+            ]
+          : [
+              {
+                source: '/',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin',
+              },
+            ]),
         // Legacy rewrite: /dashboard -> /client (Houyez property portal)
         {
           source: '/dashboard',
