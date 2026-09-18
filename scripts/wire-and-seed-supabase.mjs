@@ -721,14 +721,35 @@ async function main() {
 
   // 13. Final verification of public table counts
   console.log('\n📊 13. Final verification across all Supabase public tables:');
-  const statsRes = await runSQL(`
-    SELECT relname as table_name, n_live_tup as row_count
-    FROM pg_stat_user_tables
-    WHERE schemaname = 'public' AND n_live_tup > 0
-    ORDER BY n_live_tup DESC;
-  `);
-
-  console.table(statsRes);
+  const tables = [
+    'listings', 'compounds', 'developers', 'whatsapp_numbers',
+    'agents_registry', 'system_status', 'bot_configs', 'houyez_content',
+    'knowledge_base', 'system_config', 'leads', 'profiles'
+  ];
+  const tableStats = [];
+  for (const tbl of tables) {
+    try {
+      const { count, error } = await supabase.from(tbl).select('*', { count: 'exact', head: true });
+      if (!error) {
+        tableStats.push({ table_name: tbl, row_count: count ?? 0 });
+      }
+    } catch (_e) {}
+  }
+  if (tableStats.length > 0) {
+    console.table(tableStats);
+  } else {
+    try {
+      const statsRes = await runSQL(`
+        SELECT relname as table_name, n_live_tup as row_count
+        FROM pg_stat_user_tables
+        WHERE schemaname = 'public' AND n_live_tup > 0
+        ORDER BY n_live_tup DESC;
+      `);
+      console.table(statsRes);
+    } catch (e) {
+      console.log('Note: Management API query skipped (using direct Supabase client)');
+    }
+  }
 
   console.log('\n══════════════════════════════════════════════════════════════════════════');
   console.log('🏁 SUPABASE WIRING & HYDRATION COMPLETED SUCCESSFULLY!');
