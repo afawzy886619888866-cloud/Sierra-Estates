@@ -573,12 +573,12 @@ export default function PropertiesPage() {
               {realtimeLive && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.35)',
-                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#4ade80', fontWeight: 600,
+                  background: 'rgba(16, 185, 124, 0.1)', border: '1px solid rgba(16, 185, 124, 0.3)',
+                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#0f9d76', fontWeight: 600,
                 }}>
                   <span style={{
-                    width: 7, height: 7, borderRadius: '50%', background: '#22c55e',
-                    boxShadow: '0 0 0 0 rgba(34,197,94,0.4)',
+                    width: 7, height: 7, borderRadius: '50%', background: '#10b981',
+                    boxShadow: '0 0 0 0 rgba(16,185,124,0.4)',
                     animation: 'pulse-live 1.8s infinite',
                     display: 'inline-block',
                   }} />
@@ -864,7 +864,7 @@ export default function PropertiesPage() {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#10b981', marginTop: 4, fontFamily: 'var(--mono)' }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#0f9d76', marginTop: 4, fontFamily: 'var(--mono)' }}>
                         {activeUnit.priceLabel}
                       </div>
                     </div>
@@ -888,7 +888,7 @@ export default function PropertiesPage() {
                           sortedListings.length
                         )} of ${sortedListings.length.toLocaleString()} verified real listings`}
                   </span>
-                  <span style={{ color: '#10b981', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+                  <span style={{ color: '#0f9d76', fontWeight: 700, fontFamily: 'var(--mono)' }}>
                     {isAr ? 'قاعدة بيانات سييرا المعتمدة' : 'Sierra Verified Master Index'}
                   </span>
                 </div>
@@ -1065,7 +1065,7 @@ export default function PropertiesPage() {
                         sortedListings.length
                       )} of ${sortedListings.length.toLocaleString()} verified real listings`}
                 </span>
-                <span style={{ color: '#10b981', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+                <span style={{ color: '#0f9d76', fontWeight: 700, fontFamily: 'var(--mono)' }}>
                   {isAr ? 'قاعدة بيانات سييرا المعتمدة' : 'Sierra Verified Master Index'}
                 </span>
               </div>

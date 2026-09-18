@@ -57,7 +57,7 @@ a:hover{color:var(--pri-d);}
    margins, and let the gutter grow with the viewport. */
 .hero .wrap{position:relative;z-index:4;width:100%;max-width:1560px;margin-inline:0;padding-inline:clamp(24px,5vw,104px);}
 .hero .hero-col{max-width:620px;}
-.hero .h-eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.32em;font-size:11.5px;font-weight:700;color:#8fe1ff;margin-bottom:20px;display:flex;align-items:center;gap:12px;min-height:18px;text-shadow:0 1px 8px rgba(0,0,0,.4);}
+.hero .h-eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.32em;font-size:11.5px;font-weight:700;color:#e9c176;margin-bottom:20px;display:flex;align-items:center;gap:12px;min-height:18px;text-shadow:0 1px 8px rgba(0,0,0,.4);}
 [dir="rtl"] .hero .h-eyebrow{letter-spacing:.06em;font-family:var(--font);}
 [data-theme="dark"] .hero .h-eyebrow{color:#e9c176;}
 .hero .h-eyebrow::before{content:"";width:26px;height:2px;background:var(--pri);display:inline-block;}
