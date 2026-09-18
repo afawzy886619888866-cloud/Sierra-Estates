@@ -253,13 +253,17 @@ export default function WorkflowStudioView({ lang = 'en' }: { lang?: string }) {
       const parsed = JSON.parse(jsonDraft) as Partial<WorkflowGraph>;
       if (!Array.isArray(parsed.nodes)) throw new Error('`nodes` must be an array');
       if (!Array.isArray(parsed.edges)) throw new Error('`edges` must be an array');
-      const nodeIds = new Set(parsed.nodes.map((n) => n.id));
-      const edges = parsed.edges.filter((e) => nodeIds.has(e.from) && nodeIds.has(e.to));
+      // Capture the narrowed arrays: TS does not keep the isArray narrowing of
+      // `parsed.nodes` / `parsed.edges` alive inside the setGraph callback below.
+      const parsedNodes = parsed.nodes;
+      const parsedEdges = parsed.edges;
+      const nodeIds = new Set(parsedNodes.map((n) => n.id));
+      const edges = parsedEdges.filter((e) => nodeIds.has(e.from) && nodeIds.has(e.to));
       setGraph((g) => ({
         ...g,
         name: parsed.name || g.name,
         status: parsed.status || g.status,
-        nodes: parsed.nodes.map((n) => ({
+        nodes: parsedNodes.map((n) => ({
           id: n.id || freshNodeId(),
           type: (n.type && n.type in NODE_TYPE_META ? n.type : 'action') as WorkflowNodeType,
           label: n.label || 'Untitled',

@@ -267,7 +267,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
     return allUnits.filter((u) => {
       const compound = u.compound || u.cmp || u.location || '';
       const operation = unitOperation(u);
-      const status = normalizeStatus(u.status, operation);
+      const status = normalizeStatus(u.status);
       const price = unitPrice(u);
 
       if (qLower) {
@@ -666,7 +666,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                   {pageRows.map((u) => {
                     const id = String(u.sierraCode || u.code || u.id);
                     const operation = unitOperation(u);
-                    const status = normalizeStatus(u.status, operation);
+                    const status = normalizeStatus(u.status);
                     const meta = STATUS_META[status];
                     const price = unitPrice(u);
                     const area = Number(u.area) || 0;
