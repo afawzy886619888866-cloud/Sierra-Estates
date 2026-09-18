@@ -51,11 +51,20 @@ export async function GET(req: NextRequest) {
 
   try {
     const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
+    const includeArchived = new URL(req.url).searchParams.get('includeArchived') === '1';
 
     // This used to read the Firestore collections 'listings' and 'properties'
     // and merge them by doc id. Both were consolidated into public.listings by
     // the migration, so a single read now returns the same set.
-    const rows = await listRecords('listings', { limit });
+    //
+    // Archived rows are excluded by default: they are retained for audit but
+    // are not inventory, and a recent bulk archive (9.7k stale sheet rows)
+    // would otherwise bury every live listing inside the first page.
+    const rows = await listRecords('listings', {
+      limit,
+      orderBy: { column: 'updatedAt', ascending: false },
+      ...(includeArchived ? {} : { where: [{ column: 'status', op: 'neq', value: 'archived' }] }),
+    });
 
     const listings = rows.map((row) => mapListingToSpa(String(row.id), rowToListingDoc(row)));
 
