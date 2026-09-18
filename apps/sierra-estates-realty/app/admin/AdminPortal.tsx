@@ -32,6 +32,7 @@ import {
   AppsDirectoryView,
   DeploymentPipelineView,
   ApiGatewayView,
+  MemoryBrainView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -2406,6 +2407,10 @@ function AdminApp() {
       case 'contracts':return <ContractsView />;
       case 'heatmap':return <HeatmapView />;
       case 'intelligence':return <AgentIntelligence />;
+      case 'memory_brain':
+      case 'deepseek':
+      case 'mempalace':
+      case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={setTab} />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'easy_listing':return (
         <div className="fade-up" style={{paddingTop:4}}>
