@@ -30,7 +30,7 @@
 }
 
 .props-hero .crumbs a:hover {
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
 }
 
 .props-hero-header {
@@ -149,7 +149,7 @@
 }
 
 .props-search-input:focus {
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.15);
 }
 
@@ -224,7 +224,7 @@
 }
 
 .props-select:focus {
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
 }
 
 /* Filter Row 2 */
@@ -268,13 +268,13 @@
 }
 
 .props-chip:hover {
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: var(--ink, #ffffff);
 }
 
 .props-chip.active {
   background: var(--navy, #002b4b);
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: #ffffff;
 }
 
@@ -340,7 +340,7 @@
   gap: 6px;
   background: rgba(0, 174, 255, 0.1);
   border: 1px solid rgba(0, 174, 255, 0.25);
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
   border-radius: 8px;
   padding: 4px 10px;
   font-size: 12px;
@@ -485,7 +485,7 @@
 .pcard:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-m, 0 12px 34px rgba(0, 0, 0, 0.25));
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
 }
 
 .pcard.active-unit {
@@ -611,7 +611,7 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -629,7 +629,7 @@
 }
 
 .pcard h3 a:hover {
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
 }
 
 .pcard .addr {
@@ -730,8 +730,8 @@
 }
 
 .pcard-btn-map:hover {
-  border-color: var(--pri, #00aeff);
-  color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
+  color: var(--pri, #b89047);
 }
 
 /* ── Pagination ── */
@@ -764,14 +764,14 @@
 }
 
 .props-page-btn:hover:not(:disabled) {
-  border-color: var(--pri, #00aeff);
-  color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
+  color: var(--pri, #b89047);
   transform: translateY(-1px);
 }
 
 .props-page-btn.active {
   background: var(--navy, #002b4b);
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: #ffffff;
 }
 
