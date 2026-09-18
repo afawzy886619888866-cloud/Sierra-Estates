@@ -102,6 +102,26 @@ const APPS_CATALOG: AppService[] = [
     actionTarget: 'intelligence',
   },
   {
+    id: 'memory-brain',
+    name: { en: 'Memory Brain, DeepSeek & MemPalace', ar: 'الذاكرة المركزية، DeepSeek وMemPalace' },
+    category: 'ai',
+    description: {
+      en: 'DeepSeek-V3 reasoning harness, 18-note Obsidian Markdown Knowledge Vault, ECC price drop radar, and MemPalace vector rooms.',
+      ar: 'محرك تقييم DeepSeek الحتمي ومستودع ملاحظات أوبسيديان ورادار هبوط الأسعار وقصر الذاكرة المتجهي.'
+    },
+    badge: 'DEEPSEEK',
+    badgeCls: 'nb-green',
+    tech: ['DeepSeek-V3', 'Obsidian Vault', 'ECC Memory', 'MemPalace'],
+    port: 'In-process / RAG',
+    route: '/admin?tab=memory_brain',
+    repoPath: 'packages/deepseek-harness',
+    status: 'online',
+    icon: '🧬',
+    accentColor: '#C5A059',
+    actionType: 'navigate',
+    actionTarget: 'memory_brain',
+  },
+  {
     id: 'n8n-automations',
     name: { en: 'Workflow & n8n Orchestrator', ar: 'محرك أتمتة العمليات n8n' },
     category: 'infra',
