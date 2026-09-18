@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 
-const OPENWA_HOST = process.env.OPENWA_HOST || '18.232.148.172';
+const OPENWA_HOST = process.env.OPENWA_HOST;
 const OPENWA_PORT = process.env.OPENWA_PORT || '3000';
-const OPENWA_API_KEY = process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c';
-let currentSessionId = process.env.OPENWA_SESSION_ID || '9fbfb682-2fa8-44aa-9af0-35bb23ea80dd';
+const OPENWA_API_KEY = process.env.OPENWA_ADMIN_API_KEY;
+let currentSessionId = process.env.OPENWA_SESSION_ID || 'session-default';
+
+function gatewayConfigured(): boolean {
+  return Boolean(OPENWA_HOST && OPENWA_API_KEY);
+}
 
 async function resolveActiveSession(): Promise<string> {
   try {
@@ -22,6 +26,12 @@ async function resolveActiveSession(): Promise<string> {
 }
 
 export async function GET() {
+  if (!gatewayConfigured()) {
+    return NextResponse.json(
+      { status: 'not_configured', qrCode: null, message: 'WhatsApp gateway is not configured. Set OPENWA_HOST and OPENWA_ADMIN_API_KEY environment variables.' },
+      { status: 503 },
+    );
+  }
   try {
     const sessionId = await resolveActiveSession();
     const res = await fetch(`http://${OPENWA_HOST}:${OPENWA_PORT}/api/sessions/${sessionId}/qr`, {
@@ -53,7 +63,6 @@ export async function GET() {
       status: data.status || 'qr_ready',
       qrCode: data.qrCode,
       sessionId,
-      serverUrl: `http://${OPENWA_HOST}:${OPENWA_PORT}`,
     });
   } catch (error: any) {
     return NextResponse.json(

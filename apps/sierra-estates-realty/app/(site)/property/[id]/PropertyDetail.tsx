@@ -1,7 +1,7 @@
 'use client';
 
 /** Port of deploy/property.html. */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   MapPin, BedDouble, Bath, Scaling, Scan, Sparkles, Phone, Calendar, ArrowRight, FileText,
@@ -12,11 +12,62 @@ import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
+import { getCuratedListingImage } from '@/lib/site/luxury-images';
 
 export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
-  const p = ((HZDATA as any).findListing?.(id) || listings.find((x) => String(x.id) === String(id) || String(x.code).toLowerCase() === String(id).toLowerCase())) as CardListing | undefined;
+
+  // Live inventory lookup — the same source that powers /properties and the
+  // map. Falls back to the static catalog only if the API has no match.
+  const [liveUnit, setLiveUnit] = useState<CardListing | null>(null);
+  const [loadingLive, setLoadingLive] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const needle = String(id).trim().toLowerCase();
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d || !Array.isArray(d.units)) return;
+        const u = d.units.find((x: any) =>
+          String(x.code || '').toLowerCase() === needle ||
+          String(x.id || '').toLowerCase() === needle
+        );
+        if (u) {
+          const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
+          setLiveUnit({
+            id: 0,
+            code: u.code || u.id,
+            cmp: u.compound || u.location || 'New Cairo',
+            zone: u.zone || 'New Cairo',
+            type: u.propertyType || u.type || 'Apartment',
+            beds: u.beds ?? 3,
+            bath: u.bath ?? 2,
+            area: u.area ?? 0,
+            egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
+            usd: u.usd ?? (u.price ? (mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5)) : 0),
+            ai: Number(u.aiScore ?? 8.5),
+            tag: u.isNew ? 'New Listing' : 'Live Inventory',
+            mode,
+            agent: 'Sierra Advisor Desk',
+            ago: u.timestamp || 'Live sync',
+            img: u.img || u.photoUrl || (Array.isArray(u.images) && u.images[0]) || '',
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingLive(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const p: CardListing | undefined = liveUnit ||
+    ((HZDATA as any).findListing?.(id) ||
+      listings.find((x) => String(x.id) === String(id) || String(x.code).toLowerCase() === String(id).toLowerCase()));
 
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
@@ -27,6 +78,19 @@ export default function PropertyDetail({ id }: { id: string }) {
     setActiveImgIndex(idx);
     setLightboxOpen(true);
   };
+
+  if (!p && loadingLive) {
+    // Avoid a "not found" flash while the live lookup is in flight.
+    return (
+      <SiteShell active="best">
+        <section className="block" style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+          <div className="wrap" style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
+            {isAr ? 'جاري تحميل الوحدة…' : 'Loading listing…'}
+          </div>
+        </section>
+      </SiteShell>
+    );
+  }
 
   if (!p) {
     return (
@@ -57,8 +121,9 @@ export default function PropertyDetail({ id }: { id: string }) {
     );
   }
 
-  const hero = photo || p.img;
-  const thumbs = [p.img, ...gallery].slice(0, 6);
+  const heroImg = p.img || getCuratedListingImage({ code: p.code, compound: p.cmp, type: p.type }, 0);
+  const hero = photo || heroImg;
+  const thumbs = [heroImg, ...gallery].slice(0, 6);
   const similar = listings.filter((x) => x.id !== p.id && x.cmp === p.cmp).slice(0, 3);
   const fallback = listings.filter((x) => x.id !== p.id).slice(0, 3);
   const related = similar.length ? similar : fallback;

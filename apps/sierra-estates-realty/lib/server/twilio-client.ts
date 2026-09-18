@@ -100,12 +100,19 @@ export async function sendWhatsApp(
   body: string,
   statusCallback?: string,
 ): Promise<TwilioSendResult> {
-  // 1. Direct custom WhatsApp Gateway (AWS EC2 OpenWA / Custom URL)
-  const openwaUrl = WHATSAPP_API_URL || `http://${process.env.OPENWA_HOST || '18.232.148.172'}:${process.env.OPENWA_PORT || '3000'}`;
-  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c';
-  const openwaSession = process.env.OPENWA_SESSION_ID || '9fbfb682-2fa8-44aa-9af0-35bb23ea80dd';
+  // 1. Direct custom WhatsApp Gateway (AWS EC2 OpenWA / Custom URL) — env-configured only
+  const openwaUrl = WHATSAPP_API_URL || (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.OPENWA_PORT || '3000'}` : undefined);
+  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
+  const openwaSession = process.env.OPENWA_SESSION_ID || 'session-default';
+
+  if (!openwaUrl || !openwaKey) {
+    logger.warn('[OpenWA Gateway] Not configured (OPENWA_HOST/OPENWA_ADMIN_API_KEY unset) — skipping gateway channel');
+  }
 
   try {
+    if (!openwaUrl || !openwaKey) {
+      throw new Error('gateway_not_configured');
+    }
     const rawDigits = toPhone.replace(/\D/g, '');
     const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
     const openwaEndpoint = `${openwaUrl.replace(/\/+$/, '')}/api/sessions/${openwaSession}/messages/send-text`;
