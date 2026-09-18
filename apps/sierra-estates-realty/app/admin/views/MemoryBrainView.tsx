@@ -1,4 +1,5 @@
 'use client';
+/* cspell:disable */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -32,10 +33,10 @@ interface MemoryBrainViewProps {
   onNavigate?: (tab: string) => void;
 }
 
-export default function MemoryBrainView({ lang = 'en', onNavigate }: MemoryBrainViewProps) {
+export default function MemoryBrainView({ lang = 'en', onNavigate: _onNavigate }: MemoryBrainViewProps) {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'deepseek' | 'obsidian' | 'ecc' | 'mempalace'>('deepseek');
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState<string>('');
@@ -77,7 +78,7 @@ export default function MemoryBrainView({ lang = 'en', onNavigate }: MemoryBrain
       } else {
         setNoteContent('Failed to load note content.');
       }
-    } catch (e) {
+    } catch (_e) {
       setNoteContent('Error reading note.');
     } finally {
       setNoteLoading(false);
@@ -846,6 +847,8 @@ export default function MemoryBrainView({ lang = 'en', onNavigate }: MemoryBrain
               <select
                 value={selectedRoom}
                 onChange={(e) => setSelectedRoom(e.target.value)}
+                title={isAr ? 'تحديد غرفة الذاكرة' : 'Select memory room'}
+                aria-label={isAr ? 'تحديد غرفة الذاكرة' : 'Select memory room'}
                 style={{
                   padding: '10px 14px',
                   borderRadius: 10,

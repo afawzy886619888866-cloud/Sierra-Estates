@@ -14,7 +14,7 @@ function getVaultNotes() {
     path.resolve(process.cwd(), '../docs/obsidian-vault'),
   ];
 
-  let vaultDir = possiblePaths.find(p => fs.existsSync(p));
+  const vaultDir = possiblePaths.find(p => fs.existsSync(p));
   if (!vaultDir) return [];
 
   try {
