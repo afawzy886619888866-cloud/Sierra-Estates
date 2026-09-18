@@ -98,7 +98,7 @@ export function useListingsRealtime(setListings: SetListings) {
               event: 'INSERT',
               schema: 'public',
               table: 'listings',
-              filter: "status=eq.available",
+              filter: "status=eq.active",
             },
             (payload) => {
               const newRow = payload.new as Record<string, unknown>;

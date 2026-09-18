@@ -24,7 +24,20 @@ export interface BaseDocument {
   };
 }
 
-export type PropertyStatus = 'available' | 'reserved' | 'sold' | 'rented' | 'off-market';
+// 'active' | 'pending' | 'archived' | 'draft' are the additional states the
+// deployed public.listings table stores (the original six-status check
+// constraint); the public site has always read a wider vocabulary than the
+// Firestore-era enum, so the type now admits both.
+export type PropertyStatus =
+  | 'available'
+  | 'active'
+  | 'reserved'
+  | 'pending'
+  | 'sold'
+  | 'rented'
+  | 'off-market'
+  | 'archived'
+  | 'draft';
 export type PropertyType = 'apartment' | 'villa' | 'townhouse' | 'duplex' | 'penthouse' | 'studio' | 'chalet' | 'commercial' | 'land';
 export type PipelineStage = 'inbound' | 'qualify' | 'engage' | 'proposal' | 'viewing' | 'negotiate' | 'reserve' | 'contract' | 'handover' | 'closed-won';
 // The full set of lead-intake channels this app knows how to attribute and
