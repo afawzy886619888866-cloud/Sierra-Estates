@@ -14,14 +14,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load local environment files
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
 
-const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c';
-const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA';
+const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c';
+const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi';
 
 // Master list of environment variables for Client and Admin Vercel projects
 export const CLIENT_ENV_VARS = {
@@ -82,6 +83,12 @@ export const CLIENT_ENV_VARS = {
   WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
   LEAD_NOTIFY_WHATSAPP_NUMBER: process.env.LEAD_NOTIFY_WHATSAPP_NUMBER,
+  NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.LEAD_NOTIFY_WHATSAPP_NUMBER,
+  WHATSAPP_DEFAULT_PHONE: process.env.WHATSAPP_DEFAULT_PHONE,
+  WHATSAPP_API_KEY: process.env.WHATSAPP_API_KEY,
+  WHATSAPP_API_URL: process.env.WHATSAPP_API_URL,
+  WHATSAPP_WEBHOOK_SECRET: process.env.WHATSAPP_WEBHOOK_SECRET,
+  WHATSAPP_PROVIDER: process.env.WHATSAPP_PROVIDER || 'meta',
   BRANDING_TAG: process.env.BRANDING_TAG,
   WABA_NUMBER_1: process.env.WABA_NUMBER_1,
   WABA_NUMBER_2: process.env.WABA_NUMBER_2,
