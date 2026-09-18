@@ -16,7 +16,7 @@ FROM python:3.12-slim AS runtime
 WORKDIR /app
 
 # Non-root user for Cloud Run security
-RUN addgroup --system approx && adduser --system --ingroup appgroup appuser
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
