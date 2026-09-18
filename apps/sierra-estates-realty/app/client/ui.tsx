@@ -204,13 +204,16 @@ type ChatMsg = { role: 'bot' | 'user'; text: string };
 function makeSessionId() {
   try {
     if (typeof window !== 'undefined' && window.crypto) {
-      if ('randomUUID' in window.crypto) {
-        return `web-${window.crypto.randomUUID()}`;
+      const cryptoObj = window.crypto as Crypto;
+      if (typeof cryptoObj.randomUUID === 'function') {
+        return `web-${cryptoObj.randomUUID()}`;
       }
-      const bytes = new Uint8Array(8);
-      window.crypto.getRandomValues(bytes);
-      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-      return `web-${Date.now()}-${hex}`;
+      if (typeof cryptoObj.getRandomValues === 'function') {
+        const bytes = new Uint8Array(8);
+        cryptoObj.getRandomValues(bytes);
+        const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+        return `web-${Date.now()}-${hex}`;
+      }
     }
   } catch { /* noop */ }
   return `web-${Date.now()}`;
