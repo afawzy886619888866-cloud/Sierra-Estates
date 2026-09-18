@@ -92,22 +92,39 @@ async function run() {
     let deletedCount = 0;
     let failedCount = 0;
 
-    // Delete in concurrent batches of 10
-    const BATCH_SIZE = 10;
-    for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
-      const batch = toDelete.slice(i, i + BATCH_SIZE);
-      await Promise.all(
-        batch.map(async (dep) => {
-          const deleteUrl = `/v13/deployments/${dep.uid}${teamParam}`;
-          const result = await api(deleteUrl, { method: 'DELETE' });
-          if (result && (result.state === 'DELETED' || result.deleted || !result.error)) {
-            deletedCount++;
-          } else {
-            failedCount++;
-          }
-        })
-      );
-      process.stdout.write(`\r  Progress: ${deletedCount + failedCount} / ${toDelete.length} (${deletedCount} deleted, ${failedCount} errors)...`);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    async function deleteWithRetry(uid) {
+      const deleteUrl = `/v13/deployments/${uid}${teamParam}`;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const res = await fetch(`https://api.vercel.com${deleteUrl}`, { method: 'DELETE', headers });
+        if (res.status === 200 || res.status === 404) {
+          return true;
+        }
+        if (res.status === 429) {
+          const retryAfter = parseInt(res.headers.get('retry-after') || '5', 10);
+          process.stdout.write(` [Rate limited, sleeping ${retryAfter}s] `);
+          await sleep((retryAfter + 1) * 1000);
+          continue;
+        }
+        // Other errors
+        const text = await res.text();
+        return false;
+      }
+      return false;
+    }
+
+    // Delete in sequence with mild pacing to avoid rate limit spikes
+    for (let i = 0; i < toDelete.length; i++) {
+      const dep = toDelete[i];
+      const success = await deleteWithRetry(dep.uid);
+      if (success) deletedCount++;
+      else failedCount++;
+
+      if (i % 10 === 0 || i === toDelete.length - 1) {
+        process.stdout.write(`\r  Progress: ${i + 1} / ${toDelete.length} (${deletedCount} deleted, ${failedCount} errors)...`);
+      }
+      await sleep(150); // Safe pacing: ~6 requests per second
     }
     console.log(`\n✅ Finished ${project.name}: ${deletedCount} deployments deleted.`);
   }
