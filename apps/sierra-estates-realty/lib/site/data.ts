@@ -48,21 +48,21 @@ const defaultListings = validUnits.length > 0
       };
     })
   : [
-      { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55' },
-      { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55' },
-      { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55' },
-      { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55' },
-      { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55' },
-      { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55' },
-      { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55' },
-      { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55' },
+      { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/b055903b-8fba-485e-a052-902edfd9ef9d.png' },
+      { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHCH8F2QJGMX0JKFDC4F2RS/d5a4c65a-ed1e-11ef-8581-0a1a96148fff-6c075407-d0dd-4773-95fc-9b55a28d83ec.png' },
+      { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/c93e501a-d293-4367-8793-a4de870f6f6b.png' },
+      { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/22577be2-22ec-4ebc-a513-36f4cec53d2e.jpg' },
+      { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/79f8e83c-21d9-4901-91cc-a04b0ea69134.png' },
+      { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/b4044bfe-eee5-4941-891a-1654b12ea064.png' },
+      { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/0c8bb477-7853-41be-a1ec-a3d5cbce74de.png' },
+      { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/7563b543-1bcf-46f5-aaf0-f5fa0af9e3e6.png' },
     ];
 
 const DATA: any = {
   slides: [
     { id: 1, pre: 'FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO', preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
       main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.', mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-      img: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=900&q=55' },
+      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/923d6dab-bffd-4e5c-9923-35820e94a017.png' },
     { id: 2,
       pre: 'INSTITUTIONAL COMMERCIAL OPPORTUNITY',
       preAr: 'فرصة استثمارية وتجارية استراتيجية كبرى',
@@ -80,33 +80,33 @@ const DATA: any = {
     },
     { id: 3, pre: 'BEST-IN-CLASS DESIGN', preAr: 'تصميم من الطراز الأول',
       main: 'Redefining Luxury Living with AI-Driven Excellence', mainAr: 'نعيد تعريف الفخامة بتميّز الذكاء الاصطناعي',
-      img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55' },
+      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/3da658d2-4b56-4ee5-a902-6c2421843974.png' },
     { id: 4, pre: 'AI-DRIVEN EXCELLENCE', preAr: 'تميّز بالذكاء الاصطناعي',
       main: 'Smart Matches for Smart Investors', mainAr: 'توافق ذكي لمستثمرين أذكياء',
-      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=55' },
+      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/bad919ff-3bad-448b-a9bf-348700f0cd44.png' },
     { id: 5, pre: 'EXCLUSIVE NETWORK', preAr: 'شبكة حصرية',
       main: 'Unrivaled Access to Premium Compounds', mainAr: 'وصول لا يُضاهى لأرقى الكمبوندات',
-      img: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=900&q=55' },
+      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/44f4c24f-1939-4513-941e-bf3d3ba3b38f.png' },
     { id: 6, pre: 'CURATED PORTFOLIO', preAr: 'محفظة منتقاة',
       main: 'Your Journey to Exceptional Homes Begins Here', mainAr: 'رحلتك نحو منزل استثنائي تبدأ هنا',
-      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=55' }
+      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/67b8d8c3-fcf7-4dbe-9b37-6097d2e2406f.png' }
   ],
   listings: defaultListings,
   rooms: [
-    { id: 1, name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=900&q=55' },
-    { id: 2, name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=55' },
-    { id: 3, name: 'Garden Courtyard', sub: 'Villette · Villa G-Type', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=55' },
-    { id: 4, name: 'Infinity Pool & Deck', sub: 'Taj City · Signature Villa', img: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=900&q=55' },
-    { id: 5, name: 'Rooftop Sky Terrace', sub: 'Uptown Cairo · Penthouse Level', img: 'https://images.unsplash.com/photo-1622547748225-3fc4abd2cca0?w=900&q=55' }
+    { id: 1, name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/9affb65c-ef18-45c2-8531-41910d3075a7.png' },
+    { id: 2, name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/2c95c5fc-df8c-4df8-bace-36a841c7608e.jpg' },
+    { id: 3, name: 'Garden Courtyard', sub: 'Villette · Villa G-Type', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/9b78ec87-c3ea-426d-b077-cf8a4c324b4f.jpg' },
+    { id: 4, name: 'Infinity Pool & Deck', sub: 'Taj City · Signature Villa', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/bd3e7ee1-9546-4794-b1cb-4e05c47487b6.png' },
+    { id: 5, name: 'Rooftop Sky Terrace', sub: 'Uptown Cairo · Penthouse Level', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/7f683585-1602-4ae5-9001-d71057b1f0b9.jpg' }
   ],
   interiors: [
-    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&q=55',
-    'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=900&q=55',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=55',
-    'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=900&q=55',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=55'
+    'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/9bac59e7-15ad-4bff-b92b-e9c3e9e52e3a.jpg',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01K7ZDHACWGF5QC81WWK5WNPCZ/d9922c64-ad7f-4658-a127-79261b174d26.jpg',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01K7ZDHACWGF5QC81WWK5WNPCZ/5d674711-45b1-4ed0-bf78-b405ca364eba.jpg',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/4c18786e-a528-4e03-bb9b-82aec6edd556.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/aa6de84b-c6bf-4c5f-91a2-c4c239e7ca36.png'
   ],
-  agentImg: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=55',
+  agentImg: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/8aead01a-f6d9-44f1-8afa-02b9846ee61b.png',
   compounds: [
     { id: 1, n: 'Katameya Heights', c: [29.99, 31.48], g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000, dev: 'Katameya Group' },
     { id: 2, n: 'Katameya Dunes', c: [29.985, 31.492], g: '+12%', ai: 8.8, z: 'Katameya', priceM: 18, rent: 3400, dev: 'Katameya Group' },
@@ -280,14 +280,14 @@ const DATA: any = {
   'use strict';
   const cache: any = {};
   const IMGS = [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=55',
-    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=55',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=55',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=55',
-    'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=55',
-    'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=55',
-    'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=55',
-    'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=55'
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/4bd02668-0045-41fd-aa4a-509cd7cb4f0a.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/a2599019-6caa-4da5-bb70-540dcf392572.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/dec69831-74c5-4401-b2f6-7f1f305e89cd.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/45bf925e-1a3f-4274-935f-f50b87f45770.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/741febaa-9d85-47be-9a26-7c5ac65a7b5d.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/621e41a6-5e25-4ae7-a4dd-108d86d961dc.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/eb5a3e8b-f9a0-4d9d-9a13-03d16fb1c28e.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/3b0d80fc-2001-475a-80d1-7921d0882f75.png'
   ];
 
   function cleanCpd(s: any) {

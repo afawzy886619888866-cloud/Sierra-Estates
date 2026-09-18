@@ -177,7 +177,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
 
             <div className="mobile-drawer-links">
               <Link href="/" className={`mobile-drawer-link${active === 'home' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Home className="i" style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                <Home className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navHome')}</span>
               </Link>
               <Link href="/compounds" className={`mobile-drawer-link${active === 'cpds' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
@@ -185,7 +185,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <span>{t('navCpds')}</span>
               </Link>
               <Link href="/properties" className={`mobile-drawer-link${active === 'best' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Building2 className="i" style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navBest')}</span>
               </Link>
               <Link href="/net" className={`mobile-drawer-link${active === 'net' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
@@ -193,7 +193,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <span>{isAr ? 'رادار اصطياد وتأكيد الوحدات' : 'Listing Net Radar'}</span>
               </Link>
               <Link href={cairoPlazaHref} className={`mobile-drawer-link${active === 'projects' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <BriefcaseBusiness className="i" style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                <BriefcaseBusiness className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navProjects')}</span>
               </Link>
               <Link href={careerHref} className={`mobile-drawer-link${active === 'career' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
@@ -201,7 +201,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <span>{t('navCareer')}</span>
               </Link>
               <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
-                <BookOpen className="i" style={{ width: 18, height: 18, color: '#38bdf8' }} />
+                <BookOpen className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'بنك معلومات القاهرة الجديدة' : 'Info Bank (AI Briefings)'}</span>
               </Link>
               <Link href="/add-listing" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
@@ -256,7 +256,7 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                     cursor: 'pointer',
                   }}
                 >
-                  {theme === 'dark' ? <Sun style={{ width: 16, height: 16, color: '#e9c176' }} /> : <Moon style={{ width: 16, height: 16, color: '#38bdf8' }} />}
+                  {theme === 'dark' ? <Sun style={{ width: 16, height: 16, color: '#e9c176' }} /> : <Moon style={{ width: 16, height: 16, color: '#e9c176' }} />}
                   <span>{theme === 'dark' ? (isAr ? 'الوضع الفاتح' : 'Light Mode') : (isAr ? 'الوضع الداكن' : 'Dark Mode')}</span>
                 </button>
 

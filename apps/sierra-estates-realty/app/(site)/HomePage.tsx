@@ -603,9 +603,9 @@ export default function HomePage() {
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
                           whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           touchAction: 'manipulation',
@@ -635,9 +635,9 @@ export default function HomePage() {
                       fontSize: 12,
                       fontWeight: search.beds === '0' ? 700 : 500,
                       whiteSpace: 'nowrap',
-                      background: search.beds === '0' ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                      color: search.beds === '0' ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
-                      border: search.beds === '0' ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                      background: search.beds === '0' ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                      color: search.beds === '0' ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
+                      border: search.beds === '0' ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       touchAction: 'manipulation',
@@ -662,9 +662,9 @@ export default function HomePage() {
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
                           whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           touchAction: 'manipulation',
@@ -698,9 +698,9 @@ export default function HomePage() {
                           fontSize: 12,
                           fontWeight: isSelected ? 700 : 500,
                           whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(0, 174, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
+                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           touchAction: 'manipulation',
@@ -760,7 +760,7 @@ export default function HomePage() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <MapIcon className="i" style={{ width: 15, height: 15, color: '#38bdf8' }} />
+                  <MapIcon className="i" style={{ width: 15, height: 15, color: '#e9c176' }} />
                   <span>{isAr ? 'الخريطة' : 'Map View'}</span>
                 </button>
                 <Link
@@ -832,7 +832,7 @@ export default function HomePage() {
                 {t('mapSub')}
               </p>
             </div>
-            <Link href="/compounds" className="sec-link" style={{ color: '#0284c7', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
             </Link>
           </div>

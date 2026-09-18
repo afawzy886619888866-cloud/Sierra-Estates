@@ -142,7 +142,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       supabase
         .from("listings")
         .select(
-          "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, updated_at, img, photos, images",
+          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
         )
         .in("status", ["active", "available"])
         .order("updated_at", { ascending: false })
@@ -174,15 +174,29 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         listing.deal_type === "rent" || (price > 0 && price < 1_000_000)
           ? "rent"
           : "sale";
+      // img/tag/aiScore/publishToClient live in the raw_data JSONB blob on
+      // the deployed table (see lib/server/listing-columns.ts) — images[] is
+      // the only real photo column, with raw_data.img as the curated primary.
+      const raw = (listing.raw_data && typeof listing.raw_data === "object") ? listing.raw_data : {};
       const primaryImg =
-        listing.img ||
-        (Array.isArray(listing.photos) && listing.photos[0] ? listing.photos[0] : null) ||
+        raw.img ||
         (Array.isArray(listing.images) && listing.images[0] ? listing.images[0] : null) ||
         null;
 
       return {
         id: listing.id,
-        code: listing.code || listing.ref_id || listing.id,
+        code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
+        title: listing.title || raw.title || undefined,
+        titleAr: listing.title_ar || undefined,
+        descriptionAr: listing.description_ar || undefined,
+        agent: listing.agent_name || raw.agent || undefined,
+        tag: raw.tag || undefined,
+        aiScore: typeof raw.aiScore === "number" ? raw.aiScore : undefined,
+        featured: Boolean(listing.featured),
+        finishing: listing.finishing_type || undefined,
+        furnishing: listing.furnishing_status || undefined,
+        amenities: Array.isArray(listing.amenities) ? listing.amenities : [],
+        pfReference: listing.pf_reference_number || undefined,
         compound: listing.compound || resolved.label,
         mode,
         status: "available",
@@ -190,8 +204,8 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         location: listing.compound || resolved.label,
         rawLocation: location,
         zone,
-        lat,
-        lng,
+        lat: listing.latitude ?? lat,
+        lng: listing.longitude ?? lng,
         approxLocation: !matchedGeo && resolved.approx,
         propertyType: listing.property_type,
         beds: listing.bedrooms,

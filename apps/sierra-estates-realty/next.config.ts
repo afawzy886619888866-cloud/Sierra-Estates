@@ -62,6 +62,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '**.picsum.photos' },
       { protocol: 'https', hostname: 'media.istockphoto.com' },
+      // Sierra's own Property Finder listing photography (canonical image source)
+      { protocol: 'https', hostname: 'static.shared.propertyfinder.eg' },
+      { protocol: 'https', hostname: '**.propertyfinder.eg' },
     ],
   },
   reactStrictMode: true,

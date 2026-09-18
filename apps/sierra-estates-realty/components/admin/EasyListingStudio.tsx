@@ -48,7 +48,7 @@ export default function EasyListingStudio({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<string[]>([
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/e7515103-ed1e-11ef-8cf7-0a8c5593e6a3-68dd5ffb-d0d6-4f24-baa5-f6b2ba5ea4cb.png",
   ]);
   const [newImageUrl, setNewImageUrl] = useState("");
 
@@ -296,7 +296,7 @@ export default function EasyListingStudio({
                 type="url"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
+                placeholder="https://static.shared.propertyfinder.eg/media/images/listing/01JPEM162H7CDT6B93J1CG9MFJ/c071001f-cbdb-43b1-9c1d-d3d323ece41a.png"
                 className="flex-1 p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
               />
               <button

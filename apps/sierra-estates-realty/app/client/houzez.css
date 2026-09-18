@@ -286,7 +286,7 @@
 /* ── perfect choice + inquiry ── */
 .hz .perfect{display:grid;grid-template-columns:1.15fr 1fr;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-m);}
 .hz .perfect .pf-left{position:relative;background:var(--navy);padding:52px 48px;color:#fff;overflow:hidden;}
-.hz .perfect .pf-left::before{content:"";position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200&q=70') center/cover;opacity:.14;}
+.hz .perfect .pf-left::before{content:"";position:absolute;inset:0;background:url('https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/f7efc2e9-662e-45a4-a64e-c17d44a20214.png') center/cover;opacity:.14;}
 .hz .perfect .pf-left::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 10% 0%,rgba(0,174,255,.25),transparent 60%);}
 .hz .perfect .pf-left>*{position:relative;z-index:2;}
 .hz .perfect .pf-left h2{color:#fff;font-size:30px;margin-bottom:10px;}

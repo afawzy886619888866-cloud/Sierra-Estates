@@ -540,7 +540,7 @@ export default function PropertiesPage() {
             {selectedCompound !== 'All Compounds' && (
               <>
                 <span className="sep">/</span>
-                <span style={{ color: 'var(--pri, #00aeff)', fontWeight: 700 }}>
+                <span style={{ color: 'var(--pri, #c99436)', fontWeight: 700 }}>
                   {selectedCompound}
                 </span>
               </>

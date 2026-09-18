@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
+import { toListingColumns } from '@/lib/server/listing-columns';
 import { fingerprint } from '@/lib/services/inventory/dedupe';
 import { logger } from '@/lib/logger';
 
@@ -112,12 +113,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Route every field through toListingColumns so anything that is not a
+    // real column on the deployed table (category, ownerType, publishToClient…)
+    // is parked in raw_data instead of failing the PostgREST schema cache.
     const created = await insertRecord('listings', {
-      ...listingPatchToColumns(patch),
-      ...inventoryFields,
-      status: patch.status || 'available',
-      category: 'residential',
-      ownerType: 'internal',
+      ...toListingColumns({
+        ...listingPatchToColumns(patch),
+        ...inventoryFields,
+        status: patch.status || 'available',
+        category: 'residential',
+        ownerType: 'internal',
+      }),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });

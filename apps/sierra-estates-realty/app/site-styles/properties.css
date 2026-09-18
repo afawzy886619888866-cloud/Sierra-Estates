@@ -152,7 +152,7 @@
 
 .props-search-input:focus {
   border-color: var(--pri, #b89047);
-  box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(201, 148, 54, 0.16);
 }
 
 .props-search-clear {
@@ -206,7 +206,7 @@
 }
 
 .props-mode-btn.active.rent {
-  background: #0284c7;
+  background: #8a6a2c;
   color: #ffffff;
 }
 
@@ -340,8 +340,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(0, 174, 255, 0.1);
-  border: 1px solid rgba(0, 174, 255, 0.25);
+  background: rgba(201, 148, 54, 0.16);
+  border: 1px solid rgba(201, 148, 54, 0.28);
   color: var(--pri, #b89047);
   border-radius: 8px;
   padding: 4px 10px;
