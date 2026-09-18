@@ -364,7 +364,7 @@ export interface SegmentTab {
 }
 
 export const SEGMENT_TABS: SegmentTab[] = [
-  { key: 'all', label: 'All Inventory', defaultBadge: '13,892', color: '#0284c7' },
+  { key: 'all', label: 'All Inventory', defaultBadge: '13,892', color: '#334155' },
   { key: 'owners_rent', label: 'Direct Rent', defaultBadge: '302', color: '#059669' },
   { key: 'owners_buy', label: 'Direct Resale', defaultBadge: '262', color: '#c8961a' },
   { key: 'broker_rent', label: 'Broker Rent', defaultBadge: '4,955', color: '#d97706' },
@@ -666,7 +666,7 @@ export default function CompoundsMap({
           ">
             <span style="color: ${isSelected ? '#e9c176' : '#ffffff'};">${c.n}</span>
             <span style="
-              background: ${isSelected ? '#dfad3a' : activeSegmentObj?.color || '#0284c7'};
+              background: ${isSelected ? '#dfad3a' : activeSegmentObj?.color || '#334155'};
               color: ${isSelected ? '#071523' : '#ffffff'};
               font-size: 10px;
               font-weight: 800;
@@ -1350,7 +1350,7 @@ export default function CompoundsMap({
             <span>AI Score 9.2+ (Premier)</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 10, height: 10, background: '#0284c7', borderRadius: '50%', display: 'inline-block' }} />
+            <span style={{ width: 10, height: 10, background: '#c8961a', borderRadius: '50%', display: 'inline-block' }} />
             <span>Verified Portfolio</span>
           </div>
         </div>

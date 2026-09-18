@@ -673,7 +673,7 @@ export default function CareerPage() {
 
               {/* Admin & Operations Track */}
               <div className="cr-spotlight-card">
-                <span className="cr-spotlight-tag" style={{ background: 'rgba(0, 174, 255, 0.12)', color: '#00aeff' }}>
+                <span className="cr-spotlight-tag" style={{ background: 'rgba(201, 148, 54, 0.16)', color: '#9e7934' }}>
                   {isAr ? 'قطاع الشؤون الإدارية والعمليات' : 'ADMIN & OPERATIONS TRACK'}
                 </span>
                 <h3>{isAr ? 'الشؤون الإدارية والعمليات (Admin)' : 'Operations & Executive Support'}</h3>
@@ -695,7 +695,7 @@ export default function CareerPage() {
                     el?.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="cr-job-apply-form"
-                  style={{ background: 'linear-gradient(135deg, #00aeff, #0077b6)', color: '#fff' }}
+                  style={{ background: 'linear-gradient(135deg, #c99436, #9e7934)', color: '#081423' }}
                 >
                   {isAr ? 'وظائف الإدارة الشاغرة (3)' : 'View Admin Roles (3)'} →
                 </button>

@@ -51,7 +51,7 @@ export default function WhatsAppConciergeFloating() {
             background: 'var(--card-bg, #0f172a)',
             border: '1px solid rgba(212, 175, 55, 0.3)',
             borderRadius: 16,
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 174, 255, 0.1)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(201, 148, 54, 0.16)',
             backdropFilter: 'blur(16px)',
             overflow: 'hidden',
             animation: 'fadeUp 0.25s ease-out forwards',
@@ -61,7 +61,7 @@ export default function WhatsAppConciergeFloating() {
           <div
             style={{
               padding: '14px 16px',
-              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(0, 174, 255, 0.1))',
+              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(201, 148, 54, 0.16))',
               borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               alignItems: 'center',
@@ -79,7 +79,7 @@ export default function WhatsAppConciergeFloating() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#fff',
-                  boxShadow: '0 0 10px rgba(0, 174, 255, 0.4)',
+                  boxShadow: '0 0 10px rgba(201, 148, 54, 0.45)',
                   position: 'relative',
                 }}
               >
@@ -146,8 +146,8 @@ export default function WhatsAppConciergeFloating() {
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 174, 255, 0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(0, 174, 255, 0.3)';
+                  e.currentTarget.style.background = 'rgba(201, 148, 54, 0.16)';
+                  e.currentTarget.style.borderColor = 'rgba(201, 148, 54, 0.35)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
@@ -232,7 +232,7 @@ export default function WhatsAppConciergeFloating() {
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #25D366, #128C7E)',
           border: '2px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 8px 24px rgba(37, 211, 102, 0.4), 0 0 16px rgba(0, 174, 255, 0.25)',
+          boxShadow: '0 8px 24px rgba(37, 211, 102, 0.4), 0 0 16px rgba(201, 148, 54, 0.28)',
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',

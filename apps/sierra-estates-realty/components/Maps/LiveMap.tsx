@@ -58,7 +58,7 @@ const NAVY_PILL = 'linear-gradient(135deg, #0d2136, #1e3a5f)';
 const GOLD_PILL = `linear-gradient(135deg, ${GOLD_SHEEN}, ${GOLD})`;
 const PANEL_BG = 'rgba(9, 18, 33, 0.92)';
 const PANEL_BORDER = 'rgba(233, 193, 118, 0.22)';
-const RENT_BLUE = '#38bdf8';
+const RENT_BLUE = '#4fa3d1';
 const SALE_GREEN = '#10b981';
 
 /* ── Compound-name normalization (fixes double-counted live badges) ──── */
@@ -235,7 +235,7 @@ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean =
     : isMarked
     ? '#002b4b'
     : isRent
-    ? '#0284c7'
+    ? '#0d2e4a'
     : '#0f2942';
 
   const textColor = isActive ? '#0d0d0f' : isMarked ? GOLD_LT : '#ffffff';
@@ -619,7 +619,7 @@ export default function LiveMap({
                 <LegendLabel>{t.forSale}</LegendLabel>
               </LegendRow>
               <LegendRow>
-                <LegendPill bg="#0284c7" border={RENT_BLUE} dot={RENT_BLUE} label="28k/m" />
+                <LegendPill bg="#0f2942" border="#4fa3d1" dot={RENT_BLUE} label="28k/m" />
                 <LegendLabel>{t.forRent}</LegendLabel>
               </LegendRow>
               <LegendRow>

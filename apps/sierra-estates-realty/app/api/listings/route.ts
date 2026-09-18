@@ -148,7 +148,7 @@ function inventoryUnitToListing(u: any): Listing {
     tag: u.status === 'available' ? 'Verified Owner' : null,
     mode: u.mode || 'sale',
     agent: 'Sierra Direct Advisor',
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e31d4592-ed1e-11ef-8cf7-0a8c5593e6a3-93f6f406-cd8c-4784-a2d6-d8cb88a7ae7e.png',
     status: u.status || 'available',
     description: u.comment || '',
   } as Listing;
@@ -162,7 +162,7 @@ async function readListings(): Promise<Listing[]> {
     const { data: supaListings, error: supaErr } = await supabase
       .from('listings')
       .select('*')
-      .eq('status', 'active')
+      .in('status', ['active', 'available'])
       .limit(500);
 
     if (!supaErr && supaListings && supaListings.length > 0) {
@@ -171,9 +171,13 @@ async function readListings(): Promise<Listing[]> {
         const egpM = price > 100000 ? price / 1_000_000 : price;
         const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
 
+        // Presentation fields (img/tag/aiScore) are parked in raw_data on the
+        // deployed table — read them back through the same convention the
+        // write path uses (lib/server/listing-columns.ts).
+        const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
         return {
           id: item.id || item.ref_id,
-          code: item.code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
+          code: item.code || item.sbr_code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
           compound: item.compound || 'New Cairo',
           zone: item.location_area || '5th Settlement',
           type: item.property_type || 'Apartment',
@@ -182,11 +186,11 @@ async function readListings(): Promise<Listing[]> {
           area: Number(item.area_sqm) || 150,
           egpM: Number(egpM.toFixed(2)),
           usd: usd || 1500,
-          aiScore: item.roi_percentage ? 9.0 : 8.8,
-          tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner',
+          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : (item.roi_percentage ? 9.0 : 8.8),
+          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner'),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-          agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
-          img: (item.images && item.images[0]) || '',
+          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker'),
+          img: raw.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
           description: item.description || '',
         } as Listing;

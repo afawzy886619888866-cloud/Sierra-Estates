@@ -1290,7 +1290,7 @@ function SettingsPage({ T }) {
 }
 
 /* ── LISTINGS HUB ────────────────────────────────────────────────────── */
-const HUB_IMGS=['https://images.unsplash.com/photo-1613977257363-707ba9348227?w=80&q=70','https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=80&q=70','https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=80&q=70','https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=80&q=70','https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=80&q=70'];
+const HUB_IMGS=['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e5f9db2b-ed1e-11ef-8cf7-0a8c5593e6a3-68913e99-87a6-4770-94ad-849f6b1f19ef.png','https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e897e2a9-ed1e-11ef-8cf7-0a8c5593e6a3-14f7d350-fd28-46a1-8812-ae3d4bd8ca26.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/ec5e6f17-ed1e-11ef-8cf7-0a8c5593e6a3-6b9ee8d1-40cc-4610-97e3-778d9e343fab.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/e7cb53a2-ed1e-11ef-8cf7-0a8c5593e6a3-ed26a74f-5662-4279-854e-f3a91f918af8.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/ed8c6d00-ed1e-11ef-8cf7-0a8c5593e6a3-8eca38e5-15e8-45c0-b36d-934c297289fc.png'];
 const HUB_LISTINGS=[
   {code:'SE-HYP-VLA-0001',cmp:'Hyde Park',type:'Villa',beds:5,area:420,price:'EGP 35M',ai:9.8,status:'Active',img:0},
   {code:'SE-HYP-TWH-0002',cmp:'Hyde Park',type:'Twin House',beds:4,area:280,price:'EGP 22M',ai:9.5,status:'Active',img:1},
