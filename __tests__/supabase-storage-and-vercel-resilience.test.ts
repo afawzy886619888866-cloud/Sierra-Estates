@@ -8,7 +8,7 @@ describe("Supabase Storage & Vercel Resilience Suite", () => {
       "https://REDACTED-PROJECT.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY =
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      "REDACTED_SUPABASE_SERVICE_ROLE_KEY";
+      "REDACTED_SUPABASE_SERVICE_ROLE_KEY"; // cspell:disable-line
     process.env.SUPABASE_PROPERTY_MEDIA_BUCKET = "property-media";
   });
 

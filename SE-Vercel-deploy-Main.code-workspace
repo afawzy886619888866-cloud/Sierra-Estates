@@ -6,7 +6,7 @@
   ],
   "settings": {
     "git.ignoreLimitWarning": true,
-    "git.autoRepositoryDetection": false,
-    "git.repositoryScanMaxDepth": 0
+    "git.autoRepositoryDetection": true,
+    "git.repositoryScanMaxDepth": 1
   }
 }
