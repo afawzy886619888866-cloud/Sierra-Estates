@@ -63,12 +63,30 @@ const nextConfig: NextConfig = {
                 source: '/',
                 destination: '/admin',
               },
+              {
+                source: '/login',
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                destination: '/admin/login',
+              },
             ]
           : [
               {
                 source: '/',
                 has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
                 destination: '/admin',
+              },
+              {
+                source: '/login',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
               },
             ]),
         // Legacy rewrite: /dashboard -> /client (Houyez property portal)
