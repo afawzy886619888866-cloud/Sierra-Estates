@@ -151,17 +151,6 @@ const SORT_OPTIONS = [
   { value: 'beds-desc', labelEn: 'Bedrooms: Most First', labelAr: 'الغرف: الأكثر أولاً' },
 ];
 
-const FALLBACK_IMGS = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=70',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=70',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=70',
-  'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=70',
-  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=70',
-  'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=70',
-  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=70',
-  'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=70',
-];
-
 function sanitizeUnit(raw: any, index: number): RealListing {
   const code = raw.code || `SE-${String(index + 1).padStart(4, '0')}`;
   const compound = raw.compound || raw.location || 'New Cairo';
@@ -238,31 +227,8 @@ export default function PropertiesPage() {
   // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
   useListingsRealtime(setAllUnits);
 
-  // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/inventory?limit=500')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.units || !Array.isArray(data.units) || data.units.length === 0) return;
-        setAllUnits((prev) => {
-          const seen = new Set(prev.map((u) => u.code || u.id));
-          const additions: RealListing[] = [];
-          data.units.forEach((rawUnit: any, idx: number) => {
-            const id = rawUnit.code || rawUnit.id;
-            if (id && !seen.has(id)) {
-              seen.add(id);
-              additions.push(sanitizeUnit(rawUnit, prev.length + idx));
-            }
-          });
-          return additions.length > 0 ? [...additions, ...prev] : prev;
-        });
-      })
-      .catch((err) => console.warn('[PropertiesPage] Live inventory fetch error:', err));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Single authoritative inventory fetch on mount (below). The previous
+  // duplicate ?limit=500 fetch raced this one and was removed.
 
   // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
   useEffect(() => {

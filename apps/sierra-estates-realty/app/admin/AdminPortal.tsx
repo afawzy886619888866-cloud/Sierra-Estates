@@ -2147,6 +2147,7 @@ function AdminApp() {
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+  const [authError, setAuthError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -2184,16 +2185,22 @@ function AdminApp() {
             role: data.role || 'super_admin',
             name: data.name || 'Executive Admin',
           });
+        } else if (data?.authDisabled) {
+          // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false.
+          // Data APIs enforce the same rule server-side (auth-guard.ts).
+          setCurrentUser({
+            email: 'dev@sierra-estates.net',
+            role: 'super_admin',
+            name: 'Dev Admin',
+          });
         } else {
           window.location.href = '/admin/login';
         }
       })
       .catch(() => {
-        setCurrentUser({
-          email: 'admin@sierra-estates.net',
-          role: 'super_admin',
-          name: 'Executive Admin',
-        });
+        // Fail CLOSED: a network error must never mint an admin session.
+        // Show a retry state instead of rendering the console shell.
+        setAuthError(true);
       });
   }, []);
 
@@ -2441,6 +2448,38 @@ function AdminApp() {
       window.location.href = '/admin/login';
     }
   };
+
+  // Auth gate: the console shell itself waits for a verified session.
+  // Data was always API-protected; this also protects the shell/UX.
+  if (!currentUser) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg, #070B14)', color: 'var(--tx-f, #F0EDE5)', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center', maxWidth: 380, padding: 32 }}>
+          <div style={{ fontSize: 34, marginBottom: 12 }}>🛡️</div>
+          {authError ? (
+            <>
+              <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>Connection error</h2>
+              <p style={{ fontSize: 13, opacity: 0.75, margin: '0 0 16px' }}>
+                Could not verify your session. Check your connection and retry.
+              </p>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <button onClick={() => window.location.reload()} className="btn btn-pri" style={{ padding: '8px 18px', borderRadius: 8, border: 0, cursor: 'pointer', background: '#C8961A', color: '#0B0E17', fontWeight: 700 }}>Retry</button>
+                <a href="/admin/login" style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', textDecoration: 'none', color: 'inherit', fontSize: 13, lineHeight: '32px' }}>Go to login</a>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, opacity: 0.7 }}>Verifying session…</div>
+              <div style={{ marginTop: 14, width: 120, height: 3, marginInline: 'auto', borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: '40%', height: '100%', background: '#C8961A', animation: 'sierraBoot 1.1s ease-in-out infinite' }} />
+              </div>
+              <style>{'@keyframes sierraBoot{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}'}</style>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -109,11 +109,20 @@ export function cookieOpts(reqHost?: string) {
 
 /**
  * Helper to identify whether an email belongs to an authorized admin or staff.
+ *
+ * Production allowlist (strict):
+ *   - BOOTSTRAP_ADMIN_EMAIL
+ *   - ADMIN_EMAILS env (comma-separated; supports "@domain.tld" wildcards for
+ *     domains you OWN)
+ *   - "@sierra-estates.net" (the owned domain)
+ * The legacy hardcoded Gmail allowlist applies ONLY outside production so
+ * local development keeps working; on Vercel, set ADMIN_EMAILS with the
+ * operator's real addresses.
  */
 export function isAdminEmail(email: string): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
-  
+
   // Explicitly configured admin emails via env
   const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
     .split(",")
@@ -122,30 +131,32 @@ export function isAdminEmail(email: string): boolean {
 
   const bootstrapEmail = BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
 
-  const standardAdminEmails = [
-    "admin@sierra-estates.net",
-    "sierra@sierra-estates.net",
-    "owner@sierra-estates.net",
-    "developer@sierra-estates.net",
-    "admin@sierra.com",
-    "admin@gmail.com",
-    "admin.investor@gmail.com",
-    "sierra.admin@gmail.com",
-    "sierraestates.admin@gmail.com",
-    "a.fawzy8866@gmail.com",
-    "sierrablue8866@gmail.com",
-    "sierrablue8866-droid@gmail.com",
-    "a.fawzy@sierra-estates.net",
-    "admin",
-  ];
-
-  return (
+  const envMatch =
     clean === bootstrapEmail ||
-    standardAdminEmails.includes(clean) ||
-    configuredAdminEmails.includes(clean) ||
-    clean.endsWith("@sierra-estates.net") ||
-    clean.endsWith("@sierra.com")
-  );
+    configuredAdminEmails.some((entry) =>
+      entry.startsWith("@") ? clean.endsWith(entry) : clean === entry
+    ) ||
+    clean.endsWith("@sierra-estates.net");
+
+  if (envMatch) return true;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Legacy dev-only list (never active on Vercel/production).
+    const legacyDevEmails = [
+      "admin@sierra-estates.net",
+      "sierra@sierra-estates.net",
+      "owner@sierra-estates.net",
+      "developer@sierra-estates.net",
+      "admin",
+      "a.fawzy8866@gmail.com",
+      "sierrablue8866@gmail.com",
+      "sierrablue8866-droid@gmail.com",
+      "a.fawzy@sierra-estates.net",
+    ];
+    return legacyDevEmails.includes(clean);
+  }
+
+  return false;
 }
 
 /**

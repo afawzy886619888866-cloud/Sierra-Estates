@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
     return process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'sierra-estates-build';
   },
 
+  // Legacy path: /dashboard used to serve the retired Houyez /client portal.
+  // Redirect to home instead of rewriting to a route that no longer exists.
+  async redirects() {
+    return [{ source: '/dashboard', destination: '/', permanent: false }];
+  },
+
   serverExternalPackages: [
     '@grpc/grpc-js',
     '@opentelemetry/exporter-trace-otlp-grpc',
@@ -89,11 +95,7 @@ const nextConfig: NextConfig = {
                 destination: '/admin/login',
               },
             ]),
-        // Legacy rewrite: /dashboard -> /client (Houyez property portal)
-        {
-          source: '/dashboard',
-          destination: '/client',
-        },
+
         // RFC 5785 rewrites: Map .well-known endpoints to /api/well-known to ensure clean Vercel deployments
         {
           source: '/.well-known/oauth-authorization-server',
