@@ -143,7 +143,7 @@ const LoginForm = dynamic(() => import('./LoginForm'), {
             width: '100%',
             height: 42,
             borderRadius: 10,
-            background: 'linear-gradient(135deg, #00AEFF, #5FC9FF)',
+            background: 'linear-gradient(135deg, #C8961A, #E9C176)',
             opacity: 0.5,
           }}
         />

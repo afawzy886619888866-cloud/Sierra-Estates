@@ -179,10 +179,10 @@ export default function EasyListingStudio({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-linear-to-r from-slate-900/90 via-slate-900/60 to-cyan-950/40 border border-cyan-500/20 backdrop-blur-md shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-linear-to-r from-slate-900/90 via-slate-900/60 to-[#211A0D]/40 border border-[#C8961A]/20 backdrop-blur-md shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+            <span className="p-2 rounded-xl bg-[#C8961A]/10 text-[#E9C176] border border-[#C8961A]/30">
               <Sparkles className="w-5 h-5" />
             </span>
             <h3 className="text-xl font-bold text-white tracking-wide">
@@ -199,7 +199,7 @@ export default function EasyListingStudio({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 text-xs font-mono rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+          <span className="px-3 py-1 text-xs font-mono rounded-full bg-[#C8961A]/10 text-[#F5D78E] border border-[#C8961A]/30">
             Vercel AI SDK • Active
           </span>
         </div>
@@ -226,7 +226,7 @@ export default function EasyListingStudio({
           <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-sm space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <Send className="w-3.5 h-3.5 text-cyan-400" />
+                <Send className="w-3.5 h-3.5 text-[#E9C176]" />
                 {isAr
                   ? "نص العقار الخام (واتساب / مسودة)"
                   : "Raw Property Text / WhatsApp Intake"}
@@ -238,7 +238,7 @@ export default function EasyListingStudio({
                     `للبيع شقة مميزة جدا في ميفيدا التجمع الخامس\nمساحة 185م + فيو بحيرات مباشرة\n3 غرف نوم + 2 حمام + ريسبشن كبير\nتشطيب الترا سوبر لوكس\nالسعر المطلوب: 14,500,000 ج\nللتواصل والمعاينة: 01001234567`,
                   )
                 }
-                className="text-[10px] text-cyan-400 hover:text-cyan-300 underline"
+                className="text-[10px] text-[#E9C176] hover:text-[#F5D78E] underline"
               >
                 {isAr ? "تحميل مثال" : "Load Sample"}
               </button>
@@ -253,14 +253,14 @@ export default function EasyListingStudio({
                   ? "الصق رسالة الواتساب أو وصف العقار هنا..."
                   : 'Paste WhatsApp forward, broker draft, or freeform property specs here...\ne.g. "For sale villa in Hyde Park 350m, 4 beds, garden 120m, 22M EGP, contact 0109..."'
               }
-              className="w-full p-3.5 rounded-xl bg-slate-950/80 border border-slate-700/60 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-500 transition-colors"
+              className="w-full p-3.5 rounded-xl bg-slate-950/80 border border-slate-700/60 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-[#C8961A] transition-colors"
             />
 
             <button
               type="button"
               onClick={handleAIParse}
               disabled={isParsing || !rawText.trim()}
-              className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-semibold shadow-lg shadow-cyan-900/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#E9C176] to-[#C8961A] hover:from-[#F5D78E] hover:to-[#A87A12] text-white text-xs font-semibold shadow-lg shadow-[#C8961A]/20 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
             >
               {isParsing ? (
                 <>
@@ -287,7 +287,7 @@ export default function EasyListingStudio({
           {/* Photo Gallery & Uploads */}
           <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <ImageIcon className="w-3.5 h-3.5 text-[#E9C176]" />
               {isAr ? "صور العقار" : "Property Media / Photos"}
             </label>
 
@@ -297,12 +297,12 @@ export default function EasyListingStudio({
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
                 placeholder="https://images.unsplash.com/..."
-                className="flex-1 p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                className="flex-1 p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
               />
               <button
                 type="button"
                 onClick={addImage}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold rounded-lg border border-slate-700"
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-[#E9C176] text-xs font-semibold rounded-lg border border-slate-700"
               >
                 + Add
               </button>
@@ -342,7 +342,7 @@ export default function EasyListingStudio({
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-cyan-400" />
+                <Building2 className="w-4 h-4 text-[#E9C176]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-white">
                   {isAr
                     ? "البيانات المنظمة للمخزون"
@@ -350,7 +350,7 @@ export default function EasyListingStudio({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60">
+                <span className="text-[11px] font-mono text-[#E9C176] bg-[#211A0D]/80 px-2 py-0.5 rounded border border-[#C8961A]/40">
                   {formData.sierraCode}
                 </span>
                 <span className="text-[11px] font-semibold text-purple-400 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800/60">
@@ -371,7 +371,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, compound: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
@@ -386,7 +386,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, propertyType: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
                   <option value="Apartment">Apartment</option>
                   <option value="Standalone Villa">Standalone Villa</option>
@@ -411,7 +411,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, price: Number(e.target.value) })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
@@ -429,7 +429,7 @@ export default function EasyListingStudio({
                       mode: e.target.value as "sale" | "rent",
                     })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
                   <option value="sale">
                     {isAr ? "بيع (Sale)" : "For Sale"}
@@ -452,7 +452,7 @@ export default function EasyListingStudio({
                     onChange={(e) =>
                       setFormData({ ...formData, beds: Number(e.target.value) })
                     }
-                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
                 <div>
@@ -468,7 +468,7 @@ export default function EasyListingStudio({
                         baths: Number(e.target.value),
                       })
                     }
-                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function EasyListingStudio({
                     onChange={(e) =>
                       setFormData({ ...formData, area: Number(e.target.value) })
                     }
-                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
                 <div>
@@ -501,7 +501,7 @@ export default function EasyListingStudio({
                         gardenArea: Number(e.target.value),
                       })
                     }
-                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
               </div>
@@ -516,7 +516,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, finishing: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
                   <option value="Fully Finished">
                     Fully Finished / Super Lux
@@ -530,7 +530,7 @@ export default function EasyListingStudio({
               {/* Owner Contact */}
               <div>
                 <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-                  <Phone className="w-3 h-3 text-cyan-400" />
+                  <Phone className="w-3 h-3 text-[#E9C176]" />
                   {isAr ? "هاتف المالك / الوسيط" : "Contact Mobile"}
                 </label>
                 <input
@@ -539,7 +539,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, mobile: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
@@ -558,7 +558,7 @@ export default function EasyListingStudio({
                   setFormData({ ...formData, aiSummary: e.target.value })
                 }
                 rows={2}
-                className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 

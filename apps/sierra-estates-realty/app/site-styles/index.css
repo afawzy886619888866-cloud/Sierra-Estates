@@ -14,8 +14,8 @@
 .sl-mark::after{content:"";position:absolute;left:-10%;right:-10%;height:2px;top:0;background:linear-gradient(90deg,transparent,#e9c176 18%,#fff 50%,#e9c176 82%,transparent);box-shadow:0 0 14px rgba(233,193,118,.85);animation:slScan 1.5s cubic-bezier(.5,0,.5,1) infinite;}
 @keyframes slScan{0%{top:-4%;opacity:0;}12%{opacity:1;}88%{opacity:1;}100%{top:104%;opacity:0;}}
 @keyframes slRise{from{opacity:0;transform:translateY(14px) scale(.94);}to{opacity:1;transform:none;}}
-.sl-word{margin-top:20px;white-space:nowrap;text-align:center;line-height:1.1;font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;letter-spacing:.3em;text-indent:.3em;color:#f3f6f9;animation:slWord .9s cubic-bezier(.22,1,.36,1) .12s both;}
-.sl-tag{margin-top:9px;white-space:nowrap;text-align:center;line-height:1.2;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;color:#c8961a;animation:slWord .9s cubic-bezier(.22,1,.36,1) .22s both;}
+.sl-word{margin-top:20px;white-space:nowrap;text-align:center;line-height:1.1;font-family:var(--font-playfair,'Playfair Display'),Georgia,serif;font-size:22px;font-weight:700;letter-spacing:.3em;text-indent:.3em;color:#f3f6f9;animation:slWord .9s cubic-bezier(.22,1,.36,1) .12s both;}
+.sl-tag{margin-top:9px;white-space:nowrap;text-align:center;line-height:1.2;font-family:var(--font-mono,'JetBrains Mono'),monospace;font-size:9.5px;font-weight:700;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;color:#c8961a;animation:slWord .9s cubic-bezier(.22,1,.36,1) .22s both;}
 @keyframes slWord{from{opacity:0;letter-spacing:.5em;}to{opacity:1;}}
 .sl-rail{margin-top:30px;width:132px;height:2px;border-radius:2px;background:rgba(233,193,118,.18);overflow:hidden;}
 .sl-rail span{display:block;height:100%;width:8%;border-radius:2px;background:linear-gradient(90deg,#c8961a,#e9c176);transition:width .5s cubic-bezier(.22,1,.36,1);animation:slRail 2.2s cubic-bezier(.4,0,.2,1) forwards;}
@@ -65,7 +65,7 @@ a:hover{color:var(--pri-d);}
    term is an intercept+vw pair so it engages from the smallest phone upward —
    a bare vw term sits under any usable floor and the clamp degenerates to it. */
 .hero h1{color:#fff;font-family:var(--display);font-size:clamp(1.5rem,0.93rem + 2.44vw,3.375rem);font-weight:700;letter-spacing:-.025em;max-width:620px;line-height:1.04;min-height:1.2em;text-shadow:0 2px 30px rgba(0,0,0,.6),0 0 90px rgba(0,0,0,.35);}
-[dir="rtl"] .hero h1{letter-spacing:0;font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-weight:800;}
+[dir="rtl"] .hero h1{letter-spacing:0;font-family:var(--font-cairo,'Cairo'),'Plus Jakarta Sans',sans-serif;font-weight:800;}
 .hero h1 .hl{color:var(--pri);font-style:italic;font-weight:700;}
 [data-theme="dark"] .hero h1 .hl{color:#e9c176;}
 .hero h1 .hl::after{content:"";display:inline-block;width:8px;height:8px;margin-inline-start:6px;border-radius:50%;background:var(--pri);vertical-align:middle;box-shadow:0 0 14px var(--pri);transform:translateY(-2px);}
@@ -122,7 +122,7 @@ a:hover{color:var(--pri-d);}
 .laser-badge-dot{width:7px;height:7px;border-radius:50%;background:#e9c176;box-shadow:0 0 8px #e9c176,0 0 16px #e9c176;animation:laserPulse 1.8s ease-in-out infinite;}
 @keyframes laserPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.4);opacity:.5;}}
 .laser-badge-text{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#e9c176;text-shadow:0 0 10px rgba(233,193,118,.5);}
-[dir="rtl"] .laser-badge-text{font-family:'Cairo',sans-serif;letter-spacing:0;}
+[dir="rtl"] .laser-badge-text{font-family:var(--font-cairo,'Cairo'),sans-serif;letter-spacing:0;}
 
 /* ── TWEAKS PANEL — accent color + corner style customization ── */
 /* ── expressive feel controls (Atmosphere / Depth / Motion) ── */
@@ -289,8 +289,8 @@ a:hover{color:var(--pri-d);}
 .rq-count{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;}
 /* JetBrains Mono carries no Arabic glyphs — fall back to the body stack in RTL */
 [dir="rtl"] .rq-count,[dir="rtl"] .rq-cpd .ct{font-family:var(--font);letter-spacing:0;}
-[dir="rtl"] .rq-head h3{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:0;}
-[dir="rtl"] .rq-done h4{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-weight:800;}
+[dir="rtl"] .rq-head h3{font-family:var(--font-cairo,'Cairo'),'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:0;}
+[dir="rtl"] .rq-done h4{font-family:var(--font-cairo,'Cairo'),'Plus Jakarta Sans',sans-serif;font-weight:800;}
 .rq-count b{color:var(--pri);font-size:15px;}
 .rq-submit{margin-inline-start:auto;display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,#e9c176,#c8961a);color:#09090f;font-family:var(--font);font-weight:800;font-size:14.5px;cursor:pointer;transition:box-shadow var(--d-hover) var(--ease-out),transform var(--d-press) var(--ease-out);}
 .rq-submit:hover{box-shadow:0 8px 22px rgba(200,150,26,.42);}
@@ -605,7 +605,7 @@ a:hover{color:var(--pri-d);}
 .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:var(--pri);}
 [data-theme="dark"] .cpd-marker.pulse .unit-count{background:rgba(255,255,255,.95);color:#c8961a;}
 .cpd-marker{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:28px;border-radius:14px;background:rgba(0,43,75,.92);border:2px solid #00aeff;color:#bfeaff;font-family:var(--font);font-weight:700;font-size:12px;padding:0 11px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer;transition:background-color .2s var(--silk),color .2s var(--silk),border-color .2s var(--silk),box-shadow .2s var(--silk),opacity .2s var(--silk),transform .2s var(--silk);white-space:nowrap;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
-[dir="rtl"] .cpd-marker{font-family:'Cairo','Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
+[dir="rtl"] .cpd-marker{font-family:var(--font-cairo,'Cairo'),'Plus Jakarta Sans',sans-serif;font-size:12.5px;font-weight:800;padding:0 12px;}
 .cpd-marker:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,174,255,.5);z-index:999;border-color:#34d399;color:#fff;}
 .cpd-marker.hot{background:linear-gradient(135deg,#00aeff,#0098e0);color:#fff;border-color:#00aeff;}
 .cpd-marker.pulse{background:rgba(0,174,255,.85);color:#fff;border-color:#34d399;}

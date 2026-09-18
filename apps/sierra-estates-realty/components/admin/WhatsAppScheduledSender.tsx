@@ -185,7 +185,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 <button
                   type="button"
                   onClick={() => applyTemplate('new-listing')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-medium border border-slate-700"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[#F5D78E] text-xs font-medium border border-slate-700"
                 >
                   🏡 New Listing Alert
                 </button>
@@ -241,7 +241,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
             <div>
               <label className="text-[11px] font-semibold text-slate-300 block mb-1 flex items-center justify-between">
                 <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-cyan-400" />
+                  <Users className="w-3.5 h-3.5 text-[#E9C176]" />
                   {isAr ? 'أرقام المستلمين (مفصولة بفواصل أو سطور)' : 'Recipients (E.164 phone numbers)'}
                 </span>
                 <span className="text-[10px] text-slate-500">e.g. +201001112233, +201098887766</span>
@@ -405,7 +405,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                     className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-2 hover:border-slate-700 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-cyan-400 font-semibold">{job.toPhone}</span>
+                      <span className="font-mono text-[#E9C176] font-semibold">{job.toPhone}</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
                         {job.status}
                       </span>

@@ -125,7 +125,7 @@ export default function HealthView({ lang = 'en' }: { lang?: string }) {
         <button
           onClick={handlePing}
           disabled={isPinging}
-          className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5 self-start md:self-auto"
+          className="px-3.5 py-1.5 bg-[#C8961A] hover:bg-[#C8961A] disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5 self-start md:self-auto"
         >
           <span>{isPinging ? '⏳' : '⚡'}</span>
           {isPinging
@@ -158,7 +158,7 @@ export default function HealthView({ lang = 'en' }: { lang?: string }) {
 
             <div className="pt-2 border-t border-slate-800/80 flex justify-between items-center text-[11px] font-mono text-slate-500">
               <span>LATENCY</span>
-              <span className="text-cyan-400 font-bold">{sub.latency}</span>
+              <span className="text-[#E9C176] font-bold">{sub.latency}</span>
             </div>
           </div>
         ))}
