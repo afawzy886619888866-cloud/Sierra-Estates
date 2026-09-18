@@ -15,6 +15,13 @@ const SERVER_ONLY_PACKAGES = [
 ];
 
 const nextConfig: NextConfig = {
+  // `npm run build` already type-checks via `tsc --noEmit` before `next build`.
+  // On low-RAM local containers (<4GB) the in-build TypeScript re-check can
+  // exhaust memory and stall. Set LOCAL_SKIP_TS=1 to skip ONLY the redundant
+  // in-build re-check locally; CI/Vercel never sets it and always type-checks.
+  typescript: {
+    ignoreBuildErrors: process.env.LOCAL_SKIP_TS === '1',
+  },
   // Pin the monorepo root so output file tracing (which produces the
   // serverless function file list for `vercel build`) resolves pnpm's
   // symlinked node_modules structure from the true workspace root instead

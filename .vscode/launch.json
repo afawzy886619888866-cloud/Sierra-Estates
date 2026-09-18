@@ -130,6 +130,7 @@
       "name": "🌐 Edge: Launch (localhost:3000)",
       "type": "msedge",
       "request": "launch",
+      "version": "stable",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/apps/sierra-estates-realty"
     }

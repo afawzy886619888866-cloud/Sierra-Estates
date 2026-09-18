@@ -20,10 +20,19 @@ const IS_PROD = process.env.NODE_ENV === "production";
  * credential is a published credential. The account exists only when
  * ADMIN_BOOTSTRAP_PASSWORD is explicitly set, so production fails closed
  * unless an operator opts in.
+ *
+ * Both values are read on every call (not captured at module load) so operators
+ * can rotate credentials and tests can configure them without a re-import.
  */
-const BOOTSTRAP_ADMIN_EMAIL =
-  process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net";
-const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+function bootstrapAdminEmail(): string {
+  return (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net")
+    .trim()
+    .toLowerCase();
+}
+
+function bootstrapAdminPassword(): string {
+  return process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+}
 
 /** Dev-only fallback signing key. Never reachable in production — see getKey(). */
 const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
@@ -129,7 +138,7 @@ export function isAdminEmail(email: string): boolean {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  const bootstrapEmail = BOOTSTRAP_ADMIN_EMAIL.trim().toLowerCase();
+  const bootstrapEmail = bootstrapAdminEmail();
 
   const envMatch =
     clean === bootstrapEmail ||
@@ -206,7 +215,7 @@ export function safeEqual(a: string, b: string): boolean {
 
 /** True when a bootstrap admin account is available to sign in with. */
 export function bootstrapLoginAvailable(): boolean {
-  return Boolean(BOOTSTRAP_ADMIN_PASSWORD);
+  return Boolean(bootstrapAdminPassword());
 }
 
 /** Parse cookie header into a map. */

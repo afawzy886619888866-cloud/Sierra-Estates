@@ -1,18 +1,31 @@
 import { NextResponse } from 'next/server';
 
-const OPENWA_HOST = process.env.OPENWA_HOST;
-const OPENWA_PORT = process.env.OPENWA_PORT || '3000';
-const OPENWA_API_KEY = process.env.OPENWA_ADMIN_API_KEY;
+/**
+ * Gateway configuration is read per-request (not captured at module load) so
+ * operator rotation and test configuration take effect without a re-import.
+ * The route still fails closed: without OPENWA_HOST and OPENWA_ADMIN_API_KEY
+ * it answers 503 not_configured and never guesses at a host.
+ */
+function gatewayConfig(): { host: string; port: string; apiKey: string } {
+  return {
+    host: process.env.OPENWA_HOST || '',
+    port: process.env.OPENWA_PORT || '3000',
+    apiKey: process.env.OPENWA_ADMIN_API_KEY || '',
+  };
+}
+
 let currentSessionId = process.env.OPENWA_SESSION_ID || 'session-default';
 
 function gatewayConfigured(): boolean {
-  return Boolean(OPENWA_HOST && OPENWA_API_KEY);
+  const { host, apiKey } = gatewayConfig();
+  return Boolean(host && apiKey);
 }
 
 async function resolveActiveSession(): Promise<string> {
+  const { host, port, apiKey } = gatewayConfig();
   try {
-    const res = await fetch(`http://${OPENWA_HOST}:${OPENWA_PORT}/api/sessions`, {
-      headers: { 'X-API-Key': OPENWA_API_KEY },
+    const res = await fetch(`http://${host}:${port}/api/sessions`, {
+      headers: { 'X-API-Key': apiKey },
       cache: 'no-store',
     });
     if (res.ok) {
@@ -33,18 +46,19 @@ export async function GET() {
     );
   }
   try {
+    const { host, port, apiKey } = gatewayConfig();
     const sessionId = await resolveActiveSession();
-    const res = await fetch(`http://${OPENWA_HOST}:${OPENWA_PORT}/api/sessions/${sessionId}/qr`, {
+    const res = await fetch(`http://${host}:${port}/api/sessions/${sessionId}/qr`, {
       headers: {
-        'X-API-Key': OPENWA_API_KEY,
+        'X-API-Key': apiKey,
       },
       cache: 'no-store',
     });
 
     if (!res.ok) {
       // If 404 or expired, check session details
-      const sessionRes = await fetch(`http://${OPENWA_HOST}:${OPENWA_PORT}/api/sessions/${sessionId}`, {
-        headers: { 'X-API-Key': OPENWA_API_KEY },
+      const sessionRes = await fetch(`http://${host}:${port}/api/sessions/${sessionId}`, {
+        headers: { 'X-API-Key': apiKey },
         cache: 'no-store',
       });
       const sessionData = sessionRes.ok ? await sessionRes.json() : {};
