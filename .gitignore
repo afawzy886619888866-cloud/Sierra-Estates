@@ -146,3 +146,9 @@ coverage/
 SE-Vercel-deploy-main*/
 tools/deer-flow/
 tools/openai-agents-python/
+# Local workspace artifacts — never push (agent environment, evidence, deliverables)
+/skills/
+/download/
+/tool-results/
+worklog.md
+dev.log
