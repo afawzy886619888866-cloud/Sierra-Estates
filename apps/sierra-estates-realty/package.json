@@ -4,10 +4,11 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+        "prebuild": "node scripts/ensure-snapshot.mjs",
+        "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
         "start": "next start",
         "lint": "eslint . && node scripts/validate-configs.mjs",
-        "type-check": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
+        "type-check": "node scripts/ensure-snapshot.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
         "seed:admin": "node scripts/seed-admin.mjs",
