@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insertRecord, listRecords, updateRecord, upsertRecord } from '@sierra-estates/db';
+import { listRecords, updateRecord, upsertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifyHmacSignature } from '@/lib/server/webhook-auth';
+import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { generateLeadGreeting } from '@/lib/server/pf-lead-greeting';
 
 /**
  * Property Finder outbound webhook.
@@ -18,7 +20,12 @@ const WEBHOOK_SECRET = process.env.PF_WEBHOOK_SECRET || '';
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
-  const signature = request.headers.get('X-Signature') || '';
+  // Property Finder has used both header spellings across API versions; accept
+  // either so a platform-side rename can never break lead ingestion.
+  const signature =
+    request.headers.get('X-Signature') ||
+    request.headers.get('X-PF-Signature') ||
+    '';
 
   const denied = verifyHmacSignature(rawBody, signature, {
     secret: WEBHOOK_SECRET,
@@ -63,17 +70,30 @@ export async function POST(request: NextRequest) {
         );
 
         // Automated WhatsApp Response Queue:
-        // When client submits inquiry on Property Finder, queue an immediate tailored greeting
+        // When a client submits an inquiry on Property Finder, the bot queues an
+        // immediate tailored greeting. enqueueWhatsAppJob inserts with status
+        // 'queued' — the only status the dispatch worker drains — so the reply
+        // actually goes out (a manual insert with status 'pending' would sit
+        // in the table forever, which is exactly what the previous code did).
         if (clientPhone) {
-          const autoMessage = `مرحباً بك يا ${clientName} في سييرا إستيتس! 🌟\nوصلنا استفسارك عبر Property Finder بخصوص العقار (مرجع: ${listingRef || 'المميز'}).\nيسعدنا تزويدك بكافة تفاصيل الوحدة، المخططات الهندسية، وخطط السداد المتاحة.\n\nهل تود التواصل هنا عبر واتساب أو تحديد موعد لزيارة ومعاينة العقار؟\n\n*Sierra Estates — Beyond Brokerage*`;
+          const inquiry = lead.message || lead.inquiry || lead.notes || '';
+          const greeting = await generateLeadGreeting({
+            clientName,
+            listingRef,
+            message: typeof inquiry === 'string' ? inquiry : '',
+          });
 
-          await insertRecord('whatsapp_queue', {
-            recipientPhone: clientPhone,
-            recipientName: clientName,
-            messageBody: autoMessage,
-            status: 'pending',
-            metadata: { source: 'property-finder', propertyRef: listingRef },
-            createdAt: new Date().toISOString(),
+          await enqueueWhatsAppJob({
+            purpose: 'general-outreach',
+            toPhone: clientPhone,
+            toName: clientName,
+            body: greeting.body,
+            metadata: {
+              source: 'property-finder',
+              propertyRef: listingRef,
+              greetingSource: greeting.source,
+              pfLeadId: lead.id ?? null,
+            },
           });
         }
         break;
