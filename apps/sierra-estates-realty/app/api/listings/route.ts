@@ -103,7 +103,11 @@ function rowToEnvelope(row: Record<string, unknown>) {
     amenities: r.amenities || [],
     purpose: r.dealType === 'rent' ? 'for-rent' : 'for-sale',
     pfReferenceNumber: r.pfReferenceNumber || null,
-    publishToClient: r.publishToClient || false,
+    // Absence means public: the deployed table has no publish_to_client
+    // column, so the only stored values come from raw_data — where an
+    // explicit false is the staff moderation off-switch (see the submit
+    // path, which parks publishToClient: false on unreviewed rows).
+    publishToClient: r.publishToClient ?? true,
   };
 }
 
@@ -276,10 +280,25 @@ export async function GET(request: Request) {
 
     if (limit != null) {
       try {
-        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, { limit });
-        // publishToClient is the staff moderation switch: a row is only public
-        // inventory once someone has turned it on.
-        const listings = rows.map(rowToEnvelope).filter((l) => l.publishToClient === true);
+        // The live table mixes ~9.7k archived rows in with the ~160 active
+        // ones, so the status filter has to run inside the query — a plain
+        // limit would return mostly archived rows and the page would show
+        // nothing. Public submissions land as 'pending' (see /api/listings/
+        // submit), so this stays the moderation gate.
+        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, {
+          limit,
+          orderBy: { column: 'updatedAt', ascending: false },
+          where: [{ column: 'status', op: 'in', value: ['active', 'available'] }],
+        });
+        // publishToClient remains a moderation off-switch (an explicit false
+        // hides the row), but the live table has no publish_to_client column
+        // — it parks in raw_data at best — so requiring === true hid every
+        // live row and the envelope consumers fell back to static data.
+        const listings = rows
+          .map(rowToEnvelope)
+          .filter(
+            (l) => l.publishToClient !== false && isPubliclyVisibleListingStatus(l.status)
+          );
         return NextResponse.json({ success: true, listings, count: listings.length });
       } catch (err) {
         // Unreachable / denied → seed fallback, never 5xx.
