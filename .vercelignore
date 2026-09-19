@@ -40,7 +40,10 @@ data/**
 *.tar.gz
 *.csv
 !apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv
-apps/sierra-estates-realty/lib/inventory/snapshot.json
+# snapshot.json must NOT be ignored: the app statically imports it
+# (lib/site/data.ts, AvailabilityVerificationService), it is tracked in git as
+# a seed stub, and excluding it broke turbo-cached builds whose replayed trace
+# lstats the file (ENOENT) even though prebuild would create it on a cold build.
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
 
