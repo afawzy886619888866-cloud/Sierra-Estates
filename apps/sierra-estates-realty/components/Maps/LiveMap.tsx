@@ -171,20 +171,27 @@ function useLiveUnitCounts(): Record<string, number> {
 
 /* ── Marker icon builders (centered via translate, not fixed anchors) ── */
 
+/** Stagger cap so late pins don't wait on a 250-pin queue. */
+function pinDelay(index: number, step = 32, cap = 650): number {
+  return Math.min(index * step, cap);
+}
+
 function createCompoundIcon(
   compound: CompoundLocation,
   isSelected: boolean,
   liveCount: number | null,
-  lang: 'en' | 'ar' = 'en'
+  lang: 'en' | 'ar' = 'en',
+  index = 0
 ) {
   const name = (lang === 'ar' ? compound.nameAr : compound.nameEn) || compound.code;
   const count = liveCount ?? compound.unitsCount;
   const verified = compound.isGpsVerified;
 
   return L.divIcon({
-    className: '',
+    className: 'se-compound-wrap',
     html: `
-      <div style="
+      <div class="se-pill-inner se-compound-pill${isSelected ? ' se-pill-on' : ''}" style="
+        animation-delay:${pinDelay(index, 26)}ms;
         position: absolute;
         left: 0; top: 0;
         transform: translate(-50%, -50%) ${isSelected ? 'scale(1.12)' : 'scale(1)'};
@@ -202,7 +209,7 @@ function createCompoundIcon(
         box-shadow: ${isSelected ? `0 0 20px rgba(233,193,118,0.7), 0 4px 16px rgba(0,0,0,0.5)` : '0 4px 14px rgba(0,0,0,0.45)'};
         border: ${isSelected ? '2.5px solid #ffffff' : `1.5px solid ${verified ? 'rgba(233,193,118,0.6)' : 'rgba(245,158,11,0.7)'}`};
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       ">
         <span title="${verified ? 'GPS verified' : 'Location pending verification'}" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isSelected ? '#0d0d0f' : verified ? '#34d399' : '#f59e0b'};box-shadow:0 0 6px ${verified ? 'rgba(52,211,153,0.8)' : 'rgba(245,158,11,0.8)'};"></span>
         <span style="letter-spacing:-0.01em;">${name}</span>
@@ -223,7 +230,7 @@ function createCompoundIcon(
   });
 }
 
-function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean = false) {
+function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean = false, index = 0) {
   const shortPrice = unit.priceLabel
     .replace(' EGP', '')
     .replace(' / mo', '/m')
@@ -252,9 +259,10 @@ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean =
     : '';
 
   return L.divIcon({
-    className: '',
+    className: 'se-unit-wrap',
     html: `
-      <div style="
+      <div class="se-pin-inner se-unit-pin${isActive ? ' se-active' : ''}" style="
+        animation-delay:${pinDelay(index)}ms;
         position: absolute;
         left: 0; top: 0;
         transform: translate(-50%, -50%) ${isActive ? 'scale(1.18)' : 'scale(1)'};
@@ -272,9 +280,10 @@ function createUnitIcon(unit: MapUnitPin, isMarked: boolean, isActive: boolean =
         border: ${isActive ? '2.5px solid #ffffff' : `1.5px solid ${borderColor}`};
         box-shadow: ${isActive ? `0 0 20px rgba(233,193,118,0.9), 0 4px 14px rgba(0,0,0,0.6)` : '0 2px 10px rgba(0,0,0,0.5)'};
         cursor: pointer;
-        transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
         z-index: ${isActive ? 9999 : 'auto'};
       ">
+        ${isActive ? '<span class="se-ping"></span>' : ''}
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isActive ? '#0d0d0f' : isRent ? RENT_BLUE : SALE_GREEN};"></span>
         <span>${shortPrice}</span>
         ${distBadge}
@@ -358,6 +367,36 @@ function panelButton(
     whiteSpace: 'nowrap',
   };
 }
+
+/* ── Map motion styles (self-contained so the component stays portable) ──
+   Marker icons are L.divIcons with inline base transforms, so hover/entrance
+   motion lives here: entrance staggers with `backwards` fill (inline transform
+   wins once the animation completes), hover lift uses !important to beat the
+   inline style, and everything is disabled under prefers-reduced-motion. */
+const MAP_MOTION_CSS = `
+@keyframes se-map-fade{from{opacity:0}to{opacity:1}}
+.se-map-root{animation:se-map-fade .5s ease both}
+@keyframes se-pin-in{from{opacity:0;transform:translate(-50%,-38%) scale(.55)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.se-unit-pin{animation:se-pin-in .45s cubic-bezier(.16,1,.3,1) backwards}
+@keyframes se-pill-in{from{opacity:0;transform:translate(-50%,-78%) scale(.82)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.se-compound-pill{animation:se-pill-in .5s cubic-bezier(.16,1,.3,1) backwards}
+.se-unit-wrap:hover .se-unit-pin:not(.se-active){transform:translate(-50%,-50%) scale(1.1) !important;box-shadow:0 6px 18px rgba(9,18,33,.6) !important}
+.se-compound-wrap:hover .se-compound-pill:not(.se-pill-on){transform:translate(-50%,-50%) scale(1.07) !important;box-shadow:0 8px 20px rgba(9,18,33,.55) !important}
+.se-unit-pin.se-active{animation:none}
+.se-ping{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:radial-gradient(circle,rgba(233,193,118,.5),rgba(233,193,118,0) 62%);animation:se-ping 1.8s cubic-bezier(0,0,.2,1) infinite;pointer-events:none}
+@keyframes se-ping{0%{transform:scale(.35);opacity:.9}80%,100%{transform:scale(1.5);opacity:0}}
+.se-radius-ring{animation:se-dash 1.8s linear infinite}
+@keyframes se-dash{to{stroke-dashoffset:-24}}
+.custom-unit-popup .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 16px 40px rgba(9,18,33,.35);animation:se-pop-in .26s cubic-bezier(.16,1,.3,1)}
+.custom-unit-popup .leaflet-popup-content{margin:12px 14px}
+@keyframes se-pop-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.se-wa-btn{transition:transform .15s ease,filter .15s ease}
+.se-wa-btn:hover{transform:translateY(-1px);filter:brightness(1.07)}
+@media(prefers-reduced-motion:reduce){
+  .se-map-root,.se-unit-pin,.se-compound-pill,.se-radius-ring,.custom-unit-popup .leaflet-popup-content-wrapper{animation:none}
+  .se-ping{display:none}
+}
+`;
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
@@ -477,7 +516,8 @@ export default function LiveMap({
   );
 
   return (
-    <div style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
+    <div className="se-map-root" style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
+      <style dangerouslySetInnerHTML={{ __html: MAP_MOTION_CSS }} />
       {/* ── ORGANIZED CONTROL PANEL (top-left) ── */}
       <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ ...panelStyle, padding: controlsOpen ? '10px 12px' : '8px 12px', width: 218 }}>
@@ -672,9 +712,10 @@ export default function LiveMap({
             center={centerCoords || NEW_CAIRO_DEFAULT_CENTER}
             radius={radiusKm * 1000}
             pathOptions={{
+              className: 'se-radius-ring',
               color: '#c99436',
-              fillColor: '#c99436',
-              fillOpacity: 0.12,
+              fillColor: '#e9c176',
+              fillOpacity: 0.10,
               weight: 2,
               dashArray: '6, 6',
             }}
@@ -691,7 +732,7 @@ export default function LiveMap({
               <Marker
                 key={`compound-${compound.code}-${idx}`}
                 position={[compound.lat, compound.lng]}
-                icon={createCompoundIcon(compound, isSelected, liveCount, lang)}
+                icon={createCompoundIcon(compound, isSelected, liveCount, lang, idx)}
                 eventHandlers={{
                   click: () => {
                     onSelectCompound?.(compound);
@@ -715,7 +756,7 @@ export default function LiveMap({
 
         {/* Individual Unit Pins — street scale (decluttered at city zoom) */}
         {showUnits &&
-          displayUnits.map((unit) => {
+          displayUnits.map((unit, idx) => {
             const isMarked = selectedUnitIds.has(unit.id);
             const isActive = activeUnitId === unit.id || activeUnitId === unit.code;
             const waMsg = encodeURIComponent(
@@ -728,7 +769,7 @@ export default function LiveMap({
               <Marker
                 key={`unit-${unit.id}`}
                 position={[unit.renderLat, unit.renderLng]}
-                icon={createUnitIcon(unit, isMarked, isActive)}
+                icon={createUnitIcon(unit, isMarked, isActive, idx)}
                 eventHandlers={{
                   click: () => onSelectUnit?.(unit),
                 }}
@@ -783,6 +824,7 @@ export default function LiveMap({
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <a
+                        className="se-wa-btn"
                         href={`https://wa.me/201092048333?text=${waMsg}`}
                         target="_blank"
                         rel="noopener noreferrer"
