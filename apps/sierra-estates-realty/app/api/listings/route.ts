@@ -102,6 +102,8 @@ function rowToEnvelope(row: Record<string, unknown>) {
     status: r.status || 'available',
     amenities: r.amenities || [],
     purpose: r.dealType === 'rent' ? 'for-rent' : 'for-sale',
+    // The portal's mapRow reads agent/agentName; live rows store agent_name.
+    agent: r.agentName || undefined,
     pfReferenceNumber: r.pfReferenceNumber || null,
     // Absence means public: the deployed table has no publish_to_client
     // column, so the only stored values come from raw_data — where an

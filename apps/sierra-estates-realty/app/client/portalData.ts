@@ -133,16 +133,21 @@ export function priceLabel(p: Pick<Listing, 'mode' | 'usd' | 'egpM'>): string {
 /* ── API mapping ────────────────────────────────────────────────────────────
    Reads live inventory through the public /api/listings endpoint rather than
    querying the database from the browser. That endpoint is what applies the
-   moderation filter — a row is public inventory only once staff set
-   publishToClient — so a direct table read here would surface unreviewed
-   submissions. Any failure → empty array, so callers fall back to
-   FALLBACK_LISTINGS. */
+   moderation filter — public submissions land as 'pending' and hidden — so a
+   direct table read here would surface unreviewed rows. Any failure → empty
+   array, so callers fall back to FALLBACK_LISTINGS. */
 function mapRow(id: string, p: Record<string, unknown>): Listing {
   const num = (v: unknown, d: number): number => (typeof v === 'number' ? v : d);
   const str = (v: unknown, d: string): string => (typeof v === 'string' ? v : d);
   const rawPrice = p.price;
   const egpM = typeof rawPrice === 'number' ? (rawPrice > 1000 ? rawPrice / 1e6 : rawPrice) : num(p.egpM, 10);
-  const mode: 'sale' | 'rent' = p.mode === 'rent' || p.listingType === 'rent' ? 'rent' : 'sale';
+  // The envelope mode of /api/listings labels the deal `purpose`
+  // ('for-rent' | 'for-sale'); filter mode and the sheet units use
+  // `mode`/`listingType`. Accept all three so every source maps correctly.
+  const mode: 'sale' | 'rent' =
+    p.mode === 'rent' || p.listingType === 'rent' || p.purpose === 'for-rent' ? 'rent' : 'sale';
+  // Envelope rows carry `image` + `images[]`; sheet/snapshot units use `img`.
+  const firstGalleryImage = Array.isArray(p.images) && typeof p.images[0] === 'string' ? p.images[0] : undefined;
   return {
     id,
     code: str(p.code, id.slice(0, 8).toUpperCase()),
@@ -159,7 +164,7 @@ function mapRow(id: string, p: Record<string, unknown>): Listing {
     mode,
     agent: str(p.agent, str(p.agentName, 'Sierra Advisor')),
     ago: str(p.ago, 'Live'),
-    img: str(p.featuredImage, str(p.img, FALLBACK_LISTINGS[0].img)),
+    img: str(p.featuredImage, str(p.img, str(p.image, firstGalleryImage ?? FALLBACK_LISTINGS[0].img))),
   };
 }
 
