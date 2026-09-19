@@ -13,28 +13,8 @@
       "schedule": "0 0 * * *"
     },
     {
-      "path": "/api/cron/ingest-from-sheets",
-      "schedule": "30 0 * * *"
-    },
-    {
       "path": "/api/cron/sync-listings",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/sync-master-sheet",
-      "schedule": "30 5 * * *"
-    },
-    {
-      "path": "/api/cron/whatsapp-dispatch",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/maintenance",
-      "schedule": "0 23 * * *"
-    },
-    {
-      "path": "/api/cron/check-availability-sla",
-      "schedule": "30 12 * * *"
     }
   ],
   "headers": [

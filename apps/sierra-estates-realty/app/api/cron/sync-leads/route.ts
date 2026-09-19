@@ -6,9 +6,11 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: PROPERTY FINDER LEAD SYNC
- * Runs every 10 minutes via Vercel Cron to pull new leads.
- * This ensures "15-min response time" SLA compliance.
+ * Scheduled daily via Vercel Cron (00:00 UTC) to pull new leads so the
+ * morning team starts with a fresh inbox. Needs the Hobby plan ceiling
+ * because 50 leads each require existence checks and writes.
  */
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const denied = verifyCronRequest(req);
