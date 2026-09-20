@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { logger } from '../logger';
 import { resolveLocation } from '../inventory/gazetteer';
 import { getSupabaseAdmin } from '@sierra-estates/db';
+import { egpToUsd } from '../fx';
 import type { InventoryUnit } from '../inventory/types';
 
 export const EXCEL_COLUMNS = [
@@ -159,7 +160,10 @@ export function readExcelListings(options?: {
           price,
           priceLabel,
           egpM: price > 0 ? Number((price / 1_000_000).toFixed(2)) : undefined,
-          usd: price > 0 ? (mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : undefined,
+          // One rate for the whole system (lib/fx.ts) — rent and sale used to
+          // divide by different hardcoded numbers (50 vs 48.5), so the same
+          // EGP price produced two USD figures depending on the segment.
+          usd: price > 0 ? egpToUsd(price) : undefined,
           beds: row.Bedrooms ? Number(row.Bedrooms) : null,
           bath: row.Bathrooms ? Number(row.Bathrooms) : null,
           area: row['Area (sqm)'] ? Number(row['Area (sqm)']) : null,

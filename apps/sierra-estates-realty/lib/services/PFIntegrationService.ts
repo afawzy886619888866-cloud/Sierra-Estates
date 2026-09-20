@@ -100,7 +100,12 @@ export class PFIntegrationService {
         description: listing.description?.en || '',
         price: priceVal,
         propertyType: listing.type as any,
-        status: listing.offeringType === 'rent' ? 'rented' : 'available',
+        // FIX (Inventory OS v2): a rent OFFER is not a rented unit. The old
+        // mapping ('rent' → status 'rented') made every imported rental
+        // listing appear unavailable on the portal. Offer type now goes to
+        // dealType; availability stays 'available'.
+        status: 'available',
+        dealType: listing.offeringType === 'rent' ? 'rent' : 'sale',
         category: listing.category || 'residential',
         bedrooms: beds,
         bathrooms: baths,
@@ -135,7 +140,10 @@ export class PFIntegrationService {
     const locationId = await this.resolveLocationId(unit);
     const _publicProfileId = await this.resolvePublicProfileId();
 
-    const isRent = unit.status === 'rented';
+    // FIX (Inventory OS v2): rent-vs-sale is an OFFER attribute (dealType),
+    // not an availability attribute. Units that are genuinely rented
+    // (status='rented') must not be re-published to PF at all.
+    const isRent = unit.dealType === 'rent';
 
     const pfListing: PFListingRequest = {
       reference: unit.pfReferenceNumber || `SB-${unitId.slice(0, 8)}`,

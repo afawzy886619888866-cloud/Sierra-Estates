@@ -20,6 +20,10 @@ const listingCreateSchema = z
     status: z.string().max(50).optional(),
     img: z.number().int().optional(),
     publishToClient: z.boolean().optional(),
+    // Inventory OS v2: explicit offer type (was hardcoded to 'sale' in the
+    // fingerprint, breaking rent dedupe — see FUTURE_PLAN/04 follow-up).
+    offerType: z.enum(['sale', 'rent']).optional(),
+    offer: z.enum(['sale', 'rent']).optional(),
   })
   .passthrough();
 
@@ -95,18 +99,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'cmp and type are required' }, { status: 400 });
     }
 
-    // Inventory Domain Service (additive, non-breaking):
-    // `dupeCheckHash` and `syncSource` already exist on the canonical Unit schema
-    // (lib/models/schema.ts) but were never populated by this route. We fill them
-    // in without changing the SPA-facing shape — mapListingToSpa/mapSpaToListingPatch
-    // are untouched, so the admin frontend is unaffected.
-    //
-    // NOTE: the admin SPA form has no rent-vs-sale field today, so `offerType` is
-    // fixed to 'sale' for the fingerprint. This is a known approximation — nothing
-    // currently reads dupeCheckHash, so it carries zero live risk, but it should
-    // not be treated as authoritative for rent/sale dedupe until the SPA adds an
-    // explicit offer-type field. See FUTURE_PLAN/04 for the tracked follow-up.
-    const inventoryFields: RecordData = { syncSource: 'manual' };
+    // Inventory OS v2 (additive, non-breaking):
+    // 1. offerType is no longer hardcoded to 'sale' — the SPA may send
+    //    `offerType` or `offer`; default remains 'sale' for backwards compat.
+    // 2. New manual listings enter the lifecycle at 'pending_verification'
+    //    (the Egypt 2023 listing-transparency queue) unless an explicit legacy
+    //    status is provided.
+    const offerType: 'sale' | 'rent' =
+      parsed.data.offerType ?? parsed.data.offer ?? 'sale';
+
+    const inventoryFields: RecordData = {
+      syncSource: 'manual',
+      dealType: offerType,
+    };
     if (
       typeof patch.bedrooms === 'number' &&
       typeof patch.area === 'number' &&
@@ -115,7 +120,7 @@ export async function POST(req: NextRequest) {
       inventoryFields.dupeCheckHash = fingerprint({
         compound: patch.compound,
         propertyType: patch.propertyType,
-        offerType: 'sale',
+        offerType,
         bedrooms: patch.bedrooms,
         area: patch.area,
         price: patch.price,
@@ -129,7 +134,7 @@ export async function POST(req: NextRequest) {
       ...toListingColumns({
         ...listingPatchToColumns(patch),
         ...inventoryFields,
-        status: patch.status || 'available',
+        status: patch.status || 'pending_verification',
         category: 'residential',
         ownerType: 'internal',
       }),
