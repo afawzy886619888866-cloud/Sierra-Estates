@@ -539,6 +539,8 @@
     "testrun",
     "Turborepo",
     "worklog",
-    "zencoder"
+    "zencoder",
+    "webhint",
+    "Webhint"
   ]
 }
