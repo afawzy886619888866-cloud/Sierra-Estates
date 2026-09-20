@@ -51,22 +51,32 @@ function sslFor(url: string): { ssl?: { rejectUnauthorized: false } } {
   try {
     const host = new URL(url.replace('postgres://', 'http://').replace('postgresql://', 'http://')).hostname;
     if (host === 'localhost' || host === '127.0.0.1') return {};
-    if (/[?&]sslmode=disable/.test(url)) return {};
     return { ssl: { rejectUnauthorized: false } };
   } catch {
     return { ssl: { rejectUnauthorized: false } };
   }
 }
 
+/** pg lets sslmode/channel_binding URL params override programmatic ssl config
+ * (which turned verify on against Supabase's own CA). Strip them so the
+ * explicit `ssl: { rejectUnauthorized: false }` below is authoritative. */
+function cleanUrl(url: string): string {
+  return url
+    .replace(/[?&]sslmode=[^&]*/g, '')
+    .replace(/[?&]channel_binding=[^&]*/g, '')
+    .replace(/[?&]sslrootcert=[^&]*/g, '')
+    .replace(/\?$/, '');
+}
+
 export async function GET(req: NextRequest) {
   const denied = verifyCronRequest(req);
   if (denied) return denied;
 
-  const connectionStrings = [process.env.POSTGRES_URL_NON_POOLING, process.env.POSTGRES_URL].filter(
+  const rawCandidates = [process.env.POSTGRES_URL_NON_POOLING, process.env.POSTGRES_URL].filter(
     Boolean
   ) as string[];
 
-  if (connectionStrings.length === 0) {
+  if (rawCandidates.length === 0) {
     return NextResponse.json({ success: true, skipped: true, reason: 'no POSTGRES_URL at runtime' });
   }
 
@@ -80,20 +90,55 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, skipped: true, reason: 'no migrations present' });
   }
 
+  // Try each connection string with TLS forced permissive (Supabase presents
+  // its own CA). First strategy that connects wins.
   const client = new Client({
-    connectionString: connectionStrings[0],
+    connectionString: cleanUrl(rawCandidates[0]),
     statement_timeout: 50_000,
-    ...sslFor(connectionStrings[0]),
+    ...sslFor(rawCandidates[0]),
   });
 
   try {
     await client.connect();
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[apply-migrations] connection failed:', message);
-    return NextResponse.json({ success: false, error: `connection failed: ${message}` }, { status: 502 });
+    const firstMessage = err instanceof Error ? err.message : String(err);
+    logger.error('[apply-migrations] connection failed:', firstMessage);
+    // Fallback: the other connection string (pooler vs direct).
+    if (rawCandidates.length > 1) {
+      const fallback = new Client({
+        connectionString: cleanUrl(rawCandidates[1]),
+        statement_timeout: 50_000,
+        ...sslFor(rawCandidates[1]),
+      });
+      try {
+        await fallback.connect();
+      } catch (err2: unknown) {
+        const secondMessage = err2 instanceof Error ? err2.message : String(err2);
+        logger.error('[apply-migrations] fallback connection failed:', secondMessage);
+        return NextResponse.json(
+          {
+            success: false,
+            error: `both connection strings failed`,
+            attempts: [
+              { url: 'primary', error: firstMessage },
+              { url: 'fallback', error: secondMessage },
+            ],
+          },
+          { status: 502 }
+        );
+      }
+      return applyPending(fallback, dir, files);
+    }
+    return NextResponse.json(
+      { success: false, error: `connection failed: ${firstMessage}` },
+      { status: 502 }
+    );
   }
 
+  return applyPending(client, dir, files);
+}
+
+async function applyPending(client: Client, dir: string, files: string[]): Promise<NextResponse> {
   const appliedNow: string[] = [];
   try {
     await client.query('SELECT pg_advisory_lock($1)', [ADVISORY_LOCK_KEY]);
