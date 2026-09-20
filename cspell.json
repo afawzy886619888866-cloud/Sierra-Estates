@@ -18,6 +18,7 @@
     "**/pnpm-workspace.yaml",
     "**/.github/workflows/**",
     "**/.vercelignore",
+    "**/.gitignore",
     "**/*.toml",
     "tools/**"
   ],
@@ -524,6 +525,20 @@
     "Zayed",
     "zchip",
     "zenaq",
-    "zline"
+    "zline",
+    "amazonq",
+    "BILING",
+    "copypasted",
+    "graphify",
+    "Hndsp",
+    "htmlcov",
+    "Icoe",
+    "Laila",
+    "pnpmrc",
+    "prebuild",
+    "testrun",
+    "Turborepo",
+    "worklog",
+    "zencoder"
   ]
 }
