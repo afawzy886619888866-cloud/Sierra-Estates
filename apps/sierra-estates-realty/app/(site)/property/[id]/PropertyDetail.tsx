@@ -340,6 +340,16 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <span>{isAr ? 'تقييم الذكاء' : 'AI score'}</span>
                   <b><Sparkles style={{ width: 15, height: 15 }} /> {p.ai.toFixed(1)}</b>
                 </div>
+                {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
+                  <div className="spec-box">
+                    <span>{isAr ? 'سعر المتر' : 'Price / m²'}</span>
+                    <b style={{ color: '#DFAD3A' }}>
+                      {Math.round(
+                        (p.egpM ? p.egpM * 1_000_000 : (p.usd || 0) * 48.65) / p.area
+                      ).toLocaleString()} EGP
+                    </b>
+                  </div>
+                )}
               </div>
 
               <Reveal className="pdetail-desc">
@@ -407,6 +417,12 @@ export default function PropertyDetail({ id }: { id: string }) {
                             {netMonthlyCarry.toLocaleString()} EGP/mo
                           </strong>
                         </div>
+                        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'العائد الصافي (Cap Rate)' : 'Net Cap Rate / Yield'}</span>
+                          <strong style={{ fontSize: 15, color: '#38BDF8', fontFamily: 'var(--mono)' }}>
+                            {p.yield ? `${p.yield}%` : '8.5%'}
+                          </strong>
+                        </div>
                       </div>
                     );
                   })()}
@@ -425,6 +441,38 @@ export default function PropertyDetail({ id }: { id: string }) {
                 <div style={{ marginBottom: 16 }}>
                   <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const event = new CustomEvent('sierra:add-to-shortlist', {
+                      detail: {
+                        id: p.code || p.id,
+                        code: p.code,
+                        compound: p.cmp,
+                        type: p.type,
+                        price: HZDATA.price(p),
+                        img: p.img,
+                      },
+                    });
+                    window.dispatchEvent(event);
+                  }}
+                  className="btn btn-ghost"
+                  style={{
+                    width: '100%',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                    border: '1px solid rgba(223, 173, 58, 0.4)',
+                    color: '#DFAD3A',
+                    marginBottom: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span>✨</span>
+                  <span>{isAr ? 'إضافة إلى سلة المعاينة VIP' : 'Add to VIP Viewing Basket'}</span>
+                </button>
 
                 <a
                   className="btn btn-pri"
