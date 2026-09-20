@@ -6,7 +6,7 @@
   "types": "lib/index.ts",
   "private": true,
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/supabase-js": "^2.116.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
