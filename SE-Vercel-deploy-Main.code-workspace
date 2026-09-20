@@ -7,6 +7,9 @@
   "settings": {
     "git.ignoreLimitWarning": true,
     "git.autoRepositoryDetection": true,
-    "git.repositoryScanMaxDepth": 1
+    "git.repositoryScanMaxDepth": 1,
+    "git.ignoredRepositories": [
+      "C:\\Users\\Sierr"
+    ]
   }
 }
