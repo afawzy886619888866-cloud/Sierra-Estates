@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listRecords, updateRecord, upsertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { verifyHmacSignature } from '@/lib/server/webhook-auth';
-import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { enqueueWhatsAppJob, claimEligibleNumber, DEFAULT_OUTREACH_CONFIG } from '@/lib/server/whatsapp-queue';
+import { sendWhatsApp, getTwilioStatusCallbackUrl } from '@/lib/server/twilio-client';
 import { generateLeadGreeting } from '@/lib/server/pf-lead-greeting';
 
 /**
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
             message: typeof inquiry === 'string' ? inquiry : '',
           });
 
-          await enqueueWhatsAppJob({
+          const jobId = await enqueueWhatsAppJob({
             purpose: 'general-outreach',
             toPhone: clientPhone,
             toName: clientName,
@@ -95,6 +96,54 @@ export async function POST(request: NextRequest) {
               pfLeadId: lead.id ?? null,
             },
           });
+
+          // Hot-lead fast path: attempt to send the greeting IMMEDIATELY so a
+          // PF lead gets an instant bot reply, instead of waiting for the
+          // dispatch cron (GitHub Actions are currently disabled by the
+          // account spending limit, and Vercel Hobby crons cannot run hourly).
+          // A greeting is a direct reply to an inbound inquiry, so it
+          // intentionally bypasses the bulk-outreach operating-hours window;
+          // sender rotation still goes through claimEligibleNumber so quota
+          // bookkeeping stays in one place. Any failure rolls the job back to
+          // 'queued' — the regular dispatch worker (/api/cron/whatsapp-dispatch)
+          // picks it up later, so a message can never be lost or doubled.
+          try {
+            const claim = await claimEligibleNumber(DEFAULT_OUTREACH_CONFIG);
+            if (claim) {
+              const nowIso = new Date().toISOString();
+              await updateRecord('whatsapp_queue', jobId, {
+                status: 'sending',
+                assignedNumberId: claim.id,
+                updatedAt: nowIso,
+              });
+              try {
+                const result = await sendWhatsApp(
+                  claim.e164Phone,
+                  clientPhone,
+                  greeting.body,
+                  getTwilioStatusCallbackUrl(),
+                );
+                await updateRecord('whatsapp_queue', jobId, {
+                  status: 'sent',
+                  twilioMessageSid: result.sid,
+                  sentAt: new Date().toISOString(),
+                  attempts: 1,
+                  updatedAt: new Date().toISOString(),
+                });
+                logger.info(`[pf-webhook] greeting sent inline for lead ${lead.id} (job ${jobId}, sid ${result.sid})`);
+              } catch (sendErr: any) {
+                await updateRecord('whatsapp_queue', jobId, {
+                  status: 'queued',
+                  errorMessage: sendErr?.message || String(sendErr),
+                  updatedAt: new Date().toISOString(),
+                });
+                logger.warn(`[pf-webhook] inline send failed for lead ${lead.id}; job ${jobId} requeued: ${sendErr?.message}`);
+              }
+            }
+            // No claimable sender (quota exhausted) → job simply stays 'queued'.
+          } catch (dispatchErr: any) {
+            logger.warn(`[pf-webhook] inline dispatch skipped for job ${jobId}: ${dispatchErr?.message}`);
+          }
         }
         break;
       }
