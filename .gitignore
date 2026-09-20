@@ -123,6 +123,9 @@ obsidian-store.json
 # it (inventory, listings, inventory/download, admin whatsapp scan) and the
 # public map serves it as the offline fallback, so a clean checkout must
 # contain it. scripts/generate-inventory-snapshot.mjs refreshes it at build.
+# Build artifact: prebuild mirrors repo supabase/migrations into the app for
+# the runtime applier lambda — never commit the mirror.
+apps/sierra-estates-realty/supabase/
 apps/sierra-estates-realty/data/master-inventory-9k.json
 
 # Stale agent workspaces & configs
