@@ -44,9 +44,52 @@ export async function POST(request: NextRequest) {
       case 'lead.assigned': {
         const lead = event.data || event.payload;
 
-        const clientName = lead.sender?.name || lead.name || 'Client';
-        const clientPhone = lead.sender?.phone || lead.phone || '';
+        // PF payloads vary across Atlas API versions and webhook event types —
+        // the live 'JAWA' delivery (2026-09-20) arrived with contact info
+        // nowhere near lead.sender. Try every observed shape before giving up:
+        // sender / client / customer / contact objects, then flat fields, then
+        // a phone anywhere in the payload (first E.164-looking string).
+        const findPhone = (obj: unknown, depth = 0): string => {
+          if (depth > 4 || obj === null || typeof obj !== 'object') return '';
+          for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+            if (typeof v === 'string' && /phone|mobile|whatsapp/i.test(k) && /^\+?[0-9][0-9\s-]{6,19}$/.test(v.trim())) {
+              return v.trim();
+            }
+          }
+          for (const v of Object.values(obj as Record<string, unknown>)) {
+            if (v && typeof v === 'object') {
+              const found = findPhone(v, depth + 1);
+              if (found) return found;
+            }
+          }
+          return '';
+        };
+
+        const pickContact = (...objs: Array<Record<string, unknown> | undefined>): Record<string, unknown> => {
+          for (const o of objs) if (o && typeof o === 'object' && Object.keys(o).length > 0) return o;
+          return {};
+        };
+
+        const contact = pickContact(
+          lead.sender as Record<string, unknown> | undefined,
+          lead.client as Record<string, unknown> | undefined,
+          lead.customer as Record<string, unknown> | undefined,
+          lead.contact as Record<string, unknown> | undefined,
+        );
+
+        const clientName = (contact.name as string) || lead.name || 'Client';
+        const clientPhone =
+          (contact.phone as string) ||
+          lead.phone ||
+          findPhone(lead) ||
+          '';
         const listingRef = lead.listing?.reference || lead.property?.reference || '';
+
+        // Compact diagnostic for payload shapes we still fail to extract a
+        // phone from — the bot cannot greet a lead it cannot reach.
+        if (!clientPhone) {
+          logger.warn(`[pf-webhook] lead event without extractable phone: eventType=${eventType} topKeys=${JSON.stringify(Object.keys(lead))}`);
+        }
 
         // One upsert on pf_lead_id replaces the previous read-then-branch: the
         // same fields are written whether the lead is new or already known, so
@@ -57,7 +100,7 @@ export async function POST(request: NextRequest) {
           {
             fullName: clientName,
             phone: clientPhone,
-            email: lead.sender?.email || lead.email || '',
+            email: (contact.email as string) || lead.email || '',
             channel: 'property_finder',
             source: 'property-finder',
             status: 'new',
