@@ -109,7 +109,7 @@ def main() -> int:
         print(f"Error: {CAMPAIGN_FILE} not found.", file=sys.stderr)
         return 1
 
-    with CAMPAIGN_FILE.open('r', encoding='utf-8') as f:
+    with CAMPAIGN_FILE.open('r', encoding='utf-8-sig') as f:
         reader = list(csv.DictReader(f))
 
     total = len(reader)
