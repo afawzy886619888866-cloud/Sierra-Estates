@@ -11,6 +11,28 @@
     {
       "type": "aws-sam",
       "request": "direct-invoke",
+      "name": "Invoke Lambda",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "Template Location",
+        "logicalId": "Function Logical ID"
+      },
+      "lambda": {
+        "payload": {
+          "json": {}
+        }
+      }
+    },
+    {
+      "name": "Attach to Edge",
+      "port": 9222,
+      "request": "attach",
+      "type": "msedge",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
       "name": "Invoke Lambda with API Gateway",
       "invokeTarget": {
         "target": "api",
