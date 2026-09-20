@@ -158,5 +158,6 @@ tools/openai-agents-python/
 /tool-results/
 worklog.md
 dev.log
+obsidian-store.json
 .vercel
 .env*
