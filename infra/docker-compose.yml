@@ -48,17 +48,15 @@ services:
       # ── Timezone (Egypt) ──
       - GENERIC_TIMEZONE=${TIMEZONE:-Africa/Cairo}
       - TZ=${TIMEZONE:-Africa/Cairo}
-      # ── Firebase Admin (for Firestore writes from n8n) ──
-      # Service account JSON mounted as a file — never inline in env.
-      - FIREBASE_CONFIG=/data/firebase-service-account.json
+      # ── Supabase (for direct DB writes from n8n HTTP nodes) ──
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       # ── Gemini API (for AI matching in workflows) ──
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       # ── Property Finder webhook secret ──
       - PROPERTY_FINDER_WEBHOOK_SECRET=${PROPERTY_FINDER_WEBHOOK_SECRET:-}
     volumes:
       - ./n8n-data:/data
-      # Mount Firebase service account JSON (read-only)
-      - ./secrets/firebase-service-account.json:/data/firebase-service-account.json:ro
     networks:
       - sierra-net
     healthcheck:
@@ -84,10 +82,9 @@ services:
       - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://n8n:5678/webhook/whatsapp-incoming}
       # ── Bot identity (shown in WhatsApp profile) ──
       - BOT_NAME=${BOT_NAME:-Sierra Estates}
-      # ── Firebase Admin (to write clients + requests directly) ──
-      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-}
-      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL:-}
-      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY:-}
+      # ── Supabase (direct writes to leads / inquiries / whatsapp_queue) ──
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       # ── Logging ──
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - NODE_ENV=production
