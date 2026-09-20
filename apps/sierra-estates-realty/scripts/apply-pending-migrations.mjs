@@ -56,10 +56,13 @@ if (fs.existsSync(MIGRATIONS_DIR)) {
   console.log(`[migrations] mirrored ${copied} migration file(s) into the app bundle.`);
 }
 
+// Vercel injects an empty string for sensitive env vars declared in turbo.json
+// globalEnv but not yet populated. Filter those out so we don't try to
+// connect to an empty URL.
 const candidates = [
   process.env.POSTGRES_URL_NON_POOLING, // direct connection — best for DDL
   process.env.POSTGRES_URL, // session/transaction pooler
-].filter(Boolean);
+].filter((url) => typeof url === 'string' && url.trim().length > 0);
 
 if (candidates.length === 0) {
   console.log('[migrations] no POSTGRES_URL in build env (Sensitive vars are build-excluded');
@@ -82,6 +85,20 @@ if (files.length === 0) {
   process.exit(0);
 }
 
+/** Returns ssl options that match the runtime route's behaviour —
+ * accept self-signed certs in chain (corporate proxies / Vercel SSL inspection).
+ * Localhost gets no SSL so local dev doesn't trip over a missing CA bundle.
+ */
+function sslFor(url) {
+  try {
+    const host = new URL(url.replace('postgres://', 'http://').replace('postgresql://', 'http://')).hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return {};
+    return { ssl: { rejectUnauthorized: false } };
+  } catch {
+    return { ssl: { rejectUnauthorized: false } };
+  }
+}
+
 async function connect() {
   let lastErr;
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -89,6 +106,7 @@ async function connect() {
       const client = new Client({
         connectionString: url,
         statement_timeout: STATEMENT_TIMEOUT_MS,
+        ...sslFor(url),
       });
       try {
         await client.connect();
@@ -105,7 +123,18 @@ async function connect() {
   throw lastErr;
 }
 
-const client = await connect();
+// Soft-fail: if we cannot reach the database from the build environment
+// (e.g. Vercel SSL inspection rejects the Supabase cert), don't break the
+// build. The runtime cron /api/cron/apply-migrations route will apply the
+// pending migrations instead — that's exactly what it's there for.
+let client;
+try {
+  client = await connect();
+} catch (err) {
+  console.warn(`[migrations] could not reach database from build env (${err.code || err.message}).`);
+  console.warn('[migrations] runtime applier /api/cron/apply-migrations will apply the migrations.');
+  process.exit(0);
+}
 try {
   // Serialize concurrent builders (client portal + admin build the same repo).
   await client.query('SELECT pg_advisory_lock($1)', [ADVISORY_LOCK_KEY]);
