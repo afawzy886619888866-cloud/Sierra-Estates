@@ -25,11 +25,19 @@ import { fileURLToPath } from 'node:url';
 import { Client } from 'pg';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = path.resolve(__dirname, '..', '..', '..', 'supabase', 'migrations');
-// In-app mirror consumed by /api/cron/apply-migrations at RUNTIME (the
-// serverless bundle cannot read repo-root paths, so prebuild copies the
-// migration files into the app for output-file-tracing to pick up).
+// Migration sources, in priority order:
+//  1. Repo-root supabase/migrations/  (when the whole repo is checked out — local dev, CI)
+//  2. In-app supabase/migrations/      (when Vercel builds with rootDirectory=apps/sierra-estates-realty,
+//                                       which means only the app subtree is in /vercel/path0)
+// The prebuild step copies from source -> APP_MIGRATIONS_DIR so the runtime route
+// /api/cron/apply-migrations can read them at serverless runtime.
 const APP_MIGRATIONS_DIR = path.resolve(__dirname, '..', 'supabase', 'migrations');
+const REPO_ROOT_MIGRATIONS_DIR = path.resolve(__dirname, '..', '..', '..', 'supabase', 'migrations');
+const MIGRATIONS_DIR = fs.existsSync(REPO_ROOT_MIGRATIONS_DIR)
+  ? REPO_ROOT_MIGRATIONS_DIR
+  : fs.existsSync(APP_MIGRATIONS_DIR)
+    ? APP_MIGRATIONS_DIR
+    : REPO_ROOT_MIGRATIONS_DIR; // fall through to the original path so the existing "not found" branch fires
 const ADVISORY_LOCK_KEY = 940011; // arbitrary constant, shared by all appliers
 const STATEMENT_TIMEOUT_MS = 180_000;
 
