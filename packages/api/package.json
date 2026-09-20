@@ -15,7 +15,7 @@
 		"axios": "^1.19",
 		"express": "^5.2",
 		"pino": "^10.3",
-		"twilio": "^6.0",
+		"twilio": "^6.1",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
