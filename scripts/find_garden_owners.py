@@ -39,9 +39,13 @@ def extract_phones_from_text(text):
     if not text or pd.isna(text):
         return []
     s = str(text)
-    # Find all 11-digit numbers starting with 010, 011, 012, 015 or international 201...
     matches = re.findall(r'(?:\+?20|0)?(1[0125]\d{8})', s)
-    return ['20' + m for m in matches]
+    res = []
+    for m in matches:
+        p = '20' + m
+        if p not in ['201234567890', '201000000000', '201111111111']:
+            res.append(p)
+    return res
 
 garden_patterns = [
     r'garden',
@@ -63,15 +67,15 @@ records = {}
 # 1. Inventory_with_Photos.xlsx
 if os.path.exists('Inventory_with_Photos.xlsx'):
     wb = pd.ExcelFile('Inventory_with_Photos.xlsx')
-    for sheet in ['Owners Rent', 'Owners Buy', 'Broker Rent', 'Broker Buy', 'Unknown Broker or Owner']:
+    for sheet in ['Owners Rent', 'Owners Buy']:
         if sheet not in wb.sheet_names:
             continue
-        # Only owners unless requested
-        is_owner_sheet = 'owner' in sheet.lower()
         df = wb.parse(sheet)
         for idx, row in df.iterrows():
-            text_fields = [str(row.get(col, '')) for col in ['Description', 'Location', 'Compound', 'PropertyType']]
+            text_fields = [str(row.get(col, '')) for col in ['Description', 'Location', 'Compound', 'PropertyType', 'Contact Name']]
             full_text = ' '.join(text_fields)
+            if any(b in full_text.lower() for b in ['broker', 'سمسار', 'وسيط', 'شركة تسويق']):
+                continue
             if garden_regex.search(full_text):
                 # Look for phone in Contact Phone, WhatsApp Direct, or Description
                 candidate_phones = []
