@@ -26,8 +26,27 @@ import { Client } from 'pg';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, '..', '..', '..', 'supabase', 'migrations');
+// In-app mirror consumed by /api/cron/apply-migrations at RUNTIME (the
+// serverless bundle cannot read repo-root paths, so prebuild copies the
+// migration files into the app for output-file-tracing to pick up).
+const APP_MIGRATIONS_DIR = path.resolve(__dirname, '..', 'supabase', 'migrations');
 const ADVISORY_LOCK_KEY = 940011; // arbitrary constant, shared by all appliers
 const STATEMENT_TIMEOUT_MS = 180_000;
+
+// Always mirror migrations into the app first — the runtime applier needs
+// them present even when this script cannot reach the database (Vercel
+// excludes Sensitive env values like POSTGRES_URL from the BUILD env).
+if (fs.existsSync(MIGRATIONS_DIR)) {
+  fs.mkdirSync(APP_MIGRATIONS_DIR, { recursive: true });
+  let copied = 0;
+  for (const f of fs.readdirSync(MIGRATIONS_DIR)) {
+    if (f.endsWith('.sql')) {
+      fs.copyFileSync(path.join(MIGRATIONS_DIR, f), path.join(APP_MIGRATIONS_DIR, f));
+      copied++;
+    }
+  }
+  console.log(`[migrations] mirrored ${copied} migration file(s) into the app bundle.`);
+}
 
 const candidates = [
   process.env.POSTGRES_URL_NON_POOLING, // direct connection — best for DDL
@@ -35,7 +54,8 @@ const candidates = [
 ].filter(Boolean);
 
 if (candidates.length === 0) {
-  console.log('[migrations] no POSTGRES_URL configured (local dev?) — skipping.');
+  console.log('[migrations] no POSTGRES_URL in build env (Sensitive vars are build-excluded');
+  console.log('[migrations] on Vercel) — runtime applier /api/cron/apply-migrations will apply.');
   process.exit(0);
 }
 

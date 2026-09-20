@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
   // turbopack.root below otherwise, which caused deployed middleware to
   // fail with "Cannot find module 'next/dist/build/adapter/setup-node-env.external'".
   outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  // Bundle the mirrored SQL migrations into the runtime applier lambda
+  // (prebuild copies repo supabase/migrations -> app supabase/migrations).
+  outputFileTracingIncludes: {
+    '/api/cron/apply-migrations': ['./supabase/migrations/*.sql'],
+  },
   transpilePackages: [
     '@sierra-estates/memory-engine',
     '@sierra-estates/agents',
