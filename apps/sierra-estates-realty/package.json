@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "prebuild": "node scripts/ensure-snapshot.mjs",
+        "prebuild": "node scripts/ensure-snapshot.mjs && node scripts/apply-pending-migrations.mjs",
         "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
         "start": "next start",
         "lint": "eslint . && node scripts/validate-configs.mjs",
@@ -12,6 +12,7 @@
         "fix-build": "rimraf .next && npm run build",
         "check-node": "node scripts/diagnostic.mjs",
         "seed:admin": "node scripts/seed-admin.mjs",
+        "inventory:snapshot": "node scripts/generate-inventory-snapshot.mjs",
         "test": "jest --testPathPatterns=__tests__",
         "test:ci": "jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
     },
@@ -90,6 +91,7 @@
         "@tailwindcss/postcss": "^4",
         "@types/dotenv": "^8.2.3",
         "@types/express": "^5.0.6",
+        "@types/pg": "^8.11.10",
         "@types/jest": "^30",
         "@types/ms": "^2.1.0",
         "@types/node": "^26",
@@ -106,6 +108,7 @@
         "eslint-plugin-unused-imports": "^4.4.1",
         "jest": "^30.4.2",
         "jest-environment-node": "^30.4.1",
+        "pg": "^8.13.1",
         "rimraf": "^6.1.3",
         "tailwindcss": "^4",
         "ts-jest": "^29.4.12",

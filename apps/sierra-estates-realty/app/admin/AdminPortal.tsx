@@ -33,6 +33,7 @@ import {
   DeploymentPipelineView,
   ApiGatewayView,
   InventoryCommandView,
+  InventoryOsView,
   WorkflowStudioView,
   MemoryBrainView,
 } from './views';
@@ -2403,6 +2404,7 @@ function AdminApp() {
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
+      case 'inventory_os':return <InventoryOsView lang={langKey}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
