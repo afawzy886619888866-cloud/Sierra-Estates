@@ -209,14 +209,17 @@ export function readExcelListings(options?: {
  * Append a newly submitted unit into the appropriate sheet of Inventory_with_Photos.xlsx
  * and simultaneously sync to Supabase listings table.
  */
-export async function appendToExcelInventory(input: NewExcelListingInput): Promise<{
+export async function appendToExcelInventory(
+  input: NewExcelListingInput,
+  customFilePath?: string
+): Promise<{
   success: boolean;
   recordId: string;
   sheetName: string;
   filePath: string;
   error?: string;
 }> {
-  const filePath = getMasterExcelPath();
+  const filePath = customFilePath || getMasterExcelPath();
 
   try {
     let wb: XLSX.WorkBook;
