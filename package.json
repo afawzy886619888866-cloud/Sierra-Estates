@@ -57,7 +57,7 @@
         "turbo": "^2.3.3",
         "typescript": "^5.8.2",
         "typescript-eslint": "^8.67.0",
-        "vitest": "^4.1.11"
+        "vitest": "^5.0.1"
     },
     "dependencies": {
         "@vercel/speed-insights": "^2.0.0",
