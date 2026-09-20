@@ -2554,6 +2554,9 @@ function AdminApp() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 4,
+                    maxHeight: 'min(70vh, 480px)',
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
                   }}
                   onClick={() => setIsAppSwitcherOpen(false)}
                 >
@@ -2562,7 +2565,12 @@ function AdminApp() {
                     { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
                     { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
                     { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
+                    { id: 'memory_brain', label: isAr ? 'محرك الذاكرة المركزي' : 'Memory Brain Engine', icon: '🧬' },
+                    { id: 'heatmap', label: isAr ? 'خريطة العوائد التفاعلية' : 'Yield Heatmap & AVM', icon: '🗺️' },
+                    { id: 'notebookllm', label: isAr ? 'استوديو الملخصات الصوتية' : 'NotebookLM Audio Studio', icon: '🎙️' },
                     { id: 'contracts', label: isAr ? 'العقود الإلكترونية' : 'Digital Contracts Desk', icon: '📜' },
+                    { id: 'excel_merger', label: isAr ? 'أداة دمج الإكسل' : 'Excel & CSV Merger', icon: '🗂️' },
+                    { id: 'inventory_command', label: isAr ? 'قيادة المخزون' : 'Inventory Command', icon: '🏢' },
                     { id: 'deployment', label: isAr ? 'خطوط النشر والإنتاج' : 'CI/CD Deployment Console', icon: '🚀' },
                     { id: 'api_gateway', label: isAr ? 'بوابة واجهات البرمجة' : 'RESTful API Gateway', icon: '🌐' },
                   ].map((app) => (
