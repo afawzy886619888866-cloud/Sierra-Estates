@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import {
   EpisodicContextCache,
   HOT_DEAL_THRESHOLD_PCT,
