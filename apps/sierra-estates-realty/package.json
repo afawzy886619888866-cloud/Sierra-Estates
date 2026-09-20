@@ -3,7 +3,7 @@
     "version": "1.0.1",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev --webpack",
         "prebuild": "node scripts/ensure-snapshot.mjs && node scripts/apply-pending-migrations.mjs",
         "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
         "start": "next start",
