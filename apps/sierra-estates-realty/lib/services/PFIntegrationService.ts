@@ -43,7 +43,8 @@ export class PFIntegrationService {
         email,
         source: 'property-finder',
         stage: 'inbound',
-        phase: lead.status === 'replied' ? 'consultation' : 'acquisition',
+        // NOTE: no `phase` here — the leads table has no phase column, and
+        // writing it made every daily sync fail with a schema-cache error.
         originChannel: `Property Finder (${lead.channel})`,
         pfLeadId: lead.id,
         pfListingReferenceNumber: lead.listing?.reference || '',
