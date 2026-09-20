@@ -2,6 +2,47 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Attach to Edge",
+      "port": 9222,
+      "request": "attach",
+      "type": "msedge",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "Invoke Lambda with API Gateway",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "Template Location",
+        "logicalId": "Function Logical ID"
+      },
+      "api": {
+        "path": "Path",
+        "httpMethod": "get",
+        "payload": {
+          "json": {}
+        }
+      }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "Invoke Lambda with API Gateway",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "Template Location",
+        "logicalId": "Function Logical ID"
+      },
+      "api": {
+        "path": "Path",
+        "httpMethod": "get",
+        "payload": {
+          "json": {}
+        }
+      }
+    },
+    {
       "type": "aws-sam",
       "request": "direct-invoke",
       "name": "Invoke Lambda",
@@ -162,7 +203,6 @@
       "name": "🌐 Edge: Launch (localhost:3000)",
       "type": "msedge",
       "request": "launch",
-      "version": "stable",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/apps/sierra-estates-realty"
     }
