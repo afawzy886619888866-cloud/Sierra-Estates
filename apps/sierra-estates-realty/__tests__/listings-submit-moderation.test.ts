@@ -28,6 +28,31 @@ jest.mock('@/lib/server/rate-limit', () => ({
   publicEndpointLimiter: {},
 }));
 
+// ---------------------------------------------------------------------------
+// Side-effect mocks — these modules are invoked after the single DB write and
+// must be stubbed so (a) server-only imports don't blow up in Jest, and (b)
+// the insertMock call-count assertions remain unambiguous.
+// ---------------------------------------------------------------------------
+jest.mock('@/lib/services/ExcelInventoryService', () => ({
+  appendToExcelInventory: jest.fn(async () => undefined),
+}));
+
+jest.mock('@/lib/telegram', () => ({
+  sendTelegramMessage: jest.fn(async () => undefined),
+  escapeTelegramHtml: (s: string) => s,
+}));
+
+jest.mock('@/lib/server/whatsapp-queue', () => ({
+  enqueueWhatsAppJob: jest.fn(async () => undefined),
+}));
+
+jest.mock('@/lib/services/AugustOwnersAgentService', () => ({
+  AugustOwnersAgentService: {
+    broadcastNewUnitToGroup: jest.fn(async () => undefined),
+  },
+  AUGUST_OWNERS_GROUP_ID: '120363044918239011@g.us',
+}));
+
 import { POST } from '@/app/api/listings/submit/route';
 
 const validSubmission = {

@@ -22,6 +22,7 @@ import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { appendToExcelInventory } from '@/lib/services/ExcelInventoryService';
+import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -173,6 +174,21 @@ export async function POST(request: Request) {
       } catch (waErr) {
         logger.warn('[LISTING_SUBMIT] WhatsApp dispatch skipped:', waErr);
       }
+    }
+
+    // 3. Broadcast newly submitted unit into the August Owners WhatsApp group
+    try {
+      await AugustOwnersAgentService.broadcastNewUnitToGroup({
+        code: listingCode,
+        compound: data.compound,
+        propertyType: data.propertyType,
+        price: data.price,
+        beds: data.beds,
+        area: data.area,
+        mode: data.mode,
+      });
+    } catch (broadcastErr) {
+      logger.warn('[LISTING_SUBMIT] August group broadcast skipped:', broadcastErr);
     }
 
     return NextResponse.json(
