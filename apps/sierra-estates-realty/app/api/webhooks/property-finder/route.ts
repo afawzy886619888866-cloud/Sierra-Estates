@@ -5,6 +5,7 @@ import { verifyHmacSignature } from '@/lib/server/webhook-auth';
 import { enqueueWhatsAppJob, claimEligibleNumber, DEFAULT_OUTREACH_CONFIG } from '@/lib/server/whatsapp-queue';
 import { sendWhatsApp, getTwilioStatusCallbackUrl } from '@/lib/server/twilio-client';
 import { generateLeadGreeting } from '@/lib/server/pf-lead-greeting';
+import { resolveGreetingLanguage } from '@/lib/server/whatsapp-language';
 
 /**
  * Property Finder outbound webhook.
@@ -115,16 +116,20 @@ export async function POST(request: NextRequest) {
 
         // Automated WhatsApp Response Queue:
         // When a client submits an inquiry on Property Finder, the bot queues an
-        // immediate tailored greeting. enqueueWhatsAppJob inserts with status
+        // immediate tailored greeting. Language routing (owner rule): Egyptian
+        // (+20) and Saudi (+966) numbers are greeted in ARABIC, every other
+        // country code in ENGLISH. enqueueWhatsAppJob inserts with status
         // 'queued' — the only status the dispatch worker drains — so the reply
         // actually goes out (a manual insert with status 'pending' would sit
         // in the table forever, which is exactly what the previous code did).
         if (clientPhone) {
+          const greetingLanguage = resolveGreetingLanguage(clientPhone);
           const inquiry = lead.message || lead.inquiry || lead.notes || '';
           const greeting = await generateLeadGreeting({
             clientName,
             listingRef,
             message: typeof inquiry === 'string' ? inquiry : '',
+            language: greetingLanguage,
           });
 
           const jobId = await enqueueWhatsAppJob({
@@ -135,6 +140,7 @@ export async function POST(request: NextRequest) {
             metadata: {
               source: 'property-finder',
               propertyRef: listingRef,
+              language: greetingLanguage,
               greetingSource: greeting.source,
               pfLeadId: lead.id ?? null,
             },
