@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Generate Sierra Estates business analytics reports from Firestore."""
+"""Generate Sierra Estates business analytics reports from Supabase.
+
+Originally backed by Firestore. Migrated to Supabase on 2026-09-20.
+Reads from the `leads`, `listings`, and `profiles` (owners) tables via the
+Supabase REST API.
+"""
 
 from __future__ import annotations
 
@@ -16,40 +21,56 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-except ImportError:  # pragma: no cover - optional dependency
-    firebase_admin = None
-    credentials = None
-    firestore = None
-
 load_dotenv()
 
 
-def _load_firestore_client(project_id: str | None):
-    """Initialize and return a Firestore client."""
-    if firebase_admin is None or credentials is None or firestore is None:
-        raise RuntimeError('firebase-admin is required. Install dependencies from scripts/python/requirements.txt.')
-    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if not service_account_json:
-        raise RuntimeError('FIREBASE_SERVICE_ACCOUNT_JSON is required for Firestore analytics.')
-    try:
-        app = firebase_admin.get_app()
-    except ValueError:
-        options = {'projectId': project_id} if project_id else None
-        if options is None:
-            app = firebase_admin.initialize_app(credentials.Certificate(json.loads(service_account_json)))
-        else:
-            app = firebase_admin.initialize_app(
-                credentials.Certificate(json.loads(service_account_json)),
-                options,
-            )
-    return firestore.client(app=app)
+SUPABASE_URL = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL') or 'https://REDACTED-PROJECT.supabase.co'
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_ANON_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
+
+# Supabase table name → former Firestore collection name mapping
+TABLE_BY_COLLECTION = {
+    'Leads': 'leads',
+    'Properties': 'listings',
+    'Owners': 'profiles',
+}
+
+
+def _load_supabase_table(table: str, limit: int = 10000) -> list[dict[str, Any]]:
+    """Load all rows from a Supabase table via the REST API."""
+    if not SUPABASE_KEY:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY (or anon key) is required for analytics.')
+    headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': f'Bearer {SUPABASE_KEY}',
+        'Accept': 'application/json',
+    }
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    page_size = 1000
+    while True:
+        params = {'limit': page_size, 'offset': offset}
+        response = requests.get(
+            f'{SUPABASE_URL}/rest/v1/{table}',
+            headers=headers,
+            params=params,
+            timeout=30,
+        )
+        response.raise_for_status()
+        batch = response.json()
+        if not batch:
+            break
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        offset += page_size
+        if offset >= limit:
+            break
+    return rows
 
 
 def _serialize(value: Any) -> Any:
-    """Convert Firestore values into JSON-safe data."""
+    """Convert Supabase values into JSON-safe data."""
     if hasattr(value, 'isoformat'):
         try:
             return value.isoformat()
@@ -63,8 +84,10 @@ def _serialize(value: Any) -> Any:
 
 
 def _load_collection(client: Any, name: str) -> list[dict[str, Any]]:
-    """Load and serialize a Firestore collection."""
-    return [{**_serialize(document.to_dict() or {}), 'id': document.id} for document in client.collection(name).stream()]
+    """Load and serialize a Supabase table (name is the legacy Firestore collection name)."""
+    table = TABLE_BY_COLLECTION.get(name, name.lower())
+    rows = _load_supabase_table(table)
+    return [{**_serialize(row), 'id': row.get('id')} for row in rows]
 
 
 def _extract_datetime(document: dict[str, Any]) -> datetime | None:
@@ -161,12 +184,12 @@ def main() -> int:
     parser.add_argument('--date-range', default=None, help='Optional YYYY-MM-DD:YYYY-MM-DD date range filter.')
     parser.add_argument('--output-dir', default='reports', help='Directory for markdown output.')
     parser.add_argument('--send-telegram', action='store_true', help='Send the summary to Telegram after generation.')
-    parser.add_argument('--project-id', default=None, help='Optional Firebase project id override.')
+    parser.add_argument('--project-id', default=None, help='(Deprecated) Firebase project id override — ignored.')
     args = parser.parse_args()
 
     try:
         start, end = _parse_date_range(args.date_range)
-        client = _load_firestore_client(args.project_id)
+        client = None  # not used anymore — kept for signature compatibility
         leads = [lead for lead in _load_collection(client, 'Leads') if _within_range(lead, start, end)]
         properties = [item for item in _load_collection(client, 'Properties') if _within_range(item, start, end)]
         owners = [item for item in _load_collection(client, 'Owners') if _within_range(item, start, end)]
