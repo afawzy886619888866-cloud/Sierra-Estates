@@ -75,6 +75,9 @@
   "git.autorefresh": true,
   "git.autoRepositoryDetection": true,
   "git.repositoryScanMaxDepth": 1,
+  "git.ignoredRepositories": [
+    "C:\\Users\\Sierr"
+  ],
   "gitlens.git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
   "gitlens.codeLens.enabled": true,
   "gitlens.currentLine.enabled": true,
