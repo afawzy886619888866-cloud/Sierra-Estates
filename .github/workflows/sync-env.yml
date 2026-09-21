@@ -82,7 +82,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
           CLIENT_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
-          ADMIN_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
+          ADMIN_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
           KEY: ${{ inputs.env_key }}
           VALUE: ${{ inputs.env_value }}
           IS_SECRET: ${{ inputs.is_secret }}
@@ -157,11 +157,13 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
           CLIENT_VERCEL_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
-          ADMIN_VERCEL_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA' }}
+          ADMIN_VERCEL_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
           # Supabase
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROPERTY_MEDIA_BUCKET: ${{ vars.SUPABASE_PROPERTY_MEDIA_BUCKET || 'property-media' }}
+          SUPABASE_MEDIA_BUCKET: ${{ vars.SUPABASE_MEDIA_BUCKET || 'media' }}
           # URLs & Routing
           NEXT_PUBLIC_CLIENT_URL: ${{ vars.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net' }}
           NEXT_PUBLIC_ADMIN_URL: ${{ vars.NEXT_PUBLIC_ADMIN_URL || 'https://admin.sierra-estates.net' }}
