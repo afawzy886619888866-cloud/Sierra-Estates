@@ -8,9 +8,9 @@
  * 3. Semantic Entity Graph (Cold/Durable, entities: Buyers, Owners, Properties, Relationships)
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 // A price drop at or above this percentage is tagged as a hot/distressed
 // deal. Mirrors apps/api/ecc_memory_engine.py — the two are not wired
