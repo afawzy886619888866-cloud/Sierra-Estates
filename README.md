@@ -7,6 +7,7 @@
 [![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)
 [![Production](https://img.shields.io/badge/Status-100%25%20Production%20Ready-gold.svg)](https://sierra-estates.net)
 [![Deploy](https://img.shields.io/badge/Deploy%20Gates-9%2F9%20Passed-brightgreen)](https://sierra-estates.net)
+<!-- markdownlint-disable-next-line MD051 -->
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg)](#license--maintainers)
 
 > **Sierra Estates Realty** is the premier enterprise luxury PropTech intelligence platform engineered for the Egyptian luxury property market (New Cairo / Fifth Settlement). It unites client property discovery, algorithmic valuation, automated WhatsApp & Telegram lead concierges, interactive spatial masterplan maps, and an autonomous multi-agent fleet grounded by a unified **Obsidian + ECC Memory Brain Engine**.
