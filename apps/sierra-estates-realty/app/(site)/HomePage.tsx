@@ -165,9 +165,7 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
   const [showCompoundDropdown, setShowCompoundDropdown] = useState(false);
-  // Map stays closed until the visitor picks a location in the filter (chips,
-  // autocomplete, or "Map View"). Null = collapsed teaser state.
-  const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>(null);
+  const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -175,17 +173,10 @@ export default function HomePage() {
 
   const handleLocateOnMap = (compoundName: string) => {
     setSelectedMapCompound(compoundName);
-    // Give the map shell one frame to mount before scrolling it into view.
-    requestAnimationFrame(() => {
-      const el = document.getElementById('interactive-map');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    });
-  };
-
-  const handleCloseMap = () => {
-    setSelectedMapCompound(null);
+    const el = document.getElementById('interactive-map');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const [liveCompoundUnits, setLiveCompoundUnits] = useState<CardListing[]>([]);
@@ -325,7 +316,6 @@ export default function HomePage() {
   const handleResetFilters = () => {
     setSearch({ compound: '', type: '', beds: '0', price: '0' });
     setShowCompoundDropdown(false);
-    setSelectedMapCompound(null); // closing the filter also closes the map
   };
 
   async function submitInquiry(e: React.FormEvent) {
@@ -472,11 +462,7 @@ export default function HomePage() {
                       setSearch({ ...search, compound: chip.val });
                       setShowCompoundDropdown(false);
                       if (chip.val) {
-                        // A location pick in the filter opens the interactive map.
                         handleLocateOnMap(chip.val);
-                      } else {
-                        // "All Compounds" clears the pick and collapses the map.
-                        setSelectedMapCompound(null);
                       }
                     }}
                     style={{
@@ -508,10 +494,6 @@ export default function HomePage() {
               {/* Compound search with autocomplete */}
               <div className="field" style={{ position: 'relative' }}>
                 <label htmlFor="hero-compound-search">{t('fLoc')}</label>
-                <div style={{ fontSize: 10.5, color: 'rgba(147, 197, 253, 0.75)', margin: '2px 0 6px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <MapIcon style={{ width: 10, height: 10 }} />
-                  <span>{isAr ? 'اختر الموقع لتُفتح الخريطة التفاعلية عليه' : 'Pick a location — the interactive map opens on it'}</span>
-                </div>
                 <div style={{ position: 'relative', width: '100%' }}>
                   <input
                     type="text"
@@ -534,7 +516,6 @@ export default function HomePage() {
                       onClick={() => {
                         setSearch({ ...search, compound: '' });
                         setShowCompoundDropdown(false);
-                        setSelectedMapCompound(null); // clearing the pick closes the map
                       }}
                       style={{
                         position: 'absolute',
@@ -770,23 +751,15 @@ export default function HomePage() {
                   type="button"
                   onClick={() => {
                     if (search.compound.trim()) {
-                      // A picked location opens the interactive map on it.
                       handleLocateOnMap(search.compound.trim());
                     } else {
-                      // No pick yet: guide the visitor to the location filter
-                      // instead of opening an unfiltered map.
-                      const input = document.getElementById('hero-compound-search') as HTMLInputElement | null;
-                      if (input) {
-                        input.focus();
-                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        input.classList.add('hero-pick-hint');
-                        window.setTimeout(() => input.classList.remove('hero-pick-hint'), 2400);
-                      }
+                      const el = document.getElementById('interactive-map');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                   }}
                   className="btn"
                   id="hero-map-locate-btn"
-                  title={isAr ? 'اختر موقعاً من الفلتر لفتح الخريطة التفاعلية' : 'Pick a location in the filter to open the interactive map'}
+                  title={isAr ? 'عرض وتحديد النتائج على الخريطة التفاعلية' : 'Explore Results on Interactive Masterplan Map'}
                   style={{
                     background: 'rgba(255, 255, 255, 0.08)',
                     backdropFilter: 'blur(8px)',
@@ -864,71 +837,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* INTERACTIVE MASTERPLAN MAP SECTION — opens only after a location pick */}
+      {/* INTERACTIVE MASTERPLAN MAP SECTION */}
       <section className="block well" id="interactive-map">
         <div className="wrap">
           <div className="sec-head rv" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
             <div>
               <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 38px)', fontFamily: 'var(--display)', color: 'var(--ink, #0f172a)', margin: '0 0 8px' }}>
-                {selectedMapCompound ? t('mapTit') : (isAr ? 'خريطة الماستربلان التفاعلية' : 'Interactive Masterplan Map')}
+                {t('mapTit')}
               </h2>
               <p style={{ color: 'var(--muted, #64748b)', fontSize: 15, margin: 0, maxWidth: 640 }}>
-                {selectedMapCompound
-                  ? t('mapSub')
-                  : (isAr
-                    ? 'اختر الموقع الذي تهتم به من شريط البحث بالأعلى — وتُفتح الخريطة التفاعلية عليه فوراً مع الوحدات المطابقة.'
-                    : 'Pick the location you are interested in from the search bar above — the interactive map opens on it instantly with matching units.')}
+                {t('mapSub')}
               </p>
             </div>
-            {selectedMapCompound && (
-              <button
-                type="button"
-                onClick={handleCloseMap}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  color: 'var(--ink, #0f172a)',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  padding: '9px 16px',
-                  borderRadius: 12,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                }}
-              >
-                <X style={{ width: 14, height: 14 }} />
-                <span>{isAr ? 'إغلاق الخريطة' : 'Close Map'}</span>
-              </button>
-            )}
+            <Link href="/compounds" className="sec-link" style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
+            </Link>
           </div>
 
-          {selectedMapCompound ? (
-            <>
-              {/* Interactive Map Canvas — mounted only after a location pick */}
-              <div
-                className="map-shell rv sierra-map-open"
-                style={{ height: 580, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(223, 173, 58, 0.25)', position: 'relative' }}
-              >
-                <CompoundsMap
-                  compounds={allCompounds}
-                  featured={featuredCompounds}
-                  selectedName={selectedMapCompound}
-                  onSelectAction={(name) => {
-                    setSelectedMapCompound(name);
-                    setSearch((prev) => ({ ...prev, compound: name }));
-                  }}
-                  showControls={true}
-                  filterCompound={search.compound}
-                  filterPrice={search.price}
-                  filterType={search.type}
-                  filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
-                  isAr={isAr}
-                />
-              </div>
-              <div className="map-status" role="status" aria-live="polite">
+          {/* Interactive Map Canvas */}
+          <div className="map-shell rv" style={{ height: 580, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(223, 173, 58, 0.25)' }}>
+            <CompoundsMap
+              compounds={allCompounds}
+              featured={featuredCompounds}
+              selectedName={selectedMapCompound}
+              onSelectAction={(name) => {
+                setSelectedMapCompound(name);
+                setSearch((prev) => ({ ...prev, compound: name }));
+              }}
+              showControls={true}
+              filterCompound={search.compound}
+              filterPrice={search.price}
+              filterType={search.type}
+              filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
+              isAr={isAr}
+            />
+          </div>
+          <div className="map-status" role="status" aria-live="polite">
             {inventoryStatus === 'loading' && (isAr ? 'جاري مزامنة المخزون الحي…' : 'Syncing live inventory…')}
             {inventoryStatus === 'error' && (isAr ? 'تعذر مزامنة المخزون الحي. يتم عرض البيانات المرجعية.' : 'Live inventory is unavailable. Showing reference inventory.')}
             {inventoryStatus === 'ready' && (
@@ -936,9 +880,10 @@ export default function HomePage() {
                 ? `${matchingCount.toLocaleString()} وحدة تطابق اختياراتك`
                 : `${matchingCount.toLocaleString()} units match your selections`
             )}
-              </div>
+          </div>
 
-              {/* Synchronized Properties Deck for Active Compound */}
+          {/* Synchronized Properties Deck for Active Compound */}
+          {selectedMapCompound && (
             <div className="active-compound-deck rv" style={{ marginTop: 28 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
                 <div>
@@ -995,75 +940,6 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
-            </div>
-            </>
-          ) : (
-            /* Collapsed teaser — the heavy map mounts only after a location pick */
-            <div className="map-teaser rv" style={{
-              borderRadius: 16,
-              border: '1px dashed rgba(200, 150, 26, 0.45)',
-              background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.06) 0%, rgba(15, 23, 42, 0.03) 100%)',
-              padding: 'clamp(28px, 5vw, 56px)',
-              textAlign: 'center',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-            }}>
-              <div style={{
-                width: 72,
-                height: 72,
-                margin: '0 auto 18px',
-                borderRadius: 20,
-                display: 'grid',
-                placeItems: 'center',
-                background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.16), rgba(200, 150, 26, 0.04))',
-                border: '1px solid rgba(200, 150, 26, 0.35)',
-                boxShadow: '0 10px 30px -12px rgba(200, 150, 26, 0.45)',
-              }}>
-                <MapIcon style={{ width: 30, height: 30, color: '#b8860b' }} aria-hidden="true" />
-              </div>
-              <h3 style={{ margin: '0 0 10px', fontSize: 'clamp(19px, 2.2vw, 26px)', fontFamily: 'var(--display)', color: 'var(--ink, #0f172a)' }}>
-                {isAr ? 'الخريطة التفاعلية تنتظر اختيارك للموقع' : 'The Interactive Map Awaits Your Location Pick'}
-              </h3>
-              <p style={{ margin: '0 auto 22px', maxWidth: 560, fontSize: 14.5, lineHeight: 1.65, color: 'var(--muted, #64748b)' }}>
-                {isAr
-                  ? 'اختر الكمبوند أو المنطقة من خانة «الموقع» في شريط البحث بالأعلى — وستُفتح الخريطة التفاعلية فوراً على الماستربلان مع الوحدات المطابقة لبحثك.'
-                  : 'Pick a compound or area in the “Location” field of the search bar above — the interactive masterplan map opens instantly, focused on your pick with its matching verified units.'}
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
-                {['Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City'].map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => {
-                      setSearch((prev) => ({ ...prev, compound: name }));
-                      handleLocateOnMap(name);
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      minHeight: 40,
-                      borderRadius: 999,
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      background: '#fff',
-                      color: '#8a6a2c',
-                      border: '1px solid rgba(200, 150, 26, 0.45)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#c8961a'; e.currentTarget.style.color = '#fff'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#8a6a2c'; }}
-                  >
-                    {isAr ? 'افتح' : 'Open'} {name}
-                  </button>
-                ))}
-              </div>
-              <Link
-                href="/compounds"
-                className="sec-link"
-                style={{ color: '#8a6a2c', fontWeight: 700, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-              >
-                <span>{t('allCpds')}</span> <ArrowRight className="i" style={{ width: 16, height: 16 }} />
-              </Link>
             </div>
           )}
         </div>

@@ -120,7 +120,59 @@ pnpm migrate:supabase
 
 ---
 
-## 7. Current-state summary
+## 7. Vercel deployment ownership
+
+Vercel Git deployments are intentionally disabled in [`vercel.json`](./vercel.json).
+The Vercel GitHub integration remains the owner of normal `main` push deployments
+for the client and admin projects. The dispatch-only
+[`.github/workflows/deploy-vercel.yml`](./.github/workflows/deploy-vercel.yml)
+workflow is reserved for audited emergency deployments and environment-variable
+resynchronization.
+
+The workflow must resolve these GitHub configuration values before a production
+deployment:
+
+- Secret: `VERCEL_TOKEN`
+- Variables: `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`,
+  `ADMIN_VERCEL_PROJECT_ID`
+- Runtime secrets and Supabase configuration listed in the workflow comments
+
+Project-ID fallbacks in the workflow are non-secret emergency defaults. They
+must not be replaced with credentials or copied into environment files. If the
+project IDs change, update the GitHub Variables and this documentation together.
+
+---
+
+## 8. Storage boundary
+
+Vercel provides the web runtime only. Property media is stored in the public
+Supabase `property-media` bucket through
+`apps/sierra-estates-realty/lib/services/StorageService.ts`. The application
+does not use Vercel Blob, KV, or Postgres storage packages.
+
+Do not delete or migrate Vercel or Supabase storage resources based only on
+repository inspection. Any production resource cleanup requires an
+authenticated provider review, an explicit target, and a reversible backup or
+recovery plan. The repository intentionally contains no deployment-purge
+utility: deleting historical Vercel deployments is a provider-level operation
+and must not be bundled into application deployment.nventory, an approved change card, and a rollback plan.
+
+---
+
+## 9. Repository hygiene boundary
+
+Generated directories such as `.next`, `.turbo`, `.vercel`, `dist`,
+`node_modules`, coverage output, and local reports are safe to regenerate and
+are excluded from deployment or source comparisons. Tracked archives,
+`.agents`, `.amphion`, skills, workflows, and operational tooling are not
+automatically disposable: they require reference checks before removal.
+
+Run `pnpm check:hygiene` to produce a read-only classification. The command
+never deletes files, changes branches, or contacts Vercel/Supabase.
+
+---
+
+## 10. Current-state summary
 
 - The repo is modernized around the Supabase-first architecture.
 - The web app is not the place for long-running ingestion or bot work.

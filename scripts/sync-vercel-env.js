@@ -2,7 +2,7 @@
  * Automated Vercel Environment Variables Synchronizer
  * Syncs all GitHub/Local environment variables directly to Sierra Estates Vercel projects:
  * 1. Client Project: sierra-estates-client-portal (prj_ieVcIcoeTtHndspXMzlE0cwLl89c)
- * 2. Admin Project: sierra-estates-admin-page (prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA / prj_NMqZUADX9A5ba22ylMfls2l7I0zX)
+ * 2. Admin Project: sierra-estates-admin-page (prj_inhTu8kppYhQv2NZZV3GTUdU8uBi)
  */
 
 import https from 'https';
@@ -154,7 +154,7 @@ function vercelRequest(method, endpoint, body = null) {
       path: `${endpoint}${endpoint.includes('?') ? '&' : '?'}teamId=${VERCEL_ORG_ID}`,
       method,
       headers: {
-        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+        Authorization: `Bearer ${VERCEL_TOKEN}`,
         'Content-Type': 'application/json',
         ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {})
       }
