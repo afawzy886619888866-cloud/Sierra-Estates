@@ -42,6 +42,7 @@
         "mcp:smoke-test": "tsx scripts/mcp-smoke-test.ts",
         "check:public-env": "node scripts/check-public-env-safety.mjs",
         "check:backend": "node scripts/check-backend-policy.mjs",
+        "check:hygiene": "node scripts/check-repository-hygiene.mjs",
         "check:legacy-runtime": "node scripts/check-legacy-runtime-boundary.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
