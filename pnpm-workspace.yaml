@@ -79,7 +79,7 @@ catalog:
   '@replit/vite-plugin-runtime-error-modal': ^0.0.6
   '@tailwindcss/vite': ^4.1.14
   '@tanstack/react-query': ^5.90.21
-  '@types/node': ^26.2.0
+  '@types/node': ^26.6.1
   '@types/react': ^19.2.0
   '@types/react-dom': ^19.2.0
   '@vitejs/plugin-react': ^6.0.4
@@ -95,7 +95,7 @@ catalog:
   tailwind-merge: ^3.3.1
   tailwindcss: ^4.3.3
   tsx: ^4.21.0
-  typescript: ^5.8.2
+  typescript: ^7.0.2
   vite: ^7.3.5
   wouter: ^3.3.5
   zod: ^3.25.76
@@ -234,7 +234,7 @@ overrides:
   dompurify: '>=3.4.13'
   nanoid: '>=3.3.17'
   undici: '>=6.28.0 <7'
-  typescript: ^5.8.2
+  typescript: ^7.0.2
   tar: 7.5.22
   'tar@6': 7.5.22
   'tar@^6': 7.5.22
