@@ -28,8 +28,8 @@
     "@sierra-estates/obsidian": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "typescript": "^5.8.2"
+    "@types/node": "^26.6.1",
+    "typescript": "^7.0.2"
   },
   "exports": {
     ".": {
