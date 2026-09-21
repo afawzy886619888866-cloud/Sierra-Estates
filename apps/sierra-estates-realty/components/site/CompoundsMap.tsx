@@ -429,7 +429,7 @@ export default function CompoundsMap({
   filterCompound,
   filterPrice,
   filterType: _filterType,
-  filterBed: _filterBed,
+  filterBed,
   isAr = false,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
@@ -465,6 +465,10 @@ export default function CompoundsMap({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (filterBed !== undefined) setSelectedBed(filterBed);
+  }, [filterBed]);
 
   // Compute unit count for a given compound in the selected segment
   const getCompoundCount = useCallback(
@@ -993,6 +997,7 @@ export default function CompoundsMap({
                 key={tab.key}
                 type="button"
                 onClick={() => setSelectedSegment(tab.key)}
+                aria-pressed={isCurrent}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1056,6 +1061,7 @@ export default function CompoundsMap({
                 key={zone.key}
                 type="button"
                 onClick={() => handleZoneSelect(zone)}
+                aria-pressed={isZoneActive}
                 style={{
                   padding: '3px 9px',
                   borderRadius: 999,
@@ -1081,6 +1087,8 @@ export default function CompoundsMap({
         <button
           type="button"
           onClick={() => setIsFilterPanelOpen((prev) => !prev)}
+          aria-expanded={isFilterPanelOpen}
+          aria-controls="map-smart-filter-panel"
           style={{
             position: 'absolute',
             top: 16,
@@ -1127,7 +1135,10 @@ export default function CompoundsMap({
       {/* Floating Smart Filter Panel on Top-Right */}
       {showControls && isFilterPanelOpen && (
         <div
+          id="map-smart-filter-panel"
           className="map-smart-filter-panel"
+          role="region"
+          aria-label={isAr ? 'فلاتر الخريطة' : 'Map filters'}
           style={{
             position: 'absolute',
             top: 54,

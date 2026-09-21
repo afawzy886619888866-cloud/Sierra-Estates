@@ -19,11 +19,10 @@ dotenv.config({ path: path.resolve(ROOT, '.env.local') });
 dotenv.config();
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sbp_3f95f2d98451c633e86f637049abf4dccb08b85c';
-const PROJECT_REF = 'REDACTED-PROJECT';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('placeholder')) {
-  console.error('❌ Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.');
+  console.error('Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.');
   process.exit(1);
 }
 
@@ -60,7 +59,7 @@ async function migrateAllData() {
   const teamUsers = [
     {
       email: 'admin@sierra-estates.net',
-      password: 'DemoAdminSecurePassword2026!',
+      password: process.env.MIGRATION_ADMIN_PASSWORD,
       fullName: 'Sierra Estates Executive Admin',
       role: 'superadmin',
       phone: '+201000000000',
@@ -69,7 +68,7 @@ async function migrateAllData() {
     },
     {
       email: 'ahmed.fawzy@sierra-estates.net',
-      password: 'AhmedFawzyPassword2026!',
+      password: process.env.MIGRATION_AHMED_PASSWORD,
       fullName: 'Ahmed Fawzy',
       role: 'admin',
       phone: '+201012345001',
@@ -78,7 +77,7 @@ async function migrateAllData() {
     },
     {
       email: 'farida@sierra-estates.net',
-      password: 'FaridaPassword2026!',
+      password: process.env.MIGRATION_FARIDA_PASSWORD,
       fullName: 'Farida Al-Sayed',
       role: 'admin',
       phone: '+201012345002',
@@ -87,7 +86,7 @@ async function migrateAllData() {
     },
     {
       email: 'layla@sierra-estates.net',
-      password: 'LaylaMansourPassword2026!',
+      password: process.env.MIGRATION_LAYLA_PASSWORD,
       fullName: 'Layla Mansour',
       role: 'agent',
       phone: '+201001234567',
@@ -96,7 +95,7 @@ async function migrateAllData() {
     },
     {
       email: 'karim@sierra-estates.net',
-      password: 'KarimFahmyPassword2026!',
+      password: process.env.MIGRATION_KARIM_PASSWORD,
       fullName: 'Karim Fahmy',
       role: 'agent',
       phone: '+201002345678',
@@ -105,7 +104,7 @@ async function migrateAllData() {
     },
     {
       email: 'nour@sierra-estates.net',
-      password: 'NourSalehPassword2026!',
+      password: process.env.MIGRATION_NOUR_PASSWORD,
       fullName: 'Nour Saleh',
       role: 'agent',
       phone: '+201003456789',
@@ -114,7 +113,7 @@ async function migrateAllData() {
     },
     {
       email: 'omar@sierra-estates.net',
-      password: 'OmarMagdyPassword2026!',
+      password: process.env.MIGRATION_OMAR_PASSWORD,
       fullName: 'Omar Magdy',
       role: 'agent',
       phone: '+201004567890',
@@ -123,7 +122,7 @@ async function migrateAllData() {
     },
     {
       email: 'ai@sierra-estates.net',
-      password: 'SierraAiBotPassword2026!',
+      password: process.env.MIGRATION_AI_PASSWORD,
       fullName: 'WhatsApp Concierge Bot',
       role: 'agent',
       phone: '+201065582924',
@@ -131,6 +130,10 @@ async function migrateAllData() {
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&q=80',
     },
   ];
+  const usersWithCredentials = teamUsers.filter((user) => user.password);
+  if (usersWithCredentials.length !== teamUsers.length) {
+    console.log('ℹ️ Skipping team users without explicit MIGRATION_*_PASSWORD values.');
+  }
 
   const existingAuthUsers = await supabase.auth.admin.listUsers();
   const userMap = new Map<string, string>(); // email -> userId
@@ -139,7 +142,7 @@ async function migrateAllData() {
   });
 
   const createdProfiles: any[] = [];
-  for (const u of teamUsers) {
+  for (const u of usersWithCredentials) {
     let uid = userMap.get(u.email.toLowerCase());
     if (!uid) {
       const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({

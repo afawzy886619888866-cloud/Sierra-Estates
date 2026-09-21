@@ -28,6 +28,10 @@ a{color:var(--pri);text-decoration:none;transition:color .2s var(--silk);}
 a:hover{color:var(--pri-d);}
 [data-theme="dark"] a{color:#e9c176;}
 [data-theme="dark"] a:hover{color:#c8961a;}
+
+.map-status{display:flex;align-items:center;min-height:34px;margin-top:10px;padding:0 4px;color:var(--muted,#64748b);font-size:12px;font-weight:600;}
+@media(max-width:640px){.map-status{font-size:11px;}.map-shell{height:500px!important;min-height:420px!important;}}
+@media(prefers-reduced-motion:reduce){.map-status{transition:none;}}
 /* ── hero slider ── */
 .hero{position:relative;min-height:clamp(620px,84vh,860px);display:flex;flex-direction:column;justify-content:center;padding:70px 0 150px;overflow:hidden;background:#0a1622;}
 .hero .slide{position:absolute;inset:0;opacity:0;z-index:0;transform:scale(1.08);}

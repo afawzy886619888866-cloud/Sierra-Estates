@@ -11,8 +11,8 @@ dotenv.config({ path: path.join(ROOT, '.env.local') });
 dotenv.config();
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'sbp_3f95f2d98451c633e86f637049abf4dccb08b85c';
-const token = process.env.SUPABASE_ACCESS_TOKEN || 'sbp_3f95f2d98451c633e86f637049abf4dccb08b85c';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const token = process.env.SUPABASE_ACCESS_TOKEN;
 const projectRef = 'REDACTED-PROJECT';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {

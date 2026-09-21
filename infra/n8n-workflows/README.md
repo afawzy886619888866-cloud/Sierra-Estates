@@ -102,7 +102,7 @@ Each workflow uses Firebase + Gemini API. Configure these credentials in n8n:
 
 1. Go to **Settings → Credentials**
 2. Click **"Add Credential"** → **"Firebase Realtime Database"**
-3. Upload the service account JSON (same as `secrets/firebase-service-account.json`)
+3. Configure the Supabase URL and service-role key in the n8n environment.
 4. Name it: `Sierra Firebase`
 
 **Gemini API:**
@@ -179,7 +179,7 @@ curl -X POST http://your-vps:5678/webhook/whatsapp-incoming \
 
 ### Firebase connection error
 
-- Verify service account JSON is mounted: `docker compose exec n8n ls /data/firebase-service-account.json`
+- Verify Supabase configuration is present: `docker compose exec n8n printenv SUPABASE_URL`
 - Check credential is configured in n8n Settings → Credentials
 
 ### Gemini API errors
