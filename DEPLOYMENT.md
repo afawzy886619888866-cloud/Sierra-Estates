@@ -91,7 +91,8 @@ pnpm deploy:supabase
 pnpm migrate:supabase
 ```
 
-Notes:
+**Notes:**
+
 - `pnpm deploy:rules` and `pnpm deploy:functions` are legacy Firebase commands and are intentionally not part of the active workflow.
 - `pnpm check:backend` is the canonical guard for Supabase write policy.
 - `pnpm deploy:check` validates deployment readiness against the active architecture contract.
