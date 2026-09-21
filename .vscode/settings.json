@@ -84,5 +84,8 @@
   "gitlens.hovers.enabled": true,
   "gitlens.statusBar.enabled": true,
   "gitlens.showWelcomeOnInstall": false,
-  "gitlens.showWhatsNewAfterUpgrades": false
+  "gitlens.showWhatsNewAfterUpgrades": false,
+  "markdown.validate.ignoredLinks": [
+    "#license--maintainers"
+  ]
 }
