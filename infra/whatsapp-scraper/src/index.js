@@ -18,7 +18,7 @@
  *    Client sends WhatsApp message
  *      → Baileys receives it here
  *      → This script forwards to n8n webhook (N8N_WEBHOOK_URL)
- *      → n8n runs workflow (Gemini matching, Firestore writes)
+ *      → n8n runs workflow (Gemini matching, Supabase writes)
  *      → n8n returns bot reply text
  *      → This script sends reply back to client via WhatsApp
  *
