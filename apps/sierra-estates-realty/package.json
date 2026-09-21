@@ -19,7 +19,7 @@
     "dependencies": {
         "@ai-sdk/gateway": "^4.0.62",
         "@arizeai/openinference-semantic-conventions": "^2.2.0",
-        "@google-cloud/storage": "^8.0.1",
+        "@google-cloud/storage": "^8.2.0",
         "@google/generative-ai": "^0.24.1",
         "@grpc/grpc-js": "^1.14.3",
         "@gsap/react": "^2.1.2",
