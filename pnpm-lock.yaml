@@ -690,7 +690,11 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
-  packages/whatsapp-shared: {}
+  packages/whatsapp-shared:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.48.0
+        version: 2.112.4(@opentelemetry/api@1.9.1)
 
   scripts:
     devDependencies:
