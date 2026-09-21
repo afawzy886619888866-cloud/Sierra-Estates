@@ -15,7 +15,7 @@ infra/
 ├── whatsapp-auth/              ← Baileys session (auto-created, persists QR)
 │
 ├── secrets/                    ← Firebase service account JSON (you place here)
-│   └── firebase-service-account.json
+│   └── .env
 │
 └── whatsapp-scraper/           ← Baileys Node.js app
     ├── package.json
@@ -32,7 +32,8 @@ infra/
 ```bash
 mkdir -p secrets
 # Download from Firebase Console → Project Settings → Service Accounts → Generate new key
-cp ~/Downloads/sierra-estates-firebase-adminsdk.json secrets/firebase-service-account.json
+cp .env.example .env
+# Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.
 ```
 
 ### 2. Configure environment

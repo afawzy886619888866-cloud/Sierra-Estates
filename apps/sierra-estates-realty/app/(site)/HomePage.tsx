@@ -109,6 +109,7 @@ const SALE_PRICES = [
 export default function HomePage() {
   const { t, isAr } = useSite();
   const [listings, setListings] = useState<CardListing[]>(HZDATA.listings as CardListing[]);
+  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
 
@@ -118,7 +119,13 @@ export default function HomePage() {
     fetch('/api/inventory?limit=300')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (!active || !data?.units || !Array.isArray(data.units) || data.units.length === 0) return;
+        if (!active) return;
+        if (!data?.units || !Array.isArray(data.units)) {
+          setInventoryStatus('error');
+          return;
+        }
+        setInventoryStatus('ready');
+        if (data.units.length === 0) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
           const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
           const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
@@ -145,7 +152,10 @@ export default function HomePage() {
         });
         setListings(mapped);
       })
-      .catch((err) => console.warn('[HomePage] Live inventory fetch error:', err));
+      .catch((err) => {
+        if (active) setInventoryStatus('error');
+        console.warn('[HomePage] Live inventory fetch error:', err);
+      });
     return () => {
       active = false;
     };
@@ -290,6 +300,13 @@ export default function HomePage() {
       }
       if (search.beds !== '0' && item.beds) {
         if (item.beds < parseInt(search.beds, 10)) return false;
+      }
+      if (search.price !== '0') {
+        const budget = parseInt(search.price.replace(/[^0-9]/g, ''), 10);
+        if (!Number.isNaN(budget) && budget > 0) {
+          if (searchMode === 'rent' && item.egpM * 1000 > budget * 1000) return false;
+          if (searchMode !== 'rent' && item.egpM > budget) return false;
+        }
       }
       return true;
     }).length;
@@ -854,6 +871,15 @@ export default function HomePage() {
               filterBed={search.beds === '0' ? 'any' : parseInt(search.beds, 10)}
               isAr={isAr}
             />
+          </div>
+          <div className="map-status" role="status" aria-live="polite">
+            {inventoryStatus === 'loading' && (isAr ? 'جاري مزامنة المخزون الحي…' : 'Syncing live inventory…')}
+            {inventoryStatus === 'error' && (isAr ? 'تعذر مزامنة المخزون الحي. يتم عرض البيانات المرجعية.' : 'Live inventory is unavailable. Showing reference inventory.')}
+            {inventoryStatus === 'ready' && (
+              isAr
+                ? `${matchingCount.toLocaleString()} وحدة تطابق اختياراتك`
+                : `${matchingCount.toLocaleString()} units match your selections`
+            )}
           </div>
 
           {/* Synchronized Properties Deck for Active Compound */}

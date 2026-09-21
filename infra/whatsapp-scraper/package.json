@@ -22,7 +22,6 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.48.0",
     "@whiskeysockets/baileys": "^6.7.0",
-    "firebase-admin": "^14.2.0",
     "node-fetch": "^3.3.2",
     "pino": "^9.0.0",
     "qrcode": "^1.5.4",

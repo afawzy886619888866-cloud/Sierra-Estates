@@ -39,8 +39,8 @@ describe('package.json', () => {
     expect(PACKAGE_JSON.dependencies['@whiskeysockets/baileys']).toBeDefined();
   });
 
-  it('has firebase-admin dependency', () => {
-    expect(PACKAGE_JSON.dependencies['firebase-admin']).toBeDefined();
+  it('has Supabase dependency', () => {
+    expect(PACKAGE_JSON.dependencies['@supabase/supabase-js']).toBeDefined();
   });
 
   it('has qrcode-terminal dependency', () => {
@@ -247,8 +247,8 @@ describe('docker-compose.yml', () => {
     expect(compose).toContain('healthcheck');
   });
 
-  it('mounts Firebase service account as read-only', () => {
-    expect(compose).toContain('firebase-service-account.json');
-    expect(compose).toContain(':ro');
+  it('provides Supabase credentials through the environment', () => {
+    expect(compose).toContain('SUPABASE_URL');
+    expect(compose).toContain('SUPABASE_SERVICE_ROLE_KEY');
   });
 });
