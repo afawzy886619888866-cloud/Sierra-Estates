@@ -5,7 +5,7 @@
 #
 #  Runs on a $10 VPS (4GB RAM, Ubuntu 22.04).
 #  Services:
-#    1. n8n          — workflow automation (Property Finder → Firestore)
+#    1. n8n          — workflow automation (Property Finder → Supabase)
 #    2. whatsapp-scraper — Baileys WhatsApp client (QR auth, message relay)
 #
 #  🚀 Quick start:
@@ -24,7 +24,7 @@ version: '3.9'
 services:
   # ─────────────────────────────────────────────────────────────────────────
   #  n8n — Workflow Automation
-  #  Handles: Property Finder webhook → Firestore leads
+  #  Handles: Property Finder webhook → Supabase leads
   #           Gemini AI matching → request updates
   #           Scheduled scrapes + notifications
   # ─────────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ services:
       # ── Timezone (Egypt) ──
       - GENERIC_TIMEZONE=${TIMEZONE:-Africa/Cairo}
       - TZ=${TIMEZONE:-Africa/Cairo}
-      # ── Supabase (for direct DB writes from n8n HTTP nodes) ──
+      # ── Supabase (authoritative data store) ──
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       # ── Gemini API (for AI matching in workflows) ──
@@ -82,7 +82,7 @@ services:
       - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://n8n:5678/webhook/whatsapp-incoming}
       # ── Bot identity (shown in WhatsApp profile) ──
       - BOT_NAME=${BOT_NAME:-Sierra Estates}
-      # ── Supabase (direct writes to leads / inquiries / whatsapp_queue) ──
+      # ── Supabase (authoritative data store) ──
       - SUPABASE_URL=${SUPABASE_URL:-}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       # ── Logging ──
