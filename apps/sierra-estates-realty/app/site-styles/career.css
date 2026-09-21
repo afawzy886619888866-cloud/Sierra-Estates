@@ -55,6 +55,8 @@
 .cr-spotlight-features{list-style:none;padding:0;margin:0 0 24px;display:grid;gap:10px;}
 .cr-spotlight-features li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500;}
 .cr-spotlight-features li svg{color:#10b981;width:16px;height:16px;flex:none;}
+.cr-success-link{display:inline-block;margin-top:8px;color:#c9a86a;font-weight:700;text-decoration:underline;text-underline-offset:3px;}
+.cr-success-link:hover{color:#dfc38c;}
 
 /* ------------------------------------------------------------------ */
 /*  DEPARTMENT FILTERS                                                 */

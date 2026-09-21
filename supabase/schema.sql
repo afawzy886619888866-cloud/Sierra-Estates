@@ -589,6 +589,9 @@ CREATE TABLE IF NOT EXISTS public.career_applications (
     email TEXT,
     position TEXT NOT NULL,
     experience TEXT,
+    has_vehicle BOOLEAN NOT NULL DEFAULT FALSE,
+    biggest_achievements TEXT NOT NULL DEFAULT '',
+    expected_salary TEXT NOT NULL DEFAULT '',
     message TEXT,
     -- Remaining answers from the /careers form.
     real_estate_knowledge TEXT,
