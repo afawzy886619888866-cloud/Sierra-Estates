@@ -85,7 +85,7 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@jest/transform": "^30.4.1",
+        "@jest/transform": "^30.5.1",
         "@jest/types": "^30.5.1",
         "@next/eslint-plugin-next": "16.3.1",
         "@tailwindcss/postcss": "^4",
