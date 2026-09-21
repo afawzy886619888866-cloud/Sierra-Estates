@@ -386,7 +386,7 @@ export class AugustOwnersAgentService {
     const priceMatch = text.match(/(\d[\d,\. ]{3,12})\s*(جنيه|ج\.م|egp|m|مليون|k|الف)?/i);
     let price = 0;
     if (priceMatch) {
-      let rawNum = priceMatch[1].replace(/[, ]/g, '');
+      const rawNum = priceMatch[1].replace(/[, ]/g, '');
       price = parseFloat(rawNum) || 0;
       if (text.includes('مليون') && price < 1000) {
         price = price * 1_000_000;
