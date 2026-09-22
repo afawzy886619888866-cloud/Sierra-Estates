@@ -298,7 +298,7 @@ describe('System Wiring & Integration Verification Test Suite', () => {
       }).not.toThrow();
     });
 
-    it('root and app vercel.json must disable automatic git deployment to protect against rate collisions', () => {
+    it('root and app vercel.json must enable automatic git deployment', () => {
       const rootVercel = JSON.parse(
         fs.readFileSync(path.join(ROOT_DIR, 'vercel.json'), 'utf-8')
       );
@@ -309,8 +309,8 @@ describe('System Wiring & Integration Verification Test Suite', () => {
         )
       );
 
-      expect(rootVercel.git?.deploymentEnabled).toBe(false);
-      expect(appVercel.git?.deploymentEnabled).toBe(false);
+      expect(rootVercel.git?.deploymentEnabled).toBe(true);
+      expect(appVercel.git?.deploymentEnabled).toBe(true);
     });
 
     it('turbo.json must define pipelines for all core monorepo lifecycle stages', () => {
