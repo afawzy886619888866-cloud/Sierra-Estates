@@ -114,6 +114,19 @@
 .sheet .st.av{background:rgba(40,167,69,.12);color:var(--green);}
 .sheet .st.rs{background:rgba(230,57,70,.1);color:var(--red);}
 .sheet .go{color:var(--pri);}
+.sheet-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:14px;}
+.sheet-empty p{margin:0 0 10px;}
+.sheet-empty a{color:var(--pri);font-weight:700;}
+.sheet-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:440px;}
+.sheet-table{min-width:760px;}
+.sheet-code{font-family:var(--mono);color:var(--ink);}
+.sheet-status{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font:700 10px var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--pri-soft);color:var(--pri);}
+.sheet-status.is-rent{background:rgba(40,167,69,.12);color:var(--green);}
+@media(max-width:700px){
+  .sheet-table-wrap{margin-inline:-4px;border-radius:8px;}
+  .sheet-table{font-size:12px;min-width:700px;}
+  .sheet thead th,.sheet tbody td{padding:10px 12px;}
+}
 
 [dir="rtl"] .cpd-card .zline{letter-spacing:.02em;font-family:var(--font);}
 
