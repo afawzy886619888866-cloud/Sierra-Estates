@@ -15,14 +15,6 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-except ImportError:  # pragma: no cover - optional dependency
-    firebase_admin = None
-    credentials = None
-    firestore = None
-
 load_dotenv('.env.local')
 load_dotenv()
 
@@ -49,27 +41,6 @@ def _read_supabase_leads() -> list[dict[str, Any]]:
     return resp.json()
 
 
-def _load_firestore_client(project_id: str | None):
-    """Initialize and return a Firestore client."""
-    if firebase_admin is None or credentials is None or firestore is None:
-        raise RuntimeError('firebase-admin is required. Install dependencies from scripts/python/requirements.txt.')
-    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if not service_account_json:
-        raise RuntimeError('FIREBASE_SERVICE_ACCOUNT_JSON is required for Firestore access.')
-    try:
-        app = firebase_admin.get_app()
-    except ValueError:
-        options = {'projectId': project_id} if project_id else None
-        if options is None:
-            app = firebase_admin.initialize_app(credentials.Certificate(json.loads(service_account_json)))
-        else:
-            app = firebase_admin.initialize_app(
-                credentials.Certificate(json.loads(service_account_json)),
-                options,
-            )
-    return firestore.client(app=app)
-
-
 def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
     """Read leads from a CSV file."""
     if not input_path.exists():
@@ -79,10 +50,14 @@ def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
 
 
 def _read_firestore_leads(project_id: str | None, collection_name: str) -> list[dict[str, Any]]:
-    """Read leads from Firestore (legacy fallback)."""
-    client = _load_firestore_client(project_id)
-    documents = client.collection(collection_name).stream()
-    return [{**(document.to_dict() or {}), 'id': document.id} for document in documents]
+    """Read leads from Firestore (legacy fallback — deprecated).
+
+    Supabase is the only supported source since 2026-09-20. This stub remains
+    so old CLI invocations fail with a clear message instead of crashing.
+    """
+    raise RuntimeError(
+        'Firestore source is no longer supported. Re-run with --source=supabase (the default).'
+    )
 
 
 def _score_value(lead: dict[str, Any]) -> int:

@@ -17,6 +17,7 @@ export { default as AppsDirectoryView } from './AppsDirectoryView';
 export { default as DeploymentPipelineView } from './DeploymentPipelineView';
 export { default as ApiGatewayView } from './ApiGatewayView';
 export { default as InventoryCommandView } from './InventoryCommandView';
+export { default as InventoryOsView } from './InventoryOsView';
 export { default as WorkflowStudioView } from './WorkflowStudioView';
 export { default as MemoryBrainView } from './MemoryBrainView';
 

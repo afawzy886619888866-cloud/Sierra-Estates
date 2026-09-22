@@ -15,12 +15,17 @@ const SERVER_ONLY_PACKAGES = [
 ];
 
 const nextConfig: NextConfig = {
-  // `npm run build` already type-checks via `tsc --noEmit` before `next build`.
-  // On low-RAM local containers (<4GB) the in-build TypeScript re-check can
-  // exhaust memory and stall. Set LOCAL_SKIP_TS=1 to skip ONLY the redundant
-  // in-build re-check locally; CI/Vercel never sets it and always type-checks.
+  // The build script chain runs `tsc --noEmit` (type-check) BEFORE `next
+  // build`, so the in-build TypeScript re-check is fully redundant — and
+  // since the 2026-09-20 firebase→supabase migration commit it
+  // deterministically kills the build: silent exit-1 during
+  // "Running TypeScript ..." reproduced locally and on Vercel for BOTH
+  // projects (cf522b25/05e2d53c). The turbo env-hash change from that
+  // commit forces a full cold rebuild, and the forked TS worker dies under
+  // peak memory pressure. Type safety is unchanged: the standalone pass
+  // gates the exact same tsconfig and still fails the build on errors.
   typescript: {
-    ignoreBuildErrors: process.env.LOCAL_SKIP_TS === '1',
+    ignoreBuildErrors: true,
   },
   // Pin the monorepo root so output file tracing (which produces the
   // serverless function file list for `vercel build`) resolves pnpm's
@@ -29,6 +34,11 @@ const nextConfig: NextConfig = {
   // turbopack.root below otherwise, which caused deployed middleware to
   // fail with "Cannot find module 'next/dist/build/adapter/setup-node-env.external'".
   outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  // Bundle the mirrored SQL migrations into the runtime applier lambda
+  // (prebuild copies repo supabase/migrations -> app supabase/migrations).
+  outputFileTracingIncludes: {
+    '/api/cron/apply-migrations': ['./supabase/migrations/*.sql'],
+  },
   transpilePackages: [
     '@sierra-estates/memory-engine',
     '@sierra-estates/agents',

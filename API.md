@@ -10,7 +10,7 @@
 
 ### Ingest Properties from Google Sheets
 
-```
+```http
 POST /api/admin/ingest
 Content-Type: application/json
 X-SBR-SECRET-KEY: {secret}
@@ -40,7 +40,7 @@ Response (200):
 
 ### Run Data Migrations
 
-```
+```http
 POST /api/admin/migrate
 Authorization: Bearer {admin_token}
 
@@ -59,7 +59,7 @@ Response (200):
 
 ### Generate Business Reports
 
-```
+```http
 GET /api/admin/reports?period=month&type=revenue
 Authorization: Bearer {admin_token}
 
@@ -75,7 +75,7 @@ Response (200):
 
 ### Upload Media Assets
 
-```
+```http
 POST /api/admin/media/upload
 Authorization: Bearer {admin_token}
 Content-Type: multipart/form-data
@@ -99,7 +99,7 @@ Response (200):
 
 ### Get All Listings
 
-```
+```http
 GET /api/listings?type=resale&status=available&limit=20&offset=0
 X-SBR-SECRET-KEY: {secret}
 
@@ -131,7 +131,7 @@ Response (200):
 
 ### Search Properties by Criteria
 
-```
+```http
 POST /api/listings/search
 X-SBR-SECRET-KEY: {secret}
 
@@ -155,7 +155,7 @@ Response (200):
 
 ### Get Property Details
 
-```
+```http
 GET /api/properties/mvd-3f-85k
 X-SBR-SECRET-KEY: {secret}
 
@@ -196,7 +196,7 @@ Response (200):
 
 ### Create New Lead
 
-```
+```http
 POST /api/leads/create
 X-SBR-SECRET-KEY: {secret}
 
@@ -224,7 +224,7 @@ Response (200):
 
 ### Score Lead-Property Match
 
-```
+```http
 POST /api/matching/score
 X-SBR-SECRET-KEY: {secret}
 
@@ -250,7 +250,7 @@ Response (200):
 
 ### Get AI Recommendations
 
-```
+```http
 POST /api/matching/recommend
 Authorization: Bearer {user_token}
 
@@ -284,7 +284,7 @@ Response (200):
 
 ### Initiate Deal Closing
 
-```
+```http
 POST /api/closer/initiate
 Authorization: Bearer {user_token}
 
@@ -310,7 +310,7 @@ Response (200):
 
 ### Generate Proposal PDF
 
-```
+```http
 POST /api/proposals/generate
 Authorization: Bearer {user_token}
 
@@ -330,7 +330,7 @@ Response (200):
 
 ### Initiate E-Signature (DocuSign)
 
-```
+```http
 POST /api/deals/{dealId}/sign
 Authorization: Bearer {user_token}
 
@@ -353,7 +353,7 @@ Response (200):
 
 ### Complete Deal Closing
 
-```
+```http
 POST /api/closer/complete
 Authorization: Bearer {user_token}
 
@@ -380,7 +380,7 @@ Response (200):
 
 ### WhatsApp Message Handler (Webhook)
 
-```
+```http
 POST /api/whatsapp/webhook
 X-SBR-SECRET-KEY: {secret}
 
@@ -407,7 +407,7 @@ Response (200):
 
 ### Telegram Notification
 
-```
+```http
 POST /api/telegram/notify
 Authorization: Bearer {admin_token}
 
@@ -426,7 +426,7 @@ Response (200):
 
 ### Sync Listings (Cron Job)
 
-```
+```http
 GET /api/cron/sync-listings
 X-SBR-SECRET-KEY: {secret}
 
@@ -442,7 +442,7 @@ Response (200):
 
 ### DocuSign Webhook Callback
 
-```
+```http
 POST /api/webhooks/docusign
 Content-Type: application/json
 
@@ -522,19 +522,19 @@ Response (200):
 
 ### Firebase ID Token
 
-```
+```http
 Authorization: Bearer {firebase_id_token}
 ```
 
 ### Secret Key (Service-to-Service)
 
-```
+```http
 X-SBR-SECRET-KEY: {secret_key}
 ```
 
 ### Custom Claims (Admin)
 
-```
+```javascript
 User.customClaims.admin === true
 User.customClaims.role === 'admin'
 ```
@@ -545,7 +545,7 @@ User.customClaims.role === 'admin'
 
 All list endpoints support pagination:
 
-```
+```http
 GET /api/listings?limit=20&offset=40
 
 {
@@ -563,7 +563,7 @@ GET /api/listings?limit=20&offset=40
 
 ### Registering Webhooks
 
-```
+```http
 POST /api/webhooks/register
 Authorization: Bearer {admin_token}
 

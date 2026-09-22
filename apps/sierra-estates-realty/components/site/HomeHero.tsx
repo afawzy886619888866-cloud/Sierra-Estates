@@ -38,8 +38,24 @@ export default function HomeHero() {
   const [cur, setCur] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
   const [captionOut, setCaptionOut] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [pointer, setPointer] = useState({ x: 50, y: 50 });
   const firstPaint = useRef(true);
   const timerRef = useRef<number | null>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+    const normX = (e.clientX - rect.left) / rect.width - 0.5;
+    const normY = (e.clientY - rect.top) / rect.height - 0.5;
+    setPointer({ x: Math.round(xPct), y: Math.round(yPct) });
+    setTilt({ x: normX * 18, y: normY * 18 });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+  }, []);
 
   const startTimer = useCallback(() => {
     if (timerRef.current) window.clearInterval(timerRef.current);
@@ -86,7 +102,28 @@ export default function HomeHero() {
   };
 
   return (
-    <header className="hero">
+    <header
+      className="hero"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Ambient Quiet Luxury Gold Spotlight */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          zIndex: 2,
+          background: `radial-gradient(850px circle at ${pointer.x}% ${pointer.y}%, rgba(200, 150, 26, 0.14) 0%, transparent 65%)`,
+          transition: 'background 0.15s ease-out',
+        }}
+      />
+
       <div id="hero-slides">
         {slides.map((sl, i) => (
           <div
@@ -97,7 +134,12 @@ export default function HomeHero() {
             <img
               src={sl.img}
               alt=""
-              style={sl.objectPosition ? { objectPosition: sl.objectPosition } : undefined}
+              style={{
+                transform: `translate3d(${tilt.x * -0.6}px, ${tilt.y * -0.6}px, 0) scale(1.04)`,
+                transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                willChange: 'transform',
+                ...(sl.objectPosition ? { objectPosition: sl.objectPosition } : {}),
+              }}
             />
           </div>
         ))}
@@ -106,7 +148,14 @@ export default function HomeHero() {
       <div className="grain" aria-hidden="true" />
 
       <div className="wrap">
-        <div className="hero-col">
+        <div
+          className="hero-col"
+          style={{
+            transform: `translate3d(${tilt.x * 0.4}px, ${tilt.y * 0.4}px, 0)`,
+            transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            willChange: 'transform',
+          }}
+        >
           {/* Glowing Laser Tag */}
           <div className="laser-badge" style={captionStyle}>
             <span className="laser-badge-dot" />
