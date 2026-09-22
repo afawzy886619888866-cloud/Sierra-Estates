@@ -1,45 +1,58 @@
 #!/usr/bin/env node
 /**
- * SIERRA ESTATES — ADMIN SEEDING SCRIPT
+ * SIERRA ESTATES — ADMIN SEEDING SCRIPT (SUPABASE AUTHORITATIVE)
  *
- * Provisions the `users/{uid}` document that grants access to the staff admin
- * portal. `/api/auth` no longer self-provisions unknown accounts (the old
- * "first authenticated user becomes admin" bootstrap was a takeover risk), so
- * this script is the ONLY way to mint the first admin.
+ * Provisions or updates an administrative user in Supabase Auth and the
+ * public.profiles table. This grants access to the staff admin portal.
  *
  * Usage:
- *   node scripts/seed-admin.mjs <email-or-uid> [--role admin] [--name "Full Name"]
+ *   node scripts/seed-admin.mjs <email-or-uid> [--role admin] [--name "Full Name"] [--password "SecretPass"]
  *   pnpm --filter sierra-estates-client-page seed:admin -- ops@sierra-estates.net
  *
- * Credentials (env only — never pass a key on the command line):
- *   FIREBASE_SERVICE_ACCOUNT_JSON        service account JSON (preferred)
- *   FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU  same, CI secret name
- *   FIREBASE_SERVICE_ACCOUNT             legacy alias
- *   GOOGLE_APPLICATION_CREDENTIALS       path to a service account JSON file
- *
- * The script is idempotent: re-running it on an existing user updates the role
- * and leaves `createdAt` untouched.
+ * Credentials (loaded from .env.local or environment):
+ *   NEXT_PUBLIC_SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY
  */
 
 import fs from 'node:fs';
-import admin from 'firebase-admin';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, '../../..');
+
+// Load environment from workspace root and app local envs
+[
+  path.resolve(ROOT, '.env.local'),
+  path.resolve(ROOT, '.env'),
+  path.resolve(__dirname, '../.env.local'),
+].forEach((envPath) => {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath, override: false });
+  }
+});
 
 const ADMIN_PORTAL_ROLES = ['owner', 'agent', 'manager', 'admin', 'superadmin'];
 
 function usage(message) {
   if (message) console.error(`❌ ${message}\n`);
-  console.error('Usage: node scripts/seed-admin.mjs <email-or-uid> [--role admin] [--name "Full Name"]');
+  console.error('Usage: node scripts/seed-admin.mjs <email-or-uid> [--role admin] [--name "Full Name"] [--password "SecretPass"]');
   process.exit(1);
 }
 
 function parseArgs(argv) {
-  const opts = { target: '', role: 'admin', name: '' };
+  const opts = { target: '', role: 'admin', name: '', password: '' };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--role') opts.role = String(argv[++i] ?? '').trim().toLowerCase();
     else if (arg === '--name') opts.name = String(argv[++i] ?? '').trim();
+    else if (arg === '--password') opts.password = String(argv[++i] ?? '').trim();
     else if (arg.startsWith('--role=')) opts.role = arg.slice(7).trim().toLowerCase();
     else if (arg.startsWith('--name=')) opts.name = arg.slice(7).trim();
+    else if (arg.startsWith('--password=')) opts.password = arg.slice(11).trim();
     else if (arg.startsWith('--')) usage(`Unknown flag: ${arg}`);
     else if (!opts.target) opts.target = arg.trim();
     else usage(`Unexpected argument: ${arg}`);
@@ -51,117 +64,106 @@ function parseArgs(argv) {
   return opts;
 }
 
-/** Load the service account strictly from the environment. */
-function loadServiceAccount() {
-  const inline =
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    process.env.FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU ||
-    process.env.FIREBASE_SERVICE_ACCOUNT;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (inline) {
-    try {
-      return JSON.parse(inline);
-    } catch (err) {
-      console.error('❌ Service account env var is set but is not valid JSON:', err.message);
-      process.exit(1);
-    }
-  }
-
-  const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (credPath) {
-    if (!fs.existsSync(credPath)) {
-      console.error(`❌ GOOGLE_APPLICATION_CREDENTIALS points at a missing file: ${credPath}`);
-      process.exit(1);
-    }
-    try {
-      return JSON.parse(fs.readFileSync(credPath, 'utf8'));
-    } catch (err) {
-      console.error(`❌ Could not parse ${credPath}:`, err.message);
-      process.exit(1);
-    }
-  }
-
-  console.error('❌ No Firebase service account credentials found.');
-  console.error('   Set one of: FIREBASE_SERVICE_ACCOUNT_JSON, FIREBASE_SERVICE_ACCOUNT_SIERRA_BLU,');
-  console.error('   FIREBASE_SERVICE_ACCOUNT, or GOOGLE_APPLICATION_CREDENTIALS. This script refuses');
-  console.error('   to run on ambient/default credentials — admin grants must be explicit.');
+if (!supabaseKey) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY. Cannot seed admin user without service role privileges.');
   process.exit(1);
 }
 
-function initializeFirebase() {
-  const serviceAccount = loadServiceAccount();
-  const projectId =
-    serviceAccount.project_id ||
-    process.env.FIREBASE_PROJECT_ID ||
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    ...(projectId ? { projectId } : {}),
-  });
-  console.log(`✅ Firebase Admin initialized (project: ${projectId || 'unknown'})`);
-  return projectId;
-}
-
-/** Resolve an email to a Firebase Auth uid; a raw uid is looked up as-is. */
-async function resolveUser(target) {
-  const auth = admin.auth();
-  if (target.includes('@')) {
-    try {
-      return await auth.getUserByEmail(target.toLowerCase());
-    } catch (err) {
-      console.error(`❌ No Firebase Auth user with email "${target}" (${err.code || err.message}).`);
-      console.error('   The person must sign in / be created in Firebase Authentication first.');
-      process.exit(1);
+async function resolveOrCreateUser(target, name, password) {
+  const isEmail = target.includes('@');
+  if (isEmail) {
+    const targetEmail = target.toLowerCase();
+    const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) {
+      throw new Error(`Failed to list Supabase users: ${listError.message}`);
     }
+
+    const found = (listData.users || []).find((u) => u.email?.toLowerCase() === targetEmail);
+    if (found) {
+      return found;
+    }
+
+    // Create user in Supabase Auth
+    const finalPass = password || process.env.ADMIN_BOOTSTRAP_PASSWORD || 'SierraAdmin2026!Secure';
+    console.log(`ℹ️ User not found in Supabase Auth. Creating new user: ${targetEmail}`);
+    const { data: createData, error: createError } = await supabase.auth.admin.createUser({
+      email: targetEmail,
+      password: finalPass,
+      email_confirm: true,
+      user_metadata: { full_name: name || 'Sierra Staff' },
+    });
+
+    if (createError || !createData?.user) {
+      throw new Error(`Failed to create Supabase Auth user: ${createError?.message}`);
+    }
+
+    return createData.user;
   }
-  try {
-    return await auth.getUser(target);
-  } catch (err) {
-    console.error(`❌ No Firebase Auth user with uid "${target}" (${err.code || err.message}).`);
-    process.exit(1);
+
+  // Target is UID
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(target);
+  if (userError || !userData?.user) {
+    throw new Error(`No Supabase user found with UID "${target}": ${userError?.message}`);
   }
+
+  return userData.user;
 }
 
 async function main() {
-  const { target, role, name } = parseArgs(process.argv.slice(2));
+  const { target, role, name, password } = parseArgs(process.argv.slice(2));
 
-  console.log('🔐 Sierra Estates — Admin Seeding');
+  console.log('🔐 Sierra Estates — Admin Seeding (Supabase)');
   console.log('═══════════════════════════════════════════');
+  console.log(`📡 Connected to: ${supabaseUrl}`);
 
-  initializeFirebase();
+  const user = await resolveOrCreateUser(target, name, password);
 
-  const userRecord = await resolveUser(target);
-  const db = admin.firestore();
-  const docRef = db.collection('users').doc(userRecord.uid);
-  const existing = await docRef.get();
-  const previous = existing.exists ? existing.data() : undefined;
+  // Fetch existing profile if any
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
   const now = new Date().toISOString();
+  const email = (user.email || existingProfile?.email || target).toLowerCase();
+  const fullName = name || existingProfile?.full_name || user.user_metadata?.full_name || email.split('@')[0] || 'Sierra Staff';
 
-  const payload = {
-    uid: userRecord.uid,
-    email: (userRecord.email || previous?.email || '').toLowerCase(),
-    name: name || previous?.name || userRecord.displayName || (userRecord.email || '').split('@')[0] || 'Sierra Staff',
+  const profilePayload = {
+    id: user.id,
+    email,
+    full_name: fullName,
     role,
-    status: previous?.status || 'active',
-    createdAt: previous?.createdAt || now,
+    avatar_url: existingProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
     metadata: {
-      source: 'invite',
+      source: 'seed-admin-supabase',
       approvedBy: process.env.SEED_ADMIN_ACTOR || 'seed-admin-script',
+      updatedAt: now,
     },
   };
 
-  await docRef.set(payload, { merge: true });
+  const { error: upsertError } = await supabase
+    .from('profiles')
+    .upsert(profilePayload, { onConflict: 'id' });
+
+  if (upsertError) {
+    throw new Error(`Failed to upsert Supabase profile: ${upsertError.message}`);
+  }
 
   console.log('═══════════════════════════════════════════');
-  console.log(existing.exists ? '♻️  Updated existing users/ document' : '🆕 Created new users/ document');
-  console.log(`   path      : users/${userRecord.uid}`);
-  console.log(`   email     : ${payload.email}`);
-  console.log(`   name      : ${payload.name}`);
-  console.log(`   role      : ${previous?.role ? `${previous.role} → ${role}` : role}`);
-  console.log(`   status    : ${payload.status}`);
-  console.log(`   createdAt : ${payload.createdAt}`);
-  console.log('\n✅ Done. This account can now sign in to the admin portal.');
+  console.log(existingProfile ? '♻️  Updated existing public.profiles record' : '🆕 Created new public.profiles record');
+  console.log(`   id        : ${user.id}`);
+  console.log(`   email     : ${email}`);
+  console.log(`   name      : ${fullName}`);
+  console.log(`   role      : ${existingProfile?.role ? `${existingProfile.role} → ${role}` : role}`);
+  console.log('\n✅ Done. This account can now sign in to the admin portal via Supabase.');
 }
 
 main().catch((err) => {

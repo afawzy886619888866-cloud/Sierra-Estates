@@ -15,6 +15,35 @@ export const metadata: Metadata = {
     'AI-curated rent & resale inventory across New Cairo — 50+ compounds, 1,900+ verified listings, RERA-licensed brokers.',
   icons: { icon: '/assets/logo-mark-96.png' },
   robots: { index: true, follow: true },
+  openGraph: {
+    type: 'website',
+    siteName: 'Sierra Estates',
+    title: 'Sierra Estates · Luxury Real Estate, New Cairo',
+    description:
+      'AI-curated rent & resale inventory across New Cairo — verified compounds, live availability, investment analytics.',
+    url: SITE_URL,
+    locale: 'en_US',
+    alternateLocale: ['ar_EG'],
+    images: [
+      {
+        url: '/assets/logo-gold.png',
+        width: 512,
+        height: 512,
+        alt: 'Sierra Estates — Luxury Real Estate Intelligence',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sierra Estates · Luxury Real Estate, New Cairo',
+    description:
+      'AI-curated rent & resale inventory across New Cairo — verified compounds, live availability, investment analytics.',
+    images: ['/assets/logo-gold.png'],
+  },
+  alternates: {
+    canonical: '/',
+    languages: { 'en': SITE_URL, 'ar': `${SITE_URL}/ar` },
+  },
 };
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {

@@ -105,7 +105,7 @@ export default function RealEstateProcessorView({ lang = 'en', onNavigate }: Rea
       </div>
 
       <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))' }}>
-        <div className="kpi-card"><div className="kpi-val" style={{ color: '#00AEFF' }}>3</div><div className="kpi-lbl">{isAr ? 'أنواع المدخلات' : 'Input formats'}</div></div>
+        <div className="kpi-card"><div className="kpi-val" style={{ color: '#C8961A' }}>3</div><div className="kpi-lbl">{isAr ? 'أنواع المدخلات' : 'Input formats'}</div></div>
         <div className="kpi-card"><div className="kpi-val" style={{ color: '#34D399' }}>2</div><div className="kpi-lbl">{isAr ? 'اللغات المدعومة' : 'Languages supported'}</div></div>
         <div className="kpi-card"><div className="kpi-val" style={{ color: '#7C3AED' }}>6</div><div className="kpi-lbl">{isAr ? 'أوراق Excel' : 'Workbook sheets'}</div></div>
         <div className="kpi-card"><div className="kpi-val" style={{ color: '#f59e0b' }}>48.0</div><div className="kpi-lbl">{isAr ? 'معدل USD/EGP' : 'USD/EGP rate'}</div></div>
@@ -148,7 +148,7 @@ export default function RealEstateProcessorView({ lang = 'en', onNavigate }: Rea
             {OUTPUT_SHEETS.map((sheet) => <span key={sheet} className="chip chip-blue">{sheet}</span>)}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }}>
-            <div style={{ padding: 13, borderLeft: '3px solid #00AEFF', background: 'var(--bg-e)', borderRadius: 8 }}>
+            <div style={{ padding: 13, borderLeft: '3px solid #C8961A', background: 'var(--bg-e)', borderRadius: 8 }}>
               <div className="kpi-lbl">{copy.rule}</div>
               <p style={{ margin: '7px 0 0', color: 'var(--tx-m)', fontSize: 11, lineHeight: 1.5 }}>{copy.ruleText}</p>
             </div>

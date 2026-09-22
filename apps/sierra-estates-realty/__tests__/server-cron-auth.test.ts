@@ -20,6 +20,8 @@ import { verifyCronRequest } from '../lib/server/cron-auth';
 
 const ORIGINAL_SECRET = process.env.CRON_SECRET;
 const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
+const ORIGINAL_OWNER = process.env.CRON_OWNER_PROJECT_ID;
+const ORIGINAL_PROJECT = process.env.VERCEL_PROJECT_ID;
 
 /** NODE_ENV is typed read-only (Next augments ProcessEnv); assign via a widened cast. */
 function setNodeEnv(value: string | undefined) {
@@ -34,6 +36,10 @@ afterEach(() => {
   if (ORIGINAL_SECRET === undefined) delete process.env.CRON_SECRET;
   else process.env.CRON_SECRET = ORIGINAL_SECRET;
   setNodeEnv(ORIGINAL_NODE_ENV);
+  if (ORIGINAL_OWNER === undefined) delete process.env.CRON_OWNER_PROJECT_ID;
+  else process.env.CRON_OWNER_PROJECT_ID = ORIGINAL_OWNER;
+  if (ORIGINAL_PROJECT === undefined) delete process.env.VERCEL_PROJECT_ID;
+  else process.env.VERCEL_PROJECT_ID = ORIGINAL_PROJECT;
 });
 
 describe('verifyCronRequest — CRON_SECRET unset', () => {
@@ -126,5 +132,62 @@ describe('verifyCronRequest — CRON_SECRET set', () => {
 
   it('is case-sensitive on the token', () => {
     expect(verifyCronRequest(request({ authorization: 'Bearer CRON-S3CRET' }))!.status).toBe(401);
+  });
+});
+
+describe('verifyCronRequest — mirrored-project ownership guard', () => {
+  // The client and admin Vercel projects build from the same directory and
+  // both register the vercel.json crons; only the client may execute them.
+  const CLIENT = 'prj_client11111111111111111111';
+  const ADMIN = 'prj_admin11111111111111111111';
+
+  beforeEach(() => {
+    process.env.CRON_SECRET = 'cron-s3cret';
+    process.env.CRON_OWNER_PROJECT_ID = CLIENT;
+  });
+
+  afterEach(() => {
+    delete process.env.VERCEL_PROJECT_ID;
+    delete process.env.CRON_OWNER_PROJECT_ID;
+  });
+
+  it('runs on the owner project', () => {
+    process.env.VERCEL_PROJECT_ID = CLIENT;
+
+    expect(verifyCronRequest(request({ authorization: 'Bearer cron-s3cret' }))).toBeNull();
+  });
+
+  it('skips mirrored projects with an idempotent 200 after the secret check', async () => {
+    process.env.VERCEL_PROJECT_ID = ADMIN;
+
+    const denied = verifyCronRequest(request({ authorization: 'Bearer cron-s3cret' }));
+
+    expect(denied).not.toBeNull();
+    expect(denied!.status).toBe(200);
+    await expect(denied!.json()).resolves.toEqual({
+      skipped: true,
+      reason: 'cron-owner-mismatch',
+      project: ADMIN,
+    });
+  });
+
+  it('never lets the ownership guard bypass the secret check', () => {
+    process.env.VERCEL_PROJECT_ID = ADMIN;
+
+    // Wrong secret on a mirrored project is still a hard 401, not a soft skip.
+    expect(verifyCronRequest(request({ authorization: 'Bearer wrong' }))!.status).toBe(401);
+  });
+
+  it('is inert locally where VERCEL_PROJECT_ID is absent', () => {
+    delete process.env.VERCEL_PROJECT_ID;
+
+    expect(verifyCronRequest(request({ authorization: 'Bearer cron-s3cret' }))).toBeNull();
+  });
+
+  it('is inert when CRON_OWNER_PROJECT_ID is not configured', () => {
+    delete process.env.CRON_OWNER_PROJECT_ID;
+    process.env.VERCEL_PROJECT_ID = ADMIN;
+
+    expect(verifyCronRequest(request({ authorization: 'Bearer cron-s3cret' }))).toBeNull();
   });
 });
