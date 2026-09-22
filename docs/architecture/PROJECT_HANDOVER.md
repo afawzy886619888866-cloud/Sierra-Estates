@@ -62,9 +62,9 @@ The application is fully functional in its current frontend state.
 
 ---
 
-# 🔳 THE BASE 44 MANIFEST
+## 🔳 THE BASE 44 MANIFEST
 
-## Sierra Estates REAL ESTATE: MASTER SYSTEM HANDOFF (V11.5)
+### Sierra Estates REAL ESTATE: MASTER SYSTEM HANDOFF (V11.5)
 
 > **Role**: Lead Systems Architect, AI Strategist, Technical Product Manager.  
 > **Mission**: Bridge AI discovery with high-end human-led brokerage.  

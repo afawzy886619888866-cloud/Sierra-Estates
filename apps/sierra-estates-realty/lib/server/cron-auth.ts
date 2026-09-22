@@ -40,5 +40,33 @@ export function verifyCronRequest(req: Request): NextResponse | null {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return null;
+  return cronOwnerGuard();
+}
+
+/**
+ * Mirrored-project guard for scheduled work.
+ *
+ * Two Vercel projects (client portal and admin dashboard) build from this same
+ * directory, so both register the vercel.json cron definitions and both would
+ * execute every scheduled job — doubling Property Finder API usage and write
+ * volume. The client project owns scheduled execution: set
+ * CRON_OWNER_PROJECT_ID on both projects and only the deployment whose
+ * VERCEL_PROJECT_ID matches proceeds past this guard. Everyone else gets an
+ * idempotent 200 "skipped" so Vercel's scheduler does not report failures.
+ *
+ * Inert locally (VERCEL_PROJECT_ID is only injected on Vercel) and inert
+ * anywhere CRON_OWNER_PROJECT_ID is unset, so existing behaviour and the
+ * pinned contract tests are unchanged.
+ */
+function cronOwnerGuard(): NextResponse | null {
+  const ownerProject = process.env.CRON_OWNER_PROJECT_ID;
+  const thisProject = process.env.VERCEL_PROJECT_ID;
+
+  if (!ownerProject || !thisProject) return null;
+  if (thisProject === ownerProject) return null;
+
+  return NextResponse.json(
+    { skipped: true, reason: 'cron-owner-mismatch', project: thisProject },
+    { status: 200 },
+  );
 }

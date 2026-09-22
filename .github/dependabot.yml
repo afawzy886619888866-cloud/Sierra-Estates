@@ -11,8 +11,8 @@ updates:
     groups:
       next-ecosystem:
         patterns: ["next", "react", "react-dom", "@next/*", "eslint-config-next"]
-      firebase-ecosystem:
-        patterns: ["firebase", "firebase-admin", "firebase-functions"]
+      supabase-ecosystem:
+        patterns: ["@supabase/*", "supabase"]
       opentelemetry:
         patterns: ["@opentelemetry/*"]
       tailwind:

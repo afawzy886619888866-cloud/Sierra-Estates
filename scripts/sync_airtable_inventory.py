@@ -12,7 +12,7 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 
 BASE_ID = os.environ.get("AIRTABLE_BASE_ID", "appN96kHujXsLkc0h")
 TABLE_ID = os.environ.get("AIRTABLE_TABLE_ID", "tbli8jUq42wBb8AQa")
-TOKEN = os.environ["AIRTABLE_PAT"]
+TOKEN = os.environ.get("AIRTABLE_PAT") or os.environ.get("AIRTABLE_API_KEY", "")
 ROOT = Path(__file__).resolve().parents[1]
 CSV_OUT = ROOT / "Inventory_with_Photos_Airtable.csv"
 XLSX_OUT = ROOT / "Inventory_with_Photos.xlsx"
@@ -20,6 +20,9 @@ CHANGE_LOG_OUT = ROOT / "Inventory_sync_change_log.json"
 
 
 def fetch_records() -> list[dict[str, Any]]:
+    if not TOKEN:
+        print("Warning: Neither AIRTABLE_PAT nor AIRTABLE_API_KEY is configured in environment.")
+        return []
     records: list[dict[str, Any]] = []
     offset = None
     while True:

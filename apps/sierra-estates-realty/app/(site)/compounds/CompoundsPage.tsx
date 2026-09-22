@@ -1,7 +1,7 @@
 'use client';
 
 /** Port of deploy/compounds.html. */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -38,6 +38,22 @@ export default function CompoundsPage() {
   const [beds, setBeds] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
+  const [liveUnits, setLiveUnits] = useState<any[]>([]);
+
+  // Fetch the live inventory once (same source as /properties and the map):
+  // Supabase units → live sheet → snapshot. No fabricated fallbacks.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d && Array.isArray(d.units)) setLiveUnits(d.units);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const zones = useMemo(
     () => ['all', ...Array.from(new Set(all.map((c) => c.z)))],
@@ -53,15 +69,44 @@ export default function CompoundsPage() {
     });
   }, [all, q, zone]);
 
+  const normalize = (s: string) =>
+    String(s || '')
+      .toLowerCase()
+      .replace(/\(.*?\)/g, '')
+      .replace(/\b(new cairo|residence|residences|district \d+|phase \d+)\b/g, '')
+      .trim();
+
   const units = useMemo(() => {
     if (!selected) return [];
-    const list: any[] = (HZDATA as any).unitsFor?.(selected) || [];
-    return list.filter((u) => {
+    const target = normalize(selected);
+
+    // 1. Live inventory (real units from Supabase/sheet/snapshot)
+    const live = liveUnits
+      .filter((u: any) => {
+        const cmp = normalize(u.compound || u.location || '');
+        if (!cmp) return false;
+        return cmp === target || cmp.startsWith(target) || target.startsWith(cmp);
+      })
+      .map((u: any, i: number) => ({
+        code: u.code || u.id || `SE-${i + 1}`,
+        type: u.propertyType || u.type || 'Apartment',
+        beds: u.beds ?? 3,
+        bath: u.bath ?? 2,
+        area: u.area ?? 0,
+        mode: u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale',
+        egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
+        usd: u.usd ?? (u.price ? Math.round(u.price / 48.5) : 0),
+      }));
+
+    // 2. Committed snapshot matches (real catalog data only — no fabrication)
+    const catalog: any[] = live.length ? [] : (HZDATA as any).unitsFor?.(selected) || [];
+
+    return [...live, ...catalog].filter((u) => {
       if (type !== 'all' && u.type !== type) return false;
-      if (beds && u.beds < beds) return false;
+      if (beds && (u.beds || 0) < beds) return false;
       return true;
     });
-  }, [selected, type, beds]);
+  }, [selected, type, beds, liveUnits]);
 
   function reset() {
     setQ(''); setZone('all'); setType('all'); setBeds(0); setSelected(null);
@@ -417,9 +462,23 @@ export default function CompoundsPage() {
                           </div>
                         ))}
                         {!units.length && (
-                          <p style={{ color: 'var(--muted)', fontSize: 12.5 }}>
-                            {isAr ? 'لا توجد وحدات مطابقة للفلاتر.' : 'No units match the current filters.'}
-                          </p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--line)' }}>
+                            <p style={{ color: 'var(--muted)', fontSize: 12.5, margin: 0 }}>
+                              {type !== 'all' || beds
+                                ? (isAr ? 'لا توجد وحدات مطابقة للفلاتر.' : 'No units match the current filters.')
+                                : (isAr
+                                  ? 'جاري تحديث كتالوج الوحدات لهذا الكمبوند — اطلب التوفر المباشر الآن.'
+                                  : 'Live catalog for this compound is being updated — request current availability now.')}
+                            </p>
+                            <a
+                              href={`https://wa.me/201092048333?text=${encodeURIComponent(isAr ? `مرحبًا، مهتم بالوحدات المتاحة في ${selected}` : `Hi, I'm interested in available units in ${selected}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--gold, #C8961A)', textDecoration: 'none' }}
+                            >
+                              {isAr ? 'اطلب التوفر عبر واتساب ←' : 'Request availability on WhatsApp →'}
+                            </a>
+                          </div>
                         )}
                       </div>
                     </div>

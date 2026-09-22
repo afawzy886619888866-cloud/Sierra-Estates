@@ -31,7 +31,7 @@ comma-separated) enforced in `middleware.ts` (`lib/server/cors.ts`).
   `Access-Control-Allow-Credentials: true`.
 - Preflight `OPTIONS` is answered by middleware with `204`.
 
-```
+```env
 ALLOWED_ORIGINS=http://localhost:3000,https://sierra-estates.net
 ```
 
@@ -67,7 +67,7 @@ List published units.
 | `limit` | number | `12` | Page size |
 | `id` | string | — | When set, returns a single listing |
 
-**Response (collection)**
+#### Response (collection)
 
 ```json
 {

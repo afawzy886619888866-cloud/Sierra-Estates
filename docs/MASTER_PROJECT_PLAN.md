@@ -1,12 +1,13 @@
 # Sierra Estates — Unified Master Project Plan & Execution Roadmap
 
-**The Single Authoritative Source of Truth for Architecture, Milestones, and Release Progress**
+> The Single Authoritative Source of Truth for Architecture, Milestones, and Release Progress
 
 ---
 
 ## 1. Executive Summary & System Overview
 
 **Sierra Estates** is an enterprise-grade luxury PropTech intelligence platform engineered specifically for the New Cairo real estate market. It combines:
+
 - **Authoritative Backend**: Supabase PostgreSQL (`REDACTED-PROJECT.supabase.co`) with `pgvector` embeddings, real-time queues, and strict Row-Level Security (RLS).
 - **Dual-Domain Frontend**: Next.js 16 (App Router) serving the buyer client experience at `https://sierra-estates.net` and the administrative command deck at `https://admin.sierra-estates.net`.
 - **7-Layer Autonomous Agent Fleet**: Coordinated AI agents (Matchmaker, Closer, Valuation Scorer, Concierge, Voice Transcriber, Legal Contract Generator, Orchestrator).
@@ -35,7 +36,7 @@ timeline
     Milestone M12 : Realtime Voice Briefings & Video Tours (Active / In Planning)
 ```
 
-### Detailed Milestone Breakdown:
+### Detailed Milestone Breakdown
 
 | Milestone | Title | Scope & Deliverables | Status |
 |---|---|---|---|
@@ -101,6 +102,7 @@ flowchart TD
 ## 4. Verification Standards & Quality Gates
 
 Every commit and release is gated by automated verification:
+
 1. **Zero Working Tree Drift**: Clean git tree verified via `pnpm deploy:check`.
 2. **Canonical Backend Integrity**: 100% of data reads/writes verified against Supabase PostgreSQL.
 3. **Strict Privacy Policy**: Zero real owner phone numbers in client bundles (strict fallback to `+201092048333`).
@@ -111,7 +113,8 @@ Every commit and release is gated by automated verification:
 
 ## 5. Active Roadmap: Milestone M12 Details
 
-### Focus Areas:
+### Focus Areas
+
 - **M12.1 Realtime Egyptian-Arabic Audio Briefings**:
   - Live conversational audio overview using Gemini Live API / WebRTC.
   - Generates instant 60-second spoken summaries of rental yields, location perks, and payment schedules.

@@ -1,0 +1,100 @@
+name: Jira Sync
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  jira-sync:
+    name: Detect Jira Issue & Link GitHub Activity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 5
+
+      - name: Extract Jira Issue Key
+        id: jira_key
+        shell: bash
+        run: |
+          SEARCH_TEXT=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SEARCH_TEXT="${{ github.head_ref }} ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+          else
+            SEARCH_TEXT="$(git log -1 --pretty=%B) $(git branch --show-current)"
+          fi
+
+          echo "Searching text for Jira issue key..."
+          # Match standard Jira issue keys like SE-101, PROJ-452
+          JIRA_KEY=$(echo "$SEARCH_TEXT" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -n 1 || true)
+
+          if [ -n "$JIRA_KEY" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "key=$JIRA_KEY" >> $GITHUB_OUTPUT
+            echo "Detected Jira issue key: $JIRA_KEY"
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No Jira issue key detected in branch or PR title."
+          fi
+
+      - name: Verify Jira Configuration Secrets
+        id: check_secrets
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.JIRA_BASE_URL }}" ] && [ -n "${{ secrets.JIRA_API_TOKEN }}" ] && [ -n "${{ secrets.JIRA_USER_EMAIL }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::notice ::Jira credentials (JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN) are not configured in repository secrets."
+          fi
+
+      - name: Post Comment to Jira Issue
+        if: steps.jira_key.outputs.found == 'true' && steps.check_secrets.outputs.configured == 'true'
+        shell: bash
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_KEY: ${{ steps.jira_key.outputs.key }}
+        run: |
+          CLEAN_URL=$(echo "$JIRA_BASE_URL" | sed 's:/*$::')
+          AUTH_HEADER="Basic $(echo -n "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" | base64 -w 0)"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            MSG="GitHub PR #${{ github.event.pull_request.number }} linked by @${{ github.actor }}: ${{ github.event.pull_request.html_url }}\nTitle: ${{ github.event.pull_request.title }}"
+          else
+            MSG="GitHub commit ${{ github.sha }} pushed to main by @${{ github.actor }}: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\nCommit: $(git log -1 --pretty=%s)"
+          fi
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "body": {
+              "type": "doc",
+              "version": 1,
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    { "type": "text", "text": "$MSG" }
+                  ]
+                }
+              ]
+            }
+          }
+          EOF
+          )
+
+          curl -s -S -X POST "$CLEAN_URL/rest/api/3/issue/$JIRA_KEY/comment" \
+            -H "Authorization: $AUTH_HEADER" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" || echo "Warning: Jira comment request failed"

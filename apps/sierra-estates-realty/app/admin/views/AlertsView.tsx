@@ -102,7 +102,7 @@ export default function AlertsView({ lang = 'en' }: { lang?: string }) {
       case 'warning':
         return 'bg-yellow-950/80 text-yellow-300 border-yellow-800';
       case 'info':
-        return 'bg-cyan-950/80 text-cyan-300 border-cyan-800';
+        return 'bg-[#211A0D]/80 text-[#F5D78E] border-[#C8961A]/40';
     }
   };
 
@@ -125,7 +125,7 @@ export default function AlertsView({ lang = 'en' }: { lang?: string }) {
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
               statusFilter === 'all'
-                ? 'bg-cyan-600 text-white'
+                ? 'bg-[#C8961A] text-white'
                 : 'bg-slate-900 text-slate-400 border border-slate-800'
             }`}
           >
@@ -135,7 +135,7 @@ export default function AlertsView({ lang = 'en' }: { lang?: string }) {
             onClick={() => setStatusFilter('active')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
               statusFilter === 'active'
-                ? 'bg-cyan-600 text-white'
+                ? 'bg-[#C8961A] text-white'
                 : 'bg-slate-900 text-slate-400 border border-slate-800'
             }`}
           >
