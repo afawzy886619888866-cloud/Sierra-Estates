@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 
-interface AppService {
+export interface AppService {
   id: string;
   name: { en: string; ar: string };
   category: 'core' | 'ai' | 'studio' | 'infra';
@@ -21,7 +21,7 @@ interface AppService {
   actionTarget: string;
 }
 
-const APPS_CATALOG: AppService[] = [
+export const APPS_CATALOG: AppService[] = [
   {
     id: 'sierra-client',
     name: { en: 'Sierra Client & Luxury Portal', ar: 'بوابة العملاء الفاخرة' },

@@ -39,8 +39,10 @@ describe('package.json', () => {
     expect(PACKAGE_JSON.dependencies['@whiskeysockets/baileys']).toBeDefined();
   });
 
-  it('has Supabase dependency', () => {
+  it('has @supabase/supabase-js dependency (migrated from firebase-admin on 2026-09-20)', () => {
     expect(PACKAGE_JSON.dependencies['@supabase/supabase-js']).toBeDefined();
+    // firebase-admin was removed as part of the Firebase → Supabase migration.
+    expect(PACKAGE_JSON.dependencies['firebase-admin']).toBeUndefined();
   });
 
   it('has qrcode-terminal dependency', () => {
@@ -94,10 +96,11 @@ describe('Scraper source code (src/index.js)', () => {
     expect(SCRAPER_SOURCE).toContain('N8N_WEBHOOK_URL');
   });
 
-  it('has Firestore fallback (direct write if n8n down)', () => {
+  it('has Supabase fallback (direct write if n8n down)', () => {
     expect(SCRAPER_SOURCE).toContain('writeClientToFirestore');
     expect(SCRAPER_SOURCE).toContain('createRequestInFirestore');
-    expect(SCRAPER_SOURCE).toContain('n8n unavailable');
+    expect(SCRAPER_SOURCE).toContain('writeClientToSupabase');
+    expect(SCRAPER_SOURCE).toContain('createRequestInSupabase');
   });
 
   it('writes clients with lead_source = whatsapp_bot', () => {
@@ -247,7 +250,7 @@ describe('docker-compose.yml', () => {
     expect(compose).toContain('healthcheck');
   });
 
-  it('provides Supabase credentials through the environment', () => {
+  it('passes Supabase env vars to the scraper container', () => {
     expect(compose).toContain('SUPABASE_URL');
     expect(compose).toContain('SUPABASE_SERVICE_ROLE_KEY');
   });

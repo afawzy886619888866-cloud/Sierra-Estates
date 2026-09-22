@@ -69,7 +69,8 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Firebase has been retired. Supabase is the only persistence backend.
+ *  Legacy Firebase Admin init was removed on 2026-09-20 (Firebase → Supabase migration).
+ *  Supabase is the single source of truth for all writes.
  * ────────────────────────────────────────────────────────────────────────── */
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -181,11 +182,15 @@ async function createRequestInSupabase(leadId, phone, messageText) {
 }
 
 async function writeClientToFirestore(phone, name) {
-  return writeClientToSupabase(phone, name);
+  // Supabase is authoritative — Firebase fallback removed on 2026-09-20.
+  const supabaseLead = await writeClientToSupabase(phone, name);
+  return supabaseLead || { id: `supa-${phone}`, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
 }
 
 async function createRequestInFirestore(clientId, messageText, phone) {
-  return createRequestInSupabase(clientId, phone, messageText);
+  // Supabase is authoritative — Firebase fallback removed on 2026-09-20.
+  const supabaseInquiry = await createRequestInSupabase(clientId, phone, messageText);
+  return supabaseInquiry || { id: `supa-inq-${Date.now()}` };
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

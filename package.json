@@ -22,7 +22,7 @@
         "clean": "turbo run clean && rm -rf node_modules",
         "link:vercel": "vercel link",
         "deploy:preview": "vercel --build-env NEXT_PUBLIC_APP_ENV=preview",
-        "deploy:prod": "pnpm deploy:check && vercel --prod",
+        "deploy:prod": "pnpm deploy:check && pnpm dlx vercel@59.23.2 --prod --yes",
         "test:prod": "node scripts/test-production.cjs",
         "deploy:supabase": "node scripts/apply-supabase-schema.mjs",
         "deploy:schema": "node scripts/apply-supabase-schema.mjs",
@@ -60,9 +60,9 @@
         "eslint": "^10",
         "eslint-plugin-unused-imports": "^4.4.1",
         "turbo": "^2.3.3",
-        "typescript": "^5.8.2",
-        "typescript-eslint": "^8.67.0",
-        "vitest": "^4.1.11"
+        "typescript": "^7.0.2",
+        "typescript-eslint": "^8.70.0",
+        "vitest": "^5.0.1"
     },
     "dependencies": {
         "@vercel/speed-insights": "^2.0.0",

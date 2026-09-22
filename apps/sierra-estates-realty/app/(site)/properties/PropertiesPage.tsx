@@ -945,6 +945,16 @@ export default function PropertiesPage() {
                               <div><BedDouble style={{ width: 15, height: 15 }} /><b>{p.beds}</b><span>{isAr ? 'غرف' : 'bds'}</span></div>
                               <div><Bath style={{ width: 15, height: 15 }} /><b>{p.bath}</b><span>{isAr ? 'حمام' : 'ba'}</span></div>
                               <div><Scaling style={{ width: 15, height: 15 }} /><b>{p.area}</b><span>m²</span></div>
+                              {p.area > 0 && p.price > 0 && (
+                                <div
+                                  className="spec-sqm"
+                                  title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
+                                  style={{ color: '#DFAD3A', fontWeight: 600 }}
+                                >
+                                  <b>{Math.round(p.price / p.area).toLocaleString()}</b>
+                                  <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 

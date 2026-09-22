@@ -53,9 +53,9 @@ describe('Regression & Configuration Hardening Suite', () => {
         // Regression guard: no deprecated disableOptimisticBPs
         expect(c.disableOptimisticBPs).toBeUndefined();
 
-        // Regression guard: msedge must specify version
+        // Regression guard: msedge must specify webRoot
         if (c.type === 'msedge') {
-          expect(c.version).toBeDefined();
+          expect(c.webRoot).toBeDefined();
         }
       }
 

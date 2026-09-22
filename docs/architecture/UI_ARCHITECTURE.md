@@ -1,5 +1,3 @@
-# 🏛️ Sierra Estates: UI Architecture Roadmap
-
 # 🏛️ Sierra Estates: UI Architecture Roadmap (V12.0)
 
 This roadmap defines the visual interface of the Sierra Estates platform, bridging the gap between AI-driven backend services and the **"Quiet Luxury"** aesthetic defined in the [V12_MANIFEST.md](file:///c:/OpenClaw/V12_MANIFEST.md).
