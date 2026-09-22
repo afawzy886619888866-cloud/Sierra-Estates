@@ -17,6 +17,14 @@
       "schedule": "0 6 * * *"
     },
     {
+      "path": "/api/cron/ingest-from-sheets",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/maintenance",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/cron/sync-master-sheet",
       "schedule": "30 6 * * *"
     },

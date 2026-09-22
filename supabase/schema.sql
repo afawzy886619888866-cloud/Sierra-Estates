@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
     summary_notes TEXT,
     tags TEXT[] DEFAULT ARRAY[]::TEXT[],
     metadata JSONB DEFAULT '{}'::jsonb,
+    external_message_id TEXT,
     -- CRM/qualification fields written by the public and concierge routes.
     -- `channel` above is the normalised intake channel; `source` keeps the
     -- raw attribution string ('website', 'property-finder', ...).
@@ -179,6 +180,10 @@ CREATE TABLE IF NOT EXISTS public.leads (
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS leads_external_message_id_unique
+    ON public.leads (external_message_id)
+    WHERE external_message_id IS NOT NULL;
 
 -- ------------------------------------------------------------------------------
 -- 5. Deals, Sales & Proposals

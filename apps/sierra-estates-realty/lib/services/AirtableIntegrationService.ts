@@ -93,7 +93,7 @@ export class AirtableIntegrationService {
     return records;
   }
 
-  /** Syncs a single Airtable table into Firestore. */
+  /** Syncs a single Airtable table into Supabase. */
   static async syncTable(
     cfg: Pick<AirtableConfig, 'apiKey' | 'baseId'>,
     table: string,
@@ -106,10 +106,9 @@ export class AirtableIntegrationService {
       let syncedCount = 0;
       let errorCount = 0;
 
-      // Firestore staged these in a WriteBatch and committed once. Each row here
-      // needs its own lookup on referenceNumber to decide insert vs update, so
-      // they are applied individually; a row that fails is counted and the rest
-      // of the sync still lands, which is what the batch did not do.
+      // Each row uses a referenceNumber lookup to decide insert vs update, so
+      // rows are applied individually and a failed row does not discard the
+      // rest of the sync.
       for (const record of records) {
         try {
           const unit = mapRowToUnit(record.fields, { ownerType, syncSource: 'airtable' });
@@ -183,11 +182,11 @@ export class AirtableIntegrationService {
   }
 
   /* ────────────────────────────────────────────────────────────────
-   * EXPORT (Firestore → Airtable)
+   * EXPORT (Supabase → Airtable)
    *
-   * Mirrors Firestore inventory/leads INTO Airtable so the base stays a
+   * Mirrors Supabase inventory/leads INTO Airtable so the base stays a
    * live copy of the app data. Upserts via Airtable's performUpsert API:
-   * listings merge on "Code", leads merge on "Firestore ID", so repeated
+   * listings merge on "Code", leads merge on the legacy external-ID column, so repeated
    * exports are idempotent. Airtable caps writes at 10 records/request.
    * ──────────────────────────────────────────────────────────────── */
 
@@ -230,17 +229,17 @@ export class AirtableIntegrationService {
     return { written, errors };
   }
 
-  /** Maps a Firestore Unit document to the Airtable listing columns. */
+  /** Maps a Supabase Unit record to the Airtable listing columns. */
   static unitToAirtableFields(id: string, unit: Partial<Unit>): Record<string, unknown> | null {
     const code = unit.referenceNumber || unit.code || `FS-${id}`;
     const fields: Record<string, unknown> = {
       Code: code,
       Name: unit.title ?? '',
       Compound: unit.compound || unit.location || '',
-      'Synced From': 'Firebase sierra-blu · listings',
+      'Synced From': 'Supabase sierra-blu · listings',
     };
     if (unit.propertyType) {
-      // Firestore stores lowercase slugs ("twin-house"); Airtable options are Title Case.
+      // Supabase stores lowercase slugs ("twin-house"); Airtable options are Title Case.
       fields['Property Type'] = String(unit.propertyType)
         .split(/[-_\s]+/)
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -282,7 +281,7 @@ export class AirtableIntegrationService {
   }
 
   /**
-   * Exports Firestore listings into an Airtable table (default "Team Units").
+   * Exports Supabase listings into an Airtable table (default "Team Units").
    * Scoped to owner-sourced inventory (`ownerType === 'owner'`) — Sheets and
    * Airtable are the owner-listing sync surface, not a mirror of broker or
    * internal/team inventory.
@@ -321,7 +320,7 @@ export class AirtableIntegrationService {
     }
   }
 
-  /** Exports Firestore leads (stakeholders) into an Airtable table (default "Leads"). */
+  /*  * Exports Supabase leads (stakeholders) into an Airtable table (default "Leads"). */
   static async exportLeads(table = 'Leads'): Promise<AirtableSyncResult> {
     const cfg = this.getConfig();
     if (!cfg) {
@@ -338,6 +337,7 @@ export class AirtableIntegrationService {
         const fields: Record<string, unknown> = {
           // Field name kept as-is: renaming it would orphan every existing
           // Airtable row, since it is the key upsertRecords matches on.
+          // Keep the existing Airtable column name for backward compatibility.
           'Firestore ID': d.id,
           Name: d.fullName ?? d.name ?? '',
         };
@@ -368,7 +368,7 @@ export class AirtableIntegrationService {
     }
   }
 
-  /** Runs the full Firestore → Airtable export (listings + leads). */
+  /** Runs the full Supabase → Airtable export (listings + leads). */
   static async exportToAirtable(): Promise<{
     success: boolean;
     listings: AirtableSyncResult;
