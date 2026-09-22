@@ -64,7 +64,7 @@ permissions:
 jobs:
   manage-env:
     name: Manage Environment Variables
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
