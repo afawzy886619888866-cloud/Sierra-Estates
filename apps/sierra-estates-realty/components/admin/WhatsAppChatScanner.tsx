@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -36,6 +37,8 @@ interface ParsedUnit {
   isDuplicate: boolean;
   duplicateOf?: string;
   summary: string;
+  photoUrl?: string;
+  images?: string[];
 }
 
 interface ScanStats {
@@ -673,9 +676,21 @@ export default function WhatsAppChatScanner({
                     }}
                   >
                     <td style={{ padding: '12px' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--tx)' }}>{u.compound}</div>
-                      <div style={{ fontSize: 11, color: 'var(--tx-m)' }}>
-                        {u.propertyType} · {u.mode === 'sale' ? (isAr ? 'بيع' : 'Sale') : isAr ? 'إيجار' : 'Rent'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {u.photoUrl && (
+                          <img
+                            src={u.photoUrl}
+                            alt={u.compound}
+                            style={{ width: 38, height: 38, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--bd-s)', flexShrink: 0 }}
+                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                          />
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--tx)' }}>{u.compound}</div>
+                          <div style={{ fontSize: 11, color: 'var(--tx-m)' }}>
+                            {u.propertyType} · {u.mode === 'sale' ? (isAr ? 'بيع' : 'Sale') : isAr ? 'إيجار' : 'Rent'}
+                          </div>
+                        </div>
                       </div>
                     </td>
 

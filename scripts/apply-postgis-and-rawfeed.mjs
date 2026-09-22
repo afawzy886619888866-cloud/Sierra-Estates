@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const token = process.env.SUPABASE_ACCESS_TOKEN || 'sbp_3f95f2d98451c633e86f637049abf4dccb08b85c';
+const token = process.env.SUPABASE_ACCESS_TOKEN;
 const projectRef = 'REDACTED-PROJECT';
 
 const sql = `

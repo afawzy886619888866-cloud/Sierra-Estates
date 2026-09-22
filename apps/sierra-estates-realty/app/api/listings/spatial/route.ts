@@ -104,8 +104,48 @@ export async function GET(request: Request) {
       logger.warn('[SPATIAL_RPC] Supabase client unavailable or failed:', err?.message || err);
     }
 
-    // 2. Fallback if RPC returned empty or was unavailable (e.g. offline testing)
+    // 2. Live-table fallback: the PostGIS RPC (`get_listings_near_capital`)
+    //    is not deployed on the live Supabase project (deployed schema
+    //    diverged from supabase/schema.sql), so read public.listings
+    //    directly — the same live read /api/listings filter mode uses — and
+    //    let the haversine pass below apply the radius. Seed data stays as
+    //    the final offline tier.
+    let isLive = isLiveRpc;
     if (!isLiveRpc || rawItems.length === 0) {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: liveRows, error: liveErr } = await supabase
+          .from('listings')
+          .select('*')
+          .in('status', ['active', 'available'])
+          .limit(500);
+
+        if (!liveErr && Array.isArray(liveRows) && liveRows.length > 0) {
+          rawItems = liveRows
+            .filter((r: any) => r.latitude != null && r.longitude != null)
+            .map((r: any) => ({
+              ...r,
+              // Presentation fields (img) are parked in raw_data on the live
+              // table; surface them through the images array the processor
+              // reads (lib/server/listing-columns.ts convention).
+              images:
+                Array.isArray(r.images) && r.images.length > 0
+                  ? r.images
+                  : r.raw_data?.img
+                    ? [r.raw_data.img]
+                    : [],
+            }));
+          isLive = true;
+        } else if (liveErr) {
+          logger.warn('[SPATIAL_LIVE] Live listings read failed, trying seed:', liveErr.message);
+        }
+      } catch (err: any) {
+        logger.warn('[SPATIAL_LIVE] Supabase client unavailable:', err?.message || err);
+      }
+    }
+
+    // 3. Seed fallback (offline / sandbox only)
+    if (!isLive || rawItems.length === 0) {
       // Map seed listings into spatial records using haversine
       rawItems = SEED_LISTINGS.map((l) => {
         // Approximate location around New Cairo if not set
@@ -130,7 +170,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // 3. Process, calculate exact geodesic distance, and filter
+    // 4. Process, calculate exact geodesic distance, and filter
     const processed: SpatialListingItem[] = [];
 
     for (const item of rawItems) {
@@ -197,13 +237,13 @@ export async function GET(request: Request) {
       } as SpatialListingItem);
     }
 
-    // 4. Sort by distance (nearest first)
+    // 5. Sort by distance (nearest first)
     processed.sort((a, b) => a.distanceKm - b.distanceKm);
 
     // Apply limit
     const sliced = processed.slice(0, limit);
 
-    // 5. Generate GeoJSON FeatureCollection
+    // 6. Generate GeoJSON FeatureCollection
     const features = sliced.map((item) =>
       toGeoJsonFeature(item.latitude, item.longitude, {
         id: item.id,
@@ -248,6 +288,9 @@ export async function GET(request: Request) {
         totalFound: processed.length,
         returned: sliced.length,
         isLiveRpc,
+        // True when data came from either live source (PostGIS RPC or a
+        // direct public.listings read); false means seed/demo data.
+        isLive,
         boundingBox,
       },
       listings: sliced,

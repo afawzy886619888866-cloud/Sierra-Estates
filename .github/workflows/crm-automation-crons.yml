@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: CRM automation crons
+
+# /api/cron/sync-leads and /api/cron/sync-listings are registered by
+# apps/sierra-estates-realty/vercel.json (Vercel Cron), but
+# /api/cron/whatsapp-dispatch has no vercel.json entry — the route comment
+# says it is "fired once daily by .github/workflows/whatsapp-dispatch-cron.yml",
+# which never existed, so queued WhatsApp bot replies were never drained.
+#
+# This workflow restores that trigger. It fires hourly: the route itself
+# no-ops ("outside-operating-hours") outside the Africa/Cairo outreach window
+# and respects per-sender quotas, so extra invocations are harmless while the
+# window itself survives DST shifts and outreach-config changes.
+
+on:
+  schedule:
+    - cron: '10 * * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which cron endpoint to trigger now
+        required: true
+        type: choice
+        default: whatsapp-dispatch
+        options:
+          - whatsapp-dispatch
+          - sync-leads
+          - sync-listings
+
+concurrency:
+  group: crm-automation-crons
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    name: Trigger cron endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resolve target path
+        id: target
+        env:
+          JOB_NAME: ${{ github.event_name == 'schedule' && 'whatsapp-dispatch' || inputs.job }}
+        run: |
+          case "$JOB_NAME" in
+            whatsapp-dispatch) echo "path=/api/cron/whatsapp-dispatch" >> "$GITHUB_OUTPUT" ;;
+            sync-leads)        echo "path=/api/cron/sync-leads"        >> "$GITHUB_OUTPUT" ;;
+            sync-listings)     echo "path=/api/cron/sync-listings"     >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unknown job: $JOB_NAME" >&2; exit 1 ;;
+          esac
+
+      - name: Call production cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets['CRON_SECRET'] }}
+        run: |
+          curl -sS -f --max-time 90 \
+            "https://sierra-estates.net${{ steps.target.outputs.path }}" \
+            -H "Authorization: Bearer ${CRON_SECRET}"

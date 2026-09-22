@@ -163,95 +163,81 @@ async function fetchRealListings() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// STAGE 2: SYNC TO FIRESTORE
+// STAGE 2: SYNC TO SUPABASE
 // ═══════════════════════════════════════════════════════════════
-async function syncToFirestore(listings) {
+async function syncToSupabase(listings) {
   console.log('\n══════════════════════════════════════════════════════');
-  console.log('  STAGE 2 — Syncing Real Listings to Firestore');
+  console.log('  STAGE 2 — Syncing Real Listings to Supabase');
   console.log('══════════════════════════════════════════════════════');
 
-  // Dynamically require firebase-admin (CommonJS module — already available via createRequire at top)
-  let initializeApp, getApps, cert, getFirestore, FieldValue;
-  try {
-    ({ initializeApp, getApps, cert } = require('firebase-admin/app'));
-    ({ getFirestore, FieldValue } = require('firebase-admin/firestore'));
-  } catch {
-    console.warn('⚠️  firebase-admin not installed. Run: pnpm add -Dw firebase-admin');
-    console.warn('   Skipping Firestore sync. Real data is still saved locally.');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseKey) {
+    console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not configured. Skipping remote database sync.');
     return;
   }
 
-  // Initialize if not already initialized
-  if (getApps().length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'sierra-blu';
+  const { createClient } = require('@supabase/supabase-js');
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-      initializeApp({ credential: cert(sa), projectId });
-      console.log(`🔑 Authenticated via FIREBASE_SERVICE_ACCOUNT_JSON → project: ${projectId}`);
-    } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      initializeApp({
-        credential: cert({
-          project_id: projectId,
-          client_email: process.env.FIREBASE_CLIENT_EMAIL,
-          private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-        projectId,
-      });
-      console.log(`🔑 Authenticated via FIREBASE_CLIENT_EMAIL → project: ${projectId}`);
-    } else {
-      console.error('❌ No Firebase credentials found! Set one of:');
-      console.error('   FIREBASE_SERVICE_ACCOUNT_JSON   (full JSON string)');
-      console.error('   FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY');
-      console.error('   in .env.local');
-      return;
-    }
-  }
-
-  const db = getFirestore();
-  const collection = 'properties';
-  const BATCH_SIZE = 400;
+  const BATCH_SIZE = 100;
   let written = 0;
 
-  console.log(`🔄 Writing ${listings.length} listings → Firestore collection: "${collection}"`);
+  console.log(`🔄 Writing ${listings.length} listings → Supabase public.listings`);
   for (let i = 0; i < listings.length; i += BATCH_SIZE) {
-    const batch = db.batch();
     const slice = listings.slice(i, i + BATCH_SIZE);
-    for (const listing of slice) {
-      const ref = db.collection(collection).doc(listing.id);
-      batch.set(ref, listing, { merge: true });
-    }
-    await batch.commit();
-    written += slice.length;
-    console.log(`   ✓ Batch committed: ${written}/${listings.length}`);
-  }
+    const records = slice.map((l) => ({
+      code: l.code || l.id,
+      title: `${l.beds}BR ${l.compound}`,
+      compound: l.compound,
+      location: l.compound,
+      zone: l.zone,
+      property_type: (l.type || 'apartment').toLowerCase(),
+      bedrooms: l.beds,
+      bathrooms: l.baths,
+      area: l.area,
+      price: l.price,
+      status: 'available',
+      owner_type: l.ownerType === 'Broker' ? 'broker' : 'owner',
+      contact_name: l.ownerName,
+      owner_contact: l.mobile,
+      img: l.img,
+      photos: [l.img],
+      images: [l.img],
+      source: 'google-sheet',
+      updated_at: new Date().toISOString(),
+    }));
 
-  // Also activate any bot agents in the 'agents' collection
-  console.log('\n🤖 Scanning Firestore for inactive bot agents...');
-  const agentSnap = await db.collection('agents').get();
-  if (!agentSnap.empty) {
-    const toActivate = agentSnap.docs.filter(d => {
-      const data = d.data();
-      return data.active === false || data.isActive === false || data.status === 'inactive';
-    });
-    if (toActivate.length > 0) {
-      const batch = db.batch();
-      toActivate.forEach(doc => {
-        const data = doc.data();
-        const field = 'status' in data ? 'status' : ('active' in data ? 'active' : 'isActive');
-        const val = field === 'status' ? 'active' : true;
-        batch.update(doc.ref, { [field]: val, activatedAt: FieldValue.serverTimestamp() });
-      });
-      await batch.commit();
-      console.log(`✅ Activated ${toActivate.length} bot agent(s) in Firestore`);
+    const { error } = await supabase.from('listings').upsert(records, { onConflict: 'code' });
+    if (error) {
+      console.warn(`   ⚠️ Batch error at ${i}:`, error.message);
     } else {
-      console.log(`✅ All ${agentSnap.size} bot agents already active`);
+      written += slice.length;
+      console.log(`   ✓ Batch committed: ${written}/${listings.length}`);
     }
-  } else {
-    console.log('ℹ️  No "agents" collection found in Firestore');
   }
 
-  console.log(`\n✅ Firestore sync complete: ${written} listings written to "${collection}"`);
+  // Activate bot agents in Supabase system_status
+  console.log('\n🤖 Refreshing bot agents status in Supabase...');
+  try {
+    const { data: bots } = await supabase.from('system_status').select('id');
+    if (bots && bots.length > 0) {
+      for (const b of bots) {
+        await supabase
+          .from('system_status')
+          .update({ status: 'active', enabled: true, last_pulse: new Date().toISOString() })
+          .eq('id', b.id);
+      }
+      console.log(`✅ Activated ${bots.length} bot agent(s) in Supabase system_status`);
+    }
+  } catch (err) {
+    console.warn('   ⚠️ Bot status update note:', err.message);
+  }
+
+  console.log(`\n✅ Supabase sync complete: ${written} listings synchronized to public.listings`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -352,8 +338,8 @@ async function main() {
       return;
     }
 
-    // STAGE 2 — Firestore sync
-    await syncToFirestore(listings);
+    // STAGE 2 — Supabase sync
+    await syncToSupabase(listings);
 
     // STAGE 3 — Vertex AI (only if --vertex flag)
     if (RUN_VERTEX) {

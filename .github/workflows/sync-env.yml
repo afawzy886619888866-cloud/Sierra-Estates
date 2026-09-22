@@ -1,0 +1,240 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Sync & Edit .env (Vercel & GitHub)
+
+# Allows manual management and synchronization of environment variables across
+# GitHub Repository Secrets/Variables and Vercel Projects (Client & Admin).
+#
+# Usage:
+#   1. Set/update a single variable or secret across both GitHub and Vercel
+#   2. Full synchronization: push all master environment variables to Vercel
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'sync_all_to_vercel'
+        type: choice
+        options:
+          - 'sync_all_to_vercel'
+          - 'set_single_variable'
+      env_key:
+        description: 'Variable Name (Required if set_single_variable)'
+        required: false
+        default: ''
+        type: string
+      env_value:
+        description: 'Variable Value (Required if set_single_variable)'
+        required: false
+        default: ''
+        type: string
+      is_secret:
+        description: 'Is this a secret/sensitive value? (Stored encrypted in GitHub Secrets and Vercel)'
+        required: true
+        default: false
+        type: boolean
+      target:
+        description: 'Where to set the variable'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - 'both'
+          - 'vercel_only'
+          - 'github_only'
+      vercel_target:
+        description: 'Target Vercel environment(s)'
+        required: true
+        default: 'production,preview'
+        type: choice
+        options:
+          - 'production,preview'
+          - 'production'
+          - 'preview'
+
+concurrency:
+  group: sync-env-lock
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  manage-env:
+    name: Manage Environment Variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      # ── ACTION 1: Set single variable ─────────────────────────────────────
+      - name: Set Single Variable in GitHub / Vercel
+        if: inputs.action == 'set_single_variable'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
+          CLIENT_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
+          ADMIN_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
+          KEY: ${{ inputs.env_key }}
+          VALUE: ${{ inputs.env_value }}
+          IS_SECRET: ${{ inputs.is_secret }}
+          TARGET: ${{ inputs.target }}
+          VERCEL_TARGET: ${{ inputs.vercel_target }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$VALUE" ]; then
+            echo "::error::Both env_key and env_value are required for 'set_single_variable'."
+            exit 1
+          fi
+
+          echo "🚀 Processing environment variable: $KEY"
+
+          # 1. Update GitHub
+          if [ "$TARGET" = "both" ] || [ "$TARGET" = "github_only" ]; then
+            if [ "$IS_SECRET" = "true" ]; then
+              echo "🔒 Setting GitHub Secret: $KEY"
+              gh secret set "$KEY" --body "$VALUE" --repo "${{ github.repository }}"
+            else
+              echo "📝 Setting GitHub Variable: $KEY"
+              gh variable set "$KEY" --body "$VALUE" --repo "${{ github.repository }}"
+            fi
+            echo "✅ GitHub successfully updated for $KEY."
+          fi
+
+          # 2. Update Vercel
+          if [ "$TARGET" = "both" ] || [ "$TARGET" = "vercel_only" ]; then
+            if [ -z "$VERCEL_TOKEN" ]; then
+              echo "::error::VERCEL_TOKEN secret is required to push to Vercel."
+              exit 1
+            fi
+
+            # Format targets as JSON array
+            IFS=',' read -ra ADDR <<< "$VERCEL_TARGET"
+            TARGET_JSON=$(printf '%s\n' "${ADDR[@]}" | jq -R . | jq -s .)
+            ENV_TYPE="plain"
+            [ "$IS_SECRET" = "true" ] && ENV_TYPE="encrypted"
+
+            upsert_vercel() {
+              local proj_id="$1"
+              local proj_name="$2"
+              echo "☁️ Upserting $KEY to Vercel $proj_name ($proj_id)..."
+              
+              PAYLOAD=$(jq -n \
+                --arg k "$KEY" \
+                --arg v "$VALUE" \
+                --arg t "$ENV_TYPE" \
+                --argjson targets "$TARGET_JSON" \
+                '{key:$k, value:$v, type:$t, target:$targets}')
+
+              HTTP_CODE=$(curl -sS -o /tmp/vercel-res.json -w '%{http_code}' -X POST \
+                "https://api.vercel.com/v10/projects/${proj_id}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
+                -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD")
+
+              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+                echo "✅ Vercel ($proj_name) updated successfully."
+              else
+                echo "::warning::Failed to update Vercel $proj_name: HTTP $HTTP_CODE $(cat /tmp/vercel-res.json)"
+              fi
+            }
+
+            upsert_vercel "$CLIENT_PROJECT_ID" "Client Project"
+            upsert_vercel "$ADMIN_PROJECT_ID" "Admin Project"
+          fi
+
+      # ── ACTION 2: Full Sync to Vercel ─────────────────────────────────────
+      - name: Full Sync to Vercel Projects
+        if: inputs.action == 'sync_all_to_vercel'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ' }}
+          CLIENT_VERCEL_PROJECT_ID: ${{ vars.CLIENT_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c' }}
+          ADMIN_VERCEL_PROJECT_ID: ${{ vars.ADMIN_VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi' }}
+          # Supabase
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROPERTY_MEDIA_BUCKET: ${{ vars.SUPABASE_PROPERTY_MEDIA_BUCKET || 'property-media' }}
+          SUPABASE_MEDIA_BUCKET: ${{ vars.SUPABASE_MEDIA_BUCKET || 'media' }}
+          # URLs & Routing
+          NEXT_PUBLIC_CLIENT_URL: ${{ vars.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net' }}
+          NEXT_PUBLIC_ADMIN_URL: ${{ vars.NEXT_PUBLIC_ADMIN_URL || 'https://admin.sierra-estates.net' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://sierra-estates.net' }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL || 'https://sierra-estates.net' }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          NEXT_PUBLIC_DEFAULT_LOCALE: ${{ vars.NEXT_PUBLIC_DEFAULT_LOCALE || 'en' }}
+          NEXT_PUBLIC_INTELLIGENCE_OS_URL: ${{ vars.NEXT_PUBLIC_INTELLIGENCE_OS_URL }}
+          OPENMEMORY_URL: ${{ vars.OPENMEMORY_URL || 'http://localhost:8080' }}
+          # AI & LLM
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY || secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || secrets.GOOGLE_AI_API_KEY }}
+          GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY || secrets.GOOGLE_AI_API_KEY }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+          GOOGLE_CLOUD_LOCATION: ${{ vars.GOOGLE_CLOUD_LOCATION || 'europe-west1' }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_URL: ${{ vars.DEEPSEEK_API_URL }}
+          # Property Finder
+          PROPERTY_FINDER_API_KEY: ${{ secrets.PROPERTY_FINDER_API_KEY || secrets.PF_API_KEY }}
+          PROPERTY_FINDER_API_SECRET: ${{ secrets.PROPERTY_FINDER_API_SECRET || secrets.PF_API_SECRET }}
+          PROPERTY_FINDER_AUTH_TOKEN: ${{ secrets.PROPERTY_FINDER_AUTH_TOKEN || secrets.PROPERTY_FINDER_JWT_TOKEN || secrets.PF_JWT_TOKEN }}
+          PF_COMPANY_ID: ${{ vars.PF_COMPANY_ID }}
+          PF_WEBHOOK_SECRET: ${{ secrets.PF_WEBHOOK_SECRET }}
+          # AWS & Backend Secrets
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          SBR_SECRET_KEY: ${{ secrets.SBR_SECRET_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
+          # Telegram
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${{ vars.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          # WhatsApp
+          WHATSAPP_API_TOKEN: ${{ secrets.WHATSAPP_API_TOKEN || secrets.WHATSAPP_META_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ vars.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          LEAD_NOTIFY_WHATSAPP_NUMBER: ${{ vars.LEAD_NOTIFY_WHATSAPP_NUMBER }}
+          BRANDING_TAG: ${{ vars.BRANDING_TAG }}
+          WABA_NUMBER_1: ${{ vars.WABA_NUMBER_1 }}
+          WABA_NUMBER_2: ${{ vars.WABA_NUMBER_2 }}
+          WABA_NUMBER_3: ${{ vars.WABA_NUMBER_3 }}
+          WABA_NUMBER_4: ${{ vars.WABA_NUMBER_4 }}
+          # Twilio
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_MESSAGING_SERVICE_SID: ${{ vars.TWILIO_MESSAGING_SERVICE_SID }}
+          # SendGrid & Redis
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDER_EMAIL: ${{ vars.SENDER_EMAIL || vars.SENDGRID_FROM_EMAIL }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          # Google Sheets & n8n
+          INVENTORY_SHEET_ID: ${{ vars.INVENTORY_SHEET_ID }}
+          INVENTORY_SHEET_GID: ${{ vars.INVENTORY_SHEET_GID }}
+          MASTER_SHEET_ID: ${{ vars.MASTER_SHEET_ID }}
+          BROKER_INBOX_SHEET_ID: ${{ vars.BROKER_INBOX_SHEET_ID }}
+          N8N_BASE_URL: ${{ vars.N8N_BASE_URL }}
+          N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+          # Bootstrap
+          ADMIN_BOOTSTRAP_PASSWORD: ${{ secrets.ADMIN_BOOTSTRAP_PASSWORD }}
+          ADMIN_BOOTSTRAP_EMAIL: ${{ vars.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net' }}
+          ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN is not configured in GitHub Secrets. Please set VERCEL_TOKEN first."
+            exit 1
+          fi
+          echo "🔄 Running automated full sync to Vercel projects..."
+          node scripts/sync-vercel-env.js
