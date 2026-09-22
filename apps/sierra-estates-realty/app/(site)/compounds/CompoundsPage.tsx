@@ -156,7 +156,7 @@ export default function CompoundsPage() {
               {q && (
                 <button className="cs-clear" type="button" aria-label="Clear" onClick={() => setQ('')}>×</button>
               )}
-            </div>
+                    </div>
 
             <div className="af-group">
               <span className="af-label">{t('afType')}</span>
@@ -518,8 +518,7 @@ export default function CompoundsPage() {
                           </div>
                         </>
                       )}
-                      </div>
-                    </div>
+                        </div>
                   )}
                 </motion.div>
               </AnimatePresence>
