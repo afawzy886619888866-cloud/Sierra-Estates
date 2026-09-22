@@ -8,10 +8,10 @@ import { logger } from '@/lib/logger';
  * CRM spreadsheet import (Property Finder export rows) → public.listings.
  *
  * The sha256 dedupe fingerprint is the listing's primary key, exactly as it was
- * the Firestore document id, so re-importing the same row still updates rather
+ * the legacy document id, so re-importing the same row still updates rather
  * than duplicates.
  *
- * Firestore → Postgres field mapping. Every field is preserved; those with a
+ * Legacy document-store → Postgres field mapping. Every field is preserved; those with a
  * canonical column are written there rather than duplicated:
  *   currency → price_currency     area   → area_sqm
  *   status   → status, with 'available' written as 'active' (the value the
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         await insertRecord('listings', { ...unitPayload, createdAt: now });
 
         // Upsert owner record — keyed on the phone, which was the document id
-        // in Firestore and is the natural key (primary_mobile) in Postgres.
+        // in the former document store and is the natural key (primary_mobile) in Postgres.
         if (cleanMobileId) {
           await upsertRecord(
             'owners',
@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
         migrationSummaryLogs.push({ sync_hash: computedSyncHash, state: 'NEW_RECORD_COMMITTED' });
       }
 
-      // Short-lived 7-day TTL buffer log. Firestore expired these itself; in
-      // Postgres expire_at is recorded but nothing reaps it yet.
+      // Short-lived 7-day TTL buffer log. Postgres records expire_at; a worker
+      // is responsible for reaping expired rows.
       const sessionLogId = `LOG-BUF-${computedSyncHash}-${Date.now()}`;
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       await insertRecord('session_buffer_logs', {

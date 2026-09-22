@@ -93,7 +93,7 @@ export default function ReportsView({ lang = 'en' }: { lang?: string }) {
           </button>
           <button
             onClick={() => handleDownload('Executive_Summary_Report', 'PDF')}
-            className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg shadow-md transition-colors"
+            className="px-3 py-1.5 bg-[#C8961A] hover:bg-[#C8961A] text-white text-xs font-semibold rounded-lg shadow-md transition-colors"
           >
             {isAr ? 'توليد تقرير PDF' : 'Generate PDF'}
           </button>
@@ -101,9 +101,9 @@ export default function ReportsView({ lang = 'en' }: { lang?: string }) {
       </div>
 
       {downloadNotification && (
-        <div className="p-3 bg-cyan-950/80 border border-cyan-800 rounded-lg text-cyan-300 text-xs font-mono flex items-center justify-between animate-fadeIn">
+        <div className="p-3 bg-[#211A0D]/80 border border-[#C8961A]/40 rounded-lg text-[#F5D78E] text-xs font-mono flex items-center justify-between animate-fadeIn">
           <span>✓ {downloadNotification}</span>
-          <button onClick={() => setDownloadNotification(null)} className="text-cyan-400 font-bold">✕</button>
+          <button onClick={() => setDownloadNotification(null)} className="text-[#E9C176] font-bold">✕</button>
         </div>
       )}
 
@@ -137,7 +137,7 @@ export default function ReportsView({ lang = 'en' }: { lang?: string }) {
             <div className="space-y-1.5">
               <div className="flex justify-between items-start gap-2">
                 <span className="font-semibold text-white text-sm">{report.title}</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-[#F5D78E] border border-slate-700">
                   {report.format} • {report.size}
                 </span>
               </div>
@@ -145,7 +145,7 @@ export default function ReportsView({ lang = 'en' }: { lang?: string }) {
             </div>
 
             <div className="flex justify-between items-center pt-2 border-t border-slate-800/80">
-              <div className="text-xs text-cyan-400 font-mono">Status: Ready for Download</div>
+              <div className="text-xs text-[#E9C176] font-mono">Status: Ready for Download</div>
               <button
                 onClick={() => handleDownload(report.title, report.format)}
                 className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 transition-colors"

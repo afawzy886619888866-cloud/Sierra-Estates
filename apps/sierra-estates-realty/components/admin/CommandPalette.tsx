@@ -137,7 +137,7 @@ export default function CommandPalette({
             gap: 12,
           }}
         >
-          <span style={{ fontSize: 18, color: 'var(--gold, #00AEFF)' }}>🔍</span>
+          <span style={{ fontSize: 18, color: 'var(--gold, #C8961A)' }}>🔍</span>
           <input
             ref={inputRef}
             type="text"
@@ -317,7 +317,7 @@ export default function CommandPalette({
             <span><kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>↑</kbd> <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>↓</kbd> {isAr ? 'للتنقل' : 'Navigate'}</span>
             <span><kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 4px', borderRadius: 3 }}>↵</kbd> {isAr ? 'للاختيار' : 'Select'}</span>
           </div>
-          <span style={{ color: 'var(--gold, #00AEFF)', fontWeight: 600 }}>Sierra OS 3.0</span>
+          <span style={{ color: 'var(--gold, #C8961A)', fontWeight: 600 }}>Sierra OS 3.0</span>
         </div>
       </div>
     </div>

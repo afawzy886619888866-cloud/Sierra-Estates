@@ -17,7 +17,7 @@ import { type StakeholderAcquisitionSource } from '@/lib/models/schema';
  * as-is alongside the standard name/phone/source/notes fields rather than
  * force-fit into the full Lead/Stakeholder schema.
  *
- * Firestore → Postgres field mapping. Every field this route used to write is
+ * Legacy document-store → Postgres field mapping. Every field this route used to write is
  * still written; four of them land on their canonical `public.leads` column
  * because the value is identical and a second column would just be a copy:
  *

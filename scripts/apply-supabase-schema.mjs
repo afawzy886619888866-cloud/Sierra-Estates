@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 
-const token = process.env.SUPABASE_ACCESS_TOKEN || 'sbp_3f95f2d98451c633e86f637049abf4dccb08b85c';
+const token = process.env.SUPABASE_ACCESS_TOKEN;
 const projectRef = 'REDACTED-PROJECT';
 
 async function run() {

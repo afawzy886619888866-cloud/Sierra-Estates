@@ -1,8 +1,9 @@
 'use client';
+/* cspell:disable */
 
 import React, { useState, useMemo } from 'react';
 
-interface AppService {
+export interface AppService {
   id: string;
   name: { en: string; ar: string };
   category: 'core' | 'ai' | 'studio' | 'infra';
@@ -20,7 +21,7 @@ interface AppService {
   actionTarget: string;
 }
 
-const APPS_CATALOG: AppService[] = [
+export const APPS_CATALOG: AppService[] = [
   {
     id: 'sierra-client',
     name: { en: 'Sierra Client & Luxury Portal', ar: 'بوابة العملاء الفاخرة' },
@@ -37,7 +38,7 @@ const APPS_CATALOG: AppService[] = [
     repoPath: 'apps/sierra-estates-realty',
     status: 'online',
     icon: '🏰',
-    accentColor: '#00AEFF',
+    accentColor: '#C8961A',
     actionType: 'external',
     actionTarget: '/',
   },
@@ -102,6 +103,26 @@ const APPS_CATALOG: AppService[] = [
     actionTarget: 'intelligence',
   },
   {
+    id: 'memory-brain',
+    name: { en: 'Memory Brain, DeepSeek & MemPalace', ar: 'الذاكرة المركزية، DeepSeek وMemPalace' },
+    category: 'ai',
+    description: {
+      en: 'DeepSeek-V3 reasoning harness, 18-note Obsidian Markdown Knowledge Vault, ECC price drop radar, and MemPalace vector rooms.',
+      ar: 'محرك تقييم DeepSeek الحتمي ومستودع ملاحظات أوبسيديان ورادار هبوط الأسعار وقصر الذاكرة المتجهي.'
+    },
+    badge: 'DEEPSEEK',
+    badgeCls: 'nb-green',
+    tech: ['DeepSeek-V3', 'Obsidian Vault', 'ECC Memory', 'MemPalace'],
+    port: 'In-process / RAG',
+    route: '/admin?tab=memory_brain',
+    repoPath: 'packages/deepseek-harness',
+    status: 'online',
+    icon: '🧬',
+    accentColor: '#C5A059',
+    actionType: 'navigate',
+    actionTarget: 'memory_brain',
+  },
+  {
     id: 'n8n-automations',
     name: { en: 'Workflow & n8n Orchestrator', ar: 'محرك أتمتة العمليات n8n' },
     category: 'infra',
@@ -137,7 +158,7 @@ const APPS_CATALOG: AppService[] = [
     repoPath: 'apps/sierra-estates-realty/components/admin/EasyListingStudio.tsx',
     status: 'online',
     icon: '🎨',
-    accentColor: '#5FC9FF',
+    accentColor: '#E9C176',
     actionType: 'navigate',
     actionTarget: 'listings',
   },
@@ -177,7 +198,7 @@ const APPS_CATALOG: AppService[] = [
     repoPath: 'apps/sierra-estates-realty/app/admin/views/RealEstateProcessorView.tsx',
     status: 'online',
     icon: '🏘️',
-    accentColor: '#00AEFF',
+    accentColor: '#C8961A',
     actionType: 'navigate',
     actionTarget: 'real_estate_processor',
   },
@@ -277,7 +298,7 @@ const APPS_CATALOG: AppService[] = [
     repoPath: 'apps/sierra-estates-realty/app/api',
     status: 'online',
     icon: '🌐',
-    accentColor: '#00AEFF',
+    accentColor: '#C8961A',
     actionType: 'navigate',
     actionTarget: 'api_gateway',
   },
@@ -355,7 +376,7 @@ export default function AppsDirectoryView({
               fontFamily: 'JetBrains Mono, monospace',
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
-              color: 'var(--gold, #00AEFF)',
+              color: 'var(--gold, #C8961A)',
               padding: '3px 8px',
               borderRadius: 6,
               background: 'rgba(0, 174, 255, 0.1)',
@@ -548,7 +569,7 @@ export default function AppsDirectoryView({
                           padding: '2px 6px',
                           borderRadius: 4,
                           background: 'rgba(0, 174, 255, 0.12)',
-                          color: '#5FC9FF',
+                          color: '#E9C176',
                           border: '1px solid rgba(0, 174, 255, 0.25)',
                           fontWeight: 700,
                         }}
@@ -619,8 +640,8 @@ export default function AppsDirectoryView({
                       width: 7,
                       height: 7,
                       borderRadius: '50%',
-                      background: app.status === 'online' ? '#34D399' : '#00AEFF',
-                      boxShadow: `0 0 6px ${app.status === 'online' ? '#34D399' : '#00AEFF'}`,
+                      background: app.status === 'online' ? '#34D399' : '#C8961A',
+                      boxShadow: `0 0 6px ${app.status === 'online' ? '#34D399' : '#C8961A'}`,
                     }}
                   />
                   <span
