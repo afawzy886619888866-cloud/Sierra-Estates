@@ -14,6 +14,7 @@ on:
           - vertex-agent
           - run-harness
           - sync-propertyfinder
+          - audit:arc3
           - fleet:run-all
       prompt:
         description: Prompt for vertex-agent or openclaw:task
@@ -105,6 +106,9 @@ jobs:
               ;;
             sync-propertyfinder)
               pnpm sync-propertyfinder
+              ;;
+            audit:arc3)
+              pnpm audit:arc3
               ;;
             fleet:run-all)
               pnpm fleet:run-all
