@@ -10,10 +10,14 @@ const applicationSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(7).max(40),
   email: z.string().trim().email().max(200),
-  experience: z.string().trim().max(80).default(''),
+  position: z.string().trim().min(2).max(160),
+  experience: z.string().trim().min(1).max(80),
+  hasVehicle: z.boolean(),
+  biggestAchievements: z.string().trim().min(10).max(2000),
+  expectedSalary: z.string().trim().min(1).max(80),
   realEstateKnowledge: z.string().trim().max(120).default(''),
   availability: z.string().trim().max(80).default(''),
-  notes: z.string().trim().min(10).max(4000),
+  notes: z.string().trim().max(4000).default(''),
 });
 
 type Application = z.infer<typeof applicationSchema>;
@@ -70,12 +74,26 @@ export async function POST(request: Request) {
     // public.career_applications names these columns `name` / `position` /
     // `message`; the form calls them fullName / role / notes. Every field the
     // Firestore document carried is still stored, under the table's names.
-    const { fullName, role, notes, ...answers } = applicationRecord;
+    const {
+      fullName,
+      role,
+      position,
+      notes,
+      hasVehicle,
+      biggestAchievements,
+      expectedSalary,
+      realEstateKnowledge,
+      ...answers
+    } = applicationRecord;
     const created = await insertRecord<{ id: string }>('career_applications', {
       ...answers,
       name: fullName,
-      position: role,
+      position,
       message: notes,
+      has_vehicle: hasVehicle,
+      biggest_achievements: biggestAchievements,
+      expected_salary: expectedSalary,
+      real_estate_knowledge: realEstateKnowledge,
     });
     applicationId = created.id;
     persisted = true;
@@ -102,7 +120,11 @@ export async function POST(request: Request) {
         fullName: application.fullName,
         phone: application.phone,
         email: application.email,
+        position: application.position,
         experience: application.experience,
+        hasVehicle: application.hasVehicle ? 'Yes' : 'No',
+        biggestAchievements: application.biggestAchievements,
+        expectedSalary: application.expectedSalary,
         realEstateKnowledge: application.realEstateKnowledge,
         availability: application.availability,
         notes: application.notes,
@@ -113,7 +135,7 @@ export async function POST(request: Request) {
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${resendApiKey}`,
+          Authorization: 'Bearer ' + resendApiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -127,7 +149,11 @@ export async function POST(request: Request) {
             <p><strong>Name:</strong> ${safe.fullName}</p>
             <p><strong>Phone:</strong> ${safe.phone}</p>
             <p><strong>Email:</strong> ${safe.email}</p>
+            <p><strong>Applied position:</strong> ${safe.position}</p>
             <p><strong>Experience:</strong> ${safe.experience}</p>
+            <p><strong>Personal vehicle:</strong> ${safe.hasVehicle}</p>
+            <p><strong>Biggest achievements:</strong> ${safe.biggestAchievements}</p>
+            <p><strong>Expected salary:</strong> ${safe.expectedSalary}</p>
             <p><strong>Market & CRM knowledge:</strong> ${safe.realEstateKnowledge}</p>
             <p><strong>Availability:</strong> ${safe.availability}</p>
             <p><strong>Notes:</strong> ${safe.notes}</p>
@@ -151,6 +177,7 @@ export async function POST(request: Request) {
     applicationId,
     persisted,
     notificationSent,
+    whatsappInviteUrl: 'https://chat.whatsapp.com/BTjxkLJFO6m7lgaS4dzh1F',
     message: 'Application received successfully. Our HR team will review it shortly.',
   });
 }

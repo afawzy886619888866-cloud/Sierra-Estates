@@ -318,6 +318,14 @@ CREATE INDEX IF NOT EXISTS idx_unified_memory_embedding ON public.unified_memory
 CREATE INDEX IF NOT EXISTS idx_listings_embedding ON public.listings USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS listings_geo_idx ON public.listings USING gist (location_coords);
 
+-- Admin Portal & Dashboard Performance Optimization Indexes (database-design skill)
+CREATE INDEX IF NOT EXISTS idx_listings_agent ON public.listings(agent) WHERE agent IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_listings_status_ai_score ON public.listings(status, ai_score DESC);
+CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries(status);
+CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_leads_pipeline_stage ON public.leads(pipeline_stage);
+
 -- ------------------------------------------------------------------------------
 -- 11. Automatic updated_at Trigger
 -- ------------------------------------------------------------------------------
@@ -581,6 +589,9 @@ CREATE TABLE IF NOT EXISTS public.career_applications (
     email TEXT,
     position TEXT NOT NULL,
     experience TEXT,
+    has_vehicle BOOLEAN NOT NULL DEFAULT FALSE,
+    biggest_achievements TEXT NOT NULL DEFAULT '',
+    expected_salary TEXT NOT NULL DEFAULT '',
     message TEXT,
     -- Remaining answers from the /careers form.
     real_estate_knowledge TEXT,

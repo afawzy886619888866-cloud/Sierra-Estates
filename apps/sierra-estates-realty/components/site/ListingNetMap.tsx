@@ -618,6 +618,7 @@ function ListingNetMapContent({
             <div className="h-130 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-[#080d18]">
               <LiveMap
                 mode="dark"
+                lang="ar"
                 onSelectCompound={(c) => setSelectedCompound(c.nameEn)}
                 units={mapUnitPins}
                 selectedUnitIds={selectedUnitIds}

@@ -1,4 +1,4 @@
-﻿/* @datacloud.settings
+/* @datacloud.settings
 {
   "version": 1,
   "service": "BIG_QUERY",
@@ -11,18 +11,10 @@
 */
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Sierra Estates — Supabase Schema + Row Level Security (RLS) Policies
--- ═══════════════════════════════════════════════════════════════════════════
---
---  HOW TO DEPLOY:
---  1. Go to your Supabase project dashboard
---  2. Open SQL Editor (left sidebar)
---  3. Click "New query"
---  4. Paste this entire file
---  5. Click "Run" (▶ button)
---
---  This creates all tables + enables RLS + sets policies.
---  Safe to run multiple times (uses IF NOT EXISTS / OR REPLACE).
+-- Sierra Estates — Canonical Schema Reference
+-- NOTE: The authoritative, production Supabase schema is at supabase/schema.sql
+-- (pgvector, complete RLS policies, indexes, and full production tables).
+-- All migrations, schema applications, and deployments MUST use supabase/schema.sql.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── Enable UUID extension ───

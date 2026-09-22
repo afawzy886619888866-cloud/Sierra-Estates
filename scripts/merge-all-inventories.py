@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
+# pyright: reportAttributeAccessIssue=false, reportCallIssue=false, reportArgumentType=false
 """
 Merges Final_RealEstate_Database.xlsx and Owners_Inventory.json
 into a unified, deduplicated Master Database with Photo Priority and Airtable CSV export.
 """
+
+import sys
+from typing import Any
+
+if hasattr(sys.stdout, "reconfigure"):
+    getattr(sys.stdout, "reconfigure")(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    getattr(sys.stderr, "reconfigure")(encoding="utf-8")
 
 import os
 import json
@@ -84,7 +93,7 @@ def merge_all():
         return
 
     # 3. Concatenate
-    combined = pd.concat(dfs, ignore_index=True, sort=False)
+    combined: Any = pd.concat(dfs, ignore_index=True, sort=False)
     total_raw = len(combined)
     print(f"📊 Combined total records: {total_raw}")
 
@@ -121,9 +130,9 @@ def merge_all():
 
     # Sort so photo-bearing and recent records come first
     combined["photo_priority"] = np.where(combined["Has_Photos"] == "YES", 0, 1)
-    combined = combined.sort_values(["photo_priority", "Latest_Update"], ascending=[True, False])
+    combined = combined.sort_values(by=["photo_priority", "Latest_Update"], ascending=[True, False])
 
-    df_unique = combined.drop_duplicates(subset=["Dedup_Key"], keep="first").copy()
+    df_unique: Any = combined.drop_duplicates(subset=["Dedup_Key"], keep="first").copy()
     df_unique = df_unique.drop(columns=["photo_priority", "Dedup_Key"])
 
     # Sequential ID
@@ -143,7 +152,7 @@ def merge_all():
     cols = [c for c in PREFERRED_COLS if c in df_unique.columns]
     for c in df_unique.columns:
         if c not in cols: cols.append(c)
-    master = df_unique[cols].copy()
+    master: Any = df_unique[cols].copy()
 
     # 7. Save Airtable CSV
     master.to_csv(AIRTABLE_CSV, index=False, encoding="utf-8-sig")
@@ -188,7 +197,7 @@ def merge_all():
             "Brokers_Rent": ("Broker", "Rent"),
             "Brokers_Sale": ("Broker", "Sale"),
         }.items():
-            sub = master[(master["Advertiser_Type"] == adv) & (master["Deal"] == deal)]
+            sub: Any = master[(master["Advertiser_Type"] == adv) & (master["Deal"] == deal)]
             if not sub.empty:
                 sub.to_excel(writer, sheet_name=name, index=False)
 

@@ -69,7 +69,10 @@ export default function SierraMasterOrchestrator({
   ]);
 
   const [activeLogFilter, setActiveLogFilter] = useState<'all' | 'photos' | 'syndication' | 'leads' | 'agents'>('all');
-  const [expanded, setExpanded] = useState(true);
+  // Collapsed by default: the conductor used to eat the entire first screen of
+  // every admin page. It stays one click away via the expand toggle so power
+  // users lose nothing, while every page's own content starts immediately.
+  const [expanded, setExpanded] = useState(false);
 
   // Auto-Pilot Background Heartbeat
   useEffect(() => {
@@ -275,7 +278,7 @@ export default function SierraMasterOrchestrator({
           actionLabel: isAr ? 'عرض عملاء Property Finder' : 'View Property Finder Leads',
           actionTab: 'leads',
           badges: [
-            { label: 'PF Feed Status', val: 'Active (Synced)', color: '#00AEFF' },
+            { label: 'PF Feed Status', val: 'Active (Synced)', color: '#C8961A' },
             { label: 'Live PF Leads', val: '8 Inquiries', color: '#34D399' },
           ],
         });
@@ -293,7 +296,7 @@ export default function SierraMasterOrchestrator({
           actionTab: 'agents',
           badges: [
             { label: 'AO Port', val: '3001 Ready', color: '#34D399' },
-            { label: 'Project', val: 'se-vercel-deploy-main', color: '#00AEFF' },
+            { label: 'Project', val: 'se-vercel-deploy-main', color: '#C8961A' },
             { label: 'Harnesses', val: 'Claude + Agy + Copilot', color: '#A78BFA' },
           ],
         });
@@ -332,7 +335,7 @@ export default function SierraMasterOrchestrator({
           actionTab: 'pipeline',
           badges: [
             { label: 'Pipeline Value', val: 'EGP 102.4M', color: 'var(--gold)' },
-            { label: 'Negotiation', val: '2 Deals', color: '#00AEFF' },
+            { label: 'Negotiation', val: '2 Deals', color: '#C8961A' },
           ],
         });
         if (onNavigate) onNavigate('pipeline');
@@ -346,7 +349,7 @@ export default function SierraMasterOrchestrator({
           : `Orchestrator executed "${text || commandInput}": Database state verified, queues synchronized across all 21 microservices.`,
         badges: [
           { label: 'Status', val: 'Executed OK', color: '#34D399' },
-          { label: 'Latency', val: '42ms', color: '#00AEFF' },
+          { label: 'Latency', val: '42ms', color: '#C8961A' },
         ],
       });
     }, 700);
@@ -388,7 +391,7 @@ export default function SierraMasterOrchestrator({
               width: 38,
               height: 38,
               borderRadius: 10,
-              background: 'linear-gradient(135deg, var(--gold), #00AEFF)',
+              background: 'linear-gradient(135deg, var(--gold), #C8961A)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -478,7 +481,7 @@ export default function SierraMasterOrchestrator({
               className="progress-fill"
               style={{
                 width: `${(sweepStage / 5) * 100}%`,
-                background: 'linear-gradient(90deg, #00AEFF, var(--gold))',
+                background: 'linear-gradient(90deg, #C8961A, var(--gold))',
                 transition: 'width 0.4s ease',
               }}
             />
@@ -535,7 +538,7 @@ export default function SierraMasterOrchestrator({
                 borderRadius: 12,
                 background: 'var(--surf)',
                 border: '1px solid var(--bd)',
-                borderTop: '3px solid #00AEFF',
+                borderTop: '3px solid #C8961A',
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
               }}
@@ -844,7 +847,7 @@ export default function SierraMasterOrchestrator({
                         l.category === 'photos'
                           ? '#f59e0b20'
                           : l.category === 'syndication'
-                          ? '#00AEFF20'
+                          ? '#C8961A20'
                           : l.category === 'leads'
                           ? '#34D39920'
                           : '#7C3AED20',
@@ -852,7 +855,7 @@ export default function SierraMasterOrchestrator({
                         l.category === 'photos'
                           ? '#f59e0b'
                           : l.category === 'syndication'
-                          ? '#00AEFF'
+                          ? '#C8961A'
                           : l.category === 'leads'
                           ? '#34D399'
                           : '#7C3AED',
