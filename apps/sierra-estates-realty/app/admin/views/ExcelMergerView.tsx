@@ -568,18 +568,29 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
 
   const onSyncToDb = async () => {
     if (!mergedRows.length) return;
+    const confirmed = window.confirm(
+      isAr
+        ? `هل تريد استيراد ${mergedRows.length} وحدة إلى قاعدة البيانات؟ سيتم تسجيل العملية في سجل التدقيق.`
+        : `Import ${mergedRows.length} units into Supabase? This will update matching reference codes and create an audit record.`,
+    );
+    if (!confirmed) {
+      addLog(isAr ? 'تم إلغاء المزامنة.' : 'Import cancelled.');
+      return;
+    }
+
     setIsSyncing(true);
     addLog(`\n🔌 Syncing ${mergedRows.length} units to master database...`);
     try {
-      const res = await fetch('/api/admin/db/inventory', {
+      const res = await fetch('/api/admin/inventory/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ units: mergedRows }),
+        body: JSON.stringify({ units: mergedRows, confirmed: true }),
       });
       if (!res.ok) {
         throw new Error(`Server returned ${res.status}: ${await res.text()}`);
       }
-      addLog(`✅ Successfully synced to database!`);
+      const result = await res.json();
+      addLog(`✅ Successfully synced ${result.imported ?? mergedRows.length} units to database in chunks of ${result.chunkSize ?? 75}.`);
     } catch (e: any) {
       addLog(`❌ Sync failed: ${e?.message ?? e}`);
     } finally {

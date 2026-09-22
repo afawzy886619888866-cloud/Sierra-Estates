@@ -69,7 +69,6 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Legacy Firebase Admin init was removed on 2026-09-20 (Firebase → Supabase migration).
  *  Supabase is the single source of truth for all writes.
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -117,7 +116,7 @@ async function forwardToN8n(payload) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Create / update client + request in Supabase & Firestore directly
+ *  Create / update lead + inquiry in Supabase directly
  *  (fallback if n8n is down — ensures no lead is lost)
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -181,14 +180,12 @@ async function createRequestInSupabase(leadId, phone, messageText) {
   }
 }
 
-async function writeClientToFirestore(phone, name) {
-  // Supabase is authoritative — Firebase fallback removed on 2026-09-20.
+async function writeLeadToSupabase(phone, name) {
   const supabaseLead = await writeClientToSupabase(phone, name);
   return supabaseLead || { id: `supa-${phone}`, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
 }
 
-async function createRequestInFirestore(clientId, messageText, phone) {
-  // Supabase is authoritative — Firebase fallback removed on 2026-09-20.
+async function createInquiryInSupabase(clientId, messageText, phone) {
   const supabaseInquiry = await createRequestInSupabase(clientId, phone, messageText);
   return supabaseInquiry || { id: `supa-inq-${Date.now()}` };
 }
@@ -308,13 +305,13 @@ async function startSock() {
           jid,
         });
 
-        // ── Fallback: write directly to Firestore if n8n is down ──
+        // ── Fallback: write directly to Supabase if n8n is down ──
         let requestId = n8nResponse?.requestId;
         if (!n8nResponse) {
-          logger.warn('n8n unavailable — writing directly to Firestore');
-          const client = await writeClientToFirestore(phone, senderName);
+          logger.warn('n8n unavailable — writing directly to Supabase');
+          const client = await writeLeadToSupabase(phone, senderName);
           if (client) {
-            const request = await createRequestInFirestore(client.id, text);
+            const request = await createInquiryInSupabase(client.id, text, phone);
             requestId = request?.id;
           }
         }

@@ -151,7 +151,7 @@ export default function AgentIntelligence() {
           <code>{data.store.name}</code>, so execution history is lost whenever the
           process recycles — on serverless that is nearly every request. The figures
           below reflect only what this instance happened to handle. Set{' '}
-          <code>MEMORY_PERSISTENCE=database</code> with Firebase credentials to make
+          <code>MEMORY_PERSISTENCE=database</code> with Supabase service-role credentials to make
           them real.
           {data.store.error && <div style={{ marginTop: 6 }}>Last store error: {data.store.error}</div>}
         </div>
