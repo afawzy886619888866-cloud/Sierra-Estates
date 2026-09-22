@@ -62,7 +62,7 @@ function isConfigured(value: string | undefined) {
 
 function validateProductionEnvironment() {
   const missing: string[] = [];
-  
+
   // Supabase is the authoritative primary backend (Database, Auth, pgvector, Storage)
   const hasSupabase = Boolean(
     isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL) || isConfigured(process.env.SUPABASE_URL)
