@@ -178,3 +178,25 @@ never deletes files, changes branches, or contacts Vercel/Supabase.
 - The web app is not the place for long-running ingestion or bot work.
 - Worker orchestration is handled by dedicated services.
 - The docs and scripts should reflect this single architecture; stale Firebase commands are intentionally removed from the active contract.
+## Local Excel inventory workflow
+
+Supabase `public.listings` remains the authoritative inventory source. The local workbook is an operational export and must be reviewed before importing changes.
+
+```bash
+pnpm inventory:excel:pull
+pnpm inventory:excel:push -- --file apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx --dry-run
+pnpm inventory:excel:push -- --file apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx
+```
+
+The pull command creates `All Listings`, `Available`, `Rentals`, `Sales`, `Needs Review`, and `README` sheets. The push command validates rows and upserts by `reference_code`; it never exposes the service-role key to the browser or workbook. Use `--dry-run` before every production import.
+
+## Worker startup boundaries
+
+Deploying the Next.js application does not start the WhatsApp, Telegram, OpenClaw, Vertex, scraper, or n8n workers. Each worker needs its own runtime environment and process host. The standalone WhatsApp worker has an independent lockfile and must be installed before it is started:
+
+```bash
+pnpm whatsapp:bot:install
+pnpm whatsapp:bot
+```
+
+The inactive `infra/n8n-workflows/02-whatsapp-bot-handler.json` workflow is retained as a historical reference only. It still contains Firebase nodes and must not be activated; use the Supabase-backed TypeScript WhatsApp router instead.
