@@ -181,8 +181,8 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
 export const OPENCLAW_LOGS = [
   {t:'dim',l:'OpenClaw v3.2.1 · Sierra Estates Intelligence OS'},
   {t:'dim',l:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'},
-  {t:'green',l:'[✓] Firebase Auth connection established'},
-  {t:'green',l:'[✓] Firestore rules validated — 4 collections active'},
+  {t:'green',l:'[✓] Supabase Auth connection established'},
+  {t:'green',l:'[✓] Supabase RLS policies validated — 4 collections active'},
   {t:'green',l:'[✓] Sierra Bot online — 1,203 sessions this month'},
   {t:'green',l:'[✓] Leila/Lola agent — Arabic routing active'},
   {t:'green',l:'[✓] Stage-9 Closer — 97 deals processed this month'},
