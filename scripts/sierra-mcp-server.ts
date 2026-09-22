@@ -4,14 +4,27 @@
  * Stdio JSON-RPC 2.0 compliant server for AI Agents and IDEs
  */
 
+// Route all non-JSON logs to stderr so stdout remains pure JSON-RPC 2.0
+console.log = (...args: any[]) => {
+  process.stderr.write(args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ') + '\n');
+};
+
 import * as readline from 'readline';
-import * as dotenv from 'dotenv';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 import { obsidian } from '../packages/obsidian/src/index';
 import { OpenClawAgent } from '../packages/agents/openclaw';
+import { brainRAG, mempalace, memoryEngine } from '../packages/memory-engine/src/index';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  : null;
 
 const aiKey =
   process.env.GOOGLE_GENAI_API_KEY ||
@@ -89,16 +102,87 @@ const TOOLS = [
       },
       required: ['prompt']
     }
+  },
+  {
+    name: 'get_distressed_deals',
+    description: 'Retrieve active hot deals and distressed price drops (dropPct >= 8.0%) from Episodic Context Cache (ECC).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Maximum number of distressed deals to return (default: 10)' }
+      }
+    }
+  },
+  {
+    name: 'search_memory_palace',
+    description: 'Search Memory Palace multi-room vector & keyword store across listings, leads, negotiations, and system architecture.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        keyword: { type: 'string', description: 'Search keywords or query terms' },
+        room: { type: 'string', enum: ['listings', 'leads', 'negotiations', 'system', 'general'], description: 'Optional memory palace room' },
+        drawer: { type: 'string', description: 'Optional drawer identifier' },
+        limit: { type: 'number', description: 'Max results to return' }
+      }
+    }
+  },
+  {
+    name: 'query_brain_rag',
+    description: 'Execute a goal-aligned RAG query across Obsidian Vault notes and ECC Episodic/Entity Memory.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search inquiry or question' },
+        compound: { type: 'string', description: 'Optional compound filter' },
+        entityId: { type: 'string', description: 'Optional entity ID (buyer phone, owner phone, or Sierra code)' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'track_ecc_price_drop',
+    description: 'Track an owner price reduction in ECC and generate an episode and hot deal alert.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        sierraCode: { type: 'string', description: 'Listing identifier or unit code' },
+        oldPrice: { type: 'number', description: 'Previous asking price in EGP' },
+        newPrice: { type: 'number', description: 'New asking price in EGP' },
+        source: { type: 'string', description: 'Source channel (e.g. WhatsApp, direct, broker)' },
+        ownerName: { type: 'string', description: 'Owner name or phone number' }
+      },
+      required: ['sierraCode', 'oldPrice', 'newPrice']
+    }
   }
 ];
 
 async function handleToolCall(name: string, args: any): Promise<any> {
   switch (name) {
     case 'get_inventory': {
+      if (supabase) {
+        try {
+          let query = supabase.from('listings').select('code, compound, property_type, bedrooms, area_sqm, price, deal_type, status');
+          if (args.compound) {
+            query = query.ilike('compound', `%${args.compound}%`);
+          }
+          if (args.propertyType) {
+            query = query.ilike('property_type', `%${args.propertyType}%`);
+          }
+          const { data, error } = await query.limit(args.limit || 20);
+          if (!error && data && data.length > 0) {
+            return {
+              count: data.length,
+              source: 'supabase',
+              items: data,
+            };
+          }
+        } catch {}
+      }
       const memories = await obsidian.search(args.compound || '', ['inventory-listing', 'broker-listing']);
       const results = memories.map(m => m.value);
       return {
         count: results.length,
+        source: 'obsidian',
         items: results.slice(0, args.limit || 20)
       };
     }
@@ -114,17 +198,37 @@ async function handleToolCall(name: string, args: any): Promise<any> {
 
     case 'calculate_valuation_score': {
       const pricePerSqm = args.price / (args.area_sqm || 1);
-      // Benchmarks in New Cairo (EGP/sqm)
-      const benchmark = 80000;
+      let benchmark = 80000;
+      let compCount = 0;
+      if (supabase) {
+        try {
+          const { data } = await supabase
+            .from('listings')
+            .select('price, area_sqm')
+            .ilike('compound', `%${args.compound}%`)
+            .gt('area_sqm', 0);
+          if (data && data.length > 0) {
+            const psqm = data.map((d: any) => d.price / d.area_sqm).filter((p: number) => p > 5000 && p < 500000);
+            if (psqm.length > 0) {
+              benchmark = psqm.reduce((a: number, b: number) => a + b, 0) / psqm.length;
+              compCount = psqm.length;
+            }
+          }
+        } catch {}
+      }
+      const delta = ((pricePerSqm - benchmark) / benchmark) * 100;
       let score = 50;
-      if (pricePerSqm < benchmark * 0.8) score = 90; // Distress deal / bargain
-      else if (pricePerSqm < benchmark) score = 75;
-      else if (pricePerSqm <= benchmark * 1.2) score = 60;
+      if (delta <= -15) score = 90;
+      else if (delta <= 0) score = 75;
+      else if (delta <= 15) score = 60;
       else score = 40;
 
       return {
         compound: args.compound,
         pricePerSqm: Math.round(pricePerSqm),
+        benchmarkPerSqm: Math.round(benchmark),
+        compsAnalyzed: compCount,
+        deltaPct: Number(delta.toFixed(1)),
         valuationScore: score,
         rating: score >= 80 ? 'Distress Deal / High ROI' : score >= 60 ? 'Fair Market Value' : 'Premium / High Price',
         timestamp: new Date().toISOString()
@@ -138,6 +242,47 @@ async function handleToolCall(name: string, args: any): Promise<any> {
 
     case 'execute_openclaw_task': {
       const result = await openclaw.queryVertexAgent(args.prompt);
+      return result;
+    }
+
+    case 'get_distressed_deals': {
+      const deals = brainRAG.ecc.getHotDeals(args.limit || 10);
+      return { count: deals.length, deals };
+    }
+
+    case 'search_memory_palace': {
+      const results = mempalace.search({
+        keyword: args.keyword,
+        room: args.room,
+        drawer: args.drawer,
+        limit: args.limit || 10
+      });
+      return { count: results.length, results };
+    }
+
+    case 'query_brain_rag': {
+      const directive = brainRAG.queryBrainRAG(args.query, {
+        compound: args.compound,
+        entityId: args.entityId
+      });
+      return directive;
+    }
+
+    case 'track_ecc_price_drop': {
+      const result = brainRAG.ecc.trackPriceReduction(
+        args.sierraCode,
+        args.oldPrice,
+        args.newPrice,
+        args.source || 'Direct Intake',
+        args.ownerName
+      );
+      mempalace.store({
+        id: `price-drop-${args.sierraCode}-${Date.now()}`,
+        room: 'listings',
+        drawer: 'distressed-deals',
+        content: `Unit ${args.sierraCode} price drop: ${args.oldPrice} -> ${args.newPrice} EGP (${result.dropPct}%). Hot deal: ${result.isHotDeal}`,
+        timestamp: new Date().toISOString()
+      });
       return result;
     }
 

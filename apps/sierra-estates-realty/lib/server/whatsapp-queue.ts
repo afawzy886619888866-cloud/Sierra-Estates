@@ -98,12 +98,14 @@ function toIsoOrUndefined(value: ScheduleInput | undefined): string | undefined 
 export async function enqueueWhatsAppJob(params: {
   purpose: WhatsAppMessagePurpose;
   toPhone: string;
+  toName?: string;
   body: string;
   leadId?: string;
   unitId?: string;
   ownerNegotiationId?: string;
   templateName?: string;
   templateParams?: Record<string, string>;
+  metadata?: Record<string, unknown>;
   scheduledFor?: ScheduleInput;
 }): Promise<string> {
   const scheduledFor = toIsoOrUndefined(params.scheduledFor);
@@ -115,6 +117,7 @@ export async function enqueueWhatsAppJob(params: {
     // Column names of the queue table; the dispatch worker reads them back as
     // recipientPhone / messageBody.
     recipientPhone: params.toPhone,
+    ...(params.toName ? { recipientName: params.toName } : {}),
     messageBody: params.body,
     status: 'queued',
     attempts: 0,
@@ -126,6 +129,7 @@ export async function enqueueWhatsAppJob(params: {
     ...(params.ownerNegotiationId ? { ownerNegotiationId: params.ownerNegotiationId } : {}),
     ...(params.templateName ? { templateName: params.templateName } : {}),
     ...(params.templateParams ? { templateParams: params.templateParams } : {}),
+    ...(params.metadata ? { metadata: params.metadata } : {}),
   });
   return created.id;
 }

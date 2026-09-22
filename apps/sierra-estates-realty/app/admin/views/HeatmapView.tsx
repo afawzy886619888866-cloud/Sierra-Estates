@@ -171,7 +171,7 @@ export function HeatmapView() {
                   </div>
                   <div>
                     <div className="text-[10px] text-slate-400">5Y Growth</div>
-                    <div className="text-sm font-bold text-cyan-400">+{c.fiveYearAppreciation}%</div>
+                    <div className="text-sm font-bold text-[#E9C176]">+{c.fiveYearAppreciation}%</div>
                   </div>
                 </div>
 
@@ -211,7 +211,7 @@ export function HeatmapView() {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-950/60 rounded-xl border border-slate-800">
                   <span className="text-xs text-slate-400">Liquidity Score:</span>
-                  <span className="text-sm font-bold text-cyan-400">{selectedCompound.liquidityScore} / 10</span>
+                  <span className="text-sm font-bold text-[#E9C176]">{selectedCompound.liquidityScore} / 10</span>
                 </div>
               </div>
 

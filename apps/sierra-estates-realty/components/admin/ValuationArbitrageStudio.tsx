@@ -88,8 +88,8 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
     }
     if (verdict.includes('FAIR VALUE')) {
       return {
-        bg: 'bg-cyan-950/80 border-cyan-500/50 text-cyan-300',
-        icon: <CheckCircle2 className="w-5 h-5 text-cyan-400" />,
+        bg: 'bg-[#211A0D]/80 border-[#C8961A]/50 text-[#F5D78E]',
+        icon: <CheckCircle2 className="w-5 h-5 text-[#E9C176]" />,
         label: isAr ? '✅ شراء (سعر عادل مجدي استثمارياً)' : '✅ BUY (FAIR MARKET VALUE)',
       };
     }
@@ -105,9 +105,9 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
   return (
     <div className="space-y-6 animate-fadeIn" data-testid="valuation-arbitrage-studio">
       {/* Top Banner & Preset Quick Select */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#211A0D]/40 to-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono tracking-wider uppercase mb-1">
+          <div className="flex items-center gap-2 text-[#E9C176] text-xs font-mono tracking-wider uppercase mb-1">
             <Sparkles className="w-4 h-4" />
             <span>{isAr ? 'محرك التقييم والمراجحة الاستثمارية · The Curator' : 'The Curator · Real Estate Valuation & Arbitrage OS'}</span>
           </div>
@@ -155,7 +155,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
         <div className="lg:col-span-5 space-y-4">
           <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
             <h4 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Calculator className="w-4 h-4 text-cyan-400" />
+              <Calculator className="w-4 h-4 text-[#E9C176]" />
               <span>{isAr ? 'بيانات العقار والمدخلات المالية' : 'Property & Financial Inputs'}</span>
             </h4>
 
@@ -167,7 +167,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
               <select
                 value={propertyType}
                 onChange={(e) => setPropertyType(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8961A]"
               >
                 <option value="residential">Residential (Apartment, Duplex, Villa) [Cap Rate: 8-10%]</option>
                 <option value="administrative">Administrative / Office Space [Cap Rate: 10-12%]</option>
@@ -186,7 +186,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Cairo Plaza, New Cairo"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 
@@ -200,7 +200,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 value={sizeSqm || ''}
                 onChange={(e) => setSizeSqm(Number(e.target.value))}
                 placeholder="100"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
               <label className="text-xs font-medium text-slate-300 flex justify-between">
                 <span>{isAr ? 'سعر الشراء المعروض (جنيه)' : 'Offered Purchase Price (EGP)'}</span>
                 {valuation.offered_price_assessment.price_per_sqm && (
-                  <span className="text-cyan-400 font-mono">
+                  <span className="text-[#E9C176] font-mono">
                     {valuation.offered_price_assessment.price_per_sqm.toLocaleString()} EGP/m²
                   </span>
                 )}
@@ -219,7 +219,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 value={purchasePrice || ''}
                 onChange={(e) => setPurchasePrice(Number(e.target.value))}
                 placeholder="1350000"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 
@@ -236,7 +236,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 value={monthlyRent || ''}
                 onChange={(e) => setMonthlyRent(Number(e.target.value))}
                 placeholder="20000"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 
@@ -250,7 +250,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 value={areaResidentialSqmPrice || ''}
                 onChange={(e) => setAreaResidentialSqmPrice(Number(e.target.value))}
                 placeholder="14000"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-[#C8961A]"
               />
             </div>
 
@@ -258,7 +258,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
             <div className="space-y-2 pt-2 border-t border-slate-800">
               <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                 <span>{isAr ? 'المزايا الإضافية والرافعات القيمية (+%)' : 'Value-Add Multipliers & Structural Lifts'}</span>
-                <span className="text-cyan-400 font-mono">+{valuation.investment_metrics.total_premium_lift_pct}% Lift</span>
+                <span className="text-[#E9C176] font-mono">+{valuation.investment_metrics.total_premium_lift_pct}% Lift</span>
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {[
@@ -277,7 +277,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                       onClick={() => toggleAmenity(item.id)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                         isChecked
-                          ? 'bg-cyan-600 text-white shadow-sm'
+                          ? 'bg-[#C8961A] text-white shadow-sm'
                           : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                       }`}
                     >
@@ -331,7 +331,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
             {/* Payback Period */}
             <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
               <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                <Clock className="w-3.5 h-3.5 text-[#E9C176]" />
                 <span>PAYBACK PERIOD</span>
               </span>
               <div className="text-xl font-black text-white font-mono">
@@ -341,7 +341,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 (valuation.investment_metrics.payback_period_years || 99) < 8
                   ? 'text-emerald-400'
                   : (valuation.investment_metrics.payback_period_years || 99) <= 12
-                  ? 'text-cyan-400'
+                  ? 'text-[#E9C176]'
                   : 'text-rose-400'
               }`}>
                 {(valuation.investment_metrics.payback_period_years || 99) < 8
@@ -395,7 +395,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
           <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
             <h4 className="text-sm font-bold text-white flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-cyan-400" />
+                <Building2 className="w-4 h-4 text-[#E9C176]" />
                 <span>{isAr ? 'نطاق القيمة السوقية العادلة المحسوبة' : 'Calculated Fair Market Value Spectrum'}</span>
               </div>
               <span className="text-xs text-slate-400 font-mono">Income Capitalization</span>
@@ -407,7 +407,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                 <div className="text-lg font-bold text-slate-200 font-mono">
                   {valuation.calculated_fair_value_range.conservative_cap_value.toLocaleString()} EGP
                 </div>
-                <div className="text-[11px] text-cyan-400">
+                <div className="text-[11px] text-[#E9C176]">
                   With +{valuation.investment_metrics.total_premium_lift_pct}% Amenities:{' '}
                   <span className="font-bold">{valuation.calculated_fair_value_range.premium_adjusted_conservative.toLocaleString()} EGP</span>
                 </div>
@@ -433,7 +433,7 @@ export default function ValuationArbitrageStudio({ lang = 'en' }: { lang?: strin
                   {Object.entries(valuation.investment_metrics.value_add_premiums_detected).map(([key, label]) => (
                     <span
                       key={key}
-                      className="px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-cyan-950/60 border border-cyan-800/80 text-cyan-300"
+                      className="px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-[#211A0D]/60 border border-[#C8961A]/40 text-[#F5D78E]"
                     >
                       {label}
                     </span>

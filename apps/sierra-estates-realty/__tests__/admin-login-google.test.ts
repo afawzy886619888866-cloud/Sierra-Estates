@@ -14,14 +14,29 @@ describe('Admin Login & Google Mail Authentication', () => {
       expect(isAdminEmail('sierra@sierra-estates.net')).toBe(true);
       expect(isAdminEmail('owner@sierra-estates.net')).toBe(true);
       expect(isAdminEmail('developer@sierra-estates.net')).toBe(true);
-      expect(isAdminEmail('admin@sierra.com')).toBe(true);
+      // "sierra.com" is NOT a domain we own — the old blanket allowlist let
+      // anyone register sierra.com mail and walk in. Only the owned
+      // sierra-estates.net domain is trusted by default.
+      expect(isAdminEmail('admin@sierra.com')).toBe(false);
       expect(isAdminEmail('admin')).toBe(true);
     });
 
-    it('identifies Google Mail admin accounts', () => {
-      expect(isAdminEmail('admin@gmail.com')).toBe(true);
-      expect(isAdminEmail('sierra.admin@gmail.com')).toBe(true);
-      expect(isAdminEmail('sierraestates.admin@gmail.com')).toBe(true);
+    it('accepts Google Mail admin accounts only when the operator configures them', () => {
+      const originalAdminEmails = process.env.ADMIN_EMAILS;
+      try {
+        // Arbitrary Gmail addresses are NOT admin by default — anyone can
+        // register one. An operator opts in explicitly via ADMIN_EMAILS.
+        expect(isAdminEmail('admin@gmail.com')).toBe(false);
+        expect(isAdminEmail('sierra.admin@gmail.com')).toBe(false);
+        expect(isAdminEmail('sierraestates.admin@gmail.com')).toBe(false);
+
+        process.env.ADMIN_EMAILS = 'sierra.admin@gmail.com';
+        expect(isAdminEmail('sierra.admin@gmail.com')).toBe(true);
+        expect(isAdminEmail('sierraestates.admin@gmail.com')).toBe(false);
+      } finally {
+        if (originalAdminEmails === undefined) delete process.env.ADMIN_EMAILS;
+        else process.env.ADMIN_EMAILS = originalAdminEmails;
+      }
     });
 
     it('identifies any email on the sierra-estates.net domain', () => {
@@ -60,10 +75,21 @@ describe('Admin Login & Google Mail Authentication', () => {
       expect(session?.email).toBe('admin@sierra-estates.net');
     });
 
-    it('authenticates a Google Mail admin account with the configured password', () => {
-      const session = tryDemoLogin('admin@gmail.com', 'operator-configured-pass');
-      expect(session).not.toBeNull();
-      expect(session?.role).toBe('admin');
+    it('authenticates a Google Mail admin account only when it is on the allowlist', () => {
+      // Not allowlisted → closed, even with the right password.
+      expect(tryDemoLogin('admin@gmail.com', 'operator-configured-pass')).toBeNull();
+
+      const originalAdminEmails = process.env.ADMIN_EMAILS;
+      try {
+        process.env.ADMIN_EMAILS = 'sierra.admin@gmail.com';
+        const session = tryDemoLogin('sierra.admin@gmail.com', 'operator-configured-pass');
+        expect(session).not.toBeNull();
+        expect(session?.role).toBe('admin');
+        expect(session?.email).toBe('sierra.admin@gmail.com');
+      } finally {
+        if (originalAdminEmails === undefined) delete process.env.ADMIN_EMAILS;
+        else process.env.ADMIN_EMAILS = originalAdminEmails;
+      }
     });
 
     it('rejects invalid password', () => {

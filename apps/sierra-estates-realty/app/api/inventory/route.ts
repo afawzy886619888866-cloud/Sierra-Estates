@@ -17,16 +17,70 @@
  */
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import fs from "node:fs";
+import path from "node:path";
 import { InventoryQueryService } from "@/lib/services/inventory-query";
 import { fetchSheetUnits } from "@/lib/inventory/fetch-sheet";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { getSupabaseAdmin } from "@sierra-estates/db";
+import { readExcelListings, appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import snapshot from "@/lib/inventory/snapshot.json";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Load newly ingested WhatsApp listings with photos. */
+function fetchWhatsAppIngestedUnits(): InventoryUnit[] {
+  try {
+    const candidates = [
+      path.join(process.cwd(), "apps/sierra-estates-realty/data/whatsapp-ingested-units.json"),
+      path.join(process.cwd(), "data/whatsapp-ingested-units.json"),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
+        if (Array.isArray(raw)) {
+          return raw.map((u: any) => {
+            const loc = u.compound || u.location || "New Cairo";
+            const resolved = resolveLocation(loc);
+            const price = Number(u.price) || 0;
+            const mode =
+              u.operation?.toLowerCase() === "rent" || (price > 0 && price < 1_000_000)
+                ? "rent"
+                : "sale";
+            const primaryImg = u.photoUrl || (Array.isArray(u.images) ? u.images[0] : null) || u.img;
+            return {
+              id: u.sierraCode || u.id || `WA-${Date.now()}`,
+              code: u.sierraCode || null,
+              compound: u.compound || resolved.label,
+              mode,
+              status: "available" as const,
+              statusLabel: "Available",
+              location: u.compound || resolved.label,
+              rawLocation: loc,
+              zone: resolved.zone,
+              lat: resolved.lat,
+              lng: resolved.lng,
+              propertyType: u.type || "Apartment",
+              beds: u.bedrooms || null,
+              area: u.area_sqm || null,
+              price,
+              priceLabel: price ? `EGP ${price.toLocaleString("en-US")}` : "Price on request",
+              img: primaryImg,
+              description: u.notes || null,
+              segment: mode === "rent" ? "broker_rent" : "broker_buy",
+            };
+          });
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn(`[inventory] Error reading whatsapp-ingested-units: ${(err as Error).message}`);
+  }
+  return [];
+}
 
 /** Committed snapshot fallback. */
 function snapshotResponse(): InventoryResponse {
@@ -83,46 +137,85 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
 /** Canonical Supabase listings, mapped to the public-safe map shape. */
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
   try {
-    const { data, error } = await getSupabaseAdmin()
-      .from("listings")
-      .select(
-        "id, ref_id, code, compound, location_area, property_type, deal_type, price, price_currency, bedrooms, area_sqm, status, description, updated_at",
-      )
-      .in("status", ["active", "available"])
-      .order("updated_at", { ascending: false })
-      .limit(300);
+    const supabase = getSupabaseAdmin();
+    const [listingsRes, compoundsRes] = await Promise.all([
+      supabase
+        .from("listings")
+        .select(
+          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+        )
+        .in("status", ["active", "available"])
+        .order("updated_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("compounds")
+        .select("name, lat, lng, zone, price_m, rent, ai_score"),
+    ]);
 
-    if (error) throw new Error(error.message);
+    if (listingsRes.error) throw new Error(listingsRes.error.message);
 
-    const units: InventoryUnit[] = (data ?? []).map((listing) => {
+    const compoundGeo = new Map<string, { lat: number; lng: number; zone?: string }>();
+    for (const c of compoundsRes.data ?? []) {
+      if (c.name && c.lat && c.lng) {
+        compoundGeo.set(c.name.trim().toLowerCase(), { lat: c.lat, lng: c.lng, zone: c.zone });
+      }
+    }
+
+    const units: InventoryUnit[] = (listingsRes.data ?? []).map((listing: any) => {
       const location = listing.location_area || listing.compound || "New Cairo";
       const resolved = resolveLocation(location);
+      const matchedGeo = listing.compound ? compoundGeo.get(listing.compound.trim().toLowerCase()) : null;
+      const lat = matchedGeo ? matchedGeo.lat : resolved.lat;
+      const lng = matchedGeo ? matchedGeo.lng : resolved.lng;
+      const zone = matchedGeo?.zone || resolved.zone;
+
       const price = Number(listing.price) || 0;
       const mode =
         listing.deal_type === "rent" || (price > 0 && price < 1_000_000)
           ? "rent"
           : "sale";
+      // img/tag/aiScore/publishToClient live in the raw_data JSONB blob on
+      // the deployed table (see lib/server/listing-columns.ts) — images[] is
+      // the only real photo column, with raw_data.img as the curated primary.
+      const raw = (listing.raw_data && typeof listing.raw_data === "object") ? listing.raw_data : {};
+      const primaryImg =
+        raw.img ||
+        (Array.isArray(listing.images) && listing.images[0] ? listing.images[0] : null) ||
+        null;
 
       return {
         id: listing.id,
-        code: listing.code || listing.ref_id || listing.id,
+        code: listing.code || listing.sbr_code || listing.ref_id || listing.id,
+        title: listing.title || raw.title || undefined,
+        titleAr: listing.title_ar || undefined,
+        descriptionAr: listing.description_ar || undefined,
+        agent: listing.agent_name || raw.agent || undefined,
+        tag: raw.tag || undefined,
+        aiScore: typeof raw.aiScore === "number" ? raw.aiScore : undefined,
+        featured: Boolean(listing.featured),
+        finishing: listing.finishing_type || undefined,
+        furnishing: listing.furnishing_status || undefined,
+        amenities: Array.isArray(listing.amenities) ? listing.amenities : [],
+        pfReference: listing.pf_reference_number || undefined,
         compound: listing.compound || resolved.label,
         mode,
         status: "available",
         statusLabel: "Available",
         location: listing.compound || resolved.label,
         rawLocation: location,
-        zone: resolved.zone,
-        lat: resolved.lat,
-        lng: resolved.lng,
-        approxLocation: resolved.approx,
+        zone,
+        lat: listing.latitude ?? lat,
+        lng: listing.longitude ?? lng,
+        approxLocation: !matchedGeo && resolved.approx,
         propertyType: listing.property_type,
         beds: listing.bedrooms,
+        baths: listing.bathrooms,
         area: Number(listing.area_sqm) || null,
         price,
         priceLabel: price
           ? `EGP ${price.toLocaleString("en-US")}`
           : "Price on request",
+        img: primaryImg,
         description: listing.description,
         updatedAt: listing.updated_at,
       };
@@ -172,14 +265,30 @@ export async function GET(request: Request) {
     (await fetchDomain()) ??
     (await fetchLive()) ??
     snapshotResponse();
-  let filteredUnits = (sourceResponse.units || []).filter(
-    (u: any) =>
-      u.party !== "Owner" &&
-      u.sourceType !== "owner" &&
-      u.segment !== "owners_rent" &&
-      u.segment !== "owners_buy" &&
-      u.tag !== "Direct Owner",
-  );
+  const whatsAppUnits = fetchWhatsAppIngestedUnits();
+  const excelUnits = readExcelListings({ stripPII: true });
+  const baseUnits = [...excelUnits, ...whatsAppUnits, ...(sourceResponse.units || [])];
+  const seenCodes = new Set<string>();
+  const deduplicatedUnits: InventoryUnit[] = [];
+  for (const u of baseUnits) {
+    const key = u.code || u.id;
+    if (key && seenCodes.has(key)) continue;
+    if (key) seenCodes.add(key);
+    deduplicatedUnits.push(u);
+  }
+
+  // Strip private owner PII for public API response while keeping the real property data
+  let filteredUnits: InventoryUnit[] = deduplicatedUnits.map((u: any) => {
+    const {
+      contactPhone: _contactPhone,
+      ownerContact: _ownerContact,
+      phone: _phone,
+      contactName: _contactName,
+      whatsAppDirect: _whatsAppDirect,
+      ...publicSafe
+    } = u;
+    return publicSafe as InventoryUnit;
+  });
 
   if (filterCompound) {
     filteredUnits = filteredUnits.filter((u) => {
@@ -216,7 +325,7 @@ export async function GET(request: Request) {
 
   const payload: InventoryResponse = {
     generatedAt: sourceResponse.generatedAt || new Date().toISOString(),
-    source: sourceResponse.source,
+    source: excelUnits.length ? "excel-hybrid" : sourceResponse.source,
     count: filteredUnits.length,
     segments: sourceResponse.segments,
     compoundCounts,
@@ -229,4 +338,39 @@ export async function GET(request: Request) {
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
     },
   });
+}
+
+/**
+ * POST /api/inventory → Append newly submitted listing to Excel inventory sheet and Supabase
+ */
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    if (!body || !body.compound || !body.price) {
+      return NextResponse.json(
+        { error: "Missing required listing fields: compound and price are mandatory" },
+        { status: 400 }
+      );
+    }
+
+    const result = await appendToExcelInventory(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to append unit to Excel inventory workbook" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Listing successfully appended to sheet "${result.sheetName}" and synced to database`,
+      recordId: result.recordId,
+      sheetName: result.sheetName,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: (err as Error).message },
+      { status: 500 }
+    );
+  }
 }

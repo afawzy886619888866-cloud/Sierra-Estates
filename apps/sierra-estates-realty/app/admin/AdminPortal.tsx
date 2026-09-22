@@ -32,9 +32,14 @@ import {
   AppsDirectoryView,
   DeploymentPipelineView,
   ApiGatewayView,
+  InventoryCommandView,
+  InventoryOsView,
+  WorkflowStudioView,
+  MemoryBrainView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
+import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -146,7 +151,7 @@ function OverviewPage({ T }) {
             <div className="bar-chart">
               {['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'].map((s,i) => {
                 const h=[95,88,82,79,74,68,61,55,42,28][i];
-                const c=['#00AEFF','#5FC9FF','#1E88D9','#34D399','#7C3AED','#E63946','#00AEFF','#1E88D9','#34D399','#00AEFF'][i];
+                const c=['#C8961A','#E9C176','#1E88D9','#34D399','#7C3AED','#E63946','#C8961A','#1E88D9','#34D399','#C8961A'][i];
                 return (<div key={s} className="bar-col"><div className="bar-fill" style={{height:`${h}%`,background:`linear-gradient(180deg,${c},${c}44)`}}/><span className="bar-lbl">{s}</span></div>);
               })}
             </div>
@@ -514,7 +519,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
 
       {/* Instant Operations Triggers */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:18}}>
-        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #00AEFF'}}>
+        <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #C8961A'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
             <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>🏢 Property Finder Sync</span>
             <span className="chip chip-blue">Feed v2</span>
@@ -522,7 +527,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
           <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'مزامنة الوحدات المعتمدة مع خلاصة بروبرتي فايندر واستقبال العملاء.' : 'Push verified active listings to Property Finder XML/JSON portal & capture leads.'}</p>
           <button 
             className="btn btn-ghost" 
-            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}
+            style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}
             onClick={() => triggerOp('Property Finder Feed Syndication', '/api/sync')}
             disabled={running}
           >
@@ -614,7 +619,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
         <div className="card">
           <div className="card-hd"><span className="card-title">Lead Pipeline · Stage Funnel</span></div>
           <div className="card-body">
-            {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#00AEFF'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
+            {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#C8961A'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
               <div key={i} style={{marginBottom:12}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
                   <span style={{fontSize:11,color:'var(--tx)'}}><strong style={{color:row.color,fontFamily:'JetBrains Mono'}}>{row.s}</strong> · {row.label}</span>
@@ -836,7 +841,7 @@ export function LeadsPage({ T }: { T: any }) {
         <button 
           onClick={()=>setSourceFilter('property-finder')} 
           className="topbar-pill" 
-          style={sourceFilter==='property-finder'?{background:'#00AEFF',color:'#fff',borderColor:'#00AEFF'}:{borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}
+          style={sourceFilter==='property-finder'?{background:'#C8961A',color:'#fff',borderColor:'#C8961A'}:{borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}
         >
           🏢 Property Finder ({pfCount})
         </button>
@@ -889,7 +894,7 @@ export function LeadsPage({ T }: { T: any }) {
                 <tr key={i}>
                   <td>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <div className="lead-avatar" style={{background:l.color || '#00AEFF',width:28,height:28,fontSize:11}}>
+                      <div className="lead-avatar" style={{background:l.color || '#C8961A',width:28,height:28,fontSize:11}}>
                         {(l.name || 'C')[0]}
                       </div>
                       <span style={{color:'var(--tx)',fontWeight:600}}>{l.name}</span>
@@ -987,7 +992,7 @@ function CuratorPage({ T }) {
       {/* Compound Summary */}
       {selected && (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:10,marginBottom:20}}>
-          {[['AI Score',`${selected.ai}/10`,selected.color],['Avg Price',selected.avgM,'#00AEFF'],['Units',selected.units.toLocaleString(),'#1E88D9'],['Growth',selected.growth,'#34D399'],['Zone',selected.zone,'#7C3AED']].map(([l,v,c],i)=>(
+          {[['AI Score',`${selected.ai}/10`,selected.color],['Avg Price',selected.avgM,'#C8961A'],['Units',selected.units.toLocaleString(),'#1E88D9'],['Growth',selected.growth,'#34D399'],['Zone',selected.zone,'#7C3AED']].map(([l,v,c],i)=>(
             <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',borderTop:`3px solid ${c}`}}>
               <div style={{fontFamily:'JetBrains Mono',fontSize:13,fontWeight:700,color:c,marginBottom:3}}>{v}</div>
               <div style={{fontSize:9,color:'var(--tx-f)',textTransform:'uppercase',letterSpacing:'.12em'}}>{l}</div>
@@ -1026,7 +1031,7 @@ function CuratorPage({ T }) {
           <div className="card-hd"><span className="card-title">📊 {T('qualityScore')} Distribution</span></div>
           <div className="card-body">
             <div className="bar-chart">
-              {[['90-100',4,'#34D399'],['80-90',8,'#00AEFF'],['70-80',6,'#1E88D9'],['60-70',3,'#7C3AED'],['<60',1,'#E63946']].map(([l,v,c],i)=>(
+              {[['90-100',4,'#34D399'],['80-90',8,'#C8961A'],['70-80',6,'#1E88D9'],['60-70',3,'#7C3AED'],['<60',1,'#E63946']].map(([l,v,c],i)=>(
                 <div key={i} className="bar-col">
                   <div className="bar-fill" style={{height:`${v*9}%`,background:`linear-gradient(180deg,${c},${c}55)`}}/>
                   <span className="bar-lbl">{l}</span>
@@ -1113,7 +1118,7 @@ function NexusAIPage({ T }) {
       <HarnessBenchmarkCard />
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
-        {[[ctr,'Ingested Today','#00AEFF'],[Math.round(ctr*.93),'Parsed','#34D399'],[Math.max(0,Math.round(ctr*.06)),'Processing','#f59e0b'],[Math.max(0,Math.round(ctr*.01)),'Failed','#E63946']].map(([v,l,c],i)=>(
+        {[[ctr,'Ingested Today','#C8961A'],[Math.round(ctr*.93),'Parsed','#34D399'],[Math.max(0,Math.round(ctr*.06)),'Processing','#f59e0b'],[Math.max(0,Math.round(ctr*.01)),'Failed','#E63946']].map(([v,l,c],i)=>(
           <div key={i} style={{background:'var(--bg-e)',border:'1px solid var(--bd)',borderRadius:12,padding:'12px 14px',borderTop:`3px solid ${c}`}}>
             <div style={{fontFamily:'JetBrains Mono',fontSize:22,fontWeight:700,color:c,marginBottom:4}}>{typeof v==='number'?v.toLocaleString():v}</div>
             <div style={{fontSize:9,color:'var(--tx-f)',textTransform:'uppercase',letterSpacing:'.1em'}}>{l}</div>
@@ -1150,7 +1155,7 @@ function NexusAIPage({ T }) {
         <div className="card">
           <div className="card-hd"><span className="card-title">📊 Parse Stats · Live</span></div>
           <div className="card-body" style={{display:'flex',flexDirection:'column',gap:10}}>
-            {[['Parsed OK',93,'#34D399'],['Processing',6,'#f59e0b'],['Failed',1,'#E63946'],['Arabic entries',38,'#00AEFF'],['English entries',62,'#1E88D9']].map(([l,v,c],i)=>(
+            {[['Parsed OK',93,'#34D399'],['Processing',6,'#f59e0b'],['Failed',1,'#E63946'],['Arabic entries',38,'#C8961A'],['English entries',62,'#1E88D9']].map(([l,v,c],i)=>(
               <div key={i}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,fontSize:11}}>
                   <span style={{color:'var(--tx-m)'}}>{l}</span>
@@ -1199,7 +1204,7 @@ function ReportsPage({ T }) {
           <div className="card-body">
             <div className="bar-chart">
               {MONTHS.map((m,i)=>(
-                <div key={m} className="bar-col"><div className="bar-fill" style={{height:`${VALS[i]}%`,background:'linear-gradient(180deg,#00AEFF,#00AEFF55)'}}/><span className="bar-lbl">{m}</span></div>
+                <div key={m} className="bar-col"><div className="bar-fill" style={{height:`${VALS[i]}%`,background:'linear-gradient(180deg,#C8961A,#C8961A55)'}}/><span className="bar-lbl">{m}</span></div>
               ))}
             </div>
           </div>
@@ -1207,7 +1212,7 @@ function ReportsPage({ T }) {
         <div className="card">
           <div className="card-hd"><span className="card-title">{T('revPipeline')}</span></div>
           <div className="card-body" style={{display:'flex',flexDirection:'column',gap:10}}>
-            {[['Closed This Month','EGP 601M',100,'#34D399'],['Pipeline Value','EGP 2.1B',78,'#00AEFF'],['Avg Deal','EGP 6.2M',55,'#1E88D9'],['Commissions Due','EGP 18.4M',30,'#7C3AED']].map(([l,v,p,c],i)=>(
+            {[['Closed This Month','EGP 601M',100,'#34D399'],['Pipeline Value','EGP 2.1B',78,'#C8961A'],['Avg Deal','EGP 6.2M',55,'#1E88D9'],['Commissions Due','EGP 18.4M',30,'#7C3AED']].map(([l,v,p,c],i)=>(
               <div key={i}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,fontSize:11}}>
                   <span style={{color:'var(--tx-m)'}}>{l}</span>
@@ -1286,7 +1291,7 @@ function SettingsPage({ T }) {
 }
 
 /* ── LISTINGS HUB ────────────────────────────────────────────────────── */
-const HUB_IMGS=['https://images.unsplash.com/photo-1613977257363-707ba9348227?w=80&q=70','https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=80&q=70','https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=80&q=70','https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=80&q=70','https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=80&q=70'];
+const HUB_IMGS=['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e5f9db2b-ed1e-11ef-8cf7-0a8c5593e6a3-68913e99-87a6-4770-94ad-849f6b1f19ef.png','https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e897e2a9-ed1e-11ef-8cf7-0a8c5593e6a3-14f7d350-fd28-46a1-8812-ae3d4bd8ca26.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/ec5e6f17-ed1e-11ef-8cf7-0a8c5593e6a3-6b9ee8d1-40cc-4610-97e3-778d9e343fab.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/e7cb53a2-ed1e-11ef-8cf7-0a8c5593e6a3-ed26a74f-5662-4279-854e-f3a91f918af8.png','https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/ed8c6d00-ed1e-11ef-8cf7-0a8c5593e6a3-8eca38e5-15e8-45c0-b36d-934c297289fc.png'];
 const HUB_LISTINGS=[
   {code:'SE-HYP-VLA-0001',cmp:'Hyde Park',type:'Villa',beds:5,area:420,price:'EGP 35M',ai:9.8,status:'Active',img:0},
   {code:'SE-HYP-TWH-0002',cmp:'Hyde Park',type:'Twin House',beds:4,area:280,price:'EGP 22M',ai:9.5,status:'Active',img:1},
@@ -1420,7 +1425,7 @@ function ListingsHubPage({T}){
 
 /* ── STAGE-9 CLOSER ──────────────────────────────────────────────────── */
 const DEALS_DATA=[
-  {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#00AEFF'},
+  {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#C8961A'},
   {id:'DL-0096',client:'Khalid Mansour',phone:'+971 50 333 4455',prop:'Penthouse Uptown · 4 Beds · 320m²',value:'EGP 28M',stage:'negotiation',prog:60,signed:false,deposit:false,c:'#1E88D9'},
   {id:'DL-0095',client:'Omar Farouk',phone:'+20 100 555 6677',prop:'Twin House Mountain View · 4 Beds',value:'EGP 22M',stage:'contract',prog:72,signed:true,deposit:true,c:'#34D399'},
   {id:'DL-0094',client:'Rania Nasser',phone:'+20 102 777 8899',prop:'Villa Villette · 5 Beds · 380m²',value:'EGP 31M',stage:'closed',prog:100,signed:true,deposit:true,c:'#7C3AED'},
@@ -1522,7 +1527,7 @@ const PIPE_STAGES = [
   {k:'New',ar:'جديد',c:'#1E88D9'},
   {k:'Qualifying',ar:'تأهيل',c:'#7C3AED'},
   {k:'Viewing',ar:'معاينة',c:'#f59e0b'},
-  {k:'Negotiation',ar:'تفاوض',c:'#00AEFF'},
+  {k:'Negotiation',ar:'تفاوض',c:'#C8961A'},
   {k:'Closed Won',ar:'مغلقة ـ فوز',c:'#34D399'},
   {k:'Closed Lost',ar:'مغلقة ـ خسارة',c:'#E63946'},
 ];
@@ -1597,7 +1602,7 @@ function PipelinePage({ T }: { T: any }) {
 
         <div style={{display:'flex',gap:6,marginInlineStart:8}}>
           <button onClick={()=>setSourceFilter('all')} className="topbar-pill" style={sourceFilter==='all'?{background:'var(--gold)',color:'#071422'}:{}}>All Sources</button>
-          <button onClick={()=>setSourceFilter('Property Finder')} className="topbar-pill" style={sourceFilter==='Property Finder'?{background:'#00AEFF',color:'#fff'}:{borderColor:'rgba(0,174,255,.3)',color:'#00AEFF'}}>🏢 Property Finder</button>
+          <button onClick={()=>setSourceFilter('Property Finder')} className="topbar-pill" style={sourceFilter==='Property Finder'?{background:'#C8961A',color:'#fff'}:{borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}>🏢 Property Finder</button>
           <button onClick={()=>setSourceFilter('WhatsApp')} className="topbar-pill" style={sourceFilter==='WhatsApp'?{background:'#34D399',color:'#071422'}:{borderColor:'rgba(52,211,153,.3)',color:'#34D399'}}>💬 WhatsApp</button>
         </div>
 
@@ -1834,7 +1839,7 @@ function TasksPage({ T }: { T: any }) {
     [tasks.length, ar ? 'إجمالي المهام' : 'Total Tasks', '#1E88D9'],
     [tasks.filter(t => t.done).length, ar ? 'مكتملة' : 'Completed', '#34D399'],
     [tasks.filter(t => !t.done && t.pr === 'high').length, ar ? 'عاجلة' : 'High Priority', '#E63946'],
-    [tasks.filter(t => !t.done).length, ar ? 'قيد التنفيذ' : 'Pending', '#00AEFF'],
+    [tasks.filter(t => !t.done).length, ar ? 'قيد التنفيذ' : 'Pending', '#C8961A'],
   ];
 
   const prC: Record<string, string> = { high: '#E63946', med: '#f59e0b', low: '#1E88D9' };
@@ -2095,7 +2100,7 @@ function AutomationsPage({ T }) {
     {ic:'🔔',bg:'#E63946',n:ar?'تنبيه صفقة كبيرة':'Big Deal Alert',d:ar?'مهمة للمدير للصفقات > 15م':'Task for manager on deals > 15M'},
     {ic:'✦',bg:'#34D399',n:ar?'فوز بالصفقة':'Deal Won',d:ar?'تهنئة عند إغلاق الصفقة':'Celebration email when deal closes'},
   ];
-  const stats=[[autos.length,ar?'إجمالي القواعد':'Total Rules','#00AEFF'],[autos.filter(a=>a.on).length,ar?'نشطة':'Active','#34D399'],[autos.filter(a=>!a.on).length,ar?'موقوفة':'Disabled','#E63946'],['98.4%',ar?'نسبة النجاح':'Success Rate','#1E88D9']];
+  const stats=[[autos.length,ar?'إجمالي القواعد':'Total Rules','#C8961A'],[autos.filter(a=>a.on).length,ar?'نشطة':'Active','#34D399'],[autos.filter(a=>!a.on).length,ar?'موقوفة':'Disabled','#E63946'],['98.4%',ar?'نسبة النجاح':'Success Rate','#1E88D9']];
   return (
     <div className="fade-up">
       <div className="kpi-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))'}}>
@@ -2143,6 +2148,7 @@ function AdminApp() {
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+  const [authError, setAuthError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -2180,16 +2186,22 @@ function AdminApp() {
             role: data.role || 'super_admin',
             name: data.name || 'Executive Admin',
           });
+        } else if (data?.authDisabled) {
+          // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false.
+          // Data APIs enforce the same rule server-side (auth-guard.ts).
+          setCurrentUser({
+            email: 'dev@sierra-estates.net',
+            role: 'super_admin',
+            name: 'Dev Admin',
+          });
         } else {
           window.location.href = '/admin/login';
         }
       })
       .catch(() => {
-        setCurrentUser({
-          email: 'admin@sierra-estates.net',
-          role: 'super_admin',
-          name: 'Executive Admin',
-        });
+        // Fail CLOSED: a network error must never mint an admin session.
+        // Show a retry state instead of rendering the console shell.
+        setAuthError(true);
       });
   }, []);
 
@@ -2253,6 +2265,123 @@ function AdminApp() {
     return items;
   }, [navItems, isAr, theme]);
 
+  function WhatsAppHubWrapper({ lang }: { lang: string }) {
+    const isArabic = lang === 'ar';
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach'>('scan');
+
+    return (
+      <div className="fade-up" style={{ paddingTop: 4 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            marginBottom: 20,
+            borderBottom: '1px solid var(--bd-s)',
+            paddingBottom: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <button
+            onClick={() => setSubTab('scan')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'scan' ? '1px solid #25D366' : '1px solid var(--bd)',
+              background: subTab === 'scan' ? 'rgba(37, 211, 102, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'scan' ? '#25D366' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📥</span>
+            <span>{isArabic ? 'ماسح محادثات الموبايل ومزامنة العقارات' : 'Mobile Chat Scanner & Ingestion'}</span>
+          </button>
+
+          <button
+            onClick={() => setSubTab('qr')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'qr' ? '1px solid #C8961A' : '1px solid var(--bd)',
+              background: subTab === 'qr' ? 'rgba(0, 174, 255, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'qr' ? '#C8961A' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📱</span>
+            <span>{isArabic ? 'ربط الموبايل المباشر (QR وكود الاقتران)' : 'Live Mobile Gateway (QR & Code)'}</span>
+          </button>
+
+          <button
+            onClick={() => setSubTab('outreach')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outreach' ? '1px solid #D4AF37' : '1px solid var(--bd)',
+              background: subTab === 'outreach' ? 'rgba(212, 175, 55, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outreach' ? '#D4AF37' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>🚀</span>
+            <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
+          </button>
+        </div>
+
+        {subTab === 'scan' && <WhatsAppChatScanner lang={lang} />}
+        {subTab === 'qr' && (
+          <div
+            style={{
+              background: 'var(--bg-e)',
+              borderRadius: 16,
+              border: '1px solid var(--bd)',
+              padding: 24,
+              textAlign: 'center',
+            }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--tx)', marginBottom: 8 }}>
+              {isArabic ? 'بوابة ربط واتساب الحية للهاتف المحمول' : 'Live Mobile WhatsApp Device Gateway'}
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--tx-m)', maxWidth: 640, margin: '0 auto 20px auto' }}>
+              {isArabic
+                ? 'قم بربط هاتف الواتساب (+201092048333) لاستقبال كافة الرسائل والوسائط والمجموعات لحظياً ومزامنتها مع قاعدة البيانات.'
+                : 'Link your mobile phone (+201092048333) to continuously receive all inbound WhatsApp group messages, media, and owner listings into Sierra Estates in real-time.'}
+            </p>
+            <iframe
+              src="/whatsapp_qr.html"
+              title="WhatsApp Live QR Gateway"
+              style={{
+                width: '100%',
+                maxWidth: 520,
+                height: 640,
+                border: 'none',
+                borderRadius: 16,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                margin: '0 auto',
+                display: 'block',
+              }}
+            />
+          </div>
+        )}
+        {subTab === 'outreach' && <WhatsAppScheduledSender lang={lang} />}
+      </div>
+    );
+  }
+
   const renderPage=()=>{
     switch(tab){
       case 'overview':
@@ -2264,18 +2393,18 @@ function AdminApp() {
       case 'alerts':return <AlertsView lang={langKey}/>;
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
+      case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
       case 'whatsapp_outreach':
-      case 'whatsapp_sender':return (
-        <div className="fade-up" style={{paddingTop: 4}}>
-          <WhatsAppScheduledSender lang={langKey} />
-        </div>
-      );
+      case 'whatsapp_sync':
+      case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;
       case 'openclaw':return <OpenClawPage T={T}/>;
       case 'nexus':return <NexusAIPage T={T}/>;
       case 'leads':return <LeadsPage T={T}/>;
       case 'pipeline':return <PipelinePage T={T}/>;
       case 'tasks':return <TasksPage T={T}/>;
       case 'automations':return <AutomationsPage T={T}/>;
+      case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
+      case 'inventory_os':return <InventoryOsView lang={langKey}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
@@ -2291,6 +2420,10 @@ function AdminApp() {
       case 'contracts':return <ContractsView />;
       case 'heatmap':return <HeatmapView />;
       case 'intelligence':return <AgentIntelligence />;
+      case 'memory_brain':
+      case 'deepseek':
+      case 'mempalace':
+      case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={setTab} />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'easy_listing':return (
         <div className="fade-up" style={{paddingTop:4}}>
@@ -2317,6 +2450,38 @@ function AdminApp() {
       window.location.href = '/admin/login';
     }
   };
+
+  // Auth gate: the console shell itself waits for a verified session.
+  // Data was always API-protected; this also protects the shell/UX.
+  if (!currentUser) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg, #070B14)', color: 'var(--tx-f, #F0EDE5)', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center', maxWidth: 380, padding: 32 }}>
+          <div style={{ fontSize: 34, marginBottom: 12 }}>🛡️</div>
+          {authError ? (
+            <>
+              <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>Connection error</h2>
+              <p style={{ fontSize: 13, opacity: 0.75, margin: '0 0 16px' }}>
+                Could not verify your session. Check your connection and retry.
+              </p>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <button onClick={() => window.location.reload()} className="btn btn-pri" style={{ padding: '8px 18px', borderRadius: 8, border: 0, cursor: 'pointer', background: '#C8961A', color: '#0B0E17', fontWeight: 700 }}>Retry</button>
+                <a href="/admin/login" style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', textDecoration: 'none', color: 'inherit', fontSize: 13, lineHeight: '32px' }}>Go to login</a>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, opacity: 0.7 }}>Verifying session…</div>
+              <div style={{ marginTop: 14, width: 120, height: 3, marginInline: 'auto', borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: '40%', height: '100%', background: '#C8961A', animation: 'sierraBoot 1.1s ease-in-out infinite' }} />
+              </div>
+              <style>{'@keyframes sierraBoot{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}'}</style>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -2389,6 +2554,9 @@ function AdminApp() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 4,
+                    maxHeight: 'min(70vh, 480px)',
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
                   }}
                   onClick={() => setIsAppSwitcherOpen(false)}
                 >
@@ -2397,7 +2565,12 @@ function AdminApp() {
                     { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
                     { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
                     { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
+                    { id: 'memory_brain', label: isAr ? 'محرك الذاكرة المركزي' : 'Memory Brain Engine', icon: '🧬' },
+                    { id: 'heatmap', label: isAr ? 'خريطة العوائد التفاعلية' : 'Yield Heatmap & AVM', icon: '🗺️' },
+                    { id: 'notebookllm', label: isAr ? 'استوديو الملخصات الصوتية' : 'NotebookLM Audio Studio', icon: '🎙️' },
                     { id: 'contracts', label: isAr ? 'العقود الإلكترونية' : 'Digital Contracts Desk', icon: '📜' },
+                    { id: 'excel_merger', label: isAr ? 'أداة دمج الإكسل' : 'Excel & CSV Merger', icon: '🗂️' },
+                    { id: 'inventory_command', label: isAr ? 'قيادة المخزون' : 'Inventory Command', icon: '🏢' },
                     { id: 'deployment', label: isAr ? 'خطوط النشر والإنتاج' : 'CI/CD Deployment Console', icon: '🚀' },
                     { id: 'api_gateway', label: isAr ? 'بوابة واجهات البرمجة' : 'RESTful API Gateway', icon: '🌐' },
                   ].map((app) => (
@@ -2412,7 +2585,7 @@ function AdminApp() {
                         alignItems: 'center',
                         gap: 8,
                         fontSize: 12,
-                        color: tab === app.id ? '#00AEFF' : '#F0EDE5',
+                        color: tab === app.id ? '#C8961A' : '#F0EDE5',
                         background: tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
@@ -2442,7 +2615,7 @@ function AdminApp() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                color: 'var(--cyan, #00AEFF)',
+                color: 'var(--cyan, #C8961A)',
                 borderColor: 'rgba(0,174,255,0.3)',
                 background: 'rgba(0,174,255,0.08)',
                 fontWeight: 600,
