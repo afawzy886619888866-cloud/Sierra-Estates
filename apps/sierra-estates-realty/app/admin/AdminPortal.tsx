@@ -1257,7 +1257,7 @@ function SettingsPage({ T }) {
       <div className="card" style={{marginBottom:14}}>
         <div className="card-hd"><span className="card-title">🔧 {T('settings')}</span></div>
         <div className="card-body" style={{display:'flex',flexDirection:'column',gap:16}}>
-          {[['Firebase Project ID','sierra-blu-2026','text'],['Gemini API Key','AIza••••••••••••••','password'],['WhatsApp Cloud API Token','EAAx••••••••••','password'],['n8n Webhook URL','https://n8n.sierra-blu.com/webhook','text'],['Telegram Bot Token','6847••••••:AAH•••••','password']].map(([l,v,t],i)=>(
+          {[['Supabase Project URL','https://your-project.supabase.co','text'],['Gemini API Key','AIza••••••••••••••','password'],['WhatsApp Cloud API Token','EAAx••••••••••','password'],['n8n Webhook URL','https://n8n.sierra-blu.com/webhook','text'],['Telegram Bot Token','6847••••••:AAH•••••','password']].map(([l,v,t],i)=>(
             <div key={i}>
               <label style={{fontFamily:'JetBrains Mono',fontSize:9,textTransform:'uppercase',letterSpacing:'.16em',color:'var(--gold)',display:'block',marginBottom:5}}>{l}</label>
               <input type={t} defaultValue={v} className="f-in" title={l} placeholder={l} aria-label={l}/>

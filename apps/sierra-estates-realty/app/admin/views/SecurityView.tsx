@@ -90,13 +90,13 @@ export default function SecurityView({ lang = 'en' }: { lang?: string }) {
             <span>Enforced & Active</span>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           </div>
-          <p className="text-[11px] text-slate-500">Least privilege role mapping on Firestore & APIs</p>
+          <p className="text-[11px] text-slate-500">Least privilege role mapping on Supabase & APIs</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <span className="text-xs text-slate-400 font-mono">API SECRETS ROTATION</span>
           <div className="text-lg font-bold text-[#E9C176]">Valid (Next in 24d)</div>
-          <p className="text-[11px] text-slate-500">Resend, Firebase Admin, and AI Provider keys</p>
+          <p className="text-[11px] text-slate-500">Supabase, Resend, and AI Provider keys</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
