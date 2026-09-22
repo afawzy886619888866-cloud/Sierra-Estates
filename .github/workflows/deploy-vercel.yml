@@ -220,7 +220,7 @@ jobs:
           for attempt in 1 2 3; do
             code=$(curl -sS -o /tmp/norm-res.json -w '%{http_code}' -X PATCH \
               "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg root "${{ matrix.app_dir }}" --arg fw "${{ matrix.framework }}" \
                     '{rootDirectory:$root,framework:$fw,buildCommand:null,installCommand:"pnpm install --frozen-lockfile",outputDirectory:null,devCommand:null}')" || echo "000")
@@ -321,7 +321,7 @@ jobs:
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
             code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg key "$1" --arg value "$2" --arg type "${3:-plain}" \
                     '{key:$key,value:$value,type:$type,target:["production","preview"]}')" || echo "000")
@@ -509,7 +509,7 @@ jobs:
           for attempt in 1 2 3; do
             code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg name "${{ matrix.domain }}" '{name:$name}')" || echo "000")
             body=$(cat /tmp/dom-res.json 2>/dev/null || true)

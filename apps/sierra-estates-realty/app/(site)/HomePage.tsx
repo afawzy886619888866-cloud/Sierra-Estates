@@ -855,7 +855,7 @@ export default function HomePage() {
           </div>
 
           {/* Interactive Map Canvas */}
-          <div className="map-shell rv" style={{ height: 580, minHeight: 520, borderRadius: 16, overflow: 'hidden', boxShadow: '0 16px 40px rgba(0,0,0,0.12)', border: '1px solid rgba(223, 173, 58, 0.25)' }}>
+          <div className="map-workspace rv">
             <CompoundsMap
               compounds={allCompounds}
               featured={featuredCompounds}
