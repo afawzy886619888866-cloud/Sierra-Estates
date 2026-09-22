@@ -291,7 +291,33 @@ memoryApiRouter.get('/patterns', (_req: Request, res: Response): void => {
 import fs from 'fs';
 import path from 'path';
 
-memoryApiRouter.post('/backup', (_req: Request, res: Response): void => {
+// Rate limiting middleware to prevent abuse of backup endpoint (CodeQL js/missing-rate-limiting)
+const backupRateLimiter = (() => {
+  const requestCounts = new Map<string, { count: number; resetTime: number }>();
+  return (req: Request, res: Response, next: () => void) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute window
+    const maxRequests = 5; // max 5 backups per minute
+
+    const record = requestCounts.get(ip) || { count: 0, resetTime: now + windowMs };
+    if (now > record.resetTime) {
+      record.count = 1;
+      record.resetTime = now + windowMs;
+    } else {
+      record.count += 1;
+    }
+    requestCounts.set(ip, record);
+
+    if (record.count > maxRequests) {
+      res.status(429).json({ success: false, error: 'Too many backup requests. Please wait a minute.' });
+      return;
+    }
+    next();
+  };
+})();
+
+memoryApiRouter.post('/backup', backupRateLimiter, (_req: Request, res: Response): void => {
   try {
     const storePath = path.resolve(process.cwd(), 'obsidian-store.json');
     if (fs.existsSync(storePath)) {

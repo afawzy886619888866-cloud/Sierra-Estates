@@ -1,9 +1,9 @@
 /**
  * Automated Viewing Reminders & Confirmation Service
- * Scans Firestore viewing_appointments and dispatches WhatsApp pre-viewing reminders.
+ * Scans Supabase viewing_appointments and dispatches WhatsApp pre-viewing reminders.
  */
 
-const { adminDb } = require('./firebase-service');
+const { adminDb } = require('./supabase-service');
 
 class ViewingReminderService {
   constructor(whatsappClient) {

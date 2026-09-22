@@ -21,35 +21,25 @@ async function run() {
   logBanner();
 
   try {
-    // 1. Check Firebase CLI
-    console.log('\x1b[33m%s\x1b[0m', '[1/4] Verifying Firebase CLI & Credentials...');
+    // 1. Check Supabase Connectivity
+    console.log('\x1b[33m%s\x1b[0m', '[1/4] Verifying Authoritative Supabase Credentials & Backend Policy...');
     try {
-      execSync('firebase --version', { stdio: 'ignore' });
-      console.log('✅ Firebase CLI detected.');
+      execSync('node scripts/check-backend-policy.mjs', { stdio: 'inherit' });
+      console.log('✅ Supabase backend policy verified.');
     } catch {
-      console.error('❌ Firebase CLI is not installed or not in PATH. Please run: npm install -g firebase-tools');
+      console.error('❌ Supabase backend check failed. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.');
       rl.close();
       return;
     }
 
-    // Check Firebase project
-    let currentProject = '';
-    try {
-      const activeProjectInfo = execSync('firebase project:active', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-      currentProject = activeProjectInfo;
-      console.log(`📡 Current active Firebase project: \x1b[32m${currentProject}\x1b[0m`);
-    } catch {
-      console.log('⚠️ Could not fetch active project. Attempting to list projects...');
-    }
-
-    const deployRules = await question('❓ Deploy Firestore and Storage security rules to this project? (y/n): ');
-    if (deployRules.toLowerCase() === 'y') {
-      console.log('🚀 Running firebase deploy for security rules...');
+    const deploySchema = await question('❓ Apply/migrate Supabase master schema and RLS policies (node scripts/apply-supabase-schema.mjs)? (y/n): ');
+    if (deploySchema.toLowerCase() === 'y') {
+      console.log('🚀 Running Supabase schema deployment...');
       try {
-        execSync('firebase deploy --only firestore:rules,storage', { stdio: 'inherit' });
-        console.log('✅ Security rules deployed successfully.');
+        execSync('node scripts/apply-supabase-schema.mjs', { stdio: 'inherit' });
+        console.log('✅ Supabase schema and policies applied successfully.');
       } catch (err) {
-        console.error('❌ Failed to deploy security rules. Make sure you are logged in using `firebase login`.');
+        console.error('❌ Failed to apply Supabase schema:', err.message);
       }
     }
 

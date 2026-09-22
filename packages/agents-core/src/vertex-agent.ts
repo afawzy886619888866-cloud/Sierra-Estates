@@ -34,7 +34,7 @@ export class VertexAgent extends BaseAgent {
     this.datastoreId = options.datastoreId || process.env.VERTEX_SEARCH_DATASTORE_ID;
     this.memory = new ObsidianMemory();
 
-    const projectId = options.projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sierra-estates-core';
+    const projectId = options.projectId || process.env.GOOGLE_CLOUD_PROJECT || 'sierra-estates-core';
     const location = options.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
     this.ai = new GoogleGenAI({

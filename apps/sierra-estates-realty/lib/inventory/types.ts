@@ -67,7 +67,7 @@ export interface InventoryUnit {
 export interface InventoryResponse {
   /** ISO timestamp of when this dataset was produced. */
   generatedAt: string;
-  source: 'supabase' | 'domain' | 'live' | 'snapshot';
+  source: 'supabase' | 'domain' | 'live' | 'snapshot' | 'excel-hybrid';
   count: number;
   segments?: {
     total: number;

@@ -1,11 +1,11 @@
 /**
  * Auth helpers — server-side session cookie (JWT-like, signed via HMAC).
  * No external JWT lib required: small HS256 impl. The session is stored
- * in the `sierra_sess` httpOnly cookie. Admin SDK verifies the Firebase
- * ID token at sign-in time, then we mint our own session cookie.
+ * in the `sierra_sess` httpOnly cookie. Supabase Admin verifies the Supabase
+ * access token at sign-in time, then we mint our own session cookie.
  *
- * For dev / sandbox (no FIREBASE_SERVICE_ACCOUNT), we accept a hardcoded
- * demo admin so the admin page is reachable without Firebase credentials.
+ * For dev / sandbox, we accept an env-configured bootstrap password so the
+ * admin portal is reachable without live auth credentials.
  */
 import { isAdminPortalRole } from "./types";
 import type { Session, Role } from "./types";
@@ -20,10 +20,19 @@ const IS_PROD = process.env.NODE_ENV === "production";
  * credential is a published credential. The account exists only when
  * ADMIN_BOOTSTRAP_PASSWORD is explicitly set, so production fails closed
  * unless an operator opts in.
+ *
+ * Both values are read on every call (not captured at module load) so operators
+ * can rotate credentials and tests can configure them without a re-import.
  */
-const BOOTSTRAP_ADMIN_EMAIL =
-  process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net";
-const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+function bootstrapAdminEmail(): string {
+  return (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net")
+    .trim()
+    .toLowerCase();
+}
+
+function bootstrapAdminPassword(): string {
+  return process.env.ADMIN_BOOTSTRAP_PASSWORD || "";
+}
 
 /** Dev-only fallback signing key. Never reachable in production — see getKey(). */
 const DEV_FALLBACK_KEY = "sierra-dev-secret-change-me";
@@ -109,43 +118,54 @@ export function cookieOpts(reqHost?: string) {
 
 /**
  * Helper to identify whether an email belongs to an authorized admin or staff.
+ *
+ * Production allowlist (strict):
+ *   - BOOTSTRAP_ADMIN_EMAIL
+ *   - ADMIN_EMAILS env (comma-separated; supports "@domain.tld" wildcards for
+ *     domains you OWN)
+ *   - "@sierra-estates.net" (the owned domain)
+ * The legacy hardcoded Gmail allowlist applies ONLY outside production so
+ * local development keeps working; on Vercel, set ADMIN_EMAILS with the
+ * operator's real addresses.
  */
 export function isAdminEmail(email: string): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
-  
+
   // Explicitly configured admin emails via env
   const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-  const bootstrapEmail = (process.env.ADMIN_BOOTSTRAP_EMAIL || "admin@sierra-estates.net").trim().toLowerCase();
+  const bootstrapEmail = bootstrapAdminEmail();
 
-  const standardAdminEmails = [
-    "admin@sierra-estates.net",
-    "sierra@sierra-estates.net",
-    "owner@sierra-estates.net",
-    "developer@sierra-estates.net",
-    "admin@sierra.com",
-    "admin@gmail.com",
-    "admin.investor@gmail.com",
-    "sierra.admin@gmail.com",
-    "sierraestates.admin@gmail.com",
-    "a.fawzy8866@gmail.com",
-    "sierrablue8866@gmail.com",
-    "sierrablue8866-droid@gmail.com",
-    "a.fawzy@sierra-estates.net",
-    "admin",
-  ];
-
-  return (
+  const envMatch =
     clean === bootstrapEmail ||
-    standardAdminEmails.includes(clean) ||
-    configuredAdminEmails.includes(clean) ||
-    clean.endsWith("@sierra-estates.net") ||
-    clean.endsWith("@sierra.com")
-  );
+    configuredAdminEmails.some((entry) =>
+      entry.startsWith("@") ? clean.endsWith(entry) : clean === entry
+    ) ||
+    clean.endsWith("@sierra-estates.net");
+
+  if (envMatch) return true;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Legacy dev-only list (never active on Vercel/production).
+    const legacyDevEmails = [
+      "admin@sierra-estates.net",
+      "sierra@sierra-estates.net",
+      "owner@sierra-estates.net",
+      "developer@sierra-estates.net",
+      "admin",
+      "a.fawzy8866@gmail.com",
+      "sierrablue8866@gmail.com",
+      "sierrablue8866-droid@gmail.com",
+      "a.fawzy@sierra-estates.net",
+    ];
+    return legacyDevEmails.includes(clean);
+  }
+
+  return false;
 }
 
 /**
@@ -195,14 +215,7 @@ export function safeEqual(a: string, b: string): boolean {
 
 /** True when a bootstrap admin account is available to sign in with. */
 export function bootstrapLoginAvailable(): boolean {
-  if (
-    process.env.FIREBASE_SERVICE_ACCOUNT ||
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    process.env.GOOGLE_APPLICATION_CREDENTIALS
-  ) {
-    return false;
-  }
-  return Boolean(BOOTSTRAP_ADMIN_PASSWORD);
+  return Boolean(bootstrapAdminPassword());
 }
 
 /** Parse cookie header into a map. */

@@ -28,14 +28,13 @@
       - '.github/workflows/**'
       - 'workflows/**'
 
-'firebase':
+'supabase':
   - changed-files:
     - any-glob-to-any-file:
-      - 'functions/**'
-      - 'apps/sierra-estates-realty/firestore.rules'
-      - 'storage.rules'
-      - 'firebase.json'
-      - 'firebase/**'
+      - 'supabase/**'
+      - '**/*supabase*'
+      - 'apps/sierra-estates-realty/lib/supabaseClient.ts'
+      - 'packages/db/lib/supabase*.ts'
 
 'dependencies':
   - changed-files:

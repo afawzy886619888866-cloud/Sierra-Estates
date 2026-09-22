@@ -20,15 +20,15 @@ const MASTER_SHEET_ID = '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const MASTER_SHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SHEET_ID}/gviz/tq?tqx=out:json`;
 
 const COMPOUND_IMAGES = {
-  'Madinaty': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-  'Sodic': 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80',
-  'CFC': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
-  'Mevida': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
-  'Fifth square': 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-  'Up Town Cairo': 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80',
-  'Gardenia City': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
-  'Rehab': 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80',
-  'Default': 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80',
+  'Madinaty': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/00032040-ed1f-11ef-b066-0a1a96148fff-cca2e67e-f73e-4d13-808e-8b41ec505723.png',
+  'Sodic': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/f9c6f75c-ed1e-11ef-b066-0a1a96148fff-7f5d3e7a-fd4f-4710-9db6-c9fe70a4adef.png',
+  'CFC': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/00d560b9-ed1f-11ef-b066-0a1a96148fff-0342d319-053c-4213-8af3-28cda4164bec.png',
+  'Mevida': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/01b3fbda-ed1f-11ef-b066-0a1a96148fff-2c9f9c3c-0eea-4e48-9a5e-b475706da985.png',
+  'Fifth square': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/f8bb6cea-ed1e-11ef-b066-0a1a96148fff-91801f7d-f0ad-4380-9ca0-ef0c72bc4d5d.png',
+  'Up Town Cairo': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/02f75127-ed1f-11ef-b066-0a1a96148fff-05d8f38a-ed39-4a26-af33-abdee38c8831.png',
+  'Gardenia City': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/fd5df6a8-ed1e-11ef-b066-0a1a96148fff-e0643187-d1df-4be6-ab5e-16f9d1dd9a2e.png',
+  'Rehab': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/fadfc7b5-ed1e-11ef-b066-0a1a96148fff-b4c7f95d-284c-411b-9294-2d16b9d21fc5.png',
+  'Default': 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/fe1e45e7-ed1e-11ef-b066-0a1a96148fff-13fd30e4-77da-4a77-8a87-64b404dc5b65.png',
 };
 
 function getCompoundImage(compoundName) {

@@ -89,6 +89,20 @@ export default function PropertyCard({ p, i = 0, onLocate }: PropertyCardProps) 
           <div><BedDouble className="i" /><b>{p.beds}</b><span>{t('beds')}</span></div>
           <div><Bath className="i" /><b>{p.bath}</b><span>{t('baths')}</span></div>
           <div><Scaling className="i" /><b>{p.area}</b><span>m²</span></div>
+          {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
+            <div
+              className="spec-sqm"
+              title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
+              style={{ color: '#DFAD3A', fontWeight: 600 }}
+            >
+              <b>
+                {Math.round(
+                  (p.egpM ? p.egpM * 1_000_000 : (p.usd || 0) * 48.65) / p.area
+                ).toLocaleString()}
+              </b>
+              <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -25,8 +25,9 @@ run () {
   fi
 }
 
-run "type-check" pnpm turbo run type-check
-run "lint"       pnpm turbo run lint
+run "type-check"     pnpm turbo run type-check
+run "lint"           pnpm turbo run lint
+run "action-routing" node scripts/verify-action-routing.mjs
 
 if [ "${SKIP_TESTS:-0}" = "1" ]; then
   printf '\n\033[33m⊘ tests skipped (SKIP_TESTS=1)\033[0m\n'
