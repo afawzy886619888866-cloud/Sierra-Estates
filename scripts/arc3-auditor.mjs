@@ -61,14 +61,20 @@ if (
 
 const requiredProductionEnv = [
   'NEXT_PUBLIC_SUPABASE_URL',
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  ['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'],
   'SUPABASE_SERVICE_ROLE_KEY',
   'SESSION_SECRET',
   'SBR_SECRET_KEY',
   'CRON_SECRET',
 ];
 for (const name of requiredProductionEnv) {
-  if (!configured(name)) add('BLOCKER', 'production-env', `Missing runtime variable: ${name}`);
+  if (Array.isArray(name)) {
+    if (!name.some(configured)) {
+      add('BLOCKER', 'production-env', `Missing runtime variable: ${name.join(' or ')}`);
+    }
+  } else if (!configured(name)) {
+    add('BLOCKER', 'production-env', `Missing runtime variable: ${name}`);
+  }
 }
 
 const featureEnvGroups = [
