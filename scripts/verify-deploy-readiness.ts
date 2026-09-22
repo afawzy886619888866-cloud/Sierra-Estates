@@ -139,13 +139,14 @@ check('Supabase Master Schema Readiness', () => {
 
 const pnpmRunner = process.platform === 'win32' ? 'corepack.cmd pnpm' : 'pnpm';
 
-// 7. Check packages compilation
+// 7. Check package type safety. Not every workspace package publishes a build
+// script, while all maintained packages expose type-check.
 check('Packages Compilation & Type-Check', () => {
   try {
-    execSync(`${pnpmRunner} turbo run build --filter="./packages/*"`, { stdio: 'pipe', env: process.env });
+    execSync(`${pnpmRunner} turbo run type-check --filter="./packages/*"`, { stdio: 'pipe', env: process.env });
   } catch {
-    // Fallback if native turbo binary is unavailable on the host
-    execSync(`${pnpmRunner} --filter "./packages/*" run build`, { stdio: 'pipe', env: process.env });
+    // Fallback if native turbo is unavailable on the host.
+    execSync(`${pnpmRunner} --filter "./packages/*" run type-check`, { stdio: 'pipe', env: process.env });
   }
 });
 
