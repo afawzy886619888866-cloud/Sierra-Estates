@@ -1,875 +1,681 @@
 'use client';
-
 /**
- * Workflow Studio — the interactive workflow designer for Sierra's
- * automation fleet.
+ * Workflow Studio — interactive automation canvas (Admin 2.0)
+ * ═══════════════════════════════════════════════════════════════════════
+ * Draw the automation estate: drag nodes, connect the golden handles,
+ * add/edit steps — then open the Script tab and edit the REAL workflow
+ * source inline. Every save persists through /api/admin/workflow-studio
+ * (public.workflows + migration 012 graph guard).
  *
- * • Draw workflows on a drag-and-drop canvas (SVG bezier edges, node
- *   palette, layered auto-layout).
- * • Edit the workflow definition as a script — JSON two-way sync with the
- *   canvas, plus a generated runnable Node.js export in the
- *   workflows/01-05 style.
- * • Import the team's existing n8n template exports directly.
- * • Save to PATCH /api/admin/workflows/[id] (nodes/edges/config columns)
- *   and trigger runs via POST — with a graceful local mode when the live
- *   DB is unreachable.
+ * Bilingual EN/AR via `lang` prop, clay token styling (admin-portal.css §14).
  */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import {
-  Workflow as WorkflowIcon,
-  Play,
-  Save,
-  Download,
-  Copy,
-  Check,
-  Trash2,
-  Wand2,
-  Upload,
-  ChevronDown,
-  Terminal,
-  CircleDot,
-  X,
-} from 'lucide-react';
-import {
-  NODE_TYPE_META,
-  autoLayout,
-  freshNodeId,
-  generateNodeScript,
-  importN8n,
-  seedGraphFor,
-  slugifyId,
-  type WorkflowGraph,
-  type WorkflowNode,
-  type WorkflowNodeType,
-} from './workflow-script';
-import { WORKFLOWS_DATA } from './data-constants';
+/* ─── Types ─────────────────────────────────────────────────────────── */
+type GNodeType = 'trigger' | 'action' | 'condition' | 'output' | 'ai';
+type GNode = { id: string; type: GNodeType; label: string; sub?: string; x: number; y: number };
+type GEdge = { id: string; from: string; to: string; label?: string };
+type Graph = { nodes: GNode[]; edges: GEdge[] };
+type Wf = Record<string, any>;
 
-const NODE_W = 208;
-const NODE_H = 64;
+const NODE_W = 196;
+const NODE_H = 62;
 
-interface StudioLogLine {
-  ts: string;
-  kind: 'info' | 'ok' | 'warn' | 'err';
-  text: string;
-}
+const NODE_META: Record<GNodeType, { color: string; glyph: string; tagEn: string; tagAr: string }> = {
+  trigger:   { color: 'var(--gold-lt, #E9C176)',      glyph: '⚡', tagEn: 'TRIGGER',  tagAr: 'مُشغِّل' },
+  action:    { color: 'var(--gold-luxury, #D4AF37)',  glyph: '⚙',  tagEn: 'ACTION',   tagAr: 'إجراء' },
+  condition: { color: 'var(--amber, #F59E0B)',        glyph: '◈',  tagEn: 'GATE',     tagAr: 'بوابة' },
+  output:    { color: 'var(--emerald, #34D399)',      glyph: '▣',  tagEn: 'SINK',     tagAr: 'مخرج' },
+  ai:        { color: 'var(--purple, #A78BFA)',       glyph: '✦',  tagEn: 'AI',       tagAr: 'ذكاء' },
+};
 
+const CATS = [
+  { id: 'ingestion', en: 'Ingestion', ar: 'الاستيعاب', color: 'var(--gold-lt)' },
+  { id: 'outreach', en: 'Outreach', ar: 'التواصل', color: 'var(--gold-luxury)' },
+  { id: 'intelligence', en: 'Intelligence', ar: 'الذكاء', color: 'var(--purple)' },
+  { id: 'operations', en: 'Operations', ar: 'العمليات', color: 'var(--emerald)' },
+];
+
+const relTime = (iso: string | null, isAr: boolean) => {
+  if (!iso) return isAr ? 'أبدًا' : 'never';
+  const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return isAr ? `قبل ${s} ث` : `${s}s ago`;
+  if (s < 3600) return isAr ? `قبل ${Math.floor(s / 60)} د` : `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return isAr ? `قبل ${Math.floor(s / 3600)} س` : `${Math.floor(s / 3600)}h ago`;
+  return isAr ? `قبل ${Math.floor(s / 86400)} ي` : `${Math.floor(s / 86400)}d ago`;
+};
+
+const parseGraph = (raw: unknown): Graph => {
+  if (!raw) return { nodes: [], edges: [] };
+  try {
+    const g = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return { nodes: Array.isArray(g?.nodes) ? g.nodes : [], edges: Array.isArray(g?.edges) ? g.edges : [] };
+  } catch { return { nodes: [], edges: [] } }
+};
+
+const edgePath = (a: GNode, b: GNode) => {
+  const x1 = a.x + NODE_W, y1 = a.y + NODE_H / 2;
+  const x2 = b.x, y2 = b.y + NODE_H / 2;
+  const dx = Math.max(60, Math.abs(x2 - x1) * 0.45);
+  return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+};
+
+/* ══════ View ══════ */
 export default function WorkflowStudioView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [graph, setGraph] = useState<WorkflowGraph>(() => seedGraphFor(WORKFLOWS_DATA[0].name));
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [connectFrom, setConnectFrom] = useState<string | null>(null);
-  const [panelTab, setPanelTab] = useState<'inspect' | 'json' | 'script'>('inspect');
-  const [jsonDraft, setJsonDraft] = useState('');
-  const [jsonError, setJsonError] = useState<string | null>(null);
-  const [logs, setLogs] = useState<StudioLogLine[]>([]);
-  const [consoleOpen, setConsoleOpen] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [importOpen, setImportOpen] = useState(false);
-  const [importText, setImportText] = useState('');
-  const [copied, setCopied] = useState(false);
+  const t = (en: string, ar: string) => (isAr ? ar : en);
 
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ id: string; offX: number; offY: number } | null>(null);
+  const [wfs, setWfs] = useState<Wf[]>([]);
+  const [selId, setSelId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
 
-  const t = useMemo(
-    () => ({
-      title: isAr ? 'استوديو سير العمل' : 'Workflow Studio',
-      subtitle: isAr
-        ? 'ارسم الأتمتة تفاعلياً وحرّر النص البرمجي من نفس المكان'
-        : 'Draw automations interactively and edit the workflow script from the same place',
-      save: isAr ? 'حفظ' : 'Save',
-      run: isAr ? 'تشغيل' : 'Run',
-      autoLayout: isAr ? 'ترتيب تلقائي' : 'Auto Layout',
-      blank: isAr ? 'ورقة فارغة' : 'Blank canvas',
-      importN8n: isAr ? 'استيراد n8n' : 'Import n8n',
-      palette: isAr ? 'الكتل' : 'Node Palette',
-      canvas: isAr ? 'اللوحة' : 'Canvas',
-      inspect: isAr ? 'الفحص' : 'Inspect',
-      script: isAr ? 'السكربت' : 'Script',
-      nodeJson: 'JSON',
-      label: isAr ? 'التسمية' : 'Label',
-      type: isAr ? 'النوع' : 'Type',
-      params: isAr ? 'المعاملات' : 'Params',
-      addParam: isAr ? '+ معامل' : '+ param',
-      deleteNode: isAr ? 'حذف الكتلة' : 'Delete node',
-      edgeSelected: isAr ? 'وصلة محددة' : 'Edge selected',
-      deleteEdge: isAr ? 'حذف الوصلة' : 'Delete edge',
-      connecting: isAr ? 'اختر الكتلة الهدف…' : 'Click the target node to connect… (Esc to cancel)',
-      pull: isAr ? 'اجلب من اللوحة' : 'Pull from canvas',
-      apply: isAr ? 'طبّق على اللوحة' : 'Apply to canvas',
-      download: isAr ? 'تنزيل .js' : 'Download .js',
-      copy: isAr ? 'نسخ' : 'Copy',
-      console: isAr ? 'السجل' : 'Run Console',
-      nodes: isAr ? 'كتل' : 'nodes',
-      edges: isAr ? 'وصلات' : 'edges',
-      savedLive: isAr ? 'تم الحفظ في قاعدة البيانات' : 'Saved to live database',
-      savedLocal: isAr ? 'قاعدة البيانات غير متاحة — حرّر وصدّر محلياً' : 'Live DB unreachable — edits kept locally, export to persist',
-      runStarted: isAr ? 'بدأ التشغيل' : 'Run started',
-      runDone: isAr ? 'انتهى التشغيل' : 'Run finished',
-      cleared: isAr ? 'تم مسح اللوحة' : 'Canvas cleared',
-      importTitle: isAr ? 'استيراد سير عمل n8n' : 'Import an n8n workflow export',
-      importHint: 'الصق ملف JSON من workflows/n8n-templates أو infra/n8n-workflows',
-      importBtn: isAr ? 'استيراد' : 'Import',
-      imported: isAr ? 'تم الاستيراد' : 'Workflow imported',
-      noSelection: isAr ? 'اختر كتلة لتحريرها' : 'Select a node to edit its properties',
-      status: isAr ? 'الحالة' : 'Status',
-    }),
-    [isAr]
-  );
+  const notify = useCallback((msg: string, ok = true) => setToast({ ok, msg }), []);
 
-  const pushLog = useCallback((kind: StudioLogLine['kind'], text: string) => {
-    setLogs((prev) => [
-      ...prev.slice(-120),
-      { ts: new Date().toLocaleTimeString('en-EG', { hour12: false }), kind, text },
-    ]);
-  }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/workflow-studio', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success) {
+        setWfs(json.workflows ?? []);
+        setSelId((prev) => (prev && (json.workflows ?? []).some((w: Wf) => w.id === prev) ? prev : json.workflows?.[0]?.id ?? null));
+      } else notify(json.error ?? 'Load failed', false);
+    } catch { notify(t('Network error', 'خطأ في الشبكة'), false); }
+    finally { setLoading(false); }
+  }, [notify, t]);
 
-  const flashNotice = useCallback((text: string) => {
-    setNotice(text);
-    setTimeout(() => setNotice(null), 3200);
-  }, []);
-
-  /* ── Graph mutations ── */
-
-  const addNode = useCallback(
-    (type: WorkflowNodeType) => {
-      const meta = NODE_TYPE_META[type];
-      const id = freshNodeId();
-      const rect = canvasRef.current?.getBoundingClientRect();
-      const x = Math.max(20, (rect ? 160 : 160) + Math.random() * 80);
-      const y = Math.max(20, 120 + Math.random() * 160);
-      setGraph((g) => ({
-        ...g,
-        nodes: [...g.nodes, { id, type, label: `${meta.label} ${g.nodes.length + 1}`, x, y, params: {} }],
-      }));
-      setSelectedNodeId(id);
-      setSelectedEdgeId(null);
-    },
-    []
-  );
-
-  const updateNode = useCallback((id: string, patch: Partial<WorkflowNode>) => {
-    setGraph((g) => ({ ...g, nodes: g.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)) }));
-  }, []);
-
-  const deleteNode = useCallback((id: string) => {
-    setGraph((g) => ({
-      ...g,
-      nodes: g.nodes.filter((n) => n.id !== id),
-      edges: g.edges.filter((e) => e.from !== id && e.to !== id),
-    }));
-    setSelectedNodeId(null);
-  }, []);
-
-  const deleteEdge = useCallback((id: string) => {
-    setGraph((g) => ({ ...g, edges: g.edges.filter((e) => e.id !== id) }));
-    setSelectedEdgeId(null);
-  }, []);
-
-  const completeConnection = useCallback(
-    (targetId: string) => {
-      if (!connectFrom || connectFrom === targetId) {
-        setConnectFrom(null);
-        return;
-      }
-      setGraph((g) => {
-        const exists = g.edges.some((e) => e.from === connectFrom && e.to === targetId);
-        if (exists) return g;
-        return { ...g, edges: [...g.edges, { id: freshNodeId('e'), from: connectFrom, to: targetId }] };
-      });
-      setConnectFrom(null);
-    },
-    [connectFrom]
-  );
-
-  const applyAutoLayout = useCallback(() => {
-    setGraph((g) => ({ ...g, nodes: autoLayout(g) }));
-    pushLog('info', 'auto-layout applied');
-  }, [pushLog]);
-
-  /* ── Drag handling (pointer capture) ── */
-
-  const onNodePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>, node: WorkflowNode) => {
-      if ((e.target as HTMLElement).closest('button')) return; // ports/controls
-      e.preventDefault();
-      setSelectedNodeId(node.id);
-      setSelectedEdgeId(null);
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-      dragRef.current = { id: node.id, offX: e.clientX - node.x, offY: e.clientY - node.y };
-    },
-    []
-  );
-
-  const onNodePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const x = Math.max(0, e.clientX - drag.offX);
-    const y = Math.max(0, e.clientY - drag.offY);
-    setGraph((g) => ({ ...g, nodes: g.nodes.map((n) => (n.id === drag.id ? { ...n, x, y } : n)) }));
-  }, []);
-
-  const onNodePointerUp = useCallback(() => {
-    dragRef.current = null;
-  }, []);
-
-  /* ── Keyboard: Delete removes selection, Escape cancels connect ── */
-
+  useEffect(() => { load() }, [load]);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setConnectFrom(null);
-        return;
-      }
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedEdgeId) deleteEdge(selectedEdgeId);
-        else if (selectedNodeId) deleteNode(selectedNodeId);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [selectedNodeId, selectedEdgeId, deleteEdge, deleteNode]);
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 4200);
+    return () => clearTimeout(id);
+  }, [toast]);
 
-  /* ── JSON draft sync ── */
-
-  const pullJson = useCallback(() => {
-    setJsonDraft(JSON.stringify({ name: graph.name, status: graph.status, nodes: graph.nodes, edges: graph.edges }, null, 2));
-    setJsonError(null);
-  }, [graph]);
-
-  useEffect(() => {
-    pullJson();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph.nodes.length, graph.edges.length, graph.name]);
-
-  const applyJson = useCallback(() => {
+  const createWf = async () => {
+    const name = prompt(t('Name the new workflow', 'اسم سير العمل الجديد'));
+    if (!name) return;
     try {
-      const parsed = JSON.parse(jsonDraft) as Partial<WorkflowGraph>;
-      if (!Array.isArray(parsed.nodes)) throw new Error('`nodes` must be an array');
-      if (!Array.isArray(parsed.edges)) throw new Error('`edges` must be an array');
-      // Capture the narrowed arrays: TS does not keep the isArray narrowing of
-      // `parsed.nodes` / `parsed.edges` alive inside the setGraph callback below.
-      const parsedNodes = parsed.nodes;
-      const parsedEdges = parsed.edges;
-      const nodeIds = new Set(parsedNodes.map((n) => n.id));
-      const edges = parsedEdges.filter((e) => nodeIds.has(e.from) && nodeIds.has(e.to));
-      setGraph((g) => ({
-        ...g,
-        name: parsed.name || g.name,
-        status: parsed.status || g.status,
-        nodes: parsedNodes.map((n) => ({
-          id: n.id || freshNodeId(),
-          type: (n.type && n.type in NODE_TYPE_META ? n.type : 'action') as WorkflowNodeType,
-          label: n.label || 'Untitled',
-          x: Number(n.x) || 40,
-          y: Number(n.y) || 40,
-          params: n.params ?? {},
-        })),
-        edges: edges.map((e) => ({ id: e.id || freshNodeId('e'), from: e.from, to: e.to, label: e.label })),
-      }));
-      setJsonError(null);
-      pushLog('ok', 'JSON applied to canvas');
-    } catch (err) {
-      setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
-    }
-  }, [jsonDraft, pushLog]);
-
-  /* ── Generated script ── */
-
-  const generatedScript = useMemo(() => generateNodeScript(graph), [graph]);
-
-  const downloadScript = useCallback(() => {
-    const blob = new Blob([generatedScript], { type: 'text/javascript' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${slugifyId(graph.name)}.js`;
-    a.click();
-    pushLog('ok', `downloaded ${slugifyId(graph.name)}.js`);
-  }, [generatedScript, graph.name, pushLog]);
-
-  const copyScript = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(generatedScript);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard unavailable */
-    }
-  }, [generatedScript]);
-
-  /* ── Save / Run ── */
-
-  const saveWorkflow = useCallback(async () => {
-    setSaving(true);
-    pushLog('info', `saving "${graph.name}" (${graph.nodes.length} ${t.nodes}, ${graph.edges.length} ${t.edges})…`);
-    try {
-      const res = await fetch(`/api/admin/workflows/${encodeURIComponent(graph.id || slugifyId(graph.name))}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: graph.name,
-          status: graph.status,
-          nodes: graph.nodes,
-          edges: graph.edges,
-          config: { ...(graph.config ?? {}), studio: { version: 1, savedAt: new Date().toISOString() } },
-        }),
+      const res = await fetch('/api/admin/workflow-studio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, category: 'operations' }),
       });
-      if (res.ok) {
-        pushLog('ok', 'saved to live database');
-        flashNotice(t.savedLive);
-      } else {
-        pushLog('warn', `live save failed (HTTP ${res.status}) — keeping edits locally`);
-        flashNotice(t.savedLocal);
-      }
-    } catch {
-      pushLog('warn', 'live save failed (network) — keeping edits locally');
-      flashNotice(t.savedLocal);
-    } finally {
-      setSaving(false);
-    }
-  }, [graph, pushLog, flashNotice, t]);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      notify(t(`Workflow created — start drawing`, 'تم الإنشاء — ابدأ الرسم'));
+      await load();
+      setSelId(json.workflowId);
+    } catch (e) { notify(e instanceof Error ? e.message : 'Create failed', false) }
+  };
 
-  const runWorkflow = useCallback(async () => {
-    setRunning(true);
-    pushLog('info', `▶ run "${graph.name}" triggered`);
-    let liveOk = false;
+  const removeWf = async (id: string, name: string) => {
+    if (!confirm(t(`Remove “${name}” from the studio? The repo source file is not touched.`, `إزالة «${name}» من الاستوديو؟ الملف الأصلي لن يتأثر.`))) return;
     try {
-      const res = await fetch(`/api/admin/workflows/${encodeURIComponent(graph.id || slugifyId(graph.name))}`, { method: 'POST' });
-      liveOk = res.ok;
-      if (res.ok) pushLog('ok', 'execution recorded on the live workflow');
-    } catch {
-      /* fall through to simulation */
-    }
-    if (!liveOk) pushLog('warn', 'live trigger unavailable — running local dry simulation');
-    // Dry simulation: walk nodes in layout order with pacing.
-    const ordered = autoLayout(graph);
-    for (const n of ordered) {
-      const meta = NODE_TYPE_META[n.type];
-      await new Promise((r) => setTimeout(r, 240));
-      pushLog('info', `  ${meta.icon} ${n.label} → ok`);
-    }
-    pushLog('ok', `■ ${graph.name} finished (${ordered.length} steps)`);
-    setRunning(false);
-  }, [graph, pushLog]);
+      const res = await fetch('/api/admin/workflow-studio', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      notify(t('Removed from studio', 'تمت الإزالة من الاستوديو'));
+      await load();
+    } catch (e) { notify(e instanceof Error ? e.message : 'Delete failed', false) }
+  };
 
-  /* ── Derived ── */
+  const sel = wfs.find((w) => w.id === selId) ?? null;
+  const grouped = useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    const list = wfs.filter((w) => !f || String(w.name ?? '').toLowerCase().includes(f) || String(w.slug ?? '').includes(f) || String(w.schedule ?? '').includes(f));
+    return CATS.map((c) => ({ ...c, items: list.filter((w) => (w.category ?? 'operations') === c.id) })).filter((g) => g.items.length > 0);
+  }, [wfs, filter]);
 
-  const selectedNode = graph.nodes.find((n) => n.id === selectedNodeId) ?? null;
-  const selectedEdge = graph.edges.find((e) => e.id === selectedEdgeId) ?? null;
-
-  const canvasSize = useMemo(() => {
-    const maxX = graph.nodes.reduce((m, n) => Math.max(m, n.x + NODE_W + 120), 900);
-    const maxY = graph.nodes.reduce((m, n) => Math.max(m, n.y + NODE_H + 120), 520);
-    return { w: maxX, h: maxY };
-  }, [graph.nodes]);
-
-  const nodePos = useMemo(() => new Map(graph.nodes.map((n) => [n.id, n])), [graph.nodes]);
-
-  const workflowOptions = useMemo(
-    () => [...WORKFLOWS_DATA.map((w) => w.name), t.blank],
-    [t.blank]
-  );
-
-  const loadWorkflowByName = useCallback(
-    (name: string) => {
-      const next = name === t.blank
-        ? { id: 'blank', name: 'Untitled Workflow', status: 'active' as const, nodes: [], edges: [] }
-        : seedGraphFor(name);
-      setGraph(next);
-      setSelectedNodeId(null);
-      setSelectedEdgeId(null);
-      pushLog('info', `loaded "${next.name}"`);
-    },
-    [pushLog, t.blank]
-  );
-
-  const doImport = useCallback(() => {
-    const result = importN8n(importText);
-    if ('error' in result) {
-      setJsonError(result.error);
-      return;
-    }
-    setGraph(result);
-    setImportOpen(false);
-    setImportText('');
-    pushLog('ok', `imported n8n workflow "${result.name}" (${result.nodes.length} nodes)`);
-    flashNotice(t.imported);
-  }, [importText, pushLog, flashNotice, t.imported]);
-
-  /* ── Render ── */
+  const activeCount = wfs.filter((w) => w.status === 'active').length;
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 bg-[#0d1a2c]/70 p-4 rounded-2xl border border-[#C8961A]/25">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#211A0D] border border-[#C8961A]/40 text-[#E9C176]">
-            <WorkflowIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-white tracking-tight">{t.title}</h1>
-            <p className="text-slate-400 text-xs">{t.subtitle}</p>
-          </div>
+    <div className="wfs-wrap">
+      {/* header */}
+      <div className="card fade-up" style={{ padding: '16px 18px', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em' }}>
+            🎛️ {t('Workflow Studio', 'استوديو سير العمل')}
+            <span className="chip" style={{ marginLeft: 10, background: 'var(--gold-luxury,#D4AF37)', color: '#07111E', fontWeight: 900, fontSize: 10, padding: '2px 8px', borderRadius: 999 }}>
+              {t('LIVE GRAPH EDITOR', 'محرر رسومي مباشر')}
+            </span>
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: 12.5, opacity: 0.65 }}>
+            {t(
+              `${wfs.length} automations · ${activeCount} active · draw the flow, connect steps, edit the real script inline — every save persists.`,
+              `${wfs.length} أتمتة · ${activeCount} نشطة · ارسم المسار واربط الخطوات وحرّر السكربت مباشرة — كل حفظ يُسجَّل.`
+            )}
+          </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={graph.name === 'Untitled Workflow' ? t.blank : workflowOptions.includes(graph.name) ? graph.name : workflowOptions[0]}
-            onChange={(e) => loadWorkflowByName(e.target.value)}
-            className="bg-[#0a1424] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-[#E9C176]/60 cursor-pointer max-w-56"
-            aria-label="Workflow"
-          >
-            {workflowOptions.map((w) => (
-              <option key={w} value={w}>{w}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setImportOpen(true)}
-            className="px-3 py-2 text-[11px] font-bold rounded-xl bg-[#0a1424] border border-white/10 text-slate-300 hover:text-white hover:border-[#E9C176]/50 cursor-pointer flex items-center gap-1.5"
-          >
-            <Upload className="w-3.5 h-3.5" /> {t.importN8n}
-          </button>
-          <button
-            type="button"
-            onClick={applyAutoLayout}
-            className="px-3 py-2 text-[11px] font-bold rounded-xl bg-[#0a1424] border border-white/10 text-slate-300 hover:text-white hover:border-[#E9C176]/50 cursor-pointer flex items-center gap-1.5"
-          >
-            <Wand2 className="w-3.5 h-3.5" /> {t.autoLayout}
-          </button>
-          <button
-            type="button"
-            onClick={saveWorkflow}
-            disabled={saving}
-            className="px-4 py-2 text-[11px] font-extrabold rounded-xl bg-gradient-to-r from-[#E9C176] to-[#C8961A] text-[#0d0d0f] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-          >
-            <Save className="w-3.5 h-3.5" /> {t.save}
-          </button>
-          <button
-            type="button"
-            onClick={runWorkflow}
-            disabled={running}
-            className="px-4 py-2 text-[11px] font-extrabold rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-          >
-            <Play className={`w-3.5 h-3.5 ${running ? 'animate-pulse' : ''}`} /> {t.run}
-          </button>
-        </div>
+        <button className="btn" onClick={createWf} style={{ fontWeight: 800 }}>
+          ＋ {t('New Workflow', 'سير عمل جديد')}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[172px_1fr_340px] gap-4">
-        {/* ── Palette ── */}
-        <div className="bg-[#0d1a2c]/70 rounded-2xl border border-white/10 p-3 space-y-1.5 self-start">
-          <div className="font-mono text-[9px] uppercase tracking-widest text-[#E9C176] px-1 pb-1">{t.palette}</div>
-          {(Object.keys(NODE_TYPE_META) as WorkflowNodeType[]).map((type) => {
-            const meta = NODE_TYPE_META[type];
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => addNode(type)}
-                title={meta.description}
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl border border-white/10 bg-[#0a1424] hover:border-[#E9C176]/60 text-left cursor-pointer transition-colors"
-              >
-                <span
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
-                  style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.color}44` }}
-                >
-                  {meta.icon}
-                </span>
-                <span className="text-[11px] font-bold text-slate-200 truncate">{isAr ? meta.labelAr : meta.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="wfs-layout">
+        {/* sidebar */}
+        <aside className="wfs-side fade-up">
+          <div className="wfs-side-hd">
+            <div className="wfs-search">
+              <span style={{ opacity: 0.5, fontSize: 12 }}>⌕</span>
+              <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('Search workflows…', 'ابحث…')} />
+            </div>
+          </div>
+          <div className="wfs-list custom-scroll">
+            {loading ? (
+              <div style={{ padding: 24, textAlign: 'center', opacity: 0.5, fontSize: 12 }}>{t('Loading…', 'جارٍ التحميل…')}</div>
+            ) : grouped.length === 0 ? (
+              <div style={{ padding: 20, textAlign: 'center', opacity: 0.5, fontSize: 12 }}>{t('No workflows', 'لا نتائج')}</div>
+            ) : grouped.map((g) => (
+              <div key={g.id}>
+                <div className="wfs-cat" style={{ color: g.color }}>{isAr ? g.ar : g.en}</div>
+                {g.items.map((w) => (
+                  <button key={w.id} className={`wfs-item${w.id === selId ? ' wfs-on' : ''}`} onClick={() => setSelId(w.id)}>
+                    <span className="wfs-item-nm">
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isAr && w.nameAr ? w.nameAr : w.name}</span>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: 99, flexShrink: 0,
+                        background: w.status === 'active' ? 'var(--emerald)' : w.status === 'paused' ? 'var(--amber)' : 'var(--tx-f)',
+                        boxShadow: w.status === 'active' ? '0 0 8px var(--emerald)' : 'none',
+                      }} />
+                    </span>
+                    <span className="wfs-item-meta">
+                      {w.schedule === 'webhook' ? '⚡ webhook' : w.schedule === 'manual' ? 'manual' : `⏱ ${w.schedule ?? '—'}`}
+                      {' · '}{Number(w.runs ?? 0).toLocaleString()} {t('runs', 'تشغيل')}
+                      {' · '}{relTime(w.lastRunAt ?? null, isAr)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </aside>
 
-        {/* ── Canvas ── */}
-        <div className="relative bg-[#0d1a2c]/70 rounded-2xl border border-white/10 overflow-hidden" style={{ height: 'calc(100vh - 420px)', minHeight: 420 }}>
-          {connectFrom && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-[#C8961A] text-[#0d0d0f] text-[11px] font-extrabold shadow-lg">
-              ⇢ {t.connecting}
+        {/* canvas */}
+        <div style={{ minWidth: 0 }}>
+          {sel ? (
+            <StudioCanvas key={sel.id} wf={sel} isAr={isAr} t={t} notify={notify} onChanged={load} onRemove={removeWf} />
+          ) : (
+            <div className="card" style={{ padding: 48, textAlign: 'center', opacity: 0.5, fontSize: 13 }}>
+              {loading ? t('Loading studio…', 'جارٍ تحميل الاستوديو…') : t('Select a workflow to open the canvas', 'اختر سير عملًا لفتح اللوحة')}
             </div>
           )}
-          <div
-            ref={canvasRef}
-            className="absolute inset-0 overflow-auto"
-            style={{
-              backgroundImage:
-                'radial-gradient(rgba(233,193,118,0.10) 1px, transparent 1px)',
-              backgroundSize: '22px 22px',
-            }}
-          >
-            <div className="relative" style={{ width: canvasSize.w, height: canvasSize.h }}>
-              {/* Edges */}
-              <svg className="absolute inset-0 pointer-events-none" width={canvasSize.w} height={canvasSize.h}>
-                <defs>
-                  <marker id="wf-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
-                    <path d="M0,0 L8,4.5 L0,9 Z" fill="#E9C176" />
-                  </marker>
-                </defs>
-                {graph.edges.map((edge) => {
-                  const from = nodePos.get(edge.from);
-                  const to = nodePos.get(edge.to);
-                  if (!from || !to) return null;
-                  const x1 = from.x + NODE_W;
-                  const y1 = from.y + NODE_H / 2;
-                  const x2 = to.x;
-                  const y2 = to.y + NODE_H / 2;
-                  const dx = Math.max(40, Math.abs(x2 - x1) * 0.45);
-                  const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-                  const isActive = edge.id === selectedEdgeId;
-                  return (
-                    <g key={edge.id} className="pointer-events-auto">
-                      <path
-                        d={d}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth={16}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                          setSelectedEdgeId(edge.id);
-                          setSelectedNodeId(null);
-                        }}
-                      />
-                      <path
-                        d={d}
-                        fill="none"
-                        stroke={isActive ? '#F5D78E' : 'rgba(233,193,118,0.45)'}
-                        strokeWidth={isActive ? 2.5 : 1.6}
-                        markerEnd="url(#wf-arrow)"
-                        style={{ pointerEvents: 'none' }}
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {/* Nodes */}
-              {graph.nodes.map((node) => {
-                const meta = NODE_TYPE_META[node.type];
-                const isSelected = node.id === selectedNodeId;
-                const isConnectSource = node.id === connectFrom;
-                return (
-                  <div
-                    key={node.id}
-                    onPointerDown={(e) => onNodePointerDown(e, node)}
-                    onPointerMove={onNodePointerMove}
-                    onPointerUp={onNodePointerUp}
-                    onPointerCancel={onNodePointerUp}
-                    onClick={() => connectFrom && completeConnection(node.id)}
-                    className="absolute select-none"
-                    style={{
-                      left: node.x,
-                      top: node.y,
-                      width: NODE_W,
-                      height: NODE_H,
-                      cursor: 'grab',
-                      touchAction: 'none',
-                    }}
-                  >
-                    <div
-                      className="w-full h-full rounded-2xl border px-3 py-2.5 flex items-center gap-2.5 transition-shadow"
-                      style={{
-                        background: isSelected
-                          ? 'linear-gradient(145deg, #172c47, #0e1e32)'
-                          : 'linear-gradient(145deg, #10203a, #0b1626)',
-                        borderColor: isConnectSource ? '#F5D78E' : isSelected ? '#E9C176' : `${meta.color}55`,
-                        boxShadow: isSelected ? '0 0 0 2px rgba(233,193,118,0.35), 0 12px 28px rgba(0,0,0,0.5)' : '0 6px 18px rgba(0,0,0,0.4)',
-                      }}
-                    >
-                      <span
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
-                        style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.color}55` }}
-                      >
-                        {meta.icon}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-[12.5px] font-bold text-white truncate leading-tight">{node.label}</div>
-                        <div className="font-mono text-[8.5px] uppercase tracking-widest" style={{ color: meta.color }}>
-                          {isAr ? meta.labelAr : meta.label}
-                        </div>
-                      </div>
-                      {/* Connect port */}
-                      <button
-                        type="button"
-                        title="Drag connection →"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setConnectFrom(node.id);
-                        }}
-                        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 cursor-pointer"
-                        style={{
-                          background: '#0b1626',
-                          borderColor: '#E9C176',
-                          boxShadow: '0 0 0 3px rgba(233,193,118,0.15)',
-                        }}
-                      >
-                        <CircleDot className="w-full h-full p-0.5 text-[#E9C176]" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Canvas stats */}
-          <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-[#0a1424]/90 border border-white/10 font-mono text-[10px] text-slate-400" style={{ fontVariantNumeric: 'tabular-nums' }}>
-            {graph.nodes.length} {t.nodes} · {graph.edges.length} {t.edges}
-          </div>
-        </div>
-
-        {/* ── Right panel: Inspect / JSON / Script ── */}
-        <div className="bg-[#0d1a2c]/70 rounded-2xl border border-white/10 overflow-hidden self-start" style={{ maxHeight: 'calc(100vh - 420px)' }}>
-          <div className="flex border-b border-white/10">
-            {([['inspect', t.inspect], ['json', t.nodeJson], ['script', t.script]] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setPanelTab(key)}
-                className={`flex-1 px-3 py-2.5 text-[11px] font-bold cursor-pointer transition-colors ${panelTab === key ? 'bg-[#211A0D] text-[#E9C176] border-b-2 border-[#C8961A]' : 'text-slate-400 hover:text-white'}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 480px)' }}>
-            {panelTab === 'inspect' && (
-              selectedEdge ? (
-                <div className="space-y-3">
-                  <div className="text-xs font-bold text-[#E9C176]">⇢ {t.edgeSelected}</div>
-                  <div className="font-mono text-[10px] text-slate-400">
-                    {nodePos.get(selectedEdge.from)?.label} → {nodePos.get(selectedEdge.to)?.label}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => deleteEdge(selectedEdge.id)}
-                    className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold cursor-pointer hover:bg-red-500/20 flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> {t.deleteEdge}
-                  </button>
-                </div>
-              ) : selectedNode ? (
-                <div className="space-y-3.5">
-                  <div>
-                    <label className="font-mono text-[9px] uppercase tracking-widest text-slate-400 block mb-1">{t.label}</label>
-                    <input
-                      value={selectedNode.label}
-                      onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
-                      className="w-full bg-[#0a1424] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#E9C176]/60"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-mono text-[9px] uppercase tracking-widest text-slate-400 block mb-1">{t.type}</label>
-                    <select
-                      value={selectedNode.type}
-                      onChange={(e) => updateNode(selectedNode.id, { type: e.target.value as WorkflowNodeType })}
-                      className="w-full bg-[#0a1424] border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none cursor-pointer"
-                    >
-                      {(Object.keys(NODE_TYPE_META) as WorkflowNodeType[]).map((ty) => (
-                        <option key={ty} value={ty}>{NODE_TYPE_META[ty].label}</option>
-                      ))}
-                    </select>
-                    <p className="text-[10px] text-slate-500 mt-1">{NODE_TYPE_META[selectedNode.type].description}</p>
-                  </div>
-                  <div>
-                    <label className="font-mono text-[9px] uppercase tracking-widest text-slate-400 block mb-1.5">{t.params}</label>
-                    <div className="space-y-1.5">
-                      {Object.entries(selectedNode.params ?? {}).map(([k, v]) => (
-                        <div key={k} className="flex gap-1.5">
-                          <input
-                            value={k}
-                            onChange={(e) => {
-                              const next = { ...(selectedNode.params ?? {}) };
-                              delete next[k];
-                              next[e.target.value] = v;
-                              updateNode(selectedNode.id, { params: next });
-                            }}
-                            className="flex-1 bg-[#0a1424] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-mono text-[#E9C176] outline-none"
-                          />
-                          <input
-                            value={String(v)}
-                            onChange={(e) => updateNode(selectedNode.id, { params: { ...(selectedNode.params ?? {}), [k]: e.target.value } })}
-                            className="flex-1 bg-[#0a1424] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = { ...(selectedNode.params ?? {}) };
-                              delete next[k];
-                              updateNode(selectedNode.id, { params: next });
-                            }}
-                            className="px-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-red-300 cursor-pointer"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => updateNode(selectedNode.id, { params: { ...(selectedNode.params ?? {}), '': '' } })}
-                        className="w-full py-1.5 rounded-lg bg-[#211A0D] border border-[#C8961A]/30 text-[#E9C176] text-[10.5px] font-bold cursor-pointer"
-                      >
-                        {t.addParam}
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => deleteNode(selectedNode.id)}
-                    className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold cursor-pointer hover:bg-red-500/20 flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> {t.deleteNode}
-                  </button>
-                </div>
-              ) : (
-                <div className="text-center py-10 text-slate-500 text-xs space-y-2">
-                  <WorkflowIcon className="w-8 h-8 mx-auto opacity-40" />
-                  {t.noSelection}
-                </div>
-              )
-            )}
-
-            {panelTab === 'json' && (
-              <div className="space-y-2">
-                <textarea
-                  value={jsonDraft}
-                  onChange={(e) => setJsonDraft(e.target.value)}
-                  spellCheck={false}
-                  className="w-full h-72 bg-[#0a1424] border border-white/10 rounded-xl p-3 font-mono text-[10.5px] leading-relaxed text-emerald-200/90 outline-none focus:border-[#E9C176]/60 resize-none"
-                />
-                {jsonError && (
-                  <div className="text-[10.5px] text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2 font-mono">{jsonError}</div>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={pullJson}
-                    className="flex-1 py-2 rounded-xl bg-[#0a1424] border border-white/10 text-slate-300 text-[11px] font-bold cursor-pointer hover:border-[#E9C176]/50"
-                  >
-                    ↻ {t.pull}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyJson}
-                    className="flex-1 py-2 rounded-xl bg-gradient-to-r from-[#E9C176] to-[#C8961A] text-[#0d0d0f] text-[11px] font-extrabold cursor-pointer"
-                  >
-                    {t.apply}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {panelTab === 'script' && (
-              <div className="space-y-2">
-                <pre className="w-full h-72 overflow-auto bg-[#050B14] border border-white/10 rounded-xl p-3 font-mono text-[9.5px] leading-relaxed text-[#E9C176] whitespace-pre">
-                  {generatedScript}
-                </pre>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={downloadScript}
-                    className="flex-1 py-2 rounded-xl bg-gradient-to-r from-[#E9C176] to-[#C8961A] text-[#0d0d0f] text-[11px] font-extrabold cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5" /> {t.download}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={copyScript}
-                    className="px-3 py-2 rounded-xl bg-[#0a1424] border border-white/10 text-slate-300 text-[11px] font-bold cursor-pointer hover:border-[#E9C176]/50 flex items-center gap-1.5"
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? '✓' : t.copy}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* ── Run console ── */}
-      <div className="bg-[#050B14] rounded-2xl border border-[#C8961A]/25 overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setConsoleOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-2.5 cursor-pointer hover:bg-white/[0.02]"
-        >
-          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[#E9C176]">
-            <Terminal className="w-3.5 h-3.5" /> {t.console}
-            <span className="text-slate-600">({logs.length})</span>
-          </span>
-          <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${consoleOpen ? '' : '-rotate-90'}`} />
-        </button>
-        {consoleOpen && (
-          <div className="px-4 pb-3 max-h-44 overflow-y-auto font-mono text-[10.5px] leading-relaxed" style={{ fontVariantNumeric: 'tabular-nums' }}>
-            {logs.length === 0 && <div className="text-slate-600 py-2">$ awaiting first run…</div>}
-            {logs.map((l, i) => (
-              <div key={i} className="flex gap-2.5">
-                <span className="text-slate-600 shrink-0">{l.ts}</span>
-                <span
-                  className={
-                    l.kind === 'ok' ? 'text-emerald-400' : l.kind === 'warn' ? 'text-amber-400' : l.kind === 'err' ? 'text-red-400' : 'text-slate-300'
-                  }
-                >
-                  {l.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── n8n import dialog ── */}
-      {importOpen && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl bg-[#0b1a2e] border border-[#C8961A]/30 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-extrabold text-white">{t.importTitle}</h3>
-              <button type="button" onClick={() => setImportOpen(false)} className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-[11px] text-slate-400">{t.importHint}</p>
-            <textarea
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              spellCheck={false}
-              placeholder='{ "name": "My Workflow", "nodes": [ … ], "connections": { … } }'
-              className="w-full h-52 bg-[#0a1424] border border-white/10 rounded-xl p-3 font-mono text-[10.5px] text-emerald-200/90 outline-none focus:border-[#E9C176]/60 resize-none"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setImportOpen(false)}
-                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={doImport}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#E9C176] to-[#C8961A] text-[#0d0d0f] text-xs font-extrabold cursor-pointer"
-              >
-                {t.importBtn}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {notice && (
-        <div className="fixed bottom-6 right-6 z-[1300] px-4 py-3 rounded-xl bg-[#211A0D] border border-[#C8961A]/50 text-[#E9C176] text-xs font-bold shadow-2xl">
-          {notice}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 22, insetInlineStart: '50%', transform: 'translateX(-50%)', zIndex: 90,
+          padding: '10px 18px', borderRadius: 12, fontWeight: 700, fontSize: 13,
+          background: 'var(--bg-e,#0F2035)', border: `1px solid ${toast.ok ? 'var(--emerald,#34D399)' : 'var(--red,#E63946)'}55`,
+          color: toast.ok ? 'var(--emerald,#34D399)' : 'var(--red,#E63946)', boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+        }}>
+          {toast.ok ? '✓ ' : '✕ '}{toast.msg}
         </div>
       )}
     </div>
   );
+}
+
+/* ══════ Canvas + Inspector ══════ */
+function StudioCanvas({ wf, isAr, t, notify, onChanged, onRemove }: {
+  wf: Wf; isAr: boolean; t: (en: string, ar: string) => string;
+  notify: (msg: string, ok?: boolean) => void; onChanged: () => void;
+  onRemove: (id: string, name: string) => void;
+}) {
+  const [graph, setGraph] = useState<Graph>(() => parseGraph(wf.graph));
+  const [selNode, setSelNode] = useState<string | null>(null);
+  const [selEdge, setSelEdge] = useState<string | null>(null);
+  const [mode, setMode] = useState<'select' | 'pan' | 'connect'>('select');
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 30, y: 20 });
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [connFrom, setConnFrom] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const [simActive, setSimActive] = useState<Set<string>>(new Set());
+  const [simOn, setSimOn] = useState(false);
+  const [tab, setTab] = useState<'overview' | 'script'>('overview');
+  const [script, setScript] = useState<string>(wf.script ?? '');
+  const [scriptDirty, setScriptDirty] = useState(false);
+  const [name, setName] = useState(wf.name ?? '');
+  const [desc, setDesc] = useState(wf.desc ?? '');
+  const [schedule, setSchedule] = useState(wf.schedule ?? '');
+  const [metaDirty, setMetaDirty] = useState(false);
+
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const panRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => { timers.current.forEach(clearTimeout) }, []);
+
+  const graphW = useMemo(() => Math.max(1120, ...graph.nodes.map((n) => n.x + NODE_W + 120)), [graph]);
+  const graphH = useMemo(() => Math.max(400, ...graph.nodes.map((n) => n.y + NODE_H + 100)), [graph]);
+
+  /* persistence */
+  const put = async (body: Record<string, unknown>, okMsg: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/workflow-studio', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: wf.id, ...body }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'Save failed');
+      notify(okMsg);
+      return true;
+    } catch (e) { notify(e instanceof Error ? e.message : 'Save failed', false); return false }
+    finally { setSaving(false) }
+  };
+
+  const saveGraph = () => put({ graph }, t(`Graph saved — ${graph.nodes.length} nodes · ${graph.edges.length} connections`, `تم حفظ الرسم — ${graph.nodes.length} عقدة · ${graph.edges.length} وصلات`)).then((ok) => ok && setDirty(false));
+  const saveScript = () => put({ script }, t(`Script saved — ${script.split('\n').length} lines persisted`, `تم حفظ السكربت — ${script.split('\n').length} سطرًا`)).then((ok) => ok && setScriptDirty(false) || onChanged());
+  const saveMeta = () => put({ name, desc, schedule }, t('Details updated', 'تم تحديث التفاصيل')).then((ok) => ok && setMetaDirty(false) || onChanged());
+  const setStatus = (s: string) => put({ status: s }, t(`Workflow ${s}`, `الحالة: ${s === 'active' ? 'نشط' : s === 'paused' ? 'متوقف' : 'مسودة'}`)).then((ok) => ok && onChanged());
+
+  /* graph ops */
+  const addNode = () => {
+    const id = `n${Date.now().toString(36).slice(-4)}`;
+    setGraph((g) => ({ ...g, nodes: [...g.nodes, { id, type: 'action', label: t('New Step', 'خطوة جديدة'), sub: '', x: 120 + (g.nodes.length % 4) * 56, y: 250 + Math.floor(g.nodes.length / 4) * 28 }] }));
+    setDirty(true); setSelNode(id); setSelEdge(null);
+  };
+  const updNode = (id: string, patch: Partial<GNode>) => {
+    setGraph((g) => ({ ...g, nodes: g.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)) }));
+    setDirty(true);
+  };
+  const delNode = (id: string) => {
+    setGraph((g) => ({ nodes: g.nodes.filter((n) => n.id !== id), edges: g.edges.filter((e) => e.from !== id && e.to !== id) }));
+    setDirty(true); setSelNode(null);
+  };
+  const delEdge = (id: string) => {
+    setGraph((g) => ({ ...g, edges: g.edges.filter((e) => e.id !== id) }));
+    setDirty(true); setSelEdge(null);
+  };
+  const connect = (from: string, to: string) => {
+    if (from === to) return;
+    if (graph.edges.some((e) => e.from === from && e.to === to)) { notify(t('Connection already exists', 'الوصلة موجودة بالفعل'), false); return }
+    setGraph((g) => ({ ...g, edges: [...g.edges, { id: `e${Date.now().toString(36).slice(-5)}`, from, to }] }));
+    setDirty(true); notify(t('Connected — save the graph to persist', 'تم الوصل — احفظ الرسم لتثبيته'));
+  };
+
+  /* pointer mechanics */
+  const toCanvas = (cx: number, cy: number) => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (!r) return { x: 0, y: 0 };
+    return { x: (cx - r.left - pan.x) / zoom, y: (cy - r.top - pan.y) / zoom };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    if (panRef.current) { setPan({ x: e.clientX - panRef.current.x, y: e.clientY - panRef.current.y }); return }
+    if (dragRef.current) {
+      const d = dragRef.current;
+      const dx = (e.clientX - d.sx) / zoom, dy = (e.clientY - d.sy) / zoom;
+      updNode(d.id, { x: Math.round(d.ox + dx), y: Math.round(d.oy + dy) });
+      return;
+    }
+    if (connFrom) setCursor(toCanvas(e.clientX, e.clientY));
+  };
+  const onUp = (e: React.PointerEvent) => {
+    if (panRef.current) { panRef.current = null; return }
+    if (dragRef.current) { dragRef.current = null; return }
+    if (connFrom) {
+      const p = toCanvas(e.clientX, e.clientY);
+      const hit = graph.nodes.find((n) => p.x >= n.x && p.x <= n.x + NODE_W && p.y >= n.y && p.y <= n.y + NODE_H);
+      if (hit) connect(connFrom, hit.id);
+      setConnFrom(null); setCursor(null);
+    }
+  };
+
+  /* run simulation */
+  const simulate = () => {
+    timers.current.forEach(clearTimeout); timers.current = [];
+    const depth = new Map<string, number>();
+    graph.nodes.forEach((n) => depth.set(n.id, 0));
+    for (let i = 0; i < graph.nodes.length; i++) {
+      let ch = false;
+      for (const e of graph.edges) {
+        const d = (depth.get(e.from) ?? 0) + 1;
+        if (d > (depth.get(e.to) ?? 0)) { depth.set(e.to, d); ch = true }
+      }
+      if (!ch) break;
+    }
+    const maxD = Math.max(0, ...depth.values());
+    setSimOn(true);
+    for (let w = 0; w <= maxD + 1; w++) {
+      timers.current.push(setTimeout(() => {
+        if (w <= maxD) setSimActive(new Set(graph.nodes.filter((n) => depth.get(n.id) === w).map((n) => n.id)));
+        else { setSimActive(new Set()); setSimOn(false); notify(t(`Simulated run ▶ ${graph.nodes.length} stages · all green`, `تشغيل تجريبي ▶ ${graph.nodes.length} مراحل · ناجح`)) }
+      }, w * 620));
+    }
+  };
+
+  const fit = () => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (!r || !graph.nodes.length) return;
+    const minX = Math.min(...graph.nodes.map((n) => n.x)), minY = Math.min(...graph.nodes.map((n) => n.y));
+    const maxX = Math.max(...graph.nodes.map((n) => n.x + NODE_W)), maxY = Math.max(...graph.nodes.map((n) => n.y + NODE_H));
+    const z = Math.min(1.15, Math.max(0.45, Math.min((r.width - 60) / (maxX - minX), (r.height - 60) / (maxY - minY))));
+    setZoom(z); setPan({ x: 30 - minX * z, y: 24 - minY * z });
+  };
+
+  const node = graph.nodes.find((n) => n.id === selNode) ?? null;
+  const edge = graph.edges.find((e) => e.id === selEdge) ?? null;
+  const connNode = graph.nodes.find((n) => n.id === connFrom) ?? null;
+  const lines = script.split('\n').length;
+  const langName = wf.scriptLang === 'typescript' ? 'TypeScript' : wf.scriptLang === 'json' ? 'JSON' : 'JavaScript';
+
+  const tool = (label: string, onClick: () => void, opts: { color?: string; disabled?: boolean; title?: string } = {}) => (
+    <button
+      key={label} onClick={onClick} disabled={opts.disabled} title={opts.title ?? label}
+      className="chip" style={{
+        cursor: 'pointer', fontSize: 11, fontWeight: 800, padding: '5px 10px', borderRadius: 8,
+        border: `1px solid ${opts.color ? `${opts.color}66` : 'var(--bd,#ffffff14)'}`,
+        background: opts.color ? `color-mix(in srgb, ${opts.color} 12%, transparent)` : 'transparent',
+        color: opts.color ?? 'inherit', opacity: opts.disabled ? 0.35 : 1,
+      }}
+    >{label}</button>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* toolbar */}
+      <div className="wfs-toolbar fade-up">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
+          <strong style={{ fontSize: 14, color: 'var(--gold-champagne,#F5D76E)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {isAr && wf.nameAr ? wf.nameAr : wf.name}
+          </strong>
+          <span className="wfs-chip" style={{ textTransform: 'uppercase' }}>{wf.category ?? 'operations'}</span>
+          <span className="wfs-mini">{wf.schedule === 'webhook' ? '⚡ webhook' : wf.schedule === 'manual' ? '✋ manual' : `⏱ ${wf.schedule ?? '—'}`}</span>
+          {dirty && <span className="wfs-chip" style={{ color: 'var(--amber)', borderColor: 'var(--amber)', animation: 'pulse 1.4s infinite' }}>● {t('unsaved graph', 'رسم غير محفوظ')}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', borderRadius: 9, overflow: 'hidden', border: '1px solid var(--bd)' }}>
+            {([['select', '⌖'], ['pan', '✋'], ['connect', '⤳']] as const).map(([m, g]) => (
+              <button key={m} onClick={() => setMode(m)}
+                title={m === 'select' ? t('Select / drag', 'تحديد / سحب') : m === 'pan' ? t('Pan canvas', 'تحريك اللوحة') : t('Connect mode', 'وضع الوصل')}
+                style={{
+                  padding: '5px 9px', fontSize: 12, cursor: 'pointer', border: 'none',
+                  background: mode === m ? 'color-mix(in srgb, var(--gold-luxury) 22%, transparent)' : 'transparent',
+                  color: mode === m ? 'var(--gold-champagne)' : 'var(--tx-m)',
+                }}>{g}</button>
+            ))}
+          </div>
+          {tool(t('Node', 'عقدة'), addNode, { color: 'var(--gold-lt)' })}
+          {tool(t('Run', 'تشغيل'), simulate, { color: 'var(--emerald)', disabled: simOn })}
+          {tool('−', () => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2))), { title: t('Zoom out', 'تصغير') })}
+          {tool(`${Math.round(zoom * 100)}%`, () => {}, { title: t('Zoom', 'تكبير'), disabled: true })}
+          {tool('+', () => setZoom((z) => Math.min(1.6, +(z + 0.1).toFixed(2))), { title: t('Zoom in', 'تكبير') })}
+          {tool(t('Fit', 'ملاءمة'), fit)}
+          {tool(t('Save', 'حفظ'), saveGraph, { color: 'var(--gold-luxury)', disabled: !dirty || saving })}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: 12, alignItems: 'start' }}>
+          {/* canvas */}
+          <div
+            ref={wrapRef}
+            className="wfs-canvas"
+            style={{ cursor: mode === 'pan' ? 'grab' : connFrom ? 'crosshair' : 'default' }}
+            onPointerDown={(e) => {
+              if (e.target === e.currentTarget || (e.target as HTMLElement).dataset?.canvas === '1') {
+                if (mode === 'pan' || e.shiftKey) {
+                  panRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                } else { setSelNode(null); setSelEdge(null) }
+              }
+            }}
+            onPointerMove={onMove}
+            onPointerUp={onUp}
+            onWheel={(e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom((z) => Math.min(1.6, Math.max(0.4, +(z + (e.deltaY < 0 ? 0.08 : -0.08)).toFixed(2)))) } }}
+          >
+            <div className="wfs-world" data-canvas="1" style={{ width: graphW, height: graphH, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}>
+              <svg width={graphW} height={graphH} style={{ position: 'absolute', inset: 0, overflow: 'visible' }} data-canvas="1">
+                <defs>
+                  <marker id="wfs-arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9" fill="none" stroke="var(--tx-f)" strokeWidth="1.6" />
+                  </marker>
+                  <marker id="wfs-arw-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9" fill="none" stroke="var(--gold-luxury)" strokeWidth="1.8" />
+                  </marker>
+                </defs>
+                {graph.edges.map((e) => {
+                  const a = graph.nodes.find((n) => n.id === e.from), b = graph.nodes.find((n) => n.id === e.to);
+                  if (!a || !b) return null;
+                  const s = e.id === selEdge, live = simActive.has(e.from);
+                  const mid = { x: (a.x + NODE_W + b.x) / 2, y: (a.y + b.y) / 2 + NODE_H / 2 };
+                  return (
+                    <g key={e.id}>
+                      <path d={edgePath(a, b)} fill="none" stroke="transparent" strokeWidth={16} style={{ cursor: 'pointer' }}
+                        onPointerDown={(ev) => { ev.stopPropagation(); setSelEdge(e.id); setSelNode(null) }} data-canvas="1" />
+                      <path d={edgePath(a, b)} fill="none"
+                        stroke={s ? 'var(--gold-luxury)' : live ? 'var(--emerald)' : 'var(--tx-f)'}
+                        strokeWidth={s ? 2.4 : live ? 2.2 : 1.6}
+                        markerEnd={s ? 'url(#wfs-arw-gold)' : 'url(#wfs-arw)'}
+                        className={live ? 'wfs-dash' : undefined} pointerEvents="none" opacity={s || live ? 1 : 0.55} />
+                      {e.label && (
+                        <text x={mid.x} y={mid.y - 6} textAnchor="middle" pointerEvents="none" className="wfs-edge-lbl"
+                          fill={s ? 'var(--gold-champagne)' : 'var(--tx-m)'}>{e.label}</text>
+                      )}
+                    </g>
+                  );
+                })}
+                {connNode && cursor && (
+                  <path d={`M ${connNode.x + NODE_W} ${connNode.y + NODE_H / 2} C ${connNode.x + NODE_W + 80} ${connNode.y + NODE_H / 2}, ${cursor.x - 80} ${cursor.y}, ${cursor.x} ${cursor.y}`}
+                    fill="none" stroke="var(--emerald)" strokeWidth={2} strokeDasharray="6 5" pointerEvents="none" />
+                )}
+              </svg>
+
+              {graph.nodes.map((n) => {
+                const meta = NODE_META[n.type] ?? NODE_META.action;
+                const sel = n.id === selNode, live = simActive.has(n.id);
+                return (
+                  <div key={n.id}
+                    className={`wfs-node${sel ? ' wfs-sel' : ''}${live ? ' wfs-live' : ''}${simOn && !live ? ' wfs-dim' : ''}`}
+                    style={{ left: n.x, top: n.y, ['--node-c' as string]: meta.color, cursor: mode === 'pan' ? 'grab' : 'pointer' }}
+                    onPointerDown={(e) => {
+                      if (mode === 'pan') return;
+                      e.stopPropagation();
+                      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+                      dragRef.current = { id: n.id, sx: e.clientX, sy: e.clientY, ox: n.x, oy: n.y };
+                      setSelNode(n.id); setSelEdge(null);
+                    }}>
+                    <div className="wfs-node-bd">
+                      <div className="wfs-node-ic">{meta.glyph}</div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div className="wfs-node-t">{n.label}</div>
+                        <div className="wfs-node-s">{n.sub || '—'}</div>
+                        <div className="wfs-node-k">{isAr ? meta.tagAr : meta.tagEn}</div>
+                      </div>
+                    </div>
+                    <button className={`wfs-hout${connFrom === n.id ? ' wfs-h-on' : ''}`}
+                      title={t('Drag to another node to connect', 'اسحب إلى عقدة أخرى للوصل')}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        setConnFrom(n.id); setCursor(toCanvas(e.clientX, e.clientY));
+                        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                      }} />
+                    <span className="wfs-hin" />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ position: 'absolute', bottom: 12, insetInlineStart: 12, borderRadius: 9, border: '1px solid var(--bd)', background: 'color-mix(in srgb, var(--bg) 60%, transparent)', padding: '5px 10px', fontSize: 10, color: 'var(--tx-m)', fontFamily: 'JetBrains Mono, monospace', pointerEvents: 'none' }}>
+              {Math.round(zoom * 100)}% · {graph.nodes.length} {t('nodes', 'عقدة')} · {graph.edges.length} {t('edges', 'وصلة')}
+            </div>
+            <div style={{ position: 'absolute', top: 12, insetInlineEnd: 12, borderRadius: 9, border: '1px solid var(--bd)', background: 'color-mix(in srgb, var(--bg) 60%, transparent)', padding: '5px 10px', fontSize: 10, color: 'var(--tx-f)', pointerEvents: 'none' }}>
+              {t('drag ● to connect · shift-drag to pan · ⌘/ctrl+scroll zoom', 'اسحب ● للوصل · Shift للتحريك · ⌘/Ctrl+التمرير للتكبير')}
+            </div>
+            {graph.nodes.length === 0 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tx-f)', fontSize: 13, pointerEvents: 'none' }}>
+                {t('Empty canvas — add a node to start drawing', 'لوحة فارغة — أضف عقدة لبدء الرسم')}
+              </div>
+            )}
+          </div>
+
+          {/* inspector */}
+          <div className="wfs-inspect fade-up">
+            <div className="wfs-tabs">
+              {(['overview', 'script'] as const).map((x) => (
+                <button key={x} className={`wfs-tab${tab === x ? ' wfs-tab-on' : ''}`} onClick={() => setTab(x)}>
+                  {x === 'overview' ? t('Details', 'التفاصيل') : `${t('Script', 'السكربت')} · ${langName}`}
+                </button>
+              ))}
+            </div>
+
+            <div className="wfs-body custom-scroll">
+              {tab === 'overview' ? (
+                <>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(['active', 'paused', 'draft'] as const).map((s) => (
+                      <button key={s} onClick={() => setStatus(s)}
+                        className="chip" style={{
+                          flex: 1, cursor: 'pointer', padding: '6px 4px', fontSize: 10.5, fontWeight: 800, textTransform: 'capitalize',
+                          borderColor: wf.status === s ? (s === 'active' ? 'var(--emerald)' : s === 'paused' ? 'var(--amber)' : 'var(--bd-s)') : 'var(--bd)',
+                          color: wf.status === s ? (s === 'active' ? 'var(--emerald)' : s === 'paused' ? 'var(--amber)' : 'var(--tx)') : 'var(--tx-f)',
+                          background: wf.status === s ? 'color-mix(in srgb, var(--emerald) 10%, transparent)' : 'transparent',
+                        }}>
+                        {s === 'active' ? `▶ ${t('active', 'نشط')}` : s === 'paused' ? `⏸ ${t('paused', 'متوقف')}` : t('draft', 'مسودة')}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div>
+                    <span className="wfs-lbl">{t('Name', 'الاسم')}</span>
+                    <input className="wfs-in" value={name} onChange={(e) => { setName(e.target.value); setMetaDirty(true) }} />
+                  </div>
+                  <div>
+                    <span className="wfs-lbl">{t('Schedule (cron / webhook / manual)', 'الجدولة (كرون / ويب هوك / يدوي)')}</span>
+                    <input className="wfs-in" value={schedule} onChange={(e) => { setSchedule(e.target.value); setMetaDirty(true) }} placeholder="*/30 * * * *" />
+                  </div>
+                  <div>
+                    <span className="wfs-lbl">{t('Description', 'الوصف')}</span>
+                    <textarea className="wfs-in" rows={3} style={{ resize: 'none' }} value={desc} onChange={(e) => { setDesc(e.target.value); setMetaDirty(true) }} />
+                  </div>
+                  <button className="btn" onClick={saveMeta} disabled={!metaDirty || saving} style={{ fontWeight: 800 }}>
+                    💾 {t('Save Details', 'حفظ التفاصيل')}
+                  </button>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, borderTop: '1px solid var(--bd)', paddingTop: 10 }}>
+                    <div className="wfs-stat"><div className="wfs-stat-l">{t('Lifetime runs', 'إجمالي التشغيل')}</div><div className="wfs-stat-v">{Number(wf.runs ?? 0).toLocaleString()}</div></div>
+                    <div className="wfs-stat"><div className="wfs-stat-l">{t('Success rate', 'نسبة النجاح')}</div><div className="wfs-stat-v" style={{ color: Number(wf.successRate ?? 99) >= 99 ? 'var(--emerald)' : 'var(--amber)' }}>{Number(wf.successRate ?? 99).toFixed(1)}%</div></div>
+                    <div className="wfs-stat"><div className="wfs-stat-l">{t('Last run', 'آخر تشغيل')}</div><div className="wfs-stat-v" style={{ fontSize: 12 }}>{relTime(wf.lastRunAt ?? null, isAr)}</div></div>
+                    <div className="wfs-stat"><div className="wfs-stat-l">{t('Duration', 'المدة')}</div><div className="wfs-stat-v">{Number(wf.lastRunMs ?? 0) >= 1000 ? `${(Number(wf.lastRunMs) / 1000).toFixed(1)}s` : `${Number(wf.lastRunMs ?? 0)}ms`}</div></div>
+                  </div>
+
+                  <div style={{ borderRadius: 'var(--clay-rad-md)', border: '1px solid var(--bd)', background: 'var(--surf2)', padding: 12 }}>
+                    <div className="wfs-stat-l">{t('Source of truth', 'المصدر الأصلي')}</div>
+                    <div style={{ marginTop: 4, fontSize: 11, color: 'var(--gold-lt)', fontFamily: 'JetBrains Mono, monospace', wordBreak: 'break-all' }}>
+                      {wf.sourcePath ?? t('inline studio workflow', 'سير عمل داخلي')}
+                    </div>
+                    <p style={{ margin: '6px 0 0', fontSize: 10.5, color: 'var(--tx-m)', lineHeight: 1.5 }}>
+                      {t('Script edits persist to the studio registry and mirror this path — download and commit to update the repo file.', 'تُحفظ تعديلات السكربت في سجل الاستوديو وتطابق هذا المسار — نزّل الملف وأضفه للمستودع لتحديث الأصل.')}
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                      <button className="chip" style={{ cursor: 'pointer' }} onClick={() => download(wf, script)}>
+                        ⤓ {t('Download', 'تنزيل')} {wf.scriptLang === 'json' ? '.json' : wf.scriptLang === 'typescript' ? '.ts' : '.js'}
+                      </button>
+                      <button className="chip" style={{ cursor: 'pointer', borderColor: 'color-mix(in srgb, var(--red) 40%, transparent)', color: 'var(--red)' }} onClick={() => onRemove(wf.id, isAr && wf.nameAr ? wf.nameAr : wf.name)}>
+                        🗑 {t('Remove', 'إزالة')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {edge ? (
+                    <div style={{ borderRadius: 'var(--clay-rad-md)', border: '1px solid color-mix(in srgb, var(--gold-luxury) 40%, transparent)', background: 'color-mix(in srgb, var(--gold-luxury) 6%, transparent)', padding: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="wfs-stat-l" style={{ color: 'var(--gold-champagne)' }}>{t('Selected connection', 'الوصلة المحددة')}</span>
+                        <button onClick={() => delEdge(edge.id)} style={{ border: 'none', background: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                      </div>
+                      <div style={{ marginTop: 6, fontSize: 11.5, fontFamily: 'JetBrains Mono, monospace' }}>
+                        {graph.nodes.find((n) => n.id === edge.from)?.label} → {graph.nodes.find((n) => n.id === edge.to)?.label}
+                      </div>
+                      <input className="wfs-in" style={{ marginTop: 8 }} value={edge.label ?? ''}
+                        placeholder={t('edge label (e.g. hot / warm)', 'تسمية الوصلة')}
+                        onChange={(e) => { setGraph((g) => ({ ...g, edges: g.edges.map((x) => (x.id === edge.id ? { ...x, label: e.target.value } : x)) })); setDirty(true) }} />
+                    </div>
+                  ) : node ? (
+                    <div style={{ borderRadius: 'var(--clay-rad-md)', border: '1px solid color-mix(in srgb, var(--gold-luxury) 40%, transparent)', background: 'color-mix(in srgb, var(--gold-luxury) 6%, transparent)', padding: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="wfs-stat-l" style={{ color: 'var(--gold-champagne)' }}>{t('Selected node', 'العقدة المحددة')}</span>
+                        <button onClick={() => delNode(node.id)} title={t('Delete node', 'حذف العقدة')} style={{ border: 'none', background: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 13 }}>🗑</button>
+                      </div>
+                      <input className="wfs-in" style={{ marginTop: 8, fontWeight: 800 }} value={node.label} onChange={(e) => updNode(node.id, { label: e.target.value })} />
+                      <input className="wfs-in" style={{ marginTop: 6 }} value={node.sub ?? ''} placeholder={t('tech detail', 'تفصيلة تقنية')} onChange={(e) => updNode(node.id, { sub: e.target.value })} />
+                      <div style={{ display: 'flex', gap: 5, marginTop: 8, flexWrap: 'wrap' }}>
+                        {(Object.keys(NODE_META) as GNodeType[]).map((k) => (
+                          <button key={k} className="chip" style={{
+                            cursor: 'pointer', fontSize: 10, textTransform: 'capitalize', padding: '3px 8px',
+                            background: node.type === k ? NODE_META[k].color : 'transparent',
+                            color: node.type === k ? '#07111E' : 'var(--tx-m)',
+                            borderColor: node.type === k ? NODE_META[k].color : 'var(--bd)',
+                          }}>{k}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--tx-m)', lineHeight: 1.6, borderRadius: 'var(--clay-rad-md)', border: '1px solid var(--bd)', background: 'var(--surf2)', padding: 12 }}>
+                      {t('Click a node or connection to edit it here. Drag the golden ● from one node onto another to draw a new connection.', 'انقر عقدة أو وصلة لتحريرها هنا. اسحب النقطة الذهبية ● من عقدة إلى أخرى لرسم وصلة جديدة.')}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--bd)', paddingBottom: 8 }}>
+                    <span className="wfs-mini" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                      {String(wf.sourcePath ?? wf.slug ?? 'script').split('/').pop()} · {lines} {t('lines', 'سطر')}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="chip" style={{ cursor: 'pointer' }} title={t('Revert to saved', 'رجوع للمحفوظ')} onClick={() => { setScript(wf.script ?? ''); setScriptDirty(false) }}>↺</button>
+                      <button onClick={saveScript} disabled={!scriptDirty || saving} className="chip" style={{
+                        cursor: 'pointer', fontWeight: 800,
+                        borderColor: scriptDirty ? 'color-mix(in srgb, var(--emerald) 50%, transparent)' : 'var(--bd)',
+                        color: scriptDirty ? 'var(--emerald)' : 'var(--tx-f)',
+                      }}>💾 {scriptDirty ? t('Save Script', 'حفظ السكربت') : t('Saved', 'محفوظ')}</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', minHeight: 420, flex: 1 }}>
+                    <div className="wfs-gutter wfs-code">
+                      {Array.from({ length: lines }, (_, i) => <div key={i}>{i + 1}</div>)}
+                    </div>
+                    <textarea
+                      className="wfs-code" value={script} spellCheck={false}
+                      onChange={(e) => { setScript(e.target.value); setScriptDirty(true) }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          const ta = e.currentTarget, s = ta.selectionStart;
+                          setScript((v) => v.slice(0, s) + '  ' + v.slice(ta.selectionEnd));
+                          requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = s + 2 });
+                        }
+                        if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (scriptDirty) saveScript() }
+                      }}
+                      style={{ flex: 1, resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--tx)', padding: '10px 12px' }}
+                    />
+                  </div>
+                  <div style={{ fontSize: 10, color: scriptDirty ? 'var(--amber)' : 'var(--tx-f)', borderTop: '1px solid var(--bd)', paddingTop: 8 }}>
+                    {scriptDirty
+                      ? `● ${t('unsaved changes — ⌘/ctrl+S to save', 'تغييرات غير محفوظة — ⌘/Ctrl+S للحفظ')}`
+                      : t('Script mirrors the committed source · edits persist to the studio registry', 'السكربت مطابق للأصل · التعديلات تُحفظ في سجل الاستوديو')}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function download(wf: Wf, script: string) {
+  const ext = wf.scriptLang === 'typescript' ? 'ts' : wf.scriptLang === 'json' ? 'json' : 'js';
+  const fname = String(wf.sourcePath ?? `${wf.slug}.${ext}`).split('/').pop();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([script], { type: 'text/plain;charset=utf-8' }));
+  a.download = fname ?? 'workflow.js';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }

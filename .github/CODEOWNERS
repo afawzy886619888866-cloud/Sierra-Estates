@@ -17,13 +17,10 @@
 /vercel.json                    @sierrablue8866-droid
 /turbo.json                     @sierrablue8866-droid
 
-# Security rules. These are the only thing standing between the public client
-# SDK and Firestore/Storage; the app-level copies were removed so these are the
-# single deployable source.
-/firestore.rules                @sierrablue8866-droid
-/storage.rules                  @sierrablue8866-droid
-/firestore.indexes.json         @sierrablue8866-droid
-/firebase.json                  @sierrablue8866-droid
+# Security rules. Supabase RLS policies live in the database; the previous
+# Firebase rules files (firestore.rules, storage.rules, firestore.indexes.json,
+# firebase.json) were removed on 2026-09-20 as part of the Firebase → Supabase
+# migration. See /supabase/migrations/ for the current RLS schema.
 
 # Server-side auth: session signing, admin guards, cron and webhook secrets.
 /apps/sierra-estates-realty/lib/auth.ts             @sierrablue8866-droid

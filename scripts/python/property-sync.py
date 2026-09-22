@@ -15,14 +15,6 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-except ImportError:  # pragma: no cover - optional dependency
-    firebase_admin = None
-    credentials = None
-    firestore = None
-
 load_dotenv('.env.local')
 load_dotenv()
 
@@ -65,24 +57,10 @@ def sync_to_supabase(normalized: dict[str, Any]) -> str:
 
 
 def _load_firestore_client(project_id: str | None):
-    """Initialize and return a Firestore client."""
-    if firebase_admin is None or credentials is None or firestore is None:
-        raise RuntimeError('firebase-admin is required. Install dependencies from scripts/python/requirements.txt.')
-    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if not service_account_json:
-        raise RuntimeError('FIREBASE_SERVICE_ACCOUNT_JSON is required for Firestore sync.')
-    try:
-        app = firebase_admin.get_app()
-    except ValueError:
-        options = {'projectId': project_id} if project_id else None
-        if options is None:
-            app = firebase_admin.initialize_app(credentials.Certificate(json.loads(service_account_json)))
-        else:
-            app = firebase_admin.initialize_app(
-                credentials.Certificate(json.loads(service_account_json)),
-                options,
-            )
-    return firestore.client(app=app)
+    """Deprecated. Firestore target removed on 2026-09-20."""
+    raise RuntimeError(
+        'Firestore target is no longer supported. Re-run with --target=supabase (the default).'
+    )
 
 
 _NUMBER_SUFFIX_RE = re.compile(r'([\d,]+(?:\.\d+)?)\s*([km])(?![a-zA-Z\d])')
@@ -215,19 +193,18 @@ def fetch_property_finder_listings(limit: int | None, compound: str | None) -> l
 
 def main() -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Supabase or Firestore.')
-    parser.add_argument('--target', choices=('supabase', 'firestore'), default='supabase', help='Database target (default: supabase).')
+    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Supabase.')
+    parser.add_argument('--target', choices=('supabase', 'firestore'), default='supabase', help='Database target (default: supabase). Firestore is deprecated.')
     parser.add_argument('--dry-run', action='store_true', help='Show sync actions without writing.')
     parser.add_argument('--limit', type=int, default=None, help='Maximum number of Property Finder listings to fetch.')
     parser.add_argument('--compound', default=None, help='Optional compound name filter.')
-    parser.add_argument('--project-id', default=None, help='Optional Firebase project id override when target=firestore.')
+    parser.add_argument('--project-id', default=None, help='(Deprecated) Firebase project id override — ignored.')
     args = parser.parse_args()
 
     try:
+        if args.target == 'firestore':
+            raise RuntimeError('Firestore target is no longer supported. Re-run with --target=supabase (the default).')
         listings = fetch_property_finder_listings(args.limit, args.compound)
-        client = None
-        if not args.dry_run and args.target == 'firestore':
-            client = _load_firestore_client(args.project_id)
 
         new_records = 0
         updated_records = 0
@@ -239,26 +216,8 @@ def main() -> int:
                 print(f"[DRY RUN] Would upsert {normalized['sync_hash']} ({normalized['compound_name']})")
                 continue
 
-            if args.target == 'supabase':
-                sync_to_supabase(normalized)
-                new_records += 1
-            else:
-                assert client is not None
-                document_ref = client.collection('Properties').document(normalized['sync_hash'])
-                snapshot = document_ref.get()
-                incoming_comparable = {key: value for key, value in normalized.items() if key != 'last_sync_timestamp'}
-
-                if snapshot.exists:
-                    existing_data = snapshot.to_dict() or {}
-                    existing_comparable = {key: value for key, value in existing_data.items() if key != 'last_sync_timestamp'}
-                    if existing_comparable == incoming_comparable:
-                        skipped_duplicates += 1
-                        continue
-                    document_ref.set(normalized, merge=True)
-                    updated_records += 1
-                else:
-                    document_ref.set(normalized, merge=True)
-                    new_records += 1
+            sync_to_supabase(normalized)
+            new_records += 1
 
         print('Sync summary')
         print(f'  New records: {new_records}')

@@ -6,12 +6,12 @@
   "types": "lib/index.ts",
   "private": true,
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/supabase-js": "^2.116.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26",
-    "typescript": "^5.8.2"
+    "typescript": "^7.0.2"
   },
   "scripts": {
     "lint": "eslint .",

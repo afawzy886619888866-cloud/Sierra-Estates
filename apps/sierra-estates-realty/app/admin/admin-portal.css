@@ -1490,3 +1490,137 @@ select.f-in option {
 
 
 
+
+/* ═══════════════════════ WORKFLOW STUDIO (§14) ═══════════════════════
+   Interactive graph canvas + script editor. Obsidian clay + gold tokens.
+   ═════════════════════════════════════════════════════════════════════ */
+.wfs-wrap { display: flex; flex-direction: column; gap: 14px; }
+.wfs-layout { display: grid; grid-template-columns: 284px minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .wfs-layout { grid-template-columns: 1fr; } }
+
+.wfs-side { display: flex; flex-direction: column; max-height: 720px; border-radius: var(--clay-rad-lg); border: 1px solid var(--bd); background: var(--clay-bg-card); overflow: hidden; }
+.wfs-side-hd { padding: 12px; border-bottom: 1px solid var(--bd); }
+.wfs-search { display: flex; align-items: center; gap: 8px; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--surf2); padding: 8px 10px; }
+.wfs-search input { flex: 1; background: transparent; border: none; outline: none; color: var(--tx); font-size: 12px; min-width: 0; }
+.wfs-list { overflow-y: auto; padding: 8px; flex: 1; }
+.wfs-cat { font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 8px 4px; opacity: 0.85; }
+.wfs-item { display: block; width: 100%; text-align: start; cursor: pointer; border-radius: var(--clay-rad-md); border: 1px solid transparent; background: transparent; padding: 10px 12px; margin-bottom: 4px; transition: var(--clay-trans); }
+.wfs-item:hover { border-color: var(--bd); background: var(--surf2); }
+.wfs-item.wfs-on { border-color: color-mix(in srgb, var(--gold-luxury) 55%, transparent); background: color-mix(in srgb, var(--gold-luxury) 9%, transparent); }
+.wfs-item-nm { font-size: 12.5px; font-weight: 800; color: var(--tx); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wfs-item.wfs-on .wfs-item-nm { color: var(--gold-champagne); }
+.wfs-item-meta { margin-top: 4px; font-size: 10px; color: var(--tx-f); font-variant-numeric: tabular-nums; }
+
+.wfs-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; border-radius: var(--clay-rad-lg); border: 1px solid var(--bd); background: var(--clay-bg-card); padding: 10px 14px; }
+.wfs-canvas { position: relative; height: 560px; overflow: hidden; border-radius: var(--clay-rad-lg); border: 1px solid var(--bd); touch-action: none; background:
+  radial-gradient(rgba(127, 150, 180, 0.10) 1px, transparent 1px) 0 0 / 26px 26px,
+  radial-gradient(900px 500px at 70% -10%, rgba(200, 150, 26, 0.07), transparent 60%),
+  var(--bg-s); }
+.wfs-world { position: absolute; top: 0; left: 0; transform-origin: top left; }
+.wfs-node { position: absolute; width: 196px; height: 62px; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--clay-bg-card); box-shadow: var(--clay-card-shadow); user-select: none; }
+.wfs-node.wfs-sel { box-shadow: var(--clay-card-shadow), 0 0 18px color-mix(in srgb, var(--node-c) 30%, transparent); border-color: var(--node-c); }
+.wfs-node.wfs-live { box-shadow: 0 0 28px color-mix(in srgb, var(--node-c) 45%, transparent); border-color: var(--node-c); }
+.wfs-node.wfs-dim { opacity: 0.5; }
+.wfs-node-bd { display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px; height: 100%; }
+.wfs-node-ic { flex-shrink: 0; margin-top: 1px; width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--node-c) 40%, transparent); background: color-mix(in srgb, var(--node-c) 14%, transparent); color: var(--node-c); }
+.wfs-node-t { font-size: 12px; font-weight: 800; line-height: 1.15; color: var(--tx-s); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wfs-node-s { margin-top: 2px; font-size: 9.5px; color: var(--tx-m); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wfs-node-k { margin-top: 4px; font-size: 8px; font-weight: 900; letter-spacing: 0.16em; color: var(--node-c); opacity: 0.8; }
+.wfs-hout { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--bg-s); background: var(--gold-luxury); cursor: crosshair; opacity: 0; transition: opacity 120ms; }
+.wfs-node:hover .wfs-hout, .wfs-hout.wfs-h-on { opacity: 1; }
+.wfs-hin { position: absolute; left: -6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg-s); background: var(--gold-lt); pointer-events: none; }
+.wfs-edge-lbl { font-size: 10px; font-weight: 800; paint-order: stroke; stroke: var(--bg-s); stroke-width: 4px; }
+.wfs-dash { stroke-dasharray: 7 5; animation: wfs-dash 0.6s linear infinite; }
+@keyframes wfs-dash { to { stroke-dashoffset: -12; } }
+
+.wfs-inspect { display: flex; flex-direction: column; border-radius: var(--clay-rad-lg); border: 1px solid var(--bd); background: var(--clay-bg-card); overflow: hidden; max-height: 600px; }
+.wfs-tabs { display: flex; border-bottom: 1px solid var(--bd); }
+.wfs-tab { flex: 1; padding: 10px 12px; font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx-f); background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+.wfs-tab.wfs-tab-on { color: var(--gold-champagne); border-bottom-color: var(--gold-luxury); }
+.wfs-body { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.wfs-lbl { display: block; font-size: 10px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-f); margin-bottom: 4px; }
+.wfs-in { width: 100%; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--surf2); color: var(--tx); font-size: 12px; padding: 8px 10px; outline: none; }
+.wfs-in:focus { border-color: color-mix(in srgb, var(--gold-luxury) 55%, transparent); }
+.wfs-code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; line-height: 20px; tab-size: 2; }
+.wfs-gutter { flex-shrink: 0; user-select: none; text-align: right; color: var(--tx-f); border-right: 1px solid var(--bd); background: var(--surf2); padding: 10px 8px; min-width: 42px; }
+.wfs-stat { border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--surf2); padding: 8px 10px; }
+.wfs-stat-l { font-size: 9px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-f); }
+.wfs-stat-v { margin-top: 2px; font-size: 14px; font-weight: 900; color: var(--tx-s); font-variant-numeric: tabular-nums; }
+.wfs-mini { font-size: 10.5px; color: var(--tx-m); font-variant-numeric: tabular-nums; }
+.wfs-chip { font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--bd); color: var(--tx-m); }
+
+/* ═══════════════════════ ADMIN 2.0 TYPOGRAPHY (§15) ═══════════════════════
+   Identity fonts kept (Plus Jakarta Sans · Cairo · JetBrains Mono — already
+   imported in app/globals.css). This layer refines the *system*: a modular
+   type scale, tabular numerals for every data surface, mono for codes,
+   Arabic line-height polish and accessible focus rings.
+   ═════════════════════════════════════════════════════════════════════════ */
+:root {
+  --fs-display: 26px;   /* page titles */
+  --fs-h2: 17px;        /* card titles */
+  --fs-h3: 14px;        /* section heads */
+  --fs-body: 13px;      /* default body */
+  --fs-sm: 12px;        /* dense tables */
+  --fs-xs: 10.5px;      /* meta / eyebrows */
+  --fs-micro: 9.5px;    /* uppercase labels */
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+  --track-display: -0.028em;
+  --track-body: -0.006em;
+  --track-eyebrow: 0.14em;
+}
+
+body {
+  font-size: var(--fs-body);
+  letter-spacing: var(--track-body);
+  font-feature-settings: 'tnum' on;          /* aligned numerals everywhere by default */
+  text-rendering: optimizeLegibility;
+}
+
+h1 { font-size: var(--fs-display); letter-spacing: var(--track-display); line-height: var(--lh-tight); }
+h2 { font-size: var(--fs-h2); letter-spacing: -0.022em; line-height: var(--lh-tight); }
+h3 { font-size: var(--fs-h3); letter-spacing: -0.015em; }
+h4, h5, h6 { font-size: var(--fs-body); }
+
+[dir='rtl'] body, [dir='rtl'] h1, [dir='rtl'] h2, [dir='rtl'] h3 {
+  letter-spacing: 0;                          /* Arabic never tracks negative */
+  line-height: 1.7;
+}
+
+/* Data surfaces: tabular numerals + crisp small text */
+table, .kpi-val, .wfs-stat-v, .wfs-item-meta, .wfs-mini, td, th {
+  font-variant-numeric: tabular-nums;
+}
+table { font-size: var(--fs-sm); }
+
+/* Eyebrow / micro labels */
+.eyebrow, .wfs-cat, .wfs-stat-l, .wfs-lbl, .kpi-lbl {
+  font-size: var(--fs-micro);
+  font-weight: 900;
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+}
+
+/* Codes, scripts, refs → JetBrains Mono */
+code, pre, .mono, .wfs-code, .wfs-gutter {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; line-height: 1;
+  border-radius: 5px; padding: 2px 5px;
+  border: 1px solid var(--bd-s);
+  background: var(--surf2);
+  box-shadow: 0 1px 0 var(--bd-s);
+}
+
+/* Focus ring — visible, on-brand, keyboard only */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gold-luxury) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection */
+::selection { background: color-mix(in srgb, var(--gold-luxury) 30%, transparent); }
