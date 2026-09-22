@@ -122,9 +122,10 @@ pnpm migrate:supabase
 
 ## 7. Vercel deployment ownership
 
-Vercel Git deployments are intentionally disabled in [`vercel.json`](./vercel.json).
-The Vercel GitHub integration remains the owner of normal `main` push deployments
-for the client and admin projects. The dispatch-only
+Vercel Git deployments are enabled in both [`vercel.json`](./vercel.json) and
+[`apps/sierra-estates-realty/vercel.json`](./apps/sierra-estates-realty/vercel.json).
+The Vercel GitHub integration is the owner of normal `main` push deployments for
+the client and admin projects. The dispatch-only
 [`.github/workflows/deploy-vercel.yml`](./.github/workflows/deploy-vercel.yml)
 workflow is reserved for audited emergency deployments and environment-variable
 resynchronization.
