@@ -11,6 +11,8 @@ import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 
+import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
+
 function verifyWebhookSecret(req: NextRequest) {
   return verifySharedSecret(req, {
     header: 'x-sbr-secret-key',
@@ -141,6 +143,23 @@ export async function POST(req: NextRequest) {
         deduped: true,
         id: existing[0].id,
         orchestration: 'Duplicate ignored',
+      });
+    }
+
+    // Check if the message is from the August Owners group
+    if (AugustOwnersAgentService.isAugustOwnersGroup(group) || body.isAugustGroup === true) {
+      const augustResult = await AugustOwnersAgentService.processGroupMessage({
+        rawMessage,
+        sender,
+        group,
+        groupId: body.groupId || body.chatId,
+        media: body.media,
+      });
+
+      return NextResponse.json({
+        success: true,
+        channel: 'august_owners_group',
+        result: augustResult,
       });
     }
 

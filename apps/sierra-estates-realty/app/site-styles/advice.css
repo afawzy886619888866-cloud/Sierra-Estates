@@ -1,7 +1,7 @@
 /* Page styles ported verbatim from deploy/advice.html */
 
 .dream-hero{background:linear-gradient(135deg,#07121e 0%,#0d1f30 60%,#07121e 100%);padding:60px 0 50px;position:relative;overflow:hidden;}
-.dream-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(0,174,255,.22),transparent 60%);}
+.dream-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(201,148,54,.22),transparent 60%);}
 [data-theme="dark"] .dream-hero::before{background:radial-gradient(700px 360px at 78% 0%,rgba(200,150,26,.18),transparent 60%);}
 .dream-hero .wrap{position:relative;z-index:2;}
 .dream-hero h1{color:#fff;font-family:var(--display);font-size:46px;font-weight:700;letter-spacing:-.015em;line-height:1.05;}
@@ -34,7 +34,7 @@
 .quiz-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 .quiz-opt{display:flex;align-items:center;gap:14px;padding:18px 22px;border:1.5px solid var(--line-2);border-radius:14px;background:var(--surface-2);cursor:pointer;transition:.25s var(--silk);text-align:start;font-family:var(--font);font-size:15px;font-weight:600;color:var(--ink);position:relative;overflow:hidden;}
 .quiz-opt:hover{border-color:var(--pri);transform:translateY(-2px);box-shadow:var(--shadow-s);}
-.quiz-opt.on{border-color:var(--pri);background:rgba(0,174,255,.06);}
+.quiz-opt.on{border-color:var(--pri);background:rgba(201,148,54,.1);}
 [data-theme="dark"] .quiz-opt.on{border-color:#e9c176;background:rgba(200,150,26,.08);}
 .quiz-opt .ic{width:42px;height:42px;border-radius:10px;background:var(--bg);display:grid;place-items:center;flex:none;color:var(--pri);}
 [data-theme="dark"] .quiz-opt .ic{color:#e9c176;}
@@ -49,7 +49,7 @@
 .btn-back:hover{border-color:var(--ink);color:var(--ink);}
 .btn-back:disabled{opacity:.4;cursor:not-allowed;}
 .btn-next{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:none;border-radius:10px;background:var(--pri);color:#fff;font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer;transition:.2s var(--silk);}
-.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,174,255,.35);}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(201,148,54,.4);}
 [data-theme="dark"] .btn-next{background:#e9c176;color:#0d0d0f;}
 .btn-next:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
 .btn-next i{width:16px;height:16px;}

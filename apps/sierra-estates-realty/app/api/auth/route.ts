@@ -33,7 +33,15 @@ export async function GET(req: Request) {
   const cookies = parseCookies(req.headers.get("cookie"));
   const sess = await verifySession(cookies[SESSION_COOKIE]);
   if (!sess) {
-    return NextResponse.json({ signedIn: false }, { headers: NO_STORE_HEADERS });
+    // Mirror the auth-guard dev bypass (non-production + explicitly disabled):
+    // report it so the client shell can render in dev without a session.
+    const authDisabled =
+      process.env.NODE_ENV !== "production" &&
+      process.env.ENABLE_AUTHENTICATION === "false";
+    return NextResponse.json(
+      { signedIn: false, authDisabled },
+      { headers: NO_STORE_HEADERS }
+    );
   }
   return NextResponse.json(
     {

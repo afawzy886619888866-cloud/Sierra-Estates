@@ -170,10 +170,10 @@ function normalizePFListing(raw, idx) {
   const { compound, zone } = extractCompoundAndZone(raw.location, descEn, titleEn);
 
   const images = extractImages(raw.media);
-  const featuredImage = images[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85';
+  const featuredImage = images[0] || 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/f6be1cb2-ed1e-11ef-b066-0a1a96148fff-6b11b065-7803-42f7-bb82-6b56e277f3c4.png';
 
   const agentName = raw.assignedTo?.name || 'Fareda';
-  const agentPhoto = raw.assignedTo?.photos?.thumbnail || 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=80';
+  const agentPhoto = raw.assignedTo?.photos?.thumbnail || 'https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/2da6bb26-73f8-4f3b-98bc-7a051aaab33b.png';
 
   const propType = (raw.type || raw.category || 'Apartment').charAt(0).toUpperCase() + (raw.type || raw.category || 'Apartment').slice(1);
 

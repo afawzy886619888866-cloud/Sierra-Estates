@@ -242,7 +242,7 @@ export default function DeploymentPipelineView({ lang = 'en' }: { lang?: string 
             style={{
               padding: '10px 18px',
               borderRadius: 12,
-              background: 'linear-gradient(135deg, #00AEFF, #1E88D9)',
+              background: 'linear-gradient(135deg, #C8961A, #1E88D9)',
               color: '#071422',
               fontSize: 12.5,
               fontWeight: 700,
@@ -290,7 +290,7 @@ export default function DeploymentPipelineView({ lang = 'en' }: { lang?: string 
         }}
       >
         {[
-          { name: 'Vercel Edge Global', status: 'HEALTHY', latency: '42ms', uptime: '99.99%', tech: 'Next.js 15 SSR', color: '#00AEFF' },
+          { name: 'Vercel Edge Global', status: 'HEALTHY', latency: '42ms', uptime: '99.99%', tech: 'Next.js 15 SSR', color: '#C8961A' },
           { name: 'Cloud Run Python API', status: 'HEALTHY', latency: '128ms', uptime: '99.95%', tech: 'FastAPI 3.12', color: '#10B981' },
           { name: 'Supabase Postgres 16', status: 'HEALTHY', latency: '18ms', uptime: '99.99%', tech: 'pgvector + RLS', color: '#34D399' },
           { name: 'n8n Automation Engine', status: 'RUNNING', latency: '85ms', uptime: '99.90%', tech: 'Docker :5678', color: '#8B5CF6' },
@@ -498,7 +498,7 @@ export default function DeploymentPipelineView({ lang = 'en' }: { lang?: string 
                     color: 'rgba(240, 237, 229, 0.85)',
                   }}
                 >
-                  <td style={{ padding: '12px 12px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold, #00AEFF)' }}>
+                  <td style={{ padding: '12px 12px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--gold, #C8961A)' }}>
                     {r.id}
                   </td>
                   <td style={{ padding: '12px 12px' }}>

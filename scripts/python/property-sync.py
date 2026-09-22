@@ -15,38 +15,52 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-except ImportError:  # pragma: no cover - optional dependency
-    firebase_admin = None
-    credentials = None
-    firestore = None
-
+load_dotenv('.env.local')
 load_dotenv()
 
 DEFAULT_PF_BASE_URL = 'https://api.property-finder.eg/v2'
 
 
+def sync_to_supabase(normalized: dict[str, Any]) -> str:
+    """Sync a normalized Property Finder listing to Supabase public.listings."""
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    if not supabase_key:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')
+    headers = {
+        'apikey': supabase_key,
+        'Authorization': f'Bearer {supabase_key}',
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+    }
+    record = {
+        'code': normalized.get('sync_hash'),
+        'title': normalized.get('title') or normalized.get('compound_name'),
+        'compound': normalized.get('compound_name'),
+        'price': normalized.get('price_egp') or 0,
+        'bedrooms': normalized.get('bedrooms') or 0,
+        'bathrooms': normalized.get('bathrooms') or 0,
+        'area': normalized.get('area_sqm') or 0,
+        'property_type': (normalized.get('property_type') or 'apartment').lower(),
+        'status': 'available',
+        'source': 'property_finder',
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    resp = requests.post(
+        f'{supabase_url}/rest/v1/listings',
+        headers=headers,
+        json=[record],
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return 'synced'
+
+
 def _load_firestore_client(project_id: str | None):
-    """Initialize and return a Firestore client."""
-    if firebase_admin is None or credentials is None or firestore is None:
-        raise RuntimeError('firebase-admin is required. Install dependencies from scripts/python/requirements.txt.')
-    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if not service_account_json:
-        raise RuntimeError('FIREBASE_SERVICE_ACCOUNT_JSON is required for Firestore sync.')
-    try:
-        app = firebase_admin.get_app()
-    except ValueError:
-        options = {'projectId': project_id} if project_id else None
-        if options is None:
-            app = firebase_admin.initialize_app(credentials.Certificate(json.loads(service_account_json)))
-        else:
-            app = firebase_admin.initialize_app(
-                credentials.Certificate(json.loads(service_account_json)),
-                options,
-            )
-    return firestore.client(app=app)
+    """Deprecated. Firestore target removed on 2026-09-20."""
+    raise RuntimeError(
+        'Firestore target is no longer supported. Re-run with --target=supabase (the default).'
+    )
 
 
 _NUMBER_SUFFIX_RE = re.compile(r'([\d,]+(?:\.\d+)?)\s*([km])(?![a-zA-Z\d])')
@@ -179,16 +193,19 @@ def fetch_property_finder_listings(limit: int | None, compound: str | None) -> l
 
 def main() -> int:
     """CLI entry point."""
-    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Firestore.')
-    parser.add_argument('--dry-run', action='store_true', help='Show sync actions without writing to Firestore.')
+    parser = argparse.ArgumentParser(description='Sync Property Finder listings into Supabase.')
+    parser.add_argument('--target', choices=('supabase', 'firestore'), default='supabase', help='Database target (default: supabase). Firestore is deprecated.')
+    parser.add_argument('--dry-run', action='store_true', help='Show sync actions without writing.')
     parser.add_argument('--limit', type=int, default=None, help='Maximum number of Property Finder listings to fetch.')
     parser.add_argument('--compound', default=None, help='Optional compound name filter.')
-    parser.add_argument('--project-id', default=None, help='Optional Firebase project id override.')
+    parser.add_argument('--project-id', default=None, help='(Deprecated) Firebase project id override — ignored.')
     args = parser.parse_args()
 
     try:
+        if args.target == 'firestore':
+            raise RuntimeError('Firestore target is no longer supported. Re-run with --target=supabase (the default).')
         listings = fetch_property_finder_listings(args.limit, args.compound)
-        client = None if args.dry_run else _load_firestore_client(args.project_id)
+
         new_records = 0
         updated_records = 0
         skipped_duplicates = 0
@@ -199,22 +216,8 @@ def main() -> int:
                 print(f"[DRY RUN] Would upsert {normalized['sync_hash']} ({normalized['compound_name']})")
                 continue
 
-            assert client is not None
-            document_ref = client.collection('Properties').document(normalized['sync_hash'])
-            snapshot = document_ref.get()
-            incoming_comparable = {key: value for key, value in normalized.items() if key != 'last_sync_timestamp'}
-
-            if snapshot.exists:
-                existing_data = snapshot.to_dict() or {}
-                existing_comparable = {key: value for key, value in existing_data.items() if key != 'last_sync_timestamp'}
-                if existing_comparable == incoming_comparable:
-                    skipped_duplicates += 1
-                    continue
-                document_ref.set(normalized, merge=True)
-                updated_records += 1
-            else:
-                document_ref.set(normalized, merge=True)
-                new_records += 1
+            sync_to_supabase(normalized)
+            new_records += 1
 
         print('Sync summary')
         print(f'  New records: {new_records}')
