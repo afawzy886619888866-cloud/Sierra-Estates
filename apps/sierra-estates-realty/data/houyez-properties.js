@@ -79,21 +79,21 @@ export const HOUEZ_SLIDES = [
     preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
     main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.',
     mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-    img: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/e113c679-de81-4959-b267-f047ae007874.png',
   },
   {
     pre: 'BEST-IN-CLASS DESIGN',
     preAr: 'تصميم من الطراز الأول',
     main: 'Redefining Luxury Living with AI-Driven Excellence',
     mainAr: 'نعيد تعريف الفخامة بتميّز الذكاء الاصطناعي',
-    img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/efec3122-5b62-4316-9b26-bfc867aa4f2f.png',
   },
   {
     pre: 'AI-DRIVEN EXCELLENCE',
     preAr: 'تميّز بالذكاء الاصطناعي',
     main: 'Smart Matches for Smart Investors',
     mainAr: 'توافق ذكي لمستثمرين أذكياء',
-    img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/20b07938-a86f-41ca-8237-45b93453a357.png',
   },
 ];
 
@@ -104,7 +104,7 @@ export const HOUEZ_COMPOUNDS = [
     zone: 'Madinaty',
     zoneAr: 'مدينتي',
     count: 20,
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/2cacc107-6893-490c-8246-0f629609067d.png',
   },
   {
     name: 'Rehab',
@@ -112,7 +112,7 @@ export const HOUEZ_COMPOUNDS = [
     zone: 'New Cairo',
     zoneAr: 'القاهرة الجديدة',
     count: 21,
-    img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/e1523f6b-a0a9-4790-a949-7bc6fdbb5089.png',
   },
   {
     name: 'Fifth Square',
@@ -120,7 +120,7 @@ export const HOUEZ_COMPOUNDS = [
     zone: '5th Settlement',
     zoneAr: 'التجمع الخامس',
     count: 5,
-    img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/ef76b440-f2ec-45f6-a124-4fdedd9f0677.png',
   },
   {
     name: 'Mivida',
@@ -128,7 +128,7 @@ export const HOUEZ_COMPOUNDS = [
     zone: '5th Settlement',
     zoneAr: 'التجمع الخامس',
     count: 3,
-    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/7fc0736a-1d9b-4e5f-bd52-bddc3d71d63e.png',
   },
 ];
 
@@ -138,14 +138,14 @@ export const HOUEZ_ROOMS = [
     nameAr: 'غرفة معيشة فاخرة',
     sub: 'Madinaty · Grand Apartment',
     subAr: 'مدينتي · شقة فاخرة',
-    img: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1400&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/0580d1af-258b-4410-919c-53e2b79eaaed.png',
   },
   {
     name: 'Master Bedroom Suite',
     nameAr: 'جناح غرفة النوم الرئيسية',
     sub: 'Fifth Square · Penthouse Level',
     subAr: 'فيفت سكوير · بنتهاوس',
-    img: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1400&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/ea6baa0d-3795-4683-902c-da832de849d5.jpg',
   },
 ];
 
@@ -182,7 +182,7 @@ export const HOUEZ_LISTINGS = (realListingsRaw ).map((l, i) => ({
   agentAr: 'مستشار سييرا المباشر',
   ago: 'مزامنة حية',
   agoAr: 'مزامنة حية',
-  img: l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85',
+  img: l.img || 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/6ba25fcd-8de4-4ff3-8338-d1ba05752b9b.png',
 }));
 
 export const HOUEZ_SEARCH_TABS = [

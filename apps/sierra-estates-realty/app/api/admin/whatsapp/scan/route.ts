@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
+import fs from 'node:fs';
+import path from 'node:path';
 import { z } from 'zod';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
+import { extractAttachedPhotos } from '@/lib/services/listing-normalize';
 import { logger } from '@/lib/logger';
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
 
@@ -36,6 +40,8 @@ export interface ParsedWhatsAppUnit {
   isDuplicate: boolean;
   duplicateOf?: string;
   summary: string;
+  photoUrl?: string;
+  images?: string[];
 }
 
 /**
@@ -261,6 +267,10 @@ function parseListingMessage(
     duplicateOf = duplicateCandidate.id || duplicateCandidate.sierraCode || 'Existing Record';
   }
 
+  // 12. Attached photos extraction
+  const attachedPhotos = extractAttachedPhotos(msg.text);
+  const primaryPhoto = attachedPhotos[0] || undefined;
+
   return {
     id: `WA-UNIT-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
     timestamp: msg.timestamp,
@@ -281,10 +291,17 @@ function parseListingMessage(
     isDuplicate,
     duplicateOf,
     summary: `${propertyType} in ${detectedCompound} · ${area} sqm · ${beds} BD · ${(price / 1000000).toFixed(1)}M EGP`,
+    photoUrl: primaryPhoto,
+    images: attachedPhotos.length > 0 ? attachedPhotos : undefined,
   };
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await verifyAdminRequest(request);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const parseResult = scanRequestSchema.safeParse(body);
@@ -316,7 +333,7 @@ export async function POST(request: NextRequest) {
       parseListingMessage(m, groupType, existingListings)
     );
 
-    // Step 4: If action is "ingest", persist non-duplicate units to Supabase
+    // Step 4: If action is "ingest", persist non-duplicate units to Supabase & local snapshot
     let ingestedCount = 0;
     if (action === 'ingest') {
       const unitsToIngest = parsedUnits.filter((u) => !u.isDuplicate);
@@ -335,8 +352,9 @@ export async function POST(request: NextRequest) {
             ownerType: unit.isOwner ? 'Owner' : 'Broker Verified',
             mobile: unit.phone,
             comment: `Imported via WhatsApp Mobile Chat Scanner [${groupName}] at ${unit.timestamp}\nOriginal text: ${unit.rawText.slice(0, 300)}`,
-            photos: [],
-            images: [],
+            photos: unit.images || (unit.photoUrl ? [unit.photoUrl] : []),
+            images: unit.images || (unit.photoUrl ? [unit.photoUrl] : []),
+            featured_image: unit.photoUrl || null,
             status: 'available',
             verified: unit.isOwner,
             source: `WhatsApp: ${groupName}`,
@@ -348,6 +366,56 @@ export async function POST(request: NextRequest) {
           ingestedCount++;
         } catch (dbErr) {
           logger.warn(`Failed to insert scanned unit ${unit.id}:`, dbErr);
+        }
+      }
+
+      // Stage newly ingested units into local snapshot for instant live map availability
+      if (unitsToIngest.length > 0) {
+        try {
+          const stagedPaths = [
+            path.join(process.cwd(), 'apps/sierra-estates-realty/data/whatsapp-ingested-units.json'),
+            path.join(process.cwd(), 'data/whatsapp-ingested-units.json'),
+          ];
+          for (const sp of stagedPaths) {
+            try {
+              let existing: any[] = [];
+              if (fs.existsSync(sp)) {
+                try { existing = JSON.parse(fs.readFileSync(sp, 'utf-8')); } catch {}
+              }
+              const newlyStaged = unitsToIngest.map((u) => ({
+                type: u.propertyType,
+                location: u.compound,
+                compound: u.compound,
+                price: u.price,
+                currency: 'EGP',
+                area_sqm: u.area,
+                bedrooms: u.beds,
+                bathrooms: u.baths,
+                finishing: u.finishing,
+                sierraCode: u.sierraCode,
+                valuationScore: 85,
+                urgencyScore: 70,
+                contact_info: `${u.sender} (${u.phone})`,
+                sourceType: u.isOwner ? 'owner' : 'broker',
+                whatsappGroupName: groupName,
+                listedAt: u.timestamp,
+                isNewListing: true,
+                fromArchivedGroup: false,
+                notes: u.rawText,
+                photoUrl: u.photoUrl || null,
+                images: u.images || (u.photoUrl ? [u.photoUrl] : []),
+              }));
+              const merged = [...newlyStaged, ...existing];
+              const deduped = Array.from(new Map(merged.map((m) => [m.sierraCode, m])).values());
+              fs.mkdirSync(path.dirname(sp), { recursive: true });
+              fs.writeFileSync(sp, JSON.stringify(deduped, null, 2), 'utf-8');
+            } catch (fsErr) {
+              // Serverless (Vercel) filesystem is read-only; canonical data lives in Supabase
+              logger.info(`[whatsapp-scan] Serverless filesystem write skipped: ${(fsErr as Error).message}`);
+            }
+          }
+        } catch (stageErr) {
+          logger.warn('Failed to stage newly ingested WhatsApp units to JSON:', stageErr);
         }
       }
     }

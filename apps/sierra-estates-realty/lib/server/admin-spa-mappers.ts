@@ -71,17 +71,30 @@ export function mapSpaToLeadPatch(patch: Record<string, any>) {
 
 const STATUS_TO_LABEL: Record<PropertyStatus, string> = {
   available: 'Active',
+  active: 'Active',
   reserved: 'Review',
+  pending: 'Review',
   'off-market': 'Review',
   sold: 'Sold',
   rented: 'Active',
+  archived: 'Archived',
+  draft: 'Review',
 };
 
 const LABEL_TO_STATUS: Record<string, PropertyStatus> = {
-  Active: 'available',
-  Review: 'reserved',
+  Active: 'active',
+  Review: 'pending',
   Sold: 'sold',
+  Archived: 'archived',
 };
+
+// The deployed public.listings check constraint only admits the original six
+// statuses (active / pending / sold / rented / archived / draft) — 'available'
+// and 'reserved' were added later in supabase/schema.sql but never applied to
+// the live table, so a patch carrying them violates listings_status_check.
+const LIVE_SAFE_STATUS: PropertyStatus[] = [
+  'active', 'pending', 'sold', 'rented', 'archived', 'draft',
+] as PropertyStatus[];
 
 export function mapListingToSpa(id: string, data: Record<string, any>) {
   const isPF = data.automation?.isPublishedToPF || data.pfStatus === 'published' || !!data.pfReferenceNumber;
@@ -115,7 +128,11 @@ export function mapSpaToListingPatch(patch: Record<string, any>) {
   if (patch.beds !== undefined) out.bedrooms = patch.beds;
   if (patch.area !== undefined) out.area = patch.area;
   if (patch.price !== undefined) out.price = patch.price;
-  if (patch.status !== undefined) out.status = LABEL_TO_STATUS[patch.status] || 'available';
+  if (patch.status !== undefined) {
+    const mapped = LABEL_TO_STATUS[patch.status] || patch.status;
+    // Only forward statuses the deployed table can actually store.
+    out.status = LIVE_SAFE_STATUS.includes(mapped) ? mapped : 'active';
+  }
   if (patch.publishToClient !== undefined) out.publishToClient = patch.publishToClient;
   return out;
 }
