@@ -63,18 +63,55 @@ describe('n8n Workflow Files', () => {
     }
   });
 
-  it('workflows use only valid Firestore collections', () => {
-    const validCollections = ['listings', 'owners', 'clients', 'requests', 'agents', 'leads', 'inquiries'];
+  it('does not contain active legacy Firebase persistence', () => {
     for (const wf of workflowFiles) {
-      const firebaseNodes = wf.data.nodes.filter((n: any) =>
-        n.type === 'n8n-nodes-base.firebaseRealtimeDatabase'
-      );
-      for (const node of firebaseNodes) {
-        if (node.parameters.collection) {
-          expect(validCollections).toContain(node.parameters.collection);
-        }
+      if (wf.data.active) {
+        expect(JSON.stringify(wf.data)).not.toContain('firebaseRealtimeDatabase');
       }
     }
+  });
+});
+
+describe('legacy workflow retirement', () => {
+  for (const name of [
+    '01-property-finder-leads.json',
+    '02-whatsapp-bot-handler.json',
+    '03-ai-score-scheduler.json',
+  ]) {
+    it(`${name} is explicitly retired`, () => {
+      const workflow = workflowFiles.find((wf) => wf.name === name);
+      expect(workflow?.data.meta?.productionStatus).toBe('retired');
+      expect(workflow?.data.meta?.replacement).toBe('04-supabase-webhook-intake.json');
+    });
+  }
+});
+
+describe('04-supabase-webhook-intake.json', () => {
+  const wf = workflowFiles.find(w => w.name === '04-supabase-webhook-intake.json')!;
+  const data = wf.data;
+
+  it('is an inactive, authenticated Supabase-first workflow', () => {
+    expect(data.active).toBe(false);
+    expect(data.meta.productionStatus).toBe('candidate');
+    expect(data.meta.backend).toBe('supabase');
+    const webhook = data.nodes.find((n: any) => n.type === 'n8n-nodes-base.webhook');
+    expect(webhook?.parameters.authentication).toBe('headerAuth');
+    expect(data.nodes.some((n: any) => n.type === 'n8n-nodes-base.httpRequest')).toBe(true);
+  });
+
+  it('validates the required lead fields before persistence', () => {
+    const validator = data.nodes.find((n: any) => n.name === 'Validate Intake');
+    expect(validator?.parameters.jsCode || validator?.parameters.functionCode).toContain('name');
+    expect(validator?.parameters.jsCode || validator?.parameters.functionCode).toContain('phone');
+    expect(validator?.parameters.jsCode || validator?.parameters.functionCode).toContain('messageId');
+  });
+
+  it('uses the external message id for duplicate delivery protection', () => {
+    const validator = data.nodes.find((n: any) => n.name === 'Validate Intake');
+    const persist = data.nodes.find((n: any) => n.name === 'Persist Lead in Supabase');
+    expect(validator?.parameters.jsCode).toContain('external_message_id');
+    expect(persist?.parameters.url).toContain('on_conflict=external_message_id');
+    expect(JSON.stringify(persist?.parameters.headerParameters)).toContain('ignore-duplicates');
   });
 });
 
@@ -92,39 +129,9 @@ describe('01-property-finder-leads.json', () => {
     expect(webhook.parameters.path).toBe('property-finder-leads');
   });
 
-  it('writes to clients collection', () => {
-    const firebaseNodes = data.nodes.filter((n: any) =>
-      n.type === 'n8n-nodes-base.firebaseRealtimeDatabase'
-    );
-    const collectionNames = firebaseNodes.map((n: any) => n.parameters.collection);
-    expect(collectionNames).toContain('clients');
-  });
-
-  it('writes to leads collection', () => {
-    const firebaseNodes = data.nodes.filter((n: any) =>
-      n.type === 'n8n-nodes-base.firebaseRealtimeDatabase'
-    );
-    const collectionNames = firebaseNodes.map((n: any) => n.parameters.collection);
-    expect(collectionNames).toContain('leads');
-  });
-
-  it('writes to requests collection', () => {
-    const firebaseNodes = data.nodes.filter((n: any) =>
-      n.type === 'n8n-nodes-base.firebaseRealtimeDatabase'
-    );
-    const collectionNames = firebaseNodes.map((n: any) => n.parameters.collection);
-    expect(collectionNames).toContain('requests');
-  });
-
-  it('creates request with bot_handling status', () => {
-    const createRequestNode = data.nodes.find((n: any) => n.name === 'Create Request Ticket');
-    expect(createRequestNode).toBeDefined();
-    expect(createRequestNode.parameters.data).toContain('bot_handling');
-  });
-
-  it('has lead_source = property_finder', () => {
-    const createClientNode = data.nodes.find((n: any) => n.name === 'Create Client');
-    expect(createClientNode.parameters.data).toContain('property_finder');
+  it('is not eligible for activation', () => {
+    expect(data.meta.productionStatus).toBe('retired');
+    expect(data.active).toBe(false);
   });
 });
 
@@ -142,21 +149,9 @@ describe('02-whatsapp-bot-handler.json', () => {
     expect(webhook.parameters.path).toBe('whatsapp-incoming');
   });
 
-  it('uses Gemini 2.0 Flash model', () => {
-    const geminiNode = data.nodes.find((n: any) => n.name === 'Gemini AI Reply');
-    expect(geminiNode).toBeDefined();
-    expect(geminiNode.parameters.model).toBe('gemini-2.0-flash');
-  });
-
-  it('has escalation logic (status = ready_for_agent)', () => {
-    const escalateNode = data.nodes.find((n: any) => n.name === 'Escalate to Agent');
-    expect(escalateNode).toBeDefined();
-    expect(escalateNode.parameters.data).toContain('ready_for_agent');
-  });
-
-  it('has lead_source = whatsapp_bot', () => {
-    const createClientNode = data.nodes.find((n: any) => n.name === 'Create New Client');
-    expect(createClientNode.parameters.data).toContain('whatsapp_bot');
+  it('is not eligible for activation', () => {
+    expect(data.meta.productionStatus).toBe('retired');
+    expect(data.active).toBe(false);
   });
 });
 
@@ -183,16 +178,8 @@ describe('03-ai-score-scheduler.json', () => {
     expect(trigger.parameters.rule.interval[0].hoursInterval).toBe(4);
   });
 
-  it('uses Gemini 2.0 Flash for scoring', () => {
-    const geminiNode = data.nodes.find((n: any) => n.name === 'Gemini AI Score');
-    expect(geminiNode).toBeDefined();
-    expect(geminiNode.parameters.model).toBe('gemini-2.0-flash');
-  });
-
-  it('updates ai_score field in listings collection', () => {
-    const updateNode = data.nodes.find((n: any) => n.name === 'Update Listing Score');
-    expect(updateNode).toBeDefined();
-    expect(updateNode.parameters.collection).toBe('listings');
-    expect(updateNode.parameters.data).toContain('ai_score');
+  it('is not eligible for activation', () => {
+    expect(data.meta.productionStatus).toBe('retired');
+    expect(data.active).toBe(false);
   });
 });

@@ -14,7 +14,7 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "python.languageServer": "Jedi",
+  "python.languageServer": "Default",
   "python.analysis.typeCheckingMode": "basic",
   "compilets.autoStart": false,
   "compile-hero.disable-compile-files-on-did-save-code": true,
