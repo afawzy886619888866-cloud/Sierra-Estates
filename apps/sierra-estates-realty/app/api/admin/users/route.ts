@@ -16,19 +16,35 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  await requireRole(req, "manager");
+  try {
+    await requireRole(req, "manager");
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production" && process.env.ENABLE_AUTHENTICATION === "false") {
+      // Local development bypass
+    } else if (err instanceof Response) {
+      return err;
+    } else {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
 
   try {
-    const rows = await listRecords("profiles");
+    // database-design: select only existing profile columns in Supabase
+    const rows = await listRecords("profiles", {
+      select: "id,full_name,email,role,avatar_url,phone,created_at,updated_at",
+    });
     return NextResponse.json(
       rows.map((row) => {
         const { id, fullName, ...rest } = row as Record<string, unknown>;
-        return { uid: id, ...rest, name: fullName };
+        return { uid: id, ...rest, name: fullName, status: "active" };
       })
     );
   } catch (err) {
     console.error("[admin/users] Supabase read failed:", err);
-    throw new Error("Failed to read from Supabase");
+    return NextResponse.json(
+      { error: "Failed to read users from database", details: (err as Error)?.message },
+      { status: 500 }
+    );
   }
 }
 

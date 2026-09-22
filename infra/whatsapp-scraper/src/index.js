@@ -18,7 +18,7 @@
  *    Client sends WhatsApp message
  *      → Baileys receives it here
  *      → This script forwards to n8n webhook (N8N_WEBHOOK_URL)
- *      → n8n runs workflow (Gemini matching, Firestore writes)
+ *      → n8n runs workflow (Gemini matching, Supabase writes)
  *      → n8n returns bot reply text
  *      → This script sends reply back to client via WhatsApp
  *
@@ -69,27 +69,8 @@ if (SUPABASE_URL && SUPABASE_KEY) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Firebase Admin Init (Legacy fallback)
+ *  Supabase is the single source of truth for all writes.
  * ────────────────────────────────────────────────────────────────────────── */
-
-let firestore = null;
-try {
-  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      }),
-    });
-    firestore = admin.firestore();
-    logger.info('Firebase Admin initialized successfully');
-  } else {
-    logger.warn('Firebase Admin not configured — using Supabase for direct writes');
-  }
-} catch (err) {
-  logger.error({ err: err.message }, 'Firebase Admin init failed');
-}
 
 /* ──────────────────────────────────────────────────────────────────────────
  *  Message dedup cache (Baileys can deliver the same message twice on reconnect)
@@ -135,7 +116,7 @@ async function forwardToN8n(payload) {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- *  Create / update client + request in Supabase & Firestore directly
+ *  Create / update lead + inquiry in Supabase directly
  *  (fallback if n8n is down — ensures no lead is lost)
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -199,63 +180,14 @@ async function createRequestInSupabase(leadId, phone, messageText) {
   }
 }
 
-async function writeClientToFirestore(phone, name) {
-  // Always persist to authoritative Supabase leads table first
+async function writeLeadToSupabase(phone, name) {
   const supabaseLead = await writeClientToSupabase(phone, name);
-
-  if (!firestore) {
-    return supabaseLead || { id: `supa-${phone}`, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
-  }
-
-  try {
-    // Check if client already exists (dedup by phone)
-    const existing = await firestore.collection('clients').where('phone_number', '==', phone).limit(1).get();
-    if (!existing.empty) {
-      const doc = existing.docs[0];
-      return { id: doc.id, ...doc.data() };
-    }
-    // Create new client
-    const ref = await firestore.collection('clients').add({
-      name: name || phone,
-      phone_number: phone,
-      lead_source: 'whatsapp_bot',
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return { id: ref.id, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
-  } catch (err) {
-    logger.error({ err: err.message }, 'Firestore client write failed');
-    return supabaseLead || null;
-  }
+  return supabaseLead || { id: `supa-${phone}`, name: name || phone, phone_number: phone, lead_source: 'whatsapp_bot' };
 }
 
-async function createRequestInFirestore(clientId, messageText, phone) {
-  // Always persist to authoritative Supabase inquiries table first
+async function createInquiryInSupabase(clientId, messageText, phone) {
   const supabaseInquiry = await createRequestInSupabase(clientId, phone, messageText);
-
-  if (!firestore) {
-    return supabaseInquiry || { id: `supa-inq-${Date.now()}` };
-  }
-
-  try {
-    const ref = await firestore.collection('requests').add({
-      client_id: clientId,
-      status: 'bot_handling',
-      bot_chat_history: [{
-        sender: 'client',
-        text: messageText,
-        timestamp: new Date().toISOString(),
-      }],
-      client_needs: {},
-      matched_listings: [],
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return { id: ref.id };
-  } catch (err) {
-    logger.error({ err: err.message }, 'Firestore request create failed');
-    return supabaseInquiry || null;
-  }
+  return supabaseInquiry || { id: `supa-inq-${Date.now()}` };
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -373,13 +305,13 @@ async function startSock() {
           jid,
         });
 
-        // ── Fallback: write directly to Firestore if n8n is down ──
+        // ── Fallback: write directly to Supabase if n8n is down ──
         let requestId = n8nResponse?.requestId;
         if (!n8nResponse) {
-          logger.warn('n8n unavailable — writing directly to Firestore');
-          const client = await writeClientToFirestore(phone, senderName);
+          logger.warn('n8n unavailable — writing directly to Supabase');
+          const client = await writeLeadToSupabase(phone, senderName);
           if (client) {
-            const request = await createRequestInFirestore(client.id, text);
+            const request = await createInquiryInSupabase(client.id, text, phone);
             requestId = request?.id;
           }
         }

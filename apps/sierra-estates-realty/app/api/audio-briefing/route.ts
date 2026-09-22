@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    let propertyData = {
+    const propertyData = {
       sierraCode: body.sierraCode || body.propertyId || 'SE-PROMO-01',
       compound: body.compound || 'Mountain View iCity',
       unitType: body.unitType || 'iVilla',

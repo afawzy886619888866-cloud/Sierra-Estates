@@ -17,4 +17,14 @@ export * from './vip-concierge';
 export * from './notebookllm-engine';
 export * from './voice-briefing';
 export * from './video-teaser';
+export {
+  brainRAG,
+  memoryBrain,
+  mempalace,
+  memoryEngine,
+  sharedMemory,
+  SupabaseMemoryStore,
+  type GoalAlignedContextDirective,
+} from '@sierra-estates/memory-engine';
+export { obsidian } from '@sierra-estates/obsidian';
 

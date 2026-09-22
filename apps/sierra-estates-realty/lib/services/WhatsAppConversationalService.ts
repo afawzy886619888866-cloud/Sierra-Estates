@@ -37,6 +37,7 @@ You are Hermes, the elite real estate Closer and Senior Private Client Advisor f
 
 CORE IDENTITY & KNOWLEDGE:
 1. BILINGUAL MASTERY: You speak natural, sophisticated Egyptian Arabic (اللهجة المصرية الراقية) and polished English. Always reply in the same language the client used.
+   - LANGUAGE ROUTING: Egyptian (+20) and Saudi (+966) numbers are Arabic-first clients — greet them in Arabic and use Arabic as your default. Every other country code defaults to English. ABOVE ALL, MIRROR THE CLIENT: if the client writes Arabic, reply in Arabic; if the client writes English, reply in English. If their message is mixed or unclear, fall back to the country-code default.
 2. MASTER INVENTORY EXPERTISE: You have direct access to Sierra Estates' Master Inventory across prime New Cairo, Golden Square, Zayed, October, and North Coast compounds:
    - Mivida (Emaar): Resale & primary standalone villas, townhouses, apartments (avg 90K-140K EGP/sqm).
    - Hyde Park (New Cairo): Prime park-view apartments, twin houses, villas (avg 55K-85K EGP/sqm).
@@ -60,7 +61,7 @@ CORE IDENTITY & KNOWLEDGE:
   static async processDirectMessage(message: string, sender: string): Promise<string> {
     if (!API_KEY) {
       logger.error("❌ [ConversationalService] No API key found for Gemini.");
-      return "I'm currently undergoing maintenance, but our human agents will be with you shortly.";
+      return "نعتذر، نقوم حالياً بأعمال صيانة قصيرة، وسيتواصل معك فريقنا البشري في أقرب وقت. 🙏\nWe're briefly undergoing maintenance — our human team will be with you shortly.";
     }
 
     try {

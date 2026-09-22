@@ -19,7 +19,7 @@ import json
 import asyncio
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 # ── Env loading ────────────────────────────────────────────────────────────────
 try:
@@ -82,17 +82,20 @@ def _call_mcp_server(method: str, params: dict) -> dict:
     call_id = _next_id()
     req = json.dumps({"jsonrpc": "2.0", "id": call_id, "method": method, "params": params})
     init = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{}}'
+    npx_cmd = ["cmd", "/c", "npx"] if sys.platform == "win32" else ["npx"]
     try:
         proc = subprocess.run(
-            ["npx", "tsx", _MCP_SERVER_PATH],
+            npx_cmd + ["tsx", _MCP_SERVER_PATH],
             input=f"{init}\n{req}\n",
-            capture_output=True, text=True, timeout=20,
+            capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            timeout=20,
             cwd=str(Path(__file__).resolve().parent.parent),
         )
         for line in proc.stdout.splitlines():
             line = line.strip()
-            if not line:
-                continue
+            if not line or not line.startswith("{"):
+                continue  # skip tsx banners / warnings / empty lines
             try:
                 obj = json.loads(line)
                 if obj.get("id") == call_id:
@@ -123,35 +126,50 @@ def _call_mcp_server(method: str, params: dict) -> dict:
 def search_inventory(compound: str = "", deal_type: str = "sale", limit: int = 5) -> str:
     """
     Search the Sierra Estates live property inventory in Supabase.
-    Returns matching units with price, area, type, and availability status.
+    Returns matching listings with price, area, type, and availability status.
     deal_type: 'sale' or 'rent'
     """
     if _supabase:
         try:
-            q = _supabase.table("units").select(
-                "code, compound, type, beds, area, price, mode, status, finishing"
+            q = _supabase.table("listings").select(
+                "code, compound, property_type, bedrooms, area_sqm, price, deal_type, "
+                "status, finishing_type, valuation_status, price_per_sqm"
             )
             if compound:
                 q = q.ilike("compound", f"%{compound}%")
             if deal_type in ("rent", "rental"):
-                q = q.eq("mode", "rent")
+                q = q.eq("deal_type", "rent")
             elif deal_type == "sale":
-                q = q.eq("mode", "sale")
+                q = q.eq("deal_type", "sale")
             resp = q.limit(limit).execute()
-            units = resp.data or []
-            if not units:
-                return f"No inventory found for compound='{compound}', deal_type='{deal_type}'."
+            raw_listings = resp.data
+            listings: list[dict[str, Any]] = (
+                [u for u in raw_listings if isinstance(u, dict)]
+                if isinstance(raw_listings, list)
+                else []
+            )
+            if not listings:
+                return f"No listings found for compound='{compound}', deal_type='{deal_type}'."
             lines = []
-            for u in units:
+            for u in listings:
+                price = u.get("price")
+                area = u.get("area_sqm")
+                p_num = float(price) if isinstance(price, (int, float)) else 0.0
+                a_num = float(area) if isinstance(area, (int, float)) and float(area) > 0 else 0.0
+                psqm = u.get("price_per_sqm") or (
+                    round(p_num / a_num) if p_num and a_num else "?"
+                )
                 lines.append(
-                    f"[{u.get('code', '?')}] {u.get('compound', '?')} | "
-                    f"{u.get('type', '?')} {u.get('beds', '?')}BR | "
-                    f"{u.get('area', '?')} sqm | "
-                    f"{u.get('price', 0):,} EGP ({u.get('mode', '?')}) | "
-                    f"Status: {u.get('status', '?')} | Finish: {u.get('finishing', '?')}"
+                    f"[{u.get('code', u.get('id', '?'))}] {u.get('compound', '?')} | "
+                    f"{u.get('property_type', '?')} {u.get('bedrooms', '?')}BR | "
+                    f"{u.get('area_sqm', '?')} sqm | "
+                    f"{u.get('price', 0):,} EGP ({u.get('deal_type', '?')}) | "
+                    f"{psqm:,} EGP/sqm | "
+                    f"Status: {u.get('status', '?')} | Finish: {u.get('finishing_type', '?')} | "
+                    f"Valuation: {u.get('valuation_status', '?')}"
                 )
             return "\n".join(lines)
-        except Exception:
+        except Exception as ex:
             pass  # fall through to MCP
 
     result = _call_mcp_server(
@@ -183,19 +201,26 @@ def calculate_valuation(
     if _supabase:
         try:
             resp = (
-                _supabase.table("units")
-                .select("price, area")
+                _supabase.table("listings")
+                .select("price, area_sqm, price_per_sqm, cap_rate, roi_percentage")
                 .ilike("compound", f"%{compound}%")
-                .eq("mode", "sale")
+                .eq("deal_type", "sale")
                 .limit(30)
                 .execute()
             )
-            comps = resp.data or []
-            comp_psqm = [
-                c["price"] / max(c["area"], 1)
-                for c in comps
-                if c.get("price") and c.get("area")
-            ]
+            raw_comps = resp.data
+            comps: list[dict[str, Any]] = (
+                [c for c in raw_comps if isinstance(c, dict)]
+                if isinstance(raw_comps, list)
+                else []
+            )
+            comp_psqm: list[float] = []
+            for c in comps:
+                p = c.get("price")
+                a = c.get("area_sqm")
+                if isinstance(p, (int, float)) and isinstance(a, (int, float)) and a > 0:
+                    sqm_val = c.get("price_per_sqm")
+                    comp_psqm.append(float(sqm_val) if isinstance(sqm_val, (int, float)) else float(p) / float(a))
             if comp_psqm:
                 avg = sum(comp_psqm) / len(comp_psqm)
                 delta = ((price_per_sqm - avg) / avg) * 100
@@ -260,7 +285,7 @@ def schedule_property_viewing(
                 "notes": notes,
                 "status": "pending",
             }).execute()
-            if resp.data:
+            if resp.data and isinstance(resp.data, list) and len(resp.data) > 0 and isinstance(resp.data[0], dict):
                 booking_id = resp.data[0].get("id", "N/A")
                 return (
                     f"Viewing confirmed and logged.\n"
@@ -319,6 +344,88 @@ def ingest_whatsapp_listing(
     )
     if "error" in result:
         return f"WhatsApp ingest failed: {result['error']}"
+    return (
+        f"Listing ingested.\n"
+        f"Compound: {result.get('compound', 'N/A')}\n"
+        f"Type: {result.get('propertyType', 'N/A')}\n"
+        f"Price: {result.get('price', 'N/A'):,} EGP\n"
+        f"Area: {result.get('areaSqm', 'N/A')} sqm\n"
+        f"Confidence: {result.get('confidence', 'N/A')}"
+    )
+
+
+@function_tool
+def get_distressed_deals(limit: int = 5) -> str:
+    """
+    Retrieve active distressed deals and hot price drops (dropPct >= 8%)
+    from the Sierra Estates Episodic Context Cache (ECC).
+    """
+    result = _call_mcp_server(
+        "tools/call",
+        {"name": "get_distressed_deals", "arguments": {"limit": limit}},
+    )
+    if "error" in result:
+        return f"ECC distressed deals unavailable: {result['error']}"
+    deals = result.get("deals", [])
+    if not deals:
+        return "No active distressed deals currently logged in ECC memory."
+    lines = [f"Found {len(deals)} distressed deal(s) in ECC memory:"]
+    for d in deals:
+        data = d.get("data", {})
+        lines.append(
+            f"• Unit {data.get('sierraCode', d.get('entityId'))}: "
+            f"{data.get('oldPrice', 0):,} → {data.get('newPrice', 0):,} EGP "
+            f"(-{data.get('dropPct', 0)}% drop) | Actor: {d.get('actor', 'Owner')}"
+        )
+    return "\n".join(lines)
+
+
+@function_tool
+def search_memory_palace(keyword: str, room: str = "") -> str:
+    """
+    Search Sierra Estates Memory Palace multi-room vector & keyword store.
+    Available rooms: listings, leads, negotiations, system, general.
+    """
+    args = {"keyword": keyword, "limit": 5}
+    if room:
+        args["room"] = room
+    result = _call_mcp_server(
+        "tools/call",
+        {"name": "search_memory_palace", "arguments": args},
+    )
+    if "error" in result:
+        return f"Memory palace search unavailable: {result['error']}"
+    results = result.get("results", [])
+    if not results:
+        return f"No entries found in memory palace for '{keyword}'."
+    lines = [f"Memory Palace Matches for '{keyword}':"]
+    for item in results:
+        entry = item.get("entry", {})
+        lines.append(
+            f"[{entry.get('room', 'general').upper()}/{entry.get('drawer', '')}] "
+            f"{entry.get('content', '')[:200]}"
+        )
+    return "\n".join(lines)
+
+
+@function_tool
+def query_brain_rag(query: str, compound: str = "") -> str:
+    """
+    Query the Sierra Memory Brain RAG engine (unifying Obsidian domain vault
+    and ECC Episodic Context Cache) for strategic guidance, pricing notes, and entity history.
+    """
+    args = {"query": query}
+    if compound:
+        args["compound"] = compound
+    result = _call_mcp_server(
+        "tools/call",
+        {"name": "query_brain_rag", "arguments": args},
+    )
+    if "error" in result:
+        return f"Brain RAG query unavailable: {result['error']}"
+    formatted = result.get("formattedDirective", "")
+    if formatted:
+        return formatted
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
@@ -348,9 +455,16 @@ valuation_agent = Agent(
         "You are a senior real estate valuation analyst for Sierra Estates in New Cairo. "
         "Use calculate_valuation to provide precise investment analysis: price/sqm vs market comps, "
         "estimated cap rate, and a clear buy/hold/avoid recommendation. "
+        "Use get_distressed_deals to find urgent price-reduction bargains. "
         "Use search_inventory to surface comparable listings. Always cite data sources."
     ),
-    tools=[calculate_valuation, search_inventory, search_project_memory],
+    tools=[
+        calculate_valuation,
+        search_inventory,
+        search_project_memory,
+        get_distressed_deals,
+        search_memory_palace,
+    ],
 )
 
 viewing_scheduler_agent = Agent(
@@ -372,12 +486,22 @@ triage_agent = Agent(
         "Route the client based on intent:\n"
         "• Pricing / investment / ROI questions → hand off to Sierra Valuation Analyst.\n"
         "• Viewing requests / scheduling → hand off to Sierra Viewing Coordinator.\n"
+        "• Distressed deals / urgent bargains → use get_distressed_deals.\n"
+        "• Deep strategy / policy / compound overview → use query_brain_rag.\n"
+        "• Multi-room memory query → use search_memory_palace.\n"
         "• General inventory search / compound info → use search_inventory directly.\n"
         "• WhatsApp listing text → use ingest_whatsapp_listing.\n"
         "• Past decisions / history → use search_project_memory.\n"
         "Be concise, professional, and data-driven at all times."
     ),
-    tools=[search_inventory, ingest_whatsapp_listing, search_project_memory],
+    tools=[
+        search_inventory,
+        ingest_whatsapp_listing,
+        search_project_memory,
+        get_distressed_deals,
+        query_brain_rag,
+        search_memory_palace,
+    ],
     handoffs=[valuation_agent, viewing_scheduler_agent],
     input_guardrails=[length_guardrail],
 )
@@ -398,9 +522,18 @@ async def run(query: str):
 
     if not os.getenv("OPENAI_API_KEY"):
         print("[Dry-run] Agent topology ready:")
-        print(f"  Entry   : {triage_agent.name}")
-        print(f"  Handoffs: {[a.name for a in triage_agent.handoffs]}")
-        print(f"  Tools   : {[getattr(t, '__name__', str(t)) for t in triage_agent.tools]}")
+        entry_name = getattr(triage_agent, "name", str(triage_agent))
+        handoffs_list = [
+            getattr(getattr(a, "target", getattr(a, "agent", a)), "name", str(a))
+            for a in getattr(triage_agent, "handoffs", [])
+        ]
+        tools_list = [
+            getattr(t, "__name__", str(t))
+            for t in getattr(triage_agent, "tools", [])
+        ]
+        print(f"  Entry   : {entry_name}")
+        print(f"  Handoffs: {handoffs_list}")
+        print(f"  Tools   : {tools_list}")
         print(f"\n  Valuation tools : {[getattr(t, '__name__', str(t)) for t in valuation_agent.tools]}")
         print(f"  Viewing tools   : {[getattr(t, '__name__', str(t)) for t in viewing_scheduler_agent.tools]}")
         print("\n  To run live: set OPENAI_API_KEY=sk-... && python scripts/openai-agent-sierra.py")

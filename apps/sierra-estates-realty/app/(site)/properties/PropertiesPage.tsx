@@ -151,17 +151,6 @@ const SORT_OPTIONS = [
   { value: 'beds-desc', labelEn: 'Bedrooms: Most First', labelAr: 'الغرف: الأكثر أولاً' },
 ];
 
-const FALLBACK_IMGS = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=70',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=70',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=70',
-  'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=70',
-  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=70',
-  'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=70',
-  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=70',
-  'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=70',
-];
-
 function sanitizeUnit(raw: any, index: number): RealListing {
   const code = raw.code || `SE-${String(index + 1).padStart(4, '0')}`;
   const compound = raw.compound || raw.location || 'New Cairo';
@@ -237,6 +226,9 @@ export default function PropertiesPage() {
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
   // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
   useListingsRealtime(setAllUnits);
+
+  // Single authoritative inventory fetch on mount (below). The previous
+  // duplicate ?limit=500 fetch raced this one and was removed.
 
   // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
   useEffect(() => {
@@ -462,7 +454,7 @@ export default function PropertiesPage() {
       }
     }
     for (const u of additional) {
-      if (combined.length >= 150) break;
+      if (combined.length >= 250) break;
       if (!seen[u.id]) {
         seen[u.id] = true;
         combined.push(u);
@@ -485,12 +477,18 @@ export default function PropertiesPage() {
     }));
   }, [paginatedListings, sortedListings]);
 
-  // Handle focusing unit on map
+  // Handle focusing unit on map and scrolling card into view
   const handleSelectUnit = useCallback((unit: RealListing | MapUnitPin) => {
     const found = allUnits.find((u) => u.id === unit.id || u.code === unit.code);
     if (found) {
       setActiveUnit(found);
       setFlyToCoords([found.lat, found.lng]);
+
+      // Bidirectional scroll: smoothly scroll to listing card in list column if present
+      const el = document.getElementById(`listing-card-${found.id}`) || document.getElementById(`listing-card-${found.code}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   }, [allUnits]);
 
@@ -542,7 +540,7 @@ export default function PropertiesPage() {
             {selectedCompound !== 'All Compounds' && (
               <>
                 <span className="sep">/</span>
-                <span style={{ color: 'var(--pri, #00aeff)', fontWeight: 700 }}>
+                <span style={{ color: 'var(--pri, #c99436)', fontWeight: 700 }}>
                   {selectedCompound}
                 </span>
               </>
@@ -575,12 +573,12 @@ export default function PropertiesPage() {
               {realtimeLive && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.35)',
-                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#4ade80', fontWeight: 600,
+                  background: 'rgba(16, 185, 124, 0.1)', border: '1px solid rgba(16, 185, 124, 0.3)',
+                  borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#0f9d76', fontWeight: 600,
                 }}>
                   <span style={{
-                    width: 7, height: 7, borderRadius: '50%', background: '#22c55e',
-                    boxShadow: '0 0 0 0 rgba(34,197,94,0.4)',
+                    width: 7, height: 7, borderRadius: '50%', background: '#10b981',
+                    boxShadow: '0 0 0 0 rgba(16,185,124,0.4)',
                     animation: 'pulse-live 1.8s infinite',
                     display: 'inline-block',
                   }} />
@@ -835,7 +833,7 @@ export default function PropertiesPage() {
                 onRadiusChange={setRadiusKm}
                 centerCoords={centerCoords}
                 onCenterChange={setCenterCoords}
-                maxPins={180}
+                maxPins={250}
                 height="100%"
               />
 
@@ -866,7 +864,7 @@ export default function PropertiesPage() {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#10b981', marginTop: 4, fontFamily: 'var(--mono)' }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#0f9d76', marginTop: 4, fontFamily: 'var(--mono)' }}>
                         {activeUnit.priceLabel}
                       </div>
                     </div>
@@ -890,7 +888,7 @@ export default function PropertiesPage() {
                           sortedListings.length
                         )} of ${sortedListings.length.toLocaleString()} verified real listings`}
                   </span>
-                  <span style={{ color: '#10b981', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+                  <span style={{ color: '#0f9d76', fontWeight: 700, fontFamily: 'var(--mono)' }}>
                     {isAr ? 'قاعدة بيانات سييرا المعتمدة' : 'Sierra Verified Master Index'}
                   </span>
                 </div>
@@ -915,6 +913,7 @@ export default function PropertiesPage() {
                       return (
                         <article
                           key={p.id}
+                          id={`listing-card-${p.id}`}
                           onClick={() => handleSelectUnit(p)}
                           className={`pcard ${isSelected ? 'active-unit' : ''}`}
                           style={{ cursor: 'pointer' }}
@@ -946,6 +945,16 @@ export default function PropertiesPage() {
                               <div><BedDouble style={{ width: 15, height: 15 }} /><b>{p.beds}</b><span>{isAr ? 'غرف' : 'bds'}</span></div>
                               <div><Bath style={{ width: 15, height: 15 }} /><b>{p.bath}</b><span>{isAr ? 'حمام' : 'ba'}</span></div>
                               <div><Scaling style={{ width: 15, height: 15 }} /><b>{p.area}</b><span>m²</span></div>
+                              {p.area > 0 && p.price > 0 && (
+                                <div
+                                  className="spec-sqm"
+                                  title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
+                                  style={{ color: '#DFAD3A', fontWeight: 600 }}
+                                >
+                                  <b>{Math.round(p.price / p.area).toLocaleString()}</b>
+                                  <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -1045,7 +1054,7 @@ export default function PropertiesPage() {
                     onRadiusChange={setRadiusKm}
                     centerCoords={centerCoords}
                     onCenterChange={setCenterCoords}
-                    maxPins={180}
+                    maxPins={250}
                     height="100%"
                   />
                 </div>
@@ -1066,7 +1075,7 @@ export default function PropertiesPage() {
                         sortedListings.length
                       )} of ${sortedListings.length.toLocaleString()} verified real listings`}
                 </span>
-                <span style={{ color: '#10b981', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+                <span style={{ color: '#0f9d76', fontWeight: 700, fontFamily: 'var(--mono)' }}>
                   {isAr ? 'قاعدة بيانات سييرا المعتمدة' : 'Sierra Verified Master Index'}
                 </span>
               </div>

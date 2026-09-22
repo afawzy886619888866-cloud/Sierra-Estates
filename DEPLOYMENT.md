@@ -91,7 +91,8 @@ pnpm deploy:supabase
 pnpm migrate:supabase
 ```
 
-Notes:
+**Notes:**
+
 - `pnpm deploy:rules` and `pnpm deploy:functions` are legacy Firebase commands and are intentionally not part of the active workflow.
 - `pnpm check:backend` is the canonical guard for Supabase write policy.
 - `pnpm deploy:check` validates deployment readiness against the active architecture contract.
@@ -119,9 +120,84 @@ Notes:
 
 ---
 
-## 7. Current-state summary
+## 7. Vercel deployment ownership
+
+Vercel Git deployments are enabled in both [`vercel.json`](./vercel.json) and
+[`apps/sierra-estates-realty/vercel.json`](./apps/sierra-estates-realty/vercel.json).
+The Vercel GitHub integration is the owner of normal `main` push deployments for
+the client and admin projects. The dispatch-only
+[`.github/workflows/deploy-vercel.yml`](./.github/workflows/deploy-vercel.yml)
+workflow is reserved for audited emergency deployments and environment-variable
+resynchronization.
+
+The workflow must resolve these GitHub configuration values before a production
+deployment:
+
+- Secret: `VERCEL_TOKEN`
+- Variables: `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`,
+  `ADMIN_VERCEL_PROJECT_ID`
+- Runtime secrets and Supabase configuration listed in the workflow comments
+
+Project-ID fallbacks in the workflow are non-secret emergency defaults. They
+must not be replaced with credentials or copied into environment files. If the
+project IDs change, update the GitHub Variables and this documentation together.
+
+---
+
+## 8. Storage boundary
+
+Vercel provides the web runtime only. Property media is stored in the public
+Supabase `property-media` bucket through
+`apps/sierra-estates-realty/lib/services/StorageService.ts`. The application
+does not use Vercel Blob, KV, or Postgres storage packages.
+
+Do not delete or migrate Vercel or Supabase storage resources based only on
+repository inspection. Any production resource cleanup requires an
+authenticated provider review, an explicit target, and a reversible backup or
+recovery plan. The repository intentionally contains no deployment-purge
+utility: deleting historical Vercel deployments is a provider-level operation
+and must not be bundled into application deployment.nventory, an approved change card, and a rollback plan.
+
+---
+
+## 9. Repository hygiene boundary
+
+Generated directories such as `.next`, `.turbo`, `.vercel`, `dist`,
+`node_modules`, coverage output, and local reports are safe to regenerate and
+are excluded from deployment or source comparisons. Tracked archives,
+`.agents`, `.amphion`, skills, workflows, and operational tooling are not
+automatically disposable: they require reference checks before removal.
+
+Run `pnpm check:hygiene` to produce a read-only classification. The command
+never deletes files, changes branches, or contacts Vercel/Supabase.
+
+---
+
+## 10. Current-state summary
 
 - The repo is modernized around the Supabase-first architecture.
 - The web app is not the place for long-running ingestion or bot work.
 - Worker orchestration is handled by dedicated services.
 - The docs and scripts should reflect this single architecture; stale Firebase commands are intentionally removed from the active contract.
+## Local Excel inventory workflow
+
+Supabase `public.listings` remains the authoritative inventory source. The local workbook is an operational export and must be reviewed before importing changes.
+
+```bash
+pnpm inventory:excel:pull
+pnpm inventory:excel:push -- --file apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx --dry-run
+pnpm inventory:excel:push -- --file apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx
+```
+
+The pull command creates `All Listings`, `Available`, `Rentals`, `Sales`, `Needs Review`, and `README` sheets. The push command validates rows and upserts by `reference_code`; it never exposes the service-role key to the browser or workbook. Use `--dry-run` before every production import.
+
+## Worker startup boundaries
+
+Deploying the Next.js application does not start the WhatsApp, Telegram, OpenClaw, Vertex, scraper, or n8n workers. Each worker needs its own runtime environment and process host. The standalone WhatsApp worker has an independent lockfile and must be installed before it is started:
+
+```bash
+pnpm whatsapp:bot:install
+pnpm whatsapp:bot
+```
+
+The inactive `infra/n8n-workflows/02-whatsapp-bot-handler.json` workflow is retained as a historical reference only. It still contains Firebase nodes and must not be activated; use the Supabase-backed TypeScript WhatsApp router instead.
