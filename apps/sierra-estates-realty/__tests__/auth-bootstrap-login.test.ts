@@ -181,9 +181,21 @@ describe('isAdminEmail', () => {
     clearPasswords();
   });
 
-  it('accepts the sierra-estates.net and sierra.com domains', () => {
+  it('accepts the owned sierra-estates.net domain and rejects lookalike domains', () => {
     expect(isAdminEmail('anyone@sierra-estates.net')).toBe(true);
-    expect(isAdminEmail('anyone@sierra.com')).toBe(true);
+    // "sierra.com" is not a domain we own — trusting it by default let anyone
+    // register a sierra.com mailbox and reach the admin portal. It is now
+    // rejected unless the operator opts in via ADMIN_EMAILS.
+    expect(isAdminEmail('anyone@sierra.com')).toBe(false);
+
+    const originalAdminEmails = process.env.ADMIN_EMAILS;
+    try {
+      process.env.ADMIN_EMAILS = '@sierra.com';
+      expect(isAdminEmail('anyone@sierra.com')).toBe(true);
+    } finally {
+      if (originalAdminEmails === undefined) delete process.env.ADMIN_EMAILS;
+      else process.env.ADMIN_EMAILS = originalAdminEmails;
+    }
   });
 
   it('rejects arbitrary outside addresses', () => {

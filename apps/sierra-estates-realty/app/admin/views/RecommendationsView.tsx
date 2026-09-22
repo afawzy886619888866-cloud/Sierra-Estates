@@ -131,7 +131,7 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
             onClick={() => setActiveTab('queue')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
               activeTab === 'queue'
-                ? 'bg-cyan-600 text-white'
+                ? 'bg-[#C8961A] text-white'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
             }`}
           >
@@ -141,7 +141,7 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
             onClick={() => setActiveTab('dispatched')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
               activeTab === 'dispatched'
-                ? 'bg-cyan-600 text-white'
+                ? 'bg-[#C8961A] text-white'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
             }`}
           >
@@ -176,7 +176,7 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
           placeholder={isAr ? 'بحث بالعميل أو الكمبوند...' : 'Search by lead or compound...'}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-64 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+          className="w-full sm:w-64 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#C8961A]"
         />
       </div>
 
@@ -214,7 +214,7 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-cyan-400 font-medium">{item.compound}</span>
+                  <span className="text-[#E9C176] font-medium">{item.compound}</span>
                   <span className="text-slate-600">•</span>
                   <span className="text-slate-300">
                     {isAr ? 'العميل:' : 'Lead:'} <strong className="text-white">{item.leadName}</strong>
@@ -237,7 +237,7 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
                   {!item.dispatched ? (
                     <button
                       onClick={() => handleDispatch(item.id)}
-                      className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-[#C8961A] hover:bg-[#C8961A] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
                     >
                       <span>💬</span>
                       {isAr ? 'إرسال عبر واتساب' : 'Dispatch WhatsApp'}

@@ -26,9 +26,12 @@ export async function proxy(request: NextRequest) {
     let targetPath = pathname;
     let isRewritten = false;
 
-    // 0a) On the admin host, the console IS the site: root target is /admin
+    // 0a) On the admin host, the console IS the site: root target is /admin, login is /admin/login
     if (onAdminHost && pathname === '/') {
       targetPath = '/admin';
+      isRewritten = true;
+    } else if (onAdminHost && (pathname === '/login' || pathname === '/signin')) {
+      targetPath = '/admin/login';
       isRewritten = true;
     }
 

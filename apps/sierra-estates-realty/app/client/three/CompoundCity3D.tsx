@@ -8,6 +8,13 @@
  * and colour encode price per the active pricing mode (sale EGP-millions or
  * monthly rent USD).
  *
+ * Scene design: a bright "daylight" look — the canvas renders transparent
+ * over an ivory-to-sky gradient in the wrapper, the ground is a light
+ * sand-blue plane with a soft grid, and warm directional + hemisphere lights
+ * make the gold towers glow. Motion: towers grow out of the ground with a
+ * stagger on mount, the selected tower breathes, and the camera slowly
+ * auto-orbits until the visitor grabs it (paused while a compound is picked).
+ *
  * Interaction: hover lifts the price billboard, click selects. Selection is
  * owned by the parent portal so the unit list and the 3D scene stay in sync.
  */
@@ -60,16 +67,21 @@ function Tower({
   mode,
   range,
   selected,
+  index,
   onSelect,
 }: {
   compound: Compound;
   mode: PriceMode;
   range: [number, number];
   selected: boolean;
+  index: number;
   onSelect: (c: Compound) => void;
 }) {
-  const mesh = useRef<THREE.Mesh>(null);
+  const scaleGroup = useRef<THREE.Group>(null);
+  const material = useRef<THREE.MeshStandardMaterial>(null);
   const [hovered, setHovered] = useState(false);
+  const [grown, setGrown] = useState(false);
+  const born = useRef<number | null>(null);
 
   const [x, z] = useMemo(() => project(compound.c), [compound.c]);
 
@@ -84,106 +96,141 @@ function Tower({
 
   const color = useMemo(() => {
     const c = COLD.clone();
-    // Two-stop ramp so mid-market compounds stay readable against the dark plane.
+    // Two-stop ramp so mid-market compounds stay readable against the ground.
     return norm < 0.5
       ? c.lerp(WARM, norm * 2)
       : WARM.clone().lerp(HOT, (norm - 0.5) * 2);
   }, [norm]);
 
-  // Selected/hovered towers ease toward a taller, brighter state each frame.
-  useFrame((_, delta) => {
-    if (!mesh.current) return;
-    const target = selected ? 1.18 : hovered ? 1.08 : 1;
-    const s = mesh.current.scale;
-    s.y += (target - s.y) * Math.min(1, delta * 8);
+  // Mount stagger: each tower starts growing `index * 45ms` after its siblings,
+  // easing out of the ground; afterwards hover/selection lift the scale.
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime;
+    if (born.current === null) born.current = t + index * 0.045;
+    const p = THREE.MathUtils.clamp((t - born.current) / 0.7, 0, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    if (p >= 1 && !grown) setGrown(true);
+
+    if (scaleGroup.current) {
+      const target = eased * (selected ? 1.16 : hovered ? 1.07 : 1);
+      const s = scaleGroup.current.scale;
+      s.y += (target - s.y) * Math.min(1, delta * 9);
+    }
+    if (material.current) {
+      // Selected tower breathes; hovered gets a steady lift; resting stays calm.
+      material.current.emissiveIntensity = selected
+        ? 0.48 + Math.sin(t * 3.1) * 0.16
+        : hovered
+        ? 0.42
+        : 0.14;
+    }
   });
 
   const active = selected || hovered;
 
   return (
     <group position={[x, 0, z]}>
-      <mesh
-        ref={mesh}
-        castShadow
-        receiveShadow
-        position={[0, height / 2, 0]}
-        onPointerOver={(e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          setHovered(true);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          setHovered(false);
-          document.body.style.cursor = '';
-        }}
-        onClick={(e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          onSelect(compound);
-        }}
-      >
-        <boxGeometry args={[1.5, height, 1.5]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={active ? 0.55 : 0.12}
-          metalness={0.35}
-          roughness={0.32}
-        />
-      </mesh>
-
-      {/* Price billboard — always rendered so the map "shows the price" at a glance. */}
-      <Html
-        position={[0, height + (active ? 1.5 : 1.05), 0]}
-        center
-        distanceFactor={30}
-        zIndexRange={[20, 0]}
-        style={{ pointerEvents: 'none', transition: 'transform .18s ease' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
-            padding: active ? '7px 13px' : '5px 10px',
-            borderRadius: 20,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: active ? 13 : 11,
-            fontWeight: 800,
-            lineHeight: 1.15,
-            whiteSpace: 'nowrap',
-            color: selected ? '#0d0d0f' : '#fff',
-            background: selected
-              ? 'linear-gradient(135deg,#e9c176,#c8961a)'
-              : 'linear-gradient(135deg,#0d2136,#162e48)',
-            border: '2px solid #fff',
-            boxShadow: '0 4px 14px rgba(0,0,0,.45)',
+      <group ref={scaleGroup} scale={[1, 0.001, 1]}>
+        <mesh
+          castShadow
+          receiveShadow
+          position={[0, height / 2, 0]}
+          onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+            e.stopPropagation();
+            setHovered(true);
+            document.body.style.cursor = 'pointer';
+          }}
+          onPointerOut={() => {
+            setHovered(false);
+            document.body.style.cursor = '';
+          }}
+          onClick={(e: ThreeEvent<MouseEvent>) => {
+            e.stopPropagation();
+            onSelect(compound);
           }}
         >
-          <span>{priceText(compound, mode)}</span>
-          {active && (
-            <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.85 }}>
-              {compound.n}
-            </span>
-          )}
-        </div>
-      </Html>
+          <boxGeometry args={[1.5, height, 1.5]} />
+          <meshStandardMaterial
+            ref={material}
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.14}
+            metalness={0.3}
+            roughness={0.34}
+          />
+        </mesh>
+      </group>
+
+      {/* Price billboard — mounts after the tower has grown so it doesn't
+          hover over an empty lot; white pill on the light sky, gold when
+          selected. */}
+      {grown && (
+        <Html
+          position={[0, height + (active ? 1.5 : 1.05), 0]}
+          center
+          distanceFactor={30}
+          zIndexRange={[20, 0]}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div
+            className="se-3d-billboard"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+              padding: active ? '7px 13px' : '5px 10px',
+              borderRadius: 20,
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: active ? 13 : 11,
+              fontWeight: 800,
+              lineHeight: 1.15,
+              whiteSpace: 'nowrap',
+              color: selected ? '#231a06' : '#0d2136',
+              background: selected
+                ? 'linear-gradient(135deg,#f5d78e,#c8961a)'
+                : 'rgba(255,255,255,.94)',
+              border: selected
+                ? '2px solid #ffffff'
+                : '1.5px solid rgba(200,150,26,.45)',
+              boxShadow: selected
+                ? '0 6px 18px rgba(200,150,26,.45)'
+                : '0 4px 14px rgba(13,33,54,.18)',
+            }}
+          >
+            <span>{priceText(compound, mode)}</span>
+            {active && (
+              <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.85 }}>
+                {compound.n}
+              </span>
+            )}
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
 
-/** Subtle grid plane standing in for the New Cairo ground. */
+/** Bright ground plane standing in for the New Cairo sand. */
 function Ground() {
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[SPREAD * 3, SPREAD * 3]} />
-        <meshStandardMaterial color="#0a1420" roughness={1} metalness={0} />
+        <meshStandardMaterial color="#e4ebf3" roughness={1} metalness={0} />
       </mesh>
-      <gridHelper args={[SPREAD * 3, 36, '#1d3a57', '#16283d']} />
+      <gridHelper args={[SPREAD * 3, 36, '#c2d1e2', '#d4dfea']} />
     </>
   );
 }
+
+/** Billboard entrance + scene-local styles (kept inside the component so the
+ *  3D bundle stays self-contained wherever it is mounted). */
+const SCENE_CSS = `
+@keyframes se-3d-bill-in{from{opacity:0;transform:translateY(8px) scale(.85)}to{opacity:1;transform:none}}
+.se-3d-billboard{animation:se-3d-bill-in .4s cubic-bezier(.16,1,.3,1) both;transition:padding .18s ease,font-size .18s ease}
+@media(prefers-reduced-motion:reduce){.se-3d-billboard{animation:none}}
+`;
 
 export default function CompoundCity3D({
   compounds,
@@ -201,6 +248,11 @@ export default function CompoundCity3D({
   height?: number;
 }) {
   const handleSelect = onSelectAction || onSelect || (() => {});
+  // Slow cinematic orbit on load; permanently off once the visitor grabs the
+  // camera, and paused while a compound is selected so the detail rail and the
+  // scene stay steady for reading.
+  const [autoSpin, setAutoSpin] = useState(true);
+
   // Range is computed over the *filtered* set so the height ramp always uses
   // the full visual scale, even when the price filter narrows the results.
   const range = useMemo<[number, number]>(() => {
@@ -215,22 +267,29 @@ export default function CompoundCity3D({
         height,
         borderRadius: 'var(--r-card, 10px)',
         overflow: 'hidden',
-        background: 'linear-gradient(180deg,#0d1a29,#060c14)',
+        // Bright ivory → sky gradient shows through the transparent canvas.
+        background: 'linear-gradient(180deg,#f7fafd 0%,#e9f0f8 46%,#f0ecdf 100%)',
+        position: 'relative',
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: SCENE_CSS }} />
       <Canvas
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 26, 34], fov: 42 }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true, alpha: true }}
       >
-        <color attach="background" args={['#060c14']} />
-        <fog attach="fog" args={['#060c14', 55, 110]} />
+        {/* Transparent background (no <color attach="background">) so the
+            wrapper's daylight gradient reads as the sky. Fog tints distant
+            geometry toward the horizon tone. */}
+        <fog attach="fog" args={['#ecf1f8', 60, 135]} />
 
-        <ambientLight intensity={0.55} />
+        <ambientLight intensity={0.85} />
+        <hemisphereLight args={['#eef4fb', '#e8dcc6', 0.55]} />
         <directionalLight
           position={[18, 30, 14]}
-          intensity={1.5}
+          intensity={1.35}
+          color="#fff2d9"
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
@@ -238,23 +297,25 @@ export default function CompoundCity3D({
 
         <Ground />
 
-        {compounds.map((c) => (
+        {compounds.map((c, i) => (
           <Tower
             key={c.n}
             compound={c}
             mode={mode}
             range={range}
             selected={selected?.n === c.n}
+            index={i}
             onSelect={handleSelect}
           />
         ))}
 
         <ContactShadows
-          position={[0, 0, 0]}
-          opacity={0.5}
+          position={[0, 0.01, 0]}
+          opacity={0.28}
           scale={SPREAD * 2.5}
-          blur={2.4}
+          blur={2.8}
           far={14}
+          color="#5b6b85"
         />
 
         <OrbitControls
@@ -263,6 +324,9 @@ export default function CompoundCity3D({
           maxDistance={70}
           maxPolarAngle={Math.PI / 2.15}
           target={[0, 2, 0]}
+          autoRotate={autoSpin && !selected}
+          autoRotateSpeed={0.5}
+          onStart={() => setAutoSpin(false)}
         />
       </Canvas>
     </div>

@@ -32,10 +32,21 @@ export async function POST(req: NextRequest) {
 
     // supabase-js returns { error } rather than throwing, so an ignored error
     // here would report a successful upload that never happened.
-    const { error: uploadError } = await storage.upload(objectPath, buffer, {
+    let { error: uploadError } = await storage.upload(objectPath, buffer, {
       contentType: file.type,
-      upsert: false,
+      upsert: true,
     });
+
+    if (uploadError && (uploadError.message?.toLowerCase().includes('bucket not found') || uploadError.message?.toLowerCase().includes('does not exist'))) {
+      // Auto-create private media bucket on Supabase if not yet provisioned
+      await getSupabaseAdmin().storage.createBucket(MEDIA_BUCKET, { public: false }).catch(() => {});
+      const retry = await storage.upload(objectPath, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+      uploadError = retry.error;
+    }
+
     if (uploadError) {
       throw new Error(`Upload to ${MEDIA_BUCKET} failed: ${uploadError.message}`);
     }

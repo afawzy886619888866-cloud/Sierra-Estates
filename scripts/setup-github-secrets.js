@@ -6,6 +6,25 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
+
+// Remove GITHUB_TOKEN from env so gh CLI uses the authenticated user keyring
+delete process.env.GITHUB_TOKEN;
+delete process.env.GH_TOKEN;
+
+// Ensure GitHub CLI is in PATH on Windows
+if (process.platform === 'win32') {
+  process.env.PATH = 'C:\\Program Files\\GitHub CLI;' + process.env.PATH;
+}
 
 const REPO = process.env.GITHUB_REPOSITORY || 'sierrablue8866-droid/SE-Vercel-deploy-main';
 
@@ -35,6 +54,13 @@ const VARIABLES = [
   'SENDER_EMAIL',
   'WHATSAPP_PHONE_NUMBER_ID',
   'LEAD_NOTIFY_WHATSAPP_NUMBER',
+  'NEXT_PUBLIC_WHATSAPP_NUMBER',
+  'WHATSAPP_DEFAULT_PHONE',
+  'WHATSAPP_PROVIDER',
+  'WABA_NUMBER_1',
+  'WABA_NUMBER_2',
+  'WABA_NUMBER_3',
+  'WABA_NUMBER_4',
   'NEXT_PUBLIC_TELEGRAM_BOT_USERNAME',
   'NEXT_PUBLIC_INTELLIGENCE_OS_URL',
   'TWILIO_MESSAGING_SERVICE_SID',
@@ -68,12 +94,21 @@ const SECRETS = [
   'WHATSAPP_API_TOKEN',
   'WHATSAPP_META_TOKEN',
   'WHATSAPP_VERIFY_TOKEN',
+  'WHATSAPP_API_KEY',
+  'WHATSAPP_WEBHOOK_SECRET',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
   'TWILIO_ACCOUNT_SID',
   'TWILIO_AUTH_TOKEN',
   'SENDGRID_API_KEY',
   'UPSTASH_REDIS_REST_URL',
   'UPSTASH_REDIS_REST_TOKEN',
   'N8N_API_KEY',
+  'N8N_WEBHOOK_KEY',
+  'PROPERTY_FINDER_JWT_TOKEN',
+  'PF_JWT_TOKEN',
+  'AIRTABLE_API_KEY',
+  'SUPABASE_ACCESS_TOKEN',
 ];
 
 function setGitHubValue(kind, key) {
@@ -83,11 +118,15 @@ function setGitHubValue(kind, key) {
     return;
   }
 
-  execFileSync('gh', [kind, 'set', key, '--repo', REPO], {
-    input: `${value}\n`,
-    stdio: ['pipe', 'inherit', 'inherit'],
-  });
-  console.log(`Configured ${kind} ${key}.`);
+  try {
+    execFileSync('gh', [kind, 'set', key, '--repo', REPO], {
+      input: `${value}\n`,
+      stdio: ['pipe', 'inherit', 'inherit'],
+    });
+    console.log(`✅ Configured ${kind} ${key}.`);
+  } catch (err) {
+    console.warn(`⚠️ Failed to configure ${kind} ${key}: ${err.message}`);
+  }
 }
 
 for (const key of VARIABLES) setGitHubValue('variable', key);

@@ -78,7 +78,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/7717eb54-d6b1-4f11-b5e1-cdfec720c42f.png",
     "status": "available",
     "description": "متاح شقهومدينتي",
     "featured": true
@@ -99,7 +99,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ناصر (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/322d0607-622b-4213-86b3-3fad73f053af.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -120,7 +120,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/35596545-90bc-40c3-b57c-ffeca4fa4f53.png",
     "status": "available",
     "description": "Apartment in Sodic - 3 Bedrooms, 200m²",
     "featured": false
@@ -141,7 +141,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "فؤاد محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/be14cafa-7230-4d69-b624-b9e2eed3e511.png",
     "status": "available",
     "description": "Apartment in Fifth square - 3 Bedrooms, 200m²",
     "featured": false
@@ -162,7 +162,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "أ.امينة (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/c8c63c43-8e7c-47e9-abd3-61db7e45332f.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -183,7 +183,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد جبال (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/29d43cb8-ee8d-4bda-883f-ce809a7b8c86.png",
     "status": "available",
     "description": "متاح اكثر من وحده",
     "featured": true
@@ -204,7 +204,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ندي مسعود (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/bde71ae0-4a35-4fc7-92d6-f5de7591d88c.png",
     "status": "available",
     "description": "Apartment in Fifth square - 3 Bedrooms, 200m²",
     "featured": false
@@ -225,7 +225,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "سعيد عزمي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/2f8979a7-d408-48e7-a239-06062751636e.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -246,7 +246,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Hanan (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/390a3989-3901-4a9f-a739-c91d33663c6b.png",
     "status": "available",
     "description": "Apartment in Zaid - 3 Bedrooms, 200m²",
     "featured": false
@@ -267,7 +267,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/39161853-1dc6-467a-8cb8-5904e805deff.png",
     "status": "available",
     "description": "متاحه مايو",
     "featured": false
@@ -288,7 +288,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مرام علي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/976a26b7-ac1d-4034-bb32-0fb2053f9da9.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
     "featured": true
@@ -309,7 +309,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "أسيل محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/2d4d5a90-0134-45f0-92aa-7c949e53495e.png",
     "status": "available",
     "description": "متاح 2شقه سوديك ومتاح شقه ليك فيو",
     "featured": false
@@ -330,7 +330,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "معتز (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/d37589e9-ccdb-4dba-91c7-262ea805d690.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -351,7 +351,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "كريم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/0170446a-ed1f-11ef-bbd6-0ac05d829203-9f9601cf-aef2-4c9c-8d3a-5e115cc6a8a4.png",
     "status": "available",
     "description": "Town House in Madinaty - 4 Bedrooms, 200m²",
     "featured": false
@@ -372,7 +372,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "أحمد السيد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/c5c30e03-7bc7-4b0e-b1de-c9d4b7668a53.png",
     "status": "available",
     "description": "Villa in Oriana - 3 Bedrooms, 200m²",
     "featured": false
@@ -393,7 +393,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "أحمد بدر (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/1d7d6896-5f64-4363-b3a6-48d7436024f0.png",
     "status": "available",
     "description": "Apartment in CFC - 2 Bedrooms, 200m²",
     "featured": true
@@ -414,7 +414,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مالك (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JMGEA9VF35AMKHEC9CQZSD2D/ad6b944e-7bd1-4a6c-befa-dd38e78c9fbb.png",
     "status": "available",
     "description": "Apartment in Galleria moon valley - 3 Bedrooms, 200m²",
     "featured": false
@@ -435,7 +435,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Mohamed Ali (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/134819e2-a145-4ac2-8cc6-1fe89981c86a.png",
     "status": "available",
     "description": "Villa in CFC - 3 Bedrooms, 200m²",
     "featured": false
@@ -456,7 +456,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد شعراوي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/d1af846d-b92b-4a35-b8e8-441bb54745d8.png",
     "status": "available",
     "description": "Villa in CFC - 3 Bedrooms, 200m²",
     "featured": false
@@ -477,7 +477,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Hany (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/3de5da98-7c67-49a9-8b9e-f8e9d52031e3.png",
     "status": "available",
     "description": "Villa in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -498,7 +498,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "فاضل مرجان (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/ff2ae03e-ed1e-11ef-bbd6-0ac05d829203-efa8989b-25c6-4ae1-8e2c-a8855f64bb5b.png",
     "status": "available",
     "description": "Town House in Hyde Park - 3 Bedrooms, 200m²",
     "featured": true
@@ -519,7 +519,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "مروان (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/df8d6ed3-ed1e-11ef-b7aa-0a8c5593e6a3-9e233b39-5afe-466c-adce-ac1ed4d1ce2b.png",
     "status": "available",
     "description": "اتباعت",
     "featured": false
@@ -540,7 +540,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مروان (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/dd2d76c0-ed1e-11ef-b7aa-0a8c5593e6a3-7d538036-c9af-4356-93c5-b00585a1beaf.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -561,7 +561,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e0547a33-ed1e-11ef-b7aa-0a8c5593e6a3-775a75ae-bd16-4e8e-adf3-3c502923f054.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
     "featured": false
@@ -582,7 +582,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/dbf6d878-ed1e-11ef-b7aa-0a8c5593e6a3-c2450113-fe4a-4af7-9d01-52e86363c3e9.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -603,7 +603,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/dcd8e633-ed1e-11ef-b7aa-0a8c5593e6a3-1e6a9192-b7d6-4e94-a0c3-ff2b35643e47.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
     "featured": true
@@ -624,7 +624,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "M (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e3a75fa1-ed1e-11ef-b7aa-0a8c5593e6a3-b3cf134c-d1bb-4b34-9a73-0c92d7cdf4b6.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 200m²",
     "featured": false
@@ -645,7 +645,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "M (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/dad4aaf4-ed1e-11ef-b7aa-0a8c5593e6a3-9f494567-56ff-407b-9c33-c4341f819867.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -666,7 +666,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "لينا أسامة (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/29df707f-4eb2-413e-928d-0551f1cbda87.png",
     "status": "available",
     "description": "Villa in Madinaty - 3 Bedrooms, 200m²",
     "featured": false
@@ -687,7 +687,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "L (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/374915e6-ab70-46e7-900c-af79698a92c4.png",
     "status": "available",
     "description": "Villa in CFC - 6 Bedrooms, 690m²",
     "featured": false
@@ -708,7 +708,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Gamal hassan (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/fff6678b-ed1e-11ef-bbd6-0ac05d829203-bc7e7895-12f9-4654-b2ac-8d0bddaca019.png",
     "status": "available",
     "description": "Town House in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -729,7 +729,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ahmed alaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/dc8d9ec0-ed1e-11ef-b7aa-0a8c5593e6a3-e49366b2-6b91-4f45-8cca-be381753fe8c.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -750,7 +750,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "g (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/ddacea41-ed1e-11ef-b7aa-0a8c5593e6a3-f42360ca-528e-494f-b74a-2b9b06d03b9a.png",
     "status": "available",
     "description": "Floor With Garden in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -771,7 +771,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "دعاء (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/de539cea-ed1e-11ef-b7aa-0a8c5593e6a3-2f06d83c-b351-44bb-a764-094793c76c2e.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -792,7 +792,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "لميا جمال (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e09b5276-ed1e-11ef-b7aa-0a8c5593e6a3-b72f4cd5-45ef-4b41-aaf9-74f36eabdfc5.png",
     "status": "available",
     "description": "Floor With Garden in Mevida - 3 Bedrooms, 200m²",
     "featured": false
@@ -813,7 +813,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e1439104-ed1e-11ef-b7aa-0a8c5593e6a3-c5a0a148-7f60-4f47-910e-1fa9e80ff47f.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 200m²",
     "featured": true
@@ -834,7 +834,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مقدم محمد سمير (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e227a7ad-ed1e-11ef-b7aa-0a8c5593e6a3-ad6f44c5-a051-422b-bc15-03a2883d13d3.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -855,7 +855,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "M (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNQ7QEF0QJPEK1ERQHWJRX23/e2a45363-ed1e-11ef-b7aa-0a8c5593e6a3-8e5dac82-78a8-4854-9e3b-c96b9fe00664.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -876,7 +876,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f0171baf-ed1e-11ef-afa2-0a6e1f0e9817-43efc158-4393-48fc-8b95-a3c8b39abe14.png",
     "status": "available",
     "description": "Apartment in gardina city - 3 Bedrooms, 200m²",
     "featured": false
@@ -897,7 +897,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Samy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/ebd80f86-ed1e-11ef-afa2-0a6e1f0e9817-ddb4ef30-26e9-48b7-bfee-0381c45bd794.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -918,7 +918,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Samy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f36eff81-ed1e-11ef-afa2-0a6e1f0e9817-8193e575-4f5d-479c-9d98-26525a164f22.png",
     "status": "available",
     "description": "دور رابع +2 اسانسير+3نوم+3 حمام+2ريشبيسن",
     "featured": true
@@ -939,7 +939,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Maha (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e656e014-ed1e-11ef-afa2-0a6e1f0e9817-aec12e02-fa6d-41bb-b27d-0b7b94f356cb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -960,7 +960,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "عمرو مرسي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/edfd8295-ed1e-11ef-afa2-0a6e1f0e9817-63fa444d-50bf-4c6a-b165-82add1f02742.png",
     "status": "available",
     "description": "اربع غرف =ريسشبين 3ق+2حمام+مطبخ+غاز طبيعي+خط تليفون ونت",
     "featured": false
@@ -981,7 +981,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "عبدالرحمن حاتم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e6e49ccb-ed1e-11ef-afa2-0a6e1f0e9817-050f589a-352f-4181-bf91-43bd518c4b3b.png",
     "status": "available",
     "description": "100م اربيلا",
     "featured": false
@@ -1002,7 +1002,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "وليد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/eec614cb-ed1e-11ef-afa2-0a6e1f0e9817-cab9f51e-1602-4dd2-8070-9d860793ffd3.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1023,7 +1023,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "salim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/ef3e0517-ed1e-11ef-afa2-0a6e1f0e9817-5c1c9084-2e7f-46f4-8b17-0c787ce96fe6.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1044,7 +1044,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ihsan Al-Shami (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/ec936aa0-ed1e-11ef-afa2-0a6e1f0e9817-7b5cc2e0-b38e-4c1c-811c-65c5b457f01e.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1065,7 +1065,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Mahmoud (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e7946159-ed1e-11ef-afa2-0a6e1f0e9817-f45a5adc-8e61-4a4f-98dc-76e4784c4170.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1086,7 +1086,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هايدي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f4276463-ed1e-11ef-afa2-0a6e1f0e9817-bad20a10-f0a7-4266-b9c3-4bb2ef30e9d3.png",
     "status": "available",
     "description": "Apartment in other - 2 Bedrooms, 200m²",
     "featured": false
@@ -1107,7 +1107,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "سامي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e82aa694-ed1e-11ef-afa2-0a6e1f0e9817-4d54e7ee-ddc7-4c8b-b6d6-a478148f6ec1.png",
     "status": "available",
     "description": "اليوم ب3000+الشهر 70000+20000 تأمين",
     "featured": false
@@ -1128,7 +1128,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "دكتوره فاطمة (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f55032e2-ed1e-11ef-afa2-0a6e1f0e9817-2edcae1f-d912-48fd-8a21-253c17a74f29.png",
     "status": "available",
     "description": "متاحه للبيع 7.5M",
     "featured": true
@@ -1149,7 +1149,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "دعاء (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/314a3540-0a7c-41dd-8776-7905972ee302.png",
     "status": "available",
     "description": "Villa in Madinaty - 3 Bedrooms, 200m²",
     "featured": false
@@ -1170,7 +1170,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "g (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/bc21f2e6-16f0-4ef1-a69c-22552ec78aa7.png",
     "status": "available",
     "description": "Villa in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1191,7 +1191,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "دكتور علي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f0d3af5a-ed1e-11ef-afa2-0a6e1f0e9817-dae32b3d-9aeb-42dd-9d18-c92de0935d98.png",
     "status": "available",
     "description": "Apartment in Hyde Park - 3 Bedrooms, 200m²",
     "featured": false
@@ -1212,7 +1212,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "بودا (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/f15242bd-ed1e-11ef-afa2-0a6e1f0e9817-8632f497-0c80-4138-b050-9cea723d7429.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1233,7 +1233,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هايدي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e39614d6-ed1e-11ef-afa2-0a6e1f0e9817-3995e4d6-70d1-4779-90e2-e1f72ac82ad2.png",
     "status": "available",
     "description": "بيزامنت 150 و 150م حديقه",
     "featured": true
@@ -1254,7 +1254,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "سامي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J48NK7W8BQ3HDF37HYM3/e4b29cf4-ed1e-11ef-afa2-0a6e1f0e9817-50ed43c8-cdbe-4d25-bb37-4d764c221c21.png",
     "status": "available",
     "description": "سعر المتر 22000+دفع 35% غند توقيع العقد الباقي علي دفعات لمد 3 سنوات",
     "featured": false
@@ -1275,7 +1275,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "وليد منيسي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/91fd4049-0be7-421a-be30-8032a58ace1a.png",
     "status": "available",
     "description": "Floor With Garden in Mevida - 3 Bedrooms, 200m²",
     "featured": false
@@ -1296,7 +1296,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/9c47c883-835f-4f7f-857a-c840a06572f9.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1317,7 +1317,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد رمضان (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/fe12c831-b0f4-4313-8abd-0eb9b6dae2d1.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1338,7 +1338,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "سليم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/58959a3b-1b1f-4f5a-9875-e21837afd229.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1359,7 +1359,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Abdullah (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/0087089e-e42b-4496-bd5e-b6f1e301f112.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1380,7 +1380,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Tareq (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/535fe630-4fb4-4795-8586-31b11ad57b7d.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1401,7 +1401,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "طه (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/fa2e3742-adbf-4c5a-8e8b-d2d4f763b11d.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1422,7 +1422,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/b0d7fef9-5903-488b-9769-6fd810307515.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1443,7 +1443,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Eslam el berry (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/8a05276d-9884-43b2-bba2-e7e8694e44bb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1464,7 +1464,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "apartment for rent (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/3d5555aa-be6a-45f5-a2be-f915bd55cf34.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1485,7 +1485,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ahmed alaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT4J49WJJ89JJW4HTFC97ST/0e2a1179-e438-49cc-919c-ef5568fb91bf.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1506,7 +1506,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Gamal hassan (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/2f7218d9-c254-42c9-8430-24639fc8c179.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 200m²",
     "featured": false
@@ -1527,7 +1527,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "M (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/e67c58fa-e634-4069-9467-51da0940c000.png",
     "status": "available",
     "description": "Apartment in East town - 3 Bedrooms, 200m²",
     "featured": false
@@ -1548,7 +1548,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ياسمين أشرف (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/fcf448a9-0468-4ffb-aac4-0cc124a04a09.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1569,7 +1569,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Kareem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/59123de6-031f-404a-b0ec-ce5196aae439.png",
     "status": "available",
     "description": "villa in New Cairo - 4 Bedrooms, 950m²",
     "featured": false
@@ -1590,7 +1590,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/2011476f-31a1-432a-a8a2-5b02afa578b5.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1611,7 +1611,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مروان (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/11418953-dc69-48ed-89c9-9df8ee18f5eb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1632,7 +1632,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "بودا (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/0be2fa1b-7364-480c-a22c-16650a072433.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1653,7 +1653,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Dr. mohamed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/a44f9050-822d-4a20-a520-3c01dfff10eb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1674,7 +1674,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "hany (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/23991451-66ec-4ae5-931a-b528f91cdf0b.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1695,7 +1695,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Dr. Salwa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/15255c22-f8d8-4475-8ca8-c7f9e5cf8297.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1716,7 +1716,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Shady (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/10da9a52-ba38-41a6-adf0-930f0cd30ab8.png",
     "status": "available",
     "description": "Apartment in Lake View Residence - 3 Bedrooms, 200m²",
     "featured": false
@@ -1737,7 +1737,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Fatma (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/d8510917-dbfe-4b35-a05b-efa243498a8e.png",
     "status": "available",
     "description": "Apartment in Lake View Residence - 3 Bedrooms, 200m²",
     "featured": false
@@ -1758,7 +1758,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Fayek (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/16d8e573-c4f8-4e14-8c82-846d9657db1a.png",
     "status": "available",
     "description": "Apartment in waterway - 3 Bedrooms, 200m²",
     "featured": true
@@ -1779,7 +1779,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "karem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G5P6S933RE4W47DECFN6/10f0a0ae-ad24-483d-8cb6-aa9bf9228606.png",
     "status": "available",
     "description": "Apartment in Lake View Residence - 3 Bedrooms, 200m²",
     "featured": false
@@ -1800,7 +1800,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/664a30b3-7d48-4bcb-867d-e2b88f16040a.png",
     "status": "available",
     "description": "3 نوم+2حمام+فرش بالاجهزه الكهربائيه",
     "featured": false
@@ -1821,7 +1821,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/cc29a282-b9f7-4527-8daa-8fe0aecc92ea.png",
     "status": "available",
     "description": "Apartment in Hyde Park - 3 Bedrooms, 200m²",
     "featured": false
@@ -1842,7 +1842,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mostafa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/e1ec0d4c-67d9-4f99-948d-fe0b7356930b.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1863,7 +1863,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Dr. emad (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/e4a6cc26-3914-4406-90d7-8801c2df2cad.png",
     "status": "available",
     "description": "Apartment in CFC - 3 Bedrooms, 200m²",
     "featured": true
@@ -1884,7 +1884,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Eng Mohamed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/d7b4f61d-ddbc-4dae-b526-3ce47d1397e6.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1905,7 +1905,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ahmed Adel (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/b125f0b3-0223-4c3f-9b37-87a4eef14a1d.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1926,7 +1926,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ahmed Adel (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/06fd7ede-5a61-4dcd-94e4-84d622fe365b.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1947,7 +1947,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Raed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/213e8057-bd28-4444-8a50-3ccbb072921d.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -1968,7 +1968,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "yasmen (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/96d7c858-8b39-44b7-9c8f-ae2cac28d492.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -1989,7 +1989,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Gamal hassan (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/72d02b16-bfa1-440f-b1b5-09f6483aec21.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -2010,7 +2010,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Ziena (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G674HVP882N4M8Y8GWDD/cbd330f5-16df-467b-84ef-4e7f9b27af53.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -2031,7 +2031,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Walaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/1a101505-24dd-44d0-879b-10c63f6921bd.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -2052,7 +2052,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/1d3d2504-d1cf-4587-81b0-553d29f321fc.png",
     "status": "available",
     "description": "شقه فاضيه ٢٠٠ متر",
     "featured": false
@@ -2073,7 +2073,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Fawzy elemam (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/e24fe436-cba6-4a2c-83ce-d77633ce7212.png",
     "status": "available",
     "description": "شقه فاضيه اداري ١٥٠ متر  و ١٠٠ متر جاردن",
     "featured": true
@@ -2094,7 +2094,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Khaled (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/fa20de85-6afe-45c3-91eb-fb78154ca684.png",
     "status": "available",
     "description": "شقه مفروشه بالتكيفات",
     "featured": false
@@ -2115,7 +2115,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Abeer (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/1c2e45ce-ce97-47a3-8db8-7009d5c104bc.png",
     "status": "available",
     "description": "فيلا مفروشه بالكامل",
     "featured": false
@@ -2136,7 +2136,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Dr sabry (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/becd69ad-d117-4a62-ab01-cf9100da7f54.png",
     "status": "available",
     "description": "Apartment in North 90 - 3 Bedrooms, 200m²",
     "featured": false
@@ -2157,7 +2157,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "عمر بلتاجى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/9eed6f1b-d0bb-4c98-9bc6-9b94f016850e.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 96m²",
     "featured": false
@@ -2178,7 +2178,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 1 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/ef3185cc-baee-4bbe-b70a-4cc2fc00fcf3.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 87m²",
     "featured": true
@@ -2199,7 +2199,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/ef0178ad-c230-421c-ac31-cc2888f9f8bb.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 87m²",
     "featured": false
@@ -2220,7 +2220,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/b921836c-bad2-4120-94bd-74b8cb54e7b9.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 100m²",
     "featured": false
@@ -2241,7 +2241,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "MONER (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/943c906d-694d-4fc9-a3d2-779b2da9013f.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 89m²",
     "featured": false
@@ -2262,7 +2262,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "MONER (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/731ac5fd-9b98-475b-aabe-a9ca1d4147e8.png",
     "status": "available",
     "description": "Studio in Madinaty - 3 Bedrooms, 60m²",
     "featured": false
@@ -2283,7 +2283,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohamed hammad (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/1275024f-48a0-4811-89d5-b55bcc53d4b8.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 200m²",
     "featured": true
@@ -2304,7 +2304,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/5037beaf-1e9d-47b1-9c9d-c19b9489e379.png",
     "status": "available",
     "description": "Standalone Villa in rehab - 3 Bedrooms, 200m²",
     "featured": false
@@ -2325,7 +2325,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/949dc8f3-d723-4ed6-9565-2898b365b1fa.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 188m²",
     "featured": false
@@ -2346,7 +2346,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/e4f6a96d-d77b-4157-8357-e884c6617074.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 182m²",
     "featured": false
@@ -2367,7 +2367,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/a6b56ee9-fefb-11ef-9976-de5e2a7a351c-0aab3a70-cb2a-4440-8dff-def1a45c503c.png",
     "status": "available",
     "description": "Townhouse in palm-hills - 3 Bedrooms, 600m²",
     "featured": false
@@ -2388,7 +2388,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "MAICHEL (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6B41A6QMTPJYRRR57VF/fd0944c5-50af-4d4c-888f-b2a32203b455.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 161m²",
     "featured": true
@@ -2409,7 +2409,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هانى عزمى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/de94ba4e-62db-4ca5-b220-3a154946c134.png",
     "status": "available",
     "description": "Apartment in Fifth square - 3 Bedrooms, 190m²",
     "featured": false
@@ -2430,7 +2430,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد صلاح (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/ee1134df-8f68-4768-ad3b-109dd25d2593.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 101m²",
     "featured": false
@@ -2451,7 +2451,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد صلاح (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/9dd261b5-78a7-4e6c-a45f-e738b12ee746.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 100m²",
     "featured": false
@@ -2472,7 +2472,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "hazem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/33135d14-6d2b-4cc8-b1e4-2f6bbb8028e2.png",
     "status": "available",
     "description": "1001534224",
     "featured": false
@@ -2493,7 +2493,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/6fd52822-0a1b-4bd5-8656-8d0523d59aa7.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 162m²",
     "featured": true
@@ -2514,7 +2514,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "No name 3 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/8c04ade6-132f-4eff-b527-0ddccaf0f03d.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 100m²",
     "featured": false
@@ -2535,7 +2535,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/7cb41e1b-4dc6-408b-a456-a81196eea6c1.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 108m²",
     "featured": false
@@ -2556,7 +2556,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/89bde492-2ba2-4711-90f4-7be3027d3bb4.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -2577,7 +2577,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/a5749aa9-0d5f-4865-a2e2-603b86d83fc3.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 109m²",
     "featured": false
@@ -2598,7 +2598,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "اسراء نصار (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/b3d1f836-51c0-4036-a970-8c6ce7f3d14e.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -2619,7 +2619,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "اسراء نصار (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/e3ef3323-b39b-4795-86f1-18143762cab9.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 150m²",
     "featured": false
@@ -2640,7 +2640,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "عميد شريف الاسمر (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/36616ab0-8bd3-4318-b3ee-5352e82a5fdb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 160m²",
     "featured": false
@@ -2661,7 +2661,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "عميد شريف الاسمر2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/5e5e25cf-7b2e-49e7-b6ca-60d07783b375.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 230m²",
     "featured": false
@@ -2682,7 +2682,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "vico (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/a4baf0c9-9d19-455c-bb7e-cf80198dbc84.png",
     "status": "available",
     "description": "اتباعت",
     "featured": false
@@ -2703,7 +2703,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "haitham (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6DAWPNEQ484YE0CAKQQ/d60b3e8f-2daf-4929-8a10-99581d49f225.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 90m²",
     "featured": true
@@ -2724,7 +2724,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "haitham (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/5e5df563-3a70-46a7-a061-295f40e512a1.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 107m²",
     "featured": false
@@ -2745,7 +2745,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "haitham (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/2761f66e-bc4a-4ef9-a064-8392eb88623c.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 200m²",
     "featured": false
@@ -2766,7 +2766,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mostafa mahmoud (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/51105b5f-5fca-4189-a46d-e2a188ecfe2c.png",
     "status": "available",
     "description": "متاحه للبيع فورا",
     "featured": false
@@ -2787,7 +2787,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "hussien (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/31eb19b2-1a81-45b0-864f-31525ef5fb24.png",
     "status": "available",
     "description": "admin in New Cairo - 3 Bedrooms, 68m²",
     "featured": false
@@ -2808,7 +2808,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/e0d78399-4eb9-42ca-9496-017199aff972.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 211m²",
     "featured": true
@@ -2829,7 +2829,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6YVTTTP8B8EMZT4VT1S/fb556cee-9da8-43eb-8edf-eed83df129c7.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 135m²",
     "featured": false
@@ -2850,7 +2850,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f668472d-ed1e-11ef-8e2f-0ac05d829203-455d971f-7dbd-4835-958a-f25e8dc2c397.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 135m²",
     "featured": false
@@ -2871,7 +2871,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f9b1a873-ed1e-11ef-8e2f-0ac05d829203-529ba522-77fa-4c81-8f71-4b24713a0ea7.png",
     "status": "available",
     "description": "Apartment in Madinaty - 2 Bedrooms, 78m²",
     "featured": false
@@ -2892,7 +2892,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/facc9605-ed1e-11ef-8e2f-0ac05d829203-1b938b4d-c187-4e9f-b034-2e902a5812c2.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 78m²",
     "featured": false
@@ -2913,7 +2913,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f846fccc-ed1e-11ef-8e2f-0ac05d829203-6ed9eac9-9030-4910-b023-11d274437dc0.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 100m²",
     "featured": true
@@ -2934,7 +2934,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mdhat (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f4d4dcb7-ed1e-11ef-8e2f-0ac05d829203-6da0fff9-c144-4110-a819-81c5bd8c34e9.png",
     "status": "available",
     "description": "Studio in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -2955,7 +2955,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f91e255a-ed1e-11ef-8e2f-0ac05d829203-cf8ed245-c6dc-4d71-97c8-0551b93f98c4.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -2976,7 +2976,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ا.بوسينة رشيد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f557da38-ed1e-11ef-8e2f-0ac05d829203-df6a1522-ae6d-46b4-851c-324a47d4d138.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 230m²",
     "featured": false
@@ -2997,7 +2997,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مدحت ناصرى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f5d4c2ec-ed1e-11ef-8e2f-0ac05d829203-cef726c3-b7a3-4007-b3ff-8aa0e5eb04de.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 119m²",
     "featured": false
@@ -3018,7 +3018,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "خالد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/f7871503-ed1e-11ef-8e2f-0ac05d829203-9078b02b-54d2-4a53-8892-975b3887089e.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 135m²",
     "featured": true
@@ -3039,7 +3039,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNTC2BNPEQ18C8XB2H4R0CZT/fa49005a-ed1e-11ef-8e2f-0ac05d829203-dfe355ee-dcad-40f7-98a8-dc8f68a26dc7.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 78m²",
     "featured": false
@@ -3060,7 +3060,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ا.ملك (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/0168f7fc-ed1f-11ef-8654-0ac6a979737f-07bdcbf6-d0c0-49a5-8d2e-a5bfc315569d.png",
     "status": "available",
     "description": "Apartment in Madinaty - 2 Bedrooms, 82m²",
     "featured": false
@@ -3081,7 +3081,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/06f8a918-ed1f-11ef-8654-0ac6a979737f-76b3dc8d-3e69-4162-8e6a-e5dd410e21cb.png",
     "status": "available",
     "description": "Apartment in eypet hose elkurfenl - 3 Bedrooms, 140m²",
     "featured": false
@@ -3102,7 +3102,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/fca1009a-ed1e-11ef-8654-0ac6a979737f-ed1c8322-e1c2-453f-8979-953b66f1d577.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 190m²",
     "featured": false
@@ -3123,7 +3123,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هبه (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/fe228b51-ed1e-11ef-8654-0ac6a979737f-a4a3a465-3ac9-4560-86bd-ac61521d956d.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 133m²",
     "featured": true
@@ -3144,7 +3144,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هبه (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/ffb17618-ed1e-11ef-8654-0ac6a979737f-432657f9-e6bf-4843-bc63-2cde99c4c7d6.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 140m²",
     "featured": false
@@ -3165,7 +3165,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/0309b4df-ed1f-11ef-8654-0ac6a979737f-3eeec62f-9b06-47ed-b257-504f70668512.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 140m²",
     "featured": false
@@ -3186,7 +3186,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "heba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/04586b1f-ed1f-11ef-8654-0ac6a979737f-18cceb4b-eb58-476b-a8ae-6daf549e0f01.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 120m²",
     "featured": false
@@ -3207,7 +3207,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "HEBA (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP0Y7X14HWJA07M4KTDG2H28/05ca9ea5-ed1f-11ef-8654-0ac6a979737f-98179f58-4a46-4fbb-89e9-dfc4f38a02fb.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 240m²",
     "featured": false
@@ -3228,7 +3228,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/f8cd727c-1c8b-402c-8987-c89c0103e57e/original.jpg",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 143m²",
     "featured": true
@@ -3249,7 +3249,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/fea947a0-9426-4b74-ba9e-de62aec8c0ea/original.jpg",
     "status": "available",
     "description": "سعر البيع بدون فرش",
     "featured": false
@@ -3270,7 +3270,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمى محى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/6624e6f7-af6c-457e-8125-944a76b81871/original.jpg",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 123m²",
     "featured": false
@@ -3291,7 +3291,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/fe92c204-5343-40ae-8bdb-17ae70c041fa/original.jpg",
     "status": "available",
     "description": "متاجره لشهر 5",
     "featured": false
@@ -3312,7 +3312,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/e5507795-10c5-440e-93c5-487d2047f867/original.jpg",
     "status": "available",
     "description": "اتباعت",
     "featured": false
@@ -3333,7 +3333,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/ca47149e-1cb2-4078-9252-ab24b8940966/original.jpg",
     "status": "available",
     "description": "studio in banfcg - 3 Bedrooms, 200m²",
     "featured": true
@@ -3354,7 +3354,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "NOHA (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/09356c70-f2b4-4ca2-9dfa-f9c65d075d0a/original.jpg",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 115m²",
     "featured": false
@@ -3375,7 +3375,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "نهى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/1aaa3cf9-2b59-49b2-b8d8-733f9a46e81f.png",
     "status": "available",
     "description": "Duplex in rehab - 3 Bedrooms, 600m²",
     "featured": false
@@ -3396,7 +3396,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "نهي 3 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/09156cac-670d-4589-a9b1-988f34a9195c/original.jpg",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 89m²",
     "featured": false
@@ -3417,7 +3417,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مروه كامل (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2M7MAQWYRFBWCC8PNDM89R/63ae00c6-0065-44c7-a874-dd1d2ff031bc/original.jpg",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 89m²",
     "featured": false
@@ -3438,7 +3438,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مروه كامل 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/05babd32-ed1f-11ef-8654-0ac6a979737f-8b9664ad-a8f4-47b2-ae25-7b1fc8ff9d1d.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 90m²",
     "featured": true
@@ -3459,7 +3459,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مروه كامل 3 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/064ecd5a-ed1f-11ef-8654-0ac6a979737f-494c3835-fbd0-4ea5-bbeb-ea151e5c34a8.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 90m²",
     "featured": false
@@ -3480,7 +3480,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohammed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/076a0261-ed1f-11ef-8654-0ac6a979737f-cd05ca4c-f040-45a8-ae9e-77dceeb6717e.png",
     "status": "available",
     "description": "Apartment in Fifth square - 3 Bedrooms, 145m²",
     "featured": false
@@ -3501,7 +3501,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/fe986ce5-ed1e-11ef-8654-0ac6a979737f-66a3d9b4-abdd-4150-84e4-9860f3ecb5b3.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 96m²",
     "featured": false
@@ -3522,7 +3522,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/01b92a62-ed1f-11ef-8654-0ac6a979737f-c12d7463-746e-4afc-a12c-38eaf5ec38bf.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 150m²",
     "featured": false
@@ -3543,7 +3543,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ibrahim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/ff4ddb6c-ed1e-11ef-8654-0ac6a979737f-25d0f101-660b-4c3c-9ead-a516fa148c9b.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 145m²",
     "featured": true
@@ -3564,7 +3564,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ali hegazy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/00ac3438-ed1f-11ef-8654-0ac6a979737f-e1707e1b-4ac4-4366-be89-e0b0d4126ee0.png",
     "status": "available",
     "description": "Apartment in new-capital - 3 Bedrooms, 158m²",
     "featured": false
@@ -3585,7 +3585,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "عمر بلتاجى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/025dbc42-ed1f-11ef-8654-0ac6a979737f-7a9a1c48-cf49-49c1-89e6-fced5d8995b5.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -3606,7 +3606,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "رو (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/03a2516b-ed1f-11ef-8654-0ac6a979737f-8b8a55f3-3dbd-49c0-94f4-872b408a28bd.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -3627,7 +3627,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP2MAVWMD9BXRYYPSPYRA9AY/05756aa8-ed1f-11ef-8654-0ac6a979737f-7c4c2735-77e0-4f6d-8a0d-a731bca8ac33.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 104m²",
     "featured": false
@@ -3648,7 +3648,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e5844037-ed1e-11ef-9b9a-0a6e1f0e9817-da76ca71-9faf-41fe-916d-8ac693f8c024.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 155m²",
     "featured": true
@@ -3669,7 +3669,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "walaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/a7541cdd-fefb-11ef-a6a7-a6d2dbee71c3-703e1121-637c-4a27-97c2-5fcd86e1799d.png",
     "status": "available",
     "description": "Twin House in New Cairo - 3 Bedrooms, 280m²",
     "featured": false
@@ -3690,7 +3690,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e831bea6-ed1e-11ef-9b9a-0a6e1f0e9817-061efbbe-c72b-45dc-b2d9-79ae7f09e7bf.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 155m²",
     "featured": false
@@ -3711,7 +3711,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/ea9b934a-ed1e-11ef-9b9a-0a6e1f0e9817-93560b97-959a-4b6e-a99e-18b73439ddc3.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 140m²",
     "featured": false
@@ -3732,7 +3732,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "nermeen (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/eb30787d-ed1e-11ef-9b9a-0a6e1f0e9817-a6856e0c-ea6d-49a9-aa25-c844e80f702e.png",
     "status": "available",
     "description": "Apartment in eypet hose elkurfenl - 3 Bedrooms, 130m²",
     "featured": false
@@ -3753,7 +3753,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohammed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e6a0af6b-ed1e-11ef-9b9a-0a6e1f0e9817-e7c399f2-23ae-4714-a77d-342a2cbd281f.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 220m²",
     "featured": true
@@ -3774,7 +3774,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/ec3c78fa-ed1e-11ef-9b9a-0a6e1f0e9817-c4175d0c-d049-4947-825f-23082dd0cd3f.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 116m²",
     "featured": false
@@ -3795,7 +3795,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mostafa moamen (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e6e7b948-ed1e-11ef-9b9a-0a6e1f0e9817-0579b3c2-d849-438d-a286-47d219011afc.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 210m²",
     "featured": false
@@ -3816,7 +3816,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mostafa moamen 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/ecbe0323-ed1e-11ef-9b9a-0a6e1f0e9817-3a6f5e17-a588-4705-94eb-2790c9936dd5.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 140m²",
     "featured": false
@@ -3837,7 +3837,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "هنا اسامه (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e7d74f78-ed1e-11ef-9b9a-0a6e1f0e9817-d1ded9e8-4ef5-46f2-a844-9040f9b1cd1a.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 90m²",
     "featured": false
@@ -3858,7 +3858,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e8d197cc-ed1e-11ef-9b9a-0a6e1f0e9817-0ed6ed53-2dc9-432e-a0dd-f147b2ce1285.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 100m²",
     "featured": true
@@ -3879,7 +3879,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/79a59368-1a18-4993-a89b-beda5531a140.png",
     "status": "available",
     "description": "Standalone Villa in rehab - 3 Bedrooms, 220m²",
     "featured": false
@@ -3900,7 +3900,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/ed67f0e4-ed1e-11ef-9b9a-0a6e1f0e9817-957b1191-919b-421d-aaf7-332e86493adb.png",
     "status": "available",
     "description": "العموله شهر عن  السنه الاولي.01145010477",
     "featured": false
@@ -3921,7 +3921,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/ee071f3d-ed1e-11ef-9b9a-0a6e1f0e9817-15deac50-635a-4967-a5a0-98ad3ee85222.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 70m²",
     "featured": false
@@ -3942,7 +3942,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31340PMR514Z67BSE3X8P8/e97f0418-ed1e-11ef-9b9a-0a6e1f0e9817-10a89bb7-2fe8-4cbd-9b5b-5aa1c01afba0.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 143m²",
     "featured": false
@@ -3963,7 +3963,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ا.مينا (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/f8812621-5f2b-4f37-83cd-891e29c8c2fb.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": true
@@ -3984,7 +3984,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "shreef (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/c426dcbd-9444-4e22-9866-f0ebd8c762f6.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 190m²",
     "featured": false
@@ -4005,7 +4005,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "فاطمه زياد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/b3669ef9-b566-4499-8bde-fed46166a51e.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 156m²",
     "featured": false
@@ -4026,7 +4026,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/fd8479c1-bafa-4f5a-830b-280b182da455.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 156m²",
     "featured": false
@@ -4047,7 +4047,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/a367348f-d93f-4feb-8991-4420159fc351.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 103m²",
     "featured": false
@@ -4068,7 +4068,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد انور (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/3492509f-3a46-4cc9-8905-c11d70ffa690.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": true
@@ -4089,7 +4089,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "salma (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/9466bf2a-d122-48c3-91d3-fc95a13752d3.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 220m²",
     "featured": false
@@ -4110,7 +4110,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "dr mahmoud (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31348BWVJ852JXQEN30D7N/cb027f77-639c-4b95-a21c-cae3e9229bb4.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 90m²",
     "featured": false
@@ -4131,7 +4131,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/a6fe25fa-fefb-11ef-a8bc-d20e9a14fa59-4bffc25c-e830-4b2a-b99a-1e63802e8762.png",
     "status": "available",
     "description": "Townhouse in new-capital - 3 Bedrooms, 378m²",
     "featured": false
@@ -4152,7 +4152,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/213a9dc6-f1e1-475c-8db5-8be168b9929a.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 123m²",
     "featured": false
@@ -4173,7 +4173,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/84e8cd27-9350-4489-b0f5-8c68febd8dde.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 180m²",
     "featured": true
@@ -4194,7 +4194,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/f927eee3-2db2-4a7b-b97f-6dbd53c586f0.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 110m²",
     "featured": false
@@ -4215,7 +4215,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/b061f2a6-a583-42ae-b00f-fa72b72adef0.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 100m²",
     "featured": false
@@ -4236,7 +4236,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed saad (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/2cb1671c-abc8-474b-9d73-6f1b8da0c826.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 180m²",
     "featured": false
@@ -4257,7 +4257,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ايناس سعيد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/d73c8868-a1a0-49a3-9807-c813e6dda328.png",
     "status": "available",
     "description": "Standalone Villa in rehab - 3 Bedrooms, 225m²",
     "featured": false
@@ -4278,7 +4278,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/519ed1c9-76b4-4071-b1e8-1d8c737fcb7e.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 123m²",
     "featured": true
@@ -4299,7 +4299,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/4e8611f0-2119-4f91-b69b-9123113619d6.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 108m²",
     "featured": false
@@ -4320,7 +4320,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "منال (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/9585ac1e-d8da-4848-8a37-1d8664cd0a57.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 143m²",
     "featured": false
@@ -4341,7 +4341,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "منال 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/c84d7564-b30d-4447-8c4d-06010317d557.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 127m²",
     "featured": false
@@ -4362,7 +4362,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 1 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/ab7bc3b4-54b9-4c58-851b-c5c44e8252fe.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 108m²",
     "featured": false
@@ -4383,7 +4383,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP31349BNB4QWV1WBJZ74GJJ/cc71a47d-ecc8-46ba-bd86-b1070fed7da3.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 145m²",
     "featured": true
@@ -4404,7 +4404,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 3 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/f6896f6b-9477-4d2a-b33a-e93e88f2ce7d.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 145m²",
     "featured": false
@@ -4425,7 +4425,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 4 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/2f6a4122-f7a2-4543-a257-3818816809c9.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 103m²",
     "featured": false
@@ -4446,7 +4446,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 5 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/e021b891-1de8-43bf-86a9-f483d812de74.png",
     "status": "available",
     "description": "Studio in Madinaty - 3 Bedrooms, 65m²",
     "featured": false
@@ -4467,7 +4467,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "حسام شعراوى 6 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5VA6FB3R0WKZSSX512CWN/3115c998-b7fa-46f5-b95d-d89bb14fe45c.png",
     "status": "available",
     "description": "Standalone Villa in rehab - 3 Bedrooms, 185m²",
     "featured": false
@@ -4488,7 +4488,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "د.مشيرة العوضي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/5331b675-53ce-41e3-9029-7a8546319db5.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 106m²",
     "featured": true
@@ -4509,7 +4509,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "د.مشيرة العوضي 2 (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/6efd71d2-3e2d-49cb-90a7-23c25a91a4a4.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 130m²",
     "featured": false
@@ -4530,7 +4530,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "انمار (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/8f2a7b52-290c-4a4b-9e12-eb34b7815b57.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -4551,7 +4551,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohaned (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/f7796a2a-6bb4-43d2-a6d1-a313fa3f3984.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 130m²",
     "featured": false
@@ -4572,7 +4572,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mostafa younis (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/71b2de17-c808-4286-be40-31c8a689d3fa.png",
     "status": "available",
     "description": "Apartment in banfcg - 3 Bedrooms, 185m²",
     "featured": false
@@ -4593,7 +4593,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "محمد غريب (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3134ACJ5PCTJP68G12EN6M/e0d8d5ed-da43-4701-a634-4af481b245bd.png",
     "status": "available",
     "description": "Apartment in other - 3 Bedrooms, 200m²",
     "featured": true
@@ -4614,7 +4614,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/085206f3-ed1f-11ef-8581-0a1a96148fff-664adb93-96c5-4ff9-90f4-b360024f6e30.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 131m²",
     "featured": false
@@ -4635,7 +4635,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Mahmoud (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/02951006-ed1f-11ef-8581-0a1a96148fff-a3bb27ab-1c46-4f33-a22c-d82062041e98.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 183m²",
     "featured": false
@@ -4656,7 +4656,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "`عماد الزير (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/034cd29b-ed1f-11ef-8581-0a1a96148fff-45683912-b12a-4b7a-b5e3-6aa6c10fd833.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 117m²",
     "featured": false
@@ -4677,7 +4677,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "emad (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/0435fb0d-ed1f-11ef-8581-0a1a96148fff-c2cb21d2-977b-44b2-9853-61ac37401db7.png",
     "status": "available",
     "description": "Apartment in Madinaty - 2 Bedrooms, 117m²",
     "featured": false
@@ -4698,7 +4698,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "عماد الزير (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/05777785-ed1f-11ef-8581-0a1a96148fff-316feb94-3641-4305-b79f-a10c1512e330.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 115m²",
     "featured": true
@@ -4719,7 +4719,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/05f030c0-ed1f-11ef-8581-0a1a96148fff-bc8a15d4-f349-4ab7-a3b8-31a57b1d065d.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 117m²",
     "featured": false
@@ -4740,7 +4740,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/06c7311f-ed1f-11ef-8581-0a1a96148fff-a8dc2d90-efc9-4c50-859b-9d381bf5469f.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 110m²",
     "featured": false
@@ -4761,7 +4761,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "م.عبدالرحمن (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP3VP9H4JVB951P3R0A00VZH/0768407a-ed1f-11ef-8581-0a1a96148fff-a60acc30-b60d-4555-8dec-c3430207c4f9.png",
     "status": "available",
     "description": "للمعاينه 01019184034",
     "featured": false
@@ -4782,7 +4782,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f095751d-ed1e-11ef-a382-0a6e1f0e9817-c596fc01-a6b2-4e4a-bc0b-42b54d556133.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 118m²",
     "featured": false
@@ -4803,7 +4803,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "اوميا ال انى محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f13c1207-ed1e-11ef-a382-0a6e1f0e9817-a7fa328b-d426-4e3c-9d9f-6bd4ad1e1680.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 74m²",
     "featured": true
@@ -4824,7 +4824,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "اوميا ال انى محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f1f91157-ed1e-11ef-a382-0a6e1f0e9817-9ab40c95-2911-4ffd-9a74-06f24daf11a3.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 108m²",
     "featured": false
@@ -4845,7 +4845,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mahmoud motawea (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f342587b-ed1e-11ef-a382-0a6e1f0e9817-1ddec57c-d774-472e-ab8d-d9f8bee3c8c1.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 195m²",
     "featured": false
@@ -4866,7 +4866,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f3f519fc-ed1e-11ef-a382-0a6e1f0e9817-89c2945a-9478-4dc7-96f2-279ffeb393b2.png",
     "status": "available",
     "description": "Studio in rehab - 3 Bedrooms, 60m²",
     "featured": false
@@ -4887,7 +4887,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/f5b3ba03-ed1e-11ef-a382-0a6e1f0e9817-ca0a5d3e-b5ef-4d7b-ab68-10b34aa77559.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 82m²",
     "featured": false
@@ -4908,7 +4908,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "asmaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/eecebfd0-ed1e-11ef-a382-0a6e1f0e9817-499d4240-b9e6-4416-87ff-7a7dc250070b.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 116m²",
     "featured": true
@@ -4929,7 +4929,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "asmaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AHZBM273XM3905Q38FC1C/ef73b90f-ed1e-11ef-a382-0a6e1f0e9817-4650cb29-fbc2-474e-8803-598e8ba69026.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 90m²",
     "featured": false
@@ -4950,7 +4950,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "asmaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/6d861755-54d3-4921-9e01-f4af578640f1.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 82m²",
     "featured": false
@@ -4971,7 +4971,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/dd5dd182-8689-478c-9d79-93084ee001b1.png",
     "status": "available",
     "description": "Standalone Villa in rehab - 3 Bedrooms, 310m²",
     "featured": false
@@ -4992,7 +4992,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/e391968d-c6f5-41bf-9d93-a06162b3ea3c.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 146m²",
     "featured": false
@@ -5013,7 +5013,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/1a272f29-e9e8-4376-ad0e-fa740a6c8b54.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 89m²",
     "featured": true
@@ -5034,7 +5034,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "rania (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/6cd4ac49-5b50-45d5-9f00-1917ca4e0d0f.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 100m²",
     "featured": false
@@ -5055,7 +5055,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/b1a8d41c-11d6-4ac8-9a53-18863a02131a.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 70m²",
     "featured": false
@@ -5076,7 +5076,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed ashraf (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/8dd8e655-001f-4a38-a7d7-e1974c4ceb9d.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 155m²",
     "featured": false
@@ -5097,7 +5097,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/e7024385-4826-4f92-a6ed-d3b9e8eaf42b.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 84m²",
     "featured": false
@@ -5118,7 +5118,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/aeda4d8b-aa09-4a46-aa49-37af92ad416c.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 130m²",
     "featured": true
@@ -5139,7 +5139,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/ce8d966c-2b3c-4993-9365-7a2d9fa4e34e.jpg",
     "status": "available",
     "description": "Penthouse in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -5160,7 +5160,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "محمد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/a2edfc89-3e3b-4a7e-9f2a-8ddef65261e1.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 180m²",
     "featured": false
@@ -5181,7 +5181,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/c864ce89-b955-4083-b0e5-1d3d7053823e.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 118m²",
     "featured": false
@@ -5202,7 +5202,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/e64bcc0e-43d3-4d4d-b90e-0c88e6a05e4b.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 135m²",
     "featured": false
@@ -5223,7 +5223,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مهندس ياسر (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/f717896b-541e-4a43-ad19-12207cf8242b.png",
     "status": "available",
     "description": "Apartment in rehab - 2 Bedrooms, 139m²",
     "featured": true
@@ -5244,7 +5244,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/11180612-55d4-432c-9e9f-6c853bb366eb.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 135m²",
     "featured": false
@@ -5265,7 +5265,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mina (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/e1aecbd6-5e1b-4299-920d-d610c700bc00.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 160m²",
     "featured": false
@@ -5286,7 +5286,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "zozza (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/c18f7da4-e4ae-45f0-9c3c-92f6bb3d2793.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 123m²",
     "featured": false
@@ -5307,7 +5307,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed hussein (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/7b58bd21-dec3-4534-b8fc-c276ad2803a7.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 197m²",
     "featured": false
@@ -5328,7 +5328,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "DR.Moataz (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/87373b44-d4de-4ce4-a05a-f66ba4f9b21d.png",
     "status": "available",
     "description": "set-2b-140m-110k",
     "featured": true
@@ -5349,7 +5349,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/5a91f856-5227-4a86-93de-d3be22b7d08c.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 123m²",
     "featured": false
@@ -5370,7 +5370,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "احمد قدرى (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4C1Z4JVJ71HY4WXHCCGRG2/c1c02715-c6b1-4165-99ba-8acd191c9f59.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 133m²",
     "featured": false
@@ -5391,7 +5391,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/5692336b-902f-428a-a345-307d96be72a5.png",
     "status": "available",
     "description": "Standalone Villa in Madinaty - 3 Bedrooms, 360m²",
     "featured": false
@@ -5412,7 +5412,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/7183d779-da22-482f-8b7b-7ca974607dc4.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 116m²",
     "featured": false
@@ -5433,7 +5433,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/06b63344-1b36-4d60-b02e-2b53e3dd6697.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 131m²",
     "featured": true
@@ -5454,7 +5454,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ayman ahmed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/baa5bcf8-1638-4af7-93a1-6d544d1b5a9d.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 108m²",
     "featured": false
@@ -5475,7 +5475,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "magda (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/107b11f0-2eb4-4861-add0-05d1d9ed2bb6.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 108m²",
     "featured": false
@@ -5496,7 +5496,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "afaf (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/001cc89f-9bf2-46e7-80c1-e79d6fd0f199.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 110m²",
     "featured": false
@@ -5517,7 +5517,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "tarek (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/cd74a110-ccb2-4f8d-a116-7d0a41aeba70.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -5538,7 +5538,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "dr engy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/a367bbef-be0d-4c72-8643-eb98552638ec.png",
     "status": "available",
     "description": "Apartment in new-capital - 3 Bedrooms, 77m²",
     "featured": true
@@ -5559,7 +5559,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5CV4SHDSW8PY6CKC6B81Z0/91c43d09-dde9-4c28-b0d1-779415c8edf1.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 107m²",
     "featured": false
@@ -5580,7 +5580,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohammed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/eda52dbe-ed1e-11ef-a020-0a6e1f0e9817-2c2ab33c-8a2c-4478-a30d-c94fc180cdf3.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -5601,7 +5601,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/fb54e555-ed1e-11ef-a020-0a6e1f0e9817-0475fd5b-a15f-44f1-ae61-50bb5084c5e9.png",
     "status": "available",
     "description": "clinic in ‎El Shorouk City - 3 Bedrooms, 40m²",
     "featured": false
@@ -5622,7 +5622,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/ee4de215-ed1e-11ef-a020-0a6e1f0e9817-94ec5f7d-22e6-4126-9af2-60a884e5607b.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 107m²",
     "featured": false
@@ -5643,7 +5643,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f56caa21-ed1e-11ef-a020-0a6e1f0e9817-5a3e2407-d68d-49d2-b5af-84d144216ad4.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 73m²",
     "featured": true
@@ -5664,7 +5664,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ahmed abbas (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/ef49153d-ed1e-11ef-a020-0a6e1f0e9817-8b3a23d8-7ba3-4f56-bbd6-274cccaf3668.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 108m²",
     "featured": false
@@ -5685,7 +5685,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f88f1aa9-ed1e-11ef-a020-0a6e1f0e9817-91f8a5de-ee38-4ee2-a3ab-00dfe4263ab7.png",
     "status": "available",
     "description": "Apartment in Mevida - 3 Bedrooms, 220m²",
     "featured": false
@@ -5706,7 +5706,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "ا.ليلى فريد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/cf486435-4e6c-49ce-a380-4de59aef5a38.png",
     "status": "available",
     "description": "Villa in rehab - 3 Bedrooms, 210m²",
     "featured": false
@@ -5727,7 +5727,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mai (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f98e4201-ed1e-11ef-a020-0a6e1f0e9817-ba98eeb3-8a35-461f-8dee-22f8c748cc49.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 165m²",
     "featured": false
@@ -5748,7 +5748,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مجدى ابراهيم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/b27fe1ce-7a02-4b55-9fdd-6264217fe030.png",
     "status": "available",
     "description": "Villa in rehab - 4 Bedrooms, 280m²",
     "featured": true
@@ -5769,7 +5769,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "magdy ibrahim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/56bbe672-d704-4473-be93-c4ded4b665f5.png",
     "status": "available",
     "description": "Duplex in New Cairo - 3 Bedrooms, 250m²",
     "featured": false
@@ -5790,7 +5790,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "magdy ibrahim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/fa7ed013-ed1e-11ef-a020-0a6e1f0e9817-66008470-01a3-46cb-84f5-510ef33ff71a.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 165m²",
     "featured": false
@@ -5811,7 +5811,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "magdy ebrahim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f1f9e771-ed1e-11ef-a020-0a6e1f0e9817-0b9aa473-e2af-4068-a06f-8af0fea706ff.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 165m²",
     "featured": false
@@ -5832,7 +5832,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مجدى ابراهيم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/efad6d5c-ed1e-11ef-a020-0a6e1f0e9817-916cf3b4-72c3-46b4-bb7e-b12b76e70048.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 133m²",
     "featured": false
@@ -5853,7 +5853,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "مجدى ابراهيم (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e24bf0e6-ed1e-11ef-a020-0a6e1f0e9817-e0c66524-3854-4ee2-bd1c-1b323d97bdc8.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 157m²",
     "featured": true
@@ -5874,7 +5874,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "رقيه رشيد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f2d30ecd-ed1e-11ef-a020-0a6e1f0e9817-4205e7d9-cff6-4e83-9d33-4afc7c87055e.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 65m²",
     "featured": false
@@ -5895,7 +5895,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "رقيه راشد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e6ca5484-ed1e-11ef-a020-0a6e1f0e9817-b9bba58b-3078-46b2-ac83-bdd42af954c8.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 86m²",
     "featured": false
@@ -5916,7 +5916,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/ec2077cd-ed1e-11ef-a020-0a6e1f0e9817-edce1007-7dda-4525-bfac-d4e26711636f.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 143m²",
     "featured": false
@@ -5937,7 +5937,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "رقيه رشيد (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/fcc0ba41-ed1e-11ef-a020-0a6e1f0e9817-6d419d9a-6075-48ce-9fa5-6ef2b0f6b17a.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 143m²",
     "featured": false
@@ -5958,7 +5958,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e3edb1fb-ed1e-11ef-a020-0a6e1f0e9817-756d55db-81cc-4cc8-b81d-8d52d596a143.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 86m²",
     "featured": true
@@ -5979,7 +5979,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "REDA (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e4679997-ed1e-11ef-a020-0a6e1f0e9817-c95e1a80-6749-4f09-87c1-316b16f79bf6.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 108m²",
     "featured": false
@@ -6000,7 +6000,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "bassem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e5619c99-ed1e-11ef-a020-0a6e1f0e9817-d2e78c83-a872-4ccc-85ee-f53099179259.png",
     "status": "available",
     "description": "Apartment in new-capital - 3 Bedrooms, 154m²",
     "featured": false
@@ -6021,7 +6021,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "bassem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f3c86e34-ed1e-11ef-a020-0a6e1f0e9817-206e2d78-b441-4025-8c96-917255c0cdfe.png",
     "status": "available",
     "description": "Apartment in new-capital - 3 Bedrooms, 154m²",
     "featured": false
@@ -6042,7 +6042,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ESRAA (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/fe2186c8-ed1e-11ef-a020-0a6e1f0e9817-bbf4a3df-fe50-40ea-97ff-6b57252285f8.png",
     "status": "available",
     "description": "Apartment in rehab - 3 Bedrooms, 110m²",
     "featured": false
@@ -6063,7 +6063,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e714c910-ed1e-11ef-a020-0a6e1f0e9817-29e82918-c30e-41bc-a25f-ab7c9d697c37.png",
     "status": "available",
     "description": "Apartment in andlos - 3 Bedrooms, 130m²",
     "featured": true
@@ -6084,7 +6084,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "amr weheba (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f48817a3-ed1e-11ef-a020-0a6e1f0e9817-03b7e93e-d4c2-4824-a591-660f18ca18a5.png",
     "status": "available",
     "description": "Apartment in East town - 3 Bedrooms, 155m²",
     "featured": false
@@ -6105,7 +6105,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/e8923abd-ed1e-11ef-a020-0a6e1f0e9817-98746d7d-a7f9-44f9-b869-8afd0c49afd0.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 165m²",
     "featured": false
@@ -6126,7 +6126,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f020b04e-ed1e-11ef-a020-0a6e1f0e9817-b8be6c52-420f-465d-8db7-4f2b0dbd19e0.png",
     "status": "available",
     "description": "Apartment in ‎El Shorouk City - 3 Bedrooms, 160m²",
     "featured": false
@@ -6147,7 +6147,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "م. لمياء (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5DE3BBZGZMY984V8TWN31Y/f0ff00e8-ed1e-11ef-a020-0a6e1f0e9817-305b3c7c-d716-4b1c-a191-dc4f7a30520d.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 175m²",
     "featured": false
@@ -6168,7 +6168,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "dr mira (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e860d390-ed1e-11ef-afa2-0a6e1f0e9817-c14a6fd7-acdf-43b0-b475-4dfd3a450477.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -6189,7 +6189,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "mohammed (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e4b82861-ed1e-11ef-afa2-0a6e1f0e9817-3321a3d9-f24a-4c0d-9260-f224fd026b4e.png",
     "status": "available",
     "description": "Apartment in Fifth square - 3 Bedrooms, 180m²",
     "featured": false
@@ -6210,7 +6210,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "ENGY (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e6c9465c-ed1e-11ef-afa2-0a6e1f0e9817-383d8a1b-cb48-4143-9f18-1dda4964a265.png",
     "status": "available",
     "description": "Apartment in New Cairo - 3 Bedrooms, 140m²",
     "featured": false
@@ -6231,7 +6231,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "rent",
     "agent": "Sierra Direct Advisor",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e270cb08-ed1e-11ef-afa2-0a6e1f0e9817-5a958f75-c334-47ea-a796-fe3f7e172cad.png",
     "status": "available",
     "description": "Apartment in Madinaty - 3 Bedrooms, 66m²",
     "featured": false
@@ -6252,7 +6252,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "اسلام (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/8de61c39-e568-488d-8102-5c845df70d31.png",
     "status": "available",
     "description": "Standalone Villa in New Cairo - 3 Bedrooms, 420m²",
     "featured": false
@@ -6273,7 +6273,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Amal Sabry (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e78eb3f6-ed1e-11ef-afa2-0a6e1f0e9817-c359149c-f001-4b81-9c86-0580b4c68cda.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -6294,7 +6294,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Arwa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e55c9d03-ed1e-11ef-afa2-0a6e1f0e9817-af4abd26-b564-4630-82c7-e4dd9365a387.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6315,7 +6315,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Arwa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e6286e6b-ed1e-11ef-afa2-0a6e1f0e9817-488d0d62-3f15-43b7-bf46-bb0a124ccb05.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6336,7 +6336,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Eslam (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e8fbd21a-ed1e-11ef-afa2-0a6e1f0e9817-e05a7e4f-bd2a-4061-9556-a7eab29a2931.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6357,7 +6357,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Eslam (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/ea8c011c-ed1e-11ef-afa2-0a6e1f0e9817-03d2b228-992e-4c79-9cd7-036389a681a7.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6378,7 +6378,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Fatma (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/b0c7e94f-a853-4610-8e85-d2ec6e11b224.png",
     "status": "available",
     "description": "Duplex + garden in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -6399,7 +6399,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Hisham (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/eb6eeb8d-ed1e-11ef-afa2-0a6e1f0e9817-d4fc2c03-0a19-41eb-ba33-f0fbfed7c785.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6420,7 +6420,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Islam (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e357c369-ed1e-11ef-afa2-0a6e1f0e9817-99a533ea-95f3-408f-a4af-64723b37d044.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6441,7 +6441,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Islam (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP5E7V0AFSH712G96VHVD3JP/e4473489-ed1e-11ef-afa2-0a6e1f0e9817-cb3bcfa4-1a3e-4235-8f38-a749f3332023.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6462,7 +6462,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Magdy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/8a27ee15-53e2-47cc-9cfc-806bd61ae952.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6483,7 +6483,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Mohamed Bakr (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/17688a30-701c-41e1-95a5-a300a4276bf7.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -6504,7 +6504,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Mohamed Bakr (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/4c24cff4-fbd1-4591-ab14-f784a49817be.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6525,7 +6525,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Mr. Mohamed Sayed Mohamed Ismail (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/84face7b-6b80-4646-a56c-0790d20e215f.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6546,7 +6546,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Mr. Sultan Ahmed Bin Hareb El Falahy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/acc6aa6b-aace-4590-a434-e45d040d1e57.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6567,7 +6567,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Mrs.Heba Abd El Rahman Mohamed El Kady (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/c1e39ec7-57c4-46e3-9863-04426ac760db.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6588,7 +6588,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Nahla morsy (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/acd218c1-355a-4fae-96e5-e09d3ee69e47.png",
     "status": "available",
     "description": "236 m + 100 m garden",
     "featured": true
@@ -6609,7 +6609,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "salem (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/d541304e-a0d4-4585-ac62-451024352fe8.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6630,7 +6630,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Sherif Elmasry (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/0f0f5b0e-5a2a-4d7f-b0a6-975eb486ac57.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6651,7 +6651,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Walaa (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/df8355a3-80e0-46ca-9561-cebe247a1614.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6672,7 +6672,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Wassim (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/0ff12ce0-70f0-4f8e-b672-920340f0df79.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6693,7 +6693,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Ziena (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/8f87b03a-7f19-4ce5-ae79-8e06c6aa62ee.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": true
@@ -6714,7 +6714,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Gamal hassan (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/e113c679-de81-4959-b267-f047ae007874.png",
     "status": "available",
     "description": "Af 10 af 11",
     "featured": false
@@ -6735,7 +6735,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "معتز (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/efec3122-5b62-4316-9b26-bfc867aa4f2f.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6756,7 +6756,7 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "Maha (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/20b07938-a86f-41ca-8237-45b93453a357.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
@@ -6777,78 +6777,78 @@ export const SEED_LISTINGS: Listing[] = [
     "mode": "sale",
     "agent": "دكتور علي (Owner)",
     "ago": "Live Google Sheet Sync",
-    "img": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/2cacc107-6893-490c-8246-0f629609067d.png",
     "status": "available",
     "description": "Apartment in Up Town Cairo - 3 Bedrooms, 200m²",
     "featured": false
   },
   {
-    "id": "MD-B10-3F-35K",
-    "code": "MD-B10-3F-35K",
+    "id": "UNIT-WA-001",
+    "code": "UNIT-WA-001",
     "compound": "Madinaty",
     "zone": "Madinaty",
     "type": "Apartment",
     "beds": 3,
     "bath": 2,
     "area": 140,
-    "egpM": 0.035,
+    "egpM": 35000,
     "usd": 700,
-    "aiScore": 9.8,
-    "tag": "Verified Owner",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "rent",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 100 882 1490 (Owner Direct) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/e1523f6b-a0a9-4790-a949-7bc6fdbb5089.png",
     "status": "available",
     "description": "متاحه مدينتي الشقه فيو مميز جدا ايجار مفروش تشطيب سوبر لوكس مكيفة بالكامل بالفرش والأجهزة الحديثة جاهزة للسكن الفوري",
     "featured": true
   },
   {
-    "id": "RH-P4-3S-6.8M",
-    "code": "RH-P4-3S-6.8M",
-    "compound": "Al Rehab",
+    "id": "UNIT-WA-002",
+    "code": "UNIT-WA-002",
+    "compound": "Al Rehab City",
     "zone": "Rehab",
-    "type": "Floor with Garden",
+    "type": "Apartment",
     "beds": 3,
     "bath": 2,
     "area": 127,
     "egpM": 6.8,
     "usd": 136000,
-    "aiScore": 9.6,
-    "tag": "Verified Owner",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 109 451 9022 (Verified Owner) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/ef76b440-f2ec-45f6-a124-4fdedd9f0677.png",
     "status": "available",
     "description": "للبيع شقة أرضي بحديقة في الرحاب 4 مساحة 127م + 60م حديقة تشطيب خاص بحري بالكامل موقع مميز بالقرب من السوق الشرقي والنادي",
     "featured": false
   },
   {
-    "id": "MV-GS-5U-42M",
-    "code": "MV-GS-5U-42M",
-    "compound": "Mivida",
+    "id": "UNIT-WA-003",
+    "code": "UNIT-WA-003",
+    "compound": "Mivida (Emaar)",
     "zone": "5th Settlement",
-    "type": "Standalone Villa",
+    "type": "Villa",
     "beds": 5,
     "bath": 6,
     "area": 450,
     "egpM": 42,
     "usd": 840000,
-    "aiScore": 9.9,
-    "tag": "Featured",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 114 772 0019 (Sierra Portfolio Lead) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/0da2ac82-4161-4bb0-95f6-79b004901744.png",
     "status": "available",
     "description": "فيلا مستقلة للبيع بميفيدا إعمار مساحة أرض 620م مباني 450م استلام فوري نص تشطيب موقع بانوراما مباشر على سنترال بارك",
     "featured": false
   },
   {
-    "id": "ET-R90-4S-18.5M",
-    "code": "ET-R90-4S-18.5M",
-    "compound": "Eastown (SODIC)",
+    "id": "UNIT-WA-004",
+    "code": "UNIT-WA-004",
+    "compound": "Eastown (Sodic)",
     "zone": "5th Settlement",
     "type": "Duplex",
     "beds": 4,
@@ -6856,19 +6856,19 @@ export const SEED_LISTINGS: Listing[] = [
     "area": 310,
     "egpM": 18.5,
     "usd": 370000,
-    "aiScore": 9.7,
-    "tag": "Verified Owner",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "Fareda (Direct Client / Owner) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/0e473c3b-e5ff-4c13-93c9-a76764919b49.png",
     "status": "available",
     "description": "دوبلكس الترا سوبر لوكس للبيع في إيست تاون سوديك التسعين الجنوبي مساحة 310م روف خاص 85م بحري صريح فيو مساحات خضراء بيدجيت 100 الف مقدم أو كاش تفاوض",
     "featured": false
   },
   {
-    "id": "HP-GR-3C-9.2M",
-    "code": "HP-GR-3C-9.2M",
+    "id": "UNIT-WA-005",
+    "code": "UNIT-WA-005",
     "compound": "Hyde Park",
     "zone": "5th Settlement",
     "type": "Apartment",
@@ -6877,20 +6877,20 @@ export const SEED_LISTINGS: Listing[] = [
     "area": 185,
     "egpM": 9.2,
     "usd": 184000,
-    "aiScore": 9.5,
-    "tag": "Direct Drop",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 122 390 1845 (Owner Group Intake) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/7fc0736a-1d9b-4e5f-bd52-bddc3d71d63e.png",
     "status": "available",
     "description": "متاح شقة للبيع في هايد بارك التجمع 185 متر 3 غرف نوم (منهم ماستر بدريسنج) + 3 حمام استلام فوري اقساط متساوية بدون عمولة",
     "featured": false
   },
   {
-    "id": "SL-HAF-4U-38M",
-    "code": "SL-HAF-4U-38M",
-    "compound": "Swan Lake Residence",
+    "id": "UNIT-WA-006",
+    "code": "UNIT-WA-006",
+    "compound": "Swan Lake Residences",
     "zone": "5th Settlement",
     "type": "Twin House",
     "beds": 4,
@@ -6898,40 +6898,40 @@ export const SEED_LISTINGS: Listing[] = [
     "area": 375,
     "egpM": 38,
     "usd": 760000,
-    "aiScore": 9.8,
-    "tag": "Featured",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 101 993 4401 (Project Admin) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP4AG491P1BRQMCKXF4SBXWH/a7656863-fefb-11ef-8061-fa2821f0d76e-fc2b63fd-bc31-461f-b1cb-273ec4443dc3.png",
     "status": "available",
     "description": "توين هاوس للبيع سوان ليك ريزيدنس التجمع الأول تشطيب كامل الترا مودرن جاهز للسكن بحري صريح موقع مميز جدا على اللاجون",
     "featured": true
   },
   {
-    "id": "BD-PH-3C-14.2M",
-    "code": "BD-PH-3C-14.2M",
+    "id": "UNIT-WA-007",
+    "code": "UNIT-WA-007",
     "compound": "Badya (Palm Hills)",
-    "zone": "6th of October",
+    "zone": "5th Settlement",
     "type": "Townhouse",
     "beds": 3,
     "bath": 4,
     "area": 240,
     "egpM": 14.2,
     "usd": 284000,
-    "aiScore": 9.4,
-    "tag": "Direct Drop",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 155 019 4481 (Owner Inventory Archive) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPCGXDGMBE5RMZ2P6YY5WZ81/d79d54a1-ed1e-11ef-8581-0a1a96148fff-25e96636-e8bb-464f-8f48-6e8d9e251cdd.png",
     "status": "available",
     "description": "تاون هاوس كورنر للبيع في بادية بالم هيلز استلام قريب مساحة مباني 240م أرض 290م مدفوع جزء ومتبقي اقساط مريحة حتى 2030",
     "featured": false
   },
   {
-    "id": "VS-3A-16.5M+FF",
-    "code": "VS-3A-16.5M+FF",
+    "id": "UNIT-WA-008",
+    "code": "UNIT-WA-008",
     "compound": "Villette (SODIC)",
     "zone": "5th Settlement",
     "type": "Apartment",
@@ -6940,40 +6940,40 @@ export const SEED_LISTINGS: Listing[] = [
     "area": 220,
     "egpM": 16.5,
     "usd": 330000,
-    "aiScore": 9.7,
-    "tag": "Featured",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 109 204 8333 (Broker Verified) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/0580d1af-258b-4410-919c-53e2b79eaaed.png",
     "status": "available",
     "description": "شقة للبيع في فيلييت سوديك 3 غرف مساحة 220 متر تشطيب كامل سعر 16,500,000 جنيه كاش أو تقسيط على 5 سنين",
     "featured": false
   },
   {
-    "id": "MV-POOL-4U-38M",
-    "code": "MV-POOL-4U-38M",
-    "compound": "Mivida",
+    "id": "UNIT-WA-009",
+    "code": "UNIT-WA-009",
+    "compound": "Mivida (Emaar)",
     "zone": "5th Settlement",
-    "type": "Standalone Villa",
+    "type": "Villa",
     "beds": 4,
     "bath": 5,
     "area": 450,
     "egpM": 38,
     "usd": 760000,
-    "aiScore": 9.9,
-    "tag": "Verified Owner",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 111 234 5678 (Direct Owner) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/0fa3d4c5-fc51-4f29-932b-7528e1dd41cd.png",
     "status": "available",
     "description": "🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم ماستر، تشطيب الترا سوبر لوكس مع حديقة خاصة وحمام سباحة Private Pool. السعر 38 مليون كاش. لقطة وسعر محروق للتنفيذ الفوري.",
     "featured": false
   },
   {
-    "id": "HP-LAKE-3P-16.5M",
-    "code": "HP-LAKE-3P-16.5M",
+    "id": "UNIT-WA-010",
+    "code": "UNIT-WA-010",
     "compound": "Hyde Park",
     "zone": "5th Settlement",
     "type": "Penthouse",
@@ -6982,12 +6982,12 @@ export const SEED_LISTINGS: Listing[] = [
     "area": 280,
     "egpM": 16.5,
     "usd": 330000,
-    "aiScore": 9.8,
-    "tag": "Featured",
+    "aiScore": 9.2,
+    "tag": "WhatsApp Verified",
     "mode": "sale",
-    "agent": "Sierra WhatsApp Gateway",
+    "agent": "+20 122 345 6789 (Owner Direct) (WhatsApp Verified)",
     "ago": "WhatsApp Import",
-    "img": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+    "img": "https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/1b746e5a-3de4-41d0-998a-9e1e690e4aad.jpg",
     "status": "available",
     "description": "للبيع في كمبوند هايد بارك Hyde Park التجمع الخامس بنتهاوس Penthouse مساحة 280م + روف 120م، 3 غرف نوم، نصف تشطيب، فيو بحيرات Lake View مباشرة. إجمالي السعر 16.5 مليون بمقدم 30% وأقساط على 5 سنوات.",
     "featured": false
@@ -6995,12 +6995,12 @@ export const SEED_LISTINGS: Listing[] = [
 ];
 
 export const SEED_AGENTS: Agent[] = [
-  { id: "a1", name: "Layla Mansour", phone: "+20 100 123 4567", email: "layla@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=300&q=80", rating: 4.9, listingsCount: 18 },
-  { id: "a2", name: "Karim Fahmy", phone: "+20 100 234 5678", email: "karim@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80", rating: 4.8, listingsCount: 14 },
-  { id: "a3", name: "Nour Saleh", phone: "+20 100 345 6789", email: "nour@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80", rating: 4.9, listingsCount: 11 },
-  { id: "a4", name: "Omar Magdy", phone: "+20 100 456 7890", email: "omar@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80", rating: 4.7, listingsCount: 9 },
-  { id: "a5", name: "Yara Hakim", phone: "+20 100 567 8901", email: "yara@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&q=80", rating: 4.8, listingsCount: 13 },
-  { id: "a6", name: "Rana Adel", phone: "+20 100 678 9012", email: "rana@sierra-estates.net", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=300&q=80", rating: 4.7, listingsCount: 8 },
+  { id: "a1", name: "Layla Mansour", phone: "+20 100 123 4567", email: "layla@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/bc3fe9d6-6f0d-4e6a-b0d9-334dd2b37910.jpg", rating: 4.9, listingsCount: 18 },
+  { id: "a2", name: "Karim Fahmy", phone: "+20 100 234 5678", email: "karim@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/6ba25fcd-8de4-4ff3-8338-d1ba05752b9b.png", rating: 4.8, listingsCount: 14 },
+  { id: "a3", name: "Nour Saleh", phone: "+20 100 345 6789", email: "nour@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/f7752243-f23b-4036-8845-ab88cff3455b.png", rating: 4.9, listingsCount: 11 },
+  { id: "a4", name: "Omar Magdy", phone: "+20 100 456 7890", email: "omar@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/00a96bd6-9c58-48ba-8fb0-465f2b507d54.png", rating: 4.7, listingsCount: 9 },
+  { id: "a5", name: "Yara Hakim", phone: "+20 100 567 8901", email: "yara@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/e88b974c-ca5f-4256-9bf6-12a674e9742c.png", rating: 4.8, listingsCount: 13 },
+  { id: "a6", name: "Rana Adel", phone: "+20 100 678 9012", email: "rana@sierra-estates.net", avatar: "https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/7ca575d6-4853-4533-931c-dc6e69936740.png", rating: 4.7, listingsCount: 8 },
 ];
 
 export const SEED_INQUIRY_STATUSES = [

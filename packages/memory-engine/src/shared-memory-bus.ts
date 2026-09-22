@@ -77,14 +77,15 @@ export class SharedMemoryBus {
       data: value,
     }, allTags))
 
-    // Handle TTL expiry
-    if (effectiveTtl) {
+    // Handle TTL expiry (bounded to prevent timer overflow / resource exhaustion)
+    if (effectiveTtl && effectiveTtl > 0) {
       this.clearExpiryTimer(id)
+      const safeTtl = Math.min(Math.max(100, effectiveTtl), 2147483647)
       const timer = setTimeout(() => {
         void this.expire(id).catch((error) => {
-          console.error(`[SharedMemoryBus] Failed to expire memory: ${id}`, error)
+          console.error('[SharedMemoryBus] Failed to expire memory:', id, error)
         })
-      }, effectiveTtl)
+      }, safeTtl)
       this.expiryTimers.set(id, timer)
     }
 
@@ -178,7 +179,7 @@ export class SharedMemoryBus {
     await this.store.delete(id)
     this.clearExpiryTimer(id)
     this.emit('expire', { type: 'expire', id })
-    console.log(`[SharedMemoryBus] Memory expired: ${id}`)
+    console.log('[SharedMemoryBus] Memory expired:', id)
   }
 
   private clearExpiryTimer(id: string): void {
@@ -211,13 +212,13 @@ export class SharedMemoryBus {
   private emit(topic: string, event: MemoryEvent): void {
     this.subscribers.get(topic)?.forEach((fn) => {
       try { fn(event) } catch (err) {
-        console.error(`[SharedMemoryBus] Subscriber error on '${topic}':`, err)
+        console.error('[SharedMemoryBus] Subscriber error on topic:', topic, err)
       }
     })
     // Also emit to wildcard listeners
     this.subscribers.get('*')?.forEach((fn) => {
       try { fn(event) } catch (err) {
-        console.error(`[SharedMemoryBus] Wildcard subscriber error:`, err)
+        console.error('[SharedMemoryBus] Wildcard subscriber error:', err)
       }
     })
   }

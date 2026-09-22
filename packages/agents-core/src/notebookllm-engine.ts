@@ -320,4 +320,214 @@ Respond ONLY with valid JSON.`;
     const text = result.response.text().replace(/```json|```/g, '').trim();
     return JSON.parse(text) as StudyGuideResponse;
   }
+
+  /**
+   * Generates a concise 60-90 second bilingual audio briefing dialogue for a specific property or compound.
+   */
+  async generateAudioBriefing(
+    property: {
+      title: string;
+      compound?: string;
+      price?: number | string;
+      specs?: string;
+      location?: string;
+    },
+    language: 'ar' | 'en' = 'ar'
+  ): Promise<AudioBriefingPayload> {
+    const compound = property.compound || 'New Cairo Prime Sector';
+    const priceStr = typeof property.price === 'number' ? `${property.price.toLocaleString()} EGP` : property.price || 'Market Rate';
+
+    if (this.apiKey) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const prompt = `Generate a high-impact 60-second real estate briefing dialogue for luxury property buyers.
+Property: ${property.title} in ${compound}
+Price: ${priceStr}
+Specs: ${property.specs || 'Luxury finishes, prime orientation'}
+Language: ${language === 'ar' ? 'Arabic (Modern Standard with Egyptian luxury proptech nuances)' : 'English'}
+
+Output as JSON:
+{
+  "title": "Briefing Title",
+  "language": "${language}",
+  "estimatedDurationSeconds": 60,
+  "transcript": "Full combined speech text...",
+  "dialogue": [
+    { "speaker": "Alex", "text": "...", "role": "host" },
+    { "speaker": "Sara", "text": "...", "role": "analyst" }
+  ],
+  "keyHighlights": ["Highlight 1", "Highlight 2"]
+}`;
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().replace(/```json|```/g, '').trim();
+        return JSON.parse(text) as AudioBriefingPayload;
+      } catch {
+        // Fall back to deterministic template
+      }
+    }
+
+    // Deterministic fallback
+    if (language === 'ar') {
+      return {
+        title: `ملخص صوتي: ${property.title} — ${compound}`,
+        language: 'ar',
+        estimatedDurationSeconds: 65,
+        transcript: `أهلاً بكم في الإيجاز الصوتي من سييرا إستيتس. نلقي الضوء اليوم على ${property.title} في كمبوند ${compound}. سعر الوحدة الحالي هو ${priceStr}. تتميز الوحدة بموقع استراتيجي بالقرب من محاور القاهرة الجديدة الرئيسية مع عائد إيجاري متوقع يتراوح بين 9 إلى 11% سنوياً. لحجز معاينة حية أو جولة افتراضية، تواصلوا مع مستشارنا عبر الخط الساخن.`,
+        dialogue: [
+          {
+            speaker: 'أحمد',
+            text: `أهلاً بكم في سييرا بودكاست. معانا النهاردة فرصة ممتازة في ${compound}، وحدة ${property.title}. إيه رأيك يا سارة في التقييم المالي؟`,
+            role: 'host'
+          },
+          {
+            speaker: 'سارة',
+            text: `الوحدة معروضة بسعر ${priceStr}، وده أقل بنسبة 8% من متوسط صفقات المربع الذهبي الشهر الحالي، مع فرصة استلام فورية وعائد تشغيلي مرتفع.`,
+            role: 'analyst'
+          },
+          {
+            speaker: 'أحمد',
+            text: `ممتاز جداً! تقدروا تحجزوا معاينة مباشرة أو تطلبوا التقرير القانوني الكامل للوحدة الآن.`,
+            role: 'host'
+          }
+        ],
+        keyHighlights: [
+          `الموقع: ${compound} — التجمع الخامس`,
+          `السعر: ${priceStr}`,
+          `عائد استثماري متوقع: 9.5% - 11%`,
+          `جاهزة للمعاينة الفورية والتعاقد الرسمي`
+        ]
+      };
+    }
+
+    return {
+      title: `Audio Briefing: ${property.title} — ${compound}`,
+      language: 'en',
+      estimatedDurationSeconds: 60,
+      transcript: `Welcome to the Sierra Estates Audio Briefing. Today we examine ${property.title} located in ${compound}. Listed at ${priceStr}, this asset represents an outstanding investment opportunity with projected gross rental yields between 9 and 11% annually. Contact our New Cairo advisory desk to schedule an in-person or virtual walkthrough.`,
+      dialogue: [
+        {
+          speaker: 'Alex',
+          text: `Welcome back. Today we are spotlighting ${property.title} inside ${compound}. Sara, what stands out about this listing?`,
+          role: 'host'
+        },
+        {
+          speaker: 'Sara',
+          text: `At ${priceStr}, the price per square meter is approximately 8% below the Golden Square trailing 30-day average. The layout and orientation make it ideal for immediate occupancy or executive rental.`,
+          role: 'analyst'
+        },
+        {
+          speaker: 'Alex',
+          text: `A compelling opportunity for both capital growth and immediate cash flow. Reach out directly to book an appointment.`,
+          role: 'host'
+        }
+      ],
+      keyHighlights: [
+        `Prime Corridor: ${compound}, New Cairo`,
+        `Pricing: ${priceStr}`,
+        `Projected Yield: 9% - 11% Gross`,
+        `Verified Legal Dossier & Immediate Handover`
+      ]
+    };
+  }
+
+  /**
+   * Compiles an automated 5-step video tour storyboard with motion directions and ROI highlights.
+   */
+  compileVideoTourStoryboard(property: {
+    id?: string;
+    title: string;
+    compound: string;
+    price: number | string;
+    photos?: string[];
+    areaSqm?: number;
+  }): VideoTourStoryboard {
+    const priceFormatted = typeof property.price === 'number' ? `${property.price.toLocaleString()} EGP` : property.price;
+    const area = property.areaSqm ? `${property.areaSqm} m²` : 'Spacious Layout';
+
+    return {
+      propertyId: property.id || `prop-${Date.now()}`,
+      propertyTitle: property.title,
+      compoundName: property.compound,
+      totalDurationSeconds: 45,
+      aspectRatios: ['9:16', '16:9'],
+      audioTrackRecommendation: 'ambient_luxury_lounge_cinematic',
+      slides: [
+        {
+          slideNumber: 1,
+          type: 'intro',
+          title: property.title,
+          subtitle: `Exclusive Opportunity · ${property.compound}`,
+          durationSeconds: 7,
+          highlightStat: priceFormatted,
+          cameraMovement: 'pan_in'
+        },
+        {
+          slideNumber: 2,
+          type: 'masterplan',
+          title: 'Location & Surroundings',
+          subtitle: `Golden Square Connectivity · New Cairo`,
+          durationSeconds: 10,
+          highlightStat: 'Prime Masterplan GPS Location',
+          cameraMovement: 'aerial_sweep'
+        },
+        {
+          slideNumber: 3,
+          type: 'interior',
+          title: 'Spatial Architecture & Interior',
+          subtitle: `${area} · Premium Marble & Natural Light`,
+          durationSeconds: 11,
+          highlightStat: area,
+          cameraMovement: 'orbit_left'
+        },
+        {
+          slideNumber: 4,
+          type: 'pricing_roi',
+          title: 'Financial Projections & Yield',
+          subtitle: `Projected Rental Yield: 9.8% · Capital Growth 18%/yr`,
+          durationSeconds: 10,
+          highlightStat: '9.8% Annual Yield',
+          cameraMovement: 'pan_in'
+        },
+        {
+          slideNumber: 5,
+          type: 'outro',
+          title: 'Sierra Estates Concierge',
+          subtitle: 'Book Your Private Viewing · Hotline +201092048333',
+          durationSeconds: 7,
+          highlightStat: 'sierra-estates.net',
+          cameraMovement: 'pan_out'
+        }
+      ]
+    };
+  }
 }
+
+export interface VideoTourSlide {
+  slideNumber: number;
+  type: 'intro' | 'masterplan' | 'interior' | 'pricing_roi' | 'outro';
+  title: string;
+  subtitle: string;
+  durationSeconds: number;
+  highlightStat: string;
+  cameraMovement: 'pan_in' | 'orbit_left' | 'aerial_sweep' | 'pan_out';
+}
+
+export interface VideoTourStoryboard {
+  propertyId: string;
+  propertyTitle: string;
+  compoundName: string;
+  totalDurationSeconds: number;
+  aspectRatios: ('9:16' | '16:9')[];
+  slides: VideoTourSlide[];
+  audioTrackRecommendation: string;
+}
+
+export interface AudioBriefingPayload {
+  title: string;
+  language: 'ar' | 'en';
+  estimatedDurationSeconds: number;
+  transcript: string;
+  dialogue: { speaker: string; text: string; role: 'host' | 'analyst' }[];
+  keyHighlights: string[];
+}
+

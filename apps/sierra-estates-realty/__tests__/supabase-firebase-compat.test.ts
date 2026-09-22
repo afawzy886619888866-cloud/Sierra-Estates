@@ -92,15 +92,19 @@ describe('Supabase - Firebase Compatibility Layer & Memory Transition', () => {
       expect(entry?.content).toContain('Supabase is the primary authoritative backend');
     });
 
-    it('should have Supabase declared in obsidian-store.json', () => {
-      const storePath = path.resolve(__dirname, '../../../obsidian-store.json');
-      const storeContent = JSON.parse(fs.readFileSync(storePath, 'utf8'));
-      const supabaseRecord = storeContent['system-supabase-primary-backend'];
+    it('should keep the Supabase declaration in system memory, not in a tracked data file', () => {
+      // obsidian-store.json (142MB of tracked data) was removed from the repo
+      // in the deep-hygiene pass — the authoritative declaration lives in the
+      // MemoryPalace system memory above. This guards against the data file
+      // sneaking back into git.
+      const palace = new MemoryPalace();
+      const entry = palace.get('system-backend-authoritative-supabase');
+      expect(entry).toBeDefined();
+      expect(entry?.metadata?.provider).toBe('supabase');
+      expect(entry?.metadata?.status).toBe('active-primary');
 
-      expect(supabaseRecord).toBeDefined();
-      expect(supabaseRecord.value.provider).toBe('supabase');
-      expect(supabaseRecord.value.status).toBe('active-primary');
-      expect(supabaseRecord.value.replaces).toBe('firebase');
+      const storePath = path.resolve(__dirname, '../../../obsidian-store.json');
+      expect(fs.existsSync(storePath)).toBe(false);
     });
   });
 });

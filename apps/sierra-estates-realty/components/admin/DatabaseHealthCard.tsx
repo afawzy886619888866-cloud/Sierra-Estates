@@ -73,9 +73,9 @@ export default function DatabaseHealthCard({ lang = 'en' }: DatabaseHealthProps)
         <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition-colors">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>{isAr ? 'تجمع الاتصالات (Pool)' : 'Connection Pool'}</span>
-            <span className="text-[10px] font-mono text-cyan-400">Supavisor</span>
+            <span className="text-[10px] font-mono text-[#E9C176]">Supavisor</span>
           </div>
-          <div className="text-xl font-bold font-mono text-cyan-400 mt-1">4 / 20 Active</div>
+          <div className="text-xl font-bold font-mono text-[#E9C176] mt-1">4 / 20 Active</div>
           <div className="text-[10px] font-mono text-slate-400 mt-1">
             {isAr ? 'استخدام منخفض ومستقر (20%)' : '20% capacity · Headroom safe'}
           </div>

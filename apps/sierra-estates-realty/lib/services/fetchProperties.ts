@@ -1,4 +1,4 @@
-import { supabase } from '../../../../lib/supabase';
+import { supabase } from '../supabaseClient';
 
 export interface Property {
   id: string;
@@ -36,7 +36,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
           name: item.title || `${item.property_type} in ${item.compound}`,
           specs: `BUA: ${item.area_sqm}m² | ${item.bedrooms} Beds | ${item.bathrooms} Baths`,
           price: `${Number(item.price).toLocaleString()} EGP`,
-          imageUrl: (item.images && item.images[0]) || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+          imageUrl: (item.images && item.images[0]) || "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/01282d44-c0b4-4993-9f36-0b9eb682059d.png",
           type: item.deal_type === 'rent' ? 'Rent' : 'Resale',
           tags: item.amenities?.length ? item.amenities : [item.finishing_type || "Luxury Finishing", item.property_type || "Standalone"],
         }));
@@ -56,7 +56,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
       specs: "BUA: 350m² | Land: 650m²",
       price: "75,000 EGP",
       type: "Rent" as const,
-      imageUrl: "https://images.unsplash.com/photo-1613490908578-812e52bb1667?q=80&w=1200&auto=format&fit=crop",
+      imageUrl: "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d9b34e3b-ed1e-11ef-9c46-0a0bf5daed27-3f96b588-a9eb-47b8-9cbc-adb1ac5ebb78.png",
       tags: ["Standalone", "Fully Finished"]
     },
     {
@@ -67,7 +67,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
       specs: "BUA: 472m² | Land: 800m²",
       price: "35,000,000 EGP",
       type: "Resale" as const,
-      imageUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop",
+      imageUrl: "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/01282d44-c0b4-4993-9f36-0b9eb682059d.png",
       tags: ["Golf View", "Ready to Move"]
     },
     {
@@ -78,7 +78,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
       specs: "BUA: 420m² | Land: 700m²",
       price: "45,000,000 EGP",
       type: "Resale" as const,
-      imageUrl: "https://images.unsplash.com/photo-1613490908578-812e52bb1667?q=80&w=1200&auto=format&fit=crop",
+      imageUrl: "https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d9b34e3b-ed1e-11ef-9c46-0a0bf5daed27-3f96b588-a9eb-47b8-9cbc-adb1ac5ebb78.png",
       tags: ["Prime Location", "Private Pool"]
     }
   ] satisfies Property[]).filter(item => item.type === typeFilter);
