@@ -55,7 +55,7 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>VIP VIEWING QUEUE</span>
-            <span className="text-cyan-400">100% SLA met</span>
+            <span className="text-[#E9C176]">100% SLA met</span>
           </div>
           <div className="text-xl font-bold text-white">4 Scheduled</div>
           <p className="text-[11px] text-slate-500">Mivida &amp; Katameya Dunes viewings for tomorrow</p>
@@ -143,7 +143,7 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
                   log.type === 'warn'
                     ? 'text-amber-400'
                     : log.type === 'agent'
-                    ? 'text-cyan-400'
+                    ? 'text-[#E9C176]'
                     : log.type === 'pubsub'
                     ? 'text-emerald-400'
                     : 'text-slate-300'
@@ -217,7 +217,7 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
                     {lead.aiStatus}
                   </span>
                 </div>
-                <div className="text-[11px] text-cyan-400 font-mono mt-0.5">{lead.phone}</div>
+                <div className="text-[11px] text-[#E9C176] font-mono mt-0.5">{lead.phone}</div>
                 <div className="text-[11px] text-slate-300 mt-1 font-medium">
                   {lead.compound} · <span className="text-amber-300">{lead.budget}</span>
                 </div>

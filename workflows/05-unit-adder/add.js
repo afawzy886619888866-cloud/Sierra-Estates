@@ -1,9 +1,9 @@
 /**
- * Workflow 05: Unit Adder
+ * Workflow 05: Unit Adder (Supabase Authoritative)
  * ─────────────────────────────────────────
  * Reads new units from Google Sheets
  * Normalizes and deduplicates
- * Writes to Firestore "listings" collection
+ * Writes to Supabase "listings" table
  * Syncs with SBR code generation
  *
  * Usage:
@@ -11,42 +11,58 @@
  *   OR: cron job every 30 minutes
  *
  * Env vars required:
- *   - FIREBASE_PROJECT_ID
- *   - FIREBASE_PRIVATE_KEY
- *   - FIREBASE_CLIENT_EMAIL
+ *   - NEXT_PUBLIC_SUPABASE_URL
+ *   - SUPABASE_SERVICE_ROLE_KEY
  *   - BROKER_INBOX_SHEET_ID
  *   - GOOGLE_SERVICE_ACCOUNT_KEY
  */
 
 const { google } = require('googleapis');
-const admin = require('firebase-admin');
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+const dotenv = require('dotenv');
+
+// Load environment
+const ROOT = path.resolve(__dirname, '../..');
+[
+  path.resolve(ROOT, '.env.local'),
+  path.resolve(ROOT, '.env'),
+].forEach((envPath) => {
+  if (fs.existsSync(envPath)) dotenv.config({ path: envPath, override: false });
+});
 
 const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID;
-const SERVICE_ACCOUNT_KEY = JSON.parse(
-  fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'utf8')
-);
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Initialize Firebase
-admin.initializeApp({
-  credential: admin.credential.cert(SERVICE_ACCOUNT_KEY),
-  projectId: process.env.FIREBASE_PROJECT_ID,
+if (!SUPABASE_KEY) {
+  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY.');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const db = admin.firestore();
-
-const sheets = google.sheets({
-  version: 'v4',
-  auth: new google.auth.GoogleAuth({
-    credentials: SERVICE_ACCOUNT_KEY,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  }),
-});
+let sheets = null;
+if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)) {
+  const serviceAccountKey = JSON.parse(
+    fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'utf8')
+  );
+  sheets = google.sheets({
+    version: 'v4',
+    auth: new google.auth.GoogleAuth({
+      credentials: serviceAccountKey,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    }),
+  });
+}
 
 // Generate SBR code from property attributes
 function generateSBRCode(compound, bedrooms, furnishing, price) {
-  const compoundAbbr = compound.substring(0, 3).toUpperCase();
+  const compoundAbbr = (compound || 'PRP').substring(0, 3).toUpperCase();
   const furnishCode = furnishing === 'furnished' ? 'F' : 'U';
   const priceAbbr = `${Math.floor(price / 1000)}K`;
   return `${compoundAbbr}-${bedrooms}${furnishCode}-${priceAbbr}`;
@@ -59,6 +75,10 @@ function computeSyncHash(compound, area, floor, unitNumber) {
 }
 
 async function getPendingUnits() {
+  if (!sheets || !SHEET_ID) {
+    console.warn('⚠️ Google Sheets not configured or sheet ID missing. Skipping sheet fetch.');
+    return [];
+  }
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -66,7 +86,7 @@ async function getPendingUnits() {
     });
 
     const rows = response.data.values || [];
-    return rows.slice(1).filter(row => row[11] === 'PENDING'); // Filter by status
+    return rows.slice(1).filter(row => row[11] === 'PENDING');
   } catch (err) {
     console.error('❌ Failed to read pending units:', err.message);
     return [];
@@ -75,20 +95,24 @@ async function getPendingUnits() {
 
 async function checkDuplicate(syncHash) {
   try {
-    const snapshot = await db
-      .collection('listings')
-      .where('dupeCheckHash', '==', syncHash)
-      .limit(1)
-      .get();
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id')
+      .eq('dupe_check_hash', syncHash)
+      .limit(1);
 
-    return !snapshot.empty;
+    if (error) {
+      console.error('❌ Dedup check error:', error.message);
+      return false;
+    }
+    return Boolean(data && data.length > 0);
   } catch (err) {
     console.error('❌ Dedup check failed:', err.message);
     return false;
   }
 }
 
-async function addUnitToFirestore(unit, syncHash) {
+async function addUnitToSupabase(unit, syncHash) {
   try {
     const sbrCode = generateSBRCode(
       unit.compound,
@@ -97,58 +121,53 @@ async function addUnitToFirestore(unit, syncHash) {
       unit.price
     );
 
-    const docRef = await db.collection('listings').add({
-      // Identity
+    const price = parseFloat(unit.price) || 0;
+    const area = parseInt(unit.area) || 0;
+    const pricePerSqm = area > 0 ? Math.round(price / area) : 0;
+
+    const record = {
       title: `${unit.bedrooms}BR ${unit.compound}`,
-      titleAr: unit.titleAr || '',
-
-      // SBR Code
-      sbrCode,
-
-      // Specs
-      propertyType: unit.propertyType || 'apartment',
-      category: 'residential',
+      title_ar: unit.titleAr || '',
+      code: sbrCode,
+      property_type: unit.propertyType?.toLowerCase() || 'apartment',
       bedrooms: parseInt(unit.bedrooms) || 0,
       bathrooms: parseInt(unit.bathrooms) || 0,
-      area: parseInt(unit.area) || 0,
-      finishingType: unit.finishingType || 'not-finished',
-      furnishingStatus: unit.furnishing || 'unfurnished',
-
-      // Price
-      price: parseFloat(unit.price) || 0,
-      pricePerSqm: parseFloat(unit.price) / (parseInt(unit.area) || 1),
-
-      // Location
+      area,
+      finishing: unit.finishingType || 'not-finished',
+      price,
+      price_per_sqm: pricePerSqm,
       compound: unit.compound,
-      location: {
-        address: unit.address || unit.compound,
-        lat: parseFloat(unit.lat) || 30.0, // Default to Cairo
-        lng: parseFloat(unit.lng) || 31.0,
-      },
-
-      // Dedup
-      dupeCheckHash: syncHash,
-
-      // Lifecycle
-      status: 'Available',
-      ownerType: 'broker',
-      ownerContact: unit.ownerContact || '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-
-      // Source
+      location: unit.address || unit.compound,
+      lat: parseFloat(unit.lat) || 30.0,
+      lng: parseFloat(unit.lng) || 31.0,
+      dupe_check_hash: syncHash,
+      status: 'available',
+      owner_type: 'broker',
       source: 'sheets_sync',
-    });
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
-    console.log(`✅ Unit added: ${sbrCode}`);
-    return docRef.id;
+    const { data, error } = await supabase
+      .from('listings')
+      .insert(record)
+      .select('id')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    console.log(`✅ Unit added to Supabase: ${sbrCode} (id: ${data.id})`);
+    return data.id;
   } catch (err) {
-    console.error('❌ Firestore write failed:', err.message);
+    console.error('❌ Supabase insert failed:', err.message);
     return null;
   }
 }
 
 async function updateUnitStatus(rowIndex, status) {
+  if (!sheets || !SHEET_ID) return;
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
@@ -164,7 +183,8 @@ async function updateUnitStatus(rowIndex, status) {
 }
 
 async function main() {
-  console.log('🏢 Starting unit adder workflow...');
+  console.log('🏢 Starting unit adder workflow (Supabase)...');
+  console.log(`📡 Supabase Endpoint: ${SUPABASE_URL}`);
 
   const pendingUnits = await getPendingUnits();
   console.log(`📊 Found ${pendingUnits.length} pending units`);
@@ -199,25 +219,33 @@ async function main() {
     const isDuplicate = await checkDuplicate(syncHash);
 
     if (isDuplicate) {
-      console.log(`⏭️  Skipped (duplicate): ${unit.compound} ${unit.bedrooms}BR`);
-      await updateUnitStatus(i, 'DEDUPLICATED');
+      console.log(`⚠️ Skipping duplicate: ${unit.compound} ${unit.area}m²`);
+      await updateUnitStatus(i, 'DUPLICATE');
       deduplicated++;
+      continue;
+    }
+
+    const insertedId = await addUnitToSupabase(unit, syncHash);
+
+    if (insertedId) {
+      await updateUnitStatus(i, 'ADDED');
+      added++;
     } else {
-      const docId = await addUnitToFirestore(unit, syncHash);
-      if (docId) {
-        await updateUnitStatus(i, 'ADDED');
-        added++;
-      } else {
-        await updateUnitStatus(i, 'ERROR');
-      }
+      await updateUnitStatus(i, 'ERROR');
     }
   }
 
-  console.log(
-    `✅ Unit adder complete: ${added} added, ${deduplicated} deduplicated, ${pendingUnits.length - added - deduplicated} errors`
-  );
-
-  process.exit(0);
+  console.log('═══════════════════════════════════════');
+  console.log(`✅ Workflow complete: ${added} added, ${deduplicated} duplicates`);
 }
 
-main();
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+module.exports = {
+  generateSBRCode,
+  computeSyncHash,
+  addUnitToSupabase,
+  checkDuplicate,
+};

@@ -81,7 +81,7 @@ Sierra Estates is a **real estate intelligence platform** for the Egyptian luxur
 
 ### Key npm Dependencies
 
-```
+```text
 firebase, firebase-admin, @google/generative-ai, framer-motion, animejs,
 lucide-react, react-hot-toast, next-intl, leaflet, react-leaflet,
 @opentelemetry/sdk-node, @arizeai/openinference-semantic-conventions
@@ -192,7 +192,7 @@ graph TD
 
 ### Directory Structure
 
-```
+```text
 my-app/
 ├── app/                          # Next.js App Router
 │   ├── page.tsx                  # Operations Dashboard (4-agent switcher)
@@ -272,7 +272,7 @@ my-app/
 
 ### Key Type: `Unit` (Listing)
 
-```
+```text
 title, titleAr, code, propertyType, status, compound, location,
 area, bedrooms, bathrooms, price, images[], automation{},
 intelligence{code, valuationScore, sentiment, ...},
@@ -281,7 +281,7 @@ orchestrationState{stage, status, lastTriggeredAt}
 
 ### Key Type: `InvestmentStakeholder` (Lead)
 
-```
+```text
 name, phone, email, stage (PipelineStage), source,
 budget, preferredLocations[], aiProfiling{score, topMatches[]},
 intelligence{memory{negativeSignals[], positiveSignals[]},
@@ -310,7 +310,7 @@ orchestrationState: {
 
 The heart of Sierra Estates. Controlled by [orchestrator.ts](file:///c:/OpenClaw/my-app/lib/services/orchestrator.ts).
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  STAGE     │  NAME                │  AGENT       │  SERVICE(S)          │
 ├──────────────────────────────────────────────────────────────────────────┤
@@ -332,7 +332,7 @@ The heart of Sierra Estates. Controlled by [orchestrator.ts](file:///c:/OpenClaw
 
 ### Pipeline Trigger
 
-```
+```http
 POST /api/orchestrate
 Header: X-SBR-SECRET-KEY: <secret>
 Body: { docId: string, collection: 'units' | 'brokerListings' | ... }
@@ -545,7 +545,7 @@ role: 'admin' | 'manager' | 'agent'
 
 #### Layout Structure
 
-```
+```text
 ┌──────────────────────────────────────────────┐
 │  Topbar (logo, user avatar, sign out)        │
 ├──────────┬───────────────────────────────────┤
@@ -622,7 +622,7 @@ role: 'admin' | 'manager' | 'agent'
 
 #### Layout
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Header: Sierra Estates — INTELLIGENCE PIPELINE [BASE 44]  │
 ├──────────┬──────────────────────┬───────────────────────┤

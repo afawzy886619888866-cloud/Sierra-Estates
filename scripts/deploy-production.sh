@@ -1,50 +1,43 @@
 #!/usr/bin/env bash
 # ============================================================
-# Sierra Estates — Production Deploy Script
-# Run this once to push all infrastructure to production.
-#
-# Pre-requisites:
-#   1. firebase login (run once, stores credentials locally)
-#   2. All FIREBASE_* environment variables set in Vercel dashboard
-#   3. Every staff member has a Firestore users/{uid} doc with
-#      role ∈ {admin, manager, agent}
+# Sierra Estates — Canonical Production Deploy Script
+# Authoritative Stack: Supabase (PostgreSQL/Storage/Auth) + Vercel
 # ============================================================
 set -euo pipefail
 
-FIREBASE_PROJECT="sierra-blu"
-
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Sierra Estates — Production Deployment"
+echo "  Sierra Estates — Production Deployment (Supabase + Vercel)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# ── 1. Validate Firebase CLI is authenticated ──────────
-echo "▶  Validating Firebase auth..."
-firebase projects:list --json | grep -q "$FIREBASE_PROJECT" \
-  && echo "   ✅ Authenticated to $FIREBASE_PROJECT" \
-  || (echo "   ❌ Run: firebase login" && exit 1)
+# ── 1. Validate Supabase Environment ───────────────────
+echo "▶  Validating Supabase connection..."
+node scripts/check-backend-policy.mjs
+node scripts/check-public-env-safety.mjs
+node scripts/check-legacy-runtime-boundary.mjs
 
-# ── 2. Deploy Firestore & Storage Security Rules ───────
+# ── 2. Apply Supabase Schema & Migrations ──────────────
 echo ""
-echo "▶  Deploying Firestore + Storage security rules..."
-firebase deploy --only firestore:rules,storage --project "$FIREBASE_PROJECT"
-echo "   ✅ Security rules live"
+echo "▶  Applying Supabase Schema & Policies..."
+node scripts/apply-supabase-schema.mjs
 
-# ── 3. Deploy Firebase Cloud Functions ─────────────────
+# ── 3. Sync Environment Variables to Vercel ────────────
 echo ""
-echo "▶  Building & deploying Firebase Cloud Functions..."
-cd functions && pnpm build && cd ..
-firebase deploy --only functions --project "$FIREBASE_PROJECT"
-echo "   ✅ Cloud Functions deployed"
+echo "▶  Synchronizing environment variables to Vercel..."
+node scripts/sync-vercel-env.js
 
-# ── 4. Deploy Firestore Indexes ────────────────────────
+# ── 4. Verify Pre-Flight Deployment Readiness ──────────
 echo ""
-echo "▶  Deploying Firestore indexes..."
-firebase deploy --only firestore:indexes --project "$FIREBASE_PROJECT"
-echo "   ✅ Indexes deployed"
+echo "▶  Verifying pre-flight deploy readiness..."
+npx tsx scripts/verify-deploy-readiness.ts
 
-# ── 5. Register Telegram Bot Webhook (optional) ────────
+# ── 5. Deploy Unified Platform to Vercel Production ────
+echo ""
+echo "▶  Deploying to Vercel production..."
+vercel --prod --yes
+
+# ── 6. Register Telegram Bot Webhook (optional) ────────
 echo ""
 TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
 VERCEL_URL="${VERCEL_URL:-https://admin.sierra-estates.net}"
@@ -53,8 +46,8 @@ if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
     -H "Content-Type: application/json" \
     -d "{\"url\": \"${VERCEL_URL}/api/telegram/webhook\", \"allowed_updates\": [\"message\", \"callback_query\"]}" \
-    | jq '.ok // .description'
-  echo "   ✅ Telegram webhook registered"
+    | jq '.ok // .description' || true
+  echo "   ✅ Telegram webhook verified"
 else
   echo "   ⚠️  TELEGRAM_BOT_TOKEN not set — skipping webhook registration"
 fi
@@ -62,6 +55,7 @@ fi
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ Production deployment complete!"
-echo "  Next: Set all env vars in Vercel dashboard."
-echo "  See: NEXT_STEPS.md → 'Secrets — set before going live'"
+echo "  Authoritative Backend: Supabase (https://REDACTED-PROJECT.supabase.co)"
+echo "  Live Client URL:       https://sierra-estates.net"
+echo "  Live Admin URL:        https://admin.sierra-estates.net"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

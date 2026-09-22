@@ -91,9 +91,9 @@ export const AI_ICONS: Record<string, React.ReactElement> = {
   ),
   tour: (
     <svg viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="18" stroke="#38bdf8" strokeWidth="1.3" fill="rgba(56,189,248,.07)" />
-      <ellipse cx="24" cy="24" rx="18" ry="7" stroke="#38bdf8" strokeWidth="1" fill="none" opacity=".4" />
-      <circle cx="24" cy="24" r="4" fill="#38bdf8">
+      <circle cx="24" cy="24" r="18" stroke="#e9c176" strokeWidth="1.3" fill="rgba(233,193,118,.08)" />
+      <ellipse cx="24" cy="24" rx="18" ry="7" stroke="#e9c176" strokeWidth="1" fill="none" opacity=".4" />
+      <circle cx="24" cy="24" r="4" fill="#e9c176">
         <animate attributeName="r" values="3;5;3" dur="1.8s" repeatCount="indefinite" />
       </circle>
       <path d="M20 21 L28 24 L20 27 Z" fill="#fff" opacity=".9" />

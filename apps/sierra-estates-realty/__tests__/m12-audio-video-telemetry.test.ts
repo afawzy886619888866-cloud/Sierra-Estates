@@ -189,13 +189,31 @@ describe('Milestone M12: Realtime Audio, Video Teasers & Autonomous Telemetry', 
     });
 
     it('handles GET /api/health/deep with SLA telemetry', async () => {
-      const res = await getDeepHealth();
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.service).toBe('sierra-estates-deep-telemetry');
-      expect(json.telemetry.whatsappGateway.host).toBe('18.232.148.172');
-      expect(json.telemetry.supabase).toBeDefined();
-      expect(json.selfHealing.autoReconnectLoop).toBe('active');
+      // The gateway host is env-configured only — the old hardcoded
+      // AWS IP (18.232.148.172) was an infrastructure leak from a public,
+      // unauthenticated health route.
+      const originalHost = process.env.WHATSAPP_GATEWAY_HOST;
+      const originalOpenWa = process.env.OPENWA_HOST;
+      try {
+        process.env.WHATSAPP_GATEWAY_HOST = 'wa.sierra-estates.internal';
+        delete process.env.OPENWA_HOST;
+
+        const res = await getDeepHealth();
+        expect(res.status).toBe(200);
+        const json = await res.json();
+        expect(json.service).toBe('sierra-estates-deep-telemetry');
+        expect(json.telemetry.whatsappGateway.host).toBe('wa.sierra-estates.internal');
+        expect(json.telemetry.whatsappGateway.status).toBe('configured');
+        // No infrastructure IP may be shipped to the client.
+        expect(JSON.stringify(json)).not.toContain('18.232.148.172');
+        expect(json.telemetry.supabase).toBeDefined();
+        expect(json.selfHealing.autoReconnectLoop).toBe('active');
+      } finally {
+        if (originalHost === undefined) delete process.env.WHATSAPP_GATEWAY_HOST;
+        else process.env.WHATSAPP_GATEWAY_HOST = originalHost;
+        if (originalOpenWa === undefined) delete process.env.OPENWA_HOST;
+        else process.env.OPENWA_HOST = originalOpenWa;
+      }
     });
   });
 

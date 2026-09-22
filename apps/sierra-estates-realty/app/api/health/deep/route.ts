@@ -20,8 +20,8 @@ export async function GET() {
     checks.supabase = {
       status: error ? 'degraded' : 'healthy',
       latencyMs: dbLatency,
-      slaPassed: dbLatency < 1200,
-      activeUnits: count ?? 9534,
+      slaPassed: !error && dbLatency < 1200,
+      activeUnits: count ?? null,
       error: error ? error.message : null,
     };
   } catch (err: any) {
@@ -33,11 +33,11 @@ export async function GET() {
     };
   }
 
-  // 2. WhatsApp Gateway Reachability (AWS EC2 Gateway)
-  const waHost = process.env.WHATSAPP_GATEWAY_HOST || '18.232.148.172';
+  // 2. WhatsApp Gateway Reachability — env-configured only, no hardcoded infra
+  const waHost = process.env.WHATSAPP_GATEWAY_HOST || process.env.OPENWA_HOST || null;
   checks.whatsappGateway = {
     host: waHost,
-    status: 'online',
+    status: waHost ? 'configured' : 'not_configured',
     helplineFallback: '+201092048333',
     circuitBreaker: 'closed',
     retryPolicy: 'exponential_backoff_max_3',

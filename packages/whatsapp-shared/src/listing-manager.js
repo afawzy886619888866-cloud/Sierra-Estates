@@ -2,7 +2,7 @@
  * ListingManager — reads/writes Sierra inventory.
  * 
  * Storage: local JSON file (./data/listings.json)
- * Production: swap for Firebase Firestore calls.
+ * Production: persist through the Supabase service adapter.
  */
 
 const fs   = require('fs').promises;

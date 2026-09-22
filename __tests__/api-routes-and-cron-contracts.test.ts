@@ -79,7 +79,9 @@ describe('API Routes, Cron Jobs & Server Auth Contracts Test Suite', () => {
       expect(isAdminEmail('sierra@sierra-estates.net')).toBe(true);
       expect(isAdminEmail('a.fawzy8866@gmail.com')).toBe(true);
       expect(isAdminEmail('executive@sierra-estates.net')).toBe(true);
-      expect(isAdminEmail('agent@sierra.com')).toBe(true);
+      // "sierra.com" is not an owned domain — trusting it by default let anyone
+      // register a sierra.com mailbox and reach the admin portal.
+      expect(isAdminEmail('agent@sierra.com')).toBe(false);
 
       expect(isAdminEmail('random-user@yahoo.com')).toBe(false);
       expect(isAdminEmail('competitor@gmail.com')).toBe(false);
