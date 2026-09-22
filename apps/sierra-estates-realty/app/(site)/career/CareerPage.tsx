@@ -581,7 +581,7 @@ export default function CareerPage() {
   };
 
   return (
-    <SiteShell active={null}>
+    <SiteShell active="career">
       <div ref={containerRef} dir={isAr ? 'rtl' : 'ltr'} className="cr-page-wrapper">
         
         {/* ── HERO SECTION ────────────────────────────────────────── */}
