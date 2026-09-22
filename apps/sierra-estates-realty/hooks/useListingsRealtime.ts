@@ -54,8 +54,9 @@ function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): R
     agent: 'Sierra Advisor Desk',
     ago: 'Live',
     img: String(
-      raw.img ||
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=70'
+      (raw.raw_data as Record<string, unknown> | undefined)?.img ||
+        raw.img ||
+        "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/c1817868-a833-4e1b-bdd0-e3de3dafdd39.png"
     ),
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.latitude || raw.lat || 30.045),
@@ -97,7 +98,7 @@ export function useListingsRealtime(setListings: SetListings) {
               event: 'INSERT',
               schema: 'public',
               table: 'listings',
-              filter: "status=eq.available",
+              filter: "status=eq.active",
             },
             (payload) => {
               const newRow = payload.new as Record<string, unknown>;

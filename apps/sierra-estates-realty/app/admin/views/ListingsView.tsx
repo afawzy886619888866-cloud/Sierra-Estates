@@ -31,32 +31,32 @@ import realListingsRaw from '@/data/real-listings.json';
 // Stock luxury community presets for 1-click photo matching
 const COMMUNITY_PHOTO_PRESETS: Record<string, string[]> = {
   Mivida: [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7G1HG6HKMHT5G9X75RCJHR/3a18bbe1-5ebf-468d-892d-5ce1b0338681.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/0288fbc6-7ee9-46aa-8449-9db498eaa956.png',
   ],
   Eastown: [
-    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/b6bb617a-d76d-4162-8e44-679da8f2f0ea.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/c5182043-be29-4a20-8d65-96e532df5264.png',
   ],
   Madinaty: [
-    'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/8ebeead8-e0da-4ce1-9491-0c9018fe6518.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/68db0632-20e0-4889-8899-2a89dcf85654.png',
   ],
   'Al Rehab': [
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/d4b30259-c27e-44bf-965e-e323f1883e9e.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/540d4c5e-4137-4be0-aa6e-948b51e56d39.png',
   ],
   'Uptown Cairo': [
-    'https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/73dae100-65c1-49b6-abfc-8a98b125f682.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/b277c467-e7e9-4312-af79-f8564402a3fb.png',
   ],
   'Fifth Settlement': [
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/b82d7eb9-b345-4c07-9dbb-ebacc9c0e158.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/48863c3f-b16a-4467-ae6c-89e4f09ed382.png',
   ],
   Default: [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e9711840-ed1e-11ef-8cf7-0a8c5593e6a3-6d25555e-9552-4f8e-8618-847fbc423ebc.png',
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/ea569e25-ed1e-11ef-8cf7-0a8c5593e6a3-25e91c7f-53c6-43b2-8ce6-36c944ffda8d.png',
   ],
 };
 
@@ -504,7 +504,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               textDecoration: 'none',
             }}
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-[#E9C176]" />
             <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
           </a>
 
@@ -1523,7 +1523,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/... or https://REDACTED-PROJECT.supabase.co/storage/..."
+                  placeholder="https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e1e2eba5-ed1e-11ef-8cf7-0a8c5593e6a3-eb58b4d5-7931-4ccf-8873-c1315a729f60.png or https://REDACTED-PROJECT.supabase.co/storage/..."
                   value={customPhotoUrl}
                   onChange={(e) => setCustomPhotoUrl(e.target.value)}
                   style={{

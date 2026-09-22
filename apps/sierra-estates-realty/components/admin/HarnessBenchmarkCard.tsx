@@ -75,7 +75,7 @@ export function HarnessBenchmarkCard() {
               <div style={{ fontSize: 9, color: 'var(--tx-f)', textTransform: 'uppercase' }}>Scenarios Passed</div>
             </div>
             <div style={{ background: 'var(--bg-e)', border: '1px solid var(--bd)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#00AEFF', fontFamily: 'JetBrains Mono' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#C8961A', fontFamily: 'JetBrains Mono' }}>
                 {report.averageLatencyMs}ms
               </div>
               <div style={{ fontSize: 9, color: 'var(--tx-f)', textTransform: 'uppercase' }}>Avg Latency</div>

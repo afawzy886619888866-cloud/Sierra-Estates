@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Brand families are now self-hosted via next/font in app/layout.tsx
+   (--font-jakarta / --font-inter / --font-cairo / --font-mono /
+   --font-cormorant / --font-playfair). No Google Fonts @import needed. */
 
 /* Minimal global reset. Surface-specific styling lives with each surface
    (e.g. app/admin/admin-portal.css); keep this file lean so the client site
@@ -148,3 +150,29 @@ img, video, canvas, svg {
 .cp-calc-footnote{color:var(--muted);font-size:11px;line-height:1.6;margin:20px 0 0}
 .cp-calc-field input:focus{box-shadow:inset 0 0 0 1px var(--pri)}
 @media (max-width:850px){.cp-calc-head{display:block}.cp-calc-disclosure{max-width:none;margin-top:16px}.cp-calc-layout{grid-template-columns:1fr}.cp-calc-inputs{grid-template-columns:1fr}.cp-calc-results{grid-template-columns:1fr 1fr}.cp-calculator{padding:24px 16px;margin-bottom:48px}}
+
+/* ─── Interactive map: opens only after a location pick in the filter ─── */
+@keyframes sierraMapOpen {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sierra-map-open { animation: sierraMapOpen 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .sierra-map-open { animation: none; }
+}
+
+/* Pulse hint on the compound filter input when "Map View" is pressed without a pick */
+@keyframes sierraPickHint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(233, 193, 118, 0); border-color: rgba(255, 255, 255, 0.18); }
+  35% { box-shadow: 0 0 0 5px rgba(233, 193, 118, 0.28); border-color: #e9c176; }
+  70% { box-shadow: 0 0 0 5px rgba(233, 193, 118, 0.28); border-color: #e9c176; }
+}
+.hero-pick-hint { animation: sierraPickHint 1.2s ease-in-out 2; }
+
+/* Map teaser (collapsed state) entrance */
+@keyframes sierraTeaserIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.map-teaser { animation: sierraTeaserIn 0.5s ease both; }
+.map-teaser:hover { border-color: rgba(200, 150, 26, 0.7); transition: border-color 0.25s ease; }
