@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
+import { toListingColumns } from '@/lib/server/listing-columns';
 import { logger } from '@/lib/logger';
 
 // Force dynamic rendering — uses Supabase/auth at runtime
@@ -31,7 +32,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json();
     const patch = listingPatchToColumns(mapSpaToListingPatch(body));
 
-    const updated = await updateRecord('listings', id, { ...patch, updatedAt: new Date().toISOString() });
+    // toListingColumns parks any non-column field (publishToClient, …) in
+    // raw_data so the update can never fail on the deployed schema cache.
+    const updated = await updateRecord('listings', id, {
+      ...toListingColumns(patch),
+      updatedAt: new Date().toISOString(),
+    });
     if (!updated) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }

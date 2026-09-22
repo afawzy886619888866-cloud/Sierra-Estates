@@ -81,7 +81,7 @@ export function PropertyTeaserBrochure({ initialData, lang: _lang }: PropertyTea
     `https://wa.me/${formData.brokerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
       `مرحباً، أود الاستفسار عن كود العقار ${formData.referenceId} في ${formData.compoundName}`
     )}`
-  )}&bgcolor=0a0e1a&color=00AEFF`;
+  )}&bgcolor=0a0e1a&color=C8961A`;
 
   return (
     <div className="card" style={{ padding: 22, marginBottom: 20 }}>

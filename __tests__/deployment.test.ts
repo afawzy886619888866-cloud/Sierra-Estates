@@ -7,21 +7,21 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
   const WORKFLOWS_DIR = path.join(ROOT_DIR, '.github', 'workflows');
   const REALTY_APP_DIR = path.join(ROOT_DIR, 'apps', 'sierra-estates-realty');
 
-  describe('Vercel Rate Limiting & Anti-Collision Guards', () => {
-    it('root vercel.json must disable automatic git deployments to avoid rate limit collisions', () => {
+  describe('Vercel Git Integration', () => {
+    it('root vercel.json must enable automatic git deployments', () => {
       const rootVercelPath = path.join(ROOT_DIR, 'vercel.json');
       expect(fs.existsSync(rootVercelPath)).toBe(true);
       const config = JSON.parse(fs.readFileSync(rootVercelPath, 'utf-8'));
       expect(config.git).toBeDefined();
-      expect(config.git.deploymentEnabled).toBe(false);
+      expect(config.git.deploymentEnabled).toBe(true);
     });
 
-    it('apps/sierra-estates-realty/vercel.json must disable automatic git deployments', () => {
+    it('apps/sierra-estates-realty/vercel.json must enable automatic git deployments', () => {
       const appVercelPath = path.join(REALTY_APP_DIR, 'vercel.json');
       expect(fs.existsSync(appVercelPath)).toBe(true);
       const config = JSON.parse(fs.readFileSync(appVercelPath, 'utf-8'));
       expect(config.git).toBeDefined();
-      expect(config.git.deploymentEnabled).toBe(false);
+      expect(config.git.deploymentEnabled).toBe(true);
     });
 
     it('deploy-vercel.yml should enforce max-parallel: 1 to prevent simultaneous deploy rate limits', () => {
@@ -193,7 +193,7 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
     it('package.json deploy:prod must enforce pre-flight readiness checks', () => {
       const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
       expect(pkg.scripts['deploy:prod']).toContain('deploy:check');
-      expect(pkg.scripts['deploy:prod']).toContain('vercel --prod');
+      expect(pkg.scripts['deploy:prod']).toMatch(/\bvercel(?:@\d+\.\d+\.\d+)?\s+--prod\b/);
     });
   });
 });

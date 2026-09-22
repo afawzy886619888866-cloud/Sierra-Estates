@@ -14,6 +14,7 @@ on:
           - vertex-agent
           - run-harness
           - sync-propertyfinder
+          - audit:arc3
           - fleet:run-all
       prompt:
         description: Prompt for vertex-agent or openclaw:task
@@ -50,13 +51,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: pnpm
@@ -105,6 +106,9 @@ jobs:
               ;;
             sync-propertyfinder)
               pnpm sync-propertyfinder
+              ;;
+            audit:arc3)
+              pnpm audit:arc3
               ;;
             fleet:run-all)
               pnpm fleet:run-all

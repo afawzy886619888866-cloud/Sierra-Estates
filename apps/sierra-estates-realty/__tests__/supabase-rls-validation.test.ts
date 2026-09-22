@@ -14,7 +14,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const SCHEMA_PATH = path.resolve(__dirname, '../../../supabase/schema.sql');
+const SCHEMA_CANDIDATES = [
+  path.resolve(__dirname, '../supabase/schema.sql'),
+  path.resolve(__dirname, '../../../supabase/schema.sql'),
+  path.resolve(__dirname, '../../../schema.sql'),
+];
+const SCHEMA_PATH = SCHEMA_CANDIDATES.find((p) => fs.existsSync(p)) || SCHEMA_CANDIDATES[0];
 const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
 
 /** Tables holding customer PII, commercial terms, or operational control. */

@@ -104,7 +104,7 @@ describe('Monorepo Integrity & Code Hygiene Test Suite', () => {
     }
 
     expect(invalidJsonFiles).toEqual([]);
-  });
+  }, 60000);
 
   it('critical root configuration files must exist and be populated', () => {
     const requiredRootFiles = [

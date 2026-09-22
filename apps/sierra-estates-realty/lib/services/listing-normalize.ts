@@ -1,3 +1,4 @@
+/* cspell:disable */
 import { PropertyType, PropertyStatus, Unit } from '../models/schema';
 
 /**
@@ -168,6 +169,87 @@ export function parseNumeric(raw: unknown): number {
   return numeric;
 }
 
+/**
+ * Robust extractor for image URLs from various sources:
+ * - Direct image URL string
+ * - Comma-separated image URLs string
+ * - Array of URL strings
+ * - Airtable attachment objects: [{ url: "...", thumbnails?: { ... } }]
+ */
+export function extractImageUrls(raw: unknown): string[] {
+  if (!raw) return [];
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
+    if (trimmed.includes(',')) {
+      return trimmed
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/'));
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return [trimmed];
+    }
+    return [];
+  }
+  if (Array.isArray(raw)) {
+    const urls: string[] = [];
+    for (const item of raw) {
+      if (typeof item === 'string') {
+        const t = item.trim();
+        if (t.startsWith('http://') || t.startsWith('https://') || t.startsWith('/')) {
+          urls.push(t);
+        }
+      } else if (item && typeof item === 'object') {
+        const obj = item as Record<string, unknown>;
+        const url = (obj.url || (obj.thumbnails as any)?.full?.url || (obj.thumbnails as any)?.large?.url) as unknown;
+        if (typeof url === 'string' && url.trim()) {
+          urls.push(url.trim());
+        }
+      }
+    }
+    return urls;
+  }
+  return [];
+}
+
+/**
+ * Extracts photo attachments and direct image links from WhatsApp chat text.
+ * Matches:
+ * - <attached: 00000012-PHOTO-2026-08-24-10-15-22.jpg> (iOS export)
+ * - IMG-20260824-WA0001.jpg (file attached) (Android export)
+ * - Direct HTTP(S) image URLs: https://.../image.jpg
+ */
+export function extractAttachedPhotos(text: string): string[] {
+  if (!text) return [];
+  const photos: string[] = [];
+
+  // 1. Direct URLs and image CDN URLs
+  const urlRegex = /(https?:\/\/\S*(?:images\.unsplash\.com|airtableusercontent\.com|\.(?:jpg|jpeg|png|webp|avif))\S*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = urlRegex.exec(text)) !== null) {
+    photos.push(match[1]);
+  }
+
+  // 2. iOS attachment tags: <attached: filename.jpg>
+  const iosRegex = /<attached:\s*([^>]+)>/gi;
+  while ((match = iosRegex.exec(text)) !== null) {
+    const filename = match[1].trim();
+    if (/\.(jpg|jpeg|png|webp)$/i.test(filename)) {
+      photos.push(`/media/whatsapp/${encodeURIComponent(filename)}`);
+    }
+  }
+
+  // 3. Android attachment tags: filename.jpg (file attached)
+  const androidRegex = /([A-Za-z0-9_.-]+\.(?:jpg|jpeg|png|webp))\s*(?:\(file attached\))/gi;
+  while ((match = androidRegex.exec(text)) !== null) {
+    const filename = match[1].trim();
+    photos.push(`/media/whatsapp/${encodeURIComponent(filename)}`);
+  }
+
+  return Array.from(new Set(photos));
+}
+
 /** Reads the first present value across a list of candidate header keys. */
 function pick(row: Raw, keys: string[]): unknown {
   for (const k of keys) {
@@ -211,7 +293,10 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
   const bedrooms = parseNumeric(pick(row, ['bedrooms', 'Bedrooms', 'beds', 'غرف', 'الغرف']));
   const bathrooms = parseNumeric(pick(row, ['bathrooms', 'Bathrooms', 'baths', 'حمام', 'حمامات', 'الحمامات', 'دورات المياه']));
   const garden = parseNumeric(pick(row, ['Garden', 'garden', 'الحديقة', 'الحديقه']));
-  const imageUrl = pick(row, ['Image URL', 'imageUrl', 'Image', 'image', 'Photo', 'photo', 'صورة', 'الصورة', 'الصوره']);
+  const rawImages = pick(row, [
+    'Photos', 'photos', 'Photo', 'photo', 'Image URL', 'imageUrl', 'Images', 'images',
+    'Image', 'image', 'Pictures', 'pictures', 'Attachments', 'attachments', 'صورة', 'الصورة', 'الصوره'
+  ]);
   const mobile = pick(row, ['Mobile', 'mobile', 'Phone', 'phone', 'تليفون', 'موبايل', 'رقم']);
   const comment = pick(row, ['Comment', 'comment', 'بيان الوحده', 'تفاصيل الوحده', 'ملحوظة', 'ملاحظات', 'Description', 'description']);
   const finishing = normalizeFinishing(pick(row, ['Furnished or not', 'Furnished', 'التشطيب', 'finishing', 'finishingType']));
@@ -245,12 +330,10 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
   if (garden > 0) {
     unit.amenities = ['garden', ...(unit.amenities ?? [])];
   }
-  if (imageUrl) {
-    const url = String(imageUrl).trim();
-    if (url) {
-      unit.featuredImage = url;
-      unit.images = [url, ...(unit.images ?? [])];
-    }
+  const extractedImages = extractImageUrls(rawImages);
+  if (extractedImages.length > 0) {
+    unit.featuredImage = extractedImages[0];
+    unit.images = Array.from(new Set(extractedImages));
   }
 
   return unit;

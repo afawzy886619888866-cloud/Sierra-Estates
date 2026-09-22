@@ -452,6 +452,9 @@ export default function CareerPage() {
     email: '',
     experience: '2',
     position: '',
+    hasVehicle: '',
+    biggestAchievements: '',
+    expectedSalary: '',
     message: '',
   });
 
@@ -550,7 +553,11 @@ export default function CareerPage() {
           fullName: formData.name,
           phone: formData.phone,
           email: formData.email,
+          position,
           experience: formData.experience || '',
+          hasVehicle: formData.hasVehicle === 'yes',
+          biggestAchievements: formData.biggestAchievements,
+          expectedSalary: formData.expectedSalary,
           realEstateKnowledge: '',
           availability: 'Immediately',
           notes: formData.message || `Applied for: ${position}`,
@@ -565,12 +572,7 @@ export default function CareerPage() {
         return;
       }
 
-      // Success — persist confirmed, now also open WhatsApp for instant delivery
       setIsSent(true);
-      const text = isAr
-        ? `طلب توظيف جديد:\nالاسم: ${formData.name}\nالهاتف: ${formData.phone}\nالبريد: ${formData.email}\nالوظيفة: ${position}\nسنوات الخبرة: ${formData.experience}\nرسالة: ${formData.message}`
-        : `New Career Application:\nName: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nPosition: ${position}\nExperience: ${formData.experience} years\nMessage: ${formData.message}`;
-      window.open(`https://wa.me/201092048333?text=${encodeURIComponent(text)}`, '_blank');
     } catch {
       setSubmitError(isAr ? 'تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت.' : 'Network error. Check your connection and try again.');
     } finally {
@@ -579,7 +581,7 @@ export default function CareerPage() {
   };
 
   return (
-    <SiteShell active={null}>
+    <SiteShell active="career">
       <div ref={containerRef} dir={isAr ? 'rtl' : 'ltr'} className="cr-page-wrapper">
         
         {/* ── HERO SECTION ────────────────────────────────────────── */}
@@ -673,7 +675,7 @@ export default function CareerPage() {
 
               {/* Admin & Operations Track */}
               <div className="cr-spotlight-card">
-                <span className="cr-spotlight-tag" style={{ background: 'rgba(0, 174, 255, 0.12)', color: '#00aeff' }}>
+                <span className="cr-spotlight-tag" style={{ background: 'rgba(201, 148, 54, 0.16)', color: '#9e7934' }}>
                   {isAr ? 'قطاع الشؤون الإدارية والعمليات' : 'ADMIN & OPERATIONS TRACK'}
                 </span>
                 <h3>{isAr ? 'الشؤون الإدارية والعمليات (Admin)' : 'Operations & Executive Support'}</h3>
@@ -695,7 +697,7 @@ export default function CareerPage() {
                     el?.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="cr-job-apply-form"
-                  style={{ background: 'linear-gradient(135deg, #00aeff, #0077b6)', color: '#fff' }}
+                  style={{ background: 'linear-gradient(135deg, #c99436, #9e7934)', color: '#081423' }}
                 >
                   {isAr ? 'وظائف الإدارة الشاغرة (3)' : 'View Admin Roles (3)'} →
                 </button>
@@ -969,6 +971,7 @@ export default function CareerPage() {
                   <input
                     type="number"
                     id="f-experience"
+                    required
                     min={0}
                     max={35}
                     value={formData.experience}
@@ -977,8 +980,47 @@ export default function CareerPage() {
                   />
                 </div>
 
+                <div className="cr-form-row">
+                  <div className="cr-form-group">
+                    <label htmlFor="f-vehicle">{isAr ? 'هل لديك سيارة؟' : 'Do you have a personal vehicle?'}</label>
+                    <select
+                      id="f-vehicle"
+                      required
+                      value={formData.hasVehicle}
+                      onChange={(e) => setFormData({ ...formData, hasVehicle: e.target.value })}
+                    >
+                      <option value="">{isAr ? 'اختر إجابة...' : 'Select an answer...'}</option>
+                      <option value="yes">{isAr ? 'نعم' : 'Yes'}</option>
+                      <option value="no">{isAr ? 'لا' : 'No'}</option>
+                    </select>
+                  </div>
+                  <div className="cr-form-group">
+                    <label htmlFor="f-salary">{isAr ? 'الراتب المتوقع' : 'Expected Salary'}</label>
+                    <input
+                      type="text"
+                      id="f-salary"
+                      required
+                      value={formData.expectedSalary}
+                      onChange={(e) => setFormData({ ...formData, expectedSalary: e.target.value })}
+                      placeholder={isAr ? 'مثال: ٢٠,٠٠٠ جنيه' : 'e.g. EGP 20,000'}
+                    />
+                  </div>
+                </div>
+
                 <div className="cr-form-group">
-                  <label htmlFor="f-message">{isAr ? 'نبذة عن خبراتك السابقة وأهم إنجازاتك' : 'Brief Bio & Key Achievements'}</label>
+                  <label htmlFor="f-achievements">{isAr ? 'أكبر إنجازاتك المهنية' : 'Biggest Professional Achievements'}</label>
+                  <textarea
+                    id="f-achievements"
+                    rows={4}
+                    required
+                    value={formData.biggestAchievements}
+                    onChange={(e) => setFormData({ ...formData, biggestAchievements: e.target.value })}
+                    placeholder={isAr ? 'اذكر إنجازاتك أو أهم الصفقات والنتائج التي حققتها...' : 'Share your strongest results, deals closed, or operational wins...'}
+                  />
+                </div>
+
+                <div className="cr-form-group">
+                  <label htmlFor="f-message">{isAr ? 'رسالة إضافية (اختياري)' : 'Additional message (optional)'}</label>
                   <textarea
                     id="f-message"
                     rows={4}
@@ -1016,9 +1058,20 @@ export default function CareerPage() {
                 {isSent && (
                   <div className="cr-success-msg">
                     <CheckCircle style={{ width: 20, height: 20 }} />
-                    {isAr
-                      ? 'تم استلام طلبك بنجاح! سيتواصل معك مسؤول التوظيف خلال 48 ساعة لتحديد موعد المقابلة.'
-                      : 'Application submitted successfully! Our recruitment team will contact you within 48 hours.'}
+                    <span>
+                      {isAr
+                        ? 'تم استلام طلبك بنجاح! سيتواصل معك مسؤول التوظيف خلال 48 ساعة.'
+                        : 'Application submitted successfully! Our recruitment team will contact you within 48 hours.'}
+                      <br />
+                      <a
+                        href="https://chat.whatsapp.com/BTjxkLJFO6m7lgaS4dzh1F"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="cr-success-link"
+                      >
+                        {isAr ? 'انضم إلى مجموعة واتساب للمتقدمين' : 'Join the applicants WhatsApp group'}
+                      </a>
+                    </span>
                   </div>
                 )}
               </form>

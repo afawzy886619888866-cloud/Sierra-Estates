@@ -20,14 +20,35 @@ export default defineConfig({
       'deploy/__tests__/**/*.test.ts',
       '__tests__/**/*.test.ts',
     ],
-    alias: {
-      'server-only': resolve(__dirname, 'tools/test-stubs/empty.js'),
-      '@': resolve(__dirname, 'apps/sierra-estates-realty'),
-      '@sierra-estates/types': resolve(__dirname, 'packages/shared/src/types/index.ts'),
-      '@sierra-estates/agents-core': resolve(__dirname, 'packages/agents-core/src/index.ts'),
-      '@sierra-estates/memory-engine': resolve(__dirname, 'packages/memory-engine/src/index.ts'),
-      '@sierra-estates/obsidian': resolve(__dirname, 'packages/obsidian/src/index.ts'),
-    },
+    alias: [
+      {
+        find: /^@sierra-estates\/agents-core\/src\/(.*)$/,
+        replacement: `${resolve(__dirname, 'packages/agents-core/src')}/$1`,
+      },
+      {
+        find: 'server-only',
+        replacement: resolve(__dirname, 'tools/test-stubs/empty.js'),
+      },
+      {
+        find: '@',
+        replacement: resolve(__dirname, 'apps/sierra-estates-realty'),
+      },
+      {
+        find: '@sierra-estates/types',
+        replacement: resolve(__dirname, 'packages/shared/src/types/index.ts'),
+      },
+      {
+        find: '@sierra-estates/agents-core',
+        replacement: resolve(__dirname, 'packages/agents-core/src/index.ts'),
+      },
+      {
+        find: '@sierra-estates/memory-engine',
+        replacement: resolve(__dirname, 'packages/memory-engine/src/index.ts'),
+      },
+      {
+        find: '@sierra-estates/obsidian',
+        replacement: resolve(__dirname, 'packages/obsidian/src/index.ts'),
+      },
+    ],
   },
 });
-
