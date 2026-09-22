@@ -117,7 +117,7 @@ function coerce(raw: string): string | number | boolean | null {
 function parseFilterLine(line: string): FilterClause | null {
 
   // BETWEEN: FILTER "Price" BETWEEN 500000 AND 2000000 [EGP]
-  const between = line.match(/FILTER\s+"(.+?)"\s+BETWEEN\s+([\d,]+)\s+AND\s+([\d,]+)/i);
+  const between = line.match(/FILTER\s+"([^"]+)"\s+BETWEEN\s+([\d,]+)\s+AND\s+([\d,]+)/i);
   if (between) {
     return {
       field: between[1],
@@ -128,7 +128,7 @@ function parseFilterLine(line: string): FilterClause | null {
   }
 
   // IN: FILTER "Status" IN ("a", "b", "c")
-  const inOp = line.match(/FILTER\s+"(.+?)"\s+IN\s+\((.+?)\)/i);
+  const inOp = line.match(/FILTER\s+"([^"]+)"\s+IN\s*\(([^)]+)\)/i);
   if (inOp) {
     return {
       field: inOp[1],
@@ -138,34 +138,34 @@ function parseFilterLine(line: string): FilterClause | null {
   }
 
   // IS NOT EMPTY
-  const notEmpty = line.match(/FILTER\s+"(.+?)"\s+IS\s+NOT\s+EMPTY/i);
+  const notEmpty = line.match(/FILTER\s+"([^"]+)"\s+IS\s+NOT\s+EMPTY/i);
   if (notEmpty) return { field: notEmpty[1], operator: "!=", value: null };
 
   // IS EMPTY
-  const isEmpty = line.match(/FILTER\s+"(.+?)"\s+IS\s+EMPTY/i);
+  const isEmpty = line.match(/FILTER\s+"([^"]+)"\s+IS\s+EMPTY/i);
   if (isEmpty) return { field: isEmpty[1], operator: "==", value: null };
 
   // STARTS WITH
-  const startsWith = line.match(/FILTER\s+"(.+?)"\s+STARTS\s+WITH\s+"(.+?)"/i);
+  const startsWith = line.match(/FILTER\s+"([^"]+)"\s+STARTS\s+WITH\s+"([^"]+)"/i);
   if (startsWith) {
     return { field: startsWith[1], operator: ">=", value: startsWith[2] };
   }
 
   // CONTAINS
-  const contains = line.match(/FILTER\s+"(.+?)"\s+CONTAINS\s+"(.+?)"/i);
+  const contains = line.match(/FILTER\s+"([^"]+)"\s+CONTAINS\s+"([^"]+)"/i);
   if (contains) {
     return { field: contains[1], operator: ">=", value: contains[2] };
   }
 
   // PERCENT: FILTER "Field" >= 85 PERCENT
-  const pct = line.match(/FILTER\s+"(.+?)"\s+(>=|<=|>|<|=|!=)\s+([\d.]+)\s+PERCENT/i);
+  const pct = line.match(/FILTER\s+"([^"]+)"\s+(>=|<=|>|<|=|!=)\s+([\d.]+)\s+PERCENT/i);
   if (pct) {
     const op = pct[2] === "=" ? "==" : pct[2];
     return { field: pct[1], operator: op as DslFilterOp, value: parseFloat(pct[3]) };
   }
 
   // Standard: FILTER "Field" op "value" | number
-  const std = line.match(/FILTER\s+"(.+?)"\s+(>=|<=|>|<|!=|=)\s+("?[^";\n]+"?)/i);
+  const std = line.match(/FILTER\s+"([^"]+)"\s+(>=|<=|>|<|!=|=)\s+("?[^";\n]+"?)/i);
   if (std) {
     const op = std[2] === "=" ? "==" : std[2];
     return { field: std[1], operator: op as DslFilterOp, value: coerce(std[3]) };
@@ -255,7 +255,7 @@ export function parseDSL(dsl: string, collectionName = "listings"): ParsedView {
 
     // ── COMPARE ─────────────────────────────────────────────────
     else if (U.startsWith("COMPARE")) {
-      const m = line.match(/COMPARE\s+"(.+?)"\s+AGAINST\s+"(.+?)"/i);
+      const m = line.match(/COMPARE\s+"([^"]+)"\s+AGAINST\s+"([^"]+)"/i);
       if (m) result.compareFields.push({ field: m[1], against: m[2] });
     }
 

@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-// Load environment variables (e.g. Firebase API Keys from .env.local if present)
+// Load environment variables from .env.local when running locally.
 config({ path: '../../.env.local' });
 
 import { Orchestrator } from './orchestrator';
@@ -36,7 +36,7 @@ async function main() {
       });
       console.log(`Dummy task created with ID: ${taskId}`);
     } catch (e) {
-      console.error('Failed to create dummy task. Are Firebase credentials set?', e);
+      console.error('Failed to create dummy task. Are the required Supabase credentials set?', e);
     }
   }, 2000);
 }

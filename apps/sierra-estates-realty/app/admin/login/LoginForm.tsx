@@ -89,6 +89,26 @@ const T_AR: LoginTranslations = {
   secBadgeEdge: 'حماية Edge Proxy',
 };
 
+async function createAdminSession(session: { access_token: string; user: { email?: string; id: string; user_metadata?: { full_name?: string } } }, provider: string) {
+  const response = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      action: 'signin',
+      provider,
+      token: session.access_token,
+      email: session.user.email,
+      uid: session.user.id,
+      name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+    }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result?.ok) {
+    throw new Error(result?.error || 'Your account is not approved for the admin portal.');
+  }
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const [lang, setLang] = useState<'en' | 'ar'>('en');
@@ -131,21 +151,11 @@ export default function LoginForm() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         try {
-          await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              action: 'signin',
-              provider: 'supabase',
-              token: session.access_token,
-              email: session.user.email,
-              uid: session.user.id,
-              name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-            }),
-          });
-        } catch (_e) {}
-        router.replace('/admin');
+          await createAdminSession(session, 'supabase');
+          router.replace('/admin');
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unable to establish the admin session.');
+        }
       }
     }).catch(() => {});
 
@@ -163,22 +173,13 @@ export default function LoginForm() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         try {
-          await fetch('/api/auth', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              action: 'signin',
-              provider: 'google',
-              token: session.access_token,
-              email: session.user.email,
-              uid: session.user.id,
-              name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-            }),
-          });
-        } catch (_e) {}
-        router.replace('/admin');
-        router.refresh();
+          await createAdminSession(session, 'google');
+          router.replace('/admin');
+          router.refresh();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unable to establish the admin session.');
+          setLoading(false);
+        }
       }
     });
 
@@ -856,7 +857,7 @@ export default function LoginForm() {
               padding: '13px 0',
               borderRadius: 12,
               border: 'none',
-              background: 'linear-gradient(135deg, #3ECF8E 0%, #00AEFF 100%)',
+              background: 'linear-gradient(135deg, #3ECF8E 0%, #C8961A 100%)',
               color: '#071422',
               fontWeight: 800,
               fontSize: 13,

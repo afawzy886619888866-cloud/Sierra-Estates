@@ -28,7 +28,7 @@ export default function RoleManagerView({ lang = 'en' }: { lang?: string }) {
           <div key={r.role} className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-bold text-white">{r.label}</span>
-              <span className="font-mono text-xs text-cyan-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800">{r.role}</span>
+              <span className="font-mono text-xs text-[#E9C176] px-2 py-0.5 rounded bg-slate-950 border border-slate-800">{r.role}</span>
             </div>
             <p className="text-xs text-slate-400">{r.access}</p>
           </div>

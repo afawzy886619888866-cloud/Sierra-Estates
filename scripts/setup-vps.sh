@@ -8,7 +8,7 @@
 #    1. Installs Docker + Docker Compose on a fresh Ubuntu VPS
 #    2. Clones the SE repo (dispatch branch)
 #    3. Configures environment variables (prompts for keys)
-#    4. Places Firebase service account JSON
+#    4. Configures Supabase credentials (URL + service_role key)
 #    5. Starts n8n + WhatsApp scraper containers
 #    6. Prints the QR code for WhatsApp linking
 #    7. Opens n8n at http://YOUR-VPS-IP:5678
@@ -108,43 +108,19 @@ else
     sed -i "s/GEMINI_API_KEY=.*/GEMINI_API_KEY=$GEMINI_KEY/" .env
   fi
 
-  read -p "  Firebase Project ID (optional): " FB_PROJECT
-  if [ -n "$FB_PROJECT" ]; then
-    sed -i "s/FIREBASE_PROJECT_ID=.*/FIREBASE_PROJECT_ID=$FB_PROJECT/" .env
+  read -p "  Supabase URL (optional, press Enter to skip): " SB_URL
+  if [ -n "$SB_URL" ]; then
+    sed -i "s|SUPABASE_URL=.*|SUPABASE_URL=$SB_URL|" .env
   fi
-
+  read -p "  Supabase service_role key (optional, press Enter to skip): " SB_KEY
+  if [ -n "$SB_KEY" ]; then
+    sed -i "s|SUPABASE_SERVICE_ROLE_KEY=.*|SUPABASE_SERVICE_ROLE_KEY=$SB_KEY|" .env
+  fi
   echo -e "${GREEN}  ✓ .env configured${NC}"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  STEP 4: Firebase service account
-# ═══════════════════════════════════════════════════════════════════════════
-echo ""
-echo -e "${YELLOW}Step 4/6: Firebase service account${NC}"
-
-SECRETS_DIR="$SE_DIR/infra/secrets"
-mkdir -p "$SECRETS_DIR"
-
-if [ -f "$SECRETS_DIR/firebase-service-account.json" ]; then
-  echo -e "${GREEN}  ✓ Service account already placed${NC}"
-else
-  echo -e "${BLUE}  Place your Firebase service account JSON:${NC}"
-  echo -e "  1. Go to: Firebase Console → Project Settings → Service Accounts"
-  echo -e "  2. Click 'Generate new private key' → download JSON"
-  echo -e "  3. Upload it to this VPS:"
-  echo -e "     scp ~/Downloads/service-account.json root@$VPS_IP:$SECRETS_DIR/firebase-service-account.json"
-  echo ""
-  read -p "  Have you uploaded the service account JSON? (y/n): " SA_UPLOADED
-  if [[ "$SA_UPLOADED" != "y" && "$SA_UPLOADED" != "Y" ]]; then
-    echo -e "${YELLOW}  ⚠ Skip for now — n8n won't be able to write to Firestore.${NC}"
-    echo -e "${YELLOW}    Upload later and restart: docker compose restart n8n${NC}"
-  else
-    echo -e "${GREEN}  ✓ Service account confirmed${NC}"
-  fi
-fi
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  STEP 5: Start containers
+# STEP 5: Start containers
 # ═══════════════════════════════════════════════════════════════════════════
 echo ""
 echo -e "${YELLOW}Step 5/6: Starting Docker containers...${NC}"

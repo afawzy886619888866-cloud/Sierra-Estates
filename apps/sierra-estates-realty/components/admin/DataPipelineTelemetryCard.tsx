@@ -36,7 +36,7 @@ export default function DataPipelineTelemetryCard({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-700/60 flex items-center justify-center text-cyan-400 font-mono text-sm shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#211A0D]/80 border border-[#C8961A]/55 flex items-center justify-center text-[#E9C176] font-mono text-sm shrink-0">
             ⚡
           </div>
           <div>
@@ -44,7 +44,7 @@ export default function DataPipelineTelemetryCard({
               <h3 className="text-base font-bold text-white">
                 {isAr ? 'تتبع مسار خطوط البيانات (Dataflow & BigQuery DTS)' : 'Data Pipelines & Ingestion Telemetry'}
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-semibold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#211A0D] border border-[#C8961A]/40 text-[#F5D78E] font-semibold">
                 GCP Live
               </span>
             </div>
@@ -71,7 +71,7 @@ export default function DataPipelineTelemetryCard({
             type="button"
             onClick={handleTriggerDts}
             disabled={isSyncingDts}
-            className="px-3 py-1.5 text-xs font-mono rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-mono rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[#F5D78E] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Trigger manual DTS run"
           >
             <span>↻</span>
@@ -81,9 +81,9 @@ export default function DataPipelineTelemetryCard({
       </div>
 
       {dtsStatusMsg && (
-        <div className="p-2.5 rounded-xl bg-cyan-950/70 border border-cyan-800/80 text-xs font-mono text-cyan-300 flex items-center justify-between animate-fadeIn">
+        <div className="p-2.5 rounded-xl bg-[#211A0D]/70 border border-[#C8961A]/40 text-xs font-mono text-[#F5D78E] flex items-center justify-between animate-fadeIn">
           <span>{dtsStatusMsg}</span>
-          <span className="text-[10px] text-cyan-400">gcp.dataflow.v1b3</span>
+          <span className="text-[10px] text-[#E9C176]">gcp.dataflow.v1b3</span>
         </div>
       )}
 
@@ -105,9 +105,9 @@ export default function DataPipelineTelemetryCard({
         <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition-colors">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>{isAr ? 'معدل الإنتاجية (Throughput)' : 'Stream Throughput'}</span>
-            <span className="text-[10px] font-mono text-cyan-400">elems/s</span>
+            <span className="text-[10px] font-mono text-[#E9C176]">elems/s</span>
           </div>
-          <div className="text-xl font-bold font-mono text-cyan-400 mt-1">240/s</div>
+          <div className="text-xl font-bold font-mono text-[#E9C176] mt-1">240/s</div>
           <div className="text-[10px] font-mono text-slate-400 mt-1">
             {isAr ? 'الذروة: 580/s · بدون اختناق' : 'Peak 580/s · Zero bottleneck'}
           </div>
@@ -143,7 +143,7 @@ export default function DataPipelineTelemetryCard({
       {/* Pipeline Architecture Footer Bar */}
       <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
         <div className="flex items-center gap-2">
-          <span className="text-cyan-400 font-semibold">Config:</span>
+          <span className="text-[#E9C176] font-semibold">Config:</span>
           <span>sierra_analytics.reconciled_listings</span>
           <span className="text-slate-600">|</span>
           <span className="text-slate-300">Beam SDK 2.62.0 (Python Flex Template)</span>

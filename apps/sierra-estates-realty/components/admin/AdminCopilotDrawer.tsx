@@ -36,7 +36,7 @@ export default function AdminCopilotDrawer({
         ? 'مرحباً! أنا مساعد البيانات الذكي (Sierra Data Copilot). يمكنك سؤالي عن إحصائيات المخزون، صفقات التقييم العادل، أو حالة العملاء في التجمع الخامس.'
         : 'Welcome! I am your Sierra Data Copilot. Ask me anything about inventory pricing arbitrage, high-yield compounds, or hot deal velocity in New Cairo.',
       dataPoints: [
-        { label: isAr ? 'إجمالي المخزون الموحد' : 'Unified Inventory', value: '460 units', color: '#00AEFF' },
+        { label: isAr ? 'إجمالي المخزون الموحد' : 'Unified Inventory', value: '460 units', color: '#C8961A' },
         { label: isAr ? 'أعلى عائد إيجاري' : 'Top Yield Compound', value: 'Mivida (9.4%)', color: '#10B981' },
       ],
       timestamp: 'Just now',
@@ -95,7 +95,7 @@ export default function AdminCopilotDrawer({
         dataPoints = [
           { label: isAr ? 'الوحدات ذات الفجوة السعرية' : 'Arbitrage Units', value: '14 properties', color: '#10B981' },
           { label: isAr ? 'أعلى فرصة توفير' : 'Max Discount', value: '-14.2%', color: '#8B5CF6' },
-          { label: isAr ? 'متوسط السعر/م' : 'Avg Price/sqm', value: '44,200 EGP', color: '#00AEFF' },
+          { label: isAr ? 'متوسط السعر/م' : 'Avg Price/sqm', value: '44,200 EGP', color: '#C8961A' },
         ];
       } else if (lower.includes('yield') || lower.includes('عائد')) {
         replyText = isAr
@@ -103,7 +103,7 @@ export default function AdminCopilotDrawer({
           : 'Yield Analysis: Mivida leads New Cairo with an annualized net rental cap rate of 9.4%, followed by Eastown at 8.8% and Villette at 8.2%.';
         dataPoints = [
           { label: 'Mivida Cap Rate', value: '9.4%', color: '#10B981' },
-          { label: 'Eastown Cap Rate', value: '8.8%', color: '#00AEFF' },
+          { label: 'Eastown Cap Rate', value: '8.8%', color: '#C8961A' },
           { label: 'Payback Period', value: '10.8 yrs', color: '#F59E0B' },
         ];
       } else {
@@ -112,7 +112,7 @@ export default function AdminCopilotDrawer({
           : `Grounded in live telemetry: 460 verified listings are synced with the AVM valuation engine (98.4% precision). Lead velocity and scheduled viewings remain on track.`;
         dataPoints = [
           { label: isAr ? 'دقة المطابقة AVM' : 'AVM Precision', value: '98.4%', color: '#8B5CF6' },
-          { label: isAr ? 'العملاء الساخنون' : 'Hot Inquiries', value: '28 active', color: '#00AEFF' },
+          { label: isAr ? 'العملاء الساخنون' : 'Hot Inquiries', value: '28 active', color: '#C8961A' },
         ];
       }
 
@@ -152,13 +152,13 @@ export default function AdminCopilotDrawer({
         {/* Drawer Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-base shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-[#E9C176] to-blue-600 flex items-center justify-center text-white text-base shadow-sm">
               ✦
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold text-white">Sierra Copilot</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#211A0D] text-[#F5D78E] border border-[#C8961A]/40">
                   Gemini Analytics
                 </span>
               </div>
@@ -189,7 +189,7 @@ export default function AdminCopilotDrawer({
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(prompt)}
-                className="text-left py-1 px-2 rounded-md bg-slate-800/60 hover:bg-slate-800 text-[11px] text-slate-300 hover:text-cyan-300 transition-colors truncate border border-slate-700/50 cursor-pointer"
+                className="text-left py-1 px-2 rounded-md bg-slate-800/60 hover:bg-slate-800 text-[11px] text-slate-300 hover:text-[#F5D78E] transition-colors truncate border border-slate-700/50 cursor-pointer"
               >
                 ✦ {prompt}
               </button>
@@ -207,7 +207,7 @@ export default function AdminCopilotDrawer({
               <div
                 className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-cyan-600 text-white rounded-br-none shadow-md'
+                    ? 'bg-[#C8961A] text-white rounded-br-none shadow-md'
                     : 'bg-slate-950 border border-slate-800/90 text-slate-200 rounded-bl-none shadow-sm'
                 }`}
               >
@@ -220,7 +220,7 @@ export default function AdminCopilotDrawer({
                         <div className="text-[10px] text-slate-400 truncate">{dp.label}</div>
                         <div
                           className="text-xs font-bold font-mono mt-0.5"
-                          style={{ color: dp.color || '#00AEFF' }}
+                          style={{ color: dp.color || '#C8961A' }}
                         >
                           {dp.value}
                         </div>
@@ -236,8 +236,8 @@ export default function AdminCopilotDrawer({
           ))}
 
           {isThinking && (
-            <div className="flex items-center gap-2 text-xs text-cyan-400 font-mono p-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <div className="flex items-center gap-2 text-xs text-[#E9C176] font-mono p-2">
+              <span className="w-2 h-2 rounded-full bg-[#E9C176] animate-ping"></span>
               <span>{isAr ? 'جاري استنتاج الإحصائيات...' : 'Querying data platform...'}</span>
             </div>
           )}
@@ -258,12 +258,12 @@ export default function AdminCopilotDrawer({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={isAr ? 'اسأل عن الأسعار، العقارات، أو أداء الصفقات...' : 'Ask about prices, yields, deals, or leads...'}
-              className="flex-1 py-2 px-3 bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all font-sans"
+              className="flex-1 py-2 px-3 bg-slate-900 border border-slate-700 focus:border-[#C8961A] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#C8961A] transition-all font-sans"
             />
             <button
               type="submit"
               disabled={!input.trim() || isThinking}
-              className="py-2 px-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="py-2 px-3 rounded-xl bg-[#C8961A] hover:bg-[#C8961A] text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isAr ? 'إرسال' : 'Send'}
             </button>

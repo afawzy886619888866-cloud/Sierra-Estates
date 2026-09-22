@@ -29,9 +29,16 @@ import { isBrowseableTable } from '@/lib/server/browseable-tables';
 import { logger } from '@/lib/logger';
 
 async function callerIsSuperadmin(authResult: AuthResult): Promise<boolean> {
+  if (authResult.role === 'superadmin') return true;
   if (!authResult.uid) return false;
-  const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
-  return caller?.role === 'superadmin';
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authResult.uid);
+  if (!isUuid) return false;
+  try {
+    const caller = await getRecord<{ role?: string }>('profiles', authResult.uid);
+    return caller?.role === 'superadmin';
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ collection: string }> }) {
@@ -80,7 +87,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
     // Order: "field" or "field:desc"
     const [orderField, orderDirection] = (order ?? '').split(':');
 
-    // No Timestamp serialisation step: timestamptz columns already arrive as
+    // No Timestamp serialization step: timestamptz columns already arrive as
     // ISO strings and JSONB as plain objects.
     const docs = await listRecords(collection, {
       where: clauses,

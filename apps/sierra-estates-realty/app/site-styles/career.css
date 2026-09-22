@@ -5,7 +5,7 @@
 /* ------------------------------------------------------------------ */
 .cr-wrap{max-width:1120px;margin:0 auto;padding:0 24px;}
 .cr-hero{background:linear-gradient(135deg,#002b4b 0%,#0a1622 50%,#0d1f35 100%);color:#fff;padding:90px 0 68px;text-align:center;position:relative;overflow:hidden;}
-.cr-hero::before{content:'';position:absolute;top:-120px;right:-80px;width:420px;height:420px;background:radial-gradient(circle,rgba(0,174,255,.14) 0%,transparent 70%);pointer-events:none;}
+.cr-hero::before{content:'';position:absolute;top:-120px;right:-80px;width:420px;height:420px;background:radial-gradient(circle,rgba(201,148,54,.14) 0%,transparent 70%);pointer-events:none;}
 .cr-hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:320px;height:320px;background:radial-gradient(circle,rgba(201,168,106,.12) 0%,transparent 70%);pointer-events:none;}
 [data-theme="dark"] .cr-hero{background:linear-gradient(135deg,#070d14 0%,#0b1622 50%,#101f30 100%);}
 [data-theme="dark"] .cr-hero::before{background:radial-gradient(circle,rgba(201,168,106,.15) 0%,transparent 70%);}
@@ -48,13 +48,15 @@
 @media(max-width:768px){.cr-dept-spotlight{grid-template-columns:1fr;}}
 .cr-spotlight-card{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:32px;position:relative;overflow:hidden;transition:.3s var(--silk);}
 .cr-spotlight-card:hover{border-color:#c9a86a;box-shadow:0 12px 36px rgba(13,33,54,.08);transform:translateY(-3px);}
-.cr-spotlight-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#c9a86a,#00aeff);}
+.cr-spotlight-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#c9a86a,#c99436);}
 .cr-spotlight-tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:14px;background:rgba(201,168,106,.12);color:#c9a86a;}
 .cr-spotlight-card h3{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:12px;}
 .cr-spotlight-card p{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:20px;}
 .cr-spotlight-features{list-style:none;padding:0;margin:0 0 24px;display:grid;gap:10px;}
 .cr-spotlight-features li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500;}
 .cr-spotlight-features li svg{color:#10b981;width:16px;height:16px;flex:none;}
+.cr-success-link{display:inline-block;margin-top:8px;color:#c9a86a;font-weight:700;text-decoration:underline;text-underline-offset:3px;}
+.cr-success-link:hover{color:#dfc38c;}
 
 /* ------------------------------------------------------------------ */
 /*  DEPARTMENT FILTERS                                                 */
