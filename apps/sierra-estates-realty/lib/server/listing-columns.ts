@@ -40,6 +40,7 @@ const COLUMN_ALIASES: Record<string, string> = {
     // `agent`, so translate instead of parking it in raw_data.
     agent: 'agentName',
     titleArabic: 'titleAr',
+    location: 'locationArea',
 };
 
 /**
@@ -66,6 +67,16 @@ const LISTING_COLUMNS = new Set([
     'pricePerSqm', 'registryAssetId', 'registryStatus', 'lastSyncAt',
     'syncHash', 'syncedToRegistry', 'lastRegistrySync', 'referenceCode',
     'syncSource', 'createdAt', 'updatedAt',
+    // Added by Inventory OS v2 (supabase/migrations/011_inventory_os_v2.sql —
+    // applied automatically at deploy time by scripts/apply-pending-migrations.mjs).
+    // Keep in lockstep with that migration's ALTER TABLE list.
+    'unitCode', 'projectId', 'compoundId', 'developerId',
+    'offerType', 'listingType', 'gardenSqm', 'roofSqm', 'terraceSqm',
+    'plotSqm', 'floorNumber', 'unitView', 'maintenanceFeePerSqm',
+    'deliveryQuarter', 'verifiedAt', 'verifiedBy', 'ownershipDocRef',
+    'publishedAt', 'reservedUntil', 'reservationRef', 'daysOnMarket',
+    'photoCount', 'hasFloorPlan', 'hasVirtualTour', 'dataQualityScore',
+    'stale',
 ]);
 
 /**

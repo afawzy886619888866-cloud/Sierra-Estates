@@ -18,6 +18,7 @@ import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
+import { egpToUsd } from '@/lib/fx';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const listingCode = `SE-SUB-${Date.now().toString().slice(-6)}`;
     const egpM = data.price > 100000 ? Number((data.price / 1_000_000).toFixed(2)) : data.price;
-    const usd = Math.round(data.price / 50);
+    const usd = egpToUsd(data.price);
 
     const listingDocument = {
       code: listingCode,

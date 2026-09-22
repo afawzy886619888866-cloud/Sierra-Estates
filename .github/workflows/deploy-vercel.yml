@@ -158,13 +158,13 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: pnpm
