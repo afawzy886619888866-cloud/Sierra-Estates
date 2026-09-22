@@ -197,12 +197,36 @@ export class AgentWorkflows {
       'Audit Workflow',
       [
         {
+          agentName: 'arc3-auditor',
+          taskDescription: `Run the read-only Arc 3 production readiness gate and report blockers and warnings: ${taskDescription}`,
+        },
+        {
           agentName: 'quality-inspector',
           taskDescription: `Verify compliance of code changes, lint issues, and guidelines: ${taskDescription}`,
         },
         {
           agentName: 'qa-automation-engineer',
           taskDescription: `Run full test suite (lint, unit, build checks).`,
+        },
+      ],
+      taskDescription
+    );
+  }
+
+  /**
+   * Arc 3 production architecture audit.
+   */
+  async runArc3AuditWorkflow(taskDescription: string): Promise<TaskResult[]> {
+    return this.orchestrator.orchestratePipeline(
+      'Arc 3 Production Audit',
+      [
+        {
+          agentName: 'arc3-auditor',
+          taskDescription: `Audit Supabase authority, production environment wiring, secret boundaries, agent fleet controls, and retired runtime paths: ${taskDescription}`,
+        },
+        {
+          agentName: 'security-auditor',
+          taskDescription: `Review Arc 3 findings for exploitable security impact and confirm any production hard stop: ${taskDescription}`,
         },
       ],
       taskDescription
