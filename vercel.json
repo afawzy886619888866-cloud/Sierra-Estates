@@ -4,7 +4,7 @@
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "regions": ["fra1"],
   "crons": [
