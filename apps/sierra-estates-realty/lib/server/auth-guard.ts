@@ -61,6 +61,17 @@ export interface AuthResult {
  *   3. Internal secret key via `X-SBR-SECRET-KEY` header (for cron/webhooks)
  */
 export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
+  // Method 0: Dev environment bypass when authentication is explicitly disabled
+  if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_AUTHENTICATION === 'false') {
+    return {
+      authenticated: true,
+      uid: 'dev-admin',
+      email: 'admin@sierra-estates.net',
+      role: 'superadmin',
+      method: 'session-cookie',
+    };
+  }
+
   // Method 1: Supabase access token.
   const authHeader = req.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {

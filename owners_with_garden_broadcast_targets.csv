@@ -1,0 +1,34 @@
+﻿phone,name,unit_code,compound,deal_type,price,source,description_sample
+201112345678,+20 111 234 5678 (Direct Owner),UNIT-WA-009,Mivida,Sale,"38,000,000 EGP",Inventory_with_Photos.xlsx [Owners Buy],🔥 لقطة للبيع في ميفيدا Mivida التجمع الخامس! فيلا مستقلة Standalone مساحة 450 متر مباني، 4 غرف نوم م
+201094519022,+20 109 451 9022 (Verified Owner),UNIT-WA-002,Al Rehab,Sale,"6,800,000 EGP",Inventory_with_Photos.xlsx [Owners Buy],للبيع شقة أرضي بحديقة في الرحاب 4 مساحة 127م + 60م حديقة تشطيب خاص بحري بالكامل موقع مميز بالقرب من 
+201110122239,مباشر / المالك,PATIO-TH-C,El Patio Hills,Sale,Price on Call,Inventory_with_Photos.xlsx [Owners Buy],حديقة 130م، روف 32م، أقساط 674 ألف. El Patio Hills (La Vista) El Patio Hills Townhouse مباشر / المال
+201154445584,+20 10 23990772,SE-WA-2522,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"2522 6/8/26, 9:25 AM +20 10 23990772 1023990772.0 Available 3.0 New Cairo New Cairo 0 0 Price on Req"
+201023990772,+20 10 23990772,SE-WA-2522,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"2522 6/8/26, 9:25 AM +20 10 23990772 1023990772.0 Available 3.0 New Cairo New Cairo 0 0 Price on Req"
+201033772699,+20 10 33772699,SE-WA-4821,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"4821 7/18/26, 6:48 AM +20 10 33772699 1033772699.0 Available 3.0 New Cairo New Cairo 0 0 Price on Re"
+201286239700,+20 12 86239700,SE-WA-9938,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"9938 7/24/26, 4:36 AM +20 12 86239700 1286239700.0 Available New Cairo New Cairo 167000000 3443299 1"
+201515410943,+20 15 15410943,SE-WA-10819,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"10819 6/23/26, 04:25 +20 15 15410943 1515410943.0 Available New Cairo New Cairo 15000 309 15,000 EGP"
+201113330524,+20 11 13330524,SE-WA-11901,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"11901 6/23/26, 10:37 +20 11 13330524 1113330524.0 Available New Cairo New Cairo 4800000 98969 4.80M "
+201093003351,+20 10 93003351,SE-WA-12015,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"12015 7/1/26, 17:10 +20 10 93003351 1093003351.0 Available 6.0 New Cairo New Cairo 49000000 1010309 "
+201066046891,+20 10 66046891,SE-WA-12634,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"12634 6/20/26, 14:19 +20 10 66046891 1066046891.0 Available 3.0 New Cairo New Cairo 0 0 Price on Req"
+201154008603,+20 10 66046891,SE-WA-12653,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"12653 6/28/26, 18:22 +20 10 66046891 1154008603.0 Available New Cairo New Cairo 7000000 144330 7.00M"
+201100636107,+20 10 66046891,SE-WA-12670,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"12670 8/1/26, 16:21 +20 10 66046891 1100636107.0 Available 3.0 New Cairo New Cairo 5500000 113402 5."
+201039425674,+20 10 66046891,SE-WA-12675,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"12675 6/28/26, 18:22 +20 10 66046891 1039425674.0 Available New Cairo New Cairo 7000000 144330 7.00M"
+201277700330,+20 12 77700330,SE-WA-12858,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"12858 6/8/26, 10:52 PM +20 12 77700330 1277700330.0 Available 3.0 New Cairo New Cairo 7000000 144330"
+201066322715,+20 10 66322715,SE-WA-12905,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"12905 6/9/26, 7:14 PM +20 10 66322715 1066322715.0 Available New Cairo New Cairo 232800000 4800000 2"
+201272617514,+20 12 72617514,SE-WA-13588,Hyde Park,Sale,,data/master_inventory_clean_no_duplicates.csv,"13588 7/16/26, 1:21 PM +20 12 72617514 1272617514.0 Available 3.0 Hyde Park 5th Settlement 160000000"
+201006880040,+20 10 06880040,SE-WA-14616,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"14616 7/16/26, 10:22 PM +20 10 06880040 1006880040.0 Available 3.0 New Cairo New Cairo 3750000 77320"
+201207121523,+20 12 07121523,SE-WA-14817,Al Rehab,Sale,,data/master_inventory_clean_no_duplicates.csv,"14817 7/22/26, 10:18 PM +20 12 07121523 1207121523.0 Available 2.0 Al Rehab Al Rehab 0 0 Price on Re"
+201114228877,@mohamed42288,SE-WA-14952,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"14952 7/26/26, 2:12 PM @mohamed42288 1114228877.0 Available New Cairo New Cairo 17250000 355670 17.2"
+201286000255,+20 12 27372974,SE-WA-15600,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"15600 6/7/26, 1:18 AM +20 12 27372974 1227372974.0 Available 3.0 New Cairo New Cairo 0 0 Price on Re"
+201288313332,+20 12 27372974,SE-WA-15600,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"15600 6/7/26, 1:18 AM +20 12 27372974 1227372974.0 Available 3.0 New Cairo New Cairo 0 0 Price on Re"
+201227372974,+20 12 27372974,SE-WA-15600,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"15600 6/7/26, 1:18 AM +20 12 27372974 1227372974.0 Available 3.0 New Cairo New Cairo 0 0 Price on Re"
+201006559404,+20 12 27372974,SE-WA-15796,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"15796 6/8/26, 6:12 PM +20 12 27372974 1227372974.0 Available 2.0 New Cairo New Cairo 5000000 103093 "
+201100500062,+20 11 00500062,SE-WA-15834,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"15834 6/9/26, 10:23 AM +20 11 00500062 1100500062.0 Available 3.0 New Cairo New Cairo 13000000 26804"
+201019138668,+20 10 19138668,SE-WA-15987,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"15987 6/11/26, 10:35 PM +20 10 19138668 1019138668.0 Available New Cairo New Cairo 0 0 Price on Requ"
+201505098668,+20 10 19138668,SE-WA-16806,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,"16806 7/4/26, 5:31 AM +20 10 19138668 1505098668.0 Available New Cairo New Cairo 0 0 Price on Reques"
+201060673054,+20 10 60673054,SE-WA-17398,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,"17398 7/28/26, 8:20 PM +20 10 60673054 1060673054.0 Available 3.0 New Cairo New Cairo 35000 722 0.04"
+201203634003,Direct / Owner Group,SE-WA-19060,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,19060 2026-08-28T18:31:08.738Z Direct / Owner Group 1.203634003693727e+17 Available New Cairo New Ca
+201203634253,Direct / Owner Group,SE-WA-19064,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,19064 2026-08-28T18:41:38.033Z Direct / Owner Group 37963417280631.0 Available New Cairo New Cairo 0
+201203630638,Direct / Owner Group,SE-WA-19066,New Cairo,Sale,,data/master_inventory_clean_no_duplicates.csv,19066 2026-08-28T18:43:44.363Z Direct / Owner Group 229261428445302.0 Available New Cairo New Cairo 
+201203630419,Direct / Owner Group,SE-WA-19069,New Cairo,Rent,,data/master_inventory_clean_no_duplicates.csv,19069 2026-08-28T18:49:34.955Z Direct / Owner Group 1.2036304191273584e+17 Available 3.0 New Cairo N
+201203633289,Direct / Owner Group,SE-WA-19084,Swan Lake Residence,Sale,,data/master_inventory_clean_no_duplicates.csv,19084 2026-08-28T18:52:09.737Z Direct / Owner Group 54967561928850.0 Available 4.0 Swan Lake Residen

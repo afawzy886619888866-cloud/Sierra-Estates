@@ -23,7 +23,7 @@ function escapeXml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/'/g, '&apos;'); // cspell:disable-line
 }
 
 /**
@@ -99,7 +99,9 @@ router.get('/webhook', (req, res) => {
   if (mode && token) {
     if (mode === 'subscribe' && token === verifyToken) {
       logger.info('Webhook verified successfully');
-      res.status(200).send(challenge);
+      const safeChallenge = typeof challenge === 'string' ? challenge.replace(/[^\w-]/g, '') : '';
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send(safeChallenge);
     } else {
       res.sendStatus(403);
     }

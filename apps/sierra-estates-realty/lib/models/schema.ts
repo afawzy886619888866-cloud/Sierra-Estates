@@ -24,7 +24,20 @@ export interface BaseDocument {
   };
 }
 
-export type PropertyStatus = 'available' | 'reserved' | 'sold' | 'rented' | 'off-market';
+// 'active' | 'pending' | 'archived' | 'draft' are the additional states the
+// deployed public.listings table stores (the original six-status check
+// constraint); the public site has always read a wider vocabulary than the
+// Firestore-era enum, so the type now admits both.
+export type PropertyStatus =
+  | 'available'
+  | 'active'
+  | 'reserved'
+  | 'pending'
+  | 'sold'
+  | 'rented'
+  | 'off-market'
+  | 'archived'
+  | 'draft';
 export type PropertyType = 'apartment' | 'villa' | 'townhouse' | 'duplex' | 'penthouse' | 'studio' | 'chalet' | 'commercial' | 'land';
 export type PipelineStage = 'inbound' | 'qualify' | 'engage' | 'proposal' | 'viewing' | 'negotiate' | 'reserve' | 'contract' | 'handover' | 'closed-won';
 // The full set of lead-intake channels this app knows how to attribute and
@@ -109,6 +122,10 @@ export interface Unit extends BaseDocument {
   propertyType: PropertyType;
   category: 'residential' | 'commercial';
   status: PropertyStatus;
+  /** sale | rent — mirrors the `deal_type` column on public.listings.
+   *  Fixes the PF sync conflation where rent OFFERS were imported with
+   *  status='rented' (unavailable) instead of dealType='rent' + status='available'. */
+  dealType?: 'sale' | 'rent';
 
   // Location
   projectId?: string;       // FK to projects collection
@@ -147,7 +164,7 @@ export interface Unit extends BaseDocument {
   floorPlanUrl?: string;
 
   // Sync
-  syncSource?: 'manual' | 'property-finder' | 'airtable' | 'sheets';
+  syncSource?: 'manual' | 'property-finder' | 'airtable' | 'sheets' | 'master-owner-sheet';
   pfReferenceNumber?: string;
   manualOverrides?: string[];   // Fields that should not be overwritten by sync
   lastSyncAt?: Timestamp | FieldValue | string;

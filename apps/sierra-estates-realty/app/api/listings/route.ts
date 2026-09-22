@@ -102,8 +102,14 @@ function rowToEnvelope(row: Record<string, unknown>) {
     status: r.status || 'available',
     amenities: r.amenities || [],
     purpose: r.dealType === 'rent' ? 'for-rent' : 'for-sale',
+    // The portal's mapRow reads agent/agentName; live rows store agent_name.
+    agent: r.agentName || undefined,
     pfReferenceNumber: r.pfReferenceNumber || null,
-    publishToClient: r.publishToClient || false,
+    // Absence means public: the deployed table has no publish_to_client
+    // column, so the only stored values come from raw_data — where an
+    // explicit false is the staff moderation off-switch (see the submit
+    // path, which parks publishToClient: false on unreviewed rows).
+    publishToClient: r.publishToClient ?? true,
   };
 }
 
@@ -148,7 +154,7 @@ function inventoryUnitToListing(u: any): Listing {
     tag: u.status === 'available' ? 'Verified Owner' : null,
     mode: u.mode || 'sale',
     agent: 'Sierra Direct Advisor',
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e31d4592-ed1e-11ef-8cf7-0a8c5593e6a3-93f6f406-cd8c-4784-a2d6-d8cb88a7ae7e.png',
     status: u.status || 'available',
     description: u.comment || '',
   } as Listing;
@@ -162,7 +168,7 @@ async function readListings(): Promise<Listing[]> {
     const { data: supaListings, error: supaErr } = await supabase
       .from('listings')
       .select('*')
-      .eq('status', 'active')
+      .in('status', ['active', 'available'])
       .limit(500);
 
     if (!supaErr && supaListings && supaListings.length > 0) {
@@ -171,9 +177,13 @@ async function readListings(): Promise<Listing[]> {
         const egpM = price > 100000 ? price / 1_000_000 : price;
         const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
 
+        // Presentation fields (img/tag/aiScore) are parked in raw_data on the
+        // deployed table — read them back through the same convention the
+        // write path uses (lib/server/listing-columns.ts).
+        const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
         return {
           id: item.id || item.ref_id,
-          code: item.code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
+          code: item.code || item.sbr_code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
           compound: item.compound || 'New Cairo',
           zone: item.location_area || '5th Settlement',
           type: item.property_type || 'Apartment',
@@ -182,11 +192,11 @@ async function readListings(): Promise<Listing[]> {
           area: Number(item.area_sqm) || 150,
           egpM: Number(egpM.toFixed(2)),
           usd: usd || 1500,
-          aiScore: item.roi_percentage ? 9.0 : 8.8,
-          tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner',
+          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : (item.roi_percentage ? 9.0 : 8.8),
+          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner'),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-          agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
-          img: (item.images && item.images[0]) || '',
+          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker'),
+          img: raw.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
           description: item.description || '',
         } as Listing;
@@ -272,10 +282,25 @@ export async function GET(request: Request) {
 
     if (limit != null) {
       try {
-        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, { limit });
-        // publishToClient is the staff moderation switch: a row is only public
-        // inventory once someone has turned it on.
-        const listings = rows.map(rowToEnvelope).filter((l) => l.publishToClient === true);
+        // The live table mixes ~9.7k archived rows in with the ~160 active
+        // ones, so the status filter has to run inside the query — a plain
+        // limit would return mostly archived rows and the page would show
+        // nothing. Public submissions land as 'pending' (see /api/listings/
+        // submit), so this stays the moderation gate.
+        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, {
+          limit,
+          orderBy: { column: 'updatedAt', ascending: false },
+          where: [{ column: 'status', op: 'in', value: ['active', 'available'] }],
+        });
+        // publishToClient remains a moderation off-switch (an explicit false
+        // hides the row), but the live table has no publish_to_client column
+        // — it parks in raw_data at best — so requiring === true hid every
+        // live row and the envelope consumers fell back to static data.
+        const listings = rows
+          .map(rowToEnvelope)
+          .filter(
+            (l) => l.publishToClient !== false && isPubliclyVisibleListingStatus(l.status)
+          );
         return NextResponse.json({ success: true, listings, count: listings.length });
       } catch (err) {
         // Unreachable / denied → seed fallback, never 5xx.

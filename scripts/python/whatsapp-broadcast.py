@@ -15,14 +15,7 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-try:
-    import firebase_admin
-    from firebase_admin import credentials, firestore
-except ImportError:  # pragma: no cover - optional dependency
-    firebase_admin = None
-    credentials = None
-    firestore = None
-
+load_dotenv('.env.local')
 load_dotenv()
 
 
@@ -33,25 +26,19 @@ class SafeTemplateDict(dict[str, str]):
         return '{' + key + '}'
 
 
-def _load_firestore_client(project_id: str | None):
-    """Initialize and return a Firestore client."""
-    if firebase_admin is None or credentials is None or firestore is None:
-        raise RuntimeError('firebase-admin is required. Install dependencies from scripts/python/requirements.txt.')
-    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if not service_account_json:
-        raise RuntimeError('FIREBASE_SERVICE_ACCOUNT_JSON is required for Firestore access.')
-    try:
-        app = firebase_admin.get_app()
-    except ValueError:
-        options = {'projectId': project_id} if project_id else None
-        if options is None:
-            app = firebase_admin.initialize_app(credentials.Certificate(json.loads(service_account_json)))
-        else:
-            app = firebase_admin.initialize_app(
-                credentials.Certificate(json.loads(service_account_json)),
-                options,
-            )
-    return firestore.client(app=app)
+def _read_supabase_leads() -> list[dict[str, Any]]:
+    """Read leads from Supabase PostgreSQL public.leads."""
+    supabase_url = os.getenv('NEXT_PUBLIC_SUPABASE_URL', 'https://REDACTED-PROJECT.supabase.co')
+    supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    if not supabase_key:
+        raise RuntimeError('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY required.')
+    headers = {
+        'apikey': supabase_key,
+        'Authorization': f'Bearer {supabase_key}',
+    }
+    resp = requests.get(f'{supabase_url}/rest/v1/leads?select=*', headers=headers, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
@@ -63,10 +50,14 @@ def _read_csv_leads(input_path: Path) -> list[dict[str, Any]]:
 
 
 def _read_firestore_leads(project_id: str | None, collection_name: str) -> list[dict[str, Any]]:
-    """Read leads from Firestore."""
-    client = _load_firestore_client(project_id)
-    documents = client.collection(collection_name).stream()
-    return [{**(document.to_dict() or {}), 'id': document.id} for document in documents]
+    """Read leads from Firestore (legacy fallback — deprecated).
+
+    Supabase is the only supported source since 2026-09-20. This stub remains
+    so old CLI invocations fail with a clear message instead of crashing.
+    """
+    raise RuntimeError(
+        'Firestore source is no longer supported. Re-run with --source=supabase (the default).'
+    )
 
 
 def _score_value(lead: dict[str, Any]) -> int:
@@ -125,7 +116,7 @@ def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description='Broadcast templated WhatsApp messages to Sierra Estates leads.')
     parser.add_argument('--template', required=True, help='Message template, e.g. "Hi {name}".')
-    parser.add_argument('--source', choices=('csv', 'firestore'), required=True, help='Lead source to read from.')
+    parser.add_argument('--source', choices=('csv', 'firestore', 'supabase'), default='supabase', help='Lead source to read from (default: supabase).')
     parser.add_argument('--dry-run', action='store_true', help='Preview messages without sending them.')
     parser.add_argument('--min-score', type=int, default=0, help='Only send to leads at or above this score.')
     parser.add_argument('--input', default='leads.csv', help='CSV input path when --source=csv.')
@@ -140,11 +131,12 @@ def main() -> int:
     args = parse_args()
 
     try:
-        leads = (
-            _read_csv_leads(Path(args.input))
-            if args.source == 'csv'
-            else _read_firestore_leads(args.project_id, args.collection)
-        )
+        if args.source == 'csv':
+            leads = _read_csv_leads(Path(args.input))
+        elif args.source == 'supabase':
+            leads = _read_supabase_leads()
+        else:
+            leads = _read_firestore_leads(args.project_id, args.collection)
         report_rows: list[dict[str, Any]] = []
         for lead in leads:
             if _score_value(lead) < args.min_score:

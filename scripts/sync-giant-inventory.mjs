@@ -153,73 +153,74 @@ fs.writeFileSync(path.join(publicDir, 'sierra-estates-clean-inventory.csv'), cle
 fs.writeFileSync(path.join(ROOT, 'data/sierra-estates-clean-inventory.csv'), cleanCsvHeader + cleanCsvRows, 'utf8');
 console.log(`💾 Saved clean CSV → apps/sierra-estates-realty/public/downloads/sierra-estates-clean-inventory.csv`);
 
-// 2. Sync to Firestore
-async function syncToFirestore() {
+// 2. Sync to Supabase
+async function syncToSupabase() {
   console.log('\n══════════════════════════════════════════════════════');
-  console.log('  STAGE 2: Syncing Listings to Firebase Firestore');
+  console.log('  STAGE 2: Syncing Listings to Supabase PostgreSQL');
   console.log('══════════════════════════════════════════════════════');
 
-  let initializeApp, getApps, cert, getFirestore;
-  try {
-    ({ initializeApp, getApps, cert } = require('firebase-admin/app'));
-    ({ getFirestore } = require('firebase-admin/firestore'));
-  } catch (err) {
-    console.warn(`⚠️ firebase-admin error: ${err.message}`);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseKey) {
+    console.log('ℹ️ SUPABASE_SERVICE_ROLE_KEY not found in environment. Skipping remote database sync.');
     return;
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID || 'sierra-blu';
+  const { createClient } = require('@supabase/supabase-js');
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
   try {
-    if (getApps().length === 0) {
-      if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && process.env.GOOGLE_SERVICE_ACCOUNT_KEY.includes('{') && process.env.GOOGLE_SERVICE_ACCOUNT_KEY.includes('private_key')) {
-        const sa = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-        initializeApp({ credential: cert(sa), projectId });
-        console.log(`🔑 Authenticated via GOOGLE_SERVICE_ACCOUNT_KEY → ${projectId}`);
-      } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY && !process.env.FIREBASE_PRIVATE_KEY.includes('...')) {
-        initializeApp({
-          credential: cert({
-            projectId,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          }),
-          projectId,
-        });
-        console.log(`🔑 Authenticated via FIREBASE_CLIENT_EMAIL → ${projectId}`);
-      } else {
-        console.log('ℹ️ Running in Local File Sync Mode (Firebase credentials mock/offline).');
-        return;
-      }
-    }
-
-    const db = getFirestore();
-    const BATCH_SIZE = 500;
+    console.log(`📡 Connected to Supabase: ${supabaseUrl}`);
+    const BATCH_SIZE = 100;
     let written = 0;
-    const collections = ['properties', 'units'];
 
-    console.log(`🔄 Writing ${listings.length} listings to Firestore collections [${collections.join(', ')}]...`);
+    console.log(`🔄 Upserting ${listings.length} listings to Supabase public.listings...`);
 
-    for (const colName of collections) {
-      for (let i = 0; i < listings.length; i += BATCH_SIZE) {
-        const batch = db.batch();
-        const slice = listings.slice(i, i + BATCH_SIZE);
-        for (const unit of slice) {
-          const docRef = db.collection(colName).doc(String(unit.recordId));
-          batch.set(docRef, unit, { merge: true });
-        }
-        await batch.commit();
-        written += slice.length;
-        process.stdout.write(`   ✓ [${colName}] Committed ${Math.min(i + BATCH_SIZE, listings.length)}/${listings.length}\r`);
+    for (let i = 0; i < listings.length; i += BATCH_SIZE) {
+      const slice = listings.slice(i, i + BATCH_SIZE);
+      const records = slice.map((l) => ({
+        code: String(l.recordId),
+        title: l.title || `${l.bedrooms}BR ${l.compound}`,
+        compound: l.compound,
+        location: l.location,
+        zone: l.zone,
+        property_type: l.propertyType?.toLowerCase() || 'apartment',
+        bedrooms: Number(l.bedrooms) || 0,
+        bathrooms: Number(l.bathrooms) || 0,
+        area: Number(l.area) || 0,
+        price: Number(l.price) || 0,
+        status: 'available',
+        owner_type: l.isDirectOwner ? 'owner' : 'broker',
+        owner_contact: l.contactPhone || '',
+        contact_name: l.contactName || '',
+        img: l.img,
+        photos: l.photos,
+        images: l.images,
+        source: 'master-inventory-xlsx',
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase
+        .from('listings')
+        .upsert(records, { onConflict: 'code' });
+
+      if (error) {
+        console.warn(`\n⚠️ Batch error at ${i}:`, error.message);
+      } else {
+        written += records.length;
+        process.stdout.write(`   ✓ Committed ${written}/${listings.length}\r`);
       }
-      console.log(`\n✅ Collection "${colName}" synced successfully!`);
     }
 
-    console.log(`\n🎉 Firestore sync complete! Total ${listings.length} units active.`);
+    console.log(`\n🎉 Supabase sync complete! Total ${written} units updated in public.listings.`);
   } catch (err) {
-    console.warn(`⚠️ Firestore sync notice: ${err.message}`);
+    console.warn(`⚠️ Supabase sync notice: ${err.message}`);
   }
 }
 
-syncToFirestore().then(() => {
+syncToSupabase().then(() => {
   console.log('\n🏁 Giant Master Inventory Processing Finished Successfully!');
 });

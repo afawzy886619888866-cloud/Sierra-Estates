@@ -40,14 +40,19 @@ pnpm openclaw:task "Summarize recent listing additions and check inventory integ
 
 ### 2. Programmatic Execution in Code
 
+The legacy Airtable constructor fields below are retained only for
+compatibility with older agent package versions. They must remain empty in
+production; current inventory reads and writes go through Supabase.
+
 ```typescript
 import { OpenClawAgent } from '@sierra-estates/agents';
 
 const agent = new OpenClawAgent({
   aiApiKey: process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_AI_API_KEY || '',
-  airtableApiKey: process.env.AIRTABLE_API_KEY || '',
-  airtableBaseId: process.env.AIRTABLE_BASE_ID || '',
-  airtableTableName: process.env.AIRTABLE_TABLE_NAME || 'Listings',
+  // Legacy compatibility only; do not configure Airtable in production.
+  airtableApiKey: '',
+  airtableBaseId: '',
+  airtableTableName: 'Listings',
 });
 
 // Run task with shared memory grounding

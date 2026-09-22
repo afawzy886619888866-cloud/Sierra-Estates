@@ -1,59 +1,57 @@
+from __future__ import annotations
+
 """main.py.
 
 Consolidated FastAPI backend for Sierra Estates PropTech integrations,
 ECC Memory Engine, CRM synchronization, and Valuation Services.
 """
 
-from __future__ import annotations
-
 import logging
 import os
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 # pylint: disable=import-error,no-name-in-module
 try:
-    from dotenv import load_dotenv  # pylint: disable=import-error
-    load_dotenv()
-except ImportError:
-    def load_dotenv():  # type: ignore[misc]
-        """Stub for load_dotenv when python-dotenv is not installed."""
-        return None
+    import dotenv
+    dotenv.load_dotenv()
+except Exception:
+    pass
 
-try:
-    from fastapi import FastAPI  # pylint: disable=import-error
-    from fastapi.middleware.cors import CORSMiddleware  # pylint: disable=import-error
-    from pydantic import BaseModel, Field  # pylint: disable=import-error
-except ImportError:
-    # Stubs for environment without fastapi installed locally
-    class FastAPI:  # type: ignore[no-redef]
-        """FastAPI stub for static typing environments."""
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel, Field
+else:
+    try:
+        from fastapi import FastAPI
+        from fastapi.middleware.cors import CORSMiddleware
+        from pydantic import BaseModel, Field
+    except ImportError:
+        class FastAPI:
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+            def add_middleware(self, *args: Any, **kwargs: Any) -> None:
+                pass
+            def get(self, *args: Any, **kwargs: Any) -> Any:
+                return lambda fn: fn
+            def post(self, *args: Any, **kwargs: Any) -> Any:
+                return lambda fn: fn
+
+        class CORSMiddleware:
             pass
-        def add_middleware(self, *args: Any, **kwargs: Any) -> None:
-            pass
-        def get(self, *args: Any, **kwargs: Any) -> Any:
-            return lambda fn: fn
-        def post(self, *args: Any, **kwargs: Any) -> Any:
-            return lambda fn: fn
 
-    class CORSMiddleware:  # type: ignore[no-redef]
-        """CORS Middleware stub."""
-        pass
+        class BaseModel:
+            def model_dump(self) -> Dict[str, Any]:
+                return self.__dict__
 
-    class BaseModel:  # type: ignore[no-redef]
-        """BaseModel stub."""
-        def model_dump(self) -> Dict[str, Any]:
-            return self.__dict__
-
-    def Field(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
-        return None
+        def Field(*args: Any, **kwargs: Any) -> Any:
+            return None
 
 from property_finder_sync import PropertyFinderSyncHub
 from ecc_memory_engine import EpisodicContextCache
 from valuation_agent_skill import RealEstateValuationAgent
 from hubspot_sync import HubSpotSyncHub
 
-load_dotenv()
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 

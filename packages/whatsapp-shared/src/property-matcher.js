@@ -5,7 +5,7 @@
  * applies a +20% priority boost for Direct Owner units, and outputs rich WhatsApp cards.
  */
 
-const { adminDb } = require('./firebase-service');
+const { adminDb } = require('./supabase-service');
 const propertyEvaluator = require('./property-evaluator');
 
 // Curated active inventory catalog for New Cairo compounds with Owner / Direct metadata
@@ -110,7 +110,7 @@ class PropertyMatcher {
   async findMatches(qualData) {
     let inventory = FALLBACK_INVENTORY;
 
-    // Try fetching from Firestore listings if available
+    // Try fetching from Supabase listings if available
     try {
       if (adminDb) {
         const snap = await adminDb.collection('listings').where('status', '==', 'active').limit(20).get();

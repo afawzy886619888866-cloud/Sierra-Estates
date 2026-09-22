@@ -6,7 +6,7 @@
 
 const brochureManager = require('./brochure-manager');
 const propertyEvaluator = require('./property-evaluator');
-const firebaseService = require('./firebase-service');
+const firebaseService = require('./supabase-service');
 const emailService = require('./email-service');
 const propertyMatcher = require('./property-matcher');
 const memoryService = require('./memory-service');
