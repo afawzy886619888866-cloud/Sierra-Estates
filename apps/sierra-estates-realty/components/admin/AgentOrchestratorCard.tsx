@@ -145,7 +145,7 @@ export default function AgentOrchestratorCard({
               width: 36,
               height: 36,
               borderRadius: 8,
-              background: 'linear-gradient(135deg, #00AEFF 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #C8961A 0%, #7C3AED 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -235,7 +235,7 @@ export default function AgentOrchestratorCard({
               fontSize: 11,
               fontWeight: 700,
               background: 'rgba(0, 174, 255, 0.15)',
-              color: '#00AEFF',
+              color: '#C8961A',
               border: '1px solid rgba(0, 174, 255, 0.35)',
               borderRadius: 8,
               cursor: 'pointer',
@@ -537,7 +537,7 @@ export default function AgentOrchestratorCard({
                   fontWeight: selectedHarness === h ? 700 : 500,
                   background: selectedHarness === h ? 'rgba(0, 174, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)',
                   color: selectedHarness === h ? '#38BDF8' : '#D1D5DB',
-                  border: `1px solid ${selectedHarness === h ? '#00AEFF' : 'rgba(255, 255, 255, 0.1)'}`,
+                  border: `1px solid ${selectedHarness === h ? '#C8961A' : 'rgba(255, 255, 255, 0.1)'}`,
                   cursor: 'pointer',
                 }}
               >

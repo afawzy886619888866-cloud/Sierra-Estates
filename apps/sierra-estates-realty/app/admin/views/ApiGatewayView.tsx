@@ -197,7 +197,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
   const getMethodBadgeColor = (method: string) => {
     switch (method) {
       case 'GET':
-        return '#00AEFF';
+        return '#C8961A';
       case 'POST':
         return '#34D399';
       case 'PATCH':
@@ -240,7 +240,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
               fontFamily: 'JetBrains Mono, monospace',
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
-              color: '#00AEFF',
+              color: '#C8961A',
               padding: '3px 8px',
               borderRadius: 6,
               background: 'rgba(0, 174, 255, 0.1)',
@@ -282,7 +282,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
       >
         {[
           { label: isAr ? 'متوسط الاستجابة (p50)' : 'Median Latency (p50)', val: '78ms', color: '#34D399', icon: '⚡' },
-          { label: isAr ? 'أقصى استجابة (p95)' : '95th Percentile (p95)', val: '290ms', color: '#00AEFF', icon: '⏱️' },
+          { label: isAr ? 'أقصى استجابة (p95)' : '95th Percentile (p95)', val: '290ms', color: '#C8961A', icon: '⏱️' },
           { label: isAr ? 'معدل الأخطاء (5xx)' : 'Error Rate (5xx)', val: '0.08%', color: '#34D399', icon: '🛡️' },
           { label: isAr ? 'استهلاك الحصة' : 'Rate Quota Used', val: '1,420 / 10,000', color: '#F59E0B', icon: '📊' },
         ].map((m, idx) => (
@@ -422,7 +422,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
                   {selectedEndpoint.path}
                 </span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--gold, #00AEFF)' }}>
+              <div style={{ fontSize: 11, color: 'var(--gold, #C8961A)' }}>
                 {selectedEndpoint.service} · {selectedEndpoint.auth}
               </div>
             </div>
@@ -434,7 +434,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
                 borderRadius: 8,
                 background: 'rgba(0, 174, 255, 0.15)',
                 border: '1px solid rgba(0, 174, 255, 0.35)',
-                color: '#5FC9FF',
+                color: '#E9C176',
                 fontSize: 11.5,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -457,7 +457,7 @@ export default function ApiGatewayView({ lang = 'en' }: { lang?: string }) {
               Latency p50: <strong style={{ color: '#34D399' }}>{selectedEndpoint.p50}</strong>
             </span>
             <span style={{ fontSize: 11, background: 'rgba(255, 255, 255, 0.04)', padding: '4px 8px', borderRadius: 6, color: 'rgba(240, 237, 229, 0.7)' }}>
-              Latency p95: <strong style={{ color: '#00AEFF' }}>{selectedEndpoint.p95}</strong>
+              Latency p95: <strong style={{ color: '#C8961A' }}>{selectedEndpoint.p95}</strong>
             </span>
           </div>
 

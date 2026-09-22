@@ -18,9 +18,12 @@ import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
+import { egpToUsd } from '@/lib/fx';
 import { LISTING_STATUS_PENDING_REVIEW } from '@/lib/models/schema';
 import { sendTelegramMessage, escapeTelegramHtml } from '@/lib/telegram';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { appendToExcelInventory } from '@/lib/services/ExcelInventoryService';
+import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,7 +65,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const listingCode = `SE-SUB-${Date.now().toString().slice(-6)}`;
     const egpM = data.price > 100000 ? Number((data.price / 1_000_000).toFixed(2)) : data.price;
-    const usd = Math.round(data.price / 50);
+    const usd = egpToUsd(data.price);
 
     const listingDocument = {
       code: listingCode,
@@ -91,9 +94,9 @@ export async function POST(request: Request) {
       publishToClient: false,
       agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
       ago: 'Just now',
-      img: data.photos?.[0] || data.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-      photos: data.photos?.length ? data.photos : data.images?.length ? data.images : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'],
-      images: data.images?.length ? data.images : data.photos?.length ? data.photos : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'],
+      img: data.photos?.[0] || data.images?.[0] || 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/eb9e2524-ed1e-11ef-8cf7-0a8c5593e6a3-8eafcb90-6366-4465-8772-e6a62c758ebf.png',
+      photos: data.photos?.length ? data.photos : data.images?.length ? data.images : ['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e3cbe4bc-ed1e-11ef-8cf7-0a8c5593e6a3-31808b40-7120-47e8-b97d-6839d21f2ed9.png'],
+      images: data.images?.length ? data.images : data.photos?.length ? data.photos : ['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e4cf1bf5-ed1e-11ef-8cf7-0a8c5593e6a3-8ed7cff1-a549-4de1-a555-5b033db03c33.png'],
       comment: data.comment,
       submittedAt: now,
       source: 'web-submission',
@@ -119,6 +122,28 @@ export async function POST(request: Request) {
       logger.info(`[LISTING_SUBMIT] Sandbox mode — new listing received: ${listingCode}`);
     }
 
+    // Append newly submitted unit to the Master Excel Inventory workbook
+    try {
+      await appendToExcelInventory({
+        recordId: listingCode,
+        code: listingCode,
+        compound: data.compound,
+        propertyType: data.propertyType,
+        operation: data.mode === 'rent' ? 'Rent' : 'Sale',
+        price: data.price,
+        areaSqm: data.area,
+        bedrooms: data.beds,
+        bathrooms: data.baths,
+        contactName: data.ownerName,
+        contactPhone: data.mobile,
+        sourceType: data.ownerType === 'Broker' ? 'broker' : 'owner',
+        photoUrls: data.photos || data.images || [],
+        description: data.comment,
+      });
+    } catch (excelErr) {
+      logger.warn(`[LISTING_SUBMIT] Excel append error (non-fatal): ${(excelErr as Error).message}`);
+    }
+
     // 1. Send immediate notification to the Agency Telegram Bot
     try {
       const telegramText = `
@@ -134,8 +159,8 @@ export async function POST(request: Request) {
 <b>Notes:</b> ${escapeTelegramHtml(data.comment || 'None')}
       `.trim();
       await sendTelegramMessage(telegramText);
-    } catch (teleErr) {
-      logger.warn('[LISTING_SUBMIT] Telegram alert skipped:', teleErr);
+    } catch (telegramErr) {
+      logger.warn('[LISTING_SUBMIT] Telegram alert skipped:', telegramErr);
     }
 
     // 2. Enqueue automated WhatsApp notification for the agency concierge
@@ -150,6 +175,21 @@ export async function POST(request: Request) {
       } catch (waErr) {
         logger.warn('[LISTING_SUBMIT] WhatsApp dispatch skipped:', waErr);
       }
+    }
+
+    // 3. Broadcast newly submitted unit into the August Owners WhatsApp group
+    try {
+      await AugustOwnersAgentService.broadcastNewUnitToGroup({
+        code: listingCode,
+        compound: data.compound,
+        propertyType: data.propertyType,
+        price: data.price,
+        beds: data.beds,
+        area: data.area,
+        mode: data.mode,
+      });
+    } catch (broadcastErr) {
+      logger.warn('[LISTING_SUBMIT] August group broadcast skipped:', broadcastErr);
     }
 
     return NextResponse.json(

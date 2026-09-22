@@ -26,6 +26,7 @@ import { AgentOrchestrator } from '@sierra-estates/agents-core'
 import { sharedMemory, memoryEngine, brainRAG } from '@sierra-estates/memory-engine'
 import { stripWhatsAppSuffix } from './phone'
 import { buildListingsDigest, type ListingFetchResult } from './property-finder'
+import { defaultJiraService } from './jira-service'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -260,6 +261,23 @@ export class WhatsAppBotRouter {
 
       // 4. Build context for agents
       const context = this.buildAgentContext(phone, msg, intent, history, leadProfile)
+
+      // Automatic Jira Lead ticket sync for high-intent inquiries
+      const qualifiedIntents: MessageIntent[] = ['viewing_request', 'closing', 'owner_offering', 'property_search', 'price_inquiry']
+      if (qualifiedIntents.includes(intent) || urgency === 'high' || urgency === 'critical') {
+        const profileRecord = leadProfile as Record<string, unknown> | null
+        const prefs = profileRecord?.preferences as Record<string, unknown> | undefined
+        defaultJiraService.createLeadTicket({
+          phone,
+          name: typeof profileRecord?.name === 'string' ? profileRecord.name : undefined,
+          intent,
+          urgency,
+          propertyCode: typeof prefs?.propertyCode === 'string' ? prefs.propertyCode : undefined,
+          budget: typeof prefs?.budget === 'string' ? prefs.budget : undefined,
+          message: msg.body,
+          conversationSummary: `Intent: ${intent} | Urgency: ${urgency} | Routing: ${route.primaryAgent}`,
+        }).catch((err) => console.warn('[Router] Jira lead sync warning:', err))
+      }
 
       // 5. If human escalation needed, alert team and send holding message
       if (route.primaryAgent === 'human') {
@@ -541,6 +559,16 @@ ${history.slice(-5).map((h: unknown) => JSON.stringify(h)).join('\n') || 'None'}
       author: 'system',
       tags: ['human-escalation', 'urgent', `phone-${phone}`],
     })
+
+    // Create high-priority Jira ticket for human follow-up
+    defaultJiraService.createLeadTicket({
+      phone,
+      intent: 'human_escalation',
+      urgency: 'critical',
+      message: msg.body,
+      conversationSummary: `Escalated to human. Reason: ${reason}\n${context.slice(0, 500)}`,
+      tags: ['human-escalation', reason],
+    }).catch((err) => console.warn('[Router] Jira escalation ticket creation failed:', err))
   }
 }
 

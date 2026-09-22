@@ -6,6 +6,8 @@
 .next
 .turbo
 .venv
+.vercel
+**/.vercel/**
 node_modules
 **/node_modules/**
 **/.next/**
@@ -18,12 +20,45 @@ tmp
 *.pyc
 __pycache__
 
+# Non-web applications and backend tools
+apps/api/**
+infra/**
+workflows/**
+tools/**
+notebooks/**
+FUTURE_PLAN/**
+.pytest_cache/**
+ops/**
+scripts/test-results/**
+docs/**
+
 # Large data archives not needed for cloud web deployment
+data/**
 *.xlsx
 !apps/sierra-estates-realty/public/downloads/*.xlsx
 *.zip
 *.tar.gz
-Inventory_with_Photos_Airtable.csv
-Sierra_Estates_Units_With_Photos.csv
+*.csv
+!apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv
+# snapshot.json must NOT be ignored: the app statically imports it
+# (lib/site/data.ts, AvailabilityVerificationService), it is tracked in git as
+# a seed stub, and excluding it broke turbo-cached builds whose replayed trace
+# lstats the file (ENOENT) even though prebuild would create it on a cold build.
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
+
+# Tool artifacts and redundant local clones
+.amazonq
+.amazonq/**
+SE-Vercel-deploy-main*
+SE-Vercel-deploy-main*/**
+.reports/**
+libArchive/**
+stubArchive/**
+.amphion/**
+.claude-flow/**
+.factory/**
+.qwen/**
+.zencoder/**
+graphify-out/**
+*.tsbuildinfo

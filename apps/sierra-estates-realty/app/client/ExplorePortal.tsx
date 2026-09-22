@@ -14,7 +14,8 @@
 import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Nav, Topbar, Footer, Reveal, SierraConcierge, useT } from './ui';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Nav, Topbar, Footer, Reveal, SierraConcierge, SILK, useT } from './ui';
 import { IconMapPin, IconSearch } from './icons';
 import { COMPOUNDS, FALLBACK_LISTINGS, priceLabel, type Compound } from './portalData';
 import type { PriceMode } from './three/CompoundCity3D';
@@ -27,10 +28,10 @@ const CompoundCity3D = dynamic(() => import('./three/CompoundCity3D'), {
       style={{
         height: 560,
         borderRadius: 10,
-        background: 'linear-gradient(180deg,#0d1a29,#060c14)',
+        background: 'linear-gradient(180deg,#f7fafd,#e9f0f8)',
         display: 'grid',
         placeItems: 'center',
-        color: '#8aa4c0',
+        color: '#7c8ea6',
         fontWeight: 700,
         fontSize: 13,
       }}
@@ -48,6 +49,7 @@ function ceilingFor(mode: PriceMode): number {
 export default function ExplorePortal() {
   const { locale } = useT();
   const isAr = locale === 'ar';
+  const reduce = useReducedMotion();
 
   const [mode, setMode] = useState<PriceMode>('sale');
   const [maxPrice, setMaxPrice] = useState<number>(() => ceilingFor('sale'));
@@ -117,20 +119,25 @@ export default function ExplorePortal() {
         {/* Filters */}
         <section className="wrap explore-controls">
           <div className="seg" role="group" aria-label="Listing mode">
-            <button
-              type="button"
-              className={mode === 'sale' ? 'on' : ''}
-              onClick={() => switchMode('sale')}
-            >
-              {isAr ? 'بيع' : 'Resale'}
-            </button>
-            <button
-              type="button"
-              className={mode === 'rent' ? 'on' : ''}
-              onClick={() => switchMode('rent')}
-            >
-              {isAr ? 'إيجار' : 'Rent'}
-            </button>
+            {(['sale', 'rent'] as PriceMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={mode === m ? 'on' : ''}
+                onClick={() => switchMode(m)}
+              >
+                {mode === m && !reduce && (
+                  <motion.span
+                    layoutId="explore-seg-pill"
+                    className="seg-pill"
+                    transition={{ duration: 0.35, ease: SILK }}
+                  />
+                )}
+                <span className="seg-lbl">
+                  {m === 'sale' ? (isAr ? 'بيع' : 'Resale') : isAr ? 'إيجار' : 'Rent'}
+                </span>
+              </button>
+            ))}
           </div>
 
           <label className="explore-slider">
@@ -166,14 +173,31 @@ export default function ExplorePortal() {
           </label>
 
           <span className="explore-count">
-            <IconMapPin size={14} /> {visible.length}{' '}
+            <IconMapPin size={14} />
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={visible.length}
+                initial={reduce ? false : { y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -8, opacity: 0 }}
+                transition={{ duration: 0.25, ease: SILK }}
+                style={{ display: 'inline-block', fontWeight: 800 }}
+              >
+                {visible.length}
+              </motion.span>
+            </AnimatePresence>{' '}
             {isAr ? 'كمبوند' : visible.length === 1 ? 'compound' : 'compounds'}
           </span>
         </section>
 
         {/* 3D scene + detail rail */}
         <section className="wrap explore-grid">
-          <div className="explore-canvas">
+          <motion.div
+            className="explore-canvas"
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: SILK, delay: 0.1 }}
+          >
             {visible.length === 0 ? (
               <div className="explore-empty">
                 <IconSearch size={22} />
@@ -191,93 +215,108 @@ export default function ExplorePortal() {
                 onSelect={setSelected}
               />
             )}
-          </div>
+          </motion.div>
 
           <aside className="explore-rail">
-            {!selected ? (
-              <div className="explore-hint">
-                <h3>{isAr ? 'اختر كمبوند' : 'Pick a compound'}</h3>
-                <p>
-                  {isAr
-                    ? 'اضغط على أي برج في الخريطة لعرض وحداته وأسعارها.'
-                    : 'Click any tower on the map to list its units and prices.'}
-                </p>
-                <ul className="explore-legend">
-                  <li>
-                    <i style={{ background: 'linear-gradient(135deg,#e9c176,#c8961a)' }} />
-                    {isAr ? 'الأعلى سعرًا' : 'Highest priced'}
-                  </li>
-                  <li>
-                    <i style={{ background: '#16324f' }} />
-                    {isAr ? 'الأقل سعرًا' : 'Lowest priced'}
-                  </li>
-                </ul>
-              </div>
-            ) : (
-              <div className="explore-detail">
-                <h3>{selected.n}</h3>
-                <p className="explore-zone-tag">
-                  <IconMapPin size={13} /> {selected.z}
-                </p>
-
-                <div className="explore-stats">
-                  <div>
-                    <small>{isAr ? 'السعر' : 'Price'}</small>
-                    <b>{priceText(selected, mode)}</b>
-                  </div>
-                  <div>
-                    <small>{isAr ? 'النمو' : 'Growth'}</small>
-                    <b>{selected.g}</b>
-                  </div>
-                  <div>
-                    <small>{isAr ? 'تقييم AI' : 'AI score'}</small>
-                    <b>{selected.ai}</b>
-                  </div>
-                </div>
-
-                <h4>
-                  {isAr ? 'الوحدات المتاحة' : 'Available units'}{' '}
-                  <span>({units.length})</span>
-                </h4>
-
-                {units.length === 0 ? (
-                  <p className="explore-none">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={selected ? selected.n : 'hint'}
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduce ? undefined : { opacity: 0, y: -12 }}
+                transition={{ duration: 0.32, ease: SILK }}
+              >
+              {!selected ? (
+                <div className="explore-hint">
+                  <h3>{isAr ? 'اختر كمبوند' : 'Pick a compound'}</h3>
+                  <p>
                     {isAr
-                      ? 'لا توجد وحدات مدرجة حاليًا لهذا الكمبوند بهذا النوع.'
-                      : 'No units listed for this compound in this mode yet.'}
+                      ? 'اضغط على أي برج في الخريطة لعرض وحداته وأسعارها.'
+                      : 'Click any tower on the map to list its units and prices.'}
                   </p>
-                ) : (
-                  <ul className="explore-units">
-                    {units.map((u) => (
-                      <li key={u.id}>
-                        <Link href={`/property/${u.id}`}>
-                          <img src={u.img} alt={`${u.type} in ${u.cmp}`} loading="lazy" />
-                          <div>
-                            <b>
-                              {u.type} · {u.beds}
-                              {isAr ? ' غرف' : ' bd'}
-                            </b>
-                            <small>
-                              {u.area} m² · {u.code}
-                            </small>
-                            <span className="explore-price">{priceLabel(u)}</span>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
+                  <ul className="explore-legend">
+                    <li>
+                      <i style={{ background: 'linear-gradient(135deg,#e9c176,#c8961a)' }} />
+                      {isAr ? 'الأعلى سعرًا' : 'Highest priced'}
+                    </li>
+                    <li>
+                      <i style={{ background: '#16324f' }} />
+                      {isAr ? 'الأقل سعرًا' : 'Lowest priced'}
+                    </li>
                   </ul>
-                )}
-
-                <div className="explore-actions">
-                  <Link className="btn btn-pri" href="/properties">
-                    {isAr ? 'كل الوحدات' : 'All units'}
-                  </Link>
-                  <Link className="btn btn-ghost" href="/compounds">
-                    {isAr ? 'تفاصيل الكمبوند' : 'Compound detail'}
-                  </Link>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="explore-detail">
+                  <h3>{selected.n}</h3>
+                  <p className="explore-zone-tag">
+                    <IconMapPin size={13} /> {selected.z}
+                  </p>
+
+                  <div className="explore-stats">
+                    <div>
+                      <small>{isAr ? 'السعر' : 'Price'}</small>
+                      <b>{priceText(selected, mode)}</b>
+                    </div>
+                    <div>
+                      <small>{isAr ? 'النمو' : 'Growth'}</small>
+                      <b>{selected.g}</b>
+                    </div>
+                    <div>
+                      <small>{isAr ? 'تقييم AI' : 'AI score'}</small>
+                      <b>{selected.ai}</b>
+                    </div>
+                  </div>
+
+                  <h4>
+                    {isAr ? 'الوحدات المتاحة' : 'Available units'}{' '}
+                    <span>({units.length})</span>
+                  </h4>
+
+                  {units.length === 0 ? (
+                    <p className="explore-none">
+                      {isAr
+                        ? 'لا توجد وحدات مدرجة حاليًا لهذا الكمبوند بهذا النوع.'
+                        : 'No units listed for this compound in this mode yet.'}
+                    </p>
+                  ) : (
+                    <ul className="explore-units">
+                      {units.map((u, i) => (
+                        <motion.li
+                          key={u.id}
+                          initial={reduce ? false : { opacity: 0, x: isAr ? 10 : -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, ease: SILK, delay: Math.min(i * 0.05, 0.4) }}
+                        >
+                          <Link href={`/property/${u.id}`}>
+                            <img src={u.img} alt={`${u.type} in ${u.cmp}`} loading="lazy" />
+                            <div>
+                              <b>
+                                {u.type} · {u.beds}
+                                {isAr ? ' غرف' : ' bd'}
+                              </b>
+                              <small>
+                                {u.area} m² · {u.code}
+                              </small>
+                              <span className="explore-price">{priceLabel(u)}</span>
+                            </div>
+                          </Link>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <div className="explore-actions">
+                    <Link className="btn btn-pri" href="/properties">
+                      {isAr ? 'كل الوحدات' : 'All units'}
+                    </Link>
+                    <Link className="btn btn-ghost" href="/compounds">
+                      {isAr ? 'تفاصيل الكمبوند' : 'Compound detail'}
+                    </Link>
+                  </div>
+                </div>
+              )}
+              </motion.div>
+            </AnimatePresence>
           </aside>
         </section>
       </main>

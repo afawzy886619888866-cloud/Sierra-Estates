@@ -12,6 +12,7 @@
 ## 1. Executive Summary & Executed Cards
 
 ### Card M11.1: Enforce CI-Gated Deployment and Full Release Validation (`card_8e54b10abe`) — **DONE**
+
 - **Changes**:
   - `.github/workflows/deploy-vercel.yml`: Added `gate` job preceding `deploy`, verifying that CI completed successfully for the commit via `gh run list --workflow=ci.yml --commit=$SHA`.
   - Added `emergency_override` input on `workflow_dispatch` with mandatory audit logging to prevent catastrophic deployment lockouts while forbidding silent bypasses.
@@ -22,12 +23,15 @@
   - `__tests__/deployment.test.ts`: Added comprehensive test coverage for CI gating, emergency overrides, and preview bypass.
 
 ### Card M11.2: Normalize Admin Authorization and Malformed-Cookie Handling (`card_f5ce2c79d1`) — **DONE**
+
 - **Changes**:
   - `apps/sierra-estates-realty/lib/server/auth-guard.ts`: Defined and exported single canonical role authority:
+
     ```ts
     export const ADMIN_CONSOLE_ROLES = ['admin', 'manager', 'superadmin'] as const;
     export function isAdminConsoleRole(role: unknown): boolean;
     ```
+
   - Normalized `verifyAdminRequest` so `manager` role is treated consistently alongside `admin` and `superadmin`.
   - `apps/sierra-estates-realty/app/api/admin/auth/route.ts`: Switched role checks to `isAdminConsoleRole` across GET and POST handlers, synchronizing API route behavior with `auth-guard.ts`.
   - `apps/sierra-estates-realty/lib/auth.ts`: Hardened `parseCookies` with `try/catch` around `decodeURIComponent(v)` so malformed percent-encoded cookie strings fail closed without crashing request handlers with 500 errors.

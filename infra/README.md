@@ -14,8 +14,7 @@ infra/
 │
 ├── whatsapp-auth/              ← Baileys session (auto-created, persists QR)
 │
-├── secrets/                    ← Firebase service account JSON (you place here)
-│   └── firebase-service-account.json
+├── .env                        ← local Supabase/n8n secrets, never commit
 │
 └── whatsapp-scraper/           ← Baileys Node.js app
     ├── package.json
@@ -27,19 +26,18 @@ infra/
 
 ## Quick Start
 
-### 1. Place Firebase service account
+### 1. Configure Supabase
 
 ```bash
-mkdir -p secrets
-# Download from Firebase Console → Project Settings → Service Accounts → Generate new key
-cp ~/Downloads/sierra-estates-firebase-adminsdk.json secrets/firebase-service-account.json
+cp .env.example .env
+# Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.
 ```
 
 ### 2. Configure environment
 
 ```bash
 cp .env.example .env
-nano .env  # fill in: GEMINI_API_KEY, N8N_BASIC_AUTH_PASSWORD, FIREBASE_*, etc.
+nano .env  # fill in: GEMINI_API_KEY, N8N_BASIC_AUTH_PASSWORD, and Supabase values
 ```
 
 ### 3. Start services
@@ -80,11 +78,11 @@ Open `http://your-vps-ip:5678` in your browser. Login with the credentials from 
 │  │  (port 5678)│  webhook│  (Baileys bot)   │               │
 │  └──────┬──────┘         └────────┬─────────┘               │
 │         │                         │                         │
-│         │ Firestore write         │ WhatsApp send/receive   │
+│         │ Supabase write          │ WhatsApp send/receive   │
 │         ▼                         ▼                         │
 │  ┌─────────────┐         ┌──────────────────┐               │
-│  │  Firestore   │         │  Client phone    │               │
-│  │ (Firebase)   │         │  (WhatsApp app)  │               │
+│  │  Supabase    │         │  Client phone    │               │
+│  │ (Postgres)   │         │  (WhatsApp app)  │               │
 │  └─────────────┘         └──────────────────┘               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -94,16 +92,16 @@ Open `http://your-vps-ip:5678` in your browser. Login with the credentials from 
 1. **Client sends WhatsApp message** → Baileys receives it
 2. **Bot dedupes** (in case of reconnect double-delivery)
 3. **Forwards to n8n** webhook (`POST /webhook/whatsapp-incoming`)
-4. **n8n processes**: Gemini AI matching, Firestore writes (client + request)
+4. **n8n processes**: Gemini AI matching, Supabase writes (lead + inquiry)
 5. **n8n returns** bot reply text
 6. **Bot sends reply** back to client via WhatsApp
-7. **Fallback**: if n8n is down, bot writes directly to Firestore (no lead lost)
+7. **Fallback**: if n8n is down, the scraper writes directly to Supabase (no lead lost)
 
 ## Backup
 
 ```bash
 # Backup n8n workflows + WhatsApp session
-tar -czf sierra-backup-$(date +%Y%m%d).tar.gz n8n-data/ whatsapp-auth/ secrets/
+tar -czf sierra-backup-$(date +%Y%m%d).tar.gz n8n-data/ whatsapp-auth/
 
 # Restore
 tar -xzf sierra-backup-YYYYMMDD.tar.gz

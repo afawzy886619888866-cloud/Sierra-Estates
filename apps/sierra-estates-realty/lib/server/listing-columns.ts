@@ -35,21 +35,48 @@ const COLUMN_ALIASES: Record<string, string> = {
     comment: 'description',
     source: 'sourceChannel',
     submittedAt: 'createdAt',
+    // The deployed public.listings table stores the listing agent as
+    // agent_name (it never had an `agent` column); the app vocabulary says
+    // `agent`, so translate instead of parking it in raw_data.
+    agent: 'agentName',
+    titleArabic: 'titleAr',
+    location: 'locationArea',
 };
 
-/** Every column on public.listings, in the camelCase form the record layer uses. */
+/**
+ * Every column on the deployed public.listings, in the camelCase form the
+ * record layer uses. This mirrors the LIVE Supabase table (62 columns,
+ * introspected from PostgREST) — NOT the older supabase/schema.sql draft,
+ * which lists several columns (`agent`, `img`, `photos`, `tag`, `ago`,
+ * `egp_m`, `usd`, `ai_score`, `zone`, `owner_type`, `verified`,
+ * `publish_to_client`, …) that the deployed table does not have. Keys that
+ * are not columns here land in `raw_data` (below), so a write never fails
+ * on the schema cache and a read still exposes them via toListingRecord().
+ */
 const LISTING_COLUMNS = new Set([
     'id', 'refId', 'title', 'titleAr', 'description', 'descriptionAr',
     'compound', 'developer', 'locationArea', 'city', 'propertyType', 'dealType',
     'price', 'priceCurrency', 'bedrooms', 'bathrooms', 'areaSqm',
     'finishingType', 'deliveryYear', 'downPayment', 'installmentYears',
     'monthlyInstallment', 'roiPercentage', 'capRate', 'valuationStatus',
-    'status', 'verified', 'publishToClient', 'code', 'zone', 'egpM', 'usd',
-    'aiScore', 'tag', 'agent', 'ago', 'img', 'photos', 'gardenArea',
-    'ownerType', 'pfReferenceNumber', 'featured', 'isHotDeal', 'ownerId',
-    'ownerPhone', 'ownerName', 'brokerName', 'brokerPhone', 'sourceChannel',
-    'images', 'floorPlanUrl', 'virtualTourUrl', 'amenities', 'rawData',
-    'createdAt', 'updatedAt',
+    'status', 'code', 'sbrCode', 'agentName', 'amenities',
+    'sourceChannel', 'pfReferenceNumber', 'pfStatus', 'featured', 'isHotDeal',
+    'ownerId', 'ownerPhone', 'ownerName', 'brokerName', 'brokerPhone',
+    'images', 'floorPlanUrl', 'virtualTourUrl', 'latitude', 'longitude',
+    'locationCoords', 'rawData', 'automation', 'furnishingStatus',
+    'pricePerSqm', 'registryAssetId', 'registryStatus', 'lastSyncAt',
+    'syncHash', 'syncedToRegistry', 'lastRegistrySync', 'referenceCode',
+    'syncSource', 'createdAt', 'updatedAt',
+    // Added by Inventory OS v2 (supabase/migrations/011_inventory_os_v2.sql —
+    // applied automatically at deploy time by scripts/apply-pending-migrations.mjs).
+    // Keep in lockstep with that migration's ALTER TABLE list.
+    'unitCode', 'projectId', 'compoundId', 'developerId',
+    'offerType', 'listingType', 'gardenSqm', 'roofSqm', 'terraceSqm',
+    'plotSqm', 'floorNumber', 'unitView', 'maintenanceFeePerSqm',
+    'deliveryQuarter', 'verifiedAt', 'verifiedBy', 'ownershipDocRef',
+    'publishedAt', 'reservedUntil', 'reservationRef', 'daysOnMarket',
+    'photoCount', 'hasFloorPlan', 'hasVirtualTour', 'dataQualityScore',
+    'stale',
 ]);
 
 /**
