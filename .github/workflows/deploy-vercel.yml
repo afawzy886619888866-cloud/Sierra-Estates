@@ -4,7 +4,17 @@
 # Validation is disabled in .vscode/settings.json via github-actions.workflows.validations.enabled: false
 name: Deploy · Vercel
 
-# Deploys Sierra Estates to Vercel (Client and Admin projects):
+# MANUAL EMERGENCY DEPLOY + ENV SYNC UTILITY.
+#
+# Push deployments are owned by the Vercel GitHub integration: both projects are
+# linked to this repository (production branch `main`) and build from
+# apps/sierra-estates-realty, so every push to main auto-deploys. This workflow
+# is deliberately dispatch-only so it never double-deploys on top of the git
+# integration. Use it for:
+#   - audited emergency production deployments (e.g. rolling a hotfix when the
+#     git integration is unavailable)
+#   - re-syncing environment variables to the Vercel projects after secret
+#     rotation (the sync step runs on every dispatch)
 #
 #   ┌────────────────────────────┬──────────────────────────────────────┬─────────────────────────────┐
 #   │ Job                        │ Vercel project                       │ Domain                      │
@@ -21,17 +31,12 @@ name: Deploy · Vercel
 #   SESSION_SECRET, SBR_SECRET_KEY, CRON_SECRET
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables):
-#   VERCEL_ORG_ID              — Vercel team/org ID
-#   CLIENT_VERCEL_PROJECT_ID   — prj_theA731k4WdFVhgd6DJUP6pAry6n
-#   ADMIN_VERCEL_PROJECT_ID    — prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA
+#   VERCEL_ORG_ID              — Vercel team/org ID (team_UvdJ5ezVTaqEKyhqZ5QVqOKJ)
+#   CLIENT_VERCEL_PROJECT_ID   — prj_ieVcIcoeTtHndspXMzlE0cwLl89c (sierra-estates-client-portal)
+#   ADMIN_VERCEL_PROJECT_ID    — prj_inhTu8kppYhQv2NZZV3GTUdU8uBi (admin-dashboard)
 #   NEXT_PUBLIC_SUPABASE_URL   — Supabase project URL
 
 on:
-  # Gated on CI rather than racing it on the same push.
-  workflow_run:
-    workflows: ["CI"]
-    branches: [main]
-    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -75,40 +80,29 @@ jobs:
           EMERGENCY_OVERRIDE: ${{ github.event.inputs.emergency_override || '' }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          if [ "$EVENT_NAME" = "workflow_run" ]; then
-            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-              echo "::error::Automated deploy triggered by workflow_run requires successful CI. Conclusion: ${{ github.event.workflow_run.conclusion }}"
-              exit 1
-            fi
-            echo "✅ Verified: Automated deployment triggered by successful CI workflow_run."
+          if [ "$TARGET_ENV" = "preview" ]; then
+            echo "ℹ️ Preview deployment: CI production gate bypassed for preview environment."
             exit 0
           fi
 
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            if [ "$TARGET_ENV" = "preview" ]; then
-              echo "ℹ️ Preview deployment: CI production gate bypassed for preview environment."
-              exit 0
-            fi
-
-            if [ -n "$EMERGENCY_OVERRIDE" ]; then
-              echo "⚠️ AUDIT ALERT: Production deployment initiated with emergency override."
-              echo "⚠️ Audit Reason: $EMERGENCY_OVERRIDE"
-              exit 0
-            fi
-
-            echo "🔍 Checking CI workflow status for commit $COMMIT_SHA..."
-            CI_STATUS=$(gh run list --workflow=ci.yml --commit="$COMMIT_SHA" --json conclusion,status -q '.[0]')
-            CONCLUSION=$(echo "$CI_STATUS" | jq -r '.conclusion // empty')
-            STATUS=$(echo "$CI_STATUS" | jq -r '.status // empty')
-
-            if [ "$CONCLUSION" = "success" ]; then
-              echo "✅ Verified: CI completed successfully for commit $COMMIT_SHA."
-              exit 0
-            fi
-
-            echo "::error::Manual production deploy blocked: CI has not passed for commit $COMMIT_SHA (Status: $STATUS, Conclusion: $CONCLUSION). Provide an 'emergency_override' input if deploying an audited hotfix."
-            exit 1
+          if [ -n "$EMERGENCY_OVERRIDE" ]; then
+            echo "⚠️ AUDIT ALERT: Production deployment initiated with emergency override."
+            echo "⚠️ Audit Reason: $EMERGENCY_OVERRIDE"
+            exit 0
           fi
+
+          echo "🔍 Checking CI workflow status for commit $COMMIT_SHA..."
+          CI_STATUS=$(gh run list --workflow=ci.yml --commit="$COMMIT_SHA" --json conclusion,status -q '.[0]')
+          CONCLUSION=$(echo "$CI_STATUS" | jq -r '.conclusion // empty')
+          STATUS=$(echo "$CI_STATUS" | jq -r '.status // empty')
+
+          if [ "$CONCLUSION" = "success" ]; then
+            echo "✅ Verified: CI completed successfully for commit $COMMIT_SHA."
+            exit 0
+          fi
+
+          echo "::error::Manual production deploy blocked: CI has not passed for commit $COMMIT_SHA (Status: $STATUS, Conclusion: $CONCLUSION). Provide an 'emergency_override' input if deploying an audited hotfix."
+          exit 1
 
   deploy:
     needs: [gate]
@@ -128,7 +122,7 @@ jobs:
             framework: nextjs
             proj_id_secret: ADMIN_VERCEL_PROJECT_ID
     name: deploy (${{ matrix.role }})
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run && github.event.workflow_run.conclusion == 'success')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -146,7 +140,7 @@ jobs:
           ORG_ID="${ORG_ID_VAR:-team_UvdJ5ezVTaqEKyhqZ5QVqOKJ}"
           
           if [ "${{ matrix.role }}" = "admin" ]; then
-            PROJ="${ADMIN_PROJECT_ID:-prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA}"
+            PROJ="${ADMIN_PROJECT_ID:-prj_inhTu8kppYhQv2NZZV3GTUdU8uBi}"
           else
             PROJ="${CLIENT_PROJECT_ID:-prj_ieVcIcoeTtHndspXMzlE0cwLl89c}"
           fi
@@ -164,13 +158,13 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: pnpm
@@ -226,7 +220,7 @@ jobs:
           for attempt in 1 2 3; do
             code=$(curl -sS -o /tmp/norm-res.json -w '%{http_code}' -X PATCH \
               "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${VERCEL_ORG_ID}" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg root "${{ matrix.app_dir }}" --arg fw "${{ matrix.framework }}" \
                     '{rootDirectory:$root,framework:$fw,buildCommand:null,installCommand:"pnpm install --frozen-lockfile",outputDirectory:null,devCommand:null}')" || echo "000")
@@ -247,6 +241,7 @@ jobs:
         if: steps.proj.outputs.skip != 'true'
         env:
           # Supabase Primary Database, Auth, Vector & Storage
+          SUPABASE_URL_VAL: ${{ secrets['NEXT_PUBLIC_SUPABASE_URL'] || vars['NEXT_PUBLIC_SUPABASE_URL'] }}
           SUPABASE_ANON_VAL: ${{ secrets['SUPABASE_ANON_KEY'] || secrets['NEXT_PUBLIC_SUPABASE_ANON_KEY'] }}
           SUPABASE_SERVICE_ROLE_VAL: ${{ secrets['SUPABASE_SERVICE_ROLE_KEY'] }}
           # AI & LLM
@@ -326,7 +321,7 @@ jobs:
             [ -n "$2" ] || { echo "  $1 (empty — skipped)"; return 0; }
             code=$(curl -sS -o /tmp/env-res.json -w '%{http_code}' -X POST \
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg key "$1" --arg value "$2" --arg type "${3:-plain}" \
                     '{key:$key,value:$value,type:$type,target:["production","preview"]}')" || echo "000")
@@ -514,7 +509,7 @@ jobs:
           for attempt in 1 2 3; do
             code=$(curl -sS -o /tmp/dom-res.json -w '%{http_code}' -X POST \
               "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_ORG_ID}" \
-              -H "Authorization: Bearer $ROLE_VERCEL_TOKEN" \
+              -H "Authorization: Bearer ${ROLE_VERCEL_TOKEN}" \
               -H "Content-Type: application/json" \
               -d "$(jq -n --arg name "${{ matrix.domain }}" '{name:$name}')" || echo "000")
             body=$(cat /tmp/dom-res.json 2>/dev/null || true)

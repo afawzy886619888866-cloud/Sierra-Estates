@@ -15,7 +15,6 @@
   "dependencies": {
     "whatsapp-web.js": "^1.26.0",
     "googleapis": "^136.0.0",
-    "firebase-admin": "^13.0.0",
     "@sendgrid/mail": "^8.1.0",
     "axios": "^1.18.1"
   },

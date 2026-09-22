@@ -14,8 +14,7 @@
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "python.defaultInterpreterPath": "C:\\Users\\sierr\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
-  "python.languageServer": "Jedi",
+  "python.languageServer": "Default",
   "python.analysis.typeCheckingMode": "basic",
   "compilets.autoStart": false,
   "compile-hero.disable-compile-files-on-did-save-code": true,
@@ -32,6 +31,7 @@
   "markdown.validate.enabled": true,
   "markdown.validate.referenceLinks.enabled": "ignore",
   "markdownlint.configFile": "${workspaceFolder}/.markdownlint.json",
+  "css.lint.vendorPrefix": "ignore",
   "github-actions.workflows.validations.enabled": false,
   "github-actions.workflows.validations.context.access": "off",
   "github-actions.workflows.validations.undefined.context": "off",
@@ -53,10 +53,39 @@
     "**/coverage": true
   },
   "cSpell.configFile": "${workspaceFolder}/cspell.json",
+  "cSpell.words": [
+    "Andrej",
+    "ilike",
+    "karpathy",
+    "Karpathy",
+    "pathing",
+    "Postgrest",
+    "serialisation",
+    "unrequested",
+    "upserted"
+  ],
   "circuitpythonsync.cpbaseversion": "10",
   "circuitpythonsync.cpfullversion": "10.3.0",
   "circuitpythonsync.curlibtag": "20260901",
   "circuitpythonsync.doNotShowWelcome": true,
   "circuitpythonsync.drivepath": "",
-  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu"
+  "rust-analyzer.cargo.target": "x86_64-pc-windows-gnu",
+  "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
+  "git.enabled": true,
+  "git.autorefresh": true,
+  "git.autoRepositoryDetection": true,
+  "git.repositoryScanMaxDepth": 1,
+  "git.ignoredRepositories": [
+    "C:\\Users\\Sierr"
+  ],
+  "gitlens.git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
+  "gitlens.codeLens.enabled": true,
+  "gitlens.currentLine.enabled": true,
+  "gitlens.hovers.enabled": true,
+  "gitlens.statusBar.enabled": true,
+  "gitlens.showWelcomeOnInstall": false,
+  "gitlens.showWhatsNewAfterUpgrades": false,
+  "markdown.validate.ignoredLinks": [
+    "#license--maintainers"
+  ]
 }
