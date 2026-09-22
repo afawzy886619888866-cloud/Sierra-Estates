@@ -15,6 +15,18 @@ const SERVER_ONLY_PACKAGES = [
 ];
 
 const nextConfig: NextConfig = {
+  // The build script chain runs `tsc --noEmit` (type-check) BEFORE `next
+  // build`, so the in-build TypeScript re-check is fully redundant — and
+  // since the 2026-09-20 firebase→supabase migration commit it
+  // deterministically kills the build: silent exit-1 during
+  // "Running TypeScript ..." reproduced locally and on Vercel for BOTH
+  // projects (cf522b25/05e2d53c). The turbo env-hash change from that
+  // commit forces a full cold rebuild, and the forked TS worker dies under
+  // peak memory pressure. Type safety is unchanged: the standalone pass
+  // gates the exact same tsconfig and still fails the build on errors.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Pin the monorepo root so output file tracing (which produces the
   // serverless function file list for `vercel build`) resolves pnpm's
   // symlinked node_modules structure from the true workspace root instead
@@ -22,6 +34,11 @@ const nextConfig: NextConfig = {
   // turbopack.root below otherwise, which caused deployed middleware to
   // fail with "Cannot find module 'next/dist/build/adapter/setup-node-env.external'".
   outputFileTracingRoot: path.join(__dirname, '..', '..'),
+  // Bundle the mirrored SQL migrations into the runtime applier lambda
+  // (prebuild copies repo supabase/migrations -> app supabase/migrations).
+  outputFileTracingIncludes: {
+    '/api/cron/apply-migrations': ['./supabase/migrations/*.sql'],
+  },
   transpilePackages: [
     '@sierra-estates/memory-engine',
     '@sierra-estates/agents',
@@ -32,6 +49,12 @@ const nextConfig: NextConfig = {
   ],
   generateBuildId: async () => {
     return process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'sierra-estates-build';
+  },
+
+  // Legacy path: /dashboard used to serve the retired Houyez /client portal.
+  // Redirect to home instead of rewriting to a route that no longer exists.
+  async redirects() {
+    return [{ source: '/dashboard', destination: '/', permanent: false }];
   },
 
   serverExternalPackages: [
@@ -49,6 +72,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '**.picsum.photos' },
       { protocol: 'https', hostname: 'media.istockphoto.com' },
+      // Sierra's own Property Finder listing photography (canonical image source)
+      { protocol: 'https', hostname: 'static.shared.propertyfinder.eg' },
+      { protocol: 'https', hostname: '**.propertyfinder.eg' },
     ],
   },
   reactStrictMode: true,
@@ -56,11 +82,40 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        // Legacy rewrite: /dashboard -> /client (Houyez property portal)
-        {
-          source: '/dashboard',
-          destination: '/client',
-        },
+        // Route admin subdomain or admin-mode deployments to /admin
+        ...(process.env.NEXT_PUBLIC_SITE_MODE === 'admin'
+          ? [
+              {
+                source: '/',
+                destination: '/admin',
+              },
+              {
+                source: '/login',
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                destination: '/admin/login',
+              },
+            ]
+          : [
+              {
+                source: '/',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin',
+              },
+              {
+                source: '/login',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
+              },
+              {
+                source: '/signin',
+                has: [{ type: 'host' as const, value: 'admin.sierra-estates.net' }],
+                destination: '/admin/login',
+              },
+            ]),
+
         // RFC 5785 rewrites: Map .well-known endpoints to /api/well-known to ensure clean Vercel deployments
         {
           source: '/.well-known/oauth-authorization-server',

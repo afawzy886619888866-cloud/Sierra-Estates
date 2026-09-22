@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { autoRepairAllAgents, repairSingleAgent } from '@/lib/services/agent-repair';
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const agentId = body.agentId;
@@ -34,7 +40,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const report = await autoRepairAllAgents();
     return NextResponse.json({

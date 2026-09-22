@@ -568,18 +568,29 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
 
   const onSyncToDb = async () => {
     if (!mergedRows.length) return;
+    const confirmed = window.confirm(
+      isAr
+        ? `هل تريد استيراد ${mergedRows.length} وحدة إلى قاعدة البيانات؟ سيتم تسجيل العملية في سجل التدقيق.`
+        : `Import ${mergedRows.length} units into Supabase? This will update matching reference codes and create an audit record.`,
+    );
+    if (!confirmed) {
+      addLog(isAr ? 'تم إلغاء المزامنة.' : 'Import cancelled.');
+      return;
+    }
+
     setIsSyncing(true);
     addLog(`\n🔌 Syncing ${mergedRows.length} units to master database...`);
     try {
-      const res = await fetch('/api/admin/db/inventory', {
+      const res = await fetch('/api/admin/inventory/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ units: mergedRows }),
+        body: JSON.stringify({ units: mergedRows, confirmed: true }),
       });
       if (!res.ok) {
         throw new Error(`Server returned ${res.status}: ${await res.text()}`);
       }
-      addLog(`✅ Successfully synced to database!`);
+      const result = await res.json();
+      addLog(`✅ Successfully synced ${result.imported ?? mergedRows.length} units to database in chunks of ${result.chunkSize ?? 75}.`);
     } catch (e: any) {
       addLog(`❌ Sync failed: ${e?.message ?? e}`);
     } finally {
@@ -696,7 +707,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
               className="text-[10px] font-mono px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-1"
               title={`Synonyms: ${synonyms.join(', ')}`}
             >
-              <strong className="text-cyan-400">{col}</strong>
+              <strong className="text-[#E9C176]">{col}</strong>
               <span className="text-slate-500">({synonyms.length})</span>
             </span>
           ))}
@@ -711,7 +722,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
             { icon: <AlertCircle className="w-4 h-4" />, label: isAr ? 'بلا هاتف' : 'No Phone', val: stats.droppedNoPhone, color: 'text-red-400' },
             { icon: <Copy className="w-4 h-4" />, label: isAr ? 'مكرر' : 'Duplicates', val: stats.duplicatesRemoved, color: 'text-amber-400' },
             { icon: <CheckCircle2 className="w-4 h-4" />, label: isAr ? 'فريد' : 'Unique', val: stats.uniqueRows, color: 'text-emerald-400' },
-            { icon: <Banknote className="w-4 h-4" />, label: isAr ? 'للبيع' : 'For Sale', val: stats.saleCount, color: 'text-cyan-400' },
+            { icon: <Banknote className="w-4 h-4" />, label: isAr ? 'للبيع' : 'For Sale', val: stats.saleCount, color: 'text-[#E9C176]' },
             { icon: <Building2 className="w-4 h-4" />, label: isAr ? 'إيجار' : 'For Rent', val: stats.rentCount, color: 'text-blue-400' },
             { icon: <Users className="w-4 h-4" />, label: isAr ? 'ملاك' : 'Owners', val: stats.ownerCount, color: 'text-purple-400' },
           ].map((s) => (
@@ -754,7 +765,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
                     : line.startsWith('✅') || line.startsWith('✨') || line.startsWith('💾') || line.startsWith('✔')
                     ? 'text-emerald-400'
                     : line.startsWith('📊') || line.startsWith('📞') || line.startsWith('🚀')
-                    ? 'text-cyan-400'
+                    ? 'text-[#E9C176]'
                     : 'text-slate-400'
                 }
               >
@@ -815,7 +826,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
                   <tr key={row.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="p-3 font-mono text-slate-500 text-[10px]">{row.id}</td>
                     <td className="p-3">
-                      <span className="font-mono font-bold text-cyan-400 text-[11px]">
+                      <span className="font-mono font-bold text-[#E9C176] text-[11px]">
                         {row.sierraCode || '—'}
                       </span>
                     </td>
@@ -831,7 +842,7 @@ export default function ExcelMergerView({ lang = 'en' }: { lang?: string }) {
                         className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
                           row.operation === 'Rent'
                             ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
-                            : 'bg-cyan-950 text-cyan-300 border border-cyan-800/60'
+                            : 'bg-[#211A0D] text-[#F5D78E] border border-[#C8961A]/40'
                         }`}
                       >
                         {row.operation}

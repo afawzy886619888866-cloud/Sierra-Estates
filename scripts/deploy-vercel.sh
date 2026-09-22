@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════
-# Sierra Estates — Vercel Deployment Script
+# Sierra Estates — Vercel Deployment Script (Canonical Architecture)
 # ═══════════════════════════════════════════════════════════════════════════
 #
-#  Deploys both Admin SPA + Client Portal to Vercel.
+#  Deploys Sierra Estates (Client Portal + Unified Admin) to Vercel.
+#  Authoritative Backend: Supabase Postgres (https://REDACTED-PROJECT.supabase.co)
 #
 #  PREREQUISITES:
-#    npm install -g vercel
+#    pnpm install
 #    vercel login
 #
 #  USAGE:
@@ -14,59 +15,40 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
-BOLD='\033[1m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; NC='\033[0m'
+BOLD='\033[1m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; RED='\033[0;31m'; NC='\033[0m'
 
 echo -e "${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}║   Sierra Estates — Vercel Deployment                       ║${NC}"
+echo -e "${BOLD}║   Sierra Estates — Vercel Deployment (Supabase Engine)     ║${NC}"
 echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Deploy Admin SPA ──
-echo -e "${YELLOW}Step 1: Deploy Admin SPA${NC}"
-echo "  Directory: apps/admin"
-echo "  Framework: Vite"
-echo ""
-cd "$(dirname "$0")/../apps/admin"
+# ── Pre-flight Verification ──
+echo -e "${YELLOW}Step 1: Running monorepo pre-flight checks...${NC}"
+node scripts/verify-action-routing.mjs
+node scripts/check-no-compiled-twins.mjs
 
-# Set env vars for Vercel
-echo "  Setting environment variables..."
-vercel env add VITE_FIREBASE_API_KEY production <<< "AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs" 2>/dev/null || true
-vercel env add VITE_FIREBASE_AUTH_DOMAIN production <<< "sierra-blu.firebaseapp.com" 2>/dev/null || true
-vercel env add VITE_FIREBASE_PROJECT_ID production <<< "sierra-blu" 2>/dev/null || true
-vercel env add VITE_FIREBASE_STORAGE_BUCKET production <<< "sierra-blu.firebasestorage.app" 2>/dev/null || true
-vercel env add VITE_FIREBASE_MESSAGING_SENDER_ID production <<< "941030513456" 2>/dev/null || true
-vercel env add VITE_FIREBASE_APP_ID production <<< "1:941030513456:web:56209a1495d69f217086f5" 2>/dev/null || true
-
-echo "  Deploying..."
-vercel --prod --yes 2>&1 | tail -5
+# ── Deploy Main Application ──
+echo -e "${YELLOW}Step 2: Deploying Next.js Application (Client & Admin)...${NC}"
+echo "  Directory: apps/sierra-estates-realty"
+echo "  Framework: Next.js 16 (App Router)"
+echo "  Backend: Supabase (PostgreSQL + pgvector)"
 echo ""
-echo -e "${GREEN}✅ Admin SPA deployed!${NC}"
 
-# ── Deploy Client Portal ──
-echo ""
-echo -e "${YELLOW}Step 2: Deploy Client Portal${NC}"
-echo "  Directory: apps/client"
-echo "  Framework: Next.js"
-echo ""
-cd "$(dirname "$0")/../apps/client"
+cd "$(dirname "$0")/../apps/sierra-estates-realty"
 
-echo "  Setting environment variables..."
-vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production <<< "AIzaSyBZLN2jTTKV34SneGPoWRz1zoRpX5uODjs" 2>/dev/null || true
-vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN production <<< "sierra-blu.firebaseapp.com" 2>/dev/null || true
-vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID production <<< "sierra-blu" 2>/dev/null || true
-vercel env add NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET production <<< "sierra-blu.firebasestorage.app" 2>/dev/null || true
-vercel env add NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID production <<< "941030513456" 2>/dev/null || true
-vercel env add NEXT_PUBLIC_FIREBASE_APP_ID production <<< "1:941030513456:web:56209a1495d69f217086f5" 2>/dev/null || true
+# Set authoritative Supabase environment variables on Vercel
+echo "  Configuring authoritative Supabase environment..."
+npx vercel env add NEXT_PUBLIC_SUPABASE_URL production <<< "https://REDACTED-PROJECT.supabase.co" 2>/dev/null || true
+npx vercel env add SUPABASE_PROPERTY_MEDIA_BUCKET production <<< "property-media" 2>/dev/null || true
 
-echo "  Deploying..."
-vercel --prod --yes 2>&1 | tail -5
-echo ""
-echo -e "${GREEN}✅ Client Portal deployed!${NC}"
+echo "  Building & Deploying..."
+npx vercel --prod --yes 2>&1 | tail -10
 
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║  ✅ Both apps deployed to Vercel!                          ║${NC}"
+echo -e "${GREEN}║  ✅ Sierra Estates deployed to Vercel!                     ║${NC}"
 echo -e "${GREEN}║                                                           ║${NC}"
-echo -e "${GREEN}║  Check your Vercel dashboard for the URLs:               ║${NC}"
-echo -e "${GREEN}║  https://vercel.com/dashboard                             ║${NC}"
+echo -e "${GREEN}║  Domain: https://sierra-estates.net                        ║${NC}"
+echo -e "${GREEN}║  Admin:  https://admin.sierra-estates.net                  ║${NC}"
+echo -e "${GREEN}║  Backend: Supabase Cloud (Pure PostgreSQL)                ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"

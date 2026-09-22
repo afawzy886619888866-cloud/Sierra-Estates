@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import { MemoryBrainEngine } from '../brain-rag-engine';
 
 describe('Unified Memory Brain Engine RAG (Obsidian + ECC)', () => {

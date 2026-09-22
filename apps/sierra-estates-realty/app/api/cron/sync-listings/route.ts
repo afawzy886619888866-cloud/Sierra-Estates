@@ -6,8 +6,10 @@ import { verifyCronRequest } from '@/lib/server/cron-auth';
 
 /**
  * sierra estates — CRON: PROPERTY FINDER LISTING SYNC
- * Runs every 6 hours via Vercel Cron to pull listings from PF into Firestore.
+ * Scheduled daily via Vercel Cron (06:00 UTC) to pull listings from PF.
+ * 100 listings x 2 DB round-trips each needs the full Hobby plan ceiling.
  */
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const denied = verifyCronRequest(req);

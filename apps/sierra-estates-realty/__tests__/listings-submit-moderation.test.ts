@@ -28,6 +28,31 @@ jest.mock('@/lib/server/rate-limit', () => ({
   publicEndpointLimiter: {},
 }));
 
+// ---------------------------------------------------------------------------
+// Side-effect mocks — these modules are invoked after the single DB write and
+// must be stubbed so (a) server-only imports don't blow up in Jest, and (b)
+// the insertMock call-count assertions remain unambiguous.
+// ---------------------------------------------------------------------------
+jest.mock('@/lib/services/ExcelInventoryService', () => ({
+  appendToExcelInventory: jest.fn(async () => undefined),
+}));
+
+jest.mock('@/lib/telegram', () => ({
+  sendTelegramMessage: jest.fn(async () => undefined),
+  escapeTelegramHtml: (s: string) => s,
+}));
+
+jest.mock('@/lib/server/whatsapp-queue', () => ({
+  enqueueWhatsAppJob: jest.fn(async () => undefined),
+}));
+
+jest.mock('@/lib/services/AugustOwnersAgentService', () => ({
+  AugustOwnersAgentService: {
+    broadcastNewUnitToGroup: jest.fn(async () => undefined),
+  },
+  AUGUST_OWNERS_GROUP_ID: '120363044918239011@g.us',
+}));
+
 import { POST } from '@/app/api/listings/submit/route';
 
 const validSubmission = {
@@ -58,7 +83,11 @@ describe('/api/listings/submit — moderation', () => {
 
     expect(written.status).toBe(LISTING_STATUS_PENDING_REVIEW);
     expect(written.status).not.toBe('Available');
-    expect(written.verified).toBe(false);
+    // verified has no column on the deployed table, so the write path parks
+    // it in raw_data (see lib/server/listing-columns.ts); toListingRecord()
+    // spreads it back on read, so the moderation invariant is unchanged.
+    const rawData = (written.rawData ?? {}) as Record<string, unknown>;
+    expect(rawData.verified).toBe(false);
   });
 
   it('keeps a submission out of the client feed and unranked', async () => {
@@ -66,9 +95,11 @@ describe('/api/listings/submit — moderation', () => {
     const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
 
     // A self-submitted listing must not arrive pre-scored at the top of the
-    // inventory, nor flagged for the public client page.
-    expect(written.publishToClient).toBe(false);
-    expect(written.aiScore).toBe(0);
+    // inventory, nor flagged for the public client page. Both fields ride in
+    // raw_data on the deployed table and are spread back on every read.
+    const rawData = (written.rawData ?? {}) as Record<string, unknown>;
+    expect(rawData.publishToClient).toBe(false);
+    expect(rawData.aiScore).toBe(0);
   });
 
   it('writes the submission exactly once — the dual-write collection is gone', async () => {

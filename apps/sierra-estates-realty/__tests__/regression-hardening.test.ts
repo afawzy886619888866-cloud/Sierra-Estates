@@ -53,9 +53,9 @@ describe('Regression & Configuration Hardening Suite', () => {
         // Regression guard: no deprecated disableOptimisticBPs
         expect(c.disableOptimisticBPs).toBeUndefined();
 
-        // Regression guard: msedge must specify version
+        // Regression guard: msedge must specify webRoot
         if (c.type === 'msedge') {
-          expect(c.version).toBeDefined();
+          expect(c.webRoot).toBeDefined();
         }
       }
 
@@ -83,7 +83,9 @@ describe('Regression & Configuration Hardening Suite', () => {
       expect(rootPkg.devDependencies).toBeDefined();
       expect(rootPkg.devDependencies.turbo).toBeDefined();
       expect(rootPkg.devDependencies.typescript).toBeDefined();
-      expect(rootPkg.scripts.build).toBe('turbo run build');
+      // The build first syncs the real inventory snapshot into the bundle, then
+      // hands off to turbo — the sync pre-step is part of the real-data funnel.
+      expect(rootPkg.scripts.build).toBe('node scripts/sync-inventory-snapshot.mjs && turbo run build');
     });
   });
 

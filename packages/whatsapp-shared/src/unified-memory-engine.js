@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
-const { adminDb } = require('./firebase-service');
+const { adminDb } = require('./supabase-service');
 
 const storePath = path.resolve(__dirname, '../../../obsidian-store.json');
 const vaultDir = path.resolve(__dirname, '../../../docs/obsidian-vault');
@@ -88,7 +88,7 @@ class UnifiedMemoryEngine {
     }
     this.saveStore();
 
-    // Persist to Firestore unified_memory if connected
+    // Persist to Supabase unified_memory when configured
     try {
       if (adminDb) {
         await adminDb.collection('unified_memory').add(record);
