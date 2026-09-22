@@ -2,7 +2,7 @@
  * Automated Vercel Environment Variables Synchronizer
  * Syncs all GitHub/Local environment variables directly to Sierra Estates Vercel projects:
  * 1. Client Project: sierra-estates-client-portal (prj_ieVcIcoeTtHndspXMzlE0cwLl89c)
- * 2. Admin Project: sierra-estates-admin-page (prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA / prj_NMqZUADX9A5ba22ylMfls2l7I0zX)
+ * 2. Admin Project: sierra-estates-admin-page (prj_inhTu8kppYhQv2NZZV3GTUdU8uBi)
  */
 
 import https from 'https';
@@ -14,14 +14,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load local environment files
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.env.local') });
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN || process.env.VERCEL_AUTH_TOKEN;
 const VERCEL_ORG_ID = process.env.VERCEL_ORG_ID || 'team_UvdJ5ezVTaqEKyhqZ5QVqOKJ';
 
-const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c';
-const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || 'prj_W2gYCoKaS3oBcLDuGa9gB8z7cfnA';
+const CLIENT_PROJECT_ID = process.env.CLIENT_VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_ID_CLIENT || 'prj_ieVcIcoeTtHndspXMzlE0cwLl89c';
+const ADMIN_PROJECT_ID = process.env.ADMIN_VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_ID_ADMIN || 'prj_inhTu8kppYhQv2NZZV3GTUdU8uBi';
 
 // Master list of environment variables for Client and Admin Vercel projects
 export const CLIENT_ENV_VARS = {
@@ -59,6 +60,11 @@ export const CLIENT_ENV_VARS = {
   PF_API_SECRET: process.env.PF_API_SECRET,
   PF_COMPANY_ID: process.env.PF_COMPANY_ID,
   PF_WEBHOOK_SECRET: process.env.PF_WEBHOOK_SECRET,
+  PROPERTY_FINDER_JWT_TOKEN: process.env.PROPERTY_FINDER_JWT_TOKEN,
+  PF_JWT_TOKEN: process.env.PF_JWT_TOKEN || process.env.PROPERTY_FINDER_JWT_TOKEN,
+  N8N_WEBHOOK_KEY: process.env.N8N_WEBHOOK_KEY,
+  AIRTABLE_API_KEY: process.env.AIRTABLE_API_KEY,
+  SUPABASE_ACCESS_TOKEN: process.env.SUPABASE_ACCESS_TOKEN,
 
   // AWS & Backend
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
@@ -82,6 +88,12 @@ export const CLIENT_ENV_VARS = {
   WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
   LEAD_NOTIFY_WHATSAPP_NUMBER: process.env.LEAD_NOTIFY_WHATSAPP_NUMBER,
+  NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.LEAD_NOTIFY_WHATSAPP_NUMBER,
+  WHATSAPP_DEFAULT_PHONE: process.env.WHATSAPP_DEFAULT_PHONE,
+  WHATSAPP_API_KEY: process.env.WHATSAPP_API_KEY,
+  WHATSAPP_API_URL: process.env.WHATSAPP_API_URL,
+  WHATSAPP_WEBHOOK_SECRET: process.env.WHATSAPP_WEBHOOK_SECRET,
+  WHATSAPP_PROVIDER: process.env.WHATSAPP_PROVIDER || 'meta',
   BRANDING_TAG: process.env.BRANDING_TAG,
   WABA_NUMBER_1: process.env.WABA_NUMBER_1,
   WABA_NUMBER_2: process.env.WABA_NUMBER_2,
@@ -107,10 +119,12 @@ export const CLIENT_ENV_VARS = {
   N8N_BASE_URL: process.env.N8N_BASE_URL,
   N8N_API_KEY: process.env.N8N_API_KEY,
 
-  // Supabase (Primary Database)
+  // Supabase (Primary Database & Storage)
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_PROPERTY_MEDIA_BUCKET: process.env.SUPABASE_PROPERTY_MEDIA_BUCKET || 'property-media',
+  SUPABASE_MEDIA_BUCKET: process.env.SUPABASE_MEDIA_BUCKET || 'media',
 
   // Admin Portal Bootstrap Credentials
   ADMIN_BOOTSTRAP_EMAIL: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net',
@@ -140,7 +154,7 @@ function vercelRequest(method, endpoint, body = null) {
       path: `${endpoint}${endpoint.includes('?') ? '&' : '?'}teamId=${VERCEL_ORG_ID}`,
       method,
       headers: {
-        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+        Authorization: `Bearer ${VERCEL_TOKEN}`,
         'Content-Type': 'application/json',
         ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {})
       }

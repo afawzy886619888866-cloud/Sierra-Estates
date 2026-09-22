@@ -104,7 +104,7 @@
 
 ### 🟡 Phase 2: FRONTEND "Quiet Luxury" Upgrade (Next 2 Weeks)
 
-5. **Rebuild Landing Page** → Cinematic Hero with Sky Blue/Gold palette from reference images
+1. **Rebuild Landing Page** → Cinematic Hero with Sky Blue/Gold palette from reference images
 2. **Build Unit Detail Page** → Full-width hero + ROI sidebar
 3. **Build Public Inventory** → Editorial grid with SBR Code filtering
 4. **Polish Selection Gallery (S8)** → Add WhatsApp CTA + Match Score badges
@@ -112,8 +112,9 @@
 6. **Add 3D Virtual Tour placeholder** to unit cards
 
 ### 🟢 Phase 3: SCALE (Month 2)
- 1. **WhatsApp Cloud API** webhook → Live ingestion from broker groups
- 2. **Property Finder bi-directional sync** → Auto-publish listings
- 3. **Firebase Storage migration** → All images in cloud
- 4. **Investor Intelligence Page** → Price-per-meter analytics
- 5. **Interactive Compound Map** → Leaflet + live inventory overlay
+
+1. **WhatsApp Cloud API** webhook → Live ingestion from broker groups
+2. **Property Finder bi-directional sync** → Auto-publish listings
+3. **Firebase Storage migration** → All images in cloud
+4. **Investor Intelligence Page** → Price-per-meter analytics
+5. **Interactive Compound Map** → Leaflet + live inventory overlay

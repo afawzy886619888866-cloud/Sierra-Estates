@@ -1,5 +1,7 @@
 /* ── Sierra Estates Properties & Live Map Catalog ── */
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+/* Leaflet CSS ships with the npm package (imported by components/Maps/LiveMap.tsx).
+   The former unpkg CDN @import was removed — it duplicated the npm copy and made
+   the page depend on a third-party CDN at runtime. */
 
 .props-page-shell {
   min-height: 100vh;
@@ -30,7 +32,7 @@
 }
 
 .props-hero .crumbs a:hover {
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
 }
 
 .props-hero-header {
@@ -149,8 +151,8 @@
 }
 
 .props-search-input:focus {
-  border-color: var(--pri, #00aeff);
-  box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.15);
+  border-color: var(--pri, #b89047);
+  box-shadow: 0 0 0 3px rgba(201, 148, 54, 0.16);
 }
 
 .props-search-clear {
@@ -204,7 +206,7 @@
 }
 
 .props-mode-btn.active.rent {
-  background: #0284c7;
+  background: #8a6a2c;
   color: #ffffff;
 }
 
@@ -224,7 +226,7 @@
 }
 
 .props-select:focus {
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
 }
 
 /* Filter Row 2 */
@@ -268,13 +270,13 @@
 }
 
 .props-chip:hover {
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: var(--ink, #ffffff);
 }
 
 .props-chip.active {
   background: var(--navy, #002b4b);
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: #ffffff;
 }
 
@@ -338,9 +340,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(0, 174, 255, 0.1);
-  border: 1px solid rgba(0, 174, 255, 0.25);
-  color: var(--pri, #00aeff);
+  background: rgba(201, 148, 54, 0.16);
+  border: 1px solid rgba(201, 148, 54, 0.28);
+  color: var(--pri, #b89047);
   border-radius: 8px;
   padding: 4px 10px;
   font-size: 12px;
@@ -485,7 +487,7 @@
 .pcard:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-m, 0 12px 34px rgba(0, 0, 0, 0.25));
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
 }
 
 .pcard.active-unit {
@@ -611,7 +613,7 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -629,7 +631,7 @@
 }
 
 .pcard h3 a:hover {
-  color: var(--pri, #00aeff);
+  color: var(--pri, #b89047);
 }
 
 .pcard .addr {
@@ -730,8 +732,8 @@
 }
 
 .pcard-btn-map:hover {
-  border-color: var(--pri, #00aeff);
-  color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
+  color: var(--pri, #b89047);
 }
 
 /* ── Pagination ── */
@@ -764,14 +766,14 @@
 }
 
 .props-page-btn:hover:not(:disabled) {
-  border-color: var(--pri, #00aeff);
-  color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
+  color: var(--pri, #b89047);
   transform: translateY(-1px);
 }
 
 .props-page-btn.active {
   background: var(--navy, #002b4b);
-  border-color: var(--pri, #00aeff);
+  border-color: var(--pri, #b89047);
   color: #ffffff;
 }
 
@@ -791,4 +793,74 @@
   color: var(--muted, #94a3b8);
   font-family: var(--mono, monospace);
   margin: 0 8px;
+}
+
+/* ── Mobile Responsive Optimizations for Properties Page ── */
+@media (max-width: 768px) {
+  .props-hero {
+    padding: 24px 0 16px;
+  }
+  .props-hero-title {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+  .props-hero-sub {
+    font-size: 13.5px;
+  }
+  .props-badge-verified {
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 11.5px;
+  }
+  .props-filter-box {
+    padding: 14px;
+    border-radius: 16px;
+    margin: 16px 0;
+    gap: 12px;
+  }
+  .props-filter-row-1 {
+    gap: 10px;
+  }
+  .props-filter-row-2 {
+    gap: 10px;
+    padding-top: 10px;
+  }
+  .props-chip-group {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+  .props-chip-group::-webkit-scrollbar {
+    display: none;
+  }
+  .props-chip {
+    flex: none;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .props-mode-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  .props-sticky-map-inner {
+    min-height: 320px;
+    height: 340px;
+    border-radius: 14px;
+  }
+  .props-full-map-wrap {
+    min-height: 400px;
+    height: 55vh;
+  }
+  .props-pagination {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .props-page-btn {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
 }

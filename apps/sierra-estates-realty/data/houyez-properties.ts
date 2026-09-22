@@ -79,21 +79,21 @@ export const HOUEZ_SLIDES: HouyezSlide[] = [
     preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
     main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.',
     mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-    img: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/84face7b-6b80-4646-a56c-0790d20e215f.png',
   },
   {
     pre: 'BEST-IN-CLASS DESIGN',
     preAr: 'تصميم من الطراز الأول',
     main: 'Redefining Luxury Living with AI-Driven Excellence',
     mainAr: 'نعيد تعريف الفخامة بتميّز الذكاء الاصطناعي',
-    img: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/acc6aa6b-aace-4590-a434-e45d040d1e57.png',
   },
   {
     pre: 'AI-DRIVEN EXCELLENCE',
     preAr: 'تميّز بالذكاء الاصطناعي',
     main: 'Smart Matches for Smart Investors',
     mainAr: 'توافق ذكي لمستثمرين أذكياء',
-    img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/c1e39ec7-57c4-46e3-9863-04426ac760db.png',
   },
 ];
 
@@ -104,7 +104,7 @@ export const HOUEZ_COMPOUNDS: HouyezCompound[] = [
     zone: 'Madinaty',
     zoneAr: 'مدينتي',
     count: 20,
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/acd218c1-355a-4fae-96e5-e09d3ee69e47.png',
   },
   {
     name: 'Rehab',
@@ -112,7 +112,7 @@ export const HOUEZ_COMPOUNDS: HouyezCompound[] = [
     zone: 'New Cairo',
     zoneAr: 'القاهرة الجديدة',
     count: 21,
-    img: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/d541304e-a0d4-4585-ac62-451024352fe8.png',
   },
   {
     name: 'Fifth Square',
@@ -120,7 +120,7 @@ export const HOUEZ_COMPOUNDS: HouyezCompound[] = [
     zone: '5th Settlement',
     zoneAr: 'التجمع الخامس',
     count: 5,
-    img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/0f0f5b0e-5a2a-4d7f-b0a6-975eb486ac57.png',
   },
   {
     name: 'Mivida',
@@ -128,7 +128,7 @@ export const HOUEZ_COMPOUNDS: HouyezCompound[] = [
     zone: '5th Settlement',
     zoneAr: 'التجمع الخامس',
     count: 3,
-    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/df8355a3-80e0-46ca-9561-cebe247a1614.png',
   },
 ];
 
@@ -138,14 +138,14 @@ export const HOUEZ_ROOMS: HouyezRoom[] = [
     nameAr: 'غرفة معيشة فاخرة',
     sub: 'Madinaty · Grand Apartment',
     subAr: 'مدينتي · شقة فاخرة',
-    img: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=1400&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/0ff12ce0-70f0-4f8e-b672-920340f0df79.png',
   },
   {
     name: 'Master Bedroom Suite',
     nameAr: 'جناح غرفة النوم الرئيسية',
     sub: 'Fifth Square · Penthouse Level',
     subAr: 'فيفت سكوير · بنتهاوس',
-    img: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1400&q=85',
+    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/57b77b4f-f2e6-4cb5-ac0c-c62d9acfffc3.jpg',
   },
 ];
 
@@ -182,7 +182,7 @@ export const HOUEZ_LISTINGS: HouyezListing[] = (realListingsRaw as any[]).map((l
   agentAr: 'مستشار سييرا المباشر',
   ago: 'مزامنة حية',
   agoAr: 'مزامنة حية',
-  img: l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=85',
+  img: l.img || 'https://static.shared.propertyfinder.eg/media/images/listing/01JP76CY4E27V966J7YYMX90MC/8f87b03a-7f19-4ce5-ae79-8e06c6aa62ee.png',
 }));
 
 export const HOUEZ_SEARCH_TABS = [
