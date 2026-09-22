@@ -135,7 +135,7 @@ jobs:
 
               HTTP_CODE=$(curl -sS -o /tmp/vercel-res.json -w '%{http_code}' -X POST \
                 "https://api.vercel.com/v10/projects/${proj_id}/env?teamId=${VERCEL_ORG_ID}&upsert=true" \
-                -H "Authorization: Bearer $VERCEL_TOKEN" \
+                -H "Authorization: Bearer ${VERCEL_TOKEN}" \
                 -H "Content-Type: application/json" \
                 -d "$PAYLOAD")
 
