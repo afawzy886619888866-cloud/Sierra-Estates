@@ -9,7 +9,7 @@ import { parseRequestBody } from '@/lib/server/schemas';
  * Serves as the dynamic gateway between the web-based LeilaConcierge widget and OmnichannelChatService.
  *
  * Deliberately public — this is the site chat widget — but rate limited and
- * strictly validated so it cannot be used as an unbounded LLM / Firestore
+ * strictly validated so it cannot be used as an unbounded LLM / Supabase
  * write amplifier.
  */
 const chatRequestSchema = z.object({

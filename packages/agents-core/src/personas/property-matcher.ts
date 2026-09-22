@@ -16,7 +16,7 @@ export class PropertyMatcherAgent extends BaseAgent {
     // Identity Federation) with the Vertex AI User role on the project.
     this.ai = new GoogleGenAI({
       vertexai: true,
-      project: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      project: process.env.GOOGLE_CLOUD_PROJECT,
       location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
     });
   }

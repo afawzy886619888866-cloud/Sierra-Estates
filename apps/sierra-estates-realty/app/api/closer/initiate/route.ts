@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
  * API: INITIATE CLOSING (STAGE 9)
  * Triggers the Leila/Sierra Fail-Safe Closing Engine.
  *
- * Looks up the property code in the LIVE Master Sheet inventory (Firestore `units`)
+ * Looks up the property code in the LIVE Master Sheet inventory (Supabase `units`)
  * to get real owner contact info, type (owner/broker), and generates the correct
  * Arabic outreach script.
  *
@@ -19,7 +19,7 @@ import { logger } from '@/lib/logger';
  * SECURITY: manager+ session required — this drives real outreach against live
  * owner/broker records. The owner contact number, the outreach script and the
  * rendered email body are deliberately NOT echoed in the response; they stay in
- * the email / Firestore side effect only (same rule as /api/inventory, which
+ * the email / Supabase side effect only (same rule as /api/inventory, which
  * strips owner PII before it reaches a client).
  */
 export async function POST(request: Request) {
