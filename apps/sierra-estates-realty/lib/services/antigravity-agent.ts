@@ -96,9 +96,9 @@ function stakeholderName(lead: Lead): string {
 }
 
 /**
- * Firestore emulated a prefix search with `where('name', '>=', name)`, which
- * actually matched everything ordered at or after it. `ilike` is the honest
- * version of what that was reaching for.
+ * The former document store emulated a prefix search with
+ * `where('name', '>=', name)`, which actually matched everything ordered at or
+ * after it. `ilike` is the honest Supabase/Postgres version of that intent.
  */
 async function findStakeholderByName(name: string): Promise<Lead | null> {
   const rows = await listRecords<Lead>(COLLECTIONS.stakeholders, {
@@ -243,9 +243,9 @@ async function handleStakeholderInterview(chatId: number, text: string): Promise
   let leadId = '';
 
   if (!found) {
-    // Create new lead in S2 (extracted). Firestore's .doc() handed back an id
-    // for a document that was never written, so the update below always failed
-    // with NOT_FOUND for a first-time chat; the row is now actually inserted.
+    // Create new lead in S2 (extracted). The former document adapter handed back
+    // an id for a record that was never written, so first-time chats failed with
+    // NOT_FOUND; the row is now actually inserted.
     const created = await insertRecord<Lead>(COLLECTIONS.stakeholders, {
       fullName: `Stakeholder-${chatId}`,
       phone: `TELEGRAM:${chatId}`,
@@ -270,10 +270,9 @@ async function handleStakeholderInterview(chatId: number, text: string): Promise
 
   // 3. Update Lead Intelligence Profile & Neural Memory
   //
-  // Firestore addressed these with dotted paths ('intelligence.profile') and
-  // grew the arrays with FieldValue.arrayUnion. `intelligence` and
-  // `orchestrationState` are single JSONB columns here, so the whole object is
-  // read, merged and written back — arrayUnion becomes an explicit dedupe.
+  // The former document adapter addressed these with dotted paths and grew the
+  // arrays with arrayUnion. `intelligence` and `orchestrationState` are single
+  // JSONB columns here, so the whole object is read, merged and written back.
   const intelligence: Record<string, any> = { ...(lead.intelligence ?? {}) };
   intelligence.profile = {
     ...(lead.intelligence?.profile || {}),

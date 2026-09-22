@@ -48,6 +48,7 @@
         "check:backend": "node scripts/check-backend-policy.mjs",
         "check:hygiene": "node scripts/check-repository-hygiene.mjs",
         "check:legacy-runtime": "node scripts/check-legacy-runtime-boundary.mjs",
+        "audit:arc3": "node scripts/arc3-auditor.mjs",
         "briefing:daily": "tsx scripts/generate-daily-briefing.ts",
         "deploy:check": "tsx scripts/verify-deploy-readiness.ts",
         "deploy:check:env": "node scripts/verify-env-readiness.mjs",

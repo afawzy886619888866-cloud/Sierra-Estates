@@ -53,7 +53,9 @@ jobs:
           esac
 
       - name: Call production cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets['CRON_SECRET'] }}
         run: |
           curl -sS -f --max-time 90 \
             "https://sierra-estates.net${{ steps.target.outputs.path }}" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+            -H "Authorization: Bearer ${CRON_SECRET}"
