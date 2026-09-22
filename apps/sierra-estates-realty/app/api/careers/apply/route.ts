@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   try {
     // public.career_applications names these columns `name` / `position` /
     // `message`; the form calls them fullName / role / notes. Every field the
-    // Firestore document carried is still stored, under the table's names.
+    // The legacy document payload is still stored under the table's names.
     const {
       fullName,
       role,

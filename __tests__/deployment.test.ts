@@ -193,7 +193,7 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
     it('package.json deploy:prod must enforce pre-flight readiness checks', () => {
       const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf-8'));
       expect(pkg.scripts['deploy:prod']).toContain('deploy:check');
-      expect(pkg.scripts['deploy:prod']).toContain('vercel --prod');
+      expect(pkg.scripts['deploy:prod']).toMatch(/\bvercel(?:@\d+\.\d+\.\d+)?\s+--prod\b/);
     });
   });
 });

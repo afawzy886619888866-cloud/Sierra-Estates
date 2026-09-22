@@ -8,7 +8,7 @@
  *    - Message dedup cache
  *    - Phone number extraction from JID
  *    - n8n webhook forwarding payload structure
- *    - Firestore fallback payload structure
+ *    - Supabase fallback payload structure
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -39,9 +39,8 @@ describe('package.json', () => {
     expect(PACKAGE_JSON.dependencies['@whiskeysockets/baileys']).toBeDefined();
   });
 
-  it('has @supabase/supabase-js dependency (migrated from firebase-admin on 2026-09-20)', () => {
+  it('has @supabase/supabase-js dependency', () => {
     expect(PACKAGE_JSON.dependencies['@supabase/supabase-js']).toBeDefined();
-    // firebase-admin was removed as part of the Firebase → Supabase migration.
     expect(PACKAGE_JSON.dependencies['firebase-admin']).toBeUndefined();
   });
 
@@ -97,8 +96,8 @@ describe('Scraper source code (src/index.js)', () => {
   });
 
   it('has Supabase fallback (direct write if n8n down)', () => {
-    expect(SCRAPER_SOURCE).toContain('writeClientToFirestore');
-    expect(SCRAPER_SOURCE).toContain('createRequestInFirestore');
+    expect(SCRAPER_SOURCE).toContain('writeLeadToSupabase');
+    expect(SCRAPER_SOURCE).toContain('createInquiryInSupabase');
     expect(SCRAPER_SOURCE).toContain('writeClientToSupabase');
     expect(SCRAPER_SOURCE).toContain('createRequestInSupabase');
   });
@@ -111,9 +110,9 @@ describe('Scraper source code (src/index.js)', () => {
     expect(SCRAPER_SOURCE).toContain("status: 'bot_handling'");
   });
 
-  it('appends chat history to requests', () => {
-    expect(SCRAPER_SOURCE).toContain('bot_chat_history');
-    expect(SCRAPER_SOURCE).toContain('sender: \'client\'');
+  it('records the incoming message on the inquiry', () => {
+    expect(SCRAPER_SOURCE).toContain('message: messageText');
+    expect(SCRAPER_SOURCE).toContain("channel: 'whatsapp'");
   });
 
   it('sends bot reply back to client', () => {
