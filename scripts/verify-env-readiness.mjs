@@ -52,7 +52,7 @@ const REQUIRED = [
 
 // Supabase is the only supported production backend.
 const hasSupabase = (has('NEXT_PUBLIC_SUPABASE_URL') || has('SUPABASE_URL')) &&
-                    has('NEXT_PUBLIC_SUPABASE_ANON_KEY') &&
+                    (has('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') || has('NEXT_PUBLIC_SUPABASE_ANON_KEY')) &&
                     has('SUPABASE_SERVICE_ROLE_KEY');
 
 // Feature integrations — warn (or fail under STRICT_FEATURES) if absent.
@@ -73,7 +73,7 @@ for (const key of REQUIRED) {
 if (!hasSupabase) {
   errors.push(
     'Supabase is not fully configured. Set NEXT_PUBLIC_SUPABASE_URL, ' +
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY.'
+    'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or legacy anon key), and SUPABASE_SERVICE_ROLE_KEY.'
   );
 }
 

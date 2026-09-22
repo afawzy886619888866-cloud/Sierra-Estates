@@ -20,14 +20,16 @@ if (typeof process.loadEnvFile === 'function') {
 }
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const anonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 console.log('--- SIERRA ESTATES BACKEND VERIFICATION ---');
 
 const missing = [];
 if (!url) missing.push('NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
-if (!anonKey) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+if (!anonKey) missing.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or legacy NEXT_PUBLIC_SUPABASE_ANON_KEY)');
 if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
 
 if (missing.length > 0) {
