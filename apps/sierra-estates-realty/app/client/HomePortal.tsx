@@ -135,10 +135,25 @@ export default function HomePortal() {
           <div className="h-eyebrow">{heroPre}</div>
           <h1>{heroWords.join(' ')} <span className="hl">{heroHl}</span></h1>
           <p className="sub">{t('heroSub')}</p>
+          {slide === 0 && (
+            <p
+              className="hero-punchline"
+              style={{
+                marginTop: '14px',
+                fontSize: 'clamp(13px, 1vw, 15.5px)',
+                lineHeight: 1.65,
+                color: 'rgba(235, 206, 140, 0.92)',
+                maxWidth: '740px',
+                textShadow: '0 1px 10px rgba(0,0,0,0.5)'
+              }}
+            >
+              {t('heroPunchline')}
+            </p>
+          )}
           <div className="quick">
-            <span><IconBadgeCheck size={16} /> {t('q1')}</span>
-            <span><IconMap size={16} /> {t('q2')}</span>
-            <span><IconShield size={16} /> {t('q3')}</span>
+            <span><IconBadgeCheck size={16} /> {t('heroBadgeAgencies') || t('q1')}</span>
+            <span><IconShield size={16} /> {t('heroBadgeBrokers') || t('q2')}</span>
+            <span><IconSparkle size={16} /> {t('heroBadgePricing') || t('q3')}</span>
           </div>
           <div className="hero-cta">
             <Link href="/explore" className="btn btn-pri"><IconMap size={16} /> <span>{t('heroExplore')}</span></Link>
