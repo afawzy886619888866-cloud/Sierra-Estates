@@ -26,8 +26,8 @@ infra/**
 workflows/**
 tools/**
 notebooks/**
-FUTURE_PLAN/**
-.pytest_cache/**
+.pytest_cache
+**/.pytest_cache
 ops/**
 scripts/test-results/**
 docs/**
