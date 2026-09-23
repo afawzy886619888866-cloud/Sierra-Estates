@@ -65,11 +65,12 @@ export async function scheduleViewing(
     }
 
     return created.id;
-  } catch (err) {
+  } catch {
     // Graceful fallback for test / offline environments
     const fallbackId = `viewing-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     return fallbackId;
   }
+
 }
 
 /**
