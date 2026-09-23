@@ -48,7 +48,7 @@ export default function BannerShowcaseClient() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-gray-300">
-                <thead className="bg-white/[0.03] text-xs uppercase text-[#c8961a] border-b border-white/10">
+                <thead className="bg-white/3 text-xs uppercase text-[#c8961a] border-b border-white/10">
                   <tr>
                     <th className="py-4 px-6 font-semibold w-1/5">Element</th>
                     <th className="py-4 px-6 font-semibold w-2/5">English Version</th>
@@ -57,28 +57,28 @@ export default function BannerShowcaseClient() {
                 </thead>
                 <tbody className="divide-y divide-white/5 font-light">
                   {/* Headline */}
-                  <tr className="hover:bg-white/[0.02] transition-colors">
+                  <tr className="hover:bg-white/2 transition-colors">
                     <td className="py-4 px-6 font-mono text-xs text-[#e9c176] font-medium">Headline</td>
                     <td className="py-4 px-6 font-medium text-white">{content.en.headline}</td>
                     <td className="py-4 px-6 text-right font-medium text-white font-serif text-base" dir="rtl">{content.ar.headline}</td>
                   </tr>
 
                   {/* Subhead */}
-                  <tr className="hover:bg-white/[0.02] transition-colors">
+                  <tr className="hover:bg-white/2 transition-colors">
                     <td className="py-4 px-6 font-mono text-xs text-[#e9c176] font-medium">Subhead</td>
                     <td className="py-4 px-6 leading-relaxed text-gray-300">{content.en.subhead}</td>
                     <td className="py-4 px-6 text-right leading-relaxed text-gray-300 font-serif text-base" dir="rtl">{content.ar.subhead}</td>
                   </tr>
 
                   {/* Body / Punchline */}
-                  <tr className="hover:bg-white/[0.02] transition-colors">
+                  <tr className="hover:bg-white/2 transition-colors">
                     <td className="py-4 px-6 font-mono text-xs text-[#e9c176] font-medium">Body / Punchline</td>
                     <td className="py-4 px-6 leading-relaxed text-gray-400">{content.en.body}</td>
                     <td className="py-4 px-6 text-right leading-relaxed text-gray-400 font-serif text-base" dir="rtl">{content.ar.body}</td>
                   </tr>
 
                   {/* Badges */}
-                  <tr className="hover:bg-white/[0.02] transition-colors">
+                  <tr className="hover:bg-white/2 transition-colors">
                     <td className="py-4 px-6 font-mono text-xs text-[#e9c176] font-medium">Badges / Highlights</td>
                     <td className="py-4 px-6">
                       <ul className="space-y-1.5">
