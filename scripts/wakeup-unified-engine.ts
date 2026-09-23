@@ -9,9 +9,15 @@
  *  4. Agent Personas (Scribe, Curator, Matchmaker, Closer, Evaluator)
  */
 
+import * as os from 'os';
+import * as path from 'path';
 import { DeepSeekHarness } from '../packages/deepseek-harness/src/harness.js';
 import { ObsidianMemory } from '../packages/obsidian/src/index.js';
 import { DifyAgentAdapter } from '../packages/ai-orchestrator/src/dify-adapter.js';
+
+process.env.OBSIDIAN_STORE_PATH =
+  process.env.OBSIDIAN_STORE_PATH ||
+  path.join(os.tmpdir(), 'sierra-unified-engine-store.json');
 
 async function main() {
   console.log('╔══════════════════════════════════════════════════════════════════════╗');
