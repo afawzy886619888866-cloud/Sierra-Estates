@@ -382,8 +382,8 @@ export class AugustOwnersAgentService {
    * Heuristic fallback extractor if generative AI is offline
    */
   private static heuristicExtract(text: string): any {
-    const lower = text.toLowerCase();
     const priceMatch = text.match(/(\d[\d,\. ]{3,12})\s*(جنيه|ج\.م|egp|m|مليون|k|الف)?/i);
+
     let price = 0;
     if (priceMatch) {
       const rawNum = priceMatch[1].replace(/[, ]/g, '');
