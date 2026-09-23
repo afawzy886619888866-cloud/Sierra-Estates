@@ -246,8 +246,8 @@ export default function UnifiedBilingualHeroBanner({
             {/* English Card */}
             {(mode === "side-by-side" || mode === "en") && (
               <div className="relative overflow-hidden rounded-3xl bg-linear-to-b from-[#09121d] via-[#070d15] to-[#04080e] border border-[#c8961a]/30 p-8 md:p-10 shadow-2xl group">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-[#c8961a]/15 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-[#e9c176] to-transparent opacity-80" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#c8961a]/15 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#e9c176] to-transparent opacity-80" />
 
                 {/* Top Badge Strip */}
                 <div className="flex items-center justify-between gap-4 mb-6">
@@ -293,7 +293,7 @@ export default function UnifiedBilingualHeroBanner({
 
                 {/* Badges / Highlights */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/3 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Building2 className="w-4 h-4 text-[#c8961a] shrink-0" />
                     <span className="text-xs font-medium text-gray-200">
                       {c.en.badges[0]}
@@ -305,7 +305,7 @@ export default function UnifiedBilingualHeroBanner({
                       {c.en.badges[1]}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/3 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Cpu className="w-4 h-4 text-[#c8961a] shrink-0" />
                     <span className="text-xs font-medium text-gray-200">
                       {c.en.badges[2]}
@@ -334,8 +334,8 @@ export default function UnifiedBilingualHeroBanner({
                 dir="rtl"
                 className="relative overflow-hidden rounded-3xl bg-linear-to-b from-[#09121d] via-[#070d15] to-[#04080e] border border-[#c8961a]/30 p-8 md:p-10 shadow-2xl group text-right"
               >
-                <div className="absolute top-0 left-0 w-96 h-96 bg-[radial-gradient(ellipse_at_top_left,var(--tw-gradient-stops))] from-[#c8961a]/15 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-[#e9c176] to-transparent opacity-80" />
+                <div className="absolute top-0 left-0 w-96 h-96 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-[#c8961a]/15 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#e9c176] to-transparent opacity-80" />
 
                 {/* Top Badge Strip */}
                 <div className="flex items-center justify-between gap-4 mb-6">
@@ -381,19 +381,19 @@ export default function UnifiedBilingualHeroBanner({
 
                 {/* Badges / Highlights */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/3 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Building2 className="w-4 h-4 text-[#c8961a] shrink-0" />
                     <span className="text-xs font-medium text-gray-200">
                       {c.ar.badges[0]}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/3 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Users className="w-4 h-4 text-[#c8961a] shrink-0" />
                     <span className="text-xs font-medium text-gray-200">
                       {c.ar.badges[1]}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/3 border border-white/10 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Cpu className="w-4 h-4 text-[#c8961a] shrink-0" />
                     <span className="text-xs font-medium text-gray-200">
                       {c.ar.badges[2]}
@@ -408,7 +408,7 @@ export default function UnifiedBilingualHeroBanner({
                   </div>
                   <Link
                     href="/compounds"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs hover:brightness-110 transition-all shadow-lg"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs hover:brightness-110 transition-all shadow-lg"
                   >
                     استكشف الفرص <ArrowLeft className="w-3.5 h-3.5" />
                   </Link>
@@ -427,8 +427,8 @@ export default function UnifiedBilingualHeroBanner({
           >
             {/* English Mobile Story Card */}
             {(mode === "side-by-side" || mode === "en") && (
-              <div className="w-full max-w-90 mx-auto aspect-9/16 rounded-3xl bg-linear-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
+              <div className="w-full max-w-[360px] mx-auto aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
 
                 {/* Story Top Indicator */}
                 <div className="relative z-10">
@@ -475,7 +475,7 @@ export default function UnifiedBilingualHeroBanner({
 
                 {/* Story Middle Graphic */}
                 <div className="relative z-10 py-6 my-auto text-center">
-                  <div className="w-20 h-20 mx-auto rounded-2xl bg-linear-to-tr from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/40 flex items-center justify-center shadow-lg shadow-[#c8961a]/10 mb-4">
+                  <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-tr from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/40 flex items-center justify-center shadow-lg shadow-[#c8961a]/10 mb-4">
                     <Sparkles className="w-10 h-10 text-[#e9c176]" />
                   </div>
                   <div className="text-[11px] font-mono text-[#c8961a] uppercase tracking-wider">
@@ -490,7 +490,7 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="relative z-10 pt-4 border-t border-white/10">
                   <Link
                     href="/compounds"
-                    className="w-full py-3 rounded-xl bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs flex items-center justify-center gap-2 hover:brightness-110 shadow-lg"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs flex items-center justify-center gap-2 hover:brightness-110 shadow-lg"
                   >
                     Swipe Up to Discover <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
@@ -502,9 +502,9 @@ export default function UnifiedBilingualHeroBanner({
             {(mode === "side-by-side" || mode === "ar") && (
               <div
                 dir="rtl"
-                className="w-full max-w-90 mx-auto aspect-9/16 rounded-3xl bg-linear-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl text-right"
+                className="w-full max-w-[360px] mx-auto aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl text-right"
               >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
 
                 {/* Story Top Indicator */}
                 <div className="relative z-10">
@@ -551,7 +551,7 @@ export default function UnifiedBilingualHeroBanner({
 
                 {/* Story Middle Graphic */}
                 <div className="relative z-10 py-6 my-auto text-center">
-                  <div className="w-20 h-20 mx-auto rounded-2xl bg-linear-to-tr from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/40 flex items-center justify-center shadow-lg shadow-[#c8961a]/10 mb-4">
+                  <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-tr from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/40 flex items-center justify-center shadow-lg shadow-[#c8961a]/10 mb-4">
                     <Sparkles className="w-10 h-10 text-[#e9c176]" />
                   </div>
                   <div className="text-[11px] font-mono text-[#c8961a] tracking-wide">
@@ -566,7 +566,7 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="relative z-10 pt-4 border-t border-white/10">
                   <Link
                     href="/compounds"
-                    className="w-full py-3 rounded-xl bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs flex items-center justify-center gap-2 hover:brightness-110 shadow-lg"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] font-bold text-xs flex items-center justify-center gap-2 hover:brightness-110 shadow-lg"
                   >
                     اسحب لأعلى للاستكشاف <ArrowLeft className="w-3.5 h-3.5" />
                   </Link>
@@ -587,7 +587,7 @@ export default function UnifiedBilingualHeroBanner({
             {(mode === "side-by-side" || mode === "en") && (
               <div className="relative rounded-2xl md:rounded-3xl bg-[#04070d] border-4 border-[#1e2836] p-6 md:p-12 shadow-2xl overflow-hidden">
                 {/* Outdoor Lighting Spotlight effect */}
-                <div className="absolute top-0 inset-x-0 h-40 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-[#e9c176]/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute top-0 inset-x-0 h-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c176]/20 via-transparent to-transparent pointer-events-none" />
 
                 {/* Billboard Structure Frame Tag */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-6 font-mono">
@@ -618,7 +618,7 @@ export default function UnifiedBilingualHeroBanner({
                   </div>
 
                   <h1 className="text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white mb-6 drop-shadow-md">
-                    <span className="text-transparent bg-clip-text bg-linear-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
                       {c.en.billboard.primary}
                     </span>
                   </h1>
@@ -627,7 +627,7 @@ export default function UnifiedBilingualHeroBanner({
                     {c.en.billboard.sub}
                   </p>
 
-                  <div className="inline-flex flex-wrap items-center justify-center gap-3 md:gap-6 px-6 py-3 rounded-2xl bg-white/4 border border-[#c8961a]/40 text-[#f5d78e] text-sm md:text-lg font-bold tracking-wide">
+                  <div className="inline-flex flex-wrap items-center justify-center gap-3 md:gap-6 px-6 py-3 rounded-2xl bg-white/[0.04] border border-[#c8961a]/40 text-[#f5d78e] text-sm md:text-lg font-bold tracking-wide">
                     <span>{c.en.billboard.tagline}</span>
                   </div>
                 </div>
@@ -649,7 +649,7 @@ export default function UnifiedBilingualHeroBanner({
                 className="relative rounded-2xl md:rounded-3xl bg-[#04070d] border-4 border-[#1e2836] p-6 md:p-12 shadow-2xl overflow-hidden text-center"
               >
                 {/* Outdoor Lighting Spotlight effect */}
-                <div className="absolute top-0 inset-x-0 h-40 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-[#e9c176]/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute top-0 inset-x-0 h-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c176]/20 via-transparent to-transparent pointer-events-none" />
 
                 {/* Billboard Structure Frame Tag */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-6 font-mono">
@@ -682,7 +682,7 @@ export default function UnifiedBilingualHeroBanner({
                   </div>
 
                   <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white mb-6 drop-shadow-md">
-                    <span className="text-transparent bg-clip-text bg-linear-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
                       {c.ar.billboard.primary}
                     </span>
                   </h1>
@@ -691,7 +691,7 @@ export default function UnifiedBilingualHeroBanner({
                     {c.ar.billboard.sub}
                   </p>
 
-                  <div className="inline-flex flex-wrap items-center justify-center gap-3 md:gap-6 px-6 py-3 rounded-2xl bg-white/4 border border-[#c8961a]/40 text-[#f5d78e] text-sm md:text-lg font-bold tracking-wide">
+                  <div className="inline-flex flex-wrap items-center justify-center gap-3 md:gap-6 px-6 py-3 rounded-2xl bg-white/[0.04] border border-[#c8961a]/40 text-[#f5d78e] text-sm md:text-lg font-bold tracking-wide">
                     <span>{c.ar.billboard.tagline}</span>
                   </div>
                 </div>
