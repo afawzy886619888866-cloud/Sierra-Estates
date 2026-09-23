@@ -3,6 +3,7 @@
     "forceConsistentCasingInFileNames": true,
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["node"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -39,6 +40,9 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "__tests__",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }
