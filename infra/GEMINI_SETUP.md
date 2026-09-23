@@ -1,8 +1,4 @@
-# ═══════════════════════════════════════════════════════════════════════════
-
 # Sierra Estates — Gemini API Integration Guide
-
-# ═══════════════════════════════════════════════════════════════════════════
 
 ## What Gemini Does in This Project
 
@@ -92,13 +88,13 @@ Repeat for workflow **03-ai-score-scheduler** → "Gemini AI Score" node.
 
 The n8n HTTP Request nodes use this endpoint:
 
-```
+```http
 POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
 ```
 
 **Headers:**
 
-```
+```http
 Content-Type: application/json
 x-goog-api-key: AIzaSyYourKeyHere
 ```
