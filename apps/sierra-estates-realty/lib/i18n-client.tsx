@@ -32,9 +32,10 @@ const ar: Record<string, string> = {
   'nav.admin': 'لوحة الإدارة',
 
   // Hero
-  'hero.title': 'اكتشف عقارات القاهرة الجديدة',
-  'hero.subtitle': 'أكثر من 52 كمبوند مختار بعناية — إيجار وبيع — مدعوم بالذكاء الاصطناعي',
-  'hero.cta': 'ابدأ البحث',
+  'hero.title': 'أول محرك ذكاء اصطناعي عقاري متكامل في مصر',
+  'hero.subtitle': 'الشبكة الأكثر تخصصاً في الإيجار وإعادة البيع.. السيطرة الكاملة على القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق، والرحاب',
+  'hero.punchline': 'بفضل الذكاء الاصطناعي وشبكتنا المكونة من أكثر من 500 شركة عقارية و1,500 وسيط معتمد؛ نضمن لك الوصول لأفضل الفرص الحصرية وأدق الأسعار في شرق القاهرة بضغطة زر واحدة.',
+  'hero.cta': 'استكشف شرق القاهرة',
 
   // Search
   'search.placeholder': 'ابحث عن كمبوند أو منطقة...',
@@ -95,9 +96,10 @@ const en: Record<string, string> = {
   'nav.admin': 'Admin',
 
   // Hero
-  'hero.title': 'Discover New Cairo Properties',
-  'hero.subtitle': '52+ curated compounds — rent & resale — AI-powered',
-  'hero.cta': 'Start Searching',
+  'hero.title': 'EGYPT’S #1 AI-DRIVEN REAL ESTATE ECOSYSTEM',
+  'hero.subtitle': 'The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab',
+  'hero.punchline': 'Powered by proprietary AI and a robust alliance of 500+ real estate firms and 1,500+ certified brokers to guarantee East Cairo\'s most competitive opportunities at accurate pricing.',
+  'hero.cta': 'Explore East Cairo',
 
   // Search
   'search.placeholder': 'Search compound or area…',
