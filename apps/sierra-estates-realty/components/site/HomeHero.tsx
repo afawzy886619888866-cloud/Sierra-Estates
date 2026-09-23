@@ -221,11 +221,29 @@ export default function HomeHero() {
               </Link>
             </div>
           ) : (
-            <div className="quick">
-              <span><BadgeCheck className="i" /> <span>{t('q1')}</span></span>
-              <span><Map className="i" /> <span>{t('q2')}</span></span>
-              <span><ShieldCheck className="i" /> <span>{t('q3')}</span></span>
-            </div>
+            <>
+              {cur === 0 && (
+                <p
+                  className="hero-punchline"
+                  style={{
+                    marginTop: '16px',
+                    fontSize: 'clamp(14px, 1.15vw, 16px)',
+                    lineHeight: 1.7,
+                    color: 'rgba(235, 206, 140, 0.94)',
+                    maxWidth: '780px',
+                    fontWeight: 400,
+                    textShadow: '0 1px 12px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  {t('heroPunchline')}
+                </p>
+              )}
+              <div className="quick">
+                <span><BadgeCheck className="i" /> <span>{t('heroBadgeAgencies') || t('q1')}</span></span>
+                <span><ShieldCheck className="i" /> <span>{t('heroBadgeBrokers') || t('q2')}</span></span>
+                <span><Sparkles className="i" /> <span>{t('heroBadgePricing') || t('q3')}</span></span>
+              </div>
+            </>
           )}
         </div>
       </div>
