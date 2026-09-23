@@ -682,7 +682,7 @@ export default function UnifiedBilingualHeroBanner({
                   </div>
 
                   <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white mb-6 drop-shadow-md">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
+                    <span className="text-transparent bg-clip-text bg-linear-to-r from-[#ffffff] via-[#f5d78e] to-[#c8961a]">
                       {c.ar.billboard.primary}
                     </span>
                   </h1>
