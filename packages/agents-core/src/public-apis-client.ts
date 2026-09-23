@@ -59,12 +59,81 @@ export interface CompoundWeatherReport {
   recommendationNote: string;
 }
 
+export type CoreTargetMarket = 'new_cairo' | 'madinaty' | 'uptown_cairo' | 'general_cairo';
+
+export interface LocalizedMarketProfile {
+  marketId: CoreTargetMarket;
+  nameEn: string;
+  nameAr: string;
+  keyDistricts: string[];
+  keyCompounds: string[];
+  averagePricePerMeterEgp: number;
+  marketHighlights: string[];
+}
+
+export const TARGET_MARKET_PROFILES: Record<CoreTargetMarket, LocalizedMarketProfile> = {
+  new_cairo: {
+    marketId: 'new_cairo',
+    nameEn: 'New Cairo & The 5th Settlement',
+    nameAr: 'القاهرة الجديدة والتجمع الخامس',
+    keyDistricts: ['Golden Square', 'South Academy', 'Choueifat', 'North Investors', 'Lotus', 'Banafseg', 'Narges'],
+    keyCompounds: ['Katameya Heights', 'Mivida', 'Swan Lake Residence', 'Palm Hills New Cairo', 'Mountain View iCity', 'Hyde Park'],
+    averagePricePerMeterEgp: 48000,
+    marketHighlights: [
+      'Highest liquidity and trade velocity in East Cairo',
+      'Dominant high-end resale and luxury villa inventory',
+      'Immediate access to AUC, Road 90, and the Ring Road corridor'
+    ],
+  },
+  madinaty: {
+    marketId: 'madinaty',
+    nameEn: 'Madinaty',
+    nameAr: 'مدينتي',
+    keyDistricts: ['B1 to B12 Residential Sectors', 'Golf Villas', 'Four Seasons Private Residences', 'Craft Zone', 'South Park', 'Open Air Mall'],
+    keyCompounds: ['Madinaty Executive Villas', 'Madinaty Lake Park', 'Madinaty Golf Residences'],
+    averagePricePerMeterEgp: 34000,
+    marketHighlights: [
+      'Largest fully integrated self-sustaining gated community in Egypt',
+      'Highest annual rental yields (6-8%) and continuous family tenant demand',
+      'Direct highway transit to Suez Road, Shorouk, and the New Administrative Capital'
+    ],
+  },
+  uptown_cairo: {
+    marketId: 'uptown_cairo',
+    nameEn: 'Uptown Cairo (Emaar)',
+    nameAr: 'أبتاون كايرو (إعمار)',
+    keyDistricts: ['Mokattam High Plateau', 'The Sierras', 'Aurora', 'Reyna', 'Celesta Hills', 'Golf Clubhouse District'],
+    keyCompounds: ['Uptown Cairo by Emaar', 'Celesta Hills', 'Levana', 'Isola'],
+    averagePricePerMeterEgp: 68000,
+    marketHighlights: [
+      'Iconic 200m elevated plateau providing panoramic Cairo city vistas and cooler microclimate',
+      'Premier Emaar signature development with an 18-hole championship golf course',
+      'Central strategic nexus between Downtown Cairo and New Cairo via Emaar Drive'
+    ],
+  },
+  general_cairo: {
+    marketId: 'general_cairo',
+    nameEn: 'East Cairo Urban Corridor',
+    nameAr: 'محور شرق القاهرة الكبرى',
+    keyDistricts: ['Shorouk City', 'El Rehab', 'Mostakbal City', 'Al-Mataria Commercial Hub'],
+    keyCompounds: ['Cairo Plaza', 'Rehab City', 'Al Burouj', 'Sarai'],
+    averagePricePerMeterEgp: 31000,
+    marketHighlights: [
+      'High growth corridor bridging Greater Cairo with the New Administrative Capital',
+      'Balanced commercial and residential yield opportunities'
+    ],
+  },
+};
+
 export interface GeoLocationReport {
   country: string;
   countryCode: string;
   city: string;
+  district?: string;
   preferredCurrency: 'EGP' | 'USD' | 'AED' | 'SAR';
   isExpatBuyer: boolean;
+  primaryTargetMarket: CoreTargetMarket;
+  marketProfile: LocalizedMarketProfile;
 }
 
 export interface CompoundCoordinates {
@@ -208,11 +277,56 @@ export class PublicApisClient {
   }
 
   /**
-   * 4. Buyer Geographic Origin via IP-API (ip-api.com)
-   * Detects GCC expats and international investors to tailor currency and tax advisory.
+   * 4. Resolves query or district string to our localized Egyptian high-demand real estate markets:
+   * 1. New Cairo & 5th Settlement (Tagamoa, Golden Square, Mivida, AUC)
+   * 2. Madinaty (TMG, B1-B12, Golf, Craft Zone)
+   * 3. Uptown Cairo (Emaar, Mokattam Plateau, Celesta Hills, The Sierras)
    */
-  public static async detectClientOrigin(ipAddress: string): Promise<GeoLocationReport> {
-    const cacheKey = `ip_${ipAddress}`;
+  public static resolveTargetMarket(queryOrDistrict?: string): LocalizedMarketProfile {
+    if (!queryOrDistrict) {
+      return TARGET_MARKET_PROFILES.new_cairo;
+    }
+    const q = queryOrDistrict.toLowerCase().trim();
+
+    // Check Uptown Cairo
+    if (
+      q.includes('uptown') ||
+      q.includes('أبتاون') ||
+      q.includes('ابتاون') ||
+      q.includes('mokattam') ||
+      q.includes('المقطم') ||
+      q.includes('celesta') ||
+      q.includes('sierra')
+    ) {
+      return TARGET_MARKET_PROFILES.uptown_cairo;
+    }
+
+    // Check Madinaty
+    if (
+      q.includes('madinaty') ||
+      q.includes('مدينتي') ||
+      q.includes('talaat') ||
+      q.includes('tmg') ||
+      q.includes('طلعت مصطفى')
+    ) {
+      return TARGET_MARKET_PROFILES.madinaty;
+    }
+
+    // Default to primary flagship market: New Cairo
+    return TARGET_MARKET_PROFILES.new_cairo;
+  }
+
+  /**
+   * 5. Buyer Geographic Origin via IP-API (ip-api.com)
+   * Detects GCC expats and international investors to tailor currency and tax advisory,
+   * grounded in Egypt's key prime markets: New Cairo, Madinaty, and Uptown Cairo.
+   */
+  public static async detectClientOrigin(
+    ipAddress: string,
+    preferredMarketHint?: string
+  ): Promise<GeoLocationReport> {
+    const marketProfile = this.resolveTargetMarket(preferredMarketHint);
+    const cacheKey = `ip_${ipAddress}_${marketProfile.marketId}`;
     const cached = getCached<GeoLocationReport>(cacheKey);
     if (cached) return cached;
 
@@ -222,6 +336,8 @@ export class PublicApisClient {
       city: 'Cairo',
       preferredCurrency: 'EGP',
       isExpatBuyer: false,
+      primaryTargetMarket: marketProfile.marketId,
+      marketProfile,
     };
 
     if (!ipAddress || ipAddress === '127.0.0.1' || ipAddress === '::1' || ipAddress.startsWith('192.168.')) {
@@ -246,6 +362,8 @@ export class PublicApisClient {
         city: data?.city || 'Cairo',
         preferredCurrency,
         isExpatBuyer: code !== 'EG',
+        primaryTargetMarket: marketProfile.marketId,
+        marketProfile,
       };
 
       setCached(cacheKey, report, 43200); // 12 hours TTL
@@ -255,3 +373,4 @@ export class PublicApisClient {
     }
   }
 }
+
