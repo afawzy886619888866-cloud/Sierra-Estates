@@ -3,15 +3,24 @@ const { execSync } = require('child_process');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '../..');
-const envPath = path.join(repoRoot, 'apps/sierra-estates-realty/.env.local');
+const envLocations = [
+  path.join(repoRoot, '.env.local'),
+  path.join(repoRoot, 'apps/sierra-estates-realty/.env.local')
+];
 
-if (!fs.existsSync(envPath)) {
-  console.log(`⚠️ No .env.local found at ${envPath}`);
+let envContent = '';
+for (const loc of envLocations) {
+  if (fs.existsSync(loc)) {
+    envContent += '\n' + fs.readFileSync(loc, 'utf8');
+  }
+}
+
+if (!envContent.trim()) {
+  console.log(`⚠️ No .env.local found in repo root or apps/sierra-estates-realty/`);
   process.exit(0);
 }
 
-const envFile = fs.readFileSync(envPath, 'utf8');
-const lines = envFile.split('\n');
+const lines = envContent.split('\n');
 
 const varsToAdd = [
   'NEXT_PUBLIC_SUPABASE_URL',
