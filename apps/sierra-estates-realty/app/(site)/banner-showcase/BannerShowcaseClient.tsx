@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import SiteShell from '@/components/site/SiteShell';
 import UnifiedBilingualHeroBanner, { UNIFIED_BANNER_CONTENT } from '@/components/site/UnifiedBilingualHeroBanner';
-import { Sparkles, Layers, ShieldCheck, ArrowRight, CheckCircle2, Copy } from 'lucide-react';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
+
 
 export default function BannerShowcaseClient() {
   const content = UNIFIED_BANNER_CONTENT;
