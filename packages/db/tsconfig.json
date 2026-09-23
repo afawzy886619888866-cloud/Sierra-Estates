@@ -6,6 +6,9 @@
       "ES2020",
       "DOM"
     ],
+    "types": [
+      "node"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
