@@ -60,7 +60,20 @@ export interface NewExcelListingInput {
 }
 
 /**
- * Resolve master Excel inventory workbook location.
+ * Check if a URL represents a real uploaded unit photo (not an Unsplash or generic placeholder).
+ */
+export function isRealPhoto(url?: string | null): boolean {
+  if (!url) return false;
+  const s = String(url).trim().toLowerCase();
+  if (!s.startsWith('http')) return false;
+  if (s.includes('unsplash.com')) return false;
+  if (s.includes('placeholder')) return false;
+  if (s.includes('example.com')) return false;
+  return true;
+}
+
+/**
+ * Resolve master Excel inventory workbook location (Inventory_with_Photos.xlsx).
  */
 export function getMasterExcelPath(): string {
   const candidates = [
@@ -76,20 +89,220 @@ export function getMasterExcelPath(): string {
 }
 
 /**
- * Read real listings from Inventory_with_Photos.xlsx
+ * Resolve sierra-estates-master-inventory.xlsx path.
  */
-export function readExcelListings(options?: {
-  sheetName?: string;
-  limit?: number;
-  stripPII?: boolean;
-}): InventoryUnit[] {
-  const stripPII = options?.stripPII !== false; // default true for public safety
-  const filePath = getMasterExcelPath();
+export function getMasterInventoryWorkbookPath(): string | null {
+  const candidates = [
+    path.resolve(process.cwd(), 'apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx'),
+    path.resolve(process.cwd(), 'data/sierra-estates-master-inventory.xlsx'),
+    path.resolve(process.cwd(), '../../apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
 
-  if (!fs.existsSync(filePath)) {
-    logger.warn(`[ExcelInventory] Master workbook not found at ${filePath}`);
+/**
+ * Resolve sierra-estates-airtable-import.csv path.
+ */
+export function getAirtableImportCsvPath(): string | null {
+  const candidates = [
+    path.resolve(process.cwd(), 'apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv'),
+    path.resolve(process.cwd(), 'data/sierra-estates-airtable-import.csv'),
+    path.resolve(process.cwd(), '../../apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+/**
+ * Helper to build standard price label.
+ */
+function formatPriceLabel(price: number, mode: 'rent' | 'sale'): string {
+  if (!price || price <= 0) return 'Price on request';
+  if (mode === 'rent') {
+    return `${price.toLocaleString('en-US')} EGP / mo`;
+  }
+  if (price >= 1_000_000) {
+    return `${(price / 1_000_000).toFixed(1)}M EGP`;
+  }
+  return `${price.toLocaleString('en-US')} EGP`;
+}
+
+/**
+ * Read listings from sierra-estates-airtable-import.csv
+ */
+function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
+  const filePath = getAirtableImportCsvPath();
+  if (!filePath || !fs.existsSync(filePath)) return [];
+
+  try {
+    const buf = fs.readFileSync(filePath);
+    const wb = XLSX.read(buf, { type: 'buffer' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    if (!sheet) return [];
+
+    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+    const units: InventoryUnit[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rawCode = String(row['Sierra Code'] || row['Record ID'] || `AT-${i + 1}`).trim();
+      const compoundName = String(row['Compound Name'] || row.Compound || row['Location / Area'] || 'New Cairo').trim();
+      const resolved = resolveLocation(compoundName);
+
+      const price = Number(row['Price (EGP)']) || 0;
+      const op = String(row['Operation (Sale / Rent)'] || row.Operation || '').toLowerCase();
+      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+
+      const photoStatus = String(row['Has Photo? (YES / NO)'] || '').trim().toUpperCase();
+      const primaryPhotoUrl = String(row['Primary Photo URL (Airtable Attachment)'] || '').trim();
+      const hasRealPhoto = photoStatus === 'YES' || isRealPhoto(primaryPhotoUrl);
+
+      const lat = Number(row.Latitude) || resolved.lat;
+      const lng = Number(row.Longitude) || resolved.lng;
+
+      const unit: InventoryUnit = {
+        id: `AT-${rawCode}`,
+        code: rawCode,
+        compound: compoundName || resolved.label,
+        location: compoundName || resolved.label,
+        rawLocation: row['Location / Area'] || compoundName,
+        zone: resolved.zone,
+        lat,
+        lng,
+        approxLocation: resolved.approx,
+        propertyType: row['Property Type'] || 'Apartment',
+        type: row['Property Type'] || 'Apartment',
+        mode,
+        status: 'available',
+        statusLabel: 'Available',
+        price,
+        priceLabel: formatPriceLabel(price, mode),
+        egpM: price > 0 ? Number((price / 1_000_000).toFixed(2)) : undefined,
+        usd: price > 0 ? egpToUsd(price) : undefined,
+        beds: row.Bedrooms ? Number(row.Bedrooms) : null,
+        bath: row.Bathrooms ? Number(row.Bathrooms) : null,
+        area: row['Area (sqm)'] ? Number(row['Area (sqm)']) : null,
+        img: primaryPhotoUrl || undefined,
+        hasPhoto: hasRealPhoto,
+        sourceType: 'airtable',
+        finishingQuality: row['Finishing Quality'] || undefined,
+        description: row['Notes & Broker Description'] || undefined,
+        segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
+        segmentLabel: 'Airtable Import',
+        tag: row['Source Classification'] || 'Airtable Master',
+        party: String(row['Source Classification'] || '').includes('Owner') ? 'Owner' : 'Broker',
+      };
+
+      if (!stripPII) {
+        (unit as any).contactPhone = row['Owner / Broker Contact Info'];
+      }
+
+      units.push(unit);
+    }
+
+    return units;
+  } catch (err) {
+    logger.warn(`[ExcelInventory] Error reading Airtable CSV: ${(err as Error).message}`);
     return [];
   }
+}
+
+/**
+ * Read listings from sierra-estates-master-inventory.xlsx
+ */
+function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
+  const filePath = getMasterInventoryWorkbookPath();
+  if (!filePath || !fs.existsSync(filePath)) return [];
+
+  try {
+    const buf = fs.readFileSync(filePath);
+    const wb = XLSX.read(buf, { type: 'buffer' });
+    const sheetName = wb.SheetNames.includes('All_Master_Units') ? 'All_Master_Units' : wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    if (!sheet) return [];
+
+    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+    const units: InventoryUnit[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Note BOM on Sierra Code
+      const rawCode = String(row['\ufeffSierra Code'] || row['Sierra Code'] || row.Code || `MASTER-${i + 1}`).trim();
+      const compoundName = String(row.Compound || row.Location || 'New Cairo').trim();
+      const resolved = resolveLocation(compoundName);
+
+      const price = Number(row['Price (EGP)']) || 0;
+      const op = String(row.Operation || '').toLowerCase();
+      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+
+      const primaryImgUrl = String(row['Primary Image URL'] || '').trim();
+      const hasRealPhoto = isRealPhoto(primaryImgUrl);
+
+      const lat = Number(row.Latitude) || resolved.lat;
+      const lng = Number(row.Longitude) || resolved.lng;
+
+      const unit: InventoryUnit = {
+        id: `MASTER-${rawCode}`,
+        code: rawCode,
+        compound: compoundName || resolved.label,
+        location: compoundName || resolved.label,
+        rawLocation: row.Location || compoundName,
+        zone: resolved.zone,
+        lat,
+        lng,
+        approxLocation: resolved.approx,
+        propertyType: row['Property Type'] || 'Apartment',
+        type: row['Property Type'] || 'Apartment',
+        mode,
+        status: 'available',
+        statusLabel: 'Available',
+        price,
+        priceLabel: formatPriceLabel(price, mode),
+        egpM: price > 0 ? Number((price / 1_000_000).toFixed(2)) : undefined,
+        usd: price > 0 ? egpToUsd(price) : undefined,
+        beds: row.Bedrooms ? Number(row.Bedrooms) : null,
+        bath: row.Bathrooms ? Number(row.Bathrooms) : null,
+        area: row['Area (sqm)'] ? Number(row['Area (sqm)']) : null,
+        img: primaryImgUrl || undefined,
+        hasPhoto: hasRealPhoto,
+        sourceType: 'excel',
+        finishingQuality: row['Finishing Quality'] || undefined,
+        description: row['Listing Description & Notes'] || undefined,
+        segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
+        segmentLabel: 'Master Excel',
+        tag: row['Source Type (Owner / Broker)'] || 'Master Sheet',
+        party: String(row['Source Type (Owner / Broker)'] || '').includes('Owner') ? 'Owner' : 'Broker',
+      };
+
+      if (!stripPII) {
+        (unit as any).contactPhone = row['Contact Info / Owner Name'];
+      }
+
+      units.push(unit);
+    }
+
+    return units;
+  } catch (err) {
+    logger.warn(`[ExcelInventory] Error reading Master Excel: ${(err as Error).message}`);
+    return [];
+  }
+}
+
+/**
+ * Read listings from Inventory_with_Photos.xlsx
+ */
+function readInventoryWithPhotosInternal(options?: {
+  sheetName?: string;
+  stripPII?: boolean;
+}): InventoryUnit[] {
+  const stripPII = options?.stripPII !== false;
+  const filePath = getMasterExcelPath();
+  if (!fs.existsSync(filePath)) return [];
 
   try {
     const buf = fs.readFileSync(filePath);
@@ -128,16 +341,10 @@ export function readExcelListings(options?: {
               .filter((u) => u.startsWith('http'))
           : [];
         const primaryImg = photosList[0] || undefined;
+        const hasRealPhoto = isRealPhoto(primaryImg);
 
         const priceLabel =
-          row['Price Formatted'] ||
-          (price > 0
-            ? mode === 'rent'
-              ? `${price.toLocaleString('en-US')} EGP / mo`
-              : price >= 1_000_000
-                ? `${(price / 1_000_000).toFixed(1)}M EGP`
-                : `${price.toLocaleString('en-US')} EGP`
-            : 'Price on request');
+          row['Price Formatted'] || formatPriceLabel(price, mode);
 
         const recordId = String(row.RecordID || row.UnitCode || `EXCEL-${segment}-${i + 1}`).trim();
         const unitCode = row.UnitCode ? String(row.UnitCode).trim() : null;
@@ -160,15 +367,14 @@ export function readExcelListings(options?: {
           price,
           priceLabel,
           egpM: price > 0 ? Number((price / 1_000_000).toFixed(2)) : undefined,
-          // One rate for the whole system (lib/fx.ts) — rent and sale used to
-          // divide by different hardcoded numbers (50 vs 48.5), so the same
-          // EGP price produced two USD figures depending on the segment.
           usd: price > 0 ? egpToUsd(price) : undefined,
           beds: row.Bedrooms ? Number(row.Bedrooms) : null,
           bath: row.Bathrooms ? Number(row.Bathrooms) : null,
           area: row['Area (sqm)'] ? Number(row['Area (sqm)']) : null,
           furnishing: row.Furnishing || undefined,
           img: primaryImg,
+          hasPhoto: hasRealPhoto,
+          sourceType: 'excel',
           description: row.Description || undefined,
           segment,
           segmentLabel: sheetName,
@@ -176,7 +382,6 @@ export function readExcelListings(options?: {
           party: sheetName.includes('Owner') ? 'Owner' : 'Broker',
         };
 
-        // Only attach PII if stripPII is explicitly disabled (e.g. for internal admin)
         if (!stripPII) {
           (unit as any).contactName = row['Contact Name'];
           (unit as any).contactPhone = row['Contact Phone'];
@@ -187,22 +392,65 @@ export function readExcelListings(options?: {
       }
     }
 
-    // Prioritize units that have photos so they appear first
-    units.sort((a, b) => {
-      const aPhoto = a.img && a.img.startsWith('http') ? 1 : 0;
-      const bPhoto = b.img && b.img.startsWith('http') ? 1 : 0;
-      return bPhoto - aPhoto;
-    });
-
-    if (options?.limit && units.length > options.limit) {
-      return units.slice(0, options.limit);
-    }
-
     return units;
   } catch (err) {
-    logger.warn(`[ExcelInventory] Error reading master workbook: ${(err as Error).message}`);
+    logger.warn(`[ExcelInventory] Error reading Inventory_with_Photos: ${(err as Error).message}`);
     return [];
   }
+}
+
+/**
+ * Unified Reader: Ingests listings from:
+ * 1. Inventory_with_Photos.xlsx
+ * 2. sierra-estates-master-inventory.xlsx (All_Master_Units)
+ * 3. sierra-estates-airtable-import.csv
+ *
+ * CRITICAL RULE: Units with real pictures (hasPhoto: true) are sorted FIRST
+ * to give priority to verified photo-backed properties.
+ */
+export function readExcelListings(options?: {
+  sheetName?: string;
+  limit?: number;
+  stripPII?: boolean;
+}): InventoryUnit[] {
+  const stripPII = options?.stripPII !== false;
+
+  const photosUnits = readInventoryWithPhotosInternal({
+    sheetName: options?.sheetName,
+    stripPII,
+  });
+  const airtableUnits = readAirtableListingsInternal(stripPII);
+  const masterExcelUnits = readMasterExcelWorkbookInternal(stripPII);
+
+  const seenCodes = new Set<string>();
+  const combinedUnits: InventoryUnit[] = [];
+
+  // Order of ingestion: Photos first, then Airtable, then Master Excel
+  const allRaw = [...photosUnits, ...airtableUnits, ...masterExcelUnits];
+
+  for (const u of allRaw) {
+    const key = (u.code || u.id || '').trim().toUpperCase();
+    if (key && seenCodes.has(key)) continue;
+    if (key) seenCodes.add(key);
+    combinedUnits.push(u);
+  }
+
+  // PRIORITIZATION: Units with pictures (hasPhoto === true) are prioritized first
+  combinedUnits.sort((a, b) => {
+    const aPhoto = a.hasPhoto ? 1 : 0;
+    const bPhoto = b.hasPhoto ? 1 : 0;
+    if (bPhoto !== aPhoto) {
+      return bPhoto - aPhoto;
+    }
+    // Secondary sort: Higher priced units first
+    return (b.price || 0) - (a.price || 0);
+  });
+
+  if (options?.limit && combinedUnits.length > options.limit) {
+    return combinedUnits.slice(0, options.limit);
+  }
+
+  return combinedUnits;
 }
 
 /**
@@ -253,14 +501,7 @@ export async function appendToExcelInventory(
     const resolved = resolveLocation(input.compound || input.location || 'New Cairo');
 
     const formattedPrice =
-      input.priceFormatted ||
-      (input.price > 0
-        ? isRent
-          ? `${input.price.toLocaleString('en-US')} EGP / mo`
-          : input.price >= 1_000_000
-            ? `${(input.price / 1_000_000).toFixed(1)}M EGP`
-            : `${input.price.toLocaleString('en-US')} EGP`
-        : 'Price on request');
+      input.priceFormatted || formatPriceLabel(input.price, isRent ? 'rent' : 'sale');
 
     const photoUrlsStr = Array.isArray(input.photoUrls)
       ? input.photoUrls.join(', ')
