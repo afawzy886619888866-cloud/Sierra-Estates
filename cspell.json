@@ -552,6 +552,15 @@
     "zchip",
     "zenaq",
     "zencoder",
-    "zline"
+    "zline",
+    "langgenius",
+    "opendal",
+    "OPENDAL",
+    "pgdata",
+    "redisdata",
+    "semitechnologies",
+    "VECTORIZER",
+    "weaviatedata"
   ]
 }
+
