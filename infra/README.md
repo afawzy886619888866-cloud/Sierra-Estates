@@ -4,7 +4,7 @@
 
 ## Structure
 
-```
+```text
 infra/
 ├── docker-compose.yml          ← orchestrates n8n + whatsapp-scraper
 ├── .env.example                ← copy to .env, fill in your values
@@ -69,7 +69,7 @@ On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
 The first time you start the WhatsApp scraper, it prints a QR code in the logs:
 
-```
+```text
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Scan this QR code with WhatsApp:
   Phone → Settings → Linked Devices → Link a device
@@ -89,7 +89,7 @@ reverse proxy, TLS, and firewall rules.
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  VPS ($10, 4GB RAM, Docker)                                 │
 │                                                             │
