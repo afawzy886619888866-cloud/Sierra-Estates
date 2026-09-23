@@ -251,6 +251,109 @@ export default function SierraMasterOrchestrator({
 
     setTimeout(() => {
       setIsProcessingCmd(false);
+      // Workflow Studio Command
+
+      if (q.includes('workflow') || q.includes('flow') || q.includes('studio') || q.includes('تدفق') || q.includes('سير')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'تم تشغيل استوديو سير العمل: 8 مسارات عمل نشطة تربط استيعاب القوائم، وتدقيق الأسعار، ورسائل المتابعة، والـ S1-S10.'
+            : 'Workflow Studio engaged: 8 active operational pipelines linking listing ingestion, AVM pricing, follow-ups, and S1-S10 stages.',
+          actionLabel: isAr ? 'فتح استوديو سير العمل' : 'Open Workflow Studio',
+          actionTab: 'workflow_studio',
+          badges: [
+            { label: 'Workflows', val: '8 Active', color: '#34D399' },
+            { label: 'Studio Mode', val: 'Interactive v3', color: '#C8961A' },
+          ],
+        });
+        if (onNavigate) onNavigate('workflow_studio');
+        return;
+      }
+
+      // Automations & Cron Command
+      if (q.includes('auto') || q.includes('cron') || q.includes('أتمتة') || q.includes('اتمتة') || q.includes('مجدول')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'منظومة الأتمتة المتقدمة جاهزة: فحص AVM اللحظي، ومسح القوائم الراكدة، والجدولة التلقائية نشطة.'
+            : 'Automations engine online: Real-time AVM pricing, stale listing monitor, and scheduled cron jobs active.',
+          actionLabel: isAr ? 'عرض الأتمتة والمهام المجدولة' : 'Open Automations Console',
+          actionTab: 'automations',
+          badges: [
+            { label: 'Automations', val: '3 Running', color: '#34D399' },
+            { label: 'Health', val: 'Nominal', color: '#34D399' },
+          ],
+        });
+        if (onNavigate) onNavigate('automations');
+        return;
+      }
+
+      // CRM Leads Command
+      if (q.includes('lead') || q.includes('crm') || q.includes('عميل') || q.includes('عملاء') || q.includes('زبون')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'إدارة العملاء CRM: 284 عميلاً محتملاً نشطاً، منها 23 استفساراً عاجلاً تم مطابقتها ذكياً مع كمبوندات التجمع ومدينتي وأبتاون.'
+            : 'CRM Leads Management: 284 active leads, with 23 hot priority inquiries AI-matched to New Cairo, Madinaty, and Uptown Cairo compounds.',
+          actionLabel: isAr ? 'عرض العملاء المحتملين' : 'Open CRM Leads & Inquiries',
+          actionTab: 'leads',
+          badges: [
+            { label: 'Active Leads', val: '284 Total', color: '#1E88D9' },
+            { label: 'Hot Priority', val: '23 Inquiries', color: '#E63946' },
+          ],
+        });
+        if (onNavigate) onNavigate('leads');
+        return;
+      }
+
+      // Live Listings & Inventory OS Command
+      if (q.includes('listing') || q.includes('unit') || q.includes('inventory') || q.includes('عقار') || q.includes('عقارات') || q.includes('وحد') || q.includes('مخزون')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'قاعدة العقارات والمخزون الحي: 330 وحدة مفحوصة وموزعة على أهم كمبوندات شرق القاهرة ومحدثة الأسعار.'
+            : 'Live Inventory & Listings: 330+ verified units across East Cairo compounds with live AVM price valuations and audit tags.',
+          actionLabel: isAr ? 'فتح قاعدة العقارات والمخزون' : 'Open Listings & Inventory OS',
+          actionTab: 'inventory_os',
+          badges: [
+            { label: 'Inventory', val: '330+ Units', color: '#34D399' },
+            { label: 'Yield Rate', val: '6.8% Average', color: '#C8961A' },
+          ],
+        });
+        if (onNavigate) onNavigate('inventory_os');
+        return;
+      }
+
+      // WhatsApp Scheduled Sender & Outreach Command
+      if (q.includes('whatsapp') || q.includes('sender') || q.includes('واتساب') || q.includes('رسائل') || q.includes('ارسال') || q.includes('مراسلة')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'مرسل الواتساب الذكي وبوابة QR: تم تجهيز طابور الإرسال الآلي وربط جلسة الهاتف لمراسلة الملاك والعملاء.'
+            : 'Smart WhatsApp Sender & Device Gateway: Automated dispatch queue primed with active phone pairing for owner & buyer outreach.',
+          actionLabel: isAr ? 'فتح مرسل الواتساب' : 'Open WhatsApp Sender Hub',
+          actionTab: 'whatsapp_outreach',
+          badges: [
+            { label: 'Queue Status', val: 'Active (Port 3000)', color: '#25D366' },
+            { label: 'Outreach Slots', val: '12:00 - 20:00 Cairo', color: '#C8961A' },
+          ],
+        });
+        if (onNavigate) onNavigate('whatsapp_outreach');
+        return;
+      }
+
+      // Easy Listing Studio Command
+      if (q.includes('easy') || q.includes('إدراج') || q.includes('ادراج') || q.includes('استوديو القوائم') || q.includes('add listing')) {
+        setLastCmdReply({
+          text: isAr
+            ? 'استوديو الإدراج السهل Easy Listing Studio: يمكنك لصق رسالة المالك الخام بالعامية أو الفصحى وسيتولى الذكاء الاصطناعي استخراج البيانات وحفظها.'
+            : 'Easy Listing Studio ready: Paste raw WhatsApp Arabic or English owner messages for instant AI schema extraction and live publishing.',
+          actionLabel: isAr ? 'بدء إدراج عقار جديد' : 'Launch Easy Listing Studio',
+          actionTab: 'easy_listing',
+          badges: [
+            { label: 'Studio Engine', val: 'Instant AI Extractor', color: '#C8961A' },
+            { label: 'Format Support', val: 'Text / Images / Excel', color: '#34D399' },
+          ],
+        });
+        if (onNavigate) onNavigate('easy_listing');
+        return;
+      }
+
       // Photo Hunter Command
       if (q.includes('photo') || q.includes('صور') || q.includes('bring photo') || q.includes('hunter')) {
         setLastCmdReply({
@@ -309,11 +412,11 @@ export default function SierraMasterOrchestrator({
       }
 
       // Agents & Bots Command
-      if (q.includes('agent') || q.includes('bot') || q.includes('وكيل') || q.includes('بوت') || q.includes('fleet')) {
+      if (q.includes('agent') || q.includes('bot') || q.includes('وكيل') || q.includes('بوت') || q.includes('fleet') || q.includes('dify')) {
         setLastCmdReply({
           text: isAr
-            ? 'تم استدعاء أسطول الوكلاء: Sierra Bot، ليلى، Stage-9 Closer، Vertex Omni، Property Finder Syndicator، وOpenClaw يعملون بكفاءة 100%.'
-            : 'Agent Fleet fully operational: Sierra Bot, Leila, Stage-9 Closer, Vertex Omni Vision, Property Finder Syndicator, and OpenClaw running at 100% capacity.',
+            ? 'تم استدعاء أسطول الوكلاء ومحرك Dify: Sierra Bot، ليلى، Stage-9 Closer، Scribe، Curator، وDeepSeek يعملون بكفاءة 100%.'
+            : 'Agent Fleet & Dify fully operational: Sierra Bot, Leila, Stage-9 Closer, Scribe, Curator, and DeepSeek running at 100% capacity.',
           actionLabel: isAr ? 'لوحة تحكم الوكلاء' : 'Open Agents Console',
           actionTab: 'agents',
           badges: [
@@ -341,6 +444,7 @@ export default function SierraMasterOrchestrator({
         if (onNavigate) onNavigate('pipeline');
         return;
       }
+
 
       // General fallback orchestrator response
       setLastCmdReply({
@@ -469,6 +573,65 @@ export default function SierraMasterOrchestrator({
         </div>
       </div>
 
+      {/* ── QUICK CONTROL NAVIGATION BAR (ALWAYS ACCESSIBLE) ─────────────── */}
+      <div
+        style={{
+          padding: '8px 18px',
+          background: 'rgba(0, 0, 0, 0.25)',
+          borderBottom: '1px solid var(--bd)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--tx-f)', textTransform: 'uppercase', letterSpacing: '.05em', whiteSpace: 'nowrap' }}>
+          {isAr ? 'التحكم السريع:' : 'Quick Controls:'}
+        </span>
+        {[
+          { id: 'workflow_studio', icon: '⚡', labelEn: 'Workflow Studio', labelAr: 'استوديو سير العمل', color: '#34D399' },
+          { id: 'agents', icon: '🤖', labelEn: 'Agents & Bots', labelAr: 'الوكلاء والبوتات', color: '#A78BFA' },
+          { id: 'automations', icon: '🪄', labelEn: 'Automations', labelAr: 'الأتمتة والكرون', color: '#38BDF8' },
+          { id: 'leads', icon: '👥', labelEn: 'CRM Leads', labelAr: 'إدارة العملاء CRM', color: '#F87171' },
+          { id: 'inventory_os', icon: '🏛️', labelEn: 'Listings OS', labelAr: 'المخزون والقوائم', color: '#FBBF24' },
+          { id: 'whatsapp_outreach', icon: '💬', labelEn: 'WhatsApp Sender', labelAr: 'مرسل الواتساب', color: '#25D366' },
+          { id: 'easy_listing', icon: '🏷️', labelEn: 'Easy Listing', labelAr: 'استوديو الإدراج', color: '#F472B6' },
+          { id: 'memory_brain', icon: '🧬', labelEn: 'Memory Brain', labelAr: 'محرك الذاكرة', color: '#C8961A' },
+        ].map((btn) => (
+          <button
+            key={btn.id}
+            onClick={() => onNavigate && onNavigate(btn.id)}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 8,
+              border: '1px solid var(--bd)',
+              background: 'rgba(255, 255, 255, 0.04)',
+              color: 'var(--tx)',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = btn.color;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.borderColor = 'var(--bd)';
+            }}
+          >
+            <span>{btn.icon}</span>
+            <span>{isAr ? btn.labelAr : btn.labelEn}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Sweep Progress Bar if running */}
       {isSweeping && (
         <div style={{ padding: '10px 18px', background: 'rgba(0,174,255,0.06)', borderBottom: '1px solid var(--bd)' }}>
@@ -494,16 +657,191 @@ export default function SierraMasterOrchestrator({
           {/* ── WINDOWS AGENT ORCHESTRATOR BRIDGE CARD ────────────────────── */}
           <AgentOrchestratorCard lang={lang} onNavigate={onNavigate} />
 
-          {/* ── 5 QUICK CONDUCTOR ACTION CARDS ───────────────────────────── */}
+          {/* ── 8 MASTER CONDUCTOR ACTION CARDS ───────────────────────────── */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: 10,
               marginBottom: 16,
             }}
           >
-            {/* 1. Photo Hunter */}
+            {/* 1. Page Workflow & Studio */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #34D399',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('workflow_studio')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>⚡</span>
+                <span className="chip chip-green" style={{ fontSize: 8 }}>Studio v3</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'استوديو سير العمل والصفحات' : 'Workflows & Studio'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'تصميم وتعديل مسارات العمل التفاعلية' : 'Interactive S1-S10 visual pipelines'}
+              </p>
+            </div>
+
+            {/* 2. Autonomous Agents & Bots */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #A78BFA',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('agents')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>🤖</span>
+                <span className="chip chip-purple" style={{ fontSize: 8 }}>6 Bots</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'أسطول الوكلاء وبوتات الذكاء' : 'Agent Fleet & Bots'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'Sierra, Leila, Closer, Dify & DeepSeek' : 'Sierra, Leila, Closer, Dify & DeepSeek'}
+              </p>
+            </div>
+
+            {/* 3. Platform Automations & Crons */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #38BDF8',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('automations')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>🪄</span>
+                <span className="chip chip-blue" style={{ fontSize: 8 }}>3 Active</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'الأتمتة والمهام المجدولة' : 'Platform Automations'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'مزامنة AVM ومراقبة القوائم التلقائية' : 'AVM sync & background automated crons'}
+              </p>
+            </div>
+
+            {/* 4. CRM & Inbound Leads */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #F87171',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('leads')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>👥</span>
+                <span className="chip chip-red" style={{ fontSize: 8 }}>284 Leads</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'إدارة العملاء والطلبات العاجلة' : 'CRM & Inbound Leads'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'عملاء التجمع ومدينتي وأبتاون الفاخرة' : 'New Cairo, Madinaty & Uptown buyers'}
+              </p>
+            </div>
+
+            {/* 5. Listings & Inventory OS */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #FBBF24',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('inventory_os')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>🏛️</span>
+                <span className="chip chip-amber" style={{ fontSize: 8 }}>330+ Units</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'نظام المخزون والقوائم الحي' : 'Listings & Inventory OS'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'فحص العقارات والأسعار وتدقيق الجودة' : 'Live catalog, pricing & audit tags'}
+              </p>
+            </div>
+
+            {/* 6. WhatsApp Scheduled Sender Hub */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #25D366',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('whatsapp_outreach')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>💬</span>
+                <span className="chip chip-green" style={{ fontSize: 8 }}>Direct QR</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'مرسل الواتساب وبوابة الهاتف' : 'WhatsApp Sender Hub'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'مراسلة الملاك والعملاء وجدولة الإرسال' : 'Automated outreach & live device QR'}
+              </p>
+            </div>
+
+            {/* 7. Easy Listing Studio */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'var(--surf)',
+                border: '1px solid var(--bd)',
+                borderTop: '3px solid #F472B6',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+              }}
+              onClick={() => onNavigate && onNavigate('easy_listing')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>🏷️</span>
+                <span className="chip chip-pink" style={{ fontSize: 8 }}>1-Click AI</span>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
+                {isAr ? 'استوديو الإدراج السهل' : 'Easy Listing Studio'}
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
+                {isAr ? 'تحويل نصوص واتساب لقوائم منشورة فوراً' : 'Parse raw text & instant publish'}
+              </p>
+            </div>
+
+            {/* 8. Photo Hunter Radar */}
             <div
               style={{
                 padding: '12px 14px',
@@ -530,115 +868,8 @@ export default function SierraMasterOrchestrator({
                 {isAr ? 'أفضل الفيلات والوحدات الفاخرة المحتاجة لصور' : 'Best luxury units needing photos'}
               </p>
             </div>
-
-            {/* 2. Property Finder Syndicator */}
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--surf)',
-                border: '1px solid var(--bd)',
-                borderTop: '3px solid #C8961A',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-              }}
-              onClick={() => {
-                if (onNavigate) onNavigate('leads');
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 16 }}>🏢</span>
-                <span className="chip chip-blue" style={{ fontSize: 8 }}>Synced</span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
-                {isAr ? 'مزامنة بروبرتي فايندر' : 'Property Finder Feed'}
-              </div>
-              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
-                {isAr ? 'تزامن 330 وحدة ومتابعة عملاء PF' : '330 units live + incoming leads'}
-              </p>
-            </div>
-
-            {/* 3. Deal Pipeline Conductor */}
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--surf)',
-                border: '1px solid var(--bd)',
-                borderTop: '3px solid #34D399',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-              }}
-              onClick={() => {
-                if (onNavigate) onNavigate('pipeline');
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 16 }}>💼</span>
-                <span className="chip chip-green" style={{ fontSize: 8 }}>EGP 102M</span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
-                {isAr ? 'إدارة الصفقات والمراحل' : 'Pipeline Conductor'}
-              </div>
-              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
-                {isAr ? 'ترقية الصفقات وصياغة العقود بضغطة واحدة' : '1-click stage advance & contracts'}
-              </p>
-            </div>
-
-            {/* 4. Autonomous Agent Fleet */}
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--surf)',
-                border: '1px solid var(--bd)',
-                borderTop: '3px solid #7C3AED',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-              }}
-              onClick={() => {
-                if (onNavigate) onNavigate('agents');
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 16 }}>🤖</span>
-                <span className="chip chip-purple" style={{ fontSize: 8 }}>6 Agents</span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
-                {isAr ? 'أسطول الوكلاء الذكي' : 'Agent Fleet (6 Bots)'}
-              </div>
-              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
-                {isAr ? 'Sierra Bot، ليلى، Stage-9، Vertex' : 'Sierra Bot, Leila, Stage-9, Vertex'}
-              </p>
-            </div>
-
-            {/* 5. Tasks & Operations */}
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: 12,
-                background: 'var(--surf)',
-                border: '1px solid var(--bd)',
-                borderTop: '3px solid var(--gold)',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-              }}
-              onClick={() => {
-                if (onNavigate) onNavigate('tasks');
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 16 }}>✅</span>
-                <span className="chip chip-gold" style={{ fontSize: 8 }}>7 Active</span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--tx)' }}>
-                {isAr ? 'مركز المهام الميدانية' : 'Operations & Tasks'}
-              </div>
-              <p style={{ fontSize: 10, color: 'var(--tx-f)', margin: '4px 0 0 0' }}>
-                {isAr ? 'تذاكر المصورين ومتابعات الواتساب' : 'Photo team tickets & WhatsApp tasks'}
-              </p>
-            </div>
           </div>
+
 
           {/* ── NATURAL LANGUAGE COMMAND BAR ─────────────────────────────── */}
           <div
