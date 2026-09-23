@@ -395,6 +395,7 @@ interface InventoryApiData {
     unknown: number;
   };
   compoundCounts?: Record<string, number>;
+  compoundSheetCounts?: Record<string, number>;
   compoundSegmentCounts?: Record<string, Record<string, number>>;
   units?: Array<{
     id?: string;
@@ -403,6 +404,7 @@ interface InventoryApiData {
     location?: string;
     img?: string;
     price?: number;
+    hasPhoto?: boolean;
   }>;
 }
 
@@ -412,6 +414,7 @@ export interface CompoundsMapProps {
   selectedName?: string | null;
   onSelectAction?: (name: string) => void;
   onSelect?: (name: string) => void;
+  onOpenSheet?: (compoundName: string) => void;
   showControls?: boolean;
   filterCompound?: string;
   filterPrice?: string;
@@ -427,6 +430,7 @@ export default function CompoundsMap({
   selectedName,
   onSelectAction,
   onSelect,
+  onOpenSheet,
   showControls = true,
   filterCompound,
   filterPrice,
@@ -473,6 +477,21 @@ export default function CompoundsMap({
   useEffect(() => {
     if (filterBed !== undefined) setSelectedBed(filterBed);
   }, [filterBed]);
+
+  // Listen for clicks on the popup "View Excel Sheet" button
+  useEffect(() => {
+    const handleSheetBtnClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('.sierra-compound-sheet-trigger');
+      if (target) {
+        const cpd = target.getAttribute('data-compound');
+        if (cpd) {
+          onOpenSheet?.(cpd);
+        }
+      }
+    };
+    document.addEventListener('click', handleSheetBtnClick);
+    return () => document.removeEventListener('click', handleSheetBtnClick);
+  }, [onOpenSheet]);
 
   // Compute unit count for a given compound in the selected segment
   const getCompoundCount = useCallback(
@@ -627,6 +646,15 @@ export default function CompoundsMap({
         return 0;
       };
 
+      const getSheetUnitsCount = (name: string): number => {
+        const target = cleanCpdName(name);
+        for (const [key, count] of Object.entries(inventoryData?.compoundSheetCounts || {})) {
+          const k = cleanCpdName(key);
+          if (k === target || k.startsWith(target) || target.startsWith(k)) return count;
+        }
+        return 0;
+      };
+
       filteredCompounds.forEach((c) => {
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
@@ -635,6 +663,8 @@ export default function CompoundsMap({
         const unitsCount = liveUnits > 0 ? liveUnits : (selectedSegment === 'all' ? (c.units ?? estimateUnitsCount(c.ai)) : 0);
         const liveRentCount = getRentCount(c.n);
         const hasRentInventory = liveRentCount > 0;
+        const liveSheetCount = getSheetUnitsCount(c.n);
+        const hasSheetInventory = liveSheetCount > 0;
         const devName = COMPOUND_DEVELOPERS[c.n] || '';
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
         const activeSegmentObj = SEGMENT_TABS.find((s) => s.key === selectedSegment);
@@ -704,6 +734,19 @@ export default function CompoundsMap({
               justify-content: center;
               margin-left: -2px;
             ">R·${liveRentCount}</span>` : ''}
+            ${hasSheetInventory ? `<span style="
+              background: rgba(223, 173, 58, 0.22);
+              color: #f6d88b;
+              font-size: 9px;
+              font-weight: 800;
+              padding: 1px 5px;
+              border-radius: 999px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              border: 1px solid rgba(223, 173, 58, 0.45);
+              margin-left: -2px;
+            " title="${liveSheetCount} unphotographed sheet units">+${liveSheetCount}📄</span>` : ''}
           </div>
         `;
 
@@ -815,6 +858,39 @@ export default function CompoundsMap({
               `;
             })()}
 
+            ${hasSheetInventory ? `
+              <button
+                type="button"
+                class="sierra-compound-sheet-trigger"
+                data-compound="${c.n}"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  width: 100%;
+                  background: rgba(223, 173, 58, 0.12);
+                  color: #dfad3a;
+                  border: 1px dashed rgba(223, 173, 58, 0.45);
+                  border-radius: 8px;
+                  padding: 8px 10px;
+                  margin-bottom: 8px;
+                  cursor: pointer;
+                  font-size: 11px;
+                  font-weight: 700;
+                  box-sizing: border-box;
+                  transition: all 0.2s ease;
+                "
+                onmouseover="this.style.background='rgba(223, 173, 58, 0.22)';"
+                onmouseout="this.style.background='rgba(223, 173, 58, 0.12)';"
+              >
+                <span style="display: flex; align-items: center; gap: 5px;">
+                  <span>📊</span>
+                  <span>View Excel Sheet (+${liveSheetCount})</span>
+                </span>
+                <span style="font-size: 9.5px; opacity: 0.85;">Send Photos →</span>
+              </button>
+            ` : ''}
+
             <a
               href="/properties?compound=${encodeURIComponent(c.n)}${queryParamSeg}"
               style="
@@ -904,7 +980,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts, inventoryData?.units]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts, inventoryData?.units, inventoryData?.compoundSheetCounts]);
 
 
   // Handle external selection & smooth zoom
