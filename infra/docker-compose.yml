@@ -44,19 +44,19 @@ services:
       # ── Auth (change in production!) ──
       - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-true}
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:?Set N8N_BASIC_AUTH_PASSWORD in infra/.env}
       # ── Timezone (Egypt) ──
       - GENERIC_TIMEZONE=${TIMEZONE:-Africa/Cairo}
       - TZ=${TIMEZONE:-Africa/Cairo}
       # ── Supabase (authoritative data store) ──
-      - SUPABASE_URL=${SUPABASE_URL:-}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+      - SUPABASE_URL=${SUPABASE_URL:?Set SUPABASE_URL in infra/.env}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?Set SUPABASE_SERVICE_ROLE_KEY in infra/.env}
       # ── Gemini API (for AI matching in workflows) ──
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       # ── Property Finder webhook secret ──
       - PROPERTY_FINDER_WEBHOOK_SECRET=${PROPERTY_FINDER_WEBHOOK_SECRET:-}
     volumes:
-      - ./n8n-data:/data
+      - ./n8n-data:/home/node/.n8n
     networks:
       - sierra-net
     healthcheck:
