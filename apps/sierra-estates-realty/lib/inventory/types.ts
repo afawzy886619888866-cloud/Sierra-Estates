@@ -61,6 +61,9 @@ export interface InventoryUnit {
   description?: string | null;
   comment?: string | null;
   featured?: boolean;
+  hasPhoto?: boolean;
+  sourceType?: 'excel' | 'airtable' | 'supabase' | 'whatsapp' | string;
+  finishingQuality?: string;
   updatedAt?: string | null;
 }
 
@@ -78,6 +81,8 @@ export interface InventoryResponse {
     unknown: number;
   };
   compoundCounts?: Record<string, number>;
+  /** Unphotographed / raw sheet units aggregated per compound for map sheet mode */
+  compoundSheetCounts?: Record<string, number>;
   compoundSegmentCounts?: Record<string, Record<string, number>>;
   units: InventoryUnit[];
 }

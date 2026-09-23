@@ -256,6 +256,8 @@ export async function GET(request: Request) {
   const filterSegment = searchParams.get("segment")?.trim().toLowerCase() || "";
   const filterMode = searchParams.get("mode")?.trim().toLowerCase() || "";
   const filterStatus = searchParams.get("status")?.trim().toLowerCase() || "";
+  const filterSheetOnly = searchParams.get("sheetOnly") === "true";
+  const filterWithPhotoOnly = searchParams.get("withPhotoOnly") === "true";
   const filterLimit = searchParams.get("limit")
     ? parseInt(searchParams.get("limit")!, 10)
     : 0;
@@ -270,11 +272,46 @@ export async function GET(request: Request) {
   const baseUnits = [...excelUnits, ...whatsAppUnits, ...(sourceResponse.units || [])];
   const seenCodes = new Set<string>();
   const deduplicatedUnits: InventoryUnit[] = [];
+
   for (const u of baseUnits) {
-    const key = u.code || u.id;
+    const key = (u.code || u.id || "").trim().toUpperCase();
     if (key && seenCodes.has(key)) continue;
     if (key) seenCodes.add(key);
-    deduplicatedUnits.push(u);
+
+    const primaryImg = u.img;
+    const hasPhoto =
+      typeof u.hasPhoto === "boolean"
+        ? u.hasPhoto
+        : Boolean(
+            primaryImg &&
+              String(primaryImg).startsWith("http") &&
+              !String(primaryImg).includes("unsplash.com") &&
+              !String(primaryImg).includes("placeholder")
+          );
+
+    deduplicatedUnits.push({
+      ...u,
+      hasPhoto,
+    });
+  }
+
+  // Prioritize units that have real photos so they appear first across the system
+  deduplicatedUnits.sort((a, b) => {
+    const aPhoto = a.hasPhoto ? 1 : 0;
+    const bPhoto = b.hasPhoto ? 1 : 0;
+    if (bPhoto !== aPhoto) {
+      return bPhoto - aPhoto;
+    }
+    return (b.price || 0) - (a.price || 0);
+  });
+
+  // Calculate unphotographed / sheet units counts per compound
+  const compoundSheetCounts: Record<string, number> = {};
+  for (const u of deduplicatedUnits) {
+    if (!u.hasPhoto) {
+      const cmp = u.compound || u.location || "Unknown";
+      compoundSheetCounts[cmp] = (compoundSheetCounts[cmp] || 0) + 1;
+    }
   }
 
   // Strip private owner PII for public API response while keeping the real property data
@@ -305,6 +342,13 @@ export async function GET(request: Request) {
     filteredUnits = filteredUnits.filter((u) => u.mode === filterMode);
   }
 
+  // Filter for sheet-only or with-photos-only when specifically queried
+  if (filterSheetOnly) {
+    filteredUnits = filteredUnits.filter((u) => !u.hasPhoto);
+  } else if (filterWithPhotoOnly) {
+    filteredUnits = filteredUnits.filter((u) => u.hasPhoto);
+  }
+
   // Status filter — default to available-only unless admin passes ?status=all
   if (filterStatus && filterStatus !== "all") {
     filteredUnits = filteredUnits.filter((u) => u.status === filterStatus);
@@ -329,6 +373,7 @@ export async function GET(request: Request) {
     count: filteredUnits.length,
     segments: sourceResponse.segments,
     compoundCounts,
+    compoundSheetCounts,
     compoundSegmentCounts: sourceResponse.compoundSegmentCounts,
     units: filteredUnits,
   };
