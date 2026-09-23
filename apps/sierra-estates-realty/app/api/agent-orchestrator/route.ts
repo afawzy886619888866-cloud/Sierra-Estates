@@ -9,18 +9,6 @@ const execFileAsync = promisify(execFile);
 const AO_DAEMON_URL = process.env.AO_DAEMON_URL || 'http://127.0.0.1:3001';
 const AO_DEFAULT_EXE = 'I:\\Program Files\\agent-orchestrator\\resources\\daemon\\ao.exe';
 
-interface AOFallbackState {
-  running: boolean;
-  port: number;
-  daemonStatus: string;
-  projects: any[];
-  sessions: any[];
-  agents: {
-    installed: any[];
-    authorized: any[];
-  };
-}
-
 // Helper to query the local AO Daemon via HTTP
 async function queryAoDaemon(endpoint: string, timeoutMs = 2000): Promise<any> {
   const controller = new AbortController();
@@ -52,7 +40,7 @@ async function runAoCli(args: string[]): Promise<any> {
     } catch {
       return stdout.trim();
     }
-  } catch (err: any) {
+  } catch {
     return null;
   }
 }
@@ -61,12 +49,10 @@ async function runAoCli(args: string[]): Promise<any> {
  * GET /api/agent-orchestrator
  * Returns live status of Windows Agent Orchestrator app, registered projects, active sessions, and AI harnesses.
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const action = searchParams.get('action') || 'status';
-
     // 1. Try querying local daemon over HTTP
+
     const projectsData = await queryAoDaemon('/api/v1/projects');
     const sessionsData = await queryAoDaemon('/api/v1/sessions');
     const agentsData = await queryAoDaemon('/api/v1/agents');
@@ -198,7 +184,6 @@ export async function POST(req: NextRequest) {
       // Try spawning via CLI
       let result = null;
       try {
-        const exe = fs.existsSync(AO_DEFAULT_EXE) ? AO_DEFAULT_EXE : 'ao';
         result = await runAoCli([
           'spawn',
           '--project', 'se-vercel-deploy-main',
@@ -225,9 +210,9 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const exe = fs.existsSync(AO_DEFAULT_EXE) ? AO_DEFAULT_EXE : 'ao';
         await runAoCli(['send', '--session', sessionId, '--message', prompt]);
       } catch {}
+
 
       return NextResponse.json({
         success: true,
