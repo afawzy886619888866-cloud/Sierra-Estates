@@ -62,16 +62,17 @@ function isConfigured(value: string | undefined) {
 
 function validateProductionEnvironment() {
   const missing: string[] = [];
-  
+
   // Supabase is the authoritative primary backend (Database, Auth, pgvector, Storage)
   const hasSupabase = Boolean(
     isConfigured(process.env.NEXT_PUBLIC_SUPABASE_URL) || isConfigured(process.env.SUPABASE_URL)
   ) &&
-    isConfigured(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
+    (isConfigured(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
+      isConfigured(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) &&
     isConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   if (!hasSupabase) {
-    missing.push('Supabase URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY (Supabase is authoritative)');
+    missing.push('Supabase URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or legacy anon key), and SUPABASE_SERVICE_ROLE_KEY (Supabase is authoritative)');
   }
 
   for (const name of ['SESSION_SECRET', 'SBR_SECRET_KEY', 'CRON_SECRET']) {

@@ -161,3 +161,5 @@ dev.log
 obsidian-store.json
 .vercel
 .env*
+!.env.example
+!infra/.env.example

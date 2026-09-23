@@ -324,18 +324,19 @@ export interface ZonePreset {
   label: string;
   center: [number, number];
   zoom: number;
+  bounds: [[number, number], [number, number]];
 }
 
 export const NEW_CAIRO_ZONES: ZonePreset[] = [
-  { key: 'all', label: 'All New Cairo', center: [30.045, 31.59], zoom: 12 },
-  { key: 'Golden Square', label: 'Golden Square', center: [30.015, 31.60], zoom: 13 },
-  { key: '5th Settlement', label: '5th Settlement', center: [30.02, 31.55], zoom: 13 },
-  { key: 'Katameya', label: 'Katameya', center: [29.988, 31.485], zoom: 13 },
-  { key: 'South 90th', label: 'South 90th St', center: [30.018, 31.54], zoom: 13 },
-  { key: 'North 90th', label: 'North 90th St', center: [30.035, 31.56], zoom: 13 },
-  { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 12 },
-  { key: 'TMG', label: 'Al Rehab & Madinaty', center: [30.08, 31.60], zoom: 12 },
-  { key: 'Transit', label: 'Cairo Plaza Metro', center: [30.129, 31.312], zoom: 14 },
+  { key: 'all', label: 'Uptown → New Capital', center: [30.045, 31.59], zoom: 11, bounds: [[29.94, 31.27], [30.18, 31.78]] },
+  { key: 'Uptown', label: 'Uptown Cairo', center: [30.026, 31.307], zoom: 14, bounds: [[29.99, 31.27], [30.06, 31.35]] },
+  { key: 'Golden Square', label: 'Golden Square', center: [30.015, 31.60], zoom: 13, bounds: [[29.97, 31.54], [30.06, 31.64]] },
+  { key: '5th Settlement', label: '5th Settlement', center: [30.02, 31.55], zoom: 13, bounds: [[29.97, 31.49], [30.08, 31.61]] },
+  { key: 'Katameya', label: 'Katameya', center: [29.988, 31.485], zoom: 13, bounds: [[29.95, 31.40], [30.04, 31.53]] },
+  { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 12, bounds: [[30.01, 31.60], [30.12, 31.71]] },
+  { key: 'Madinaty', label: 'Madinaty & Shorouk', center: [30.105, 31.64], zoom: 12, bounds: [[30.04, 31.57], [30.18, 31.72]] },
+  { key: 'New Capital', label: 'New Capital', center: [30.01, 31.73], zoom: 12, bounds: [[29.94, 31.66], [30.10, 31.82]] },
+  { key: 'Transit', label: 'Cairo Plaza Metro', center: [30.129, 31.312], zoom: 14, bounds: [[30.10, 31.27], [30.16, 31.36]] },
 ];
 
 export interface MapPricePreset {
@@ -417,6 +418,7 @@ export interface CompoundsMapProps {
   filterType?: string;
   filterBed?: number | 'any';
   isAr?: boolean;
+  selectedOnly?: boolean;
 }
 
 export default function CompoundsMap({
@@ -431,6 +433,7 @@ export default function CompoundsMap({
   filterType: _filterType,
   filterBed,
   isAr = false,
+  selectedOnly = false,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
   const hostRef = useRef<HTMLDivElement>(null);
@@ -444,6 +447,7 @@ export default function CompoundsMap({
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
+  const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
   const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
@@ -507,6 +511,7 @@ export default function CompoundsMap({
   // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
     return compounds.filter((c) => {
+      if (showSelectedOnly && selectedName && c.n !== selectedName) return false;
       // 1. Text query filter (local state or external prop)
       const effectiveQuery = (filterQuery || filterCompound || '').toLowerCase().trim();
       if (effectiveQuery) {
@@ -522,6 +527,12 @@ export default function CompoundsMap({
         if (selectedZone === 'Golden Square') {
           const isGolden = c.z.includes('5th') && (c.n.includes('Mivida') || c.n.includes('Villette') || c.n.includes('Palm') || c.n.includes('Mountain View') || c.n.includes('Eastown') || c.n.includes('Fifth Square'));
           if (!isGolden) return false;
+        } else if (selectedZone === 'Madinaty') {
+          if (!c.n.includes('Madinaty') && !c.n.includes('Rehab') && !c.z.toLowerCase().includes('shorouk')) return false;
+        } else if (selectedZone === 'New Capital') {
+          if (!c.z.toLowerCase().includes('capital') && !c.n.toLowerCase().includes('capital')) return false;
+        } else if (selectedZone === 'Uptown') {
+          if (!c.n.toLowerCase().includes('uptown') && !c.z.toLowerCase().includes('mokattam')) return false;
         } else if (selectedZone === 'TMG') {
           if (!c.n.includes('Rehab') && !c.n.includes('Madinaty')) return false;
         } else if (selectedZone === 'Transit') {
@@ -551,7 +562,7 @@ export default function CompoundsMap({
 
       return true;
     });
-  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice]);
+  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -795,7 +806,7 @@ export default function CompoundsMap({
               return `
                 <div style="margin: 8px 0 10px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
                   <div style="font-size: 9.5px; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 4px;">
-                    <span>🏛️ MASTERPLAN PHASES & DISTRICTS</span>
+                    <span>MASTERPLAN PHASES & DISTRICTS</span>
                   </div>
                   <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     ${phases.map((p) => `<span style="font-size: 10px; background: rgba(223, 173, 58, 0.12); color: #78350f; border: 1px solid rgba(223, 173, 58, 0.35); padding: 2px 7px; border-radius: 6px; font-weight: 600;">${p}</span>`).join('')}
@@ -917,7 +928,7 @@ export default function CompoundsMap({
   const handleZoneSelect = useCallback((zone: ZonePreset) => {
     setSelectedZone(zone.key);
     if (mapRef.current) {
-      mapRef.current.flyTo(zone.center, zone.zoom, { duration: 0.9 });
+      mapRef.current.fitBounds(zone.bounds, { padding: [24, 24], maxZoom: zone.zoom, duration: 0.9 });
     }
   }, []);
 
@@ -927,6 +938,7 @@ export default function CompoundsMap({
     setSelectedBed('any');
     setSelectedPriceBudget('any');
     setSelectedSegment('all');
+    setShowSelectedOnly(false);
     if (mapRef.current) {
       mapRef.current.flyTo(NEW_CAIRO_CENTER, 12, { duration: 0.8 });
     }
@@ -938,11 +950,12 @@ export default function CompoundsMap({
     (selectedBed !== 'any' ? 1 : 0) +
     (selectedPriceBudget !== 'any' ? 1 : 0) +
     (selectedSegment !== 'all' ? 1 : 0) +
+    (showSelectedOnly ? 1 : 0) +
     (filterCompound ? 1 : 0) +
     (filterPrice && filterPrice !== '0' ? 1 : 0);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="map-command-deck" style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
       {/* Map Host Canvas */}
       <div
         ref={hostRef}
@@ -1238,6 +1251,30 @@ export default function CompoundsMap({
                 </button>
               )}
             </div>
+
+            <button
+              type="button"
+              aria-pressed={showSelectedOnly}
+              onClick={() => setShowSelectedOnly((value) => !value)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: showSelectedOnly ? '1px solid #dfad3a' : '1px solid rgba(255,255,255,0.14)',
+                background: showSelectedOnly ? 'rgba(223,173,58,0.18)' : 'rgba(255,255,255,0.05)',
+                color: showSelectedOnly ? '#dfad3a' : '#e2e8f0',
+                fontSize: 11.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <span>{isAr ? 'إظهار الكمبوند المحدد فقط' : 'Show selected compound only'}</span>
+              <span>{showSelectedOnly && selectedName ? 'ON' : 'OFF'}</span>
+            </button>
           </div>
 
           {/* Price Budget Range Selector */}
