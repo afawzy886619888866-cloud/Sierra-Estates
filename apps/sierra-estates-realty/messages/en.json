@@ -9,9 +9,15 @@
     "contact": "Contact"
   },
   "hero": {
-    "title": "Luxury Real Estate Intelligence",
-    "subtitle": "AI-powered insights for premium properties",
-    "cta": "Get Started"
+    "title": "EGYPT’S #1 AI-DRIVEN REAL ESTATE ECOSYSTEM",
+    "subtitle": "The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab",
+    "punchline": "Powered by proprietary AI and a robust alliance of 500+ real estate firms and 1,500+ certified brokers to guarantee East Cairo's most competitive opportunities at accurate pricing.",
+    "badges": {
+      "agencies": "500+ Partner Agencies",
+      "brokers": "1,500+ Certified Brokers",
+      "pricing": "Proprietary AI Pricing"
+    },
+    "cta": "Explore East Cairo"
   },
   "features": {
     "intelligence": "AI Intelligence",
