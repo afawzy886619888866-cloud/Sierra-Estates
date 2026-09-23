@@ -1,15 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useState } from "react";
+import Link from "next/link";
 import {
-  Building2, Users, Cpu, ShieldCheck, CheckCircle2,
-  Copy, Check, Sparkles, Smartphone, Monitor, Presentation,
-  ArrowRight, ArrowLeft, Layers
-} from 'lucide-react';
+  Building2,
+  Users,
+  Cpu,
+  ShieldCheck,
+  Copy,
+  Check,
+  Sparkles,
+  Smartphone,
+  Monitor,
+  Presentation,
+  ArrowRight,
+  ArrowLeft,
+  Layers,
+} from "lucide-react";
 
-export type BannerFormat = 'desktop' | 'mobile' | 'billboard';
-export type BannerMode = 'side-by-side' | 'en' | 'ar';
+export type BannerFormat = "desktop" | "mobile" | "billboard";
+export type BannerMode = "side-by-side" | "en" | "ar";
 
 export interface BannerData {
   en: {
@@ -59,54 +69,56 @@ export interface BannerData {
 export const UNIFIED_BANNER_CONTENT: BannerData = {
   en: {
     headline: "EGYPT’S #1 AI-DRIVEN REAL ESTATE ECOSYSTEM",
-    subhead: "The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab",
+    subhead:
+      "The Only Specialized Network for Resale and Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab",
     body: "Powered by proprietary AI and a robust alliance of 500+ real estate firms and 1,500+ certified brokers to guarantee East Cairo's most competitive opportunities at accurate pricing.",
     badges: [
       "500+ Partner Agencies",
       "1,500+ Certified Brokers",
-      "Proprietary AI Pricing"
+      "Proprietary AI Pricing",
     ],
     desktop: {
       top: "EGYPT’S #1 AI-DRIVEN REAL ESTATE ECOSYSTEM",
-      center: "The Definitive Network for Resale & Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab.",
-      footer: "500+ Partner Agencies | 1,500+ Certified Brokers | Instant AI Verification"
+      center:
+        "The Definitive Network for Resale & Rentals Dominating New Cairo, The 5th Settlement, Madinaty, Shorouk, and Rehab.",
+      footer:
+        "500+ Partner Agencies | 1,500+ Certified Brokers | Instant AI Verification",
     },
     mobile: {
       header: "EGYPT’S #1 AI PROPTECH ENGINE",
       body: "Resale & Rentals Dominating New Cairo, Madinaty, Shorouk & Rehab.",
-      tag: "Powered by AI • 500+ Agencies • 1,500+ Brokers"
+      tag: "Powered by AI • 500+ Agencies • 1,500+ Brokers",
     },
     billboard: {
       primary: "EGYPT’S #1 AI REAL ESTATE ECOSYSTEM",
       sub: "Dominating Resale & Rentals in New Cairo, The 5th Settlement, Madinaty, Shorouk & Rehab",
-      tagline: "Best Deals. Verified Prices. Guaranteed Opportunities."
-    }
+      tagline: "Best Deals. Verified Prices. Guaranteed Opportunities.",
+    },
   },
   ar: {
     headline: "أول محرك ذكاء اصطناعي عقاري متكامل في مصر",
-    subhead: "الشبكة الأكثر تخصصاً في الإيجار وإعادة البيع.. السيطرة الكاملة على القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق، والرحاب",
+    subhead:
+      "الشبكة الأكثر تخصصاً في الإيجار وإعادة البيع.. السيطرة الكاملة على القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق، والرحاب",
     body: "بفضل الذكاء الاصطناعي وشبكتنا المكونة من أكثر من 500 شركة عقارية و1,500 وسيط معتمد؛ نضمن لك الوصول لأفضل الفرص الحصرية وأدق الأسعار في شرق القاهرة بضغطة زر واحدة.",
-    badges: [
-      "+500 شركة شريكة",
-      "+1,500 وسيط معتمد",
-      "أدق تسعير بذكاء اصطناعي"
-    ],
+    badges: ["+500 شركة شريكة", "+1,500 وسيط معتمد", "أدق تسعير بذكاء اصطناعي"],
     desktop: {
       top: "أول محرك ذكاء اصطناعي عقاري متكامل في مصر",
-      center: "الشبكة الأكثر تخصصاً في الإيجار وإعادة البيع.. السيطرة الكاملة على القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق، والرحاب.",
-      footer: "+500 شركة شريكة | +1,500 وسيط معتمد | تحقق فوري بالذكاء الاصطناعي"
+      center:
+        "الشبكة الأكثر تخصصاً في الإيجار وإعادة البيع.. السيطرة الكاملة على القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق، والرحاب.",
+      footer:
+        "+500 شركة شريكة | +1,500 وسيط معتمد | تحقق فوري بالذكاء الاصطناعي",
     },
     mobile: {
       header: "المحرك العقاري الأول بالذكاء الاصطناعي في مصر",
       body: "إيجار وإعادة بيع.. السيطرة الكاملة على القاهرة الجديدة، مدينتي، الشروق والرحاب.",
-      tag: "مدعوم بالذكاء الاصطناعي • +500 شركة • +1,500 وسيط"
+      tag: "مدعوم بالذكاء الاصطناعي • +500 شركة • +1,500 وسيط",
     },
     billboard: {
       primary: "أول منظومة عقارية بالذكاء الاصطناعي في مصر",
       sub: "السيطرة على الإيجار وإعادة البيع في القاهرة الجديدة، التجمع الخامس، مدينتي، الشروق والرحاب",
-      tagline: "أفضل الصفقات. أسعار موثقة. فرص مضمونة."
-    }
-  }
+      tagline: "أفضل الصفقات. أسعار موثقة. فرص مضمونة.",
+    },
+  },
 };
 
 interface Props {
@@ -117,10 +129,10 @@ interface Props {
 }
 
 export default function UnifiedBilingualHeroBanner({
-  initialFormat = 'desktop',
-  initialMode = 'side-by-side',
+  initialFormat = "desktop",
+  initialMode = "side-by-side",
   showControls = true,
-  className = ''
+  className = "",
 }: Props) {
   const [format, setFormat] = useState<BannerFormat>(initialFormat);
   const [mode, setMode] = useState<BannerMode>(initialMode);
@@ -140,12 +152,13 @@ export default function UnifiedBilingualHeroBanner({
       {showControls && (
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-6 rounded-2xl bg-[#0d1520]/80 backdrop-blur-md border border-[#c8961a]/20 shadow-2xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/30 text-[#e9c176]">
+            <div className="p-2 rounded-xl bg-linear-to-br from-[#c8961a]/20 to-[#c8961a]/5 border border-[#c8961a]/30 text-[#e9c176]">
               <Layers className="w-5 h-5" />
             </div>
             <div>
               <div className="text-xs uppercase tracking-wider text-[#c8961a] font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Sierra Estates • Design System
+                <Sparkles className="w-3.5 h-3.5" /> Sierra Estates • Design
+                System
               </div>
               <h2 className="text-base font-bold text-white tracking-wide">
                 Unified Bilingual Banner Studio
@@ -156,31 +169,31 @@ export default function UnifiedBilingualHeroBanner({
           {/* Format Selector */}
           <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#070c14] border border-white/10">
             <button
-              onClick={() => setFormat('desktop')}
+              onClick={() => setFormat("desktop")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                format === 'desktop'
-                  ? 'bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold'
-                  : 'text-gray-400 hover:text-white'
+                format === "desktop"
+                  ? "bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               <Monitor className="w-3.5 h-3.5" /> 1. Desktop Banner
             </button>
             <button
-              onClick={() => setFormat('mobile')}
+              onClick={() => setFormat("mobile")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                format === 'mobile'
-                  ? 'bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold'
-                  : 'text-gray-400 hover:text-white'
+                format === "mobile"
+                  ? "bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" /> 2. Mobile & Stories
             </button>
             <button
-              onClick={() => setFormat('billboard')}
+              onClick={() => setFormat("billboard")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                format === 'billboard'
-                  ? 'bg-gradient-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold'
-                  : 'text-gray-400 hover:text-white'
+                format === "billboard"
+                  ? "bg-linear-to-r from-[#c8961a] to-[#d8a838] text-[#070c14] shadow-md font-bold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               <Presentation className="w-3.5 h-3.5" /> 3. Outdoor Billboard
@@ -190,31 +203,31 @@ export default function UnifiedBilingualHeroBanner({
           {/* Mode Selector */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-[#070c14] border border-white/10">
             <button
-              onClick={() => setMode('side-by-side')}
+              onClick={() => setMode("side-by-side")}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'side-by-side'
-                  ? 'bg-white/15 text-white shadow font-semibold'
-                  : 'text-gray-400 hover:text-white'
+                mode === "side-by-side"
+                  ? "bg-white/15 text-white shadow font-semibold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               Side-by-Side Dual View
             </button>
             <button
-              onClick={() => setMode('en')}
+              onClick={() => setMode("en")}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'en'
-                  ? 'bg-white/15 text-white shadow font-semibold'
-                  : 'text-gray-400 hover:text-white'
+                mode === "en"
+                  ? "bg-white/15 text-white shadow font-semibold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               English
             </button>
             <button
-              onClick={() => setMode('ar')}
+              onClick={() => setMode("ar")}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'ar'
-                  ? 'bg-white/15 text-white shadow font-semibold'
-                  : 'text-gray-400 hover:text-white'
+                mode === "ar"
+                  ? "bg-white/15 text-white shadow font-semibold"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               العربية
@@ -226,15 +239,17 @@ export default function UnifiedBilingualHeroBanner({
       {/* RENDER FORMATS */}
 
       {/* 1. HERO WEB BANNER (DESKTOP / LANDSCAPE) */}
-      {format === 'desktop' && (
+      {format === "desktop" && (
         <div className="banner-format-desktop">
-          <div className={`grid gap-6 ${mode === 'side-by-side' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+          <div
+            className={`grid gap-6 ${mode === "side-by-side" ? "grid-cols-1 xl:grid-cols-2" : "grid-cols-1"}`}
+          >
             {/* English Card */}
-            {(mode === 'side-by-side' || mode === 'en') && (
+            {(mode === "side-by-side" || mode === "en") && (
               <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#09121d] via-[#070d15] to-[#04080e] border border-[#c8961a]/30 p-8 md:p-10 shadow-2xl group">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#c8961a]/15 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#e9c176] to-transparent opacity-80" />
-                
+
                 {/* Top Badge Strip */}
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#c8961a]/15 border border-[#c8961a]/40 text-[#f5d78e] text-xs font-semibold tracking-wider uppercase">
@@ -242,12 +257,23 @@ export default function UnifiedBilingualHeroBanner({
                     Top Banner
                   </div>
                   <button
-                    onClick={() => copyToClipboard(`${c.en.desktop.top}\n\n${c.en.desktop.center}\n\n${c.en.desktop.footer}`, 'desktop-en')}
+                    onClick={() =>
+                      copyToClipboard(
+                        `${c.en.desktop.top}\n\n${c.en.desktop.center}\n\n${c.en.desktop.footer}`,
+                        "desktop-en",
+                      )
+                    }
                     className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#e9c176] transition-colors"
                     title="Copy full copy"
                   >
-                    {copiedKey === 'desktop-en' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedKey === 'desktop-en' ? 'Copied!' : 'Copy Copy'}</span>
+                    {copiedKey === "desktop-en" ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {copiedKey === "desktop-en" ? "Copied!" : "Copy Copy"}
+                    </span>
                   </button>
                 </div>
 
@@ -270,15 +296,21 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Building2 className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.en.badges[0]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.en.badges[0]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Users className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.en.badges[1]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.en.badges[1]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Cpu className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.en.badges[2]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.en.badges[2]}
+                    </span>
                   </div>
                 </div>
 
@@ -298,7 +330,7 @@ export default function UnifiedBilingualHeroBanner({
             )}
 
             {/* Arabic Card */}
-            {(mode === 'side-by-side' || mode === 'ar') && (
+            {(mode === "side-by-side" || mode === "ar") && (
               <div
                 dir="rtl"
                 className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#09121d] via-[#070d15] to-[#04080e] border border-[#c8961a]/30 p-8 md:p-10 shadow-2xl group text-right"
@@ -313,12 +345,23 @@ export default function UnifiedBilingualHeroBanner({
                     النسخة العربية (الرئيسية)
                   </div>
                   <button
-                    onClick={() => copyToClipboard(`${c.ar.desktop.top}\n\n${c.ar.desktop.center}\n\n${c.ar.desktop.footer}`, 'desktop-ar')}
+                    onClick={() =>
+                      copyToClipboard(
+                        `${c.ar.desktop.top}\n\n${c.ar.desktop.center}\n\n${c.ar.desktop.footer}`,
+                        "desktop-ar",
+                      )
+                    }
                     className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#e9c176] transition-colors"
                     title="نسخ النص بالكامل"
                   >
-                    {copiedKey === 'desktop-ar' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedKey === 'desktop-ar' ? 'تم النسخ!' : 'نسخ النص'}</span>
+                    {copiedKey === "desktop-ar" ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {copiedKey === "desktop-ar" ? "تم النسخ!" : "نسخ النص"}
+                    </span>
                   </button>
                 </div>
 
@@ -341,15 +384,21 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Building2 className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.ar.badges[0]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.ar.badges[0]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Users className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.ar.badges[1]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.ar.badges[1]}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-sm">
                     <Cpu className="w-4 h-4 text-[#c8961a] shrink-0" />
-                    <span className="text-xs font-medium text-gray-200">{c.ar.badges[2]}</span>
+                    <span className="text-xs font-medium text-gray-200">
+                      {c.ar.badges[2]}
+                    </span>
                   </div>
                 </div>
 
@@ -372,14 +421,16 @@ export default function UnifiedBilingualHeroBanner({
       )}
 
       {/* 2. MOBILE & NARROW FORMATS (STORIES / APP / FEED ADS) */}
-      {format === 'mobile' && (
+      {format === "mobile" && (
         <div className="banner-format-mobile">
-          <div className={`grid gap-8 justify-center ${mode === 'side-by-side' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 max-w-md mx-auto'}`}>
+          <div
+            className={`grid gap-8 justify-center ${mode === "side-by-side" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 max-w-md mx-auto"}`}
+          >
             {/* English Mobile Story Card */}
-            {(mode === 'side-by-side' || mode === 'en') && (
+            {(mode === "side-by-side" || mode === "en") && (
               <div className="w-full max-w-[360px] mx-auto aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
-                
+
                 {/* Story Top Indicator */}
                 <div className="relative z-10">
                   <div className="flex gap-1 mb-4">
@@ -387,17 +438,26 @@ export default function UnifiedBilingualHeroBanner({
                     <div className="h-1 flex-1 bg-[#c8961a]/40 rounded-full" />
                     <div className="h-1 flex-1 bg-[#c8961a]/40 rounded-full" />
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-xs text-gray-400 mb-6">
                     <span className="font-mono text-[#c8961a] text-[10px] tracking-widest uppercase">
                       SIERRA PROPTECH
                     </span>
                     <button
-                      onClick={() => copyToClipboard(`${c.en.mobile.header}\n\n${c.en.mobile.body}\n\n${c.en.mobile.tag}`, 'mobile-en')}
+                      onClick={() =>
+                        copyToClipboard(
+                          `${c.en.mobile.header}\n\n${c.en.mobile.body}\n\n${c.en.mobile.tag}`,
+                          "mobile-en",
+                        )
+                      }
                       className="p-1 text-gray-400 hover:text-white"
                       title="Copy copy"
                     >
-                      {copiedKey === 'mobile-en' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedKey === "mobile-en" ? (
+                        <Check className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
                     </button>
                   </div>
 
@@ -440,13 +500,13 @@ export default function UnifiedBilingualHeroBanner({
             )}
 
             {/* Arabic Mobile Story Card */}
-            {(mode === 'side-by-side' || mode === 'ar') && (
+            {(mode === "side-by-side" || mode === "ar") && (
               <div
                 dir="rtl"
                 className="w-full max-w-[360px] mx-auto aspect-[9/16] rounded-3xl bg-gradient-to-b from-[#0a1420] via-[#070d16] to-[#020509] border-2 border-[#c8961a]/40 p-6 flex flex-col justify-between relative overflow-hidden shadow-2xl text-right"
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-[#c8961a]/20 via-transparent to-transparent pointer-events-none" />
-                
+
                 {/* Story Top Indicator */}
                 <div className="relative z-10">
                   <div className="flex gap-1 mb-4">
@@ -454,17 +514,26 @@ export default function UnifiedBilingualHeroBanner({
                     <div className="h-1 flex-1 bg-[#c8961a]/40 rounded-full" />
                     <div className="h-1 flex-1 bg-[#c8961a]/40 rounded-full" />
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-xs text-gray-400 mb-6">
                     <span className="font-mono text-[#c8961a] text-[10px] tracking-widest uppercase">
                       منظومة سيرا الذكية
                     </span>
                     <button
-                      onClick={() => copyToClipboard(`${c.ar.mobile.header}\n\n${c.ar.mobile.body}\n\n${c.ar.mobile.tag}`, 'mobile-ar')}
+                      onClick={() =>
+                        copyToClipboard(
+                          `${c.ar.mobile.header}\n\n${c.ar.mobile.body}\n\n${c.ar.mobile.tag}`,
+                          "mobile-ar",
+                        )
+                      }
                       className="p-1 text-gray-400 hover:text-white"
                       title="نسخ النص"
                     >
-                      {copiedKey === 'mobile-ar' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedKey === "mobile-ar" ? (
+                        <Check className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
                     </button>
                   </div>
 
@@ -510,24 +579,37 @@ export default function UnifiedBilingualHeroBanner({
       )}
 
       {/* 3. LARGE OUTDOOR / BILLBOARD FORMAT */}
-      {format === 'billboard' && (
+      {format === "billboard" && (
         <div className="banner-format-billboard">
-          <div className={`grid gap-6 ${mode === 'side-by-side' ? 'grid-cols-1' : 'grid-cols-1'}`}>
+          <div
+            className={`grid gap-6 ${mode === "side-by-side" ? "grid-cols-1" : "grid-cols-1"}`}
+          >
             {/* English Billboard */}
-            {(mode === 'side-by-side' || mode === 'en') && (
+            {(mode === "side-by-side" || mode === "en") && (
               <div className="relative rounded-2xl md:rounded-3xl bg-[#04070d] border-4 border-[#1e2836] p-6 md:p-12 shadow-2xl overflow-hidden">
                 {/* Outdoor Lighting Spotlight effect */}
                 <div className="absolute top-0 inset-x-0 h-40 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#e9c176]/20 via-transparent to-transparent pointer-events-none" />
-                
+
                 {/* Billboard Structure Frame Tag */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-6 font-mono">
                   <span>BILLBOARD HIGHWAY 90 • FORMAT 14x4M</span>
                   <button
-                    onClick={() => copyToClipboard(`${c.en.billboard.primary}\n${c.en.billboard.sub}\n${c.en.billboard.tagline}`, 'billboard-en')}
+                    onClick={() =>
+                      copyToClipboard(
+                        `${c.en.billboard.primary}\n${c.en.billboard.sub}\n${c.en.billboard.tagline}`,
+                        "billboard-en",
+                      )
+                    }
                     className="flex items-center gap-1 text-gray-400 hover:text-[#e9c176]"
                   >
-                    {copiedKey === 'billboard-en' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedKey === 'billboard-en' ? 'Copied' : 'Copy Specs'}</span>
+                    {copiedKey === "billboard-en" ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {copiedKey === "billboard-en" ? "Copied" : "Copy Specs"}
+                    </span>
                   </button>
                 </div>
 
@@ -554,13 +636,15 @@ export default function UnifiedBilingualHeroBanner({
                 {/* Footer Brand Marker */}
                 <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-400">
                   <span>500+ PARTNER AGENCIES • 1,500+ CERTIFIED BROKERS</span>
-                  <span className="text-[#c8961a] font-bold">sierraestates.eg</span>
+                  <span className="text-[#c8961a] font-bold">
+                    sierraestates.eg
+                  </span>
                 </div>
               </div>
             )}
 
             {/* Arabic Billboard */}
-            {(mode === 'side-by-side' || mode === 'ar') && (
+            {(mode === "side-by-side" || mode === "ar") && (
               <div
                 dir="rtl"
                 className="relative rounded-2xl md:rounded-3xl bg-[#04070d] border-4 border-[#1e2836] p-6 md:p-12 shadow-2xl overflow-hidden text-center"
@@ -570,13 +654,26 @@ export default function UnifiedBilingualHeroBanner({
 
                 {/* Billboard Structure Frame Tag */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-6 font-mono">
-                  <span>لوحة إعلانات الطرق الرئيسية (شارع التسعين • 14x4M)</span>
+                  <span>
+                    لوحة إعلانات الطرق الرئيسية (شارع التسعين • 14x4M)
+                  </span>
                   <button
-                    onClick={() => copyToClipboard(`${c.ar.billboard.primary}\n${c.ar.billboard.sub}\n${c.ar.billboard.tagline}`, 'billboard-ar')}
+                    onClick={() =>
+                      copyToClipboard(
+                        `${c.ar.billboard.primary}\n${c.ar.billboard.sub}\n${c.ar.billboard.tagline}`,
+                        "billboard-ar",
+                      )
+                    }
                     className="flex items-center gap-1 text-gray-400 hover:text-[#e9c176]"
                   >
-                    {copiedKey === 'billboard-ar' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedKey === 'billboard-ar' ? 'تم النسخ' : 'نسخ النص'}</span>
+                    {copiedKey === "billboard-ar" ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                    <span>
+                      {copiedKey === "billboard-ar" ? "تم النسخ" : "نسخ النص"}
+                    </span>
                   </button>
                 </div>
 
@@ -603,7 +700,9 @@ export default function UnifiedBilingualHeroBanner({
                 {/* Footer Brand Marker */}
                 <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-400">
                   <span>+500 شركة شريكة • +1,500 وسيط معتمد</span>
-                  <span className="text-[#c8961a] font-bold">sierraestates.eg</span>
+                  <span className="text-[#c8961a] font-bold">
+                    sierraestates.eg
+                  </span>
                 </div>
               </div>
             )}
