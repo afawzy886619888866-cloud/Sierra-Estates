@@ -8,7 +8,7 @@
  */
 
 import { pino } from 'pino';
-import { ObsidianMemory } from '@sierra-estates/memory-engine';
+import { ObsidianMemory } from '@sierra-estates/obsidian';
 
 const logger = pino({ name: 'DifyAgentAdapter' });
 
@@ -63,12 +63,10 @@ export class DifyAgentAdapter {
     // 1. Fetch relevant memory context
     let memoryContext = '';
     try {
-      const recentNotes = await this.memory.search({
-        query: String(payload.inputs.query || payload.inputs.compound || 'real estate'),
-        limit: 3,
-      });
+      const queryStr = String(payload.inputs.query || payload.inputs.compound || 'real estate');
+      const recentNotes = await this.memory.search(queryStr);
       if (recentNotes.length > 0) {
-        memoryContext = recentNotes.map(n => `[Memory ${n.id}]: ${n.content}`).join('\n');
+        memoryContext = recentNotes.slice(0, 3).map(n => `[Memory ${n.id}]: ${JSON.stringify(n.value)}`).join('\n');
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -162,12 +160,11 @@ export class DifyAgentAdapter {
 
     // Persist event into memory engine
     try {
-      await this.memory.create({
-        id: `task-${assignment.taskId}`,
-        title: `Task ${assignment.taskId} [${assignment.persona}]`,
-        content: JSON.stringify({ ...assignment, outcome }),
-        tags: ['agent-dispatch', assignment.persona],
-      });
+      await this.memory.set(
+        `task-${assignment.taskId}`,
+        { ...assignment, outcome },
+        ['agent-dispatch', assignment.persona]
+      );
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn({ error: errorMsg }, 'Could not record task into memory');
@@ -182,12 +179,11 @@ export class DifyAgentAdapter {
 
   private async commitOutcomeToMemory(runId: string, user: string, outputs: Record<string, unknown>): Promise<void> {
     try {
-      await this.memory.create({
-        id: `dify-run-${runId}`,
-        title: `Dify Run ${runId} (${user})`,
-        content: JSON.stringify(outputs),
-        tags: ['dify', 'workflow-output'],
-      });
+      await this.memory.set(
+        `dify-run-${runId}`,
+        { runId, user, outputs },
+        ['dify', 'workflow-output']
+      );
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn({ error: errorMsg }, 'Failed saving Dify output into ObsidianMemory');
