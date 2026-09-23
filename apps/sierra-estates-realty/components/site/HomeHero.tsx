@@ -3,7 +3,7 @@
 /** Hero slideshow — port of the hero block + slide logic in deploy/index.html. */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, BadgeCheck, Map, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Map, ShieldCheck, Sparkles } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 
