@@ -183,7 +183,7 @@ export default function UnifiedBilingualHeroBanner({
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              <Billboard className="w-3.5 h-3.5" /> 3. Outdoor Billboard
+              <Presentation className="w-3.5 h-3.5" /> 3. Outdoor Billboard
             </button>
           </div>
 
