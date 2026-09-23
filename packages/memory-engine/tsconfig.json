@@ -3,11 +3,7 @@
   "compilerOptions": {
     "lib": ["esnext", "dom"],
     "types": ["node"],
-    "outDir": "./dist",
-    "moduleResolution": "bundler",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "noEmit": true,
     "paths": {
       "@sierra-estates/obsidian": ["../obsidian/src/index.ts", "../obsidian/dist/index.d.ts"]
     }
