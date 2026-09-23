@@ -17,6 +17,7 @@ export * from './vip-concierge';
 export * from './notebookllm-engine';
 export * from './voice-briefing';
 export * from './video-teaser';
+export * from './public-apis-client';
 export {
   brainRAG,
   memoryBrain,
