@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Building2, Users, Cpu, ShieldCheck, CheckCircle2,
-  Copy, Check, Sparkles, Smartphone, Monitor, Billboard,
+  Copy, Check, Sparkles, Smartphone, Monitor, Presentation,
   ArrowRight, ArrowLeft, Layers
 } from 'lucide-react';
 

@@ -153,7 +153,7 @@ export default function HomePortal() {
           <div className="quick">
             <span><IconBadgeCheck size={16} /> {t('heroBadgeAgencies') || t('q1')}</span>
             <span><IconShield size={16} /> {t('heroBadgeBrokers') || t('q2')}</span>
-            <span><IconSparkle size={16} /> {t('heroBadgePricing') || t('q3')}</span>
+            <span><IconSparkles size={16} /> {t('heroBadgePricing') || t('q3')}</span>
           </div>
           <div className="hero-cta">
             <Link href="/explore" className="btn btn-pri"><IconMap size={16} /> <span>{t('heroExplore')}</span></Link>
