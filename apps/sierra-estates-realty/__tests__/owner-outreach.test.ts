@@ -16,10 +16,11 @@ jest.mock('../lib/server/whatsapp-queue', () => {
   const actual = jest.requireActual('../lib/server/whatsapp-queue');
   return {
     ...actual,
-    startOrContinueOwnerNegotiation: jest.fn(async (params: any) => ({
+    startOrContinueOwnerNegotiation: jest.fn(async (_params: any) => ({
       negotiationId: `neg-${Date.now()}`,
       jobId: `job-${Date.now()}`,
     })),
+
     getOutreachConfig: jest.fn(async () => ({
       operatingHourStart: 12,
       operatingHourEnd: 20,

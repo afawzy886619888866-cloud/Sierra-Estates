@@ -21,7 +21,8 @@ export default function AdminCopilotDrawer({
   isOpen,
   onClose,
   lang = 'en',
-  onFilterInventory,
+  onFilterInventory: _onFilterInventory,
+
 }: AdminCopilotDrawerProps) {
   const isAr = lang === 'ar';
   const [input, setInput] = useState('');

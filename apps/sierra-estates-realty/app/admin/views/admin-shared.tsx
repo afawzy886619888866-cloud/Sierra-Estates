@@ -2,6 +2,8 @@
  * Admin Portal — shared UI components extracted from AdminPortal.tsx
  */
 import React from 'react';
+import Image from 'next/image';
+
 
 /* ── ICONS ───────────────────────────────────────────────────────────── */
 export const Ic = {
@@ -19,7 +21,7 @@ export const Ic = {
 export function ShieldLogo({size=28}: {size?: number}) {
    
   return (
-    <img
+    <Image
       src="/assets/sierra-estates-official-logo.png"
       alt="Sierra Estates Official Emblem"
       width={size}
@@ -34,6 +36,7 @@ export function ShieldLogo({size=28}: {size?: number}) {
       }}
     />
   );
+
 }
 
 /* ── SPARKLINE ───────────────────────────────────────────────────────── */

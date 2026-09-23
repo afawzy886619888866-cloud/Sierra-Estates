@@ -904,7 +904,8 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts, inventoryData?.units]);
+
 
   // Handle external selection & smooth zoom
   useEffect(() => {

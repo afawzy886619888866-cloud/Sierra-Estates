@@ -26,7 +26,8 @@ type Tab = 'pipeline' | 'grid' | 'analytics';
 
 export default function InventoryOsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const t = (en: string, ar: string) => (isAr ? ar : en);
+  const t = useCallback((en: string, ar: string) => (isAr ? ar : en), [isAr]);
+
 
   const [units, setUnits] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);

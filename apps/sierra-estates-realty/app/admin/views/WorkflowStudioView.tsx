@@ -63,7 +63,8 @@ const edgePath = (a: GNode, b: GNode) => {
 /* ══════ View ══════ */
 export default function WorkflowStudioView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const t = (en: string, ar: string) => (isAr ? ar : en);
+  const t = useCallback((en: string, ar: string) => (isAr ? ar : en), [isAr]);
+
 
   const [wfs, setWfs] = useState<Wf[]>([]);
   const [selId, setSelId] = useState<string | null>(null);
