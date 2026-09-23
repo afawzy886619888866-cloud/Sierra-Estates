@@ -458,14 +458,13 @@ Determine:
     }
   }
 
-  /**
-   * Handles client confirming viewing date after receiving photos.
-   */
   public static async handleClientViewingConfirmation(params: {
     clientPhone: string;
-    clientMessage: string;
+    clientMessage?: string;
   }): Promise<{ scheduled: boolean; viewingId?: string; message: string }> {
-    const { clientPhone, clientMessage } = params;
+    const { clientPhone } = params;
+
+
     const cleanClient = clientPhone.replace(/[^0-9]/g, '');
 
     const sessions = await this.getSessions();

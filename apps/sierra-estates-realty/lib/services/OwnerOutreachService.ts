@@ -231,11 +231,12 @@ export class OwnerOutreachService {
     const now = new Date();
     // Cairo is UTC+2 or UTC+3 depending on DST; use current hour in Africa/Cairo
     const cairoHour = currentHourInZone('Africa/Cairo', now);
-    let targetCairoHour = 12;
+    let _targetCairoHour = 12;
 
     if (cairoHour >= 12 && cairoHour < 20) {
-      targetCairoHour = Math.min(19, cairoHour + hourOffset);
+      _targetCairoHour = Math.min(19, cairoHour + hourOffset);
     }
+
 
     const scheduled = new Date(now.getTime() + hourOffset * 3600 * 1000);
     return scheduled.toISOString();
