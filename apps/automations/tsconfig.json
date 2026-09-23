@@ -10,13 +10,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
+    "noEmit": true,
     "paths": {
       "@sierra-estates/db": [
         "../../packages/db/lib/index.ts"
       ]
     },
-    "moduleResolution": "node"
+    "moduleResolution": "bundler"
   },
   "include": [
     "src/**/*"
