@@ -806,7 +806,7 @@ export default function CompoundsMap({
               return `
                 <div style="margin: 8px 0 10px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
                   <div style="font-size: 9.5px; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 4px;">
-                    <span>🏛️ MASTERPLAN PHASES & DISTRICTS</span>
+                    <span>MASTERPLAN PHASES & DISTRICTS</span>
                   </div>
                   <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     ${phases.map((p) => `<span style="font-size: 10px; background: rgba(223, 173, 58, 0.12); color: #78350f; border: 1px solid rgba(223, 173, 58, 0.35); padding: 2px 7px; border-radius: 6px; font-weight: 600;">${p}</span>`).join('')}
@@ -955,7 +955,7 @@ export default function CompoundsMap({
     (filterPrice && filterPrice !== '0' ? 1 : 0);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="map-command-deck" style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
       {/* Map Host Canvas */}
       <div
         ref={hostRef}

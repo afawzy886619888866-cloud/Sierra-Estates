@@ -24,20 +24,29 @@ infra/
         └── index.js            ← main bot script (QR auth + message relay)
 ```
 
+## GitHub Actions-independent fallback
+
+This stack is the supported fallback when GitHub Actions cannot start. It runs
+on any Docker host or VPS and does not depend on GitHub-hosted runners. Vercel
+Git integration continues to deploy the web app separately; this stack handles
+long-running n8n and WhatsApp automation.
+
+Use a small persistent VPS rather than a laptop or an ephemeral CI runner.
+
 ## Quick Start
 
 ### 1. Configure Supabase
 
 ```bash
 cp .env.example .env
-# Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.
+# Set the real server-only values in .env.
 ```
 
 ### 2. Configure environment
 
 ```bash
 cp .env.example .env
-nano .env  # fill in: GEMINI_API_KEY, N8N_BASIC_AUTH_PASSWORD, and Supabase values
+nano .env  # fill in N8N_BASIC_AUTH_PASSWORD and Supabase service-role values
 ```
 
 ### 3. Start services
@@ -46,6 +55,15 @@ nano .env  # fill in: GEMINI_API_KEY, N8N_BASIC_AUTH_PASSWORD, and Supabase valu
 docker compose up -d
 docker compose logs -f whatsapp-scraper
 ```
+
+Before starting production, validate the rendered configuration without
+printing secret values:
+
+```bash
+docker compose config --quiet
+```
+
+On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
 ### 4. Scan QR code
 
@@ -65,7 +83,9 @@ The session is saved to `whatsapp-auth/` — you won't need to re-scan on restar
 
 ### 5. Access n8n
 
-Open `http://your-vps-ip:5678` in your browser. Login with the credentials from `.env`.
+Open the HTTPS `WEBHOOK_URL` host in your browser. Login with the credentials
+from `.env`. Do not expose port 5678 directly on the public internet without a
+reverse proxy, TLS, and firewall rules.
 
 ## Architecture
 

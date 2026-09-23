@@ -264,14 +264,7 @@ export default function CompoundsPage() {
               className="af-chip on"
               style={{ fontSize: 11, padding: '4px 10px' }}
             >
-              🗺️ {isAr ? 'الخريطة القياسية' : 'Standard Density'}
-            </button>
-            <button
-              type="button"
-              className="af-chip"
-              style={{ fontSize: 11, padding: '4px 10px', color: '#F59E0B' }}
-            >
-              🔥 {isAr ? 'خريطة العائد الاستثماري (Heatmap)' : 'ROI Yield Heatmap'}
+              {isAr ? 'الخريطة القياسية' : 'Standard Density'}
             </button>
           </div>
 
@@ -325,7 +318,7 @@ export default function CompoundsPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          ⚖️ {isAr ? 'مقارنة' : 'Compare'}
+                          {isAr ? 'مقارنة' : 'Compare'}
                         </button>
                       </div>
 
