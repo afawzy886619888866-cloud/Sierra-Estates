@@ -39,6 +39,8 @@ export default function CompoundsPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [liveUnits, setLiveUnits] = useState<any[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
+  const [inventoryError, setInventoryError] = useState(false);
 
   // Fetch the live inventory once (same source as /properties and the map):
   // Supabase units → live sheet → snapshot. No fabricated fallbacks.
@@ -47,9 +49,20 @@ export default function CompoundsPage() {
     fetch('/api/inventory')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d && Array.isArray(d.units)) setLiveUnits(d.units);
+        if (cancelled) return;
+        setInventoryLoading(false);
+        if (d && Array.isArray(d.units)) {
+          setLiveUnits(d.units);
+        } else {
+          setInventoryError(true);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) {
+          setInventoryLoading(false);
+          setInventoryError(true);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -93,6 +106,7 @@ export default function CompoundsPage() {
         beds: u.beds ?? 3,
         bath: u.bath ?? 2,
         area: u.area ?? 0,
+        status: u.status || u.availability || 'Available',
         mode: u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale',
         egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
         usd: u.usd ?? (u.price ? Math.round(u.price / 48.5) : 0),
@@ -142,7 +156,7 @@ export default function CompoundsPage() {
               {q && (
                 <button className="cs-clear" type="button" aria-label="Clear" onClick={() => setQ('')}>×</button>
               )}
-            </div>
+                    </div>
 
             <div className="af-group">
               <span className="af-label">{t('afType')}</span>
@@ -250,14 +264,7 @@ export default function CompoundsPage() {
               className="af-chip on"
               style={{ fontSize: 11, padding: '4px 10px' }}
             >
-              🗺️ {isAr ? 'الخريطة القياسية' : 'Standard Density'}
-            </button>
-            <button
-              type="button"
-              className="af-chip"
-              style={{ fontSize: 11, padding: '4px 10px', color: '#F59E0B' }}
-            >
-              🔥 {isAr ? 'خريطة العائد الاستثماري (Heatmap)' : 'ROI Yield Heatmap'}
+              {isAr ? 'الخريطة القياسية' : 'Standard Density'}
             </button>
           </div>
 
@@ -311,7 +318,7 @@ export default function CompoundsPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          ⚖️ {isAr ? 'مقارنة' : 'Compare'}
+                          {isAr ? 'مقارنة' : 'Compare'}
                         </button>
                       </div>
 
@@ -443,25 +450,48 @@ export default function CompoundsPage() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {units.slice(0, 12).map((u) => (
-                          <div
-                            key={u.code}
-                            style={{
-                              display: 'flex', justifyContent: 'space-between', gap: 10,
-                              padding: '10px 12px', borderRadius: 10,
-                              border: '1px solid var(--line)', background: 'var(--surface-2, var(--bg))',
-                              fontSize: 12.5,
-                            }}
-                          >
-                            <span>
-                              <b style={{ fontFamily: 'var(--mono)' }}>{u.code}</b>
-                              <span style={{ color: 'var(--muted)' }}> · {u.type} · {u.beds}🛏 · {u.area} m²</span>
-                            </span>
-                            <b>{u.mode === 'rent' ? `$${u.usd?.toLocaleString?.() ?? u.usd}/mo` : `EGP ${u.egpM}M`}</b>
-                          </div>
-                        ))}
-                        {!units.length && (
+                      {inventoryLoading ? (
+                        <div className="sheet-empty">{isAr ? 'جاري تحميل التوفر المباشر…' : 'Loading live availability…'}</div>
+                      ) : inventoryError ? (
+                        <div className="sheet-empty">
+                          <p>{isAr ? 'تعذر تحميل التوفر المباشر.' : 'Live availability could not be loaded.'}</p>
+                          <a href={`https://wa.me/201092048333?text=${encodeURIComponent(`Hi, I'm interested in available units in ${selected}`)}`} target="_blank" rel="noopener noreferrer">
+                            {isAr ? 'اطلب التوفر عبر واتساب ←' : 'Request availability on WhatsApp →'}
+                          </a>
+                        </div>
+                      ) : units.length ? (
+                        <div className="sheet-table-wrap" role="region" aria-label={`${selected} availability`} tabIndex={0}>
+                          <table className="sheet-table">
+                            <thead>
+                              <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Beds</th>
+                                <th>Baths</th>
+                                <th>Area</th>
+                                <th>Mode</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {units.map((u) => (
+                                <tr key={u.code}>
+                                  <td><b className="sheet-code">{u.code}</b></td>
+                                  <td>{u.type}</td>
+                                  <td>{u.beds || '—'}</td>
+                                  <td>{u.bath || '—'}</td>
+                                  <td>{u.area ? `${u.area} m²` : '—'}</td>
+                                  <td><span className={`sheet-status ${u.mode === 'rent' ? 'is-rent' : 'is-sale'}`}>{u.mode}</span></td>
+                                  <td><b>{u.mode === 'rent' ? `$${u.usd?.toLocaleString?.() ?? u.usd}/mo` : `EGP ${u.egpM}M`}</b></td>
+                                  <td>{u.status || 'Available'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--line)' }}>
                             <p style={{ color: 'var(--muted)', fontSize: 12.5, margin: 0 }}>
                               {type !== 'all' || beds
@@ -479,9 +509,9 @@ export default function CompoundsPage() {
                               {isAr ? 'اطلب التوفر عبر واتساب ←' : 'Request availability on WhatsApp →'}
                             </a>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </>
+                      )}
+                        </div>
                   )}
                 </motion.div>
               </AnimatePresence>

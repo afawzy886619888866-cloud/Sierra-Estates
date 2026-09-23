@@ -9,7 +9,11 @@ dotenv.config({ path: path.join(ROOT, '.env') });
 
 const env = process.env;
 const url = env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL || env.POSTGRES_URL || null;
-const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || null;
+const anonKey =
+  env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  env.SUPABASE_ANON_KEY ||
+  null;
 const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_KEY || null;
 
 console.log('🧭 Canonical backend policy check');
