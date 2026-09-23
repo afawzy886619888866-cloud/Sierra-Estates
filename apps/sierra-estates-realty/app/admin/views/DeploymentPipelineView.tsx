@@ -387,7 +387,8 @@ export default function DeploymentPipelineView({ lang = 'en' }: { lang?: string 
             position: 'relative',
           }}
         >
-          {stages.map((st, i) => {
+          {stages.map((st) => {
+
             const isCompleted = st.status === 'completed';
             const isGate = st.status === 'gate';
             return (

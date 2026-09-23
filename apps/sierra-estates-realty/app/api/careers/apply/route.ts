@@ -76,8 +76,9 @@ export async function POST(request: Request) {
     // The legacy document payload is still stored under the table's names.
     const {
       fullName,
-      role,
+      role: _role,
       position,
+
       notes,
       hasVehicle,
       biggestAchievements,
