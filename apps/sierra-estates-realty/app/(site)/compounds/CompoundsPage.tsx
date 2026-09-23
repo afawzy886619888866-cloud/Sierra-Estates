@@ -13,6 +13,8 @@ import { HZDATA } from '@/lib/site/data';
 import { motionTokens } from '@/lib/site/motionTokens';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
+import CompoundExcelSheetModal from '@/components/site/CompoundExcelSheetModal';
+
 const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ssr: false,
   loading: () => (
@@ -39,6 +41,9 @@ export default function CompoundsPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [liveUnits, setLiveUnits] = useState<any[]>([]);
+  const [compoundSheetCounts, setCompoundSheetCounts] = useState<Record<string, number>>({});
+  const [sheetModalCompound, setSheetModalCompound] = useState<string | null>(null);
+  const [sheetModalOpen, setSheetModalOpen] = useState(false);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   const [inventoryError, setInventoryError] = useState(false);
 
@@ -53,6 +58,9 @@ export default function CompoundsPage() {
         setInventoryLoading(false);
         if (d && Array.isArray(d.units)) {
           setLiveUnits(d.units);
+          if (d.compoundSheetCounts) {
+            setCompoundSheetCounts(d.compoundSheetCounts);
+          }
         } else {
           setInventoryError(true);
         }
@@ -88,6 +96,15 @@ export default function CompoundsPage() {
       .replace(/\(.*?\)/g, '')
       .replace(/\b(new cairo|residence|residences|district \d+|phase \d+)\b/g, '')
       .trim();
+
+  const getSheetCount = (name: string): number => {
+    const target = normalize(name);
+    for (const [key, count] of Object.entries(compoundSheetCounts)) {
+      const k = normalize(key);
+      if (k === target || k.startsWith(target) || target.startsWith(k)) return count;
+    }
+    return 0;
+  };
 
   const units = useMemo(() => {
     if (!selected) return [];
@@ -276,6 +293,10 @@ export default function CompoundsPage() {
                 featured={featured}
                 selectedName={selected}
                 onSelectAction={setSelected}
+                onOpenSheet={(cpd) => {
+                  setSheetModalCompound(cpd);
+                  setSheetModalOpen(true);
+                }}
               />
             </div>
             <div className="intel" id="intel-panel">
@@ -321,6 +342,58 @@ export default function CompoundsPage() {
                           {isAr ? 'مقارنة' : 'Compare'}
                         </button>
                       </div>
+
+                      {/* Unphotographed Master Sheet Units Callout */}
+                      {selected && getSheetCount(selected) > 0 && (
+                        <div
+                          style={{
+                            marginBottom: 12,
+                            padding: '10px 12px',
+                            borderRadius: 10,
+                            background: 'rgba(223, 173, 58, 0.09)',
+                            border: '1px dashed rgba(223, 173, 58, 0.45)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#f6d88b', display: 'block' }}>
+                              {isAr
+                                ? `+${getSheetCount(selected)} وحدة مسجلة بشيت الإكسل`
+                                : `+${getSheetCount(selected)} Unphotographed Sheet Units`}
+                            </span>
+                            <span style={{ fontSize: 10, color: 'var(--muted)' }}>
+                              {isAr ? 'اضغط لعرض الجدول وطلب تصوير أي وحدة' : 'Inspect master spreadsheet & request photos'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSheetModalCompound(selected);
+                              setSheetModalOpen(true);
+                            }}
+                            style={{
+                              background: '#dfad3a',
+                              color: '#071523',
+                              border: 0,
+                              padding: '5px 11px',
+                              borderRadius: 8,
+                              fontSize: 11,
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <span>{isAr ? 'عرض الشيت' : 'View Sheet'}</span>
+                            <span>→</span>
+                          </button>
+                        </div>
+                      )}
 
                       {/* Side-by-Side Comparison Box */}
                       {compareMode && (
@@ -527,30 +600,73 @@ export default function CompoundsPage() {
           </Reveal>
 
           <div className="grid-comp">
-            {filtered.map((c, i) => (
-              <button
-                key={c.n}
-                type="button"
-                className={`comp rv d${(i % 4) + 1} ${selected === c.n ? 'is-active' : ''}`}
-                onClick={() => {
-                  setSelected(c.n);
-                  document.getElementById('cpd-map')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }}
-                style={{ border: 0, padding: 0, cursor: 'pointer', textAlign: 'start' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imgs[c.n] || imgs['Mivida']} alt={c.n} loading="lazy" />
-                <div className="co-scrim" />
-                <div className="co-count">AI {c.ai.toFixed(1)} · {c.g}</div>
-                <div className="co-body">
-                  <h4>{c.n}</h4>
-                  <span>{c.z} · EGP {c.priceM}M avg</span>
-                </div>
-              </button>
-            ))}
+            {filtered.map((c, i) => {
+              const sheetCount = getSheetCount(c.n);
+              return (
+                <button
+                  key={c.n}
+                  type="button"
+                  className={`comp rv d${(i % 4) + 1} ${selected === c.n ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setSelected(c.n);
+                    document.getElementById('cpd-map')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }}
+                  style={{ border: 0, padding: 0, cursor: 'pointer', textAlign: 'start', position: 'relative' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imgs[c.n] || imgs['Mivida']} alt={c.n} loading="lazy" />
+                  <div className="co-scrim" />
+                  <div className="co-count">AI {c.ai.toFixed(1)} · {c.g}</div>
+                  {sheetCount > 0 && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSheetModalCompound(c.n);
+                        setSheetModalOpen(true);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        zIndex: 3,
+                        background: 'rgba(7, 21, 35, 0.88)',
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(223, 173, 58, 0.5)',
+                        color: '#f6d88b',
+                        fontSize: 10,
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: 999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                      }}
+                      title={isAr ? `عرض ${sheetCount} وحدة مسجلة بالإكسل` : `View ${sheetCount} unphotographed sheet units`}
+                    >
+                      <span>📊 +{sheetCount}</span>
+                      <span style={{ fontSize: 9, opacity: 0.85 }}>{isAr ? 'إكسل' : 'Sheet'}</span>
+                    </span>
+                  )}
+                  <div className="co-body">
+                    <h4>{c.n}</h4>
+                    <span>{c.z} · EGP {c.priceM}M avg</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
+
+      {/* Interactive Compound Excel Sheet Modal */}
+      <CompoundExcelSheetModal
+        isOpen={sheetModalOpen}
+        onClose={() => setSheetModalOpen(false)}
+        compoundName={sheetModalCompound}
+        initialUnits={liveUnits}
+        isAr={isAr}
+      />
     </SiteShell>
   );
 }

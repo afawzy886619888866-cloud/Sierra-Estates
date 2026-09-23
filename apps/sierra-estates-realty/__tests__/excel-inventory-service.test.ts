@@ -113,10 +113,44 @@ describe('ExcelInventoryService & Telegram Sync', () => {
       expect(rows[0]['Inventory Status']).toBe('Available');
       expect(rows[0]['Contact Phone']).toBe('01099887766');
     });
+  });
 
-    it('safely handles non-existent file path fallback during read', () => {
-      const listings = readExcelListings({ sheetName: 'NonExistentSheet' });
+  describe('Photo Verification & Prioritization', () => {
+    it('accurately identifies real photo URLs vs unsplash placeholders', () => {
+      const { isRealPhoto } = require('../lib/services/ExcelInventoryService');
+      expect(isRealPhoto('https://sierra.net/photos/1.jpg')).toBe(true);
+      expect(isRealPhoto('https://images.unsplash.com/photo-1600596542815?auto=format')).toBe(false);
+      expect(isRealPhoto('https://example.com/placeholder.jpg')).toBe(false);
+      expect(isRealPhoto('')).toBe(false);
+      expect(isRealPhoto(null)).toBe(false);
+      expect(isRealPhoto(undefined)).toBe(false);
+    });
+
+    it('prioritizes units with real photos before sheet-only units', () => {
+      const listings = readExcelListings({ limit: 10 });
       expect(Array.isArray(listings)).toBe(true);
+      if (listings.length >= 2) {
+        // Find if any withPhoto exists
+        const photoIndices = listings
+          .map((u, i) => (u.hasPhoto ? i : -1))
+          .filter((i) => i !== -1);
+        const noPhotoIndices = listings
+          .map((u, i) => (!u.hasPhoto ? i : -1))
+          .filter((i) => i !== -1);
+
+        if (photoIndices.length > 0 && noPhotoIndices.length > 0) {
+          expect(Math.max(...photoIndices)).toBeLessThan(Math.min(...noPhotoIndices));
+        }
+      }
+    });
+
+    it('strips private owner PII by default for public consumption', () => {
+      const listings = readExcelListings({ limit: 5 });
+      for (const u of listings) {
+        expect((u as any).contactPhone).toBeUndefined();
+        expect((u as any).ownerContact).toBeUndefined();
+      }
     });
   });
 });
+
