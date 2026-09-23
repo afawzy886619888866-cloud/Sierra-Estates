@@ -109,6 +109,28 @@ function getDefaultFleet(): AgentHeartbeat[] {
       missingSecrets: process.env.VERCEL_TOKEN ? [] : ['VERCEL_TOKEN (set in Vercel project environment)'],
       docLink: '/docs/roles.md#6-devops--infrastructure',
     },
+    {
+      id: 'vertex-omni',
+      name: 'Vertex Omni (Vision & Photos)',
+      status: 'ONLINE',
+      role: 'Photo Analysis, Room Tagging & Missing Photo Radar',
+      load: '72%',
+      heartbeat: now,
+      needs: ['Gemini 2.5 Flash', 'Vision API'],
+      missingSecrets: [],
+      docLink: '/docs/roles.md#2-the-curator--scribe',
+    },
+    {
+      id: 'pf-syndicator',
+      name: 'Property Finder Syndicator',
+      status: 'ONLINE',
+      role: 'Portal feed sync & rapid lead ingestion (<45s)',
+      load: '82%',
+      heartbeat: now,
+      needs: ['PropertyFinder Syndication', 'Inbound Webhook'],
+      missingSecrets: process.env.PROPERTY_FINDER_API_KEY ? [] : ['PROPERTY_FINDER_API_KEY (optional for live syndication)'],
+      docLink: '/docs/roles.md#2-the-curator--scribe',
+    },
   ];
   return fleet.map((agent) => ({ ...agent, isSimulated: true }));
 }
