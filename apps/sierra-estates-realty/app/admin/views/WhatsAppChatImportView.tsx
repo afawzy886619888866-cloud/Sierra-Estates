@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, MessageSquare, CheckCircle2, AlertTriangle, Loader2, FileText, Database, BarChart2, Phone } from 'lucide-react';
 
 interface ScrapeReport {
@@ -44,6 +44,7 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [report, setReport] = useState<ScrapeReport | null>(null);
   const [listings, setListings] = useState<ScrapedListing[]>([]);
+  const [error, setError] = useState('');
   const [skipDup, setSkipDup] = useState(true);
   const [syncAirtable, setSyncAirtable] = useState(true);
 
@@ -210,6 +211,110 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
               : 'Upload a .txt export from any WhatsApp owners group. AI will extract listings and sync to inventory & Airtable.'}
           </p>
         </div>
+      </div>
+
+      {/* OpenClaw Autonomous Scanner Card */}
+      <div
+        style={{
+          padding: '18px 20px',
+          borderRadius: 14,
+          background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.08), rgba(37, 211, 102, 0.08))',
+          border: '1px solid rgba(200, 150, 26, 0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24 }}>🤖</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--tx-p)' }}>
+                {isAr ? 'وكيل OpenClaw لمسح مجموعات الواتساب التلقائي' : 'OpenClaw Autonomous WhatsApp Scanner'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--tx-m)' }}>
+                {isAr ? 'المجموعة المستهدفة: Owners August 2026 (120363044918239011@g.us)' : 'Target Group: Owners August 2026 (120363044918239011@g.us)'}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRunOpenClawScan}
+            disabled={isOpenClawScanning}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #25D366, #128C7E)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: isOpenClawScanning ? 'not-allowed' : 'pointer',
+              opacity: isOpenClawScanning ? 0.7 : 1,
+              boxShadow: '0 4px 12px rgba(37, 211, 102, 0.25)',
+            }}
+          >
+            {isOpenClawScanning ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{isAr ? 'جاري مسح المجموعات بواسطة OpenClaw...' : 'OpenClaw Scanning Groups...'}</span>
+              </>
+            ) : (
+              <>
+                <span>⚡</span>
+                <span>{isAr ? 'تشغيل مسح ملاك أغسطس الآن (Daily Scan)' : 'Run Owners August Daily Scan Now'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Live Telemetry Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 11 }}>
+          <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(37, 211, 102, 0.15)', color: '#25D366', fontWeight: 700 }}>
+            {isAr ? 'الوحدات المستخرجة من الواتساب: ' : 'Extracted WhatsApp Units: '}
+            {openClawTelemetry?.totalExtractedUnits ?? '...'}
+          </span>
+          <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(200, 150, 26, 0.15)', color: '#C8961A', fontWeight: 700 }}>
+            {isAr ? 'وحدات الملاك المباشرة: ' : 'Direct Owner Units: '}
+            {openClawTelemetry?.directOwnersCount ?? '...'}
+          </span>
+          <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', fontWeight: 700 }}>
+            {isAr ? 'مسودات التواصل التلقائي مع الملاك: ' : 'Pending Owner Outreach Drafts: '}
+            {openClawTelemetry?.pendingOutreachCount ?? '...'}
+          </span>
+          <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.06)', color: 'var(--tx-m)', fontWeight: 600 }}>
+            {isAr ? 'مجدول يومياً الساعة 06:00 صباحاً' : 'Scheduled Daily at 06:00 AM'}
+          </span>
+        </div>
+
+        {/* Scan Summary Banner if just run */}
+        {openClawSummary && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: 10,
+              background: 'rgba(37, 211, 102, 0.1)',
+              border: '1px solid rgba(37, 211, 102, 0.3)',
+              fontSize: 12,
+              color: 'var(--tx-p)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ fontWeight: 700, color: '#25D366' }}>
+              ✓ {isAr ? 'اكتمل مسح OpenClaw اليومي بنجاح!' : 'OpenClaw Daily Scan Completed Successfully!'}
+            </div>
+            <div style={{ color: 'var(--tx-m)' }}>
+              {isAr
+                ? `تم فحص ${openClawSummary.filesScanned} ملف دردشة · استخراج ${openClawSummary.realEstateListingsFound} إعلان عقاري · ${openClawSummary.outreachDraftsGenerated} مسودة تواصل تم تجهيزها في ${(openClawSummary.durationMs / 1000).toFixed(1)} ثانية.`
+                : `Scanned ${openClawSummary.filesScanned} chat files · Extracted ${openClawSummary.realEstateListingsFound} property listings · ${openClawSummary.outreachDraftsGenerated} owner outreach drafts queued in ${(openClawSummary.durationMs / 1000).toFixed(1)}s.`}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* How-to */}
