@@ -409,7 +409,7 @@ SET search_path = public, pg_temp
 AS $fn$
     SELECT EXISTS (
         SELECT 1 FROM public.profiles
-        WHERE id = auth.uid() AND role IN ('superadmin', 'admin')
+        WHERE id = (SELECT auth.uid()) AND role IN ('superadmin', 'admin')
     );
 $fn$;
 
@@ -422,7 +422,7 @@ SET search_path = public, pg_temp
 AS $fn$
     SELECT EXISTS (
         SELECT 1 FROM public.profiles
-        WHERE id = auth.uid() AND role IN ('superadmin', 'admin', 'agent', 'broker')
+        WHERE id = (SELECT auth.uid()) AND role IN ('superadmin', 'admin', 'agent', 'broker')
     );
 $fn$;
 
@@ -436,15 +436,15 @@ BEGIN
     -- pins role to its current value. Only an admin may change it.
     DROP POLICY IF EXISTS "profiles_self_read" ON public.profiles;
     CREATE POLICY "profiles_self_read" ON public.profiles
-        FOR SELECT TO authenticated USING (id = auth.uid() OR public.is_staff());
+        FOR SELECT TO authenticated USING (id = (SELECT auth.uid()) OR public.is_staff());
 
     DROP POLICY IF EXISTS "profiles_self_update" ON public.profiles;
     CREATE POLICY "profiles_self_update" ON public.profiles
         FOR UPDATE TO authenticated
-        USING (id = auth.uid())
+        USING (id = (SELECT auth.uid()))
         WITH CHECK (
-            id = auth.uid()
-            AND role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+            id = (SELECT auth.uid())
+            AND role = (SELECT p.role FROM public.profiles p WHERE p.id = (SELECT auth.uid()))
         );
 
     DROP POLICY IF EXISTS "profiles_admin_manage" ON public.profiles;
@@ -2201,10 +2201,16 @@ ALTER TABLE public.bot_runs ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
     DROP POLICY IF EXISTS "raw_feed_staff_access" ON public.raw_feed;
-    CREATE POLICY "raw_feed_staff_access" ON public.raw_feed FOR ALL USING (true);
+    DROP POLICY IF EXISTS "Service role and staff can manage raw_feed" ON public.raw_feed;
+    CREATE POLICY "raw_feed_staff_access" ON public.raw_feed
+        FOR ALL TO authenticated
+        USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "bot_runs_staff_access" ON public.bot_runs;
-    CREATE POLICY "bot_runs_staff_access" ON public.bot_runs FOR ALL USING (true);
+    DROP POLICY IF EXISTS "Service role and staff can manage bot_runs" ON public.bot_runs;
+    CREATE POLICY "bot_runs_staff_access" ON public.bot_runs
+        FOR ALL TO authenticated
+        USING (public.is_staff()) WITH CHECK (public.is_staff());
 END $$;
 
 -- ─── 47. Proximity Search Function (New Capital & Compound Radius) ────────────

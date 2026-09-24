@@ -205,9 +205,11 @@ describe('Regression & Configuration Hardening Suite', () => {
 
   describe('6. Git Branch Alignment & Repository Integrity Guard', () => {
     it('verifies critical feature and chore branches exist and match main revision', () => {
-      const { execSync } = require('child_process');
+      const { execFileSync } = require('child_process');
       try {
-        const mainRev = execSync('git rev-parse main', { cwd: ROOT }).toString().trim();
+        const git = (args: string[]) =>
+          execFileSync('git', args, { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+        const mainRev = git(['rev-parse', '--verify', 'main^{commit}']);
         expect(mainRev.length).toBe(40);
 
         const branchesToCheck = [
@@ -230,7 +232,7 @@ describe('Regression & Configuration Hardening Suite', () => {
 
         for (const b of branchesToCheck) {
           try {
-            const branchRev = execSync(`git rev-parse ${b}`, { cwd: ROOT }).toString().trim();
+            const branchRev = git(['rev-parse', '--verify', `${b}^{commit}`]);
             expect(branchRev).toBe(mainRev);
           } catch {
             // Branch might not be checked out locally in all environments
