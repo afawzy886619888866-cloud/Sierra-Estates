@@ -23,7 +23,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getRecord, insertRecord, upsertRecord, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
-import { sharedMemory } from '@sierra-estates/memory-engine';
+import { sharedMemory, eccMemory } from '@sierra-estates/memory-engine';
 
 const genAI = new GoogleGenerativeAI(
   process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || ''
@@ -358,6 +358,35 @@ async function buildRecommendationMessage(
       { author: 'laila', tags: ['lead_qualified', 'intake_complete', session.phone] }
     ).catch(() => {});
 
+    // Record in Episodic Context Cache (ECC) & Semantic Entity Graph
+    try {
+      eccMemory.recordEpisode({
+        type: 'buyer_preference',
+        entityId: session.phone,
+        actor: session.data.clientName || 'Buyer',
+        summary: `Buyer profile: ${data.intent || 'buy'} in ${data.compounds?.join(', ') || 'Any'} with budget ${data.budgetEGP ? `${(data.budgetEGP / 1_000_000).toFixed(1)}M EGP` : 'flexible'}`,
+        data: {
+          ...session.data,
+          phone: session.phone,
+          matchedUnits: scored.slice(0, 3).map((u) => ({ id: u.id, title: u.title, score: u.score })),
+          channel: 'whatsapp_laila',
+        },
+      });
+
+      eccMemory.upsertEntity({
+        id: session.phone,
+        type: 'buyer',
+        contact: session.phone,
+        compound: data.compounds?.[0],
+        budgetRange: data.budgetEGP ? { min: 0, max: data.budgetEGP } : undefined,
+        targetPropertyType: data.unitType,
+        tags: ['lead', data.intent || 'buy', session.lang],
+        lastUpdated: new Date().toISOString(),
+      });
+    } catch (_eccErr) {
+      // Non-blocking fail-safe
+    }
+
     return lines.join('\n');
   } catch (err) {
     logger.error('[Laila] Matching error:', err);
@@ -407,6 +436,15 @@ export async function processLailaIntake(
       // Intent stage
       const intent = parsed.intent;
       if (intent === 'list') {
+        try {
+          eccMemory.recordEpisode({
+            type: 'owner_listing_drop',
+            entityId: session.phone,
+            actor: 'Direct Owner',
+            summary: `Direct owner listing submission initiated via WhatsApp Laila`,
+            data: { phone: session.phone, channel: 'whatsapp_laila' },
+          });
+        } catch (_eccErr) {}
         reply = isAr ? COPY.list_property.ar : COPY.list_property.en;
         session.stage = 0; // reset after collecting listing info
         break;

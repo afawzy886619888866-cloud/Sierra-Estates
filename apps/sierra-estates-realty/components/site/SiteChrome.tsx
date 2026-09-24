@@ -69,16 +69,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
           </Link>
 
           <div className="menu">
-            <Link href="/" className={act('home')}>{t('navHome')}</Link>
-            <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
-            <Link href="/properties" className={act('best')}>{t('navBest')}</Link>
             <Link href="/net" className={act('net')} style={active === 'net' ? { color: '#e9c176', fontWeight: 700 } : undefined}>
-              {isAr ? 'رادار الوحدات' : 'Listing Net'}
+              {isAr ? 'الخريطة والرادار' : 'Map & Radar'}
             </Link>
-            <Link href={cairoPlazaHref} className={act('projects')}>{t('navProjects')}</Link>
-            <Link href={careerHref} className={act('career')}>{t('navCareer')}</Link>
-            <Link href={infoBankHref}>{isAr ? 'بنك المعلومات' : 'Info Bank'}</Link>
-            <Link href="/#contact" className={act('contact')}>{t('navContact')}</Link>
+            <Link href="/compounds" className={act('cpds')}>{t('navCpds')}</Link>
           </div>
 
           <div className="nav-right">
@@ -176,33 +170,13 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
             </div>
 
             <div className="mobile-drawer-links">
-              <Link href="/" className={`mobile-drawer-link${active === 'home' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Home className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{t('navHome')}</span>
+              <Link href="/net" className={`mobile-drawer-link${active === 'net' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <Radar className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
+                <span>{isAr ? 'الخريطة والرادار' : 'Map & Radar'}</span>
               </Link>
               <Link href="/compounds" className={`mobile-drawer-link${active === 'cpds' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Map className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navCpds')}</span>
-              </Link>
-              <Link href="/properties" className={`mobile-drawer-link${active === 'best' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{t('navBest')}</span>
-              </Link>
-              <Link href="/net" className={`mobile-drawer-link${active === 'net' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Radar className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{isAr ? 'رادار اصطياد وتأكيد الوحدات' : 'Listing Net Radar'}</span>
-              </Link>
-              <Link href={cairoPlazaHref} className={`mobile-drawer-link${active === 'projects' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <BriefcaseBusiness className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{t('navProjects')}</span>
-              </Link>
-              <Link href={careerHref} className={`mobile-drawer-link${active === 'career' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
-                <Sparkles className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{t('navCareer')}</span>
-              </Link>
-              <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
-                <BookOpen className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{isAr ? 'بنك معلومات القاهرة الجديدة' : 'Info Bank (AI Briefings)'}</span>
               </Link>
               <Link href="/add-listing" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <PlusCircle className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
@@ -210,8 +184,20 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               </Link>
               <Link href="/#contact" className={`mobile-drawer-link${active === 'contact' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Phone className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
-                <span>{t('navContact')}</span>
+                <span>{t('reqNow')}</span>
               </Link>
+
+              <div style={{ margin: '14px 0 6px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
+                <a
+                  href="#site-footer"
+                  className="mobile-drawer-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ fontSize: 12, opacity: 0.7 }}
+                >
+                  <Building2 className="i" style={{ width: 16, height: 16 }} />
+                  <span>{isAr ? 'المزيد في أسفل الصفحة (المشاريع، الوظائف، بنك المعلومات)...' : 'More in Footer (Projects, Career, Info Bank)...'}</span>
+                </a>
+              </div>
             </div>
 
             <div className="mobile-drawer-footer">
@@ -288,24 +274,23 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
         </div>
       )}
 
+      {/* Mobile Bottom Navigation Bar: Exactly Map, Compounds, Add Listing, and Request */}
       <nav className="bottom-nav">
-        <Link href="/" className={`bn-item${active === 'home' ? ' active' : ''}`}>
-          <Home className="i" /><span>{t('navHome')}</span>
+        <Link href="/net" className={`bn-item${active === 'net' ? ' active' : ''}`} title={isAr ? 'الخريطة والرادار' : 'Map & Radar'}>
+          <Radar className="i" style={active === 'net' ? { color: '#e9c176' } : undefined} />
+          <span>{isAr ? 'الخريطة' : 'Map'}</span>
         </Link>
-        <Link href="/properties" className={`bn-item${active === 'best' ? ' active' : ''}`}>
-          <Building2 className="i" /><span>{t('navBest')}</span>
+        <Link href="/compounds" className={`bn-item${active === 'cpds' ? ' active' : ''}`} title={t('navCpds')}>
+          <Building2 className="i" style={active === 'cpds' ? { color: '#e9c176' } : undefined} />
+          <span>{t('navCpds')}</span>
         </Link>
-        <Link href="/compounds" className={`bn-item${active === 'cpds' ? ' active' : ''}`}>
-          <Map className="i" /><span>{t('navCpds')}</span>
+        <Link href="/add-listing" className="bn-item" title={t('addListing')}>
+          <PlusCircle className="i" style={{ color: '#10b981' }} />
+          <span>{t('addListing')}</span>
         </Link>
-        <Link href={cairoPlazaHref} className={`bn-item${active === 'projects' ? ' active' : ''}`}>
-          <BriefcaseBusiness className="i" /><span>{t('navProjects')}</span>
-        </Link>
-        <Link href={careerHref} className={`bn-item${active === 'career' ? ' active' : ''}`}>
-          <Sparkles className="i" /><span>{t('navCareer')}</span>
-        </Link>
-        <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`}>
-          <Phone className="i" /><span>{t('navContact')}</span>
+        <Link href="/#contact" className={`bn-item${active === 'contact' ? ' active' : ''}`} title={t('reqNow')}>
+          <Phone className="i" style={{ color: '#e9c176' }} />
+          <span>{t('reqNow')}</span>
         </Link>
       </nav>
     </>

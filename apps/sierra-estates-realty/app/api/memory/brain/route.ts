@@ -107,9 +107,10 @@ export async function GET(req: NextRequest) {
     });
 
     // ECC overview
-    const entities = (eccMemory as any).entityGraph ? Array.from((eccMemory as any).entityGraph.values()) : [];
-    const hotDeals = eccMemory.getHotDeals ? eccMemory.getHotDeals(10) : [];
-    const recentEpisodes = eccMemory.getRecentEpisodes ? eccMemory.getRecentEpisodes(15) : [];
+    const entities = eccMemory.getAllEntities();
+    const hotDeals = eccMemory.getHotDeals(10);
+    const recentEpisodes = eccMemory.getRecentEpisodes(15);
+    const stats = eccMemory.getStats();
 
     // DeepSeek scenarios overview
     const scenarios = BENCHMARK_SCENARIOS.map(s => ({

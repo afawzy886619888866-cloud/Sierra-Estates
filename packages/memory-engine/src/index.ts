@@ -60,4 +60,15 @@ export {
   type LeadGenerationVector,
 } from './online-intelligence-engine'
 
+/* Episodic Context Cache (ECC) & Semantic Entity Graph Memory Engine */
+export {
+  EpisodicContextCache,
+  eccMemory,
+  HOT_DEAL_THRESHOLD_PCT,
+  type Episode,
+  type EpisodeType,
+  type EntityProfile,
+  type WorkingMemorySession,
+} from '../../../packages/agents/tools/eccMemoryEngine'
+
 

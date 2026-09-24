@@ -10,7 +10,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { sharedMemory } from './shared-memory-bus.js';
+import { sharedMemory } from './shared-memory-bus';
 
 export interface MarketTrendReport {
   timestamp: string;
