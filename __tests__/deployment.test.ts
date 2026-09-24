@@ -131,6 +131,9 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       expect(code).toContain('ADMIN_ENV_VARS');
       expect(code).toContain('syncVarsToProject');
       expect(code).toContain('429');
+      expect(code).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
+      expect(code).toContain('SUPABASE_MEDIA_BUCKET');
+      expect(code).not.toMatch(/CLIENT_ENV_VARS[\s\S]*SUPABASE_ACCESS_TOKEN/);
     });
 
     it('push_all_vercel_envs.js should resolve monorepo root correctly', () => {
@@ -139,6 +142,8 @@ describe('Deployments & Vercel Configuration Test Suite', () => {
       const code = fs.readFileSync(pushScriptPath, 'utf-8');
       expect(code).toContain('apps/sierra-estates-realty/.env.local');
       expect(code).toContain('varsToAdd');
+      expect(code).toContain('SUPABASE_PROPERTY_MEDIA_BUCKET');
+      expect(code).toContain('SUPABASE_MEDIA_BUCKET');
     });
 
     it('verify-deploy-readiness.ts should check environment and build prerequisites', () => {
