@@ -136,11 +136,11 @@ const realEvidence: EvidenceImage[] = [
   },
   {
     src: '/cairo-plaza/real-facade-ai-enhanced.jpg',
-    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza façade with Banque Misr frontage',
+    altEn: 'AI-enhanced current-site photograph of the Cairo Plaza facade with Banque Misr frontage',
     altAr: 'صورة حقيقية محسّنة بالذكاء الاصطناعي لواجهة كايرو بلازا مع واجهة بنك مصر',
-    titleEn: 'Main façade & Banque Misr',
+    titleEn: 'Main facade & Banque Misr',
     titleAr: 'الواجهة الرئيسية وبنك مصر',
-    captionEn: 'AI-enhanced current-site evidence · façade and visible businesses preserved',
+    captionEn: 'AI-enhanced current-site evidence · facade and visible businesses preserved',
     captionAr: 'دليل حقيقي محسّن بالذكاء الاصطناعي · الحفاظ على الواجهة والأنشطة الظاهرة',
   },
   {
@@ -203,6 +203,86 @@ type AdCampaign = {
 
 const officialAdCampaigns: AdCampaign[] = [
   {
+    src: '/cairo-plaza/ads/cairo-plaza-real-banner-office.jpg',
+    badgeEn: '100% REAL SITE PHOTO',
+    badgeAr: 'تصوير حقيقي ١٠٠٪',
+    titleEn: 'Turnkey Executive Office Suite · Real Photo',
+    titleAr: 'مقر تنفيذي مفروش بالكامل — تصوير حقيقي من الموقع',
+    descEn: 'Authentic photograph of the turnkey office suite at Cairo Plaza, equipped with executive desks, marble corridors, and immediate keys.',
+    descAr: 'تصوير حقيقي لمقر إداري مفروش بالكامل في كايرو بلازا، مجهز بالأثاث التنفيذي والمصاعد السريعة واستلام فوري.',
+    ref: 'REF: SE-CP-REAL-OFFICE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-real-banner-commercial.jpg',
+    badgeEn: 'REAL STREET FRONTAGE',
+    badgeAr: 'الواجهة الرئيسية الحقيقية',
+    titleEn: 'Commercial Hub & Banque Misr Branch',
+    titleAr: 'الصرح التجاري وفرع بنك مصر — تصوير حقيقي',
+    descEn: 'Actual street-level camera evidence of the operating commercial base, Banque Misr flagship branch, and high-footfall concourse.',
+    descAr: 'تصوير حي ومباشر لواجهة الصرح التجاري وفرع بنك مصر المتكامل وتدفق المشاة أمام محطة المترو.',
+    ref: 'REF: SE-CP-REAL-COMMERCIAL',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-real-banner-luxury-lobby.jpg',
+    badgeEn: 'REAL HOTEL LOBBY',
+    badgeAr: 'المدخل الرخامي الحقيقي',
+    titleEn: 'Hotel-Grade Emerald Marble Reception',
+    titleAr: 'مدخل فندقي رخامي فاخر — تصوير حقيقي',
+    descEn: 'Genuine photograph of the grand emerald marble staircase, ornamental ironwork gate, and modern elevator access.',
+    descAr: 'تصوير حقيقي للسلالم الرخامية الخضراء الفاخرة والبوابة الحديدية المشغولة ومصاعد ميتسوبيشي.',
+    ref: 'REF: SE-CP-REAL-LOBBY',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-real-banner-tower-metro.jpg',
+    badgeEn: 'REAL METRO ELEVATION',
+    badgeAr: 'إطلالة حقيقية من المترو',
+    titleEn: 'Twin Towers Facing Al-Mataria Metro Station',
+    titleAr: 'البرجان التوأمان أمام محطة المترو مباشرة',
+    descEn: 'Actual vantage view captured from the metro station overpass, proving the zero-meter transit proximity and unmatched visibility.',
+    descAr: 'لقطة حقيقية من كوبري المشاة بمحطة المترو تثبت القرب المباشر والواجهة الإعلانية الضخمة.',
+    ref: 'REF: SE-CP-REAL-METRO',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-studio-danube-style.jpg',
+    badgeEn: 'HOTEL SUITE & STUDIO',
+    badgeAr: 'استوديو فندقي فاخر',
+    titleEn: 'Elegant Studio for Rent & Sale · Cairo Plaza',
+    titleAr: 'استوديو فندقي مفروش للإيجار والبيع — كايرو بلازا',
+    descEn: 'Sunlit turnkey studio, 55 SQM, luxury furnishings, and metro frontage with flexible payment terms.',
+    descAr: 'استوديو فندقي بإضاءة طبيعية وتشطيب كامل، 55 م² أمام محطة المترو مباشرة مع خطط سداد ميسرة.',
+    ref: 'REF: SE-CP-STUDIO-DANUBE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-office-danube-style.jpg',
+    badgeEn: 'EXECUTIVE OFFICE',
+    badgeAr: 'مقر تنفيذي فاخر',
+    titleEn: 'Executive Office Suite · Cairo Plaza',
+    titleAr: 'مقر إداري وتنفيذي مجهز بالكامل — كايرو بلازا',
+    descEn: 'Turnkey executive boardroom, 75 SQM, grand marble lobby, express lifts, and immediate operation.',
+    descAr: 'مكتب تنفيذي مجهز ومكيف 75 م² مع مدخل رخامي فندقي ومصاعد سريعة واستلام فوري.',
+    ref: 'REF: SE-CP-OFFICE-DANUBE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-clinic-danube-style.jpg',
+    badgeEn: 'MEDICAL CLINIC',
+    badgeAr: 'عيادات ومراكز طبية',
+    titleEn: 'Prime Medical Clinic for Lease · Cairo Plaza',
+    titleAr: 'عيادة طبية مجهزة ومرخصة — كايرو بلازا',
+    descEn: 'Ultra-bright consultation suite, 60 SQM, next to Alfa Lab & Elite Scan with extreme patient density.',
+    descAr: 'مقر طبي وعيادة استشارية 60 م² بجوار معمل ألفا وإيليت سكان وأعلى كثافة مرضى يومية.',
+    ref: 'REF: SE-CP-CLINIC-DANUBE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-ad-retail-danube-style.jpg',
+    badgeEn: 'RETAIL FLAGSHIP',
+    badgeAr: 'محلات تجارية وشو روم',
+    titleEn: 'Flagship Retail & Showroom · Cairo Plaza',
+    titleAr: 'محلات تجارية وواجهات شو روم — كايرو بلازا',
+    descEn: 'Ground-floor showroom, 120 SQM, expansive glass facade next to Banque Misr with peak footfall.',
+    descAr: 'محل تجاري وشو روم بالدور الأرضي 120 م² بواجهة زجاجية بجوار فرع بنك مصر وأعلى ترافيك.',
+    ref: 'REF: SE-CP-RETAIL-DANUBE',
+  },
+  {
     src: '/cairo-plaza/ads/cairo-plaza-ad-dual.jpg',
     badgeEn: 'OWN OR LEASE',
     badgeAr: 'امتلك أو استأجر',
@@ -216,7 +296,7 @@ const officialAdCampaigns: AdCampaign[] = [
     src: '/cairo-plaza/ads/cairo-plaza-ad-collage.jpg',
     badgeEn: 'VERIFIED EVIDENCE',
     badgeAr: 'صرح متكامل بالمطرية',
-    titleEn: 'Commercial Opportunity in Matareya',
+    titleEn: 'Commercial Opportunity in Al-Mataria',
     titleAr: 'فرصتك التجارية الكبرى في قلب المطرية',
     descEn: 'Strategic transit location directly opposite the Metro Station with hotel-grade entrances.',
     descAr: 'موقع استراتيجي حيوي أمام محطة المترو مباشرة مع تشطيب راقي ومداخل فندقية ومصاعد سريعة.',
@@ -532,7 +612,7 @@ const fullInventorySchedule: InventoryUnit[] = [
     terrace: '—',
     frontageEn: 'Tower East Wing & Elevator Node',
     frontageAr: 'الجناح الشرقي للبرج بجوار المصاعد',
-    statusEn: 'Available / Ready for Medical Fitout',
+    statusEn: 'Available / Ready for Medical Fit-out',
     statusAr: 'متاح / جاهز للتجهيز والترخيص الطبي',
     roi: '15.1%',
     priceEgp: 9800000,
@@ -669,8 +749,8 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
       }
 
       // 4. Panorama Showcase Frame
-      if (document.querySelector('.cp-pano-frame')) {
-        gsap.from('.cp-pano-frame', {
+      if (document.querySelector('.cp-panorama-frame')) {
+        gsap.from('.cp-panorama-frame', {
           scrollTrigger: {
             trigger: '.cp-panorama-showcase',
             start: 'top 82%',
@@ -826,14 +906,14 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
           <div className="cp-hero-photo-inner">
             <Image
               src="/cairo-plaza/real-facade-ai-enhanced.jpg"
-              alt={isAr ? 'صورة حقيقية محسّنة لواجهة كايرو بلازا وبنك مصر' : 'AI-enhanced current-site photograph of the Cairo Plaza façade and Banque Misr frontage'}
+              alt={isAr ? 'صورة حقيقية محسّنة لواجهة كايرو بلازا وبنك مصر' : 'AI-enhanced current-site photograph of the Cairo Plaza facade and Banque Misr frontage'}
               fill
               priority
               sizes="(max-width: 900px) 100vw, 50vw"
               style={{ objectFit: 'cover', objectPosition: 'center 35%' }}
             />
           </div>
-          <figcaption>{isAr ? 'صورة حقيقية محسّنة بالذكاء الاصطناعي · الواجهة الحالية والأنشطة العاملة' : 'AI-enhanced current-site evidence · current façade & active commercial context'}</figcaption>
+          <figcaption>{isAr ? 'صورة حقيقية محسّنة بالذكاء الاصطناعي · الواجهة الحالية والأنشطة العاملة' : 'AI-enhanced current-site evidence · current facade & active commercial context'}</figcaption>
         </figure>
       </section>
 
@@ -898,16 +978,16 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
           </section>
 
           {/* ── REAL-SITE PANORAMA SHOWCASE ── */}
-          <section className="cp-panorama-showcase" aria-labelledby="cp-pano-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
+          <section className="cp-panorama-showcase" aria-labelledby="cp-panorama-title" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>
             <div className="cp-section-heading">
               <div>
                 <p className="cp-eyebrow">{isAr ? 'بانوراما الموقع الحقيقي 360°' : 'REAL-SITE 360° PANORAMIC VIEW'}</p>
-                <h2 id="cp-pano-title" className="cp-section-title">{isAr ? 'الموقع الفعلي والأبراج قيد الإنشاء' : 'Actual site footprint & construction context'}</h2>
+                <h2 id="cp-panorama-title" className="cp-section-title">{isAr ? 'الموقع الفعلي والأبراج قيد الإنشاء' : 'Actual site footprint & construction context'}</h2>
               </div>
               <p className="cp-section-note">{isAr ? 'صورة بانورامية حقيقية شاملة للموقع توضح كتلة الأبراج، الساحة المفتوحة، والمحيط العمراني أمام محطة مترو المطرية.' : 'High-resolution wide panoramic site capture showing real tower massing, open public courtyard, and immediate metro street frontage.'}</p>
             </div>
             
-            <div className="cp-pano-frame" style={{ position: 'relative', width: '100%', height: '420px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(201, 168, 106, 0.25)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', background: '#0b1118' }}>
+            <div className="cp-panorama-frame" style={{ position: 'relative', width: '100%', height: '420px', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(201, 168, 106, 0.25)', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', background: '#0b1118' }}>
               <Image
                 src="/cairo-plaza/real-site-panorama.jpg"
                 alt={isAr ? 'صورة بانورامية حقيقية شاملة لموقع مشروع كايرو بلازا' : 'Wide verified real-site panorama of Cairo Plaza construction site'}
