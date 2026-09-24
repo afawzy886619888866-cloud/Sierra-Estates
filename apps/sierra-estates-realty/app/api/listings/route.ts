@@ -301,11 +301,37 @@ export async function GET(request: Request) {
           .filter(
             (l) => l.publishToClient !== false && isPubliclyVisibleListingStatus(l.status)
           );
-        return NextResponse.json({ success: true, listings, count: listings.length });
+        if (listings.length > 0) {
+          return NextResponse.json({ success: true, listings, count: listings.length });
+        }
       } catch (err) {
-        // Unreachable / denied → seed fallback, never 5xx.
+        // Unreachable / denied → snapshot real units fallback, never 5xx.
         logger.error('[LISTINGS] envelope list failed:', err);
       }
+
+      const snapshotUnits = (snapshot as any)?.units || [];
+      if (snapshotUnits.length > 0) {
+        const realListings = snapshotUnits.slice(0, limit).map((u: any) => ({
+          id: u.id,
+          title: `${u.propertyType || u.type || 'Property'} · ${u.compound || 'New Cairo'}`,
+          price: u.price || 0,
+          compound: u.compound || u.location || 'New Cairo',
+          beds: u.beds || 3,
+          baths: u.baths || 2,
+          area: u.area || 180,
+          image: u.img,
+          images: u.img ? [u.img] : [],
+          description: u.description || `${u.propertyType || 'Apartment'} in ${u.compound}`,
+          propertyType: u.propertyType || u.type || 'apartment',
+          status: u.status || 'available',
+          amenities: [],
+          purpose: u.mode === 'rent' ? 'for-rent' : 'for-sale',
+          pfReferenceNumber: u.code || null,
+          publishToClient: true,
+        }));
+        return NextResponse.json({ success: true, listings: realListings, count: realListings.length, source: 'snapshot', seeded: true });
+      }
+
       const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
       return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
     }
