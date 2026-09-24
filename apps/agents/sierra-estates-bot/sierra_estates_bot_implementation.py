@@ -5,12 +5,19 @@ Purpose: Automate customer journey from inquiry to human handover
 """
 
 import json
+import os
+import sys
+import csv
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
 from dataclasses import dataclass, asdict
 import hashlib
 import uuid
+
+# Ensure UTF-8 stdout encoding on Windows
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # ============================================================================
 # STEP 1: DATA MODELS & ENUMS
@@ -128,11 +135,11 @@ class LeadProfile:
 # ============================================================================
 
 class PropertyFinderAPI:
-    """Mock API for Property Finder Integration"""
+    """API for Property Finder & Master Inventory Integration"""
     
-    def __init__(self):
-        # Mock database
-        self.properties_db = {
+    def __init__(self, inventory_csv_path: Optional[str] = None):
+        # Default mock database for test baseline
+        self.properties_db: Dict[str, PropertyData] = {
             "SB001": PropertyData(
                 code="SB001",
                 property_type=PropertyType.APARTMENT,
@@ -156,26 +163,118 @@ class PropertyFinderAPI:
                 compound_name="Palm Hills"
             )
         }
+        
+        # Load from canonical master inventory CSV if available
+        self._load_master_inventory(inventory_csv_path)
+
+    def _load_master_inventory(self, custom_path: Optional[str] = None) -> None:
+        """Loads properties from master CSV into properties_db if found."""
+        candidates = [
+            custom_path,
+            os.path.join(os.getcwd(), "Sierra_Estates_All_Units.csv"),
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "Sierra_Estates_All_Units.csv"),
+            os.path.join(os.getcwd(), "Sierra_Estates_All_Owners_Units.csv"),
+        ]
+        resolved_path = None
+        for c in candidates:
+            if c and os.path.exists(c):
+                resolved_path = c
+                break
+
+        if not resolved_path:
+            return
+
+        try:
+            with open(resolved_path, "r", encoding="utf-8-sig", errors="replace") as f:
+                reader = csv.DictReader(f)
+                count = 0
+                for row in reader:
+                    code = (row.get("Unit Code") or "").strip()
+                    record_id = (row.get("Record ID") or "").strip()
+                    primary_key = code or record_id
+                    if not primary_key:
+                        continue
+                    
+                    p_type_raw = (row.get("Property Type") or "").lower()
+                    if "فيلا" in p_type_raw or "villa" in p_type_raw:
+                        p_type = PropertyType.VILLA
+                    elif "بنت" in p_type_raw or "penthouse" in p_type_raw:
+                        p_type = PropertyType.PENTHOUSE
+                    elif "دوبلكس" in p_type_raw or "duplex" in p_type_raw:
+                        p_type = PropertyType.DUPLEX
+                    else:
+                        p_type = PropertyType.APARTMENT
+
+                    furn_raw = (row.get("Furnishing Status") or "").lower()
+                    if "كامل" in furn_raw or "fully" in furn_raw or "مفروش" in furn_raw:
+                        furn = FurnishingLevel.FULLY_FURNISHED
+                    elif "نص" in furn_raw or "semi" in furn_raw:
+                        furn = FurnishingLevel.SEMI_FURNISHED
+                    else:
+                        furn = FurnishingLevel.UNFURNISHED
+
+                    status_raw = (row.get("Listing Status") or "").lower()
+                    status = PropertyStatus.AVAILABLE if "avail" in status_raw or "متاح" in status_raw else PropertyStatus.TAKEN
+
+                    try:
+                        price = float(row.get("Price (EGP)") or 0)
+                    except (ValueError, TypeError):
+                        price = 0.0
+
+                    try:
+                        bedrooms = int(float(row.get("Bedrooms") or 0))
+                    except (ValueError, TypeError):
+                        bedrooms = 0
+
+                    loc = row.get("Compound / Project") or row.get("Location") or row.get("Zone / District") or "التجمع الخامس"
+                    photo = row.get("Photo URLs") or None
+
+                    prop = PropertyData(
+                        code=primary_key,
+                        property_type=p_type,
+                        bedrooms=bedrooms,
+                        furnishing_level=furn,
+                        location=loc,
+                        status=status,
+                        last_updated=datetime.now(),
+                        price=price,
+                        image_url=photo,
+                        compound_name=row.get("Compound / Project") or None
+                    )
+                    if code:
+                        self.properties_db[code.upper()] = prop
+                    if record_id:
+                        self.properties_db[record_id.upper()] = prop
+                    count += 1
+        except Exception as e:
+            # Fallback to in-memory items if parsing encounters issues
+            pass
     
-    def check_property_availability(self, code: str) -> Tuple[PropertyData, bool]:
+    def check_property_availability(self, code: str) -> Tuple[Optional[PropertyData], bool]:
         """
         Check if property exists and is available
         Returns: (PropertyData, is_available)
         """
-        if code not in self.properties_db:
+        clean_code = code.strip().upper()
+        # Direct check or case-insensitive check
+        matched = self.properties_db.get(clean_code)
+        if not matched:
+            for k, v in self.properties_db.items():
+                if k.upper() == clean_code or clean_code in k.upper():
+                    matched = v
+                    break
+
+        if not matched:
             return None, False
         
-        property_data = self.properties_db[code]
-        is_available = property_data.status == PropertyStatus.AVAILABLE
-        
-        return property_data, is_available
+        is_available = matched.status == PropertyStatus.AVAILABLE
+        return matched, is_available
     
     def search_properties(self, preferences: CustomerPreferences) -> List[PropertyData]:
         """Search properties matching customer preferences"""
         results = []
         
         for prop in self.properties_db.values():
-            # Filter by preferences
             if preferences.property_type and prop.property_type != preferences.property_type:
                 continue
             if preferences.bedrooms and prop.bedrooms != preferences.bedrooms:
