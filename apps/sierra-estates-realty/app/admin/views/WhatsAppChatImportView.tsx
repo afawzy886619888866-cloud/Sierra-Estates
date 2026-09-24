@@ -58,6 +58,32 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
     lastReport?: any;
   } | null>(null);
 
+  // NotebookLM Multi-Platform Harvester State
+  const [isMultiPlatformScanning, setIsMultiPlatformScanning] = useState(false);
+  const [multiPlatformReport, setMultiPlatformReport] = useState<any>(null);
+
+  const handleRunMultiPlatformScan = async () => {
+    setIsMultiPlatformScanning(true);
+    setError('');
+    try {
+      const res = await fetch('/api/openclaw/scan-multiplatform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success && data.report) {
+        setMultiPlatformReport(data);
+      } else {
+        setError(data.message || 'Multiplatform scan failed');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error triggering Multiplatform scan');
+    } finally {
+      setIsMultiPlatformScanning(false);
+    }
+  };
+
   const fetchOpenClawTelemetry = async () => {
     try {
       const res = await fetch('/api/openclaw/scan-whatsapp-groups');
@@ -312,6 +338,130 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
               {isAr
                 ? `تم فحص ${openClawSummary.filesScanned} ملف دردشة · استخراج ${openClawSummary.realEstateListingsFound} إعلان عقاري · ${openClawSummary.outreachDraftsGenerated} مسودة تواصل تم تجهيزها في ${(openClawSummary.durationMs / 1000).toFixed(1)} ثانية.`
                 : `Scanned ${openClawSummary.filesScanned} chat files · Extracted ${openClawSummary.realEstateListingsFound} property listings · ${openClawSummary.outreachDraftsGenerated} owner outreach drafts queued in ${(openClawSummary.durationMs / 1000).toFixed(1)}s.`}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* NotebookLM Multi-Platform Harvester Card */}
+      <div
+        style={{
+          padding: '18px 20px',
+          borderRadius: 14,
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(200, 150, 26, 0.08))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24 }}>🧠</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--tx-p)' }}>
+                {isAr ? 'حاصد العقارات الذكي NotebookLM (عقارماب + دوبيزل + فيسبوك + واتساب)' : 'NotebookLM Multi-Platform Real Estate Harvester'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--tx-m)' }}>
+                {isAr
+                  ? 'جمع عروض الملاك المباشرة من عقارماب، دوبيزل، وجروبات فيسبوك وواتساب التجمع الخامس وحساب تسعير المتر العادل'
+                  : 'Grounded direct-owner scraping across AqarMap, Dubizzle, Facebook Groups & WhatsApp with AVM pricing arbitrage'}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRunMultiPlatformScan}
+            disabled={isMultiPlatformScanning}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: isMultiPlatformScanning ? 'not-allowed' : 'pointer',
+              opacity: isMultiPlatformScanning ? 0.7 : 1,
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+            }}
+          >
+            {isMultiPlatformScanning ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{isAr ? 'جاري الفحص متعدد المنصات...' : 'Scanning Multi-Platforms...'}</span>
+              </>
+            ) : (
+              <>
+                <span>🌐</span>
+                <span>{isAr ? 'تشغيل الحاصد متعدد المنصات الآن' : 'Run Multi-Platform Harvester'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Multi-Platform Telemetry & Results */}
+        {multiPlatformReport && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: 11 }}>
+              <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', fontWeight: 700 }}>
+                {isAr ? 'إجمالي المعروض: ' : 'Total Processed: '}
+                {multiPlatformReport.report.totalProcessed}
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(37, 211, 102, 0.15)', color: '#25D366', fontWeight: 700 }}>
+                {isAr ? 'ملاك مباشرين معتمدين: ' : 'Authentic Direct Owners: '}
+                {multiPlatformReport.report.ownerUnitsFoundCount}
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(200, 150, 26, 0.15)', color: '#C8961A', fontWeight: 700 }}>
+                {isAr ? 'صفقات ذهبية أقل من سعر السوق: ' : 'Golden Deals: '}
+                {multiPlatformReport.report.goldenDealsCount}
+              </span>
+              <span style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', fontWeight: 700 }}>
+                {isAr ? 'إعلانات وسطاء مفلترة: ' : 'Broker Ads Filtered: '}
+                {multiPlatformReport.report.brokerUnitsFiltered}
+              </span>
+            </div>
+
+            {/* List of discovered owner units */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+              {multiPlatformReport.report.ownerUnits.map((u: any, idx: number) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: u.arbitrageStatus === 'UNDERPRICED_GOLDEN_DEAL' ? '1px solid rgba(200, 150, 26, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    fontSize: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, color: 'var(--tx-p)' }}>{u.compound}</span>
+                    <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', fontSize: 10, fontWeight: 700 }}>
+                      {u.platform.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ color: '#25D366', fontWeight: 700 }}>{u.priceFormatted}</div>
+                  <div style={{ color: 'var(--tx-m)', fontSize: 11 }}>
+                    {u.areaSqm ? `${u.areaSqm} م²` : ''} {u.bedrooms ? `· ${u.bedrooms} غرف` : ''} · {u.finishing}
+                  </div>
+                  {u.arbitrageStatus === 'UNDERPRICED_GOLDEN_DEAL' && (
+                    <div style={{ color: '#C8961A', fontWeight: 700, fontSize: 11 }}>
+                      ⭐ {isAr ? `صفقة ذهبية (${u.arbitrageDeltaPct}% أقل من متوسط الكمبوند)` : `Golden Deal (${u.arbitrageDeltaPct}% vs median)`}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 10, color: 'var(--tx-m)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <Phone className="w-3 h-3 text-[#25D366]" />
+                    <span>{u.contactPhone} ({u.contactName})</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
