@@ -21,7 +21,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getRecord, insertRecord, upsertRecord, listRecords } from '@sierra-estates/db';
+import { getRecord, upsertRecord, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { sharedMemory, eccMemory } from '@sierra-estates/memory-engine';
 
@@ -407,7 +407,7 @@ export async function processLailaIntake(
   phone: string
 ): Promise<string> {
   const lang = detectLang(message, phone);
-  let session = await loadSession(phone) ?? newSession(phone, lang);
+  const session = await loadSession(phone) ?? newSession(phone, lang);
 
   // Sync language if first message
   if (session.stage === 0) {

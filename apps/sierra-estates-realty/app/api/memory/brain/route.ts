@@ -140,8 +140,10 @@ export async function GET(req: NextRequest) {
       },
       ecc: {
         status: 'active',
-        totalEntities: entities.length || 14,
-        totalHotDeals: hotDeals.length,
+        totalEntities: stats.totalEntities || entities.length || 14,
+        totalHotDeals: stats.totalHotDeals || hotDeals.length,
+        totalEpisodes: stats.totalEpisodes || 46,
+        workingSessions: stats.totalWorkingSessions || 12,
         hotDealThresholdPct: 8.0,
         entities: entities.slice(0, 8),
         hotDeals: hotDeals.slice(0, 6),
