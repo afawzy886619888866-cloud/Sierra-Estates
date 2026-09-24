@@ -9,6 +9,10 @@ import { useSite } from '@/lib/site/SiteContext';
 
 export default function SiteFooter() {
   const { t, lang } = useSite();
+  const isAr = lang === 'ar';
+  const cairoPlazaHref = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
+  const careerHref = isAr ? '/ar/career' : '/career';
+  const infoBankHref = isAr ? '/ar/notebookllm' : '/notebookllm';
 
   return (
     <footer id="site-footer">
@@ -36,22 +40,31 @@ export default function SiteFooter() {
 
           <div className="fcol">
             <h5>{t('fExplore')}</h5>
-            <Link href="/properties">{t('fBuy')}</Link>
-            <Link href="/properties">{t('fRent')}</Link>
-            <Link href="/properties">{t('fNew')}</Link>
-            <Link href="/net" style={{ color: '#e9c176', fontWeight: 600 }}>🎯 {lang === 'ar' ? 'رادار الوحدات (Net)' : 'Listing Net'}</Link>
+            <Link href="/properties">{isAr ? 'عقارات للبيع والإيجار' : 'Properties (Buy & Rent)'}</Link>
             <Link href="/compounds">{t('fCpds')}</Link>
-            <Link href="/notebookllm" style={{ color: '#d4af37', fontWeight: 600 }}>🏦 Information Bank</Link>
-            <Link href="#">{t('fAgent')}</Link>
+            <Link href="/net" style={{ color: '#e9c176', fontWeight: 600 }}>
+              🎯 {isAr ? 'الخريطة والرادار العقاري' : 'Map & Radar Scanner'}
+            </Link>
+            <Link href="/add-listing" style={{ color: '#10b981', fontWeight: 600 }}>
+              ➕ {isAr ? 'إضافة عقار (مالك أو وسيط)' : 'Add Property Listing'}
+            </Link>
+            <Link href="/#contact">
+              📝 {isAr ? 'طلب وحدة مخصصة' : 'Request Bespoke Unit'}
+            </Link>
           </div>
 
           <div className="fcol">
-            <h5>{t('fCompany')}</h5>
-            <Link href="#">{t('fAbout')}</Link>
-            <Link href="/add-listing">{t('fBrokers')}</Link>
-            <Link href="#">{t('fJournal')}</Link>
-            <Link href="/career">{t('fCareers')}</Link>
-            <Link href="#">{t('fContact')}</Link>
+            <h5>{isAr ? 'المشاريع وبنك المعلومات' : 'Projects & Intelligence'}</h5>
+            <Link href={cairoPlazaHref} style={{ color: '#e9c176', fontWeight: 600 }}>
+              🏢 {isAr ? 'مشاريع كايرو بلازا' : 'Cairo Plaza Projects'}
+            </Link>
+            <Link href={infoBankHref} style={{ color: '#d4af37', fontWeight: 600 }}>
+              🏦 {isAr ? 'بنك معلومات القاهرة الجديدة' : 'New Cairo Info Bank'}
+            </Link>
+            <Link href={careerHref}>
+              💼 {isAr ? 'انضم لفريقنا (وظائف)' : 'Careers & Opportunities'}
+            </Link>
+            <Link href="/#contact">{t('fAgent')}</Link>
           </div>
 
           <div className="fcol">

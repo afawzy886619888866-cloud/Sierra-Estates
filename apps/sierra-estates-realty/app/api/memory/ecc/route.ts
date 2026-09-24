@@ -33,10 +33,19 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    const stats = eccMemory.getStats();
+    const hotDeals = eccMemory.getHotDeals(10);
+    const recentEpisodes = eccMemory.getRecentEpisodes(15);
+    const entities = eccMemory.getAllEntities();
+
     return NextResponse.json({
       success: true,
       message: 'ECC Memory Engine & Unified Brain RAG are online.',
       activeGoal: brainRAG.getActiveGoal(),
+      stats,
+      hotDeals,
+      recentEpisodes,
+      entities,
     });
   } catch (error) {
     return NextResponse.json(

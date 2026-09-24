@@ -218,6 +218,27 @@ export class EpisodicContextCache {
     return matches;
   }
 
+  public getAllEntities(): EntityProfile[] {
+    return Array.from(this.entityGraph.values());
+  }
+
+  public getEntitiesByType(type: 'buyer' | 'owner' | 'broker' | 'property'): EntityProfile[] {
+    return this.getAllEntities().filter((e) => e.type === type);
+  }
+
+  public getWorkingSessions(): WorkingMemorySession[] {
+    return Array.from(this.workingMemory.values());
+  }
+
+  public getStats() {
+    return {
+      totalEpisodes: this.episodicJournal.length,
+      totalEntities: this.entityGraph.size,
+      totalHotDeals: this.getHotDeals().length,
+      totalWorkingSessions: this.workingMemory.size,
+    };
+  }
+
   // --- 4. Persistence & Storage Synchronization ---
 
   private updateEntityFromEpisode(episode: Episode): void {

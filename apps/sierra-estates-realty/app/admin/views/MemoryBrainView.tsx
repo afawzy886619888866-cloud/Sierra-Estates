@@ -45,6 +45,9 @@ export default function MemoryBrainView({ lang = 'en', onNavigate: _onNavigate }
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string>('all');
+  const [selectedEccEntity, setSelectedEccEntity] = useState<any | null>(null);
+  const [eccFilter, setEccFilter] = useState<'all' | 'buyer' | 'owner' | 'property' | 'hot_deal'>('all');
+  const [eccSearch, setEccSearch] = useState('');
 
   // Load telemetry
   const loadBrainData = async () => {
@@ -623,200 +626,519 @@ export default function MemoryBrainView({ lang = 'en', onNavigate: _onNavigate }
         </div>
       )}
 
-      {/* TAB 3: ECC MEMORY ENGINE */}
+      {/* TAB 3: ECC MEMORY ENGINE (Building Data Apps Standard) */}
       {activeTab === 'ecc' && (
         <div className="fade-up">
-          {/* Price Reduction Radar */}
+          {/* KPI Cards Row (Building Data Apps Standard) */}
           <div
             style={{
-              background: 'linear-gradient(135deg, rgba(8, 20, 35, 0.95), rgba(18, 38, 64, 0.9))',
-              border: '1px solid rgba(52, 211, 153, 0.3)',
-              borderRadius: 16,
-              padding: 24,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 14,
               marginBottom: 20,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div
+              style={{
+                background: 'rgba(12, 12, 15, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#f8fafc' }}>
-                  🚨 {isAr ? 'رادار هبوط الأسعار والفرص المتعثرة (≥ 8% هبوط)' : 'Live Price Reduction Radar (≥ 8% Drop)'}
-                </h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: 11.5, color: 'rgba(241, 245, 249, 0.7)' }}>
-                  {isAr
-                    ? 'يلتقط وكيل ECC تلقائياً انخفاضات أسعار الملاك في مجموعات الواتساب لتنبيه وكيل الإغلاق والمشترين'
-                    : 'Automatically triggers Closer agent and priority matching for urgent VIP buyers.'}
-                </p>
+                <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  {isAr ? 'عقد الكيانات (المشترين والملاك)' : 'Active Entity Nodes'}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#f8fafc', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>
+                  {data?.ecc?.totalEntities || 18}
+                </div>
               </div>
               <span
                 style={{
-                  background: 'rgba(52, 211, 153, 0.15)',
-                  color: '#34d399',
-                  border: '1px solid rgba(52, 211, 153, 0.3)',
-                  padding: '4px 10px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38bdf8',
+                  padding: '4px 8px',
                   borderRadius: 12,
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: 700,
                 }}
               >
-                THRESHOLD: 8.0%
+                +14% graph
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-              {[
-                {
-                  code: 'SE-HYP-VLA-001',
-                  compound: 'Hyde Park',
-                  type: 'Villa 320m²',
-                  oldPrice: 38000000,
-                  newPrice: 34500000,
-                  dropPct: 9.21,
-                  source: 'WhatsApp Direct Owner',
-                  date: 'Today 11:20 AM',
-                },
-                {
-                  code: 'SE-MVD-APT-004',
-                  compound: 'Mivida',
-                  type: 'Apartment 190m²',
-                  oldPrice: 18500000,
-                  newPrice: 16800000,
-                  dropPct: 9.18,
-                  source: 'OpenClaw Harvester',
-                  date: 'Today 09:45 AM',
-                },
-                {
-                  code: 'SE-UPC-PTH-008',
-                  compound: 'Uptown Cairo',
-                  type: 'Penthouse 260m²',
-                  oldPrice: 26000000,
-                  newPrice: 23500000,
-                  dropPct: 9.61,
-                  source: 'WhatsApp Broker Alert',
-                  date: 'Yesterday',
-                },
-              ].map((item) => (
-                <div
-                  key={item.code}
-                  style={{
-                    background: 'rgba(10, 24, 40, 0.85)',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    borderRadius: 12,
-                    padding: 14,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: 13 }}>{item.compound}</span>
-                    <span
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        color: '#f87171',
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        fontSize: 10,
-                        fontWeight: 700,
-                      }}
-                    >
-                      ↓ {item.dropPct.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'rgba(241, 245, 249, 0.6)', marginBottom: 8 }}>
-                    {item.type} · <code style={{ color: '#c5a059' }}>{item.code}</code>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 11, textDecoration: 'line-through', color: 'rgba(241, 245, 249, 0.4)' }}>
-                      {(item.oldPrice / 1e6).toFixed(1)}M EGP
-                    </span>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>
-                      {(item.newPrice / 1e6).toFixed(1)}M EGP
-                    </span>
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(241, 245, 249, 0.4)' }}>
-                    {item.source} · {item.date}
-                  </div>
+            <div
+              style={{
+                background: 'rgba(12, 12, 15, 0.85)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                borderRadius: 14,
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: '#34d399', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  {isAr ? 'صفقات الهبوط السعري المتعثرة' : 'Distress Deals (≥ 8% Drop)'}
                 </div>
-              ))}
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#34d399', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>
+                  {data?.ecc?.totalHotDeals || 3}
+                </div>
+              </div>
+              <span
+                style={{
+                  background: 'rgba(52, 211, 153, 0.2)',
+                  color: '#34d399',
+                  padding: '4px 8px',
+                  borderRadius: 12,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                }}
+              >
+                HOT ALERT
+              </span>
+            </div>
+
+            <div
+              style={{
+                background: 'rgba(12, 12, 15, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  {isAr ? 'جلسات الذاكرة اللحظية (TTL)' : 'Working Sessions (Hot)'}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#f8fafc', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>
+                  {data?.ecc?.workingSessions || 12}
+                </div>
+              </div>
+              <span
+                style={{
+                  background: 'rgba(197, 160, 89, 0.15)',
+                  color: '#c5a059',
+                  padding: '4px 8px',
+                  borderRadius: 12,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                }}
+              >
+                30m TTL
+              </span>
+            </div>
+
+            <div
+              style={{
+                background: 'rgba(12, 12, 15, 0.85)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 14,
+                padding: '16px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  {isAr ? 'أحداث المفاوضات المسجلة' : 'Episodic Journal Events'}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#f8fafc', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>
+                  {data?.ecc?.totalEpisodes || 46}
+                </div>
+              </div>
+              <span
+                style={{
+                  background: 'rgba(167, 139, 250, 0.15)',
+                  color: '#a78bfa',
+                  padding: '4px 8px',
+                  borderRadius: 12,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                }}
+              >
+                Decay Weighted
+              </span>
             </div>
           </div>
 
-          {/* Entity Profile Graph Sample */}
-          <div
-            style={{
-              background: 'rgba(8, 20, 35, 0.7)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 16,
-              padding: 24,
-            }}
-          >
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#f8fafc' }}>
-              👥 {isAr ? 'ملفات الكيانات النشطة في شبكة العلاقات' : 'Active Entity Relationship Profiles'}
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-              {[
-                {
-                  name: 'Eng. Tarek Mansour',
-                  role: 'VIP Buyer',
-                  compound: 'Villette / Hyde Park',
-                  budget: '35M - 45M EGP',
-                  type: 'Cash / 1-Yr Installment',
-                  sentiment: 'High Urgency',
-                  lastContact: 'WhatsApp 2h ago',
-                },
-                {
-                  name: 'Dr. Mona Al-Alfy',
-                  role: 'Direct Owner',
-                  compound: 'Mivida Gardens',
-                  budget: 'Asking 28M EGP',
-                  type: 'Exclusive Resale',
-                  sentiment: 'Motivated Seller',
-                  lastContact: 'Inspection completed',
-                },
-                {
-                  name: 'Mr. Karim El-Gammal',
-                  role: 'Institutional Investor',
-                  compound: 'Eastown Sodic Commercial',
-                  budget: '80M EGP Portfolio',
-                  type: 'Commercial / Medical',
-                  sentiment: 'Cap Rate > 12% requirement',
-                  lastContact: 'Due diligence stage',
-                },
-              ].map((ent, i) => (
+          {/* Primary Split View (Table + Secondary Details Panel) */}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            {/* Left Main Data Table */}
+            <div
+              style={{
+                flex: selectedEccEntity ? '1 1 58%' : '1 1 100%',
+                minWidth: 320,
+                transition: 'all 0.3s ease',
+              }}
+            >
+              <div
+                style={{
+                  background: 'rgba(12, 12, 15, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Table Filter Toolbar */}
                 <div
-                  key={i}
                   style={{
-                    background: 'rgba(14, 30, 48, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    borderRadius: 12,
-                    padding: 16,
+                    padding: '14px 16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 10,
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: 13.5 }}>{ent.name}</span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {(['all', 'buyer', 'owner', 'property', 'hot_deal'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setEccFilter(mode)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 8,
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: eccFilter === mode ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                          color: eccFilter === mode ? '#e9c176' : '#94a3b8',
+                          border: eccFilter === mode ? '1px solid rgba(197, 160, 89, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        }}
+                      >
+                        {mode === 'all'
+                          ? isAr ? 'الكل' : 'All Entities'
+                          : mode === 'buyer'
+                          ? isAr ? 'المشترين (Buyers)' : 'Buyers'
+                          : mode === 'owner'
+                          ? isAr ? 'الملاك (Owners)' : 'Owners'
+                          : mode === 'property'
+                          ? isAr ? 'الوحدات (Units)' : 'Properties'
+                          : isAr ? '🔥 هبوط أسعار' : '🔥 Hot Deals'}
+                      </button>
+                    ))}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={eccSearch}
+                    onChange={(e) => setEccSearch(e.target.value)}
+                    placeholder={isAr ? 'بحث في الكيانات، الأكواد، المجمعات...' : 'Search entities, codes, compounds...'}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 8,
+                      padding: '6px 12px',
+                      color: '#f8fafc',
+                      fontSize: 12,
+                      width: 220,
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {/* Dense Data Table */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(255, 255, 255, 0.03)', color: '#94a3b8', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Entity / Sierra Code</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Type</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Compound / Area</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Budget / Price</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Status / Signal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        {
+                          id: 'SE-HYP-VLA-001',
+                          name: 'Hyde Park Standalone Villa 320m²',
+                          type: 'property',
+                          compound: 'Hyde Park New Cairo',
+                          price: 34500000,
+                          oldPrice: 38000000,
+                          isHotDeal: true,
+                          dropPct: 9.2,
+                          contact: '+201009876543 (Direct Owner)',
+                          episodesCount: 4,
+                          lastActivity: 'Price drop logged today 11:20 AM',
+                        },
+                        {
+                          id: 'lead-buyer-tarek',
+                          name: 'Eng. Tarek Mansour',
+                          type: 'buyer',
+                          compound: 'Villette / Hyde Park',
+                          price: 45000000,
+                          contact: '+201012345678',
+                          isHotDeal: false,
+                          episodesCount: 6,
+                          lastActivity: 'Viewing requested in Villette',
+                        },
+                        {
+                          id: 'SE-MVD-APT-004',
+                          name: 'Mivida Gardens Luxury Apt 190m²',
+                          type: 'property',
+                          compound: 'Mivida',
+                          price: 16800000,
+                          oldPrice: 18500000,
+                          isHotDeal: true,
+                          dropPct: 9.18,
+                          contact: '+201023456789 (OpenClaw Harvester)',
+                          episodesCount: 3,
+                          lastActivity: 'Owner distressed drop verified',
+                        },
+                        {
+                          id: 'owner-dr-mona',
+                          name: 'Dr. Mona Al-Alfy',
+                          type: 'owner',
+                          compound: 'Mivida Gardens',
+                          price: 28000000,
+                          contact: '+201034567890',
+                          isHotDeal: false,
+                          episodesCount: 5,
+                          lastActivity: 'Listing inspection completed',
+                        },
+                        {
+                          id: 'SE-UPC-PTH-008',
+                          name: 'Uptown Cairo Penthouse 260m²',
+                          type: 'property',
+                          compound: 'Uptown Cairo',
+                          price: 23500000,
+                          oldPrice: 26000000,
+                          isHotDeal: true,
+                          dropPct: 9.61,
+                          contact: '+201045678901 (Broker Alert)',
+                          episodesCount: 2,
+                          lastActivity: 'Price drop logged yesterday',
+                        },
+                        {
+                          id: 'investor-karim',
+                          name: 'Mr. Karim El-Gammal',
+                          type: 'buyer',
+                          compound: 'Eastown Sodic Commercial',
+                          price: 80000000,
+                          contact: '+201056789012',
+                          isHotDeal: false,
+                          episodesCount: 7,
+                          lastActivity: 'Due diligence on commercial asset',
+                        },
+                      ]
+                        .filter((item) => {
+                          if (eccFilter === 'buyer') return item.type === 'buyer';
+                          if (eccFilter === 'owner') return item.type === 'owner';
+                          if (eccFilter === 'property') return item.type === 'property';
+                          if (eccFilter === 'hot_deal') return item.isHotDeal;
+                          return true;
+                        })
+                        .filter((item) => {
+                          if (!eccSearch.trim()) return true;
+                          const q = eccSearch.toLowerCase();
+                          return (
+                            item.name.toLowerCase().includes(q) ||
+                            item.id.toLowerCase().includes(q) ||
+                            item.compound.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((item) => {
+                          const isSelected = selectedEccEntity?.id === item.id;
+                          return (
+                            <tr
+                              key={item.id}
+                              onClick={() => setSelectedEccEntity(item)}
+                              style={{
+                                cursor: 'pointer',
+                                background: isSelected
+                                  ? 'rgba(197, 160, 89, 0.15)'
+                                  : 'transparent',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                                transition: 'background 0.2s ease',
+                              }}
+                            >
+                              <td style={{ padding: '12px 14px', color: '#f8fafc' }}>
+                                <div style={{ fontWeight: 600 }}>{item.name}</div>
+                                <div style={{ fontSize: 10.5, color: '#94a3b8', fontFamily: 'JetBrains Mono, monospace' }}>
+                                  {item.id}
+                                </div>
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span
+                                  style={{
+                                    padding: '2px 8px',
+                                    borderRadius: 6,
+                                    fontSize: 10.5,
+                                    fontWeight: 700,
+                                    background:
+                                      item.type === 'buyer'
+                                        ? 'rgba(56, 189, 248, 0.15)'
+                                        : item.type === 'owner'
+                                        ? 'rgba(167, 139, 250, 0.15)'
+                                        : 'rgba(52, 211, 153, 0.15)',
+                                    color:
+                                      item.type === 'buyer'
+                                        ? '#38bdf8'
+                                        : item.type === 'owner'
+                                        ? '#a78bfa'
+                                        : '#34d399',
+                                  }}
+                                >
+                                  {item.type.toUpperCase()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 14px', color: '#cbd5e1' }}>{item.compound}</td>
+                              <td style={{ padding: '12px 14px', color: '#f8fafc', fontWeight: 600 }}>
+                                {(item.price / 1e6).toFixed(1)}M EGP
+                                {item.oldPrice && (
+                                  <span style={{ fontSize: 10, color: '#94a3b8', textDecoration: 'line-through', marginLeft: 6 }}>
+                                    {(item.oldPrice / 1e6).toFixed(1)}M
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                {item.isHotDeal ? (
+                                  <span
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.2)',
+                                      color: '#f87171',
+                                      padding: '2px 6px',
+                                      borderRadius: 6,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    ↓ {item.dropPct}% HOT
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#94a3b8', fontSize: 11 }}>{item.lastActivity}</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Secondary Details Panel (Slides in when an entity is selected) */}
+            {selectedEccEntity && (
+              <div
+                style={{
+                  flex: '1 1 38%',
+                  minWidth: 300,
+                  background: 'rgba(12, 12, 15, 0.98)',
+                  border: '1px solid rgba(197, 160, 89, 0.3)',
+                  borderRadius: 14,
+                  padding: 20,
+                  position: 'sticky',
+                  top: 20,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div>
                     <span
                       style={{
-                        background: 'rgba(197, 160, 89, 0.15)',
-                        color: '#c5a059',
-                        padding: '2px 8px',
-                        borderRadius: 6,
                         fontSize: 10,
-                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: '#c5a059',
+                        fontWeight: 700,
+                        letterSpacing: '.1em',
                       }}
                     >
-                      {ent.role}
+                      {isAr ? 'ملف الكيان في الذاكرة' : 'Memory Entity Inspection'}
+                    </span>
+                    <h4 style={{ margin: '4px 0 0 0', color: '#f8fafc', fontSize: 15, fontWeight: 700 }}>
+                      {selectedEccEntity.name}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEccEntity(null)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: 'none',
+                      borderRadius: 8,
+                      width: 28,
+                      height: 28,
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 6 }}>
+                    <span style={{ color: '#94a3b8' }}>ID:</span>
+                    <code style={{ color: '#e9c176' }}>{selectedEccEntity.id}</code>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 6 }}>
+                    <span style={{ color: '#94a3b8' }}>Target Compound:</span>
+                    <span style={{ color: '#f8fafc' }}>{selectedEccEntity.compound}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 6 }}>
+                    <span style={{ color: '#94a3b8' }}>Budget / Asking:</span>
+                    <span style={{ color: '#34d399', fontWeight: 700 }}>
+                      {(selectedEccEntity.price / 1e6).toFixed(1)}M EGP
                     </span>
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'rgba(241, 245, 249, 0.7)', marginBottom: 4 }}>
-                    📍 {ent.compound}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#34d399', fontWeight: 600, marginBottom: 4 }}>
-                    💰 {ent.budget}
-                  </div>
-                  <div style={{ fontSize: 10.5, color: 'rgba(241, 245, 249, 0.5)', marginTop: 8 }}>
-                    {ent.sentiment} · {ent.lastContact}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
+                    <span style={{ color: '#94a3b8' }}>Direct Contact:</span>
+                    <span style={{ color: '#cbd5e1' }}>{selectedEccEntity.contact}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Chronological Episodes Stream */}
+                <div style={{ marginBottom: 14 }}>
+                  <h5 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                    {isAr ? 'سجل الأحداث المتسلسل (Chronological Episodes)' : 'Chronological Episodes Stream'}
+                  </h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #34d399', padding: '8px 10px', borderRadius: 4 }}>
+                      <div style={{ fontSize: 11, color: '#f8fafc', fontWeight: 600 }}>{selectedEccEntity.lastActivity}</div>
+                      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Decay Weight: 1.00 · Just now</div>
+                    </div>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.02)', borderLeft: '3px solid #c5a059', padding: '8px 10px', borderRadius: 4 }}>
+                      <div style={{ fontSize: 11, color: '#f8fafc', fontWeight: 600 }}>Preferences aligned with New Cairo inventory</div>
+                      <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Decay Weight: 0.85 · Yesterday</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action CTA */}
+                <button
+                  type="button"
+                  onClick={() => alert(`Simulated matchmaking for ${selectedEccEntity.name}`)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #c5a059 0%, #dfba73 100%)',
+                    color: '#071422',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🚀 {isAr ? 'تفعيل وكيل الإغلاق والمطابقة' : 'Trigger Closer Agent Match'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

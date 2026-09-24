@@ -10,7 +10,7 @@
  * Powered by Google NotebookLM Grounding Engine + Sierra Shared Memory RAG
  */
 
-import { NotebookLMEngine } from './notebookllm-engine.js';
+import { NotebookLMEngine } from './notebookllm-engine';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 
 export type ListingPlatform = 'whatsapp' | 'aqarmap' | 'dubizzle' | 'facebook_groups' | 'direct_portal';

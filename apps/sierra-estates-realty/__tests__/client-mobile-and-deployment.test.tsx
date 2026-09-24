@@ -15,9 +15,10 @@ describe('Client Page Mobile Architecture & Deployment Readiness', () => {
     expect(html).toContain('bottom-nav');
     expect(html).toContain('bn-item');
 
-    // Assert key mobile links exist
+    // Assert key mobile links exist (Map, Compounds, Add Listing)
     expect(html).toContain('href="/compounds"');
-    expect(html).toContain('href="/properties"');
+    expect(html).toContain('href="/net"');
+    expect(html).toContain('href="/add-listing"');
   });
 
   it('renders language and theme toggle controls for mobile/desktop headers', () => {
