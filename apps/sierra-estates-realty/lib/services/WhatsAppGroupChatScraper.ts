@@ -23,7 +23,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getSupabaseAdmin, insertRecord, upsertRecord, listRecords } from '@sierra-estates/db';
+import { upsertRecord, listRecords } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 
 const genAI = new GoogleGenerativeAI(
