@@ -140,7 +140,8 @@ export async function GET(request: Request) {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="sierra-estates-master-inventory.csv"',
+        'Content-Disposition': 'inline; filename="sierra-estates-master-inventory.csv"',
+        'Cache-Control': 'public, max-age=60, s-maxage=300',
       },
     });
   }

@@ -113,10 +113,12 @@ temp/
 data/
 *.xlsx
 !apps/sierra-estates-realty/public/downloads/*.xlsx
+!apps/sierra-estates-realty/public/downloads/*.csv
 Inventory_with_Photos_Airtable.csv
 inventory_*.csv
 memory_*.csv
 Sierra_Estates_*.csv
+!apps/sierra-estates-realty/public/downloads/Sierra_Estates_*.csv
 owner_media_matches.json
 obsidian-store.json
 # NOTE: snapshot.json is deliberately COMMITTED — four routes statically import
