@@ -257,7 +257,7 @@ export class NotebookLMHarvester {
       || text.match(/([0-9]{1,2}(?:\.[0-9]{1,3})?)\s*(?:مليون|million)/i);
 
     if (priceMatch) {
-      let rawVal = priceMatch[1].replace(/[, ]/g, '');
+      const rawVal = priceMatch[1].replace(/[, ]/g, '');
       let num = parseFloat(rawVal);
       if (text.includes('مليون') || text.includes('million') || num < 200) {
         if (num < 200) num = num * 1000000;

@@ -10,17 +10,13 @@ import {
   Sun,
   Moon,
   Languages,
-  Home,
   Building2,
   Map,
-  Sparkles,
   Phone,
-  BriefcaseBusiness,
   Menu,
   X,
   PlusCircle,
   Radar,
-  BookOpen,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
@@ -49,9 +45,6 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
 
   const act = (k: ActiveNav) => (active === k ? 'active' : undefined);
   const isAr = lang === 'ar';
-  const cairoPlazaHref = isAr ? '/ar/cairo-plaza' : '/cairo-plaza';
-  const careerHref = isAr ? '/ar/career' : '/career';
-  const infoBankHref = isAr ? '/ar/notebookllm' : '/notebookllm';
 
   return (
     <>
