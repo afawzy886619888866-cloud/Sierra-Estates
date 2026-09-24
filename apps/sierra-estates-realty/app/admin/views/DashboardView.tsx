@@ -363,7 +363,7 @@ export default function DashboardView({
             key={kpi.label}
             className="clay-card p-5 group"
           >
-            <div className={`absolute inset-y-0 left-0 w-[4px] rounded-l-2xl bg-gradient-to-b ${kpi.rail} opacity-70 group-hover:opacity-100 transition-opacity`} />
+            <div className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-linear-to-b ${kpi.rail} opacity-70 group-hover:opacity-100 transition-opacity`} />
             <div className="flex items-start justify-between gap-2">
               <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold font-mono">{kpi.label}</div>
               <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-base shrink-0 shadow-inner ${kpi.chip}`}>{kpi.icon}</div>
@@ -409,8 +409,8 @@ export default function DashboardView({
               </span>
             </div>
             <div className="clay-bar h-4 flex">
-              <div className="clay-bar-fill h-full bg-gradient-to-r from-emerald-600 to-emerald-400" style={{ width: '51.6%' }} title="Rent: 51.6%" />
-              <div className="clay-bar-fill h-full bg-gradient-to-r from-[#A87A12] to-[#E9C176]" style={{ width: '48.4%' }} title="Re-sale: 48.4%" />
+              <div className="clay-bar-fill h-full bg-linear-to-r from-emerald-600 to-emerald-400" style={{ width: '51.6%' }} title="Rent: 51.6%" />
+              <div className="clay-bar-fill h-full bg-linear-to-r from-[#A87A12] to-[#E9C176]" style={{ width: '48.4%' }} title="Re-sale: 48.4%" />
             </div>
           </div>
 
@@ -459,7 +459,7 @@ export default function DashboardView({
                   <span className="text-slate-400">{c.count} ({c.pct}%)</span>
                 </div>
                 <div className="clay-bar h-2">
-                  <div className={`clay-bar-fill h-full bg-gradient-to-r ${c.color}`} style={{ width: `${c.pct * 3.5}%` }} />
+                  <div className={`clay-bar-fill h-full bg-linear-to-r ${c.color}`} style={{ width: `${c.pct * 3.5}%` }} />
                 </div>
               </div>
             ))}
@@ -499,7 +499,7 @@ export default function DashboardView({
                   <span className="text-emerald-400">{t.stat}</span>
                 </div>
                 <div className="clay-bar h-1.5 mt-2">
-                  <div className="clay-bar-fill h-full bg-gradient-to-r from-[#C8961A] to-[#E9C176]" style={{ width: `${t.pct}%` }} />
+                  <div className="clay-bar-fill h-full bg-linear-to-r from-[#C8961A] to-[#E9C176]" style={{ width: `${t.pct}%` }} />
                 </div>
               </div>
             ))}
@@ -796,7 +796,7 @@ export default function DashboardView({
                 <span className="text-[#E9C176] font-bold">1,240 (100%)</span>
               </div>
               <div className="clay-bar h-2.5">
-                <div className="clay-bar-fill h-full bg-gradient-to-r from-[#C8961A] to-[#F5D78E]" style={{ width: '100%' }}></div>
+                <div className="clay-bar-fill h-full bg-linear-to-r from-[#C8961A] to-[#F5D78E]" style={{ width: '100%' }}></div>
               </div>
             </div>
 
@@ -806,7 +806,7 @@ export default function DashboardView({
                 <span className="text-blue-400 font-bold">482 (38.8%)</span>
               </div>
               <div className="clay-bar h-2.5">
-                <div className="clay-bar-fill h-full bg-gradient-to-r from-blue-600 to-sky-400" style={{ width: '38.8%' }}></div>
+                <div className="clay-bar-fill h-full bg-linear-to-r from-blue-600 to-sky-400" style={{ width: '38.8%' }}></div>
               </div>
             </div>
 
@@ -816,7 +816,7 @@ export default function DashboardView({
                 <span className="text-purple-400 font-bold">186 (15.0%)</span>
               </div>
               <div className="clay-bar h-2.5">
-                <div className="clay-bar-fill h-full bg-gradient-to-r from-purple-600 to-fuchsia-400" style={{ width: '15%' }}></div>
+                <div className="clay-bar-fill h-full bg-linear-to-r from-purple-600 to-fuchsia-400" style={{ width: '15%' }}></div>
               </div>
             </div>
 
@@ -826,7 +826,7 @@ export default function DashboardView({
                 <span className="text-emerald-400 font-bold">74 (6.0%)</span>
               </div>
               <div className="clay-bar h-2.5">
-                <div className="clay-bar-fill h-full bg-gradient-to-r from-emerald-600 to-emerald-400" style={{ width: '6%' }}></div>
+                <div className="clay-bar-fill h-full bg-linear-to-r from-emerald-600 to-emerald-400" style={{ width: '6%' }}></div>
               </div>
             </div>
           </div>

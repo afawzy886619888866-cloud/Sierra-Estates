@@ -164,9 +164,9 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
           }`}
         >
           {statusMsg.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
           ) : (
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
           )}
           <span className="font-medium">{statusMsg.text}</span>
         </div>

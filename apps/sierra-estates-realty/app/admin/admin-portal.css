@@ -1663,7 +1663,7 @@ select.f-in option {
   radial-gradient(900px 500px at 70% -10%, rgba(200, 150, 26, 0.07), transparent 60%),
   var(--bg-s); }
 .wfs-world { position: absolute; top: 0; left: 0; transform-origin: top left; }
-.wfs-node { position: absolute; width: 196px; height: 62px; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--clay-bg-card); box-shadow: var(--clay-card-shadow); user-select: none; }
+.wfs-node { position: absolute; width: 196px; height: 62px; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--clay-bg-card); box-shadow: var(--clay-card-shadow); -webkit-user-select: none; user-select: none; }
 .wfs-node.wfs-sel { box-shadow: var(--clay-card-shadow), 0 0 18px color-mix(in srgb, var(--node-c) 30%, transparent); border-color: var(--node-c); }
 .wfs-node.wfs-live { box-shadow: 0 0 28px color-mix(in srgb, var(--node-c) 45%, transparent); border-color: var(--node-c); }
 .wfs-node.wfs-dim { opacity: 0.5; }
@@ -1688,7 +1688,7 @@ select.f-in option {
 .wfs-in { width: 100%; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--surf2); color: var(--tx); font-size: 12px; padding: 8px 10px; outline: none; }
 .wfs-in:focus { border-color: color-mix(in srgb, var(--gold-luxury) 55%, transparent); }
 .wfs-code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; line-height: 20px; tab-size: 2; }
-.wfs-gutter { flex-shrink: 0; user-select: none; text-align: right; color: var(--tx-f); border-right: 1px solid var(--bd); background: var(--surf2); padding: 10px 8px; min-width: 42px; }
+.wfs-gutter { flex-shrink: 0; -webkit-user-select: none; user-select: none; text-align: right; color: var(--tx-f); border-right: 1px solid var(--bd); background: var(--surf2); padding: 10px 8px; min-width: 42px; }
 .wfs-stat { border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--surf2); padding: 8px 10px; }
 .wfs-stat-l { font-size: 9px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-f); }
 .wfs-stat-v { margin-top: 2px; font-size: 14px; font-weight: 900; color: var(--tx-s); font-variant-numeric: tabular-nums; }

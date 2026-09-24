@@ -13,8 +13,6 @@ import {
   Building2,
   MessageCircle,
   FileText,
-  Video,
-  Play,
   X,
   Maximize2,
 } from 'lucide-react';
