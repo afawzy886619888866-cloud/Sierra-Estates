@@ -35,10 +35,10 @@ docs/**
 # Large data archives not needed for cloud web deployment
 data/**
 *.xlsx
-!apps/sierra-estates-realty/public/downloads/*.xlsx
 *.zip
 *.tar.gz
 *.csv
+!apps/sierra-estates-realty/public/downloads/owners-*.csv
 !apps/sierra-estates-realty/data/sierra-estates-airtable-import.csv
 # snapshot.json must NOT be ignored: the app statically imports it
 # (lib/site/data.ts, AvailabilityVerificationService), it is tracked in git as

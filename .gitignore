@@ -109,16 +109,18 @@ temp/
 .virtual_documents/
 
 # Data files — inventory lives in Supabase, NOT git
-# Allowlist: apps/sierra-estates-realty/public/downloads/*.xlsx (client downloads)
+# Data files — inventory lives in Supabase, NOT git
+# Allowlist: only lightweight owners exports for Google Sheets IMPORTDATA
 data/
 *.xlsx
-!apps/sierra-estates-realty/public/downloads/*.xlsx
-!apps/sierra-estates-realty/public/downloads/*.csv
+*.csv
+!apps/sierra-estates-realty/public/downloads/owners-*.csv
+!apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_*.csv
 Inventory_with_Photos_Airtable.csv
 inventory_*.csv
 memory_*.csv
 Sierra_Estates_*.csv
-!apps/sierra-estates-realty/public/downloads/Sierra_Estates_*.csv
+!apps/sierra-estates-realty/public/downloads/Sierra_Estates_Owners_*.csv
 owner_media_matches.json
 obsidian-store.json
 # NOTE: snapshot.json is deliberately COMMITTED — four routes statically import
