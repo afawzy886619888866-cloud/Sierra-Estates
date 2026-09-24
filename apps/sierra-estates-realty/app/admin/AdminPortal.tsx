@@ -36,6 +36,7 @@ import {
   InventoryOsView,
   WorkflowStudioView,
   MemoryBrainView,
+  CairoPlazaAdminView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -2406,6 +2407,7 @@ function AdminApp() {
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
+      case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={setTab}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
@@ -2565,6 +2567,7 @@ function AdminApp() {
                   {[
                     { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
                     { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
+                    { id: 'cairo_plaza', label: isAr ? 'مشروع كايرو بلازا والتسويق' : 'Cairo Plaza Media Hub', icon: '🏢' },
                     { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
                     { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
                     { id: 'memory_brain', label: isAr ? 'محرك الذاكرة المركزي' : 'Memory Brain Engine', icon: '🧬' },

@@ -54,6 +54,13 @@ const COMMUNITY_PHOTO_PRESETS: Record<string, string[]> = {
     'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/b82d7eb9-b345-4c07-9dbb-ebacc9c0e158.png',
     'https://static.shared.propertyfinder.eg/media/images/listing/01JP7H8DF01RY4ETCN5FECY525/48863c3f-b16a-4467-ae6c-89e4f09ed382.png',
   ],
+  'Cairo Plaza': [
+    '/cairo-plaza/site-photos/cp-portal-tower1-entrance.jpg',
+    '/cairo-plaza/site-photos/cp-interior-marble-stairs.jpg',
+    '/cairo-plaza/site-photos/cp-furnished-executive-office.jpg',
+    '/cairo-plaza/site-photos/cp-corridor-elevator-hallway.jpg',
+    '/cairo-plaza/site-photos/cp-exterior-banque-misr-frontage.png',
+  ],
   Default: [
     'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e9711840-ed1e-11ef-8cf7-0a8c5593e6a3-6d25555e-9552-4f8e-8618-847fbc423ebc.png',
     'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/ea569e25-ed1e-11ef-8cf7-0a8c5593e6a3-25e91c7f-53c6-43b2-8ce6-36c944ffda8d.png',
