@@ -441,7 +441,7 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                 )}
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-115 overflow-y-auto pr-1">
                 {queueJobs.map((job) => (
                   <div
                     key={job.id}
