@@ -44,9 +44,55 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [report, setReport] = useState<ScrapeReport | null>(null);
   const [listings, setListings] = useState<ScrapedListing[]>([]);
-  const [error, setError] = useState('');
   const [skipDup, setSkipDup] = useState(true);
   const [syncAirtable, setSyncAirtable] = useState(true);
+
+  // OpenClaw Autonomous Scanner State
+  const [isOpenClawScanning, setIsOpenClawScanning] = useState(false);
+  const [openClawSummary, setOpenClawSummary] = useState<any>(null);
+  const [openClawTelemetry, setOpenClawTelemetry] = useState<{
+    totalExtractedUnits: number;
+    directOwnersCount: number;
+    pendingOutreachCount: number;
+    lastReport?: any;
+  } | null>(null);
+
+  const fetchOpenClawTelemetry = async () => {
+    try {
+      const res = await fetch('/api/openclaw/scan-whatsapp-groups');
+      if (res.ok) {
+        const data = await res.json();
+        setOpenClawTelemetry(data);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchOpenClawTelemetry();
+  }, []);
+
+  const handleRunOpenClawScan = async () => {
+    setIsOpenClawScanning(true);
+    setError('');
+    try {
+      const res = await fetch('/api/openclaw/scan-whatsapp-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetGroup: 'Owners August 2026' }),
+      });
+      const data = await res.json();
+      if (data.success && data.summary) {
+        setOpenClawSummary(data.summary);
+        await fetchOpenClawTelemetry();
+      } else {
+        setError(data.message || 'OpenClaw scan failed');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error triggering OpenClaw scan');
+    } finally {
+      setIsOpenClawScanning(false);
+    }
+  };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];

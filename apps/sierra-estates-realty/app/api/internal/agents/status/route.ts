@@ -28,7 +28,7 @@ function getDefaultFleet(): AgentHeartbeat[] {
       role: 'Primary client inquiry & Arabic intake',
       load: '94%',
       heartbeat: now,
-      needs: ['HUGGINGFACE_API_KEY', 'Firestore Access'],
+      needs: ['HUGGINGFACE_API_KEY', 'Supabase Postgres Access'],
       missingSecrets: process.env.HUGGINGFACE_API_KEY || process.env.HF_TOKEN ? [] : ['HUGGINGFACE_API_KEY (optional for DeepSeek-R1 inference)'],
       docLink: '/docs/roles.md#1-ai-concierge-lead',
     },
