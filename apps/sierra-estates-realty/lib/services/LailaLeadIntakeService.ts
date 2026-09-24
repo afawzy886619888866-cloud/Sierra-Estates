@@ -108,14 +108,26 @@ const TABLE = 'whatsapp_lead_sessions';
 async function loadSession(phone: string): Promise<IntakeSession | null> {
   try {
     const row = await getRecord<IntakeSession>(TABLE, phone, 'phone');
-    return row ?? null;
+    if (row) return row;
+  } catch {}
+  try {
+    const mem = await sharedMemory.read(`session:${phone}`);
+    return (mem as IntakeSession) ?? null;
   } catch {
     return null;
   }
 }
 
 async function saveSession(session: IntakeSession): Promise<void> {
-  await upsertRecord(TABLE, { ...session, updatedAt: new Date().toISOString() }, 'phone');
+  try {
+    await upsertRecord(TABLE, { ...session, updatedAt: new Date().toISOString() }, 'phone');
+  } catch {
+    await sharedMemory.write(`session:${session.phone}`, { ...session, updatedAt: new Date().toISOString() }, {
+      author: 'laila',
+      tags: ['session', session.phone],
+      ttlSeconds: 86400,
+    }).catch(() => {});
+  }
 }
 
 function newSession(phone: string, lang: 'ar' | 'en'): IntakeSession {
@@ -331,7 +343,7 @@ async function buildRecommendationMessage(
       },
       leadScore: Math.min(95, 50 + (scored[0]?.score ?? 0)),
       summaryNotes: `Intake via Laila. Intent: ${data.intent}. Budget: ${data.budgetEGP ? `${(data.budgetEGP / 1_000_000).toFixed(1)}M EGP` : 'N/A'}. Compounds: ${data.compounds?.join(', ') || 'flexible'}. Urgency: ${data.urgency || 'N/A'}.`,
-    }, 'phone');
+    }, 'phone').catch(() => {});
 
     // Broadcast to SharedMemory for Stage-9 Closer to pick up
     await sharedMemory.write(
