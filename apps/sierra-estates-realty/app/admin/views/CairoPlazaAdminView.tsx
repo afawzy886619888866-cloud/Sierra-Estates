@@ -13,6 +13,8 @@ import {
   Building2,
   MessageCircle,
   FileText,
+  Video,
+  Play,
   X,
   Maximize2,
 } from 'lucide-react';
@@ -2326,6 +2328,154 @@ Sierra Estates Commercial Desk: +20 109 204 8333`}
               </div>
               <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 8:</b> خريطة الاستثمار، نماذج التشغيل وبيانات التواصل
+              </div>
+          {/* Commercial Video Reel Showcase */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 35, 57, 0.95) 0%, rgba(7, 14, 26, 0.98) 100%)',
+              border: '1.5px solid rgba(200, 150, 26, 0.45)',
+              borderRadius: 14,
+              padding: '24px 28px',
+              marginTop: 24,
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.55), 0 0 24px rgba(200, 150, 26, 0.1)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      fontFamily: 'JetBrains Mono, monospace',
+                      letterSpacing: '0.1em',
+                      padding: '3px 10px',
+                      borderRadius: 6,
+                      background: 'rgba(200, 150, 26, 0.2)',
+                      color: 'var(--gold, #C8961A)',
+                      border: '1px solid rgba(200, 150, 26, 0.4)',
+                    }}
+                  >
+                    🎬 9:16 VERTICAL COMMERCIAL REEL · 1080×1920 FULL HD
+                  </span>
+                  <span style={{ fontSize: 11, color: '#34D399', fontWeight: 700 }}>
+                    ● {isAr ? 'جاهز لحملات فيسبوك وإنستغرام ريلز' : 'Optimized for Reels & Meta Ads'}
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#F0EDE5', margin: '0 0 6px' }}>
+                  {isAr ? 'الفيديو الإعلاني التجاري لمشروع كايرو بلازا (مونتاج وإخراج متكامل)' : 'Cairo Plaza Official Commercial Video Reel'}
+                </h3>
+
+                <p style={{ fontSize: 13, color: '#A0AEC0', margin: 0, maxWidth: 680, lineHeight: 1.6 }}>
+                  {isAr
+                    ? 'فيديو ترويجي احترافي يدمج لقطات وصول المترو، والواجهة الحقيقية لفرع بنك مصر ومعامل ألفا وإيليت سكان، وتشطيبات المداخل الفندقية والمكاتب، مع كروت الأسعار الرسمية واللوجو الذهبي والخط الساخن.'
+                    : 'High-converting 45-second commercial video reel combining transit arrival, real site evidence (Banque Misr & Alfa Lab), hotel-grade marble entrance, furnished executive suites, and verified 2026 pricing cards.'}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <a
+                  href="/cairo-plaza/cairo-plaza-commercial-reel-2026.mp4"
+                  download="cairo-plaza-commercial-reel-2026.mp4"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '11px 20px',
+                    borderRadius: 9,
+                    background: 'linear-gradient(135deg, #C8961A 0%, #E9C176 100%)',
+                    color: '#071422',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(200, 150, 26, 0.3)',
+                  }}
+                >
+                  <Download size={15} />
+                  {isAr ? 'تحميل الفيديو (MP4 · 20 ميجابايت)' : 'Download Video (20 MB)'}
+                </a>
+
+                <button
+                  onClick={() => {
+                    const caption = `🔥 استثمر في أقوى صرح تجاري وإداري بالقاهرة — كايرو بلازا!
+📍 أمام محطة مترو المطرية مباشرة (صفر متر وصول)
+🏦 يضم كبرى الكيانات: فرع بنك مصر المتكامل ومعامل ألفا ومراكز إيليت سكان
+✨ مداخل فندقية فاخرة من الرخام الإيطالي ومصاعد ميتسوبيشي سريعة
+💼 مكاتب إدارية وعيادات ومحلات تجارية جاهزة للتسليم الفوري
+
+💰 أسعار البيع والتمليك الرسمية (حصر 2026):
+🏧 أكشاك وصراف آلي ATM: تبدأ من 77,500 ج
+🛍️ محلات تجارية: تبدأ من 511,000 ج
+🩺 مقرات وعيادات: تبدأ من 585,000 ج
+📈 عائد استثماري إيجاري سنوي يصل إلى 22%
+
+💳 تسهيلات سداد بدون فوائد وخصومات حصرية للكاش!
+📲 تواصل معنا لمعاينة الموقع فوراً: 01092048333
+🌐 تفاصيل المشروع: https://sierra-estates.net/cairo-plaza`;
+                    handleCopyText(caption, 'video-reel-caption');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '11px 16px',
+                    borderRadius: 9,
+                    background: copiedItem === 'video-reel-caption' ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: copiedItem === 'video-reel-caption' ? '#34D399' : '#F0EDE5',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {copiedItem === 'video-reel-caption' ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedItem === 'video-reel-caption' ? (isAr ? 'تم نسخ كابشن الإعلان!' : 'Caption Copied!') : (isAr ? 'نسخ كابشن الإعلان للسوشيال ميديا' : 'Copy Social Caption')}
+                </button>
+              </div>
+            </div>
+
+            {/* Video Player & Specs Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'center' }}>
+              <div
+                style={{
+                  maxWidth: 320,
+                  margin: '0 auto',
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  border: '2px solid rgba(200, 150, 26, 0.4)',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)',
+                  background: '#040812',
+                }}
+              >
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  style={{ width: '100%', height: 'auto', display: 'block', aspectRatio: '9 / 16' }}
+                  src="/cairo-plaza/cairo-plaza-commercial-reel-2026.mp4"
+                />
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: 15, fontWeight: 700, color: '#F0EDE5', marginBottom: 12 }}>
+                  {isAr ? 'المواصفات الفنية ومحاور الفيديو:' : 'Video Technical Specs & Highlights:'}
+                </h4>
+
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <b style={{ color: 'var(--gold, #C8961A)', fontSize: 13 }}>الأبعاد والتوافق:</b> 1080×1920 (نسبة 9:16 رأسية) مثالية لإعلانات فيسبوك، ريلز إنستغرام، تيك توك، وحالات واتساب.
+                  </div>
+                  <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <b style={{ color: 'var(--gold, #C8961A)', fontSize: 13 }}>المدة والموسيقى:</b> 45.5 ثانية مع موسيقى حماسية وإيقاع تصويري جذاب ونهاية متلاشية بسلاسة (Audio Fade-Out).
+                  </div>
+                  <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <b style={{ color: 'var(--gold, #C8961A)', fontSize: 13 }}>المشاهد المدمجة:</b> وصول المترو + المنظور المعماري 3D + تصوير الشارع الحقيقي لبنك مصر ومعامل ألفا + المداخل الرخامية والمكاتب + مصفوفة الأسعار + شعار سييرا الذهبي وبيانات الاتصال.
+                  </div>
+                  <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <b style={{ color: 'var(--gold, #C8961A)', fontSize: 13 }}>المسار على قرص F:</b> <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#CBD5E1' }}>F:\Cairo plaza project\cairo-plaza-commercial-reel-2026.mp4</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
