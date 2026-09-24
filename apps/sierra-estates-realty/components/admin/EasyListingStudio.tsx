@@ -34,6 +34,25 @@ interface ParsedListingData {
   confidence: number;
 }
 
+const REAL_OWNER_PRESETS = [
+  {
+    name: 'Fifth Square (8.8M)',
+    text: 'للبيع شقة ارضي بجاردن في كمبوند فيفث سكوير المراسم التجمع الخامس\nمساحة 165م + حديقة 70م خاصة\n3 غرف نوم + 2 حمام + ريسبشن واسع\nنصف تشطيب استلام فوري\nالسعر: 8,800,000 ج كاش\nالمالك المباشر عمرو مرسي: 01013995871',
+  },
+  {
+    name: 'Al Rehab (11.5M)',
+    text: 'شقة للبيع بمدينة الرحاب المرحلة الرابعة فيو جاردن مفتوح\nمساحة 155 متر، 3 غرف و 2 حمام\nتشطيب الترا سوبر لوكس\nالسعر المطلوب: 11,500,000 جنيه كاش نهائي\nللتواصل مع المالك ا. ليلى فريد: 01228774975',
+  },
+  {
+    name: 'Mivida (Rent 85k)',
+    text: 'للايجار شقة فاخرة مفروشة بالكامل في ميفيدا إعمار\nمساحة 185م فيو بحيرات مباشرة\n3 غرف ماستر + 3 حمامات + تكييف مركزي\nالايجار الشهري: 85,000 ج\nالتواصل: 01001234567',
+  },
+  {
+    name: 'Madinaty (8.34M)',
+    text: 'للبيع شقة ممتازة في مدينتي B14 طلعت مصطفى\nمساحة 133 متر دور متكرر فيو بارك\n3 نوم + 2 حمام + تراس كبير\nالسعر: 8,340,000 ج شامل الوديعة\nالمالك محمد: 01022844661',
+  },
+];
+
 export default function EasyListingStudio({
   onListingPublishedAction,
   lang = "en",
@@ -73,6 +92,8 @@ export default function EasyListingStudio({
       "Luxury 3-bedroom residence in Mivida with panoramic lake views and high-end finishes.",
     confidence: 0.95,
   });
+
+  const pricePerSqm = formData.area > 0 ? Math.round(formData.price / formData.area) : 0;
 
   const handleAIParse = async () => {
     if (!rawText.trim()) {
@@ -219,13 +240,13 @@ export default function EasyListingStudio({
         </div>
       )}
 
-      {/* 2-Column Workflow Studio */}
+      {/* 2-Column Workflow Studio — Clay Architecture */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Raw Intake & AI Trigger */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 backdrop-blur-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+          <div className="clay-card p-5 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2">
                 <Send className="w-3.5 h-3.5 text-[#E9C176]" />
                 {isAr
                   ? "نص العقار الخام (واتساب / مسودة)"
@@ -238,29 +259,51 @@ export default function EasyListingStudio({
                     `للبيع شقة مميزة جدا في ميفيدا التجمع الخامس\nمساحة 185م + فيو بحيرات مباشرة\n3 غرف نوم + 2 حمام + ريسبشن كبير\nتشطيب الترا سوبر لوكس\nالسعر المطلوب: 14,500,000 ج\nللتواصل والمعاينة: 01001234567`,
                   )
                 }
-                className="text-[10px] text-[#E9C176] hover:text-[#F5D78E] underline"
+                className="text-[10px] text-[#E9C176] hover:text-[#F5D78E] underline cursor-pointer"
               >
-                {isAr ? "تحميل مثال" : "Load Sample"}
+                {isAr ? "تحميل افتراضي" : "Reset Default"}
               </button>
             </div>
 
-            <textarea
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              rows={8}
-              placeholder={
-                isAr
-                  ? "الصق رسالة الواتساب أو وصف العقار هنا..."
-                  : 'Paste WhatsApp forward, broker draft, or freeform property specs here...\ne.g. "For sale villa in Hyde Park 350m, 4 beds, garden 120m, 22M EGP, contact 0109..."'
-              }
-              className="w-full p-3.5 rounded-xl bg-slate-950/80 border border-slate-700/60 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-[#C8961A] transition-colors"
-            />
+            {/* Quick Real Owner Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[10.5px] font-semibold text-slate-400 block font-mono">
+                {isAr ? '⚡ نماذج سريعة من عقارات الملاك الحقيقية:' : '⚡ Quick Presets from Real Inventory:'}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {REAL_OWNER_PRESETS.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => setRawText(p.text)}
+                    className="clay-stat-badge bg-slate-900/90 hover:bg-[#211A0D] border border-slate-700 hover:border-[#C8961A]/50 text-slate-300 hover:text-[#F5D78E] cursor-pointer text-[10px] py-1 px-2.5 transition-all"
+                  >
+                    <span>✦</span>
+                    <span>{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="clay-inset p-2">
+              <textarea
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                rows={7}
+                placeholder={
+                  isAr
+                    ? "الصق رسالة الواتساب أو وصف العقار هنا..."
+                    : 'Paste WhatsApp forward, broker draft, or freeform property specs here...\ne.g. "For sale villa in Hyde Park 350m, 4 beds, garden 120m, 22M EGP, contact 0109..."'
+                }
+                className="w-full bg-transparent border-0 text-white placeholder-slate-500 text-xs font-mono focus:outline-none resize-none"
+              />
+            </div>
 
             <button
               type="button"
               onClick={handleAIParse}
               disabled={isParsing || !rawText.trim()}
-              className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#E9C176] to-[#C8961A] hover:from-[#F5D78E] hover:to-[#A87A12] text-white text-xs font-semibold shadow-lg shadow-[#C8961A]/20 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+              className="clay-btn-gold w-full py-3 px-4 text-xs font-bold gap-2 disabled:opacity-50"
             >
               {isParsing ? (
                 <>
@@ -285,8 +328,8 @@ export default function EasyListingStudio({
           </div>
 
           {/* Photo Gallery & Uploads */}
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+          <div className="clay-card p-5 space-y-3">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2">
               <ImageIcon className="w-3.5 h-3.5 text-[#E9C176]" />
               {isAr ? "صور العقار" : "Property Media / Photos"}
             </label>
@@ -296,13 +339,13 @@ export default function EasyListingStudio({
                 type="url"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="https://static.shared.propertyfinder.eg/media/images/listing/01JPEM162H7CDT6B93J1CG9MFJ/c071001f-cbdb-43b1-9c1d-d3d323ece41a.png"
-                className="flex-1 p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
+                placeholder="https://static.shared.propertyfinder.eg/media/images/listing/..."
+                className="flex-1 p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
               />
               <button
                 type="button"
                 onClick={addImage}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-[#E9C176] text-xs font-semibold rounded-lg border border-slate-700"
+                className="clay-btn-dark px-3.5 py-2 text-[#E9C176] text-xs font-bold"
               >
                 + Add
               </button>
@@ -312,7 +355,7 @@ export default function EasyListingStudio({
               {imageUrls.map((url, idx) => (
                 <div
                   key={idx}
-                  className="relative group rounded-lg overflow-hidden border border-slate-800 aspect-video bg-slate-950"
+                  className="relative group rounded-xl overflow-hidden border border-slate-800 aspect-video bg-slate-950 shadow-inner"
                 >
                   <Image
                     src={url}
@@ -324,7 +367,7 @@ export default function EasyListingStudio({
                   <button
                     type="button"
                     onClick={() => removeImage(idx)}
-                    className="absolute top-1 right-1 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-1 bg-red-600/90 hover:bg-red-600 text-white rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✕
                   </button>
@@ -338,7 +381,7 @@ export default function EasyListingStudio({
         <div className="lg:col-span-7">
           <form
             onSubmit={handlePublish}
-            className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-5"
+            className="clay-card-elevated p-6 space-y-5"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
@@ -350,10 +393,10 @@ export default function EasyListingStudio({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-[#E9C176] bg-[#211A0D]/80 px-2 py-0.5 rounded border border-[#C8961A]/40">
+                <span className="clay-stat-badge bg-[#211A0D] border border-[#C8961A]/40 text-[#E9C176]">
                   {formData.sierraCode}
                 </span>
-                <span className="text-[11px] font-semibold text-purple-400 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800/60">
+                <span className="clay-stat-badge bg-purple-950/80 border border-purple-800/60 text-purple-300">
                   AI: {formData.aiScore}/10
                 </span>
               </div>
@@ -371,7 +414,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, compound: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
+                  className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
@@ -386,7 +429,7 @@ export default function EasyListingStudio({
                   onChange={(e) =>
                     setFormData({ ...formData, propertyType: e.target.value })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
+                  className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
                   <option value="Apartment">Apartment</option>
                   <option value="Standalone Villa">Standalone Villa</option>
@@ -401,17 +444,24 @@ export default function EasyListingStudio({
 
               {/* Price */}
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-                  <DollarSign className="w-3 h-3 text-emerald-400" />
-                  {isAr ? "السعر المطلوب (EGP)" : "Price (EGP)"}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                    <DollarSign className="w-3 h-3 text-emerald-400" />
+                    {isAr ? "السعر المطلوب (EGP)" : "Price (EGP)"}
+                  </label>
+                  {pricePerSqm > 0 && (
+                    <span className="clay-stat-badge bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] py-0.5 px-2 font-mono">
+                      {pricePerSqm.toLocaleString()} EGP/m²
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
                   value={formData.price}
                   onChange={(e) =>
                     setFormData({ ...formData, price: Number(e.target.value) })
                   }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-[#C8961A]"
+                  className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
@@ -567,7 +617,7 @@ export default function EasyListingStudio({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+                className="clay-btn-emerald px-6 py-2.5 text-xs font-bold gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

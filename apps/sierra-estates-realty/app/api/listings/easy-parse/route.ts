@@ -43,16 +43,20 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
 
   // Detect Compound
   const compounds = [
+    { name: 'Fifth Square', matches: ['fifth square', 'فيفث سكوير', 'المراسم', 'marasem'] },
+    { name: 'Al Rehab', matches: ['al rehab', 'rehab', 'الرحاب', 'مدينة الرحاب'] },
+    { name: 'Madinaty', matches: ['madinaty', 'مدينتي'] },
     { name: 'Mivida', matches: ['mivida', 'ميفيدا'] },
     { name: 'Hyde Park', matches: ['hyde park', 'هايد بارك', 'هايدبارك'] },
     { name: 'Mountain View iCity', matches: ['mountain view', 'ماونتن فيو', 'ماونتن', 'icity', 'اي سيتي'] },
     { name: 'Villette', matches: ['villette', 'فيليت', 'sodic villette'] },
     { name: 'Palm Hills NC', matches: ['palm hills', 'بالم هيلز', 'بالم'] },
     { name: 'Eastown', matches: ['eastown', 'ايست تاون', 'ايستاون'] },
-    { name: 'Madinaty', matches: ['madinaty', 'مدينتي'] },
+    { name: 'Beit El Watan', matches: ['beit el watan', 'beit elwatan', 'بيت الوطن'] },
+    { name: 'Katameya Dunes', matches: ['katameya dunes', 'katameya', 'قطامية ديونز', 'القطامية'] },
+    { name: 'Lake View', matches: ['lake view', 'ليك فيو', 'lakeview'] },
     { name: 'Uptown Cairo', matches: ['uptown', 'اب تاون', 'أب تاون'] },
     { name: 'Swan Lake', matches: ['swan lake', 'سوان ليك'] },
-    { name: 'Fifth Square', matches: ['fifth square', 'فيفث سكوير'] },
   ];
 
   let detectedCompound = '5th Settlement';
