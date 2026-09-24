@@ -83,11 +83,15 @@ interface ScanSummary {
   durationMs: number;
 }
 
-export async function runOpenClawDailyScan(targetGroupName: string = 'Owners August 2026'): Promise<ScanSummary> {
+export async function runOpenClawDailyScan(
+  targetGroupName: string = 'Owners August 2026',
+  limit: number = 300
+): Promise<ScanSummary> {
   const startTime = Date.now();
   console.log('\n============================================================');
   console.log(`🤖 [OpenClaw] Starting Daily WhatsApp Scan`);
   console.log(`🎯 Primary Target Group: ${targetGroupName}`);
+  console.log(`📊 Processing Limit: ${limit} priority messages`);
   console.log(`⏰ Time: ${new Date().toISOString()}`);
   console.log('============================================================\n');
 
@@ -210,9 +214,10 @@ export async function runOpenClawDailyScan(targetGroupName: string = 'Owners Aug
 
   // Prioritize messages from the target group (Owners August)
   const sortedMessages = [...reMessages].sort((a, b) => (b.isOwnerGroup ? 1 : 0) - (a.isOwnerGroup ? 1 : 0));
+  const targetBatch = sortedMessages.slice(0, limit);
 
-  for (let i = 0; i < sortedMessages.length; i++) {
-    const msg = sortedMessages[i];
+  for (let i = 0; i < targetBatch.length; i++) {
+    const msg = targetBatch[i];
     try {
       const parsed = await agent.ingestWhatsAppGroupMessage(
         msg.text,
@@ -367,7 +372,8 @@ export async function runOpenClawDailyScan(targetGroupName: string = 'Owners Aug
 // CLI execution
 if (process.argv[1] && (process.argv[1].endsWith('openclaw-daily-scanner.ts') || process.argv[1].endsWith('openclaw-daily-scanner.js'))) {
   const target = process.argv[2] || 'Owners August 2026';
-  runOpenClawDailyScan(target)
+  const limit = parseInt(process.argv[3], 10) || 150;
+  runOpenClawDailyScan(target, limit)
     .then(() => process.exit(0))
     .catch((err) => {
       console.error('Fatal scan error:', err);
