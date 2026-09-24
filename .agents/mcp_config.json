@@ -28,6 +28,12 @@
         "start"
       ],
       "env": {}
+    },
+    "stitch": {
+      "serverUrl": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${GOOGLE_AI_API_KEY}"
+      }
     }
   }
 }
