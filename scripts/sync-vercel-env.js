@@ -69,7 +69,6 @@ export const CLIENT_ENV_VARS = {
   PF_JWT_TOKEN: process.env.PF_JWT_TOKEN || process.env.PROPERTY_FINDER_JWT_TOKEN,
   N8N_WEBHOOK_KEY: process.env.N8N_WEBHOOK_KEY,
   AIRTABLE_API_KEY: process.env.AIRTABLE_API_KEY,
-  SUPABASE_ACCESS_TOKEN: process.env.SUPABASE_ACCESS_TOKEN,
 
   // AWS & Backend
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
