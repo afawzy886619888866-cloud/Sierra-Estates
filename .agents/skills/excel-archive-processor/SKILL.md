@@ -5,11 +5,9 @@ description: Empowers Antigravity and OpenClaw agents to inspect, unpack, read, 
 
 # Excel & Archive Processor Skill · Antigravity & OpenClaw
 
-> **Status: not yet implemented.** This skill document is aspirational — no
-> corresponding code exists in `packages/agents` or elsewhere in the repo.
-> An agent following this skill has no archive/spreadsheet-extraction tools
-> to invoke; treat every instruction below as a spec for future work, not a
-> capability available today.
+> **Status: Active & Implemented.** Canonical enterprise consolidation is powered by
+> [`scripts/enterprise-inventory-consolidator.py`](file:///h:/last/Main/SE-Vercel-deploy-main/scripts/enterprise-inventory-consolidator.py).
+> Supports recursive directory scanning, WhatsApp chat extraction, multi-key deduplication (last 7 digits of phone + price + deal), First_Seen/Latest_Update tracking, status dropdown validations, and styled multi-sheet export.
 
 ## Purpose
 
