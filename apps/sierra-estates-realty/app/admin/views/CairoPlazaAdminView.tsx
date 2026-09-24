@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import {
   Camera,
-  Image as ImageIcon,
   Share2,
   Download,
   ExternalLink,
@@ -12,16 +11,9 @@ import {
   Copy,
   Sparkles,
   Building2,
-  MapPin,
-  TrendingUp,
-  Phone,
-  Eye,
   MessageCircle,
   X,
   Maximize2,
-  Calendar,
-  ShieldCheck,
-  Layers,
 } from 'lucide-react';
 
 interface SitePhoto {
@@ -54,9 +46,53 @@ interface CommercialCreative {
 
 const SITE_PHOTOS: SitePhoto[] = [
   {
+    id: 'sp-office-bright',
+    titleEn: 'Turnkey Executive Office · Enhanced Brightness',
+    titleAr: 'مكتب تنفيذي مفروش بالكامل · إضاءة معززة مشرقة',
+    src: '/cairo-plaza/site-photos/cp-furnished-executive-office-bright.jpg',
+    category: 'interior',
+    dimensions: '1024 × 576',
+    badge: 'BRIGHT HD',
+    descEn: 'Sunlit and brightness-enhanced view of modern executive workstations, ergonomic chairs, and motivational wall art.',
+    descAr: 'نسخة محسّنة ومعززة الإضاءة تبرز فخامة وتفاصيل المكتب التنفيذي وأرضيات البورسلين اللامعة.',
+  },
+  {
+    id: 'sp-stairs-bright',
+    titleEn: 'Hotel-Grade Marble Entrance · Enhanced Brightness',
+    titleAr: 'مدخل الرخام الفندقي والدرج الداخلي · إضاءة معززة',
+    src: '/cairo-plaza/site-photos/cp-interior-marble-stairs-bright.jpg',
+    category: 'entrance',
+    dimensions: '576 × 1024',
+    badge: 'BRIGHT HD',
+    descEn: 'Brightness-boosted perspective highlighting natural emerald marble grain and polished granite borders.',
+    descAr: 'نسخة عالية الإشراق والوضوح تبرز لمعان الرخام الطبيعي الفاخر ونقوش بوابة الحماية.',
+  },
+  {
+    id: 'sp-portal-bright',
+    titleEn: 'Tower 1 Main Portal · Enhanced Brightness',
+    titleAr: 'مدخل كايرو بلازا برج ١ من الشارع · إضاءة معززة',
+    src: '/cairo-plaza/site-photos/cp-portal-tower1-entrance-bright.jpg',
+    category: 'entrance',
+    dimensions: '576 × 1024',
+    badge: 'BRIGHT HD',
+    descEn: 'Street entrance portal with enhanced clarity and balanced exposure for commercial print and digital ads.',
+    descAr: 'نسخة محسنة تبرز لافتة البرج وسلالم المدخل بوضوح وإشراق ملائم للإعلانات الرقمية.',
+  },
+  {
+    id: 'sp-corridor-bright',
+    titleEn: 'Elevator Lobby & Corridor · Enhanced Brightness',
+    titleAr: 'ممر المصاعد والأدوار الإدارية · إضاءة معززة',
+    src: '/cairo-plaza/site-photos/cp-corridor-elevator-hallway-bright.jpg',
+    category: 'interior',
+    dimensions: '576 × 1024',
+    badge: 'BRIGHT HD',
+    descEn: 'Brightened corporate corridor highlighting elevator stainless steel doors and polished marble tiles.',
+    descAr: 'نسخة واضحة ومشرقة توضح مدخل المصاعد وتشطيبات الممرات الفندقية.',
+  },
+  {
     id: 'sp-portal',
-    titleEn: 'Main Street Portal & Entrance · Tower 1',
-    titleAr: 'المدخل والبوابة الرئيسية · كايرو بلازا برج ١',
+    titleEn: 'Main Street Portal & Entrance · Tower 1 (Original)',
+    titleAr: 'المدخل والبوابة الرئيسية · كايرو بلازا برج ١ (الأصلية)',
     src: '/cairo-plaza/site-photos/cp-portal-tower1-entrance.jpg',
     category: 'entrance',
     dimensions: '576 × 1024',
@@ -122,6 +158,356 @@ const SITE_PHOTOS: SitePhoto[] = [
 ];
 
 const COMMERCIAL_CREATIVES: CommercialCreative[] = [
+  {
+    id: 'cc-real-office',
+    titleEn: 'Real Site Banner · Turnkey Executive Office Suite',
+    titleAr: 'بانر تصوير حقيقي · مقر إداري تنفيذي مفروش بالكامل',
+    src: '/cairo-plaza/social/cairo-plaza-real-banner-office.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'LinkedIn Sponsored', 'Instagram Feed', 'WhatsApp Catalog'],
+    dimensions: '1080 × 1080',
+    badgeEn: '100% REAL PHOTO BANNER',
+    badgeAr: 'بانر تصوير حقيقي ١٠٠٪',
+    descEn: 'Hero is the genuine camera photograph of the furnished executive office with warm color-grading, dark navy & gold curve, 4 feature badges, and 3 real circular insets (marble stairs, elevators, Banque Misr).',
+    descAr: 'تصميم يعتمد على الصورة الحقيقية للمكتب التنفيذي المفروش مع معالجة إضاءة فاخرة، إطار ذهبي مقوس، وثلاث صور دائرية حقيقية للمدخل والمصاعد وبنك مصر.',
+    suggestedCaptionAr: `📸 تصوير حقيقي من قلب كايرو بلازا — مقرك الإداري والتنفيذي جاهز فوراً للتشغيل!
+وفر تكاليف ووقت التشطيب وابدأ عملك اليوم في أميز صرح تجاري وإداري أمام محطة مترو المطرية مباشرة:
+✅ مكاتب مجهزة بأرقى التشطيبات والتكييفات والمكاتب الجلدية
+✅ مساحة 75 م² بتوزيع ذكي
+✅ مدخل فندقي رخامي فاخر ومصاعد ميتسوبيشي سريعة
+✅ فرع بنك مصر متكامل بالدور الأرضي
+✅ استلام فوري بالمفتاح وعقود موثقة
+
+📲 احجز موعد معاينتك الحية الآن: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `📸 100% Real Site Photograph — Turnkey Executive Office Ready for Immediate Operations!
+Eliminate fit-out downtime and launch at Cairo Plaza, directly opposite Al-Mataria Metro Station:
+✅ Fitted with executive desks, leather armchairs, climate control & fast Wi-Fi
+✅ 75 SQM intelligent commercial layout
+✅ Hotel-grade emerald marble staircase & express lifts
+✅ Active Banque Misr anchor on-site
+✅ Immediate key handover with notarized contracts
+
+📲 Schedule In-Person Inspection: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-real-commercial',
+    titleEn: 'Real Site Banner · Banque Misr Anchor & Commercial Hub',
+    titleAr: 'بانر تصوير حقيقي · الواجهة التجارية مع بنك مصر',
+    src: '/cairo-plaza/social/cairo-plaza-real-banner-commercial.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed', 'Instagram Sponsored', 'Retail Investors', 'Outdoor Displays'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'REAL STREET FRONTAGE',
+    badgeAr: 'واجهة الشارع الحقيقية',
+    descEn: 'Hero is the genuine street photo of Cairo Plaza featuring the operational Banque Misr branch and wide pavement, with gold badges and real insets (office, marble stairs, portal).',
+    descAr: 'تصوير حقيقي لواجهة المبنى بالشارع الرئيسي وفرع بنك مصر المتكامل وتدفق المشاة، مع إطار ذهبي راقي وثلاث صور دائرية حقيقية للمكتب والسلالم والمدخل.',
+    suggestedCaptionAr: `🏦 استثمر في أقوى واجهة تجارية بالقاهرة — صرح كايرو بلازا!
+واجهة تجارية مباشرة تضم كبرى الكيانات مثل فرع بنك مصر المتكامل وأمام محطة المترو مباشرة:
+🔥 ترافيك بشري استثنائي على مدار الساعة
+🔥 مساحات تجارية وشو روم بالدور الأرضي
+🔥 عائد استثماري إيجاري سنوي مجزي يصل إلى 22%
+🔥 تسهيلات سداد مرنة وخيارات تملك أو استئجار
+
+📲 تواصل معنا لمعرفة المساحات المتاحة: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🏦 Prime Commercial Investment — Real Street Frontage at Cairo Plaza!
+Anchored by an operational flagship Banque Misr branch directly on the high-traffic metro boulevard:
+🔥 Extraordinary non-stop pedestrian footfall
+🔥 Ground floor retail, pharmacy & showroom units
+🔥 High projected rental yields up to 22%
+🔥 Flexible purchase and lease arrangements
+
+📲 Call Sierra Estates: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-real-luxury-lobby',
+    titleEn: 'Real Site Banner · Emerald Marble Entrance & Elevators',
+    titleAr: 'بانر تصوير حقيقي · المدخل الرخامي الفندقي الفاخر',
+    src: '/cairo-plaza/social/cairo-plaza-real-banner-luxury-lobby.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Ads', 'Instagram Carousel', 'Executive Investors'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'REAL HOTEL-GRADE LOBBY',
+    badgeAr: 'مدخل رخامي حقيقي',
+    descEn: 'Hero is the genuine camera photo of the grand emerald marble stairs, iron gate, and brass handrails, framed with luxury gold borders and real insets.',
+    descAr: 'تصوير حقيقي للسلالم الرخامية الخضراء الفاخرة والبوابة الحديدية المشغولة، مع ثلاث لقطات حقيقية للمكتب والمصاعد والواجهة.',
+    suggestedCaptionAr: `🏛️ فخامة الاستقبال تصنع فارق شركتك — مداخل فندقية فاخرة في كايرو بلازا!
+تشطيبات رخامية إيطالية استثنائية وبوابات حديد مشغول تعكس رقي علامتك التجارية:
+✨ مصاعد ميتسوبيشي سريعة
+✨ أمن وحراسة 24 ساعة
+✨ مقرات إدارية وعيادات طبية متخصصة
+✨ استثمار يبدأ من 2.8 مليون مع تسهيلات سداد
+
+📲 احجز زيارتك الميدانية: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🏛️ Make an Irresistible First Impression — Hotel-Grade Reception at Cairo Plaza!
+Featuring genuine Italian emerald marble staircases, bespoke ironwork, and modern amenities:
+✨ High-speed Mitsubishi elevators
+✨ 24/7 building management and concierge security
+✨ Corporate suites and specialized medical clinics
+✨ Ownership starting from EGP 2.8M with installment options
+
+📲 Book a Private Tour: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-real-tower-metro',
+    titleEn: 'Real Site Banner · Transit Elevation Directly at Metro',
+    titleAr: 'بانر تصوير حقيقي · إطلالة البرج أمام محطة المترو مباشرة',
+    src: '/cairo-plaza/social/cairo-plaza-real-banner-tower-metro.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed', 'Instagram Ads', 'Transit Ads', 'WhatsApp Broadcast'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'REAL METRO ELEVATION',
+    badgeAr: 'إطلالة حقيقية من المترو',
+    descEn: 'Hero is the genuine high-angle photo from the metro pedestrian overpass showing the twin towers towering above the concourse, with real circular insets.',
+    descAr: 'تصوير حقيقي من جسر المشاة بمحطة المترو يبرز البرجين التوأمين وموقع كايرو بلازا الاستراتيجي، مع صور دائرية حقيقية للداخل.',
+    suggestedCaptionAr: `🚇 صفر متر من محطة المترو — كايرو بلازا العنوان الأقوى لنشاطك!
+موقع فريد لا يتكرر يوفر لعملائك وموظفيك أسهل وصول من أي مكان بالقاهرة الكبرى:
+💎 واجهة إعلانية ضخمة تضمن أعلى شهرة لنشاطك
+💎 مقرات إدارية، عيادات، ومحلات تجارية
+💎 مياه وكهرباء وتكييفات جاهزة فوراً
+💎 تعاقد واستلام في نفس اليوم
+
+📲 للاستفسار والحجز: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🚇 Zero Meters from the Metro Station — Cairo Plaza, Central Cairo's Ultimate Address!
+Unmatched accessibility for your clients, patients, and staff across Greater Cairo:
+💎 High-visibility facade ensuring unmatched brand recognition
+💎 Commercial, medical, and executive suites available
+💎 Turnkey utility infrastructure ready for immediate operation
+💎 Same-day contracting and key handover
+
+📲 Inquire Today: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-real-landscape-office',
+    titleEn: 'Real Site Landscape Banner · Executive Office (1200×630)',
+    titleAr: 'بانر أفقي تصوير حقيقي · مكاتب كايرو بلازا (1200×630)',
+    src: '/cairo-plaza/social/cairo-plaza-real-banner-landscape-office.jpg',
+    format: '16:9 Landscape Banner',
+    platforms: ['Facebook Link Ad', 'Website Header', 'Display Networks', 'Twitter/X'],
+    dimensions: '1200 × 630',
+    badgeEn: 'REAL PHOTO LANDSCAPE',
+    badgeAr: 'بانر أفقي تصوير حقيقي',
+    descEn: 'Wide horizontal format banner designed for website headers and Facebook link preview cards, using the genuine executive office photo and real circular insets.',
+    descAr: 'تصميم عريض مثالي لهيدر الموقع الإعلاني أو روابط فيسبوك الممولة مع صورة المكتب الحقيقية والصور الدائرية والبادجات الذهبية.',
+    suggestedCaptionAr: `🏢 مقرات إدارية وتنفيذية جاهزة فوراً للتسليم في كايرو بلازا — تصوير حقيقي من الموقع!
+مساحات تبدأ من 75 م² بإيجار شهري 35 ألف ج أو بالتمليك مع تسهيلات سداد.
+📲 للتواصل والمعاينة: 01092048333`,
+    suggestedCaptionEn: `🏢 Turnkey Executive Office Suites at Cairo Plaza — 100% Real Site Photograph!
+Suites from 75 SQM at EGP 35,000 / month or purchase with installments.
+📲 Inquire: +201092048333`,
+  },
+  {
+    id: 'cc-danube-studio',
+    titleEn: 'Luxury Poster · Elegant Studio for Rent & Sale',
+    titleAr: 'بوستر فاخر · استوديو فندقي مفروش للإيجار والبيع',
+    src: '/cairo-plaza/social/cairo-plaza-ad-studio-danube-style.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed', 'Instagram Sponsored', 'WhatsApp Status', 'Digital Displays'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'LUXURY POSTER · STUDIO',
+    badgeAr: 'بوستر فاخر · استوديو',
+    descEn: 'Sunlit luxury studio interior with double gold curve, 4 feature badges (Furnished, 55 SQM, Ready to Move, Premium Living), 3 circular insets (Kitchen, Bath, Tower), and EGP 25K price card.',
+    descAr: 'تصميم بوستر فاخر فائق الإشراق بإضاءة نهارية طبيعية، إطار ذهبي مقوس، 4 أيقونات ذهبية، 3 لقطات دائرية للمطبخ والحمام والواجهة، وبادج السعر 25 ألف ج.',
+    suggestedCaptionAr: `✨ استوديو فندقي فاخر للإيجار والاستثمار في كايرو بلازا — أمام مترو المطرية مباشرة!
+مفروش بالكامل بأرقى التشطيبات الفندقية وجاهز فوراً للسكن أو التأجير:
+💎 إضاءة طبيعية وتشطيب الترا سوبر لوكس
+💎 مساحة 55 متر مربع بتوزيع ذكي
+💎 عائد استثماري سنوي مجزي
+💎 خطط سداد وتسهيلات مرنة
+
+📲 تواصل معنا للمعاينة والحجز الفوري: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `✨ Elegant Studio for Rent & Investment at Cairo Plaza — Directly Opposite Al-Mataria Metro!
+Turnkey luxury serviced suite ready for immediate occupancy or high-yield rental:
+💎 Ultra-bright daylight interior with premium furnishings
+💎 55 SQM intelligent layout with fitted kitchenette & marble bath
+💎 Rapid ROI in central transit hub
+💎 Flexible payment terms
+
+📲 Inquire & Book Private Viewing: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-danube-office',
+    titleEn: 'Luxury Poster · Executive Office Suite for Lease',
+    titleAr: 'بوستر فاخر · مقر إداري تنفيذي للإيجار والتمليك',
+    src: '/cairo-plaza/social/cairo-plaza-ad-office-danube-style.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'LinkedIn Sponsored', 'Instagram Feed', 'Corporate Catalog'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'EXECUTIVE POSTER',
+    badgeAr: 'بوستر تنفيذي · مكاتب',
+    descEn: 'Sunlit modern executive office with designer desk, dual champagne gold curve, 4 badges, 3 circular insets (Marble stairs, elevators, tower facade), and EGP 35K price badge.',
+    descAr: 'تصميم بوستر تنفيذي مشرق لمكتب إداري فاخر بإطلالة بانورامية، إطار ذهبي مقوس، وثلاث صور دائرية للمدخل الرخامي والمصاعد والواجهة، وكارت سعر 35 ألف ج.',
+    suggestedCaptionAr: `🏢 انطلق بنشاطك فوراً من قلب القاهرة — مقرات إدارية وتنفيذية فاخرة في كايرو بلازا!
+وفر شهور التشطيب وتكاليف التجهيز وابدأ اليوم في موقع استراتيجي أمام المترو مباشرة:
+✅ مكاتب تنفيذية مجهزة بالكامل ومكيفة
+✅ مساحات تبدأ من 75 م²
+✅ مدخل فندقي رخامي ومصاعد سريعة
+✅ فرع بنك مصر متكامل بالمبنى
+
+📲 احجز معاينتك اليوم: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🏢 Elevate Your Corporate Presence — Executive Office Suites at Cairo Plaza!
+Eliminate fit-out downtime and launch immediately at Cairo's central transit corridor:
+✅ Fully fitted executive suites with panoramic daylight views
+✅ 75 SQM turnkey layouts
+✅ Grand emerald marble lobby & Mitsubishi express elevators
+✅ Operational Banque Misr anchor on-site
+
+📲 Contact Sierra Estates: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-danube-clinic',
+    titleEn: 'Luxury Poster · Prime Medical Clinic for Lease',
+    titleAr: 'بوستر فاخر · عيادة ومقر طبي مجهز للإيجار',
+    src: '/cairo-plaza/social/cairo-plaza-ad-clinic-danube-style.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'Medical Groups', 'Instagram Feed', 'WhatsApp Catalog'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'MEDICAL POSTER',
+    badgeAr: 'بوستر طبي · عيادات',
+    descEn: 'Ultra-bright medical clinic suite with doctor consultation desk, gold curve frame, 4 feature badges (Equipped, 60 SQM, Ready, High Footfall), 3 insets, and EGP 30K price card.',
+    descAr: 'تصميم بوستر فاخر لعيادة طبية راقية ومضيئة، 4 أيقونات ذهبية، 3 لقطات دائرية للاستقبال والانتظار والبرج، وكارت سعر 30 ألف ج.',
+    suggestedCaptionAr: `🏥 عيادات ومراكز طبية جاهزة فوراً للتشغيل في كايرو بلازا!
+ترافيك بشري استثنائي يومياً بموقع حيوي نادر أمام محطة مترو المطرية مباشرة:
+🩺 تشطيبات طبية معتمدة ومجهزة بالكامل
+🩺 تكييف مركزي ومصاعد طبية سريعة
+🩺 جوار معمل ألفا وإيليت سكان وفرع بنك مصر
+🩺 خطط سداد ميسرة بدون مصاريف تشطيب
+
+📲 لحجز المعاينة الطبية: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🏥 Prime Turnkey Medical Suites & Clinics at Cairo Plaza!
+Capitalize on extraordinary daily patient footfall directly opposite Al-Mataria Metro Station:
+🩺 Fully fitted healthcare suites & consultation rooms
+🩺 Medical-grade elevators, 24/7 power backup & central climate control
+🩺 Clustered with Alfa Lab, Elite Scan, and Banque Misr
+🩺 Flexible rental & purchase payment structures
+
+📲 Book Your Inspection: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-danube-retail',
+    titleEn: 'Luxury Poster · Flagship Retail & Showroom for Lease',
+    titleAr: 'بوستر فاخر · محلات تجارية وواجهات شو روم للإيجار',
+    src: '/cairo-plaza/social/cairo-plaza-ad-retail-danube-style.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Commerce', 'Instagram Sponsored', 'Retail Investors', 'Outdoor Displays'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'RETAIL POSTER',
+    badgeAr: 'بوستر تجاري · محلات',
+    descEn: 'Sunlit ground-floor flagship retail showroom with glass display facade, gold curve frame, 4 feature badges, 3 insets (Banque Misr, mall arcade, tower), and EGP 50K price card.',
+    descAr: 'تصميم بوستر تجاري راقي للواجهات والمحلات التجارية بالدور الأرضي مع واجهات زجاجية واسعة، 3 لقطات دائرية لفرع بنك مصر والممشى، وسعر 50 ألف ج.',
+    suggestedCaptionAr: `🛍️ واجهات ومحلات تجارية بالدور الأرضي في كايرو بلازا — أعلى ترافيك بشري بالمنطقة!
+مساحات تبدأ من 120 م² بواجهات زجاجية عريضة أمام محطة المترو وبجوار فرع بنك مصر:
+✨ تسليم فوري وتجهيزات كاملة
+✨ مناسبة للبنوك، الصيدليات، معارض التجزئة، والماركات العالمية
+✨ أعلى عائد إيجاري سنوي مضمون
+✨ تسهيلات حصرية بالسداد
+
+📲 استفسر عن المساحات المتاحة: 01092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+    suggestedCaptionEn: `🛍️ Flagship Ground-Floor Retail & Showrooms at Cairo Plaza!
+Command premier transit footfall directly on the Al-Mataria Metro concourse beside Banque Misr:
+✨ High-ceiling glass facade showroom spaces from 120 SQM
+✨ Ready for immediate fit-out and commercial trading
+✨ Unrivaled pedestrian exposure and transit density
+✨ Flexible lease & ownership terms
+
+📲 Inquire Today: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-fb-bright-arabic',
+    titleEn: 'Bright Facebook Ad · Arabic Luxury Edition',
+    titleAr: 'إعلان فيسبوك مشرق · مقرات تجارية وإدارية وعيادات',
+    src: '/cairo-plaza/social/cairo-plaza-facebook-bright-arabic.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed Ad', 'Instagram Sponsored', 'Meta Audience Network'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'FACEBOOK BRIGHT AD',
+    badgeAr: 'إعلان فيسبوك مشرق',
+    descEn: 'Sunlit modern executive office, gold Arabic typography, 3 circular insets (marble lobby, elevators, tower), and flexible installment card.',
+    descAr: 'تصميم مشرق وعصري بإضاءة نهارية طبيعية، خط عربي مذهب، وثلاث صور دائرية للمدخل والمصاعد والبرج، مع كارت خطط السداد المرنة.',
+    suggestedCaptionAr: `🌟 صرح كايرو بلازا — مقرات تجارية وإدارية وعيادات جاهزة فوراً للتسليم!
+موقع استراتيجي نادر أمام محطة مترو المطرية مباشرة | ترافيك بشري استثنائي لنشاطك.
+💎 تشطيبات فندقية كاملة وأثاث تنفيذي راقي
+💎 عائد إيجاري سنوي مجزي يصل إلى 22%
+💎 خطط سداد مرنة مع تسهيلات حصرية من سييرا
+💎 مدخل فندقي، مصاعد ميتسوبيشي، وفرع بنك مصر متكامل
+
+📲 تواصل معنا الآن للمعاينة الفورية: 01092048333
+🌐 رابط التفاصيل: https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🌟 Cairo Plaza — Commercial & Administrative Flagship in Central Cairo
+Strategic transit-oriented address right in front of Al-Mataria Metro Station.
+💎 Turnkey executive finishing with hotel-grade reception
+💎 Projected annual rental returns up to 22%
+💎 Flexible payment structures & cash discounts
+💎 Operational Banque Misr anchor branch on-site
+
+📲 Inquire & Schedule Viewings: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-fb-bright-office',
+    titleEn: 'Bright Facebook Ad · Executive Commercial & Office Suites',
+    titleAr: 'إعلان فيسبوك مشرق · مكاتب ومقرات إدارية فاخرة',
+    src: '/cairo-plaza/social/cairo-plaza-facebook-bright-office.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'Instagram Feed', 'LinkedIn Sponsored'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'EXECUTIVE AD',
+    badgeAr: 'مكاتب تنفيذية',
+    descEn: 'High-contrast bright daylight executive boardroom with panoramic city views, gold badges, and circular detail vignettes.',
+    descAr: 'تصميم إعلاني فخم وعالي الإضاءة لمكتب تنفيذي وإطلالة زجاجية بانورامية مع تفاصيل ذهبية للمدخل والمصاعد.',
+    suggestedCaptionAr: `🏢 ارتقِ بمستوى شركتك — مقرات إدارية فاخرة في كايرو بلازا
+وفر تكاليف ووقت التشطيب وابدأ عملك اليوم في أميز موقع بالقاهرة:
+✅ مكاتب مجهزة بأرقى التشطيبات والتكييفات
+✅ أنظمة سداد وتسهيلات مرنة واستلام فوري
+✅ بجوار محطة المترو مباشرة
+
+احجز معاينتك اليوم: 01092048333`,
+    suggestedCaptionEn: `🏢 Elevate Your Business Address — Executive Suites at Cairo Plaza
+Save fit-out capital and downtime — begin operations immediately:
+✅ Turnkey furnished suites with panoramic glass views
+✅ Flexible installments & immediate handover
+✅ Directly on the Metro concourse
+
+Reserve Your Walkthrough Today: +201092048333`,
+  },
+  {
+    id: 'cc-fb-bright-retail',
+    titleEn: 'Bright Facebook Ad · Flagship Retail & Medical Suites',
+    titleAr: 'إعلان فيسبوك مشرق · محلات تجارية وعيادات طبية',
+    src: '/cairo-plaza/social/cairo-plaza-facebook-bright-retail.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Commerce Ad', 'Instagram Feed', 'WhatsApp Catalog'],
+    dimensions: '1024 × 1024',
+    badgeEn: 'RETAIL & MEDICAL',
+    badgeAr: 'تجاري وطبي',
+    descEn: 'Sunlit commercial retail and clinic presentation featuring the operational Banque Misr and Alfa Lab building frontage outside panoramic windows.',
+    descAr: 'تصميم إعلاني تجاري مشرق للمحلات والعيادات يبرز واجهة المبنى المباشرة مع فرع بنك مصر ومعمل ألفا وإيليت سكان.',
+    suggestedCaptionAr: `🏥 فرصتك الاستثمارية الكبرى في قطاع التجزئة والمقرات الطبية بكايرو بلازا
+مساحات تجارية وعيادات مجهزة بموقع استراتيجي فائق الترافيك أمام المترو مباشرة.
+عائد سنوي مضمون يصل إلى 24%.
+
+تواصل مع فريق مبيعات سييرا: 01092048333`,
+    suggestedCaptionEn: `🏥 Prime Retail Flagships & Medical Suites at Cairo Plaza
+Commercial spaces & clinics in a high-footfall transit hub with Banque Misr anchor.
+Guaranteed annual yields up to 24%.
+
+Contact Sierra Estates: +201092048333`,
+  },
   {
     id: 'cc-dual',
     titleEn: 'Dual Commercial Showcase · Own or Lease',
@@ -417,7 +803,7 @@ const CAIRO_PLAZA_UNITS = [
     rentVal: 'EGP 125,000 / mo',
     roi: '22.0%',
     status: 'Available',
-    features: ['Panoramic glass façade', 'Dedicated restrooms', 'Server room'],
+    features: ['Panoramic glass facade', 'Dedicated restrooms', 'Server room'],
   },
 ];
 
