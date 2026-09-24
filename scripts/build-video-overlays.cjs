@@ -346,3 +346,10 @@ async function run() {
   }
 
   await browser.close();
+  console.log('✨ All 7 transparent video overlay cards rendered successfully!');
+}
+
+run().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
