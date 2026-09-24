@@ -214,6 +214,7 @@ async function buildRecommendationMessage(
             area: d.areaSqm || d.area_sqm || 0,
             bedrooms: d.bedrooms || 3,
             type: d.propertyType || d.type || 'Apartment',
+            finishing: d.finishing || 'Semi-Finished',
             hasPhoto: true,
             status: 'available',
             isOwner: true,
