@@ -24,7 +24,6 @@ For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`]
 
 - **Real Estate Intelligence & Automation**: `sierra-closer-agent`, `concierge-lead-agent`, `whatsapp-inventory-harvester`, `real-estate-valuation-analyzer`, `ecc-memory-engine`, `excel-archive-processor`, `inventory-csv-merger`.
 - **UI/UX & Design (Anti-Slop)**: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend` (`taste-skill`), `high-end-visual-design` (`soft-skill`), `stitch-design-taste`, `minimalist-ui`, `industrial-brutalist-ui`, `gpt-taste`.
-- **Google Cloud Developer Plugin**: `finding-google-skills`, `gcloud`, `google-cloud-recipe-auth`, `google-cloud-recipe-onboarding`, `retrieving-developer-knowledge`.
 - **Code & Architecture**: `clean-code`, `code-reviewer`, `database-design`, `nextjs-supabase-auth`, `sierra-deployment-ops`.
 
 <!-- BEGIN AWS Agent Toolkit rules -->

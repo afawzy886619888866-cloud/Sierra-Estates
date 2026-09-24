@@ -38,15 +38,16 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 
 ---
 
-## 2. Google Cloud Developer Plugin Skills
+## 2. Google Cloud Developer Plugin (Uninstalled)
 
-Installed via the `google-cloud-developer` plugin in `~/.gemini/config/plugins/google-cloud-developer/skills/`:
+*Status: Uninstalled via `agy plugin uninstall google-cloud-developer`.*
 
-- **`finding-google-skills`**: Dynamically locates and loads specialized Google product skills on-demand from the remote catalog index (e.g., GKE, BigQuery, Vertex AI, Firebase).
-- **`gcloud`**: Validation guardrails, syntax rules, and data reduction for executing `gcloud` CLI commands safely.
-- **`google-cloud-recipe-auth`**: Guidance on authentication and authorization patterns (ADC, service accounts, IAM, and workload identity).
-- **`google-cloud-recipe-onboarding`**: Step-by-step walkthrough for onboarding new Google Cloud projects, billing accounts, and first deployments.
-- **`retrieving-developer-knowledge`**: Integration with the `developer-knowledge` MCP server to retrieve official Google developer documentation and API references.
+Previously provided the following 5 catalog/CLI skills:
+- **`finding-google-skills`**: Dynamic discovery of remote Google Cloud skills.
+- **`gcloud`**: CLI safety guardrails and syntax validation.
+- **`google-cloud-recipe-auth`**: ADC and service account patterns.
+- **`google-cloud-recipe-onboarding`**: Initial project onboarding guides.
+- **`retrieving-developer-knowledge`**: Official Google developer doc retrieval via MCP.
 
 ---
 
