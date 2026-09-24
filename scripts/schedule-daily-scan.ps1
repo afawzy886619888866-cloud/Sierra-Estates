@@ -16,10 +16,11 @@ Write-Host "  Schedule:           Daily at $Time"
 Write-Host "  Sheets Folder:      $TargetFolder"
 Write-Host "  Target WhatsApp:    Owners August 2026"
 Write-Host "  Python Engine:      $PythonScript"
-Write-Host "  OpenClaw Agent:     $OpenClawScript"
+$NotebookLMScript = "$RootDir\scripts\run-notebookllm-multiplatform-scan.ts"
+Write-Host "  NotebookLM Agent:   $NotebookLMScript"
 
-# Combined runner command: runs Excel merger first, then OpenClaw WhatsApp scan
-$RunnerCmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command `"& '$PythonExe' '$PythonScript' '$TargetFolder'; npx tsx '$OpenClawScript' 'Owners August 2026' 250`""
+# Combined runner command: runs Excel merger, OpenClaw WhatsApp scan, and NotebookLM Multi-Platform Harvester
+$RunnerCmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command `"& '$PythonExe' '$PythonScript' '$TargetFolder'; npx tsx '$OpenClawScript' 'Owners August 2026' 250; npx tsx '$NotebookLMScript'`""
 
 $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -Command `"$RunnerCmd`"" -WorkingDirectory $RootDir
 $Trigger = New-ScheduledTaskTrigger -Daily -At $Time
