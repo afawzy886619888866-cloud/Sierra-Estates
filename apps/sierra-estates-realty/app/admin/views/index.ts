@@ -20,5 +20,4 @@ export { default as InventoryCommandView } from './InventoryCommandView';
 export { default as InventoryOsView } from './InventoryOsView';
 export { default as WorkflowStudioView } from './WorkflowStudioView';
 export { default as MemoryBrainView } from './MemoryBrainView';
-
-
+export { default as WhatsAppChatImportView } from './WhatsAppChatImportView';

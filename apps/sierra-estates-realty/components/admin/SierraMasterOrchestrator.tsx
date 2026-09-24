@@ -45,7 +45,7 @@ export default function SierraMasterOrchestrator({
       category: 'system',
       message: isAr
         ? 'المايسترو الذكي متصل · يراقب 330 وحدة و6 وكلاء وبوابة بروبرتي فايندر'
-        : 'Sierra Master Conductor Online · Monitoring 330 units, 6 agents, & Property Finder feed',
+        : 'Sierra Master Conductor Online · Monitoring 330 units, 10 agents, & Property Finder feed',
       type: 'success',
     },
     {
@@ -210,7 +210,7 @@ export default function SierraMasterOrchestrator({
 
     // 5. Agent Fleet & Agent Orchestrator Dispatch
     setSweepStage(5);
-    setSweepStatusText(isAr ? 'المرحلة 5/5: توزيع المهام على أسطول الوكلاء الـ 6 وAgent Orchestrator...' : 'Stage 5/5: Dispatching tasks across all 6 agents & Agent Orchestrator (:3001)...');
+    setSweepStatusText(isAr ? 'المرحلة 5/5: توزيع المهام على أسطول الوكلاء الـ 10 وAgent Orchestrator...' : 'Stage 5/5: Dispatching tasks across all 10 agents & Agent Orchestrator (:3001)...');
     await new Promise((r) => setTimeout(r, 800));
     try {
       await fetch('/api/orchestrate', { method: 'POST' }).catch(() => {});

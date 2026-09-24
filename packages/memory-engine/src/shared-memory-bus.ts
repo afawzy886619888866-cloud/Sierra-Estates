@@ -15,7 +15,22 @@ import { ObsidianMemory, MemoryEntry } from '@sierra-estates/obsidian'
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type AgentName = 'liela' | 'sierra' | 'hermes' | 'openclaw' | 'closer' | 'super-broker' | 'system' | 'admin'
+export type AgentName =
+  | 'liela'           // legacy alias — keep for BC
+  | 'laila'           // Laila bilingual lead intake
+  | 'sierra'          // Sierra-Bot — master conductor
+  | 'hermes'          // WhatsApp conversational AI
+  | 'openclaw'        // OpenClaw architect
+  | 'closer'          // Stage-9 Closer
+  | 'super-broker'
+  | 'pf-syndicator'   // Property Finder syndication
+  | 'vertex-omni'     // Vertex multi-modal AI
+  | 'the-curator'     // AVM valuation
+  | 'the-scribe'      // Ingestion & normalization
+  | 'insights-agent'  // Market analytics
+  | 'sierra-ops'      // Production ops
+  | 'system'
+  | 'admin'
 
 export interface MemoryWriteOptions {
   /** Agent writing this memory */
@@ -44,7 +59,11 @@ export interface MemoryEvent {
 
 export type MemorySubscriber = (event: MemoryEvent) => void
 
-const AGENT_NAMES = ['liela', 'sierra', 'hermes', 'openclaw', 'closer', 'super-broker', 'system', 'admin'] as const
+const AGENT_NAMES = [
+  'liela', 'laila', 'sierra', 'hermes', 'openclaw', 'closer',
+  'super-broker', 'pf-syndicator', 'vertex-omni', 'the-curator',
+  'the-scribe', 'insights-agent', 'sierra-ops', 'system', 'admin',
+] as const
 
 function isAgentName(value: unknown): value is AgentName {
   return typeof value === 'string' && AGENT_NAMES.includes(value as AgentName)
