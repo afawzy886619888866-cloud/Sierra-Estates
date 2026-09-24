@@ -8,6 +8,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function loadDataset(datasetName: string): any[] {
+  if (datasetName === 'owners' || datasetName === 'verified' || datasetName === '585') {
+    const snapshotData = snapshot as unknown;
+    return Array.isArray(snapshotData)
+      ? (snapshotData as any[])
+      : ((snapshotData as { units?: any[] })?.units || []);
+  }
+
   try {
     const dataDir = path.join(process.cwd(), 'data');
     if (datasetName === '9k') {
@@ -40,23 +47,34 @@ function normalizeUnitRow(u: any) {
   const bedroomsNum = Number(u.bedrooms || u.beds || 0) || 0;
   const bathroomsNum = Number(u.bathrooms || u.baths || 0) || 0;
 
+  const dealType =
+    u.mode === 'rent'
+      ? 'Rent'
+      : u.mode === 'resale'
+      ? 'Re-sale'
+      : u.operation || u.dealType || u.deal_type || 'Sale';
+
   return {
-    'Listing ID': u.id || u.sierraCode || '',
-    'Sierra Code': u.sierraCode || u.id || '',
+    'Listing ID': u.id || u.sierraCode || u.code || '',
+    'Sierra Code': u.code || u.sierraCode || u.id || '',
     'Compound / Project': u.compound || u.location || 'New Cairo',
-    'Location': u.location || u.compound || 'New Cairo, Cairo',
-    'Unit Type': u.type || u.unit_type || 'Apartment',
-    'Deal Type': u.operation || u.dealType || u.deal_type || 'Sale',
+    'Location': u.location || u.rawLocation || u.compound || 'New Cairo, Cairo',
+    'Unit Type': u.propertyType || u.type || u.unit_type || 'Apartment',
+    'Deal Type': dealType,
     'Price (EGP)': priceNum,
-    'Price Formatted': u.priceFormatted || (priceNum > 0 ? `${priceNum.toLocaleString()} EGP` : 'Price on Request'),
+    'Price Formatted': u.priceLabel || u.priceFormatted || (priceNum > 0 ? `${priceNum.toLocaleString()} EGP` : 'Price on Request'),
     'Currency': u.currency || 'EGP',
     'Area (m²)': areaNum,
     'Bedrooms': bedroomsNum,
     'Bathrooms': bathroomsNum,
     'Finishing Status': u.finishing || u.finishingStatus || 'Standard',
-    'Channel Source': u.sourceGroup || u.sourceType || u.origin || 'Master Inventory',
+    'Owner Contact Name': u.contactName || '',
+    'Owner Phone': u.contactPhone || '',
+    'WhatsApp Direct': u.whatsappDirect || '',
+    'Description': u.description || '',
+    'Channel Source': u.source || u.sourceGroup || u.sourceType || 'Master Inventory',
     'Owner / Broker Type': u.sourceType || 'Owner Direct',
-    'Listing Status': u.status || 'Available',
+    'Listing Status': u.statusLabel || u.status || 'Available',
     'Is New': u.isNewListing ? 'Yes' : 'No',
     'Date Added': u.listedAt || u.dateAdded || new Date().toISOString().slice(0, 10),
   };
@@ -79,7 +97,9 @@ export async function GET(request: Request) {
 
   if (filterDealType) {
     rawUnits = rawUnits.filter((u) => {
-      const d = String(u.operation || u.dealType || u.deal_type || '').toLowerCase();
+      const d = String(u.mode || u.operation || u.dealType || u.deal_type || '').toLowerCase();
+      if (filterDealType === 'rent') return d.includes('rent') || d.includes('إيجار');
+      if (filterDealType === 'resale' || filterDealType === 'sale') return d.includes('resale') || d.includes('sale') || d.includes('بيع');
       return d.includes(filterDealType);
     });
   }
