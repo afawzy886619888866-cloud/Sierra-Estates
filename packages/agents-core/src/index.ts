@@ -15,6 +15,7 @@ export * from './contract-engine';
 export * from './arbitrage-scanner';
 export * from './vip-concierge';
 export * from './notebookllm-engine';
+export * from './notebookllm-harvester';
 export * from './voice-briefing';
 export * from './video-teaser';
 export * from './public-apis-client';

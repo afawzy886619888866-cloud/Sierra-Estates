@@ -51,3 +51,13 @@ export {
   type GoalAlignedContextDirective,
 } from './brain-rag-engine'
 
+/* Autonomous Online Market Intelligence & Lead Enhancement */
+export {
+  OnlineIntelligenceEngine,
+  onlineIntelligence,
+  type MarketTrendReport,
+  type WebsiteEnhancementDirective,
+  type LeadGenerationVector,
+} from './online-intelligence-engine'
+
+
