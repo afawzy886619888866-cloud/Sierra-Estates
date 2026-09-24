@@ -2423,7 +2423,7 @@ function AdminApp() {
       case 'reports':return <ReportsView lang={langKey}/>;
       case 'contracts':return <ContractsView />;
       case 'heatmap':return <HeatmapView />;
-      case 'intelligence':return <AgentIntelligence />;
+      case 'intelligence':return <AgentIntelligence lang={langKey} />;
       case 'memory_brain':
       case 'deepseek':
       case 'mempalace':

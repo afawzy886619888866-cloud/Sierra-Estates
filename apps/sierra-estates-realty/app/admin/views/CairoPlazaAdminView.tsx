@@ -2329,6 +2329,9 @@ Sierra Estates Commercial Desk: +20 109 204 8333`}
               <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 8:</b> خريطة الاستثمار، نماذج التشغيل وبيانات التواصل
               </div>
+            </div>
+          </div>
+
           {/* Commercial Video Reel Showcase */}
           <div
             style={{

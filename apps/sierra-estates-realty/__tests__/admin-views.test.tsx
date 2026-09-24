@@ -128,8 +128,8 @@ describe('DashboardView', () => {
     expect(render(<DashboardView lang="en" />)).toContain('Systems Operational');
   });
 
-  it('shows Active Catalog value 1,547', () => {
-    expect(render(<DashboardView lang="en" />)).toContain('1,547');
+  it('shows Active Catalog value 585', () => {
+    expect(render(<DashboardView lang="en" />)).toContain('585');
   });
 
   it('shows OpenClaw Autonomous Harvester Cockpit with 19 channels', () => {

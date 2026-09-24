@@ -112,7 +112,7 @@ describe('Enhanced Admin Views Test Suite', () => {
       expect(html).toContain('Executive Dashboard · Intelligence OS');
       expect(html).toContain('Deal Conversion Pipeline');
       expect(html).toContain('Live Agent Fleet Telemetry');
-      expect(html).toContain('1,547');
+      expect(html).toContain('585');
       expect(html).toContain('98.4%');
     });
 

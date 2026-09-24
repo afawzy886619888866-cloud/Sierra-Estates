@@ -30,10 +30,10 @@ interface DashboardLead {
 }
 
 const FALLBACK_HOT_LEADS: DashboardLead[] = [
-  { id: 'lead-1', name: 'Dr. Tarek El-Mansy', phone: '+201001234567', interest: 'Mivida · 3B Standalone Villa', stage: 'Negotiating', score: 98, budget: '18.5M EGP', color: '#C8961A' },
-  { id: 'lead-2', name: 'Eng. Mona Al-Shorbagy', phone: '+201098765432', interest: 'Hyde Park · Lake Penthouse', stage: 'Viewing Scheduled', score: 95, budget: '14.2M EGP', color: '#10B981' },
-  { id: 'lead-3', name: 'Karim Abdel-Aziz', phone: '+201123456789', interest: 'Swan Lake · Signature Villa', stage: 'Contract Draft', score: 94, budget: '32.0M EGP', color: '#8B5CF6' },
-  { id: 'lead-4', name: 'Dina El-Gohary', phone: '+201201122334', interest: 'Eastown · Duplex + Garden', stage: 'Initial Contact', score: 91, budget: '9.8M EGP', color: '#F59E0B' },
+  { id: 'lead-1', name: 'Hazem (Direct Owner)', phone: '+201001534224', interest: 'Fifth Square · 3B Apartment (MFS-3B-11.95M)', stage: 'Direct Owner Intake', score: 98, budget: '11.95M EGP', color: '#C8961A' },
+  { id: 'lead-2', name: 'ا. ليلى فريد (مالك مباشر)', phone: '+201228774975', interest: 'Al Rehab · Residence (FP-25R-11.5M)', stage: 'Viewing Scheduled', score: 96, budget: '11.5M EGP', color: '#10B981' },
+  { id: 'lead-3', name: 'عمرو مرسي (مالك مباشر)', phone: '+201013995871', interest: 'Fifth Square · Ground Unit (HV1-4R-8.8M)', stage: 'Active Listing', score: 94, budget: '8.8M EGP', color: '#8B5CF6' },
+  { id: 'lead-4', name: 'محمد (مالك مباشر)', phone: '+201022844661', interest: 'Madinaty · B14 Residence (MT-B14-3U-8.34M)', stage: 'Follow Up', score: 92, budget: '8.5M EGP', color: '#F59E0B' },
 ];
 
 const RECENT_ACTIVITIES: ActivityFeedItem[] = [
@@ -42,54 +42,54 @@ const RECENT_ACTIVITIES: ActivityFeedItem[] = [
     timestamp: 'Just now',
     agent: 'openclaw_architect',
     event: {
-      en: 'Consolidated master inventory reconciled 460 units across 19 WhatsApp & master channels',
-      ar: 'المخزون الموحد دمج 460 عقاراً عبر 19 مجموعة واتساب وشيت المخزون الرئيسي'
+      en: 'Master owner catalog synchronized 585 verified units (302 Rent + 283 Re-sale)',
+      ar: 'المخزون المعتمد وثّق 585 عقاراً حقيقياً من الملاك (302 إيجار + 283 إعادة بيع)'
     },
     compound: 'New Cairo & Madinaty',
     badge: 'INVENTORY_SYNC',
   },
   {
     id: 'act-1',
-    timestamp: '2m ago',
+    timestamp: '3m ago',
     agent: 'vertex_omni',
     event: {
-      en: 'AVM model updated valuation baseline for 12 Hyde Park villas',
-      ar: 'نموذج التقييم الآلي حدّث خط الأساس لـ 12 فيلا في هايد بارك'
+      en: 'AVM model calibrated valuation baseline across 22 New Cairo & 5th Settlement compounds',
+      ar: 'نموذج التقييم الذكي وازن خط الأساس السعري عبر 22 كمبوند بالقاهرة الجديدة والتجمع'
     },
-    compound: 'Hyde Park',
+    compound: 'Mivida & Hyde Park',
     badge: 'VALUATION',
   },
   {
     id: 'act-2',
-    timestamp: '8m ago',
+    timestamp: '9m ago',
     agent: 'concierge_lead',
     event: {
-      en: 'WhatsApp qualification completed for VIP Lead Sara Mohamed',
-      ar: 'اكتمل تأهيل العميل المميز سارة محمد عبر واتساب'
+      en: 'Direct WhatsApp communication channels verified for 100% of direct owner listings',
+      ar: 'قنوات واتساب المباشرة تم تأكيدها لـ 100% من عقارات الملاك المباشرين'
     },
-    compound: 'Mivida',
+    compound: 'Al Rehab & Fifth Square',
     badge: 'QUALIFIED',
   },
   {
     id: 'act-3',
-    timestamp: '19m ago',
+    timestamp: '21m ago',
     agent: 'openclaw_orchestrator',
     event: {
-      en: 'Multi-party negotiation simulation matched buyer & seller margin at 4.1%',
-      ar: 'محاكاة التفاوض متعدد الأطراف قاربت هامش البائع والمشتري عند 4.1%'
+      en: 'Price index normalized for Al Rehab & Madinaty resale units against current market benchmarks',
+      ar: 'مؤشر الأسعار تم توحيده لوحدات إعادة البيع بالرحاب ومدينتي وفق أسعار السوق الحقيقية'
     },
-    compound: 'Katameya Dunes',
-    badge: 'NEGOTIATION',
+    compound: 'Al Rehab & Madinaty',
+    badge: 'ARBITRAGE',
   },
   {
     id: 'act-4',
-    timestamp: '35m ago',
+    timestamp: '38m ago',
     agent: 'property_finder_connector',
     event: {
-      en: 'Automated sync ingested 36 verified listings with price index normalization',
-      ar: 'المزامنة التلقائية استوردت 36 وحدة معتمدة مع توحيد مؤشر الأسعار'
+      en: 'Direct Owner Intake pipeline synchronized with Sierra_Estates_Owners_Units_Rent_and_Resale',
+      ar: 'خط استلام الملاك تم دمجه ومطابقته مع شيت الوحدات المعتمد الموحد'
     },
-    compound: 'Villette',
+    compound: 'New Cairo All-Zones',
     badge: 'SYNC',
   },
 ];
@@ -262,8 +262,8 @@ export default function DashboardView({
   }, [fetchTelemetry]);
 
   const metrics = useMemo(() => {
-    const total = liveData?.totalListings ? liveData.totalListings.toLocaleString() : '1,547';
-    const leadsCount = liveData?.newInquiries7d !== undefined ? liveData.newInquiries7d.toString() : '284';
+    const total = liveData?.totalListings ? liveData.totalListings.toLocaleString() : '585';
+    const leadsCount = liveData?.newInquiries7d !== undefined ? liveData.newInquiries7d.toString() : '283';
 
     switch (timeRange) {
       case '7d':
