@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Building2, Phone, MessageSquare, ShieldCheck, FileText,
-  TrendingUp, Search, Filter, Layers,
+  TrendingUp, Search, Filter, Layers, Download,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -202,6 +202,46 @@ type AdCampaign = {
 };
 
 const officialAdCampaigns: AdCampaign[] = [
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-arabic-banner-office.jpg',
+    badgeEn: 'ARABIC LUXURY · SIERRA',
+    badgeAr: 'بانر عربي فاخر · سييرا',
+    titleEn: 'Cairo Plaza Executive Suites · Official Arabic Ad',
+    titleAr: 'صرح كايرو بلازا — مقرات إدارية وتنفيذية فاخرة',
+    descEn: 'Authentic site photo with official Sierra Estates gold logo, Cairo Arabic typography, and WhatsApp 01092048333.',
+    descAr: 'تصوير حقيقي من الموقع مع لوجو سييرا الذهبي الرسمي وخطوط عربية فاخرة والواتساب المباشر.',
+    ref: 'REF: SE-CP-AR-OFFICE',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-arabic-banner-commercial.jpg',
+    badgeEn: 'BANQUE MISR ANCHOR',
+    badgeAr: 'واجهة بنك مصر التجارية',
+    titleEn: 'Commercial Hub & Flagship Retail · Arabic Ad',
+    titleAr: 'الصرح التجاري والواجهة الكبرى مع بنك مصر',
+    descEn: 'High footfall retail and showroom units with official Banque Misr operational branch.',
+    descAr: 'محلات وتوكيلات تجارية وبنوك بأعلى كثافة مشاة أمام محطة المترو مباشرة.',
+    ref: 'REF: SE-CP-AR-COMMERCIAL',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-arabic-banner-luxury-lobby.jpg',
+    badgeEn: 'HOTEL-GRADE LOBBY',
+    badgeAr: 'مدخل فندقي فاخر',
+    titleEn: 'Hotel-Grade Marble Entrance & Medical Suites',
+    titleAr: 'مداخل واستقبال فندقي فاخر — كايرو بلازا',
+    descEn: 'Italian emerald marble stairs, Mitsubishi lifts, and medical & corporate suites from EGP 2.8M.',
+    descAr: 'رخام إيطالي فاخر، مصاعد ميتسوبيشي، ومقرات وعيادات طبية متخصصة مع تسهيلات سداد.',
+    ref: 'REF: SE-CP-AR-LOBBY',
+  },
+  {
+    src: '/cairo-plaza/ads/cairo-plaza-arabic-banner-metro-tower.jpg',
+    badgeEn: 'TRANSIT LANDMARK',
+    badgeAr: 'أمام المترو مباشرة',
+    titleEn: 'Twin Towers Facing Al-Mataria Metro Station',
+    titleAr: 'أقوى موقع تجاري واستثماري أمام محطة المترو',
+    descEn: 'Zero meters from the metro station, massive advertising facade, and immediate utility readiness.',
+    descAr: 'صفر متر من بوابة محطة المترو، واجهة إعلانية ضخمة، وتعاقد واستلام فوري.',
+    ref: 'REF: SE-CP-AR-METRO',
+  },
   {
     src: '/cairo-plaza/ads/cairo-plaza-real-banner-office.jpg',
     badgeEn: '100% REAL SITE PHOTO',
@@ -891,7 +931,23 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
           <h1 className="cp-title">{t.title}</h1>
           <p className="cp-body">{t.body}</p>
           <div className="cp-actions">
-            <Link href={`${prefix}/investor`} className="cp-btn cp-btn-primary">
+            <a
+              href="/cairo-plaza/documents/cairo-plaza-arabic-brochure-2026.pdf"
+              download="cairo-plaza-arabic-brochure-2026.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cp-btn cp-btn-primary"
+              style={{
+                background: 'linear-gradient(135deg, #C8961A 0%, #E9C176 100%)',
+                color: '#071422',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              <Download className="i" style={{ width: 18, height: 18, display: 'inline', marginInlineEnd: 6 }} />
+              {isAr ? 'تحميل البروشور الشامل بالأسعار (PDF)' : 'Download Arabic Brochure & Prices (PDF)'}
+            </a>
+            <Link href={`${prefix}/investor`} className="cp-btn cp-btn-secondary">
               <TrendingUp className="i" style={{ width: 18, height: 18, display: 'inline', marginInlineEnd: 6 }} />
               {isAr ? 'اطلب الملف الاستثماري' : 'Request the Investor Pack'}
             </Link>
@@ -1284,13 +1340,29 @@ export default function CairoPlazaExperience({ lang: initialLang = 'en', section
               <p>{isAr ? 'سيقوم مستشار الاستثمار الخاص بنا بإرسال الملف الكامل والتواصل معك خلال دقائق.' : 'Our private wealth advisor will deliver the complete dossier directly via WhatsApp or Email.'}</p>
             </div>
             <div className="cp-investor-cta-actions">
+              <a
+                href="/cairo-plaza/documents/cairo-plaza-arabic-brochure-2026.pdf"
+                download="cairo-plaza-arabic-brochure-2026.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cp-btn cp-btn-primary"
+                style={{
+                  background: 'linear-gradient(135deg, #C8961A 0%, #E9C176 100%)',
+                  color: '#071422',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                <Download className="i" style={{ width: 16, height: 16, display: 'inline', marginInlineEnd: 6 }} />
+                {isAr ? 'تحميل البروشور الشامل بالأسعار (PDF)' : 'Download Arabic Brochure (PDF)'}
+              </a>
               <button
                 type="button"
                 onClick={() => {
                   const msg = isAr ? 'أود طلب الملف الاستثماري الرسمي لمشروع كايرو بلازا.' : 'I would like to request the official Cairo Plaza Investor Pack.';
                   window.open(`https://wa.me/201092048333?text=${encodeURIComponent(msg)}`, '_blank');
                 }}
-                className="cp-btn cp-btn-primary"
+                className="cp-btn cp-btn-secondary"
               >
                 <MessageSquare className="i" style={{ width: 16, height: 16, display: 'inline', marginInlineEnd: 6 }} />
                 {isAr ? 'طلب الملف عبر واتساب' : 'Request via WhatsApp'}

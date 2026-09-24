@@ -12,6 +12,7 @@ import {
   Sparkles,
   Building2,
   MessageCircle,
+  FileText,
   X,
   Maximize2,
 } from 'lucide-react';
@@ -158,6 +159,153 @@ const SITE_PHOTOS: SitePhoto[] = [
 ];
 
 const COMMERCIAL_CREATIVES: CommercialCreative[] = [
+  {
+    id: 'cc-ar-office',
+    titleEn: 'Arabic Luxury Banner · Executive Office Suite (1:1)',
+    titleAr: 'بانر عربي فاخر · مقرات إدارية وتنفيذية فاخرة (1:1)',
+    src: '/cairo-plaza/social/cairo-plaza-arabic-banner-office.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'Instagram Sponsored', 'WhatsApp Broadcast', 'Meta Ads Manager'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'ARABIC LUXURY · SIERRA LOGO',
+    badgeAr: 'بانر عربي فاخر · لوجو سييرا',
+    descEn: 'High-end Arabic banner with real office hero, official Sierra Estates gold logo, Cairo calligraphy, 3 real insets, WhatsApp 01092048333, and website link.',
+    descAr: 'بانر عربي فاخر متكامل يجمع صورة المقر الحقيقي ولوجو سييرا الذهبي الرسمي وخطوط أميري وكايرو والواتساب 01092048333 ورابط الموقع.',
+    suggestedCaptionAr: `🌟 صرح كايرو بلازا — مقرات إدارية وتنفيذية فاخرة جاهزة فوراً للتشغيل!
+بموقع استراتيجي فريد أمام محطة مترو المطرية مباشرة | القاهرة.
+💎 تشطيب وتأثيث فندقي راقي متكامل (مكاتب جلدية وتكييفات)
+💎 مساحات تبدأ من 75 م² بتوزيع هندسي ذكي
+💎 عائد إيجاري استثماري سنوي يصل إلى 22%
+💎 تسهيلات سداد بدون فوائد مع شركة سييرا
+💎 استلام فوري للمفتاح وعقود موثقة من المالك مباشرة
+
+📲 احجز موعد معاينتك الحية اليوم عبر واتساب: 01092048333
+🌐 الموقع الرسمي: https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🌟 Cairo Plaza — Luxury Turnkey Executive Office Suites
+Prime location directly opposite Al-Mataria Metro Station, Central Cairo.
+💎 Fitted with executive desks, leather armchairs, climate control & fast Wi-Fi
+💎 75 SQM intelligent commercial layout
+💎 Annual rental yields up to 22%
+💎 Interest-free installment facilities directly from Sierra Estates
+💎 Immediate key handover with notarized contracts
+
+📲 WhatsApp / Inquiries: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-ar-commercial',
+    titleEn: 'Arabic Luxury Banner · Banque Misr Commercial Hub (1:1)',
+    titleAr: 'بانر عربي فاخر · الواجهة التجارية الكبرى وبنك مصر (1:1)',
+    src: '/cairo-plaza/social/cairo-plaza-arabic-banner-commercial.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed', 'Instagram Sponsored', 'Retail Investors', 'Google Display'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'ARABIC COMMERCIAL · 1:1',
+    badgeAr: 'بانر تجاري عربي · 1:1',
+    descEn: 'Arabic commercial banner with real street photo and Banque Misr anchor, official Sierra Estates branding, 3 real insets, and WhatsApp 01092048333.',
+    descAr: 'تصميم تجاري راقي للواجهة الحقيقية وفرع بنك مصر المتكامل وتدفق المشاة مع لوجو سييرا الذهبي والواتساب ورابط الموقع.',
+    suggestedCaptionAr: `🏦 استثمر في أقوى واجهة تجارية بالقاهرة — صرح كايرو بلازا!
+واجهة حيوية مباشرة تضم فرع بنك مصر المتكامل أمام محطة المترو مباشرة:
+🔥 أعلى ترافيك بشري وكثافة مشاة على مدار اليوم
+🔥 محلات وشو روم وتوكيلات تجارية بالدور الأرضي
+🔥 عقود موثقة وأنظمة تملك أو استئجار مرنة
+🔥 استثمار تجاري يبدأ من 30 ألف ج / شهر
+
+📲 للتواصل والحجز الفوري عبر واتساب: 01092048333
+🌐 https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🏦 Prime Commercial Investment — Real Street Frontage at Cairo Plaza!
+Anchored by an operational flagship Banque Misr branch directly on the high-traffic metro boulevard:
+🔥 Extraordinary non-stop pedestrian footfall
+🔥 Ground floor retail, pharmacy & showroom units
+🔥 High projected rental yields up to 22%
+🔥 Flexible purchase and lease arrangements
+
+📲 Call / WhatsApp Sierra Estates: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-ar-luxury-lobby',
+    titleEn: 'Arabic Luxury Banner · Hotel-Grade Marble Entrance (1:1)',
+    titleAr: 'بانر عربي فاخر · مداخل واستقبال فندقي فاخر (1:1)',
+    src: '/cairo-plaza/social/cairo-plaza-arabic-banner-luxury-lobby.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Feed', 'Instagram Carousel', 'Healthcare & Corporate Investors'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'ARABIC LUXURY LOBBY',
+    badgeAr: 'مدخل فندقي عربي',
+    descEn: 'Authentic green marble staircase photo with Arabic luxury calligraphy, Sierra Estates official logo, and EGP 2.8M starting price.',
+    descAr: 'تصوير حقيقي للسلالم الرخامية الفاخرة مع خطوط عربية مذهبة ولوجو سييرا وكارت سعر 2.8 مليون مع تقسيط 3 سنوات.',
+    suggestedCaptionAr: `🏛️ فخامة الاستقبال تصنع الفارق — مداخل فندقية فاخرة في كايرو بلازا!
+رخام أخضر إيطالي، بوابات حديد مشغول، ومصاعد ميتسوبيشي سريعة:
+✨ مقرات كبرى وعيادات طبية متخصصة
+✨ جوار كبرى الكيانات مثل معمل ألفا وإيليت سكان وبنك مصر
+✨ أمن وحراسة 24 ساعة
+✨ فرص التملك تبدأ من 2.8 مليون ج مع خصم للكاش أو تقسيط 3 سنوات
+
+📲 احجز زيارتك ومعاينتك الميدانية: 01092048333
+🌐 https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🏛️ Hotel-Grade Reception & Corporate Suites at Cairo Plaza!
+Italian emerald marble staircases, bespoke ironwork, and modern amenities:
+✨ High-speed Mitsubishi elevators & 24/7 security
+✨ Corporate suites & specialized medical clinics
+✨ Clustered with Alfa Lab, Elite Scan & Banque Misr
+✨ Ownership starting from EGP 2.8M with installment options
+
+📲 Book a Tour: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-ar-metro-tower',
+    titleEn: 'Arabic Luxury Banner · Twin Towers Facing Metro (1:1)',
+    titleAr: 'بانر عربي فاخر · البرجان التوأمان أمام المترو مباشرة (1:1)',
+    src: '/cairo-plaza/social/cairo-plaza-arabic-banner-metro-tower.jpg',
+    format: '1:1 Square',
+    platforms: ['Facebook Lead Ad', 'Instagram Sponsored', 'WhatsApp Broadcast'],
+    dimensions: '1080 × 1080',
+    badgeEn: 'ARABIC TRANSIT TOWER',
+    badgeAr: 'برج المترو بالعربي',
+    descEn: 'Real high-angle tower photo from the metro pedestrian overpass with Arabic typography, Sierra Estates branding, and hotline 01092048333.',
+    descAr: 'تصوير حقيقي من كوبري المترو يبرز البرجين والواجهة الضخمة لنشاطك، مع الخطوط العربية الفاخرة وهوية سييرا والواتساب.',
+    suggestedCaptionAr: `🚇 صفر متر من محطة مترو المطرية — كايرو بلازا أقوى موقع تجاري واستثماري!
+واجهة إعلانية ضخمة تضمن أعلى شهرة وسهولة وصول لنشاطك:
+💎 وحدات تجارية وطبية وإدارية بمساحات متنوعة
+💎 مرافق وعدادات مياه وكهرباء وتكييفات جاهزة فوراً
+💎 تعاقد واستلام في نفس اليوم من المالك مباشرة
+💎 أسعار إيجار تبدأ من 25 ألف إلى 60 ألف ج شهرياً
+
+📲 اتصل أو تواصل عبر واتساب: 01092048333
+🌐 https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🚇 Zero Meters from Al-Mataria Metro Station — Cairo Plaza!
+The ultimate transit-oriented landmark in Central Cairo:
+💎 High-visibility commercial, medical, and administrative suites
+💎 Utilities connected & ready for immediate operation
+💎 Same-day contracting and key handover
+💎 Rental options from EGP 25,000 to 60,000 / month
+
+📲 Inquire Today: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
+  {
+    id: 'cc-ar-story-office',
+    titleEn: 'Arabic Luxury Story / Reel · Executive Office (9:16)',
+    titleAr: 'ستوري وريلز عربي فاخر · مقرات إدارية وتنفيذية (9:16)',
+    src: '/cairo-plaza/social/cairo-plaza-arabic-story-office.jpg',
+    format: '9:16 Story / Reel',
+    platforms: ['Instagram Stories', 'Facebook Reels', 'WhatsApp Status', 'TikTok Sponsored'],
+    dimensions: '1080 × 1920',
+    badgeEn: 'ARABIC STORY / REEL',
+    badgeAr: 'ستوري وريلز عربي',
+    descEn: 'Full vertical 9:16 Story ad featuring the real executive office, official Sierra Estates logo, 4 feature cards, 3 real circular insets, and big WhatsApp CTA 01092048333.',
+    descAr: 'تصميم رأسي كامل 9:16 مخصص للستوري والريلز والواتساب مع صور حقيقية وزر اتصال مباشر وتفاصيل الأسعار والموقع.',
+    suggestedCaptionAr: `🏢 مقرك الإداري الفاخر جاهز فوراً للتشغيل في كايرو بلازا أمام المترو مباشرة!
+إيجار شهري يبدأ من 35 ألف ج | استلام فوري بالمفتاح وتسهيلات سداد بدون فوائد.
+📲 تواصل الآن عبر واتساب: 01092048333
+🌐 https://sierra-estates.net/ar/cairo-plaza`,
+    suggestedCaptionEn: `🏢 Turnkey Executive Office Suite at Cairo Plaza — Directly Opposite Metro!
+Monthly rent from EGP 35,000 | Immediate handover & interest-free installments.
+📲 WhatsApp: +201092048333
+🌐 https://sierra-estates.net/cairo-plaza`,
+  },
   {
     id: 'cc-real-office',
     titleEn: 'Real Site Banner · Turnkey Executive Office Suite',
@@ -815,7 +963,7 @@ export default function CairoPlazaAdminView({
   onNavigate?: (tab: string) => void;
 }) {
   const isAr = lang === 'ar';
-  const [activeTab, setActiveTab] = useState<'photos' | 'social' | 'campaigns' | 'inventory'>('photos');
+  const [activeTab, setActiveTab] = useState<'photos' | 'social' | 'campaigns' | 'inventory' | 'brochure'>('photos');
   const [filterFormat, setFilterFormat] = useState<'all' | '1:1 Square' | '9:16 Story / Reel' | '16:9 Landscape Banner'>('all');
   const [photoFilter, setPhotoFilter] = useState<'all' | 'exterior' | 'interior' | 'entrance'>('all');
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
@@ -949,6 +1097,29 @@ export default function CairoPlazaAdminView({
             >
               <ExternalLink size={14} />
               {isAr ? 'معاينة الصفحة العامة' : 'Open Public Site'}
+            </a>
+
+            <a
+              href="/cairo-plaza/documents/cairo-plaza-arabic-brochure-2026.pdf"
+              download="cairo-plaza-arabic-brochure-2026.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 16px',
+                borderRadius: 9,
+                background: 'rgba(200, 150, 26, 0.15)',
+                border: '1px solid rgba(200, 150, 26, 0.4)',
+                color: 'var(--gold, #C8961A)',
+                fontSize: 12,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              <Download size={14} />
+              {isAr ? 'تحميل البروشور الشامل بالأسعار (PDF)' : 'Download Arabic Brochure (PDF)'}
             </a>
 
             {onNavigate && (
@@ -1112,6 +1283,30 @@ export default function CairoPlazaAdminView({
         >
           <Building2 size={16} />
           {isAr ? 'جدول الوحدات المتاحة والتسعير' : 'Available Units & Pricing'}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('brochure')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: 8,
+            border: 'none',
+            background: activeTab === 'brochure' ? 'linear-gradient(135deg, rgba(200, 150, 26, 0.25), rgba(200, 150, 26, 0.1))' : 'transparent',
+            color: activeTab === 'brochure' ? 'var(--gold, #C8961A)' : 'var(--tx-m, #A0AEC0)',
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            borderBottom: activeTab === 'brochure' ? '2px solid var(--gold, #C8961A)' : '2px solid transparent',
+          }}
+        >
+          <FileText size={16} />
+          {isAr ? 'البروشور العربي الرسمي (PDF 8 صفحات)' : 'Official Arabic Brochure (8-Page PDF)'}
+          <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 99, background: 'rgba(200, 150, 26, 0.2)', color: 'var(--gold, #C8961A)' }}>
+            8 PAGES
+          </span>
         </button>
       </div>
 
@@ -1819,6 +2014,320 @@ Sierra Estates Commercial Desk: +20 109 204 8333`}
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: ARABIC BROCHURE PDF & SPACE VISION ──────────────────────── */}
+      {activeTab === 'brochure' && (
+        <div>
+          {/* Executive CTA Banner */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 35, 57, 0.95) 0%, rgba(7, 14, 26, 0.98) 100%)',
+              border: '1px solid rgba(200, 150, 26, 0.4)',
+              borderRadius: 14,
+              padding: '24px 28px',
+              marginBottom: 24,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 16,
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    fontFamily: 'JetBrains Mono, monospace',
+                    letterSpacing: '0.1em',
+                    padding: '3px 10px',
+                    borderRadius: 6,
+                    background: 'rgba(200, 150, 26, 0.2)',
+                    color: 'var(--gold, #C8961A)',
+                    border: '1px solid rgba(200, 150, 26, 0.4)',
+                  }}
+                >
+                  8-PAGE LUXURY ARABIC DOSSIER · VECTOR PDF
+                </span>
+                <span style={{ fontSize: 11, color: '#34D399', fontWeight: 600 }}>
+                  ● {isAr ? 'بيانات وحصر أبريل 2026 المعتمد' : 'Verified April 2026 Schedule'}
+                </span>
+              </div>
+
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#F0EDE5', margin: '0 0 6px' }}>
+                {isAr ? 'بروشور مشروع كايرو بلازا التجاري والإداري الشامل (باللغة العربية)' : 'Cairo Plaza Comprehensive Arabic Commercial & Investment Brochure'}
+              </h2>
+
+              <p style={{ fontSize: 13, color: '#A0AEC0', margin: 0, maxWidth: 700, lineHeight: 1.6 }}>
+                {isAr
+                  ? 'بروشور طباعة رقمية فاخر وعالي الدقة (A4) يشتمل على جداول الأسعار الرسمية الصريحة (تبدأ من إلى)، وحصر المساحات الشامل، ورؤية تفصيلية لتوظيف واستغلال كل مساحة (ماكينات صراف، تجاري، عيادات، مقرات إدارية).'
+                  : 'High-resolution print-ready 8-page vector PDF detailing exact unit pricing (start from to), verified sizes, and the functional vision mapping what every space can become.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <a
+                href="/cairo-plaza/documents/cairo-plaza-arabic-brochure-2026.pdf"
+                download="cairo-plaza-arabic-brochure-2026.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '12px 22px',
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #C8961A 0%, #E9C176 100%)',
+                  color: '#071422',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 6px 18px rgba(200, 150, 26, 0.35)',
+                }}
+              >
+                <Download size={16} />
+                {isAr ? 'تحميل ملف PDF (حجم 5 ميجابايت)' : 'Download PDF (5 MB)'}
+              </a>
+
+              <a
+                href="/cairo-plaza/cairo-plaza-arabic-brochure.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '12px 18px',
+                  borderRadius: 10,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#F0EDE5',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                <ExternalLink size={15} />
+                {isAr ? 'استعراض في المتصفح (HTML)' : 'Open Interactive HTML'}
+              </a>
+            </div>
+          </div>
+
+          {/* Pricing & Size Start-From-To Matrix */}
+          <div style={{ marginBottom: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F0EDE5', marginBottom: 12 }}>
+              {isAr ? 'مؤشرات الأسعار والمساحات المعتمدة (تبدأ من إلى)' : 'Verified Price & Size Boundaries (Start From To)'}
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+              {/* Ground Floor Commercial */}
+              <div
+                style={{
+                  background: 'rgba(11, 19, 43, 0.7)',
+                  border: '1px solid rgba(200, 150, 26, 0.3)',
+                  borderRadius: 12,
+                  padding: 18,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold, #C8961A)' }}>الدور الأرضي التجاري</span>
+                  <span style={{ fontSize: 11, color: '#A0AEC0' }}>الأبراج 3 و 5 و 7</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  المساحات: <b style={{ color: '#F0EDE5' }}>1.55 م² إلى 34.3 م²</b>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  سعر المتر: <b style={{ color: 'var(--gold, #C8961A)' }}>40,000 إلى 55,000 ج.م</b>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#34D399', marginTop: 8 }}>
+                  سعر الوحدة: من 77,500 إلى 1,886,500 ج.م
+                </div>
+              </div>
+
+              {/* 1st Floor Commercial */}
+              <div
+                style={{
+                  background: 'rgba(11, 19, 43, 0.7)',
+                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  borderRadius: 12,
+                  padding: 18,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#34D399' }}>الدور الأول التجاري</span>
+                  <span style={{ fontSize: 11, color: '#A0AEC0' }}>برج 3</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  المساحات: <b style={{ color: '#F0EDE5' }}>14.6 م² إلى 49.15 م²</b>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  سعر المتر: <b style={{ color: '#34D399' }}>32,000 إلى 47,000 ج.م</b>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#34D399', marginTop: 8 }}>
+                  سعر الوحدة: من 511,000 إلى 1,572,800 ج.م
+                </div>
+              </div>
+
+              {/* Administrative & Medical */}
+              <div
+                style={{
+                  background: 'rgba(11, 19, 43, 0.7)',
+                  border: '1px solid rgba(96, 165, 250, 0.3)',
+                  borderRadius: 12,
+                  padding: 18,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#60A5FA' }}>الأبراج الإدارية والعيادات الطبية</span>
+                  <span style={{ fontSize: 11, color: '#A0AEC0' }}>الأبراج 1 و 3 و 7</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  المساحات: <b style={{ color: '#F0EDE5' }}>45 م² إلى 80 م²</b>
+                </div>
+                <div style={{ fontSize: 13, color: '#CBD5E1', marginBottom: 4 }}>
+                  سعر المتر: <b style={{ color: '#60A5FA' }}>13,000 إلى 26,000 ج.م</b>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#34D399', marginTop: 8 }}>
+                  سعر الوحدة: يبدأ من 585,000 إلى 1,472,000 ج.م
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Functional Vision: Imagine What Every Space Could Be */}
+          <div style={{ marginBottom: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F0EDE5', marginBottom: 6 }}>
+              {isAr ? 'رؤية التوظيف والاستغلال التجاري: تخيل ما يمكن أن يكون عليه كل مكان' : 'Functional Vision: Imagine What Every Space Could Be'}
+            </h3>
+            <p style={{ fontSize: 12, color: '#A0AEC0', marginBottom: 14 }}>
+              {isAr
+                ? 'دراسة جدوى هندسية وتشغيلية تبيّن أفضل نشاط تجاري واستثماري لكل نطاق مساحي داخل كايرو بلازا لتحقيق أسرع فترة استرداد رأس مال وأعلى عائد سنوي.'
+                : 'Strategic operational mapping outlining the optimal business model for each space envelope to maximize rental return and capital payback.'}
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+              {/* Micro Kiosks */}
+              <div style={{ background: 'rgba(11, 19, 43, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold, #C8961A)', marginBottom: 4 }}>
+                  🏧 المساحات الميكرو (1.55 – 3.5 م²)
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 8 }}>
+                  استثمار يبدأ من 77,500 ج | استرداد رأس المال: 6–8 شهور
+                </div>
+                <ul style={{ margin: 0, paddingRight: 18, fontSize: 12, color: '#CBD5E1', lineHeight: 1.7 }}>
+                  <li>ماكينات صراف آلي للبنوك الخاصة (Private ATM Node)</li>
+                  <li>أكشاك شحن ودفع فوري وإلكتروني (فوري / أمان / كاش)</li>
+                  <li>منافذ بيع كروت وشرائح مشغلي المحمول الأربعة</li>
+                </ul>
+              </div>
+
+              {/* Retail 10-25 SQM */}
+              <div style={{ background: 'rgba(11, 19, 43, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#34D399', marginBottom: 4 }}>
+                  📱 المساحات الأرضية الحيوية (10 – 25 م²)
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 8 }}>
+                  استثمار: 400,000 – 1,100,000 ج | عائد إيجاري متوقع: 18–22%
+                </div>
+                <ul style={{ margin: 0, paddingRight: 18, fontSize: 12, color: '#CBD5E1', lineHeight: 1.7 }}>
+                  <li>معارض إكسسوارات وهواتف ذكية وكاميرات</li>
+                  <li>مراكز بصريات ونظارات طبية وشمسية</li>
+                  <li>صرافة معتمدة، خدمات تحويل أموال ومكاتب سفريات</li>
+                  <li>محامص ومقاهي إسبريسو متخصصة (Specialty Coffee)</li>
+                </ul>
+              </div>
+
+              {/* Flagship Retail 26-35 SQM */}
+              <div style={{ background: 'rgba(11, 19, 43, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#60A5FA', marginBottom: 4 }}>
+                  🏪 المحلات والواجهات الرئيسية (26 – 35 م²)
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 8 }}>
+                  استثمار: 1.3 – 1.88 مليون ج | واجهات مباشرة على الشارع
+                </div>
+                <ul style={{ margin: 0, paddingRight: 18, fontSize: 12, color: '#CBD5E1', lineHeight: 1.7 }}>
+                  <li>صيدليات سلاسل كبرى 24/7 (العزبي / رشدي / سيف)</li>
+                  <li>منافذ توكيلات وعلامات تجارية للأزياء والأحذية</li>
+                  <li>محلات مجوهرات وذهب ومعارض هدايا فاخرة</li>
+                </ul>
+              </div>
+
+              {/* First Floor Commercial */}
+              <div style={{ background: 'rgba(11, 19, 43, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#E9C176', marginBottom: 4 }}>
+                  💈 الدور الأول التجاري (15 – 50 م²)
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 8 }}>
+                  استثمار: 511,000 – 1,572,000 ج | واجهات داخلية وسلم مباشر
+                </div>
+                <ul style={{ margin: 0, paddingRight: 18, fontSize: 12, color: '#CBD5E1', lineHeight: 1.7 }}>
+                  <li>مراكز صيانة معتمدة لشركات التقنية والإلكترونيات</li>
+                  <li>صالونات تجميل وسيدات VIP ومراكز عناية بالبشرة</li>
+                  <li>معارض مستلزمات طبية وتجهيزات عيادات الأسنان</li>
+                </ul>
+              </div>
+
+              {/* Administrative & Medical */}
+              <div style={{ background: 'rgba(11, 19, 43, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#A78BFA', marginBottom: 4 }}>
+                  🩺 المقرات الإدارية والعيادات الطبية (45 – 80 م²)
+                </div>
+                <div style={{ fontSize: 11, color: '#34D399', fontWeight: 600, marginBottom: 8 }}>
+                  استثمار: يبدأ من 585,000 ج | مداخل رخامية ومصاعد مستقلة
+                </div>
+                <ul style={{ margin: 0, paddingRight: 18, fontSize: 12, color: '#CBD5E1', lineHeight: 1.7 }}>
+                  <li>عيادات استشارية متخصصة (أسنان، عيون، ليزر وتجميل)</li>
+                  <li>مقرات إقليمية لشركات المقاولات، الشحن، والخدمات</li>
+                  <li>مكاتب محاسبة قانونية، مراجعة ضرائب، ومحاماة دولية</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* 8-Page Index Overview */}
+          <div
+            style={{
+              background: 'rgba(7, 14, 26, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 12,
+              padding: 20,
+            }}
+          >
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F0EDE5', marginBottom: 12 }}>
+              {isAr ? 'فهرس ومحتويات صفحات البروشور الثمانية (A4 Print-Ready)' : '8-Page Brochure Index & Content Structure'}
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 1:</b> الغلاف التنفيذي وصرح كايرو بلازا المعماري
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 2:</b> الموقع الاستراتيجي والكثافة المرورية بمحطة المترو
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 3:</b> جدول أسعار ومساحات الدور الأرضي (3، 5، 7)
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 4:</b> رؤية التوظيف والاستغلال التجاري بالدور الأرضي
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 5:</b> جدول أسعار ومساحات الدور الأول التجاري (برج 3)
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 6:</b> رؤية التوظيف والأنشطة المتوافقة بالدور الأول
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 7:</b> المقرات الإدارية والعيادات الطبية (1، 3، 7)
+              </div>
+              <div style={{ padding: 12, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <b style={{ color: 'var(--gold, #C8961A)', fontSize: 12 }}>صفحة 8:</b> خريطة الاستثمار، نماذج التشغيل وبيانات التواصل
+              </div>
+            </div>
           </div>
         </div>
       )}
