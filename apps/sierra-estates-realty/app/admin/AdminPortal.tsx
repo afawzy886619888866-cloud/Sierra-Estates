@@ -570,9 +570,9 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
         <div className="card" style={{padding:'14px 16px',borderTop:'3px solid #7C3AED'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
             <span style={{fontWeight:700,fontSize:13,color:'var(--tx)'}}>🤖 Autonomous Bots Sweep</span>
-            <span className="chip chip-purple">6 Agents</span>
+            <span className="chip chip-purple">10 Agents</span>
           </div>
-          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'تفعيل وكلاء الذكاء الاصطناعي الستة لمتابعة العملاء وتنسيق الصفقات.' : 'Trigger Leila, Sierra-Bot, and Stage-9 Closer to follow up with active leads.'}</p>
+          <p style={{fontSize:11,color:'var(--tx-m)',marginBottom:10,lineHeight:1.4}}>{isAr ? 'تفعيل وكلاء الذكاء الاصطناعي العشرة لمتابعة العملاء وتنسيق الصفقات وتدقيق المخزون.' : 'Trigger full 10-agent autonomous fleet to follow up leads, sync portals, and curate inventory.'}</p>
           <button 
             className="btn btn-ghost" 
             style={{width:'100%',justifyContent:'center',fontSize:11,borderColor:'rgba(124,58,237,.3)',color:'#7C3AED'}}
