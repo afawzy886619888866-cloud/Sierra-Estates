@@ -323,7 +323,7 @@ export default function WhatsAppChatImportView({ lang = 'en' }: Props) {
             gap: 8,
           }}
         >
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 shrink-0" />
           {error}
         </div>
       )}
