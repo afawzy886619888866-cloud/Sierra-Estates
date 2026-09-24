@@ -194,15 +194,41 @@ async function buildRecommendationMessage(
       finishing: string;
       hasPhoto: boolean;
       status: string;
+      isOwner?: boolean;
     }>('units', {
       where: [{ column: 'status', value: 'available' }],
       limit: 50,
     });
 
+    // Also pull latest direct-owner units from Shared Memory Bus RAG
+    try {
+      const ownerMemories = await sharedMemory.search('', ['owner_unit']);
+      for (const mem of ownerMemories) {
+        const d = (mem.value as any)?.data || mem.value;
+        if (d && (d.compound || d.priceEgp)) {
+          units.unshift({
+            id: d.sierraCode || mem.id,
+            compound: d.compound || 'New Cairo',
+            title: `${d.compound} (${d.propertyType || 'Apartment'})`,
+            price: d.priceEgp || d.price || 0,
+            area: d.areaSqm || d.area_sqm || 0,
+            bedrooms: d.bedrooms || 3,
+            type: d.propertyType || d.type || 'Apartment',
+            hasPhoto: true,
+            status: 'available',
+            isOwner: true,
+          });
+        }
+      }
+    } catch {}
+
     // Score each unit
     const scored = units
       .map((u) => {
         let score = 0;
+
+        // Direct Owner Golden Deal bonus
+        if (u.isOwner) score += 25;
 
         // Compound match
         if (data.compounds?.length) {
@@ -256,9 +282,13 @@ async function buildRecommendationMessage(
 
     scored.forEach((u, i) => {
       const priceM = u.price ? `${(u.price / 1_000_000).toFixed(1)}M EGP` : 'TBD';
+      const ownerBadge = u.isOwner
+        ? (lang === 'ar' ? '   💎 *مباشر من المالك (بدون عمولة)*\n' : '   💎 *Direct Owner Deal (0% Commission)*\n')
+        : '';
       if (lang === 'ar') {
         lines.push(
           `*${i + 1}. ${u.compound || 'New Cairo'}*\n` +
+          ownerBadge +
           `   📐 ${u.area || '?'} م²  •  🛏️ ${u.bedrooms || '?'} غرف\n` +
           `   💰 ${priceM}\n` +
           `   ${u.hasPhoto ? '📷 صور متاحة' : '📋 بيانات فقط'}\n`
@@ -266,6 +296,7 @@ async function buildRecommendationMessage(
       } else {
         lines.push(
           `*${i + 1}. ${u.compound || 'New Cairo'}*\n` +
+          ownerBadge +
           `   📐 ${u.area || '?'} sqm  •  🛏️ ${u.bedrooms || '?'} bed\n` +
           `   💰 ${priceM}\n` +
           `   ${u.hasPhoto ? '📷 Photos available' : '📋 Data listing only'}\n`
