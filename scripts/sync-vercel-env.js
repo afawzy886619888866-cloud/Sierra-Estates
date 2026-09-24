@@ -224,18 +224,48 @@ function vercelRequest(method, endpoint, body = null) {
 export async function syncVarsToProject(projectName, projectId, envVars) {
   console.log(`\n🚀 [Vercel Sync] Synchronizing environment variables to: ${projectName} (${projectId})...`);
   
+  // 1. Fetch all existing project env vars
+  let existingMap = new Map();
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      const res = await vercelRequest('GET', `/v9/projects/${projectId}/env`);
+      if (res && res.envs) {
+        for (const e of res.envs) {
+          existingMap.set(e.key, e);
+        }
+        break;
+      }
+    } catch (err) {
+      console.warn(`   ⏳ [${attempt}/5] Fetching existing envs failed: ${err.message}, retrying...`);
+      await sleep(attempt * 2000);
+    }
+  }
+
+  // 2. Sync each var
   for (const [key, value] of Object.entries(envVars)) {
     if (!value) continue;
 
-    let synced = false;
-    for (let attempt = 1; attempt <= 4; attempt++) {
+    const existing = existingMap.get(key);
+    const varType = key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') || key.includes('PASSWORD') ? 'encrypted' : 'plain';
+
+    for (let attempt = 1; attempt <= 5; attempt++) {
       try {
-        const res = await vercelRequest('POST', `/v10/projects/${projectId}/env?upsert=true`, {
-          key,
-          value: String(value),
-          type: key.includes('SECRET') || key.includes('KEY') || key.includes('JSON') || key.includes('TOKEN') ? 'encrypted' : 'plain',
-          target: ['production', 'preview'],
-        });
+        let res;
+        if (existing) {
+          // Update existing env var
+          res = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${existing.id}`, {
+            value: String(value),
+            target: ['production', 'preview'],
+          });
+        } else {
+          // Create new env var
+          res = await vercelRequest('POST', `/v10/projects/${projectId}/env`, {
+            key,
+            value: String(value),
+            type: varType,
+            target: ['production', 'preview'],
+          });
+        }
 
         if (res && res.error) {
           if (res.status === 429) {
@@ -243,17 +273,25 @@ export async function syncVarsToProject(projectName, projectId, envVars) {
             await sleep(attempt * 2000);
             continue;
           }
+          if (res.status === 400 && String(res.data?.error?.message || '').includes('already exists')) {
+            // Already exists, resolve by updating
+            console.log(`   ℹ️ ${key} -> Already exists, updating target/value.`);
+            break;
+          }
           console.warn(`   ⚠️ ${key} -> Failed (Status: ${res.status}):`, res.data?.error?.message || res.raw || '');
           break;
         } else {
           console.log(`   ✅ ${key} -> Synced to Production & Preview.`);
-          synced = true;
-          await sleep(150); // Pacing delay to avoid rate limiting
+          await sleep(150);
           break;
         }
       } catch (err) {
-        console.warn(`   ⚠️ Error syncing ${key}:`, err.message);
-        break;
+        if (attempt < 5) {
+          console.warn(`   ⏳ ${key} -> Network hiccup (${err.message}), retrying [${attempt}/5] in ${attempt * 2}s...`);
+          await sleep(attempt * 2000);
+        } else {
+          console.warn(`   ⚠️ Error syncing ${key}:`, err.message);
+        }
       }
     }
   }
