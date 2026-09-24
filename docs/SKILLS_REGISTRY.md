@@ -9,6 +9,7 @@ This registry provides the canonical catalog of all AI agent skills, plugins, an
 These skills are project-specific, version-controlled in Git, and hold **Priority 1 (Highest Precedence)** in Antigravity's progressive disclosure hierarchy.
 
 ### 🏢 Real Estate Intelligence & Deal Closing
+
 - **`sierra-closer-agent`**: Stage-9 Closer Bot & high-value deal negotiation. Executes 5-stage closing workflows, post-viewing feedback, due diligence, and Arabic/English negotiation.
 - **`concierge-lead-agent`**: WhatsApp & Telegram lead concierge for Sierra Estates client communication, lead scoring, and automated inquiry handling.
 - **`whatsapp-inventory-harvester`**: Scraper and NLP extraction for real estate WhatsApp groups. Normalizes Arabic/English listings, classifies direct owners vs brokers, and deduplicates records.
@@ -20,6 +21,7 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 - **`openclaw-architect`**: Autonomous task execution and architectural agent for codebase analysis and background worker tasks.
 
 ### 🎨 Design & Frontend Engineering (Anti-Slop)
+
 - **`ui-ux-pro-max`**: Multi-domain design intelligence (79 styles, 192 product palettes, 74 font pairings, 119 UX guidelines, and interactive micro-interactions).
 - **`impeccable`**: Elite frontend UI/UX refinement, micro-interactions, layout polish, accessible contrast, and visual hierarchy.
 - **`design-taste-frontend` (`taste-skill`)**: Anti-slop frontend engineering, brief inference, and anti-default design architecture.
@@ -30,6 +32,7 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 - **`gpt-taste`**: Advanced GSAP motion engineering, scroll triggers, and wide editorial typography.
 
 ### ⚙️ Code Quality & Deployment Ops
+
 - **`code-reviewer`**: Modern AI-powered code reviewer ensuring idiomatic TypeScript, security boundaries, and regression safety.
 - **`database-design`**: PostgreSQL schema design, indexing strategies, relationships, and serverless database optimization.
 - **`nextjs-supabase-auth`**: Session management, middleware security gates, protected routes, and Row Level Security (RLS) policies.
@@ -43,6 +46,7 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 *Status: Uninstalled via `agy plugin uninstall google-cloud-developer`.*
 
 Previously provided the following 5 catalog/CLI skills:
+
 - **`finding-google-skills`**: Dynamic discovery of remote Google Cloud skills.
 - **`gcloud`**: CLI safety guardrails and syntax validation.
 - **`google-cloud-recipe-auth`**: ADC and service account patterns.
@@ -63,6 +67,7 @@ Previously provided the following 5 catalog/CLI skills:
 ## 4. Built-in Antigravity Skills
 
 Located in `~/.gemini/antigravity-ide/builtin/skills/`:
+
 - **`agy-customizations`**: Complete guide to the Antigravity customization engine (priority hierarchy, progressive disclosure, discovery).
 - **`antigravity-guide`**: Comprehensive reference and sitemap for Google Antigravity CLI, IDE, and subagent orchestration.
 
