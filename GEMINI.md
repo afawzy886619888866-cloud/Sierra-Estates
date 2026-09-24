@@ -20,20 +20,12 @@
 
 ## 4. Installed Local & Global Skills
 
-The following project skills are configured in `.agents/skills/` and globally:
+For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`](file:///H:/last/Main/SE-Vercel-deploy-main/docs/SKILLS_REGISTRY.md). Key active skills include:
 
-- `design-taste-frontend` (`taste-skill`) — Anti-slop frontend engineering, brief inference, and anti-default design architecture.
-- `ui-ux-pro-max` — Multi-domain UI/UX design intelligence (67 styles, 96 palettes, 57 font pairings, reasoning engine).
-- `high-end-visual-design` (`soft-skill`) — Luxury real estate agency aesthetics, refined whitespace, and calm typography.
-- `stitch-design-taste` — Google Stitch MCP integration for generative screens, variant testing, and `DESIGN.md` synthesis.
-- `minimalist-ui` & `industrial-brutalist-ui` — Restrained editorial layouts and bold architectural grids.
-- `impeccable` — Frontend UI/UX refinement, micro-interactions, layout polish.
-- `clean-code` & `code-reviewer` — Static code quality, idiomatic refactoring, regression safety.
-- `nextjs-best-practices` & `react-best-practices` — App Router performance, caching, and hydration optimization.
-- `nextjs-supabase-auth` — Session management, middleware gates, protected routes, and RLS policies.
-- `security-audit` — OWASP audit, secret leaks detection, RLS boundary verification.
-- `database-design` — PostgreSQL indexing, schema relationships, query optimization.
-- `debugging-strategies` & `performance-optimizer` — Systematic root-cause debugging and Core Web Vitals optimization.
+- **Real Estate Intelligence & Automation**: `sierra-closer-agent`, `concierge-lead-agent`, `whatsapp-inventory-harvester`, `real-estate-valuation-analyzer`, `ecc-memory-engine`, `excel-archive-processor`, `inventory-csv-merger`.
+- **UI/UX & Design (Anti-Slop)**: `ui-ux-pro-max`, `impeccable`, `design-taste-frontend` (`taste-skill`), `high-end-visual-design` (`soft-skill`), `stitch-design-taste`, `minimalist-ui`, `industrial-brutalist-ui`, `gpt-taste`.
+- **Google Cloud Developer Plugin**: `finding-google-skills`, `gcloud`, `google-cloud-recipe-auth`, `google-cloud-recipe-onboarding`, `retrieving-developer-knowledge`.
+- **Code & Architecture**: `clean-code`, `code-reviewer`, `database-design`, `nextjs-supabase-auth`, `sierra-deployment-ops`.
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 
