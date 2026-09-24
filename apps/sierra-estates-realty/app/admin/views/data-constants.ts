@@ -38,6 +38,7 @@ export const LANG: Record<string, Record<string, string>> = {
     excelMerger:'Excel Merger', processor:'Real Estate Processor',
     all_apps:'All Apps Hub', deployment:'Deployment CI/CD', api_gateway:'API Gateway',
     memory_brain:'Memory Brain & DeepSeek',
+    cairo_plaza:'Cairo Plaza Media Hub',
     saveConfig:'Save Configuration', saved:'✓ Saved!', githubIntegration:'🔗 GitHub Integration',
     pullLatest:'Pull Latest', openRepo:'Open Repo', pushChanges:'Push Changes',
   },
@@ -73,6 +74,7 @@ export const LANG: Record<string, Record<string, string>> = {
     perfByCompound:'🗺️ الأداء حسب المجمع',
     excelMerger:'دمج الإكسل', processor:'معالج العقارات',
     all_apps:'دليل التطبيقات', deployment:'خطوط النشر', api_gateway:'بوابة الـ API',
+    cairo_plaza:'مشروع كايرو بلازا',
     saveConfig:'حفظ الإعدادات', saved:'✓ تم الحفظ!', githubIntegration:'🔗 تكامل GitHub',
     pullLatest:'سحب آخر التحديثات', openRepo:'فتح المستودع', pushChanges:'رفع التغييرات',
   }
@@ -160,6 +162,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
   {id:'inventory_command',label:T('inventory_command'),icon:'🏢',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
+  {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
   {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('operations'),badge:'PRO',badgeCls:'nb-green'},
   {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},

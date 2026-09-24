@@ -243,6 +243,26 @@ export const APPS_CATALOG: AppService[] = [
     actionTarget: 'easy_listing',
   },
   {
+    id: 'cairo-plaza-hub',
+    name: { en: 'Cairo Plaza Media & Social Studio', ar: 'مركز وسائط وإعلانات كايرو بلازا' },
+    category: 'studio',
+    description: {
+      en: 'Real site photos manager, social media commercial campaigns (1:1, 9:16, 16:9), and bilingual investor outreach.',
+      ar: 'إدارة الصور الحقيقية المعتمدة للمبنى، وحملات السوشيال ميديا التجارية الجاهزة، ورسائل واتساب الترويجية.'
+    },
+    badge: 'COMMERCIAL',
+    badgeCls: 'nb-green',
+    tech: ['Verified Site Photos', 'Social Creatives', 'WhatsApp Dispatch'],
+    port: 'Integrated',
+    route: '/admin?tab=cairo_plaza',
+    repoPath: 'apps/sierra-estates-realty/app/admin/views/CairoPlazaAdminView.tsx',
+    status: 'online',
+    icon: '🏢',
+    accentColor: '#C8961A',
+    actionType: 'navigate',
+    actionTarget: 'cairo_plaza',
+  },
+  {
     id: 'excel-merger',
     name: { en: 'Excel & CSV Inventory Merger', ar: 'أداة دمج وتوحيد ملفات الإكسل' },
     category: 'studio',
