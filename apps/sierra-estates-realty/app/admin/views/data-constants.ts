@@ -93,9 +93,13 @@ export const AGENTS_DATA = (T: TranslationFn) => [
   {name:'Sierra Bot',desc:T('lang')==='ar'?'الوكيل الرئيسي للذكاء الاصطناعي — يتعامل مع استفسارات العملاء':'Primary AI concierge — handles client queries & property recommendations.',emoji:'🤖',color:'#C8961A',status:'Online',load:94,tasks:1203},
   {name:'Leila / Lola',desc:T('lang')==='ar'?'متخصصة عربية ثنائية اللغة — ترجمة وتفاوض':'Bilingual Arabic specialist — translates listings & handles Gulf negotiations.',emoji:'🐪',color:'#1E88D9',status:'Online',load:87,tasks:889},
   {name:'Stage-9 Closer',desc:T('lang')==='ar'?'محرك الصفقات الآلي — عقود ومدفوعات':'Automated deal engine — drafts contracts, DocuSign, Stripe deposits.',emoji:'💼',color:'#34D399',status:'Online',load:71,tasks:421},
+  {name:'Vertex Omni',desc:T('lang')==='ar'?'فحص جودة وتصنيف الصور بالذكاء الاصطناعي':'Computer vision radar — analyzes room tags, photos and image resolution.',emoji:'📷',color:'#EC4899',status:'Online',load:72,tasks:2450},
+  {name:'PF Syndicator',desc:T('lang')==='ar'?'مزامنة قنوات بروبرتي فايندر واستقبال العملاء':'Portal feed sync engine — rapid lead ingestion & Property Finder sync in <45s.',emoji:'🏢',color:'#8B5CF6',status:'Online',load:82,tasks:5200},
   {name:'WhatsApp Scraper',desc:T('lang')==='ar'?'يرصد مجموعات واتساب وبروبيرتي فايندر':'Monitors Property Finder, OLX & WhatsApp groups.',emoji:'🕵️',color:'#7C3AED',status:'Running',load:55,tasks:2847},
-  {name:'The Scribe',desc:T('lang')==='ar'?'خط استيعاب S1-S2 — يحلل بيانات القوائم الخام':'S1-S2 ingestion — parses raw listing data & normalizes to Sierra schema.',emoji:'✍️',color:'#E63946',status:'Idle',load:12,tasks:4821},
   {name:'The Curator',desc:T('lang')==='ar'?'إدارة المخزون S3-S5 — تسعير وتقييم':'S3-S5 inventory management — deduplication, quality scoring & AVM pricing.',emoji:'🎨',color:'#E9C176',status:'Online',load:68,tasks:3102},
+  {name:'The Scribe',desc:T('lang')==='ar'?'خط استيعاب S1-S2 — يحلل بيانات القوائم الخام':'S1-S2 ingestion — parses raw listing data & normalizes to Sierra schema.',emoji:'✍️',color:'#E63946',status:'Idle',load:45,tasks:4821},
+  {name:'Market Insights',desc:T('lang')==='ar'?'تحليلات سيولة السوق وعوائد الاستثمار':'DeepSeek AVM market liquidity, investor briefs and compound rental yields.',emoji:'📈',color:'#10B981',status:'Online',load:58,tasks:1850},
+  {name:'Sierra Ops',desc:T('lang')==='ar'?'عمليات النشر والبنية التحتية والمراقبة':'CI/CD pipeline, Vercel deployments, Sentry logs and fleet self-healing.',emoji:'🚀',color:'#6366F1',status:'Ready',load:30,tasks:980},
 ];
 
 export const WORKFLOWS_DATA = [
@@ -145,7 +149,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'monitoring',label:T('lang')==='ar'?'المراقبة المباشرة':'Live Monitoring',icon:'📡',section:T('main'),badge:'LIVE',badgeCls:'nb-blue'},
   {id:'recommendations',label:T('lang')==='ar'?'التوصيات الذكية':'Recommendations',icon:'✨',section:T('main'),badge:'AI',badgeCls:'nb-green'},
   {id:'alerts',label:T('lang')==='ar'?'التنبيهات':'Alerts',icon:'🔔',section:T('main'),badge:'2',badgeCls:'nb-red'},
-  {id:'agents',label:T('agents'),icon:'🤖',section:T('main'),badge:'6',badgeCls:'nb-green'},
+  {id:'agents',label:T('agents'),icon:'🤖',section:T('main'),badge:'10',badgeCls:'nb-green'},
   {id:'workflows',label:T('workflows'),icon:'⚡',section:T('main'),badge:'8',badgeCls:'nb-blue'},
   {id:'workflow_studio',label:T('workflow_studio'),icon:'🧩',section:T('main'),badge:'NEW',badgeCls:'nb-green'},
   {id:'automations',label:T('lang')==='ar'?'الأتمتة':'Automations',icon:'🪄',section:T('main'),badge:'3',badgeCls:'nb-green'},
@@ -186,6 +190,8 @@ export const OPENCLAW_LOGS = [
   {t:'green',l:'[✓] Sierra Bot online — 1,203 sessions this month'},
   {t:'green',l:'[✓] Leila/Lola agent — Arabic routing active'},
   {t:'green',l:'[✓] Stage-9 Closer — 97 deals processed this month'},
+  {t:'green',l:'[✓] Vertex Omni — 2,450 photos verified & room tagged'},
+  {t:'green',l:'[✓] Property Finder Syndicator — feeds live (<45s lead ingestion)'},
   {t:'blue',l:'[~] WhatsApp Scraper — scanning Property Finder (ETA 2 min)'},
   {t:'blue',l:'[~] AVM Engine — pricing 23 new listings...'},
   {t:'',l:''},
@@ -193,10 +199,14 @@ export const OPENCLAW_LOGS = [
   {t:'green',l:'  Sierra Bot      Online    94%     1,203'},
   {t:'green',l:'  Leila/Lola      Online    87%     889'},
   {t:'green',l:'  Stage-9 Closer  Online    71%     421'},
+  {t:'green',l:'  Vertex Omni     Online    72%     2,450'},
+  {t:'green',l:'  PF Syndicator   Online    82%     5,200'},
   {t:'green',l:'  Scraper         Running   55%     2,847'},
-  {t:'blue',l:'  The Scribe      Idle      12%     4,821'},
   {t:'green',l:'  The Curator     Online    68%     3,102'},
-  {t:'dim',l:'Last sync: 2026-06-07 · All systems nominal'},
+  {t:'blue',l:'  The Scribe      Idle      45%     4,821'},
+  {t:'green',l:'  Market Insights Online    58%     1,850'},
+  {t:'green',l:'  Sierra Ops      Ready     30%     980'},
+  {t:'dim',l:'Last sync: 2026-06-07 · All systems nominal · 10/10 Agents Active'},
 ];
 
 export interface NexusEntry {

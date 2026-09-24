@@ -108,6 +108,54 @@ const DEFAULT_FLEET: AgentData[] = [
     capabilities: ['Multi-group Scraping', 'Direct Owner Classifier', 'Price Parsing'],
     docLink: '/docs/roles.md#4-openclaw-architect',
   },
+  {
+    id: 'the-curator',
+    name: 'The Curator (S3-S5 Valuation)',
+    role: 'Cairo AVM, Price Adjustment & Deduplication Engine',
+    status: 'ONLINE',
+    load: '68%',
+    model: 'DeepSeek-R1',
+    itemsProcessed: 3102,
+    lastActive: 'Just now',
+    capabilities: ['AVM Valuation', 'Cairo Resale Arbitrage', 'Duplicate Detection'],
+    docLink: '/docs/roles.md#2-the-curator--scribe',
+  },
+  {
+    id: 'the-scribe',
+    name: 'The Scribe (S1-S2 Ingestion)',
+    role: 'Raw WhatsApp & Listing Text Parser to Sierra Schema',
+    status: 'ONLINE',
+    load: '45%',
+    model: 'Gemini 2.5 Flash',
+    itemsProcessed: 4821,
+    lastActive: 'Just now',
+    capabilities: ['Excel Master Parser', 'WhatsApp Chat Regex', 'Column Normalization'],
+    docLink: '/docs/roles.md#2-the-curator--scribe',
+  },
+  {
+    id: 'insights-agent',
+    name: 'Strategic Market Insights Agent',
+    role: 'DeepSeek AVM Market Liquidity & Pricing Analysis',
+    status: 'ONLINE',
+    load: '58%',
+    model: 'DeepSeek-R1',
+    itemsProcessed: 1850,
+    lastActive: 'Just now',
+    capabilities: ['Market Liquidity', 'Yield Heatmaps', 'Pub/Sub Distribution'],
+    docLink: '/docs/roles.md#5-market-insights-agent',
+  },
+  {
+    id: 'sierra-ops',
+    name: 'Sierra Deployment Ops',
+    role: 'CI/CD Pipeline, Vercel Deployments & Sentry Monitoring',
+    status: 'READY',
+    load: '30%',
+    model: 'Local Engine',
+    itemsProcessed: 980,
+    lastActive: 'Just now',
+    capabilities: ['Vercel Production CI/CD', 'Sentry Telemetry', 'Self-Healing Health Checks'],
+    docLink: '/docs/roles.md#6-devops--infrastructure',
+  },
 ];
 
 const AVAILABLE_MODELS = [
@@ -164,6 +212,34 @@ const AGENT_BUSINESS_ROLES: Record<
     summaryAr: 'يقرأ عروض مجموعات الواتساب، يستخرج عقارات الملاك المباشرة، ويمنع أي تكرار.',
     channel: 'DeepSeek NLP & Phone Dedup',
   },
+  'the-curator': {
+    badgeEn: '🎨 AVM Valuation & Curation',
+    badgeAr: '🎨 التقييم وتنظيم المخزون',
+    summaryEn: 'Applies Cairo real estate valuation models, quality scoring, and pricing arbitrage algorithms.',
+    summaryAr: 'يطبق نماذج تقييم العقارات بالقاهرة، ونقاط جودة الوحدات، وخوارزميات تسعير السوق العادل.',
+    channel: 'AVM Engine & Resale Arbitrage',
+  },
+  'the-scribe': {
+    badgeEn: '✍️ Master Ingestion & Scribe',
+    badgeAr: '✍️ إدخال وتنسيق البيانات',
+    summaryEn: 'Normalizes messy WhatsApp chats and Excel property records into the unified Sierra database schema.',
+    summaryAr: 'يحول رسائل الواتساب وقوائم الإكسل غير المنظمة إلى الهيكل الموحد لقاعدة بيانات سييرا.',
+    channel: 'Excel Parser & Chat Ingestion',
+  },
+  'insights-agent': {
+    badgeEn: '📈 Market Insights & Heatmaps',
+    badgeAr: '📈 مؤشرات السوق والسيولة',
+    summaryEn: 'Calculates rental yields, compound investment payback periods, and investor intelligence reports.',
+    summaryAr: 'يحسب عوائد الإيجار وفترات استرداد الاستثمار في المجمعات السكنية ويصدر تقارير للمستثمرين.',
+    channel: 'DeepSeek AVM & Heatmaps',
+  },
+  'sierra-ops': {
+    badgeEn: '🚀 Production Ops & Health',
+    badgeAr: '🚀 البنية التحتية والنشر',
+    summaryEn: 'Monitors Vercel deployments, Supabase health, Sentry errors, and triggers auto-repair protocols.',
+    summaryAr: 'يراقب عمليات نشر Vercel وسلامة Supabase وسجلات الأخطاء ويفعل بروتوكولات التعافي الذاتي.',
+    channel: 'Vercel CI/CD & Telemetry',
+  },
 };
 
 export default function AgentsView({ lang = 'en' }: { lang?: string }) {
@@ -184,7 +260,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
       role: 'ai',
       text: isAr
         ? 'مرحباً بك في غرفة عمليات أسطول سييرا للذكاء الاصطناعي. جميع الوكلاء نشطون ومتصلون بقاعدة البيانات والمخزون.'
-        : 'Welcome to the Sierra AI Fleet Command Deck. All 6 operational agents are connected to live inventory and ready for dispatch.',
+        : 'Welcome to the Sierra AI Fleet Command Deck. All 10 operational agents are connected to live inventory and ready for dispatch.',
       time: 'Just now',
       agent: 'Sierra Bot',
     },
@@ -222,7 +298,7 @@ export default function AgentsView({ lang = 'en' }: { lang?: string }) {
         setStatusMessage(
           isAr
             ? '✅ تم بنجاح فحص وإصلاح كافة الوكلاء! جميع القنوات تعمل بكفاءة 100%.'
-            : '✅ All 6 autonomous agents tested, repaired, and restored to 100% health!'
+            : '✅ All 10 autonomous agents tested, repaired, and restored to 100% health!'
         );
       }
     } catch {

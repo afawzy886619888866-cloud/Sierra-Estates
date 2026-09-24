@@ -37,8 +37,8 @@ const AGENT_CATALOG: Record<string, { name: string; role: string; primaryChannel
     role: 'Primary AI Concierge — Website Chat & Smart Property Matcher',
     primaryChannel: 'Website Socket & Inbound API',
   },
-  'leila-closer': {
-    name: 'Leila / Lola (Sales Closer)',
+  'laila-bilingual': {
+    name: 'Leila / Lola (Sales Closer & Outreach)',
     role: 'WhatsApp & Telegram High-Touch Follow-Up',
     primaryChannel: 'Twilio / WhatsApp Cloud Gateway',
   },
@@ -50,7 +50,7 @@ const AGENT_CATALOG: Record<string, { name: string; role: string; primaryChannel
   'vertex-omni': {
     name: 'Vertex Omni (Vision & Photos)',
     role: 'Photo Analysis, Room Tagging & Missing Photo Radar',
-    primaryChannel: 'Gemini 2.5 Vision & Unsplash Indexer',
+    primaryChannel: 'Gemini 2.5 Vision & Photo Radar',
   },
   'pf-syndicator': {
     name: 'Property Finder Syndicator',
@@ -62,13 +62,34 @@ const AGENT_CATALOG: Record<string, { name: string; role: string; primaryChannel
     role: 'WhatsApp Group Scraper & Inventory Deduplication',
     primaryChannel: 'DeepSeek NLP & Phone Deduplicator',
   },
+  'the-curator': {
+    name: 'The Curator (S3-S5 Valuation)',
+    role: 'Cairo AVM, Price Adjustment & Deduplication Engine',
+    primaryChannel: 'AVM Valuation Engine & Arbitrage Matrix',
+  },
+  'the-scribe': {
+    name: 'The Scribe (S1-S2 Ingestion)',
+    role: 'Raw WhatsApp & Listing Text Parser to Sierra Schema',
+    primaryChannel: 'Excel Master Parser & Raw Ingestion Queue',
+  },
+  'insights-agent': {
+    name: 'Strategic Market Insights Agent',
+    role: 'DeepSeek AVM Market Liquidity & Pricing Analysis',
+    primaryChannel: 'Pub/Sub ai.recommendations & Yield Heatmaps',
+  },
+  'sierra-ops': {
+    name: 'Sierra Deployment Ops',
+    role: 'CI/CD Pipeline, Vercel Deployments & Sentry Monitoring',
+    primaryChannel: 'Vercel Production & Sentry Telemetry',
+  },
 };
 
 /**
  * Repair and diagnose an individual agent by ID.
  */
 export async function repairSingleAgent(agentId: string): Promise<AgentRepairResult> {
-  const meta = AGENT_CATALOG[agentId] || {
+  const normalizedId = agentId === 'leila-closer' ? 'laila-bilingual' : agentId;
+  const meta = AGENT_CATALOG[normalizedId] || AGENT_CATALOG[agentId] || {
     name: `Agent ${agentId}`,
     role: 'Autonomous Assistant',
     primaryChannel: 'Internal Queue',
@@ -102,7 +123,7 @@ export async function repairSingleAgent(agentId: string): Promise<AgentRepairRes
 }
 
 /**
- * Run full fleet diagnostic, repair memory deadlocks, and heal all 6 operational agents.
+ * Run full fleet diagnostic, repair memory deadlocks, and heal all 10 operational agents.
  */
 export async function autoRepairAllAgents(): Promise<FleetRepairReport> {
   const agentIds = Object.keys(AGENT_CATALOG);
