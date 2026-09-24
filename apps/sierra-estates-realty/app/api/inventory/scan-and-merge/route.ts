@@ -139,7 +139,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanResponse>
   }
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const targetDir = 'I:\\supabase\\Sheets';
   const masterExcel = path.join(targetDir, 'Final_RealEstate_Master_Unified.xlsx');
   const airtableCsv = path.join(targetDir, 'Unified_Airtable_Inventory.csv');

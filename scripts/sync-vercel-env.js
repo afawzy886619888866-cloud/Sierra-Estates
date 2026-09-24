@@ -137,7 +137,8 @@ export const CLIENT_ENV_VARS = {
   SUPABASE_MEDIA_BUCKET: process.env.SUPABASE_MEDIA_BUCKET || 'media',
 
   // Additional AI & Search Providers
-  NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
+  // AI credentials are server-only. Never synchronize them under NEXT_PUBLIC_*.
+  GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   SERPER_API_KEY: process.env.SERPER_API_KEY,

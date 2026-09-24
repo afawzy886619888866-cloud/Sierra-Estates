@@ -21,6 +21,11 @@ const SCHEMA_CANDIDATES = [
 ];
 const SCHEMA_PATH = SCHEMA_CANDIDATES.find((p) => fs.existsSync(p)) || SCHEMA_CANDIDATES[0];
 const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
+const HARDENING_MIGRATION_PATH = path.resolve(
+  __dirname,
+  '../../../supabase/migrations/20260924_rls_hardening.sql'
+);
+const hardeningMigration = fs.readFileSync(HARDENING_MIGRATION_PATH, 'utf-8');
 
 /** Tables holding customer PII, commercial terms, or operational control. */
 const STAFF_ONLY_TABLES = [
@@ -38,6 +43,8 @@ const STAFF_ONLY_TABLES = [
   'agents_registry',
   'bot_commands',
   'workflows',
+  'raw_feed',
+  'bot_runs',
 ];
 
 /** Public forms may INSERT but must never SELECT their own submissions back. */
@@ -104,7 +111,7 @@ describe('Supabase RLS — profiles', () => {
     // role is the privilege boundary: the WITH CHECK pins it to the stored
     // value, so a self-update cannot escalate.
     expect(schema).toMatch(
-      /WITH CHECK \(\s*id = auth\.uid\(\)\s*AND role = \(SELECT p\.role FROM public\.profiles p WHERE p\.id = auth\.uid\(\)\)/
+      /WITH CHECK \(\s*id = \(SELECT auth\.uid\(\)\)\s*AND role = \(SELECT p\.role FROM public\.profiles p WHERE p\.id = \(SELECT auth\.uid\(\)\)\)/
     );
   });
 
@@ -131,6 +138,23 @@ describe('Supabase RLS — migrated tables', () => {
     expect(schema).toMatch(
       /"contracts_admin_access" ON public\.contracts\s+FOR ALL TO authenticated USING \(public\.is_admin\(\)\)/
     );
+  });
+
+  describe('Supabase RLS — internal worker tables', () => {
+    it('removes legacy PUBLIC policies before creating staff-only policies', () => {
+      expect(hardeningMigration).toMatch(
+        /DROP POLICY IF EXISTS "Service role and staff can manage raw_feed"/
+      );
+      expect(hardeningMigration).toMatch(
+        /DROP POLICY IF EXISTS "Service role and staff can manage bot_runs"/
+      );
+      expect(hardeningMigration).toMatch(
+        /CREATE POLICY "raw_feed_staff_access" ON public\.raw_feed\s+FOR ALL TO authenticated\s+USING \(public\.is_staff\(\)\) WITH CHECK \(public\.is_staff\(\)\)/
+      );
+      expect(hardeningMigration).toMatch(
+        /CREATE POLICY "bot_runs_staff_access" ON public\.bot_runs\s+FOR ALL TO authenticated\s+USING \(public\.is_staff\(\)\) WITH CHECK \(public\.is_staff\(\)\)/
+      );
+    });
   });
 
   it('makes audit_logs admin-read-only, with no client insert path', () => {

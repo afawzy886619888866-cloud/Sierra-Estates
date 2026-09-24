@@ -8,7 +8,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../../.env.local') });
 
 // Verify that the Gemini API Key is present
-const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
 if (!apiKey) {
   console.error('\n❌ ERROR: GOOGLE_AI_API_KEY is not defined in your environment.');
   console.error('Please configure it in H:\\Sierra-Estates-Final\\.env.local and try again.');
