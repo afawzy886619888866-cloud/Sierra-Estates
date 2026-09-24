@@ -228,12 +228,13 @@ export async function runOpenClawDailyScan(
 
       if (!parsed || !parsed.compound) continue;
 
+      const data = parsed.data;
       const isOwner = parsed.sourceType === 'owner' || msg.isOwnerGroup;
       if (isOwner) directOwnersCount++;
 
       // Check duplicate
-      const phoneDigits = String(parsed.contact_info || '').replace(/[^\d]/g, '');
-      const priceNum = parseInt(String(parsed.price || '0').replace(/[^\d]/g, ''), 10) || 0;
+      const phoneDigits = String(data.contact_info || '').replace(/[^\d]/g, '');
+      const priceNum = parseInt(String(data.price || '0').replace(/[^\d]/g, ''), 10) || 0;
       const dedupKey = `${phoneDigits}_${priceNum}`;
 
       if (phoneDigits && existingKeySet.has(dedupKey)) {
@@ -243,26 +244,26 @@ export async function runOpenClawDailyScan(
       if (phoneDigits) existingKeySet.add(dedupKey);
 
       // Check completeness
-      const isComplete = Boolean(parsed.compound && parsed.price > 0 && phoneDigits.length >= 7);
+      const isComplete = Boolean(parsed.compound && data.price > 0 && phoneDigits.length >= 7);
 
       const unitRecord = {
         id: `WA-${Date.now()}-${i}`,
         sierraCode: parsed.sierraCode || `SE-WA-${i + 1}`,
-        type: parsed.type || 'Apartment',
+        type: data.type || parsed.propertyType || 'Apartment',
         compound: parsed.compound,
-        location: parsed.location || parsed.compound,
-        operation: parsed.operation || 'Sale',
-        price: parsed.price || 0,
-        currency: parsed.currency || 'EGP',
-        priceFormatted: parsed.priceFormatted || `${parsed.price?.toLocaleString()} EGP`,
-        area_sqm: parsed.area_sqm || null,
-        bedrooms: parsed.bedrooms || null,
-        bathrooms: parsed.bathrooms || null,
-        finishing: parsed.finishing || 'Unknown',
+        location: data.location || parsed.compound,
+        operation: data.operation || 'Sale',
+        price: data.price || 0,
+        currency: data.currency || 'EGP',
+        priceFormatted: parsed.priceFormatted || `${data.price?.toLocaleString()} EGP`,
+        area_sqm: data.area_sqm || null,
+        bedrooms: data.bedrooms || null,
+        bathrooms: data.bathrooms || null,
+        finishing: data.finishing || 'Unknown',
         sourceType: isOwner ? 'owner' : 'broker',
         sourceGroup: msg.groupName,
         whatsappGroupId: msg.groupId,
-        contact_info: parsed.contact_info || msg.sender,
+        contact_info: data.contact_info || msg.sender,
         listedAt: msg.timestamp || new Date().toISOString(),
         rawText: msg.text,
         status: 'Available',
@@ -302,9 +303,9 @@ export async function runOpenClawDailyScan(
           ownerName: msg.sender,
           compound: parsed.compound,
           missingFields: [
-            !parsed.price ? 'price' : '',
-            !parsed.area_sqm ? 'area' : '',
-            !parsed.bedrooms ? 'bedrooms' : '',
+            !data.price ? 'price' : '',
+            !data.area_sqm ? 'area' : '',
+            !data.bedrooms ? 'bedrooms' : '',
           ].filter(Boolean),
           draftMessageArabic: `السلام عليكم يا فندم بخصوص وحدتكم المعروضة في ${parsed.compound}، نتشرف بالتواصل مع حضرتك من سييرا إستيتس. هل متاح السعر وتفاصيل المساحة والصور لمعاينتها للعملاء المهتمين؟ شكراً لحضرتك.`,
           status: 'pending_dispatch',
