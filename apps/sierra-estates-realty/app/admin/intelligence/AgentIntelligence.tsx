@@ -334,7 +334,7 @@ export default function AgentIntelligence({ lang = 'en' }: { lang?: string }) {
             key={idx}
             className="relative overflow-hidden p-5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/70 group"
           >
-            <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${kpi.rail}`} />
+            <div className={`absolute inset-y-0 left-0 w-1 bg-linear-to-b ${kpi.rail}`} />
             <div className="flex items-start justify-between">
               <span className="text-xs uppercase font-bold tracking-wider text-slate-400">
                 {kpi.title}
@@ -537,7 +537,7 @@ export default function AgentIntelligence({ lang = 'en' }: { lang?: string }) {
                 </div>
                 <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-[#C8961A] to-[#E9C176] h-full rounded-full transition-all duration-500"
+                    className="bg-linear-to-r from-[#C8961A] to-[#E9C176] h-full rounded-full transition-all duration-500"
                     style={{ width: `${skill.pct}%` }}
                   />
                 </div>
