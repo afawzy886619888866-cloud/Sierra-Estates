@@ -445,60 +445,86 @@ export default function PropertyDetail({ id }: { id: string }) {
 
             {/* Sticky booking rail */}
             <aside>
-              <div className="pdetail-cta rv">
-                <div className="pd-price">{HZDATA.price(p)}</div>
-                <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
-                  {p.mode === 'rent' ? (isAr ? 'إيجار شهري' : 'Monthly rent') : (isAr ? 'سعر البيع' : 'Asking price')}
-                </div>
+              <div className="pdetail-cta luxury-inst-card rv">
+                {(() => {
+                  const isRent = p.mode === 'rent';
+                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10_000_000));
+                  const formattedEgpPrice = `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`;
 
-                <div style={{ marginBottom: 16 }}>
-                  <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
-                </div>
+                  return (
+                    <>
+                      <div className="pd-price font-mono font-bold" style={{ color: '#C9A84C' }}>
+                        {formattedEgpPrice}
+                      </div>
+                      <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
+                        {isRent ? (isAr ? 'إيجار شهري موثق' : 'Verified Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
+                      </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const event = new CustomEvent('sierra:add-to-shortlist', {
-                      detail: {
-                        id: p.code || p.id,
-                        code: p.code,
-                        compound: p.cmp,
-                        type: p.type,
-                        price: HZDATA.price(p),
-                        img: p.img,
-                      },
-                    });
-                    window.dispatchEvent(event);
-                  }}
-                  className="btn btn-ghost"
-                  style={{
-                    width: '100%',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    border: '1px solid rgba(223, 173, 58, 0.4)',
-                    color: '#DFAD3A',
-                    marginBottom: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span>✨</span>
-                  <span>{isAr ? 'إضافة إلى سلة المعاينة VIP' : 'Add to VIP Viewing Basket'}</span>
-                </button>
+                      <div style={{ marginBottom: 16 }}>
+                        <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
+                      </div>
 
-                <a
-                  className="btn btn-pri"
-                  style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
-                  href={`https://wa.me/201092048333?text=${encodeURIComponent(
-                    `Hello Sierra Estates — I'd like to view ${p.code} (${p.type} in ${p.cmp}).`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Calendar className="i" />
-                  <span>{isAr ? 'احجز معاينة' : 'Book a viewing'}</span>
-                </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const event = new CustomEvent('sierra:add-to-shortlist', {
+                            detail: {
+                              id: p.code || p.id,
+                              code: p.code,
+                              compound: p.cmp,
+                              type: p.type,
+                              price: formattedEgpPrice,
+                              img: p.img,
+                            },
+                          });
+                          window.dispatchEvent(event);
+                        }}
+                        className="btn btn-ghost"
+                        style={{
+                          width: '100%',
+                          justifyContent: 'center',
+                          fontSize: 13,
+                          border: '1px solid rgba(201, 168, 76, 0.4)',
+                          color: '#C9A84C',
+                          marginBottom: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>✨</span>
+                        <span>{isAr ? 'إضافة إلى سلة المعاينة VIP' : 'Add to VIP Viewing Basket'}</span>
+                      </button>
+
+                      <a
+                        className="btn btn-pri"
+                        style={{
+                          width: '100%',
+                          justifyContent: 'center',
+                          marginBottom: 10,
+                          background: '#25D366',
+                          borderColor: '#25D366',
+                          color: '#FFFFFF',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                        href={`https://wa.me/201092048333?text=${encodeURIComponent(
+                          isAr
+                            ? `مرحباً سييرا العقارية، أود الاستفسار وحجز موعد معاينة خاصة للوحدة [${p.code}] في ${p.cmp} (${formattedEgpPrice}).`
+                            : `Hello Sierra Estates — I would like to book a private viewing tour for unit [${p.code}] in ${p.cmp} (${formattedEgpPrice}).`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Phone className="i" />
+                        <span>{isAr ? 'حجز واستفسار فوري (واتساب)' : 'Instant WhatsApp Inquiry & Tour'}</span>
+                      </a>
+                    </>
+                  );
+                })()}
                 <a
                   className="btn btn-navy"
                   style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
