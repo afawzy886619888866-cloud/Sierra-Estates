@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   MapPin, BedDouble, Bath, Scaling, Scan, Sparkles, Phone, Calendar, ArrowRight, FileText,
+  ShieldCheck, Paintbrush, CheckCircle2,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
@@ -293,8 +294,15 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="gallery-main rv" onClick={() => openLightbox(0)} style={{ cursor: 'zoom-in' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={hero} alt={`${p.type} in ${p.cmp}`} />
-                <div className="gallery-badges">
-                  {p.tag && <span className="tag featured">{p.tag}</span>}
+                <div className="gallery-badges flex flex-wrap gap-1.5">
+                  <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <ShieldCheck style={{ width: 12, height: 12 }} />
+                    <span>{isAr ? 'مالك مباشر' : 'Direct Owner'}</span>
+                  </span>
+                  <span className="tag" style={{ background: 'rgba(16, 185, 129, 0.9)', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Sparkles style={{ width: 12, height: 12 }} />
+                    <span>{isAr ? 'تم التحقق حديثاً' : 'Verified Fresh'}</span>
+                  </span>
                   <span className={`tag ${p.mode === 'rent' ? 'rent' : 'sale'}`}>
                     {p.mode === 'rent' ? t('modeRent') : t('modeSale')}
                   </span>
@@ -323,6 +331,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                 ))}
               </div>
 
+              {/* Upfront Essential Metrics */}
               <div className="specs-grid rv">
                 <div className="spec-box">
                   <span>{t('beds')}</span>
@@ -337,13 +346,17 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <b><Scaling style={{ width: 15, height: 15 }} /> {p.area} m²</b>
                 </div>
                 <div className="spec-box">
-                  <span>{isAr ? 'تقييم الذكاء' : 'AI score'}</span>
-                  <b><Sparkles style={{ width: 15, height: 15 }} /> {p.ai.toFixed(1)}</b>
+                  <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
+                  <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing || 'Ultra Super Lux'}</b>
+                </div>
+                <div className="spec-box">
+                  <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
+                  <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability || 'Available'}</b>
                 </div>
                 {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
                   <div className="spec-box">
                     <span>{isAr ? 'سعر المتر' : 'Price / m²'}</span>
-                    <b style={{ color: '#DFAD3A' }}>
+                    <b style={{ color: '#C9A84C' }}>
                       {Math.round(
                         (p.egpM ? p.egpM * 1_000_000 : (p.usd || 0) * 48.65) / p.area
                       ).toLocaleString()} EGP
