@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { listRecords } from '@sierra-estates/db';
 import { COLLECTIONS, type WhatsAppMessagePurpose } from '@/lib/models/schema';
-import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { enqueueWhatsAppJob, startOrContinueOwnerNegotiation } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
@@ -80,20 +80,32 @@ export async function POST(req: NextRequest) {
         personalizedBody = personalizedBody.replace(/\{\{name\}\}/gi, recipient.name);
       }
 
-      const jobId = await enqueueWhatsAppJob({
-        purpose: purpose as WhatsAppMessagePurpose,
-        toPhone: recipient.phone,
-        body: personalizedBody,
-        leadId: recipient.leadId,
-        unitId: recipient.unitId,
-        ownerNegotiationId: recipient.ownerNegotiationId,
-        templateName,
-        templateParams: {
-          ...templateParams,
-          ...(campaignName ? { campaignName } : {}),
-        },
-        scheduledFor: targetDate,
-      });
+      let jobId: string;
+      if (purpose === 'owner-negotiation' && !recipient.ownerNegotiationId) {
+        const neg = await startOrContinueOwnerNegotiation({
+          ownerPhone: recipient.phone,
+          ownerName: recipient.name,
+          unitId: recipient.unitId,
+          body: personalizedBody,
+          scheduledFor: targetDate,
+        });
+        jobId = neg.jobId;
+      } else {
+        jobId = await enqueueWhatsAppJob({
+          purpose: purpose as WhatsAppMessagePurpose,
+          toPhone: recipient.phone,
+          body: personalizedBody,
+          leadId: recipient.leadId,
+          unitId: recipient.unitId,
+          ownerNegotiationId: recipient.ownerNegotiationId,
+          templateName,
+          templateParams: {
+            ...templateParams,
+            ...(campaignName ? { campaignName } : {}),
+          },
+          scheduledFor: targetDate,
+        });
+      }
 
       jobIds.push(jobId);
     }

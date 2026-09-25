@@ -52,11 +52,11 @@ export class OmnichannelChatService {
       }
     }
 
-    // 1. If WhatsApp message contains property markers and is from a group, route to parsing engine immediately
-    if (platform === 'whatsapp' && groupName && groupName !== 'Direct Message') {
-      const isBrokerListing = this.isMessagePropertyListing(text);
-      if (isBrokerListing) {
-        logger.info(`🏢 [Omnichannel] WhatsApp message identified as Portfolio Asset signal. Routing to Parser Service.`);
+    // 1. If WhatsApp message contains property markers from a group or direct owner:
+    if (platform === 'whatsapp') {
+      const isListing = this.isMessagePropertyListing(text);
+      if (isListing && groupName && groupName !== 'Direct Message') {
+        logger.info(`🏢 [Omnichannel] WhatsApp message identified as Portfolio Asset signal from group ${groupName}. Routing to Parser Service.`);
         await WhatsAppStatusService.recordHeartbeat('syncing');
         const parseResult = await WhatsAppParserService.processIncomingMessage(text, senderId, groupName, media);
         return {
@@ -64,6 +64,28 @@ export class OmnichannelChatService {
           replyText: `Ingested Portfolio Asset with code ${parseResult.data.sierraCode}`,
           actionTaken: 'asset_ingestion'
         };
+      }
+
+      if (isListing && (!groupName || groupName === 'Direct Message')) {
+        logger.info(`🏢 [Omnichannel] Direct owner WhatsApp message identified as property listing intake from ${senderId}.`);
+        try {
+          const { ListingAvailabilitySyncService } = await import('@/lib/services/ListingAvailabilitySyncService');
+          const syncResult = await ListingAvailabilitySyncService.syncFromInboundOwnerMessage({
+            ownerPhone: senderId,
+            ownerName: senderName,
+            text,
+            mediaUrls: media ? [media.data] : [],
+          });
+          if (syncResult.actionTaken !== 'negotiation_only') {
+            return {
+              success: true,
+              replyText: 'تم استلام تفاصيل الوحدة وإضافتها لقاعدة بيانات معروضات سييرا إستيتس بنجاح! 🌿 سنقوم بعرضها على عملائنا الجاهزين فوراً.',
+              actionTaken: 'owner_listing_intake',
+            };
+          }
+        } catch (err: any) {
+          logger.warn(`[Omnichannel] Listing intake note: ${err?.message}`);
+        }
       }
     }
 
