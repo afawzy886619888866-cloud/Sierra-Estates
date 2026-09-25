@@ -481,6 +481,134 @@
   box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
 }
 
+/* ── 3B. PropertyCard Variations (Compact, Bento, Editorial) ────────── */
+/* 1. Compact / Executive Horizontal Card */
+.pcard.pcard-compact {
+  display: flex;
+  flex-direction: row;
+  min-height: 200px;
+}
+
+@media (max-width: 640px) {
+  .pcard.pcard-compact {
+    flex-direction: column;
+  }
+}
+
+.pcard.pcard-compact .photo {
+  width: 220px;
+  min-width: 220px;
+  height: 100%;
+  border-radius: 14px 0 0 14px;
+}
+
+[dir="rtl"] .pcard.pcard-compact .photo {
+  border-radius: 0 14px 14px 0;
+}
+
+@media (max-width: 640px) {
+  .pcard.pcard-compact .photo {
+    width: 100%;
+    min-width: 100%;
+    height: 180px;
+    border-radius: 14px 14px 0 0;
+  }
+}
+
+.pcard.pcard-compact .body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+/* 2. Bento Financial Investor Card */
+.pcard.pcard-bento {
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(11, 25, 41, 0.95) 100%);
+  border: 1px solid rgba(200, 150, 26, 0.22);
+}
+
+.pcard.pcard-bento .bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pcard.pcard-bento .bento-metric-cell {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.pcard.pcard-bento .bento-metric-cell:hover {
+  background: rgba(200, 150, 26, 0.08);
+  border-color: rgba(200, 150, 26, 0.3);
+}
+
+.pcard.pcard-bento .bento-metric-cell .metric-val {
+  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink, #fff);
+}
+
+.pcard.pcard-bento .bento-metric-cell .metric-lbl {
+  font-size: 9.5px;
+  color: var(--muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 3. Architectural Editorial Card */
+.pcard.pcard-editorial {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 20, 36, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.pcard.pcard-editorial .photo {
+  height: 230px;
+  border-radius: 10px 10px 0 0;
+}
+
+.pcard.pcard-editorial .photo img {
+  filter: contrast(1.04) saturate(0.95);
+  transition: filter 0.4s ease, transform 0.4s ease;
+}
+
+.pcard.pcard-editorial:hover .photo img {
+  filter: contrast(1.06) saturate(1.05);
+}
+
+.pcard.pcard-editorial h3 {
+  font-family: var(--font-cormorant, 'Cormorant Garamond', Georgia, serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pcard.pcard-editorial .specs-editorial {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+  font-size: 11px;
+  color: var(--muted, #94a3b8);
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 12px;
+}
+
 /* ── 4. Compound Tiles & Interactive Hub ────────────────────────────── */
 .c-tile {
   border-radius: 16px;

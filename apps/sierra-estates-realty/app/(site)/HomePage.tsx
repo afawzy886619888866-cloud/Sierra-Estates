@@ -9,7 +9,7 @@ import {
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
-import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
+import PropertyCard, { type CardListing, type PropertyCardVariant } from '@/components/site/PropertyCard';
 import HomeHero from '@/components/site/HomeHero';
 import PropertyShowcaseVideo from '@/components/site/PropertyShowcaseVideo';
 import VirtualTourBanner from '@/components/site/VirtualTourBanner';
@@ -109,6 +109,7 @@ const SALE_PRICES = [
 export default function HomePage() {
   const { t, isAr } = useSite();
   const [listings, setListings] = useState<CardListing[]>(HZDATA.listings as CardListing[]);
+  const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
@@ -953,13 +954,53 @@ export default function HomePage() {
               <div className="eyebrow">{t('eyeList')}</div>
               <h2>{t('featTit')}</h2>
               <p>{t('featSub')}</p>
+
+              {/* Card Style Variation Pills */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
+                  {isAr ? 'نمط العرض:' : 'Card Style:'}
+                </span>
+                {[
+                  { id: 'showcase', label: isAr ? 'معرض الصور' : 'Showcase' },
+                  { id: 'bento', label: isAr ? 'تحليلات العائد' : 'Financial Bento' },
+                  { id: 'compact', label: isAr ? 'موجز تنفيذي' : 'Compact' },
+                  { id: 'editorial', label: isAr ? 'تصميم هادئ' : 'Editorial' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setCardVariant(opt.id as PropertyCardVariant)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 20,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: cardVariant === opt.id ? '1px solid #C8961A' : '1px solid rgba(255,255,255,0.12)',
+                      background: cardVariant === opt.id ? 'rgba(200, 150, 26, 0.18)' : 'rgba(255,255,255,0.03)',
+                      color: cardVariant === opt.id ? '#E9C176' : 'var(--ink, #fff)',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <Link href="/properties" className="sec-link">
               <span>{t('viewAll')}</span> <ArrowRight className="i" />
             </Link>
           </div>
-          <div className="grid-props" id="prop-grid">
-            {displayedFeatured.map((p, i) => <PropertyCard key={p.id} p={p} i={i} onLocate={handleLocateOnMap} />)}
+          <div className={`grid-props${cardVariant === 'compact' ? ' grid-props-compact' : ''}`} id="prop-grid">
+            {displayedFeatured.map((p, i) => (
+              <PropertyCard
+                key={p.id}
+                p={p}
+                i={i}
+                variant={cardVariant}
+                onLocate={handleLocateOnMap}
+              />
+            ))}
           </div>
         </div>
       </section>
