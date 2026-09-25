@@ -24,6 +24,9 @@ import {
   LayoutGrid,
   Columns,
   ExternalLink,
+  ShieldCheck,
+  Sparkles,
+  Paintbrush,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import { useSite } from '@/lib/site/SiteContext';
