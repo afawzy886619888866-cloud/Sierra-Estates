@@ -106,7 +106,7 @@ function normalizeStatus(raw: string | undefined): InventoryStatus {
   if (s.includes('sold')) return 'sold';
   if (s.includes('rented') || s === 'unavailable' || s === 'no_answer' || s === 'no answer') return 'rented';
   if (s.includes('hold')) return 'hold';
-  if (s.includes('reserved')) return 'reserved';
+  if (s.includes('offer') || s.includes('reserved')) return 'reserved';
   if (s.includes('archive')) return 'archived';
   if (s === 'follow_up' || s.includes('pending')) return 'hold';
   return 'available';
@@ -119,7 +119,7 @@ function isUnavailable(raw: string | undefined): boolean {
 
 const STATUS_META: Record<InventoryStatus, { label: string; labelAr: string; cls: string; dot: string }> = {
   available: { label: 'Available', labelAr: 'متاح', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', dot: '#34D399' },
-  reserved: { label: 'Reserved', labelAr: 'محجوز', cls: 'bg-[#C8961A]/15 text-[#E9C176] border-[#C8961A]/40', dot: '#E9C176' },
+  reserved: { label: 'Under Offer', labelAr: 'تحت العرض', cls: 'bg-[#C9A84C]/15 text-[#E9C176] border-[#C9A84C]/40', dot: '#E9C176' },
   sold: { label: 'Sold', labelAr: 'تم البيع', cls: 'bg-slate-500/15 text-slate-300 border-slate-500/30 line-through decoration-slate-400/60', dot: '#94a3b8' },
   rented: { label: 'Rented', labelAr: 'تم الإيجار', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30', dot: '#38bdf8' },
   hold: { label: 'On Hold', labelAr: 'معلّق', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30', dot: '#f59e0b' },
@@ -148,6 +148,39 @@ function unitOperation(item: any): 'sale' | 'rent' {
   return 'sale';
 }
 
+export function isDirectOwner(u: any): boolean {
+  if (u.isDirectOwner === true) return true;
+  const ownerType = String(u.ownerType || '').toLowerCase();
+  const tag = String(u.tag || '').toLowerCase();
+  const agent = String(u.agent || '').toLowerCase();
+  const channel = String(u.channel || u.sourceType || '').toLowerCase();
+  const party = String(u.party || '').toLowerCase();
+  return (
+    ownerType.includes('owner') ||
+    tag.includes('owner') ||
+    tag.includes('direct') ||
+    agent.includes('owner') ||
+    channel.includes('owner') ||
+    party.includes('owner')
+  );
+}
+
+export function normalizeFinishing(raw: string | undefined): string {
+  if (!raw) return 'Fully Finished';
+  const r = raw.trim();
+  const lower = r.toLowerCase();
+  if (lower.includes('ultra') || lower.includes('super lux') || r.includes('سوبر لوكس') || r.includes('الترا')) return 'Ultra Super Lux';
+  if (lower.includes('fully') || lower.includes('finished') || r.includes('تشطيب') || r.includes('جاهز')) return 'Fully Finished';
+  if (lower.includes('semi') || r.includes('نصف تشطيب')) return 'Semi Finished';
+  if (lower.includes('core') || lower.includes('shell') || r.includes('طوب') || r.includes('بدون تشطيب')) return 'Core & Shell';
+  return r;
+}
+
+export function formatEGPCommas(price: number, op: 'sale' | 'rent'): string {
+  if (!price || isNaN(price)) return 'Price on Request';
+  return `${price.toLocaleString('en-US')} EGP${op === 'rent' ? '/mo' : ''}`;
+}
+
 function hashJitter(seed: string): [number, number] {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
@@ -168,11 +201,16 @@ function ownerPhone(u: any): string {
 
 /* ── View ───────────────────────────────────────────────────────────── */
 
-type ViewTab = 'grid' | 'insights' | 'workflow' | 'map';
+export type ViewTab = 'master' | 'owners_brokers' | 'rent_sale' | 'insights' | 'workflow' | 'map';
 
 export default function InventoryCommandView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [tab, setTab] = useState<ViewTab>('grid');
+  const [tab, setTab] = useState<ViewTab>('master');
+  const [ownerSubFilter, setOwnerSubFilter] = useState<'all' | 'owners' | 'brokers'>('all');
+  const [rentSaleSubFilter, setRentSaleSubFilter] = useState<'all' | 'sale' | 'rent'>('all');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [assignedLeads, setAssignedLeads] = useState<Record<string, string>>({});
+
   const [allUnits, setAllUnits] = useState<any[]>(() => buildUnifiedBaseline());
   const [liveMerged, setLiveMerged] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
