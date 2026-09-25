@@ -163,14 +163,33 @@ function sanitizeUnit(raw: any, index: number): RealListing {
   const egpM = Number((price / 1000000).toFixed(1));
   const usd = isRent ? Math.round(price / 50) : Math.round(price / 5000);
 
+  // Strict Luxury Institutional Standard: Price (EGP with commas)
   let priceLabel = raw.priceLabel;
-  if (!priceLabel) {
-    if (isRent) {
-      priceLabel = `${price.toLocaleString()} EGP / mo`;
-    } else {
-      priceLabel = egpM >= 1 ? `${egpM}M EGP` : `${price.toLocaleString()} EGP`;
-    }
+  if (!priceLabel || priceLabel.includes('M EGP')) {
+    priceLabel = isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`;
   }
+
+  const isDirectOwner = Boolean(
+    raw.isDirectOwner ||
+    raw.ownerType === 'owner' ||
+    raw.party === 'Owner' ||
+    raw.sourceType === 'owner' ||
+    raw.tag?.toLowerCase().includes('owner') ||
+    String(code).startsWith('DO-')
+  );
+
+  const isVerifiedFresh = Boolean(
+    raw.verifiedFresh ||
+    raw.isNew ||
+    raw.tag?.toLowerCase().includes('new') ||
+    raw.tag?.toLowerCase().includes('fresh') ||
+    raw.ago?.toLowerCase().includes('now') ||
+    raw.ago?.toLowerCase().includes('d ago') ||
+    raw.ago?.toLowerCase().includes('h ago')
+  );
+
+  const finishing = raw.finishing || (Number(raw.beds || raw.bedrooms || 3) >= 4 ? 'Ultra Super Lux' : 'Fully Finished');
+  const availability = raw.availability || raw.status || 'Available';
 
   return {
     id: raw.id || `unit-${index + 1}`,
@@ -198,6 +217,10 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
     segment: raw.segment,
     description: raw.description,
+    finishing,
+    availability,
+    isDirectOwner,
+    verifiedFresh,
   };
 }
 
