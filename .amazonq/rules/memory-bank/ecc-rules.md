@@ -1,4 +1,4 @@
-# Amazon Q — Everything Claude Code (ECC) & Obsidian Skills Integration
+# Amazonl Q — Everything Claude Code (ECC) & Obsidian Skills Integration
 
 > **ECC Version:** 2.0.0
 > **Skills Engine:** `.agent/skills/`, `.agents/skills/`, `@sierra-estates/obsidian`
