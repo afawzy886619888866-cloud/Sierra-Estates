@@ -939,28 +939,13 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                         area_sqm: u.area ?? '',
                         price_egp: unitPrice(u),
                         status: STATUS_META[normalizeStatus(u.status)].label,
-                        owner: u.ownerName || '',
-                        mobile: ownerPhone(u),
-                      })),
-                      'sierra-inventory-export.csv'
-                    )
-                  }
-                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[#211A0D] border border-[#C8961A]/40 text-[#E9C176] hover:border-[#E9C176] cursor-pointer flex items-center gap-1.5"
-                >
-                  <Download className="w-3 h-3" /> Export CSV
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Display: Table View OR Cards Variation View */}
-          <div className="bg-[#0d1a2c]/70 rounded-2xl border border-white/10 overflow-hidden">
+                 <div className="bg-[#0A1628]/95 rounded-2xl border border-[#C9A84C]/25 overflow-hidden shadow-2xl backdrop-blur-md">
             {viewMode === 'table' ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs" style={{ fontVariantNumeric: 'tabular-nums' }}>
                   <thead>
-                    <tr className="text-left text-slate-400 border-b border-white/10 bg-[#0a1424]">
-                      <th className="px-3 py-2.5 w-8">
+                    <tr className="text-left text-slate-400 border-b border-white/10 bg-[#07111e]">
+                      <th className="px-3 py-3 w-8">
                         <input
                           type="checkbox"
                           checked={allPageSelected}
@@ -973,17 +958,18 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                             });
                             setSelectedIds(next);
                           }}
-                          className="accent-[#C8961A] cursor-pointer"
+                          className="accent-[#C9A84C] cursor-pointer"
                           aria-label="Select page"
                         />
                       </th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Unit</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Compound</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Specs</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Price</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Owner</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Status</th>
-                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Actions</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Unit & Channel</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Location / Compound</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Price (EGP)</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Rooms & Area</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Finishing</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Availability</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Owner & Phone</th>
+                      <th className="px-3 py-3 font-mono text-[10px] uppercase tracking-wider text-slate-300">Quick Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -996,17 +982,18 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                       const area = Number(u.area) || 0;
                       const photo = (u.photos && u.photos[0]) || u.img || u.image;
                       const compound = u.compound || u.cmp || u.location || '—';
-                      const allowed = STATUS_FLOW[status];
                       const phone = ownerPhone(u);
+                      const isOwner = isDirectOwner(u);
+                      const finishing = normalizeFinishing(u.finishing);
 
                       return (
-                        <tr key={id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                        <tr key={id} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
                           <td className="px-3 py-2.5">
                             <input
                               type="checkbox"
                               checked={selectedIds.has(id)}
                               onChange={() => toggleSelect(id)}
-                              className="accent-[#C8961A] cursor-pointer"
+                              className="accent-[#C9A84C] cursor-pointer"
                               aria-label={`Select ${id}`}
                             />
                           </td>
@@ -1022,75 +1009,132 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                               )}
                               <div>
                                 <div className="font-bold text-white font-mono text-[11px]">{id}</div>
-                                <div className="text-[9.5px] text-slate-500">
-                                  {operation === 'rent' ? 'Rent' : 'Sale'}
-                                  {u.tag ? ` · ${u.tag}` : ''}
+                                <div className="mt-0.5">
+                                  {isOwner ? (
+                                    <span className="inline-flex items-center gap-1 text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-[#C9A84C]/20 text-[#E9C176] border border-[#C9A84C]/40">
+                                      <ShieldCheck className="w-2.5 h-2.5 text-[#E9C176]" />
+                                      Direct Owner
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-[8.5px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/50">
+                                      Broker Network
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-3 py-2.5">
-                            <div className="text-slate-200 font-semibold text-[11px]">{compound}</div>
-                            <div className="text-[9.5px] text-slate-500">{u.developer || u.zone || ''}</div>
+                            <div className="text-[#F8F9FA] font-semibold text-[11px] truncate max-w-[150px]">{compound}</div>
+                            <div className="text-[9.5px] text-slate-400 truncate max-w-[150px]">{u.zone || u.developer || 'New Cairo'}</div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="font-mono font-bold text-[#E9C176] text-[11px]">
+                              {formatEGPCommas(price, operation)}
+                            </div>
+                            {area > 0 && price > 0 && (
+                              <div className="text-[9.5px] text-slate-400 font-mono">
+                                {Math.round(price / area).toLocaleString('en-US')} EGP/m²
+                              </div>
+                            )}
                           </td>
                           <td className="px-3 py-2.5 text-slate-300">
-                            <div className="text-[11px]">{u.type || '—'}</div>
-                            <div className="text-[9.5px] text-slate-500">
-                              {u.beds ?? '—'} bd · {area ? `${area} m²` : '—'}
+                            <div className="text-[11px] font-medium text-slate-200">
+                              {u.beds != null ? `${u.beds} bd` : '—'} {u.baths != null ? `· ${u.baths} ba` : ''}
+                            </div>
+                            <div className="text-[9.5px] text-[#C9A84C] font-mono font-bold">
+                              {area ? `${area} m²` : '—'}
                             </div>
                           </td>
                           <td className="px-3 py-2.5">
-                            <div className="font-mono font-bold text-[#E9C176] text-[11px]">{formatEGP(price)}</div>
-                            {area > 0 && price > 0 && (
-                              <div className="text-[9.5px] text-slate-500 font-mono">{Math.round(price / area).toLocaleString('en-EG')}/m²</div>
-                            )}
-                          </td>
-                          <td className="px-3 py-2.5">
-                            {u.ownerName ? (
-                              <div>
-                                <div className="text-[11px] text-slate-200">{u.ownerName}</div>
-                                {phone && (
-                                  <div className="text-[9.5px] text-slate-500 font-mono flex items-center gap-1">
-                                    <Phone className="w-2.5 h-2.5" /> {phone}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-[10px] text-slate-600">—</span>
-                            )}
+                            <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#0A1628] border border-white/10 text-slate-300">
+                              {finishing}
+                            </span>
                           </td>
                           <td className="px-3 py-2.5">
                             <select
-                              value={meta.label}
+                              value={status === 'reserved' ? 'Under Offer' : meta.label}
                               onChange={(e) => applyStatus(id, e.target.value)}
-                              className={`text-[10px] font-bold rounded-lg px-2 py-1 border cursor-pointer outline-none ${meta.cls}`}
+                              className={`text-[10px] font-bold rounded-lg px-2.5 py-1 border cursor-pointer outline-none transition-all ${meta.cls}`}
                             >
-                              {(Object.keys(STATUS_META) as InventoryStatus[])
-                                .filter((s) => allowed.includes(s))
-                                .map((s) => (
-                                  <option key={s} value={STATUS_META[s].label} className="bg-[#0b1a2e] text-white">
-                                    {STATUS_META[s].label}
-                                  </option>
-                                ))}
+                              <option value="Available" className="bg-[#0A1628] text-emerald-300">Available</option>
+                              <option value="Under Offer" className="bg-[#0A1628] text-[#E9C176]">Under Offer</option>
+                              <option value="Sold" className="bg-[#0A1628] text-slate-300">Sold</option>
+                              <option value="Rented" className="bg-[#0A1628] text-sky-300">Rented</option>
+                              <option value="On Hold" className="bg-[#0A1628] text-amber-300">On Hold</option>
                             </select>
                           </td>
                           <td className="px-3 py-2.5">
-                            <button
-                              type="button"
-                              onClick={() => setDrawerUnit(toDrawerUnit(u))}
-                              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
-                              title="View details"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="text-[11px] text-slate-200 font-medium truncate max-w-[120px]">{u.ownerName || 'Direct Owner'}</div>
+                            {phone ? (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyPhone(phone, id)}
+                                className={`mt-0.5 px-1.5 py-0.5 rounded text-[9.5px] font-mono flex items-center gap-1 border transition-all ${
+                                  copiedId === id
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                    : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:border-[#C9A84C]/40'
+                                }`}
+                                title="Click to copy phone number"
+                              >
+                                {copiedId === id ? (
+                                  <>
+                                    <Check className="w-2.5 h-2.5 text-emerald-400" />
+                                    <span>Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-2.5 h-2.5 text-slate-400" />
+                                    <span>{phone}</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-slate-600 font-mono">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={assignedLeads[id] || 'unassigned'}
+                                onChange={(e) => handleAssignLead(id, e.target.value)}
+                                className="text-[9.5px] font-medium bg-[#0A1628] border border-white/10 rounded-md px-1.5 py-1 text-slate-300 outline-none focus:border-[#C9A84C]/60 cursor-pointer"
+                                title="Lead assignment"
+                              >
+                                <option value="unassigned" className="bg-[#0A1628] text-slate-500">Assign Rep…</option>
+                                <option value="Leila AI" className="bg-[#0A1628] text-[#E9C176]">Leila AI</option>
+                                <option value="VIP Closer Desk" className="bg-[#0A1628] text-emerald-400">VIP Closer</option>
+                                <option value="North 90th Specialist" className="bg-[#0A1628] text-sky-400">North 90th</option>
+                                <option value="Eastown Rep" className="bg-[#0A1628] text-purple-400">Eastown Rep</option>
+                              </select>
+                              {phone && (
+                                <a
+                                  href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                                  title="Direct WhatsApp"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setDrawerUnit(toDrawerUnit(u))}
+                                className="p-1 rounded-md bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
+                                title="View details"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
                     {pageRows.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="px-4 py-14 text-center text-slate-500 text-sm">
-                          No matching units
+                        <td colSpan={9} className="px-4 py-14 text-center text-slate-500 text-sm">
+                          No matching units found in active filters
                         </td>
                       </tr>
                     )}
@@ -1119,18 +1163,21 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                   const phone = ownerPhone(u);
                   const estYield = u.yield || (operation === 'rent' ? 10.4 : 8.2);
 
+                  const isOwner = isDirectOwner(u);
+                  const finishing = normalizeFinishing(u.finishing);
+
                   /* ── SUB-VARIANT 1: SHOWCASE ── */
                   if (cardVariant === 'showcase') {
                     return (
                       <div
                         key={id}
-                        className={`group bg-[#0a1424]/90 rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden ${
+                        className={`group bg-[#0A1628]/95 rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-lg ${
                           selectedIds.has(id)
-                            ? 'border-[#E9C176] shadow-lg shadow-[#C8961A]/10'
-                            : 'border-white/10 hover:border-[#C8961A]/50'
+                            ? 'border-[#C9A84C] shadow-lg shadow-[#C9A84C]/15 ring-1 ring-[#C9A84C]/50'
+                            : 'border-white/10 hover:border-[#C9A84C]/50'
                         }`}
                       >
-                        <div className="relative h-44 bg-[#07121e] overflow-hidden">
+                        <div className="relative h-44 bg-[#07111e] overflow-hidden">
                           {photo ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -1139,93 +1186,147 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#0a1424] to-[#07121e] text-slate-500 p-4">
-                              <Building2 className="w-8 h-8 text-[#C8961A]/40 mb-1" />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#0A1628] to-[#07111e] text-slate-500 p-4">
+                              <Building2 className="w-8 h-8 text-[#C9A84C]/40 mb-1" />
                               <span className="text-[10px] font-mono text-slate-400 tracking-wider">SIERRA BLUEPRINT</span>
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0a1424] via-transparent to-black/40 pointer-events-none" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-transparent to-black/50 pointer-events-none" />
 
                           {/* Top Badges */}
                           <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
-                            <label className="flex items-center gap-1.5 bg-[#0a1424]/85 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 cursor-pointer">
+                            <label className="flex items-center gap-1.5 bg-[#0A1628]/90 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={selectedIds.has(id)}
                                 onChange={() => toggleSelect(id)}
-                                className="accent-[#C8961A]"
+                                className="accent-[#C9A84C]"
                               />
                               <span className="font-mono font-bold text-[10px] text-white">{id}</span>
                             </label>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
-                              {meta.label}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              {isOwner ? (
+                                <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-[#C9A84C]/90 text-[#0A1628]">
+                                  <ShieldCheck className="w-2.5 h-2.5" />
+                                  Direct
+                                </span>
+                              ) : (
+                                <span className="text-[8.5px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-slate-300 backdrop-blur-md">
+                                  Broker
+                                </span>
+                              )}
+                              <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
+                                {status === 'reserved' ? 'Under Offer' : meta.label}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Floating Price */}
-                          <div className="absolute bottom-2.5 left-2.5 z-10 font-mono font-extrabold text-[#E9C176] text-xs bg-[#0a1424]/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#C8961A]/30">
-                            {formatEGP(price)}
+                          <div className="absolute bottom-2.5 left-2.5 z-10 font-mono font-extrabold text-[#E9C176] text-xs bg-[#0A1628]/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#C9A84C]/40">
+                            {formatEGPCommas(price, operation)}
                           </div>
 
                           {/* Operation Tag */}
-                          <div className="absolute bottom-2.5 right-2.5 z-10 text-[9.5px] uppercase font-bold text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded">
+                          <div className="absolute bottom-2.5 right-2.5 z-10 text-[9.5px] uppercase font-bold text-[#E9C176] bg-[#211A0D]/90 backdrop-blur-md px-2 py-0.5 rounded border border-[#C9A84C]/30">
                             {operation}
                           </div>
                         </div>
 
                         <div className="p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
                           <div>
-                            <div className="text-white font-bold text-sm truncate">{compound}</div>
+                            <div className="text-[#F8F9FA] font-bold text-sm truncate">{compound}</div>
                             <div className="text-[11px] text-slate-400 flex items-center justify-between mt-0.5">
-                              <span>{u.type || 'Unit'} · {u.beds ?? '—'} bd</span>
-                              {area > 0 && <span className="font-mono text-slate-300">{area} m²</span>}
+                              <span>{u.beds != null ? `${u.beds} bd` : 'Unit'} {u.baths != null ? `· ${u.baths} ba` : ''}</span>
+                              {area > 0 && <span className="font-mono text-[#C9A84C] font-bold">{area} m²</span>}
                             </div>
-                            {area > 0 && price > 0 && (
-                              <div className="text-[10px] font-mono text-[#E9C176]/90 mt-1">
-                                {Math.round(price / area).toLocaleString('en-EG')} EGP/m²
-                              </div>
+                            <div className="flex items-center justify-between mt-1 text-[10px]">
+                              <span className="px-1.5 py-0.5 rounded bg-[#07111e] border border-white/5 text-slate-300">
+                                {finishing}
+                              </span>
+                              {area > 0 && price > 0 && (
+                                <span className="font-mono text-slate-400">
+                                  {Math.round(price / area).toLocaleString('en-US')} EGP/m²
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Owner & Phone Copy Strip */}
+                          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-300 truncate max-w-[110px]">{u.ownerName || 'Direct Owner'}</span>
+                            {phone ? (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyPhone(phone, id)}
+                                className={`px-2 py-0.5 rounded text-[9.5px] font-mono flex items-center gap-1 border transition-all ${
+                                  copiedId === id
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                    : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 hover:border-[#C9A84C]/40'
+                                }`}
+                                title="Click to copy phone number"
+                              >
+                                {copiedId === id ? (
+                                  <>
+                                    <Check className="w-2.5 h-2.5 text-emerald-400" />
+                                    <span>Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-2.5 h-2.5 text-slate-400" />
+                                    <span>{phone}</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-slate-600 font-mono text-[10px]">—</span>
                             )}
                           </div>
 
-                          {/* Owner & WhatsApp Strip */}
-                          {u.ownerName && (
-                            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
-                              <span className="text-slate-300 truncate max-w-[130px]">{u.ownerName}</span>
-                              {phone && (
-                                <a
-                                  href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-emerald-400 hover:text-emerald-300 font-mono text-[10px] flex items-center gap-1"
-                                >
-                                  <Phone className="w-2.5 h-2.5" /> WhatsApp
-                                </a>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Status changer & Detail Drawer */}
-                          <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                          {/* Lead Assignment + Status changer */}
+                          <div className="pt-2 border-t border-white/10 flex items-center gap-1.5">
                             <select
-                              value={meta.label}
+                              value={status === 'reserved' ? 'Under Offer' : meta.label}
                               onChange={(e) => applyStatus(id, e.target.value)}
-                              className={`flex-1 text-[10.5px] font-bold rounded-lg px-2 py-1.5 border cursor-pointer outline-none ${meta.cls}`}
+                              className={`flex-1 text-[10px] font-bold rounded-lg px-2 py-1.5 border cursor-pointer outline-none transition-all ${meta.cls}`}
                             >
-                              {(Object.keys(STATUS_META) as InventoryStatus[])
-                                .filter((s) => allowed.includes(s))
-                                .map((s) => (
-                                  <option key={s} value={STATUS_META[s].label} className="bg-[#0b1a2e] text-white">
-                                    {STATUS_META[s].label}
-                                  </option>
-                                ))}
+                              <option value="Available" className="bg-[#0A1628] text-emerald-300">Available</option>
+                              <option value="Under Offer" className="bg-[#0A1628] text-[#E9C176]">Under Offer</option>
+                              <option value="Sold" className="bg-[#0A1628] text-slate-300">Sold</option>
+                              <option value="Rented" className="bg-[#0A1628] text-sky-300">Rented</option>
+                              <option value="On Hold" className="bg-[#0A1628] text-amber-300">On Hold</option>
                             </select>
+
+                            <select
+                              value={assignedLeads[id] || 'unassigned'}
+                              onChange={(e) => handleAssignLead(id, e.target.value)}
+                              className="text-[9.5px] font-medium bg-[#07111e] border border-white/10 rounded-lg px-1.5 py-1.5 text-slate-300 outline-none focus:border-[#C9A84C]/60 cursor-pointer"
+                              title="Lead assignment"
+                            >
+                              <option value="unassigned" className="bg-[#0A1628] text-slate-500">Assign…</option>
+                              <option value="Leila AI" className="bg-[#0A1628] text-[#E9C176]">Leila AI</option>
+                              <option value="VIP Closer Desk" className="bg-[#0A1628] text-emerald-400">VIP Closer</option>
+                              <option value="North 90th Specialist" className="bg-[#0A1628] text-sky-400">North 90th</option>
+                              <option value="Eastown Rep" className="bg-[#0A1628] text-purple-400">Eastown Rep</option>
+                            </select>
+
+                            {phone && (
+                              <a
+                                href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                                title="WhatsApp Owner"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                              </a>
+                            )}
                             <button
                               type="button"
                               onClick={() => setDrawerUnit(toDrawerUnit(u))}
                               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
                               title="View details"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -1238,10 +1339,10 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                     return (
                       <div
                         key={id}
-                        className={`group bg-[#0a1424]/90 rounded-2xl border p-3.5 space-y-3 transition-all duration-300 flex flex-col justify-between ${
+                        className={`group bg-[#0A1628]/95 rounded-2xl border p-3.5 space-y-3 transition-all duration-300 flex flex-col justify-between shadow-lg ${
                           selectedIds.has(id)
-                            ? 'border-[#E9C176] shadow-lg shadow-[#C8961A]/10'
-                            : 'border-white/10 hover:border-[#C8961A]/50'
+                            ? 'border-[#C9A84C] shadow-lg shadow-[#C9A84C]/15 ring-1 ring-[#C9A84C]/50'
+                            : 'border-white/10 hover:border-[#C9A84C]/50'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -1250,45 +1351,68 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                               type="checkbox"
                               checked={selectedIds.has(id)}
                               onChange={() => toggleSelect(id)}
-                              className="accent-[#C8961A]"
+                              className="accent-[#C9A84C]"
                             />
                             <span className="font-mono font-bold text-xs text-[#E9C176]">{id}</span>
                           </label>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
-                            {meta.label}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            {isOwner && (
+                              <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-[#C9A84C]/20 text-[#E9C176] border border-[#C9A84C]/40">
+                                <ShieldCheck className="w-2.5 h-2.5" />
+                                Direct
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
+                              {status === 'reserved' ? 'Under Offer' : meta.label}
+                            </span>
+                          </div>
                         </div>
 
                         <div>
-                          <div className="text-white font-bold text-sm truncate">{compound}</div>
-                          <div className="text-[11px] text-slate-400">{u.type || 'Unit'} · {operation.toUpperCase()}</div>
+                          <div className="text-[#F8F9FA] font-bold text-sm truncate">{compound}</div>
+                          <div className="text-[11px] text-slate-400 flex items-center justify-between mt-0.5">
+                            <span>{u.type || 'Unit'} · {operation.toUpperCase()}</span>
+                            <span className="text-[10px] text-slate-300 font-mono">{finishing}</span>
+                          </div>
                         </div>
 
                         {/* 4-cell Bento Financial Metrics */}
                         <div className="grid grid-cols-2 gap-2 text-center">
-                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                          <div className="bg-[#07111e] p-2 rounded-xl border border-white/5">
                             <div className="text-[9px] uppercase text-slate-500 font-mono">Price / m²</div>
                             <div className="text-xs font-mono font-bold text-[#E9C176]">
-                              {area > 0 && price > 0 ? Math.round(price / area).toLocaleString('en-EG') : '—'}
+                              {area > 0 && price > 0 ? Math.round(price / area).toLocaleString('en-US') : '—'}
                             </div>
                           </div>
-                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                          <div className="bg-[#07111e] p-2 rounded-xl border border-white/5">
                             <div className="text-[9px] uppercase text-slate-500 font-mono">Est. Yield</div>
                             <div className="text-xs font-mono font-bold text-emerald-400">{estYield}%</div>
                           </div>
-                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                          <div className="bg-[#07111e] p-2 rounded-xl border border-white/5">
                             <div className="text-[9px] uppercase text-slate-500 font-mono">Area</div>
                             <div className="text-xs font-mono font-bold text-slate-200">{area ? `${area} m²` : '—'}</div>
                           </div>
-                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                          <div className="bg-[#07111e] p-2 rounded-xl border border-white/5">
                             <div className="text-[9px] uppercase text-slate-500 font-mono">Payback</div>
                             <div className="text-xs font-mono font-bold text-slate-200">{(100 / estYield).toFixed(1)} Yrs</div>
                           </div>
                         </div>
 
                         <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                          <div className="font-mono font-extrabold text-[#E9C176] text-xs">{formatEGP(price)}</div>
+                          <div className="font-mono font-extrabold text-[#E9C176] text-xs">
+                            {formatEGPCommas(price, operation)}
+                          </div>
                           <div className="flex items-center gap-1.5">
+                            {phone && (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyPhone(phone, id)}
+                                className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176]"
+                                title="Copy Phone"
+                              >
+                                {copiedId === id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
                             {phone && (
                               <a
                                 href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
@@ -1318,8 +1442,8 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                   return (
                     <div
                       key={id}
-                      className={`group bg-[#0a1424]/90 rounded-xl border p-3 flex items-center justify-between gap-3 transition-all ${
-                        selectedIds.has(id) ? 'border-[#E9C176]' : 'border-white/10 hover:border-[#C8961A]/40'
+                      className={`group bg-[#0A1628]/95 rounded-xl border p-3 flex items-center justify-between gap-3 transition-all shadow-md ${
+                        selectedIds.has(id) ? 'border-[#C9A84C] ring-1 ring-[#C9A84C]/50' : 'border-white/10 hover:border-[#C9A84C]/40'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -1327,34 +1451,51 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                           type="checkbox"
                           checked={selectedIds.has(id)}
                           onChange={() => toggleSelect(id)}
-                          className="accent-[#C8961A] flex-shrink-0"
+                          className="accent-[#C9A84C] flex-shrink-0 cursor-pointer"
                         />
                         {photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={photo} alt={id} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-white/10" />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-[#0d1a2c] border border-white/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-5 h-5 text-[#C8961A]/50" />
+                          <div className="w-12 h-12 rounded-lg bg-[#07111e] border border-white/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-[#C9A84C]/50" />
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <span className="font-mono font-bold text-xs text-[#E9C176]">{id}</span>
+                            {isOwner && (
+                              <span className="inline-flex items-center text-[8px] font-bold px-1 py-0.2 rounded bg-[#C9A84C]/20 text-[#E9C176] border border-[#C9A84C]/40">
+                                Direct
+                              </span>
+                            )}
                             <span className="text-[10px] text-slate-400 truncate">· {compound}</span>
                           </div>
                           <div className="text-[11px] text-slate-300 truncate">
-                            {u.type || 'Unit'} · {u.beds ?? '—'} bd · {area ? `${area} m²` : '—'}
+                            {u.type || 'Unit'} · {u.beds != null ? `${u.beds} bd` : '—'} · {area ? `${area} m²` : '—'} · <span className="text-slate-400">{finishing}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2.5 flex-shrink-0">
                         <div className="text-right">
-                          <div className="font-mono font-bold text-xs text-[#E9C176]">{formatEGP(price)}</div>
+                          <div className="font-mono font-bold text-xs text-[#E9C176]">
+                            {formatEGPCommas(price, operation)}
+                          </div>
                           <div className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded border inline-block ${meta.cls}`}>
-                            {meta.label}
+                            {status === 'reserved' ? 'Under Offer' : meta.label}
                           </div>
                         </div>
+                        {phone && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPhone(phone, id)}
+                            className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176]"
+                            title="Copy Phone"
+                          >
+                            {copiedId === id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
                         {phone && (
                           <a
                             href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
@@ -1380,7 +1521,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                 })}
                 {pageRows.length === 0 && (
                   <div className="col-span-full py-14 text-center text-slate-500 text-sm">
-                    No matching units
+                    No matching units found in active filters
                   </div>
                 )}
               </div>
