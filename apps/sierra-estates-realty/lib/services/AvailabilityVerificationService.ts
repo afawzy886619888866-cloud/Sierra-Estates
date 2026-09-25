@@ -428,6 +428,19 @@ Determine:
 
     await this.saveSessions(sessions);
 
+    // Synchronize confirmed availability directly to authoritative Supabase public.listings
+    try {
+      const { ListingAvailabilitySyncService } = await import('./ListingAvailabilitySyncService');
+      await ListingAvailabilitySyncService.syncFromInboundOwnerMessage({
+        unitId: matchedUnit.unitId || matchedUnit.unitCode,
+        ownerPhone: fromPhone,
+        text: replyText,
+        mediaUrls,
+      });
+    } catch (syncErr: any) {
+      logger.warn(`[AvailabilityService] Error syncing listing to Supabase: ${syncErr?.message}`);
+    }
+
     // If unit is confirmed available, forward refined details to the client
     if (isAvailable) {
       const clientUpdate =

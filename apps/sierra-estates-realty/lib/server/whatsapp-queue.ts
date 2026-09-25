@@ -327,7 +327,7 @@ export async function appendOwnerNegotiationMessage(
   };
   if (entry.price !== undefined) historyEntry.price = entry.price;
 
-  const existing = await getRecord<{ history?: unknown[] }>('owner_negotiations', negotiationId);
+  const existing = await getRecord<OwnerNegotiation & { history?: unknown[] }>('owner_negotiations', negotiationId);
   const history = Array.isArray(existing?.history) ? existing.history : [];
 
   await updateRecord('owner_negotiations', negotiationId, {
@@ -336,6 +336,23 @@ export async function appendOwnerNegotiationMessage(
     updatedAt: now,
     ...(entry.direction === 'inbound' ? { status: 'negotiating' } : {}),
   });
+
+  // When an owner replies to an outreach message, automatically sync unit status
+  // in Supabase public.listings (flipping unavailable units back to available or rented/sold).
+  if (entry.direction === 'inbound' && existing) {
+    try {
+      const { ListingAvailabilitySyncService } = await import('@/lib/services/ListingAvailabilitySyncService');
+      await ListingAvailabilitySyncService.syncFromInboundOwnerMessage({
+        negotiationId,
+        unitId: existing.unitId,
+        ownerPhone: existing.ownerPhone,
+        ownerName: existing.ownerName,
+        text: entry.message,
+      });
+    } catch (syncErr: any) {
+      logger.warn(`[whatsapp-queue] Listing sync note: ${syncErr?.message}`);
+    }
+  }
 }
 
 /**
@@ -352,6 +369,7 @@ export async function startOrContinueOwnerNegotiation(params: {
   askingPrice?: number;
   offerPrice?: number;
   body: string;
+  scheduledFor?: ScheduleInput;
 }): Promise<{ negotiationId: string; jobId: string }> {
   const existing = await findActiveOwnerNegotiationByPhone(params.ownerPhone);
   const now = new Date().toISOString();
@@ -360,6 +378,8 @@ export async function startOrContinueOwnerNegotiation(params: {
   if (existing) {
     negotiationId = existing.id;
     const patch: Record<string, unknown> = { updatedAt: now };
+    if (params.unitId && !existing.data.unitId) patch.unitId = params.unitId;
+    if (params.ownerName && !existing.data.ownerName) patch.ownerName = params.ownerName;
     if (params.offerPrice !== undefined) patch.currentOfferPrice = params.offerPrice;
     if (params.interestedLeadId !== undefined) patch.interestedLeadId = params.interestedLeadId;
     await updateRecord('owner_negotiations', negotiationId, patch);
@@ -391,6 +411,7 @@ export async function startOrContinueOwnerNegotiation(params: {
     toPhone: params.ownerPhone,
     body: params.body,
     ownerNegotiationId: negotiationId,
+    scheduledFor: params.scheduledFor,
     ...(params.unitId ? { unitId: params.unitId } : {}),
   });
 
