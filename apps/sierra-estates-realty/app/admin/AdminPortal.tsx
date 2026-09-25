@@ -2549,11 +2549,11 @@ function AdminApp() {
                     top: 'calc(100% + 8px)',
                     [isAr ? 'left' : 'right']: 0,
                     width: 250,
-                    background: 'linear-gradient(180deg, #102339 0%, #081424 100%)',
-                    border: '1px solid rgba(0, 174, 255, 0.3)',
-                    borderRadius: 12,
+                    background: 'var(--clay-bg-card-elevated)',
+                    border: '1px solid rgba(200, 150, 26, 0.35)',
+                    borderRadius: 'var(--clay-rad-xl)',
                     padding: 8,
-                    boxShadow: '0 16px 36px rgba(0,0,0,0.6), 0 0 20px rgba(0, 174, 255, 0.15)',
+                    boxShadow: 'var(--clay-card-gold-shadow), var(--clay-card-inset)',
                     zIndex: 500,
                     display: 'flex',
                     flexDirection: 'column',
@@ -2590,11 +2590,11 @@ function AdminApp() {
                         alignItems: 'center',
                         gap: 8,
                         fontSize: 12,
-                        color: tab === app.id ? '#C8961A' : '#F0EDE5',
-                        background: tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent',
+                        color: tab === app.id ? '#E9C176' : 'var(--tx)',
+                        background: tab === app.id ? 'linear-gradient(135deg, rgba(200, 150, 26, 0.22) 0%, rgba(168, 122, 18, 0.12) 100%)' : 'transparent',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = tab === app.id ? 'rgba(0, 174, 255, 0.15)' : 'transparent')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = tab === app.id ? 'linear-gradient(135deg, rgba(200, 150, 26, 0.22) 0%, rgba(168, 122, 18, 0.12) 100%)' : 'transparent')}
                     >
                       <span>{app.icon}</span>
                       <span style={{ fontWeight: tab === app.id ? 700 : 500 }}>{app.label}</span>
@@ -2620,10 +2620,11 @@ function AdminApp() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                color: 'var(--cyan, #C8961A)',
-                borderColor: 'rgba(0,174,255,0.3)',
-                background: 'rgba(0,174,255,0.08)',
-                fontWeight: 600,
+                color: 'var(--gold-lt)',
+                borderColor: 'rgba(200, 150, 26, 0.35)',
+                background: 'linear-gradient(135deg, rgba(200, 150, 26, 0.16) 0%, rgba(168, 122, 18, 0.08) 100%)',
+                boxShadow: 'var(--clay-btn-shadow)',
+                fontWeight: 700,
               }}
               title={isAr ? 'فتح مساعد البيانات الذكي' : 'Open AI Data Copilot'}
             >
