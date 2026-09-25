@@ -223,7 +223,7 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     finishing,
     availability,
     isDirectOwner,
-    verifiedFresh,
+    verifiedFresh: isVerifiedFresh,
   };
 }
 
