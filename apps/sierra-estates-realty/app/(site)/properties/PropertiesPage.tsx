@@ -945,31 +945,48 @@ export default function PropertiesPage() {
                           key={p.id}
                           id={`listing-card-${p.id}`}
                           onClick={() => handleSelectUnit(p)}
-                          className={`pcard ${isSelected ? 'active-unit' : ''}`}
+                          className={`pcard luxury-inst-card ${isSelected ? 'active-unit' : ''}`}
                           style={{ cursor: 'pointer' }}
                         >
-                          <div className="photo">
+                          <div className="photo relative">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={p.img} alt={`${p.type} in ${p.compound}`} loading="lazy" />
-                            <div className="badges">
+                            <div className="badges flex flex-wrap gap-1">
+                              {p.isDirectOwner && (
+                                <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <ShieldCheck style={{ width: 11, height: 11 }} />
+                                  <span>{isAr ? 'مالك مباشر' : 'Direct Owner'}</span>
+                                </span>
+                              )}
+                              {p.verifiedFresh && !p.isDirectOwner && (
+                                <span className="tag" style={{ background: 'rgba(16, 185, 129, 0.9)', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <Sparkles style={{ width: 11, height: 11 }} />
+                                  <span>{isAr ? 'تحقق حديث' : 'Verified Fresh'}</span>
+                                </span>
+                              )}
                               <span className={`tag ${p.mode === 'rent' ? 'rent' : 'sale'}`}>
                                 {p.mode === 'rent' ? (isAr ? 'إيجار' : 'Rent') : (isAr ? 'بيع' : 'Sale')}
                               </span>
                               {p.tag && <span className="tag featured">{p.tag}</span>}
                             </div>
-                            <div className="price-float">{p.priceLabel}</div>
+                            <div className="price-float font-mono font-bold" style={{ background: 'rgba(10, 22, 40, 0.94)', border: '1px solid rgba(201, 168, 76, 0.4)', color: '#C9A84C' }}>
+                              {p.priceLabel}
+                            </div>
                             <div className="ai-score">AI {p.ai.toFixed(1)}</div>
                           </div>
 
                           <div className="body">
-                            <div className="ptype">{p.code} · {p.type}</div>
+                            <div className="ptype flex items-center justify-between">
+                              <span>{p.code} · {p.type}</span>
+                              <span className="text-[10px] text-[#10B981] font-semibold">{p.availability || 'Available'}</span>
+                            </div>
                             <h3>
                               <Link href={`/property/${p.code || p.id}`} onClick={(e) => e.stopPropagation()}>
                                 {p.compound}
                               </Link>
                             </h3>
                             <div className="addr">
-                              <MapPin style={{ width: 14, height: 14 }} /> {p.location || p.zone}
+                              <MapPin style={{ width: 14, height: 14, color: '#C9A84C' }} /> {p.location || p.zone}
                             </div>
                             <div className="specs">
                               <div><BedDouble style={{ width: 15, height: 15 }} /><b>{p.beds}</b><span>{isAr ? 'غرف' : 'bds'}</span></div>
@@ -979,26 +996,49 @@ export default function PropertiesPage() {
                                 <div
                                   className="spec-sqm"
                                   title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
-                                  style={{ color: '#DFAD3A', fontWeight: 600 }}
+                                  style={{ color: '#C9A84C', fontWeight: 600 }}
                                 >
                                   <b>{Math.round(p.price / p.area).toLocaleString()}</b>
                                   <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
                                 </div>
                               )}
                             </div>
+
+                            {/* Upfront finishing & VIP Tour action */}
+                            <div className="mt-2 text-[11px] text-slate-400 flex items-center justify-between border-t border-black/5 dark:border-white/5 pt-1.5">
+                              <span className="flex items-center gap-1">
+                                <Paintbrush style={{ width: 12, height: 12, color: '#C9A84C' }} /> {p.finishing || 'Fully Finished'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (typeof window !== 'undefined') {
+                                    window.dispatchEvent(new CustomEvent('sierra:add-to-shortlist', {
+                                      detail: { id: p.code || p.id, code: p.code, compound: p.compound, type: p.type, price: p.priceLabel, img: p.img }
+                                    }));
+                                  }
+                                }}
+                                className="text-[#C9A84C] hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0 text-[11px]"
+                              >
+                                + VIP Tour
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="foot">
+                          <div className="foot flex items-center justify-between">
                             <div className="agent">
                               <small><b>{p.agent}</b>{p.ago}</small>
                             </div>
-                            <div className="pcard-actions">
+                            <div className="pcard-actions flex items-center gap-2">
                               <a
                                 href={waLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="pcard-btn-whatsapp"
+                                style={{ background: '#25D366', color: '#FFFFFF', borderColor: '#25D366' }}
+                                title="Instant WhatsApp Inquiry"
                               >
                                 <Phone style={{ width: 13, height: 13 }} />
                                 <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
