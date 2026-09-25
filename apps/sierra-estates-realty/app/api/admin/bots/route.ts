@@ -28,6 +28,7 @@ import { verifyAdminRequest } from '@/lib/server/auth-guard';
 import { getRecord, insertRecord, upsertRecord } from '@sierra-estates/db';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { SIERRA_BLUE_SYSTEM_PROMPT } from '@/lib/prompts/sierra_blue_bot';
 
 // Known bots. New bots can register themselves by writing to system_status/{botId}.
 const KNOWN_BOTS = [
@@ -52,10 +53,7 @@ const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
     replyGroups: true,
     adminNumber: '201099887766',
     teamNumbers: '201099887766,201122334455',
-    systemPrompt: `You are the Sierra Estates AI Assistant. You specialize in luxury real estate in New Cairo, Egypt.
-Answer questions politely in Arabic or English based on user's language.
-Guide clients through buying, selling, or leasing luxury units, penthouses, and villas.
-Keep responses concise (under 250 words) and maintain a prestigious, helpful tone.`,
+    systemPrompt: SIERRA_BLUE_SYSTEM_PROMPT,
   },
   'liela-bot': {
     model: 'gemini-2.0-flash',
