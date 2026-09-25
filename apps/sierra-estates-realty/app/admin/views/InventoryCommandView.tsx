@@ -38,6 +38,8 @@ import {
   Clock,
   ChevronRight,
   Loader2,
+  Table,
+  Sparkles,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
@@ -188,6 +190,10 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const pageSize = 12;
+
+  // View presentation mode & card variations
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [cardVariant, setCardVariant] = useState<'showcase' | 'bento' | 'compact'>('showcase');
 
   // Drawer
   const [drawerUnit, setDrawerUnit] = useState<DrawerUnit | null>(null);
@@ -555,12 +561,67 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
             </div>
 
             {/* Bulk + export row */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5">
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
-                <Database className="w-3.5 h-3.5 text-[#E9C176]" />
-                Showing {sorted.length.toLocaleString()} of {allUnits.length.toLocaleString()}
-                {selectedIds.size > 0 && <span className="text-[#E9C176] font-bold">· {selectedIds.size} selected</span>}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                  <Database className="w-3.5 h-3.5 text-[#E9C176]" />
+                  Showing {sorted.length.toLocaleString()} of {allUnits.length.toLocaleString()}
+                  {selectedIds.size > 0 && <span className="text-[#E9C176] font-bold">· {selectedIds.size} selected</span>}
+                </div>
+
+                {/* View presentation mode: Table vs Cards */}
+                <div className="flex rounded-xl overflow-hidden border border-white/10 p-0.5 bg-[#0a1424]">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 ${
+                      viewMode === 'table' ? 'bg-[#C8961A] text-[#0d0d0f]' : 'text-slate-300 hover:text-white'
+                    }`}
+                    title="Dense Table Spreadsheet View"
+                  >
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Table</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('cards')}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 ${
+                      viewMode === 'cards' ? 'bg-[#C8961A] text-[#0d0d0f]' : 'text-slate-300 hover:text-white'
+                    }`}
+                    title="Interactive Cards Grid"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Cards</span>
+                  </button>
+                </div>
+
+                {/* Sub-variant toggle if Cards mode is selected */}
+                {viewMode === 'cards' && (
+                  <div className="flex items-center gap-1 rounded-xl border border-[#C8961A]/35 p-0.5 bg-[#0a1424] animate-fade-in">
+                    {(
+                      [
+                        { id: 'showcase', label: 'Showcase' },
+                        { id: 'bento', label: 'Financial Bento' },
+                        { id: 'compact', label: 'Compact' },
+                      ] as const
+                    ).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setCardVariant(v.id)}
+                        className={`px-2.5 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-colors ${
+                          cardVariant === v.id
+                            ? 'bg-[#E9C176] text-[#0d0d0f]'
+                            : 'text-slate-400 hover:text-[#E9C176]'
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div className="flex items-center gap-2">
                 {selectedIds.size > 0 && (
                   <>
@@ -607,149 +668,438 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
             </div>
           </div>
 
-          {/* Data table */}
+          {/* Main Display: Table View OR Cards Variation View */}
           <div className="bg-[#0d1a2c]/70 rounded-2xl border border-white/10 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                <thead>
-                  <tr className="text-left text-slate-400 border-b border-white/10 bg-[#0a1424]">
-                    <th className="px-3 py-2.5 w-8">
-                      <input
-                        type="checkbox"
-                        checked={allPageSelected}
-                        onChange={() => {
-                          const next = new Set(selectedIds);
-                          pageRows.forEach((u) => {
-                            const id = u.sierraCode || u.code || u.id;
-                            if (allPageSelected) next.delete(id);
-                            else next.add(id);
-                          });
-                          setSelectedIds(next);
-                        }}
-                        className="accent-[#C8961A] cursor-pointer"
-                        aria-label="Select page"
-                      />
-                    </th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Unit</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Compound</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Specs</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Price</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Owner</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Status</th>
-                    <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageRows.map((u) => {
-                    const id = String(u.sierraCode || u.code || u.id);
-                    const operation = unitOperation(u);
-                    const status = normalizeStatus(u.status);
-                    const meta = STATUS_META[status];
-                    const price = unitPrice(u);
-                    const area = Number(u.area) || 0;
-                    const photo = (u.photos && u.photos[0]) || u.img || u.image;
-                    const compound = u.compound || u.cmp || u.location || '—';
-                    const allowed = STATUS_FLOW[status];
-                    const phone = ownerPhone(u);
+            {viewMode === 'table' ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <thead>
+                    <tr className="text-left text-slate-400 border-b border-white/10 bg-[#0a1424]">
+                      <th className="px-3 py-2.5 w-8">
+                        <input
+                          type="checkbox"
+                          checked={allPageSelected}
+                          onChange={() => {
+                            const next = new Set(selectedIds);
+                            pageRows.forEach((u) => {
+                              const id = u.sierraCode || u.code || u.id;
+                              if (allPageSelected) next.delete(id);
+                              else next.add(id);
+                            });
+                            setSelectedIds(next);
+                          }}
+                          className="accent-[#C8961A] cursor-pointer"
+                          aria-label="Select page"
+                        />
+                      </th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Unit</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Compound</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Specs</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Price</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Owner</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Status</th>
+                      <th className="px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageRows.map((u) => {
+                      const id = String(u.sierraCode || u.code || u.id);
+                      const operation = unitOperation(u);
+                      const status = normalizeStatus(u.status);
+                      const meta = STATUS_META[status];
+                      const price = unitPrice(u);
+                      const area = Number(u.area) || 0;
+                      const photo = (u.photos && u.photos[0]) || u.img || u.image;
+                      const compound = u.compound || u.cmp || u.location || '—';
+                      const allowed = STATUS_FLOW[status];
+                      const phone = ownerPhone(u);
 
-                    return (
-                      <tr key={id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                        <td className="px-3 py-2.5">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(id)}
-                            onChange={() => toggleSelect(id)}
-                            className="accent-[#C8961A] cursor-pointer"
-                            aria-label={`Select ${id}`}
-                          />
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <div className="flex items-center gap-2.5">
-                            {photo ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={photo} alt={id} className="w-10 h-7 rounded-md object-cover border border-white/10 flex-shrink-0" />
-                            ) : (
-                              <div className="w-10 h-7 rounded-md border border-dashed border-white/15 bg-[#0a1424] flex items-center justify-center flex-shrink-0">
-                                <ImageIcon className="w-3 h-3 text-slate-600" />
-                              </div>
-                            )}
-                            <div>
-                              <div className="font-bold text-white font-mono text-[11px]">{id}</div>
-                              <div className="text-[9.5px] text-slate-500">
-                                {operation === 'rent' ? 'Rent' : 'Sale'}
-                                {u.tag ? ` · ${u.tag}` : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <div className="text-slate-200 font-semibold text-[11px]">{compound}</div>
-                          <div className="text-[9.5px] text-slate-500">{u.developer || u.zone || ''}</div>
-                        </td>
-                        <td className="px-3 py-2.5 text-slate-300">
-                          <div className="text-[11px]">{u.type || '—'}</div>
-                          <div className="text-[9.5px] text-slate-500">
-                            {u.beds ?? '—'} bd · {area ? `${area} m²` : '—'}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-mono font-bold text-[#E9C176] text-[11px]">{formatEGP(price)}</div>
-                          {area > 0 && price > 0 && (
-                            <div className="text-[9.5px] text-slate-500 font-mono">{Math.round(price / area).toLocaleString('en-EG')}/m²</div>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          {u.ownerName ? (
-                            <div>
-                              <div className="text-[11px] text-slate-200">{u.ownerName}</div>
-                              {phone && (
-                                <div className="text-[9.5px] text-slate-500 font-mono flex items-center gap-1">
-                                  <Phone className="w-2.5 h-2.5" /> {phone}
+                      return (
+                        <tr key={id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                          <td className="px-3 py-2.5">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(id)}
+                              onChange={() => toggleSelect(id)}
+                              className="accent-[#C8961A] cursor-pointer"
+                              aria-label={`Select ${id}`}
+                            />
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              {photo ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={photo} alt={id} className="w-10 h-7 rounded-md object-cover border border-white/10 flex-shrink-0" />
+                              ) : (
+                                <div className="w-10 h-7 rounded-md border border-dashed border-white/15 bg-[#0a1424] flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-3 h-3 text-slate-600" />
                                 </div>
                               )}
+                              <div>
+                                <div className="font-bold text-white font-mono text-[11px]">{id}</div>
+                                <div className="text-[9.5px] text-slate-500">
+                                  {operation === 'rent' ? 'Rent' : 'Sale'}
+                                  {u.tag ? ` · ${u.tag}` : ''}
+                                </div>
+                              </div>
                             </div>
-                          ) : (
-                            <span className="text-[10px] text-slate-600">—</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <select
-                            value={meta.label}
-                            onChange={(e) => applyStatus(id, e.target.value)}
-                            className={`text-[10px] font-bold rounded-lg px-2 py-1 border cursor-pointer outline-none ${meta.cls}`}
-                          >
-                            {(Object.keys(STATUS_META) as InventoryStatus[])
-                              .filter((s) => allowed.includes(s))
-                              .map((s) => (
-                                <option key={s} value={STATUS_META[s].label} className="bg-[#0b1a2e] text-white">
-                                  {STATUS_META[s].label}
-                                </option>
-                              ))}
-                          </select>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <button
-                            type="button"
-                            onClick={() => setDrawerUnit(toDrawerUnit(u))}
-                            className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
-                            title="View details"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="text-slate-200 font-semibold text-[11px]">{compound}</div>
+                            <div className="text-[9.5px] text-slate-500">{u.developer || u.zone || ''}</div>
+                          </td>
+                          <td className="px-3 py-2.5 text-slate-300">
+                            <div className="text-[11px]">{u.type || '—'}</div>
+                            <div className="text-[9.5px] text-slate-500">
+                              {u.beds ?? '—'} bd · {area ? `${area} m²` : '—'}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <div className="font-mono font-bold text-[#E9C176] text-[11px]">{formatEGP(price)}</div>
+                            {area > 0 && price > 0 && (
+                              <div className="text-[9.5px] text-slate-500 font-mono">{Math.round(price / area).toLocaleString('en-EG')}/m²</div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            {u.ownerName ? (
+                              <div>
+                                <div className="text-[11px] text-slate-200">{u.ownerName}</div>
+                                {phone && (
+                                  <div className="text-[9.5px] text-slate-500 font-mono flex items-center gap-1">
+                                    <Phone className="w-2.5 h-2.5" /> {phone}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-slate-600">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <select
+                              value={meta.label}
+                              onChange={(e) => applyStatus(id, e.target.value)}
+                              className={`text-[10px] font-bold rounded-lg px-2 py-1 border cursor-pointer outline-none ${meta.cls}`}
+                            >
+                              {(Object.keys(STATUS_META) as InventoryStatus[])
+                                .filter((s) => allowed.includes(s))
+                                .map((s) => (
+                                  <option key={s} value={STATUS_META[s].label} className="bg-[#0b1a2e] text-white">
+                                    {STATUS_META[s].label}
+                                  </option>
+                                ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <button
+                              type="button"
+                              onClick={() => setDrawerUnit(toDrawerUnit(u))}
+                              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
+                              title="View details"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {pageRows.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-14 text-center text-slate-500 text-sm">
+                          No matching units
                         </td>
                       </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Cards Variation Grid */
+              <div
+                className={`p-4 ${
+                  cardVariant === 'compact'
+                    ? 'grid grid-cols-1 md:grid-cols-2 gap-3'
+                    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+                }`}
+              >
+                {pageRows.map((u) => {
+                  const id = String(u.sierraCode || u.code || u.id);
+                  const operation = unitOperation(u);
+                  const status = normalizeStatus(u.status);
+                  const meta = STATUS_META[status];
+                  const price = unitPrice(u);
+                  const area = Number(u.area) || 0;
+                  const photo = (u.photos && u.photos[0]) || u.img || u.image;
+                  const compound = u.compound || u.cmp || u.location || '—';
+                  const allowed = STATUS_FLOW[status];
+                  const phone = ownerPhone(u);
+                  const estYield = u.yield || (operation === 'rent' ? 10.4 : 8.2);
+
+                  /* ── SUB-VARIANT 1: SHOWCASE ── */
+                  if (cardVariant === 'showcase') {
+                    return (
+                      <div
+                        key={id}
+                        className={`group bg-[#0a1424]/90 rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden ${
+                          selectedIds.has(id)
+                            ? 'border-[#E9C176] shadow-lg shadow-[#C8961A]/10'
+                            : 'border-white/10 hover:border-[#C8961A]/50'
+                        }`}
+                      >
+                        <div className="relative h-44 bg-[#07121e] overflow-hidden">
+                          {photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={photo}
+                              alt={id}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#0a1424] to-[#07121e] text-slate-500 p-4">
+                              <Building2 className="w-8 h-8 text-[#C8961A]/40 mb-1" />
+                              <span className="text-[10px] font-mono text-slate-400 tracking-wider">SIERRA BLUEPRINT</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0a1424] via-transparent to-black/40 pointer-events-none" />
+
+                          {/* Top Badges */}
+                          <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
+                            <label className="flex items-center gap-1.5 bg-[#0a1424]/85 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(id)}
+                                onChange={() => toggleSelect(id)}
+                                className="accent-[#C8961A]"
+                              />
+                              <span className="font-mono font-bold text-[10px] text-white">{id}</span>
+                            </label>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
+                              {meta.label}
+                            </span>
+                          </div>
+
+                          {/* Floating Price */}
+                          <div className="absolute bottom-2.5 left-2.5 z-10 font-mono font-extrabold text-[#E9C176] text-xs bg-[#0a1424]/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#C8961A]/30">
+                            {formatEGP(price)}
+                          </div>
+
+                          {/* Operation Tag */}
+                          <div className="absolute bottom-2.5 right-2.5 z-10 text-[9.5px] uppercase font-bold text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded">
+                            {operation}
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="text-white font-bold text-sm truncate">{compound}</div>
+                            <div className="text-[11px] text-slate-400 flex items-center justify-between mt-0.5">
+                              <span>{u.type || 'Unit'} · {u.beds ?? '—'} bd</span>
+                              {area > 0 && <span className="font-mono text-slate-300">{area} m²</span>}
+                            </div>
+                            {area > 0 && price > 0 && (
+                              <div className="text-[10px] font-mono text-[#E9C176]/90 mt-1">
+                                {Math.round(price / area).toLocaleString('en-EG')} EGP/m²
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Owner & WhatsApp Strip */}
+                          {u.ownerName && (
+                            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+                              <span className="text-slate-300 truncate max-w-[130px]">{u.ownerName}</span>
+                              {phone && (
+                                <a
+                                  href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-400 hover:text-emerald-300 font-mono text-[10px] flex items-center gap-1"
+                                >
+                                  <Phone className="w-2.5 h-2.5" /> WhatsApp
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Status changer & Detail Drawer */}
+                          <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                            <select
+                              value={meta.label}
+                              onChange={(e) => applyStatus(id, e.target.value)}
+                              className={`flex-1 text-[10.5px] font-bold rounded-lg px-2 py-1.5 border cursor-pointer outline-none ${meta.cls}`}
+                            >
+                              {(Object.keys(STATUS_META) as InventoryStatus[])
+                                .filter((s) => allowed.includes(s))
+                                .map((s) => (
+                                  <option key={s} value={STATUS_META[s].label} className="bg-[#0b1a2e] text-white">
+                                    {STATUS_META[s].label}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => setDrawerUnit(toDrawerUnit(u))}
+                              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] hover:border-[#E9C176]/50 cursor-pointer"
+                              title="View details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     );
-                  })}
-                  {pageRows.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-14 text-center text-slate-500 text-sm">
-                        No matching units
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  }
+
+                  /* ── SUB-VARIANT 2: BENTO FINANCIAL ── */
+                  if (cardVariant === 'bento') {
+                    return (
+                      <div
+                        key={id}
+                        className={`group bg-[#0a1424]/90 rounded-2xl border p-3.5 space-y-3 transition-all duration-300 flex flex-col justify-between ${
+                          selectedIds.has(id)
+                            ? 'border-[#E9C176] shadow-lg shadow-[#C8961A]/10'
+                            : 'border-white/10 hover:border-[#C8961A]/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(id)}
+                              onChange={() => toggleSelect(id)}
+                              className="accent-[#C8961A]"
+                            />
+                            <span className="font-mono font-bold text-xs text-[#E9C176]">{id}</span>
+                          </label>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.cls}`}>
+                            {meta.label}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="text-white font-bold text-sm truncate">{compound}</div>
+                          <div className="text-[11px] text-slate-400">{u.type || 'Unit'} · {operation.toUpperCase()}</div>
+                        </div>
+
+                        {/* 4-cell Bento Financial Metrics */}
+                        <div className="grid grid-cols-2 gap-2 text-center">
+                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                            <div className="text-[9px] uppercase text-slate-500 font-mono">Price / m²</div>
+                            <div className="text-xs font-mono font-bold text-[#E9C176]">
+                              {area > 0 && price > 0 ? Math.round(price / area).toLocaleString('en-EG') : '—'}
+                            </div>
+                          </div>
+                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                            <div className="text-[9px] uppercase text-slate-500 font-mono">Est. Yield</div>
+                            <div className="text-xs font-mono font-bold text-emerald-400">{estYield}%</div>
+                          </div>
+                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                            <div className="text-[9px] uppercase text-slate-500 font-mono">Area</div>
+                            <div className="text-xs font-mono font-bold text-slate-200">{area ? `${area} m²` : '—'}</div>
+                          </div>
+                          <div className="bg-[#0d1a2c] p-2 rounded-xl border border-white/5">
+                            <div className="text-[9px] uppercase text-slate-500 font-mono">Payback</div>
+                            <div className="text-xs font-mono font-bold text-slate-200">{(100 / estYield).toFixed(1)} Yrs</div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                          <div className="font-mono font-extrabold text-[#E9C176] text-xs">{formatEGP(price)}</div>
+                          <div className="flex items-center gap-1.5">
+                            {phone && (
+                              <a
+                                href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                                title="WhatsApp Owner"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setDrawerUnit(toDrawerUnit(u))}
+                              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] cursor-pointer"
+                              title="View details"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  /* ── SUB-VARIANT 3: COMPACT ── */
+                  return (
+                    <div
+                      key={id}
+                      className={`group bg-[#0a1424]/90 rounded-xl border p-3 flex items-center justify-between gap-3 transition-all ${
+                        selectedIds.has(id) ? 'border-[#E9C176]' : 'border-white/10 hover:border-[#C8961A]/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(id)}
+                          onChange={() => toggleSelect(id)}
+                          className="accent-[#C8961A] flex-shrink-0"
+                        />
+                        {photo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={photo} alt={id} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-white/10" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-[#0d1a2c] border border-white/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-5 h-5 text-[#C8961A]/50" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-[#E9C176]">{id}</span>
+                            <span className="text-[10px] text-slate-400 truncate">· {compound}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-300 truncate">
+                            {u.type || 'Unit'} · {u.beds ?? '—'} bd · {area ? `${area} m²` : '—'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <div className="font-mono font-bold text-xs text-[#E9C176]">{formatEGP(price)}</div>
+                          <div className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded border inline-block ${meta.cls}`}>
+                            {meta.label}
+                          </div>
+                        </div>
+                        {phone && (
+                          <a
+                            href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, regarding unit ${id} in ${compound}...`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                            title="WhatsApp Owner"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDrawerUnit(toDrawerUnit(u))}
+                          className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-[#E9C176] cursor-pointer"
+                          title="View details"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {pageRows.length === 0 && (
+                  <div className="col-span-full py-14 text-center text-slate-500 text-sm">
+                    No matching units
+                  </div>
+                )}
+              </div>
+            )}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
                 <button
