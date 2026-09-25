@@ -40,6 +40,9 @@ import {
   Loader2,
   Table,
   Sparkles,
+  Check,
+  Copy,
+  ShieldCheck,
 } from 'lucide-react';
 
 import consolidatedRaw from '@/data/consolidated-master-inventory.json';
