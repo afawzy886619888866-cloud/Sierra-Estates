@@ -83,7 +83,8 @@ export class WhatsAppConversationalService {
         dynamicSystemPrompt += `\n\n${ragContext}`;
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash", systemInstruction: dynamicSystemPrompt });
+      const modelName = process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.0-flash";
+      const model = genAI.getGenerativeModel({ model: modelName, systemInstruction: dynamicSystemPrompt });
       
       const chatSession = model.startChat({
         history: geminiHistory,
@@ -101,14 +102,21 @@ export class WhatsAppConversationalService {
       })();
 
       const timeoutPromise = new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('AI response timed out')), 4000)
+        setTimeout(() => reject(new Error('AI response timed out')), 8000)
       );
 
       let replyText: string;
       try {
         replyText = await Promise.race([aiPromise, timeoutPromise]);
-      } catch {
-        replyText = SIERRA_BLUE_FALLBACK_MESSAGE;
+      } catch (err: any) {
+        logger.warn(`[ConversationalService] Primary generation fallback: ${err?.message}`);
+        try {
+          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: dynamicSystemPrompt });
+          const fallbackRes = await fallbackModel.generateContent(message);
+          replyText = fallbackRes.response.text();
+        } catch {
+          replyText = SIERRA_BLUE_FALLBACK_MESSAGE;
+        }
       }
 
       // Update ECC Memory
@@ -170,7 +178,7 @@ export class WhatsAppConversationalService {
         .map(m => `${m.role.toUpperCase()}: ${m.content}`)
         .join('\n');
 
-      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+      const model = genAI.getGenerativeModel({ model: process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.0-flash" });
       const prompt = `Analyze this real estate WhatsApp conversation and extract structured lead intelligence.
 CONVERSATION:
 ${recentHistoryText}
