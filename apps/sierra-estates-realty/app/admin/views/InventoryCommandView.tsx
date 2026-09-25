@@ -939,6 +939,20 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                         area_sqm: u.area ?? '',
                         price_egp: unitPrice(u),
                         status: STATUS_META[normalizeStatus(u.status)].label,
+                        owner: u.ownerName || '',
+                        mobile: ownerPhone(u),
+                      })),
+                      'sierra-inventory-export.csv'
+                    )
+                  }
+                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[#211A0D] border border-[#C8961A]/40 text-[#E9C176] hover:border-[#E9C176] cursor-pointer flex items-center gap-1.5"
+                >
+                  <Download className="w-3 h-3" /> Export CSV
+                </button>
+              </div>
+            </div>
+          </div>
+
                  <div className="bg-[#0A1628]/95 rounded-2xl border border-[#C9A84C]/25 overflow-hidden shadow-2xl backdrop-blur-md">
             {viewMode === 'table' ? (
               <div className="overflow-x-auto">
