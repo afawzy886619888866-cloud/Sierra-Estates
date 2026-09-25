@@ -74,6 +74,10 @@ export interface RealListing {
   segment?: string;
   description?: string;
   distanceKm?: number;
+  finishing?: string;
+  availability?: string;
+  isDirectOwner?: boolean;
+  verifiedFresh?: boolean;
 }
 
 type ViewMode = 'split' | 'grid' | 'map';
