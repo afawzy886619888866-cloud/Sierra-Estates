@@ -1,6 +1,5 @@
 import 'server-only';
 import {
-  listRecords,
   getRecord,
   insertRecord,
   updateRecord,
@@ -234,7 +233,7 @@ export class ListingAvailabilitySyncService {
     );
 
     // Locate listing in Supabase
-    let dbListing = await this.findDatabaseListing(unitId, ownerPhone);
+    const dbListing = await this.findDatabaseListing(unitId, ownerPhone);
 
     // 1. Update Existing DB Listing
     if (dbListing && dbListing.id) {
