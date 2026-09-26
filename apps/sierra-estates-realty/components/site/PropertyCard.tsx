@@ -27,10 +27,8 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Calendar,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
-import { HZDATA } from '@/lib/site/data';
 import { GsapMagnetic } from './GsapAnimations';
 
 export interface CardListing {
