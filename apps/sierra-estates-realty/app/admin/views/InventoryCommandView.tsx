@@ -2184,7 +2184,7 @@ function InventoryWhatsAppWorkflow({
    SMALL PRIMITIVES
 ═══════════════════════════════════════════════════════════════════════ */
 
-function Kpi({ label, value, icon, accent = '#E9C176' }: { label: string; value: string; icon: React.ReactNode; accent?: string }) {
+function _Kpi({ label, value, icon, accent = '#E9C176' }: { label: string; value: string; icon: React.ReactNode; accent?: string }) {
   return (
     <div className="rounded-xl bg-[#0d1a2c]/70 border border-white/10 px-3.5 py-3 flex items-center gap-3">
       <span className="p-2 rounded-lg bg-[#211A0D] border border-[#C8961A]/30 flex-shrink-0" style={{ color: accent }}>
