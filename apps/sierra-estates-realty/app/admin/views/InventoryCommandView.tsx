@@ -35,7 +35,6 @@ import {
   Phone,
   Users,
   TrendingUp,
-  Clock,
   ChevronRight,
   Loader2,
   Table,
@@ -1173,7 +1172,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                   const area = Number(u.area) || 0;
                   const photo = (u.photos && u.photos[0]) || u.img || u.image;
                   const compound = u.compound || u.cmp || u.location || '—';
-                  const allowed = STATUS_FLOW[status];
+                  const _allowed = STATUS_FLOW[status];
                   const phone = ownerPhone(u);
                   const estYield = u.yield || (operation === 'rent' ? 10.4 : 8.2);
 
