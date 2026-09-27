@@ -204,6 +204,22 @@ function toListing(row) {
   const unitCode = String(value(row, 'Unit Code', 'UnitCode', 'unit_code')).trim() || null;
   const title = String(value(row, 'Title', 'title')).trim() || `${propertyType} in ${compound} (${code || unitCode || ref})`;
 
+  const rawStatus = String(value(row, 'Status', 'status', 'Listing Status')).trim().toLowerCase();
+  let status = 'available';
+  if (['archived', 'archive'].includes(rawStatus)) status = 'archived';
+  else if (['reserved', 'pending'].includes(rawStatus)) status = 'reserved';
+  else if (['sold', 'rented'].includes(rawStatus)) status = 'sold';
+  else if (['active', 'available'].includes(rawStatus)) status = 'available';
+  else status = 'available';
+
+  let ownerPhone = String(value(row, 'Owner Phone', 'Contact Phone', 'Phone', 'owner_phone', 'mobile')).trim() || null;
+  if (!ownerPhone) {
+    const avail = String(value(row, 'Availability', 'availability')).trim();
+    if (avail.replace(/\D/g, '').length >= 10) {
+      ownerPhone = avail;
+    }
+  }
+
   return {
     ref_id: ref,
     reference_code: ref,
@@ -221,11 +237,11 @@ function toListing(row) {
     bedrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bedrooms', 'bedrooms', 'rooms', 'beds')))),
     bathrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bathrooms', 'bathrooms', 'baths')))),
     finishing_type: String(value(row, 'Furnishing', 'Furnishing Status', 'Finishing', 'finishing_type', 'finishing')).trim() || null,
-    status: String(value(row, 'Status', 'status', 'availability', 'Listing Status', 'Availability')).trim() || 'available',
+    status,
     verified_at: isVerified ? new Date().toISOString() : null,
     published_at: isPublish ? new Date().toISOString() : null,
     owner_name: String(value(row, 'Owner / Contact Name', 'Contact Name', 'ContactName', 'owner_name', 'name')).trim() || null,
-    owner_phone: String(value(row, 'Owner Phone', 'Contact Phone', 'Phone', 'owner_phone', 'mobile')).trim() || null,
+    owner_phone: ownerPhone,
     source_channel: String(value(row, 'Source Channel', 'source_channel', 'SourceFile')).trim() || 'excel_import',
     pf_reference_number: String(value(row, 'Property Finder Ref', 'pf_reference_number')).trim() || null,
     description: String(value(row, 'Notes', 'Description / Notes', 'description', 'notes', 'Listing Description / Notes')).trim() || null,
@@ -241,9 +257,16 @@ async function push(options) {
   if (invalid.length) {
     throw new Error(`${invalid.length} invalid row(s). First error: ${invalid[0].error}`);
   }
-  const listings = converted.map((item) => item);
+  
+  // Deduplicate by ref_id so Postgres ON CONFLICT never sees the same key twice in one statement
+  const dedupedMap = new Map();
+  for (const item of converted) {
+    dedupedMap.set(item.ref_id, item);
+  }
+  const listings = Array.from(dedupedMap.values());
+
   if (options.dryRun) {
-    console.log(`Dry run: ${listings.length} valid listing(s) would be upserted.`);
+    console.log(`Dry run: ${listings.length} valid listing(s) would be upserted (${converted.length - listings.length} duplicate ref_ids merged).`);
     return;
   }
   const supabase = requireSupabase();
