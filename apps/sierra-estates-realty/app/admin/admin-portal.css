@@ -1753,11 +1753,13 @@ kbd {
 
 /* Focus ring — visible, on-brand, keyboard only */
 :focus-visible {
-  outline: 2px solid rgba(200, 150, 26, 0.7);
-  outline: 2px solid color-mix(in srgb, var(--gold-luxury) 70%, transparent);
+  outline: 2px solid rgba(212, 175, 55, 0.7);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Selection */
-::selection { background: color-mix(in srgb, var(--gold-luxury) 30%, transparent); }
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+}
+
