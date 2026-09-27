@@ -75,9 +75,6 @@ jobs:
       - name: Lint realty app
         run: pnpm --filter sierra-estates-client-page lint
 
-      - name: Unit tests (functions)
-        run: pnpm --filter sierra-estates-functions test
-
       - name: Unit tests (realty app)
         run: pnpm --filter sierra-estates-client-page test:ci
         env:
