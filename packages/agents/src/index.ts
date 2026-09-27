@@ -6,3 +6,4 @@ export * from './hooks/use-dsl-view';
 export * from '../openclaw';
 export * from './closer-agent-enhanced';
 export * from './hermes-agent';
+export * from './sierra-listing-pipeline-agent';

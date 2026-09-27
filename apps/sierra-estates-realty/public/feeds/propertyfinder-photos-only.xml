@@ -1,0 +1,801 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list last_update="2026-09-27T06:20:37.149Z">
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00012</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>TH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>7500</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Eastown</sub_community>
+    <title_en><![CDATA[Townhouse in Eastown (Owners Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:36; price evidence=7,500 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00014</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>DU</property_type>
+    <price_on_application>0</price_on_application>
+    <price>200000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo</sub_community>
+    <title_en><![CDATA[Duplex in New Cairo (Owners Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:38; price evidence=4,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <bedroom>2</bedroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00001</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Madinaty</community>
+    <sub_community>Madinaty</sub_community>
+    <title_en><![CDATA[Apartment in Madinaty (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:18; price evidence=الشهر 900 دولار; currency=USD; media files in source message=0.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>IMG-20260810-WA0000.JPG</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Madinaty</community>
+    <sub_community>Madinaty</sub_community>
+    <title_en><![CDATA[Apartment in Madinaty (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:22; price evidence=; currency=unknown; media files in source message=1.]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0000_79f262af.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0010_75963abb.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00007</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo</sub_community>
+    <title_en><![CDATA[Standalone Villa in New Cairo (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
+    <size>122</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU50A005</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU50D7SN</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNER-MU50JYE4</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>TW</property_type>
+    <price_on_application>0</price_on_application>
+    <price>21000000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Villette</sub_community>
+    <title_en><![CDATA[Twin House in Villette (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Live API test unit in Villette]]></description_en>
+    <size>310</size>
+    <bedroom>4</bedroom>
+    <bathroom>4</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600585154340-be6161a56a0c</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU50LEB5</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU50OCUK</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU50TTK7</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU512AAG</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU5VYJZQ</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>TEST-OWNER-MU60J6EQ</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>14500000</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Mivida</sub_community>
+    <title_en><![CDATA[Apartment in Mivida (Owners Resale)]]></title_en>
+    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <size>170</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00249</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>85000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in Al Rehab, Al Rehab. Contact Sierra Estates for private viewing.]]></description_en>
+    <bedroom>3</bedroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>CMP-93-230</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>45000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo Prime</sub_community>
+    <title_en><![CDATA[Apartment in New Cairo Prime (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in New Cairo Prime, New Cairo. Contact Sierra Estates for private viewing.]]></description_en>
+    <size>230</size>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0052_3419c8c6.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0054_6f743a61.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>GRP-131-42</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>40000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in Al Rehab, Al Rehab. Contact Sierra Estates for private viewing.]]></description_en>
+    <size>180</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260621-WA0065_40f45f3b.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00399</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>38000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in Al Rehab, Al Rehab. Contact Sierra Estates for private viewing.]]></description_en>
+    <size>131</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0085_fb789252.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0094_0c075d25.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00430</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>35000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in Al Rehab, Al Rehab. Contact Sierra Estates for private viewing.]]></description_en>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00431</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>35000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Apartment available for Rent in Al Rehab, Al Rehab. Contact Sierra Estates for private viewing.]]></description_en>
+    <size>50</size>
+    <bathroom>1</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0070_21e9946b.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0079_16f94fff.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00532</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>TH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>7500</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>Eastown</sub_community>
+    <title_en><![CDATA[Townhouse in Eastown (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Townhouse available for Rent in Eastown, 5th Settlement. Contact Sierra Estates for private viewing.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00536</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>DU</property_type>
+    <price_on_application>0</price_on_application>
+    <price>200000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo Prime</sub_community>
+    <title_en><![CDATA[Duplex in New Cairo Prime (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Duplex available for Rent in New Cairo Prime, New Cairo. Contact Sierra Estates for private viewing.]]></description_en>
+    <bedroom>2</bedroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00024</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>85000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:26; price evidence=85,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <bedroom>3</bedroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00018</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>45000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo</sub_community>
+    <title_en><![CDATA[Apartment in New Cairo (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:05; price evidence=45,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <size>230</size>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0052_3419c8c6.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0054_6f743a61.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00019</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>40000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:09; price evidence=40,000 جنيه شهرياً; currency=EGP; media files in source message=0.]]></description_en>
+    <size>180</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260621-WA0065_40f45f3b.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00021</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>38000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:22; price evidence=38,000 جنيه شهرياً; currency=EGP; media files in source message=0.]]></description_en>
+    <size>131</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0085_fb789252.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0094_0c075d25.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00022</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>35000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:24; price evidence=35,000 جنيه شهرياً; currency=EGP; media files in source message=0.]]></description_en>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00023</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>35000</price>
+    <rental_period>M</rental_period>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Al Rehab</community>
+    <sub_community>Al Rehab</sub_community>
+    <title_en><![CDATA[Apartment in Al Rehab (Brokers Rent)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:25; price evidence=35,000 جنيه شهرياً; currency=EGP; media files in source message=0.]]></description_en>
+    <size>50</size>
+    <bathroom>1</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0070_21e9946b.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0079_16f94fff.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00742</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>CH</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo Prime</sub_community>
+    <title_en><![CDATA[Chalet in New Cairo Prime (Brokers Resale)]]></title_en>
+    <description_en><![CDATA[Chalet available for Resale in New Cairo Prime, New Cairo. Contact Sierra Estates for private viewing.]]></description_en>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0126_ea3df351.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0134_e0759feb.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00902</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Madinaty</community>
+    <sub_community>Madinaty</sub_community>
+    <title_en><![CDATA[Apartment in Madinaty (Brokers Resale)]]></title_en>
+    <description_en><![CDATA[Apartment available for Resale in Madinaty, Madinaty. Contact Sierra Estates for private viewing.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>SE-00904</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo Prime</sub_community>
+    <title_en><![CDATA[Standalone Villa in New Cairo Prime (Brokers Resale)]]></title_en>
+    <description_en><![CDATA[Standalone Villa available for Resale in New Cairo Prime, New Cairo. Contact Sierra Estates for private viewing.]]></description_en>
+    <size>122</size>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00002</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>Madinaty</community>
+    <sub_community>Madinaty</sub_community>
+    <title_en><![CDATA[Apartment in Madinaty (Brokers Resale)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:22; price evidence=; currency=unknown; media files in source message=1.]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>2</bathroom>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0000_79f262af.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0010_75963abb.jpg</url>
+    </photo>
+  </property>
+  <property last_update="2026-09-27 06:20:37">
+    <reference_number>OWNERS-AUG26-00004</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>1</price_on_application>
+    <price>0</price>
+    <currency>EGP</currency>
+    <city>Cairo</city>
+    <community>New Cairo</community>
+    <sub_community>New Cairo</sub_community>
+    <title_en><![CDATA[Apartment in New Cairo (Brokers Resale)]]></title_en>
+    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:21; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
+    <agent>
+      <name>Sierra Estates Team</name>
+      <email>info@sierra-estates.net</email>
+      <phone>+201000000000</phone>
+    </agent>
+    <photo>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0126_ea3df351.jpg</url>
+      <url>https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0134_e0759feb.jpg</url>
+    </photo>
+  </property>
+</list>
