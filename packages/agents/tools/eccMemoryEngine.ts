@@ -11,6 +11,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { getSupabaseAdmin, isSupabaseAdminConfigured } from '@sierra-estates/db';
 
 // A price drop at or above this percentage is tagged as a hot/distressed
 // deal. Mirrors apps/api/ecc_memory_engine.py — the two are not wired
@@ -21,10 +22,15 @@ export const HOT_DEAL_THRESHOLD_PCT = 8.0;
 export type EpisodeType =
   | 'price_drop'
   | 'negotiation_offer'
+  | 'ai_counter_offer'
   | 'viewing_scheduled'
   | 'inspection_feedback'
   | 'buyer_preference'
   | 'contract_stage'
+  | 'deal_closed'
+  | 'objection_handled'
+  | 'due_diligence_verified'
+  | 'lead_scored'
   | 'owner_listing_drop';
 
 export interface Episode {
@@ -172,6 +178,78 @@ export class EpisodicContextCache {
     return { episode, dropPct, isHotDeal };
   }
 
+  public trackAiCounterOffer(
+    entityId: string,
+    originalOffer: number,
+    counterOffer: number,
+    rationale: string,
+    agentName = 'Sierra Closer Agent'
+  ): { episode: Episode; concessionPct: number } {
+    const diff = counterOffer - originalOffer;
+    const concessionPct = originalOffer ? Number(((diff / originalOffer) * 100).toFixed(1)) : 0;
+
+    const episode = this.recordEpisode({
+      type: 'ai_counter_offer',
+      entityId,
+      actor: agentName,
+      summary: `AI counter-offer of ${counterOffer.toLocaleString()} EGP (original: ${originalOffer.toLocaleString()} EGP, diff: ${concessionPct}%): ${rationale}`,
+      data: {
+        entityId,
+        originalOffer,
+        counterOffer,
+        diff,
+        concessionPct,
+        rationale,
+      },
+    });
+
+    return { episode, concessionPct };
+  }
+
+  public trackDealStage(
+    entityId: string,
+    stage: 'inquiry' | 'negotiation' | 'viewing' | 'contract' | 'closed',
+    notes?: string,
+    actor = 'Sierra Deal Engine'
+  ): Episode {
+    const episode = this.recordEpisode({
+      type: stage === 'closed' ? 'deal_closed' : 'contract_stage',
+      entityId,
+      actor,
+      summary: `Deal stage transitioned to '${stage}'${notes ? `: ${notes}` : ''}`,
+      data: {
+        entityId,
+        stage,
+        notes,
+      },
+    });
+
+    return episode;
+  }
+
+  public recordLeadScoring(
+    entityId: string,
+    score: number,
+    category: 'cold' | 'warm' | 'hot' | 'vip',
+    breakdown?: Record<string, any>,
+    actor = 'Sierra Lead Concierge'
+  ): Episode {
+    const episode = this.recordEpisode({
+      type: 'lead_scored',
+      entityId,
+      actor,
+      summary: `Lead scored at ${score}/100 [${category.toUpperCase()}]`,
+      data: {
+        entityId,
+        score,
+        category,
+        breakdown: breakdown || {},
+      },
+    });
+
+    return episode;
+  }
+
   // --- 3. Semantic Entity Graph ---
 
   public upsertEntity(profile: EntityProfile): EntityProfile {
@@ -273,8 +351,169 @@ export class EpisodicContextCache {
       entity.targetPropertyType = episode.data.targetType;
     }
 
+    if (episode.type === 'ai_counter_offer') {
+      entity.tags = Array.from(new Set([...entity.tags, 'ACTIVE_NEGOTIATION']));
+    }
+
+    if (episode.type === 'deal_closed') {
+      entity.tags = Array.from(new Set([...entity.tags, 'DEAL_CLOSED']));
+    }
+
+    if (episode.type === 'lead_scored' && episode.data?.category) {
+      entity.tags = Array.from(new Set([...entity.tags, `LEAD_${String(episode.data.category).toUpperCase()}`]));
+    }
+
+    if (episode.type === 'due_diligence_verified') {
+      entity.tags = Array.from(new Set([...entity.tags, 'DUE_DILIGENCE_VERIFIED']));
+    }
+
+    if (episode.type === 'objection_handled') {
+      entity.tags = Array.from(new Set([...entity.tags, 'OBJECTION_RESOLVED']));
+    }
+
     entity.lastUpdated = episode.timestamp;
     this.entityGraph.set(episode.entityId, entity);
+  }
+
+  // --- 5. Supabase Authoritative Cloud Sync ---
+
+  public async syncEpisodeToSupabase(episode: Episode, client?: any): Promise<boolean> {
+    try {
+      const supabase = client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      if (!supabase) return false;
+
+      const { error } = await supabase.from('unified_memory').upsert(
+        {
+          agent_id: 'ecc-memory-engine',
+          session_id: episode.entityId,
+          category: episode.type,
+          key: `ecc:episode:${episode.id}`,
+          value: {
+            id: episode.id,
+            type: episode.type,
+            entityId: episode.entityId,
+            actor: episode.actor,
+            timestamp: episode.timestamp,
+            summary: episode.summary,
+            data: episode.data,
+            decayWeight: episode.decayWeight,
+          },
+          source: 'ecc-memory-engine',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'agent_id,key' }
+      );
+
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
+  public async syncEntityToSupabase(entity: EntityProfile, client?: any): Promise<boolean> {
+    try {
+      const supabase = client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      if (!supabase) return false;
+
+      const { error } = await supabase.from('unified_memory').upsert(
+        {
+          agent_id: 'ecc-entity-graph',
+          session_id: entity.id,
+          category: entity.type,
+          key: `ecc:entity:${entity.id}`,
+          value: entity,
+          source: 'ecc-entity-graph',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'agent_id,key' }
+      );
+
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
+  public async syncToSupabase(options?: { client?: any }): Promise<{
+    syncedEpisodes: number;
+    syncedEntities: number;
+    success: boolean;
+  }> {
+    try {
+      const supabase = options?.client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      if (!supabase) {
+        return { syncedEpisodes: 0, syncedEntities: 0, success: false };
+      }
+
+      let syncedEpisodes = 0;
+      let syncedEntities = 0;
+
+      for (const episode of this.episodicJournal) {
+        const ok = await this.syncEpisodeToSupabase(episode, supabase);
+        if (ok) syncedEpisodes++;
+      }
+
+      for (const entity of this.entityGraph.values()) {
+        const ok = await this.syncEntityToSupabase(entity, supabase);
+        if (ok) syncedEntities++;
+      }
+
+      return { syncedEpisodes, syncedEntities, success: true };
+    } catch {
+      return { syncedEpisodes: 0, syncedEntities: 0, success: false };
+    }
+  }
+
+  public async loadFromSupabase(options?: { client?: any; limit?: number }): Promise<{
+    loadedEpisodes: number;
+    loadedEntities: number;
+    success: boolean;
+  }> {
+    try {
+      const supabase = options?.client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      if (!supabase) {
+        return { loadedEpisodes: 0, loadedEntities: 0, success: false };
+      }
+
+      const limit = options?.limit || 100;
+
+      const { data: episodesData, error: epError } = await supabase
+        .from('unified_memory')
+        .select('value')
+        .eq('agent_id', 'ecc-memory-engine')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (!epError && Array.isArray(episodesData)) {
+        for (const row of episodesData) {
+          if (row.value && row.value.id && !this.episodicJournal.some((ep) => ep.id === row.value.id)) {
+            this.episodicJournal.push(row.value as Episode);
+          }
+        }
+      }
+
+      const { data: entitiesData, error: entError } = await supabase
+        .from('unified_memory')
+        .select('value')
+        .eq('agent_id', 'ecc-entity-graph')
+        .limit(limit);
+
+      if (!entError && Array.isArray(entitiesData)) {
+        for (const row of entitiesData) {
+          if (row.value && row.value.id) {
+            this.entityGraph.set(row.value.id, row.value as EntityProfile);
+          }
+        }
+      }
+
+      return {
+        loadedEpisodes: episodesData?.length || 0,
+        loadedEntities: entitiesData?.length || 0,
+        success: true,
+      };
+    } catch {
+      return { loadedEpisodes: 0, loadedEntities: 0, success: false };
+    }
   }
 
   private persistAsync(): void {
