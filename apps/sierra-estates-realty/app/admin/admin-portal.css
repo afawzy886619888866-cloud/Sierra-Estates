@@ -647,6 +647,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -672,6 +673,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -696,6 +698,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
