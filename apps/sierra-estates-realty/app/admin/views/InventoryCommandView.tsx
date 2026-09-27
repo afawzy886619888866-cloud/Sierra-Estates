@@ -705,7 +705,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
               </div>
               <div className="mt-2 w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-emerald-500 to-[#C9A84C] h-full rounded-full transition-all duration-700"
+                  className="bg-linear-to-r from-emerald-500 to-[#C9A84C] h-full rounded-full transition-all duration-700"
                   style={{ width: `${executiveKpis.freshnessHealthScore}` }}
                 />
               </div>
@@ -1014,9 +1014,9 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                             <div className="flex items-center gap-2.5">
                               {photo ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={photo} alt={id} className="w-10 h-7 rounded-md object-cover border border-white/10 flex-shrink-0" />
+                                <img src={photo} alt={id} className="w-10 h-7 rounded-md object-cover border border-white/10 shrink-0" />
                               ) : (
-                                <div className="w-10 h-7 rounded-md border border-dashed border-white/15 bg-[#0a1424] flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-7 rounded-md border border-dashed border-white/15 bg-[#0a1424] flex items-center justify-center shrink-0">
                                   <ImageIcon className="w-3 h-3 text-slate-600" />
                                 </div>
                               )}
@@ -1199,12 +1199,12 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#0A1628] to-[#07111e] text-slate-500 p-4">
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-linear-to-br from-[#0A1628] to-[#07111e] text-slate-500 p-4">
                               <Building2 className="w-8 h-8 text-[#C9A84C]/40 mb-1" />
                               <span className="text-[10px] font-mono text-slate-400 tracking-wider">SIERRA BLUEPRINT</span>
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0A1628] via-transparent to-black/50 pointer-events-none" />
+                          <div className="absolute inset-0 bg-linear-to-t from-[#0A1628] via-transparent to-black/50 pointer-events-none" />
 
                           {/* Top Badges */}
                           <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
@@ -1464,13 +1464,13 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                           type="checkbox"
                           checked={selectedIds.has(id)}
                           onChange={() => toggleSelect(id)}
-                          className="accent-[#C9A84C] flex-shrink-0 cursor-pointer"
+                          className="accent-[#C9A84C] shrink-0 cursor-pointer"
                         />
                         {photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={photo} alt={id} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-white/10" />
+                          <img src={photo} alt={id} className="w-12 h-12 rounded-lg object-cover shrink-0 border border-white/10" />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-[#07111e] border border-white/10 flex items-center justify-center flex-shrink-0">
+                          <div className="w-12 h-12 rounded-lg bg-[#07111e] border border-white/10 flex items-center justify-center shrink-0">
                             <Building2 className="w-5 h-5 text-[#C9A84C]/50" />
                           </div>
                         )}
@@ -1490,7 +1490,7 @@ export default function InventoryCommandView({ lang = 'en' }: { lang?: string })
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 flex-shrink-0">
+                      <div className="flex items-center gap-2.5 shrink-0">
                         <div className="text-right">
                           <div className="font-mono font-bold text-xs text-[#E9C176]">
                             {formatEGPCommas(price, operation)}
@@ -1718,7 +1718,7 @@ function InventoryInsightsPanel({ kpis, allUnits }: { kpis: any; allUnits: any[]
             {donutSegments.map((seg) => (
               <div key={seg.label} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: seg.color }} />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: seg.color }} />
                   <span className="text-slate-300">{seg.label}</span>
                 </div>
                 <span className="font-mono font-bold text-white">{seg.value} <span className="text-slate-500 font-normal">({seg.pct}%)</span></span>
@@ -1742,7 +1742,7 @@ function InventoryInsightsPanel({ kpis, allUnits }: { kpis: any; allUnits: any[]
                 </div>
                 <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                    className="h-full rounded-full bg-linear-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
                     style={{ width: `${cmp.pct}%` }}
                   />
                 </div>
@@ -1797,13 +1797,13 @@ function InventoryInsightsPanel({ kpis, allUnits }: { kpis: any; allUnits: any[]
               const meta = STATUS_META[status];
               return (
                 <div key={id} className="flex items-center gap-2 bg-white/[0.03] rounded-xl p-2.5 border border-white/10">
-                  <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ background: meta.dot }} />
+                  <div className="w-1.5 h-8 rounded-full shrink-0" style={{ background: meta.dot }} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-mono font-bold text-white truncate">{id}</div>
                     <div className="text-[9px] text-slate-400 truncate">{u.compound || u.cmp || ''} · {u.ownerName || ''}</div>
                     <div className="text-[9px] text-[#E9C176] font-mono">{formatEGP(unitPrice(u))}</div>
                   </div>
-                  <ChevronRight className="w-3 h-3 text-slate-600 flex-shrink-0" />
+                  <ChevronRight className="w-3 h-3 text-slate-600 shrink-0" />
                 </div>
               );
             })}
@@ -1978,7 +1978,7 @@ function InventoryWhatsAppWorkflow({
       {/* Header */}
       <div className="bg-[#0d1a2c]/70 rounded-2xl border border-[#C8961A]/25 p-5">
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-[#1a1200] border border-[#C8961A]/40 text-[#E9C176] flex-shrink-0">
+          <div className="p-3 rounded-xl bg-[#1a1200] border border-[#C8961A]/40 text-[#E9C176] shrink-0">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div className="flex-1">
@@ -2058,14 +2058,14 @@ function InventoryWhatsAppWorkflow({
                       className="accent-[#C8961A] pointer-events-none"
                     />
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="text-[10px] text-slate-500 font-mono w-5 flex-shrink-0">{i + 1}</span>
-                      <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ background: row.statusDot }} />
+                      <span className="text-[10px] text-slate-500 font-mono w-5 shrink-0">{i + 1}</span>
+                      <div className="w-1.5 h-8 rounded-full shrink-0" style={{ background: row.statusDot }} />
                       <div className="min-w-0 flex-1">
                         <div className="text-[11px] font-bold text-white font-mono truncate">{row.id}</div>
                         <div className="text-[9.5px] text-slate-400 truncate">{row.compound} · {row.type}{row.beds ? ` · ${row.beds}BR` : ''}</div>
                       </div>
                     </div>
-                    <div className="flex-shrink-0 text-right">
+                    <div className="shrink-0 text-right">
                       <div className="text-[11px] font-mono text-[#E9C176]">{formatEGP(row.price)}</div>
                       <div className="text-[9.5px] text-slate-500 flex items-center gap-1">
                         <Phone className="w-2.5 h-2.5" />{row.phone.slice(-7)}
@@ -2135,7 +2135,7 @@ function InventoryWhatsAppWorkflow({
               type="button"
               onClick={handleSend}
               disabled={sending || selected.length === 0}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#C8961A] to-[#E9C176] text-[#0d0d0f] font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-[#C8961A]/20"
+              className="w-full py-3 rounded-xl bg-linear-to-r from-[#C8961A] to-[#E9C176] text-[#0d0d0f] font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-[#C8961A]/20"
             >
               {sending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Queuing…</>
@@ -2187,7 +2187,7 @@ function InventoryWhatsAppWorkflow({
 function _Kpi({ label, value, icon, accent = '#E9C176' }: { label: string; value: string; icon: React.ReactNode; accent?: string }) {
   return (
     <div className="rounded-xl bg-[#0d1a2c]/70 border border-white/10 px-3.5 py-3 flex items-center gap-3">
-      <span className="p-2 rounded-lg bg-[#211A0D] border border-[#C8961A]/30 flex-shrink-0" style={{ color: accent }}>
+      <span className="p-2 rounded-lg bg-[#211A0D] border border-[#C8961A]/30 shrink-0" style={{ color: accent }}>
         {icon}
       </span>
       <div className="min-w-0">
