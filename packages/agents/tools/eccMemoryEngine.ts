@@ -440,7 +440,7 @@ export class EpisodicContextCache {
     success: boolean;
   }> {
     try {
-      const supabase = options?.client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      const supabase = options?.client !== undefined ? options.client : (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
       if (!supabase) {
         return { syncedEpisodes: 0, syncedEntities: 0, success: false };
       }
@@ -470,7 +470,7 @@ export class EpisodicContextCache {
     success: boolean;
   }> {
     try {
-      const supabase = options?.client || (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
+      const supabase = options?.client !== undefined ? options.client : (isSupabaseAdminConfigured() ? getSupabaseAdmin() : null);
       if (!supabase) {
         return { loadedEpisodes: 0, loadedEntities: 0, success: false };
       }

@@ -255,13 +255,12 @@ describe('Episodic Context Cache (ECC) Memory Engine', () => {
       expect(freshEcc.getEntity('cloud-buyer-99')?.name).toBe('Cloud Investor');
     });
 
-    it('fails closed gracefully when Supabase is not configured', async () => {
+    it('fails closed gracefully when Supabase is not configured or unavailable', async () => {
       const freshEcc = new EpisodicContextCache();
-      // No client passed and in test environment without admin key
-      const syncRes = await freshEcc.syncToSupabase();
+      const syncRes = await freshEcc.syncToSupabase({ client: null });
       expect(syncRes.success).toBe(false);
 
-      const loadRes = await freshEcc.loadFromSupabase();
+      const loadRes = await freshEcc.loadFromSupabase({ client: null });
       expect(loadRes.success).toBe(false);
     });
   });
