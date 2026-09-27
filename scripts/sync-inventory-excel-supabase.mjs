@@ -72,24 +72,26 @@ function numberValue(input) {
 }
 
 function stableReference(row) {
-  const explicit = String(value(row, 'Reference Code', 'reference_code', 'Code', 'code')).trim();
-  if (explicit) return explicit.toUpperCase();
+  const explicit = String(value(row, 'Reference Code', 'reference_code', 'Code', 'code', 'Unit Code', 'UnitCode', 'Record ID', 'RecordID')).trim();
+  if (explicit && explicit.length > 2 && !['NADA', 'NULL', 'UNDEFINED'].includes(explicit.toUpperCase())) {
+    return explicit.toUpperCase();
+  }
   const fingerprint = [
-    value(row, 'Compound', 'compound'),
-    value(row, 'Property Type', 'property_type'),
-    value(row, 'Deal Type', 'deal_type'),
-    value(row, 'Area (sqm)', 'area_sqm'),
-    value(row, 'Price (EGP)', 'price'),
-    value(row, 'Owner Phone', 'owner_phone'),
+    value(row, 'Compound', 'compound', 'Compound / Project', 'compound / project'),
+    value(row, 'Property Type', 'property_type', 'PropertyType', 'Unit Type'),
+    value(row, 'Deal Type', 'deal_type', 'DealType', 'Operation (Deal Type)'),
+    value(row, 'Area (sqm)', 'area_sqm', 'Area', 'space_m2'),
+    value(row, 'Price (EGP)', 'price', 'Price', 'price_egp'),
+    value(row, 'Owner Phone', 'owner_phone', 'Phone', 'Contact Phone', 'mobile'),
   ].map((item) => String(item).trim().toLowerCase()).join('|');
   return `XLS-${createHash('sha256').update(fingerprint).digest('hex').slice(0, 16).toUpperCase()}`;
 }
 
 function toWorkbookRow(listing) {
   return {
-    'Reference Code': listing.reference_code || listing.code || listing.id,
+    'Reference Code': listing.reference_code || listing.code || listing.unit_code || listing.id,
     Compound: listing.compound || '',
-    'Zone / Area': listing.zone || listing.location_area || '',
+    'Zone / Area': listing.location_area || listing.city || '',
     'Property Type': listing.property_type || '',
     'Deal Type': listing.deal_type || '',
     'Price (EGP)': listing.price ?? 0,
@@ -97,12 +99,12 @@ function toWorkbookRow(listing) {
     'Area (sqm)': listing.area_sqm ?? 0,
     Bedrooms: listing.bedrooms ?? 0,
     Bathrooms: listing.bathrooms ?? 0,
-    Furnishing: listing.finishing_type || '',
+    Furnishing: listing.finishing_type || listing.furnishing_status || '',
     Status: listing.status || '',
-    Verified: Boolean(listing.verified),
-    'Publish to Client': Boolean(listing.publish_to_client),
-    'Owner / Contact Name': listing.owner_name || '',
-    'Owner Phone': listing.owner_phone || '',
+    Verified: Boolean(listing.verified_at),
+    'Publish to Client': Boolean(listing.published_at),
+    'Owner / Contact Name': listing.owner_name || listing.broker_name || '',
+    'Owner Phone': listing.owner_phone || listing.broker_phone || '',
     'Source Channel': listing.source_channel || listing.sync_source || '',
     'Property Finder Ref': listing.pf_reference_number || '',
     'Last Updated': listing.updated_at || listing.created_at || '',
@@ -146,7 +148,7 @@ async function pull(options) {
   const supabase = requireSupabase();
   const { data, error } = await supabase
     .from('listings')
-    .select('id, reference_code, code, compound, zone, location_area, property_type, deal_type, price, price_currency, area_sqm, bedrooms, bathrooms, finishing_type, status, verified, publish_to_client, owner_name, owner_phone, source_channel, sync_source, pf_reference_number, description, created_at, updated_at')
+    .select('id, reference_code, code, unit_code, compound, location_area, city, property_type, deal_type, price, price_currency, area_sqm, bedrooms, bathrooms, finishing_type, furnishing_status, status, verified_at, published_at, owner_name, owner_phone, broker_name, broker_phone, source_channel, sync_source, pf_reference_number, description, created_at, updated_at')
     .order('updated_at', { ascending: false });
   if (error) throw new Error(`Supabase listings pull failed: ${error.message}`);
   writeWorkbook((data || []).map(toWorkbookRow), options.file);
@@ -159,42 +161,52 @@ function readRows(file, sheetName) {
   const sheet = sheetName
     || (workbook.SheetNames.includes(WORKBOOK_SHEET) ? WORKBOOK_SHEET
       : workbook.SheetNames.includes('All_Units') ? 'All_Units'
-        : workbook.SheetNames[0]);
+        : workbook.SheetNames.includes('All Listings') ? 'All Listings'
+          : workbook.SheetNames[0]);
   if (!workbook.Sheets[sheet]) throw new Error(`Worksheet not found: ${sheet}`);
   return XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { defval: '' });
 }
 
 function toListing(row) {
-  const compound = String(value(row, 'Compound', 'compound')).trim();
-  const propertyType = String(value(row, 'Property Type', 'property_type')).trim();
-  const dealType = String(value(row, 'Deal Type', 'deal_type')).trim().toLowerCase();
-  const price = numberValue(value(row, 'Price (EGP)', 'price', 'price_egp'));
-  const area = numberValue(value(row, 'Area (sqm)', 'area_sqm', 'space_m2'));
+  const compound = String(value(row, 'Compound', 'compound', 'Compound / Project', 'compound / project', 'Project')).trim();
+  const propertyType = String(value(row, 'Property Type', 'property_type', 'PropertyType', 'propertytype', 'Unit Type', 'unit_type', 'Type')).trim();
+  let dealType = String(value(row, 'Deal Type', 'deal_type', 'DealType', 'dealtype', 'Operation (Deal Type)', 'Operation', 'deal')).trim().toLowerCase();
+  if (dealType.includes('rent') || dealType.includes('ايجار') || dealType.includes('إيجار')) dealType = 'rent';
+  else if (dealType.includes('resale') || dealType.includes('re-sale')) dealType = 'resale';
+  else if (dealType.includes('sale') || dealType.includes('بيع') || dealType.includes('primary')) dealType = 'sale';
+
+  const price = numberValue(value(row, 'Price (EGP)', 'price', 'price_egp', 'Price', 'total price', 'Price Display'));
+  const area = numberValue(value(row, 'Area (sqm)', 'area_sqm', 'Area', 'space_m2', 'space'));
   if (!compound || !propertyType || !['sale', 'rent', 'resale', 'primary'].includes(dealType) || price < 0 || area < 0) {
     return { error: 'Compound, Property Type, valid Deal Type, Price (EGP), and Area (sqm) are required.', row };
   }
+
+  const isVerified = String(value(row, 'Verified', 'verified', 'Listing Status')).toLowerCase().includes('verified');
+  const isPublish = ['true', 'yes', 'published', 'active', 'available'].includes(String(value(row, 'Publish to Client', 'publish_to_client', 'Status', 'status', 'Availability')).toLowerCase());
+
   return {
     reference_code: stableReference(row),
-    code: String(value(row, 'Code', 'code', 'Reference Code', 'reference_code')).trim() || null,
+    code: String(value(row, 'Code', 'code', 'Reference Code', 'reference_code', 'Unit Code', 'UnitCode')).trim() || null,
+    unit_code: String(value(row, 'Unit Code', 'UnitCode', 'unit_code')).trim() || null,
     compound,
-    zone: String(value(row, 'Zone / Area', 'zone', 'location_area')).trim() || null,
-    location_area: String(value(row, 'Zone / Area', 'zone', 'location_area')).trim() || 'New Cairo',
+    location_area: String(value(row, 'Zone / Area', 'zone', 'location_area', 'Location', 'Zone / District')).trim() || 'New Cairo',
+    city: 'Cairo',
     property_type: propertyType,
     deal_type: dealType,
     price,
     price_currency: String(value(row, 'Currency', 'price_currency')).trim() || 'EGP',
     area_sqm: area,
-    bedrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bedrooms', 'bedrooms')))),
-    bathrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bathrooms', 'bathrooms')))),
-    finishing_type: String(value(row, 'Furnishing', 'finishing_type')).trim() || null,
-    status: String(value(row, 'Status', 'status', 'availability')).trim() || 'pending',
-    verified: String(value(row, 'Verified', 'verified')).toLowerCase() === 'true',
-    publish_to_client: String(value(row, 'Publish to Client', 'publish_to_client')).toLowerCase() === 'true',
-    owner_name: String(value(row, 'Owner / Contact Name', 'owner_name', 'name')).trim() || null,
-    owner_phone: String(value(row, 'Owner Phone', 'owner_phone', 'mobile')).trim() || null,
-    source_channel: String(value(row, 'Source Channel', 'source_channel')).trim() || 'excel_import',
+    bedrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bedrooms', 'bedrooms', 'rooms', 'beds')))),
+    bathrooms: Math.max(0, Math.trunc(numberValue(value(row, 'Bathrooms', 'bathrooms', 'baths')))),
+    finishing_type: String(value(row, 'Furnishing', 'Furnishing Status', 'Finishing', 'finishing_type', 'finishing')).trim() || null,
+    status: String(value(row, 'Status', 'status', 'availability', 'Listing Status', 'Availability')).trim() || 'available',
+    verified_at: isVerified ? new Date().toISOString() : null,
+    published_at: isPublish ? new Date().toISOString() : null,
+    owner_name: String(value(row, 'Owner / Contact Name', 'Contact Name', 'ContactName', 'owner_name', 'name')).trim() || null,
+    owner_phone: String(value(row, 'Owner Phone', 'Contact Phone', 'Phone', 'owner_phone', 'mobile')).trim() || null,
+    source_channel: String(value(row, 'Source Channel', 'source_channel', 'SourceFile')).trim() || 'excel_import',
     pf_reference_number: String(value(row, 'Property Finder Ref', 'pf_reference_number')).trim() || null,
-    description: String(value(row, 'Notes', 'description', 'notes')).trim() || null,
+    description: String(value(row, 'Notes', 'Description / Notes', 'description', 'notes', 'Listing Description / Notes')).trim() || null,
     sync_source: 'excel_import',
     updated_at: new Date().toISOString(),
   };
@@ -213,9 +225,16 @@ async function push(options) {
     return;
   }
   const supabase = requireSupabase();
-  const { error } = await supabase.from('listings').upsert(listings, { onConflict: 'reference_code' });
-  if (error) throw new Error(`Supabase listings push failed: ${error.message}`);
-  console.log(`Upserted ${listings.length} listing(s) into Supabase.`);
+  const BATCH_SIZE = 250;
+  let totalUpserted = 0;
+  for (let i = 0; i < listings.length; i += BATCH_SIZE) {
+    const chunk = listings.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase.from('listings').upsert(chunk, { onConflict: 'reference_code' });
+    if (error) throw new Error(`Supabase listings push failed at batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
+    totalUpserted += chunk.length;
+    console.log(`Upserted ${totalUpserted}/${listings.length} listings...`);
+  }
+  console.log(`Successfully upserted ${totalUpserted} listing(s) into Supabase.`);
 }
 
 async function main() {
