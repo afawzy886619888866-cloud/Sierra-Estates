@@ -146,13 +146,25 @@ function writeWorkbook(rows, file) {
 
 async function pull(options) {
   const supabase = requireSupabase();
-  const { data, error } = await supabase
-    .from('listings')
-    .select('id, reference_code, code, unit_code, compound, location_area, city, property_type, deal_type, price, price_currency, area_sqm, bedrooms, bathrooms, finishing_type, furnishing_status, status, verified_at, published_at, owner_name, owner_phone, broker_name, broker_phone, source_channel, sync_source, pf_reference_number, description, created_at, updated_at')
-    .order('updated_at', { ascending: false });
-  if (error) throw new Error(`Supabase listings pull failed: ${error.message}`);
-  writeWorkbook((data || []).map(toWorkbookRow), options.file);
-  console.log(`Wrote ${(data || []).length} listings to ${options.file}`);
+  const PAGE_SIZE = 1000;
+  let allListings = [];
+  let from = 0;
+  while (true) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id, reference_code, code, unit_code, compound, location_area, city, property_type, deal_type, price, price_currency, area_sqm, bedrooms, bathrooms, finishing_type, furnishing_status, status, verified_at, published_at, owner_name, owner_phone, broker_name, broker_phone, source_channel, sync_source, pf_reference_number, description, created_at, updated_at')
+      .order('updated_at', { ascending: false })
+      .range(from, to);
+    if (error) throw new Error(`Supabase listings pull failed at range ${from}-${to}: ${error.message}`);
+    if (!data || data.length === 0) break;
+    allListings.push(...data);
+    console.log(`Fetched ${allListings.length} listings from Supabase...`);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  writeWorkbook(allListings.map(toWorkbookRow), options.file);
+  console.log(`Wrote ${allListings.length} listings to ${options.file}`);
 }
 
 function readRows(file, sheetName) {
