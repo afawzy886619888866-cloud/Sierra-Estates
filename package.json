@@ -32,6 +32,7 @@
         "export:inventory": "node scripts/generate-excel-inventory.mjs && tsx scripts/export-master-excel-csv.ts",
         "inventory:excel:pull": "node scripts/sync-inventory-excel-supabase.mjs pull",
         "inventory:excel:push": "node scripts/sync-inventory-excel-supabase.mjs push",
+        "export:propertyfinder": "node scripts/export-propertyfinder-feed.mjs",
         "whatsapp:bot:install": "npm --prefix apps/agents/whatsapp-bot ci --ignore-scripts",
         "whatsapp:bot": "npm --prefix apps/agents/whatsapp-bot start",
         "openclaw:task": "tsx scripts/openclaw-task-runner.ts",

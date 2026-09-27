@@ -30,6 +30,7 @@ const MEDIA_DIR = path.join(OUTPUT_DIR, 'Owners_Media');
 const INVENTORY_FILE = path.join(OUTPUT_DIR, 'Owners_Inventory.json');
 const QR_PNG_PATH = path.join(OUTPUT_DIR, 'whatsapp_qr.png');
 const QR_HTML_PATH = path.join(OUTPUT_DIR, 'whatsapp_qr.html');
+const PUBLIC_QR_PNG = path.resolve(__dirname, '../../../apps/sierra-estates-realty/public/whatsapp_qr.png');
 
 if (!fs.existsSync(MEDIA_DIR)) {
   fs.mkdirSync(MEDIA_DIR, { recursive: true });
@@ -39,6 +40,9 @@ async function renderQRPage(qr) {
   try {
     const dataUrl = await QRCode.toDataURL(qr, { width: 400, margin: 2 });
     await QRCode.toFile(QR_PNG_PATH, qr, { width: 400, margin: 2 });
+    try {
+      await QRCode.toFile(PUBLIC_QR_PNG, qr, { width: 400, margin: 2 });
+    } catch (_) {}
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -218,7 +222,9 @@ async function processIncomingListing(msg, sock) {
     '';
 
   const isOwnerIndicator = /مالك|من المالك|اونر|owner|direct owner|بدون وسيط/i.test(text) ||
-    /owner|ملاك|مالك/i.test(jid);
+    /owner|ملاك|مالك/i.test(jid) ||
+    jid === '120363412518130365@g.us' ||
+    jid === '120363401965989396@g.us';
 
   const phoneMatch = text.match(/(?<!\d)(?:\+?20[\s\-.]?)?0?1[0125](?:[\s\-.]?\d){8}(?!\d)/);
   const contactPhone = phoneMatch ? normalizePhone(phoneMatch[0]) : senderPhone;
@@ -271,6 +277,23 @@ async function processIncomingListing(msg, sock) {
 
   harvestedOwners.set(unitCode, listingRecord);
   logger.info({ unitCode, hasImage, compound, price }, '✅ Added to Owners Inventory queue');
+
+  // Forward to Next.js WhatsApp Ingest API (AugustOwnersAgentService / Supabase / Property Finder)
+  try {
+    const isAugust = jid.includes('120363044918239011') || jid.toLowerCase().includes('august') || jid.toLowerCase().includes('owner');
+    fetch('http://localhost:3000/api/ingest/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        sender: contactPhone,
+        group: jid,
+        groupId: jid,
+        isAugustGroup: isAugust,
+        media: savedPhotoPath ? { filePath: savedPhotoPath, photoCode } : undefined,
+      }),
+    }).catch(() => {});
+  } catch (_) {}
 
   // Persist JSON cache for Excel exporter
   fs.writeFileSync(INVENTORY_FILE, JSON.stringify(Array.from(harvestedOwners.values()), null, 2));
