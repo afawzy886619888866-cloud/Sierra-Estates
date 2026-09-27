@@ -89,7 +89,7 @@ function stableReference(row) {
 
 function toWorkbookRow(listing) {
   return {
-    'Reference Code': listing.reference_code || listing.code || listing.unit_code || listing.id,
+    'Reference Code': listing.ref_id || listing.reference_code || listing.code || listing.unit_code || listing.id,
     Compound: listing.compound || '',
     'Zone / Area': listing.location_area || listing.city || '',
     'Property Type': listing.property_type || '',
@@ -175,19 +175,41 @@ function toListing(row) {
   else if (dealType.includes('resale') || dealType.includes('re-sale')) dealType = 'resale';
   else if (dealType.includes('sale') || dealType.includes('بيع') || dealType.includes('primary')) dealType = 'sale';
 
-  const price = numberValue(value(row, 'Price (EGP)', 'price', 'price_egp', 'Price', 'total price', 'Price Display'));
-  const area = numberValue(value(row, 'Area (sqm)', 'area_sqm', 'Area', 'space_m2', 'space'));
-  if (!compound || !propertyType || !['sale', 'rent', 'resale', 'primary'].includes(dealType) || price < 0 || area < 0) {
-    return { error: 'Compound, Property Type, valid Deal Type, Price (EGP), and Area (sqm) are required.', row };
+  let price = numberValue(value(row, 'Price (EGP)', 'price', 'price_egp', 'Price', 'total price', 'Price Display'));
+  if (price > 500000000 || price < 0) {
+    const notePrice = numberValue(value(row, 'Notes', 'Description / Notes', 'description', 'notes'));
+    if (notePrice > 0 && notePrice <= 500000000) {
+      price = notePrice;
+    } else {
+      price = 0;
+    }
+  }
+  price = Math.round(price * 100) / 100;
+
+  let area = numberValue(value(row, 'Area (sqm)', 'area_sqm', 'Area', 'space_m2', 'space'));
+  if (area > 100000 || area < 0) {
+    area = 0;
+  }
+  area = Math.round(area * 100) / 100;
+
+  if (!compound || !propertyType || !['sale', 'rent', 'resale', 'primary'].includes(dealType)) {
+    return { error: 'Compound, Property Type, and valid Deal Type are required.', row };
   }
 
   const isVerified = String(value(row, 'Verified', 'verified', 'Listing Status')).toLowerCase().includes('verified');
   const isPublish = ['true', 'yes', 'published', 'active', 'available'].includes(String(value(row, 'Publish to Client', 'publish_to_client', 'Status', 'status', 'Availability')).toLowerCase());
 
+  const ref = stableReference(row);
+  const code = String(value(row, 'Code', 'code', 'Reference Code', 'reference_code', 'Unit Code', 'UnitCode')).trim() || null;
+  const unitCode = String(value(row, 'Unit Code', 'UnitCode', 'unit_code')).trim() || null;
+  const title = String(value(row, 'Title', 'title')).trim() || `${propertyType} in ${compound} (${code || unitCode || ref})`;
+
   return {
-    reference_code: stableReference(row),
-    code: String(value(row, 'Code', 'code', 'Reference Code', 'reference_code', 'Unit Code', 'UnitCode')).trim() || null,
-    unit_code: String(value(row, 'Unit Code', 'UnitCode', 'unit_code')).trim() || null,
+    ref_id: ref,
+    reference_code: ref,
+    title,
+    code,
+    unit_code: unitCode,
     compound,
     location_area: String(value(row, 'Zone / Area', 'zone', 'location_area', 'Location', 'Zone / District')).trim() || 'New Cairo',
     city: 'Cairo',
@@ -229,7 +251,7 @@ async function push(options) {
   let totalUpserted = 0;
   for (let i = 0; i < listings.length; i += BATCH_SIZE) {
     const chunk = listings.slice(i, i + BATCH_SIZE);
-    const { error } = await supabase.from('listings').upsert(chunk, { onConflict: 'reference_code' });
+    const { error } = await supabase.from('listings').upsert(chunk, { onConflict: 'ref_id' });
     if (error) throw new Error(`Supabase listings push failed at batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
     totalUpserted += chunk.length;
     console.log(`Upserted ${totalUpserted}/${listings.length} listings...`);
