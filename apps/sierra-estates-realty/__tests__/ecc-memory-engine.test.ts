@@ -201,7 +201,7 @@ describe('Episodic Context Cache (ECC) Memory Engine', () => {
 
     it('hydrates episodes and entities from Supabase', async () => {
       const mockClient = {
-        from: (table: string) => ({
+        from: (_table: string) => ({
           select: () => ({
             eq: (col: string, val: string) => {
               if (val === 'ecc-memory-engine') {
