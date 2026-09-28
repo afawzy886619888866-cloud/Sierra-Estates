@@ -1,4 +1,5 @@
 import 'server-only';
+import { createClient } from '@supabase/supabase-js';
 import { insertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { toListingColumns } from '@/lib/server/listing-columns';
@@ -8,6 +9,7 @@ import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
+
 
 /**
  * AugustOwnersAgentService
@@ -35,7 +37,8 @@ export interface ProcessGroupMessageParams {
   sender: string;
   group: string;
   groupId?: string;
-  media?: { data: string; mimeType: string };
+  /** base64-encoded image data forwarded by owners-harvester */
+  media?: { data: string; mimeType: string; photoCode?: string };
 }
 
 export interface AugustAgentResult {
@@ -178,6 +181,25 @@ export class AugustOwnersAgentService {
     const finishing = parsed.finishing || 'Fully Finished';
     const mode = (parsed.mode || 'sale').toLowerCase() as 'sale' | 'rent';
 
+    // ─── Upload photo to Supabase Storage (must happen before DB insert so images[] is populated)
+    let uploadedImageUrls: string[] = [];
+    if (media?.data) {
+      try {
+        const publicUrl = await AugustOwnersAgentService.uploadPhotoToStorage(
+          media.data,
+          media.mimeType,
+          media.photoCode || listingCode,
+        );
+        if (publicUrl) {
+          uploadedImageUrls = [publicUrl];
+          logger.info(`[AugustOwnersAgent] Photo uploaded to Supabase Storage: ${publicUrl}`);
+        }
+      } catch (uploadErr: any) {
+        logger.warn(`[AugustOwnersAgent] Photo upload non-fatal: ${uploadErr?.message}`);
+      }
+    }
+
+    // Attach images to listing document before any DB insert
     const listingDocument = {
       code: listingCode,
       title: `${propertyType} · ${compound}`,
@@ -195,6 +217,7 @@ export class AugustOwnersAgentService {
       status: 'available',
       verified: true,
       available: true,
+      images: uploadedImageUrls,
       sourceChannel: 'whatsapp-august-owners',
       description: rawMessage,
       createdAt: now,
@@ -220,7 +243,7 @@ export class AugustOwnersAgentService {
       logger.warn(`[AugustOwnersAgent] Direct DB write fallback: ${dbErr?.message}`);
     }
 
-    // Insert into units table (for Property Finder and inventory queries)
+    // Insert into units table with images already populated
     try {
       await insertRecord(COLLECTIONS.units, {
         title: `${propertyType} · ${compound}`,
@@ -234,6 +257,7 @@ export class AugustOwnersAgentService {
         bedrooms,
         bathrooms,
         area,
+        images: uploadedImageUrls,
         pfReferenceNumber: pfReference,
         description: rawMessage,
         createdAt: now,
@@ -267,9 +291,8 @@ export class AugustOwnersAgentService {
       logger.warn(`[AugustOwnersAgent] Excel append error (non-fatal): ${excelErr?.message}`);
     }
 
-    // Step 1: Make ad in Property Finder + notify user
+    // Step 1: Publish to Property Finder — now that images are attached to the unit record
     try {
-      // Trigger Property Finder sync/publish
       await PFIntegrationService.publishListing(unitId).catch((e) => {
         logger.warn(`[AugustOwnersAgent] PF publishListing non-fatal: ${e?.message}`);
       });
@@ -396,7 +419,7 @@ export class AugustOwnersAgentService {
     const bedsMatch = text.match(/(\d+)\s*(غرف|غرفة|نوم|beds?|bd)/i);
     const beds = bedsMatch ? parseInt(bedsMatch[1]) : 3;
 
-    const areaMatch = text.match(/(\d+)\s*(متر|م²|م2|sqm|m2)/i);
+    const areaMatch = text.match(/(\d+)\s*(متر|م²|م٢|sqm|m2)/i);
     const area = areaMatch ? parseInt(areaMatch[1]) : 160;
 
     let compound = 'New Cairo';
@@ -421,5 +444,51 @@ export class AugustOwnersAgentService {
       type: text.includes('فيلا') || text.includes('villa') ? 'Villa' : 'Apartment',
       mode: text.includes('ايجار') || text.includes('rent') ? 'rent' : 'sale',
     };
+  }
+
+  /**
+   * Upload a base64-encoded photo to Supabase Storage `listing-photos` bucket.
+   * Returns the public URL, or null on failure.
+   *
+   * Uses the service-role key (server-only context) so it can write to the
+   * bucket without requiring the anon policy to allow inserts.
+   */
+  private static async uploadPhotoToStorage(
+    base64Data: string,
+    mimeType: string,
+    photoCode: string,
+  ): Promise<string | null> {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) {
+      logger.warn('[AugustOwnersAgent] SUPABASE_SERVICE_ROLE_KEY not set — photo upload skipped');
+      return null;
+    }
+
+    const adminClient = createClient(url, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+    const storagePath = `whatsapp/${photoCode}_${Date.now()}.${ext}`;
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const { error } = await adminClient.storage
+      .from('listing-photos')
+      .upload(storagePath, buffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (error) {
+      logger.warn(`[AugustOwnersAgent] Storage upload error: ${error.message}`);
+      return null;
+    }
+
+    const { data } = adminClient.storage
+      .from('listing-photos')
+      .getPublicUrl(storagePath);
+
+    return data?.publicUrl ?? null;
   }
 }

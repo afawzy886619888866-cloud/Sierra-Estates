@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -38,6 +39,14 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+function getStableRef(u) {
+  if (u['Reference Code']) return String(u['Reference Code']).trim();
+  if (u['Unit_Code']) return String(u['Unit_Code']).trim();
+  const rawKey = `${u._category || ''}|${u['Compound'] || ''}|${u['Property Type'] || ''}|${u['Price (EGP)'] || 0}|${u['Area (sqm)'] || 0}|${u['Owner Phone'] || u['Phone'] || ''}`;
+  const hash = crypto.createHash('md5').update(rawKey).digest('hex').substring(0, 8).toUpperCase();
+  return `SE-PH-${hash}`;
+}
+
 async function main() {
   const photosWorkbookPath = path.join(ROOT, 'Sierra_Estates_Units_With_Photos.xlsx');
   if (!fs.existsSync(photosWorkbookPath)) {
@@ -63,7 +72,8 @@ async function main() {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${new Date().toISOString()}">\n`;
 
   for (const u of allPhotoUnits) {
-    const ref = u['Reference Code'] || `SE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Use Unit_Code or deterministic hash as stable reference — prevents PF treating re-runs as new ads.
+    const ref = getStableRef(u);
     const offeringType = mapOfferingType(u['Deal Type']);
     const propType = mapPropertyType(u['Property Type']);
     const price = Number(u['Price (EGP)']) || 0;
@@ -116,6 +126,8 @@ async function main() {
   console.log(`[✓] Generated Property Finder XML Feed (${allPhotoUnits.length} ads) → ${xmlPath}`);
 
   // 2. Build Portal CSV for manual upload in Property Finder
+  const maxPhotos = 8;
+  const photoHeaders = Array.from({ length: maxPhotos }, (_, i) => `Photo URL ${i + 1}`);
   const csvHeaders = [
     'Reference',
     'Category',
@@ -128,8 +140,8 @@ async function main() {
     'Bedrooms',
     'Bathrooms',
     'Area (sqm)',
-    'Photo URL 1',
-    'Photo URL 2',
+    ...photoHeaders,
+    'All Photo URLs',
     'Title (EN)',
     'Description (EN)',
   ];
@@ -138,8 +150,9 @@ async function main() {
   const cleanStr = (s) => `"${String(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
 
   for (const u of allPhotoUnits) {
-    const ref = u['Reference Code'] || `SE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    const ref = getStableRef(u);
     const photoUrls = String(u['Photo URLs'] || '').split(/[\n,;]+/).map(s => s.trim()).filter(s => s.startsWith('http'));
+    const photoCols = Array.from({ length: maxPhotos }, (_, i) => cleanStr(photoUrls[i] || ''));
 
     csvRows.push([
       cleanStr(ref),
@@ -153,8 +166,8 @@ async function main() {
       u['Bedrooms'] || 0,
       u['Bathrooms'] || 0,
       u['Area (sqm)'] || 0,
-      cleanStr(photoUrls[0] || ''),
-      cleanStr(photoUrls[1] || ''),
+      ...photoCols,
+      cleanStr(photoUrls.join(' | ')),
       cleanStr(`${u['Property Type']} in ${u['Compound'] || 'New Cairo'}`),
       cleanStr(u['Description'] || ''),
     ].join(','));
