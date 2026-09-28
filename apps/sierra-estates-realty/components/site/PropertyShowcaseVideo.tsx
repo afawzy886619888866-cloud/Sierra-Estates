@@ -6,12 +6,15 @@ import { ArrowRight, Pause, Play, Sparkles } from 'lucide-react';
 import type { CardListing } from './PropertyCard';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { usePublicListings } from '@/lib/site/usePublicListings';
 
 const ROTATION_MS = 5200;
 
 export default function PropertyShowcaseVideo() {
   const { isAr } = useSite();
-  const listings = useMemo(() => (HZDATA.listings as CardListing[]).slice(0, 5), []);
+  // Phase 4/B3: real units from the public inventory API (no snapshot in bundle)
+  const { units, loading } = usePublicListings(5);
+  const listings = useMemo(() => (units as CardListing[]).slice(0, 5), [units]);
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);

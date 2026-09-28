@@ -19,43 +19,43 @@ export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
 
-  // Live inventory lookup — the same source that powers /properties and the
-  // map. Falls back to the static catalog only if the API has no match.
+  // Phase 4/B3: single-row lookup via /api/listings/[id] instead of
+  // downloading the entire inventory to render one unit. The endpoint returns
+  // the app-vocabulary record (compound/price/beds/area/mode/…) and a real
+  // 404 for unknown ids — no fabricated fallback (Master Rule 5).
   const [liveUnit, setLiveUnit] = useState<CardListing | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    const needle = String(id).trim().toLowerCase();
-    fetch('/api/inventory')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled || !d || !Array.isArray(d.units)) return;
-        const u = d.units.find((x: any) =>
-          String(x.code || '').toLowerCase() === needle ||
-          String(x.id || '').toLowerCase() === needle
-        );
-        if (u) {
-          const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
-          setLiveUnit({
-            id: 0,
-            code: u.code || u.id,
-            cmp: u.compound || u.location || 'New Cairo',
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds ?? 3,
-            bath: u.bath ?? 2,
-            area: u.area ?? 0,
-            egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
-            usd: u.usd ?? (u.price ? (mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5)) : 0),
-            ai: Number(u.aiScore ?? 8.5),
-            tag: u.isNew ? 'New Listing' : 'Live Inventory',
-            mode,
-            agent: 'Sierra Advisor Desk',
-            ago: u.timestamp || 'Live sync',
-            img: u.img || u.photoUrl || (Array.isArray(u.images) && u.images[0]) || '',
-          });
-        }
+    fetch(`/api/listings/${encodeURIComponent(String(id))}`)
+      .then((r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`listings API ${r.status}`);
+        return r.json();
+      })
+      .then((u: any) => {
+        if (cancelled || !u || !u.id) return;
+        const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
+        const price = Number(u.price) || 0;
+        setLiveUnit({
+          id: 0,
+          code: u.code || u.referenceCode || u.refId || String(u.id),
+          cmp: u.compound || u.locationArea || 'New Cairo',
+          zone: u.zone || u.locationArea || 'New Cairo',
+          type: u.type || u.propertyType || 'Apartment',
+          beds: u.beds ?? 0,
+          bath: u.bath ?? 0,
+          area: u.area ?? u.areaSqm ?? 0,
+          egpM: price > 0 ? Number((price / 1_000_000).toFixed(1)) : 0,
+          usd: price > 0 ? (mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0,
+          ai: Number(u.ai ?? 0),
+          tag: u.tag || (mode === 'rent' ? 'Rent' : 'Sale'),
+          mode,
+          agent: 'Sierra Advisor Desk',
+          ago: u.ago || 'Live sync',
+          img: u.img || (Array.isArray(u.images) && u.images[0]) || '',
+        });
       })
       .catch(() => {})
       .finally(() => {

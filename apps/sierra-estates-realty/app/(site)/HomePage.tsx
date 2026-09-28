@@ -108,7 +108,7 @@ const SALE_PRICES = [
 
 export default function HomePage() {
   const { t, isAr } = useSite();
-  const [listings, setListings] = useState<CardListing[]>(HZDATA.listings as CardListing[]);
+  const [listings, setListings] = useState<CardListing[]>([]); // Phase 4/B3: real units arrive via the /api/inventory fetch below
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];

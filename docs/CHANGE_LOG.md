@@ -119,3 +119,43 @@ The following changes remove every code path that could present invented propert
 - **Reason:** Master Command — reports must stay honest; verification overturned two audit claims.
 - **Files:** docs/CURRENT_STATE_REPORT.md.
 - **DB impact:** none. **Risk:** none. **Rollback:** delete §12.
+
+---
+
+## 2026-09-29 — Phase 4 Execution (website activation, B3 + Master Rule 5)
+
+### Change 1 — 6.5 MB snapshot out of every client bundle (B3)
+
+- **Change:** `lib/site/data.ts` no longer imports `lib/inventory/snapshot.json` (was pulled into every client page via HZDATA, and fed a fabricated mapping layer: `egpM || 8.5`, synthetic `ai` scores, fake "Verified Portfolio" tags, and an 8-hardcoded-fictional-listings fallback on empty snapshot). `unitsFor`/`findListing` are snapshot-free. New `lib/site/usePublicListings.ts` hook fetches `/api/inventory?limit=` with module-level caching — the single client-side source of real units. `PropertiesPage` starts empty with an honest loading state; `HomePage`/`AiEnginePage`/`AdvicePage`/`PropertyShowcaseVideo` wired to the hook. Server-side snapshot consumers (API routes, sitemap, metadata) unchanged — server memory only.
+- **Reason:** Audit B3 + Phase 1.5 gap: the fabricated fallback layer inside data.ts survived the first sweep.
+- **Files:** lib/site/data.ts, lib/site/usePublicListings.ts (new), 5 client pages/components.
+- **DB impact:** none. **Risk:** low (pages show honest loading/empty states instead of stale bundled data). **Rollback:** git revert.
+
+### Change 2 — /matches wired to the real matching engine (Phase 4 P0)
+
+- **Change:** `MatchesPage` rewritten from client-side scoring over the static catalog to debounced `POST /api/matches` (budget 40 / beds 20 / type 15 / zone 15 / AI 10), rendering engine scores WITH match reasons (master spec: explainable matches), honest loading/error/empty states, removed the unsupported yield filter. EGP/USD budget input converted to the USD figure the engine scores against.
+- **Reason:** Roadmap Phase 4/6 — the deterministic engine was orphaned from UI.
+- **Files:** app/(site)/matches/MatchesPage.tsx.
+- **DB impact:** none (read-only scoring). **Risk:** low. **Rollback:** git revert.
+
+### Change 3 — property detail: one row, not the whole inventory (B3b)
+
+- **Change:** `PropertyDetail` now fetches `/api/listings/[id]` (single-row, honest 404) instead of downloading all of `/api/inventory` to find one unit; no invented defaults (beds `?? 0`, ai `?? 0` instead of `?? 3`/`?? 8.5`). Metadata resolver in `property/[id]/page.tsx` reads the DB row server-side first, snapshot second, drops fake `?? 3`/`?? 8.5` meta defaults. `sitemap.ts` + `page.tsx` no longer statically import the gitignored (missing on fresh clones) `@/data/whatsapp-ingested-units.json` — read defensively from disk like `/api/inventory` does (fixed two latent fresh-clone build breaks).
+- **Reason:** Audit B3 + roadmap Phase 4.
+- **Files:** app/(site)/property/[id]/PropertyDetail.tsx, app/(site)/property/[id]/page.tsx, app/sitemap.ts.
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert.
+
+### Change 4 — admin dashboard honesty (partial)
+
+- **Change:** `DashboardView` `FALLBACK_HOT_LEADS` (4 hardcoded "leads" with real-looking phone numbers shown when the API fails) → empty honest fallback; live-lead mapping stops inventing `score: 93+(i%6)` and default budgets/phones.
+- **Reason:** Master Rule 5 for internal tools — staff must not act on people who never inquired.
+- **Files:** app/admin/views/DashboardView.tsx.
+- **DB impact:** none. **Risk:** none. **Rollback:** git revert.
+- **Note (next block):** RECENT_ACTIVITIES synthetic feed + CRM stage PATCH wiring + `/api/inventory` service-role least-privilege remain open.
+
+### Change 5 — test updated to the honest contract
+
+- **Change:** `v12-quiet-luxury.test.ts` PropertyDetail case now asserts the honest pre-fetch state (renders "Loading listing", contains NO fabricated compound/spec data) instead of asserting the deleted static-catalog fallback.
+- **Reason:** The old assertion required the fabrication path to keep working.
+- **Files:** __tests__/v12-quiet-luxury.test.ts.
+- **Verification:** tsc 0 errors (needs --max-old-space-size=6144; default heap OOMs); Jest 106/106 suites, 1,126/1,126 tests.

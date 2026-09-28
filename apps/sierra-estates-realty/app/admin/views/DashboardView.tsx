@@ -29,12 +29,11 @@ interface DashboardLead {
   color?: string;
 }
 
-const FALLBACK_HOT_LEADS: DashboardLead[] = [
-  { id: 'lead-1', name: 'Hazem (Direct Owner)', phone: '+201001534224', interest: 'Fifth Square · 3B Apartment (MFS-3B-11.95M)', stage: 'Direct Owner Intake', score: 98, budget: '11.95M EGP', color: '#C8961A' },
-  { id: 'lead-2', name: 'ا. ليلى فريد (مالك مباشر)', phone: '+201228774975', interest: 'Al Rehab · Residence (FP-25R-11.5M)', stage: 'Viewing Scheduled', score: 96, budget: '11.5M EGP', color: '#10B981' },
-  { id: 'lead-3', name: 'عمرو مرسي (مالك مباشر)', phone: '+201013995871', interest: 'Fifth Square · Ground Unit (HV1-4R-8.8M)', stage: 'Active Listing', score: 94, budget: '8.8M EGP', color: '#8B5CF6' },
-  { id: 'lead-4', name: 'محمد (مالك مباشر)', phone: '+201022844661', interest: 'Madinaty · B14 Residence (MT-B14-3U-8.34M)', stage: 'Follow Up', score: 92, budget: '8.5M EGP', color: '#F59E0B' },
-];
+// Phase 4 honesty fix: the previous fallback presented 4 hardcoded “leads”
+// (with real-looking phone numbers) whenever the leads API failed — staff
+// would act on people who never inquired. An empty list is the honest
+// offline state; real leads arrive from /api/admin/leads below.
+const FALLBACK_HOT_LEADS: DashboardLead[] = [];
 
 const RECENT_ACTIVITIES: ActivityFeedItem[] = [
   {
@@ -202,13 +201,13 @@ export default function DashboardView({
             .slice(0, 4)
             .map((l: any, i: number) => ({
               id: l.id || `lead-${i}`,
-              name: l.name || 'VIP Client',
-              phone: l.phone || '+201000000000',
-              interest: l.interest || 'New Cairo Luxury Residence',
+              name: l.name || 'Unnamed lead',
+              phone: l.phone || '',
+              interest: l.interest || '',
               stage: l.stage || 'Initial Contact',
               hot: true,
-              score: 93 + (i % 6),
-              budget: l.budget ? `${(l.budget / 1000000).toFixed(1)}M EGP` : '15-25M EGP',
+              score: l.score ?? undefined,
+              budget: l.budget ? `${(l.budget / 1000000).toFixed(1)}M EGP` : '',
               color: l.color || ['#C8961A', '#10B981', '#8B5CF6', '#F59E0B'][i % 4],
             }));
           if (mapped.length > 0) {

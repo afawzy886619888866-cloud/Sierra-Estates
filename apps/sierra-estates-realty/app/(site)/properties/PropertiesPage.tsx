@@ -31,7 +31,8 @@ import {
 import SiteShell from '@/components/site/SiteShell';
 import { useSite } from '@/lib/site/SiteContext';
 import { useReveal } from '@/lib/site/useReveal';
-import snapshot from '@/lib/inventory/snapshot.json';
+// Phase 4/B3: the 6.5 MB snapshot.json no longer ships in the client bundle —
+// real units arrive from /api/inventory below (loading state is honest).
 import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { useListingsRealtime } from '@/hooks/useListingsRealtime';
@@ -237,26 +238,11 @@ export default function PropertiesPage() {
   const { t, isAr, theme } = useSite();
   const listingsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initial load directly from snapshot for instant zero-delay render (excluding owner listings)
-  const initialUnits: RealListing[] = useMemo(() => {
-    const rawList: any[] = (snapshot as any)?.units || [];
-    const valid = rawList.filter((raw: any) =>
-      raw.party !== 'Owner' &&
-      raw.sourceType !== 'owner' &&
-      raw.segment !== 'owners_rent' &&
-      raw.segment !== 'owners_buy' &&
-      raw.tag !== 'Direct Owner'
-    );
-    // Prioritize units with defined price and clean compound name
-    valid.sort((a: any, b: any) => {
-      const aScore = (a.price > 0 ? 100 : 0) + (a.compound && a.compound !== 'New Cairo' ? 50 : 0);
-      const bScore = (b.price > 0 ? 100 : 0) + (b.compound && b.compound !== 'New Cairo' ? 50 : 0);
-      return bScore - aScore;
-    });
-    return valid.map(sanitizeUnit);
-  }, []);
-
-  const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
+  // Phase 4/B3: real units come from /api/inventory (server-side snapshot of
+  // the same data, PII-stripped). The page starts empty and shows its
+  // loading state — never fabricated units. Owner direct listings excluded.
+  const [allUnits, setAllUnits] = useState<RealListing[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
   const [realtimeLive, setRealtimeLive] = useState(false);
 
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
@@ -339,7 +325,10 @@ export default function PropertiesPage() {
         setAllUnits(validUnits.map(sanitizeUnit));
       })
       .catch((err) => {
-        console.warn('[PropertiesPage] Using committed snapshot inventory:', err);
+        console.warn('[PropertiesPage] inventory fetch failed:', err);
+      })
+      .finally(() => {
+        if (active) setInventoryLoading(false);
       });
 
     return () => {
@@ -927,7 +916,13 @@ export default function PropertiesPage() {
                   </span>
                 </div>
 
-                {sortedListings.length === 0 ? (
+                {inventoryLoading && sortedListings.length === 0 ? (
+                  <div className="empty-state">
+                    <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
+                    <h3>{isAr ? 'جاري تحميل الجرد العقاري…' : 'Loading inventory…'}</h3>
+                    <p>{isAr ? 'يتم جلب الوحدات الحقيقية من قاعدة البيانات.' : 'Fetching real units from the live inventory.'}</p>
+                  </div>
+                ) : sortedListings.length === 0 ? (
                   <div className="empty-state">
                     <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
                     <h3>{isAr ? 'لم يتم العثور على وحدات مطابقة' : 'No properties match your filters'}</h3>
