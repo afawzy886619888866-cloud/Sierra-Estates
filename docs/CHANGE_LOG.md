@@ -159,3 +159,17 @@ The following changes remove every code path that could present invented propert
 - **Reason:** The old assertion required the fabrication path to keep working.
 - **Files:** __tests__/v12-quiet-luxury.test.ts.
 - **Verification:** tsc 0 errors (needs --max-old-space-size=6144; default heap OOMs); Jest 106/106 suites, 1,126/1,126 tests.
+
+---
+
+## 2026-09-29 — Merge main ↔ origin/main (migration-set alignment)
+
+### Change 1 — integrated remote repo-cleanup line (82827c2..bcf347d) with local Phase 2/3/4 line (5fa2d85, a7a8557)
+
+- **Change:** Merge commit uniting two parallel consolidation efforts that had solved the same problem (B4: app-only migrations 011/012 invisible to root-based runs) differently. Remote (repo-cleanup session): canonical root `supabase/migrations/` keeping original names + force-tracked app copies (add-both rule, documented in `.gitignore` + `docs/REPO_CLEANUP_NOTICE.md`) + deletion of unreferenced root `tailwind.config.ts`/`postcss.config.mjs`. Local (Phase 2/3 session): same files renamed to dated names `20260924_011`/`20260925_012` + new `20260929_013_master_inventory_activation.sql`. **Resolution: remote naming wins** — the deploy-time runner (`scripts/apply-pending-migrations.mjs`) tracks applied migrations by filename+checksum in `public.schema_migrations`; the production ledger aligns with the original names, so keeping them means zero spurious re-applies and zero checksum mismatches. Local dated renames deleted (content byte-identical to originals — pure renames, nothing lost); `20260929_013` re-homed under the add-both rule (canonical root copy + force-tracked app copy, blob-identical).
+- **Reason:** Naive merge would have left BOTH naming families in `supabase/migrations/` → 011/012 re-applied under new filenames against the production ledger (double-apply of 331+1,655 lines of DDL) and a missing app copy of 013 → turbo replay ENOENT (the exact 19:55 UTC / 22:0x UTC Vercel failure class the remote commits fixed).
+- **Files:** supabase/migrations/ (canonical 6-file set), apps/sierra-estates-realty/supabase/migrations/ (mirror 6-file set, force-tracked), scripts/data-audit/import-master-inventory.mjs + app/admin/views/InventoryOsView.tsx (user-facing migration-name hints updated to canonical names).
+- **DB impact:** none at merge time. Next deploy applies exactly one new migration: `20260929_013_master_inventory_activation.sql` (idempotent, additive: listings +source_verified_at/availability/publish_status, uq_listings_dupe_check_hash partial unique, broker_sessions TO service_role — see Phase 3 entry).
+- **Risk:** low — verified post-merge: app==root content identity for all 6 migration files (blob-level), tsc 0 errors, Jest 106/106 suites 1,126/1,126 tests.
+- **Rollback:** git revert of the merge commit.
+

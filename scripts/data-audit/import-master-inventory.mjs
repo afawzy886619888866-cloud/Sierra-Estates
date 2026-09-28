@@ -21,7 +21,7 @@
  * Column modes:
  *   --columns full (default) base columns + 011 (data_quality_score, stale) +
  *              013 (source_verified_at, availability, publish_status).
- *              Requires supabase/migrations/20260924_011 + 20260929_013 applied.
+ *              Requires supabase/migrations/011 + 20260929_013 applied.
  *   --columns base  schema.sql baseline only (freshness/publishability data
  *              still preserved inside raw_data JSONB).
  *
@@ -338,7 +338,7 @@ async function main() {
         if (/PGRST204|column .* does not exist/i.test(error.message)) {
           throw new Error(
             `Column drift detected (batch ${Math.floor(i / OPTS.batch) + 1}): ${error.message}\n` +
-            `→ apply supabase/migrations/20260924_011_inventory_os_v2.sql + 20260929_013_master_inventory_activation.sql first,\n` +
+            `→ apply supabase/migrations/011_inventory_os_v2.sql + 20260929_013_master_inventory_activation.sql first,\n` +
             `  or re-run with --columns=base`);
         }
         rejected += chunk.length;
