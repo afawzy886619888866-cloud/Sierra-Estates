@@ -175,7 +175,8 @@ obsidian-store.json
 .amphion/
 tools/claude-proxy/
 
-# App-dir migration copies are 100% build-generated (mirrored from
-# supabase/migrations/ at repo root by apps/sierra-estates-realty/scripts/
-# apply-pending-migrations.mjs prebuild step). Never edit or track them here.
-apps/sierra-estates-realty/supabase/migrations/*
+# NOTE: apps/sierra-estates-realty/supabase/ is intentionally gitignored, but
+# migrations 011/012 inside it are force-tracked (git add -f): the turbo-cached
+# build replay lstats them at their app-dir paths — untracking them breaks
+# Vercel builds with ENOENT. Canonical copies live in supabase/migrations/;
+# the prebuild mirror overwrites the app copies each build (no drift).
