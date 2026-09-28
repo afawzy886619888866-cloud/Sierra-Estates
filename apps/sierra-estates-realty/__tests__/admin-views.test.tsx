@@ -118,24 +118,29 @@ describe('DashboardView', () => {
     expect(render(<DashboardView lang="ar" />)).toContain('\u0644\u0648\u062d\u0629 \u0627\u0644\u0642\u064a\u0627\u062f\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629');
   });
 
-  it('shows AI Match Precision metric', () => {
+  it('shows Conversion Rate metric with an honest em-dash before data loads', () => {
     const html = render(<DashboardView lang="en" />);
-    expect(html).toContain('AI Match Precision');
-    expect(html).toContain('98.4%');
+    expect(html).toContain('Conversion Rate');
+    // Honest contract: no fabricated '98.4%' — the card renders '—' until
+    // /api/admin/dashboard returns real data.
+    expect(html).not.toContain('98.4%');
+    expect(html).not.toContain('AVM Tier 1');
   });
 
   it('shows Systems Operational badge', () => {
     expect(render(<DashboardView lang="en" />)).toContain('Systems Operational');
   });
 
-  it('shows Active Catalog value 585', () => {
-    expect(render(<DashboardView lang="en" />)).toContain('585');
+  it('shows honest em-dash for Active Catalog before data loads (no fabricated 585)', () => {
+    const html = render(<DashboardView lang="en" />);
+    expect(html).not.toContain('585');
   });
 
-  it('shows OpenClaw Autonomous Harvester Cockpit with 19 channels', () => {
+  it('shows OpenClaw Autonomous Harvester Cockpit with the registry channel count', () => {
     const html = render(<DashboardView lang="en" />);
     expect(html).toContain('OpenClaw Autonomous Harvester Cockpit');
-    expect(html).toContain('19 Channels Live');
+    // 15 = 20 registered − 5 archived in packages/agents/tools/whatsappGroupRegistry.ts
+    expect(html).toContain('15 Channels Live');
     expect(html).toContain('ingest:all');
   });
 

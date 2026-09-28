@@ -112,8 +112,12 @@ describe('Enhanced Admin Views Test Suite', () => {
       expect(html).toContain('Executive Dashboard · Intelligence OS');
       expect(html).toContain('Deal Conversion Pipeline');
       expect(html).toContain('Live Agent Fleet Telemetry');
-      expect(html).toContain('585');
-      expect(html).toContain('98.4%');
+      // Honest contract: KPIs render '—' until live data arrives; no
+      // fabricated '585' catalog count or '98.4%' AI precision figure.
+      expect(html).not.toContain('585');
+      expect(html).not.toContain('98.4%');
+      expect(html).toContain('Conversion Rate');
+      expect(html).toContain('No real activity yet');
     });
 
     it('renders correctly in Arabic', () => {

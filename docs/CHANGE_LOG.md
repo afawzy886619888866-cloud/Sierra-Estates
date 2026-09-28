@@ -173,3 +173,41 @@ The following changes remove every code path that could present invented propert
 - **Risk:** low — verified post-merge: app==root content identity for all 6 migration files (blob-level), tsc 0 errors, Jest 106/106 suites 1,126/1,126 tests.
 - **Rollback:** git revert of the merge commit.
 
+
+---
+
+## 2026-09-29 — Phase 4 completion (admin honesty + CRM persistence + least privilege)
+
+### Change 1 — Executive Dashboard honest data wiring (operator-facing, Master Rule 5)
+
+- **Change:** `DashboardView.tsx` fabricated-metrics sweep: KPI fallbacks ('585' catalog, '283' leads, 'EGP 142M' volume, invented growth %) → live `/api/admin/dashboard` values or '—'; "AI Match Precision 98.4% / AVM Tier 1 Verified" card → real "Conversion Rate" (closed/inquiries); rent/sale ratio, avg rent/sale, compound market share, price tiers → computed from real `/api/inventory` units with honest empty states; deal funnel (hardcoded 1,240/482/186/74) → computed from real lead pipeline stages; RECENT_ACTIVITIES (5 invented events incl. "585 verified units", "100% owner WhatsApp verified") → server's real `recentActivity` (actual inquiries + leads, newest first); hot-lead `?? 95` invented score → rendered only when a real score exists; "19 Channels Live / 12 owner + 7 broker" → registry-derived 15 active (8 owner + 7 broker, from `whatsappGroupRegistry.ts` 20 registered − 5 archived); "CANONICAL 585" → "CANONICAL SOURCE"; "460 Units / 100% De-duplicated" → live `activeListings` count or '—'; "460 verified units synchronized with AVM" → honest DB-sync description.
+- **Also in this change:** `handleOpenClawTask` previously faked a 1.4s `setTimeout` then reported "✓ Completed" without calling any backend → now POSTs the real `/api/openclaw/scan-whatsapp-groups` and reports its actual result; `handleBroadcastFleet` claimed "✓ 10/10 Agents" while posting 4 → honest "4/4 (simulated)"; `handleRequestPurge`'s confirm showed "✓ Staging Cache Safely Purged" with zero backend action → honest "Guard demo completed — no data was touched (no purge backend is wired)".
+- **Reason:** Phase 4 open block (CHANGE_LOG Phase 4 note) + audit: the executive dashboard is the operational source of truth for staff; every hardcoded number above was invented and provably false (Phase 1 found 8,486 unique units, 0 publishable).
+- **Files:** app/admin/views/DashboardView.tsx.
+- **DB impact:** none (read-only API calls). **Risk:** low — dashboard shows '—'/empty states until live data arrives; that is the intended honest behavior. **Rollback:** git revert.
+
+### Change 2 — server-side avgAiScore fabrication removed
+
+- **Change:** `/api/admin/dashboard` computed `avgAiScore` by inventing 8.5/9.5 for listings without a score (and 8.8 when empty) → now the true mean over listings that carry a real numeric `aiScore`, `null` when none; `DashboardKPIs.avgAiScore` type widened to `number | null`. No UI consumer renders it today.
+- **Files:** app/api/admin/dashboard/route.ts, lib/types.ts.
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert.
+
+### Change 3 — CRM stage/hot persistence (P1, client journey: MATCHING → SELECTION)
+
+- **Change:** AdminPortal `LeadsPage` `advanceStage`/`toggleHot` were local-React-state only — every stage change vanished on refresh (CRM lifecycle broken at its core interaction) and were indexed against the FILTERED list while mutating the UNFILTERED array (any active filter mutated the wrong lead). Now: optimistic update by lead `id` + `PATCH /api/admin/leads/[id]` (existing endpoint, zod-validated, admin-guarded, maps SPA stage labels to `pipeline_stage`), with revert + visible inline error banner on failure.
+- **Reason:** Phase 4 open block; journey stages cannot be tracked if changes don't persist.
+- **Files:** app/admin/AdminPortal.tsx.
+- **DB impact:** none (uses existing PATCH route). **Risk:** low. **Rollback:** git revert.
+
+### Change 4 — /api/inventory least privilege (P1, security)
+
+- **Change:** public inventory endpoint read via service-role (`getSupabaseAdmin`), bypassing RLS and trusting a client-side WHERE to protect public visibility → now reads via anon client (`getSupabase`) under the database's public RLS policy ("Public can view active listings": status='active' or staff), and the query filter tightened from `.in(status, [active, available])` to `.eq(status, active)` to match the policy exactly. Anon-env absence degrades gracefully to the existing fallback chain (domain → live sheet → snapshot).
+- **Reason:** Phase 4 open block; a public endpoint holding a god key violates least privilege — a mapping mistake would publish drafts/owner PII.
+- **Files:** app/api/inventory/route.ts.
+- **DB impact:** none. **Risk:** low-medium — requires `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the deploy env (already the documented default in .env.local.example). **Rollback:** git revert.
+
+### Change 5 — tests updated to the honest contract
+
+- **Change:** `admin-views.test.tsx` + `admin-views-enhanced.test.tsx` previously asserted the fabrications ('585', '98.4%', '19 Channels Live') — updated to assert Conversion Rate card, honest '—'/empty states, and the registry-derived 15-channel count.
+- **Files:** __tests__/admin-views.test.tsx, __tests__/admin-views-enhanced.test.tsx.
+- **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 106/106 suites, 1,126/1,126 tests (--maxWorkers=2).

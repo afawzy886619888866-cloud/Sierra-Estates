@@ -23,7 +23,7 @@ import { InventoryQueryService } from "@/lib/services/inventory-query";
 import { fetchSheetUnits } from "@/lib/inventory/fetch-sheet";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
-import { getSupabaseAdmin } from "@sierra-estates/db";
+import { getSupabase } from "@sierra-estates/db";
 import { readExcelListings, appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import snapshot from "@/lib/inventory/snapshot.json";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
@@ -134,17 +134,26 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
   }
 }
 
-/** Canonical Supabase listings, mapped to the public-safe map shape. */
+/** Canonical Supabase listings, mapped to the public-safe map shape.
+ *
+ * Least privilege (was service-role): this is a public, unauthenticated
+ * endpoint, so it reads through the anon client and inherits the database's
+ * public RLS policy ("Public can view active listings": status='active' or
+ * staff) instead of trusting a client-side WHERE to filter what the public
+ * may see. If the anon env is absent, this throws into the catch below and
+ * the route falls back to the next source — same graceful degradation as
+ * any other Supabase failure.
+ */
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = getSupabase();
     const [listingsRes, compoundsRes] = await Promise.all([
       supabase
         .from("listings")
         .select(
           "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
         )
-        .in("status", ["active", "available"])
+        .eq("status", "active")
         .order("updated_at", { ascending: false })
         .limit(1000),
       supabase

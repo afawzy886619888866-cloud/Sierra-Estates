@@ -80,9 +80,15 @@ export async function GET(req: Request) {
     ? (closed / inquiries.length) * 100
     : 0;
   const pendingApprovals = inquiries.filter((i) => i.status === "new" || (i.status as string) === "pending").length;
-  const avgAiScore = listings.length
-    ? listings.reduce((s, l: any) => s + (l.aiScore || (l.valuationStatus === 'Underpriced' ? 9.5 : 8.5)), 0) / listings.length
-    : 8.8;
+  // Honest average: only over listings that actually carry an aiScore. The
+  // previous fallback invented 8.5/9.5 per listing (and 8.8 when empty),
+  // fabricating an "AI quality" figure for the admin dashboard.
+  const realScores = (listings as any[])
+    .map((l) => (typeof l.aiScore === 'number' ? l.aiScore : null))
+    .filter((v): v is number => v !== null);
+  const avgAiScore = realScores.length
+    ? realScores.reduce((s, v) => s + v, 0) / realScores.length
+    : null;
 
   // Recent activity feed (merge inquiries + leads, top 10)
   const recentActivity: DashboardKPIs["recentActivity"] = [

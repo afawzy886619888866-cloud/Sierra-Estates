@@ -786,17 +786,46 @@ export function LeadsPage({ T }: { T: any }) {
 
   const STAGE_ORDER = ['Initial Contact', 'AI Matched', 'Viewing Scheduled', 'Negotiating', 'Contract Draft', 'Closed Won'];
 
-  const advanceStage = (index: number) => {
-    setLeads(prev => prev.map((l, i) => {
-      if (i !== index) return l;
-      const currentIdx = STAGE_ORDER.indexOf(l.stage);
-      const nextStage = currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : STAGE_ORDER[0];
-      return { ...l, stage: nextStage };
-    }));
+  // Persisted stage advance: optimistic local update + PATCH /api/admin/leads/[id]
+  // (previously local-state only — every stage change was lost on refresh).
+  // The lead is identified by id, not table index — the old index-based
+  // implementation mutated the WRONG row whenever a filter was active.
+  const [stageError, setStageError] = useState<string | null>(null);
+
+  const advanceStage = (lead: any) => {
+    if (!lead?.id) return;
+    const currentIdx = STAGE_ORDER.indexOf(lead.stage);
+    const nextStage = currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : STAGE_ORDER[0];
+    setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, stage: nextStage } : l)));
+    fetch(`/api/admin/leads/${lead.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: nextStage }),
+    })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(() => setStageError(null))
+      .catch(() => {
+        // Revert the optimistic update — the server is the source of truth.
+        setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, stage: lead.stage } : l)));
+        setStageError(`Could not save stage for ${lead.name || 'this lead'} — change reverted. Check the API/DB connection.`);
+      });
   };
 
-  const toggleHot = (index: number) => {
-    setLeads(prev => prev.map((l, i) => i === index ? { ...l, hot: !l.hot } : l));
+  const toggleHot = (lead: any) => {
+    if (!lead?.id) return;
+    const nextHot = !lead.hot;
+    setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, hot: nextHot } : l)));
+    fetch(`/api/admin/leads/${lead.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hot: nextHot }),
+    })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(() => setStageError(null))
+      .catch(() => {
+        setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, hot: lead.hot } : l)));
+        setStageError(`Could not save the hot flag for ${lead.name || 'this lead'} — change reverted.`);
+      });
   };
 
   const handleOpenWhatsApp = (lead: any) => {
@@ -915,6 +944,12 @@ export function LeadsPage({ T }: { T: any }) {
         <button className="btn btn-ghost" onClick={doExport}>⬇ {T('exportCSV')}</button>
         <button className="btn btn-ghost" onClick={()=>setImportModal(true)}>⬆ {T('importCSV')}</button>
       </div>
+      {stageError && (
+        <div style={{background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.4)',borderRadius:10,padding:'8px 12px',marginBottom:12,fontSize:11,color:'#FCA5A5',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}} role="alert">
+          <span>⚠ {stageError}</span>
+          <button onClick={()=>setStageError(null)} style={{background:'none',border:'none',color:'#FCA5A5',cursor:'pointer',fontWeight:700}} aria-label="Dismiss error">✕</button>
+        </div>
+      )}
       <div className="card">
         <div className="card-hd">
           <span className="card-title">CRM · {T('leads')}</span>
@@ -943,7 +978,7 @@ export function LeadsPage({ T }: { T: any }) {
                       </div>
                       <span style={{color:'var(--tx)',fontWeight:600}}>{l.name}</span>
                       <button 
-                        onClick={()=>toggleHot(i)} 
+                        onClick={()=>toggleHot(l)} 
                         style={{background:'none',border:'none',cursor:'pointer',fontSize:12,padding:0}}
                         title={l.hot ? 'Mark as normal' : 'Mark as hot lead'}
                       >
@@ -966,7 +1001,7 @@ export function LeadsPage({ T }: { T: any }) {
                   <td>
                     <button 
                       className="btn btn-ghost" 
-                      onClick={()=>advanceStage(i)} 
+                      onClick={()=>advanceStage(l)} 
                       style={{padding:'3px 8px',fontSize:9,borderColor:'var(--bd-s)',color:'var(--gold)'}}
                       title="Advance to next pipeline stage"
                     >

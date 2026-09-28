@@ -186,7 +186,7 @@ export interface DashboardKPIs {
   activeCompounds: number;
   totalUsers: number;
   pendingApprovals: number;
-  avgAiScore: number;
+  avgAiScore: number | null; // null when no listing carries a real aiScore
   recentActivity: Array<{
     id: string;
     type: "inquiry" | "listing" | "lead" | "user";
