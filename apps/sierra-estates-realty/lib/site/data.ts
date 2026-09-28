@@ -236,7 +236,17 @@ const DATA: any = {
   featured: ['Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette', 'Madinaty', 'Al Rehab', 'Taj City'],
   compoundImgs: COMPOUND_HERO_IMAGES,
   price: function (p: any) {
-    return p.mode === 'rent' ? '$' + p.usd.toLocaleString() + '/mo' : 'EGP ' + p.egpM.toFixed(1) + 'M';
+    // Public inventory API units ship raw `price` only (egpM/usd are derived
+    // client-side). Derive what is knowable from the record's own price and
+    // fall back to an honest "Price on request" — never throw, never invent.
+    const rec = p || {};
+    const rawPrice = Number(rec.price) > 0 ? Number(rec.price) : 0;
+    if (rec.mode === 'rent') {
+      const usd = Number(rec.usd) > 0 ? Number(rec.usd) : rawPrice > 0 ? Math.round(rawPrice / 50) : 0;
+      return usd > 0 ? '$' + usd.toLocaleString() + '/mo' : 'Price on request';
+    }
+    const egpM = Number(rec.egpM) > 0 ? Number(rec.egpM) : rawPrice > 0 ? rawPrice / 1000000 : 0;
+    return egpM > 0 ? 'EGP ' + egpM.toFixed(1) + 'M' : 'Price on request';
   }
 };
 

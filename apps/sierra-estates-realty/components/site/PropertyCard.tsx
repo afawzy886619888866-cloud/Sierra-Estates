@@ -31,6 +31,12 @@ import {
 import { useSite } from '@/lib/site/SiteContext';
 import { GsapMagnetic } from './GsapAnimations';
 
+// AI scores are optional on public inventory units (anti-fabrication rule 5:
+// hide rather than synthesize). Never dereference an undefined score — render
+// an honest placeholder instead of crashing the whole page.
+const fmtAi = (ai: unknown): string =>
+  Number.isFinite(Number(ai)) && Number(ai) > 0 ? Number(ai).toFixed(1) : '—';
+
 export interface CardListing {
   id: number | string;
   code: string;
@@ -114,7 +120,7 @@ export default function PropertyCard({
   const sqmPriceFormatted = sqmPrice > 0 ? sqmPrice.toLocaleString() : '80,000';
   const estYield = p.yield || (isRent ? 10.4 : 9.1);
   const paybackYears = (100 / estYield).toFixed(1);
-  const isUnderpriced = p.ai >= 9.3;
+  const isUnderpriced = Number(p.ai) >= 9.3;
 
   // Institutional Verified Badges
   const isDirectOwner = Boolean(
@@ -203,9 +209,9 @@ export default function PropertyCard({
           <div className="price-float font-mono font-bold">{formattedEgpPrice}</div>
           <div
             className="ai-score"
-            title={`Sierra Intelligence Score: ${p.ai.toFixed(1)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${estYield}%`}
+            title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${estYield}%`}
           >
-            AI {p.ai.toFixed(1)}
+            AI {fmtAi(p.ai)}
           </div>
         </div>
 
@@ -292,7 +298,7 @@ export default function PropertyCard({
             </span>
           </div>
           <div className="price-float font-mono font-bold">{formattedEgpPrice}</div>
-          <div className="ai-score">AI {p.ai.toFixed(1)}</div>
+          <div className="ai-score">AI {fmtAi(p.ai)}</div>
         </div>
 
         <div className="body" style={{ padding: '16px' }}>
@@ -396,7 +402,7 @@ export default function PropertyCard({
           <div className="price-float font-mono" style={{ background: 'rgba(10, 22, 40, 0.94)', border: '1px solid rgba(201, 168, 76, 0.4)' }}>
             {formattedEgpPrice}
           </div>
-          <div className="ai-score">AI {p.ai.toFixed(1)}</div>
+          <div className="ai-score">AI {fmtAi(p.ai)}</div>
         </div>
 
         <div className="body" style={{ padding: '20px' }}>
@@ -543,10 +549,10 @@ export default function PropertyCard({
         </div>
         <div
           className="ai-score"
-          title={`Sierra Intelligence Score: ${p.ai.toFixed(1)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${p.yield ? p.yield + '%' : '9.1%'}\n• Backed by verified comparable index`}
+          title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${p.yield ? p.yield + '%' : '9.1%'}\n• Backed by verified comparable index`}
           style={{ cursor: 'help' }}
         >
-          AI {p.ai.toFixed(1)}
+          AI {fmtAi(p.ai)}
         </div>
       </div>
 
