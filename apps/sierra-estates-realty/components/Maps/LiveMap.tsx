@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import { CompoundLocation, NEW_CAIRO_COMPOUNDS } from './compounds-data';
+import { compoundShortName } from '@/lib/site/smart-search';
 export type { CompoundLocation };
 export { NEW_CAIRO_COMPOUNDS };
 
@@ -183,7 +184,12 @@ function createCompoundIcon(
   lang: 'en' | 'ar' = 'en',
   index = 0
 ) {
-  const name = (lang === 'ar' ? compound.nameAr : compound.nameEn) || compound.code;
+  // Short lowercase label keeps 30+ city-scale pills readable; the full AR/EN
+  // name stays in the hover Tooltip.
+  const name =
+    lang === 'ar'
+      ? compound.nameAr || compound.code
+      : compoundShortName(compound.nameEn) || compound.nameEn || compound.code;
   const count = liveCount ?? compound.unitsCount;
   const verified = compound.isGpsVerified;
 
@@ -201,8 +207,8 @@ function createCompoundIcon(
         padding: 6px 12px;
         border-radius: 9999px;
         font-family: var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, sans-serif;
-        font-size: 11.5px;
-        font-weight: 800;
+        font-size: 10.5px;
+        font-weight: 700;
         white-space: nowrap;
         color: ${isSelected ? '#0d0d0f' : '#ffffff'};
         background: ${isSelected ? GOLD_PILL : NAVY_PILL};
@@ -426,6 +432,9 @@ export interface LiveMapProps {
   showLegend?: boolean;
   /** Render the "showing X of Y units" counter chip. */
   showPinCounter?: boolean;
+  /** When non-empty, ONLY these compound codes render as labelled cluster
+   *  nodes — used by the radar to show just the filtered compound/area. */
+  visibleCompoundCodes?: string[] | null;
 }
 
 export default function LiveMap({
@@ -450,6 +459,7 @@ export default function LiveMap({
   compoundZoomCutoff = 16,
   showLegend = true,
   showPinCounter = true,
+  visibleCompoundCodes = null,
 }: LiveMapProps) {
   const isAr = lang === 'ar';
   const [tileStyle, setTileStyle] = useState<MapTileStyle>(mode === 'dark' ? 'dark' : 'light');
@@ -722,9 +732,14 @@ export default function LiveMap({
           />
         )}
 
-        {/* Compound Cluster Nodes — city & district scale (hidden at street zoom) */}
+        {/* Compound Cluster Nodes — city & district scale (hidden at street zoom).
+            When visibleCompoundCodes is set (radar filter active), only the
+            selected compounds/areas get labelled nodes — map stays uncluttered. */}
         {showCompounds &&
-          NEW_CAIRO_COMPOUNDS.map((compound, idx) => {
+          (visibleCompoundCodes && visibleCompoundCodes.length > 0
+            ? NEW_CAIRO_COMPOUNDS.filter((c) => visibleCompoundCodes.includes(c.code))
+            : NEW_CAIRO_COMPOUNDS
+          ).map((compound, idx) => {
             const isSelected = selectedCode === compound.code;
             const liveCount = resolveCompoundCount(compound, liveCounts);
 

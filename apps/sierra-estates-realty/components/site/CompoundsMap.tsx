@@ -14,8 +14,15 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
-import { Search, RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
+import { RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
 import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
+import SmartFilterBar from '@/components/site/SmartFilterBar';
+import {
+  RENT_BUDGET_LADDER,
+  SALE_BUDGET_LADDER,
+  budgetBounds,
+  compoundShortName,
+} from '@/lib/site/smart-search';
 
 export interface MapCompound {
   n: string;
@@ -570,12 +577,19 @@ export default function CompoundsMap({
         }
       }
 
-      // 4. External Price filter (from homepage search e.g. '7m', '15m', '25m', '40m', '60m', '35k', etc.)
+      // 4. External Price filter — unified preset keys from SmartFilterBar
+      // ('under10m', '10m-20m', … sale) / ('under35k', '35k-60k', … rent).
       if (filterPrice && filterPrice !== '0') {
-        const numVal = parseInt(filterPrice.replace(/[^0-9]/g, ''), 10);
-        if (!isNaN(numVal) && numVal > 0) {
-          if (filterPrice.toLowerCase().endsWith('m') && c.priceM > numVal) return false;
-          if (filterPrice.toLowerCase().endsWith('k') && (c.rent || 2000) > numVal * 1000) return false;
+        const ladder = filterPrice.includes('k') ? RENT_BUDGET_LADDER : SALE_BUDGET_LADDER;
+        const { min, max } = budgetBounds(filterPrice, ladder);
+        if (ladder === RENT_BUDGET_LADDER) {
+          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
+          const rentUsd = c.rent || 0;
+          if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
+          if (max !== undefined && rentUsd > max / 50) return false;
+        } else {
+          if (min !== undefined && c.priceM * 1_000_000 < min) return false;
+          if (max !== undefined && c.priceM * 1_000_000 > max) return false;
         }
       }
 
@@ -669,12 +683,13 @@ export default function CompoundsMap({
         const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
         const activeSegmentObj = SEGMENT_TABS.find((s) => s.key === selectedSegment);
 
-        // Custom Pill Pin with Cairo Emerald & Champagne Gold Accent
+        // Custom Pill Pin — compact SHORT lowercase label so 60+ markers
+        // never crowd the masterplan (full name + developer live in popup).
         const markerHtml = `
           <div class="sierra-compound-pin ${isSelected ? 'is-selected' : ''}" style="
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             background: ${
               isSelected
                 ? '#071523'
@@ -683,7 +698,7 @@ export default function CompoundsMap({
                 : 'linear-gradient(135deg, #0b1c2d, #14283d)'
             };
             color: #ffffff;
-            padding: 5px 8px 5px 12px;
+            padding: 4px 7px 4px 10px;
             border-radius: 999px;
             border: ${
               isSelected
@@ -702,14 +717,14 @@ export default function CompoundsMap({
             cursor: pointer;
             white-space: nowrap;
             font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-            font-size: 11.5px;
-            font-weight: 700;
-            letter-spacing: 0.01em;
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
             transform: translate(-50%, -50%) ${isSelected ? 'scale(1.08)' : 'scale(1)'};
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
           ">
-            <span style="color: ${isSelected ? '#e9c176' : '#ffffff'};">${c.n}</span>
+            <span style="color: ${isSelected ? '#e9c176' : 'rgba(255,255,255,0.92)'};">${compoundShortName(c.n)}</span>
             <span style="
               background: ${isSelected ? '#dfad3a' : activeSegmentObj?.color || '#334155'};
               color: ${isSelected ? '#071523' : '#ffffff'};
@@ -1234,15 +1249,13 @@ export default function CompoundsMap({
             top: 54,
             right: 16,
             zIndex: 400,
-            width: 290,
-            maxHeight: 'calc(100% - 70px)',
-            overflowY: 'auto',
+            width: 308,
             background: 'rgba(7, 21, 35, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(223, 173, 58, 0.25)',
             borderRadius: 14,
-            padding: 16,
+            padding: 14,
             boxShadow: '0 20px 40px -4px rgba(0,0,0,0.45)',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", sans-serif',
             color: '#ffffff',
@@ -1285,133 +1298,55 @@ export default function CompoundsMap({
             </div>
           </div>
 
-          {/* Search Input */}
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 4 }}>
-              FIND COMPOUND OR DEVELOPER
-            </label>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: 8,
-                padding: '6px 10px',
-              }}
-            >
-              <Search style={{ width: 13, height: 13, color: '#94a3b8', flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder="Mivida, Hyde Park, SODIC..."
-                value={filterQuery}
-                onChange={(e) => setFilterQuery(e.target.value)}
-                style={{
-                  border: 'none',
-                  outline: 'none',
-                  background: 'transparent',
-                  fontSize: 12,
-                  color: '#ffffff',
-                  width: '100%',
-                }}
-              />
-              {filterQuery && (
-                <button
-                  type="button"
-                  title="Clear search query"
-                  aria-label="Clear search query"
-                  onClick={() => setFilterQuery('')}
-                  style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
-                >
-                  <X style={{ width: 12, height: 12 }} />
-                </button>
-              )}
-            </div>
+          {/* SMART FILTER CHIPS — dropdowns: compound/area · rooms · budget */}
+          <SmartFilterBar
+            value={{
+              purpose: selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent' ? 'rent' : 'sale',
+              compound: filterQuery,
+              rooms: selectedBed === 'any' ? '' : String(selectedBed),
+              budget: selectedPriceBudget === 'any' ? '' : selectedPriceBudget,
+              unitType: '',
+              condition: '',
+            }}
+            onChange={(v) => {
+              setFilterQuery(v.compound);
+              setSelectedBed(v.rooms === '' ? 'any' : parseInt(v.rooms, 10) || 'any');
+              setSelectedPriceBudget(v.budget || 'any');
+            }}
+            compounds={compounds.map((c) => ({ name: c.n, zone: c.z }))}
+            showPurpose={false}
+            showCondition={false}
+            budgetOptions={MAP_PRICE_PRESETS.map((p) => ({ val: p.val, en: p.labelEn, ar: p.labelAr }))}
+            panelAlign="end"
+            compact
+            resultCount={filteredCompounds.length}
+            onReset={handleResetFilters}
+            idPrefix="map"
+          />
 
-            <button
-              type="button"
-              aria-pressed={showSelectedOnly}
-              onClick={() => setShowSelectedOnly((value) => !value)}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 12,
-                padding: '8px 10px',
-                borderRadius: 8,
-                border: showSelectedOnly ? '1px solid #dfad3a' : '1px solid rgba(255,255,255,0.14)',
-                background: showSelectedOnly ? 'rgba(223,173,58,0.18)' : 'rgba(255,255,255,0.05)',
-                color: showSelectedOnly ? '#dfad3a' : '#e2e8f0',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <span>{isAr ? 'إظهار الكمبوند المحدد فقط' : 'Show selected compound only'}</span>
-              <span>{showSelectedOnly && selectedName ? 'ON' : 'OFF'}</span>
-            </button>
-          </div>
-
-          {/* Price Budget Range Selector */}
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>
-              PRICE BUDGET
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {MAP_PRICE_PRESETS.map((p) => (
-                <button
-                  key={p.val}
-                  type="button"
-                  onClick={() => setSelectedPriceBudget(p.val)}
-                  style={{
-                    padding: '4px 8px',
-                    border: selectedPriceBudget === p.val ? '1px solid #dfad3a' : '1px solid rgba(255, 255, 255, 0.12)',
-                    background: selectedPriceBudget === p.val ? 'rgba(223, 173, 58, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    color: selectedPriceBudget === p.val ? '#dfad3a' : '#cbd5e1',
-                    borderRadius: 6,
-                    fontSize: 10.5,
-                    fontWeight: selectedPriceBudget === p.val ? 800 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {isAr ? p.labelAr : p.labelEn}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Bedrooms Selector */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 6 }}>
-              MIN BEDROOMS
-            </label>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {(['any', 1, 2, 3, 4, 5] as const).map((b) => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setSelectedBed(b)}
-                  style={{
-                    flex: 1,
-                    padding: '5px 0',
-                    border: selectedBed === b ? '1px solid #dfad3a' : '1px solid rgba(255, 255, 255, 0.12)',
-                    background: selectedBed === b ? 'rgba(223, 173, 58, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                    color: selectedBed === b ? '#dfad3a' : '#cbd5e1',
-                    borderRadius: 6,
-                    fontSize: 11,
-                    fontWeight: selectedBed === b ? 800 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {b === 'any' ? 'Any' : `${b}+`}
-                </button>
-              ))}
-            </div>
-          </div>
+          <button
+            type="button"
+            aria-pressed={showSelectedOnly}
+            onClick={() => setShowSelectedOnly((value) => !value)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 10,
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: showSelectedOnly ? '1px solid #dfad3a' : '1px solid rgba(255,255,255,0.14)',
+              background: showSelectedOnly ? 'rgba(223,173,58,0.18)' : 'rgba(255,255,255,0.05)',
+              color: showSelectedOnly ? '#dfad3a' : '#e2e8f0',
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <span>{isAr ? 'إظهار الكمبوند المحدد فقط' : 'Show selected compound only'}</span>
+            <span>{showSelectedOnly && selectedName ? 'ON' : 'OFF'}</span>
+          </button>
 
           {/* Reset Action */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>

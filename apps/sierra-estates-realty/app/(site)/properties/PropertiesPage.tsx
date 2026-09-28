@@ -37,6 +37,7 @@ import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { useListingsRealtime } from '@/hooks/useListingsRealtime';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import { unitMatchesCondition, CONDITION_OPTIONS } from '@/lib/site/smart-search';
 
 // Dynamic import for Leaflet map to guarantee SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -79,6 +80,8 @@ export interface RealListing {
   description?: string;
   distanceKm?: number;
   finishing?: string;
+  finishingQuality?: string;
+  furnishing?: string;
   availability?: string;
   isDirectOwner?: boolean;
   verifiedFresh?: boolean;
@@ -262,6 +265,7 @@ export default function PropertiesPage() {
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedCompound, setSelectedCompound] = useState('All Compounds');
   const [selectedBeds, setSelectedBeds] = useState('all');
+  const [selectedCondition, setSelectedCondition] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('ai');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
@@ -284,6 +288,7 @@ export default function PropertiesPage() {
     const compound = params.get('compound');
     const beds = params.get('beds');
     const price = params.get('price');
+    const condition = params.get('condition');
     const view = params.get('view');
     const radius = params.get('radius');
 
@@ -296,6 +301,7 @@ export default function PropertiesPage() {
     if (compound) setSelectedCompound(compound);
     if (beds) setSelectedBeds(beds);
     if (price) setSelectedPriceRange(price);
+    if (condition && CONDITION_OPTIONS.some((o) => o.val === condition)) setSelectedCondition(condition);
     if (view === 'grid' || view === 'map' || view === 'split') setViewMode(view);
     if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
@@ -432,9 +438,14 @@ export default function PropertiesPage() {
         if (selectedPriceRange === 'above100k' && p <= 100000) return false;
       }
 
+      // Condition (finishing) — carried from the hero SmartFilterBar (?condition=)
+      if (selectedCondition !== 'all') {
+        if (!unitMatchesCondition({ finishing: item.finishing, finishingQuality: item.finishingQuality, furnishing: item.furnishing }, selectedCondition)) return false;
+      }
+
       return true;
     });
-  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange]);
+  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition]);
 
   // Sorting
   const sortedListings = useMemo(() => {
@@ -537,6 +548,7 @@ export default function PropertiesPage() {
     setSelectedCompound('All Compounds');
     setSelectedBeds('all');
     setSelectedPriceRange('all');
+    setSelectedCondition('all');
     setRadiusKm(null);
     setSortBy('ai');
     setActiveUnit(null);
@@ -718,6 +730,23 @@ export default function PropertiesPage() {
               </div>
 
               <div className="props-filter-row-2-right">
+                {/* Condition (Finishing) Filter */}
+                <select
+                  value={selectedCondition}
+                  onChange={(e) => setSelectedCondition(e.target.value)}
+                  className="props-select"
+                  style={{ width: 'auto', minWidth: 140 }}
+                  title={isAr ? 'حالة التشطيب' : 'Condition'}
+                  aria-label={isAr ? 'حالة التشطيب' : 'Condition'}
+                >
+                  <option value="all">{isAr ? 'أي حالة' : 'Any Condition'}</option>
+                  {CONDITION_OPTIONS.filter((o) => o.val).map((o) => (
+                    <option key={o.val} value={o.val}>
+                      {isAr ? o.ar : o.en}
+                    </option>
+                  ))}
+                </select>
+
                 {/* Price Range Filter */}
                 <select
                   value={selectedPriceRange}
