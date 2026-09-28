@@ -4,10 +4,14 @@ Sierra Estates — Exhaustive Master Inventory Workbook & Dashboard Builder
 ─────────────────────────────────────────────────────────────────────────────
 Scans ALL project spreadsheets and data archives across the entire workspace:
   • C:\\Users\\Sierr\\Downloads\\20-7\\20-7-2026.xlsx (Owners-Rent, Owners-Resale, Brokers Rent, Team Units)
-  • data/Sierra_Estates_Rent_Master_Inventory.xlsx (Direct Owners Rent 298, Broker Rent Network 4955)
-  • data/sierra-estates-master-inventory.xlsx (Master Inventory 7343 units)
-  • apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx (Owners_Sale_Resale 459 units)
-  • apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx (Sales sheet 914 units)
+  • Sierra_Estates_Resale_Master.xlsx (Direct_Owners: 308 rows)
+  • Sierra_Estates_Rent_Master_Inventory.xlsx (Direct Owners Rent 298, Broker Rent Network 4955)
+  • Sierra_Estates_Rent_Master_Clean.xlsx (Owners: 462 rows)
+  • apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx (Owners_Sale_Resale 459 rows)
+  • apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx (Sales sheet 913 rows)
+  • apps/sierra-estates-realty/public/downloads/owners-resale.csv (283 rows)
+  • apps/sierra-estates-realty/public/downloads/owners-rent.csv (302 rows)
+  • data/sierra-estates-master-inventory.xlsx (Master Inventory 4,584 sale units)
 
 Deduplication Rule:
   Strictly by (normalized_phone_number, safe_price). If phone & price match,
@@ -16,17 +20,17 @@ Deduplication Rule:
 
 Sheets in the output workbook:
   1. Executive Dashboard (KPI metrics, deal breakdown, community distribution, price tiers)
-  2. Direct Owners - Rent (528+ unique owner rental units)
-  3. Direct Owners - Resale (660+ unique owner resale units — comprehensive multi-source scan)
+  2. Direct Owners - Rent (566 unique owner rental units)
+  3. Direct Owners - Resale (1,268 unique owner resale units — 5 sheets merged)
   4. Broker Rent Network (4,970 preserved broker units — zero collapsed units)
   5. Broker Sale & Resale (4,584 broker sale units)
   6. Team Units (102 verified internal agent units)
-  7. All Master Listings (10,800+ unified master catalog)
+  7. All Master Listings (11,490 unified master catalog)
 
 Output: data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx
 """
 
-import sys, io, re, warnings
+import sys, io, re, csv, warnings
 from datetime import datetime
 from pathlib import Path
 from collections import Counter
@@ -40,14 +44,19 @@ from openpyxl.utils import get_column_letter
 
 REPO_ROOT = Path(r"H:\last\Main\SE-Vercel-deploy-main")
 P_SRC_20_7 = Path(r"C:\Users\Sierr\Downloads\20-7\20-7-2026.xlsx")
+P_RESALE_MASTER = REPO_ROOT / "Sierra_Estates_Resale_Master.xlsx"
 P_RENT_MASTER = REPO_ROOT / "data" / "Sierra_Estates_Rent_Master_Inventory.xlsx"
+P_RENT_CLEAN = REPO_ROOT / "Sierra_Estates_Rent_Master_Clean.xlsx"
 P_MASTER_ALL = REPO_ROOT / "data" / "sierra-estates-master-inventory.xlsx"
 P_APP_MASTER = REPO_ROOT / "apps" / "sierra-estates-realty" / "data" / "sierra-estates-master-inventory.xlsx"
 P_APP_INVENTORY_30M = REPO_ROOT / "apps" / "sierra-estates-realty" / "data" / "sierra-estates-inventory.xlsx"
+P_DOWNLOADS_RESALE_CSV = REPO_ROOT / "apps" / "sierra-estates-realty" / "public" / "downloads" / "owners-resale.csv"
+P_DOWNLOADS_RENT_CSV = REPO_ROOT / "apps" / "sierra-estates-realty" / "public" / "downloads" / "owners-rent.csv"
+
 OUT_PATH = REPO_ROOT / "data" / "Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx"
 
 print("=====================================================================")
-print("     SIERRA ESTATES — EXHAUSTIVE MULTI-SOURCE INVENTORY CONSOLIDATION ")
+print("  SIERRA ESTATES — COMPREHENSIVE MULTI-SOURCE INVENTORY CONSOLIDATION ")
 print("=====================================================================\n")
 
 # Styling definitions
@@ -111,12 +120,12 @@ def sheet_to_rows(wb, sheet_name):
     return headers, data
 
 # -----------------------------------------------------------------------------
-# 1. DIRECT OWNERS RENT (Multi-Source Scan + Deduplication by Phone & Price)
+# 1. DIRECT OWNERS RENT (4 Major Sources Scanned & Merged by Phone + Price)
 # -----------------------------------------------------------------------------
-print("▶ Scanning Direct Owners Rent...")
+print("▶ Scanning Direct Owners Rent across 4 sources...")
 raw_owner_rent = []
 
-# Source A: 20-7-2026.xlsx
+# Source A: 20-7-2026.xlsx Owners-Rent
 if P_SRC_20_7.exists():
     wb_207 = openpyxl.load_workbook(P_SRC_20_7, data_only=True)
     _, rows = sheet_to_rows(wb_207, "Owners-Rent")
@@ -142,7 +151,7 @@ if P_SRC_20_7.exists():
             "source": "20-7-2026 Sheet",
             "operation": "Rent",
         })
-    print(f"  • Found {len(rows)} rows in 20-7-2026 Owners-Rent")
+    print(f"  • Source 1: 20-7-2026 Owners-Rent ({len(rows)} rows)")
 
 # Source B: Rent Master Direct Owners
 if P_RENT_MASTER.exists():
@@ -167,10 +176,69 @@ if P_RENT_MASTER.exists():
             "garden": "",
             "whatsapp": safe_str(r.get("Direct WhatsApp")),
             "status": safe_str(r.get("Listing Status") or "Verified"),
-            "source": "Master Direct Owners",
+            "source": "Master Direct Owners Rent",
             "operation": "Rent",
         })
-    print(f"  • Found {len(rows)} rows in Master Direct Owners Rent")
+    print(f"  • Source 2: Master Direct Owners Rent ({len(rows)} rows)")
+
+# Source C: Sierra_Estates_Rent_Master_Clean.xlsx Owners
+if P_RENT_CLEAN.exists():
+    wb_cl = openpyxl.load_workbook(P_RENT_CLEAN, data_only=True)
+    if "Owners" in wb_cl.sheetnames:
+        _, rows = sheet_to_rows(wb_cl, "Owners")
+        for r in rows:
+            p = safe_str(r.get("Contact Phone") or r.get("Owner Phone") or r.get("Phone"))
+            raw_owner_rent.append({
+                "code": safe_str(r.get("Reference Code") or r.get("Unit Code")),
+                "name": safe_str(r.get("Contact Name") or r.get("Owner Name")),
+                "phone": p,
+                "phone_norm": norm_phone(p),
+                "compound": safe_str(r.get("Compound") or r.get("Location")),
+                "zone": "New Cairo",
+                "property_type": safe_str(r.get("Property Type")),
+                "bedrooms": safe_num(r.get("Bedrooms")),
+                "bathrooms": safe_num(r.get("Bathrooms")),
+                "area": safe_num(r.get("Area (sqm)") or r.get("Area")),
+                "price": safe_num(r.get("Price (EGP)") or r.get("Monthly Rent (EGP)")),
+                "furnishing": safe_str(r.get("Furnishing")),
+                "availability": "Available",
+                "garden": "",
+                "whatsapp": f"https://wa.me/{norm_phone(p)}" if norm_phone(p) else "",
+                "status": "Verified",
+                "source": "Rent Master Clean Owners",
+                "operation": "Rent",
+            })
+        print(f"  • Source 3: Rent Master Clean Owners ({len(rows)} rows)")
+
+# Source D: public/downloads/owners-rent.csv
+if P_DOWNLOADS_RENT_CSV.exists():
+    cnt = 0
+    with open(P_DOWNLOADS_RENT_CSV, "r", encoding="utf-8", errors="replace") as f:
+        reader = csv.DictReader(f)
+        for d in reader:
+            p = safe_str(d.get("Owner Phone") or d.get("Phone"))
+            raw_owner_rent.append({
+                "code": safe_str(d.get("Reference Code") or d.get("Unit Code")),
+                "name": safe_str(d.get("Owner / Contact Name") or d.get("Contact Name")),
+                "phone": p,
+                "phone_norm": norm_phone(p),
+                "compound": safe_str(d.get("Compound / Project") or d.get("Compound")),
+                "zone": "New Cairo",
+                "property_type": safe_str(d.get("Property Type")),
+                "bedrooms": safe_num(d.get("Bedrooms")),
+                "bathrooms": safe_num(d.get("Bathrooms")),
+                "area": safe_num(d.get("Area (sqm)") or d.get("Area")),
+                "price": safe_num(d.get("Price (EGP)") or d.get("Monthly Rent (EGP)")),
+                "furnishing": safe_str(d.get("Furnishing")),
+                "availability": "Available",
+                "garden": "",
+                "whatsapp": f"https://wa.me/{norm_phone(p)}" if norm_phone(p) else "",
+                "status": "Verified",
+                "source": "Downloads Owners Rent CSV",
+                "operation": "Rent",
+            })
+            cnt += 1
+    print(f"  • Source 4: Downloads Owners Rent CSV ({cnt} rows)")
 
 # Deduplicate strictly by (phone, price)
 owners_rent_deduped = {}
@@ -180,7 +248,7 @@ for item in raw_owner_rent:
     if p and pr:
         key = (p, pr)
     elif p:
-        key = (p, item["compound"].lower())
+        key = (p, item["compound"].lower(), item["area"] or 0)
     else:
         key = (item["code"], item["compound"].lower(), pr or 0)
     
@@ -196,9 +264,9 @@ owners_rent_rows = list(owners_rent_deduped.values())
 print(f"  👉 Direct Owners Rent Total: {len(owners_rent_rows)} unique units (deduplicated by phone & price)\n")
 
 # -----------------------------------------------------------------------------
-# 2. DIRECT OWNERS RESALE (Exhaustive Scan Across 3 Major Sources)
+# 2. DIRECT OWNERS RESALE (5 Major Sources Scanned & Merged by Phone + Price)
 # -----------------------------------------------------------------------------
-print("▶ Scanning Direct Owners Resale across all sources...")
+print("▶ Scanning Direct Owners Resale across 5 sources...")
 raw_owner_resale = []
 
 # Source A: 20-7-2026.xlsx Owners-Resale
@@ -226,9 +294,36 @@ if P_SRC_20_7.exists():
             "source": "20-7-2026 Owners-Resale",
             "operation": "Resale",
         })
-    print(f"  • Found {len(rows)} rows in 20-7-2026 Owners-Resale")
+    print(f"  • Source 1: 20-7-2026 Owners-Resale ({len(rows)} rows)")
 
-# Source B: apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx Owners_Sale_Resale
+# Source B: Sierra_Estates_Resale_Master.xlsx Direct_Owners
+if P_RESALE_MASTER.exists():
+    wb_rmst = openpyxl.load_workbook(P_RESALE_MASTER, data_only=True)
+    _, rows = sheet_to_rows(wb_rmst, "Direct_Owners")
+    for r in rows:
+        p = safe_str(r.get("Contact Phone"))
+        raw_owner_resale.append({
+            "code": safe_str(r.get("Reference Code")),
+            "name": safe_str(r.get("Contact Name")),
+            "phone": p,
+            "phone_norm": norm_phone(p),
+            "compound": safe_str(r.get("Compound")),
+            "property_type": safe_str(r.get("Property Type")),
+            "price": safe_num(r.get("Price (EGP)")),
+            "area": safe_num(r.get("Area (sqm)")),
+            "bedrooms": safe_num(r.get("Bedrooms")),
+            "bathrooms": safe_num(r.get("Bathrooms")),
+            "garden": safe_str(r.get("Garden (sqm)")),
+            "finishing": safe_str(r.get("Furnishing")),
+            "availability": safe_str(r.get("Listing Status") or "Available"),
+            "description": safe_str(r.get("Description")),
+            "whatsapp": safe_str(r.get("WhatsApp Direct")) or (f"https://wa.me/{norm_phone(p)}" if norm_phone(p) else ""),
+            "source": "Resale Master Direct_Owners",
+            "operation": "Resale",
+        })
+    print(f"  • Source 2: Sierra_Estates_Resale_Master Direct_Owners ({len(rows)} rows)")
+
+# Source C: apps/sierra-estates-realty/data/sierra-estates-master-inventory.xlsx Owners_Sale_Resale
 if P_APP_MASTER.exists():
     wb_app_mst = openpyxl.load_workbook(P_APP_MASTER, data_only=True)
     _, rows = sheet_to_rows(wb_app_mst, "Owners_Sale_Resale")
@@ -253,9 +348,9 @@ if P_APP_MASTER.exists():
             "source": "Apps Master Owners_Sale_Resale",
             "operation": "Resale",
         })
-    print(f"  • Found {len(rows)} rows in Apps Master Owners_Sale_Resale")
+    print(f"  • Source 3: Apps Master Owners_Sale_Resale ({len(rows)} rows)")
 
-# Source C: apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx (30MB Sales Sheet)
+# Source D: apps/sierra-estates-realty/data/sierra-estates-inventory.xlsx (30MB Sales Sheet)
 if P_APP_INVENTORY_30M.exists():
     wb_30m = openpyxl.load_workbook(P_APP_INVENTORY_30M, read_only=True)
     _, rows = sheet_to_rows(wb_30m, "Sales")
@@ -281,7 +376,36 @@ if P_APP_INVENTORY_30M.exists():
             "source": f"Master Sales Sheet ({src_ch})",
             "operation": "Resale",
         })
-    print(f"  • Found {len(rows)} rows in Master 30MB Sales sheet")
+    print(f"  • Source 4: Master 30MB Sales sheet ({len(rows)} rows)")
+
+# Source E: apps/sierra-estates-realty/public/downloads/owners-resale.csv
+if P_DOWNLOADS_RESALE_CSV.exists():
+    cnt = 0
+    with open(P_DOWNLOADS_RESALE_CSV, "r", encoding="utf-8", errors="replace") as f:
+        reader = csv.DictReader(f)
+        for d in reader:
+            p = safe_str(d.get("Owner Phone") or d.get("Phone"))
+            raw_owner_resale.append({
+                "code": safe_str(d.get("Reference Code") or d.get("Unit Code")),
+                "name": safe_str(d.get("Owner / Contact Name") or d.get("Contact Name")),
+                "phone": p,
+                "phone_norm": norm_phone(p),
+                "compound": safe_str(d.get("Compound / Project") or d.get("Compound")),
+                "property_type": safe_str(d.get("Property Type")),
+                "price": safe_num(d.get("Price (EGP)") or d.get("Price")),
+                "area": safe_num(d.get("Area (sqm)") or d.get("Area")),
+                "bedrooms": safe_num(d.get("Bedrooms")),
+                "bathrooms": safe_num(d.get("Bathrooms")),
+                "garden": "",
+                "finishing": safe_str(d.get("Furnishing")),
+                "availability": "Available",
+                "description": safe_str(d.get("Notes")),
+                "whatsapp": f"https://wa.me/{norm_phone(p)}" if norm_phone(p) else "",
+                "source": "Downloads Owners Resale CSV",
+                "operation": "Resale",
+            })
+            cnt += 1
+    print(f"  • Source 5: Downloads Owners Resale CSV ({cnt} rows)")
 
 print(f"  Total raw owner resale candidates collected: {len(raw_owner_resale)}")
 
@@ -494,12 +618,12 @@ for c_idx, h in enumerate(seg_cols, 1):
 ws_dash.row_dimensions[5].height = 24
 
 seg_rows = [
-    ("Direct Owners - Rent", len(owners_rent_rows), f"{(len(owners_rent_rows)/grand_total)*100:.1f}%", "Rent", "Phone + Price Match", "Master 298 + 20-7 Sheet 320"),
-    ("Direct Owners - Resale", len(owners_resale_rows), f"{(len(owners_resale_rows)/grand_total)*100:.1f}%", "Resale / Sale", "Phone + Price Match", "20-7 Sheet + Apps Master OSR + 30MB Sales"),
+    ("Direct Owners - Rent", len(owners_rent_rows), f"{(len(owners_rent_rows)/grand_total)*100:.1f}%", "Rent", "Phone + Price Match", "4 Sheets (20-7, Master Rent, Clean, Downloads CSV)"),
+    ("Direct Owners - Resale", len(owners_resale_rows), f"{(len(owners_resale_rows)/grand_total)*100:.1f}%", "Resale / Sale", "Phone + Price Match", "5 Sheets (20-7, Resale Master, Apps OSR, 30MB, CSV)"),
     ("Broker Rent Network", len(broker_rent_rows), f"{(len(broker_rent_rows)/grand_total)*100:.1f}%", "Rent", "RecordID / Distinct Unit", "Rent Master 4955 + 20-7 Brokers 15"),
     ("Broker Sale & Resale", len(broker_sale_rows), f"{(len(broker_sale_rows)/grand_total)*100:.1f}%", "Sale / Primary", "RecordID / Master Unit", "Master All Inventory (7,343 Sales)"),
     ("Team Units", len(team_units_rows), f"{(len(team_units_rows)/grand_total)*100:.1f}%", "Rent & Sale", "Team Group Listing", "20-7 Internal Agent WhatsApp Units"),
-    ("GRAND TOTAL INVENTORY", grand_total, "100.0%", "Complete Portfolio", "Strict Dedup & Zero Loss", "All 6 Workspace Master Spreadsheets"),
+    ("GRAND TOTAL INVENTORY", grand_total, "100.0%", "Complete Portfolio", "Strict Dedup & Zero Loss", "All 9 Workspace Spreadsheets & Archives"),
 ]
 
 for r_idx, r in enumerate(seg_rows, 6):
@@ -808,7 +932,7 @@ wb_out.save(OUT_PATH)
 print("✅ Consolidated master inventory workbook generated successfully!")
 print(f"   • Executive Dashboard       : KPI tables, deal splits, top 10 compounds")
 print(f"   • Direct Owners - Rent      : {len(owners_rent_rows):,} units")
-print(f"   • Direct Owners - Resale    : {len(owners_resale_rows):,} units (Exhaustive multi-source scan)")
+print(f"   • Direct Owners - Resale    : {len(owners_resale_rows):,} units (5 sheets merged!)")
 print(f"   • Broker Rent Network       : {len(broker_rent_rows):,} units (100% preserved)")
 print(f"   • Broker Sale & Resale      : {len(broker_sale_rows):,} units")
 print(f"   • Team Units                : {len(team_units_rows):,} units")
