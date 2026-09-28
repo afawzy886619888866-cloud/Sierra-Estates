@@ -180,14 +180,16 @@ function readRows(file, sheetName) {
 }
 
 function toListing(row) {
-  const compound = String(value(row, 'Compound', 'compound', 'Compound / Project', 'compound / project', 'Project')).trim();
-  const propertyType = String(value(row, 'Property Type', 'property_type', 'PropertyType', 'propertytype', 'Unit Type', 'unit_type', 'Type')).trim();
+  // Compound: keep whatever we have; 'Unknown' placeholder so NOT NULL is satisfied — never drop the row
+  const compound = String(value(row, 'Compound', 'compound', 'Compound / Project', 'compound / project', 'Project')).trim() || 'Unknown';
+  const propertyType = String(value(row, 'Property Type', 'property_type', 'PropertyType', 'propertytype', 'Unit Type', 'unit_type', 'Type')).trim() || 'Unknown';
   let dealType = String(value(row, 'Deal Type', 'deal_type', 'DealType', 'dealtype', 'Operation (Deal Type)', 'Operation', 'deal')).trim().toLowerCase();
   if (dealType.includes('rent') || dealType.includes('ايجار') || dealType.includes('إيجار')) dealType = 'rent';
   else if (dealType.includes('resale') || dealType.includes('re-sale')) dealType = 'resale';
   else if (dealType.includes('sale') || dealType.includes('بيع') || dealType.includes('primary')) dealType = 'sale';
+  else dealType = 'rent'; // sensible default — never reject a row over this
 
-  let price = numberValue(value(row, 'Price (EGP)', 'price', 'price_egp', 'Price', 'total price', 'Price Display'));
+  let price = numberValue(value(row, 'Price (EGP)', 'Monthly Rent (EGP)', 'Price (EGP)', 'price', 'price_egp', 'Price', 'total price', 'Price Display'));
   if (price > 500000000 || price < 0) {
     const notePrice = numberValue(value(row, 'Notes', 'Description / Notes', 'description', 'notes'));
     if (notePrice > 0 && notePrice <= 500000000) {
@@ -203,10 +205,6 @@ function toListing(row) {
     area = 0;
   }
   area = Math.round(area * 100) / 100;
-
-  if (!compound || !propertyType || !['sale', 'rent', 'resale', 'primary'].includes(dealType)) {
-    return { error: 'Compound, Property Type, and valid Deal Type are required.', row };
-  }
 
   const isVerified = String(value(row, 'Verified', 'verified', 'Listing Status')).toLowerCase().includes('verified');
   const isPublish = ['true', 'yes', 'published', 'active', 'available'].includes(String(value(row, 'Publish to Client', 'publish_to_client', 'Status', 'status', 'Availability')).toLowerCase());
@@ -264,12 +262,7 @@ function toListing(row) {
 
 async function push(options) {
   const rows = readRows(options.file, options.sheet);
-  const converted = rows.map(toListing);
-  const invalid = converted.filter((item) => item.error);
-  if (invalid.length) {
-    console.warn(`⚠️  Skipping ${invalid.length} invalid row(s) (missing Compound/Property Type/Deal Type). First: ${invalid[0].error}`);
-  }
-  const valid = converted.filter((item) => !item.error);
+  const valid = rows.map(toListing); // every row converts — nulls written, nothing dropped
 
   // Deduplicate by ref_id so Postgres ON CONFLICT never sees the same key twice in one statement
   const dedupedMap = new Map();
@@ -279,7 +272,7 @@ async function push(options) {
   const listings = Array.from(dedupedMap.values());
 
   if (options.dryRun) {
-    console.log(`Dry run: ${listings.length} valid listing(s) would be upserted (${converted.length - listings.length} duplicate ref_ids merged).`);
+    console.log(`Dry run: ${listings.length} listing(s) would be upserted (${rows.length - listings.length} duplicate ref_ids merged).`);
     return;
   }
   const supabase = requireSupabase();
