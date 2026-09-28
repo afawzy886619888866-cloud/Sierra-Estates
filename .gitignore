@@ -167,3 +167,10 @@ obsidian-store.json
 .env*
 !.env.example
 !infra/.env.example
+
+# ============================================================================
+# Removed from repo (kept local): AI tooling artifacts & vendored dev tooling.
+# Not referenced by any build, CI workflow, or runtime code. (2026-09 audit)
+# ============================================================================
+.amphion/
+tools/claude-proxy/
