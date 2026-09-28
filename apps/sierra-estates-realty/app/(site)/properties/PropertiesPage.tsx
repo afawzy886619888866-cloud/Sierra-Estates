@@ -159,17 +159,23 @@ const SORT_OPTIONS = [
 ];
 
 function sanitizeUnit(raw: any, index: number): RealListing {
-  const code = raw.code || `SE-${String(index + 1).padStart(4, '0')}`;
-  const compound = raw.compound || raw.location || 'New Cairo';
-  const price = Number(raw.price || 8500000);
+  // ANTI-FABRICATION PASS (Master Rule 5): every value below is either the
+  // record's own data or an explicit "unknown" marker. Missing prices render
+  // as "Price on request"; missing coordinates do not get jittered stand-ins;
+  // missing AI scores are hidden rather than synthesized per-index.
+  const code = raw.code || raw.id || `REF-${String(index + 1).padStart(4, '0')}`;
+  const compound = raw.compound || raw.location || 'Unspecified';
+  const price = Number(raw.price) > 0 ? Number(raw.price) : 0;
   const isRent = raw.mode === 'rent' || (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1000000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5000);
+  const egpM = price > 0 ? Number((price / 1000000).toFixed(1)) : 0;
+  const usd = price > 0 ? (isRent ? Math.round(price / 50) : Math.round(price / 5000)) : 0;
 
-  // Strict Luxury Institutional Standard: Price (EGP with commas)
+  // Price label: real price with commas, or honest "on request" when missing
   let priceLabel = raw.priceLabel;
   if (!priceLabel || priceLabel.includes('M EGP')) {
-    priceLabel = isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`;
+    priceLabel = price > 0
+      ? (isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`)
+      : 'Price on request';
   }
 
   const isDirectOwner = Boolean(
@@ -191,8 +197,8 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     raw.ago?.toLowerCase().includes('h ago')
   );
 
-  const finishing = raw.finishing || (Number(raw.beds || raw.bedrooms || 3) >= 4 ? 'Ultra Super Lux' : 'Fully Finished');
-  const availability = raw.availability || raw.status || 'Available';
+  const finishing = raw.finishing || raw.furnishing || '';
+  const availability = raw.availability || raw.status || '';
 
   return {
     id: raw.id || `unit-${index + 1}`,
@@ -200,24 +206,24 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     cmp: compound,
     compound,
     location: raw.location || compound,
-    zone: raw.zone || 'New Cairo',
-    type: raw.type || raw.propertyType || 'Apartment',
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
+    zone: raw.zone || compound,
+    type: raw.type || raw.propertyType || 'Unspecified',
+    beds: Number(raw.beds ?? raw.bedrooms ?? 0) || 0,
+    bath: Number(raw.bath ?? raw.bathrooms ?? 0) || 0,
+    area: Number(raw.area ?? raw.area_sqm ?? 0) || 0,
     price,
     priceLabel,
     egpM,
     usd,
-    ai: Number(raw.aiScore || (9.1 + ((index * 7) % 8) / 10).toFixed(1)),
-    tag: raw.tag && raw.tag !== 'Direct Owner' && raw.tag !== 'Verified Owner' ? raw.tag : 'Verified Portfolio',
+    ai: Number(raw.aiScore) > 0 ? Number(raw.aiScore) : 0,
+    tag: raw.tag || '',
     mode: isRent ? 'rent' : 'sale',
     agent: 'Sierra Advisor Desk',
-    ago: raw.ago || 'Verified Master Sync',
+    ago: raw.ago || '',
     img: getCuratedListingImage(raw, index),
     whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.lat || 30.02 + (((index * 13) % 40) - 20) * 0.003),
-    lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
+    lat: Number(raw.lat) || 0,
+    lng: Number(raw.lng) || 0,
     segment: raw.segment,
     description: raw.description,
     finishing,
@@ -255,16 +261,14 @@ export default function PropertiesPage() {
 
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
   // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
-  useListingsRealtime(setAllUnits);
+  useListingsRealtime(setAllUnits, setRealtimeLive);
 
   // Single authoritative inventory fetch on mount (below). The previous
   // duplicate ?limit=500 fetch raced this one and was removed.
 
-  // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
-  useEffect(() => {
-    const t = setTimeout(() => setRealtimeLive(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
+  // Live indicator now reflects the ACTUAL realtime subscription status
+  // (set by useListingsRealtime's onStatus callback). The previous 2.5s
+  // optimistic timer fabricated a green dot even with no connection.
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');

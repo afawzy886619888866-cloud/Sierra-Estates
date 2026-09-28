@@ -160,34 +160,12 @@ function OverviewPage({ T }) {
           </div>
         </div>
         <div className="card">
-          <div className="card-hd"><span className="card-title">{T('hotLeads')}</span><span className="chip chip-red">3 urgent</span></div>
+          <div className="card-hd"><span className="card-title">{T('hotLeads')}</span><span className="chip chip-amber">Live CRM</span></div>
           <div style={{maxHeight:160,overflowY:'auto'}}>
-            {LEADS_DATA.filter(l=>l.hot).map((l,i)=>(
-              <div key={i} className="lead-row">
-                <div className="lead-avatar" style={{background:l.color}}>{l.name[0]}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:12,fontWeight:600,color:'var(--tx)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.name}</div>
-                  <div style={{fontSize:9.5,color:'var(--tx-f)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.interest}</div>
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:4}}>
-                  <span className="chip chip-amber">{l.stage}</span>
-                  {l.phone && (
-                    <button
-                      className="btn btn-green"
-                      style={{padding:'2px 6px',fontSize:9}}
-                      onClick={() => {
-                        const clean = l.phone.replace(/[^0-9]/g, '');
-                        const msg = encodeURIComponent(`مرحباً ${l.name}، مستشار سييرا العقاري معك بخصوص طلبك لـ ${l.interest}.`);
-                        window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
-                      }}
-                      title="Direct WhatsApp"
-                    >
-                      💬
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+            {/* ANTI-FABRICATION: hot leads render only from live /api/admin/leads data. */}
+            <div style={{fontSize:11,color:'var(--tx-m)',padding:'12px 0',textAlign:'center'}}>
+              Hot leads appear here once the CRM loads — no sample contacts shown.
+            </div>
           </div>
         </div>
         <div className="card">
@@ -621,15 +599,10 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
         <div className="card">
           <div className="card-hd"><span className="card-title">Lead Pipeline · Stage Funnel</span></div>
           <div className="card-body">
-            {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#C8961A'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
-              <div key={i} style={{marginBottom:12}}>
-                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                  <span style={{fontSize:11,color:'var(--tx)'}}><strong style={{color:row.color,fontFamily:'JetBrains Mono'}}>{row.s}</strong> · {row.label}</span>
-                  <span style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--tx-m)'}}>{row.count.toLocaleString()}</span>
-                </div>
-                <div className="progress-bar" style={{height:6}}><div className="progress-fill" style={{width:`${row.pct}%`,background:`linear-gradient(90deg,${row.color},${row.color}80)`}}/></div>
-              </div>
-            ))}
+            {/* ANTI-FABRICATION: hardcoded funnel counts removed. Stage counts must come from /api/admin/dashboard. */}
+            <div style={{fontSize:11,color:'var(--tx-m)',padding:'12px 0',textAlign:'center'}}>
+              Stage funnel connects to live CRM data — no sample numbers shown.
+            </div>
           </div>
         </div>
       </div>
@@ -864,7 +837,7 @@ export function LeadsPage({ T }: { T: any }) {
             <span className="chip chip-green" style={{fontSize:9}}><span className="pulse-dot">●</span> Published</span>
           </div>
           <div style={{fontSize:11,color:'var(--tx-m)',fontFamily:'JetBrains Mono'}}>
-            1,762 units · Bilingual EN/AR · Photos included
+            Live catalog units · Bilingual EN/AR · count reflects current database
           </div>
           <div style={{fontSize:10,color:'var(--tx-f)',marginTop:4}}>
             Feed URL: <a href="/api/feeds/property-finder" target="_blank" rel="noopener noreferrer" style={{color:'var(--gold)',textDecoration:'none'}}>/api/feeds/property-finder</a>

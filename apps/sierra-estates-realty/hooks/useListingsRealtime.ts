@@ -20,53 +20,62 @@ import type { RealListing } from '@/app/(site)/properties/PropertiesPage';
 type SetListings = React.Dispatch<React.SetStateAction<RealListing[]>>;
 
 function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): RealListing {
-  const compound = String(raw.compound || raw.location || 'New Cairo');
-  const price = Number(raw.price || 8_500_000);
+  // ANTI-FABRICATION: no invented defaults. Missing values surface as honest
+  // zeros / "Unspecified" / "Price on request" exactly like the page-level
+  // sanitizer. A realtime row is real data, not a template to embellish.
+  const compound = String(raw.compound || raw.location || 'Unspecified');
+  const price = Number(raw.price) > 0 ? Number(raw.price) : 0;
   const isRent =
     raw.mode === 'rent' ||
     (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1_000_000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5_000);
-  const priceLabel = isRent
-    ? `${price.toLocaleString()} EGP / mo`
-    : egpM >= 1
-    ? `${egpM}M EGP`
-    : `${price.toLocaleString()} EGP`;
+  const egpM = price > 0 ? Number((price / 1_000_000).toFixed(1)) : 0;
+  const usd = price > 0 ? (isRent ? Math.round(price / 50) : Math.round(price / 5_000)) : 0;
+  const priceLabel =
+    price > 0
+      ? isRent
+        ? `${price.toLocaleString()} EGP / mo`
+        : egpM >= 1
+        ? `${egpM}M EGP`
+        : `${price.toLocaleString()} EGP`
+      : 'Price on request';
 
   return {
     id: String(raw.id || `rt-${index}`),
-    code: String(raw.code || `SE-RT-${String(index + 1).padStart(4, '0')}`),
+    code: String(raw.code || raw.id || `REF-RT-${String(index + 1).padStart(4, '0')}`),
     cmp: compound,
     compound,
     location: String(raw.location || compound),
-    zone: String(raw.zone || 'New Cairo'),
-    type: String(raw.type || raw.propertyType || 'Apartment'),
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
+    zone: String(raw.zone || compound),
+    type: String(raw.type || raw.propertyType || 'Unspecified'),
+    beds: Number(raw.beds ?? raw.bedrooms ?? 0) || 0,
+    bath: Number(raw.bath ?? raw.bathrooms ?? 0) || 0,
+    area: Number(raw.area ?? raw.area_sqm ?? 0) || 0,
     price,
     priceLabel: String(raw.priceLabel || priceLabel),
     egpM,
     usd,
-    ai: Number(raw.aiScore || 9.1),
-    tag: 'Verified Portfolio',
+    ai: Number(raw.aiScore) > 0 ? Number(raw.aiScore) : 0,
+    tag: raw.tag ? String(raw.tag) : '',
     mode: isRent ? 'rent' : 'sale',
     agent: 'Sierra Advisor Desk',
-    ago: 'Live',
+    ago: raw.ago ? String(raw.ago) : 'Live update',
     img: String(
       (raw.raw_data as Record<string, unknown> | undefined)?.img ||
         raw.img ||
-        "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/c1817868-a833-4e1b-bdd0-e3de3dafdd39.png"
+        ''
     ),
     whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.latitude || raw.lat || 30.045),
-    lng: Number(raw.longitude || raw.lng || 31.59),
+    lat: Number(raw.latitude || raw.lat || 0),
+    lng: Number(raw.longitude || raw.lng || 0),
     segment: raw.segment ? String(raw.segment) : undefined,
     description: raw.description ? String(raw.description) : undefined,
   };
 }
 
-export function useListingsRealtime(setListings: SetListings) {
+export function useListingsRealtime(
+  setListings: SetListings,
+  onStatus?: (connected: boolean) => void
+) {
   const channelRef = useRef<ReturnType<
     typeof import('@supabase/supabase-js').createClient
   >['channel'] extends (...args: infer _A) => infer R ? R : never | null>(null);
@@ -160,8 +169,10 @@ export function useListingsRealtime(setListings: SetListings) {
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.info('[useListingsRealtime] ✅ Realtime channel connected.');
+              onStatus?.(true);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
               console.warn('[useListingsRealtime] ⚠️ Realtime channel error:', status);
+              onStatus?.(false);
             }
           });
 
@@ -177,5 +188,5 @@ export function useListingsRealtime(setListings: SetListings) {
         channelRef.current = null;
       }
     };
-  }, [setListings]);
+  }, [setListings, onStatus]);
 }

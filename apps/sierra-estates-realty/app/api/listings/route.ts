@@ -12,7 +12,7 @@
  *
  *   2. Filter mode (default) — used by lib/api-client `api.listings()`.
  *      Returns a bare Listing[] filtered by mode/compound/type/beds/maxUsd/q.
- *      Reads Supabase → Live Sheet → snapshot → SEED_LISTINGS.
+ *      Reads Supabase → Live Sheet → snapshot. Never hardcoded seed data.
  *
  * POST — create a listing (manager+). Writes to public.listings; if the write
  * fails outside production it returns a demo id so the admin UI flow works.
@@ -22,7 +22,8 @@ import { z } from 'zod';
 import { COLLECTIONS, isPubliclyVisibleListingStatus } from '@/lib/models/schema';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
-import { SEED_LISTINGS } from '@/lib/seed';
+// SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5):
+// public endpoints must never serve baked-in listings when live sources are empty.
 import { getRecord, insertRecord, listRecords } from '@sierra-estates/db';
 import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns';
 import { requireRole } from '@/lib/auth';
@@ -192,8 +193,8 @@ async function readListings(): Promise<Listing[]> {
           area: Number(item.area_sqm) || 150,
           egpM: Number(egpM.toFixed(2)),
           usd: usd || 1500,
-          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : (item.roi_percentage ? 9.0 : 8.8),
-          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner'),
+          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
           agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker'),
           img: raw.img || (item.images && item.images[0]) || '',
@@ -221,8 +222,10 @@ async function readListings(): Promise<Listing[]> {
     return (snapshot as any).units.map(inventoryUnitToListing);
   }
 
-  // Final fallback to seed data
-  return SEED_LISTINGS;
+  // ANTI-FABRICATION (Master Rule 5): no hardcoded seed fallback. When no
+  // real source has data the API returns an empty set with an honest source
+  // marker instead of months-old baked-in listings.
+  return [];
 }
 
 export async function GET(request: Request) {
@@ -273,11 +276,10 @@ export async function GET(request: Request) {
         }
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
-      const seed = SEED_LISTINGS.find((l) => l.id === id);
+      const seed = null; // ANTI-FABRICATION: no hardcoded listing-by-id fallback
       if (!seed) {
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
-      return NextResponse.json({ success: true, listing: seedToEnvelope(seed) });
     }
 
     if (limit != null) {
@@ -332,8 +334,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, listings: realListings, count: realListings.length, source: 'snapshot', seeded: true });
       }
 
-      const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
-      return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
+      // ANTI-FABRICATION: no seed fallback — return an honest empty set
+      return NextResponse.json({ success: true, listings: [], count: 0, source: 'none', seeded: false });
     }
 
     // ── Proximity mode (?lat= & ?lng=): PostGIS radius search ─────────────
@@ -385,17 +387,9 @@ export async function GET(request: Request) {
       }
 
       if (spatialItems.length === 0) {
-        spatialItems = SEED_LISTINGS.map((l) => {
-          const itemLat = (l as any).latitude ?? 30.045;
-          const itemLng = (l as any).longitude ?? 31.59;
-          const dist = calculateHaversineDistanceKm(lat, lng, itemLat, itemLng);
-          return {
-            ...l,
-            distanceKm: dist,
-            latitude: itemLat,
-            longitude: itemLng,
-          } as Listing & { distanceKm: number };
-        });
+        // ANTI-FABRICATION: no seed fallback — an empty DB returns zero
+        // nearby results rather than fabricated coordinates.
+        spatialItems = [];
       }
 
       let filtered = spatialItems.filter((l) => isPubliclyVisibleListingStatus(l.status));

@@ -105,7 +105,14 @@ export async function POST(req: NextRequest) {
 
     if (!message && isVoiceMessage) {
       const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
-      const voiceTranscript = body.transcript || 'معايا شقة للإيجار في إيستاون التجمع الخامس مساحتها ١٦٥ متر ٣ غرف و٢ حمام تشطيب الترا سوبر لوكس مطلوب ٤٥ ألف جنية شهرياً من المالك مباشرة';
+      // ANTI-FABRICATION: the demo transcript fallback was removed. Without a
+      // real transcript the voice note is acknowledged but NOT parsed into a
+      // listing — a missing transcript must not become a fake unit.
+      const voiceTranscript = body.transcript;
+      if (!voiceTranscript) {
+        console.warn('[WhatsApp Webhook] Voice note received without transcript — skipping parse (no fabricated listings).');
+        return NextResponse.json({ status: 'skipped', reason: 'voice_note_without_transcript' });
+      }
       const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
       message = parsedVoice.rawTranscript;
       console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);

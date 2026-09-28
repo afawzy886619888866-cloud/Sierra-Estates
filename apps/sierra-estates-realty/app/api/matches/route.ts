@@ -3,13 +3,12 @@
  *   { budget, beds, type, mode, preferredZone? }
  *   → MatchResult[] (top 3 listings with score + reasons)
  *
- * Pure scoring — no DB writes. Reads listings (Supabase or seed),
+ * Pure scoring — no DB writes. Reads live listings from Supabase only,
  * ranks by composite score: budget fit + beds fit + type match +
- * zone match + AI score weight.
+ * zone match + AI score weight. Never falls back to hardcoded data.
  */
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { SEED_LISTINGS } from "@/lib/seed";
 import { listRecords } from "@sierra-estates/db";
 import { toListingRecord } from "@/lib/server/listing-columns";
 import type { Listing, MatchAnswers, MatchResult } from "@/lib/types";
@@ -41,9 +40,11 @@ async function loadListings(): Promise<Listing[]> {
       return rows.map((row) => toListingRecord(row)) as unknown as Listing[];
     }
   } catch (err) {
-    console.warn("[matches] Supabase read failed, using seed:", err);
+    console.warn("[matches] Supabase read failed — returning empty set, never fabricated data:", err);
   }
-  return SEED_LISTINGS;
+  // ANTI-FABRICATION (Master Rule 5): no hardcoded fallback. An empty or
+  // unreachable DB yields an honest "no matches" response, not stale seeds.
+  return [];
 }
 
 /**

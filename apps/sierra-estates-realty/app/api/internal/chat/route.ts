@@ -6,8 +6,9 @@ export async function POST(req: NextRequest) {
     const message = body.message || body.prompt || '';
     const hfToken = process.env.HUGGINGFACE_API_KEY || process.env.HF_TOKEN || '';
 
-    // If HF Token available, call HuggingFace Serverless Inference API, otherwise use local reasoning proxy
-    let reply = `[Sierra Estates AI Proxy] Received inquiry: "${message.substring(0, 80)}". Analyzed 306 luxury units in New Cairo. High-yield opportunities found in Mivida and Hyde Park.`;
+    // ANTI-FABRICATION: without an AI backend configured we return an honest
+    // "not configured" reply — never a canned fake analysis of units.
+    let reply = 'AI assistant is not configured. Set HUGGINGFACE_API_KEY (or route this panel to the Gemini concierge via /api/chat) to enable live answers.';
 
     if (hfToken) {
       try {

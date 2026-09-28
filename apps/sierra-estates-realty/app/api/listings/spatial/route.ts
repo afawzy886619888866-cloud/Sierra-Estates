@@ -19,7 +19,7 @@ import {
   toGeoJsonFeatureCollection,
 } from '@/lib/server/spatial-utils';
 import { isPubliclyVisibleListingStatus } from '@/lib/models/schema';
-import { SEED_LISTINGS } from '@/lib/seed';
+// SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5)
 import type { Listing } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -144,30 +144,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Seed fallback (offline / sandbox only)
+    // 3. ANTI-FABRICATION: no seed fallback — randomizing coordinates around
+    // New Cairo for stale seed rows fabricated locations. Empty stays empty.
     if (!isLive || rawItems.length === 0) {
-      // Map seed listings into spatial records using haversine
-      rawItems = SEED_LISTINGS.map((l) => {
-        // Approximate location around New Cairo if not set
-        const itemLat = (l as any).latitude ?? DEFAULT_NEW_CAIRO_LAT + (Math.random() - 0.5) * 0.1;
-        const itemLng = (l as any).longitude ?? DEFAULT_NEW_CAIRO_LNG + (Math.random() - 0.5) * 0.1;
-        return {
-          id: l.id,
-          title: `${l.type} in ${l.compound}`,
-          compound: l.compound,
-          property_type: l.type,
-          deal_type: l.mode,
-          price: l.usd * 50,
-          bedrooms: l.beds,
-          bathrooms: l.bath,
-          area_sqm: l.area,
-          latitude: itemLat,
-          longitude: itemLng,
-          status: l.status,
-          images: l.img ? [l.img] : [],
-          description: l.description,
-        };
-      });
+      rawItems = [];
     }
 
     // 4. Process, calculate exact geodesic distance, and filter

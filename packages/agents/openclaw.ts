@@ -257,8 +257,8 @@ export class OpenClawAgent {
     else if (/(شقة|apartment|شقه)/i.test(normalizedRawText))
       propertyType = "Apartment";
 
-    // 4. Extract Area (sqm)
-    let area_sqm = 200;
+    // 4. Extract Area (sqm) — never defaulted; unknown stays null (anti-fabrication)
+    let area_sqm: number | null = null;
     const areaMatch = normalizedRawText.match(
       /(\d{2,4})\s*(?:متر|م²|م2|م(?!\p{L})|sqm|sq\.m|m2|meter)/iu,
     );
@@ -274,6 +274,7 @@ export class OpenClawAgent {
 
     // 6. Extract Price with Advanced Arabic Idioms
     let price = 0;
+    let priceNeedsVerification = false;
 
     // Pattern A: "مليون ونصف" or "مليون ونص" (1.5M) / "مليون وربع" (1.25M)
     if (/(مليون\s+ونصف|مليون\s+ونص)/i.test(normalizedRawText)) {
@@ -326,10 +327,14 @@ export class OpenClawAgent {
         }
       }
     }
-    if (price === 0) price = operation === "Rent" ? 35_000 : 12_500_000;
+    // ANTI-FABRICATION: missing price stays 0/unknown — flagged for follow-up, never guessed
+    if (price === 0) {
+      price = 0;
+      priceNeedsVerification = true;
+    }
 
-    // 7. Extract Bedrooms
-    let bedrooms = 3;
+    // 7. Extract Bedrooms — never defaulted; unknown stays null (anti-fabrication)
+    let bedrooms: number | null = null;
     const bedMatch = normalizedRawText.match(
       /(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i,
     );
@@ -420,9 +425,10 @@ export class OpenClawAgent {
       valuationScore = 90;
     }
 
-    // 13. Sierra Code Synthesis
+    // 13. Sierra Code Synthesis (beds unknown -> "U" marker instead of fabricated count)
     const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
     const typePrefix = propertyType.slice(0, 1).toUpperCase();
+    const bedsToken = bedrooms === null ? "U" : String(bedrooms);
     const finishPrefix =
       finishing === "fully_finished"
         ? "F"
@@ -431,7 +437,7 @@ export class OpenClawAgent {
           : "U";
     const priceM = (price / 1_000_000).toFixed(1).replace(/\.0$/, "");
     const featSuffix = features.length > 0 ? `+${features.join("+")}` : "";
-    const sierraCode = `${locPrefix}-${typePrefix}-${bedrooms}${finishPrefix}-${priceM}M${featSuffix}`;
+    const sierraCode = `${locPrefix}-${typePrefix}-${bedsToken}${finishPrefix}-${priceM}M${featSuffix}`;
 
     // 14. Source Type & Group Classification
     const registryGroup = groupId ? findGroup(groupId) : findGroup(groupName);
@@ -452,9 +458,10 @@ export class OpenClawAgent {
       compound: detectedCompound,
       price,
       currency,
-      area_sqm,
-      bedrooms,
-      bathrooms: Math.max(1, bedrooms - 1),
+      area_sqm: area_sqm ?? undefined,
+      bedrooms: bedrooms ?? undefined,
+      bathrooms: bedrooms === null ? undefined : Math.max(1, bedrooms - 1),
+      priceNeedsVerification,
       finishing,
       furnishing,
       operation,
