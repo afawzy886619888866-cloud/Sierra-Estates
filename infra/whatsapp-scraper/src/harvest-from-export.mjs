@@ -23,6 +23,13 @@ const OUTPUT_DIR = process.env.OUTPUT_DIR || 'H:\\Sheets';
 const INVENTORY_FILE = path.join(OUTPUT_DIR, 'Owners_Inventory.json');
 const REPORT_FILE = path.join(OUTPUT_DIR, 'harvest_report.json');
 
+// Live-harvester JSON — contains photo metadata keyed by Owner_Phone
+const LIVE_OWNERS_JSON = path.join(OUTPUT_DIR, 'Owners_Inventory.json');
+// Media directory where the harvester saves downloaded photos
+const MEDIA_DIR = path.join(OUTPUT_DIR, 'Owners_Media');
+// Public CDN base — photos served via Next.js public folder or a CDN prefix
+const PHOTO_CDN_BASE = process.env.PHOTO_CDN_BASE || 'https://sierra-estates.net/media/owners';
+
 // ─── Config ────────────────────────────────────────────────────────────────
 const PRICE_RULES = {
   rent: { min: 7_000, max: 300_000 },
@@ -225,10 +232,65 @@ function extractUnit(msg, groupName, idx) {
     area,
     bedrooms,
     phone,
+    // Photo fields — populated later by crossLinkPhotos()
+    hasPhotos: false,
+    photoUrls: [],
+    photoCode: null,
     status: flagged ? 'Needs Revision' : 'Active',
     pfStatus: 'pending',
     createdAt: new Date().toISOString(),
   };
+}
+
+// ─── Photo Index Builder ─────────────────────────────────────────────────────
+
+/**
+ * Load Owners_Inventory.json (written by owners-harvester.js) and build a
+ * Map of normalizedPhone → array of photo records.
+ *
+ * Each record in Owners_Inventory.json looks like:
+ *   { Owner_Phone, Photo_Code, Photo_Path, Has_Photos, Unit_Code, ... }
+ *
+ * We resolve each Photo_Path to a public URL using two strategies:
+ *   1. If the file exists under MEDIA_DIR, we construct the CDN URL.
+ *   2. Otherwise we fall back to just the Photo_Code for manual resolution.
+ */
+function buildPhotoIndex() {
+  /** @type {Map<string, Array<{photoCode: string, photoPath: string, publicUrl: string}>>} */
+  const index = new Map();
+
+  if (!fs.existsSync(LIVE_OWNERS_JSON)) {
+    return index; // harvester hasn't run yet — no photos to cross-link
+  }
+
+  let records;
+  try {
+    records = JSON.parse(fs.readFileSync(LIVE_OWNERS_JSON, 'utf-8'));
+  } catch {
+    return index;
+  }
+
+  for (const r of records) {
+    if (!r.Owner_Phone || r.Has_Photos !== 'YES' || !r.Photo_Path) continue;
+
+    const phone = normalizePhone(r.Owner_Phone);
+    if (!phone) continue;
+
+    // Build the public URL from the filename only (avoids exposing local paths)
+    const fileName = path.basename(r.Photo_Path);
+    const publicUrl = `${PHOTO_CDN_BASE}/${encodeURIComponent(fileName)}`;
+
+    const entry = {
+      photoCode: r.Photo_Code || r.Unit_Code || '',
+      photoPath: r.Photo_Path,
+      publicUrl,
+    };
+
+    if (!index.has(phone)) index.set(phone, []);
+    index.get(phone).push(entry);
+  }
+
+  return index;
 }
 
 // ─── Inventory Manager ───────────────────────────────────────────────────────
@@ -258,28 +320,40 @@ function dedup(existing, incoming) {
 function generatePFXML(units) {
   const pfUnits = units.filter(u => u.status === 'Active' && u.price);
 
-  const listings = pfUnits.map(u => `
+  const listings = pfUnits.map(u => {
+    const offeringType = u.dealType === 'rent' ? 'RR' : 'RS';
+    const photoBlock = (u.photoUrls || []).filter(url => url.startsWith('http')).length > 0
+      ? `      <photo>\n${(u.photoUrls).filter(url => url.startsWith('http')).map(url => `        <url>${url}</url>`).join('\n')}\n      </photo>`
+      : '';
+
+    return `
     <property>
       <reference_number>${u.id}</reference_number>
-      <listing_type>${u.dealType === 'rent' ? 'RR' : 'RS'}</listing_type>
-      <property_type>${u.unitType || 'Apartment'}</property_type>
+      <offering_type>${offeringType}</offering_type>
+      <property_type>${u.unitType || 'AP'}</property_type>
       <price>${u.price}</price>
-      <area>${u.area || ''}</area>
+      <currency>EGP</currency>
+      ${u.dealType === 'rent' ? '<rental_period>M</rental_period>' : ''}
+      <size>${u.area || ''}</size>
       <bedroom>${u.bedrooms || ''}</bedroom>
-      <location>
-        <city>Cairo</city>
-        <community>${u.compound}</community>
-      </location>
-      <description><![CDATA[${u.rawText?.slice(0, 500) || ''}]]></description>
-      <owner_phone>${u.phone || ''}</owner_phone>
-      <date_posted>${u.date || ''}</date_posted>
-    </property>`).join('\n');
+      <city>Cairo</city>
+      <community>${u.compound}</community>
+      <title_en><![CDATA[${u.unitType || 'Apartment'} for ${u.dealType === 'rent' ? 'rent' : 'sale'} in ${u.compound}]]></title_en>
+      <description_en><![CDATA[${u.rawText?.slice(0, 500) || ''}]]></description_en>
+      <agent>
+        <name>Sierra Estates Team</name>
+        <email>info@sierra-estates.net</email>
+        <phone>+201000000000</phone>
+      </agent>
+${photoBlock}
+    </property>`;
+  }).join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<list>
+<list last_update="${new Date().toISOString()}">
   <source>
     <name>Sierra Estates</name>
-    <website>https://sierra-estates.vercel.app</website>
+    <website>https://sierra-estates.net</website>
   </source>
   ${listings}
 </list>`;
@@ -314,6 +388,11 @@ HOW TO EXPORT FROM WHATSAPP (on your phone):
   const messages = parseExportFile(exportFilePath);
   console.log(`✅ Total messages found: ${messages.length}`);
 
+  // Build phone → photo index from the live harvester's Owners_Inventory.json
+  const photoIndex = buildPhotoIndex();
+  const photoIndexSize = photoIndex.size;
+  console.log(`📸 Photo index loaded: ${photoIndexSize} phones with photos from Owners_Inventory.json`);
+
   const extracted = [];
   let skipped = 0;
   for (let i = 0; i < messages.length; i++) {
@@ -321,6 +400,20 @@ HOW TO EXPORT FROM WHATSAPP (on your phone):
     if (unit) extracted.push(unit);
     else skipped++;
   }
+
+  // Cross-link photos: match each extracted unit's phone to the photo index
+  let photosLinked = 0;
+  for (const unit of extracted) {
+    const phone = unit.phone;
+    if (phone && photoIndex.has(phone)) {
+      const photos = photoIndex.get(phone);
+      unit.photoUrls = photos.map(p => p.publicUrl);
+      unit.photoCode = photos[0]?.photoCode || null;
+      unit.hasPhotos = true;
+      photosLinked++;
+    }
+  }
+  console.log(`🔗 Photo cross-link: ${photosLinked} of ${extracted.length} units matched with photos`);
 
   console.log(`🏠 Units extracted: ${extracted.length}`);
   console.log(`⏭️  Messages skipped: ${skipped}`);
@@ -379,6 +472,8 @@ HOW TO EXPORT FROM WHATSAPP (on your phone):
     newAddedToInventory: newUnits.length,
     totalInventory: merged.length,
     pfFeedUnits: merged.filter(u => u.status === 'Active' && u.price).length,
+    photoIndexPhones: photoIndexSize,
+    unitsWithPhotos: photosLinked,
     flaggedUnits: flagged.map(u => ({
       id: u.id,
       sender: u.sender,
@@ -387,6 +482,7 @@ HOW TO EXPORT FROM WHATSAPP (on your phone):
       price: u.price,
       priceStatus: u.priceStatus,
       compound: u.compound,
+      hasPhotos: u.hasPhotos,
     })),
   };
 
@@ -401,8 +497,13 @@ HOW TO EXPORT FROM WHATSAPP (on your phone):
 
   console.log(`\n✅ Done! Next steps:`);
   console.log(`   1. Review flagged units: ${INVENTORY_FILE}`);
-  console.log(`   2. Upload PF feed XML to Property Finder portal`);
-  console.log(`   3. Run again for the second group export`);
+  console.log(`   2. ${photosLinked} units have photos linked — verify CDN URLs in the PF feed XML`);
+  console.log(`   3. Upload PF feed XML to Property Finder portal: ${pfFeedPath}`);
+  console.log(`   4. Run again for the next group export file`);
+  if (photoIndexSize === 0) {
+    console.log(`\n   ⚠️  No photos found in Owners_Inventory.json.`);
+    console.log(`      Run the live harvester (node src/owners-harvester.js) first to download group photos.`);
+  }
 }
 
 main().catch(console.error);
