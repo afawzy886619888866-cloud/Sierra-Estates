@@ -315,7 +315,7 @@ export default function InventoryOsView({ lang = 'en' }: { lang?: string }) {
       {migrationMissing && (
         <div className="card fade-up" style={{ padding: '12px 16px', borderInlineStart: '3px solid var(--amber,#f59e0b)', fontSize: 12.5, opacity: 0.85 }}>
           ⚠ {t(
-            'Inventory OS v2 migration not detected on this database. Run supabase/migrations/011_inventory_os_v2.sql + 012_workflow_studio.sql (idempotent, additive) to unlock payment plans, price history, DQ scoring and the guarded trigger.',
+            'Inventory OS v2 migration not detected on this database. Run supabase/migrations/20260924_011_inventory_os_v2.sql + 20260925_012_workflow_studio.sql (idempotent, additive) to unlock payment plans, price history, DQ scoring and the guarded trigger.',
             'لم يتم اكتشاف ترحيل النظام على قاعدة البيانات. شغّل الترحيلين 011 و012 لفتح خطط السداد وسجل الأسعار والحراسة.'
           )}
         </div>

@@ -30,15 +30,12 @@
 
 | Duplicate of | Kept as | Count |
 |---|---|---|
-| BROKER | BROKER | 2074 |
-| BROKER | ? | 627 |
-| OWNER_DIRECT | OWNER_DIRECT | 517 |
-| BROKER | OWNER_DIRECT | 241 |
-| BROKER | PARTNER | 72 |
-| OWNER_DIRECT | ? | 39 |
-| PARTNER | PARTNER | 17 |
-| OWNER_DIRECT | PARTNER | 14 |
-| PARTNER | ? | 1 |
+| BROKER | BROKER | 2567 |
+| OWNER_DIRECT | OWNER_DIRECT | 551 |
+| BROKER | OWNER_DIRECT | 331 |
+| BROKER | PARTNER | 116 |
+| OWNER_DIRECT | PARTNER | 19 |
+| PARTNER | PARTNER | 18 |
 
 ## Interpretation & caveats
 

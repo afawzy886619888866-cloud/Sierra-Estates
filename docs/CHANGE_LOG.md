@@ -72,3 +72,50 @@ The following changes remove every code path that could present invented propert
 - `lib/seed.ts` (7,016 lines) still imported by non-API consumers — recommend full deletion in Phase 4 after DB population.
 - Snapshot-in-bundle architecture (B3) — Phase 4 scope.
 - `/api/inventory` service-role usage (B5), admin browser bearer token (B12) — Phase 4/13 scope.
+
+---
+
+## 2026-09-29 — Phase 2/3 Execution (importer + schema consolidation)
+
+### Change 1 — Phase-1 pipeline audit-trail fix (data correctness)
+
+- **Change:** `scripts/data-audit/build_master_inventory.py` dedupe stage: (a) exact-fingerprint group members no longer share one `unit_id` — merged-away rows get `SB-<fp>-D<n>` row ids; (b) near-dupe chains resolve transitively to the surviving canonical row; (c) absorbing winners inherit the loser's `dupe_sources` provenance. `data/MASTER_INVENTORY_V1.csv` regenerated.
+- **Reason:** Pre-import verification found 2,013 self-referencing `duplicate_of` entries and 667 dangling chain references — the duplicate audit trail was partially unusable, and row identity was not unique (12,088 rows / 10,075 ids).
+- **Files:** scripts/data-audit/build_master_inventory.py, data/MASTER_INVENTORY_V1.csv|.xlsx (gitignored), docs/DUPLICATE_REPORT.md.
+- **DB impact:** none.
+- **Risk:** low — canonical counts unchanged (8,486 / 3,602); only audit-trail columns improved (verified: 0 self-refs, 0 dangling, 12,088 unique ids).
+- **Rollback:** git revert; regenerate CSV from prior script version.
+
+### Change 2 — Migration chain consolidation (B4 fragmentation fix)
+
+- **Change:** `011_inventory_os_v2.sql` and `012_workflow_studio.sql` moved from `apps/sierra-estates-realty/supabase/migrations/` to root `supabase/migrations/` as `20260924_011_inventory_os_v2.sql` / `20260925_012_workflow_studio.sql`, with identical app-local mirrors kept for sparse-checkout deploys. The deploy-time runner prefers the root directory, so a full-repo checkout previously never applied 011/012.
+- **Reason:** Audit B4 — 4 scattered migration directories; two of them unreachable depending on checkout mode.
+- **Files:** supabase/migrations/ (+2), apps/sierra-estates-realty/supabase/migrations/ (renamed mirrors), apps/sierra-estates-realty/app/admin/views/InventoryOsView.tsx (hint text paths).
+- **DB impact:** none until the runner executes (idempotent SQL: IF NOT EXISTS / OR REPLACE throughout). Renaming resets `schema_migrations` identity — both files re-apply harmlessly.
+- **Risk:** low.
+- **Rollback:** git revert; old filenames remain in git history.
+
+### Change 3 — Migration 013: master inventory activation (B5 + B6 fixes)
+
+- **Change:** New `supabase/migrations/20260929_013_master_inventory_activation.sql`: (a) `listings` += `source_verified_at TIMESTAMPTZ`, `availability TEXT`, `publish_status TEXT` (+4 indexes); (b) partial unique index `uq_listings_dupe_check_hash` (dedupe standard, B9); (c) **B5 fix**: `ADD COLUMN embedding_768 vector(768)` + ivfflat index — the column both embedding generators already write to; (d) **B6 fix**: `broker_sessions` folded into the canonical chain with `TO service_role` policy (was `USING(true)` = effectively public). Baseline `supabase/schema.sql` updated to match (embedding_768 column, broker_sessions table §49) and re-mirrored to the app-local copy.
+- **Reason:** Phase 2 importer requires the freshness/availability/publishability columns; audit B5/B6/B9.
+- **Files:** supabase/migrations/20260929_013_*.sql (new), supabase/schema.sql, apps/sierra-estates-realty/supabase/schema.sql (mirror), infra/supabase/migrations/20260928_broker_sessions.sql (policy fixed to `TO service_role`).
+- **DB impact:** additive only — no drops, no column type changes, RLS policy restricted (broker_sessions public→service_role).
+- **Risk:** low-medium (RLS restriction could break any code path writing broker_sessions with a non-service key — verified: only service-key contexts use it).
+- **Rollback:** drop the 3 columns + index; restore old broker_sessions policy from git.
+
+### Change 4 — Phase 2 importer (new tooling)
+
+- **Change:** `scripts/data-audit/import-master-inventory.mjs` — consumes the canonical `MASTER_INVENTORY_V1.csv` (never raw sources), filters DUPLICATE rows, maps to the live `listings` column set (base / 011 / 013 modes), upserts `onConflict: ref_id` in 250-row batches, pre-classifies inserts vs updates, writes a reconciled import report (seen/duplicated/valid/invalid/inserted/updated/rejected + dimension breakdowns) to `data/reports/`. Default is DRY-RUN; `--write` requires credentials; PGRST204 aborts with "apply 011+013 first" guidance. Every imported row lands `status='draft'`, `verified=false`, `publish_to_client=false` — the public RLS policy (`status='active'`) makes unverified inventory unreachable by clients.
+- **Reason:** Master Command Phase 2 — the legacy importer inserted with default `status='active'`, exposing unverified data publicly; raw-XLSX consumption bypassed the Phase-1 quality cascade.
+- **Files:** scripts/data-audit/import-master-inventory.mjs (new), data/reports/IMPORT_REPORT_*.md|json (generated, gitignored).
+- **DB impact:** none until `--write` is executed with credentials (dry-run verified: 12,088 seen = 3,602 duplicated + 8,486 valid + 0 invalid; deterministic across re-runs).
+- **Risk:** low (default dry-run; live write is a deliberate, credentialed action).
+- **Rollback:** no DB writes occur in dry-run; a `--write` run is reversible by re-running the prior canonical import (upsert semantics).
+
+### Change 5 — Audit report corrections
+
+- **Change:** `docs/CURRENT_STATE_REPORT.md` §12 appended: B5-CI (`branches: ain]`) was a terminal-rendering false positive (bytewise check: triggers were always `[main]`); B5 root cause inverted (missing `embedding_768` column, not a wrong function); migration locations clarified; Phase-1 audit-trail bug documented.
+- **Reason:** Master Command — reports must stay honest; verification overturned two audit claims.
+- **Files:** docs/CURRENT_STATE_REPORT.md.
+- **DB impact:** none. **Risk:** none. **Rollback:** delete §12.

@@ -474,11 +474,17 @@ def dedupe(records):
             winner = dict(group[0])
             merged_photos = set()
             others_meta = []
-            for g in group[1:]:
+            for n, g in enumerate(group[1:], start=1):
                 if g.get('photos'): merged_photos.update(str(g['photos']).split(','))
-                others_meta.append({'unit_id': g['unit_id'], 'src': g['src'], 'row': g['src_row'],
+                # FIX (Phase 2): rows in an exact-fingerprint group share the
+                # fingerprint-derived unit_id; give each merged-away row a
+                # unique row-level id (SB-<fp>-D<n>) so duplicate_of never
+                # self-references and every CSV row keeps a distinct identity.
+                d = dict(g)
+                d['unit_id'] = f'SB-{fp}-D{n}'
+                others_meta.append({'unit_id': d['unit_id'], 'src': g['src'], 'row': g['src_row'],
                                     'owner_or_broker': g['owner_or_broker'], 'phone': g['phone']})
-                d = dict(g); d['duplicate_of'] = winner['unit_id']; d['dupe_type'] = 'exact'
+                d['duplicate_of'] = winner['unit_id']; d['dupe_type'] = 'exact'
                 dupes.append(d)
             if merged_photos and not winner.get('photos'):
                 winner['photos'] = ','.join(sorted(p.strip() for p in merged_photos if p.strip()))
@@ -515,10 +521,37 @@ def dedupe(records):
                             near_dupe_pairs.append((winner['unit_id'], loser['unit_id'], loser['src'], loser['src_row']))
                             loser['duplicate_of'] = winner['unit_id']
                             loser['dupe_type'] = 'near'
+                            # FIX (Phase 2): the absorbing winner inherits the loser's
+                            # exact-group metadata so DUPLICATE_REPORT keeps the full
+                            # provenance chain after multi-level merges.
+                            inherited = (loser.get('dupe_sources') or []) + [{
+                                'unit_id': loser['unit_id'], 'src': loser['src'], 'row': loser['src_row'],
+                                'owner_or_broker': loser['owner_or_broker'], 'phone': loser['phone']}]
+                            winner['dupe_sources'] = (winner.get('dupe_sources') or []) + inherited
+                            winner['dupe_count'] = len(winner['dupe_sources'])
                             near_dupes.append(loser)
                             near_loser_ids.add(loser['unit_id'])
                             removed.add(loser['unit_id'])
     survivors = [r for r in kept if r['unit_id'] not in near_loser_ids]
+
+    # FIX (Phase 2): near-dupe chains can leave dangling references
+    # (a -> b, then b -> c leaves a -> b where b is itself a DUPLICATE).
+    # Resolve every duplicate_of transitively to the surviving canonical row.
+    by_id = {}
+    for r in survivors + dupes + near_dupes:
+        by_id.setdefault(r['unit_id'], r)
+    dup_like = [r for r in dupes + near_dupes]
+    for r in dup_like:
+        cur, seen, depth = r['duplicate_of'], {r['unit_id']}, 0
+        while cur and cur not in seen and depth < 16:
+            nxt = by_id.get(cur)
+            if nxt is None or not nxt.get('duplicate_of'):
+                break
+            seen.add(cur)
+            cur = nxt['duplicate_of']
+            depth += 1
+        if cur and cur not in seen:
+            r['duplicate_of'] = cur
     return survivors, dupes, near_dupes, near_dupe_pairs
 
 def assign_publish_status(r):

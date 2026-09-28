@@ -169,3 +169,34 @@ External credentials required (cannot be verified from repo): Supabase service k
 ---
 
 *Report produced as Phase 0 deliverable per the Master Execution Command. Next: `IMPLEMENTATION_ROADMAP.md` + `DATA_GAP_REPORT.md`, then Phase 1 data audit.*
+
+---
+
+## 12. PHASE 2 CORRECTIONS (2026-09-29, post-audit verification)
+
+Working through Phase 2/3 surfaced three corrections to this report — recorded
+here because the audit must stay honest:
+
+1. **B5-CI was a false positive.** The claimed "corrupted trigger
+   (`branches: ain]`)" in 6 workflow files does not exist in the files — a
+   bytewise check shows all six are `branches: [main]`. The `ain]` reading was
+   a terminal-rendering artifact (the escape sequence `[m` was consumed when
+   displaying the file). CI and deploy-supabase triggers were never broken.
+2. **B5 root cause inverted.** `match_listings_gemini` referencing
+   `embedding_768` was *correct as designed*: the two embedding generators
+   (`generate-supabase-embeddings.ts`, `wire-and-seed-supabase.mjs`) both write
+   768-dim Gemini vectors to that column. The actual defect was the **missing
+   `embedding_768` column** in every schema version, so every generator write
+   silently failed. Fixed in `20260929_013_master_inventory_activation.sql`.
+3. **Migration locations clarified.** 011/012 lived in
+   `apps/sierra-estates-realty/supabase/migrations/` (app-local), not the root
+   `supabase/migrations/`. Because the deploy-time runner prefers the root
+   directory, a full-repo checkout would **never apply 011/012** — they are
+   now consolidated into the root directory (renamed
+   `20260924_011_inventory_os_v2.sql` / `20260925_012_workflow_studio.sql`)
+   with identical app-local mirrors for sparse checkouts.
+4. **Phase-1 audit-trail bug (found during Phase 2 prep).** Exact-fingerprint
+   duplicate groups shared one `unit_id`, producing 2,013 self-referencing
+   `duplicate_of` entries plus 667 dangling chain references. Fixed in
+   `build_master_inventory.py`; CSV regenerated with globally unique row ids
+   and fully resolvable duplicate chains (0 self-refs, 0 dangling).

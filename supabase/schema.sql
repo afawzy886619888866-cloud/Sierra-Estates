@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS public.listings (
     longitude NUMERIC,
     raw_data JSONB DEFAULT '{}'::jsonb,
     embedding vector(1536),
+    embedding_768 vector(768),          -- Gemini gemini-embedding-001 target (see 013)
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -1717,6 +1718,8 @@ $$;
 
 -- ------------------------------------------------------------------------------
 -- 16. Gemini 768-Dimension Vector Search Function
+--    Targets embedding_768 (added in 013_master_inventory_activation — audit
+--    finding B5: the column the generators write to was missing from schema).
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION match_listings_gemini(
     query_embedding vector(768),
@@ -2244,3 +2247,36 @@ BEGIN
   EXCEPTION WHEN duplicate_object THEN NULL;
   END;
 END $$;
+
+-- ─── 49. Broker sessions (folded from infra/supabase/migrations, policy fixed) ──
+-- RAG conversation memory per client session. Policy is restricted to
+-- service_role (audit finding B6: the original infra/ version had no TO
+-- clause, making the table effectively public read/write).
+CREATE TABLE IF NOT EXISTS public.broker_sessions (
+    id              BIGSERIAL PRIMARY KEY,
+    session_id      TEXT UNIQUE NOT NULL,
+    messages        JSONB NOT NULL DEFAULT '[]',
+    profile         JSONB NOT NULL DEFAULT '{}',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_broker_sessions_session_id ON public.broker_sessions (session_id);
+CREATE INDEX IF NOT EXISTS idx_broker_sessions_updated    ON public.broker_sessions (updated_at DESC);
+
+CREATE OR REPLACE FUNCTION public.update_broker_session_ts()
+RETURNS TRIGGER AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS broker_sessions_updated ON public.broker_sessions;
+CREATE TRIGGER broker_sessions_updated
+  BEFORE UPDATE ON public.broker_sessions
+  FOR EACH ROW EXECUTE FUNCTION public.update_broker_session_ts();
+
+ALTER TABLE public.broker_sessions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "service_role_all" ON public.broker_sessions;
+CREATE POLICY "service_role_all" ON public.broker_sessions
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
