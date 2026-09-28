@@ -174,3 +174,8 @@ obsidian-store.json
 # ============================================================================
 .amphion/
 tools/claude-proxy/
+
+# App-dir migration copies are 100% build-generated (mirrored from
+# supabase/migrations/ at repo root by apps/sierra-estates-realty/scripts/
+# apply-pending-migrations.mjs prebuild step). Never edit or track them here.
+apps/sierra-estates-realty/supabase/migrations/*
