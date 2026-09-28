@@ -59,8 +59,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -207,8 +207,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       framer-motion:
         specifier: ^13.4.0
         version: 13.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -432,8 +432,8 @@ importers:
         specifier: ^2.8.5
         version: 2.8.6
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -478,8 +478,8 @@ importers:
         specifier: workspace:*
         version: link:../obsidian
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -497,8 +497,8 @@ importers:
         specifier: workspace:*
         version: link:../obsidian
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -531,8 +531,8 @@ importers:
         specifier: workspace:*
         version: link:../obsidian
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       ioredis:
         specifier: ^6.0.0
         version: 6.0.0
@@ -603,8 +603,8 @@ importers:
   packages/deepseek-harness:
     dependencies:
       dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
+        specifier: ^18.0.3
+        version: 18.0.3
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -3408,9 +3408,10 @@ packages:
   dompurify@3.4.13:
     resolution: {integrity: sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==}
 
-  dotenv@17.4.2:
-    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+  dotenv@18.0.3:
+    resolution: {integrity: sha512-/8CJTyL817qPnfbQrJgOEcrU3fDrJkRIoXBE566wHuvIXKOCHUZhPqGPbCPi9SogjdGnreF0TlvnTgK6J/8zpA==}
     engines: {node: '>=12'}
+    hasBin: true
 
   draco3d@1.5.7:
     resolution: {integrity: sha512-m6WCKt/erDXcw+70IJXnG7M3awwQPAsZvJGX5zY7beBqpELw6RDGkYVU0W43AFxye4pDZ5i2Lbyc/NNGqwjUVQ==}
@@ -8240,7 +8241,7 @@ snapshots:
 
   '@types/dotenv@8.2.3':
     dependencies:
-      dotenv: 17.4.2
+      dotenv: 18.0.3
 
   '@types/draco3d@1.4.10': {}
 
@@ -9181,7 +9182,7 @@ snapshots:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
-  dotenv@17.4.2: {}
+  dotenv@18.0.3: {}
 
   draco3d@1.5.7: {}
 
