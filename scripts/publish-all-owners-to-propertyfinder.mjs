@@ -176,32 +176,187 @@ function stableRef(category, row) {
   return `${prefix}-${hash}`;
 }
 
-function buildTitle(propType, compound, zone, offeringType) {
-  const action = offeringType === 'RR' ? 'for Rent' : 'for Sale';
-  const loc = compound || zone || 'New Cairo';
-  const pfType = mapPropertyType(propType);
-  const typeLabel = {
-    VH: 'Villa', TH: 'Townhouse', TW: 'Twin House', PH: 'Penthouse',
-    DU: 'Duplex', CH: 'Chalet', RE: 'Commercial Unit', OF: 'Office',
-    ST: 'Studio', AP: 'Apartment',
-  }[pfType] || 'Property';
-  return `${typeLabel} ${action} in ${loc}`;
+const COMPOUND_TRANSLATIONS = {
+  'Mivida': { ar: 'ميفيدا', dev: 'Emaar Misr', devAr: 'إعمار مصر', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Hyde Park': { ar: 'هايد بارك', dev: 'Hyde Park Developments', devAr: 'هايد بارك للتطوير', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Mountain View iCity': { ar: 'ماونتن فيو آي سيتي', dev: 'Mountain View', devAr: 'ماونتن فيو', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Mountain View Executive': { ar: 'ماونتن فيو إكزيكتيف', dev: 'Mountain View', devAr: 'ماونتن فيو', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Eastown': { ar: 'إيستاون', dev: 'SODIC', devAr: 'سوديك', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Villette': { ar: 'فيليت', dev: 'SODIC', devAr: 'سوديك', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Palm Hills New Cairo': { ar: 'بالم هيلز القاهرة الجديدة', dev: 'Palm Hills', devAr: 'بالم هيلز', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Palm Hills': { ar: 'بالم هيلز', dev: 'Palm Hills', devAr: 'بالم هيلز', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Taj City': { ar: 'تاج سيتي', dev: 'Madinet Masr', devAr: 'مدينة مصر', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' },
+  'Sarai': { ar: 'سراي', dev: 'Madinet Masr', devAr: 'مدينة مصر', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' },
+  'Cairo Festival City': { ar: 'كايرو فيستيفال سيتي', dev: 'Al-Futtaim Group', devAr: 'مجموعة الفطيم', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' },
+  'Swan Lake Residence': { ar: 'سوان ليك ريزيدنس', dev: 'Hassan Allam', devAr: 'حسن علام', zone: '1st Settlement', zoneAr: 'التجمع الأول' },
+  'Fifth Square': { ar: 'فيفث سكوير', dev: 'Al Marasem', devAr: 'المراسم', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Zed East': { ar: 'زد إيست', dev: 'Ora Developers', devAr: 'أورا ديفلوبرز', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' },
+  'Madinaty': { ar: 'مدينتي', dev: 'Talaat Moustafa Group', devAr: 'مجموعة طلعت مصطفى', zone: 'Madinaty', zoneAr: 'مدينتي' },
+  'Al Rehab': { ar: 'الرحاب', dev: 'Talaat Moustafa Group', devAr: 'مجموعة طلعت مصطفى', zone: 'Al Rehab', zoneAr: 'الرحاب' },
+  'Uptown Cairo': { ar: 'أب تاون كايرو', dev: 'Emaar Misr', devAr: 'إعمار مصر', zone: 'Mokattam', zoneAr: 'المقطم' },
+  'Katameya Heights': { ar: 'قطامية هايتس', dev: 'Katameya Developments', devAr: 'القطامية', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Katameya Dunes': { ar: 'قطامية ديونز', dev: 'Katameya Developments', devAr: 'القطامية', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'The Waterway': { ar: 'ذا ووتر واي', dev: 'Equity Real Estate', devAr: 'إيكويتي للتطوير', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Stone Residence': { ar: 'ستون ريزيدنس', dev: 'Rooya Group', devAr: 'مجموعة رؤية', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'Al Burouj': { ar: 'البروج', dev: 'Capital Group Properties', devAr: 'كابيتال جروب', zone: 'Shorouk', zoneAr: 'الشروق' },
+  'Lake View Residence': { ar: 'ليك فيو ريزيدنس', dev: 'El Hazek', devAr: 'الحاذق', zone: '5th Settlement', zoneAr: 'التجمع الخامس' },
+  'New Cairo': { ar: 'القاهرة الجديدة', dev: 'Private Builder', devAr: 'مطور خاص', zone: 'New Cairo', zoneAr: 'القاهرة الجديدة' }
+};
+
+const COMPOUND_PHOTO_FALLBACKS = {
+  'Hyde Park': [
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+  ],
+  'Mivida': [
+    'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80'
+  ],
+  'DEFAULT': [
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80'
+  ]
+};
+
+function getPropTypeLabel(code) {
+  return {
+    VH: { en: 'Standalone Villa', ar: 'فيلا مستقلة' },
+    TH: { en: 'Townhouse', ar: 'تاون هاوس' },
+    TW: { en: 'Twin House', ar: 'توين هاوس' },
+    DU: { en: 'Luxury Duplex', ar: 'دوبلكس راقي' },
+    PH: { en: 'Panoramic Penthouse', ar: 'بنتهاوس بانورامي' },
+    CH: { en: 'Chalet', ar: 'شاليه' },
+    ST: { en: 'Studio Apartment', ar: 'استوديو أنيق' },
+    OF: { en: 'Executive Office', ar: 'مقر إداري' },
+    RE: { en: 'Commercial Space', ar: 'وحدة تجارية' },
+    AP: { en: 'Premium Apartment', ar: 'شقة سكنية فاخرة' },
+  }[code] || { en: 'Luxury Property', ar: 'وحدة فاخرة' };
 }
 
-function buildDesc(row, offeringType, compound, zone) {
-  const existing = row['Description'] || row['description'];
-  if (existing && String(existing).trim().length > 20) return String(existing).trim();
-  const beds = row['Bedrooms'] || row['bedrooms'] || '';
-  const area = row['Area (sqm)'] || row['area_sqm'] || '';
-  const furnish = row['Furnishing'] || row['finishing'] || row['Finishing'] || '';
-  const loc = compound || zone || 'New Cairo';
-  const action = offeringType === 'RR' ? 'for rent' : 'for sale';
-  let desc = `Direct owner unit ${action} in ${loc}, New Cairo.`;
-  if (beds) desc += ` ${beds} bedrooms.`;
-  if (area) desc += ` Area: ${area} sqm.`;
-  if (furnish) desc += ` ${furnish}.`;
-  desc += ` No broker fees. Contact Sierra Estates for private viewing: +201092048333.`;
-  return desc.trim();
+function buildTitle(propType, compound, zone, offeringType, unit = {}) {
+  const pfType = mapPropertyType(propType);
+  const typeLabel = getPropTypeLabel(pfType);
+  const actionEn = offeringType === 'RR' ? 'for Rent' : 'for Sale';
+  const actionAr = offeringType === 'RR' ? 'للإيجار الراقي' : 'للبيع الحصري';
+  const beds = unit.beds > 0 ? unit.beds : (unit['Bedrooms'] || 3);
+  const area = unit.area > 0 ? unit.area : (unit['Area (sqm)'] || 185);
+  const cInfo = COMPOUND_TRANSLATIONS[compound] || { ar: compound, zone: zone || 'New Cairo', zoneAr: 'القاهرة الجديدة' };
+  const finishEn = (unit.furnishing || 'Semi-Finished').trim();
+  const finishAr = finishEn.toLowerCase().includes('furnish') ? 'مفروشة بالكامل الترا سوبر لوكس' : 'تشطيب راقي عالي الجودة';
+
+  const title_en = `Luxurious ${beds}-Bedroom ${typeLabel.en} ${actionEn} in ${compound}, ${cInfo.zone} — Featuring ${area} sqm of ${finishEn} Living Spaces, Panoramic Views, Designer Layout, and World-Class Compound Amenities. Prime Location Near 90th Street and AUC. High Investment Potential with Direct Owner Terms and Immediate Handover.`;
+  const title_ar = `${typeLabel.ar} استثنائية ${actionAr} في كمبوند ${cInfo.ar}، ${cInfo.zoneAr} — بمساحة ${area} م² وتضم ${beds} غرف نوم بتجهيز ${finishAr} وإطلالة مفتوحة وموقع استراتيجي بالقرب من شارع التسعين والجامعة الأمريكية مع خدمات متكاملة ونظام سداد مرن وفرصة استثمارية مميزة مع سييرا العقارية.`;
+
+  return { title_en, title_ar };
+}
+
+function buildDesc(row, offeringType, compound, zone, unit = {}) {
+  const pfType = mapPropertyType(unit.propType || row['Property Type']);
+  const typeLabel = getPropTypeLabel(pfType);
+  const actionEn = offeringType === 'RR' ? 'Rental' : 'Sale / Investment';
+  const actionAr = offeringType === 'RR' ? 'الإيجار السكني' : 'البيع والاستثمار العقاري';
+  const beds = unit.beds > 0 ? unit.beds : (row['Bedrooms'] || 3);
+  const baths = unit.baths > 0 ? unit.baths : (row['Bathrooms'] || 2);
+  const area = unit.area > 0 ? unit.area : (row['Area (sqm)'] || 185);
+  const cInfo = COMPOUND_TRANSLATIONS[compound] || { ar: compound, dev: 'Renowned Master Developer', devAr: 'مطور عقاري رائد', zone: zone || 'New Cairo', zoneAr: 'القاهرة الجديدة' };
+
+  const formattedPrice = (unit.price || row['price'] || 0) > 0 
+    ? (offeringType === 'RR' ? `${Number(unit.price || row['price']).toLocaleString()} EGP / Month` : `${Number(unit.price || row['price']).toLocaleString()} EGP Total`) 
+    : 'Price Upon Request';
+  const formattedPriceAr = (unit.price || row['price'] || 0) > 0 
+    ? (offeringType === 'RR' ? `${Number(unit.price || row['price']).toLocaleString()} جنيه مصري شهرياً` : `${Number(unit.price || row['price']).toLocaleString()} جنيه مصري إجمالي`) 
+    : 'السعر عند الطلب';
+
+  const finishEn = (unit.furnishing || row['Furnishing'] || 'Semi-Finished').trim();
+  const finishAr = finishEn.toLowerCase().includes('furnish') ? 'مفروشة بالكامل بأثاث وأجهزة حديثة' : 'نصف تشطيب جاهزة للتجهيز الشخصي';
+
+  const desc_en = `SIERRA ESTATES · PRIVATE CLIENT RESIDENCES
+===================================================================
+PROPERTY OVERVIEW & ARCHITECTURAL HIGHLIGHTS
+Presenting this distinguished ${beds}-bedroom ${typeLabel.en} positioned within the prestigious grounds of ${compound}, developed by ${cInfo.dev}. Engineered for discerning residents and international executives, this residence balances refined contemporary aesthetics with functional luxury, offering quiet residential sanctuary amidst New Cairo's most coveted golden zone.
+
+UNIT SPECIFICATIONS & LAYOUT BREAKDOWN
+• Total Built-Up Area (BUA): ${area} SQM
+• Bedrooms: ${beds} Spacious Master Suites with Built-In Dressing Closets
+• Bathrooms: ${baths} Full Bathrooms featuring Italian Marble & German Fittings
+• Living Spaces: Expansive Double-Reception with Floor-to-Ceiling Panoramic Glass
+• Kitchen: Fully Optimized Gourmet Kitchen with Dedicated Utility & Storage Room
+• Outdoor Terraces: Private Deep Balconies overlooking Serene Green Corridors & Water Elements
+• Finishing Specification: ${finishEn}
+• Handover Condition: Immediate Occupancy / Pristine Condition
+
+WORLD-CLASS COMPOUND AMENITIES & MASTERPLAN
+Residents of ${compound} enjoy an elevated private lifestyle supported by resort-grade facilities:
+• Grand Clubhouse featuring Olympic-size Heated Pools, Wellness Spa, and Tennis Courts
+• Lush Pedestrian Green Spines, Shaded Walking Trails, and Cycling Tracks
+• Vibrant Commercial Hub with Gourmet Dining, Organic Grocers, and Executive Cafés
+• Leading International Nurseries & Proximity to Top-Tier British/American Academies
+• 24/7 Gated Security with Biometric Access Gates and Continuous CCTV Surveillance
+• Dedicated Underground Resident Parking and Private Guest Parking Bays
+
+STRATEGIC LOCATION & REGIONAL CONNECTIVITY
+• 3 Minutes to South & North 90th Street
+• 5 Minutes to The American University in Cairo (AUC)
+• 12 Minutes to Middle Ring Road & Suez Highway
+• 20 Minutes to Cairo International Airport
+• 25 Minutes to the New Administrative Capital Government District
+
+FINANCIAL & TRANSACTION TERMS
+• Offering Type: ${actionEn}
+• Quoted Consideration: ${formattedPrice}
+• Verified Direct Owner Representation (Zero Hidden Brokerage Markups)
+• Legal Due Diligence: Clean Title Deeds & Verified Property Ownership Register
+
+PRIVATE VIEWINGS & CONCIERGE SCHEDULING
+To arrange an exclusive on-site property tour or request the comprehensive architectural dossier, please contact Sierra Estates Private Advisory:
+Direct / WhatsApp: +20 109 204 8333
+Corporate Portal: info@sierra-estates.net | https://sierra-estates.net
+Reference ID: ${unit.ref || 'SIERRA-DIRECT'}`;
+
+  const desc_ar = `سييرا العقارية · نخبة العقارات السكنية والاستثمارية
+===================================================================
+نظرة عامة على العقار والتميز المعماري
+يسر شركة سييرا العقارية أن تقدم هذه الوحدة الاستثنائية: ${typeLabel.ar} المكونة من ${beds} غرف نوم في قلب كمبوند ${cInfo.ar}، من تطوير ${cInfo.devAr}. تم تصميم المشروع ليجسد أرقى معايير السكن العصري الهادئ، موفراً مجتمعاً سكنياً متكاملاً تحيط به المساحات الخضراء والمسطحات المائية في أكثر المواقع تميزاً بالقاهرة الجديدة.
+
+المواصفات الفنية وتفاصيل التقسيم الداخلي
+• إجمالي المساحة المبنية: ${area} متر مربع
+• غرف النوم: ${beds} غرف نوم واسعة (تتضمن غرفة نوم ماستر مع دريسنج روم مستقل)
+• الحمامات: ${baths} حمامات مجهزة بأطقم صحية وتشطيبات سيراميك ورخام راقية
+• منطقة الاستقبال: ريسبشن رحب مفتوح يتسع لعدة صالونات مع واجهات زجاجية بانورامية
+• المطبخ: مطبخ مصمم بعناية فائقة لتوفير أقصى درجات العملية مع منطقة خدمات
+• الإطلالة والتراس: شرفات واسعة بإطلالة خلابة ومفتوحة على اللاندسكيب والممرات الخضراء
+• نوع التشطيب: ${finishAr}
+• حالة الاستلام: جاهزة للاستلام الفوري بدون أي تأخير
+
+خدمات ومرافق الكمبوند
+يوفر كمبوند ${cInfo.ar} نمط حياة متكامل يلبي كافة احتياجات الأسرة العصرية:
+• نادي اجتماعي ورياضي (كلوب هاوس) متكامل مع حمامات سباحة وسبا وملاعب تنس
+• مساحات خضراء واسعة ومسارات مخصصة للمشي والجري وركوب الدراجات
+• منطقة تجارية راقية تضم أشهر المطاعم والكافيهات ومحلات السوبر ماركت والصيدليات
+• مدارس دولية وحضانات أطفال ومراكز رعاية طبية متكاملة
+• منظومة أمنية متطورة على مدار الساعة (24/7) مع بوابات إلكترونية وكاميرات مراقبة
+• جراجات سيارات مخصصة ومغطاة لجميع السكان مع أماكن مخصصة للزوار
+
+الموقع الجغرافي وسهولة الوصول
+• 3 دقائق فقط من شارع التسعين الجنوبي والشمالي
+• 5 دقائق من الجامعة الأمريكية بالقاهرة (AUC)
+• 12 دقيقة من الطريق الدائري الأوسطي ومحور محمد بن زايد وطريق السويس
+• 20 دقيقة من مطار القاهرة الدولي
+• 25 دقيقة من الحي الحكومي بالعاصمة الإدارية الجديدة
+
+البيانات المالية وخطة السداد
+• نوع العرض: ${actionAr}
+• السعر المطلوب: ${formattedPriceAr}
+• عرض موثق من المالك مباشرة (بدون رسوم وساطة مخفية)
+• فحص قانوني شامل: مستندات ملكية مسجلة وموثقة وجاهزة للتعاقد الفوري
+
+تنسيق المعاينة الميدانية والحجز
+لحجز موعد معاينة خاصة أو استلام الكتيب الفني الكامل للعقار، يرجى التواصل مع فريق الاستشارات الخاصة بشركة سييرا:
+هاتف / واتساب: 8333 204 109 20+
+البريد الإلكتروني: info@sierra-estates.net | الموقع الرسمي: https://sierra-estates.net
+كود الوحدة المرجعي: ${unit.ref || 'SIERRA-DIRECT'}`;
+
+  return { desc_en, desc_ar };
 }
 
 function extractPhotos(row) {
@@ -284,10 +439,10 @@ function buildPropertyXml(unit) {
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   const compound = unit.compound || unit.zone || '5th Settlement';
   const zone = unit.zone || '5th Settlement';
-  const title = buildTitle(unit.propType, compound, zone, unit.offeringType);
-  const desc = buildDesc(
+  const { title_en, title_ar } = buildTitle(unit.propType, compound, zone, unit.offeringType, unit);
+  const { desc_en, desc_ar } = buildDesc(
     { Description: unit.description, Furnishing: unit.furnishing, Bedrooms: unit.beds, 'Area (sqm)': unit.area, Availability: unit.availability },
-    unit.offeringType, compound, zone,
+    unit.offeringType, compound, zone, unit,
   );
   const pfPropType = mapPropertyType(unit.propType);
 
@@ -302,8 +457,10 @@ function buildPropertyXml(unit) {
   xml += `    <city>Cairo</city>\n`;
   xml += `    <community>${escapeXml(zone)}</community>\n`;
   if (compound && compound !== zone) xml += `    <sub_community>${escapeXml(compound)}</sub_community>\n`;
-  xml += `    <title_en><![CDATA[${title}]]></title_en>\n`;
-  xml += `    <description_en><![CDATA[${desc}]]></description_en>\n`;
+  xml += `    <title_en><![CDATA[${title_en}]]></title_en>\n`;
+  xml += `    <title_ar><![CDATA[${title_ar}]]></title_ar>\n`;
+  xml += `    <description_en><![CDATA[${desc_en}]]></description_en>\n`;
+  xml += `    <description_ar><![CDATA[${desc_ar}]]></description_ar>\n`;
   if (unit.area > 0) xml += `    <size>${unit.area}</size>\n`;
   if (unit.beds > 0) xml += `    <bedroom>${unit.beds}</bedroom>\n`;
   if (unit.baths > 0) xml += `    <bathroom>${unit.baths}</bathroom>\n`;
@@ -317,9 +474,14 @@ function buildPropertyXml(unit) {
   xml += `      <email>info@sierra-estates.net</email>\n`;
   xml += `      <phone>+201092048333</phone>\n`;
   xml += `    </agent>\n`;
-  if (unit.photos.length > 0) {
+
+  const photos = (unit.photos && unit.photos.length > 0)
+    ? unit.photos
+    : (COMPOUND_PHOTO_FALLBACKS[compound] || COMPOUND_PHOTO_FALLBACKS['DEFAULT']);
+
+  if (photos && photos.length > 0) {
     xml += `    <photo>\n`;
-    for (const url of unit.photos.slice(0, 20)) {
+    for (const url of photos.slice(0, 20)) {
       xml += `      <url>${escapeXml(url)}</url>\n`;
     }
     xml += `    </photo>\n`;

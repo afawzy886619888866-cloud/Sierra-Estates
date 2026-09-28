@@ -16,8 +16,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
 
-const CARTO_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const CARTO_ATTRIB = '&copy; OpenStreetMap &copy; CARTO';
+const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const NEW_CAIRO: [number, number] = [30.03, 31.53];
 
 const STATUS_COLOR: Record<InventoryStatus, string> = {
@@ -146,7 +146,7 @@ export default function InventoryMap({
       scrollWheelZoom={false}
       style={{ height: '100%', width: '100%' }}
     >
-      <TileLayer url={CARTO_LIGHT} attribution={CARTO_ATTRIB} maxZoom={18} />
+      <TileLayer url={OSM_TILES} attribution={OSM_ATTRIB} maxZoom={18} />
       {placed.map((u) => (
         <Marker
           key={u.id}

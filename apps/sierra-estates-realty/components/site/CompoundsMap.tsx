@@ -602,11 +602,11 @@ export default function CompoundsMap({
       });
       mapRef.current = map;
 
-      // Voyager luxury tile layer (clean, crisp, and high-contrast)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO &copy; Sierra Estates',
+      // Standard OpenStreetMap tile layer (reliable, high-contrast, no API key required)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
-        subdomains: 'abcd',
+        subdomains: 'abc',
       }).addTo(map);
 
       layerRef.current = L.layerGroup().addTo(map);

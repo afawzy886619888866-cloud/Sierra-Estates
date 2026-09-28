@@ -769,10 +769,12 @@ export function LeadsPage({ T }: { T: any }) {
   const [importModal, setImportModal] = useState(false);
   const [leads, setLeads] = useState(LEADS_DATA);
   const [loading, setLoading] = useState(false);
+  const [pfSyncing, setPfSyncing] = useState(false);
+  const [pfSyncResult, setPfSyncResult] = useState<{created?:number;updated?:number;skipped?:number;error?:string;ts?:string}|null>(null);
 
   const fetchLeads = useCallback(() => {
     setLoading(true);
-    fetch('/api/admin/leads?limit=100')
+    fetch('/api/admin/leads?limit=200')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.leads && data.leads.length > 0) {
@@ -782,6 +784,28 @@ export function LeadsPage({ T }: { T: any }) {
       .catch((err) => console.warn('[AdminPortal] Leads fetch failed:', err))
       .finally(() => setLoading(false));
   }, []);
+
+  const syncPFLeads = useCallback(async () => {
+    setPfSyncing(true);
+    setPfSyncResult(null);
+    try {
+      const res = await fetch('/api/cron/sync-leads', {
+        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'sierra-cron'}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPfSyncResult({ ...data.summary, ts: new Date().toLocaleTimeString() });
+        // Re-fetch leads after successful sync
+        fetchLeads();
+      } else {
+        setPfSyncResult({ error: data.error || 'Sync failed', ts: new Date().toLocaleTimeString() });
+      }
+    } catch (e: any) {
+      setPfSyncResult({ error: e.message || 'Network error', ts: new Date().toLocaleTimeString() });
+    } finally {
+      setPfSyncing(false);
+    }
+  }, [fetchLeads]);
 
   useEffect(() => {
     fetchLeads();
@@ -831,6 +855,51 @@ export function LeadsPage({ T }: { T: any }) {
 
   return (
     <div className="fade-up">
+      {/* Property Finder Status Banner */}
+      <div style={{background:'linear-gradient(135deg,rgba(200,150,26,0.12) 0%,rgba(30,136,217,0.08) 100%)',border:'1px solid rgba(200,150,26,0.3)',borderRadius:14,padding:'14px 18px',marginBottom:16,display:'flex',flexWrap:'wrap',gap:12,alignItems:'center'}}>
+        <div style={{flex:1,minWidth:200}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            <span style={{fontSize:16}}>🏢</span>
+            <span style={{fontWeight:700,fontSize:13,color:'var(--gold)'}}>Property Finder · Live Feed</span>
+            <span className="chip chip-green" style={{fontSize:9}}><span className="pulse-dot">●</span> Published</span>
+          </div>
+          <div style={{fontSize:11,color:'var(--tx-m)',fontFamily:'JetBrains Mono'}}>
+            1,762 units · Bilingual EN/AR · Photos included
+          </div>
+          <div style={{fontSize:10,color:'var(--tx-f)',marginTop:4}}>
+            Feed URL: <a href="/api/feeds/property-finder" target="_blank" rel="noopener noreferrer" style={{color:'var(--gold)',textDecoration:'none'}}>/api/feeds/property-finder</a>
+            {' '}·{' '}
+            <a href="/feeds/propertyfinder-feed.xml" target="_blank" rel="noopener noreferrer" style={{color:'var(--tx-m)',textDecoration:'none'}}>Static XML</a>
+          </div>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'flex-end'}}>
+          <button
+            className="btn btn-gold"
+            onClick={syncPFLeads}
+            disabled={pfSyncing}
+            style={{display:'flex',alignItems:'center',gap:6,fontSize:11,padding:'7px 14px'}}
+            title="Pull latest leads from Property Finder API and sync to CRM"
+          >
+            {pfSyncing ? '⏳ Syncing…' : '🔄 Sync PF Leads Now'}
+          </button>
+          {pfSyncResult && (
+            <div style={{fontSize:10,fontFamily:'JetBrains Mono',textAlign:'right'}}>
+              {pfSyncResult.error ? (
+                <span style={{color:'var(--crimson)'}}>✗ {pfSyncResult.error}</span>
+              ) : (
+                <span style={{color:'var(--emerald)'}}>✓ +{pfSyncResult.created ?? 0} new · {pfSyncResult.updated ?? 0} updated · {pfSyncResult.skipped ?? 0} skipped @ {pfSyncResult.ts}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {loading && (
+        <div style={{fontSize:11,color:'var(--tx-f)',marginBottom:10,fontFamily:'JetBrains Mono',display:'flex',alignItems:'center',gap:6}}>
+          <span className="pulse-dot" style={{color:'var(--gold)'}}>●</span> Loading leads from Supabase…
+        </div>
+      )}
+
       {/* Quick Source Pill Filters */}
       <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
         <button 

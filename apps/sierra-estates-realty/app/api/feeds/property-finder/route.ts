@@ -6,6 +6,8 @@
  * broker-listed sale units with a price. Falls back to the committed
  * snapshot so the feed never returns fabricated demo listings.
  */
+import fs from 'fs';
+import path from 'path';
 import { NextResponse } from 'next/server';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
 import snapshot from '@/lib/inventory/snapshot.json';
@@ -79,6 +81,23 @@ async function loadUnits(): Promise<FeedUnit[]> {
 }
 
 export async function GET() {
+  // Check for pre-generated high-fidelity Property Finder XML feed with 1,762 rich ads
+  const candidatePaths = [
+    path.join(process.cwd(), 'public', 'feeds', 'propertyfinder-feed.xml'),
+    path.join(process.cwd(), 'apps', 'sierra-estates-realty', 'public', 'feeds', 'propertyfinder-feed.xml'),
+  ];
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      const xml = fs.readFileSync(p, 'utf8');
+      return new NextResponse(xml, {
+        headers: {
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=300, s-maxage=600',
+        },
+      });
+    }
+  }
+
   const units = await loadUnits();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list>\n`;
