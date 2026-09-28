@@ -63,7 +63,8 @@ async function main() {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<list last_update="${new Date().toISOString()}">\n`;
 
   for (const u of allPhotoUnits) {
-    const ref = u['Reference Code'] || `SE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Use Unit_Code as stable reference — prevents PF treating re-runs as new ads.
+    const ref = u['Reference Code'] || u['Unit_Code'] || `SE-${String(u['Unit_Code'] || '').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 8) || Math.random().toString(36).substring(2, 9).toUpperCase()}`;
     const offeringType = mapOfferingType(u['Deal Type']);
     const propType = mapPropertyType(u['Property Type']);
     const price = Number(u['Price (EGP)']) || 0;
@@ -138,7 +139,8 @@ async function main() {
   const cleanStr = (s) => `"${String(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
 
   for (const u of allPhotoUnits) {
-    const ref = u['Reference Code'] || `SE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Use Unit_Code as stable reference — prevents PF treating re-runs as new ads.
+    const ref = u['Reference Code'] || u['Unit_Code'] || `SE-${String(u['Unit_Code'] || '').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 8) || Math.random().toString(36).substring(2, 9).toUpperCase()}`;
     const photoUrls = String(u['Photo URLs'] || '').split(/[\n,;]+/).map(s => s.trim()).filter(s => s.startsWith('http'));
 
     csvRows.push([
