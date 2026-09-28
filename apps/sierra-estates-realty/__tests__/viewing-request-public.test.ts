@@ -73,7 +73,7 @@ describe('POST /api/viewing-requests (public form)', () => {
       fullName: 'Test Client',
       phone: '+201001234567',
       source: 'website',
-      status: 'Viewing Requested',
+      status: 'viewing_scheduled', // Phase 10: canonical value (m016)
       pipelineStage: 'viewing',
     });
 

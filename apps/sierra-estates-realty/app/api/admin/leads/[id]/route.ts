@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
+import { getRecord, insertRecord, updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
 import { logger } from '@/lib/logger';
 
@@ -34,9 +34,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json();
     const patch = leadPatchToColumns(mapSpaToLeadPatch(body));
 
+    // Phase 10 transition audit: capture the stage BEFORE the write so the
+    // actor-context record (audit_logs) complements the DB trigger that logs
+    // into orchestration_history.
+    const previous = await getRecord('leads', id).catch(() => null);
+
     const updated = await updateRecord('leads', id, { ...patch, updatedAt: new Date().toISOString() });
     if (!updated) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+
+    if (patch.pipelineStage !== undefined && previous && previous.pipelineStage !== undefined
+        && String(previous.pipelineStage) !== String(patch.pipelineStage)) {
+      await insertRecord('audit_logs', {
+        actorUid: authResult.uid ?? null,
+        action: 'lead.stage_change',
+        target: `leads:${id}`,
+        before: { stage: previous.pipelineStage },
+        after: { stage: patch.pipelineStage },
+        createdAt: new Date().toISOString(),
+      }).catch((err: unknown) => {
+        logger.warn(`[admin/leads] audit_logs write failed: ${err instanceof Error ? err.message : String(err)}`);
+      });
     }
 
     return NextResponse.json({ success: true, lead: mapLeadToSpa(id, rowToLeadDoc(updated)) });

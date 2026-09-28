@@ -130,9 +130,11 @@ CREATE TABLE IF NOT EXISTS public.leads (
     email TEXT,
     channel TEXT DEFAULT 'whatsapp' CHECK (channel IN ('whatsapp', 'telegram', 'web', 'phone', 'referral', 'property_finder')),
     lead_type TEXT DEFAULT 'buyer' CHECK (lead_type IN ('buyer', 'renter', 'investor', 'seller', 'owner')),
-    -- 'Viewing Requested' is written by /api/leads/request-viewing; the rest
-    -- are the canonical pipeline values.
-    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture', 'Viewing Requested')),
+    -- Canonical status values only (Phase 10 migration 016: the odd free-form
+    -- 'Viewing Requested' value was normalized to 'viewing_scheduled' and the
+    -- CHECK narrowed). leads.status is a DERIVED coarse projection of
+    -- pipeline_stage — kept in sync by trigger_leads_status_sync.
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture')),
     target_compound TEXT,
     target_property_type TEXT,
     budget_min NUMERIC(15, 2) DEFAULT 0,
@@ -343,6 +345,71 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ─── Phase 10 (migration 016): CRM pipeline unification ─────────────────────
+-- pipeline_stage is the canonical vocabulary; leads.status is a derived coarse
+-- projection kept in sync by trigger_leads_status_sync, and every stage/status
+-- change is audited into orchestration_history (reused table, per roadmap).
+CREATE OR REPLACE FUNCTION public.lead_status_for_stage(p_stage TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT CASE p_stage
+        WHEN 'inbound'   THEN 'new'
+        WHEN 'qualify'   THEN 'qualified'
+        WHEN 'engage'    THEN 'contacted'
+        WHEN 'proposal'  THEN 'contacted'
+        WHEN 'viewing'   THEN 'viewing_scheduled'
+        WHEN 'negotiate' THEN 'negotiating'
+        WHEN 'reserve'   THEN 'negotiating'
+        WHEN 'contract'  THEN 'negotiating'
+        WHEN 'handover'  THEN 'negotiating'
+        WHEN 'closed-won' THEN 'won'
+        ELSE 'new'
+    END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_lead_status_from_stage()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+    IF NEW.pipeline_stage IS DISTINCT FROM OLD.pipeline_stage THEN
+        NEW.status := public.lead_status_for_stage(NEW.pipeline_stage);
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.audit_lead_stage_transition()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NEW.pipeline_stage IS DISTINCT FROM OLD.pipeline_stage
+       OR NEW.status IS DISTINCT FROM OLD.status THEN
+        INSERT INTO public.orchestration_history (
+            parent_table, parent_id, stage, status, engine_version, details
+        ) VALUES (
+            'leads',
+            NEW.id,
+            COALESCE(NEW.pipeline_stage, NEW.status, 'unknown'),
+            'transition',
+            'phase10-crm-unification',
+            jsonb_build_object(
+                'from', jsonb_build_object('stage', OLD.pipeline_stage, 'status', OLD.status),
+                'to',   jsonb_build_object('stage', NEW.pipeline_stage, 'status', NEW.status),
+                'at',   to_jsonb(NOW())
+            )
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_profiles') THEN
@@ -362,6 +429,12 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_memory') THEN
         CREATE TRIGGER trigger_update_memory BEFORE UPDATE ON public.unified_memory FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_leads_status_sync') THEN
+        CREATE TRIGGER trigger_leads_status_sync BEFORE UPDATE ON public.leads FOR EACH ROW EXECUTE FUNCTION public.sync_lead_status_from_stage();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_leads_stage_audit') THEN
+        CREATE TRIGGER trigger_leads_stage_audit AFTER UPDATE ON public.leads FOR EACH ROW EXECUTE FUNCTION public.audit_lead_stage_transition();
     END IF;
 END $$;
 
@@ -637,9 +710,60 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     source TEXT DEFAULT 'website'
         CHECK (source IN ('website', 'whatsapp', 'admin', 'property-finder', 'concierge')),
     calendar_link TEXT,
+    -- Phase 9 (migration 015): client-survey capability token, minted when
+    -- an agent marks the viewing completed. The public survey endpoint
+    -- validates it server-side (service-role lookup, token = capability);
+    -- no anon-visible rows are needed.
+    survey_token TEXT,
+    survey_sent_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_viewings_survey_token
+    ON public.viewings(survey_token)
+    WHERE survey_token IS NOT NULL;
+
+-- ─── Viewing feedback (Phase 9: post-viewing sales report + client survey
+-- + manager combined review — one row per viewing). ─────────────────────
+CREATE TABLE IF NOT EXISTS public.viewing_feedback (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    viewing_id TEXT NOT NULL REFERENCES public.viewings(id) ON DELETE CASCADE,
+    lead_id TEXT REFERENCES public.leads(id) ON DELETE SET NULL,
+    -- Sales-side post-viewing report (filled by the showing agent).
+    unit_accuracy TEXT
+        CHECK (unit_accuracy IN ('exact', 'minor_diff', 'major_diff', 'misrepresented')),
+    client_reaction TEXT
+        CHECK (client_reaction IN ('very_positive', 'positive', 'neutral', 'negative')),
+    price_reaction TEXT
+        CHECK (price_reaction IN ('accepted', 'slightly_high', 'too_high', 'not_discussed')),
+    objections JSONB DEFAULT '[]'::jsonb,   -- [{ category, note? }]
+    interest_level TEXT
+        CHECK (interest_level IN ('hot', 'warm', 'cold', 'lost')),
+    next_action TEXT
+        CHECK (next_action IN ('second_viewing', 'offer', 'renegotiate_price',
+                               'follow_up', 'nurture', 'archive')),
+    notes TEXT,
+    submitted_by TEXT,
+    submitted_at TIMESTAMPTZ,
+    -- Client survey (token-gated public submission; NULL until submitted).
+    client_rating INT CHECK (client_rating BETWEEN 1 AND 5),
+    client_comment TEXT,
+    would_recommend BOOLEAN,
+    survey_submitted_at TIMESTAMPTZ,
+    -- Manager combined-analysis review.
+    review_status TEXT DEFAULT 'pending_review'
+        CHECK (review_status IN ('pending_review', 'approved', 'needs_changes')),
+    manager_notes TEXT,
+    reviewed_by TEXT,
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    UNIQUE (viewing_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_viewing_feedback_lead ON public.viewing_feedback(lead_id);
+CREATE INDEX IF NOT EXISTS idx_viewing_feedback_review_status ON public.viewing_feedback(review_status);
 
 -- ─── Concierge selections (S8 curated portfolios shared with a lead) ─────────
 -- Reachable by link at /concierge/{leadId}, so readable without an account.
@@ -920,6 +1044,13 @@ BEGIN
     -- /api/leads/request-viewing is public but writes through the service role.
     DROP POLICY IF EXISTS "viewings_staff_access" ON public.viewings;
     CREATE POLICY "viewings_staff_access" ON public.viewings
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Phase 9 feedback rows: staff-only on purpose — the client survey is
+    -- submitted through the server-side token-gated endpoint (the survey
+    -- token on viewings IS the capability), so no anon policy exists.
+    DROP POLICY IF EXISTS "viewing_feedback_staff_access" ON public.viewing_feedback;
+    CREATE POLICY "viewing_feedback_staff_access" ON public.viewing_feedback
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     -- A concierge portfolio was previously readable by `anon` with USING (TRUE).

@@ -37,6 +37,7 @@ import {
   WorkflowStudioView,
   MemoryBrainView,
   CairoPlazaAdminView,
+  ViewingsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -2486,6 +2487,7 @@ function AdminApp() {
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
       case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={setTab}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
+      case 'viewings':return <ViewingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;

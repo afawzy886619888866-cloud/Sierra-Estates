@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       if (existing[0]) {
         leadId = existing[0].id;
         await updateRecord('leads', leadId, {
-          status: 'Viewing Requested',
+          status: 'viewing_scheduled', // Phase 10: canonical value (m016 normalized the legacy free-form spelling)
           pipelineStage: 'viewing',
           updatedAt: now,
         });
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         ...(data.visitorEmail ? { email: data.visitorEmail } : {}),
         channel: 'web',
         source: 'website',
-        status: 'Viewing Requested',
+        status: 'viewing_scheduled', // Phase 10: canonical value (m016 normalized the legacy free-form spelling)
         pipelineStage: 'viewing',
         via: `Viewing request for ${data.propertyCode}`,
         createdAt: now,

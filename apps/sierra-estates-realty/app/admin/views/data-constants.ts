@@ -162,6 +162,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
   {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+  {id:'viewings',label:T('lang')==='ar'?'المعاينات والتقييم':'Viewings & Feedback',icon:'👁️',section:T('operations'),badge:'P9',badgeCls:'nb-green'},
   {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('operations'),badge:'PRO',badgeCls:'nb-green'},
   {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'whatsapp_chat_import',label:T('lang')==='ar'?'استيراد واتساب':'WA Chat Import',icon:'📲',section:T('operations'),badge:'AI',badgeCls:'nb-green'},

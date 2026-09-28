@@ -262,3 +262,53 @@ The following changes remove every code path that could present invented propert
 - **Files:** app/api/viewing-requests/route.ts (rewritten), app/(site)/property/[id]/PropertyDetail.tsx.
 - **DB impact:** new rows in `viewings` + `leads` only. **Risk:** low. **Rollback:** git revert.
 - **Verification:** __tests__/viewing-request-public.test.ts 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.
+
+---
+
+## 2026-10-01 — Phase 9 (POST-VIEWING FEEDBACK)
+
+### Change 1 — viewing feedback layer (migration 015, additive)
+
+- **Change:** `public.viewing_feedback` — ONE row per viewing (UNIQUE(viewing_id)) with three sides: sales report (unit accuracy, client reaction, price reaction, objections[], interest level, next action, notes), token-gated client survey (rating 1-5, comment, would-recommend), manager combined review (pending_review → approved | needs_changes). `viewings` gains `survey_token` + `survey_sent_at` (48-hex capability token minted at completion, unique partial index). RLS staff-only (no anon policy — the token IS the capability; the public endpoint validates it server-side).
+- **Reason:** Roadmap Phase 9: post-viewing feedback forms + combined analysis view for manager approval — the loop after Phase 8's viewing lifecycle had no capture layer.
+- **Files:** supabase/migrations/20261001_015_viewing_feedback.sql (+ force-tracked app copy, add-both rule), supabase/schema.sql baseline + app mirror.
+- **DB impact:** next deploy applies 015 (additive; new table + nullable columns only). **Risk:** low. **Rollback:** revert migration file (additive-only; drop optional).
+
+### Change 2 — feedback APIs (admin upsert/review + public survey)
+
+- **Change:** `GET /api/admin/viewings` lists viewings with the feedback row merged (status filter). `PATCH /api/admin/viewings/[id]` enforces LEGAL lifecycle transitions only (pending_approval→scheduled|cancelled; scheduled→completed|cancelled|no_show; terminals locked), audits each move to audit_logs with the acting admin; completing mints the survey token and enqueues the REAL WhatsApp survey message (`enqueueWhatsAppJob`, purpose 'viewing-followup'). `PUT /api/admin/viewings/[id]/feedback` upserts the sales report (zod vocabularies mirrored from the SQL CHECKs), resets manager review on re-submit, and nudges the lead's CRM state (offer/renegotiate→negotiate, second_viewing→viewing; hot/lost→hot flag) — the migration-016 trigger audits that stage change. `PATCH` = manager review (approve / needs_changes + notes). Public `GET/POST /api/viewing-feedback` is token-gated: GET returns survey context (first name only — no phone/email PII); POST accepts one submission per token (409 on repeat / non-completed viewing).
+- **Reason:** three-sided feedback loop with zero fabricated data; every write audited.
+- **Files:** app/api/admin/viewings/route.ts, app/api/admin/viewings/[id]/route.ts, app/api/admin/viewings/[id]/feedback/route.ts, app/api/viewing-feedback/route.ts, lib/server/viewing-feedback-shared.ts (single vocabulary source shared by SQL/tests/UI), lib/models/schema.ts (purpose union + 'viewing-followup').
+- **DB impact:** rows in viewing_feedback / whatsapp_queue / audit_logs. **Risk:** low. **Rollback:** git revert.
+
+### Change 3 — admin ViewingsView + public survey page
+
+- **Change:** Admin "Viewings & Feedback" board (nav: Operations): real-data table (visitor, unit, source, status chips, feedback/review indicators), filter chips with counts, Schedule/Complete/Cancel/No-show actions, and the combined-analysis modal (① sales report form ② client survey read-only ③ manager approve/request-changes) — honest loading/error/empty states, zero seeded demo rows. Public `/viewing-feedback?token=…` page: star rating + comment + recommend toggle, honest invalid/expired/already-submitted states, noindex.
+- **Files:** app/admin/views/ViewingsView.tsx (new), app/admin/views/index.ts, app/admin/AdminPortal.tsx (nav + case), app/admin/views/data-constants.ts, app/(site)/viewing-feedback/{page.tsx,FeedbackForm.tsx}, app/site-styles/viewing-feedback.css.
+- **DB impact:** none beyond the APIs above. **Risk:** low. **Rollback:** git revert.
+
+---
+
+## 2026-10-01 — Phase 10 (CRM PIPELINE UNIFICATION)
+
+### Change 1 — single status vocabulary + transition audit (migration 016)
+
+- **Change:** `pipeline_stage` declared THE canonical lead vocabulary (4 overlapping ones existed). `leads.status` becomes a derived coarse projection: `lead_status_for_stage()` pure mapping + BEFORE UPDATE trigger `trigger_leads_status_sync` (fires only when the stage actually changes; manual lost/nurture edits survive until the next stage move). Legacy free-form `'Viewing Requested'` rows NORMALIZED to `'viewing_scheduled'` BEFORE the CHECK is swapped to the clean 8-value list. Every stage/status change now writes a transition record into `orchestration_history` (reused table per roadmap) via SECURITY DEFINER trigger `trigger_leads_stage_audit` with pinned search_path.
+- **Reason:** Roadmap Phase 10 "single status vocabulary across the 4 overlapping ones; transition audit".
+- **Files:** supabase/migrations/20261001_016_crm_pipeline_unification.sql (+ app copy, add-both rule), supabase/schema.sql baseline + app mirror (check + functions + triggers + comments).
+- **DB impact:** next deploy applies 016: UPDATE normalize (Viewing Requested→viewing_scheduled) + CHECK swap + 2 triggers. **Risk:** low (normalize precedes swap; DROP/ADD constraint is metadata-only). **Rollback:** revert migration file; data value change is semantic-preserving.
+
+### Change 2 — canonical writers + actor-context audit
+
+- **Change:** all 3 writers of the legacy value (`/api/viewing-requests`, `/api/leads/request-viewing` ×2) now write `'viewing_scheduled'`. Lead PATCH handler records `lead.stage_change` in audit_logs with the ACTING ADMIN as actor (complements the DB trigger's row-level record with actor context). `WhatsAppMessagePurpose` extended with 'viewing-followup'.
+- **Files:** app/api/viewing-requests/route.ts, app/api/leads/request-viewing/route.ts, app/api/admin/leads/[id]/route.ts, lib/models/schema.ts, __tests__/viewing-request-public.test.ts (assertion updated to the canonical contract).
+- **DB impact:** none (values). **Risk:** low. **Rollback:** git revert.
+
+### Change 3 — lead automation timers (cron)
+
+- **Change:** `lib/server/lead-timers.ts` pure decision logic: per-stage SLAs (viewing 2d tightest → handover/contract 14d), staleness from REAL leads.updatedAt, open-followup dedupe, overdue flip selection. `GET /api/cron/lead-timers` (CRON_SECRET-guarded): flips overdue followups, creates deduped call/WhatsApp followups for stale leads quoting the real stage + real days, writes ONE honest summary activity (zero-run says 0). Deliberately NOT registered in vercel.json — the Hobby tier allows only the 2 existing crons; scheduling consolidates in Phase 11 (EC2/GHA), endpoint is invocable externally meanwhile.
+- **Reason:** Roadmap Phase 10 "lead automation timers".
+- **Files:** lib/server/lead-timers.ts, app/api/cron/lead-timers/route.ts.
+- **DB impact:** followups rows (pending→overdue flips; new timer rows) + one activities row per run. **Risk:** low (deduped, bounded reads 500). **Rollback:** git revert; delete stray followups createdBy='lead-timers'.
+
+- **Verification (Phase 9+10):** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 111/111 suites, 1,192/1,192 tests (new: phase9-viewing-feedback 30 tests, phase10-crm-pipeline 12 tests); migrations 015/016 blob-identical app mirrors verified by test; repo-wide walk asserts no app writer of the legacy status remains.
