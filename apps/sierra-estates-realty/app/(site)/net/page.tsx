@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import SiteShell from '@/components/site/SiteShell';
 import ListingNetMap from '@/components/site/ListingNetMap';
-import '../site-styles/net-radar.css';
+import '../../site-styles/net-radar.css';
 
 export const metadata: Metadata = {
   title: 'شبكة اصطياد الوحدات ورادار التوافر الفوري | Sierra Estates',
