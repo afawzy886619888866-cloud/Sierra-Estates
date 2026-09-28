@@ -267,12 +267,13 @@ async function push(options) {
   const converted = rows.map(toListing);
   const invalid = converted.filter((item) => item.error);
   if (invalid.length) {
-    throw new Error(`${invalid.length} invalid row(s). First error: ${invalid[0].error}`);
+    console.warn(`⚠️  Skipping ${invalid.length} invalid row(s) (missing Compound/Property Type/Deal Type). First: ${invalid[0].error}`);
   }
-  
+  const valid = converted.filter((item) => !item.error);
+
   // Deduplicate by ref_id so Postgres ON CONFLICT never sees the same key twice in one statement
   const dedupedMap = new Map();
-  for (const item of converted) {
+  for (const item of valid) {
     dedupedMap.set(item.ref_id, item);
   }
   const listings = Array.from(dedupedMap.values());
@@ -284,12 +285,15 @@ async function push(options) {
   const supabase = requireSupabase();
   const BATCH_SIZE = 250;
   let totalUpserted = 0;
-  for (let i = 0; i < listings.length; i += BATCH_SIZE) {
-    const chunk = listings.slice(i, i + BATCH_SIZE);
+  // Strip `status` from the upsert so existing archived/reserved records in Supabase
+  // are not silently re-activated by the default 'available' fallback.
+  const safeListings = listings.map(({ status, ...rest }) => rest);
+  for (let i = 0; i < safeListings.length; i += BATCH_SIZE) {
+    const chunk = safeListings.slice(i, i + BATCH_SIZE);
     const { error } = await supabase.from('listings').upsert(chunk, { onConflict: 'ref_id' });
     if (error) throw new Error(`Supabase listings push failed at batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
     totalUpserted += chunk.length;
-    console.log(`Upserted ${totalUpserted}/${listings.length} listings...`);
+    console.log(`Upserted ${totalUpserted}/${safeListings.length} listings...`);
   }
   console.log(`Successfully upserted ${totalUpserted} listing(s) into Supabase.`);
 }
