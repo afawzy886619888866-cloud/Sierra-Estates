@@ -17,7 +17,12 @@
           "text-size-adjust",
           "text-size-adjust: 100%",
           "-webkit-text-size-adjust",
-          "-webkit-text-size-adjust: 100%"
+          "-webkit-text-size-adjust: 100%",
+          "user-select",
+          "user-select: none",
+          "border-color: color-mix(in srgb, var(--gold-luxury) 55%, transparent)",
+          "border: 1px solid color-mix(in srgb, var(--node-c) 40%, transparent)",
+          "outline: 2px solid color-mix(in srgb, var(--gold-luxury) 70%, transparent)"
         ]
       }
     ],
@@ -33,13 +38,53 @@
     "no-inline-styles": "off"
   },
   "ignoredUrls": [
-    { "domain": ".*\\.min\\..*", "hints": ["all"] },
-    { "domain": ".*/_next/.*", "hints": ["all"] },
-    { "domain": ".*/\\.next/.*", "hints": ["all"] },
-    { "domain": ".*/node_modules/.*", "hints": ["all"] },
-    { "domain": ".*/dist/.*", "hints": ["all"] },
-    { "domain": ".*/out/.*", "hints": ["all"] },
-    { "domain": ".*/deploy/.*", "hints": ["all"] },
-    { "domain": ".*/public/client-page/.*", "hints": ["all"] }
+    {
+      "domain": ".*\\.min\\..*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/_next/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/\\.next/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/node_modules/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/dist/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/out/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/deploy/.*",
+      "hints": [
+        "all"
+      ]
+    },
+    {
+      "domain": ".*/public/client-page/.*",
+      "hints": [
+        "all"
+      ]
+    }
   ]
 }
