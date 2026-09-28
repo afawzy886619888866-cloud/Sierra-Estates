@@ -176,7 +176,11 @@ obsidian-store.json
 tools/claude-proxy/
 
 # NOTE: apps/sierra-estates-realty/supabase/ is intentionally gitignored, but
-# migrations 011/012 inside it are force-tracked (git add -f): the turbo-cached
-# build replay lstats them at their app-dir paths — untracking them breaks
-# Vercel builds with ENOENT. Canonical copies live in supabase/migrations/;
-# the prebuild mirror overwrites the app copies each build (no drift).
+# ALL files in supabase/migrations/ inside it are FORCE-TRACKED (git add -f):
+# the turbo-cached build replay lstats them at their app-dir paths, and any
+# traced-but-absent file breaks Vercel builds with ENOENT (observed for both
+# 011/012 and the mirrored 2025*/2026* files). Canonical copies live in
+# supabase/migrations/ at repo root; the prebuild mirror overwrites these app
+# copies with root content at every build, so no drift is possible.
+# IF YOU ADD A MIGRATION: commit it in BOTH supabase/migrations/ (canonical)
+# AND apps/sierra-estates-realty/supabase/migrations/ (git add -f).
