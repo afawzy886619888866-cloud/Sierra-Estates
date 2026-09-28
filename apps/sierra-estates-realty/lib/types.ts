@@ -175,6 +175,11 @@ export interface MatchResult {
   listing: Listing;
   score: number;           // 0-100
   reasons: string[];
+  /** Hard constraints the listing violates (empty for normal results). */
+  hardConstraintViolations: string[];
+  /** True ⇒ returned only because compliant results < limit; explicitly
+   *  flagged per the master spec ("alternatives" may not look normal). */
+  alternative?: boolean;
 }
 
 /* Dashboard KPIs returned by /api/admin/dashboard */

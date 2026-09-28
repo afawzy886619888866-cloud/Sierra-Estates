@@ -211,3 +211,34 @@ The following changes remove every code path that could present invented propert
 - **Change:** `admin-views.test.tsx` + `admin-views-enhanced.test.tsx` previously asserted the fabrications ('585', '98.4%', '19 Channels Live') — updated to assert Conversion Rate card, honest '—'/empty states, and the registry-derived 15-channel count.
 - **Files:** __tests__/admin-views.test.tsx, __tests__/admin-views-enhanced.test.tsx.
 - **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 106/106 suites, 1,126/1,126 tests (--maxWorkers=2).
+
+---
+
+## 2026-09-29 — Phase 5 + 6 + 7 (hard-constraint matching engine, bot profile gap-fill, client-journey test)
+
+### Change 1 — hard-constraint matching engine (P0, Phase 6)
+
+- **Change:** scoring extracted from the route into a pure, unit-tested module `lib/server/match-scoring.ts`. Budget is now a **ceiling** (was soft "±25% full marks" — a 50%-over-budget listing could rank #1 as a normal result), minimum bedrooms a **hard floor** (a 2BR could previously outrank a 4BR for a 4BR ask). Violators can ONLY surface as explicitly flagged alternatives (`alternative: true` + `hardConstraintViolations[]`), and only when compliant results cannot fill the limit. Soft ranking weights preserved: budget fit 40 / beds 20 / type 15 / zone 15 / AI 10. `/api/matches` route now delegates to the module; `MatchResult` type carries the new fields; `/matches` page renders an explicit "Alternative — violates hard constraints" banner on flagged results.
+- **Reason:** Master-spec Phase 6 acceptance: "never returns a hard-constraint violator except explicitly flagged 'alternatives'; every result traceable to a DB row."
+- **Files:** lib/server/match-scoring.ts (new), app/api/matches/route.ts, lib/types.ts, app/(site)/matches/MatchesPage.tsx.
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert.
+
+### Change 2 — PropertyMatchmaker hard-contract parity (agents-core)
+
+- **Change:** `ClientProfile` extended with dealType/furnishing/moveInDate/nationality/specialRequirements (Phase 5 set); `MatchResult` gains `hardConstraintViolations` + `alternative`; `rankProperties` returns compliant-first, flagged-alternatives only when short.
+- **Files:** packages/agents-core/src/property-matcher.ts.
+- **DB impact:** none. **Risk:** low (backward-compatible signature). **Rollback:** git revert.
+
+### Change 3 — bot qualification profile gap-fill (Phase 5)
+
+- **Change:** WhatsAppConversationalService Gemini extraction now captures the full master-spec profile — minBedrooms, furnishing, moveInDate, nationality, specialRequirements — with an explicit hard-constraint vs soft-preference split and "never invent unstated values" instructions; all stored into `aiProfiling.preferences`.
+- **Reason:** previously only compound/unitType/budget/urgency were captured; four required profile fields were silently dropped.
+- **Files:** lib/services/WhatsAppConversationalService.ts.
+- **DB impact:** none (JSONB field). **Risk:** low. **Rollback:** git revert. Live E2E pending Gemini key.
+
+### Change 4 — Phase 7 first real client test (personas A–E)
+
+- **Change:** new suite `__tests__/client-journey-personas.test.ts` runs the five scripted personas (exact / vague / international-EN / no-match / contradictory 4BR-villa-Madinaty-≤50k) through the REAL engine against the REAL 8,486-unit master inventory CSV — zero invented fixtures. Asserts: compliant results satisfy budget cap + bedroom floor; violators only ever appear flagged; the client-facing set (PUBLISHABLE = 0 today) is represented honestly. Findings + acceptance recorded in `docs/CLIENT_TEST_REPORT.md` and `tests/client-journey/README.md`.
+- **Files:** __tests__/client-journey-personas.test.ts (new), __tests__/match-scoring.test.ts (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
+- **DB impact:** none. **Risk:** none (tests). **Rollback:** delete files.
+- **Verification:** tsc 0 errors; Jest 108/108 suites, 1,143/1,143 tests.

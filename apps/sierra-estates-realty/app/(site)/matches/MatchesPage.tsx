@@ -25,6 +25,8 @@ interface MatchResult {
   listing: Record<string, any>;
   score: number;
   reasons: string[];
+  hardConstraintViolations?: string[];
+  alternative?: boolean;
 }
 
 function toCardListing(l: Record<string, any>, i: number): CardListing {
@@ -234,6 +236,19 @@ export default function MatchesPage() {
                     {r.score}% {isAr ? 'مطابقة' : 'match'}
                   </span>
                   <PropertyCard p={toCardListing(r.listing, i)} i={i} />
+                  {r.alternative && (
+                    <div
+                      style={{
+                        marginTop: 8, padding: '8px 10px', borderRadius: 10,
+                        background: 'rgba(197,90,17,0.10)',
+                        border: '1px solid rgba(197,90,17,0.35)',
+                        fontSize: 11.5, fontWeight: 600, color: '#c75a4e',
+                      }}
+                    >
+                      ⚠ {isAr ? 'خيار بديل — يخالف بعض الشروط الأساسية:' : 'Alternative — violates hard constraints:'}{' '}
+                      {(r.hardConstraintViolations || []).join(' · ')}
+                    </div>
+                  )}
                   {r.reasons?.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                       {r.reasons.slice(0, 4).map((reason) => (
