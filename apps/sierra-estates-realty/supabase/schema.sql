@@ -624,6 +624,19 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     location TEXT,
     reminder_sent BOOLEAN DEFAULT FALSE,
     notes TEXT,
+    -- Phase 8 (migration 014): request-capture fields — the canonical table
+    -- for ALL viewing flows (public site form, concierge, agent scheduling).
+    property_code TEXT,
+    visitor_name TEXT,
+    visitor_phone TEXT,
+    visitor_email TEXT,
+    preferred_date DATE,
+    preferred_time TEXT,
+    number_of_people INT,
+    message TEXT,
+    source TEXT DEFAULT 'website'
+        CHECK (source IN ('website', 'whatsapp', 'admin', 'property-finder', 'concierge')),
+    calendar_link TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );

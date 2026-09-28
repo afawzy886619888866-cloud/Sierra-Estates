@@ -242,3 +242,23 @@ The following changes remove every code path that could present invented propert
 - **Files:** __tests__/client-journey-personas.test.ts (new), __tests__/match-scoring.test.ts (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
 - **DB impact:** none. **Risk:** none (tests). **Rollback:** delete files.
 - **Verification:** tsc 0 errors; Jest 108/108 suites, 1,143/1,143 tests.
+
+---
+
+## 2026-09-29 — Phase 8 (VIEWING: table consolidation + public request flow)
+
+### Change 1 — viewing tables consolidated (migration 014, non-destructive)
+
+- **Change:** `public.viewings` is now the single canonical viewing table: gained the request-capture fields it lacked (`property_code`, `visitor_name/phone/email`, `preferred_date/time`, `number_of_people`, `message`, `source`, `calendar_link`). Legacy `viewing_requests` rows copied in (status pending→pending_approval, confirmed→scheduled); legacy `viewing_appointments` rows copied in (had zero writers — dead schema); both old tables FROZEN with deprecation comments, NOT dropped (full rollback safety). Idempotent, additive-only.
+- **Reason:** Roadmap Phase 8 "consolidate 3 viewing tables → one"; three overlapping tables with three status vocabularies made the journey untrackable.
+- **Files:** supabase/migrations/20260930_014_viewing_consolidation.sql (+ force-tracked app copy, add-both rule), supabase/schema.sql baseline + app mirror.
+- **DB impact:** next deploy applies 014 (additive; no data loss; old tables retained). **Risk:** low. **Rollback:** revert migration file — all data remains in old tables.
+
+### Change 2 — public viewing-request flow wired (PROPERTY → REQUEST → SLOT → CONFIRM)
+
+- **Change:** `/api/viewing-requests` POST repurposed from an orphaned admin-guarded endpoint (zero UI consumers) to the PUBLIC form: rate-limited, zod-validated (future date, phone format), upserts the visitor as a lead by phone (source website, `pipelineStage: 'viewing'`, status 'Viewing Requested'), writes ONE canonical `viewings` row (pending_approval), fires a Telegram ops alert (fire-and-forget), and returns confirmation links that carry the REAL chosen slot. GET stays admin-guarded and now reads the canonical table.
+- **Change:** PropertyDetail replaces the fabricated `.ics` download — the old block shipped a HARDCODED PAST DATE (2026-09-01) to clients — with a real "Request a Viewing" form (date/time slot, name, phone) that POSTs the endpoint, then offers WhatsApp confirmation + Google Calendar add with the real date. The WhatsApp deep-link CTA remains as a secondary channel.
+- **Reason:** Master-spec journey stage VIEWING had no entry point: the property page could not create a DB record at all, and the only public viewing route required an existing leadId (concierge-only).
+- **Files:** app/api/viewing-requests/route.ts (rewritten), app/(site)/property/[id]/PropertyDetail.tsx.
+- **DB impact:** new rows in `viewings` + `leads` only. **Risk:** low. **Rollback:** git revert.
+- **Verification:** __tests__/viewing-request-public.test.ts 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.

@@ -73,6 +73,53 @@ export default function PropertyDetail({ id }: { id: string }) {
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // ── Phase 8: real viewing request flow (PROPERTY → REQUEST → SLOT →
+  // CONFIRM). The old block here downloaded an .ics with a HARDCODED PAST
+  // DATE (2026-09-01) — a fabricated slot. This form writes a real
+  // public.viewings row via /api/viewing-requests and only then offers
+  // calendar/WhatsApp confirmation for the REAL chosen date.
+  const [showViewingForm, setShowViewingForm] = useState(false);
+  const [viewingDate, setViewingDate] = useState('');
+  const [viewingTime, setViewingTime] = useState('morning');
+  const [visitorName, setVisitorName] = useState('');
+  const [visitorPhone, setVisitorPhone] = useState('');
+  const [viewingSubmitting, setViewingSubmitting] = useState(false);
+  const [viewingResult, setViewingResult] = useState<
+    { ok: true; whatsappConfirmUrl: string; calendarLink: string; date: string } | { ok: false; error: string } | null
+  >(null);
+
+  const submitViewingRequest = async () => {
+    if (!viewingDate || !visitorName.trim() || !visitorPhone.trim()) {
+      setViewingResult({ ok: false, error: isAr ? 'يرجى إدخال الاسم والهاتف والتاريخ.' : 'Please provide your name, phone, and a preferred date.' });
+      return;
+    }
+    setViewingSubmitting(true);
+    setViewingResult(null);
+    try {
+      const res = await fetch('/api/viewing-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyCode: p?.code || String(id),
+          visitorName: visitorName.trim(),
+          visitorPhone: visitorPhone.trim(),
+          preferredDate: viewingDate,
+          preferredTime: viewingTime,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setViewingResult({ ok: true, whatsappConfirmUrl: data.whatsappConfirmUrl, calendarLink: data.calendarLink, date: viewingDate });
+      } else {
+        setViewingResult({ ok: false, error: data.error || `Request failed (HTTP ${res.status})` });
+      }
+    } catch (e: unknown) {
+      setViewingResult({ ok: false, error: e instanceof Error ? e.message : 'Network error' });
+    } finally {
+      setViewingSubmitting(false);
+    }
+  };
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
   const openLightbox = (idx: number) => {
@@ -542,37 +589,55 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <FileText className="i" style={{ width: 14, height: 14 }} />
                   <span>{isAr ? 'تحميل البروشور (PDF)' : 'Download PDF Brochure'}</span>
                 </button>
+                {/* Phase 8 — real viewing request flow (replaces the old
+                    hardcoded-date .ics download, which fabricated a slot) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const icsContent = [
-                      'BEGIN:VCALENDAR',
-                      'VERSION:2.0',
-                      'PRODID:-//Sierra Estates//VIP Viewing//EN',
-                      'BEGIN:VEVENT',
-                      `SUMMARY:VIP Viewing: ${p.code} (${p.type} in ${p.cmp})`,
-                      `DESCRIPTION:Private property walkthrough scheduled with ${p.agent} (Sierra Estates). Contact: +201092048333`,
-                      `LOCATION:${p.cmp}, ${p.zone}, New Cairo`,
-                      'DTSTART:20260901T100000Z',
-                      'DTEND:20260901T110000Z',
-                      'END:VEVENT',
-                      'END:VCALENDAR',
-                    ].join('\r\n');
-                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', `sierra-viewing-${p.code}.ics`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="btn btn-ghost"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
+                  onClick={() => setShowViewingForm((v) => !v)}
+                  className="btn btn-navy"
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, marginBottom: showViewingForm ? 6 : 8 }}
                 >
                   <Calendar className="i" style={{ width: 14, height: 14 }} />
-                  <span>{isAr ? 'حفظ الموعد في التقويم (.ics)' : 'Add to Calendar (.ics)'}</span>
+                  <span>{isAr ? 'طلب موعد معاينة' : 'Request a Viewing'}</span>
                 </button>
+                {showViewingForm && (
+                  <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {viewingResult?.ok ? (
+                      <>
+                        <p style={{ fontSize: 12.5, color: '#0f9d76', fontWeight: 700, margin: 0 }}>
+                          {isAr ? `✓ تم استلام طلبك لموعد ${viewingResult.date} — سيتواصل الفريق للتأكيد.` : `✓ Request received for ${viewingResult.date} — our team will confirm shortly.`}
+                        </p>
+                        <a className="btn btn-pri" href={viewingResult.whatsappConfirmUrl} target="_blank" rel="noopener noreferrer" style={{ width: '100%', justifyContent: 'center', fontSize: 12, background: '#25D366', borderColor: '#25D366', color: '#fff' }}>
+                          {isAr ? 'تأكيد عبر واتساب' : 'Confirm via WhatsApp'}
+                        </a>
+                        <a className="btn btn-ghost" href={viewingResult.calendarLink} target="_blank" rel="noopener noreferrer" style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}>
+                          <Calendar className="i" style={{ width: 14, height: 14 }} />
+                          <span>{isAr ? 'أضف إلى تقويم جوجل' : 'Add to Google Calendar'}</span>
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        {viewingResult && !viewingResult.ok && (
+                          <p style={{ fontSize: 12, color: '#c75a4e', margin: 0 }} role="alert">⚠ {viewingResult.error}</p>
+                        )}
+                        <input type="date" value={viewingDate} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setViewingDate(e.target.value)} aria-label={isAr ? 'التاريخ المفضل' : 'Preferred date'} style={{ fontSize: 12 }} />
+                        <select value={viewingTime} onChange={(e) => setViewingTime(e.target.value)} aria-label={isAr ? 'الوقت المفضل' : 'Preferred time'} style={{ fontSize: 12 }}>
+                          <option value="morning">{isAr ? 'صباحاً (10ص - 12م)' : 'Morning (10:00–12:00)'}</option>
+                          <option value="afternoon">{isAr ? 'ظهراً (12م - 3م)' : 'Afternoon (12:00–15:00)'}</option>
+                          <option value="sunset">{isAr ? 'العصر (3م - 6م)' : 'Late afternoon (15:00–18:00)'}</option>
+                        </select>
+                        <input type="text" value={visitorName} onChange={(e) => setVisitorName(e.target.value)} placeholder={isAr ? 'الاسم' : 'Your name'} aria-label={isAr ? 'الاسم' : 'Your name'} style={{ fontSize: 12 }} maxLength={100} />
+                        <input type="tel" value={visitorPhone} onChange={(e) => setVisitorPhone(e.target.value)} placeholder={isAr ? 'رقم الهاتف / واتساب' : 'Phone / WhatsApp'} aria-label={isAr ? 'رقم الهاتف' : 'Phone number'} style={{ fontSize: 12 }} maxLength={20} />
+                        <button type="button" className="btn btn-gold" onClick={submitViewingRequest} disabled={viewingSubmitting} style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}>
+                          {viewingSubmitting ? (isAr ? 'جاري الإرسال…' : 'Submitting…') : isAr ? 'إرسال طلب المعاينة' : 'Send viewing request'}
+                        </button>
+                        <p style={{ fontSize: 10.5, color: 'var(--muted)', margin: 0 }}>
+                          {isAr ? 'يُسجَّل الطلب في نظامنا ويصل تنبيه فوري لفريق العمليات.' : 'Creates a real request in our system and instantly alerts our operations team.'}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.cmp} ${p.zone || 'New Cairo'} Egypt`)}`}
                   target="_blank"
