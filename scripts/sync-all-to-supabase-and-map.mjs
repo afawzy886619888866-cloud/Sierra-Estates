@@ -249,11 +249,13 @@ async function main() {
     const whatsapp = String(r['WhatsApp Direct'] || '').trim() || (contactPhone ? `https://wa.me/${contactPhone.replace(/[^\d]/g, '')}` : null);
     const sourceHeritage = String(r['Source Heritage'] || 'Master Workbook').trim();
 
-    // Unique ref_id
-    let refId = idCode;
-    if (!refId || refId.length < 3 || refId.toUpperCase() === 'NONE' || refId.toUpperCase() === 'NULL') {
+    // Unique ref_id distinguishing deal type (prevents Rent and Sale of the same unit overwriting each other)
+    let refId = (idCode && idCode.length >= 3 && !['NONE', 'NULL', 'UNDEFINED'].includes(idCode.toUpperCase()))
+      ? `${idCode}-${dealType.toUpperCase()}`
+      : '';
+    if (!refId) {
       const hashInput = `${compound}|${propType}|${dealType}|${priceNum}|${areaNum}|${contactPhone || idx}`;
-      refId = `SE-${createHash('sha256').update(hashInput).digest('hex').slice(0, 12).toUpperCase()}`;
+      refId = `SE-${createHash('sha256').update(hashInput).digest('hex').slice(0, 12).toUpperCase()}-${dealType.toUpperCase()}`;
     }
 
     const title = `${propType} in ${compound} (${dealType.toUpperCase()})`;
