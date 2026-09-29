@@ -4,6 +4,7 @@ import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
+import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -232,6 +233,14 @@ export async function POST(req: NextRequest) {
       // 3. Fall back to standard Conversational AI for Direct Messages (ECC Memory)
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
+
+      // MANDATORY Cairo Plaza notice: any auto-reply that discusses (or was
+      // prompted by a message discussing) Cairo Plaza El-Mataria carries the
+      // official Booking & Contracting steps verbatim at the bottom —
+      // announcement/DISCLAIMER-POLICY.md. Exact text, never altered.
+      if (replyText && (mentionsCairoPlaza(message) || mentionsCairoPlaza(replyText))) {
+        replyText = withCairoPlazaNotice(replyText);
+      }
       
       // Attempt Outbound Meta Dispatch if configured
       if (replyText && sender) {
