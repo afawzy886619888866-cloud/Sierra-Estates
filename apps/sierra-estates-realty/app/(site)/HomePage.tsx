@@ -37,11 +37,8 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
-// Excel sheet modal is heavy (table + lead form) — load on demand only.
-const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
-  ssr: false,
-});
-
+// Flag-pin press now opens the compact in-map units deck rendered by
+// CompoundsMap itself — no fullscreen modal needed on the homepage.
 const COMPOUND_PICKS = ['Hyde Park', 'Mivida', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City', 'Al Rehab', 'Madinaty'];
 
 const AI_TOOLS = [
@@ -136,11 +133,6 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
-  // Flag-pin press → open the compound's Excel sheet (ALL units, fetched from /api/inventory).
-  const [sheetModal, setSheetModal] = useState<{ open: boolean; compound: string | null }>({
-    open: false,
-    compound: null,
-  });
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -597,10 +589,6 @@ export default function HomePage() {
                 setSelectedMapCompound(name);
                 setSearch((prev) => ({ ...prev, compound: name }));
               }}
-              onOpenSheet={(cpd) => {
-                setSelectedMapCompound(cpd);
-                setSheetModal({ open: true, compound: cpd });
-              }}
               showControls={true}
               filterCompound={search.compound}
               filterPrice={search.price}
@@ -619,13 +607,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Flag-pin press → ALL units for the compound in the Excel sheet */}
-          <CompoundExcelSheetModal
-            isOpen={sheetModal.open}
-            onClose={() => setSheetModal((prev) => ({ ...prev, open: false }))}
-            compoundName={sheetModal.compound}
-            isAr={isAr}
-          />
+          {/* Flag-pin press → compact in-map units deck (rendered inside CompoundsMap) */}
 
           {/* Synchronized Properties Deck for Active Compound */}
           {selectedMapCompound && (

@@ -293,10 +293,6 @@ export default function CompoundsPage() {
                 featured={featured}
                 selectedName={selected}
                 onSelectAction={setSelected}
-                onOpenSheet={(cpd) => {
-                  setSheetModalCompound(cpd);
-                  setSheetModalOpen(true);
-                }}
               />
             </div>
             <div className="intel" id="intel-panel">

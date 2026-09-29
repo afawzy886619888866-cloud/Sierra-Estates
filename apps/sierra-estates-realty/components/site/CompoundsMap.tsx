@@ -16,11 +16,17 @@ import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
 import { RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
 import SmartFilterBar from '@/components/site/SmartFilterBar';
+import CompoundUnitsDeck from '@/components/site/CompoundUnitsDeck';
 import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
 } from '@/lib/site/smart-search';
+
+/** Two-letter flag code for a compound (matches the map pin badge). */
+function compoundFlagCode(name: string): string {
+  return name.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toLowerCase() || '·';
+}
 
 export interface MapCompound {
   n: string;
@@ -443,10 +449,14 @@ export default function CompoundsMap({
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
+  const [selectedUnitType, setSelectedUnitType] = useState<string>('');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
+  // Flag-press sheet: compact Excel-style units deck fitted INSIDE the map
+  // deck area (map hidden behind a solid panel while open).
+  const [sheetCompound, setSheetCompound] = useState<string | null>(null);
 
   // Fetch full live inventory and segment aggregates (marker tooltips,
   // legend counts and the flag-press Excel sheet all read from this).
@@ -528,9 +538,25 @@ export default function CompoundsMap({
         }
       }
 
+      // 5. Unit-type filter — a compound stays visible when the live
+      // inventory holds at least one unit of that type inside it. When the
+      // inventory payload has not arrived yet, keep every compound visible
+      // (never exclude on missing evidence).
+      if (selectedUnitType && inventoryData?.units) {
+        const t = selectedUnitType.toLowerCase();
+        const target = c.n.toLowerCase().trim();
+        const hasType = inventoryData.units.some((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
+          const pt = String(u.propertyType || u.type || '').toLowerCase();
+          return Boolean(pt) && (pt.includes(t) || t.includes(pt));
+        });
+        if (!hasType) return false;
+      }
+
       return true;
     });
-  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName]);
+  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName, selectedUnitType, inventoryData]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -594,8 +620,7 @@ export default function CompoundsMap({
         // Two-letter flag pin — the masterplan stays clean: NO compound names
         // on the map. Pressing the flag opens the Excel sheet modal with ALL
         // units for that compound (live inventory + master sheet).
-        const flagCode =
-          c.n.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toLowerCase() || '·';
+        const flagCode = compoundFlagCode(c.n);
         const flagBg = isSelected ? '#071523' : isFeat ? '#0a382b' : '#14283d';
         const flagBorder = isSelected
           ? '2px solid #dfad3a'
@@ -656,12 +681,14 @@ export default function CompoundsMap({
           zIndexOffset: isSelected ? 1000 : isFeat ? 700 : 100,
         });
 
-        // Flag press → select (intel panel / search sync) AND open the Excel
-        // sheet modal with every unit for this compound. No Leaflet popup —
-        // the masterplan itself is the interface.
+        // Flag press → select (intel panel / search sync) AND open the
+        // compact Excel-style units deck fitted to the map area (map hidden
+        // while open). No Leaflet popup — the masterplan itself is the
+        // interface.
         marker.on('click', () => {
           handleSelect?.(c.n);
           onOpenSheet?.(c.n);
+          setSheetCompound(c.n);
         });
 
         // Render Masterplan Boundary Polygon (if available)
@@ -720,6 +747,13 @@ export default function CompoundsMap({
     };
   }, [ready, filteredCompounds, featured, selectedName, handleSelect, onOpenSheet]);
 
+  // Close the sheet when a different compound is selected externally
+  useEffect(() => {
+    if (sheetCompound && selectedName && sheetCompound !== selectedName) {
+      setSheetCompound(selectedName);
+    }
+  }, [selectedName, sheetCompound]);
+
 
   // Handle external selection & smooth zoom
   useEffect(() => {
@@ -752,6 +786,7 @@ export default function CompoundsMap({
     setSelectedZone('all');
     setSelectedBed('any');
     setSelectedPriceBudget('any');
+    setSelectedUnitType('');
     setSelectedSegment('all');
     setShowSelectedOnly(false);
     if (mapRef.current) {
@@ -764,6 +799,7 @@ export default function CompoundsMap({
     (selectedZone !== 'all' ? 1 : 0) +
     (selectedBed !== 'any' ? 1 : 0) +
     (selectedPriceBudget !== 'any' ? 1 : 0) +
+    (selectedUnitType ? 1 : 0) +
     (selectedSegment !== 'all' ? 1 : 0) +
     (showSelectedOnly ? 1 : 0) +
     (filterCompound ? 1 : 0) +
@@ -771,6 +807,17 @@ export default function CompoundsMap({
 
   return (
     <div className="map-command-deck" style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
+      {/* Flag-press Units Deck — fitted to the map area, map hidden while open */}
+      {sheetCompound && (
+        <CompoundUnitsDeck
+          compoundName={sheetCompound}
+          flagCode={compoundFlagCode(sheetCompound)}
+          units={(inventoryData?.units || []) as any}
+          onClose={() => setSheetCompound(null)}
+          isAr={isAr}
+        />
+      )}
+
       {/* Map Host Canvas */}
       <div
         ref={hostRef}
@@ -1028,13 +1075,14 @@ export default function CompoundsMap({
               compound: filterQuery,
               rooms: selectedBed === 'any' ? '' : String(selectedBed),
               budget: selectedPriceBudget === 'any' ? '' : selectedPriceBudget,
-              unitType: '',
+              unitType: selectedUnitType,
               condition: '',
             }}
             onChange={(v) => {
               setFilterQuery(v.compound);
               setSelectedBed(v.rooms === '' ? 'any' : parseInt(v.rooms, 10) || 'any');
               setSelectedPriceBudget(v.budget || 'any');
+              setSelectedUnitType(v.unitType || '');
             }}
             compounds={compounds.map((c) => ({ name: c.n, zone: c.z }))}
             showPurpose={false}
