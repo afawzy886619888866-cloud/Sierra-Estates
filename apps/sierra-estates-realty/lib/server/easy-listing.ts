@@ -31,7 +31,9 @@ export type EasyListingRouting = 'MAIN_INVENTORY' | 'MAP_SHEET';
 export interface EasyListingInput {
   role: string;
   name: string;
-  phone: string;
+  /** Optional: when absent, a strictly-valid Egyptian mobile is extracted
+   *  from `details` (WhatsApp channel flow); no valid number → loud error. */
+  phone?: string;
   details: string;
 }
 
@@ -324,6 +326,23 @@ export function normalizeEgyptianPhone(raw: string): string | null {
   return null;
 }
 
+/**
+ * Phone fallback for the WhatsApp channel: the conversation text itself often
+ * carries the number ("رقمه 01012345678" / "اتصل 0111 234 5678" / "+20 100 123 4567").
+ * Scans the digit runs of the free text and returns the FIRST run that is a
+ * strictly-valid Egyptian mobile. Never fabricates: prices, areas, reference
+ * ids and short runs all fail normalizeEgyptianPhone and are skipped; when no
+ * valid mobile is found the caller must keep failing loudly.
+ */
+export function extractPhoneFromText(text: string): string | null {
+  const runs = (text || '').match(/\+?\d[\d\s\-().]*\d/g) || [];
+  for (const run of runs) {
+    const phone = normalizeEgyptianPhone(run);
+    if (phone) return phone;
+  }
+  return null;
+}
+
 /* ───────────────────────── ad generation ───────────────────────── */
 
 function fmtEGP(v: number): string {
@@ -404,7 +423,12 @@ export function parseEasyListing(input: EasyListingInput): EasyListingResult {
     throw new EasyListingValidationError('uploader_name is required');
   }
 
-  const phone = normalizeEgyptianPhone(input.phone || '');
+  // Structured phone wins; when absent, fall back to extracting a strictly-
+  // valid Egyptian mobile from the free text (WhatsApp channel flow). Neither
+  // path may invent a number — no valid mobile anywhere → loud 400 below.
+  const phone =
+    normalizeEgyptianPhone(input.phone || '') ||
+    (input.phone ? null : extractPhoneFromText(input.details || ''));
   if (!phone) {
     throw new EasyListingValidationError(
       'uploader_phone must be a valid Egyptian mobile (01xxxxxxxxx)',

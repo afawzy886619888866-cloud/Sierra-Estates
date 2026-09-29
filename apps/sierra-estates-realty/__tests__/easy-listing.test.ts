@@ -38,6 +38,7 @@ import {
     parseEasyListing,
     toPayload,
     normalizeEgyptianPhone,
+    extractPhoneFromText,
     normalizeRole,
     EasyListingValidationError,
 } from '../lib/server/easy-listing';
@@ -107,6 +108,24 @@ describe('normalizeEgyptianPhone', () => {
         expect(normalizeEgyptianPhone('0101234567')).toBeNull(); // too short
         expect(normalizeEgyptianPhone('0691234567')).toBeNull(); // not a mobile
         expect(normalizeEgyptianPhone('abc')).toBeNull();
+    });
+});
+
+describe('extractPhoneFromText (WhatsApp channel fallback)', () => {
+    it('extracts the embedded mobile from Arabic conversation text', () => {
+        expect(extractPhoneFromText('شقة للبيع ميفيدا رقمه 01012345678')).toBe('+201012345678');
+    });
+
+    it('extracts spaced and international forms', () => {
+        expect(extractPhoneFromText('اتصل 0111 234 5678')).toBe('+201112345678');
+        expect(extractPhoneFromText('Call +20 100 123 4567')).toBe('+201001234567');
+        expect(extractPhoneFromText('00201012345678')).toBe('+201012345678');
+    });
+
+    it('never mistakes prices, areas or reference codes for phones', () => {
+        expect(extractPhoneFromText('سعر 12500000 مساحة 175 متر')).toBeNull();
+        expect(extractPhoneFromText('Ref NC-MIV-APT-F2-175M 8.5 مليون')).toBeNull();
+        expect(extractPhoneFromText('')).toBeNull();
     });
 });
 
@@ -289,6 +308,49 @@ describe('parseEasyListing', () => {
         ).toThrow(EasyListingValidationError);
     });
 
+    it('extracts the phone from the details text when the field is omitted (WhatsApp flow)', () => {
+        const r = parseEasyListing({
+            role: 'AGENT',
+            name: 'Tester',
+            details: 'شقة 175 متر دور ثاني ميفيدا رقمه 01012345678',
+        });
+        expect(r.uploader_phone).toBe('+201012345678');
+        expect(r.internal_code).toBe('NC-MIV-APT-F2-175M');
+    });
+
+    it('extracts spaced / international phones from the text', () => {
+        const r = parseEasyListing({
+            role: 'BROKER',
+            name: 'Tester',
+            details: 'شاليه مراسي 120 متر اتصل 0111 234 5678',
+        });
+        expect(r.uploader_phone).toBe('+201112345678');
+        expect(r.routing_destination).toBe('MAP_SHEET');
+    });
+
+    it('keeps failing loudly when no valid mobile is anywhere', () => {
+        expect(() =>
+            parseEasyListing({
+                role: 'AGENT',
+                name: 'Tester',
+                details: 'شقة 175 متر دور ثاني ميفيدا سعر 12500000',
+            }),
+        ).toThrow(EasyListingValidationError);
+    });
+
+    it('never rescues a mistyped structured phone via the text', () => {
+        // An explicitly-provided but invalid phone must keep failing loudly —
+        // the text fallback only engages when the field is entirely absent.
+        expect(() =>
+            parseEasyListing({
+                role: 'AGENT',
+                name: 'Tester',
+                phone: '010123456',
+                details: 'شقة 175 متر دور ثاني ميفيدا رقمه 01012345678',
+            }),
+        ).toThrow(EasyListingValidationError);
+    });
+
   it('handles غرفتين / حمامين dual forms without digits', () => {
         const r = parseEasyListing({
             role: 'AGENT',
@@ -381,6 +443,39 @@ describe('POST /api/easy-listing', () => {
         // Agent rows must not carry owner columns.
         expect(doc.ownerName).toBeUndefined();
         expect(mockEnqueueWhatsAppJob).not.toHaveBeenCalled();
+    });
+
+    it('extracts the phone from the details text when the field is omitted (route level)', async () => {
+        mockInsertRecord.mockResolvedValueOnce({ id: 'listing-text-phone' });
+
+        const res = await post({
+            role: 'AGENT',
+            name: 'Tester',
+            details: 'شقة 175 متر دور ثاني ميفيدا رقمه 01012345678',
+        });
+        expect(res.status).toBe(200);
+
+        const body = await res.json();
+        expect(body.ok).toBe(true);
+        // The promised JSON contract lives under `payload`.
+        expect(body.payload.uploader_phone).toBe('+201012345678');
+
+        const [table, doc] = mockInsertRecord.mock.calls[0];
+        expect(table).toBe('listings');
+        expect(doc.rawData.easy_listing.uploader_phone).toBe('+201012345678');
+    });
+
+    it('still 400s when no valid phone exists anywhere (field omitted, none in text)', async () => {
+        const res = await post({
+            role: 'AGENT',
+            name: 'Tester',
+            details: 'شقة 175 متر دور ثاني ميفيدا سعر 12500000',
+        });
+        expect(res.status).toBe(400);
+        const body = await res.json();
+        expect(body.ok).toBe(false);
+        expect(body.error).toContain('uploader_phone');
+        expect(mockInsertRecord).not.toHaveBeenCalled();
     });
 
     it('stages OWNER submissions with owner name + phone columns', async () => {
