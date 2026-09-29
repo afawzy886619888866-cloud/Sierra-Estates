@@ -405,6 +405,14 @@ interface InventoryApiData {
     img?: string;
     price?: number;
     hasPhoto?: boolean;
+    /* condition evidence fields served by /api/inventory (used by the
+       condition-counts aggregator + evidence-based condition filter) */
+    finishing?: string;
+    finishingQuality?: string;
+    furnishing?: string;
+    furnished?: string | boolean;
+    mode?: string;
+    segment?: string;
   }>;
 }
 

@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "next dev --webpack",
         "prebuild": "node scripts/ensure-snapshot.mjs && node scripts/apply-pending-migrations.mjs",
-        "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+        "build": "npm run prebuild && npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=6144 next build --webpack",
         "start": "next start",
         "lint": "eslint . && node scripts/validate-configs.mjs",
         "type-check": "node scripts/ensure-snapshot.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc --noEmit",
