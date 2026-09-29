@@ -21,7 +21,7 @@ import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
-  unitMatchesCondition,
+  unitConditionKey,
 } from '@/lib/site/smart-search';
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
@@ -570,9 +570,11 @@ export default function CompoundsMap({
       // 6. Segment filter (rent/resale) — a compound stays visible when the
       // live inventory holds at least one unit of that segment inside it
       // (exact segment match when the unit carries one; otherwise the unit's
-      // mode is the fallback evidence). When the inventory payload has not
-      // arrived yet, keep every compound visible — never exclude on missing
-      // evidence.
+      // mode is the fallback evidence — most public units carry no segment
+      // attribution yet). Static compound rent/price levels are NOT evidence
+      // of live inventory, so they never keep a pin alive here. When the
+      // inventory payload has not arrived yet, keep every compound visible
+      // — never exclude on missing evidence.
       if (selectedSegment !== 'all' && inventoryData?.units) {
         const target = c.n.toLowerCase().trim();
         const hasSegment = inventoryData.units.some((u: any) => {
@@ -583,33 +585,34 @@ export default function CompoundsMap({
           if (seg && seg !== 'unknown') return false;
           return isRentSegment ? u.mode === 'rent' : u.mode === 'sale';
         });
-        if (!hasSegment) {
-          // Compound-level fallback evidence: tracked rent level / sale price.
-          if (isRentSegment && !(Number(c.rent) > 0)) return false;
-          if (!isRentSegment && !(c.priceM > 0)) return false;
-        }
+        if (!hasSegment) return false;
       }
 
-      // 7. Condition filter — same contract as /properties: a compound stays
-      // visible when the live inventory holds at least one unit matching that
-      // condition inside it. Unknown/missing finishing never matches a
-      // selected condition (strict, no fabrication).
+      // 7. Condition filter — evidence rule: a compound is excluded only when
+      // its live inventory holds at least one unit with a RESOLVABLE condition
+      // and none of them match the selection. Units whose finishing text can't
+      // be resolved ("Standard", empty, …) carry no evidence either way — they
+      // must not hide the compound (same anti-fabrication stance as the rest
+      // of the map filters; /properties stays strict because it filters rows,
+      // not pins).
       if (selectedCondition && inventoryData?.units) {
         const target = c.n.toLowerCase().trim();
-        const hasCondition = inventoryData.units.some((u: any) => {
+        let sawResolvable = false;
+        let sawMatch = false;
+        inventoryData.units.forEach((u: any) => {
           const cmp = (u.compound || u.location || '').toLowerCase().trim();
-          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
-          return unitMatchesCondition(
-            {
-              finishing: u.finishing,
-              finishingQuality: u.finishingQuality,
-              furnishing: u.furnishing,
-              furnished: u.furnished,
-            },
-            selectedCondition,
-          );
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return;
+          const key = unitConditionKey({
+            finishing: u.finishing,
+            finishingQuality: u.finishingQuality,
+            furnishing: u.furnishing,
+            furnished: u.furnished,
+          });
+          if (key === 'unknown') return;
+          sawResolvable = true;
+          if (key === selectedCondition) sawMatch = true;
         });
-        if (!hasCondition) return false;
+        if (sawResolvable && !sawMatch) return false;
       }
 
       return true;
