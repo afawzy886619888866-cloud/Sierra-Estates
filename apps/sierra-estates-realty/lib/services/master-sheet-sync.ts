@@ -102,7 +102,7 @@ function parseAvailability(avail?: string, typeRaw?: string): PropertyStatus {
   return 'available';
 }
 
-function parsePropertyType(raw?: string): PropertyType {
+function parsePropertyType(raw?: string): PropertyType | '' {
   const norm = (raw || '').toLowerCase().trim();
   if (norm.includes('villa') || norm.includes('فيلا') || norm.includes('فيللا')) return 'villa';
   if (norm.includes('town') || norm.includes('تاون')) return 'townhouse';
@@ -110,7 +110,8 @@ function parsePropertyType(raw?: string): PropertyType {
   if (norm.includes('penthouse') || norm.includes('بنتهاوس')) return 'penthouse';
   if (norm.includes('chalet') || norm.includes('شاليه')) return 'chalet';
   if (norm.includes('apartment') || norm.includes('شقة') || norm.includes('شقه') || norm.includes('استوديو')) return 'apartment';
-  return 'apartment';
+  // §21 no-fabrication: unknown type stays empty — never 'apartment'
+  return '';
 }
 
 /** 'مفروش'/'F' → 'F' (furnished), 'نص مفروش'/'S' → 'S', 'غير مفروش'/'U' → 'U'. */
@@ -255,9 +256,13 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         id: sanitizedDocId,
         code: unitCode,
         unitCode, // Inventory OS v2 cross-source unit identity
-        title: `${propertyType.toUpperCase()} in ${location || 'New Cairo'} - ${unitCode}`,
-        compound: (location || 'New Cairo').trim(),
-        locationArea: (location || 'New Cairo').trim(),
+        // §21 no-fabrication: title/compound/location only claim what the
+        // sheet row actually carries (no 'New Cairo' / type invention)
+        title: [propertyType && location ? `${propertyType.toUpperCase()} in ${location}` : propertyType || location || 'Unit', unitCode]
+          .filter(Boolean)
+          .join(' - '),
+        compound: (location || '').trim(),
+        locationArea: (location || '').trim(),
         city: geo.zone, // canonical zone from the gazetteer, not hardcoded
         propertyType,
         dealType: 'resale', // owner sheet is secondary-market inventory
@@ -284,10 +289,10 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
       const appUnit: Partial<Unit> = {
         code: unitCode,
         title: columnPayload.title as string,
-        compound: (location || 'New Cairo').trim(),
-        location: (location || 'New Cairo').trim(),
+        compound: (location || '').trim(),
+        location: (location || '').trim(),
         city: geo.zone,
-        propertyType,
+        ...(propertyType ? { propertyType } : {}),
         category: 'residential',
         price,
         area,

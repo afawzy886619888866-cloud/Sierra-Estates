@@ -62,6 +62,9 @@ export interface CardListing {
   verifiedFresh?: boolean;
   images?: string[];
   price?: number;
+  /** true when the displayed image is curated catalog imagery, not a real
+   *  photo of this unit (§21: never imply unverified photos are the unit). */
+  imgCurated?: boolean;
 }
 
 export type PropertyCardVariant = 'showcase' | 'compact' | 'bento' | 'editorial';
@@ -89,6 +92,16 @@ export default function PropertyCard({
   const href = `/property/${p.id}`;
 
   // Image list for carousel
+  const imgCuratedBadge = p.imgCurated ? (
+    <span
+      className="tag"
+      title={isAr ? 'صورة تعبيرية من الكتالوج — صور الوحدة الفعلية قيد التحقق' : 'Representative catalog imagery — actual unit photos pending verification'}
+      style={{ background: 'rgba(15,23,42,0.85)', color: '#e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+    >
+      {isAr ? '📷 صورة تعبيرية' : '📷 Representative'}
+    </span>
+  ) : null;
+
   const imageList = p.images && p.images.length > 0 ? p.images : [p.img];
   const currentImg = imageList[activeImgIndex] || p.img;
 
@@ -104,23 +117,28 @@ export default function PropertyCard({
     setActiveImgIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   };
 
-  // Price calculations: EGP with commas
+  // Price calculations: EGP with commas — §21 no-fabrication:
+  // a price is shown ONLY when the record carries one (price/egpM/usd);
+  // otherwise "Price on request". Never 35,000 EGP / 8.5M invented numbers.
   const isRent = p.mode === 'rent';
-  let rawPrice = p.price;
+  let rawPrice = p.price || 0;
   if (!rawPrice || rawPrice <= 0) {
     if (p.egpM && p.egpM > 0) rawPrice = Math.round(p.egpM * 1_000_000);
     else if (p.usd && p.usd > 0) rawPrice = Math.round(p.usd * (isRent ? 50 : 48.65));
-    else rawPrice = isRent ? 35000 : 8500000;
   }
-  const formattedEgpPrice = `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`;
+  const hasPrice = rawPrice > 0;
+  const formattedEgpPrice = hasPrice
+    ? `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`
+    : (isAr ? 'السعر عند الطلب' : 'Price on request');
 
-  const sqmPrice = Math.round(
-    (p.egpM ? p.egpM * 1_000_000 : (p.usd || 0) * 48.65) / (p.area || 1)
-  );
-  const sqmPriceFormatted = sqmPrice > 0 ? sqmPrice.toLocaleString() : '80,000';
-  const estYield = p.yield || (isRent ? 10.4 : 9.1);
-  const paybackYears = (100 / estYield).toFixed(1);
-  const isUnderpriced = Number(p.ai) >= 9.3;
+  // Price/m² only meaningful when BOTH price and area are known
+  const sqmPrice = hasPrice && p.area && p.area > 0 ? Math.round(rawPrice / p.area) : 0;
+  const sqmPriceFormatted = sqmPrice > 0 ? sqmPrice.toLocaleString() : '—';
+  // Investment metrics ONLY from real data — never 10.4%/9.1% defaults
+  const estYield = p.yield && p.yield > 0 ? p.yield : undefined;
+  const paybackYears = estYield ? (100 / estYield).toFixed(1) : undefined;
+  const hasAi = Number.isFinite(Number(p.ai)) && Number(p.ai) > 0;
+  const isUnderpriced = hasAi && Number(p.ai) >= 9.3;
 
   // Institutional Verified Badges
   const isDirectOwner = Boolean(
@@ -141,15 +159,16 @@ export default function PropertyCard({
     p.ago?.toLowerCase().includes('verified')
   );
 
-  // Essential upfront metrics
-  const finishing = p.finishing || (p.beds >= 4 ? (isAr ? 'ألترا سوبر لوكس' : 'Ultra Super Lux') : (isAr ? 'تشطيب كامل' : 'Fully Finished'));
-  const availability = p.availability || (isAr ? 'متاح فوري' : 'Available');
+  // §21: finishing/availability are shown only when the record carries them —
+  // no invented "Fully Finished" grades or "Available now" claims.
+  const finishing = p.finishing || '';
+  const availability = p.availability || '';
 
   // WhatsApp quick inquiry trigger
   const waInquiry = `https://wa.me/201092048333?text=${encodeURIComponent(
     isAr
-      ? `مرحباً سييرا العقارية، أود الاستفسار عن الوحدة [${p.code}] في ${p.cmp} بسعر (${formattedEgpPrice}). هل هي متاحة للمعاينة الخاصة؟`
-      : `Hello Sierra Estates, I would like to inquire about unit [${p.code}] in ${p.cmp} (${formattedEgpPrice}). Is it available for a private viewing?`
+      ? `مرحباً سييرا العقارية، أود الاستفسار عن الوحدة [${p.code}] في ${p.cmp || '—'} بسعر (${formattedEgpPrice}). هل هي متاحة للمعاينة الخاصة؟`
+      : `Hello Sierra Estates, I would like to inquire about unit [${p.code}] in ${p.cmp || '—'} (${formattedEgpPrice}). Is it available for a private viewing?`
   )}`;
 
   const handleShortlistTrigger = (e: React.MouseEvent) => {
@@ -188,6 +207,7 @@ export default function PropertyCard({
 
           {/* Verified Unit Badges */}
           <div className="badges flex flex-wrap gap-1.5">
+            {imgCuratedBadge}
             {isDirectOwner && (
               <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.5)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <ShieldCheck style={{ width: 11, height: 11 }} />
@@ -209,7 +229,7 @@ export default function PropertyCard({
           <div className="price-float font-mono font-bold">{formattedEgpPrice}</div>
           <div
             className="ai-score"
-            title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${estYield}%`}
+            title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10${estYield ? `\n• Est. Net Yield: ${estYield}%` : ''}`}
           >
             AI {fmtAi(p.ai)}
           </div>
@@ -218,21 +238,21 @@ export default function PropertyCard({
         <div className="body">
           <div>
             <div className="ptype flex items-center justify-between">
-              <span>{p.code} · {p.type}</span>
-              <span className="text-[10px] text-[#C9A84C] font-semibold">{availability}</span>
+              <span>{p.code} · {p.type || '—'}</span>
+              {availability && <span className="text-[10px] text-[#C9A84C] font-semibold">{availability}</span>}
             </div>
-            <h3><Link href={href}>{p.type} in {p.cmp}</Link></h3>
+            <h3><Link href={href}>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</Link></h3>
             <div className="addr">
               <MapPin className="i" style={{ color: '#C9A84C', flexShrink: 0 }} />
-              <span>{p.cmp}, {p.zone}</span>
+              <span>{[p.cmp, p.zone].filter(Boolean).join(', ')}</span>
             </div>
           </div>
 
           {/* Upfront Essential Metrics */}
           <div className="specs">
-            <div><BedDouble className="i" /><b>{p.beds}</b><span>{t('beds')}</span></div>
-            <div><Bath className="i" /><b>{p.bath}</b><span>{t('baths')}</span></div>
-            <div><Scaling className="i" /><b>{p.area}</b><span>m²</span></div>
+            <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '?'}</b><span>{t('beds')}</span></div>
+            <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '?'}</b><span>{t('baths')}</span></div>
+            <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '?'}</b><span>m²</span></div>
             <div className="spec-sqm" style={{ color: '#C9A84C', fontWeight: 600 }}>
               <b>{sqmPriceFormatted}</b>
               <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
@@ -284,10 +304,13 @@ export default function PropertyCard({
             <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
           </Link>
           <div className="badges">
-            <span className="tag" style={{ background: '#059669', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <TrendingUp style={{ width: 12, height: 12 }} />
-              {estYield}% {isAr ? 'عائد' : 'Yield'}
-            </span>
+            {imgCuratedBadge}
+            {estYield && (
+              <span className="tag" style={{ background: '#059669', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <TrendingUp style={{ width: 12, height: 12 }} />
+                {estYield}% {isAr ? 'عائد' : 'Yield'}
+              </span>
+            )}
             {isDirectOwner && (
               <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.5)' }}>
                 <ShieldCheck style={{ width: 11, height: 11, display: 'inline' }} /> {isAr ? 'مالك مباشر' : 'Direct Owner'}
@@ -303,7 +326,7 @@ export default function PropertyCard({
 
         <div className="body" style={{ padding: '16px' }}>
           <div className="flex items-center justify-between">
-            <div className="ptype">{p.code} · {p.type}</div>
+            <div className="ptype">{p.code} · {p.type || '—'}</div>
             <span
               className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
               style={{
@@ -312,22 +335,24 @@ export default function PropertyCard({
                 border: `1px solid ${isUnderpriced ? 'rgba(16, 185, 129, 0.35)' : 'rgba(201, 168, 76, 0.35)'}`,
               }}
             >
-              {isUnderpriced ? (isAr ? 'أقل من السوق (-6%)' : 'Underpriced (-6%)') : (isAr ? 'قيمة عادلة' : 'Fair Value')}
+              {hasAi
+                ? (isUnderpriced ? (isAr ? 'أقل من السوق' : 'Underpriced') : (isAr ? 'قيمة عادلة' : 'Fair Value'))
+                : (isAr ? 'غير مقيّم' : 'Not scored')}
             </span>
           </div>
 
-          <h3><Link href={href}>{p.type} in {p.cmp}</Link></h3>
-          <div className="addr"><MapPin className="i" /> {p.cmp}, {p.zone}</div>
+          <h3><Link href={href}>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</Link></h3>
+          <div className="addr"><MapPin className="i" /> {[p.cmp, p.zone].filter(Boolean).join(', ')}</div>
 
           {/* Bento Financial Metrics */}
           <div className="bento-grid">
             <div className="bento-metric-cell">
               <span className="metric-lbl">{isAr ? 'عائد الإيجار' : 'Net Cap Rate'}</span>
-              <span className="metric-val" style={{ color: '#34d399' }}>{estYield}%</span>
+              <span className="metric-val" style={{ color: '#34d399' }}>{estYield ? `${estYield}%` : '—'}</span>
             </div>
             <div className="bento-metric-cell">
               <span className="metric-lbl">{isAr ? 'فترة الاسترداد' : 'Est. Payback'}</span>
-              <span className="metric-val">{paybackYears} {isAr ? 'سنة' : 'Yrs'}</span>
+              <span className="metric-val">{paybackYears ? `${paybackYears} ${isAr ? 'سنة' : 'Yrs'}` : '—'}</span>
             </div>
             <div className="bento-metric-cell">
               <span className="metric-lbl">{isAr ? 'سعر المتر' : 'Price / m²'}</span>
@@ -335,7 +360,7 @@ export default function PropertyCard({
             </div>
             <div className="bento-metric-cell">
               <span className="metric-lbl">{isAr ? 'التشطيب' : 'Finishing'}</span>
-              <span className="metric-val text-[11px] truncate">{finishing}</span>
+              <span className="metric-val text-[11px] truncate">{finishing || '—'}</span>
             </div>
           </div>
         </div>
@@ -387,6 +412,7 @@ export default function PropertyCard({
             <img src={currentImg} alt={`${p.type} in ${p.cmp}`} loading="lazy" />
           </Link>
           <div className="badges">
+            {imgCuratedBadge}
             <span className="tag" style={{ background: '#0A1628', backdropFilter: 'blur(8px)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C' }}>
               {p.code}
             </span>
@@ -407,22 +433,26 @@ export default function PropertyCard({
 
         <div className="body" style={{ padding: '20px' }}>
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>
-            {p.cmp} · {p.zone}
+            {[p.cmp, p.zone].filter(Boolean).join(' · ')}
           </div>
           <h3 style={{ fontSize: 18, lineHeight: 1.35, marginBottom: 12 }}>
-            <Link href={href}>{p.type} at {p.cmp}</Link>
+            <Link href={href}>{p.type || 'Property'} at {p.cmp || '—'}</Link>
           </h3>
 
           <div className="specs-editorial">
-            <span>{p.beds} {t('beds')}</span>
+            <span>{p.beds > 0 ? p.beds : '?'} {t('beds')}</span>
             <span>·</span>
-            <span>{p.bath} {t('baths')}</span>
+            <span>{p.bath > 0 ? p.bath : '?'} {t('baths')}</span>
             <span>·</span>
-            <span>{p.area} m²</span>
+            <span>{p.area > 0 ? p.area : '?'} m²</span>
             <span>·</span>
             <span className="spec-sqm" style={{ color: '#C9A84C' }}>{sqmPriceFormatted} {isAr ? 'ج/م²' : 'EGP/m²'}</span>
-            <span>·</span>
-            <span className="text-[11px] text-[#C9A84C] font-semibold">{finishing}</span>
+            {finishing && (
+              <>
+                <span>·</span>
+                <span className="text-[11px] text-[#C9A84C] font-semibold">{finishing}</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -512,6 +542,7 @@ export default function PropertyCard({
 
         {/* Verified Badges */}
         <div className="badges flex flex-wrap gap-1">
+          {imgCuratedBadge}
           {isDirectOwner && (
             <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <ShieldCheck style={{ width: 11, height: 11 }} />
@@ -549,7 +580,7 @@ export default function PropertyCard({
         </div>
         <div
           className="ai-score"
-          title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10\n• AVM Confidence: 95%\n• Est. Net Yield: ${p.yield ? p.yield + '%' : '9.1%'}\n• Backed by verified comparable index`}
+          title={`Sierra Intelligence Score: ${fmtAi(p.ai)}/10${estYield ? `\n• Est. Net Yield: ${estYield}%` : ''}`}
           style={{ cursor: 'help' }}
         >
           AI {fmtAi(p.ai)}
@@ -558,14 +589,16 @@ export default function PropertyCard({
 
       <div className="body">
         <div className="ptype flex items-center justify-between">
-          <span>{p.code} · {p.type}</span>
-          <span className="text-[10.5px] font-semibold text-[#10B981] flex items-center gap-1">
-            <CheckCircle2 style={{ width: 11, height: 11 }} />
-            {availability}
-          </span>
+          <span>{p.code} · {p.type || '—'}</span>
+          {availability && (
+            <span className="text-[10.5px] font-semibold text-[#10B981] flex items-center gap-1">
+              <CheckCircle2 style={{ width: 11, height: 11 }} />
+              {availability}
+            </span>
+          )}
         </div>
 
-        <h3><Link href={href}>{p.type} in {p.cmp}</Link></h3>
+        <h3><Link href={href}>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</Link></h3>
 
         {onLocate ? (
           <button
@@ -579,17 +612,17 @@ export default function PropertyCard({
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'inherit', font: 'inherit', color: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}
             title={isAr ? `تحديد ${p.cmp} على الخريطة` : `Locate ${p.cmp} on Masterplan Map`}
           >
-            <MapPin className="i" style={{ color: '#C9A84C', flexShrink: 0 }} /> <span>{p.cmp}, {p.zone}</span>
+            <MapPin className="i" style={{ color: '#C9A84C', flexShrink: 0 }} /> <span>{[p.cmp, p.zone].filter(Boolean).join(', ')}</span>
           </button>
         ) : (
-          <div className="addr"><MapPin className="i" style={{ color: '#C9A84C' }} /> {p.cmp}, {p.zone}</div>
+          <div className="addr"><MapPin className="i" style={{ color: '#C9A84C' }} /> {[p.cmp, p.zone].filter(Boolean).join(', ')}</div>
         )}
 
         {/* Upfront Essential Metrics */}
         <div className="specs">
-          <div><BedDouble className="i" /><b>{p.beds}</b><span>{t('beds')}</span></div>
-          <div><Bath className="i" /><b>{p.bath}</b><span>{t('baths')}</span></div>
-          <div><Scaling className="i" /><b>{p.area}</b><span>m²</span></div>
+          <div><BedDouble className="i" /><b>{p.beds > 0 ? p.beds : '?'}</b><span>{t('beds')}</span></div>
+          <div><Bath className="i" /><b>{p.bath > 0 ? p.bath : '?'}</b><span>{t('baths')}</span></div>
+          <div><Scaling className="i" /><b>{p.area > 0 ? p.area : '?'}</b><span>m²</span></div>
           <div
             className="spec-sqm"
             title={isAr ? 'سعر المتر المربع التقديري' : 'Estimated Price per Square Meter'}
@@ -604,7 +637,7 @@ export default function PropertyCard({
         <div className="mt-2.5 pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px]">
           <span className="text-slate-400 flex items-center gap-1">
             <Paintbrush className="w-3 h-3 text-[#C9A84C]" />
-            <span>{finishing}</span>
+            <span>{finishing || (isAr ? 'التشطيب غير محدد' : 'Finishing TBD')}</span>
           </span>
           <button
             type="button"

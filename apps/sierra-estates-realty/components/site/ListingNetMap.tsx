@@ -764,7 +764,7 @@ function ListingNetMapContent({
 
                           <div className="text-xs text-white/60 flex items-center justify-between gap-2">
                             <span>
-                              {unit.type} · {unit.beds || 3} غرف · {unit.area || 160} م²
+                              {unit.type} · {unit.beds ? `${unit.beds} غرف` : '—'} · {unit.area ? `${unit.area} م²` : '—'}
                             </span>
                             <span className="font-extrabold text-emerald-400 font-mono">
                               {unit.priceLabel}

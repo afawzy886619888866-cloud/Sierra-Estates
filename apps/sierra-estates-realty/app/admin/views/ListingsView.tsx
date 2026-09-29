@@ -1308,15 +1308,15 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
 
                       {/* Compound & Location */}
                       <td style={{ padding: '12px 14px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--tx-s)' }}>{item.compound || item.location || 'New Cairo'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>{item.location || item.zone || '5th Settlement'}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--tx-s)' }}>{item.compound || item.location || '—'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>{item.location || item.zone || '—'}</div>
                       </td>
 
                       {/* Specs */}
                       <td style={{ padding: '12px 14px' }}>
-                        <div style={{ fontWeight: 500, color: 'var(--tx)' }}>{item.type || 'Apartment'}</div>
+                        <div style={{ fontWeight: 500, color: 'var(--tx)' }}>{item.type || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>
-                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths · {item.area_sqm || item.area || 180}m²
+                          {item.bedrooms || item.beds || '?'} Beds · {item.bathrooms || item.baths || '?'} Baths · {item.area_sqm || item.area || '?'}m²
                         </div>
                       </td>
 
