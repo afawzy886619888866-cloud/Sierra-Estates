@@ -432,3 +432,13 @@ The following changes remove every code path that could present invented propert
 - **Files:** apps/sierra-estates-realty/lib/server/easy-listing.ts (extractPhoneFromText + fallback in parseEasyListing + optional phone), apps/sierra-estates-realty/app/api/easy-listing/route.ts (schema + docs), apps/sierra-estates-realty/__tests__/easy-listing.test.ts (+9 tests).
 - **DB impact:** none. **Risk:** low — purely additive input handling; existing required-phone behavior unchanged when the field is provided. **Rollback:** git revert.
 - **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 124/124 suites, 1,354/1,354 tests (+9: extraction of Arabic-embedded/spaced/international phones at unit level, price/area/code never misread, absent-phone + valid-in-text at route level incl. persisted uploader_phone, absent-phone + none-in-text still 400, mistyped structured phone never rescued). Fresh-clone note: the 2 data-dependent suites (phase13-data-qa, client-journey-personas) require `data/MASTER_INVENTORY_V1.csv` regenerated via `scripts/data-audit/build_master_inventory.py` — reproduced here exactly (12,088 rows = 8,486 unique + 3,602 duplicates).
+
+## 2026-09-29 — Property Finder credential rotation + public-repo secret scrub
+
+### Change 1 — Remove dead PF credentials from the public repo (security, docs only)
+
+- **Change:** The previous Property Finder API key/secret were committed in plaintext in `docs/memory/property_finder_integration.md` — in a PUBLIC repository — and were disabled by Property Finder (Atlas `401 auth_client_credentials_invalid_credentials`). Scrubbed both literals from that doc and from the `docs/memory/index.md` pointer; the doc now documents that live credentials live ONLY in the Vercel env vars `PROPERTY_FINDER_API_KEY` / `PROPERTY_FINDER_API_SECRET` (both projects) and must never be pasted into git. The rotated pair was verified live against `atlas.propertyfinder.com/v1/auth/token` (token issued, 30-min expiry) — the value itself is deliberately NOT recorded here.
+- **Reason:** Leaked-in-public credentials are the presumable cause of the disable; leaving the pattern in place invites the rotated pair being committed and killed the same way.
+- **Files:** docs/memory/property_finder_integration.md, docs/memory/index.md.
+- **DB impact:** none. **Risk:** none (documentation only; the removed values were already dead — 401). **Rollback:** git revert (not recommended).
+- **Owner action required:** paste the rotated `PROPERTY_FINDER_API_KEY` + `PROPERTY_FINDER_API_SECRET` into BOTH Vercel projects (client portal `prj_ieVcIcoeTtHndspXMzlE0cwLl89c`, admin `prj_inhTu8kppYhQv2NZZV3GTUdU8uBi`) and redeploy, or the PF listing/lead sync keeps failing on the dead pair.
