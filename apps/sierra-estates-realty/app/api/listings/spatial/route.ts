@@ -107,9 +107,12 @@ export async function GET(request: Request) {
     // 2. Live-table fallback: the PostGIS RPC (`get_listings_near_capital`)
     //    is not deployed on the live Supabase project (deployed schema
     //    diverged from supabase/schema.sql), so read public.listings
-    //    directly — the same live read /api/listings filter mode uses — and
-    //    let the haversine pass below apply the radius. Seed data stays as
-    //    the final offline tier.
+    //    directly — the same publish-gated live read /api/listings filter
+    //    mode uses — and let the haversine pass below apply the radius.
+    //    PUBLISH GATE (activation plan Phase D): this read requires
+    //    publish_status = 'PUBLISHABLE' exactly like the RPC and RLS policy;
+    //    unverified units must never appear on the public map. Seed data
+    //    stays out entirely (anti-fabrication tier below).
     let isLive = isLiveRpc;
     if (!isLiveRpc || rawItems.length === 0) {
       try {
@@ -118,6 +121,7 @@ export async function GET(request: Request) {
           .from('listings')
           .select('*')
           .in('status', ['active', 'available'])
+          .eq('publish_status', 'PUBLISHABLE')
           .limit(500);
 
         if (!liveErr && Array.isArray(liveRows) && liveRows.length > 0) {
@@ -193,21 +197,25 @@ export async function GET(request: Request) {
 
       if (maxUsd != null && usd > maxUsd) continue;
 
+      // ANTI-FABRICATION (activation plan Rule B): missing values surface as
+      // empty/0 — no invented 'New Cairo', no ||150 area, no hardcoded
+      // 9.2/8.9 aiScore, no 'Verified Location' tag on unverified rows.
+      const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
       processed.push({
         id: item.id || item.ref_id,
         code: item.code || item.reference_code || `SE-${String(item.id).substring(0, 4)}`,
-        compound: item.compound || 'New Cairo',
-        zone: item.location_area || item.zone || '5th Settlement',
-        type: item.property_type || 'Apartment',
+        compound: item.compound ?? '',
+        zone: item.location_area ?? item.zone ?? '',
+        type: item.property_type ?? '',
         beds: itemBeds,
-        bath: Number(item.bathrooms) || 1,
-        area: Number(item.area_sqm) || 150,
+        bath: Number(item.bathrooms) || 0,
+        area: Number(item.area_sqm) || 0,
         egpM: Number(egpM.toFixed(2)),
         usd,
-        aiScore: item.roi_percentage ? 9.2 : 8.9,
-        tag: item.featured ? 'Featured' : 'Verified Location',
+        aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+        tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
         mode: itemMode,
-        agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Advisor',
+        agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
         img: (item.images && item.images[0]) || '',
         status,
         description: item.description || '',

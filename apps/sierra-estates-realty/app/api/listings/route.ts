@@ -6,13 +6,15 @@
  *   1. Legacy envelope mode — when `?id=` or `?limit=` is present.
  *      Returns { success, listing | listings, count }. Kept for the static
  *      public/client-page and lib/services/InventoryService.client.ts.
- *      Reads public.listings; if the read fails or RLS denies access it falls
- *      back to seed data instead of erroring (INTEGRATION.md data-flow
- *      contract).
+ *      Reads public.listings. PUBLISH GATE: only rows with
+ *      publish_status = 'PUBLISHABLE' are served; when the live read fails
+ *      or nothing verified exists the honest answer is an empty envelope —
+ *      never fabricated seed/snapshot data (activation plan Phase D/E).
  *
  *   2. Filter mode (default) — used by lib/api-client `api.listings()`.
  *      Returns a bare Listing[] filtered by mode/compound/type/beds/maxUsd/q.
- *      Reads Supabase → Live Sheet → snapshot. Never hardcoded seed data.
+ *      Reads Supabase with the same PUBLISH gate. No sheet/snapshot/seed
+ *      fallback: when no PUBLISHABLE rows exist the answer is [].
  *
  * POST — create a listing (manager+). Writes to public.listings; if the write
  * fails outside production it returns a demo id so the admin UI flow works.
@@ -24,11 +26,11 @@ import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
 // SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5):
 // public endpoints must never serve baked-in listings when live sources are empty.
+// The live-sheet and snapshot imports were removed with their fallback paths:
+// unverified units must not reach the public surface (activation plan Phase E).
 import { getRecord, insertRecord, listRecords } from '@sierra-estates/db';
 import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns';
 import { requireRole } from '@/lib/auth';
-import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
-import snapshot from '@/lib/inventory/snapshot.json';
 import type { Listing } from '@/lib/types';
 import { calculateHaversineDistanceKm } from '@/lib/server/spatial-utils';
 
@@ -136,95 +138,65 @@ function seedToEnvelope(l: Listing) {
   };
 }
 
-function inventoryUnitToListing(u: any): Listing {
-  const price = u.price || 0;
-  const egpM = price > 100000 ? price / 1_000_000 : price;
-  const usd = u.mode === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
-  return {
-    id: u.id,
-    code: u.code || u.id,
-    compound: u.location || 'New Cairo',
-    zone: u.zone || '5th Settlement',
-    type: u.propertyType || 'Apartment',
-    beds: u.beds || 3,
-    bath: Math.max(1, (u.beds || 3) - 1),
-    area: u.area || 150,
-    egpM: Number(egpM.toFixed(2)),
-    usd: usd,
-    aiScore: 8.5,
-    tag: u.status === 'available' ? 'Verified Owner' : null,
-    mode: u.mode || 'sale',
-    agent: 'Sierra Direct Advisor',
-    img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e31d4592-ed1e-11ef-8cf7-0a8c5593e6a3-93f6f406-cd8c-4784-a2d6-d8cb88a7ae7e.png',
-    status: u.status || 'available',
-    description: u.comment || '',
-  } as Listing;
-}
-
-/** Filter-mode read: Supabase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
+/**
+ * Filter-mode read — PUBLISH GATE (activation plan Phase D/E):
+ * serves ONLY public.listings rows whose publish_status = 'PUBLISHABLE'.
+ * No sheet/snapshot/seed fallback: unverified units must never reach the
+ * public surface, and when nothing verified exists the honest answer is [].
+ */
 async function readListings(): Promise<Listing[]> {
-  // Try Supabase first (reads all active listings directly)
   try {
     const { supabase } = await import('@/lib/supabase');
     const { data: supaListings, error: supaErr } = await supabase
       .from('listings')
       .select('*')
       .in('status', ['active', 'available'])
+      .eq('publish_status', 'PUBLISHABLE')
       .limit(500);
 
-    if (!supaErr && supaListings && supaListings.length > 0) {
+    if (!supaErr && supaListings) {
       return supaListings.map((item: any) => {
         const price = Number(item.price) || 0;
         const egpM = price > 100000 ? price / 1_000_000 : price;
-        const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+        const usd = Math.round(price / 50);
 
         // Presentation fields (img/tag/aiScore) are parked in raw_data on the
         // deployed table — read them back through the same convention the
         // write path uses (lib/server/listing-columns.ts).
+        // ANTI-FABRICATION: missing values surface as empty/0 — never
+        // invented defaults (no 'New Cairo', no ||3 beds, no ||1500 USD).
         const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
         return {
           id: item.id || item.ref_id,
           code: item.code || item.sbr_code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
-          compound: item.compound || 'New Cairo',
-          zone: item.location_area || '5th Settlement',
-          type: item.property_type || 'Apartment',
-          beds: item.bedrooms || 3,
-          bath: item.bathrooms || 2,
-          area: Number(item.area_sqm) || 150,
+          compound: item.compound ?? '',
+          zone: item.location_area ?? '',
+          type: item.property_type ?? '',
+          beds: item.bedrooms ?? 0,
+          bath: item.bathrooms ?? 0,
+          area: Number(item.area_sqm) || 0,
           egpM: Number(egpM.toFixed(2)),
-          usd: usd || 1500,
+          usd,
           aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
           tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker'),
+          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
           img: raw.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
           description: item.description || '',
         } as Listing;
       });
     }
-  } catch (supaErr) {
-    console.warn('[listings] Supabase read failed, using sheet:', supaErr);
-  }
-
-  // Live Sheet fallback
-  try {
-    const sheetUnits = await fetchSheetUnits({ revalidate: 300 });
-    if (sheetUnits && sheetUnits.length > 0) {
-      return sheetUnits.map(inventoryUnitToListing);
+    if (supaErr) {
+      logger.warn('[listings] Supabase read failed:', supaErr);
     }
-  } catch (err) {
-    console.warn('[listings] Live sheet fetch failed, using snapshot:', err);
+  } catch (supaErr) {
+    logger.warn('[listings] Supabase read failed:', supaErr);
   }
 
-  // Snapshot fallback
-  if (snapshot && (snapshot as any).units?.length) {
-    return (snapshot as any).units.map(inventoryUnitToListing);
-  }
-
-  // ANTI-FABRICATION (Master Rule 5): no hardcoded seed fallback. When no
-  // real source has data the API returns an empty set with an honest source
-  // marker instead of months-old baked-in listings.
+  // ANTI-FABRICATION (Master Rule 5 + activation plan Phase E): the public
+  // path has NO sheet/snapshot/seed fallback. When no PUBLISHABLE rows exist
+  // the honest answer is an empty set.
   return [];
 }
 
@@ -288,11 +260,16 @@ export async function GET(request: Request) {
         // ones, so the status filter has to run inside the query — a plain
         // limit would return mostly archived rows and the page would show
         // nothing. Public submissions land as 'pending' (see /api/listings/
-        // submit), so this stays the moderation gate.
+        // submit), so this stays the moderation gate. PUBLISH GATE: only
+        // publish_status = 'PUBLISHABLE' rows are served (activation plan
+        // Phase D — the public client must never see unverified inventory).
         const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, {
           limit,
           orderBy: { column: 'updatedAt', ascending: false },
-          where: [{ column: 'status', op: 'in', value: ['active', 'available'] }],
+          where: [
+            { column: 'status', op: 'in', value: ['active', 'available'] },
+            { column: 'publish_status', op: 'eq', value: 'PUBLISHABLE' },
+          ],
         });
         // publishToClient remains a moderation off-switch (an explicit false
         // hides the row), but the live table has no publish_to_client column
@@ -307,34 +284,14 @@ export async function GET(request: Request) {
           return NextResponse.json({ success: true, listings, count: listings.length });
         }
       } catch (err) {
-        // Unreachable / denied → snapshot real units fallback, never 5xx.
+        // Unreachable / denied → honest empty envelope, never a 5xx, never
+        // fabricated snapshot/seed data (activation plan Phase E).
         logger.error('[LISTINGS] envelope list failed:', err);
       }
 
-      const snapshotUnits = (snapshot as any)?.units || [];
-      if (snapshotUnits.length > 0) {
-        const realListings = snapshotUnits.slice(0, limit).map((u: any) => ({
-          id: u.id,
-          title: `${u.propertyType || u.type || 'Property'} · ${u.compound || 'New Cairo'}`,
-          price: u.price || 0,
-          compound: u.compound || u.location || 'New Cairo',
-          beds: u.beds || 3,
-          baths: u.baths || 2,
-          area: u.area || 180,
-          image: u.img,
-          images: u.img ? [u.img] : [],
-          description: u.description || `${u.propertyType || 'Apartment'} in ${u.compound}`,
-          propertyType: u.propertyType || u.type || 'apartment',
-          status: u.status || 'available',
-          amenities: [],
-          purpose: u.mode === 'rent' ? 'for-rent' : 'for-sale',
-          pfReferenceNumber: u.code || null,
-          publishToClient: true,
-        }));
-        return NextResponse.json({ success: true, listings: realListings, count: realListings.length, source: 'snapshot', seeded: true });
-      }
-
-      // ANTI-FABRICATION: no seed fallback — return an honest empty set
+      // ANTI-FABRICATION (activation plan Phase E): no snapshot fallback —
+      // the static units were never verified. The honest answer is an empty
+      // envelope with an explicit source marker.
       return NextResponse.json({ success: true, listings: [], count: 0, source: 'none', seeded: false });
     }
 
@@ -352,27 +309,35 @@ export async function GET(request: Request) {
         });
 
         if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
-          spatialItems = rpcData.map((item: any) => {
+          // PUBLISH GATE: the RPC returns full listing rows; only verified
+          // PUBLISHABLE units may surface in public proximity search.
+          const publishable = rpcData.filter(
+            (item: any) => String(item.publish_status ?? '') === 'PUBLISHABLE'
+          );
+          spatialItems = publishable.map((item: any) => {
             const price = Number(item.price) || 0;
             const egpM = price > 100000 ? price / 1_000_000 : price;
-            const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+            const usd = Math.round(price / 50);
             const dist = calculateHaversineDistanceKm(lat, lng, Number(item.latitude), Number(item.longitude));
 
+            // ANTI-FABRICATION: no invented defaults (no 'New Cairo', no
+            // ||3 beds, no ||1500 USD, no hardcoded 9.0/8.8 aiScore).
+            const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
             return {
               id: item.id || item.ref_id,
               code: item.code || item.reference_code || `SE-${item.id?.substring(0, 4)}`,
-              compound: item.compound || 'New Cairo',
-              zone: item.location_area || '5th Settlement',
-              type: item.property_type || 'Apartment',
-              beds: item.bedrooms || 3,
-              bath: item.bathrooms || 2,
-              area: Number(item.area_sqm) || 150,
+              compound: item.compound ?? '',
+              zone: item.location_area ?? '',
+              type: item.property_type ?? '',
+              beds: item.bedrooms ?? 0,
+              bath: item.bathrooms ?? 0,
+              area: Number(item.area_sqm) || 0,
               egpM: Number(egpM.toFixed(2)),
-              usd: usd || 1500,
-              aiScore: item.roi_percentage ? 9.0 : 8.8,
-              tag: item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Location',
+              usd,
+              aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+              tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
               mode: item.deal_type === 'rent' ? 'rent' : 'sale',
-              agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker',
+              agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
               img: (item.images && item.images[0]) || '',
               status: item.status || 'available',
               description: item.description || '',

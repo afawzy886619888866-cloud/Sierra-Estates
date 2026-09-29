@@ -11,13 +11,13 @@
  * The Canvas is dynamically imported (ssr:false) — three.js needs `window`,
  * and this keeps the ~600KB 3D bundle off every other route.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Nav, Topbar, Footer, Reveal, SierraConcierge, SILK, useT } from './ui';
 import { IconMapPin, IconSearch } from './icons';
-import { COMPOUNDS, FALLBACK_LISTINGS, priceLabel, type Compound } from './portalData';
+import { COMPOUNDS, EMPTY_LISTINGS, fetchListings, priceLabel, type Compound, type Listing } from './portalData';
 import type { PriceMode } from './three/CompoundCity3D';
 import { priceOf, priceText } from './three/CompoundCity3D';
 
@@ -55,6 +55,15 @@ export default function ExplorePortal() {
   const [maxPrice, setMaxPrice] = useState<number>(() => ceilingFor('sale'));
   const [zone, setZone] = useState('all');
   const [selected, setSelected] = useState<Compound | null>(null);
+  // ANTI-FABRICATION: units come from the publish-gated /api/listings read —
+  // never a static fabricated array (activation plan Phase E).
+  const [listings, setListings] = useState<Listing[]>(EMPTY_LISTINGS);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchListings(100).then((live) => { if (!cancelled && live.length) setListings(live); });
+    return () => { cancelled = true; };
+  }, []);
 
   const ceiling = useMemo(() => ceilingFor(mode), [mode]);
 
@@ -84,12 +93,12 @@ export default function ExplorePortal() {
   const units = useMemo(() => {
     if (!selected) return [];
     const base = selected.n.split(' (')[0];
-    return FALLBACK_LISTINGS.filter(
+    return listings.filter(
       (l) =>
         l.mode === mode &&
         (l.cmp === selected.n || base.startsWith(l.cmp) || l.cmp.startsWith(base))
     );
-  }, [selected, mode]);
+  }, [selected, mode, listings]);
 
   const priceUnitLabel =
     mode === 'sale' ? (isAr ? 'مليون جنيه' : 'EGP M') : isAr ? 'دولار/شهر' : 'USD/mo';

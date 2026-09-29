@@ -564,7 +564,10 @@ BEGIN
     -- could edit or delete the whole catalogue.
     DROP POLICY IF EXISTS "Public can view active listings" ON public.listings;
     CREATE POLICY "Public can view active listings" ON public.listings
-        FOR SELECT USING (status = 'active' OR public.is_staff());
+        FOR SELECT USING (
+            (status = 'active' AND publish_status = 'PUBLISHABLE')
+            OR public.is_staff()
+        );
 
     DROP POLICY IF EXISTS "Authenticated users can manage listings" ON public.listings;
     DROP POLICY IF EXISTS "listings_staff_write" ON public.listings;
@@ -2442,7 +2445,8 @@ BEGIN
       ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
       radius_meters::float8
     )
-    AND (status = 'available' OR status = 'active');
+    AND (status = 'available' OR status = 'active')
+    AND publish_status = 'PUBLISHABLE';
 END;
 $$ LANGUAGE plpgsql;
 
