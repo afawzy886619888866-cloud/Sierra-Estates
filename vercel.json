@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter sierra-estates-client-page build",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {
