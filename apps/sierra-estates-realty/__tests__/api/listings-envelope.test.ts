@@ -21,10 +21,11 @@
  * envelope (source: 'none') — never snapshot/seed data (Phase E).
  */
 const listMock = jest.fn();
+const getRecordMock = jest.fn();
 
 jest.mock('@sierra-estates/db', () => ({
   listRecords: (...args: unknown[]) => listMock(...args),
-  getRecord: jest.fn(async () => null),
+  getRecord: (...args: unknown[]) => getRecordMock(...args),
   insertRecord: jest.fn(async () => ({ id: 'demo' })),
 }));
 
@@ -52,6 +53,47 @@ const liveRow = (overrides: Record<string, unknown> = {}) => ({
   description: 'Live Property Finder listing',
   rawData: {},
   ...overrides,
+});
+
+describe('GET /api/listings?id= — fetch-by-id mode (Phase D publish gate)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getRecordMock.mockResolvedValue(null);
+  });
+
+  it('serves a PUBLISHABLE row by direct id', async () => {
+    getRecordMock.mockResolvedValueOnce(
+      liveRow({ id: 'live-pf-1', publishStatus: 'PUBLISHABLE' })
+    );
+
+    const res = await GET(new Request('http://localhost/api/listings?id=live-pf-1'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.listing.title).toContain('Uptown Cairo');
+  });
+
+  it('404s an unverified-but-active row (REVIEW_REQUIRED) — no direct-link leak', async () => {
+    // /api/listings/submit hands the caller the new id, so fetch-by-id must
+    // not become a direct link to an unreviewed submission even when its
+    // status is publicly visible ('active').
+    getRecordMock.mockResolvedValueOnce(
+      liveRow({ id: 'unverified-1', publishStatus: 'REVIEW_REQUIRED' })
+    );
+
+    const res = await GET(new Request('http://localhost/api/listings?id=unverified-1'));
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('Listing not found');
+  });
+
+  it('404s a row with no publish_status at all (fail-closed)', async () => {
+    getRecordMock.mockResolvedValueOnce(liveRow({ id: 'legacy-1' }));
+
+    const res = await GET(new Request('http://localhost/api/listings?id=legacy-1'));
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('GET /api/listings?limit= — envelope mode', () => {

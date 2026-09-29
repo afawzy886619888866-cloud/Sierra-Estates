@@ -1,21 +1,24 @@
 /**
  * GET /api/feeds/property-finder — PropertyFinder XML listing feed.
  *
- * Serves REAL inventory: the canonical `units` collection via
- * InventoryQueryService (same source as /api/inventory), filtered to
- * broker-listed sale units with a price. Falls back to the committed
- * snapshot so the feed never returns fabricated demo listings.
+ * PUBLISH GATE (activation plan Phase D): this feed advertises units on a
+ * public third-party portal, so it exports ONLY verified
+ * `publish_status = 'PUBLISHABLE'` rows from the canonical `units`
+ * collection (InventoryQueryService with `publishStatus: 'PUBLISHABLE'`),
+ * filtered to broker-listed sale units with a price.
  *
- * §21: every exported field must exist on the unit. Units missing compound,
- * type, area, bedrooms, bathrooms or city are SKIPPED (counted in logs) —
- * the old defaults ('New Cairo' community, 'Apartment' type, 0 beds)
- * misrepresented real units to Property Finder.
+ * ANTI-FABRICATION (§21 + Phase E): every exported field must exist on the
+ * unit. Units missing compound, type, area, bedrooms, bathrooms or city are
+ * SKIPPED (counted in logs) — the old defaults ('New Cairo' community,
+ * 'Apartment' type, 0 beds) misrepresented real units to Property Finder.
+ * The committed-snapshot fallback was removed with the same doctrine
+ * /api/listings applies: unverified rows never reach a public surface, so
+ * when nothing verified exists the honest answer is an empty <list>.
  */
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
-import snapshot from '@/lib/inventory/snapshot.json';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -61,28 +64,27 @@ type FeedUnit = {
 };
 
 async function loadUnits(): Promise<FeedUnit[]> {
-  // 1. Canonical Supabase `units` collection (broker listings only)
+  // Canonical Supabase `units` collection (broker listings only) — PUBLISH
+  // GATED (Phase D): only verified PUBLISHABLE rows may be advertised on an
+  // external portal, enforced inside the query itself.
   try {
     const rows = await InventoryQueryService.query({
       status: 'available',
+      publishStatus: 'PUBLISHABLE',
       ownerType: 'broker',
       limit: 1000,
     });
     const units = (rows as unknown as FeedUnit[]).filter((u) => Number(u.price) > 0);
     if (units.length > 0) return units;
   } catch (err) {
-    logger.warn('[feeds/property-finder] Supabase query failed, falling back to snapshot:', err);
+    logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }
 
-  // 2. Committed snapshot (real synced data — never fabricated)
-  const snapUnits = ((snapshot as any)?.units || []) as FeedUnit[];
-  return snapUnits.filter(
-    (u) =>
-      u &&
-      (u.mode === 'sale' || u.dealType === 'sale') &&
-      (Number(u.price) > 0 || Number(u.egpM) > 0) &&
-      !String(u.segment || '').startsWith('owners_')
-  );
+  // ANTI-FABRICATION / Phase D: no snapshot fallback. The snapshot rows are
+  // real but UNVERIFIED — exporting them to a public portal is exactly what
+  // the publish gate exists to prevent. Honest empty feed over unreviewed
+  // inventory (same doctrine /api/listings applies).
+  return [];
 }
 
 /**

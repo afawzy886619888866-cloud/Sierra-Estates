@@ -226,6 +226,37 @@ describe('service-role least privilege', () => {
     });
 });
 
+// ─── Public publish gate pins (activation plan Phase D) ─────────────────────
+describe('public publish gate — every public listing surface filters publish_status', () => {
+    it('/api/inventory gates the Supabase query AND drops unverified local-file tiers', () => {
+        const source = readFileSync(join(APP_DIR, 'app', 'api', 'inventory', 'route.ts'), 'utf8');
+        // The gate runs inside the query (RLS migration 020 may be unapplied).
+        expect(source).toContain('.eq("publish_status", "PUBLISHABLE")');
+        // Unverified local-file sources must never merge into the public GET.
+        expect(source).not.toContain('readExcelListings');
+        expect(source).not.toContain('fetchSheetUnits');
+        expect(source).not.toContain('whatsapp-ingested-units.json');
+        expect(source).not.toContain("from '@/lib/inventory/snapshot.json'");
+        // §21: no invented location label.
+        expect(source).not.toContain('|| "New Cairo"');
+    });
+
+    it('/api/feeds/property-finder exports only verified (PUBLISHABLE) units', () => {
+        const source = readFileSync(
+            join(APP_DIR, 'app', 'api', 'feeds', 'property-finder', 'route.ts'),
+            'utf8'
+        );
+        expect(source).toContain("publishStatus: 'PUBLISHABLE'");
+        // The unverified snapshot fallback was removed (Phase D/E doctrine).
+        expect(source).not.toContain("snapshot.json");
+    });
+
+    it('/api/matches filters status AND publish_status inside the query', () => {
+        const source = readFileSync(join(APP_DIR, 'app', 'api', 'matches', 'route.ts'), 'utf8');
+        expect(source).toContain(`{ column: "publish_status", op: "eq", value: "PUBLISHABLE" }`);
+    });
+});
+
 // ─── Secrets scan ────────────────────────────────────────────────────────────
 describe('secrets scan — no credential-shaped literals in committed source', () => {
     const CREDENTIAL_PATTERNS: Array<[string, RegExp]> = [

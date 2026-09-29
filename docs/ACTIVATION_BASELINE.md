@@ -142,13 +142,28 @@ Probed directly (full detail + evidence in `docs/LIVE_ENVIRONMENT_GATE.md`):
   `/api/listings` returns 500 rows (its `.limit(500)` cap) with master-inventory
   lineage codes (`SE-RNT-*`, `INV-*`; all sampled codes present in the
   canonical snapshot), `status='active'`.
-- **CRITICAL (code-verified, Phase D blocker):**
+- **CRITICAL → RESOLVED AT APP LAYER (2026-09-30, credential-free patch):**
   - Public RLS policy is `FOR SELECT USING (status = 'active' OR is_staff())`
-    (`supabase/schema.sql:566`) — **`publish_status` is NOT enforced**.
-  - Public API route `/api/listings` filters `status IN ('active','available')`
-    only — **`publish_status` NOT enforced**.
-  - Consequence: the Phase-D requirement "public client sees ONLY
-    PUBLISHABLE" cannot hold today; 500 unverified units are publicly visible.
+    (`supabase/schema.sql:566`) — **`publish_status` still NOT enforced in
+    RLS** (migration `20261002_020_public_publish_gate.sql` is written but
+    needs Supabase credentials to apply — the remaining credential-gated
+    half of this blocker).
+  - **App-layer defense-in-depth now enforces
+    `publish_status = 'PUBLISHABLE'` on EVERY public listing surface**
+    (verified by tests `api/inventory-publish-gate`,
+    `api/matches-publish-gate`, `api/listings-envelope`,
+    `api/listings-spatial`, `phase13-security-sweep`):
+    `/api/listings` (filter + envelope + `?id=` + proximity modes),
+    `/api/listings/spatial` (RPC output filtered in-app + gated live-table
+    fallback), `/api/inventory` (gated query; unverified Excel /
+    WhatsApp-ingested / sheet / snapshot tiers REMOVED from the public GET),
+    `/api/matches` (status + publish gate inside the query), and
+    `/api/feeds/property-finder` (gated query; unverified snapshot fallback
+    removed).
+  - Consequence: until staff verify units, public surfaces serve an honest
+    EMPTY state (`source: 'none'`) instead of 500 unverified units. The
+    public client now sees ONLY PUBLISHABLE at the application layer; the
+    DB-layer (RLS) enforcement lands when migration 020 is applied.
 
 ---
 
@@ -234,9 +249,15 @@ this document says so.
 
 1. **Zero publishable units** (master inventory) — the verification workflow
    (Phase C) has not been run against owners/brokers. Highest business blocker.
-2. **Public visibility does not enforce `publish_status`** (RLS policy +
-   `/api/listings`) — 500 unverified units are publicly visible today. Must be
-   fixed before Phase D can pass. Destructive-change rules apply (Rule E).
+2. **Public visibility `publish_status` enforcement — APP LAYER DONE
+   (2026-09-30), DB layer credential-gated.** Every public route now filters
+   `publish_status = 'PUBLISHABLE'` inside its query (see the Phase D section
+   above for the full surface list); unverified local-file tiers (Excel,
+   WhatsApp-ingested demo-group units, sheet, snapshot) were removed from
+   public GETs. REMAINING: apply `supabase/migrations/
+   20261002_020_public_publish_gate.sql` (RLS policy + gated RPC) to the live
+   project — requires Supabase service credentials. Destructive-change rules
+   apply (Rule E).
 3. **No-fabrication violations in client-facing code (Rule B / §21)** —
    `/api/listings` invents defaults for missing data: `usd || 1500`,
    `compound || 'New Cairo'`, `zone || '5th Settlement'`, `type ||
