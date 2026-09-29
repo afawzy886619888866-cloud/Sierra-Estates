@@ -15,7 +15,7 @@ Outputs:
 Never fabricates: unknown compounds stay UNKNOWN (no New-Cairo default), invalid
 phones stay invalid, missing prices stay missing.
 """
-import csv, hashlib, json, re, unicodedata
+import csv, hashlib, json, os, re, unicodedata
 from datetime import date, datetime
 from collections import Counter, defaultdict
 
@@ -23,7 +23,9 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
-ROOT = '/home/z/my-project/sierra-blu'
+# Self-locating repo root (works from any checkout path; env override for CI)
+ROOT = os.environ.get('SE_PIPELINE_ROOT',
+                      os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 XLSX_IN = f'{ROOT}/data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx'
 TSV1 = f'{ROOT}/owners_rent_tab_separated.tsv'
 TSV2 = f'{ROOT}/owners_rent_with_photos.tsv'

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Phase 1 deliverables generator: XLSX + 5 markdown reports from pipeline output."""
-import csv, json
+import csv, json, os
 from collections import Counter, defaultdict
 from datetime import date
 
@@ -8,7 +8,9 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-ROOT = '/home/z/my-project/sierra-blu'
+# Self-locating repo root (works from any checkout path; env override for CI)
+ROOT = os.environ.get('SE_PIPELINE_ROOT',
+                      os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 CSV_IN = f'{ROOT}/data/MASTER_INVENTORY_V1.csv'
 TODAY = '2026-09-29'
 
