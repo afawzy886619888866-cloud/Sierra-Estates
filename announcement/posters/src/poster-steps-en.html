@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar"><head><meta charset="UTF-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#888;font-family:'Cairo','Tajawal',Tahoma,sans-serif}
+  .poster{position:relative;width:1080px;height:1350px;margin:0 auto;background:#f5f0e4;overflow:hidden;
+          background-image:radial-gradient(ellipse at 50% 0%,#faf6ec 0%,#f1ead8 62%,#e9e0cb 100%)}
+  .poster.square{width:1080px;height:1080px}
+  /* corner ornaments */
+  .orn{position:absolute;width:150px;height:150px;pointer-events:none}
+  .orn::before,.orn::after{content:'';position:absolute;background:#a4906e}
+  .orn::before{width:100%;height:2px}
+  .orn::after{width:2px;height:100%}
+  .orn.tl{top:34px;left:34px}.orn.tl::before{top:0;left:0}.orn.tl::after{top:0;left:0}
+  .orn.tr{top:34px;right:34px}.orn.tr::before{top:0;right:0}.orn.tr::after{top:0;right:0}
+  .orn.bl{bottom:34px;left:34px}.orn.bl::before{bottom:0;left:0}.orn.bl::after{bottom:0;left:0}
+  .orn.br{bottom:34px;right:34px}.orn.br::before{bottom:0;right:0}.orn.br::after{bottom:0;right:0}
+  .inner{position:relative;height:100%;padding:74px 88px 64px;display:flex;flex-direction:column}
+  .kicker{color:#a4906e;font-weight:700;font-size:20px;letter-spacing:.06em;text-align:center}
+  h1.title{color:#8f1f2c;font-weight:900;text-align:center;line-height:1.32;
+           font-size:46px;margin-top:6px}
+  .divider{display:flex;align-items:center;gap:14px;color:#a4906e;margin:22px 0 26px}
+  .divider::before,.divider::after{content:'';flex:1;height:2px;
+           background:linear-gradient(90deg,transparent,#a4906e,transparent)}
+  .divider span{font-size:18px}
+  .steps{display:grid;gap:20px;direction:rtl}
+  .step{display:flex;gap:18px;align-items:flex-start}
+  .num{flex:0 0 52px;height:52px;border-radius:50%;background:#8f1f2c;color:#faf6ec;
+       font-weight:900;font-size:26px;display:flex;align-items:center;justify-content:center;
+       box-shadow:0 4px 12px rgba(143,31,44,.25)}
+  .step .txt{font-size:23.5px;line-height:1.75;color:#2f2a24;font-weight:700;padding-top:4px}
+  .step .ribbon{font-size:17px;color:#7a6a52;font-weight:600;margin-top:4px}
+  .band-label{display:flex;justify-content:center;margin-bottom:12px}
+  .band-label span{background:#8f1f2c;color:#faf6ec;font-weight:700;font-size:17px;
+       padding:7px 22px;border-radius:999px}
+  .mand-wrap{margin-top:auto}
+  .mandatory{direction:rtl;background:#fff8e6;border:2.5px solid #c9a227;
+       border-right:9px solid #8f1f2c;border-radius:16px;padding:22px 26px;
+       box-shadow:0 10px 26px rgba(143,31,44,.10)}
+  .mandatory .ar{color:#5a1420;font-weight:900;font-size:21.5px;line-height:1.95;text-align:right}
+  .mandatory .en{color:#6d5c44;font-size:14.5px;font-weight:600;margin-top:12px;direction:ltr;text-align:left;line-height:1.65}
+  .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .cta span{border:2px solid #a4906e;color:#5a4a33;font-weight:800;font-size:19px;
+       padding:10px 24px;border-radius:999px;background:rgba(255,255,255,.35)}
+  .foot{color:#8f1f2c;font-weight:900;font-size:21px;text-align:center;padding-top:20px}
+  .ltr .steps{direction:ltr}
+  .ltr .step .txt{text-align:left}
+  .ltr .mandatory{direction:rtl;border-right:2.5px solid #c9a227;border-left:9px solid #8f1f2c}
+  .ltr .mandatory .ar{text-align:right}
+</style></head>
+<body><div class="poster ltr">
+  <div class="orn tl"></div><div class="orn tr"></div><div class="orn bl"></div><div class="orn br"></div>
+  <div class="inner ltr">
+  <div class="kicker">Official Announcement</div>
+  <h1 class="title" style="font-size:42px">Booking &amp; Contracting Steps<br>Cairo Plaza El-Mataria Project</h1>
+  <div class="divider"><span>◆</span></div>
+  <div class="steps">
+<div class="step"><span class="num">1</span><div><div class="txt">The client is entitled to review the project documents and the company's papers <span style="color:#7a6a52;font-size:18px">(building licence – engineering names of floors – contract template – commercial register)</span>.</div></div></div>
+<div class="step"><span class="num">2</span><div><div class="txt">A booking form is completed for applicants and a deposit of up to EGP 5,000 (five thousand Egyptian pounds) is paid at the Marketing Office located on the Cairo Plaza El-Mataria project site; the client is entitled to a copy of the form as proof.</div></div></div>
+
+    <div class="step"><span class="num">3</span><div><div class="txt">The contract is signed; the original booking form stamped with the company seal is received, the contracting deposit is paid, and payment receipts are received from the Financial Administration in Building (1), second floor, Cairo Plaza El-Mataria.</div></div></div>
+    <div class="step"><span class="num">4</span><div><div class="txt">The company-signed original contract is received within a maximum of (7) business days from the client's signing date.</div></div></div>
+  </div>
+  <div class="mand-wrap"><div class="band-label"><span>★ Mandatory Notice — attached verbatim at the end of every piece of content</span></div>
+<div class="mandatory"><p class="ar">يتم توقيع العقد وإستلام أصل إستمارة الحجز مختومة بخاتم الشركة وتسليم دفعة التعاقد وإستلام إيصالات السداد من الإدارة المالية الموجودة بالعمارة رقم (1) بالدور الثاني بمشروع كايرو بلازا المطرية. يتم إستلام أصل العقد الموقع من الشركة بحد أقصى (7) أيام عمل من تاريخ توقيع العميل على العقد.</p><div class="en"><b>EN reference translation:</b> The contract is signed, the original booking form stamped with the company seal is received, the contracting deposit is paid, and the payment receipts are received from the Financial Administration located in Building No. (1), second floor, Cairo Plaza El-Mataria project. The original contract signed by the company is received within a maximum of (7) business days from the date the client signs the contract.</div></div></div>
+  <div class="foot">With compliments — Cairo Plaza El-Mataria Project Management</div>
+</div>
+</div></body></html>
