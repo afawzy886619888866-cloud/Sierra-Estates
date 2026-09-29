@@ -312,3 +312,28 @@ The following changes remove every code path that could present invented propert
 - **DB impact:** followups rows (pending→overdue flips; new timer rows) + one activities row per run. **Risk:** low (deduped, bounded reads 500). **Rollback:** git revert; delete stray followups createdBy='lead-timers'.
 
 - **Verification (Phase 9+10):** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 111/111 suites, 1,192/1,192 tests (new: phase9-viewing-feedback 30 tests, phase10-crm-pipeline 12 tests); migrations 015/016 blob-identical app mirrors verified by test; repo-wide walk asserts no app writer of the legacy status remains.
+
+## 2026-10-01 — Phase 11 (AUTOMATION UNIFICATION)
+
+### Change 1 — Dispatcher: one scheduled entry point for all 10 cron jobs
+
+- **Change:** New `GET /api/cron/dispatch/[job]` (night | morning | any single job). Invokes the existing job routes IN-PROCESS (dynamic import + NextRequest with the propagated Authorization header — no self-fetch), so every scheduling path shares the same fail-closed `verifyCronRequest`/`cronOwnerGuard` gate. Per job: own try/catch (isolation), `automation_runs` ledger row (status/duration/trigger-source/truncated response), DLQ upsert on failure, DLQ resolution on success, and a dedupe guard (skip when a success fresher than the job's window exists; `?force=1` bypass). HTTP 500 when any job failed → both schedulers treat it as "retry" and the dedupe guard makes the retry execute only the failures.
+- **Reason:** Roadmap Phase 11 "unify crons". 10 cron endpoints existed but only 2 were scheduled (Vercel Hobby cap) — maintenance, expire-reservations, lead-timers, availability-SLA, master-sheet/sheets ingestion and the WhatsApp drain had NO trigger at all; nothing recorded whether a job ever ran or failed.
+- **Files:** app/api/cron/dispatch/[job]/route.ts (new), lib/server/automation-jobs.ts (new registry: 10 jobs, windows, dedupe hours), lib/server/automation-run.ts (new ledger/DLQ helpers, fail-soft by design).
+- **DB impact:** new `automation_runs` table (migration 017). **Risk:** low — dispatcher only orchestrates existing, individually-tested routes. **Rollback:** git revert; drop table.
+
+### Change 2 — Scheduling off the Hobby limit (Vercel 2-slot fallback + GHA canonical)
+
+- **Change:** BOTH vercel.json files (root + app) now carry exactly 2 crons — `dispatch/night` @ 02:00 UTC, `dispatch/morning` @ 06:00 UTC (previously the root file declared 7 crons, which the Hobby plan cannot register, and the app file spent its 2 slots on sync-leads/sync-listings only). New canonical scheduler `.github/workflows/automations.yml`: hourly whatsapp-dispatch, 3-hourly lead-timers + check-availability-sla, both daily windows (10 min offset from Vercel's slots), daily sync-leads at 10:10 UTC (preserves the historical 10:00 hour), manual workflow_dispatch matrix over EVERY job incl. apply-migrations, `curl --retry 3 --retry-all-errors`, hard-fails when CRON_SECRET is unconfigured. Superseded `.github/workflows/crm-automation-crons.yml` deleted (its hourly whatsapp-dispatch + manual triggers are subsumed). `apply-migrations` is deliberately in NO window and NO schedule — DDL moves only as a deliberate act.
+- **Reason:** Roadmap "move off Hobby limits → GHA"; dual independent schedulers + dedupe guard = either side failing still leaves the other running the work.
+- **Files:** vercel.json, apps/sierra-estates-realty/vercel.json, .github/workflows/automations.yml (new), .github/workflows/crm-automation-crons.yml (deleted).
+- **DB impact:** none. **Risk:** medium — requires the CRON_SECRET repository secret in GitHub for the GHA leg (Vercel leg works without it). Without the secret GHA runs fail visibly, they never run jobs silently. **Rollback:** git revert (previous vercel.json cron entries restored).
+
+### Change 3 — Migration 017: automation_runs ledger + DLQ lifecycle (additive)
+
+- **Change:** `20261001_017_automation_runs.sql`: `public.automation_runs` (job, trigger_source, status ∈ success|failed|skipped, started/finished, duration_ms, attempt, summary JSONB, error) with staff-read RLS (service-role writes only) + (job, started_at DESC) index and a partial failures index. `failed_orchestrations` (existed since workflow-studio, never had a writer) gains `resolved_at TIMESTAMPTZ` + open-queue partial index — the dispatcher upserts failures under pipeline `cron:<job>` (attempts++ on the open entry, no row-stacking) and marks them resolved when the same job later succeeds. Baseline schema.sql updated; app mirror synced (add-both rule, blob-identical).
+- **Reason:** Roadmap Phase 11 "retryable + observable automations (DLQ exists)".
+- **Files:** supabase/migrations/20261001_017_automation_runs.sql (+ app mirror), supabase/schema.sql (+ app mirror).
+- **DB impact:** the migration itself (additive; no drops/renames). **Risk:** low. **Rollback:** drop automation_runs, drop column resolved_at.
+
+- **Verification (Phase 11):** tsc 0 errors; Jest 112/112 suites, 1,211/1,211 tests (new phase11-automation-dispatch suite: 19 tests — registry↔disk↔handler-map invariants, window fan-out, auth propagation, clean sub-request URLs, failure isolation + retry signal, dedupe skip + force bypass, owner-mismatch skip, fail-closed 401, Hobby-cap config contract on both vercel.json files, GHA schedule/retry contract, retired-workflow assertion). The suite caught one real bug pre-merge: `?force=1` was read but not wired into the dedupe guard.

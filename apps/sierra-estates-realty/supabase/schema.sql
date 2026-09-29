@@ -945,7 +945,27 @@ CREATE TABLE IF NOT EXISTS public.failed_orchestrations (
     attempts INT DEFAULT 0,
     last_error TEXT,
     payload JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    -- Phase 11 dispatcher lifecycle: set when the same pipeline later
+    -- succeeded. NULL = still on the dead letter queue.
+    resolved_at TIMESTAMPTZ
+);
+
+-- Phase 11 automation unification: one row per scheduled job execution.
+-- status='skipped' means the dedupe guard saw a fresh success for the job.
+CREATE TABLE IF NOT EXISTS public.automation_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job TEXT NOT NULL,
+    trigger_source TEXT NOT NULL DEFAULT 'scheduled',
+    status TEXT NOT NULL
+        CHECK (status IN ('success', 'failed', 'skipped')),
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ,
+    duration_ms INT,
+    attempt INT NOT NULL DEFAULT 1,
+    summary JSONB DEFAULT '{}'::jsonb,
+    error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.search_queries (
@@ -981,6 +1001,9 @@ CREATE INDEX IF NOT EXISTS idx_pages_slug_locale ON public.pages(slug, locale);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bot_commands_bot ON public.bot_commands(bot_id, status);
 CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow ON public.workflow_executions(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_automation_runs_job_started ON public.automation_runs(job, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_automation_runs_failures ON public.automation_runs(job, started_at DESC) WHERE status = 'failed';
+CREATE INDEX IF NOT EXISTS idx_failed_orchestrations_open ON public.failed_orchestrations(pipeline, created_at DESC) WHERE resolved_at IS NULL;
 
 -- ==============================================================================
 -- RLS for the migrated tables.
@@ -1006,6 +1029,7 @@ ALTER TABLE public.bot_commands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workflows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workflow_executions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.failed_orchestrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automation_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.search_queries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
@@ -1134,6 +1158,10 @@ BEGIN
     DROP POLICY IF EXISTS "failed_orchestrations_admin_read" ON public.failed_orchestrations;
     CREATE POLICY "failed_orchestrations_admin_read" ON public.failed_orchestrations
         FOR SELECT TO authenticated USING (public.is_admin());
+
+    DROP POLICY IF EXISTS "automation_runs_staff_read" ON public.automation_runs;
+    CREATE POLICY "automation_runs_staff_read" ON public.automation_runs
+        FOR SELECT TO authenticated USING (public.is_staff());
 
     DROP POLICY IF EXISTS "search_queries_staff_read" ON public.search_queries;
     CREATE POLICY "search_queries_staff_read" ON public.search_queries
