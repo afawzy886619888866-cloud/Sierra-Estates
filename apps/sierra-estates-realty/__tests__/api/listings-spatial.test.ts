@@ -159,45 +159,52 @@ describe('GET /api/listings/spatial Endpoint', () => {
       data: null,
       error: { message: 'function public.get_listings_near_capital does not exist' },
     });
+    // PUBLISH GATE: the fallback tier filters publish_status = 'PUBLISHABLE'
+    // inside the query (activation plan Phase D), so the mocked chain needs
+    // .eq() and the fixture row must carry the gated column.
     (supabase.from as jest.Mock).mockReturnValueOnce({
       select: jest.fn().mockReturnValue({
         in: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue({
-            data: [
-              {
-                id: 'live-pf-1',
-                ref_id: 'PF-LIVE-1',
-                code: 'PF-LIVE-1',
-                compound: 'Uptown Cairo',
-                location_area: 'Uptown Cairo',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 8000000,
-                bedrooms: 3,
-                bathrooms: 3,
-                area_sqm: 190,
-                latitude: 30.04,
-                longitude: 31.58,
-                status: 'active',
-                images: [
-                  'https://static.shared.propertyfinder.eg/media/images/listing/x/1.jpg',
-                ],
-                description: 'Live PF listing',
-                raw_data: { img: 'https://static.shared.propertyfinder.eg/media/images/listing/x/raw.jpg' },
-              },
-              // No coordinates → must be dropped by the live fallback tier.
-              {
-                id: 'live-nocoord',
-                code: 'PF-NOCOORD',
-                compound: 'Maadi',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 4000000,
-                status: 'active',
-                images: [],
-              },
-            ],
-            error: null,
+          eq: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue({
+              data: [
+                {
+                  id: 'live-pf-1',
+                  ref_id: 'PF-LIVE-1',
+                  code: 'PF-LIVE-1',
+                  compound: 'Uptown Cairo',
+                  location_area: 'Uptown Cairo',
+                  property_type: 'Apartment',
+                  deal_type: 'sale',
+                  price: 8000000,
+                  publish_status: 'PUBLISHABLE',
+                  bedrooms: 3,
+                  bathrooms: 3,
+                  area_sqm: 190,
+                  latitude: 30.04,
+                  longitude: 31.58,
+                  status: 'active',
+                  images: [
+                    'https://static.shared.propertyfinder.eg/media/images/listing/x/1.jpg',
+                  ],
+                  description: 'Live PF listing',
+                  raw_data: { img: 'https://static.shared.propertyfinder.eg/media/images/listing/x/raw.jpg' },
+                },
+                // No coordinates → must be dropped by the live fallback tier.
+                {
+                  id: 'live-nocoord',
+                  code: 'PF-NOCOORD',
+                  compound: 'Maadi',
+                  property_type: 'Apartment',
+                  deal_type: 'sale',
+                  price: 4000000,
+                  publish_status: 'PUBLISHABLE',
+                  status: 'active',
+                  images: [],
+                },
+              ],
+              error: null,
+            }),
           }),
         }),
       }),

@@ -15,7 +15,7 @@ import {
   Nav, Topbar, Footer, PropertyCard, Reveal, SierraConcierge, useT,
 } from './ui';
 import {
-  SLIDES, COMPOUNDS, COMPOUND_IMGS, FALLBACK_LISTINGS, fetchListings, Listing,
+  SLIDES, COMPOUNDS, COMPOUND_IMGS, EMPTY_LISTINGS, fetchListings, Listing,
 } from './portalData';
 import {
   IconMapPin, IconChevronDown, IconSearch, IconArrowRight, IconBadgeCheck, IconMap,
@@ -75,7 +75,9 @@ function Stat({ value, dec, prefix, suffix, label }: { value: number; dec?: numb
 export default function HomePortal() {
   const { t, locale } = useT();
   const isAr = locale === 'ar';
-  const [listings, setListings] = useState<Listing[]>(FALLBACK_LISTINGS);
+  // ANTI-FABRICATION: starts honestly empty — only publish-gated live units
+  // are ever rendered (activation plan Phase E).
+  const [listings, setListings] = useState<Listing[]>(EMPTY_LISTINGS);
   const [slide, setSlide] = useState(0);
   const [tab, setTab] = useState(0);
   const reduce = useReducedMotion();
@@ -201,6 +203,11 @@ export default function HomePortal() {
           </Reveal>
           <div className="grid-props">
             {featured.map((p, i) => <PropertyCard key={p.id} p={p} index={i} />)}
+            {listings.length === 0 && (
+              <p className="props-none" style={{ gridColumn: '1 / -1', padding: '2.5rem 0', textAlign: 'center', opacity: 0.7 }}>
+                {t('featNone')}
+              </p>
+            )}
           </div>
         </div>
       </section>
