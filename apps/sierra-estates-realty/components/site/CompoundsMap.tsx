@@ -4,7 +4,7 @@
  * Sierra Estates — Interactive Compounds Masterplan Map
  *
  * Central interactive command deck featuring:
- * - Luxury Cairo Emerald & Champagne Gold custom pill markers
+ * - Two-letter flag pins (clean masterplan) — press opens the Excel sheet
  * - Zone fast-switching (Golden Square, 5th Settlement, Katameya, South/North 90th, Mostakbal City)
  * - 5-way segment bar (All Inventory, Owners Rent, Owners Buy, Broker Rent, Broker Buy)
  * - Rich interactive popup cards with AI investment score, pricing, growth rate, and developer tag
@@ -15,13 +15,11 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
 import { RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
-import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
 import SmartFilterBar from '@/components/site/SmartFilterBar';
 import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
-  compoundShortName,
 } from '@/lib/site/smart-search';
 
 export interface MapCompound {
@@ -379,18 +377,6 @@ export const SEGMENT_TABS: SegmentTab[] = [
   { key: 'broker_buy', label: 'Broker Resale', defaultBadge: '7,495', color: '#6366f1' },
 ];
 
-function cleanCpdName(s: string): string {
-  return String(s || '')
-    .toLowerCase()
-    .replace(/\(.*?\)/g, '')
-    .replace(/\b(new cairo|residence|residences|district \d+|phase \d+)\b/g, '')
-    .trim();
-}
-
-function estimateUnitsCount(aiScore: number): number {
-  return Math.max(12, Math.round(aiScore * 2.8));
-}
-
 interface InventoryApiData {
   count: number;
   segments?: {
@@ -461,19 +447,16 @@ export default function CompoundsMap({
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
-  const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
 
-  // Fetch full live inventory and segment aggregates
+  // Fetch full live inventory and segment aggregates (marker tooltips,
+  // legend counts and the flag-press Excel sheet all read from this).
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetch('/api/inventory').then((r) => (r.ok ? r.json() : null)),
-      fetch('/api/inventory?mode=rent').then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([allData, rentData]: [InventoryApiData | null, InventoryApiData | null]) => {
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((allData: InventoryApiData | null) => {
         if (cancelled) return;
         if (allData) setInventoryData(allData);
-        if (rentData?.compoundCounts) setRentCounts(rentData.compoundCounts);
       })
       .catch((err) => console.warn('[CompoundsMap] Listings fetch failed:', err));
     return () => {
@@ -485,54 +468,6 @@ export default function CompoundsMap({
     if (filterBed !== undefined) setSelectedBed(filterBed);
   }, [filterBed]);
 
-  // Listen for clicks on the popup "View Excel Sheet" button
-  useEffect(() => {
-    const handleSheetBtnClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('.sierra-compound-sheet-trigger');
-      if (target) {
-        const cpd = target.getAttribute('data-compound');
-        if (cpd) {
-          onOpenSheet?.(cpd);
-        }
-      }
-    };
-    document.addEventListener('click', handleSheetBtnClick);
-    return () => document.removeEventListener('click', handleSheetBtnClick);
-  }, [onOpenSheet]);
-
-  // Compute unit count for a given compound in the selected segment
-  const getCompoundCount = useCallback(
-    (compoundName: string): number => {
-      if (!inventoryData) return 0;
-      const target = cleanCpdName(compoundName);
-      if (!target) return 0;
-
-      const segmentCounts = inventoryData.compoundSegmentCounts || {};
-      const compoundCounts = inventoryData.compoundCounts || {};
-
-      for (const [key, segObj] of Object.entries(segmentCounts)) {
-        const cleanK = cleanCpdName(key);
-        if (cleanK === target || cleanK.startsWith(target) || target.startsWith(cleanK)) {
-          if (selectedSegment === 'all') {
-            return segObj.all || compoundCounts[key] || 0;
-          }
-          return segObj[selectedSegment] || 0;
-        }
-      }
-
-      if (selectedSegment === 'all') {
-        for (const [key, count] of Object.entries(compoundCounts)) {
-          const cleanK = cleanCpdName(key);
-          if (cleanK === target || cleanK.startsWith(target) || target.startsWith(cleanK)) {
-            return count;
-          }
-        }
-      }
-
-      return 0;
-    },
-    [inventoryData, selectedSegment]
-  );
 
   // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
@@ -651,293 +586,82 @@ export default function CompoundsMap({
       layer.clearLayers();
       markersMapRef.current.clear();
 
-      const getRentCount = (name: string): number => {
-        const target = cleanCpdName(name);
-        for (const [key, count] of Object.entries(rentCounts)) {
-          const k = cleanCpdName(key);
-          if (k === target || k.startsWith(target) || target.startsWith(k)) return count;
-        }
-        return 0;
-      };
-
-      const getSheetUnitsCount = (name: string): number => {
-        const target = cleanCpdName(name);
-        for (const [key, count] of Object.entries(inventoryData?.compoundSheetCounts || {})) {
-          const k = cleanCpdName(key);
-          if (k === target || k.startsWith(target) || target.startsWith(k)) return count;
-        }
-        return 0;
-      };
-
       filteredCompounds.forEach((c) => {
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
         const isHot = c.ai >= 9.2;
-        const liveUnits = getCompoundCount(c.n);
-        const unitsCount = liveUnits > 0 ? liveUnits : (selectedSegment === 'all' ? (c.units ?? estimateUnitsCount(c.ai)) : 0);
-        const liveRentCount = getRentCount(c.n);
-        const hasRentInventory = liveRentCount > 0;
-        const liveSheetCount = getSheetUnitsCount(c.n);
-        const hasSheetInventory = liveSheetCount > 0;
-        const devName = COMPOUND_DEVELOPERS[c.n] || '';
-        const displayName = devName && !c.n.includes('(') ? `${c.n} (${devName})` : c.n;
-        const activeSegmentObj = SEGMENT_TABS.find((s) => s.key === selectedSegment);
 
-        // Custom Pill Pin — compact SHORT lowercase label so 60+ markers
-        // never crowd the masterplan (full name + developer live in popup).
+        // Two-letter flag pin — the masterplan stays clean: NO compound names
+        // on the map. Pressing the flag opens the Excel sheet modal with ALL
+        // units for that compound (live inventory + master sheet).
+        const flagCode =
+          c.n.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toLowerCase() || '·';
+        const flagBg = isSelected ? '#071523' : isFeat ? '#0a382b' : '#14283d';
+        const flagBorder = isSelected
+          ? '2px solid #dfad3a'
+          : isHot
+          ? '1.5px solid rgba(223, 173, 58, 0.7)'
+          : '1px solid rgba(255, 255, 255, 0.28)';
+        const flagShadow = isSelected
+          ? '0 0 20px rgba(223, 173, 58, 0.75), 0 6px 14px rgba(0,0,0,0.55)'
+          : isHot
+          ? '0 0 12px rgba(223, 173, 58, 0.35), 0 4px 10px rgba(0,0,0,0.4)'
+          : '0 3px 9px rgba(0,0,0,0.38)';
+        const flagColor = isSelected ? '#e9c176' : '#ffffff';
+
         const markerHtml = `
-          <div class="sierra-compound-pin ${isSelected ? 'is-selected' : ''}" style="
-            display: inline-flex;
+          <div class="sierra-compound-flag ${isSelected ? 'is-selected' : ''}" style="
+            position: relative;
+            width: 30px;
+            height: 30px;
+            display: flex;
             align-items: center;
-            gap: 5px;
-            background: ${
-              isSelected
-                ? '#071523'
-                : isFeat
-                ? 'linear-gradient(135deg, #04261c, #0a382b)'
-                : 'linear-gradient(135deg, #0b1c2d, #14283d)'
-            };
-            color: #ffffff;
-            padding: 4px 7px 4px 10px;
-            border-radius: 999px;
-            border: ${
-              isSelected
-                ? '2px solid #dfad3a'
-                : isHot
-                ? '1.5px solid rgba(223, 173, 58, 0.7)'
-                : '1px solid rgba(255, 255, 255, 0.22)'
-            };
-            box-shadow: ${
-              isSelected
-                ? '0 0 22px rgba(223, 173, 58, 0.8), 0 6px 16px rgba(0,0,0,0.6)'
-                : isHot
-                ? '0 0 14px rgba(223, 173, 58, 0.4), 0 4px 12px rgba(0,0,0,0.35)'
-                : '0 2px 8px rgba(0,0,0,0.3)'
-            };
+            justify-content: center;
+            background: ${flagBg};
+            color: ${flagColor};
+            border: ${flagBorder};
+            border-radius: 9px 9px 9px 2px;
+            box-shadow: ${flagShadow};
             cursor: pointer;
-            white-space: nowrap;
             font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-            font-size: 10.5px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            transform: translate(-50%, -50%) ${isSelected ? 'scale(1.08)' : 'scale(1)'};
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            transform: ${isSelected ? 'scale(1.14)' : 'scale(1)'};
+            transform-origin: 50% 100%;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
-          ">
-            <span style="color: ${isSelected ? '#e9c176' : 'rgba(255,255,255,0.92)'};">${compoundShortName(c.n)}</span>
-            <span style="
-              background: ${isSelected ? '#dfad3a' : activeSegmentObj?.color || '#334155'};
-              color: ${isSelected ? '#071523' : '#ffffff'};
-              font-size: 10px;
-              font-weight: 800;
-              padding: 1px 7px;
-              border-radius: 999px;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              min-width: 18px;
-            ">${unitsCount}</span>
-            ${hasRentInventory ? `<span style="
-              background: #059669;
-              color: #ffffff;
-              font-size: 9px;
-              font-weight: 800;
-              padding: 1px 5px;
-              border-radius: 999px;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              margin-left: -2px;
-            ">R·${liveRentCount}</span>` : ''}
-            ${hasSheetInventory ? `<span style="
-              background: rgba(223, 173, 58, 0.22);
-              color: #f6d88b;
-              font-size: 9px;
-              font-weight: 800;
-              padding: 1px 5px;
-              border-radius: 999px;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              border: 1px solid rgba(223, 173, 58, 0.45);
-              margin-left: -2px;
-            " title="${liveSheetCount} unphotographed sheet units">+${liveSheetCount}📄</span>` : ''}
-          </div>
+          ">${flagCode}<span aria-hidden="true" style="
+            position: absolute;
+            bottom: -4.5px;
+            left: 50%;
+            margin-left: -4.5px;
+            width: 9px;
+            height: 9px;
+            background: ${flagBg};
+            border-right: ${flagBorder};
+            border-bottom: ${flagBorder};
+            transform: rotate(45deg);
+          "></span></div>
         `;
 
         const marker = L.marker(c.c, {
           icon: L.divIcon({
             className: 'sierra-leaflet-marker-wrap',
             html: markerHtml,
-            iconSize: [140, 30],
-            iconAnchor: [70, 15],
+            iconSize: [30, 36],
+            iconAnchor: [15, 35],
           }),
           zIndexOffset: isSelected ? 1000 : isFeat ? 700 : 100,
         });
 
-        // Rich Interactive Popup
-        const rentDisplay = c.rent ? `$${c.rent.toLocaleString()}` : `$${Math.round(c.priceM * 200).toLocaleString()}`;
-        const queryParamSeg = selectedSegment !== 'all' ? `&segment=${selectedSegment}` : '';
-        const matchingUnit = inventoryData?.units?.find((u) => {
-          const cName = cleanCpdName(u.compound || u.location || '');
-          const target = cleanCpdName(c.n);
-          return cName === target || cName.startsWith(target) || target.startsWith(cName);
-        });
-        const previewImg = matchingUnit?.img || (COMPOUND_HERO_IMAGES as Record<string, string>)[c.n];
-        const popupHtml = `
-          <div class="compound-rich-popup" style="
-            min-width: 260px;
-            max-width: 290px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-            padding: 4px 2px;
-          ">
-            <div style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 6px;
-            ">
-              <span style="
-                font-size: 10px;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.12em;
-                color: #c8961a;
-              ">${c.z}</span>
-              <span style="
-                font-size: 9.5px;
-                font-weight: 700;
-                padding: 2px 7px;
-                border-radius: 999px;
-                background: #04261c;
-                color: #34d399;
-                border: 1px solid rgba(52, 211, 153, 0.3);
-              ">AI ${c.ai.toFixed(1)}</span>
-            </div>
-            <h4 style="
-              margin: 0 0 10px 0;
-              font-size: 15.5px;
-              font-weight: 800;
-              color: #0f172a;
-              line-height: 1.25;
-            ">
-              ${displayName}
-            </h4>
-            ${previewImg ? `
-              <div style="width: 100%; height: 115px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; background: #0b1c2d; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                <img src="${previewImg}" alt="${displayName}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.parentElement.style.display='none'" />
-                ${matchingUnit?.code ? `<span style="position: absolute; bottom: 6px; left: 6px; background: rgba(7, 21, 35, 0.88); color: #e2e8f0; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(223, 173, 58, 0.5); backdrop-filter: blur(4px);">${matchingUnit.code}</span>` : ''}
-              </div>
-            ` : ''}
-
-            <div style="
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 10px;
-              padding: 10px 12px;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 8px 12px;
-              margin-bottom: 12px;
-            ">
-              <div>
-                <div style="font-size: 9.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">UNITS</div>
-                <div style="font-size: 15px; font-weight: 800; color: #0f172a;">${unitsCount}</div>
-              </div>
-              <div>
-                <div style="font-size: 9.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">CAPITAL GAIN</div>
-                <div style="font-size: 15px; font-weight: 800; color: #059669;">${c.g}</div>
-              </div>
-              <div>
-                <div style="font-size: 9.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">FROM RESALE</div>
-                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">EGP ${c.priceM}M</div>
-              </div>
-              <div>
-                <div style="font-size: 9.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">RENT / MO</div>
-                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${rentDisplay}</div>
-              </div>
-            </div>
-
-            ${(() => {
-              const phases = COMPOUND_PHASES[c.n] || [];
-              if (phases.length === 0) return '';
-              return `
-                <div style="margin: 8px 0 10px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
-                  <div style="font-size: 9.5px; font-weight: 800; color: #b45309; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 4px;">
-                    <span>MASTERPLAN PHASES & DISTRICTS</span>
-                  </div>
-                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    ${phases.map((p) => `<span style="font-size: 10px; background: rgba(223, 173, 58, 0.12); color: #78350f; border: 1px solid rgba(223, 173, 58, 0.35); padding: 2px 7px; border-radius: 6px; font-weight: 600;">${p}</span>`).join('')}
-                  </div>
-                </div>
-              `;
-            })()}
-
-            ${hasSheetInventory ? `
-              <button
-                type="button"
-                class="sierra-compound-sheet-trigger"
-                data-compound="${c.n}"
-                style="
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  width: 100%;
-                  background: rgba(223, 173, 58, 0.12);
-                  color: #dfad3a;
-                  border: 1px dashed rgba(223, 173, 58, 0.45);
-                  border-radius: 8px;
-                  padding: 8px 10px;
-                  margin-bottom: 8px;
-                  cursor: pointer;
-                  font-size: 11px;
-                  font-weight: 700;
-                  box-sizing: border-box;
-                  transition: all 0.2s ease;
-                "
-                onmouseover="this.style.background='rgba(223, 173, 58, 0.22)';"
-                onmouseout="this.style.background='rgba(223, 173, 58, 0.12)';"
-              >
-                <span style="display: flex; align-items: center; gap: 5px;">
-                  <span>📊</span>
-                  <span>View Excel Sheet (+${liveSheetCount})</span>
-                </span>
-                <span style="font-size: 9.5px; opacity: 0.85;">Send Photos →</span>
-              </button>
-            ` : ''}
-
-            <a
-              href="/properties?compound=${encodeURIComponent(c.n)}${queryParamSeg}"
-              style="
-                display: block;
-                width: 100%;
-                background: #04261c;
-                color: #ffffff;
-                text-align: center;
-                padding: 9px 12px;
-                border-radius: 8px;
-                font-size: 12.5px;
-                font-weight: 700;
-                text-decoration: none;
-                box-sizing: border-box;
-                border: 1px solid rgba(223, 173, 58, 0.4);
-                transition: all 0.2s ease;
-              "
-              onmouseover="this.style.background='#071523'; this.style.borderColor='#dfad3a';"
-              onmouseout="this.style.background='#04261c'; this.style.borderColor='rgba(223, 173, 58, 0.4)';"
-            >
-              Explore ${unitsCount} Units in ${c.n} →
-            </a>
-          </div>
-        `;
-
-        marker.bindPopup(popupHtml, {
-          maxWidth: 300,
-          className: 'sierra-map-popup-clean',
-        });
-
+        // Flag press → select (intel panel / search sync) AND open the Excel
+        // sheet modal with every unit for this compound. No Leaflet popup —
+        // the masterplan itself is the interface.
         marker.on('click', () => {
           handleSelect?.(c.n);
+          onOpenSheet?.(c.n);
         });
 
         // Render Masterplan Boundary Polygon (if available)
@@ -962,7 +686,6 @@ export default function CompoundsMap({
                 duration: 0.9,
               });
             }
-            marker.openPopup();
           });
 
           polygon.addTo(layer);
@@ -995,7 +718,7 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts, inventoryData?.units, inventoryData?.compoundSheetCounts]);
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, onOpenSheet]);
 
 
   // Handle external selection & smooth zoom
