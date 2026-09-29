@@ -104,6 +104,32 @@ describe('Admin Components Suite', () => {
       const html = render(<PropertyTeaserBrochure lang="en" />);
       expect(html).toContain('Brochure');
     });
+
+    it('§21: starts empty — no prefilled demo villa and no invented broker desk', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).not.toContain('REF-HYD-042');
+      expect(html).not.toContain('Hyde Park');
+      expect(html).not.toContain('Sierra Elite Desk');
+      expect(html).not.toContain('38000000');
+      expect(html).not.toContain('420');
+    });
+
+    it('§21: every tear-sheet input is visible and editable — no hidden fixed specs', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).toContain('Reference ID');
+      expect(html).toContain('Unit Type');
+      expect(html).toContain('Bedrooms');
+      expect(html).toContain('Finishing');
+      expect(html).toContain('Down Payment');
+      expect(html).toContain('Broker Name');
+    });
+
+    it('§21: honest missing-fields note shown and generation disabled while incomplete', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).toContain('required field');
+      expect(html).toContain('missing — the teaser is generated only from complete, real listing data');
+      expect(html).toContain('disabled');
+    });
   });
 
   describe('WhatsAppScheduledSender', () => {
