@@ -199,6 +199,29 @@ export interface DashboardKPIs {
     at: string;
   }>;
   topAgents: Array<{ name: string; listings: number; rating: number }>;
+  /* ── Phase 12: Data Integrity Control Center (from real listings rows) ── */
+  inventoryHealth?: {
+    /* source_verified_at recency buckets (30d / 90d / older / never) */
+    freshness: { fresh: number; aging: number; stale: number; never: number };
+    /* publishability cascade distribution (PUBLISHABLE / REVIEW_REQUIRED / …) */
+    publishStatusCounts: Record<string, number>;
+    /* listings where verified !== true (staff verification outstanding) */
+    needsVerification: number;
+    /* listings without a dupe_check_hash — not yet duplicate-fingerprinted */
+    unfingerprinted: number;
+    totalListings: number;
+  } | null;
+  /* ── Phase 11/12 tie-in: dispatcher run ledger + DLQ (migration 017) ── */
+  automationHealth?: {
+    jobs: Array<{
+      job: string;
+      status: string;
+      finishedAt: string | null;
+      durationMs: number | null;
+      triggerSource: string;
+    }>;
+    openDeadLetterQueue: number;
+  } | null;
 }
 
 /* Reports aggregation */

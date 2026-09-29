@@ -337,3 +337,14 @@ The following changes remove every code path that could present invented propert
 - **DB impact:** the migration itself (additive; no drops/renames). **Risk:** low. **Rollback:** drop automation_runs, drop column resolved_at.
 
 - **Verification (Phase 11):** tsc 0 errors; Jest 112/112 suites, 1,211/1,211 tests (new phase11-automation-dispatch suite: 19 tests — registry↔disk↔handler-map invariants, window fan-out, auth propagation, clean sub-request URLs, failure isolation + retry signal, dedupe skip + force bypass, owner-mismatch skip, fail-closed 401, Hobby-cap config contract on both vercel.json files, GHA schedule/retry contract, retired-workflow assertion). The suite caught one real bug pre-merge: `?force=1` was read but not wired into the dedupe guard.
+
+## 2026-10-01 — Phase 12 (ADMIN CONTROL CENTER)
+
+### Change 1 — Data Integrity Control Center (dashboard API + widgets)
+
+- **Change:** `/api/admin/dashboard` extended with two guarded sections. `inventoryHealth`: source-evidence freshness buckets (≤30d / 30–90d / >90d / never, from listings.source_verified_at), publishability cascade distribution (publish_status counts, NULL → UNCLASSIFIED), staff-verification queue (verified !== true), dupe bookkeeping (rows without dupe_check_hash) — every number a real count over the listings projection, zero defaults. `automationHealth`: per-job last run folded from automation_runs (newest-first) + open dead-letter count. Degradation contract: when the 013 projection or the 017 ledger is unavailable (migration not applied), the endpoint retries the core KPI read WITHOUT the new columns and reports the section as null — never fabricates zeros, and a pending migration can never take the dashboard down. DashboardView renders four control-center widgets (Freshness bars, Publish Readiness chips, Verification Queue, Automation Health with DLQ badge) with bilingual labels and honest empty / "not available" states; fake KPIs were already gone since Phase 4.
+- **Reason:** Roadmap Phase 12 "Reuse /api/admin/dashboard; add inventory-freshness, duplicates, needs-verification widgets; remove fake KPIs" — plus the Phase 11 ledger as the natural fourth widget (automation health).
+- **Files:** app/api/admin/dashboard/route.ts, lib/types.ts (DashboardKPIs + inventoryHealth/automationHealth), app/admin/views/DashboardView.tsx.
+- **DB impact:** none (reads only). **Risk:** low. **Rollback:** git revert.
+
+- **Verification (Phase 12):** tsc 0 errors; Jest 113/113 suites, 1,217/1,217 tests (new phase12-control-center suite: 6 tests — bucket math over real-shaped rows, newest-first automation fold, empty-database honesty, 013-missing degradation (inventoryHealth null + core KPIs intact + automation section still working), 017-missing degradation, widget headers + not-available render).

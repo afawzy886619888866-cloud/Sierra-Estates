@@ -76,6 +76,30 @@ interface RealFunnel {
   closings: number;
 }
 
+/** Phase 12: Data Integrity Control Center — mirrors the server payload
+ * (/api/admin/dashboard → inventoryHealth). Every bucket is a REAL count of
+ * listings rows; null means the projection is unavailable (migration 013
+ * not applied), which renders as “not available” — never as fake zeros. */
+interface InventoryHealth {
+  freshness: { fresh: number; aging: number; stale: number; never: number };
+  publishStatusCounts: Record<string, number>;
+  needsVerification: number;
+  unfingerprinted: number;
+  totalListings: number;
+}
+
+/** Phase 11/12 tie-in: dispatcher run ledger + DLQ (automationHealth). */
+interface AutomationHealth {
+  jobs: Array<{
+    job: string;
+    status: string;
+    finishedAt: string | null;
+    durationMs: number | null;
+    triggerSource: string;
+  }>;
+  openDeadLetterQueue: number;
+}
+
 export default function DashboardView({
   lang = 'en',
   onNavigateAction,
@@ -99,6 +123,9 @@ export default function DashboardView({
   const [recentActivities, setRecentActivities] = useState<ActivityFeedItem[]>([]);
   const [invStats, setInvStats] = useState<InventoryStats | null>(null);
   const [funnel, setFunnel] = useState<RealFunnel | null>(null);
+  // Phase 12 control center: real data-integrity + automation health.
+  const [invHealth, setInvHealth] = useState<InventoryHealth | null>(null);
+  const [autoHealth, setAutoHealth] = useState<AutomationHealth | null>(null);
   const [hotLeads, setHotLeads] = useState<DashboardLead[]>(FALLBACK_HOT_LEADS);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastFeedback, setBroadcastFeedback] = useState<string | null>(null);
@@ -203,6 +230,10 @@ export default function DashboardView({
             badge: a.type === 'inquiry' ? 'INQUIRY' : 'LEAD',
           }));
           setRecentActivities(events);
+          // Phase 12: integrity + automation control-center sections ride
+          // on the same payload (null when their migrations aren't applied).
+          setInvHealth(d.inventoryHealth ?? null);
+          setAutoHealth(d.automationHealth ?? null);
         }
       })
       .catch((err) => console.warn('[DashboardView] Metrics fetch failed:', err));
@@ -462,6 +493,180 @@ export default function DashboardView({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── DATA INTEGRITY & AUTOMATION CONTROL CENTER (Phase 12) ──
+          Every number here is a real count from the listings table or the
+          automation_runs ledger. null sections render "not available"
+          (migration pending) — never fabricated zeros. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Widget 1: Inventory freshness */}
+        <div className="clay-card p-5">
+          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <span>🗓️</span>
+            <span>{isAr ? 'حداثة المخزون' : 'Inventory Freshness'}</span>
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5 mb-4">
+            {isAr ? 'من تاريخ آخر دليل من المصدر' : 'By last source evidence (source_verified_at)'}
+          </p>
+          {invHealth ? (
+            invHealth.totalListings === 0 ? (
+              <p className="text-xs text-slate-400 font-mono">
+                {isAr ? 'لا توجد وحدات في قاعدة البيانات بعد — في انتظار الاستيراد' : 'No listings in the database yet — import pending'}
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {([
+                  ['fresh', isAr ? 'حديث (≤30 يوم)' : 'Fresh (≤30d)', 'bg-emerald-500', 'text-emerald-400'],
+                  ['aging', isAr ? 'متقادم (30–90 يوم)' : 'Aging (30–90d)', 'bg-amber-500', 'text-amber-400'],
+                  ['stale', isAr ? 'قديم (>90 يوم)' : 'Stale (>90d)', 'bg-rose-500', 'text-rose-400'],
+                  ['never', isAr ? 'لم يوثق مطلقاً' : 'Never verified', 'bg-slate-600', 'text-slate-400'],
+                ] as const).map(([key, label, barCls, textCls]) => {
+                  const value = invHealth.freshness[key];
+                  const pct = invHealth.totalListings ? Math.round((value / invHealth.totalListings) * 100) : 0;
+                  return (
+                    <div key={key}>
+                      <div className="flex justify-between text-[11px] font-mono mb-1">
+                        <span className="text-slate-300">{label}</span>
+                        <span className={textCls}>{value} · {pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-900/80 overflow-hidden">
+                        <div className={`h-full ${barCls} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            <p className="text-xs text-slate-400 font-mono">
+              {isAr ? 'غير متاح — عمود الهجرة 013 غير مطبق' : 'Not available — migration 013 not applied'}
+            </p>
+          )}
+        </div>
+
+        {/* Widget 2: Publish readiness cascade */}
+        <div className="clay-card p-5">
+          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <span>🚦</span>
+            <span>{isAr ? 'جاهزية النشر' : 'Publish Readiness'}</span>
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5 mb-4">
+            {isAr ? 'توزيع تصنيف قابلية النشر' : 'Publishability cascade distribution'}
+          </p>
+          {invHealth ? (
+            invHealth.totalListings === 0 ? (
+              <p className="text-xs text-slate-400 font-mono">
+                {isAr ? 'لا توجد وحدات مصنفة بعد' : 'No classified units yet'}
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(invHealth.publishStatusCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([status, count]) => {
+                    const tone =
+                      status === 'PUBLISHABLE'
+                        ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-300'
+                        : status === 'DUPLICATE' || status === 'EXPIRED'
+                          ? 'bg-rose-950/80 border-rose-700/60 text-rose-300'
+                          : 'bg-amber-950/80 border-amber-700/60 text-amber-300';
+                    return (
+                      <span key={status} className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono ${tone}`}>
+                        {status} · {count}
+                      </span>
+                    );
+                  })}
+              </div>
+            )
+          ) : (
+            <p className="text-xs text-slate-400 font-mono">
+              {isAr ? 'غير متاح — عمود الهجرة 013 غير مطبق' : 'Not available — migration 013 not applied'}
+            </p>
+          )}
+        </div>
+
+        {/* Widget 3: Verification queue + duplicate bookkeeping */}
+        <div className="clay-card p-5">
+          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <span>🔍</span>
+            <span>{isAr ? 'طابور التحقق' : 'Verification Queue'}</span>
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5 mb-4">
+            {isAr ? 'وحدات تنتظر تحقق الموظفين' : 'Units awaiting staff verification'}
+          </p>
+          {invHealth ? (
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] text-slate-300 font-mono">
+                  {isAr ? 'بحاجة إلى تحقق' : 'Needs verification'}
+                </span>
+                <span className="text-2xl font-extrabold font-mono text-amber-400">
+                  {invHealth.needsVerification}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[11px] text-slate-300 font-mono">
+                  {isAr ? 'غير مسجل ببصمة تكرار' : 'Not dupe-fingerprinted'}
+                </span>
+                <span className="text-sm font-mono text-slate-300">{invHealth.unfingerprinted}</span>
+              </div>
+              <p className="text-[10px] text-slate-500 font-mono border-t border-slate-800/80 pt-2">
+                {isAr
+                  ? `${invHealth.totalListings} وحدة إجمالاً · القيد الفريد uq_listings_dupe_check_hash يمنع التكرار المسجل`
+                  : `${invHealth.totalListings} total listings · uq_listings_dupe_check_hash blocks fingerprinted dupes`}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 font-mono">
+              {isAr ? 'غير متاح — عمود الهجرة 013 غير مطبق' : 'Not available — migration 013 not applied'}
+            </p>
+          )}
+        </div>
+
+        {/* Widget 4: Automation health (Phase 11 ledger + DLQ) */}
+        <div className="clay-card p-5">
+          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+            <span>⚙️</span>
+            <span>{isAr ? 'صحة الأتمتة' : 'Automation Health'}</span>
+          </h4>
+          <p className="text-[11px] text-slate-400 mt-0.5 mb-4">
+            {isAr ? 'آخر تشغيل لكل مهمة مجدولة' : 'Last run per scheduled job'}
+          </p>
+          {autoHealth ? (
+            <div className="space-y-1.5">
+              {autoHealth.jobs.length === 0 ? (
+                <p className="text-xs text-slate-400 font-mono">
+                  {isAr ? 'لم تعمل أي مهمة مجدولة بعد' : 'No scheduled job has run yet'}
+                </p>
+              ) : (
+                autoHealth.jobs.slice(0, 6).map((j) => {
+                  const dot =
+                    j.status === 'success' ? 'bg-emerald-400' : j.status === 'failed' ? 'bg-rose-400' : 'bg-slate-400';
+                  return (
+                    <div key={j.job} className="flex items-center justify-between gap-2 text-[11px] font-mono">
+                      <span className="flex items-center gap-1.5 text-slate-300 truncate">
+                        <span className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`} />
+                        {j.job}
+                      </span>
+                      <span className="text-slate-500 shrink-0">{timeAgo(j.finishedAt ?? undefined) || j.status}</span>
+                    </div>
+                  );
+                })
+              )}
+              <p className={`text-[10px] font-mono border-t border-slate-800/80 pt-2 ${autoHealth.openDeadLetterQueue > 0 ? 'text-rose-400' : 'text-slate-500'}`}>
+                {autoHealth.openDeadLetterQueue > 0
+                  ? isAr
+                    ? `⚠ ${autoHealth.openDeadLetterQueue} إخفاق غير محلول في DLQ`
+                    : `⚠ ${autoHealth.openDeadLetterQueue} unresolved DLQ failure(s)`
+                  : isAr ? 'لا إخفاقات في قائمة الرسائل الميتة' : 'No open dead-letter queue failures'}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 font-mono">
+              {isAr ? 'غير متاح — هجرة 017 غير مطبقة' : 'Not available — migration 017 not applied'}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── LIVE INVENTORY ANALYTICS (computed from /api/inventory) ── */}
