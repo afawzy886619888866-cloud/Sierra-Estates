@@ -638,11 +638,14 @@ export default function CompoundsMap({
       });
       mapRef.current = map;
 
-      // Standard OpenStreetMap tile layer (reliable, high-contrast, no API key required)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        subdomains: 'abc',
+      // Sierra brand basemap — CARTO dark_matter: an obsidian-navy canvas
+      // that matches the masterplan deck (#071523) and the champagne-gold
+      // pins. The previous generic light OSM tiles clashed with the dark
+      // brand chrome (no API key required, subdomains a–d).
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 20,
+        subdomains: 'abcd',
       }).addTo(map);
 
       layerRef.current = L.layerGroup().addTo(map);

@@ -35,9 +35,14 @@ export type PlacedMapUnitPin = MapUnitPin & {
 export type MapTileStyle = 'dark' | 'light' | 'satellite';
 
 const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string }> = {
+  // 'dark' is the Sierra brand basemap: obsidian navy canvas that matches
+  // the site chrome (#070b14 / #071523 + champagne gold). The previous
+  // implementation pointed BOTH dark and light at the same light OSM
+  // tiles, so the 🌙 toggle (and the radar's default dark mode) showed a
+  // generic white map inside our dark UI.
   dark: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
