@@ -3,11 +3,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
+import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
  * Receives real-time streams from Meta WhatsApp Business Cloud API, Twilio, or Automation Bridges.
+ *
+ * MEDIA POLICY — the bot accepts CONVERSATIONS (text, voice transcripts, image
+ * captions) but NOT IMAGES: media is never downloaded, never parsed into a
+ * listing, and never stored from the bot. Unit photos reach the system through
+ * the admin portal instead (/api/admin/listings/photos), which is also where
+ * the team re-requests photos from the owner/broker. A media-only message in
+ * a DM gets the polite decline copy; in a group it is skipped silently.
  */
+
+/** Message types the conversation layer treats as media (never parsed). */
+const MEDIA_MESSAGE_TYPES = new Set([
+  'image', 'video', 'sticker', 'document', 'location', 'contacts', 'reaction', 'unsupported', 'template',
+]);
 
 /**
  * Verify a Meta X-Hub-Signature-256 HMAC over the raw body.
@@ -122,9 +135,17 @@ export async function POST(req: NextRequest) {
     const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
     const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
-    // Support text messages and audio/voice note messages
-    let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
-    const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
+    // Support text messages and audio/voice note messages. An image caption
+    // IS conversation text (the bot accepts the conversation, not the image).
+    let message =
+      metaMessageObj?.text?.body ||
+      metaMessageObj?.image?.caption ||
+      body.message?.text ||
+      body.text ||
+      body.Body;
+    const messageType = metaMessageObj?.type || body.type;
+    const isVoiceMessage = messageType === 'audio' || messageType === 'voice';
+    const isMediaMessage = MEDIA_MESSAGE_TYPES.has(String(messageType));
 
     if (!message && isVoiceMessage) {
       const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
@@ -139,6 +160,23 @@ export async function POST(req: NextRequest) {
       const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
       message = parsedVoice.rawTranscript;
       console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
+    }
+
+    // ── MEDIA POLICY: accept the conversation, decline the media ──
+    // A media message carrying no text (no caption) is acknowledged, never
+    // parsed, and (in DMs) answered with the decline copy. Groups are skipped
+    // silently — the bot must not spam broker groups with auto-replies.
+    if (!message && isMediaMessage) {
+      if (isGroup) {
+        return NextResponse.json({ status: 'skipped', reason: 'media_not_supported_in_group' });
+      }
+      await sendWhatsAppReply(sender, botMediaDeclineMessage());
+      return NextResponse.json({
+        status: 'success',
+        type: 'media_declined_text_only_bot',
+        media_type: String(messageType),
+        processed_at: new Date().toISOString(),
+      });
     }
 
     if (!message) {

@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE NOT NULL,
     full_name TEXT,
     phone TEXT,
-    role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'manager', 'agent', 'broker', 'viewer', 'client', 'owner')),
+    role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'manager', 'agent', 'broker', 'viewer', 'client', 'owner', 'partner')),
     avatar_url TEXT,
     -- Recorded at sign-in by /api/auth; the Firestore users doc carried these.
     status TEXT DEFAULT 'active',

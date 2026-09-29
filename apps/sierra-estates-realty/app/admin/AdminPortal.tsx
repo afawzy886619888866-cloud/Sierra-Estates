@@ -40,6 +40,7 @@ import {
   ViewingsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } from '@/lib/partner-access';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
@@ -2231,7 +2232,7 @@ function AdminApp() {
   const [langKey,setLangKey]=useState(()=>(typeof window!=='undefined'&&localStorage.getItem('admin_lang'))||'en');
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
-  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string; scope?: { developers: string[]; compounds: string[] } } | null>(null);
   const [authError, setAuthError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -2240,6 +2241,22 @@ function AdminApp() {
 
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
+
+  // PARTNER ACCOUNTS: a merged-in property account sees ONLY Inventory,
+  // Ad Listing and CRM — with its own data (server-side scope). Every tab
+  // switch is funneled through guardedSetTab; the nav itself is filtered.
+  const isPartner = isPartnerRole(currentUser?.role);
+  const guardedSetTab = useCallback((id: string) => {
+    setTab((current) => (isTabAllowedForRole(id, currentUser?.role) ? id : current));
+  }, [currentUser?.role]);
+
+  // When the session resolves to a partner, land on their first allowed tab
+  // ('overview' is a staff dashboard they must never open).
+  useEffect(() => {
+    if (isPartner && !isTabAllowedForRole(tab, currentUser?.role)) {
+      setTab(PARTNER_NAV_IDS[0]);
+    }
+  }, [isPartner, tab, currentUser?.role]);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -2269,6 +2286,7 @@ function AdminApp() {
             email: data.email || 'admin@sierra-estates.net',
             role: data.role || 'super_admin',
             name: data.name || 'Executive Admin',
+            ...(data.scope ? { scope: data.scope } : {}),
           });
         } else if (data?.authDisabled) {
           // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false.
@@ -2295,7 +2313,11 @@ function AdminApp() {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  const navItems=NAV_ITEMS(T);
+  const navItems=useMemo(()=>{
+    const all=NAV_ITEMS(T);
+    const allowedIds=navIdsForRole(all.map(n=>n.id), currentUser?.role);
+    return all.filter(n=>allowedIds.includes(n.id));
+  },[T, currentUser?.role]);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
   const commandItems = useMemo<CommandItem[]>(() => {
@@ -2305,10 +2327,15 @@ function AdminApp() {
       category: n.section,
       icon: n.icon,
       badge: n.badge,
-      action: () => setTab(n.id),
+      action: () => guardedSetTab(n.id),
     }));
 
     items.push(
+      // Copilot + telemetry refresh are staff-only — a partner session has no
+      // access to the admin data APIs they drive.
+      ...(isPartner
+        ? []
+        : ([
       {
         id: 'act-copilot',
         title: isAr ? 'فتح مساعد الذكاء الاصطناعي (Copilot)' : 'Open AI Data Copilot',
@@ -2323,6 +2350,7 @@ function AdminApp() {
         icon: '🔄',
         action: handleManualRefresh,
       },
+          ] as CommandItem[])),
       {
         id: 'act-lang',
         title: isAr ? 'التبديل إلى الإنجليزية' : 'التبديل إلى العربية',
@@ -2347,7 +2375,7 @@ function AdminApp() {
     );
 
     return items;
-  }, [navItems, isAr, theme]);
+  }, [navItems, isAr, theme, guardedSetTab, isPartner]);
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
@@ -2469,8 +2497,8 @@ function AdminApp() {
   const renderPage=()=>{
     switch(tab){
       case 'overview':
-      case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
-      case 'all_apps':return <AppsDirectoryView lang={langKey} onNavigate={setTab}/>;
+      case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={guardedSetTab} onNavigate={guardedSetTab}/>;
+      case 'all_apps':return <AppsDirectoryView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -2489,12 +2517,12 @@ function AdminApp() {
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
-      case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={setTab}/>;
-      case 'listings':return <ListingsView lang={langKey}/>;
+      case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={guardedSetTab}/>;
+      case 'listings':return <ListingsView lang={langKey} restricted={isPartner}/>;
       case 'viewings':return <ViewingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
-      case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
+      case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
@@ -2510,7 +2538,7 @@ function AdminApp() {
       case 'memory_brain':
       case 'deepseek':
       case 'mempalace':
-      case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={setTab} />;
+      case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={guardedSetTab} />;
       case 'notebookllm':return <NotebookLMStudio />;
       case 'easy_listing':return (
         <div className="fade-up" style={{paddingTop:4}}>
@@ -2518,7 +2546,11 @@ function AdminApp() {
         </div>
       );
       case 'settings':return <SettingsPage T={T}/>;
-      default:return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
+      // A partner never reaches the default staff dashboard (guardedSetTab +
+      // the nav filter keep them inside their three tabs) — but if a stale
+      // state ever slips through, land them on their inventory, not the
+      // staff overview.
+      default:return isPartner ? <InventoryOsView lang={langKey}/> : <DashboardView lang={langKey} onNavigateAction={guardedSetTab} onNavigate={guardedSetTab}/>;
     }
   };
 
@@ -2575,13 +2607,13 @@ function AdminApp() {
       {/* Mobile overlay */}
       <div className={`mobile-overlay ${mobileOpen?'open':''}`} onClick={()=>setMobileOpen(false)}>
         <div className="mobile-sidebar" onClick={e=>e.stopPropagation()}>
-          <SidebarContent T={T} tab={tab} setTab={setTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)}/>
+          <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)}/>
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <aside id="sidebar" className={collapsed?'collapsed':''}>
-        <SidebarContent T={T} tab={tab} setTab={setTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null}/>
+        <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null}/>
       </aside>
 
       {/* Main */}
@@ -2614,7 +2646,8 @@ function AdminApp() {
           </div>
 
           <div style={{marginInlineStart:'auto',display:'flex',gap:8,alignItems:'center'}}>
-            {/* Quick App Switcher */}
+            {/* Quick App Switcher — staff only (jumps to staff-only consoles) */}
+            {!isPartner && (
             <div style={{ position: 'relative' }}>
               <button
                 className="app-switcher-btn"
@@ -2664,7 +2697,7 @@ function AdminApp() {
                   ].map((app) => (
                     <div
                       key={app.id}
-                      onClick={() => setTab(app.id)}
+                      onClick={() => guardedSetTab(app.id)}
                       style={{
                         padding: '8px 10px',
                         borderRadius: 8,
@@ -2686,6 +2719,7 @@ function AdminApp() {
                 </div>
               )}
             </div>
+            )}
 
             <button className="topbar-pill" onClick={()=>setLangKey(l=>l==='en'?'ar':'en')} title="Toggle Language / تبديل اللغة" aria-label="Toggle Language / تبديل اللغة">
               {isAr?'EN':'ع'}
@@ -2695,6 +2729,8 @@ function AdminApp() {
             </button>
             <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+            {/* AI Data Copilot — staff only (queries admin-only APIs) */}
+            {!isPartner && (
             <button
               className="topbar-pill"
               onClick={() => setIsCopilotOpen(true)}
@@ -2714,6 +2750,9 @@ function AdminApp() {
               <span>✦</span>
               <span style={{ fontSize: 11 }}>{isAr ? 'مساعد البيانات' : 'Copilot'}</span>
             </button>
+            )}
+            {/* Telemetry refresh — staff fleet tool, meaningless for partners */}
+            {!isPartner && (
             <button
               className="topbar-pill"
               onClick={handleManualRefresh}
@@ -2725,6 +2764,7 @@ function AdminApp() {
               </span>
               <span style={{ fontSize: 11 }}>{isAr ? 'تحديث' : 'Refresh'}</span>
             </button>
+            )}
             <div
               className="topbar-pill"
               style={{
@@ -2754,7 +2794,9 @@ function AdminApp() {
                 {(currentUser?.email?.[0] || 'A').toUpperCase()}
               </span>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
-                {currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+                {isPartner
+                  ? (isAr ? 'حساب شريك · بروبرتي' : 'Partner Account')
+                  : currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
               </span>
             </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>
@@ -2763,14 +2805,17 @@ function AdminApp() {
           </div>
         </div>
         <div id="content">
-          <SierraMasterOrchestrator lang={langKey} onNavigate={setTab} />
+          {/* Master orchestrator — staff fleet console (admin-only APIs) */}
+          {!isPartner && <SierraMasterOrchestrator lang={langKey} onNavigate={guardedSetTab} />}
           {renderPage()}
         </div>
+        {!isPartner && (
         <AdminCopilotDrawer
           isOpen={isCopilotOpen}
           onClose={() => setIsCopilotOpen(false)}
           lang={langKey}
         />
+        )}
         <CommandPalette
           isOpen={isCommandPaletteOpen}
           onClose={() => setIsCommandPaletteOpen(false)}

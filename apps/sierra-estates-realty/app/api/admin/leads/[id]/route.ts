@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
+import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { getRecord, insertRecord, updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
+import { leadInScope } from '@/lib/server/partner-scope';
 import { logger } from '@/lib/logger';
 
 // Force dynamic rendering — uses Supabase/auth at runtime
@@ -24,8 +25,10 @@ function leadPatchToColumns(patch: Record<string, unknown>): RecordData {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const authResult = await verifyAdminRequest(req);
-  if (!authResult.authenticated) {
+  // The CRM board is interactive for partners too (stage advance / hot flag)
+  // — but a partner may only touch leads inside their own portfolio.
+  const auth = await verifyPortalRequest(req);
+  if (!auth.authenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -39,6 +42,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // into orchestration_history.
     const previous = await getRecord('leads', id).catch(() => null);
 
+    if (auth.access === 'partner') {
+      // A lead the partner cannot even see may not be mutated.
+      if (!previous) {
+        return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      }
+      if (!leadInScope(previous, auth.scope)) {
+        return NextResponse.json(
+          { error: 'Forbidden — lead outside partner portfolio' },
+          { status: 403 }
+        );
+      }
+      // Partners advance stages / toggle hot on their own board only.
+      const allowedKeys = ['pipelineStage', 'hot', 'updatedAt'];
+      const attempted = Object.keys(patch).filter((k) => !allowedKeys.includes(k));
+      if (attempted.length > 0) {
+        return NextResponse.json(
+          { error: `Partners may only update stage/hot — rejected: ${attempted.join(', ')}` },
+          { status: 403 }
+        );
+      }
+    }
+
     const updated = await updateRecord('leads', id, { ...patch, updatedAt: new Date().toISOString() });
     if (!updated) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
@@ -47,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (patch.pipelineStage !== undefined && previous && previous.pipelineStage !== undefined
         && String(previous.pipelineStage) !== String(patch.pipelineStage)) {
       await insertRecord('audit_logs', {
-        actorUid: authResult.uid ?? null,
+        actorUid: auth.uid ?? null,
         action: 'lead.stage_change',
         target: `leads:${id}`,
         before: { stage: previous.pipelineStage },

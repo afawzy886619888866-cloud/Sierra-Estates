@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
@@ -117,7 +117,7 @@ function buildUnifiedBaseline(): any[] {
   return Array.from(map.values());
 }
 
-export default function ListingsView({ lang = 'en' }: { lang?: string }) {
+export default function ListingsView({ lang = 'en', restricted = false }: { lang?: string; restricted?: boolean }) {
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'whatsapp-sender' | 'whatsapp-scanner' | 'brochure' | 'valuation'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,6 +144,30 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
   // Photo Attach Modal State
   const [activePhotoModalUnit, setActivePhotoModalUnit] = useState<any | null>(null);
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string>('');
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [photoRequestSending, setPhotoRequestSending] = useState(false);
+  const [photoRequestResult, setPhotoRequestResult] = useState<string | null>(null);
+
+  // The WhatsApp bot accepts conversations (text) but NOT images — photos
+  // enter through THIS modal. Persist to /api/admin/listings/photos so they
+  // survive a refresh (the old attach was local-state only and was lost).
+  const persistPhotos = useCallback(async (code: string, urls: string[]): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/admin/listings/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, urls }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.details || json.error || `HTTP ${res.status}`);
+      return true;
+    } catch (e: any) {
+      setBulkNotification(`${e?.message || 'Could not save photos'} — photos NOT saved. Retry.`);
+      setTimeout(() => setBulkNotification(null), 5000);
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -339,16 +363,19 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
     );
   };
 
-  // Attach / Apply photos to a listing
+  // Attach / Apply photos to a listing — persists to the DB, then updates state.
   const handleApplyPhotos = (code: string, photoUrls: string[]) => {
     setAllListingsData((prev) =>
       prev.map((item) => {
         if ((item.sierraCode || item.code || item.id) === code) {
+          const merged = Array.from(
+            new Set([...(item.photos || []), ...photoUrls])
+          ).filter(Boolean);
           return {
             ...item,
-            photos: photoUrls,
-            hasPhotos: photoUrls.length > 0,
-            image: photoUrls[0],
+            photos: merged,
+            hasPhotos: merged.length > 0,
+            image: merged[0],
           };
         }
         return item;
@@ -356,8 +383,72 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
     );
     setActivePhotoModalUnit(null);
     setCustomPhotoUrl('');
-    setBulkNotification(`Attached ${photoUrls.length} verified photo(s) to ${code}. Unit is now ready for syndication!`);
+    setBulkNotification(`Attaching ${photoUrls.length} verified photo(s) to ${code}…`);
     setTimeout(() => setBulkNotification(null), 4000);
+    // Persistence: photos now live on the listing row, not just in this tab's
+    // memory. Failure is surfaced — never a silent local-only "success".
+    void persistPhotos(code, photoUrls);
+  };
+
+  // Upload photos straight from the team's device (the bot never accepts
+  // images, so this button is the images' front door).
+  const handleDevicePhotoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !activePhotoModalUnit) return;
+    const code = activePhotoModalUnit.sierraCode || activePhotoModalUnit.code || activePhotoModalUnit.id;
+    setUploadingPhotos(true);
+    setUploadError(null);
+    try {
+      const uploaded: string[] = [];
+      for (const file of Array.from(files).slice(0, 10)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('code', String(code));
+        const res = await fetch('/api/admin/listings/photos', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.details || json.error || `HTTP ${res.status}`);
+        if (json.url) uploaded.push(json.url as string);
+      }
+      setAllListingsData((prev) =>
+        prev.map((item) => {
+          if ((item.sierraCode || item.code || item.id) === code) {
+            const merged = Array.from(
+              new Set([...(item.photos || []), ...uploaded])
+            ).filter(Boolean);
+            return { ...item, photos: merged, hasPhotos: merged.length > 0, image: merged[0] };
+          }
+          return item;
+        })
+      );
+      setActivePhotoModalUnit(null);
+      setBulkNotification(`Uploaded ${uploaded.length} photo(s) to ${code} ✓ (saved on the unit)`);
+      setTimeout(() => setBulkNotification(null), 4000);
+    } catch (e: any) {
+      setUploadError(e?.message || 'Upload failed');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  // Ask the unit's owner/broker for photos over WhatsApp (outbound queue).
+  const handleRequestPhotos = async () => {
+    if (!activePhotoModalUnit) return;
+    const code = activePhotoModalUnit.sierraCode || activePhotoModalUnit.code || activePhotoModalUnit.id;
+    setPhotoRequestSending(true);
+    setPhotoRequestResult(null);
+    try {
+      const res = await fetch('/api/admin/listings/photos/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: String(code) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      setPhotoRequestResult(isAr ? '✓ تم إرسال طلب الصور على واتساب (في قائمة الإرسال)' : '✓ Photo request queued on WhatsApp');
+    } catch (e: any) {
+      setPhotoRequestResult(e?.message || 'Request failed');
+    } finally {
+      setPhotoRequestSending(false);
+    }
   };
 
   const handleToggleSelectAllPage = () => {
@@ -472,48 +563,53 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
         {/* Action Controls & Tab Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {/* Download Spreadsheets links */}
-          <a
-            href="/downloads/Sierra_Estates_Owners_Rent_Master.xlsx"
-            download="Sierra_Estates_Owners_Rent_Master.xlsx"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 10,
-              background: 'var(--bg-e)',
-              border: '1px solid var(--bd)',
-              color: 'var(--tx)',
-              fontSize: 11,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              textDecoration: 'none',
-            }}
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isAr ? 'شيت إيجارات الملاك' : 'Owners Rent (.xlsx)'}</span>
-          </a>
+          {/* Download Spreadsheets links (staff only — the master sheets carry
+              the whole company's data, not a partner's scoped portfolio) */}
+          {!restricted && (
+            <>
+            <a
+              href="/downloads/Sierra_Estates_Owners_Rent_Master.xlsx"
+              download="Sierra_Estates_Owners_Rent_Master.xlsx"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 10,
+                background: 'var(--bg-e)',
+                border: '1px solid var(--bd)',
+                color: 'var(--tx)',
+                fontSize: 11,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                textDecoration: 'none',
+              }}
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isAr ? 'شيت إيجارات الملاك' : 'Owners Rent (.xlsx)'}</span>
+            </a>
 
-          <a
-            href="/downloads/Sierra_Estates_Rent_Master_Inventory.xlsx"
-            download="Sierra_Estates_Rent_Master_Inventory.xlsx"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 10,
-              background: 'var(--bg-e)',
-              border: '1px solid var(--bd)',
-              color: 'var(--tx)',
-              fontSize: 11,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              textDecoration: 'none',
-            }}
-          >
-            <Download className="w-3.5 h-3.5 text-[#E9C176]" />
-            <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
-          </a>
+            <a
+              href="/downloads/Sierra_Estates_Rent_Master_Inventory.xlsx"
+              download="Sierra_Estates_Rent_Master_Inventory.xlsx"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 10,
+                background: 'var(--bg-e)',
+                border: '1px solid var(--bd)',
+                color: 'var(--tx)',
+                fontSize: 11,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                textDecoration: 'none',
+              }}
+            >
+              <Download className="w-3.5 h-3.5 text-[#E9C176]" />
+              <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
+            </a>
+            </>
+          )}
 
           {/* Tab Controls */}
           <div style={{ display: 'flex', padding: 3, borderRadius: 12, background: 'var(--surf)', border: '1px solid var(--bd)' }}>
@@ -534,22 +630,6 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <span>{isAr ? 'المخزون الموحد' : 'All Listings'}</span>
             </button>
             <button
-              onClick={() => setActiveTab('valuation')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 8,
-                fontSize: 11,
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                background: activeTab === 'valuation' ? 'var(--emerald)' : 'transparent',
-                color: activeTab === 'valuation' ? '#07111E' : 'var(--tx-m)',
-              }}
-            >
-              <Calculator className="w-3.5 h-3.5 inline mr-1" />
-              <span>{isAr ? 'التقييم والمراجحة' : 'AVM Arbitrage'}</span>
-            </button>
-            <button
               onClick={() => setActiveTab('easy-listing')}
               style={{
                 padding: '6px 12px',
@@ -564,6 +644,26 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
             >
               <Sparkles className="w-3.5 h-3.5 inline mr-1" />
               <span>{isAr ? 'إدراج ذكي' : 'Easy Add'}</span>
+            </button>
+            {/* Internal marketing tools — staff only (partner accounts see the
+                listing grid + Easy Add, never the outreach/scanner/AVM/brochure) */}
+            {!restricted && (
+              <>
+            <button
+              onClick={() => setActiveTab('valuation')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'valuation' ? 'var(--emerald)' : 'transparent',
+                color: activeTab === 'valuation' ? '#07111E' : 'var(--tx-m)',
+              }}
+            >
+              <Calculator className="w-3.5 h-3.5 inline mr-1" />
+              <span>{isAr ? 'التقييم والمراجحة' : 'AVM Arbitrage'}</span>
             </button>
             <button
               onClick={() => setActiveTab('whatsapp-sender')}
@@ -613,15 +713,18 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
               <FileText className="w-3.5 h-3.5 inline mr-1" />
               <span>PDF Teaser</span>
             </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'valuation' && <ValuationArbitrageStudio lang={lang} />}
+      {/* Tab Content — restricted (partner) sessions can never land on the
+          staff-only tools even if a stale tab id survives in state */}
+      {activeTab === 'valuation' && !restricted && <ValuationArbitrageStudio lang={lang} />}
       {activeTab === 'easy-listing' && <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />}
-      {activeTab === 'whatsapp-sender' && <WhatsAppScheduledSender lang={lang} />}
-      {activeTab === 'whatsapp-scanner' && (
+      {activeTab === 'whatsapp-sender' && !restricted && <WhatsAppScheduledSender lang={lang} />}
+      {activeTab === 'whatsapp-scanner' && !restricted && (
         <WhatsAppChatScanner
           lang={lang}
           onUnitsIngested={() => {
@@ -643,7 +746,7 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
           }}
         />
       )}
-      {activeTab === 'brochure' && <PropertyTeaserBrochure />}
+      {activeTab === 'brochure' && !restricted && <PropertyTeaserBrochure />}
 
       {activeTab === 'inventory' && (
         <div className="space-y-4">
@@ -1491,6 +1594,92 @@ export default function ListingsView({ lang = 'en' }: { lang?: string }) {
 
             <div style={{ fontSize: 12, color: 'var(--tx-m)', lineHeight: 1.5 }}>
               Attach verified photos for <strong>{activePhotoModalUnit.compound}</strong> ({activePhotoModalUnit.type} · {activePhotoModalUnit.priceFormatted || `${activePhotoModalUnit.price?.toLocaleString()} EGP`}). Units with photos achieve 4.2x higher conversion on Property Finder and Client Portal.
+              <div style={{ marginTop: 4, fontSize: 11, color: 'var(--tx-f)' }}>
+                {isAr
+                  ? 'ℹ️ البوت بيستقبل النصوص فقط — الصور بتترفع من هنا وتتحفظ على الوحدة مباشرة.'
+                  : 'ℹ️ The bot accepts text only — photos are uploaded HERE and saved onto the unit.'}
+              </div>
+            </div>
+
+            {/* Upload from device — the photos' front door (bot never accepts images) */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 6 }}>
+                {isAr ? '⬆️ رفع صور من الجهاز / الموبايل' : '⬆️ Upload Photos From Device'}
+              </div>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '14px 12px',
+                  borderRadius: 10,
+                  border: '2px dashed rgba(200, 150, 26, 0.45)',
+                  background: 'rgba(200, 150, 26, 0.06)',
+                  cursor: uploadingPhotos ? 'wait' : 'pointer',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  color: 'var(--gold)',
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                  multiple
+                  disabled={uploadingPhotos}
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    void handleDevicePhotoUpload(e.target.files);
+                    e.currentTarget.value = '';
+                  }}
+                />
+                <Camera className="w-4 h-4" />
+                {uploadingPhotos
+                  ? isAr ? 'جاري الرفع…' : 'Uploading…'
+                  : isAr ? 'اختر صور (حتى 10) — هتتحفظ على الوحدة فوراً'
+                         : 'Choose photos (up to 10) — saved onto the unit instantly'}
+              </label>
+              {uploadError && (
+                <div style={{ marginTop: 6, fontSize: 11, color: '#FCA5A5' }}>⚠ {uploadError}</div>
+              )}
+            </div>
+
+            {/* Request photos from the owner/broker over WhatsApp */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
+                {isAr ? '💬 طلب الصور من المالك/الوسيط (واتساب)' : '💬 Request Photos From Owner/Broker (WhatsApp)'}
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleRequestPhotos()}
+                disabled={photoRequestSending}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: 'rgba(37, 211, 102, 0.12)',
+                  border: '1px solid rgba(37, 211, 102, 0.4)',
+                  color: '#25D366',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: photoRequestSending ? 'wait' : 'pointer',
+                  opacity: photoRequestSending ? 0.6 : 1,
+                }}
+              >
+                <Send className="w-4 h-4" />
+                {photoRequestSending
+                  ? isAr ? 'جاري الإرسال…' : 'Queueing…'
+                  : isAr ? 'ابعت طلب الصور على واتساب'
+                         : 'Send Photo Request via WhatsApp'}
+              </button>
+              {photoRequestResult && (
+                <div style={{ fontSize: 11, color: photoRequestResult.startsWith('✓') ? '#34D399' : '#FCA5A5' }}>
+                  {photoRequestResult}
+                </div>
+              )}
             </div>
 
             {/* Presets based on compound */}
