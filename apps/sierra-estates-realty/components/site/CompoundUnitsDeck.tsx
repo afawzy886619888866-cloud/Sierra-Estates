@@ -251,7 +251,9 @@ export default function CompoundUnitsDeck({
       style={{
         position: "absolute",
         inset: 0,
-        zIndex: 500,
+        // Above every Leaflet pane/control (control corners sit at z-index
+        // 1000) so the deck fully hides the map while open.
+        zIndex: 1100,
         background: "#071523",
         display: "flex",
         flexDirection: "column",

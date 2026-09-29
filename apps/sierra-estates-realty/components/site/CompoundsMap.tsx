@@ -21,6 +21,7 @@ import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
+  unitMatchesCondition,
 } from '@/lib/site/smart-search';
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
@@ -450,6 +451,7 @@ export default function CompoundsMap({
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
   const [selectedUnitType, setSelectedUnitType] = useState<string>('');
+  const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -481,6 +483,8 @@ export default function CompoundsMap({
 
   // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
+    const isRentSegment =
+      selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent';
     return compounds.filter((c) => {
       if (showSelectedOnly && selectedName && c.n !== selectedName) return false;
       // 1. Text query filter (local state or external prop)
@@ -513,12 +517,21 @@ export default function CompoundsMap({
         }
       }
 
-      // 3. Price preset filter (local on map)
+      // 3. Budget preset filter (local on map) — rent ladder while a rent
+      // segment is active, sale presets otherwise (same keys as SmartFilterBar).
       if (selectedPriceBudget !== 'any') {
-        const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
-        if (preset) {
-          if (preset.minM !== undefined && c.priceM < preset.minM) return false;
-          if (preset.maxM !== undefined && c.priceM > preset.maxM) return false;
+        if (isRentSegment) {
+          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
+          const { min, max } = budgetBounds(selectedPriceBudget, RENT_BUDGET_LADDER);
+          const rentUsd = c.rent || 0;
+          if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
+          if (max !== undefined && rentUsd > max / 50) return false;
+        } else {
+          const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
+          if (preset) {
+            if (preset.minM !== undefined && c.priceM < preset.minM) return false;
+            if (preset.maxM !== undefined && c.priceM > preset.maxM) return false;
+          }
         }
       }
 
@@ -554,9 +567,54 @@ export default function CompoundsMap({
         if (!hasType) return false;
       }
 
+      // 6. Segment filter (rent/resale) — a compound stays visible when the
+      // live inventory holds at least one unit of that segment inside it
+      // (exact segment match when the unit carries one; otherwise the unit's
+      // mode is the fallback evidence). When the inventory payload has not
+      // arrived yet, keep every compound visible — never exclude on missing
+      // evidence.
+      if (selectedSegment !== 'all' && inventoryData?.units) {
+        const target = c.n.toLowerCase().trim();
+        const hasSegment = inventoryData.units.some((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
+          const seg = String(u.segment || '').toLowerCase();
+          if (seg === selectedSegment) return true;
+          if (seg && seg !== 'unknown') return false;
+          return isRentSegment ? u.mode === 'rent' : u.mode === 'sale';
+        });
+        if (!hasSegment) {
+          // Compound-level fallback evidence: tracked rent level / sale price.
+          if (isRentSegment && !(Number(c.rent) > 0)) return false;
+          if (!isRentSegment && !(c.priceM > 0)) return false;
+        }
+      }
+
+      // 7. Condition filter — same contract as /properties: a compound stays
+      // visible when the live inventory holds at least one unit matching that
+      // condition inside it. Unknown/missing finishing never matches a
+      // selected condition (strict, no fabrication).
+      if (selectedCondition && inventoryData?.units) {
+        const target = c.n.toLowerCase().trim();
+        const hasCondition = inventoryData.units.some((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
+          return unitMatchesCondition(
+            {
+              finishing: u.finishing,
+              finishingQuality: u.finishingQuality,
+              furnishing: u.furnishing,
+              furnished: u.furnished,
+            },
+            selectedCondition,
+          );
+        });
+        if (!hasCondition) return false;
+      }
+
       return true;
     });
-  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName, selectedUnitType, inventoryData]);
+  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName, selectedUnitType, selectedSegment, selectedCondition, inventoryData]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -787,6 +845,7 @@ export default function CompoundsMap({
     setSelectedBed('any');
     setSelectedPriceBudget('any');
     setSelectedUnitType('');
+    setSelectedCondition('');
     setSelectedSegment('all');
     setShowSelectedOnly(false);
     if (mapRef.current) {
@@ -800,6 +859,7 @@ export default function CompoundsMap({
     (selectedBed !== 'any' ? 1 : 0) +
     (selectedPriceBudget !== 'any' ? 1 : 0) +
     (selectedUnitType ? 1 : 0) +
+    (selectedCondition ? 1 : 0) +
     (selectedSegment !== 'all' ? 1 : 0) +
     (showSelectedOnly ? 1 : 0) +
     (filterCompound ? 1 : 0) +
@@ -871,7 +931,12 @@ export default function CompoundsMap({
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setSelectedSegment(tab.key)}
+                onClick={() => {
+                  setSelectedSegment(tab.key);
+                  // Rent and sale use different budget ladders — reset the
+                  // budget when the segment direction changes.
+                  setSelectedPriceBudget('any');
+                }}
                 aria-pressed={isCurrent}
                 style={{
                   display: 'inline-flex',
@@ -1068,7 +1133,7 @@ export default function CompoundsMap({
             </div>
           </div>
 
-          {/* SMART FILTER CHIPS — dropdowns: compound/area · rooms · budget */}
+          {/* SMART FILTER CHIPS — dropdowns: compound/area · rooms · budget · unit type · condition */}
           <SmartFilterBar
             value={{
               purpose: selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent' ? 'rent' : 'sale',
@@ -1076,18 +1141,22 @@ export default function CompoundsMap({
               rooms: selectedBed === 'any' ? '' : String(selectedBed),
               budget: selectedPriceBudget === 'any' ? '' : selectedPriceBudget,
               unitType: selectedUnitType,
-              condition: '',
+              condition: selectedCondition,
             }}
             onChange={(v) => {
               setFilterQuery(v.compound);
               setSelectedBed(v.rooms === '' ? 'any' : parseInt(v.rooms, 10) || 'any');
               setSelectedPriceBudget(v.budget || 'any');
               setSelectedUnitType(v.unitType || '');
+              setSelectedCondition(v.condition || '');
             }}
             compounds={compounds.map((c) => ({ name: c.n, zone: c.z }))}
             showPurpose={false}
-            showCondition={false}
-            budgetOptions={MAP_PRICE_PRESETS.map((p) => ({ val: p.val, en: p.labelEn, ar: p.labelAr }))}
+            budgetOptions={
+              selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent'
+                ? RENT_BUDGET_LADDER
+                : MAP_PRICE_PRESETS.map((p) => ({ val: p.val, en: p.labelEn, ar: p.labelAr }))
+            }
             panelAlign="end"
             compact
             resultCount={filteredCompounds.length}
