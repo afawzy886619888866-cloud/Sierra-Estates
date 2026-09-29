@@ -232,6 +232,7 @@ jobs:
           ADMIN_BOOTSTRAP_PASSWORD: ${{ secrets.ADMIN_BOOTSTRAP_PASSWORD }}
           ADMIN_BOOTSTRAP_EMAIL: ${{ vars.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net' }}
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+          PARTNER_ACCOUNTS: ${{ secrets.PARTNER_ACCOUNTS }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
             echo "::error::VERCEL_TOKEN is not configured in GitHub Secrets. Please set VERCEL_TOKEN first."
