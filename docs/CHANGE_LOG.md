@@ -373,3 +373,13 @@ The following changes remove every code path that could present invented propert
 - **DB impact:** none. **Risk:** low. **Rollback:** git revert / delete files.
 
 - **Verification (Phase 13):** tsc 0 errors; Jest 115/115 suites, 1,239/1,239 tests (+22). Two real defects found and fixed while building the suites: the secrets-scan walk initially passed a string where the walker expects an array (iterated path characters → walked the whole filesystem → hang; fixed + guarded with a comment), and the CSV parser transcription had dropped the character-accumulate branch (all columns parsed empty; fixed to match the personas suite's parser).
+
+## 2026-10-01 — Phase 14 (PRODUCTION READINESS GATE)
+
+### Change 1 — Gate green: 9/9 deploy:check stages
+
+- **Change:** Two gate blockers fixed. (1) `broker-brain/route.ts` no longer reads `NEXT_PUBLIC_GEMINI_API_KEY` — a server route reading a NEXT_PUBLIC_ spelling inlines the Gemini secret into the client bundle (same defect class as B12); now `GEMINI_API_KEY` only, caught by the gate's Public Environment Safety stage. (2) `verify-deploy-readiness.ts` no longer requires `.amphion/config.json` — that path was deliberately removed in commit 6ec9f0a (deploy slim-down, now gitignored); the stale requirement kept the gate permanently red and contradicted the repo's own recorded decision. With fixes committed: Root Config ✅, Env Config ✅ (Vercel-acknowledged), Public Env Safety ✅, Canonical Backend Policy ✅, Legacy Runtime Boundary ✅, Master Schema ✅, Packages tsc ✅, Client Tests ✅ (115/115 suites, 1,239/1,239), Zero Drift ✅ — "SYSTEM READY FOR VERCEL PRODUCTION DEPLOYMENT".
+- **Reason:** Roadmap Phase 14 "deploy gates honest (pnpm deploy:check re-run after fixes)".
+- **Files:** apps/sierra-estates-realty/app/api/broker-brain/route.ts, scripts/verify-deploy-readiness.ts, docs/PRODUCTION_READINESS_REPORT.md (new — gate table, external-credential blocker list, standing guidance).
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert.
+- **Verification:** gate re-run twice (with and without placeholder env for the presence-only backend-policy stage — production values live in Vercel per the stage-2 contract; documented in the report). tsc 0 errors; the gate's own test stage ran the full 115/115 suite.
