@@ -13,7 +13,7 @@
 | 5 | Legacy Runtime Boundary | ✅ |
 | 6 | Supabase Master Schema Readiness | ✅ |
 | 7 | Packages Compilation & Type-Check | ✅ |
-| 8 | Client Unit & Integration Tests | ✅ (115/115 suites, 1,239/1,239 tests) |
+| 8 | Client Unit & Integration Tests | ✅ (115/115 suites, 1,239/1,239 tests at gate time; now 116/116, 1,267/1,267 after the Easy Listing suite) |
 | 9 | Git Status & Zero Working Tree Drift | ✅ |
 
 \* Stage 4 is a presence-only env check (Supabase URL + anon key + service-role key at run time). The verified run used **placeholder values to exercise the checker logic**; production values are configured in Vercel (stage 2's acknowledged contract). The gate must be re-run in the deploy environment for a production-signed result.
@@ -26,7 +26,7 @@
 ## Cumulative state (Phases 0–14)
 
 - **Data honesty:** zero fabrication paths in client-facing code (Phase 1.5 sweep, pinned by tests); master inventory 12,088 → 8,486 unique units, **0 PUBLISHABLE** — publication requires verification by rule, pinned by the Phase 13 data-QA suite.
-- **Database:** canonical migration chain 011–017 (additive, idempotent, add-both rule mirrored), baseline schema.sql in sync.
+- **Database:** canonical migration chain 011–018 (additive, idempotent, add-both rule mirrored; 018 adds the Easy Listing broker `map_sheet_entries` staging table), baseline schema.sql in sync.
 - **Automation:** all 10 cron jobs scheduled via the Phase 11 dispatcher (Vercel 2-slot Hobby fallback + GitHub Actions canonical), run ledger + DLQ lifecycle.
 - **Admin:** Data Integrity Control Center widgets on real data with guarded degradation (Phase 12).
 - **Security:** fail-closed cron/webhook auth, B12 fixed, WhatsApp HMAC hardened, service-role usage audited with justification, secrets scan pinned (Phase 13).

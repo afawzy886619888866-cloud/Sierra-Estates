@@ -260,6 +260,36 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_queue (
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Easy Listing (migration 018): broker MAP_SHEET staging. Written by
+-- /api/easy-listing through the service role; read by staff + the Excel
+-- map-sheet exports. A row is promoted to MAIN_INVENTORY only by an
+-- explicit staff action (listing_id), never automatically.
+CREATE TABLE IF NOT EXISTS public.map_sheet_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    internal_code TEXT NOT NULL,
+    uploader_role TEXT NOT NULL
+        CHECK (uploader_role IN ('AGENT', 'OWNER', 'BROKER')),
+    uploader_name TEXT NOT NULL,
+    uploader_phone TEXT NOT NULL,
+    region TEXT,
+    compound TEXT,
+    unit_type TEXT,
+    floor_label TEXT,
+    area_m2 NUMERIC(10, 2),
+    bedrooms INT,
+    bathrooms INT,
+    price_egp NUMERIC(15, 2),
+    deal_type TEXT NOT NULL DEFAULT 'sale'
+        CHECK (deal_type IN ('sale', 'rent')),
+    raw_text TEXT,
+    photo_request_status TEXT NOT NULL DEFAULT 'not_requested'
+        CHECK (photo_request_status IN ('not_requested', 'requested', 'received', 'completed')),
+    photo_request_queued_at TIMESTAMPTZ,
+    listing_id UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ------------------------------------------------------------------------------
 -- 8. Unified Memory & Vector Context Engine (for AI Agents)
 -- ------------------------------------------------------------------------------
@@ -415,6 +445,9 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_profiles') THEN
         CREATE TRIGGER trigger_update_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_map_sheet_entries') THEN
+        CREATE TRIGGER trigger_update_map_sheet_entries BEFORE UPDATE ON public.map_sheet_entries FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_listings') THEN
         CREATE TRIGGER trigger_update_listings BEFORE UPDATE ON public.listings FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
@@ -569,6 +602,12 @@ BEGIN
     DROP POLICY IF EXISTS "Authenticated users can access whatsapp queue" ON public.whatsapp_queue;
     DROP POLICY IF EXISTS "whatsapp_queue_staff_access" ON public.whatsapp_queue;
     CREATE POLICY "whatsapp_queue_staff_access" ON public.whatsapp_queue
+        FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
+
+    -- Easy Listing broker staging: carries the uploader's contact details +
+    -- unverified market intel, so staff-only like the queue above.
+    DROP POLICY IF EXISTS "map_sheet_entries_staff_access" ON public.map_sheet_entries;
+    CREATE POLICY "map_sheet_entries_staff_access" ON public.map_sheet_entries
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
     DROP POLICY IF EXISTS "Authenticated users can access unified memory" ON public.unified_memory;
@@ -1004,6 +1043,10 @@ CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow ON public.workflow_e
 CREATE INDEX IF NOT EXISTS idx_automation_runs_job_started ON public.automation_runs(job, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_automation_runs_failures ON public.automation_runs(job, started_at DESC) WHERE status = 'failed';
 CREATE INDEX IF NOT EXISTS idx_failed_orchestrations_open ON public.failed_orchestrations(pipeline, created_at DESC) WHERE resolved_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_map_sheet_internal_code ON public.map_sheet_entries(internal_code);
+CREATE INDEX IF NOT EXISTS idx_map_sheet_uploader_phone ON public.map_sheet_entries(uploader_phone);
+CREATE INDEX IF NOT EXISTS idx_map_sheet_photo_status ON public.map_sheet_entries(photo_request_status);
+CREATE INDEX IF NOT EXISTS idx_map_sheet_created_at ON public.map_sheet_entries(created_at DESC);
 
 -- ==============================================================================
 -- RLS for the migrated tables.
