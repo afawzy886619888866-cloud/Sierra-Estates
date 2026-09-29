@@ -14,7 +14,10 @@ function getSupabase() {
 
 // ── Gemini client ─────────────────────────────────────────────────────────
 function getGemini() {
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY!;
+  // Server-only key (Phase 13/14 gate): reading the NEXT_PUBLIC_ spelling
+  // here would inline the Gemini API key into the CLIENT bundle — it is a
+  // server secret, never a public one (same class of defect as audit B12).
+  const apiKey = process.env.GEMINI_API_KEY!;
   return new GoogleGenerativeAI(apiKey);
 }
 
