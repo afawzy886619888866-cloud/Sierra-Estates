@@ -762,13 +762,17 @@ export function LeadsPage({ T }: { T: any }) {
   const syncPFLeads = useCallback(async () => {
     setPfSyncing(true);
     setPfSyncResult(null);
+    // B12 fix: this used to call /api/cron/sync-leads directly, attaching a
+    // client-inlined cron secret (with a guessable fallback literal) to the
+    // request — exposing the secret to every visitor of the admin bundle.
+    // The sync now goes through the admin-authenticated proxy route, which
+    // invokes the cron endpoint server-side; no secret ever crosses the
+    // trust boundary.
     try {
-      const res = await fetch('/api/cron/sync-leads', {
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'sierra-cron'}` },
-      });
+      const res = await fetch('/api/admin/leads/sync-pf', { method: 'POST' });
       const data = await res.json();
-      if (data.success) {
-        setPfSyncResult({ ...data.summary, ts: new Date().toLocaleTimeString() });
+      if (res.ok && data.success) {
+        setPfSyncResult({ ...data.summary?.summary, ts: new Date().toLocaleTimeString() });
         // Re-fetch leads after successful sync
         fetchLeads();
       } else {

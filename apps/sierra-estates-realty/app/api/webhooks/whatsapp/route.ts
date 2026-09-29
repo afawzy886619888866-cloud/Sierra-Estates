@@ -9,10 +9,19 @@ import { verifySharedSecret } from '@/lib/server/webhook-auth';
  * Receives real-time streams from Meta WhatsApp Business Cloud API, Twilio, or Automation Bridges.
  */
 
-function verifyMetaSignature(payload: string, signatureHeader: string | null, appSecret: string): boolean {
-  if (!signatureHeader || !appSecret) return true; // Optional if secret is not configured
+/**
+ * Verify a Meta X-Hub-Signature-256 HMAC over the raw body.
+ *
+ * Phase 13 hardening: this used to `return true` when the signature header or
+ * the app secret was missing (fail-open), and it verified against the WHATSAPP
+ * API *token* — Meta signs webhooks with the App *secret*. The route-level
+ * logic now decides what "missing" means; this function ONLY answers whether
+ * the presented signature is valid. Missing inputs can never validate.
+ */
+function verifyMetaSignature(payload: string, signatureHeader: string, appSecret: string): boolean {
+  if (!signatureHeader || !appSecret) return false;
   try {
-    const signature = signatureHeader.replace('sha256=', '');
+    const signature = signatureHeader.replace(/^sha256=/, '');
     const hmac = crypto.createHmac('sha256', appSecret);
     const digest = hmac.update(payload).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(digest, 'hex'));
@@ -74,11 +83,25 @@ export async function POST(req: NextRequest) {
 
   const rawBody = await req.text();
 
-  // Meta X-Hub-Signature-256 validation
-  const metaSecret = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN || '';
+  // Meta X-Hub-Signature-256 validation (defense in depth on top of the
+  // shared-secret gate above). Semantics after the Phase 13 hardening:
+  //   · Signature PRESENTED but no app secret configured → 403: a caller
+  //     presenting a Meta signature we cannot verify is not authenticatable.
+  //   · Signature PRESENTED and app secret configured → verify or 403.
+  //   · No signature header → allowed: the request already passed the
+  //     fail-closed shared-secret gate (automation bridges do not sign).
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
   const hubSignature = req.headers.get('x-hub-signature-256');
-  if (hubSignature && metaSecret && !verifyMetaSignature(rawBody, hubSignature, metaSecret)) {
-    return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 403 });
+  if (hubSignature) {
+    if (!appSecret) {
+      return NextResponse.json(
+        { error: 'Meta signature presented but WHATSAPP_APP_SECRET is not configured' },
+        { status: 403 },
+      );
+    }
+    if (!verifyMetaSignature(rawBody, hubSignature, appSecret)) {
+      return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 403 });
+    }
   }
 
   try {

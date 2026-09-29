@@ -348,3 +348,28 @@ The following changes remove every code path that could present invented propert
 - **DB impact:** none (reads only). **Risk:** low. **Rollback:** git revert.
 
 - **Verification (Phase 12):** tsc 0 errors; Jest 113/113 suites, 1,217/1,217 tests (new phase12-control-center suite: 6 tests — bucket math over real-shaped rows, newest-first automation fold, empty-database honesty, 013-missing degradation (inventoryHealth null + core KPIs intact + automation section still working), 017-missing degradation, widget headers + not-available render).
+
+## 2026-10-01 — Phase 13 (QA + SECURITY)
+
+### Change 1 — B12 fixed: cron secret no longer crosses to the browser
+
+- **Change:** New `POST /api/admin/leads/sync-pf` (admin-session-authenticated): invokes the PF sync cron endpoint IN-PROCESS with the server-side CRON_SECRET header (Phase 11 dispatcher pattern) and returns the summary. AdminPortal's "Sync Property Finder" button now calls this proxy with NO secret in the request — previously it called /api/cron/sync-leads directly with `Bearer ${NEXT_PUBLIC_CRON_SECRET || 'sierra-cron'}`, client-inlining the cron secret into the admin bundle with a guessable fallback literal (audit B12). Repo-wide rule pinned by test: no source file references NEXT_PUBLIC_CRON_SECRET.
+- **Files:** app/api/admin/leads/sync-pf/route.ts (new), app/admin/AdminPortal.tsx.
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert.
+
+### Change 2 — WhatsApp webhook HMAC hardened (defense in depth)
+
+- **Change:** X-Hub-Signature-256 verification now (a) uses the correct secret (WHATSAPP_APP_SECRET — Meta signs with the App secret; it previously "verified" against the API *token*), (b) rejects a PRESENTED signature when no app secret is configured (403, unverifiable = rejected), (c) rejects wrong signatures (403). Unsigned traffic remains allowed because the fail-closed shared-secret gate (SBR_SECRET_KEY, 503 when unconfigured / 401 when wrong) already authenticates automation bridges — documented in the route. `verifyMetaSignature` itself no longer returns true on missing inputs (was fail-open).
+- **Reason:** Roadmap Phase 13 "webhook HMAC" + the house fail-closed philosophy (cron-auth / webhook-auth).
+- **Files:** app/api/webhooks/whatsapp/route.ts.
+- **DB impact:** none. **Risk:** medium — a Meta deployment that was relying on the broken token-based check must set WHATSAPP_APP_SECRET; unsigned bridge traffic is unaffected (tested).
+- **Rollback:** git revert.
+
+### Change 3 — QA suites: data QA (pipeline invariants) + bot QA matrix (contract) + security sweep
+
+- **Change:** `phase13-data-qa.test.ts` runs the Phase 1 pipeline's own invariants against the REAL master inventory CSV: 12,088 rows = 8,486 unique + 3,602 duplicates (audit contract pinned), globally unique unit_ids, 0 self-referencing / 0 dangling duplicate_of chains, PUBLISHABLE honestly zero, price-validity share in the audit's ~36% band (3,081/8,486 = 0.363 via the pipeline's own price_validity column). Bot QA matrix at contract level (Gemini E2E remains blocked on the API key — documented): hard/soft split, no-invention rule, all 5 Phase 5 gap-fill fields present in the extraction prompt; lead mapping preserves unknowns as null (`?? null`, no invented defaults) — AR/EN/mixed/vague/contradictory inputs all flow through this same contract. `phase13-security-sweep.test.ts`: B12 regression scans, sync-pf proxy behavior (401 / in-process auth propagation / 502 upstream), HMAC matrix (forged 403, unverifiable 403, correct 200, unsigned allowed), service-role least-privilege pin (public /api/inventory stays on the anon client under RLS), and a secrets scan (no credential-shaped literals — sk-/ghp_/AKIA/AIza/xoxb-/Supabase-JWT — in committed source, fixtures excluded).
+- **Reason:** Roadmap Phase 13 "Data QA suite, bot QA matrix, matching QA (covered by Phase 6 suites + personas), integration QA (113 existing suites), security sweep".
+- **Files:** __tests__/phase13-data-qa.test.ts, __tests__/phase13-security-sweep.test.ts (new).
+- **DB impact:** none. **Risk:** low. **Rollback:** git revert / delete files.
+
+- **Verification (Phase 13):** tsc 0 errors; Jest 115/115 suites, 1,239/1,239 tests (+22). Two real defects found and fixed while building the suites: the secrets-scan walk initially passed a string where the walker expects an array (iterated path characters → walked the whole filesystem → hang; fixed + guarded with a comment), and the CSV parser transcription had dropped the character-accumulate branch (all columns parsed empty; fixed to match the personas suite's parser).
