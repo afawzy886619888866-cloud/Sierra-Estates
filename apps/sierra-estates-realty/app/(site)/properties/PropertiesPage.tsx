@@ -73,6 +73,7 @@ export interface RealListing {
   agent: string;
   ago: string;
   img: string;
+  imgCurated?: boolean;
   whatsapp: string;
   lat: number;
   lng: number;
@@ -225,6 +226,7 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     agent: 'Sierra Advisor Desk',
     ago: raw.ago || '',
     img: getCuratedListingImage(raw, index),
+    imgCurated: !raw.img,
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.lat) || 0,
     lng: Number(raw.lng) || 0,
@@ -592,8 +594,8 @@ export default function PropertiesPage() {
               </h1>
               <p className="props-hero-sub">
                 {isAr
-                  ? `تصفح المعروض الحقيقي المعتمد من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار الحقيقية وتواصل فوري.`
-                  : `Browse verified live listings across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} real units). Interactive map and instant advisor verification.`}
+                  ? `تصفح المعروض الحقيقي من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار وتواصل فوري — التحقق من كل وحدة يتم قبل نشرها.`
+                  : `Browse live listings from owners and brokers across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} units). Interactive map and instant advisor contact — every unit is verified before publication.`}
               </p>
             </div>
 

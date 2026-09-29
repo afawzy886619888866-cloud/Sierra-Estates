@@ -37,7 +37,7 @@ function toCardListing(l: Record<string, any>, i: number): CardListing {
     code: l.code || l.referenceCode || l.refId || '',
     cmp: l.compound || l.locationArea || '',
     zone: l.zone || l.locationArea || '',
-    type: l.type || 'Apartment',
+    type: l.type || '',
     beds: Number(l.beds ?? 0),
     bath: Number(l.bath ?? 0),
     area: Number(l.area ?? 0),

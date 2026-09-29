@@ -41,9 +41,9 @@ export default function PropertyDetail({ id }: { id: string }) {
         setLiveUnit({
           id: 0,
           code: u.code || u.referenceCode || u.refId || String(u.id),
-          cmp: u.compound || u.locationArea || 'New Cairo',
-          zone: u.zone || u.locationArea || 'New Cairo',
-          type: u.type || u.propertyType || 'Apartment',
+          cmp: u.compound || u.locationArea || '',
+          zone: u.zone || u.locationArea || '',
+          type: u.type || u.propertyType || '',
           beds: u.beds ?? 0,
           bath: u.bath ?? 0,
           area: u.area ?? u.areaSqm ?? 0,
@@ -319,7 +319,7 @@ export default function PropertyDetail({ id }: { id: string }) {
             <span className="sep">/</span>
             <Link href="/properties">{t('navProps')}</Link>
             <span className="sep">/</span>
-            <span>{p.type} in {p.cmp}</span>
+            <span>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</span>
           </div>
         </div>
       </header>
@@ -327,10 +327,10 @@ export default function PropertyDetail({ id }: { id: string }) {
       <section className="block">
         <div className="wrap">
           <div className="pdetail-head rv">
-            <h1 className="pdetail-title">{p.type} in {p.cmp}</h1>
+            <h1 className="pdetail-title">{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</h1>
             <div className="pdetail-loc">
               <MapPin style={{ width: 15, height: 15 }} />
-              <span>{p.cmp} · {p.zone}, New Cairo</span>
+              <span>{[p.cmp, p.zone].filter(Boolean).join(' · ')}</span>
               <span>·</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{p.code}</span>
             </div>
@@ -340,8 +340,17 @@ export default function PropertyDetail({ id }: { id: string }) {
             <div>
               <div className="gallery-main rv" onClick={() => openLightbox(0)} style={{ cursor: 'zoom-in' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={hero} alt={`${p.type} in ${p.cmp}`} />
+                <img src={hero} alt={`${p.type || 'Property'} in ${p.cmp || '—'}`} />
                 <div className="gallery-badges flex flex-wrap gap-1.5">
+                  {!photo && !p.img && (
+                    <span
+                      className="tag"
+                      title={isAr ? 'صورة تعبيرية من الكتالوج — صور الوحدة الفعلية قيد التحقق' : 'Representative catalog imagery — actual unit photos pending verification'}
+                      style={{ background: 'rgba(15,23,42,0.85)', color: '#e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      {isAr ? '📷 صورة تعبيرية' : '📷 Representative imagery'}
+                    </span>
+                  )}
                   <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <ShieldCheck style={{ width: 12, height: 12 }} />
                     <span>{isAr ? 'مالك مباشر' : 'Direct Owner'}</span>
@@ -382,24 +391,28 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="specs-grid rv">
                 <div className="spec-box">
                   <span>{t('beds')}</span>
-                  <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds}</b>
+                  <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds > 0 ? p.beds : '?'}</b>
                 </div>
                 <div className="spec-box">
                   <span>{t('baths')}</span>
-                  <b><Bath style={{ width: 15, height: 15 }} /> {p.bath}</b>
+                  <b><Bath style={{ width: 15, height: 15 }} /> {p.bath > 0 ? p.bath : '?'}</b>
                 </div>
                 <div className="spec-box">
                   <span>{isAr ? 'المساحة' : 'Area'}</span>
-                  <b><Scaling style={{ width: 15, height: 15 }} /> {p.area} m²</b>
+                  <b><Scaling style={{ width: 15, height: 15 }} /> {p.area > 0 ? p.area : '?'} m²</b>
                 </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
-                  <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing || 'Ultra Super Lux'}</b>
-                </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
-                  <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability || 'Available'}</b>
-                </div>
+                {p.finishing && (
+                  <div className="spec-box">
+                    <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
+                    <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing}</b>
+                  </div>
+                )}
+                {p.availability && (
+                  <div className="spec-box">
+                    <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
+                    <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability}</b>
+                  </div>
+                )}
                 {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
                   <div className="spec-box">
                     <span>{isAr ? 'سعر المتر' : 'Price / m²'}</span>
@@ -418,8 +431,8 @@ export default function PropertyDetail({ id }: { id: string }) {
                 </h2>
                 <p style={{ color: 'var(--muted)', maxWidth: '68ch' }}>
                   {isAr
-                    ? `${p.type} بمساحة ${p.area} م² في ${p.cmp}، ${p.zone}. تضم ${p.beds} غرف نوم و${p.bath} حمامات، ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.`
-                    : `A ${p.area} m² ${p.type.toLowerCase()} in ${p.cmp}, ${p.zone}. ${p.beds} bedrooms and ${p.bath} bathrooms, scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.`}
+                    ? `${p.type || 'وحدة'} بمساحة ${p.area > 0 ? p.area : '—'} م² في ${p.cmp || '—'}${p.zone ? `، ${p.zone}` : ''}.${p.beds > 0 ? ` تضم ${p.beds} غرف نوم و${p.bath > 0 ? p.bath : '—'} حمامات.` : ''}${p.ai > 0 ? ` ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.` : ''}`
+                    : `A ${p.area > 0 ? p.area : '—'} m² ${p.type ? p.type.toLowerCase() : 'property'} in ${p.cmp || '—'}${p.zone ? `, ${p.zone}` : ''}.${p.beds > 0 ? ` ${p.beds} bedrooms and ${p.bath > 0 ? p.bath : '—'} bathrooms.` : ''}${p.ai > 0 ? ` Scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.` : ''}`}
                 </p>
 
                 {/* Mortgage & Investment Yield Analyzer */}
@@ -444,7 +457,20 @@ export default function PropertyDetail({ id }: { id: string }) {
                   </div>
 
                   {(() => {
-                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 12_000_000);
+                    // §21 no-fabrication: the analyzer needs a REAL price.
+                    // Without one it says so — it never computes from a
+                    // invented 12M EGP base.
+                    const hasBasePrice = p.egpM > 0 || p.usd > 0;
+                    if (!hasBasePrice) {
+                      return (
+                        <div style={{ fontSize: 12.5, color: 'var(--muted)', padding: '6px 2px' }}>
+                          {isAr
+                            ? 'السعر غير متاح لهذه الوحدة — لا يمكن احتساب التمويل أو العائد الاستثماري بدقة. تواصل معنا للحصول على التسعيرة المحدثة.'
+                            : 'No price on file for this unit — mortgage and yield figures cannot be calculated honestly. Contact us for the current asking price.'}
+                        </div>
+                      );
+                    }
+                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65;
                     const downPayment = (baseEGP * 30) / 100;
                     const financedAmount = baseEGP - downPayment;
                     const monthlyMortgage = Math.round((financedAmount * (1 + 0.12 * 7)) / (7 * 12));
@@ -480,7 +506,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                         <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'العائد الصافي (Cap Rate)' : 'Net Cap Rate / Yield'}</span>
                           <strong style={{ fontSize: 15, color: '#38BDF8', fontFamily: 'var(--mono)' }}>
-                            {p.yield ? `${p.yield}%` : '8.5%'}
+                            {p.yield ? `${p.yield}%` : (isAr ? 'غير متاح' : 'N/A')}
                           </strong>
                         </div>
                       </div>
@@ -495,8 +521,13 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="pdetail-cta luxury-inst-card rv">
                 {(() => {
                   const isRent = p.mode === 'rent';
-                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10_000_000));
-                  const formattedEgpPrice = `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`;
+                  // §21: honest price — "Price on request" when unknown,
+                  // never an invented 10M EGP figure.
+                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 0));
+                  const hasPrice = rawPrice > 0;
+                  const formattedEgpPrice = hasPrice
+                    ? `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`
+                    : (isAr ? 'السعر عند الطلب' : 'Price on request');
 
                   return (
                     <>
@@ -504,12 +535,14 @@ export default function PropertyDetail({ id }: { id: string }) {
                         {formattedEgpPrice}
                       </div>
                       <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
-                        {isRent ? (isAr ? 'إيجار شهري موثق' : 'Verified Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
+                        {isRent ? (isAr ? 'إيجار شهري' : 'Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
                       </div>
 
-                      <div style={{ marginBottom: 16 }}>
-                        <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
-                      </div>
+                      {hasPrice && (
+                        <div style={{ marginBottom: 16 }}>
+                          <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65} />
+                        </div>
+                      )}
 
                       <button
                         type="button"
@@ -639,7 +672,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                   </div>
                 )}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.cmp} ${p.zone || 'New Cairo'} Egypt`)}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${[p.cmp, p.zone].filter(Boolean).join(' ')} Egypt`.trim())}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-ghost"

@@ -164,7 +164,7 @@ export default function CompoundExcelSheetModal({
     const rows = filteredRows.map((u) => [
       `"${u.code || u.id}"`,
       `"${u.compound || compoundName || ""}"`,
-      `"${u.propertyType || u.type || "Apartment"}"`,
+      `"${u.propertyType || u.type || ""}"`,
       `"${u.mode}"`,
       u.area || "",
       u.beds || "",
@@ -220,8 +220,8 @@ export default function CompoundExcelSheetModal({
 
     const unit = selectedUnitForPhotos;
     const code = unit.code || unit.id;
-    const cmp = unit.compound || compoundName || "New Cairo";
-    const type = unit.propertyType || unit.type || "Apartment";
+    const cmp = unit.compound || compoundName || "";
+    const type = unit.propertyType || unit.type || "";
     const area = unit.area ? `${unit.area} m²` : "";
     const beds = unit.beds ? `${unit.beds} Beds` : "";
     const price =
@@ -468,7 +468,7 @@ export default function CompoundExcelSheetModal({
 
                       {/* Property Type */}
                       <td className="py-3 px-3 font-sans text-slate-200">
-                        {u.propertyType || u.type || "Apartment"}
+                        {u.propertyType || u.type || "—"}
                       </td>
 
                       {/* Area */}

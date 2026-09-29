@@ -106,37 +106,52 @@ export class WhatsAppParserService {
       try {
         extractedData = await Promise.race([this.parseMessage(content, media), timeoutPromise]);
       } catch {
-        // Deterministic Arabic/English NLP fallback
+        // Deterministic Arabic/English NLP fallback — §21 no-fabrication:
+        // extract ONLY what the message actually carries. Unfound fields stay
+        // undefined so downstream slot-filling ASKS the sender instead of
+        // inventing an 18.5M EGP / 3-bed / 260 sqm Hyde Park listing.
         const isVilla = /villa|فيلا/i.test(content);
         const isTownhouse = /townhouse|تاون|توين/i.test(content);
         const isPenthouse = /penthouse|بنتهاوس/i.test(content);
-        const type = isVilla ? 'villa' : isTownhouse ? 'townhouse' : isPenthouse ? 'penthouse' : 'apartment';
-        
-        let compound = 'New Cairo';
+        const isApartment = /apartment|شقة/i.test(content);
+        const type = isVilla ? 'villa'
+          : isTownhouse ? 'townhouse'
+          : isPenthouse ? 'penthouse'
+          : isApartment ? 'apartment'
+          : undefined;
+
+        let compound: string | undefined;
         if (/hyde\s*park|هايد\s*بارك/i.test(content)) compound = 'Hyde Park';
         else if (/mivida|ميفيدا/i.test(content)) compound = 'Mivida';
         else if (/palm\s*hills|بالم\s*هيلز/i.test(content)) compound = 'Palm Hills';
         else if (/madinaty|مدينتي/i.test(content)) compound = 'Madinaty';
 
         const priceMatch = content.match(/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?)\s*(?:مليون|m|million|egp|جنيه)/i);
-        let price = 18500000;
+        let price: number | undefined;
         if (priceMatch) {
           const num = parseFloat(priceMatch[1].replace(/,/g, ''));
           price = num < 1000 ? num * 1000000 : num;
         }
 
+        const bedsMatch = content.match(/(\d+)\s*(?:غرف|غرفة|نوم|beds?|bd)/i);
+        const areaMatch = content.match(/(\d+)\s*(?:متر|م²|م٢|sqm|m2)/i);
+
+        const looksLikeListing = Boolean(
+          price !== undefined ||
+          compound !== undefined ||
+          type !== undefined ||
+          /للبيع|للايجار|للإيجار|for sale|for rent/i.test(content)
+        );
+
         extractedData = {
-          isListing: true,
+          isListing: looksLikeListing,
           compound,
           price,
-          bedrooms: 3,
-          area: 260,
+          bedrooms: bedsMatch ? parseInt(bedsMatch[1], 10) : undefined,
+          area: areaMatch ? parseInt(areaMatch[1], 10) : undefined,
           type,
-          finishing: 'semi_finished',
-          sierraCode: 'HY-T-3S-18.5M',
+          finishing: undefined,
           technicalId: `WA-${Date.now()}`,
-          urgencyScore: 85,
-          valuationScore: 90,
         };
       }
 
@@ -206,7 +221,7 @@ export class WhatsAppParserService {
   /**
    * Simulates geospatial mapping based on compound name for the 'Live Map' feature.
    */
-  private static simulateGeocoding(compound: string | null) {
+  private static simulateGeocoding(compound: string | null): { lat: number; lng: number } | undefined {
     const coordsMap: Record<string, {lat: number, lng: number}> = {
       'Mivida': { lat: 30.015, lng: 31.490 },
       'Mountain View': { lat: 30.035, lng: 31.470 },
@@ -216,12 +231,9 @@ export class WhatsAppParserService {
     };
     
     if (compound && coordsMap[compound]) return coordsMap[compound];
-    
-    // Default New Cairo center with slight jittering for visualization
-    return { 
-      lat: 30.044 + (Math.random() - 0.5) * 0.1, 
-      lng: 31.235 + (Math.random() - 0.5) * 0.1 
-    };
+    // §21: unknown compound → no coordinate (a random jittered pin would
+    // place a real listing at a fabricated location on the Live Map).
+    return undefined;
   }
 
   private static generateInternalCodes(data: any, source: string): { code: string, technicalId: string } {

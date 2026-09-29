@@ -648,9 +648,9 @@ function OpenClawPage({ T }) {
       try {
         const r = await fetch('/api/admin/leads?limit=5');
         const d = await r.json();
-        setLogs(l=>[...l,{t:'green',l:`[✓] Active Leads: ${d?.total || 284} · High Priority: ${d?.leads?.filter((x:any)=>x.hot)?.length || 3}`}]);
+        setLogs(l=>[...l,{t:'green',l:`[✓] Active Leads: ${d?.total ?? 0} · High Priority: ${d?.leads?.filter((x:any)=>x.hot)?.length ?? 0}`}]);
       } catch {
-        setLogs(l=>[...l,{t:'',l:'  Active: 284 · Hot: 3 · Today: +8'}]);
+        setLogs(l=>[...l,{t:'',l:'  Lead counters unavailable (API unreachable) — no fabricated totals shown.'}]);
       }
       return;
     }
