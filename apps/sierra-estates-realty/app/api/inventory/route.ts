@@ -37,6 +37,29 @@ import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Evidence-based segment attribution (Direct vs Broker) for the map's
+ * 5-way segment bar. Only EXPLICIT evidence is used — anything ambiguous
+ * stays unattributed (undefined → counted as 'unknown') rather than guessed,
+ * mirroring the anti-fabrication stance of this endpoint. Evidence source:
+ *   - source_channel containing 'owner'          → Direct (owners_*)
+ *   - source_channel broker/agent/portal channels → Broker (broker_*)
+ *     ('property_finder' and 'dubizzle' postings are broker-published inventory)
+ *   - 'direct' / 'website' / 'whatsapp_group' / '' → ambiguous, no attribution.
+ * The map's own filter falls back to unit.mode for unattributed units, so
+ * those remain visible in both rent tabs — the honest overlap we documented. */
+function deriveSegment(
+  sourceChannel: unknown,
+  mode: string,
+): InventoryUnit["segment"] | undefined {
+  const src = String(sourceChannel || "").toLowerCase();
+  const isRent = mode === "rent";
+  if (src.includes("owner")) return isRent ? "owners_rent" : "owners_buy";
+  if (/(broker|agent|property_finder|dubizzle)/.test(src)) {
+    return isRent ? "broker_rent" : "broker_buy";
+  }
+  return undefined;
+}
+
 /** Canonical Supabase listings, mapped to the public-safe map shape.
  *
  * Least privilege (was service-role): this is a public, unauthenticated
@@ -123,6 +146,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         pfReference: listing.pf_reference_number || undefined,
         compound: label,
         mode,
+        segment: deriveSegment(listing.source_channel, mode),
         status: "available",
         statusLabel: "Available",
         location: label,
@@ -229,6 +253,25 @@ export async function GET(request: Request) {
     });
   }
 
+  // Live segment aggregates for the map's segment bar badges — computed from
+  // the same publish-gated, deduplicated set that powers the pins (pre-filter).
+  const segmentCounts = {
+    total: deduplicatedUnits.length,
+    owners_rent: 0,
+    owners_buy: 0,
+    broker_rent: 0,
+    broker_buy: 0,
+    unknown: 0,
+  };
+  for (const u of deduplicatedUnits) {
+    const s = String((u as { segment?: string }).segment || "").toLowerCase();
+    if (s === "owners_rent" || s === "owners_buy" || s === "broker_rent" || s === "broker_buy") {
+      segmentCounts[s]++;
+    } else {
+      segmentCounts.unknown++;
+    }
+  }
+
   // Prioritize units that have real photos so they appear first across the system
   deduplicatedUnits.sort((a, b) => {
     const aPhoto = a.hasPhoto ? 1 : 0;
@@ -305,7 +348,7 @@ export async function GET(request: Request) {
     generatedAt: sourceResponse?.generatedAt || new Date().toISOString(),
     source: sourceResponse?.source || "none",
     count: filteredUnits.length,
-    segments: sourceResponse?.segments,
+    segments: sourceResponse?.segments ?? segmentCounts,
     compoundCounts,
     compoundSheetCounts,
     compoundSegmentCounts: sourceResponse?.compoundSegmentCounts,

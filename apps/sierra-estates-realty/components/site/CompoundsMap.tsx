@@ -481,6 +481,23 @@ export default function CompoundsMap({
   }, [filterBed]);
 
 
+  // Live per-condition unit counts (evidence-based) for the condition chip:
+  // options with zero resolvable units render disabled instead of dead-ending.
+  const conditionCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const u of inventoryData?.units ?? []) {
+      const key = unitConditionKey({
+        finishing: u.finishing,
+        finishingQuality: u.finishingQuality,
+        furnishing: u.furnishing,
+        furnished: u.furnished,
+      });
+      if (key === "unknown") continue; // unresolvable finishing = no evidence
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [inventoryData]);
+
   // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
     const isRentSegment =
@@ -1166,6 +1183,7 @@ export default function CompoundsMap({
             panelAlign="end"
             compact
             resultCount={filteredCompounds.length}
+            conditionCounts={conditionCounts}
             onReset={handleResetFilters}
             idPrefix="map"
           />

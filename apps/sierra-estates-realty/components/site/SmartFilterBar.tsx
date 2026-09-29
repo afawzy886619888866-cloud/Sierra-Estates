@@ -59,6 +59,9 @@ export interface SmartFilterBarProps {
   panelAlign?: 'start' | 'end';
   /** Show the live result-count pill inside the bar. */
   resultCount?: number | null;
+  /** Live per-condition unit counts (evidence-based). When provided, options
+   *  show their count and zero-count options render disabled — no dead ends. */
+  conditionCounts?: Record<string, number>;
   /** Render a reset chip when any facet is active. */
   onReset?: () => void;
   /** Tighter paddings for embedded map panels. */
@@ -83,6 +86,7 @@ export default function SmartFilterBar({
   budgetOptions,
   panelAlign = 'start',
   resultCount = null,
+  conditionCounts,
   onReset,
   compact = false,
   className,
@@ -573,9 +577,38 @@ export default function SmartFilterBar({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {CONDITION_OPTIONS.map((o) => {
                   const isOn = value.condition === o.val;
+                  const count = conditionCounts && o.val ? (conditionCounts[o.val] || 0) : null;
+                  const hasEvidence = count === null || count > 0;
                   return (
-                    <button key={o.val || 'any'} type="button" onClick={() => { patch({ condition: o.val }); setOpenChip(null); }} style={optionRow(isOn)}>
-                      <span>{isAr ? o.ar : o.en}</span>
+                    <button
+                      key={o.val || 'any'}
+                      type="button"
+                      disabled={conditionCounts ? !hasEvidence && !isOn : false}
+                      onClick={() => { patch({ condition: o.val }); setOpenChip(null); }}
+                      style={{
+                        ...optionRow(isOn),
+                        cursor: conditionCounts && !hasEvidence && !isOn ? 'not-allowed' : optionRow(isOn).cursor,
+                        opacity: conditionCounts && !hasEvidence && !isOn ? 0.42 : 1,
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {isAr ? o.ar : o.en}
+                        {count !== null && (
+                          <span
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: 800,
+                              padding: '1px 6px',
+                              borderRadius: 999,
+                              background: count > 0 ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255,255,255,0.06)',
+                              border: `1px solid ${count > 0 ? 'rgba(201, 148, 54, 0.35)' : 'rgba(255,255,255,0.12)'}`,
+                              color: count > 0 ? '#e9c176' : 'rgba(255,255,255,0.4)',
+                            }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </span>
                       {isOn && <Check style={{ width: 14, height: 14 }} />}
                     </button>
                   );
