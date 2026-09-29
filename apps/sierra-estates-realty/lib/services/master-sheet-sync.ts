@@ -99,7 +99,11 @@ function parseAvailability(avail?: string, typeRaw?: string): PropertyStatus {
   if (combined.includes('تم الايجار') || combined.includes('مؤجر') || combined.includes('rented')) return 'rented';
   if (combined.includes('no answer') || combined.includes('غير متاح') || combined.includes('مغلق') || combined.includes('off market')) return 'off-market';
   if (combined.includes('متاح') || combined.includes('available')) return 'available';
-  return 'available';
+  // §21: blank availability is NOT 'available' — an unconfirmed unit stays
+  // 'pending' so availability-filtered queries exclude it until the sheet
+  // states otherwise. The stored status is preserved for rows whose
+  // lifecycle forbids the regression (canTransition gate below).
+  return 'pending';
 }
 
 function parsePropertyType(raw?: string): PropertyType | '' {

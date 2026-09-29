@@ -52,6 +52,26 @@ export interface AugustAgentResult {
   replyMessage?: string;
 }
 
+/**
+ * §21: city is derived ONLY from an explicit compound→city vocabulary and
+ * returned as undefined when the compound is not recognised — never the old
+ * blanket 'New Cairo' (which mislabelled Sheikh Zayed / Sokhna / North Coast
+ * posts). The units row then simply carries no city until verified.
+ */
+function deriveCityFromCompound(compound: string): string | undefined {
+  const c = (compound || '').toLowerCase();
+  if (!c) return undefined;
+  if (/sokhna|سوخنة|azha|أزها/.test(c)) return 'Ain Sokhna';
+  if (/hacienda|marassi|north coast|الساحل|marina/.test(c)) return 'North Coast';
+  if (/sheikh zayed|زايد|6th of october|أكتوبر|october/.test(c)) return 'Giza';
+  if (/new capital|العاصمة|newcapital/.test(c)) return 'New Administrative Capital';
+  if (/alex|إسكندرية|اسكندرية/.test(c)) return 'Alexandria';
+  if (/rehab|الرحاب|madinaty|مدينتي|new cairo|التجمع|5th settlement|5th|ميفيدا|hyde park|هايد|mivida/.test(c)) {
+    return 'New Cairo';
+  }
+  return undefined;
+}
+
 export class AugustOwnersAgentService {
   /**
    * Check if a message originated from the August Owners group
@@ -270,10 +290,16 @@ export class AugustOwnersAgentService {
         title: `${propertyType} · ${compound}`,
         compound,
         location: compound,
-        city: 'New Cairo',
+        // §21: city is not invented — it is derived only from the compound
+        // vocabulary and omitted when unknown (was hardcoded 'New Cairo').
+        city: deriveCityFromCompound(compound),
         price,
         propertyType,
-        status: mode === 'rent' ? 'rented' : 'available',
+        // BUG FIX: a newly recorded FOR-RENT listing is AVAILABLE, not
+        // 'rented' — the old `mode === 'rent' ? 'rented' : 'available'`
+        // marked every fresh rent listing as already-rented (instantly
+        // invisible to availability-filtered queries).
+        status: 'available',
         category: 'residential',
         bedrooms,
         bathrooms,
