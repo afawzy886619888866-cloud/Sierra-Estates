@@ -9,6 +9,7 @@
  */
 import { isAdminPortalRole } from "./types";
 import type { Session, Role } from "./types";
+import { findPartnerAccount } from "./server/partner-scope";
 
 const COOKIE_NAME = "sierra_sess";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12; // 12h
@@ -217,6 +218,30 @@ export function safeEqual(a: string, b: string): boolean {
 export function bootstrapLoginAvailable(): boolean {
   return Boolean(bootstrapAdminPassword());
 }
+<<<<<<< HEAD
+=======
+
+/**
+ * Partner Account Login (PARTNER_ACCOUNTS env — see lib/server/partner-scope.ts
+ * for the format). Merged-in property accounts authenticate with email +
+ * password against the operator-configured list, the same doctrine as
+ * tryDemoLogin: no committed default, constant-time compare, values read
+ * per-call so credentials can rotate without a re-import. An unset or
+ * malformed PARTNER_ACCOUNTS provisions ZERO accounts — this path is closed.
+ */
+export function tryPartnerLogin(email: string, password: string): Session | null {
+  const account = findPartnerAccount(email, password);
+  if (!account) return null;
+  return {
+    uid: `partner-${account.email.replace(/[^a-z0-9]/g, "-")}`,
+    email: account.email,
+    name: account.name,
+    role: "partner" as Role,
+    scope: account.scope,
+    exp: Date.now() + SESSION_TTL_MS,
+  };
+}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 /** Parse cookie header into a map. */
 export function parseCookies(header: string | null): Record<string, string> {

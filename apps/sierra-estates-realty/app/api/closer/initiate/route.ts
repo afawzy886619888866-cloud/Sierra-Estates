@@ -53,17 +53,23 @@ export async function POST(request: Request) {
       : !propertyCode.startsWith('PF-');
 
     const listingEntity = isDirectOwner ? 'Direct Owner (FSBO)' : 'Real Estate Broker';
-    const contactName = matchedUnit?.ownerContact
+    // §21: contact identity is only claimed when the sheet actually carries
+    // it — no invented '+20 100 987 6543' placeholder numbers.
+    const hasContactOnFile = Boolean(matchedUnit?.ownerContact);
+    const contactName = hasContactOnFile
       ? (isDirectOwner ? 'Owner' : 'Broker')
-      : isDirectOwner ? 'Owner (from Master Sheet)' : 'Broker (from Master Sheet)';
-    const contactPhone = matchedUnit?.ownerContact || (isDirectOwner ? '+20 100 987 6543' : '+20 122 345 6789');
+      : isDirectOwner
+        ? 'Owner (contact not on file — unit not verified)'
+        : 'Broker (contact not on file — unit not verified)';
+    const contactPhone = matchedUnit?.ownerContact || null;
 
-    const compound = matchedUnit?.compound || matchedUnit?.location || 'New Cairo';
+    const compound = matchedUnit?.compound || matchedUnit?.location || null;
     const priceStr = matchedUnit?.price
       ? `${(matchedUnit.price / 1_000_000).toFixed(1)}M EGP`
       : 'السعر عند التواصل';
+    const compoundLabel = compound ?? '—';
     const unitDetails = matchedUnit
-      ? `${matchedUnit.propertyType} ${matchedUnit.bedrooms}BR في ${compound} - ${priceStr}`
+      ? `${matchedUnit.propertyType} ${matchedUnit.bedrooms}BR في ${compoundLabel} - ${priceStr}`
       : `كود ${propertyCode}`;
 
     // 3. Arabic outreach script using live property details
@@ -92,9 +98,9 @@ Sierra Estates AI Autopilot has taken over and booked a physical viewing appoint
 Date & Time: ${viewingDate.toLocaleDateString()} at 4:00 PM (Egypt Time)
 Property Code: ${propertyCode}
 Unit Details:  ${unitDetails}
-Compound:      ${compound}
+Compound:      ${compoundLabel}
 Listing Type:  ${listingEntity}
-Contact:       ${contactName} — ${contactPhone}
+Contact:       ${contactName} — ${contactPhone ?? 'N/A (not on file)'}
 Data Source:   ${matchedUnit ? '✅ Master Owner Sheet (Live)' : '⚠️ Heuristic (unit not found in sheet)'}
 
 ==================================================
@@ -125,7 +131,9 @@ Sierra Estates Intelligence OS
       inventoryMatch: matchedUnit
         ? { found: true, code: matchedUnit.code, compound, price: matchedUnit.price, ownerType: matchedUnit.ownerType }
         : { found: false, note: 'Unit not found in Master Sheet — used heuristic fallback' },
-      introMessage: `AI Closer Autopilot engaged. Viewing scheduled for ${viewingDate.toLocaleDateString()} at 4:00 PM. Report sent to a.fawzy8866@gmail.com with live owner details from Master Sheet.`,
+      introMessage: matchedUnit
+        ? `AI Closer Autopilot engaged. Viewing scheduled for ${viewingDate.toLocaleDateString()} at 4:00 PM. Report sent to a.fawzy8866@gmail.com with live owner details from Master Sheet.`
+        : `AI Closer Autopilot engaged. Viewing scheduled for ${viewingDate.toLocaleDateString()} at 4:00 PM. Report sent to a.fawzy8866@gmail.com — unit was NOT found in the Master Sheet; outreach will rely on the property code only until the record is verified.`,
       meta: {
         listingEntity,
         contactName,

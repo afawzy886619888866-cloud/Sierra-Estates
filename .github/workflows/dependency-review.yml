@@ -18,7 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
+<<<<<<< HEAD
         uses: actions/checkout@v4
+=======
+        uses: actions/checkout@v7
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
 

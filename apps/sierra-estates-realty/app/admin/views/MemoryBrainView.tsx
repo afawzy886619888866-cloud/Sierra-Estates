@@ -687,7 +687,11 @@ export default function MemoryBrainView({ lang = 'en', onNavigate: _onNavigate }
                   {isAr ? 'صفقات الهبوط السعري المتعثرة' : 'Distress Deals (≥ 8% Drop)'}
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#34d399', fontFamily: 'JetBrains Mono, monospace', marginTop: 4 }}>
+<<<<<<< HEAD
                   {data?.ecc?.totalHotDeals || 3}
+=======
+                  {data?.ecc?.totalHotDeals ?? 0}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 </div>
               </div>
               <span

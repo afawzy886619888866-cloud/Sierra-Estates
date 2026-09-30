@@ -482,14 +482,26 @@ export async function semanticSearch(params: {
         description: item.description,
         compound: item.compound,
         district: item.location_area || item.compound,
+<<<<<<< HEAD
         city: item.city || 'Cairo',
+=======
+        // §21 no-fabrication: a listing with no city stays city-less — never
+        // silently re-labelled 'Cairo'.
+        city: item.city || undefined,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         price: Number(item.price) || 0,
         monthlyRent: item.deal_type === 'rent' ? Number(item.price) : undefined,
         currency: item.price_currency || 'EGP',
         bedrooms: item.bedrooms || 0,
+<<<<<<< HEAD
         bathrooms: item.bathrooms || 1,
         area: Number(item.area_sqm) || 150,
         propertyType: item.property_type || 'Apartment',
+=======
+        bathrooms: item.bathrooms || 0,
+        area: Number(item.area_sqm) || 0,
+        propertyType: item.property_type || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         status: item.status || 'available',
         finishingType: item.finishing_type,
         images: item.images || [],

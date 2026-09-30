@@ -179,10 +179,26 @@ export class WhatsAppConversationalService {
         .join('\n');
 
       const model = genAI.getGenerativeModel({ model: process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+<<<<<<< HEAD
+=======
+      // Phase 5 profile (master spec): the full qualification set, split into
+      // HARD constraints (budget cap, location, minimum bedrooms, rent-vs-sale)
+      // and SOFT preferences (furnishing, finishing, view, pool, move-in date…).
+      // Extract both so matching never trades a hard constraint for a soft one.
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const prompt = `Analyze this real estate WhatsApp conversation and extract structured lead intelligence.
 CONVERSATION:
 ${recentHistoryText}
 
+<<<<<<< HEAD
+=======
+Extract the client's full requirements profile. Distinguish HARD constraints
+(non-negotiable: budget ceiling, required location/compound, minimum bedrooms,
+buy-vs-rent intent) from SOFT preferences (preferred but flexible: furnishing,
+finishing level, view, amenities, move-in date). Never invent values that the
+conversation does not state — use null/empty when unknown.
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 Respond ONLY with a JSON object:
 {
   "isQualified": boolean,
@@ -191,6 +207,14 @@ Respond ONLY with a JSON object:
   "compound": string,
   "unitType": "apartment" | "villa" | "townhouse" | "duplex" | "penthouse" | "chalet" | "commercial" | "any",
   "budgetEGP": number,
+<<<<<<< HEAD
+=======
+  "minBedrooms": number | null,
+  "furnishing": "furnished" | "semi_furnished" | "unfurnished" | "any" | null,
+  "moveInDate": string | null,
+  "nationality": string | null,
+  "specialRequirements": string | null,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   "priorityScore": number (1-100),
   "urgency": "immediate" | "soon" | "casual",
   "summary": string
@@ -228,6 +252,17 @@ Respond ONLY with a JSON object:
               unitType: intel.unitType || 'any',
               budget: intel.budgetEGP || 0,
               urgency: intel.urgency || 'soon',
+<<<<<<< HEAD
+=======
+              // Phase 5 gap-fill: bedrooms / furnishing / move-in /
+              // nationality / special requirements were previously never
+              // captured, silently dropping qualification context.
+              minBedrooms: intel.minBedrooms ?? null,
+              furnishing: intel.furnishing ?? null,
+              moveInDate: intel.moveInDate ?? null,
+              nationality: intel.nationality ?? null,
+              specialRequirements: intel.specialRequirements ?? null,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             },
           },
         };

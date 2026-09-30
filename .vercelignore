@@ -68,3 +68,31 @@ stubArchive/**
 .zencoder/**
 graphify-out/**
 *.tsbuildinfo
+<<<<<<< HEAD
+=======
+
+# ============================================================================
+# 2026-09-29 audit additions (merged on top of the original rules above)
+# ============================================================================
+
+# Legacy root public/ (10.9MB design assets) — app serves
+# apps/sierra-estates-realty/public; nothing reads the root copy at build.
+/public/
+
+# Editor configs & AI-assistant artifacts not covered above
+.vscode/
+.claude/
+.clinerules
+62daec16-d1ed-444d-8d6a-d654c5b84b3e/
+83de526d-6350-4890-b9b3-39794dff3894/
+FUTURE_PLAN
+
+# One-off data exports & ops leftovers
+*.tsv
+deploy/
+docker-compose*.yml
+
+# Jest suites run in CI only, never inside Vercel builds
+/__tests__/
+__tests__/
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1

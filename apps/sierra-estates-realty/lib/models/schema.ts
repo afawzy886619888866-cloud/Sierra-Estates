@@ -619,7 +619,7 @@ export interface WhatsAppNumber extends BaseDocument {
   lastError?: string;
 }
 
-export type WhatsAppMessagePurpose = 'owner-negotiation' | 'client-recommendation' | 'general-outreach';
+export type WhatsAppMessagePurpose = 'owner-negotiation' | 'client-recommendation' | 'general-outreach' | 'viewing-followup';
 export type WhatsAppMessageDirection = 'outbound' | 'inbound';
 export type WhatsAppMessageQueueStatus =
   | 'queued'          // accepted, waiting for an eligible number + operating window

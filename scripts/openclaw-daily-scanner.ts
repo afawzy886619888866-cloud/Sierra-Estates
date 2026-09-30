@@ -249,10 +249,19 @@ export async function runOpenClawDailyScan(
       const unitRecord = {
         id: `WA-${Date.now()}-${i}`,
         sierraCode: parsed.sierraCode || `SE-WA-${i + 1}`,
+<<<<<<< HEAD
         type: data.type || parsed.propertyType || 'Apartment',
         compound: parsed.compound,
         location: data.location || parsed.compound,
         operation: data.operation || 'Sale',
+=======
+        // §21 no-fabrication: unstated type/operation stay empty — never
+        // invented 'Apartment' / 'Sale'.
+        type: data.type || parsed.propertyType || '',
+        compound: parsed.compound,
+        location: data.location || parsed.compound,
+        operation: data.operation || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         price: data.price || 0,
         currency: data.currency || 'EGP',
         priceFormatted: parsed.priceFormatted || `${data.price?.toLocaleString()} EGP`,
@@ -266,11 +275,21 @@ export async function runOpenClawDailyScan(
         contact_info: data.contact_info || msg.sender,
         listedAt: msg.timestamp || new Date().toISOString(),
         rawText: msg.text,
+<<<<<<< HEAD
         status: 'Available',
         verified: isOwner,
         isNewListing: true,
         urgencyScore: parsed.urgencyScore || 70,
         valuationScore: parsed.valuationScore || 75,
+=======
+        status: 'Unknown',
+        verified: isOwner,
+        isNewListing: true,
+        // §21 no-fabrication: scores only when the parser actually produced
+        // one — never invented 70/75 defaults.
+        urgencyScore: parsed.urgencyScore ?? null,
+        valuationScore: parsed.valuationScore ?? null,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       };
 
       if (isComplete) {

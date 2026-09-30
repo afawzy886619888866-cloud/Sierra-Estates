@@ -14,7 +14,14 @@ function getSupabase() {
 
 // ── Gemini client ─────────────────────────────────────────────────────────
 function getGemini() {
+<<<<<<< HEAD
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY!;
+=======
+  // Server-only key (Phase 13/14 gate): reading the NEXT_PUBLIC_ spelling
+  // here would inline the Gemini API key into the CLIENT bundle — it is a
+  // server secret, never a public one (same class of defect as audit B12).
+  const apiKey = process.env.GEMINI_API_KEY!;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   return new GoogleGenerativeAI(apiKey);
 }
 
@@ -198,7 +205,11 @@ export async function POST(req: NextRequest) {
       : '\n\nNo exact inventory match — provide general market guidance.\n';
 
     const statsContext = marketStats
+<<<<<<< HEAD
       ? `\nMARKET STATS for ${marketStats.compound || 'New Cairo'} (${dealType}):
+=======
+      ? `\nMARKET STATS for ${marketStats.compound || 'market-wide (all compounds)'} (${dealType}):
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   Count: ${marketStats.count} available units
   Price range: EGP ${marketStats.min?.toLocaleString()} – ${marketStats.max?.toLocaleString()}
   Avg: EGP ${marketStats.avg?.toLocaleString()} | Median: EGP ${marketStats.median?.toLocaleString()}

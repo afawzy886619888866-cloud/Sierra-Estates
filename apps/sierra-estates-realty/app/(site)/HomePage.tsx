@@ -6,10 +6,26 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
+<<<<<<< HEAD
   Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing, type PropertyCardVariant } from '@/components/site/PropertyCard';
+=======
+  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles,
+} from 'lucide-react';
+import SiteShell from '@/components/site/SiteShell';
+import PropertyCard, { type CardListing, type PropertyCardVariant } from '@/components/site/PropertyCard';
+import SmartFilterBar from '@/components/site/SmartFilterBar';
+import {
+  RENT_BUDGET_LADDER,
+  SALE_BUDGET_LADDER,
+  budgetBounds,
+  unitMatchesCondition,
+  unitPriceEgp,
+  type SmartFilterValue,
+} from '@/lib/site/smart-search';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import HomeHero from '@/components/site/HomeHero';
 import PropertyShowcaseVideo from '@/components/site/PropertyShowcaseVideo';
 import VirtualTourBanner from '@/components/site/VirtualTourBanner';
@@ -28,6 +44,11 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
+<<<<<<< HEAD
+=======
+// Flag-pin press now opens the compact in-map units deck rendered by
+// CompoundsMap itself — no fullscreen modal needed on the homepage.
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 const COMPOUND_PICKS = ['Hyde Park', 'Mivida', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City', 'Al Rehab', 'Madinaty'];
 
 const AI_TOOLS = [
@@ -52,6 +73,7 @@ const TICKER_AR = [
   'بالم هيلز AI 9.2', 'إيستاون طلب متزايد', 'البروج نمو سنوي +18%',
 ];
 
+<<<<<<< HEAD
 const SUGGESTED_COMPOUNDS = [
   'Cairo Plaza',
   'Mivida',
@@ -109,6 +131,16 @@ const SALE_PRICES = [
 export default function HomePage() {
   const { t, isAr } = useSite();
   const [listings, setListings] = useState<CardListing[]>(HZDATA.listings as CardListing[]);
+=======
+const SMART_POPULAR_COMPOUNDS = new Set([
+  'Cairo Plaza', 'Mivida', 'Hyde Park', 'Mountain View iCity',
+  'Eastown', 'Villette', 'Al Rehab', 'Madinaty',
+]);
+
+export default function HomePage() {
+  const { t, isAr } = useSite();
+  const [listings, setListings] = useState<CardListing[]>([]); // Phase 4/B3: real units arrive via the /api/inventory fetch below
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];
@@ -128,11 +160,18 @@ export default function HomePage() {
         setInventoryStatus('ready');
         if (data.units.length === 0) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
+<<<<<<< HEAD
+=======
+          // §21 no-fabrication: unknown fields stay empty/0 and render as
+          // '—'/'?'/'Price on request'. No 'New Cairo'/'Apartment'/3-bed/
+          // 8.5M-EGP/$175K/9.x-AI invented values, no 'Verified' tags.
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
           const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
           return {
             id: u.id || `REAL-${i + 1}`,
             code: u.code || `SE-REAL-${i + 1}`,
+<<<<<<< HEAD
             cmp: u.compound || u.location || 'New Cairo',
             zone: u.zone || 'New Cairo',
             type: u.propertyType || u.type || 'Apartment',
@@ -149,6 +188,26 @@ export default function HomePage() {
             img: u.img || getCuratedListingImage(u, i),
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+=======
+            cmp: u.compound || u.location || '',
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.tag || null,
+            mode: u.mode || 'sale',
+            agent: 'Sierra Advisor Desk',
+            ago: '',
+            img: u.img || getCuratedListingImage(u, i),
+            imgCurated: !u.img,
+            whatsapp: 'https://wa.me/201092048333',
+            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+            finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           };
         });
         setListings(mapped);
@@ -164,8 +223,12 @@ export default function HomePage() {
 
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
+<<<<<<< HEAD
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
   const [showCompoundDropdown, setShowCompoundDropdown] = useState(false);
+=======
+  const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
@@ -199,6 +262,7 @@ export default function HomePage() {
             id: u.id || `LIVE-${i + 1}`,
             code: u.code || `SE-LIVE-${i + 1}`,
             cmp: u.compound || selectedMapCompound,
+<<<<<<< HEAD
             zone: u.zone || 'New Cairo',
             type: u.propertyType || u.type || 'Apartment',
             beds: u.beds || 3,
@@ -208,10 +272,25 @@ export default function HomePage() {
             usd: usd > 0 ? usd : 175000,
             ai: u.aiScore || 9.5,
             tag: u.isNewListing ? 'New Listing' : 'Verified WhatsApp / Live Sync',
+=======
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.isNewListing ? 'New Listing' : null,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             mode: u.mode || 'sale',
             agent: 'Sierra Advisor Desk',
             ago: 'Live Sync',
             img: u.img || getCuratedListingImage(u, i),
+<<<<<<< HEAD
+=======
+            imgCurated: !u.img,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
           };
@@ -263,7 +342,12 @@ export default function HomePage() {
     if (search.compound.trim()) params.set('compound', search.compound.trim());
     if (search.type) params.set('type', search.type);
     if (search.beds !== '0') params.set('beds', search.beds);
+<<<<<<< HEAD
     if (search.price !== '0') params.set('price', search.price);
+=======
+    if (search.price) params.set('price', search.price);
+    if (search.condition) params.set('condition', search.condition);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const query = params.toString();
     return query ? `/properties?${query}` : '/properties';
   }, [search, searchMode]);
@@ -274,6 +358,10 @@ export default function HomePage() {
     if (search.compound.trim()) params.set('compound', search.compound.trim());
     if (search.type) params.set('type', search.type);
     if (search.beds !== '0') params.set('beds', search.beds);
+<<<<<<< HEAD
+=======
+    if (search.price) params.set('price', search.price);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const query = params.toString();
     return query ? `/net?${query}` : '/net';
   }, [search, searchMode]);
@@ -288,7 +376,22 @@ export default function HomePage() {
     []
   );
 
+<<<<<<< HEAD
   const matchingCount = useMemo(() => {
+=======
+  const compoundOptions = useMemo(
+    () =>
+      (HZDATA.compounds as MapCompound[]).map((c) => ({
+        name: c.n,
+        zone: c.z,
+        popular: SMART_POPULAR_COMPOUNDS.has(c.n),
+      })),
+    []
+  );
+
+  const matchingCount = useMemo(() => {
+    const { min, max } = budgetBounds(search.price, searchMode === 'rent' ? RENT_BUDGET_LADDER : SALE_BUDGET_LADDER);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return listings.filter((item) => {
       if (searchMode === 'rent' && item.mode !== 'rent') return false;
       if (searchMode === 'buy' && item.mode === 'rent') return false;
@@ -302,6 +405,7 @@ export default function HomePage() {
       if (search.beds !== '0' && item.beds) {
         if (item.beds < parseInt(search.beds, 10)) return false;
       }
+<<<<<<< HEAD
       if (search.price !== '0') {
         const budget = parseInt(search.price.replace(/[^0-9]/g, ''), 10);
         if (!Number.isNaN(budget) && budget > 0) {
@@ -309,14 +413,45 @@ export default function HomePage() {
           if (searchMode !== 'rent' && item.egpM > budget) return false;
         }
       }
+=======
+      if (min !== undefined || max !== undefined) {
+        const p = unitPriceEgp({ mode: item.mode, price: item.price, egpM: item.egpM });
+        if (p > 0) {
+          if (min !== undefined && p < min) return false;
+          if (max !== undefined && p > max) return false;
+        }
+      }
+      if (search.condition && !unitMatchesCondition({ finishing: item.finishing }, search.condition)) return false;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       return true;
     }).length;
   }, [listings, searchMode, search]);
 
+<<<<<<< HEAD
   const hasActiveFilters = Boolean(search.compound || search.type || search.beds !== '0' || search.price !== '0');
   const handleResetFilters = () => {
     setSearch({ compound: '', type: '', beds: '0', price: '0' });
     setShowCompoundDropdown(false);
+=======
+  const hasActiveFilters = Boolean(search.compound || search.type || search.beds !== '0' || search.price || search.condition);
+  const handleResetFilters = () => {
+    setSearch({ compound: '', type: '', beds: '0', price: '', condition: '' });
+    setSearchMode('buy');
+  };
+
+  /** Bridge between SmartFilterBar state and the hero search state. */
+  const handleSmartChange = (v: SmartFilterValue) => {
+    const nextPurpose: 'buy' | 'rent' = v.purpose === 'rent' ? 'rent' : 'buy';
+    setSearchMode((prev) => (prev === 'new' ? nextPurpose : prev === nextPurpose ? prev : nextPurpose));
+    setSelectedMapCompound(v.compound || null);
+    setSearch({
+      compound: v.compound,
+      type: v.unitType,
+      beds: v.rooms || '0',
+      price: v.budget,
+      condition: v.condition,
+    });
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   };
 
   async function submitInquiry(e: React.FormEvent) {
@@ -439,6 +574,7 @@ export default function HomePage() {
               </div>
             </div>
 
+<<<<<<< HEAD
             {/* Quick Compound Chips */}
             <div
               className="compounds-chip-rail"
@@ -730,6 +866,28 @@ export default function HomePage() {
                   })}
                 </div>
               </div>
+=======
+            {/* SMART COMPACT FILTER — dropdown chips: compound/area, rooms, budget, unit type, condition */}
+            <div className="search-fields" style={{ display: 'block' }}>
+              <SmartFilterBar
+                value={{
+                  purpose: searchMode === 'rent' ? 'rent' : 'sale',
+                  compound: search.compound,
+                  rooms: search.beds === '0' ? '' : search.beds,
+                  budget: search.price,
+                  unitType: search.type,
+                  condition: search.condition,
+                }}
+                onChange={handleSmartChange}
+                compounds={compoundOptions}
+                showPurpose={false}
+                showCondition
+                onReset={handleResetFilters}
+                idPrefix="hero"
+              />
+
+              {/* Unit type / bedrooms / budget pills → replaced by SmartFilterBar above */}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
               {/* Action Buttons */}
               <div className="field searchbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -883,6 +1041,11 @@ export default function HomePage() {
             )}
           </div>
 
+<<<<<<< HEAD
+=======
+          {/* Flag-pin press → compact in-map units deck (rendered inside CompoundsMap) */}
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           {/* Synchronized Properties Deck for Active Compound */}
           {selectedMapCompound && (
             <div className="active-compound-deck rv" style={{ marginTop: 28 }}>

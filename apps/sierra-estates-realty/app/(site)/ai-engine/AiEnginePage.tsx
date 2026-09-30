@@ -9,6 +9,10 @@ import { Reveal, RevealGroup, revealChild } from '@/components/site/Reveal';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+<<<<<<< HEAD
+=======
+import { usePublicListings } from '@/lib/site/usePublicListings';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const MODULES = [
   { k: 'match', href: '/matches', en: 'Smart Match', ar: 'المطابقة الذكية', dEn: 'Ranks live inventory against your budget, bedroom count and intent.', dAr: 'يرتّب المعروض حسب ميزانيتك وعدد الغرف والغرض.' },
@@ -21,7 +25,12 @@ const MODULES = [
 
 export default function AiEnginePage() {
   const { isAr } = useSite();
+<<<<<<< HEAD
   const listings = HZDATA.listings as any[];
+=======
+  // Phase 4/B3: real unit count from the public inventory API (no snapshot in bundle)
+  const { units: listings, loading: listingsLoading } = usePublicListings(300);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const compounds = HZDATA.compounds as any[];
 
   const stats = [

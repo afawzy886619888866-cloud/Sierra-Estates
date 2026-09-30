@@ -3,6 +3,10 @@ import '../site-styles/shared.css';
 import '../site-styles/site-refinements.css';
 import { SiteProvider } from '@/lib/site/SiteContext';
 import SiteShell from '@/components/site/SiteShell';
+<<<<<<< HEAD
+=======
+import BookingContractingNotice from '@/components/client/BookingContractingNotice';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';
 
@@ -23,6 +27,11 @@ export default function CairoPlazaLayout({ children }: { children: React.ReactNo
     <SiteProvider>
       <SiteShell active="projects">
         {children}
+<<<<<<< HEAD
+=======
+        {/* MANDATORY Booking & Contracting notice — bottom of every Cairo Plaza page */}
+        <BookingContractingNotice lang="en" />
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       </SiteShell>
     </SiteProvider>
   );

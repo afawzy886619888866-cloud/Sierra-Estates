@@ -163,19 +163,27 @@ function normalizePFListing(raw, idx) {
     ? (currency === 'EGP' ? Math.round(price / 50) : price) 
     : Math.round((egpM * 1_000_000) / 50);
 
-  const beds = parseInt(raw.bedrooms || '3', 10) || 3;
-  const bath = parseInt(raw.bathrooms || '2', 10) || 2;
-  const area = parseFloat(raw.size || '180') || 180;
+  const beds = parseInt(raw.bedrooms || '0', 10) || 0;
+  const bath = parseInt(raw.bathrooms || '0', 10) || 0;
+  const area = parseFloat(raw.size || '0') || 0;
 
   const { compound, zone } = extractCompoundAndZone(raw.location, descEn, titleEn);
 
   const images = extractImages(raw.media);
+<<<<<<< HEAD
   const featuredImage = images[0] || 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/f6be1cb2-ed1e-11ef-b066-0a1a96148fff-6b11b065-7803-42f7-bb82-6b56e277f3c4.png';
 
   const agentName = raw.assignedTo?.name || 'Fareda';
   const agentPhoto = raw.assignedTo?.photos?.thumbnail || 'https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/2da6bb26-73f8-4f3b-98bc-7a051aaab33b.png';
+=======
+  const featuredImage = images[0] || '';
 
-  const propType = (raw.type || raw.category || 'Apartment').charAt(0).toUpperCase() + (raw.type || raw.category || 'Apartment').slice(1);
+  const agentName = raw.assignedTo?.name || '';
+  const agentPhoto = raw.assignedTo?.photos?.thumbnail || '';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
+
+  const propTypeRaw = raw.type || raw.category || '';
+  const propType = propTypeRaw ? propTypeRaw.charAt(0).toUpperCase() + propTypeRaw.slice(1) : '';
 
   return {
     id: id,

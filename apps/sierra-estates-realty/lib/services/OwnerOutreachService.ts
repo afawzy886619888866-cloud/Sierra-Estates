@@ -89,12 +89,21 @@ export function normalizeEgyptPhone(raw: string | null | undefined): string | nu
 
 /**
  * Generates an executive, polite Arabic outreach message tailored for New Cairo luxury compound owners.
+<<<<<<< HEAD
+=======
+ * §21 no-fabrication: when compound/type are unknown the message omits the
+ * clause — it never claims a compound the record does not carry.
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  */
 export function generateOwnerOutreachMessage(owner: OwnerInventoryItem): string {
   const nameGreeting = owner.name && owner.name.trim().length > 1 ? `أستاذ/ة ${owner.name.trim()}` : 'فندم';
   const dealStr = owner.dealType === 'rent' ? 'للإيجار' : 'للبيع';
   const propStr = owner.propertyType || 'الوحدة';
+<<<<<<< HEAD
   const compoundStr = owner.compound ? `بكمبوند ${owner.compound}` : 'بالتجمع الخامس';
+=======
+  const compoundStr = owner.compound ? `بكمبوند ${owner.compound}` : '';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   return (
     `السلام عليكم ورحمة الله، مرحباً ${nameGreeting} 🌿\n\n` +
@@ -155,10 +164,17 @@ export class OwnerOutreachService {
               name: nameIdx >= 0 ? (row[nameIdx] || '').replace(/['"]/g, '').trim() : '',
               phone: rawPhone,
               e164Phone: e164,
+<<<<<<< HEAD
               compound: compIdx >= 0 ? (row[compIdx] || '').replace(/['"]/g, '').trim() : 'New Cairo',
               zone: zoneIdx >= 0 ? (row[zoneIdx] || '').replace(/['"]/g, '').trim() : 'New Cairo',
               dealType,
               propertyType: typeIdx >= 0 ? (row[typeIdx] || '').replace(/['"]/g, '').trim() : 'Apartment',
+=======
+              compound: compIdx >= 0 ? (row[compIdx] || '').replace(/['"]/g, '').trim() : '',
+              zone: zoneIdx >= 0 ? (row[zoneIdx] || '').replace(/['"]/g, '').trim() : '',
+              dealType,
+              propertyType: typeIdx >= 0 ? (row[typeIdx] || '').replace(/['"]/g, '').trim() : '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               priceEgp: priceIdx >= 0 ? parseFloat((row[priceIdx] || '').replace(/['"]/g, '')) || 0 : 0,
               code: codeIdx >= 0 ? (row[codeIdx] || '').replace(/['"]/g, '').trim() : `SE-O-${i}`,
             });
@@ -180,10 +196,17 @@ export class OwnerOutreachService {
               name: item.name || '',
               phone: rawPhone,
               e164Phone: e164,
+<<<<<<< HEAD
               compound: item.compound || 'New Cairo',
               zone: item.zone || 'New Cairo',
               dealType: (item.deal_type || 'rent').toLowerCase().includes('rent') ? 'rent' : 'sale',
               propertyType: item.property_type || item.type || 'Apartment',
+=======
+              compound: item.compound || '',
+              zone: item.zone || '',
+              dealType: (item.deal_type || 'rent').toLowerCase().includes('rent') ? 'rent' : 'sale',
+              propertyType: item.property_type || item.type || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               priceEgp: parseFloat(item.price_egp || item.price) || 0,
               code: item.code || item.sierraCode || `SE-J-${idx}`,
             });
@@ -209,10 +232,17 @@ export class OwnerOutreachService {
             name: row.owner_name || '',
             phone: row.owner_phone || '',
             e164Phone: e164,
+<<<<<<< HEAD
             compound: row.compound || 'New Cairo',
             zone: row.zone || 'New Cairo',
             dealType: (row.deal_type || 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
             propertyType: row.property_type || 'Apartment',
+=======
+            compound: row.compound || '',
+            zone: row.zone || '',
+            dealType: (row.deal_type || 'sale').toLowerCase() === 'rent' ? 'rent' : 'sale',
+            propertyType: row.property_type || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             priceEgp: parseFloat(row.price_egp || row.price) || 0,
             code: row.sierra_code || row.id,
           });

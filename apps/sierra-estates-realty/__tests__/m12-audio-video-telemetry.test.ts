@@ -158,7 +158,11 @@ describe('Milestone M12: Realtime Audio, Video Teasers & Autonomous Telemetry', 
 
   describe('4. API Routes (/api/audio-briefing & /api/health/deep)', () => {
     it('handles GET /api/audio-briefing with query params', async () => {
+<<<<<<< HEAD
       const req = new NextRequest('http://localhost:3000/api/audio-briefing?compound=Mivida&price=12000000&area=160&lang=ar');
+=======
+      const req = new NextRequest('http://localhost:3000/api/audio-briefing?code=SE-MIV-01&compound=Mivida&unitType=Apartment&price=12000000&area=160&lang=ar');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const res = await getAudioBriefing(req);
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -167,6 +171,23 @@ describe('Milestone M12: Realtime Audio, Video Teasers & Autonomous Telemetry', 
       expect(json.briefing.financialMetrics).toBeDefined();
     });
 
+<<<<<<< HEAD
+=======
+    it('refuses to generate a briefing from defaults — missing params are a 400', async () => {
+      // §21: the old route invented a complete property ('Mivida',
+      // 'Apartment', 12.5M EGP, 185 sqm) whenever the caller passed nothing.
+      const req = new NextRequest('http://localhost:3000/api/audio-briefing?lang=ar');
+      const res = await getAudioBriefing(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.success).toBe(false);
+      expect(json.missing).toContain('compound');
+      expect(json.missing).toContain('unitType');
+      expect(json.missing).toContain('price');
+      expect(json.missing).toContain('area');
+    });
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     it('handles POST /api/audio-briefing with payload body', async () => {
       const req = new NextRequest('http://localhost:3000/api/audio-briefing', {
         method: 'POST',
@@ -188,6 +209,26 @@ describe('Milestone M12: Realtime Audio, Video Teasers & Autonomous Telemetry', 
       expect(json.briefing.language).toBe('en-US');
     });
 
+<<<<<<< HEAD
+=======
+    it('refuses a POST without real property data instead of inventing a unit', async () => {
+      // §21: the old POST defaulted to 'Mountain View iCity' / 'iVilla' /
+      // 10.5M EGP / 210 sqm — a fully fabricated briefing.
+      const req = new NextRequest('http://localhost:3000/api/audio-briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: 'en-US' }),
+      });
+
+      const res = await postAudioBriefing(req);
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.success).toBe(false);
+      expect(json.missing).toContain('compound');
+      expect(json.missing).toContain('price');
+    });
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     it('handles GET /api/health/deep with SLA telemetry', async () => {
       // The gateway host is env-configured only — the old hardcoded
       // AWS IP (18.232.148.172) was an infrastructure leak from a public,

@@ -43,7 +43,11 @@ export async function initiateClosing(
   const sale = await insertRecord<{ id: string }>(COLLECTIONS.sales, saleData);
 
   // Generate Contract Preview URL (Simulated)
+<<<<<<< HEAD
   const contractUrl = `https://sierraestates.luxury/contracts/preview/${sale.id}`;
+=======
+  const contractUrl = `https://sierra-estates.net/contracts/preview/${sale.id}`;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Update unit status to 'reserved'
   await updateRecord(COLLECTIONS.units, unitId, { status: 'reserved' });

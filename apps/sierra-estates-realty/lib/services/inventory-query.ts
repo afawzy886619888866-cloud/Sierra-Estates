@@ -43,6 +43,13 @@ export interface InventoryUnit {
 
 export interface InventoryQuery {
   status?: PropertyStatus | PropertyStatus[];
+  /**
+   * PUBLISH GATE (activation plan Phase D): when set, the query also filters
+   * `publish_status` inside the SQL where clause. Public callers MUST pass
+   * 'PUBLISHABLE'; internal surfaces (Closer Agent, admin, bots) leave it
+   * unset so staff workflows keep seeing unverified inventory.
+   */
+  publishStatus?: string | string[];
   propertyType?: string;
   compound?: string;
   bedrooms?: number;
@@ -83,11 +90,34 @@ export const InventoryQueryService = {
         ? Array.isArray(criteria.status) ? criteria.status : [criteria.status]
         : ['available'];
 
+<<<<<<< HEAD
       let units = await listRecords<InventoryUnit>(COLLECTIONS.units, {
         where: [{ column: 'status', op: 'in', value: statuses }],
         limit: 300,
       });
 
+=======
+      // PUBLISH GATE (Phase D): public callers pass publishStatus so only
+      // verified rows leave the database; internal callers omit it.
+      const publishWhere = criteria.publishStatus
+        ? [{
+            column: 'publish_status',
+            op: 'in' as const,
+            value: Array.isArray(criteria.publishStatus)
+              ? criteria.publishStatus
+              : [criteria.publishStatus],
+          }]
+        : [];
+
+      let units = await listRecords<InventoryUnit>(COLLECTIONS.units, {
+        where: [
+          { column: 'status', op: 'in', value: statuses },
+          ...publishWhere,
+        ],
+        limit: 300,
+      });
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       // In-memory filters: the remaining predicates are fuzzy (substring
       // compound match, budget bands) and not worth pushing into SQL here.
       if (criteria.propertyType) {

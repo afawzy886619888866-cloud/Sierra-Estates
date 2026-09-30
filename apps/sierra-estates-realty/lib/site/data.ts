@@ -1,5 +1,17 @@
+<<<<<<< HEAD
 import snapshot from '@/lib/inventory/snapshot.json';
 import { getCuratedListingImage, COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
+=======
+// NOTE (Phase 4 / B3 + Master Rule 5): this module previously imported the
+// 6.5 MB lib/inventory/snapshot.json — every client page importing HZDATA
+// shipped the whole catalog in its JS bundle, and when the snapshot was
+// empty (fresh clones) the code fell back to 8 hardcoded fictional listings
+// with invented prices, agents and "Verified" tags. Both paths are gone.
+// Static marketing content (slides, interiors, compound gazetteer) lives
+// here; REAL unit data comes from /api/inventory (server-side, PII-stripped,
+// cached) via lib/site/usePublicListings.ts.
+import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const EAST_CAIRO_TARGETS = [
   'Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette',
@@ -8,6 +20,7 @@ const EAST_CAIRO_TARGETS = [
   'Stone Residence', 'District 5', 'Madinaty', 'Al Rehab', 'Uptown Cairo',
   'Al Burouj', 'Sarai', 'STEI8HT', 'Bloomfields', 'The Brooks', 'El Patio Oro'
 ];
+<<<<<<< HEAD
 
 const validUnits: any[] = ((snapshot as any)?.units || []).filter(
   (u: any) =>
@@ -57,6 +70,14 @@ const defaultListings = validUnits.length > 0
       { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/0c8bb477-7853-41be-a1ec-a3d5cbce74de.png' },
       { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/7563b543-1bcf-46f5-aaf0-f5fa0af9e3e6.png' },
     ];
+=======
+export { EAST_CAIRO_TARGETS };
+
+// Curated listings are intentionally EMPTY: pages that need real units fetch
+// them from /api/inventory (see usePublicListings). An empty array is the
+// honest state — fabricating units, prices or agents violates Master Rule 5.
+const defaultListings: any[] = [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const DATA: any = {
   slides: [
@@ -272,7 +293,21 @@ const DATA: any = {
   featured: ['Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette', 'Madinaty', 'Al Rehab', 'Taj City'],
   compoundImgs: COMPOUND_HERO_IMAGES,
   price: function (p: any) {
+<<<<<<< HEAD
     return p.mode === 'rent' ? '$' + p.usd.toLocaleString() + '/mo' : 'EGP ' + p.egpM.toFixed(1) + 'M';
+=======
+    // Public inventory API units ship raw `price` only (egpM/usd are derived
+    // client-side). Derive what is knowable from the record's own price and
+    // fall back to an honest "Price on request" — never throw, never invent.
+    const rec = p || {};
+    const rawPrice = Number(rec.price) > 0 ? Number(rec.price) : 0;
+    if (rec.mode === 'rent') {
+      const usd = Number(rec.usd) > 0 ? Number(rec.usd) : rawPrice > 0 ? Math.round(rawPrice / 50) : 0;
+      return usd > 0 ? '$' + usd.toLocaleString() + '/mo' : 'Price on request';
+    }
+    const egpM = Number(rec.egpM) > 0 ? Number(rec.egpM) : rawPrice > 0 ? rawPrice / 1000000 : 0;
+    return egpM > 0 ? 'EGP ' + egpM.toFixed(1) + 'M' : 'Price on request';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 };
 
@@ -302,6 +337,7 @@ const DATA: any = {
     if (cache[name]) return cache[name];
     const target = cleanCpd(name);
 
+<<<<<<< HEAD
     // 1. Look up real master inventory units
     const snapshotUnits: any[] = (snapshot as any)?.units || [];
     const matched = snapshotUnits.filter((u: any) => {
@@ -334,6 +370,13 @@ const DATA: any = {
       cache[name] = mapped;
       return mapped;
     }
+=======
+    // Phase 4/B3: the snapshot no longer ships in the client bundle.
+    // CompoundsPage passes live /api/inventory units first; when the live
+    // fetch has no units for this compound the honest answer is an empty
+    // list — the UI shows its \"request inventory\" state.
+    const matched: any[] = [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     // 2. No fabrication: if the catalog has no real units for this compound,
   //    return an empty list and let the UI show an honest "request inventory"
@@ -345,6 +388,7 @@ const DATA: any = {
   D.findListing = function (id: any) {
     if (!id) return null;
     const strId = String(id).trim().toLowerCase();
+<<<<<<< HEAD
     const foundDef = defaultListings.find(
       (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
     );
@@ -376,6 +420,15 @@ const DATA: any = {
       };
     }
     return null;
+=======
+    // Phase 4/B3: snapshot-free. Real unit lookups go through
+    // /api/listings/[id] (single-row, honest 404). The curated static list is
+    // empty by design (anti-fabrication), so this only resolves ids that
+    // genuinely exist in static curated content.
+    return defaultListings.find(
+      (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
+    ) || null;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   };
 })(DATA);
 

@@ -50,6 +50,7 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
         const code = item.sierraCode || item.code || m.id;
         const price = item.price ? Number(item.price).toLocaleString() : (item.egpM ? `${item.egpM}M` : 'N/A');
         const type = item.type || item.propertyType || 'Unit';
+<<<<<<< HEAD
         const loc = item.location || item.compound || 'New Cairo';
         const beds = item.bedrooms || item.beds || item.rooms || '-';
         const area = item.area_sqm || item.area || '-';
@@ -58,6 +59,18 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
         report += `${i + 1}. *[${code}]* ${type} in *${loc}*\n`;
         report += `   💰 Price: ${price} ${item.currency || 'EGP'} | 📐 ${area} sqm | 🛏️ ${beds} Beds\n`;
         report += `   ⭐ Valuation Score: ${score}/100 | Source: ${item.source || item.sourceGroup || 'Master Sheet'}\n\n`;
+=======
+        // §21 no-fabrication: unknown location renders as 'Unknown', never
+        // 'New Cairo'; score/source are only claimed when actually present.
+        const loc = item.location || item.compound || 'Unknown';
+        const beds = item.bedrooms || item.beds || item.rooms || '-';
+        const area = item.area_sqm || item.area || '-';
+        const score = item.valuationScore || item.aiScore || item.intelligence?.valuationScore;
+
+        report += `${i + 1}. *[${code}]* ${type} in *${loc}*\n`;
+        report += `   💰 Price: ${price} ${item.currency || 'EGP'} | 📐 ${area} sqm | 🛏️ ${beds} Beds\n`;
+        report += `   ⭐ Valuation Score: ${score !== undefined ? `${score}/100` : 'not yet assessed'} | Source: ${item.source || item.sourceGroup || 'unspecified'}\n\n`;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       });
 
       return report.trim();
@@ -76,7 +89,12 @@ export async function generateInventoryReport(config: AirtableConfig): Promise<s
         const code = item.sierraCode || item.code || item.id || `listing-${i + 1}`;
         const price = item.price ? Number(item.price).toLocaleString() : 'N/A';
         const type = item.type || item.propertyType || 'Unit';
+<<<<<<< HEAD
         const loc = item.location || item.compound || 'New Cairo';
+=======
+        // §21 no-fabrication: unknown location renders as 'Unknown', never 'New Cairo'.
+        const loc = item.location || item.compound || 'Unknown';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         const beds = item.bedrooms || item.beds || item.rooms || '-';
         const area = item.area_sqm || item.area || '-';
         report += `${i + 1}. *[${code}]* ${type} in *${loc}*\n`;

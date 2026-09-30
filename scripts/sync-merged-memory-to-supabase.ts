@@ -68,6 +68,7 @@ async function main() {
         if (!refId.startsWith('INV-MEM-')) continue;
 
         const code = parts[codeIdx] || '';
+<<<<<<< HEAD
         const compound = parts[compIdx] || 'New Cairo';
         const pType = parts[typeIdx] || 'Apartment';
         const price = parseFloat(parts[priceIdx]) || 0;
@@ -75,16 +76,38 @@ async function main() {
         const beds = parseInt(parts[bedsIdx], 10) || 3;
         const baths = parseInt(parts[bathsIdx], 10) || 2;
         const finish = parts[finishIdx] || 'Semi-Finished';
+=======
+        // §21 no-fabrication: empty CSV cells become null/0 — never invented
+        // 'New Cairo' / 'Apartment' / 150 sqm / 3 beds / 2 baths / 'Semi-Finished'
+        // defaults. deal_type stays null: the unified CSV carries no deal column,
+        // so claiming 'sale' would fabricate a property fact.
+        const compound = parts[compIdx] || null;
+        const pType = parts[typeIdx] || null;
+        const price = parseFloat(parts[priceIdx]) || 0;
+        const area = parseFloat(parts[areaIdx]) || 0;
+        const beds = parseInt(parts[bedsIdx], 10) || 0;
+        const baths = parseInt(parts[bathsIdx], 10) || 0;
+        const finish = parts[finishIdx] || null;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         const phone = parts[phoneIdx] || '';
         const broker = parts[brokerIdx] || 'WhatsApp Ingestion';
         const notes = parts[notesIdx] || '';
 
         newUnitsToInsert.push({
             ref_id: refId,
+<<<<<<< HEAD
             title: `${pType} in ${compound} (${code || refId})`,
             compound: compound,
             property_type: pType,
             deal_type: 'sale',
+=======
+            // §21: title built only from extracted facts (neutral 'Unit' when
+            // the row states no type).
+            title: `${[pType || 'Unit', compound ? `in ${compound}` : null].filter(Boolean).join(' ')} (${code || refId})`,
+            compound: compound,
+            property_type: pType,
+            deal_type: null,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             price: price,
             area_sqm: area,
             bedrooms: beds,
