@@ -129,9 +129,13 @@ export async function POST(request: Request) {
       code: r.internal_code,
       title: `${d.unit_type ?? 'Unit'} · ${d.compound ?? d.region ?? 'Unknown location'}`,
       compound: d.compound ?? d.region ?? 'Unknown',
-      locationArea: d.region ?? 'New Cairo',
-      city: 'Cairo',
-      propertyType: d.unit_type ?? 'Apartment',
+      // §21 no-fabrication: the parser returns null when the text names no
+      // region/type — write null, never an invented default. City is derived
+      // (the parser's region lexicon is Cairo-governorate only: New Cairo +
+      // Uptown), so it is only set when a region was actually extracted.
+      locationArea: d.region ?? null,
+      city: d.region != null ? 'Cairo' : null,
+      propertyType: d.unit_type ?? null,
       dealType: d.deal_type,
       price: d.price_egp ?? 0,
       priceCurrency: 'EGP',
