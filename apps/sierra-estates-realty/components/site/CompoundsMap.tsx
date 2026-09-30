@@ -26,7 +26,7 @@ import {
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
 function compoundFlagCode(name: string): string {
-  return name.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toLowerCase() || '·';
+  return name.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toUpperCase() || '·';
 }
 
 export interface MapCompound {
