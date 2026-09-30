@@ -119,11 +119,19 @@ export default function CompoundsPage() {
       })
       .map((u: any, i: number) => ({
         code: u.code || u.id || `SE-${i + 1}`,
+<<<<<<< HEAD
         type: u.propertyType || u.type || 'Apartment',
         beds: u.beds ?? 3,
         bath: u.bath ?? 2,
         area: u.area ?? 0,
         status: u.status || u.availability || 'Available',
+=======
+        type: u.propertyType || u.type || '',
+        beds: u.beds ?? 0,
+        bath: u.bath ?? 0,
+        area: u.area ?? 0,
+        status: u.status || u.availability || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         mode: u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale',
         egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
         usd: u.usd ?? (u.price ? Math.round(u.price / 48.5) : 0),
@@ -293,10 +301,13 @@ export default function CompoundsPage() {
                 featured={featured}
                 selectedName={selected}
                 onSelectAction={setSelected}
+<<<<<<< HEAD
                 onOpenSheet={(cpd) => {
                   setSheetModalCompound(cpd);
                   setSheetModalOpen(true);
                 }}
+=======
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               />
             </div>
             <div className="intel" id="intel-panel">

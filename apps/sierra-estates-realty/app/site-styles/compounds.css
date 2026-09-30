@@ -114,6 +114,7 @@
   border-color:rgba(214,170,85,.62)!important;
   color:var(--map-ink)!important;
 }
+<<<<<<< HEAD
 .map-command-deck .sierra-compound-pin{
   background:#102a36!important;
   border-color:rgba(214,170,85,.52)!important;
@@ -123,6 +124,15 @@
 }
 .map-command-deck .sierra-compound-pin.is-selected{
   background:#173a44!important;
+=======
+.map-command-deck .sierra-compound-flag{
+  background:#14283d!important;
+  border-color:rgba(214,170,85,.52)!important;
+  box-shadow:0 7px 18px rgba(2,12,20,.34)!important;
+}
+.map-command-deck .sierra-compound-flag.is-selected{
+  background:#071523!important;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   border-color:var(--map-accent)!important;
   box-shadow:0 0 0 3px rgba(214,170,85,.2),0 10px 22px rgba(2,12,20,.42)!important;
 }

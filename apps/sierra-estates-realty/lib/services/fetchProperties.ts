@@ -29,6 +29,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
         .limit(50);
 
       if (!error && data && data.length > 0) {
+<<<<<<< HEAD
         return data.map((item: any) => ({
           id: item.id || item.ref_id,
           sbrCode: item.ref_id || `SBR-${item.id?.substring(0, 6)}`,
@@ -39,6 +40,22 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
           imageUrl: (item.images && item.images[0]) || "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/01282d44-c0b4-4993-9f36-0b9eb682059d.png",
           type: item.deal_type === 'rent' ? 'Rent' : 'Resale',
           tags: item.amenities?.length ? item.amenities : [item.finishing_type || "Luxury Finishing", item.property_type || "Standalone"],
+=======
+        // §21 no-fabrication: unknown compound stays empty, no stock
+        // photo URL is injected, and amenity tags come only from real data.
+        return data.map((item: any) => ({
+          id: item.id || item.ref_id,
+          sbrCode: item.ref_id || `SBR-${item.id?.substring(0, 6)}`,
+          compound: item.compound || '',
+          name: item.title || [item.property_type, item.compound].filter(Boolean).join(' in ') || 'Listing',
+          specs: `BUA: ${item.area_sqm ?? '?'}m² | ${item.bedrooms ?? '?'} Beds | ${item.bathrooms ?? '?'} Baths`,
+          price: Number(item.price) > 0 ? `${Number(item.price).toLocaleString()} EGP` : 'Price on request',
+          imageUrl: (item.images && item.images[0]) || '',
+          type: item.deal_type === 'rent' ? 'Rent' : 'Resale',
+          tags: Array.isArray(item.amenities) && item.amenities.length
+            ? item.amenities
+            : [item.finishing_type, item.property_type].filter(Boolean),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         }));
       }
     }
@@ -46,6 +63,7 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
     console.warn("Supabase fetching fallback:", error);
   }
 
+<<<<<<< HEAD
   // Fallback Mock data matching New Cairo Context if database is empty during init
   return ([
     {
@@ -82,4 +100,10 @@ export async function fetchPropertiesFromDB(typeFilter: 'Rent' | 'Resale'): Prom
       tags: ["Prime Location", "Private Pool"]
     }
   ] satisfies Property[]).filter(item => item.type === typeFilter);
+=======
+  // §21 no-fabrication: when the database is empty/unreachable we return
+  // an EMPTY list — we never serve invented "Azure Heights"-style mock
+  // units with hardcoded Property Finder photos to the client.
+  return [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }

@@ -22,3 +22,7 @@ export { default as WorkflowStudioView } from './WorkflowStudioView';
 export { default as MemoryBrainView } from './MemoryBrainView';
 export { default as WhatsAppChatImportView } from './WhatsAppChatImportView';
 export { default as CairoPlazaAdminView } from './CairoPlazaAdminView';
+<<<<<<< HEAD
+=======
+export { default as ViewingsView } from './ViewingsView';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1

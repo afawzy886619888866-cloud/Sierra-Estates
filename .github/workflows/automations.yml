@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Automations
+
+# Phase 11 — automation unification. This workflow is the CANONICAL scheduler;
+# the two Vercel Hobby cron slots (vercel.json → /api/cron/dispatch/night +
+# /dispatch/morning) are only a no-secrets fallback for the same windows.
+#
+# Why both schedulers can fire the same job safely:
+#   every dispatch records an automation_runs row, and the dispatcher skips a
+#   job whose last success is fresher than its dedupe window (e.g. 20h for the
+#   daily syncs). Overlaps therefore collapse into one real execution plus one
+#   honest "skipped (recent_success)" ledger entry — never a double run.
+#
+# Failure handling: the dispatcher answers HTTP 500 when ANY job failed, so
+#   · curl --retry re-runs the dispatch, and
+#   · the dedupe guard makes that retry execute ONLY the failed jobs,
+#   · failures also land in the failed_orchestrations DLQ (pipeline
+#     "cron:<job>") and a later success resolves them.
+#
+# Required repository secret: CRON_SECRET (same value as the Vercel env var).
+# Without it the scheduled runs fail auth and the workflow exits non-zero —
+# visible, not silent.
+
+on:
+  schedule:
+    # Hourly: drain queued WhatsApp bot replies (the route itself no-ops
+    # outside the Africa/Cairo outreach window and respects sender quotas).
+    - cron: '10 * * * *'
+    # Every 3 hours: lead timers + availability SLA want a tight cadence.
+    - cron: '25 */3 * * *'
+    # Daily windows (10 min after the Vercel fallback slots: if Vercel already
+    # ran the window successfully, every job inside is deduped to "skipped").
+    - cron: '10 2 * * *'
+    - cron: '10 6 * * *'
+    # Daily sync-leads (historically 10:00 via vercel.json; keep that hour).
+    - cron: '10 10 * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Dispatcher target (window name or single job)
+        required: true
+        type: choice
+        default: 'night'
+        options:
+          - night
+          - morning
+          - maintenance
+          - expire-reservations
+          - lead-timers
+          - check-availability-sla
+          - sync-listings
+          - sync-master-sheet
+          - ingest-from-sheets
+          - sync-leads
+          - whatsapp-dispatch
+          - apply-migrations
+      force:
+        description: Bypass the dedupe guard (?force=1)
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: automations
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SITE_URL: https://sierra-estates.net
+
+jobs:
+  dispatch:
+    name: Trigger automation dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resolve target for this event
+        id: target
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_TARGET: ${{ inputs.target }}
+        run: |
+          # Scheduled runs pick the job from the cron expression itself, so
+          # each schedule entry in `on:` maps to exactly one dispatch target.
+          case "${SCHEDULE}" in
+            '10 * * * *')    TARGET='whatsapp-dispatch' ;;
+            '25 */3 * * *')  TARGET='lead-timers,check-availability-sla' ;;
+            '10 2 * * *')    TARGET='night' ;;
+            '10 6 * * *')    TARGET='morning' ;;
+            '10 10 * * *')   TARGET='sync-leads' ;;
+            '')              TARGET="${INPUT_TARGET:-night}" ;;
+            *)               echo "Unmapped schedule: ${SCHEDULE}" >&2; exit 1 ;;
+          esac
+          echo "targets=${TARGET}" >> "$GITHUB_OUTPUT"
+
+      - name: Call the dispatcher for each target
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          TARGETS: ${{ steps.target.outputs.targets }}
+          FORCE: ${{ inputs.force && '1' || '0' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET is not configured in repository secrets — scheduled work cannot authenticate."
+            exit 1
+          fi
+
+          status=0
+          for target in ${TARGETS//,/ }; do
+            echo "── Dispatching '${target}' ─────────────────────────────────"
+            if ! curl -sS --fail-with-body --show-error \
+                 --retry 3 --retry-delay 15 --retry-all-errors \
+                 --max-time 240 \
+                 --write-out '\nHTTP %{http_code} in %{time_total}s\n' \
+                 "${SITE_URL}/api/cron/dispatch/${target}?source=github-actions&force=${FORCE}" \
+                 -H "Authorization: Bearer ${CRON_SECRET}"; then
+              echo "::warning::Dispatch '${target}' failed after retries — the failure is recorded in automation_runs + the failed_orchestrations DLQ."
+              status=1
+            fi
+          done
+          exit "${status}"

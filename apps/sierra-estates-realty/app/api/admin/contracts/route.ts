@@ -93,6 +93,47 @@ export async function POST(req: NextRequest) {
     const contractNumber = generateContractNumber(contractType);
     const contractId = `con-${Date.now()}`;
 
+<<<<<<< HEAD
+=======
+    // §21: a contract is a legal record — its terms may never be invented.
+    // The old defaults ('New Cairo', 'Apartment', beds 3, 150 sqm, 10%
+    // deposit, 50/50 commission split) fabricated binding terms whenever a
+    // field was missing. Missing terms now fail loudly with a 400.
+    const num = (v: unknown): number | null => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    };
+    const missing: string[] = [];
+    if (!body.unitCode) missing.push('unitCode');
+    if (!body.compoundName) missing.push('compoundName');
+    if (!body.propertyType) missing.push('propertyType');
+    if (!body.dealType) missing.push('dealType');
+    if (!body.finishing) missing.push('finishing');
+    if (!body.buyerName) missing.push('buyerName');
+    if (num(body.agreedPrice) === null) missing.push('agreedPrice');
+    if (num(body.reservationDeposit) === null) missing.push('reservationDeposit');
+    if (num(body.areaSqm) === null) missing.push('areaSqm');
+    if (num(body.bedrooms) === null) missing.push('bedrooms');
+    if (num(body.bathrooms) === null) missing.push('bathrooms');
+    if (body.commissionPercentage != null) {
+      // Commission terms come as a complete block or not at all — share
+      // splits are never defaulted to 50/50.
+      if (num(body.commissionPercentage) === null) missing.push('commissionPercentage');
+      if (num(body.sierraSharePercentage) === null) missing.push('sierraSharePercentage');
+      if (num(body.brokerSharePercentage) === null) missing.push('brokerSharePercentage');
+    }
+    if (missing.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Contract terms must be provided explicitly — refusing to fabricate defaults',
+          missing,
+        },
+        { status: 400 }
+      );
+    }
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const newContract: DigitalContractData = {
       id: contractId,
       contractNumber,
@@ -100,6 +141,7 @@ export async function POST(req: NextRequest) {
       status: 'pending_signatures',
       createdAt: new Date().toISOString(),
       unit: {
+<<<<<<< HEAD
         unitCode: body.unitCode || 'SE-UNIT-NEW',
         compoundName: body.compoundName || 'New Cairo',
         propertyType: body.propertyType || 'Apartment',
@@ -114,6 +156,22 @@ export async function POST(req: NextRequest) {
       },
       buyer: {
         name: body.buyerName || 'Buyer',
+=======
+        unitCode: body.unitCode,
+        compoundName: body.compoundName,
+        propertyType: body.propertyType,
+        areaSqm: Number(body.areaSqm),
+        bedrooms: Number(body.bedrooms),
+        bathrooms: Number(body.bathrooms),
+        finishing: body.finishing,
+        dealType: body.dealType === 'sale' ? 'sale' : 'rent',
+        agreedPrice: Number(body.agreedPrice),
+        reservationDeposit: Number(body.reservationDeposit),
+        paymentPlanDescription: body.paymentPlanDescription || '',
+      },
+      buyer: {
+        name: body.buyerName,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         nationalIdOrPassport: body.buyerNationalId || 'N/A',
         phone: body.buyerPhone || '',
         email: body.buyerEmail || '',
@@ -124,10 +182,17 @@ export async function POST(req: NextRequest) {
         phone: body.sellerPhone || '',
       },
       commission: body.commissionPercentage ? {
+<<<<<<< HEAD
         totalCommissionAmount: (Number(body.agreedPrice) || 0) * (Number(body.commissionPercentage) / 100),
         commissionPercentage: Number(body.commissionPercentage) || 2.5,
         sierraSharePercentage: Number(body.sierraSharePercentage) || 50,
         brokerSharePercentage: Number(body.brokerSharePercentage) || 50,
+=======
+        totalCommissionAmount: Number(body.agreedPrice) * (Number(body.commissionPercentage) / 100),
+        commissionPercentage: Number(body.commissionPercentage),
+        sierraSharePercentage: Number(body.sierraSharePercentage),
+        brokerSharePercentage: Number(body.brokerSharePercentage),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         externalBrokerName: body.externalBrokerName || '',
         externalBrokerPhone: body.externalBrokerPhone || '',
         vatIncluded: true,

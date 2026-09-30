@@ -4,7 +4,11 @@
  * Sierra Estates — Interactive Compounds Masterplan Map
  *
  * Central interactive command deck featuring:
+<<<<<<< HEAD
  * - Luxury Cairo Emerald & Champagne Gold custom pill markers
+=======
+ * - Two-letter flag pins (clean masterplan) — press opens the Excel sheet
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  * - Zone fast-switching (Golden Square, 5th Settlement, Katameya, South/North 90th, Mostakbal City)
  * - 5-way segment bar (All Inventory, Owners Rent, Owners Buy, Broker Rent, Broker Buy)
  * - Rich interactive popup cards with AI investment score, pricing, growth rate, and developer tag
@@ -14,8 +18,25 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { Map as LeafletMap } from 'leaflet';
+<<<<<<< HEAD
 import { Search, RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
 import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
+=======
+import { RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
+import SmartFilterBar from '@/components/site/SmartFilterBar';
+import CompoundUnitsDeck from '@/components/site/CompoundUnitsDeck';
+import {
+  RENT_BUDGET_LADDER,
+  SALE_BUDGET_LADDER,
+  budgetBounds,
+  unitConditionKey,
+} from '@/lib/site/smart-search';
+
+/** Two-letter flag code for a compound (matches the map pin badge). */
+function compoundFlagCode(name: string): string {
+  return name.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toUpperCase() || '·';
+}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 export interface MapCompound {
   n: string;
@@ -372,6 +393,7 @@ export const SEGMENT_TABS: SegmentTab[] = [
   { key: 'broker_buy', label: 'Broker Resale', defaultBadge: '7,495', color: '#6366f1' },
 ];
 
+<<<<<<< HEAD
 function cleanCpdName(s: string): string {
   return String(s || '')
     .toLowerCase()
@@ -384,6 +406,8 @@ function estimateUnitsCount(aiScore: number): number {
   return Math.max(12, Math.round(aiScore * 2.8));
 }
 
+=======
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 interface InventoryApiData {
   count: number;
   segments?: {
@@ -405,6 +429,17 @@ interface InventoryApiData {
     img?: string;
     price?: number;
     hasPhoto?: boolean;
+<<<<<<< HEAD
+=======
+    /* condition evidence fields served by /api/inventory (used by the
+       condition-counts aggregator + evidence-based condition filter) */
+    finishing?: string;
+    finishingQuality?: string;
+    furnishing?: string;
+    furnished?: string | boolean;
+    mode?: string;
+    segment?: string;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }>;
 }
 
@@ -450,10 +485,16 @@ export default function CompoundsMap({
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
+<<<<<<< HEAD
+=======
+  const [selectedUnitType, setSelectedUnitType] = useState<string>('');
+  const [selectedCondition, setSelectedCondition] = useState<string>('');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
+<<<<<<< HEAD
   const [rentCounts, setRentCounts] = useState<Record<string, number>>({});
 
   // Fetch full live inventory and segment aggregates
@@ -467,6 +508,21 @@ export default function CompoundsMap({
         if (cancelled) return;
         if (allData) setInventoryData(allData);
         if (rentData?.compoundCounts) setRentCounts(rentData.compoundCounts);
+=======
+  // Flag-press sheet: compact Excel-style units deck fitted INSIDE the map
+  // deck area (map hidden behind a solid panel while open).
+  const [sheetCompound, setSheetCompound] = useState<string | null>(null);
+
+  // Fetch full live inventory and segment aggregates (marker tooltips,
+  // legend counts and the flag-press Excel sheet all read from this).
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/inventory')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((allData: InventoryApiData | null) => {
+        if (cancelled) return;
+        if (allData) setInventoryData(allData);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       })
       .catch((err) => console.warn('[CompoundsMap] Listings fetch failed:', err));
     return () => {
@@ -478,6 +534,7 @@ export default function CompoundsMap({
     if (filterBed !== undefined) setSelectedBed(filterBed);
   }, [filterBed]);
 
+<<<<<<< HEAD
   // Listen for clicks on the popup "View Excel Sheet" button
   useEffect(() => {
     const handleSheetBtnClick = (e: MouseEvent) => {
@@ -529,6 +586,30 @@ export default function CompoundsMap({
 
   // Filtered compounds based on query, zone, budget, and external props
   const filteredCompounds = useMemo(() => {
+=======
+
+  // Live per-condition unit counts (evidence-based) for the condition chip:
+  // options with zero resolvable units render disabled instead of dead-ending.
+  const conditionCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const u of inventoryData?.units ?? []) {
+      const key = unitConditionKey({
+        finishing: u.finishing,
+        finishingQuality: u.finishingQuality,
+        furnishing: u.furnishing,
+        furnished: u.furnished,
+      });
+      if (key === "unknown") continue; // unresolvable finishing = no evidence
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [inventoryData]);
+
+  // Filtered compounds based on query, zone, budget, and external props
+  const filteredCompounds = useMemo(() => {
+    const isRentSegment =
+      selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return compounds.filter((c) => {
       if (showSelectedOnly && selectedName && c.n !== selectedName) return false;
       // 1. Text query filter (local state or external prop)
@@ -561,6 +642,7 @@ export default function CompoundsMap({
         }
       }
 
+<<<<<<< HEAD
       // 3. Price preset filter (local on map)
       if (selectedPriceBudget !== 'any') {
         const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
@@ -582,6 +664,109 @@ export default function CompoundsMap({
       return true;
     });
   }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName]);
+=======
+      // 3. Budget preset filter (local on map) — rent ladder while a rent
+      // segment is active, sale presets otherwise (same keys as SmartFilterBar).
+      if (selectedPriceBudget !== 'any') {
+        if (isRentSegment) {
+          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
+          const { min, max } = budgetBounds(selectedPriceBudget, RENT_BUDGET_LADDER);
+          const rentUsd = c.rent || 0;
+          if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
+          if (max !== undefined && rentUsd > max / 50) return false;
+        } else {
+          const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
+          if (preset) {
+            if (preset.minM !== undefined && c.priceM < preset.minM) return false;
+            if (preset.maxM !== undefined && c.priceM > preset.maxM) return false;
+          }
+        }
+      }
+
+      // 4. External Price filter — unified preset keys from SmartFilterBar
+      // ('under10m', '10m-20m', … sale) / ('under35k', '35k-60k', … rent).
+      if (filterPrice && filterPrice !== '0') {
+        const ladder = filterPrice.includes('k') ? RENT_BUDGET_LADDER : SALE_BUDGET_LADDER;
+        const { min, max } = budgetBounds(filterPrice, ladder);
+        if (ladder === RENT_BUDGET_LADDER) {
+          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
+          const rentUsd = c.rent || 0;
+          if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
+          if (max !== undefined && rentUsd > max / 50) return false;
+        } else {
+          if (min !== undefined && c.priceM * 1_000_000 < min) return false;
+          if (max !== undefined && c.priceM * 1_000_000 > max) return false;
+        }
+      }
+
+      // 5. Unit-type filter — a compound stays visible when the live
+      // inventory holds at least one unit of that type inside it. When the
+      // inventory payload has not arrived yet, keep every compound visible
+      // (never exclude on missing evidence).
+      if (selectedUnitType && inventoryData?.units) {
+        const t = selectedUnitType.toLowerCase();
+        const target = c.n.toLowerCase().trim();
+        const hasType = inventoryData.units.some((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
+          const pt = String(u.propertyType || u.type || '').toLowerCase();
+          return Boolean(pt) && (pt.includes(t) || t.includes(pt));
+        });
+        if (!hasType) return false;
+      }
+
+      // 6. Segment filter (rent/resale) — a compound stays visible when the
+      // live inventory holds at least one unit of that segment inside it
+      // (exact segment match when the unit carries one; otherwise the unit's
+      // mode is the fallback evidence — most public units carry no segment
+      // attribution yet). Static compound rent/price levels are NOT evidence
+      // of live inventory, so they never keep a pin alive here. When the
+      // inventory payload has not arrived yet, keep every compound visible
+      // — never exclude on missing evidence.
+      if (selectedSegment !== 'all' && inventoryData?.units) {
+        const target = c.n.toLowerCase().trim();
+        const hasSegment = inventoryData.units.some((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
+          const seg = String(u.segment || '').toLowerCase();
+          if (seg === selectedSegment) return true;
+          if (seg && seg !== 'unknown') return false;
+          return isRentSegment ? u.mode === 'rent' : u.mode === 'sale';
+        });
+        if (!hasSegment) return false;
+      }
+
+      // 7. Condition filter — evidence rule: a compound is excluded only when
+      // its live inventory holds at least one unit with a RESOLVABLE condition
+      // and none of them match the selection. Units whose finishing text can't
+      // be resolved ("Standard", empty, …) carry no evidence either way — they
+      // must not hide the compound (same anti-fabrication stance as the rest
+      // of the map filters; /properties stays strict because it filters rows,
+      // not pins).
+      if (selectedCondition && inventoryData?.units) {
+        const target = c.n.toLowerCase().trim();
+        let sawResolvable = false;
+        let sawMatch = false;
+        inventoryData.units.forEach((u: any) => {
+          const cmp = (u.compound || u.location || '').toLowerCase().trim();
+          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return;
+          const key = unitConditionKey({
+            finishing: u.finishing,
+            finishingQuality: u.finishingQuality,
+            furnishing: u.furnishing,
+            furnished: u.furnished,
+          });
+          if (key === 'unknown') return;
+          sawResolvable = true;
+          if (key === selectedCondition) sawMatch = true;
+        });
+        if (sawResolvable && !sawMatch) return false;
+      }
+
+      return true;
+    });
+  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName, selectedUnitType, selectedSegment, selectedCondition, inventoryData]);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -602,11 +787,22 @@ export default function CompoundsMap({
       });
       mapRef.current = map;
 
+<<<<<<< HEAD
       // Standard OpenStreetMap tile layer (reliable, high-contrast, no API key required)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         subdomains: 'abc',
+=======
+      // Sierra brand basemap — CARTO dark_matter: an obsidian-navy canvas
+      // that matches the masterplan deck (#071523) and the champagne-gold
+      // pins. The previous generic light OSM tiles clashed with the dark
+      // brand chrome (no API key required, subdomains a–d).
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 20,
+        subdomains: 'abcd',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       }).addTo(map);
 
       layerRef.current = L.layerGroup().addTo(map);
@@ -637,6 +833,7 @@ export default function CompoundsMap({
       layer.clearLayers();
       markersMapRef.current.clear();
 
+<<<<<<< HEAD
       const getRentCount = (name: string): number => {
         const target = cleanCpdName(name);
         for (const [key, count] of Object.entries(rentCounts)) {
@@ -655,10 +852,13 @@ export default function CompoundsMap({
         return 0;
       };
 
+=======
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       filteredCompounds.forEach((c) => {
         const isFeat = featured.includes(c.n);
         const isSelected = selectedName === c.n;
         const isHot = c.ai >= 9.2;
+<<<<<<< HEAD
         const liveUnits = getCompoundCount(c.n);
         const unitsCount = liveUnits > 0 ? liveUnits : (selectedSegment === 'all' ? (c.units ?? estimateUnitsCount(c.ai)) : 0);
         const liveRentCount = getRentCount(c.n);
@@ -748,18 +948,79 @@ export default function CompoundsMap({
               margin-left: -2px;
             " title="${liveSheetCount} unphotographed sheet units">+${liveSheetCount}📄</span>` : ''}
           </div>
+=======
+
+        // Two-letter flag pin — the masterplan stays clean: NO compound names
+        // on the map. Pressing the flag opens the Excel sheet modal with ALL
+        // units for that compound (live inventory + master sheet).
+        const flagCode = compoundFlagCode(c.n);
+        const flagBg = isSelected ? '#071523' : isFeat ? '#0a382b' : '#14283d';
+        const flagBorder = isSelected
+          ? '2px solid #dfad3a'
+          : isHot
+          ? '1.5px solid rgba(223, 173, 58, 0.7)'
+          : '1px solid rgba(255, 255, 255, 0.28)';
+        const flagShadow = isSelected
+          ? '0 0 20px rgba(223, 173, 58, 0.75), 0 6px 14px rgba(0,0,0,0.55)'
+          : isHot
+          ? '0 0 12px rgba(223, 173, 58, 0.35), 0 4px 10px rgba(0,0,0,0.4)'
+          : '0 3px 9px rgba(0,0,0,0.38)';
+        const flagColor = isSelected ? '#e9c176' : '#ffffff';
+
+        const markerHtml = `
+          <div class="sierra-compound-flag ${isSelected ? 'is-selected' : ''}" style="
+            position: relative;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: ${flagBg};
+            color: ${flagColor};
+            border: ${flagBorder};
+            border-radius: 9px 9px 9px 2px;
+            box-shadow: ${flagShadow};
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            transform: ${isSelected ? 'scale(1.14)' : 'scale(1)'};
+            transform-origin: 50% 100%;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+          ">${flagCode}<span aria-hidden="true" style="
+            position: absolute;
+            bottom: -4.5px;
+            left: 50%;
+            margin-left: -4.5px;
+            width: 9px;
+            height: 9px;
+            background: ${flagBg};
+            border-right: ${flagBorder};
+            border-bottom: ${flagBorder};
+            transform: rotate(45deg);
+          "></span></div>
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         `;
 
         const marker = L.marker(c.c, {
           icon: L.divIcon({
             className: 'sierra-leaflet-marker-wrap',
             html: markerHtml,
+<<<<<<< HEAD
             iconSize: [140, 30],
             iconAnchor: [70, 15],
+=======
+            iconSize: [30, 36],
+            iconAnchor: [15, 35],
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           }),
           zIndexOffset: isSelected ? 1000 : isFeat ? 700 : 100,
         });
 
+<<<<<<< HEAD
         // Rich Interactive Popup
         const rentDisplay = c.rent ? `$${c.rent.toLocaleString()}` : `$${Math.round(c.priceM * 200).toLocaleString()}`;
         const queryParamSeg = selectedSegment !== 'all' ? `&segment=${selectedSegment}` : '';
@@ -923,6 +1184,16 @@ export default function CompoundsMap({
 
         marker.on('click', () => {
           handleSelect?.(c.n);
+=======
+        // Flag press → select (intel panel / search sync) AND open the
+        // compact Excel-style units deck fitted to the map area (map hidden
+        // while open). No Leaflet popup — the masterplan itself is the
+        // interface.
+        marker.on('click', () => {
+          handleSelect?.(c.n);
+          onOpenSheet?.(c.n);
+          setSheetCompound(c.n);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         });
 
         // Render Masterplan Boundary Polygon (if available)
@@ -947,7 +1218,10 @@ export default function CompoundsMap({
                 duration: 0.9,
               });
             }
+<<<<<<< HEAD
             marker.openPopup();
+=======
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           });
 
           polygon.addTo(layer);
@@ -980,7 +1254,18 @@ export default function CompoundsMap({
     return () => {
       cancelled = true;
     };
+<<<<<<< HEAD
   }, [ready, filteredCompounds, featured, selectedName, handleSelect, getCompoundCount, selectedSegment, rentCounts, inventoryData?.units, inventoryData?.compoundSheetCounts]);
+=======
+  }, [ready, filteredCompounds, featured, selectedName, handleSelect, onOpenSheet]);
+
+  // Close the sheet when a different compound is selected externally
+  useEffect(() => {
+    if (sheetCompound && selectedName && sheetCompound !== selectedName) {
+      setSheetCompound(selectedName);
+    }
+  }, [selectedName, sheetCompound]);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 
   // Handle external selection & smooth zoom
@@ -1014,6 +1299,11 @@ export default function CompoundsMap({
     setSelectedZone('all');
     setSelectedBed('any');
     setSelectedPriceBudget('any');
+<<<<<<< HEAD
+=======
+    setSelectedUnitType('');
+    setSelectedCondition('');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     setSelectedSegment('all');
     setShowSelectedOnly(false);
     if (mapRef.current) {
@@ -1026,6 +1316,11 @@ export default function CompoundsMap({
     (selectedZone !== 'all' ? 1 : 0) +
     (selectedBed !== 'any' ? 1 : 0) +
     (selectedPriceBudget !== 'any' ? 1 : 0) +
+<<<<<<< HEAD
+=======
+    (selectedUnitType ? 1 : 0) +
+    (selectedCondition ? 1 : 0) +
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     (selectedSegment !== 'all' ? 1 : 0) +
     (showSelectedOnly ? 1 : 0) +
     (filterCompound ? 1 : 0) +
@@ -1033,6 +1328,20 @@ export default function CompoundsMap({
 
   return (
     <div className="map-command-deck" style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
+<<<<<<< HEAD
+=======
+      {/* Flag-press Units Deck — fitted to the map area, map hidden while open */}
+      {sheetCompound && (
+        <CompoundUnitsDeck
+          compoundName={sheetCompound}
+          flagCode={compoundFlagCode(sheetCompound)}
+          units={(inventoryData?.units || []) as any}
+          onClose={() => setSheetCompound(null)}
+          isAr={isAr}
+        />
+      )}
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       {/* Map Host Canvas */}
       <div
         ref={hostRef}
@@ -1086,7 +1395,16 @@ export default function CompoundsMap({
               <button
                 key={tab.key}
                 type="button"
+<<<<<<< HEAD
                 onClick={() => setSelectedSegment(tab.key)}
+=======
+                onClick={() => {
+                  setSelectedSegment(tab.key);
+                  // Rent and sale use different budget ladders — reset the
+                  // budget when the segment direction changes.
+                  setSelectedPriceBudget('any');
+                }}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 aria-pressed={isCurrent}
                 style={{
                   display: 'inline-flex',
@@ -1234,15 +1552,23 @@ export default function CompoundsMap({
             top: 54,
             right: 16,
             zIndex: 400,
+<<<<<<< HEAD
             width: 290,
             maxHeight: 'calc(100% - 70px)',
             overflowY: 'auto',
+=======
+            width: 308,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             background: 'rgba(7, 21, 35, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(223, 173, 58, 0.25)',
             borderRadius: 14,
+<<<<<<< HEAD
             padding: 16,
+=======
+            padding: 14,
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             boxShadow: '0 20px 40px -4px rgba(0,0,0,0.45)',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", sans-serif',
             color: '#ffffff',
@@ -1285,6 +1611,7 @@ export default function CompoundsMap({
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Search Input */}
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginBottom: 4 }}>
@@ -1412,6 +1739,63 @@ export default function CompoundsMap({
               ))}
             </div>
           </div>
+=======
+          {/* SMART FILTER CHIPS — dropdowns: compound/area · rooms · budget · unit type · condition */}
+          <SmartFilterBar
+            value={{
+              purpose: selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent' ? 'rent' : 'sale',
+              compound: filterQuery,
+              rooms: selectedBed === 'any' ? '' : String(selectedBed),
+              budget: selectedPriceBudget === 'any' ? '' : selectedPriceBudget,
+              unitType: selectedUnitType,
+              condition: selectedCondition,
+            }}
+            onChange={(v) => {
+              setFilterQuery(v.compound);
+              setSelectedBed(v.rooms === '' ? 'any' : parseInt(v.rooms, 10) || 'any');
+              setSelectedPriceBudget(v.budget || 'any');
+              setSelectedUnitType(v.unitType || '');
+              setSelectedCondition(v.condition || '');
+            }}
+            compounds={compounds.map((c) => ({ name: c.n, zone: c.z }))}
+            showPurpose={false}
+            budgetOptions={
+              selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent'
+                ? RENT_BUDGET_LADDER
+                : MAP_PRICE_PRESETS.map((p) => ({ val: p.val, en: p.labelEn, ar: p.labelAr }))
+            }
+            panelAlign="end"
+            compact
+            resultCount={filteredCompounds.length}
+            conditionCounts={conditionCounts}
+            onReset={handleResetFilters}
+            idPrefix="map"
+          />
+
+          <button
+            type="button"
+            aria-pressed={showSelectedOnly}
+            onClick={() => setShowSelectedOnly((value) => !value)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 10,
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: showSelectedOnly ? '1px solid #dfad3a' : '1px solid rgba(255,255,255,0.14)',
+              background: showSelectedOnly ? 'rgba(223,173,58,0.18)' : 'rgba(255,255,255,0.05)',
+              color: showSelectedOnly ? '#dfad3a' : '#e2e8f0',
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <span>{isAr ? 'إظهار الكمبوند المحدد فقط' : 'Show selected compound only'}</span>
+            <span>{showSelectedOnly && selectedName ? 'ON' : 'OFF'}</span>
+          </button>
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
           {/* Reset Action */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>

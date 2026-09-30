@@ -28,10 +28,19 @@ describe('Client Property Calculator & Admin WhatsApp Template Testing', () => {
       template: string,
       variables: { name?: string; compound?: string; price?: string }
     ): string {
+<<<<<<< HEAD
       return template
         .replace(/\{\{name\}\}/g, variables.name || 'Client')
         .replace(/\{\{compound\}\}/g, variables.compound || 'New Cairo')
         .replace(/\{\{price\}\}/g, variables.price || 'Market Price');
+=======
+      // §21 no-fabrication: missing variables get neutral phrasing — never
+      // an invented 'New Cairo' location claim.
+      return template
+        .replace(/\{\{name\}\}/g, variables.name || 'Client')
+        .replace(/\{\{compound\}\}/g, variables.compound || 'your preferred community')
+        .replace(/\{\{price\}\}/g, variables.price || 'price on request');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     }
 
     it('interpolates all dynamic variables correctly', () => {
@@ -48,7 +57,12 @@ describe('Client Property Calculator & Admin WhatsApp Template Testing', () => {
     it('provides graceful fallbacks for missing template parameters', () => {
       const template = 'Hello {{name}}, welcome to {{compound}}!';
       const output = interpolateWhatsAppTemplate(template, {});
+<<<<<<< HEAD
       expect(output).toBe('Hello Client, welcome to New Cairo!');
+=======
+      // §21: the fallback is neutral phrasing, not an invented location.
+      expect(output).toBe('Hello Client, welcome to your preferred community!');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 

@@ -81,6 +81,7 @@ export const LANG: Record<string, Record<string, string>> = {
 };
 
 export const KPI_DATA = (T: TranslationFn) => [
+<<<<<<< HEAD
   {val:'1,547',lbl:T('totalListings'),delta:'+12% this week',up:true,color:'#C8961A',spark:[42,55,48,70,62,85,95]},
   {val:'284',lbl:T('activeLeads'),delta:'+8 today',up:true,color:'#1E88D9',spark:[30,45,38,55,48,70,80]},
   {val:'EGP 6.2M',lbl:T('avgDeal'),delta:'+5% MoM',up:true,color:'#34D399',spark:[55,60,52,68,65,78,88]},
@@ -89,6 +90,18 @@ export const KPI_DATA = (T: TranslationFn) => [
   {val:'98.2%',lbl:T('aiMatch'),delta:'+0.4%',up:true,color:'#34D399',spark:[90,92,91,95,93,97,98]},
   {val:'23',lbl:T('pending'),delta:'3 urgent',up:false,color:'#E63946',spark:[10,18,12,22,17,25,23]},
   {val:'1,503',lbl:T('eliteBrokers'),delta:'+45 this month',up:true,color:'#E9C176',spark:[60,70,68,80,75,90,95]},
+=======
+  // ANTI-FABRICATION: placeholder values are honest "no data" markers. Real
+  // values are merged in by OverviewPage from /api/admin/dashboard when live.
+  {val:'—',lbl:T('totalListings'),delta:'Awaiting dashboard sync',up:null,color:'#C8961A',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('activeLeads'),delta:'Awaiting dashboard sync',up:null,color:'#1E88D9',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('avgDeal'),delta:'Awaiting dashboard sync',up:null,color:'#34D399',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('dealsClosed'),delta:'Awaiting dashboard sync',up:null,color:'#7C3AED',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('avgResponse'),delta:'Awaiting dashboard sync',up:null,color:'#C8961A',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('aiMatch'),delta:'Awaiting dashboard sync',up:null,color:'#34D399',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('pending'),delta:'Awaiting dashboard sync',up:null,color:'#E63946',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('eliteBrokers'),delta:'Awaiting dashboard sync',up:null,color:'#E9C176',spark:[0,0,0,0,0,0,0]},
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 ];
 
 export const AGENTS_DATA = (T: TranslationFn) => [
@@ -115,6 +128,7 @@ export const WORKFLOWS_DATA = [
   {name:'Telegram Alert Dispatcher',status:'active',runs:5640,last:'4 min ago',color:'#34D399'},
 ];
 
+<<<<<<< HEAD
 export const LEADS_DATA = [
   {name:'Ahmed Al-Rashid',phone:'+20 100 111 2233',source:'property-finder',interest:'Villa · Hyde Park · EGP 20M+',stage:'Viewing Scheduled',color:'#C8961A',hot:true},
   {name:'Sara Mohamed',phone:'+20 101 222 3344',source:'website',interest:'3-Bed · Mivida · Rent',stage:'AI Matched',color:'#1E88D9',hot:false},
@@ -123,6 +137,12 @@ export const LEADS_DATA = [
   {name:'Omar Farouk',phone:'+20 100 555 6677',source:'referral',interest:'Twin House · Mountain View',stage:'Negotiating',color:'#E63946',hot:true},
   {name:'Layla Karim',phone:'+20 109 666 7788',source:'property-finder',interest:'Furnished 2-Bed · Eastown',stage:'AI Matched',color:'#E9C176',hot:false},
 ];
+=======
+// ANTI-FABRICATION (Master Rule 5): fabricated demo leads with fake PII were
+// previously rendered whenever the leads API failed. The CRM now shows an
+// honest empty/loading state instead. Real leads come from /api/admin/leads.
+export const LEADS_DATA: any[] = [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 export const COMPOUNDS_DATA: Record<string, {units:number; avgM:string; growth:string; zone:string; ai:number; color:string}> = {
   'Mountain View iCity':{units:1820,avgM:'EGP 11.2M',growth:'+24%',zone:'5th Settlement',ai:9.6,color:'#C8961A'},
@@ -164,6 +184,10 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
   {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+<<<<<<< HEAD
+=======
+  {id:'viewings',label:T('lang')==='ar'?'المعاينات والتقييم':'Viewings & Feedback',icon:'👁️',section:T('operations'),badge:'P9',badgeCls:'nb-green'},
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('operations'),badge:'PRO',badgeCls:'nb-green'},
   {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'whatsapp_chat_import',label:T('lang')==='ar'?'استيراد واتساب':'WA Chat Import',icon:'📲',section:T('operations'),badge:'AI',badgeCls:'nb-green'},

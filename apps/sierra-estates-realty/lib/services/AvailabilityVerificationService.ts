@@ -3,6 +3,10 @@ import { logger } from '@/lib/logger';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 import { scheduleViewing } from './viewing-engine';
 import snapshot from '@/lib/inventory/snapshot.json';
+<<<<<<< HEAD
+=======
+import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 export interface VerificationUnitItem {
   unitId: string;
@@ -15,7 +19,11 @@ export interface VerificationUnitItem {
   contactPhone: string;
   contactName: string;
   ownerType: 'owner' | 'broker' | 'unknown';
+<<<<<<< HEAD
   status: 'inquiry_sent' | 'available' | 'unavailable' | 'expired';
+=======
+  status: 'inquiry_sent' | 'no_contact_on_file' | 'available' | 'unavailable' | 'expired';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   sentAt: number;
   expiresAt: number;
   replyReceivedAt?: number;
@@ -49,6 +57,22 @@ export class AvailabilityVerificationService {
   public static readonly SLA_TIMEOUT_MS = 60 * 60 * 1000; // 1 Hour (3600s)
 
   /**
+<<<<<<< HEAD
+=======
+   * MANDATORY Cairo Plaza notice (announcement/DISCLAIMER-POLICY.md): every
+   * CLIENT-facing auto-sent message that involves (or mentions) Cairo Plaza
+   * El-Mataria must carry the official Booking & Contracting steps verbatim at
+   * the bottom. Broker/owner inquiries are B2B operational, not client-facing
+   * content, and stay unwrapped by design.
+   */
+  private static maybeApplyNotice(text: string, context: string): string {
+    return mentionsCairoPlaza(text) || mentionsCairoPlaza(context)
+      ? withCairoPlazaNotice(text)
+      : text;
+  }
+
+  /**
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
    * Look up unit details from snapshot.json
    */
   public static findUnitById(unitId: string): any | null {
@@ -104,8 +128,13 @@ export class AvailabilityVerificationService {
             mode: 'radar-net-availability',
             name: s.clientName,
             phone: s.clientPhone,
+<<<<<<< HEAD
             zone: s.units[0]?.compound || 'New Cairo',
             property_type: s.units[0]?.propertyType || 'Apartment',
+=======
+            zone: s.units[0]?.compound || '',
+            property_type: s.units[0]?.propertyType || '',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             budget: `${s.units.length} units selected (max 40)`,
             status: s.status === 'active' ? 'inquiry_sent' : s.status,
             source: 'listing-net-radar',
@@ -192,8 +221,15 @@ export class AvailabilityVerificationService {
     for (const id of unitIds) {
       const unit = this.findUnitById(id);
       const unitCode = unit?.code || id;
+<<<<<<< HEAD
       const compound = unit?.compound || 'New Cairo';
       const propertyType = unit?.type || 'Apartment';
+=======
+      // §21 no-fabrication: unknown compound/type stay empty — the inquiry
+      // message phrases around them instead of inventing 'New Cairo'/'Apartment'.
+      const compound = unit?.compound || '';
+      const propertyType = unit?.type || '';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const operation = (unit?.mode || 'sale').toLowerCase();
       const priceLabel = unit?.priceLabel || (unit?.price ? `${Number(unit.price).toLocaleString()} EGP` : 'Price on request');
       const price = Number(unit?.price) || 0;
@@ -220,10 +256,17 @@ export class AvailabilityVerificationService {
         ownerType = 'broker';
       }
 
+<<<<<<< HEAD
       // Default fallback phone if not present in dataset
       if (!contactPhone) {
         contactPhone = '+201000000000';
       }
+=======
+      // §21: no fabricated placeholder phone numbers. Without a real contact
+      // on file the inquiry is NOT dispatched — the unit is marked
+      // no_contact_on_file for manual follow-up instead of texting a dummy.
+      const hasContact = Boolean(contactPhone);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
       const item: VerificationUnitItem = {
         unitId: id,
@@ -236,14 +279,24 @@ export class AvailabilityVerificationService {
         contactPhone,
         contactName,
         ownerType,
+<<<<<<< HEAD
         status: 'inquiry_sent',
         sentAt: now,
         expiresAt,
+=======
+        status: hasContact ? 'inquiry_sent' : 'no_contact_on_file',
+        sentAt: now,
+        expiresAt,
+        refinedNotes: hasContact
+          ? undefined
+          : 'لا يوجد رقم تواصل موثق للوحدة — يتطلب متابعة يدوية',
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         photoUrls: unit?.img ? [unit.img] : [],
       };
 
       verificationUnits.push(item);
 
+<<<<<<< HEAD
       // Dispatch WhatsApp to unit owner/broker
       const inquiryMsg =
         `مرحباً ${contactName}،\n` +
@@ -256,6 +309,28 @@ export class AvailabilityVerificationService {
         `⏱️ نرجو الرد خلال ساعة لتأكيد الحجز للعميل.\nشكراً لتعاونكم المثمر.`;
 
       await this.sendWhatsApp(contactPhone, inquiryMsg);
+=======
+      // Dispatch WhatsApp to unit owner/broker — only when a real contact exists
+      if (hasContact) {
+        const compoundPhrase = compound ? `في كمبوند *${compound}* ` : '';
+        const typePhrase = propertyType ? `${propertyType} ` : '';
+        const inquiryMsg =
+          `مرحباً ${contactName}،\n` +
+          `مع حضرتك مستشار العمليات من سييرا العقارية (Sierra Estates).\n\n` +
+          `نستفسر بخصوص الوحدة كود: *${unitCode}* ${compoundPhrase}(${typePhrase}معروضة لـ ${operation === 'rent' ? 'الإيجار' : 'البيع'} بسعر ${priceLabel}).\n\n` +
+          `🎯 لدينا عميل مباشر يرغب في الحجز والمعاينة.\n` +
+          `برجاء التكرم بالتأكيد:\n` +
+          `1. هل الوحدة ما زالت متاحة حالياً؟\n` +
+          `2. برجاء إرسال أحدث صور وفيديو للوحدة إن وجد.\n\n` +
+          `⏱️ نرجو الرد خلال ساعة لتأكيد الحجز للعميل.\nشكراً لتعاونكم المثمر.`;
+
+        await this.sendWhatsApp(contactPhone, inquiryMsg);
+      } else {
+        logger.warn(
+          `[AvailabilityService] Unit ${unitCode}: no contact on file — marked no_contact_on_file, inquiry not dispatched`
+        );
+      }
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     }
 
     const session: BatchAvailabilitySession = {
@@ -279,11 +354,25 @@ export class AvailabilityVerificationService {
     const clientConfirmation =
       `أهلاً أستاذ ${clientName}،\n` +
       `تم استلام طلب التحقق لعدد (${verificationUnits.length}) وحدة تم اختيارها عبر رادار سييرا العقارية بنجاح! 🎯\n\n` +
+<<<<<<< HEAD
       `جاري التواصل الفوري مع الملاك والوسطاء لطلب أحدث الصور وتأكيد التوافر.\n` +
       `⏱️ نطبق معيار استجابة سريع (ساعة واحدة كحد أقصى)، وسيتم استبعاد أي وحدة لا يتم الرد عليها للحفاظ على وقتكم الثمين.\n\n` +
       `سنوافيكم هنا بالصور والتفاصيل المؤكدة تباعاً! 📸`;
 
     await this.sendWhatsApp(clientPhone, clientConfirmation);
+=======
+      `جاري التواصل مع الملاك والوسطاء الذين لديهم أرقام تواصل موثقة لطلب أحدث الصور وتأكيد التوافر.\n` +
+      `⏱️ نطبق معيار استجابة سريع (ساعة واحدة كحد أقصى)، وسيتم استبعاد أي وحدة لا يتم الرد عليها للحفاظ على وقتكم الثمين.\n\n` +
+      `سنوافيكم هنا بالصور والتفاصيل المؤكدة تباعاً! 📸`;
+
+    await this.sendWhatsApp(
+      clientPhone,
+      this.maybeApplyNotice(
+        clientConfirmation,
+        verificationUnits.map((u) => `${u.compound} ${u.unitCode}`).join(' ') + ' ' + (notes || '')
+      )
+    );
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     return session;
   }
@@ -455,7 +544,14 @@ Determine:
           : `\n`) +
         `ما رأي حضرتك في الوحدة وتفاصيلها؟ وهل ترغب في تحديد موعد لمعاينتها على الطبيعة؟ 🗓️`;
 
+<<<<<<< HEAD
       await this.sendWhatsApp(matchedSession.clientPhone, clientUpdate);
+=======
+      await this.sendWhatsApp(
+        matchedSession.clientPhone,
+        this.maybeApplyNotice(clientUpdate, `${matchedUnit.compound} ${refinedSummary}`)
+      );
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       matchedSession.viewingProposed = true;
       await this.saveSessions(sessions);
       return { matchedUnitCode: matchedUnit.unitCode, clientNotified: true, responseSummary: refinedSummary };
@@ -466,7 +562,14 @@ Determine:
         `أفادت جهة الاتصال بأن الوحدة غير متاحة حالياً (${refinedSummary}).\n` +
         `نواصل فحص باقي الوحدات المختارة في رادارك وسنوافيكم بالمتاح فوراً! 🔍`;
 
+<<<<<<< HEAD
       await this.sendWhatsApp(matchedSession.clientPhone, clientUnavailableUpdate);
+=======
+      await this.sendWhatsApp(
+        matchedSession.clientPhone,
+        this.maybeApplyNotice(clientUnavailableUpdate, `${matchedUnit.compound} ${refinedSummary}`)
+      );
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       return { matchedUnitCode: matchedUnit.unitCode, clientNotified: true, responseSummary: 'Unit unavailable' };
     }
   }
@@ -519,7 +622,17 @@ Determine:
       `الموعد: ${scheduledDate.toLocaleDateString('ar-EG', { weekday: 'long', month: 'long', day: 'numeric' })} في تمام الساعة 4:00 عصراً.\n` +
       `سيتواصل معكم مستشار المعاينات الميدانية الخاص بكم لتأكيد نقطة الالتقاء وتنسيق تصريح الدخول. يسعدنا دائماً خدمتكم في سييرا العقارية!`;
 
+<<<<<<< HEAD
     await this.sendWhatsApp(matchedSession.clientPhone, confirmationMsg);
+=======
+    await this.sendWhatsApp(
+      matchedSession.clientPhone,
+      this.maybeApplyNotice(
+        confirmationMsg,
+        matchedSession.units.map((u) => `${u.compound} ${u.unitCode}`).join(' ')
+      )
+    );
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     return { scheduled: true, viewingId, message: confirmationMsg };
   }

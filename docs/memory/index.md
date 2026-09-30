@@ -18,7 +18,11 @@ Click the links below to navigate specific sub-nodes (or open this folder direct
 2. **[🤖 AI Agent & Bot Orchestrations](file:///C:/Users/sierr/.gemini/antigravity/worktrees/Final/refine-full-stack-ecosystem/docs/memory/agent_orchestrations.md)**  
     * Explains exactly how **Sierra Bot**, **Leila**, the **Stage-9 Closer**, and the **WhatsApp Scraper** connect, communicate, and preserve memory states.
 3. **[📡 Property Finder API Gateway](file:///C:/Users/sierr/.gemini/antigravity/worktrees/Final/refine-full-stack-ecosystem/docs/memory/property_finder_integration.md)**  
+<<<<<<< HEAD
     * Detailed specifications of the active Property Finder API credentials, webhooks, and listing sync handlers.
+=======
+    * Detailed specifications of the Property Finder API integration (webhooks, listing sync handlers; credentials live only in Vercel env).
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 4. **[🔐 Security Rules & Role Gating](file:///C:/Users/sierr/.gemini/antigravity/worktrees/Final/refine-full-stack-ecosystem/docs/memory/security_rules.md)**  
     * Ensures that database changes never accidentally expose sensitive client details or bypass role filters.
 

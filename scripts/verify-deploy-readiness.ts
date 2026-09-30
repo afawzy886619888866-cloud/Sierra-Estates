@@ -107,7 +107,16 @@ console.log('\n🚀 SIERRA ESTATES PRODUCTION DEPLOYMENT VERIFICATION\n');
 
 // 1. Check root configuration files
 check('Root Configuration Files', () => {
+<<<<<<< HEAD
   const requiredFiles = ['package.json', 'turbo.json', 'tsconfig.json', '.amphion/config.json'];
+=======
+  // `.amphion/config.json` was deliberately removed from git (commit 6ec9f0a
+  // "remove AI tooling artifacts from git, extend .vercelignore for deploy
+  // slim-down") and is now .gitignored — requiring it here contradicted the
+  // repo's own decision and made the gate permanently red. The three real
+  // build roots stay required.
+  const requiredFiles = ['package.json', 'turbo.json', 'tsconfig.json'];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   for (const f of requiredFiles) {
     const fullPath = path.resolve(process.cwd(), f);
     if (!fs.existsSync(fullPath)) throw new Error(`Missing ${f}`);

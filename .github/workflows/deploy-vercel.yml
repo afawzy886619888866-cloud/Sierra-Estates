@@ -158,6 +158,7 @@ jobs:
           echo "proj_id=$PROJ"             >> "$GITHUB_OUTPUT"
           echo "✅ ${{ matrix.role }} → project $PROJ (org: $ORG_ID, domain: ${{ matrix.domain }})"
 
+<<<<<<< HEAD
       - uses: actions/checkout@v4
         with:
           submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
@@ -165,6 +166,15 @@ jobs:
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
+=======
+      - uses: actions/checkout@v7
+        with:
+          submodules: false   # repo has no active submodules; prevents ghost-submodule fetch failures
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         with:
           node-version: '22'
           cache: pnpm
@@ -315,6 +325,13 @@ jobs:
           ADMIN_BOOTSTRAP_PW: ${{ secrets['ADMIN_BOOTSTRAP_PASSWORD'] }}
           ADMIN_BOOTSTRAP_EM: 'admin@sierra-estates.net'
           ADMIN_EMAILS_VAL: 'admin@sierra-estates.net,sierrablue8866@gmail.com,a.fawzy8866@gmail.com'
+<<<<<<< HEAD
+=======
+          # Partner accounts (merged-in property companies — role 'partner';
+          # see apps/sierra-estates-realty/lib/server/partner-scope.ts for the
+          # format). Unset/malformed provisions ZERO accounts (fail closed).
+          PARTNER_ACCOUNTS_VAL: ${{ secrets['PARTNER_ACCOUNTS'] }}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         run: |
           # Rate-limited upsert helper with exponential backoff & pacing
           upsert() {
@@ -380,6 +397,10 @@ jobs:
           upsert ADMIN_BOOTSTRAP_PASSWORD              "$ADMIN_BOOTSTRAP_PW" encrypted
           upsert ADMIN_BOOTSTRAP_EMAIL                 "$ADMIN_BOOTSTRAP_EM"
           upsert ADMIN_EMAILS                          "$ADMIN_EMAILS_VAL"
+<<<<<<< HEAD
+=======
+          upsert PARTNER_ACCOUNTS                      "$PARTNER_ACCOUNTS_VAL" encrypted
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
           # Telegram Integration
           upsert TELEGRAM_BOT_TOKEN                    "$TG_BOT_TOKEN" encrypted

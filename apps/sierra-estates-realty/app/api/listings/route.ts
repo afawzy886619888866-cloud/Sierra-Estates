@@ -6,6 +6,7 @@
  *   1. Legacy envelope mode — when `?id=` or `?limit=` is present.
  *      Returns { success, listing | listings, count }. Kept for the static
  *      public/client-page and lib/services/InventoryService.client.ts.
+<<<<<<< HEAD
  *      Reads public.listings; if the read fails or RLS denies access it falls
  *      back to seed data instead of erroring (INTEGRATION.md data-flow
  *      contract).
@@ -13,6 +14,17 @@
  *   2. Filter mode (default) — used by lib/api-client `api.listings()`.
  *      Returns a bare Listing[] filtered by mode/compound/type/beds/maxUsd/q.
  *      Reads Supabase → Live Sheet → snapshot → SEED_LISTINGS.
+=======
+ *      Reads public.listings. PUBLISH GATE: only rows with
+ *      publish_status = 'PUBLISHABLE' are served; when the live read fails
+ *      or nothing verified exists the honest answer is an empty envelope —
+ *      never fabricated seed/snapshot data (activation plan Phase D/E).
+ *
+ *   2. Filter mode (default) — used by lib/api-client `api.listings()`.
+ *      Returns a bare Listing[] filtered by mode/compound/type/beds/maxUsd/q.
+ *      Reads Supabase with the same PUBLISH gate. No sheet/snapshot/seed
+ *      fallback: when no PUBLISHABLE rows exist the answer is [].
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  *
  * POST — create a listing (manager+). Writes to public.listings; if the write
  * fails outside production it returns a demo id so the admin UI flow works.
@@ -22,12 +34,22 @@ import { z } from 'zod';
 import { COLLECTIONS, isPubliclyVisibleListingStatus } from '@/lib/models/schema';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
+<<<<<<< HEAD
 import { SEED_LISTINGS } from '@/lib/seed';
 import { getRecord, insertRecord, listRecords } from '@sierra-estates/db';
 import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns';
 import { requireRole } from '@/lib/auth';
 import { fetchSheetUnits } from '@/lib/inventory/fetch-sheet';
 import snapshot from '@/lib/inventory/snapshot.json';
+=======
+// SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5):
+// public endpoints must never serve baked-in listings when live sources are empty.
+// The live-sheet and snapshot imports were removed with their fallback paths:
+// unverified units must not reach the public surface (activation plan Phase E).
+import { getRecord, insertRecord, listRecords } from '@sierra-estates/db';
+import { toListingColumns, toListingRecord } from '@/lib/server/listing-columns';
+import { requireRole } from '@/lib/auth';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import type { Listing } from '@/lib/types';
 import { calculateHaversineDistanceKm } from '@/lib/server/spatial-utils';
 
@@ -113,6 +135,7 @@ function rowToEnvelope(row: Record<string, unknown>) {
   };
 }
 
+<<<<<<< HEAD
 /** Map a seed Listing to the legacy envelope shape (offline / sandbox fallback). */
 function seedToEnvelope(l: Listing) {
   return {
@@ -163,12 +186,22 @@ function inventoryUnitToListing(u: any): Listing {
 /** Filter-mode read: Supabase → Live Sheet → Snapshot → Seed fallback (INTEGRATION.md contract). */
 async function readListings(): Promise<Listing[]> {
   // Try Supabase first (reads all active listings directly)
+=======
+/**
+ * Filter-mode read — PUBLISH GATE (activation plan Phase D/E):
+ * serves ONLY public.listings rows whose publish_status = 'PUBLISHABLE'.
+ * No sheet/snapshot/seed fallback: unverified units must never reach the
+ * public surface, and when nothing verified exists the honest answer is [].
+ */
+async function readListings(): Promise<Listing[]> {
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   try {
     const { supabase } = await import('@/lib/supabase');
     const { data: supaListings, error: supaErr } = await supabase
       .from('listings')
       .select('*')
       .in('status', ['active', 'available'])
+<<<<<<< HEAD
       .limit(500);
 
     if (!supaErr && supaListings && supaListings.length > 0) {
@@ -176,14 +209,30 @@ async function readListings(): Promise<Listing[]> {
         const price = Number(item.price) || 0;
         const egpM = price > 100000 ? price / 1_000_000 : price;
         const usd = item.deal_type === 'rent' ? Math.round(price / 50) : Math.round(price / 50);
+=======
+      .eq('publish_status', 'PUBLISHABLE')
+      .limit(500);
+
+    if (!supaErr && supaListings) {
+      return supaListings.map((item: any) => {
+        const price = Number(item.price) || 0;
+        const egpM = price > 100000 ? price / 1_000_000 : price;
+        const usd = Math.round(price / 50);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
         // Presentation fields (img/tag/aiScore) are parked in raw_data on the
         // deployed table — read them back through the same convention the
         // write path uses (lib/server/listing-columns.ts).
+<<<<<<< HEAD
+=======
+        // ANTI-FABRICATION: missing values surface as empty/0 — never
+        // invented defaults (no 'New Cairo', no ||3 beds, no ||1500 USD).
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
         return {
           id: item.id || item.ref_id,
           code: item.code || item.sbr_code || item.ref_id || `SE-${item.id?.substring(0, 4)}`,
+<<<<<<< HEAD
           compound: item.compound || 'New Cairo',
           zone: item.location_area || '5th Settlement',
           type: item.property_type || 'Apartment',
@@ -196,12 +245,27 @@ async function readListings(): Promise<Listing[]> {
           tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : 'Verified Owner'),
           mode: item.deal_type === 'rent' ? 'rent' : 'sale',
           agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Broker'),
+=======
+          compound: item.compound ?? '',
+          zone: item.location_area ?? '',
+          type: item.property_type ?? '',
+          beds: item.bedrooms ?? 0,
+          bath: item.bathrooms ?? 0,
+          area: Number(item.area_sqm) || 0,
+          egpM: Number(egpM.toFixed(2)),
+          usd,
+          aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+          tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
+          mode: item.deal_type === 'rent' ? 'rent' : 'sale',
+          agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           img: raw.img || (item.images && item.images[0]) || '',
           status: item.status || 'available',
           description: item.description || '',
         } as Listing;
       });
     }
+<<<<<<< HEAD
   } catch (supaErr) {
     console.warn('[listings] Supabase read failed, using sheet:', supaErr);
   }
@@ -223,6 +287,19 @@ async function readListings(): Promise<Listing[]> {
 
   // Final fallback to seed data
   return SEED_LISTINGS;
+=======
+    if (supaErr) {
+      logger.warn('[listings] Supabase read failed:', supaErr);
+    }
+  } catch (supaErr) {
+    logger.warn('[listings] Supabase read failed:', supaErr);
+  }
+
+  // ANTI-FABRICATION (Master Rule 5 + activation plan Phase E): the public
+  // path has NO sheet/snapshot/seed fallback. When no PUBLISHABLE rows exist
+  // the honest answer is an empty set.
+  return [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export async function GET(request: Request) {
@@ -263,6 +340,7 @@ export async function GET(request: Request) {
       } catch (err) {
         // Unreachable / denied → fall through to seed, never a 5xx.
         logger.error('[LISTINGS] fetch-by-id failed:', err);
+<<<<<<< HEAD
       }
       if (row) {
         const listing = rowToEnvelope(row);
@@ -272,12 +350,27 @@ export async function GET(request: Request) {
           return NextResponse.json({ success: true, listing });
         }
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
+=======
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       }
-      const seed = SEED_LISTINGS.find((l) => l.id === id);
+      if (row) {
+        const listing = rowToEnvelope(row);
+        // The submit endpoint hands the caller the new id, so fetch-by-id
+        // would otherwise be a direct link to an unverified submission.
+        // PUBLISH GATE (activation plan Phase D): status alone is not enough —
+        // only publish_status = 'PUBLISHABLE' rows may be served publicly, so
+        // an unverified-but-active row 404s instead of leaking by direct link.
+        const publishable =
+          String((row as Record<string, unknown>).publishStatus ?? '') === 'PUBLISHABLE';
+        if (publishable && isPubliclyVisibleListingStatus(listing.status)) {
+          return NextResponse.json({ success: true, listing });
+        }
+        return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
+      }
+      const seed = null; // ANTI-FABRICATION: no hardcoded listing-by-id fallback
       if (!seed) {
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });
       }
-      return NextResponse.json({ success: true, listing: seedToEnvelope(seed) });
     }
 
     if (limit != null) {
@@ -286,11 +379,24 @@ export async function GET(request: Request) {
         // ones, so the status filter has to run inside the query — a plain
         // limit would return mostly archived rows and the page would show
         // nothing. Public submissions land as 'pending' (see /api/listings/
+<<<<<<< HEAD
         // submit), so this stays the moderation gate.
         const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, {
           limit,
           orderBy: { column: 'updatedAt', ascending: false },
           where: [{ column: 'status', op: 'in', value: ['active', 'available'] }],
+=======
+        // submit), so this stays the moderation gate. PUBLISH GATE: only
+        // publish_status = 'PUBLISHABLE' rows are served (activation plan
+        // Phase D — the public client must never see unverified inventory).
+        const rows = await listRecords<Record<string, unknown>>(COLLECTIONS.units, {
+          limit,
+          orderBy: { column: 'updatedAt', ascending: false },
+          where: [
+            { column: 'status', op: 'in', value: ['active', 'available'] },
+            { column: 'publish_status', op: 'eq', value: 'PUBLISHABLE' },
+          ],
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         });
         // publishToClient remains a moderation off-switch (an explicit false
         // hides the row), but the live table has no publish_to_client column
@@ -305,6 +411,7 @@ export async function GET(request: Request) {
           return NextResponse.json({ success: true, listings, count: listings.length });
         }
       } catch (err) {
+<<<<<<< HEAD
         // Unreachable / denied → snapshot real units fallback, never 5xx.
         logger.error('[LISTINGS] envelope list failed:', err);
       }
@@ -334,6 +441,98 @@ export async function GET(request: Request) {
 
       const listings = SEED_LISTINGS.slice(0, limit).map(seedToEnvelope);
       return NextResponse.json({ success: true, listings, count: listings.length, seeded: true });
+=======
+        // Unreachable / denied → honest empty envelope, never a 5xx, never
+        // fabricated snapshot/seed data (activation plan Phase E).
+        logger.error('[LISTINGS] envelope list failed:', err);
+      }
+
+      // ANTI-FABRICATION (activation plan Phase E): no snapshot fallback —
+      // the static units were never verified. The honest answer is an empty
+      // envelope with an explicit source marker.
+      return NextResponse.json({ success: true, listings: [], count: 0, source: 'none', seeded: false });
+    }
+
+    // ── Proximity mode (?lat= & ?lng=): PostGIS radius search ─────────────
+    if (lat != null && lng != null) {
+      const radiusMeters = (radiusKm || 25) * 1000;
+      let spatialItems: (Listing & { distanceKm: number })[] = [];
+
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_listings_near_capital', {
+          capital_lat: lat,
+          capital_lng: lng,
+          radius_meters: radiusMeters,
+        });
+
+        if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+          // PUBLISH GATE: the RPC returns full listing rows; only verified
+          // PUBLISHABLE units may surface in public proximity search.
+          const publishable = rpcData.filter(
+            (item: any) => String(item.publish_status ?? '') === 'PUBLISHABLE'
+          );
+          spatialItems = publishable.map((item: any) => {
+            const price = Number(item.price) || 0;
+            const egpM = price > 100000 ? price / 1_000_000 : price;
+            const usd = Math.round(price / 50);
+            const dist = calculateHaversineDistanceKm(lat, lng, Number(item.latitude), Number(item.longitude));
+
+            // ANTI-FABRICATION: no invented defaults (no 'New Cairo', no
+            // ||3 beds, no ||1500 USD, no hardcoded 9.0/8.8 aiScore).
+            const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
+            return {
+              id: item.id || item.ref_id,
+              code: item.code || item.reference_code || `SE-${item.id?.substring(0, 4)}`,
+              compound: item.compound ?? '',
+              zone: item.location_area ?? '',
+              type: item.property_type ?? '',
+              beds: item.bedrooms ?? 0,
+              bath: item.bathrooms ?? 0,
+              area: Number(item.area_sqm) || 0,
+              egpM: Number(egpM.toFixed(2)),
+              usd,
+              aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+              tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
+              mode: item.deal_type === 'rent' ? 'rent' : 'sale',
+              agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
+              img: (item.images && item.images[0]) || '',
+              status: item.status || 'available',
+              description: item.description || '',
+              distanceKm: dist,
+              latitude: Number(item.latitude),
+              longitude: Number(item.longitude),
+            } as Listing & { distanceKm: number };
+          });
+        }
+      } catch (rpcErr) {
+        logger.warn('[LISTINGS_PROXIMITY] Supabase spatial RPC failed:', rpcErr);
+      }
+
+      if (spatialItems.length === 0) {
+        // ANTI-FABRICATION: no seed fallback — an empty DB returns zero
+        // nearby results rather than fabricated coordinates.
+        spatialItems = [];
+      }
+
+      let filtered = spatialItems.filter((l) => isPubliclyVisibleListingStatus(l.status));
+      if (mode) filtered = filtered.filter((l) => l.mode === mode);
+      if (compound) filtered = filtered.filter((l) => l.compound.toLowerCase().includes(compound.toLowerCase()));
+      if (type) filtered = filtered.filter((l) => l.type === type);
+      if (beds != null) filtered = filtered.filter((l) => l.beds >= beds);
+      if (maxUsd != null) filtered = filtered.filter((l) => l.usd <= maxUsd);
+      if (q) {
+        const needle = q.toLowerCase();
+        filtered = filtered.filter((l) =>
+          [l.code, l.compound, l.agent, l.type, l.description ?? '']
+            .join(' ')
+            .toLowerCase()
+            .includes(needle)
+        );
+      }
+      filtered.sort((a, b) => a.distanceKm - b.distanceKm);
+      return NextResponse.json(filtered);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     }
 
     // ── Proximity mode (?lat= & ?lng=): PostGIS radius search ─────────────

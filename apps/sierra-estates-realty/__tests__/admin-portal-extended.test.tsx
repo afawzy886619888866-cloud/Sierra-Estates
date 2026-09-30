@@ -38,6 +38,7 @@ describe('Admin Portal Extended Suite', () => {
     });
   });
 
+<<<<<<< HEAD
   describe('4. LeadsPage · lead source attribution', () => {
     const T = (k: string) => k;
 
@@ -59,13 +60,38 @@ describe('Admin Portal Extended Suite', () => {
       expect(html).toContain('>allSources</option>');
       expect(html).toContain('<option value="property-finder">Property Finder</option>');
       expect(html).toContain('<option value="website">Website</option>');
+=======
+  describe('4. LeadsPage · lead source attribution (anti-fabrication contract)', () => {
+    const T = (k: string) => k;
+
+    it('renders the standard channel pills and an empty CRM table when no live leads exist — no demo PII', () => {
+      const html = render(<LeadsPage T={T} />);
+
+      // The channel pills come from SOURCE_META (fixed vocabulary), not from
+      // fabricated demo leads. With an empty database the table body stays
+      // empty instead of showing the former hardcoded fake contacts.
+      expect(html).toContain('Property Finder');
+      expect(html).toContain('Website');
+      expect(html).toContain('WhatsApp');
+      expect(html).toContain('0 active leads');
+      expect(html).not.toContain('Ahmed Al-Rashid'); // fabricated demo lead must NOT render
+    });
+
+    it('renders the all-sources filter control', () => {
+      const html = render(<LeadsPage T={T} />);
+      expect(html).toContain('>allSources</option>');
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 
   describe('3. Admin RBAC & Audit Actions', () => {
     it('enforces RBAC role validation (super_admin, sales_agent, analyst)', () => {
       const allowedRoles = ['super_admin', 'sales_agent', 'analyst'];
+<<<<<<< HEAD
       const testUser = { id: 'usr-1', email: 'admin@sierraestates.com', role: 'super_admin' };
+=======
+      const testUser = { id: 'usr-1', email: 'admin@sierra-estates.net', role: 'super_admin' };
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       
       expect(allowedRoles).toContain(testUser.role);
       const isSuperAdmin = testUser.role === 'super_admin';

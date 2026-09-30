@@ -7,11 +7,19 @@
   },
   "crons": [
     {
+<<<<<<< HEAD
       "path": "/api/cron/sync-leads",
       "schedule": "0 10 * * *"
     },
     {
       "path": "/api/cron/sync-listings",
+=======
+      "path": "/api/cron/dispatch/night",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/morning",
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       "schedule": "0 6 * * *"
     }
   ],

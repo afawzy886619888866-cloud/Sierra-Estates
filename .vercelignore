@@ -52,19 +52,5 @@ apps/sierra-estates-realty/public/cairo-plaza/*.mp4
 # lstats the file (ENOENT) even though prebuild would create it on a cold build.
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
-
-# Tool artifacts and redundant local clones
-.amazonq
-.amazonq/**
-SE-Vercel-deploy-main*
-SE-Vercel-deploy-main*/**
-.reports/**
-libArchive/**
-stubArchive/**
-.amphion/**
-.claude-flow/**
-.factory/**
-.qwen/**
-.zencoder/**
-graphify-out/**
-*.tsbuildinfo
+tmp
+*.log

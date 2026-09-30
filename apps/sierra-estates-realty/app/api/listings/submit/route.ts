@@ -30,6 +30,7 @@ export const dynamic = 'force-dynamic';
 
 const submitListingSchema = z.object({
   compound: z.string().min(1, 'Compound / Location is required').max(100),
+<<<<<<< HEAD
   propertyType: z.string().min(1, 'Property type is required').default('Apartment'),
   mode: z.enum(['sale', 'rent']).default('sale'),
   beds: z.coerce.number().int().min(0).default(3),
@@ -38,6 +39,16 @@ const submitListingSchema = z.object({
   gardenArea: z.coerce.number().min(0).optional().default(0),
   price: z.coerce.number().min(0, 'Price must be positive'),
   finishing: z.string().optional().default('Fully Furnished'),
+=======
+  propertyType: z.string().min(1, 'Property type is required'),
+  mode: z.enum(['sale', 'rent']),
+  beds: z.coerce.number().int().min(0),
+  baths: z.coerce.number().int().min(0),
+  area: z.coerce.number().min(0),
+  gardenArea: z.coerce.number().min(0).optional().default(0),
+  price: z.coerce.number().min(0, 'Price must be positive'),
+  finishing: z.string().optional(),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   ownerName: z.string().min(1, 'Owner name is required').max(100),
   ownerType: z.string().optional().default('Owner'),
   mobile: z.string().min(6, 'Valid contact mobile is required').max(30),
@@ -75,7 +86,12 @@ export async function POST(request: Request) {
       verified: false,
       cmp: data.compound,
       compound: data.compound,
+<<<<<<< HEAD
       zone: data.compound.toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
+=======
+      // Zone is NOT invented from the compound name: it stays unset until
+      // verification assigns a real one (§21: no '5th Settlement' guess).
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       type: data.propertyType,
       beds: data.beds,
       baths: data.baths,
@@ -94,9 +110,17 @@ export async function POST(request: Request) {
       publishToClient: false,
       agent: `${data.ownerName} (${data.ownerType || 'Owner'})`,
       ago: 'Just now',
+<<<<<<< HEAD
       img: data.photos?.[0] || data.images?.[0] || 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/eb9e2524-ed1e-11ef-8cf7-0a8c5593e6a3-8eafcb90-6366-4465-8772-e6a62c758ebf.png',
       photos: data.photos?.length ? data.photos : data.images?.length ? data.images : ['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e3cbe4bc-ed1e-11ef-8cf7-0a8c5593e6a3-31808b40-7120-47e8-b97d-6839d21f2ed9.png'],
       images: data.images?.length ? data.images : data.photos?.length ? data.photos : ['https://static.shared.propertyfinder.eg/media/images/listing/01JPEKVA63EPQ4R9N1H5KT2FSX/e4cf1bf5-ed1e-11ef-8cf7-0a8c5593e6a3-8ed7cff1-a549-4de1-a555-5b033db03c33.png'],
+=======
+      // No stock photos: a submission without media has NO media (§21: the
+      // old hardcoded PropertyFinder CDN images misrepresented the unit).
+      img: (data.photos?.[0] || data.images?.[0]) || null,
+      photos: data.photos?.length ? data.photos : data.images?.length ? data.images : [],
+      images: data.images?.length ? data.images : data.photos?.length ? data.photos : [],
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       comment: data.comment,
       submittedAt: now,
       source: 'web-submission',
@@ -152,7 +176,11 @@ export async function POST(request: Request) {
 <b>Type:</b> ${escapeTelegramHtml(data.propertyType)} (${data.mode.toUpperCase()})
 <b>Price:</b> EGP ${Number(data.price).toLocaleString('en-US')}
 <b>Specs:</b> ${data.beds} Beds · ${data.baths} Baths · ${data.area} m²
+<<<<<<< HEAD
 <b>Finishing:</b> ${escapeTelegramHtml(data.finishing || 'Standard')}
+=======
+<b>Finishing:</b> ${escapeTelegramHtml(data.finishing || 'Not specified')}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 <b>Contact:</b> ${escapeTelegramHtml(data.ownerName)} (${data.ownerType || 'Owner'})
 <b>Phone:</b> ${escapeTelegramHtml(data.mobile)}
 <b>Code:</b> ${listingCode}

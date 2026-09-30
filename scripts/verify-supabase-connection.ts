@@ -41,7 +41,12 @@ async function checkConnection() {
       if (data && data.length > 0) {
         console.log('Sample properties:');
         data.forEach((p: any, i: number) => {
+<<<<<<< HEAD
           console.log(`  ${i + 1}. [${p.compound || 'New Cairo'}] ${p.title || 'Luxury Unit'} - ${p.price ? Number(p.price).toLocaleString() + ' EGP' : 'Price on request'}`);
+=======
+          // §21 no-fabrication: honest markers for missing compound/title.
+          console.log(`  ${i + 1}. [${p.compound || 'unspecified compound'}] ${p.title || '(untitled)'} - ${p.price ? Number(p.price).toLocaleString() + ' EGP' : 'Price on request'}`);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         });
       }
     }

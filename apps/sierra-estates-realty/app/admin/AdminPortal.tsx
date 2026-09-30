@@ -37,8 +37,15 @@ import {
   WorkflowStudioView,
   MemoryBrainView,
   CairoPlazaAdminView,
+<<<<<<< HEAD
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
+=======
+  ViewingsView,
+} from './views';
+import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } from '@/lib/partner-access';
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
@@ -160,8 +167,9 @@ function OverviewPage({ T }) {
           </div>
         </div>
         <div className="card">
-          <div className="card-hd"><span className="card-title">{T('hotLeads')}</span><span className="chip chip-red">3 urgent</span></div>
+          <div className="card-hd"><span className="card-title">{T('hotLeads')}</span><span className="chip chip-amber">Live CRM</span></div>
           <div style={{maxHeight:160,overflowY:'auto'}}>
+<<<<<<< HEAD
             {LEADS_DATA.filter(l=>l.hot).map((l,i)=>(
               <div key={i} className="lead-row">
                 <div className="lead-avatar" style={{background:l.color}}>{l.name[0]}</div>
@@ -188,6 +196,12 @@ function OverviewPage({ T }) {
                 </div>
               </div>
             ))}
+=======
+            {/* ANTI-FABRICATION: hot leads render only from live /api/admin/leads data. */}
+            <div style={{fontSize:11,color:'var(--tx-m)',padding:'12px 0',textAlign:'center'}}>
+              Hot leads appear here once the CRM loads — no sample contacts shown.
+            </div>
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
         </div>
         <div className="card">
@@ -621,6 +635,7 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
         <div className="card">
           <div className="card-hd"><span className="card-title">Lead Pipeline · Stage Funnel</span></div>
           <div className="card-body">
+<<<<<<< HEAD
             {[{s:'S1-2',label:'Ingestion & Parsing',count:4821,pct:100,color:'#1E88D9'},{s:'S3-5',label:'Inventory & Pricing',count:3102,pct:64,color:'#C8961A'},{s:'S6-8',label:'Matching & Outreach',count:1240,pct:26,color:'#34D399'},{s:'S9',label:'Negotiation',count:421,pct:8.7,color:'#7C3AED'},{s:'S10',label:'Closed Deals',count:97,pct:2,color:'#E63946'}].map((row,i)=>(
               <div key={i} style={{marginBottom:12}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
@@ -630,6 +645,12 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
                 <div className="progress-bar" style={{height:6}}><div className="progress-fill" style={{width:`${row.pct}%`,background:`linear-gradient(90deg,${row.color},${row.color}80)`}}/></div>
               </div>
             ))}
+=======
+            {/* ANTI-FABRICATION: hardcoded funnel counts removed. Stage counts must come from /api/admin/dashboard. */}
+            <div style={{fontSize:11,color:'var(--tx-m)',padding:'12px 0',textAlign:'center'}}>
+              Stage funnel connects to live CRM data — no sample numbers shown.
+            </div>
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
         </div>
       </div>
@@ -673,9 +694,15 @@ function OpenClawPage({ T }) {
       try {
         const r = await fetch('/api/admin/leads?limit=5');
         const d = await r.json();
+<<<<<<< HEAD
         setLogs(l=>[...l,{t:'green',l:`[✓] Active Leads: ${d?.total || 284} · High Priority: ${d?.leads?.filter((x:any)=>x.hot)?.length || 3}`}]);
       } catch {
         setLogs(l=>[...l,{t:'',l:'  Active: 284 · Hot: 3 · Today: +8'}]);
+=======
+        setLogs(l=>[...l,{t:'green',l:`[✓] Active Leads: ${d?.total ?? 0} · High Priority: ${d?.leads?.filter((x:any)=>x.hot)?.length ?? 0}`}]);
+      } catch {
+        setLogs(l=>[...l,{t:'',l:'  Lead counters unavailable (API unreachable) — no fabricated totals shown.'}]);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       }
       return;
     }
@@ -788,6 +815,7 @@ export function LeadsPage({ T }: { T: any }) {
   const syncPFLeads = useCallback(async () => {
     setPfSyncing(true);
     setPfSyncResult(null);
+<<<<<<< HEAD
     try {
       const res = await fetch('/api/cron/sync-leads', {
         headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'sierra-cron'}` },
@@ -795,6 +823,19 @@ export function LeadsPage({ T }: { T: any }) {
       const data = await res.json();
       if (data.success) {
         setPfSyncResult({ ...data.summary, ts: new Date().toLocaleTimeString() });
+=======
+    // B12 fix: this used to call /api/cron/sync-leads directly, attaching a
+    // client-inlined cron secret (with a guessable fallback literal) to the
+    // request — exposing the secret to every visitor of the admin bundle.
+    // The sync now goes through the admin-authenticated proxy route, which
+    // invokes the cron endpoint server-side; no secret ever crosses the
+    // trust boundary.
+    try {
+      const res = await fetch('/api/admin/leads/sync-pf', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPfSyncResult({ ...data.summary?.summary, ts: new Date().toLocaleTimeString() });
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         // Re-fetch leads after successful sync
         fetchLeads();
       } else {
@@ -813,6 +854,7 @@ export function LeadsPage({ T }: { T: any }) {
 
   const STAGE_ORDER = ['Initial Contact', 'AI Matched', 'Viewing Scheduled', 'Negotiating', 'Contract Draft', 'Closed Won'];
 
+<<<<<<< HEAD
   const advanceStage = (index: number) => {
     setLeads(prev => prev.map((l, i) => {
       if (i !== index) return l;
@@ -824,6 +866,48 @@ export function LeadsPage({ T }: { T: any }) {
 
   const toggleHot = (index: number) => {
     setLeads(prev => prev.map((l, i) => i === index ? { ...l, hot: !l.hot } : l));
+=======
+  // Persisted stage advance: optimistic local update + PATCH /api/admin/leads/[id]
+  // (previously local-state only — every stage change was lost on refresh).
+  // The lead is identified by id, not table index — the old index-based
+  // implementation mutated the WRONG row whenever a filter was active.
+  const [stageError, setStageError] = useState<string | null>(null);
+
+  const advanceStage = (lead: any) => {
+    if (!lead?.id) return;
+    const currentIdx = STAGE_ORDER.indexOf(lead.stage);
+    const nextStage = currentIdx >= 0 && currentIdx < STAGE_ORDER.length - 1 ? STAGE_ORDER[currentIdx + 1] : STAGE_ORDER[0];
+    setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, stage: nextStage } : l)));
+    fetch(`/api/admin/leads/${lead.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: nextStage }),
+    })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(() => setStageError(null))
+      .catch(() => {
+        // Revert the optimistic update — the server is the source of truth.
+        setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, stage: lead.stage } : l)));
+        setStageError(`Could not save stage for ${lead.name || 'this lead'} — change reverted. Check the API/DB connection.`);
+      });
+  };
+
+  const toggleHot = (lead: any) => {
+    if (!lead?.id) return;
+    const nextHot = !lead.hot;
+    setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, hot: nextHot } : l)));
+    fetch(`/api/admin/leads/${lead.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hot: nextHot }),
+    })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(() => setStageError(null))
+      .catch(() => {
+        setLeads(prev => prev.map(l => (l.id === lead.id ? { ...l, hot: lead.hot } : l)));
+        setStageError(`Could not save the hot flag for ${lead.name || 'this lead'} — change reverted.`);
+      });
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   };
 
   const handleOpenWhatsApp = (lead: any) => {
@@ -864,7 +948,11 @@ export function LeadsPage({ T }: { T: any }) {
             <span className="chip chip-green" style={{fontSize:9}}><span className="pulse-dot">●</span> Published</span>
           </div>
           <div style={{fontSize:11,color:'var(--tx-m)',fontFamily:'JetBrains Mono'}}>
+<<<<<<< HEAD
             1,762 units · Bilingual EN/AR · Photos included
+=======
+            Live catalog units · Bilingual EN/AR · count reflects current database
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
           <div style={{fontSize:10,color:'var(--tx-f)',marginTop:4}}>
             Feed URL: <a href="/api/feeds/property-finder" target="_blank" rel="noopener noreferrer" style={{color:'var(--gold)',textDecoration:'none'}}>/api/feeds/property-finder</a>
@@ -942,6 +1030,12 @@ export function LeadsPage({ T }: { T: any }) {
         <button className="btn btn-ghost" onClick={doExport}>⬇ {T('exportCSV')}</button>
         <button className="btn btn-ghost" onClick={()=>setImportModal(true)}>⬆ {T('importCSV')}</button>
       </div>
+      {stageError && (
+        <div style={{background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.4)',borderRadius:10,padding:'8px 12px',marginBottom:12,fontSize:11,color:'#FCA5A5',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}} role="alert">
+          <span>⚠ {stageError}</span>
+          <button onClick={()=>setStageError(null)} style={{background:'none',border:'none',color:'#FCA5A5',cursor:'pointer',fontWeight:700}} aria-label="Dismiss error">✕</button>
+        </div>
+      )}
       <div className="card">
         <div className="card-hd">
           <span className="card-title">CRM · {T('leads')}</span>
@@ -970,7 +1064,11 @@ export function LeadsPage({ T }: { T: any }) {
                       </div>
                       <span style={{color:'var(--tx)',fontWeight:600}}>{l.name}</span>
                       <button 
+<<<<<<< HEAD
                         onClick={()=>toggleHot(i)} 
+=======
+                        onClick={()=>toggleHot(l)} 
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                         style={{background:'none',border:'none',cursor:'pointer',fontSize:12,padding:0}}
                         title={l.hot ? 'Mark as normal' : 'Mark as hot lead'}
                       >
@@ -993,7 +1091,11 @@ export function LeadsPage({ T }: { T: any }) {
                   <td>
                     <button 
                       className="btn btn-ghost" 
+<<<<<<< HEAD
                       onClick={()=>advanceStage(i)} 
+=======
+                      onClick={()=>advanceStage(l)} 
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                       style={{padding:'3px 8px',fontSize:9,borderColor:'var(--bd-s)',color:'var(--gold)'}}
                       title="Advance to next pipeline stage"
                     >
@@ -1495,6 +1597,7 @@ function ListingsHubPage({T}){
 }
 
 /* ── STAGE-9 CLOSER ──────────────────────────────────────────────────── */
+<<<<<<< HEAD
 const DEALS_DATA=[
   {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#C8961A'},
   {id:'DL-0096',client:'Khalid Mansour',phone:'+971 50 333 4455',prop:'Penthouse Uptown · 4 Beds · 320m²',value:'EGP 28M',stage:'negotiation',prog:60,signed:false,deposit:false,c:'#1E88D9'},
@@ -1503,6 +1606,25 @@ const DEALS_DATA=[
   {id:'DL-0093',client:'Hisham Bakr',phone:'+20 109 888 9900',prop:'Garden Villa Mivida · 3 Beds · 195m²',value:'EGP 8.5M',stage:'initial',prog:25,signed:false,deposit:false,c:'#E63946'},
   {id:'DL-0092',client:'Layla Karim',phone:'+20 109 666 7788',prop:'Apartment Eastown · 3 Beds · 155m²',value:'EGP 7.2M',stage:'negotiation',prog:50,signed:false,deposit:false,c:'#f59e0b'},
 ];
+=======
+// §21 no-fabrication: this board previously shipped six hardcoded demo
+// deals (Ahmed Al-Rashid EGP 35M, Omar Farouk, …) rendered as a live
+// "EGP 130.7M" pipeline. Real deals arrive via intake/CRM wiring — until
+// then the board stays honestly EMPTY, never seeded with fake clients.
+interface CloserDeal {
+  id: string;
+  client: string;
+  phone: string;
+  prop: string;
+  value: string;
+  stage: string;
+  prog: number;
+  signed: boolean;
+  deposit: boolean;
+  c: string;
+}
+const DEALS_DATA: CloserDeal[] = [];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 function Stage9CloserPage({T}){
   const [stageF,setStageF]=useState('all');
   const STAGES=[
@@ -1552,7 +1674,13 @@ function Stage9CloserPage({T}){
       </div>
       {/* Deal cards */}
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {filtered.map(deal=>(
+        {filtered.length===0?(
+          <div className="card" style={{padding:'28px 18px',textAlign:'center'}}>
+            <div style={{fontSize:34,marginBottom:8,opacity:.6}}>🗂️</div>
+            <div style={{fontWeight:700,fontSize:14,color:'var(--tx)',marginBottom:4}}>No deals on file</div>
+            <div style={{fontSize:11.5,color:'var(--tx-m)',maxWidth:460,margin:'0 auto'}}>The closer pipeline is empty until real deals are ingested — Sierra does not display demo clients, invented progress, or fabricated pipeline value.</div>
+          </div>
+        ):filtered.map(deal=>(
           <div key={deal.id} className="card" style={{borderLeft:`3px solid ${deal.c}`}}>
             <div style={{padding:'14px 16px'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
@@ -1614,6 +1742,7 @@ interface PipeDeal {
   phone: string;
 }
 
+<<<<<<< HEAD
 const INITIAL_PIPE_DEALS: PipeDeal[] = [
   {id:'DL-01',n:'Ahmed Al-Rashid',d:'Villa · Hyde Park',v:'EGP 20M',s:'Negotiation',ai:9.4,src:'Property Finder',phone:'+201001112233'},
   {id:'DL-02',n:'Khalid Mansour',d:'Penthouse · Uptown Cairo',v:'EGP 15M',s:'Negotiation',ai:9.1,src:'WhatsApp',phone:'+971503334455'},
@@ -1625,6 +1754,14 @@ const INITIAL_PIPE_DEALS: PipeDeal[] = [
   {id:'DL-08',n:'Mona Selim',d:'Villa · Katameya Heights',v:'EGP 38M',s:'Closed Won',ai:9.7,src:'Direct',phone:'+201098889900'},
   {id:'DL-09',n:'Hassan Badr',d:'Studio · Taj City',v:'EGP 2.1M',s:'Closed Lost',ai:6.1,src:'Website',phone:'+201051112233'},
 ];
+=======
+const INITIAL_PIPE_DEALS: PipeDeal[] = [];
+// §21 no-fabrication: the kanban previously shipped nine hardcoded demo
+// deals (DL-01…DL-09 — fake clients, fake ★ai scores, fake values) plus a
+// hardcoded "EGP 102.4M" pipeline total that was never even computed. Real
+// pipeline rows come from lead-intake wiring; until then the board stays
+// honestly EMPTY.
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 function PipelinePage({ T }: { T: any }) {
   const ar = T('lang')==='ar';
@@ -1655,6 +1792,13 @@ function PipelinePage({ T }: { T: any }) {
     return true;
   });
 
+<<<<<<< HEAD
+=======
+  // §21: pipeline value is COMPUTED from the rows on the board — never a
+  // hardcoded marketing number (was: a literal "EGP 102.4M" string).
+  const pipelineTotalM = filteredDeals.reduce((s, d) => s + parseFloat(d.v.replace(/[^\d.]/g, '')) || s, 0);
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const totals = {
     all: filteredDeals.length,
     active: filteredDeals.filter(d => !d.s.startsWith('Closed')).length,
@@ -1678,10 +1822,26 @@ function PipelinePage({ T }: { T: any }) {
         </div>
 
         <span style={{marginInlineStart:'auto',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)',alignSelf:'center'}}>
+<<<<<<< HEAD
           {ar?'قيمة الخط':'Pipeline value'}: <b style={{color:'var(--gold)'}}>EGP 102.4M</b> · {totals.active} {ar?'نشطة':'active'} · {totals.won} {ar?'مكسوبة':'won'}
         </span>
       </div>
 
+=======
+          {ar?'قيمة الخط':'Pipeline value'}: <b style={{color:'var(--gold)'}}>EGP {pipelineTotalM.toFixed(1)}M</b> · {totals.active} {ar?'نشطة':'active'} · {totals.won} {ar?'مكسوبة':'won'}
+        </span>
+      </div>
+
+      {/* §21 honest empty state — no demo deals, no invented kanban rows */}
+      {filteredDeals.length === 0 && (
+        <div className="card" style={{padding:'24px 18px',textAlign:'center',marginBottom:14}}>
+          <div style={{fontSize:30,marginBottom:6,opacity:.6}}>📋</div>
+          <div style={{fontWeight:700,fontSize:13,color:'var(--tx)',marginBottom:4}}>{ar?'لا توجد صفقات مسجلة':'No deals on file'}</div>
+          <div style={{fontSize:11,color:'var(--tx-m)',maxWidth:480,margin:'0 auto'}}>{ar?'خط الصفقات فارغ حتى إدخال بيانات عملاء حقيقية — لا يتم عرض صفقات تجريبية أو قيمة وهمية.':'The pipeline is empty until real client data is ingested — Sierra never displays demo deals, invented ai scores, or fabricated pipeline value.'}</div>
+        </div>
+      )}
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       <div className="kanban">
         {stages.map(st=>{
           const stageDeals = filteredDeals.filter(d => d.s === st.k);
@@ -2218,7 +2378,11 @@ function AdminApp() {
   const [langKey,setLangKey]=useState(()=>(typeof window!=='undefined'&&localStorage.getItem('admin_lang'))||'en');
   const [collapsed,setCollapsed]=useState(false);
   const [mobileOpen,setMobileOpen]=useState(false);
+<<<<<<< HEAD
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string } | null>(null);
+=======
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string; name?: string; scope?: { developers: string[]; compounds: string[] } } | null>(null);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [authError, setAuthError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -2228,6 +2392,25 @@ function AdminApp() {
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
 
+<<<<<<< HEAD
+=======
+  // PARTNER ACCOUNTS: a merged-in property account sees ONLY Inventory,
+  // Ad Listing and CRM — with its own data (server-side scope). Every tab
+  // switch is funneled through guardedSetTab; the nav itself is filtered.
+  const isPartner = isPartnerRole(currentUser?.role);
+  const guardedSetTab = useCallback((id: string) => {
+    setTab((current) => (isTabAllowedForRole(id, currentUser?.role) ? id : current));
+  }, [currentUser?.role]);
+
+  // When the session resolves to a partner, land on their first allowed tab
+  // ('overview' is a staff dashboard they must never open).
+  useEffect(() => {
+    if (isPartner && !isTabAllowedForRole(tab, currentUser?.role)) {
+      setTab(PARTNER_NAV_IDS[0]);
+    }
+  }, [isPartner, tab, currentUser?.role]);
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -2256,6 +2439,10 @@ function AdminApp() {
             email: data.email || 'admin@sierra-estates.net',
             role: data.role || 'super_admin',
             name: data.name || 'Executive Admin',
+<<<<<<< HEAD
+=======
+            ...(data.scope ? { scope: data.scope } : {}),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           });
         } else if (data?.authDisabled) {
           // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false.
@@ -2282,7 +2469,15 @@ function AdminApp() {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
+<<<<<<< HEAD
   const navItems=NAV_ITEMS(T);
+=======
+  const navItems=useMemo(()=>{
+    const all=NAV_ITEMS(T);
+    const allowedIds=navIdsForRole(all.map(n=>n.id), currentUser?.role);
+    return all.filter(n=>allowedIds.includes(n.id));
+  },[T, currentUser?.role]);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
   const commandItems = useMemo<CommandItem[]>(() => {
@@ -2292,10 +2487,22 @@ function AdminApp() {
       category: n.section,
       icon: n.icon,
       badge: n.badge,
+<<<<<<< HEAD
       action: () => setTab(n.id),
     }));
 
     items.push(
+=======
+      action: () => guardedSetTab(n.id),
+    }));
+
+    items.push(
+      // Copilot + telemetry refresh are staff-only — a partner session has no
+      // access to the admin data APIs they drive.
+      ...(isPartner
+        ? []
+        : ([
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       {
         id: 'act-copilot',
         title: isAr ? 'فتح مساعد الذكاء الاصطناعي (Copilot)' : 'Open AI Data Copilot',
@@ -2310,6 +2517,10 @@ function AdminApp() {
         icon: '🔄',
         action: handleManualRefresh,
       },
+<<<<<<< HEAD
+=======
+          ] as CommandItem[])),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       {
         id: 'act-lang',
         title: isAr ? 'التبديل إلى الإنجليزية' : 'التبديل إلى العربية',
@@ -2334,7 +2545,11 @@ function AdminApp() {
     );
 
     return items;
+<<<<<<< HEAD
   }, [navItems, isAr, theme]);
+=======
+  }, [navItems, isAr, theme, guardedSetTab, isPartner]);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
@@ -2456,8 +2671,13 @@ function AdminApp() {
   const renderPage=()=>{
     switch(tab){
       case 'overview':
+<<<<<<< HEAD
       case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
       case 'all_apps':return <AppsDirectoryView lang={langKey} onNavigate={setTab}/>;
+=======
+      case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={guardedSetTab} onNavigate={guardedSetTab}/>;
+      case 'all_apps':return <AppsDirectoryView lang={langKey} onNavigate={guardedSetTab}/>;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       case 'health':return <HealthView lang={langKey}/>;
       case 'monitoring':return <MonitoringView lang={langKey}/>;
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
@@ -2476,11 +2696,20 @@ function AdminApp() {
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
+<<<<<<< HEAD
       case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={setTab}/>;
       case 'listings':return <ListingsView lang={langKey}/>;
       case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
       case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
       case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={setTab}/>;
+=======
+      case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={guardedSetTab}/>;
+      case 'listings':return <ListingsView lang={langKey} restricted={isPartner}/>;
+      case 'viewings':return <ViewingsView lang={langKey}/>;
+      case 'excel_merger':return <ExcelMergerView lang={langKey}/>;
+      case 'whatsapp_chat_import':return <WhatsAppChatImportView lang={langKey}/>;
+      case 'real_estate_processor':return <RealEstateProcessorView lang={langKey} onNavigate={guardedSetTab}/>;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       case 'curator':return <CuratorPage T={T}/>;
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
@@ -2496,7 +2725,11 @@ function AdminApp() {
       case 'memory_brain':
       case 'deepseek':
       case 'mempalace':
+<<<<<<< HEAD
       case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={setTab} />;
+=======
+      case 'ecc':return <MemoryBrainView lang={langKey} onNavigate={guardedSetTab} />;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       case 'notebookllm':return <NotebookLMStudio />;
       case 'easy_listing':return (
         <div className="fade-up" style={{paddingTop:4}}>
@@ -2504,7 +2737,15 @@ function AdminApp() {
         </div>
       );
       case 'settings':return <SettingsPage T={T}/>;
+<<<<<<< HEAD
       default:return <DashboardView lang={langKey} onNavigateAction={setTab} onNavigate={setTab}/>;
+=======
+      // A partner never reaches the default staff dashboard (guardedSetTab +
+      // the nav filter keep them inside their three tabs) — but if a stale
+      // state ever slips through, land them on their inventory, not the
+      // staff overview.
+      default:return isPartner ? <InventoryOsView lang={langKey}/> : <DashboardView lang={langKey} onNavigateAction={guardedSetTab} onNavigate={guardedSetTab}/>;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     }
   };
 
@@ -2561,13 +2802,13 @@ function AdminApp() {
       {/* Mobile overlay */}
       <div className={`mobile-overlay ${mobileOpen?'open':''}`} onClick={()=>setMobileOpen(false)}>
         <div className="mobile-sidebar" onClick={e=>e.stopPropagation()}>
-          <SidebarContent T={T} tab={tab} setTab={setTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)}/>
+          <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)}/>
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <aside id="sidebar" className={collapsed?'collapsed':''}>
-        <SidebarContent T={T} tab={tab} setTab={setTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null}/>
+        <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null}/>
       </aside>
 
       {/* Main */}
@@ -2600,7 +2841,12 @@ function AdminApp() {
           </div>
 
           <div style={{marginInlineStart:'auto',display:'flex',gap:8,alignItems:'center'}}>
+<<<<<<< HEAD
             {/* Quick App Switcher */}
+=======
+            {/* Quick App Switcher — staff only (jumps to staff-only consoles) */}
+            {!isPartner && (
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             <div style={{ position: 'relative' }}>
               <button
                 className="app-switcher-btn"
@@ -2650,7 +2896,11 @@ function AdminApp() {
                   ].map((app) => (
                     <div
                       key={app.id}
+<<<<<<< HEAD
                       onClick={() => setTab(app.id)}
+=======
+                      onClick={() => guardedSetTab(app.id)}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                       style={{
                         padding: '8px 10px',
                         borderRadius: 8,
@@ -2672,6 +2922,10 @@ function AdminApp() {
                 </div>
               )}
             </div>
+<<<<<<< HEAD
+=======
+            )}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
             <button className="topbar-pill" onClick={()=>setLangKey(l=>l==='en'?'ar':'en')} title="Toggle Language / تبديل اللغة" aria-label="Toggle Language / تبديل اللغة">
               {isAr?'EN':'ع'}
@@ -2681,6 +2935,11 @@ function AdminApp() {
             </button>
             <a href="/" target="_blank" rel="noopener noreferrer" className="topbar-pill" style={{textDecoration:'none'}} title={isAr ? 'فتح بوابة العملاء المباشرة' : 'Open Live Public Client Portal'}>↗ {T('livesite')}</a>
             <div className="topbar-pill on"><span className="pulse-dot" style={{color:'var(--emerald)'}}>●</span> 3.0 AI</div>
+<<<<<<< HEAD
+=======
+            {/* AI Data Copilot — staff only (queries admin-only APIs) */}
+            {!isPartner && (
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             <button
               className="topbar-pill"
               onClick={() => setIsCopilotOpen(true)}
@@ -2700,6 +2959,12 @@ function AdminApp() {
               <span>✦</span>
               <span style={{ fontSize: 11 }}>{isAr ? 'مساعد البيانات' : 'Copilot'}</span>
             </button>
+<<<<<<< HEAD
+=======
+            )}
+            {/* Telemetry refresh — staff fleet tool, meaningless for partners */}
+            {!isPartner && (
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             <button
               className="topbar-pill"
               onClick={handleManualRefresh}
@@ -2711,6 +2976,10 @@ function AdminApp() {
               </span>
               <span style={{ fontSize: 11 }}>{isAr ? 'تحديث' : 'Refresh'}</span>
             </button>
+<<<<<<< HEAD
+=======
+            )}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             <div
               className="topbar-pill"
               style={{
@@ -2740,7 +3009,13 @@ function AdminApp() {
                 {(currentUser?.email?.[0] || 'A').toUpperCase()}
               </span>
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
+<<<<<<< HEAD
                 {currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+=======
+                {isPartner
+                  ? (isAr ? 'حساب شريك · بروبرتي' : 'Partner Account')
+                  : currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               </span>
             </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>
@@ -2749,14 +3024,26 @@ function AdminApp() {
           </div>
         </div>
         <div id="content">
+<<<<<<< HEAD
           <SierraMasterOrchestrator lang={langKey} onNavigate={setTab} />
           {renderPage()}
         </div>
+=======
+          {/* Master orchestrator — staff fleet console (admin-only APIs) */}
+          {!isPartner && <SierraMasterOrchestrator lang={langKey} onNavigate={guardedSetTab} />}
+          {renderPage()}
+        </div>
+        {!isPartner && (
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         <AdminCopilotDrawer
           isOpen={isCopilotOpen}
           onClose={() => setIsCopilotOpen(false)}
           lang={langKey}
         />
+<<<<<<< HEAD
+=======
+        )}
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         <CommandPalette
           isOpen={isCommandPaletteOpen}
           onClose={() => setIsCommandPaletteOpen(false)}

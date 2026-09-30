@@ -26,6 +26,15 @@ export interface ClientProfile {
   minBedrooms?: number;
   finishing?: string;
   urgency?: 'high' | 'medium' | 'low';
+<<<<<<< HEAD
+=======
+  // Phase 5 profile gap-fill (master-spec qualification set):
+  dealType?: 'sale' | 'rent';
+  furnishing?: 'furnished' | 'semi_furnished' | 'unfurnished' | 'any';
+  moveInDate?: string;
+  nationality?: string;
+  specialRequirements?: string;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export interface MatchResult {
@@ -33,9 +42,35 @@ export interface MatchResult {
   matchScore: number; // 0 - 100%
   confidence: 'high' | 'medium' | 'low';
   reasons: string[];
+<<<<<<< HEAD
 }
 
 export class PropertyMatchmaker {
+=======
+  /** Hard constraints this property violates (empty for normal results). */
+  hardConstraintViolations: string[];
+  /** True ⇒ surfaced only because compliant results < limit, per the
+   *  master spec: violators may appear solely as flagged alternatives. */
+  alternative?: boolean;
+}
+
+export class PropertyMatchmaker {
+  /** Hard-constraint gate: budget ceiling + minimum bedrooms. A violation
+   *  makes the property ineligible as a normal result (flagged alternative
+   *  only). Master spec: never trade a hard constraint for a soft score. */
+  private static hardViolations(property: PropertyListing, client: ClientProfile): string[] {
+    const violations: string[] = [];
+    if (client.budgetMax && property.price > client.budgetMax) {
+      const overPct = Math.round(((property.price - client.budgetMax) / client.budgetMax) * 100);
+      violations.push(`Over budget by ${overPct}%`);
+    }
+    if (client.minBedrooms && property.bedrooms < client.minBedrooms) {
+      violations.push(`${property.bedrooms} bedrooms < ${client.minBedrooms} required`);
+    }
+    return violations;
+  }
+
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   /**
    * Calculate cosine-weighted multi-attribute match score for a property against client profile.
    */
@@ -99,7 +134,14 @@ export class PropertyMatchmaker {
 
     // 4. Quality & Valuation Boost (Weight: 20)
     maxScore += 20;
+<<<<<<< HEAD
     const quality = property.valuationScore || 75;
+=======
+    // §21 no-fabrication: the quality boost is computed only from a real
+    // valuation score — an unscored property earns no boost, never an
+    // assumed 75/100.
+    const quality = property.valuationScore ?? 0;
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const qualityBoost = Math.round((quality / 100) * 20);
     score += qualityBoost;
     if (quality >= 85) {
@@ -114,10 +156,15 @@ export class PropertyMatchmaker {
       matchScore: finalPercent,
       confidence,
       reasons,
+<<<<<<< HEAD
+=======
+      hardConstraintViolations: this.hardViolations(property, client),
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     };
   }
 
   /**
+<<<<<<< HEAD
    * Rank a collection of property listings for a client profile.
    */
   public static rankProperties(listings: PropertyListing[], client: ClientProfile, limit: number = 5): MatchResult[] {
@@ -125,5 +172,28 @@ export class PropertyMatchmaker {
       .map((p) => this.calculateMatch(p, client))
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
+=======
+   * Rank a collection of property listings for a client profile. Compliant
+   * results come first (by score); hard-constraint violators only ever
+   * surface after them, explicitly flagged as alternatives, and only when
+   * compliant results cannot fill the limit.
+   */
+  public static rankProperties(listings: PropertyListing[], client: ClientProfile, limit: number = 5): MatchResult[] {
+    const scored = listings
+      .map((p) => this.calculateMatch(p, client))
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    const compliant = scored.filter((m) => m.hardConstraintViolations.length === 0);
+    if (compliant.length >= limit) {
+      return compliant.slice(0, limit).map((m) => ({ ...m, alternative: false }));
+    }
+
+    const alternatives = scored
+      .filter((m) => m.hardConstraintViolations.length > 0)
+      .slice(0, limit - compliant.length)
+      .map((m) => ({ ...m, alternative: true }));
+
+    return [...compliant.map((m) => ({ ...m, alternative: false })), ...alternatives];
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 }

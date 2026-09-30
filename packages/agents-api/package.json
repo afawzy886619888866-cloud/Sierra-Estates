@@ -13,7 +13,11 @@
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",
     "cors": "^2.8.5",
+<<<<<<< HEAD
     "dotenv": "^17.4.2",
+=======
+    "dotenv": "^18.0.3",
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     "express": "^5.2.1",
     "express-rate-limit": "^6.7.0",
     "socket.io": "^4.7.5"
@@ -21,8 +25,14 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+<<<<<<< HEAD
     "@types/node": "^26.6.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+=======
+    "@types/node": "^26.6.2",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2"
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 }

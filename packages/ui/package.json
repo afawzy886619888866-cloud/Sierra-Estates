@@ -14,7 +14,11 @@
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+<<<<<<< HEAD
     "typescript": "^5.9.3"
+=======
+    "typescript": "^7.0.2"
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   },
   "scripts": {
     "lint": "eslint ."

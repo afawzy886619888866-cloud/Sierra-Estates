@@ -25,9 +25,16 @@ CREATE TRIGGER broker_sessions_updated
   BEFORE UPDATE ON broker_sessions
   FOR EACH ROW EXECUTE FUNCTION update_broker_session_ts();
 
+<<<<<<< HEAD
 -- RLS: only service role can write (broker API uses service key)
 ALTER TABLE broker_sessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON broker_sessions FOR ALL USING (true);
+=======
+-- RLS: service role only (B6 fix: original lacked TO clause -> effectively public).
+-- Canonical version lives in supabase/migrations/20260929_013_master_inventory_activation.sql
+ALTER TABLE broker_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON broker_sessions FOR ALL TO service_role USING (true) WITH CHECK (true);
+>>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 -- TTL cleanup: auto-purge sessions older than 90 days (run via pg_cron or manual)
 -- SELECT cron.schedule('cleanup-old-sessions', '0 2 * * *',
