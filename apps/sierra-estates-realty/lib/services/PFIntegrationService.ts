@@ -138,8 +138,6 @@ export class PFIntegrationService {
   static async publishListing(unitId: string) {
     const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
     if (!unit) throw new Error('Unit not found');
-<<<<<<< HEAD
-=======
 
     // §21: a PF listing carries only real unit data. Missing price, type,
     // bedroom/bathroom counts or area fail loudly instead of being defaulted
@@ -158,7 +156,6 @@ export class PFIntegrationService {
       );
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const locationId = await this.resolveLocationId(unit);
     if (locationId === null) {
       const lookup = unit.compound || unit.location || unit.city || '(no location on record)';

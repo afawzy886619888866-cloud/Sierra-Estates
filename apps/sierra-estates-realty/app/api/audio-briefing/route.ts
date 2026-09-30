@@ -4,23 +4,6 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-<<<<<<< HEAD
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const code = searchParams.get('code') || searchParams.get('propertyId') || 'SE-MIV-01';
-  const compound = searchParams.get('compound') || 'Mivida';
-  const unitType = searchParams.get('unitType') || 'Apartment';
-  const price = Number(searchParams.get('price')) || 12500000;
-  const area = Number(searchParams.get('area')) || 185;
-  const lang = (searchParams.get('lang') === 'en' || searchParams.get('lang') === 'en-US') ? 'en-US' : 'ar-EG';
-  const investor = searchParams.get('investor') || undefined;
-
-  try {
-    const payload: VoiceBriefingRequest = {
-      sierraCode: code,
-      compound,
-      unitType,
-=======
 /**
  * §21 no-fabrication contract: a briefing is generated ONLY from property
  * data the caller actually supplies (or that exists in Supabase). The old
@@ -69,7 +52,6 @@ export async function GET(req: NextRequest) {
       sierraCode: code,
       compound: compound as string,
       unitType: unitType as string,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       priceEGP: price,
       areaSqm: area,
       language: lang,
@@ -89,19 +71,6 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-<<<<<<< HEAD
-    const propertyData = {
-      sierraCode: body.sierraCode || body.propertyId || 'SE-PROMO-01',
-      compound: body.compound || 'Mountain View iCity',
-      unitType: body.unitType || 'iVilla',
-      priceEGP: Number(body.priceEGP || body.price) || 10500000,
-      areaSqm: Number(body.areaSqm || body.area) || 210,
-      language: (body.language === 'en' || body.language === 'en-US') ? 'en-US' : 'ar-EG',
-      investorName: body.investorName || body.name || undefined,
-    } as VoiceBriefingRequest;
-
-    // If only propertyId is provided, try looking up from Supabase
-=======
     // Nullable until proven present — the gate below rejects anything missing.
     const resolved: {
       sierraCode: string;
@@ -123,7 +92,6 @@ export async function POST(req: NextRequest) {
 
     // If only propertyId is provided, try looking up from Supabase — the
     // record's real values fill the gaps; no value is ever invented.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     if (body.propertyId && (!body.compound || !body.price)) {
       try {
         const supabase = getSupabaseAdmin();
@@ -134,20 +102,6 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (data) {
-<<<<<<< HEAD
-          propertyData.sierraCode = data.id;
-          propertyData.compound = data.compound || propertyData.compound;
-          propertyData.unitType = data.unit_type || propertyData.unitType;
-          propertyData.priceEGP = Number(data.price) || propertyData.priceEGP;
-          propertyData.areaSqm = Number(data.area) || propertyData.areaSqm;
-        }
-      } catch {
-        // Fallback to existing body data
-      }
-    }
-
-    const briefing = await VoiceBriefingEngine.generateBriefing(propertyData);
-=======
           resolved.sierraCode = data.id;
           resolved.compound = resolved.compound || data.compound || null;
           resolved.unitType = resolved.unitType || data.unit_type || null;
@@ -181,7 +135,6 @@ export async function POST(req: NextRequest) {
       language: resolved.language,
       investorName: resolved.investorName,
     });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return NextResponse.json({ success: true, briefing }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(

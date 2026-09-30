@@ -1,9 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
-/** Port of deploy/matches.html — Smart Match. */
-import React, { useMemo, useState } from 'react';
-=======
 /**
  * /matches — Smart Match (Phase 4 wiring).
  *
@@ -15,44 +11,12 @@ import React, { useMemo, useState } from 'react';
  * empty sets render honest states.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import AiToolPage from '@/components/site/AiToolPage';
 import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
 import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 
-<<<<<<< HEAD
-export default function MatchesPage() {
-  const { isAr } = useSite();
-  const listings = HZDATA.listings as CardListing[];
-
-  const [mode, setMode] = useState<'all' | 'sale' | 'rent'>('all');
-  const [currency, setCurrency] = useState<'EGP' | 'USD'>('EGP');
-  const [beds, setBeds] = useState(0);
-  const [budget, setBudget] = useState(40);
-  const [minYield, setMinYield] = useState(0);
-
-  const matched = useMemo(() => {
-    return listings
-      .filter((p) => mode === 'all' || p.mode === mode)
-      .filter((p) => !beds || p.beds >= beds)
-      .filter((p) => {
-        if (p.mode === 'rent') return true;
-        const priceInUnits = currency === 'USD' ? (p.usd ? p.usd / 1000 : (p.egpM * 1000000) / 48.65 / 1000) : p.egpM;
-        return priceInUnits <= budget;
-      })
-      .map((p) => {
-        const priceInUnits = currency === 'USD' ? (p.usd ? p.usd / 1000 : (p.egpM * 1000000) / 48.65 / 1000) : p.egpM;
-        const budgetFit = p.mode === 'rent' ? 1 : Math.max(0, 1 - Math.abs(budget - priceInUnits) / Math.max(budget, 1));
-        const bedFit = beds ? Math.max(0, 1 - Math.abs(p.beds - beds) / 5) : 0.8;
-        const yieldFit = minYield > 0 ? (p.yield && p.yield >= minYield ? 1.0 : 0.6) : 1.0;
-        const score = p.ai / 10 * 0.5 + budgetFit * 0.2 + bedFit * 0.15 + yieldFit * 0.15;
-        return { p, score: Math.round(score * 100) };
-      })
-      .sort((a, b) => b.score - a.score);
-  }, [listings, mode, currency, beds, budget, minYield]);
-=======
 /** Budget input is converted to the USD figure the engine scores against. */
 const FX_EGP_PER_USD = 50;
 const PROPERTY_TYPES = ['Apartment', 'Villa', 'Townhouse', 'Twin House', 'Duplex', 'Penthouse'];
@@ -142,7 +106,6 @@ export default function MatchesPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [runMatch]);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   return (
     <AiToolPage
@@ -150,13 +113,8 @@ export default function MatchesPage() {
       title={isAr ? 'المطابقة الذكية' : 'Smart Match'}
       sub={
         isAr
-<<<<<<< HEAD
-          ? 'حدّد ميزانيتك واحتياجك، ويرتّب المحرك المعروض حسب مدى مطابقته لك.'
-          : 'Set your budget and needs; the engine ranks live inventory by how well it fits.'
-=======
           ? 'حدّد ميزانيتك واحتياجك، ويرتّب المحرك الوحدات الحقيقية حسب مدى مطابقتها مع أسباب واضحة لكل نتيجة.'
           : 'Set your budget and needs; the engine ranks live inventory with an explicit reason for every match.'
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       }
     >
       <section className="block">
@@ -165,18 +123,12 @@ export default function MatchesPage() {
             <div className="af-group">
               <span className="af-label">{isAr ? 'الغرض' : 'Looking to'}</span>
               <div className="af-chips">
-<<<<<<< HEAD
-                {(['all', 'sale', 'rent'] as const).map((m) => (
-                  <button key={m} type="button" className={`af-chip${mode === m ? ' on' : ''}`} onClick={() => setMode(m)}>
-                    {m === 'all' ? (isAr ? 'الكل' : 'All') : m === 'sale' ? (isAr ? 'شراء' : 'Buy') : (isAr ? 'إيجار' : 'Rent')}
-=======
                 {(['rent', 'sale'] as const).map((m) => (
                   <button key={m} type="button" className={`af-chip${mode === m ? ' on' : ''}`} onClick={() => {
                     setMode(m);
                     setBudget(m === 'rent' ? 40 : 25);
                   }}>
                     {m === 'sale' ? (isAr ? 'شراء' : 'Buy') : (isAr ? 'إيجار' : 'Rent')}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   </button>
                 ))}
               </div>
@@ -188,11 +140,7 @@ export default function MatchesPage() {
                 {(['EGP', 'USD'] as const).map((c) => (
                   <button key={c} type="button" className={`af-chip${currency === c ? ' on' : ''}`} onClick={() => {
                     setCurrency(c);
-<<<<<<< HEAD
-                    setBudget(c === 'USD' ? 800 : 40);
-=======
                     setBudget(mode === 'rent' ? (c === 'USD' ? 800 : 40) : (c === 'USD' ? 300 : 25));
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   }}>
                     {c}
                   </button>
@@ -203,11 +151,6 @@ export default function MatchesPage() {
             <div className="af-group">
               <span className="af-label">{isAr ? 'الغرف' : 'Bedrooms'}</span>
               <div className="af-chips">
-<<<<<<< HEAD
-                {[0, 2, 3, 4, 5].map((b) => (
-                  <button key={b} type="button" className={`af-chip${beds === b ? ' on' : ''}`} onClick={() => setBeds(b)}>
-                    {b === 0 ? (isAr ? 'الكل' : 'Any') : `${b}+`}
-=======
                 {[1, 2, 3, 4, 5].map((b) => (
                   <button key={b} type="button" className={`af-chip${beds === b ? ' on' : ''}`} onClick={() => setBeds(b)}>
                     {b}+
@@ -233,7 +176,6 @@ export default function MatchesPage() {
                 {['Any', ...compounds.slice(0, 8)].map((z) => (
                   <button key={z} type="button" className={`af-chip${preferredZone === z ? ' on' : ''}`} onClick={() => setPreferredZone(z)}>
                     {z === 'Any' ? (isAr ? 'الكل' : 'Any') : z}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   </button>
                 ))}
               </div>
@@ -241,15 +183,6 @@ export default function MatchesPage() {
 
             <div className="af-group" style={{ minWidth: 200 }}>
               <span className="af-label">
-<<<<<<< HEAD
-                {isAr ? 'الميزانية' : 'Budget'}: <b>{currency === 'USD' ? `$${budget}K` : `EGP ${budget}M`}</b>
-              </span>
-              <input
-                type="range"
-                min={currency === 'USD' ? 100 : 3}
-                max={currency === 'USD' ? 2000 : 60}
-                step={currency === 'USD' ? 50 : 1}
-=======
                 {isAr ? 'الميزانية' : 'Budget'}:{' '}
                 <b>
                   {currency === 'USD'
@@ -264,33 +197,12 @@ export default function MatchesPage() {
                 min={mode === 'rent' ? (currency === 'USD' ? 200 : 5) : (currency === 'USD' ? 50 : 3)}
                 max={mode === 'rent' ? (currency === 'USD' ? 6000 : 300) : (currency === 'USD' ? 1500 : 60)}
                 step={mode === 'rent' ? (currency === 'USD' ? 50 : 5) : (currency === 'USD' ? 10 : 1)}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}
                 style={{ width: '100%' }}
               />
             </div>
 
-<<<<<<< HEAD
-            <div className="af-group">
-              <span className="af-label">{isAr ? 'الحد الأدنى للعائد' : 'Min Yield'}</span>
-              <div className="af-chips">
-                {[0, 7, 9, 12].map((y) => (
-                  <button key={y} type="button" className={`af-chip${minYield === y ? ' on' : ''}`} onClick={() => setMinYield(y)}>
-                    {y === 0 ? (isAr ? 'الكل' : 'Any') : `${y}%+`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <span className="af-count"><b>{matched.length}</b> {isAr ? 'نتيجة' : 'matches'}</span>
-          </div>
-
-          {matched.length ? (
-            <div className="grid-props">
-              {matched.map(({ p, score }, i) => (
-                <div key={p.id} style={{ position: 'relative' }}>
-=======
             <span className="af-count">
               <b>{results.length}</b> {isAr ? 'نتيجة' : 'matches'}
             </span>
@@ -313,27 +225,11 @@ export default function MatchesPage() {
             <div className="grid-props">
               {results.map((r, i) => (
                 <div key={String(r.listing?.id ?? i)} style={{ position: 'relative' }}>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   <span
                     style={{
                       position: 'absolute', zIndex: 3, insetInlineStart: 14, top: 14,
                       fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
                       padding: '6px 10px', borderRadius: 999,
-<<<<<<< HEAD
-                      background: score >= 80 ? '#1e8b7a' : 'var(--navy)', color: '#fff',
-                    }}
-                  >
-                    {score}% {isAr ? 'مطابقة' : 'match'}
-                  </span>
-                  <PropertyCard p={p} i={i} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Reveal className="empty-state">
-              <h3>{isAr ? 'لا توجد نتائج مطابقة' : 'No matches at these settings'}</h3>
-              <p>{isAr ? 'جرّب رفع الميزانية أو تقليل عدد الغرف.' : 'Try raising the budget or lowering the bedroom count.'}</p>
-=======
                       background: r.score >= 80 ? '#1e8b7a' : 'var(--navy)', color: '#fff',
                     }}
                   >
@@ -381,7 +277,6 @@ export default function MatchesPage() {
                   ? 'جرّب رفع الميزانية أو تقليل عدد الغرف، أو اطلب من فريقنا تأمين وحدة تناسبك.'
                   : 'Try raising the budget or lowering the bedroom count — or ask our team to source a unit for you.'}
               </p>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             </Reveal>
           )}
         </div>

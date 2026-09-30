@@ -97,11 +97,6 @@ class PropertyEvaluator {
     // 5. Calculate Estimated ROI Yield
     const estimatedRentalYield = benchmark.tier === 1 ? '7.5% - 9.2%' : '8.0% - 10.5%';
 
-<<<<<<< HEAD
-    return {
-      compound: unit.compound,
-      unitTitle: unit.title || `${unit.type || 'Residence'} in ${unit.compound || 'New Cairo'}`,
-=======
     // §21 no-fabrication: the derived title is built only from fields the
     // unit actually carries — never a default 'New Cairo' compound claim.
     const derivedTitle = [unit.type, unit.compound].filter(Boolean).join(' in ');
@@ -109,7 +104,6 @@ class PropertyEvaluator {
     return {
       compound: unit.compound,
       unitTitle: unit.title || derivedTitle || 'Property listing',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       isOwner,
       ownerBoostApplied,
       ownerBonus: ownerBoostApplied ? '+20% Direct Owner Priority Boost' : null,

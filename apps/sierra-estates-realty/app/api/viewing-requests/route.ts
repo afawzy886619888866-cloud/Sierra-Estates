@@ -19,12 +19,8 @@
  * GET (ADMIN): listing of viewing rows for the ops dashboard.
  */
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
-import { insertRecord, listRecords, type WhereClause } from '@sierra-estates/db';
-=======
 import { z } from 'zod';
 import { insertRecord, listRecords, updateRecord, type WhereClause } from '@sierra-estates/db';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 import { applyRateLimit, publicEndpointLimiter } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/logger';
@@ -120,42 +116,6 @@ export async function POST(request: NextRequest) {
       leadId = created.id;
     }
 
-<<<<<<< HEAD
-    // Validate email format (bounded length and safe linear regex to prevent ReDoS)
-    const emailRegex = /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,255}\.[a-zA-Z]{2,24}$/;
-    if (typeof visitorEmail !== 'string' || visitorEmail.length > 320 || !emailRegex.test(visitorEmail)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Validate date is in future
-    const requestDate = new Date(preferredDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (requestDate < today) {
-      return NextResponse.json(
-        { error: 'Preferred date must be in the future' },
-        { status: 400 }
-      );
-    }
-
-    // Add viewing request to Supabase
-    const created = await insertRecord<{ id: string }>('viewing_requests', {
-      propertyCode,
-      visitorName,
-      visitorEmail,
-      visitorPhone,
-      preferredDate,
-      preferredTime: preferredTime || '',
-      numberOfPeople: numberOfPeople || 1,
-      message: message || '',
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-=======
     // ── 2. Canonical viewing row (public.viewings — migration 014) ─────────
     const viewing = await insertRecord<{ id: string }>('viewings', {
       ...(leadId ? { leadId } : {}),
@@ -171,7 +131,6 @@ export async function POST(request: NextRequest) {
       source: 'website',
       createdAt: now,
       updatedAt: now,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
 
     // ── 3. Telegram internal alert (fire-and-forget — never blocks) ───────
@@ -200,16 +159,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-<<<<<<< HEAD
-        requestId: created.id,
-        message: 'Viewing request created successfully'
-=======
         requestId: viewing.id,
         leadId,
         message: 'Viewing request received — our team will confirm shortly.',
         whatsappConfirmUrl: `https://wa.me/201092048333?text=${waText}`,
         calendarLink,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       },
       { status: 201 }
     );
@@ -231,22 +185,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     const where: WhereClause[] = [];
-<<<<<<< HEAD
-    if (propertyCode) {
-      where.push({ column: 'propertyCode', value: propertyCode });
-    }
-    if (status) {
-      where.push({ column: 'status', value: status });
-    }
-
-    const requests = await listRecords('viewing_requests', { where });
-
-    return NextResponse.json({
-      success: true,
-      count: requests.length,
-      requests
-    }, { status: 200 });
-=======
     if (status) where.push({ column: 'status', value: status });
 
     // Canonical table post-migration 014 (legacy viewing_requests rows were
@@ -258,7 +196,6 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, count: requests.length, requests }, { status: 200 });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   } catch (error) {
     logger.error('Get viewing requests error:', error);
     return NextResponse.json(

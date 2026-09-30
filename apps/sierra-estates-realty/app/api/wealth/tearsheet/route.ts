@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TearSheetGenerator, TearSheetListingInput } from '@sierra-estates/agents-core';
 
-<<<<<<< HEAD
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const input: TearSheetListingInput = {
-      referenceId: body.referenceId || 'REF-MIV-104',
-      title: body.title || 'Luxury Standalone Villa in Mivida',
-      compoundName: body.compoundName || 'Mivida',
-      unitType: body.unitType || 'Standalone Villa',
-      buaSqm: Number(body.buaSqm) || 390,
-      landSqm: Number(body.landSqm) || 450,
-      bedrooms: Number(body.bedrooms) || 4,
-      bathrooms: Number(body.bathrooms) || 5,
-      finishing: body.finishing || 'ultra_lux',
-      askingPriceEGP: Number(body.askingPriceEGP) || 38000000,
-      downPaymentPercent: Number(body.downPaymentPercent) || 10,
-      installmentTenureYears: Number(body.installmentTenureYears) || 8,
-      deliveryYear: Number(body.deliveryYear) || 2026,
-      brokerName: body.brokerName || 'Sierra Advisor Desk',
-      brokerPhone: body.brokerPhone || '+201092048333',
-=======
 /**
  * §21 no-fabrication contract: an investor tearsheet is a client-facing
  * financial document — it must describe a real listing. The old defaults
@@ -92,7 +71,6 @@ export async function POST(req: NextRequest) {
       deliveryYear: Number(body.deliveryYear),
       brokerName: String(body.brokerName),
       brokerPhone: String(body.brokerPhone),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     };
 
     const sheet = TearSheetGenerator.generateTearSheet(input);

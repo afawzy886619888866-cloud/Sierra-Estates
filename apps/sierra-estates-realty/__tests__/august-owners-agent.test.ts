@@ -106,11 +106,7 @@ describe('AugustOwnersAgentService', () => {
 
       expect(result.handled).toBe(true);
       expect(result.isListing).toBe(true);
-<<<<<<< HEAD
-      expect(result.action).toBe('unit_published');
-=======
       expect(result.action).toBe('unit_recorded_pending_verification');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       expect(result.listingCode).toMatch(/^SE-AUG-/);
       expect(result.pfReference).toMatch(/^PF-SE-AUG-/);
 
@@ -128,20 +124,6 @@ describe('AugustOwnersAgentService', () => {
         })
       );
 
-<<<<<<< HEAD
-      // Step 1: Telegram alert triggered
-      expect(TelegramModule.sendTelegramMessage).toHaveBeenCalledWith(
-        expect.stringContaining('New August Owner Unit Activated')
-      );
-
-      // Step 6: Confirmation sent to WhatsApp Group
-      expect(WhatsAppQueueModule.enqueueWhatsAppJob).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toPhone: AUGUST_OWNERS_GROUP_ID,
-          body: expect.stringContaining('تم تفعيل ونشر الوحدة بنجاح'),
-        })
-      );
-=======
       // Step 1: Telegram alert triggered — honest recorded/unverified status
       expect(TelegramModule.sendTelegramMessage).toHaveBeenCalledWith(
         expect.stringContaining('New August Owner Unit Recorded')
@@ -191,7 +173,6 @@ describe('AugustOwnersAgentService', () => {
       expect(result.missingFields).toContain('mode');
       expect(result.replyMessage).toContain('نوع الوحدة');
       expect(result.replyMessage).toContain('نوع المعروض');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 

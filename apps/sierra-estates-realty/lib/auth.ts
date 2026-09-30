@@ -218,8 +218,6 @@ export function safeEqual(a: string, b: string): boolean {
 export function bootstrapLoginAvailable(): boolean {
   return Boolean(bootstrapAdminPassword());
 }
-<<<<<<< HEAD
-=======
 
 /**
  * Partner Account Login (PARTNER_ACCOUNTS env — see lib/server/partner-scope.ts
@@ -241,7 +239,6 @@ export function tryPartnerLogin(email: string, password: string): Session | null
     exp: Date.now() + SESSION_TTL_MS,
   };
 }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 /** Parse cookie header into a map. */
 export function parseCookies(header: string | null): Record<string, string> {

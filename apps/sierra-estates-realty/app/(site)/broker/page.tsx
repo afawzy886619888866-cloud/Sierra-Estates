@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import BrokerBrainPage from './BrokerBrainPage';
-
-export default function BrokerPage() {
-  return <BrokerBrainPage />;
-=======
 import type { Metadata } from 'next';
 import SiteShell from '@/components/site/SiteShell';
 import BrokerBrainPage from './BrokerBrainPage';
@@ -23,5 +17,4 @@ export default function BrokerPage() {
       </div>
     </SiteShell>
   );
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }

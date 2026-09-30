@@ -16,14 +16,6 @@ export class InsightsAgent extends BaseAgent {
   }
 
   public async handleTask(request: AgentExecutionRequest): Promise<MarketInsight> {
-<<<<<<< HEAD
-    const compound = request.context?.compound || 'New Cairo General';
-    const inventoryCount = request.context?.inventoryCount || 306;
-
-    return {
-      topic: `Market Liquidity & Pricing Trends — ${compound}`,
-      headline: `Strong Secondary Resale Demand Detected in ${compound}`,
-=======
     // §21 no-fabrication: never invent a compound or an inventory count.
     // Unknown context renders honest placeholders, not 'New Cairo General'/306,
     // and unsupplied market benchmarks are reported as unavailable — not as facts.
@@ -36,18 +28,10 @@ export class InsightsAgent extends BaseAgent {
     return {
       topic: `Market Liquidity & Pricing Trends — ${compound}`,
       headline: `Resale liquidity & pricing trend snapshot — ${compound}`,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       sentiment: 'bullish',
       confidence: 0.94,
       dataPoints: [
         { label: 'Active Monitored Units', value: inventoryCount },
-<<<<<<< HEAD
-        { label: 'Average Price / Sqm (Finished)', value: '62,500 EGP' },
-        { label: 'Projected 12M Capital Growth', value: '+24.5%' },
-        { label: 'Gross Rental Yield', value: '8.4%' },
-      ],
-      recommendedAction: 'Target direct-owner cash buyers with high urgency listings in Mivida and Hyde Park.',
-=======
         { label: 'Average Price / Sqm (Finished)', value: avgPricePerSqm ?? 'N/A — no verified benchmark supplied' },
         { label: 'Projected 12M Capital Growth', value: projectedGrowth ?? 'N/A — no verified forecast supplied' },
         { label: 'Gross Rental Yield', value: rentalYield ?? 'N/A — no verified yield supplied' },
@@ -55,7 +39,6 @@ export class InsightsAgent extends BaseAgent {
       recommendedAction: request.context?.compound
         ? `Target direct-owner cash buyers with high-urgency listings in ${compound}.`
         : 'Supply compound context to generate a targeted acquisition action.',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     };
   }
 }

@@ -11,11 +11,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
 import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail } from '@/lib/auth';
-<<<<<<< HEAD
-=======
 import { isPartnerRole } from '@/lib/partner-access';
 import { normalizeScope, scopeFromProfile, type PartnerScope } from '@/lib/server/partner-scope';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
@@ -47,14 +44,11 @@ export interface AuthResult {
   email?: string;
   role?: string;
   /**
-<<<<<<< HEAD
-=======
    * Partner portfolio scope — present ONLY on session-cookie sessions minted for
    * role 'partner'. See lib/server/partner-scope.ts.
    */
   scope?: PartnerScope;
   /**
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
    * How the caller proved who they are.
    *
    * 'supabase'       — a real user identity, carrying a uid and a profiles row.
@@ -127,10 +121,7 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
           uid: sess.uid,
           email: sess.email,
           role: sess.role,
-<<<<<<< HEAD
-=======
           scope: sess.role === 'partner' ? normalizeScope(sess.scope) : undefined,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           method: 'session-cookie',
         };
       }
@@ -173,14 +164,6 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   // Session cookie callers already carry a verified role minted by /api/auth
   if (result.method === 'session-cookie') {
-<<<<<<< HEAD
-    if (isAdminConsoleRole(result.role)) {
-      return result;
-    }
-    if (result.email && isAdminEmail(result.email)) {
-      return result;
-    }
-=======
     // A partner session is a partner — even when the email lands on an owned
     // domain (isAdminEmail). The explicit role always wins over the email
     // fallback, or a partner1@sierra-estates.net account would escalate to admin.
@@ -193,7 +176,6 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
     if (result.email && isAdminEmail(result.email)) {
       return result;
     }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return { authenticated: false, method: 'none' };
   }
 
@@ -219,8 +201,6 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
     email: result.email,
     method: result.method,
   };
-<<<<<<< HEAD
-=======
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -330,5 +310,4 @@ export async function verifyPortalRequest(req: NextRequest): Promise<PortalAcces
     // A lookup failure must deny, never admit.
   }
   return { authenticated: false, method: 'none' };
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }

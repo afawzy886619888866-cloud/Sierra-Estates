@@ -31,20 +31,13 @@ import {
 import SiteShell from '@/components/site/SiteShell';
 import { useSite } from '@/lib/site/SiteContext';
 import { useReveal } from '@/lib/site/useReveal';
-<<<<<<< HEAD
-import snapshot from '@/lib/inventory/snapshot.json';
-=======
 // Phase 4/B3: the 6.5 MB snapshot.json no longer ships in the client bundle —
 // real units arrive from /api/inventory below (loading state is honest).
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { useListingsRealtime } from '@/hooks/useListingsRealtime';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
-<<<<<<< HEAD
-=======
 import { unitMatchesCondition, CONDITION_OPTIONS } from '@/lib/site/smart-search';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 // Dynamic import for Leaflet map to guarantee SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -80,10 +73,7 @@ export interface RealListing {
   agent: string;
   ago: string;
   img: string;
-<<<<<<< HEAD
-=======
   imgCurated?: boolean;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   whatsapp: string;
   lat: number;
   lng: number;
@@ -91,11 +81,8 @@ export interface RealListing {
   description?: string;
   distanceKm?: number;
   finishing?: string;
-<<<<<<< HEAD
-=======
   finishingQuality?: string;
   furnishing?: string;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   availability?: string;
   isDirectOwner?: boolean;
   verifiedFresh?: boolean;
@@ -177,19 +164,6 @@ const SORT_OPTIONS = [
 ];
 
 function sanitizeUnit(raw: any, index: number): RealListing {
-<<<<<<< HEAD
-  const code = raw.code || `SE-${String(index + 1).padStart(4, '0')}`;
-  const compound = raw.compound || raw.location || 'New Cairo';
-  const price = Number(raw.price || 8500000);
-  const isRent = raw.mode === 'rent' || (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1000000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5000);
-
-  // Strict Luxury Institutional Standard: Price (EGP with commas)
-  let priceLabel = raw.priceLabel;
-  if (!priceLabel || priceLabel.includes('M EGP')) {
-    priceLabel = isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`;
-=======
   // ANTI-FABRICATION PASS (Master Rule 5): every value below is either the
   // record's own data or an explicit "unknown" marker. Missing prices render
   // as "Price on request"; missing coordinates do not get jittered stand-ins;
@@ -207,7 +181,6 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     priceLabel = price > 0
       ? (isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`)
       : 'Price on request';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 
   const isDirectOwner = Boolean(
@@ -229,13 +202,8 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     raw.ago?.toLowerCase().includes('h ago')
   );
 
-<<<<<<< HEAD
-  const finishing = raw.finishing || (Number(raw.beds || raw.bedrooms || 3) >= 4 ? 'Ultra Super Lux' : 'Fully Finished');
-  const availability = raw.availability || raw.status || 'Available';
-=======
   const finishing = raw.finishing || raw.furnishing || '';
   const availability = raw.availability || raw.status || '';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   return {
     id: raw.id || `unit-${index + 1}`,
@@ -243,34 +211,15 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     cmp: compound,
     compound,
     location: raw.location || compound,
-<<<<<<< HEAD
-    zone: raw.zone || 'New Cairo',
-    type: raw.type || raw.propertyType || 'Apartment',
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
-=======
     zone: raw.zone || compound,
     type: raw.type || raw.propertyType || 'Unspecified',
     beds: Number(raw.beds ?? raw.bedrooms ?? 0) || 0,
     bath: Number(raw.bath ?? raw.bathrooms ?? 0) || 0,
     area: Number(raw.area ?? raw.area_sqm ?? 0) || 0,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     price,
     priceLabel,
     egpM,
     usd,
-<<<<<<< HEAD
-    ai: Number(raw.aiScore || (9.1 + ((index * 7) % 8) / 10).toFixed(1)),
-    tag: raw.tag && raw.tag !== 'Direct Owner' && raw.tag !== 'Verified Owner' ? raw.tag : 'Verified Portfolio',
-    mode: isRent ? 'rent' : 'sale',
-    agent: 'Sierra Advisor Desk',
-    ago: raw.ago || 'Verified Master Sync',
-    img: getCuratedListingImage(raw, index),
-    whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.lat || 30.02 + (((index * 13) % 40) - 20) * 0.003),
-    lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
-=======
     ai: Number(raw.aiScore) > 0 ? Number(raw.aiScore) : 0,
     tag: raw.tag || '',
     mode: isRent ? 'rent' : 'sale',
@@ -281,7 +230,6 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.lat) || 0,
     lng: Number(raw.lng) || 0,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     segment: raw.segment,
     description: raw.description,
     finishing,
@@ -295,58 +243,23 @@ export default function PropertiesPage() {
   const { t, isAr, theme } = useSite();
   const listingsContainerRef = useRef<HTMLDivElement>(null);
 
-<<<<<<< HEAD
-  // Initial load directly from snapshot for instant zero-delay render (excluding owner listings)
-  const initialUnits: RealListing[] = useMemo(() => {
-    const rawList: any[] = (snapshot as any)?.units || [];
-    const valid = rawList.filter((raw: any) =>
-      raw.party !== 'Owner' &&
-      raw.sourceType !== 'owner' &&
-      raw.segment !== 'owners_rent' &&
-      raw.segment !== 'owners_buy' &&
-      raw.tag !== 'Direct Owner'
-    );
-    // Prioritize units with defined price and clean compound name
-    valid.sort((a: any, b: any) => {
-      const aScore = (a.price > 0 ? 100 : 0) + (a.compound && a.compound !== 'New Cairo' ? 50 : 0);
-      const bScore = (b.price > 0 ? 100 : 0) + (b.compound && b.compound !== 'New Cairo' ? 50 : 0);
-      return bScore - aScore;
-    });
-    return valid.map(sanitizeUnit);
-  }, []);
-
-  const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
-=======
   // Phase 4/B3: real units come from /api/inventory (server-side snapshot of
   // the same data, PII-stripped). The page starts empty and shows its
   // loading state — never fabricated units. Owner direct listings excluded.
   const [allUnits, setAllUnits] = useState<RealListing[]>([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [realtimeLive, setRealtimeLive] = useState(false);
 
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
   // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
-<<<<<<< HEAD
-  useListingsRealtime(setAllUnits);
-=======
   useListingsRealtime(setAllUnits, setRealtimeLive);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Single authoritative inventory fetch on mount (below). The previous
   // duplicate ?limit=500 fetch raced this one and was removed.
 
-<<<<<<< HEAD
-  // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
-  useEffect(() => {
-    const t = setTimeout(() => setRealtimeLive(true), 2500);
-    return () => clearTimeout(t);
-  }, []);
-=======
   // Live indicator now reflects the ACTUAL realtime subscription status
   // (set by useListingsRealtime's onStatus callback). The previous 2.5s
   // optimistic timer fabricated a green dot even with no connection.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -354,10 +267,7 @@ export default function PropertiesPage() {
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedCompound, setSelectedCompound] = useState('All Compounds');
   const [selectedBeds, setSelectedBeds] = useState('all');
-<<<<<<< HEAD
-=======
   const [selectedCondition, setSelectedCondition] = useState('all');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('ai');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
@@ -380,10 +290,7 @@ export default function PropertiesPage() {
     const compound = params.get('compound');
     const beds = params.get('beds');
     const price = params.get('price');
-<<<<<<< HEAD
-=======
     const condition = params.get('condition');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const view = params.get('view');
     const radius = params.get('radius');
 
@@ -396,10 +303,7 @@ export default function PropertiesPage() {
     if (compound) setSelectedCompound(compound);
     if (beds) setSelectedBeds(beds);
     if (price) setSelectedPriceRange(price);
-<<<<<<< HEAD
-=======
     if (condition && CONDITION_OPTIONS.some((o) => o.val === condition)) setSelectedCondition(condition);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     if (view === 'grid' || view === 'map' || view === 'split') setViewMode(view);
     if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
@@ -429,14 +333,10 @@ export default function PropertiesPage() {
         setAllUnits(validUnits.map(sanitizeUnit));
       })
       .catch((err) => {
-<<<<<<< HEAD
-        console.warn('[PropertiesPage] Using committed snapshot inventory:', err);
-=======
         console.warn('[PropertiesPage] inventory fetch failed:', err);
       })
       .finally(() => {
         if (active) setInventoryLoading(false);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       });
 
     return () => {
@@ -540,11 +440,6 @@ export default function PropertiesPage() {
         if (selectedPriceRange === 'above100k' && p <= 100000) return false;
       }
 
-<<<<<<< HEAD
-      return true;
-    });
-  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange]);
-=======
       // Condition (finishing) — carried from the hero SmartFilterBar (?condition=)
       if (selectedCondition !== 'all') {
         if (!unitMatchesCondition({ finishing: item.finishing, finishingQuality: item.finishingQuality, furnishing: item.furnishing }, selectedCondition)) return false;
@@ -553,7 +448,6 @@ export default function PropertiesPage() {
       return true;
     });
   }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition]);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Sorting
   const sortedListings = useMemo(() => {
@@ -656,10 +550,7 @@ export default function PropertiesPage() {
     setSelectedCompound('All Compounds');
     setSelectedBeds('all');
     setSelectedPriceRange('all');
-<<<<<<< HEAD
-=======
     setSelectedCondition('all');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     setRadiusKm(null);
     setSortBy('ai');
     setActiveUnit(null);
@@ -703,13 +594,8 @@ export default function PropertiesPage() {
               </h1>
               <p className="props-hero-sub">
                 {isAr
-<<<<<<< HEAD
-                  ? `تصفح المعروض الحقيقي المعتمد من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار الحقيقية وتواصل فوري.`
-                  : `Browse verified live listings across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} real units). Interactive map and instant advisor verification.`}
-=======
                   ? `تصفح المعروض الحقيقي من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار وتواصل فوري — التحقق من كل وحدة يتم قبل نشرها.`
                   : `Browse live listings from owners and brokers across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} units). Interactive map and instant advisor contact — every unit is verified before publication.`}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               </p>
             </div>
 
@@ -846,8 +732,6 @@ export default function PropertiesPage() {
               </div>
 
               <div className="props-filter-row-2-right">
-<<<<<<< HEAD
-=======
                 {/* Condition (Finishing) Filter */}
                 <select
                   value={selectedCondition}
@@ -865,7 +749,6 @@ export default function PropertiesPage() {
                   ))}
                 </select>
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 {/* Price Range Filter */}
                 <select
                   value={selectedPriceRange}
@@ -1064,9 +947,6 @@ export default function PropertiesPage() {
                   </span>
                 </div>
 
-<<<<<<< HEAD
-                {sortedListings.length === 0 ? (
-=======
                 {inventoryLoading && sortedListings.length === 0 ? (
                   <div className="empty-state">
                     <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
@@ -1074,7 +954,6 @@ export default function PropertiesPage() {
                     <p>{isAr ? 'يتم جلب الوحدات الحقيقية من قاعدة البيانات.' : 'Fetching real units from the live inventory.'}</p>
                   </div>
                 ) : sortedListings.length === 0 ? (
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   <div className="empty-state">
                     <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
                     <h3>{isAr ? 'لم يتم العثور على وحدات مطابقة' : 'No properties match your filters'}</h3>

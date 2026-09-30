@@ -60,25 +60,17 @@ describe('Bots & Client Replying Communication Test Suite', () => {
     ): string {
       if (language === 'ar') {
         if (intent === 'buy_inquiry') {
-<<<<<<< HEAD
-          return `أهلاً بك أستاذ ${clientName}، يسعدنا تواصلك مع سييرا إستيتس. لدينا خيارات مميزة في ${options.compound || 'أرقى كمبوندات التجمع الخامس'} في حدود ${options.priceRange || 'ميزانيتك'}. هل يناسبك ترتيب موعد لمعاينة الوحدات المتاحة هذا الأسبوع؟`;
-=======
           // §21 no-fabrication: the fallback is self-referential phrasing —
           // no invented specific area claim like 'التجمع الخامس'.
           return `أهلاً بك أستاذ ${clientName}، يسعدنا تواصلك مع سييرا إستيتس. لدينا خيارات مميزة ${options.compound ? `في ${options.compound}` : 'في أرقى كمبونداتنا'} في حدود ${options.priceRange || 'ميزانيتك'}. هل يناسبك ترتيب موعد لمعاينة الوحدات المتاحة هذا الأسبوع؟`;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         }
         return `أهلاً بك أستاذ ${clientName} في سييرا إستيتس. كيف يمكن لمستشارك العقاري مساعدتك اليوم؟`;
       }
 
       // English
       if (intent === 'buy_inquiry') {
-<<<<<<< HEAD
-        return `Hello ${clientName}, welcome to Sierra Estates. We have curated premium listings in ${options.compound || 'New Cairo'} within ${options.priceRange || 'your budget'}. Would you like to schedule a private viewing this week?`;
-=======
         // §21 no-fabrication: the fallback names no location — never 'New Cairo'.
         return `Hello ${clientName}, welcome to Sierra Estates. We have curated premium listings in ${options.compound || 'our featured communities'} within ${options.priceRange || 'your budget'}. Would you like to schedule a private viewing this week?`;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       }
       return `Hello ${clientName}, welcome to Sierra Estates. How may our luxury property advisor assist you today?`;
     }

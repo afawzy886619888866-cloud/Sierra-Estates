@@ -1,11 +1,7 @@
 import type { Metadata } from 'next';
-<<<<<<< HEAD
-import ListingNetMap from '@/components/site/ListingNetMap';
-=======
 import SiteShell from '@/components/site/SiteShell';
 import ListingNetMap from '@/components/site/ListingNetMap';
 import '../../site-styles/net-radar.css';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 export const metadata: Metadata = {
   title: 'شبكة اصطياد الوحدات ورادار التوافر الفوري | Sierra Estates',
@@ -15,11 +11,6 @@ export const metadata: Metadata = {
 
 export default function NetRadarPage() {
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-[#070b14] pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <ListingNetMap />
-    </div>
-=======
     <SiteShell active="net">
       <div
         style={{
@@ -36,6 +27,5 @@ export default function NetRadarPage() {
         </div>
       </div>
     </SiteShell>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   );
 }

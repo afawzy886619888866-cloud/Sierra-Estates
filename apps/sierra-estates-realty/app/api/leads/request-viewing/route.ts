@@ -45,11 +45,7 @@ export async function POST(req: Request) {
     const lead = await getRecord(COLLECTIONS.stakeholders, leadId);
     if (lead) {
       await updateRecord(COLLECTIONS.stakeholders, leadId, {
-<<<<<<< HEAD
-        status: 'Viewing Requested',
-=======
         status: 'viewing_scheduled', // Phase 10: canonical value (m016 normalized the legacy free-form spelling)
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         stage: 2,
         updatedAt: now,
       });

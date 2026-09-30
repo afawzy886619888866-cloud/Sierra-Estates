@@ -52,7 +52,6 @@ apps/sierra-estates-realty/public/cairo-plaza/*.mp4
 # lstats the file (ENOENT) even though prebuild would create it on a cold build.
 packages/whatsapp-agent/wa_sessions
 packages/whatsapp-agent/*.sw_col.json
-<<<<<<< HEAD
 
 # Tool artifacts and redundant local clones
 .amazonq
@@ -69,8 +68,6 @@ stubArchive/**
 .zencoder/**
 graphify-out/**
 *.tsbuildinfo
-<<<<<<< HEAD
-=======
 
 # ============================================================================
 # 2026-09-29 audit additions (merged on top of the original rules above)
@@ -96,8 +93,3 @@ docker-compose*.yml
 # Jest suites run in CI only, never inside Vercel builds
 /__tests__/
 __tests__/
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
-=======
-tmp
-*.log
->>>>>>> d2b8a29c09aad3d3015897345ba8ee9ad9e55824

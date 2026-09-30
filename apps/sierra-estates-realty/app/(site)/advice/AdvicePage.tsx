@@ -7,10 +7,7 @@ import PropertyCard, { type CardListing } from '@/components/site/PropertyCard';
 import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
-<<<<<<< HEAD
-=======
 import { usePublicListings } from '@/lib/site/usePublicListings';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const PRIORITIES = [
   { k: 'space', en: 'Space for a family', ar: 'مساحة للعائلة' },
@@ -21,13 +18,9 @@ const PRIORITIES = [
 
 export default function AdvicePage() {
   const { isAr } = useSite();
-<<<<<<< HEAD
-  const listings = HZDATA.listings as CardListing[];
-=======
   // Phase 4/B3: real units from the public inventory API (no snapshot in bundle)
   const { units, loading: listingsLoading } = usePublicListings(300);
   const listings = units as CardListing[];
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const compounds = HZDATA.compounds as any[];
 
   const [priority, setPriority] = useState('space');

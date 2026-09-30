@@ -35,11 +35,6 @@ export type PlacedMapUnitPin = MapUnitPin & {
 export type MapTileStyle = 'dark' | 'light' | 'satellite';
 
 const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string }> = {
-<<<<<<< HEAD
-  dark: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-=======
   // 'dark' is the Sierra brand basemap: obsidian navy canvas that matches
   // the site chrome (#070b14 / #071523 + champagne gold). The previous
   // implementation pointed BOTH dark and light at the same light OSM
@@ -48,7 +43,6 @@ const TILE_LAYERS: Record<MapTileStyle, { url: string; attrib: string }> = {
   dark: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   },
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -195,16 +189,12 @@ function createCompoundIcon(
   lang: 'en' | 'ar' = 'en',
   index = 0
 ) {
-<<<<<<< HEAD
-  const name = (lang === 'ar' ? compound.nameAr : compound.nameEn) || compound.code;
-=======
   // Short lowercase label keeps 30+ city-scale pills readable; the full AR/EN
   // name stays in the hover Tooltip.
   const name =
     lang === 'ar'
       ? compound.nameAr || compound.code
       : compoundShortName(compound.nameEn) || compound.nameEn || compound.code;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const count = liveCount ?? compound.unitsCount;
   const verified = compound.isGpsVerified;
 
@@ -222,13 +212,8 @@ function createCompoundIcon(
         padding: 6px 12px;
         border-radius: 9999px;
         font-family: var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, sans-serif;
-<<<<<<< HEAD
-        font-size: 11.5px;
-        font-weight: 800;
-=======
         font-size: 10.5px;
         font-weight: 700;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         white-space: nowrap;
         color: ${isSelected ? '#0d0d0f' : '#ffffff'};
         background: ${isSelected ? GOLD_PILL : NAVY_PILL};
@@ -452,12 +437,9 @@ export interface LiveMapProps {
   showLegend?: boolean;
   /** Render the "showing X of Y units" counter chip. */
   showPinCounter?: boolean;
-<<<<<<< HEAD
-=======
   /** When non-empty, ONLY these compound codes render as labelled cluster
    *  nodes — used by the radar to show just the filtered compound/area. */
   visibleCompoundCodes?: string[] | null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export default function LiveMap({
@@ -482,10 +464,7 @@ export default function LiveMap({
   compoundZoomCutoff = 16,
   showLegend = true,
   showPinCounter = true,
-<<<<<<< HEAD
-=======
   visibleCompoundCodes = null,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }: LiveMapProps) {
   const isAr = lang === 'ar';
   const [tileStyle, setTileStyle] = useState<MapTileStyle>(mode === 'dark' ? 'dark' : 'light');
@@ -758,11 +737,6 @@ export default function LiveMap({
           />
         )}
 
-<<<<<<< HEAD
-        {/* Compound Cluster Nodes — city & district scale (hidden at street zoom) */}
-        {showCompounds &&
-          NEW_CAIRO_COMPOUNDS.map((compound, idx) => {
-=======
         {/* Compound Cluster Nodes — city & district scale (hidden at street zoom).
             When visibleCompoundCodes is set (radar filter active), only the
             selected compounds/areas get labelled nodes — map stays uncluttered. */}
@@ -771,7 +745,6 @@ export default function LiveMap({
             ? NEW_CAIRO_COMPOUNDS.filter((c) => visibleCompoundCodes.includes(c.code))
             : NEW_CAIRO_COMPOUNDS
           ).map((compound, idx) => {
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             const isSelected = selectedCode === compound.code;
             const liveCount = resolveCompoundCount(compound, liveCounts);
 

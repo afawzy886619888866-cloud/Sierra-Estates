@@ -87,10 +87,6 @@ describe('Supabase RLS — no blanket authenticated access', () => {
 });
 
 describe('Supabase RLS — listings', () => {
-<<<<<<< HEAD
-  it('keeps active inventory publicly readable', () => {
-    expect(schema).toMatch(/FOR SELECT USING \(status = 'active' OR public\.is_staff\(\)\)/);
-=======
   it('keeps active inventory publicly readable ONLY when PUBLISHABLE (Phase D publish gate)', () => {
     // ANTI-FABRICATION (activation plan Phase D): the anonymous public may
     // read a listing only when it is active AND verified-publishable;
@@ -98,7 +94,6 @@ describe('Supabase RLS — listings', () => {
     expect(schema).toMatch(
       /FOR SELECT USING \(\s*\(status = 'active' AND publish_status = 'PUBLISHABLE'\)\s*OR public\.is_staff\(\)\s*\)/
     );
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   });
 
   it('restricts writes to staff', () => {

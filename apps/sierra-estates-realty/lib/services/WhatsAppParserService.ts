@@ -106,15 +106,6 @@ export class WhatsAppParserService {
       try {
         extractedData = await Promise.race([this.parseMessage(content, media), timeoutPromise]);
       } catch {
-<<<<<<< HEAD
-        // Deterministic Arabic/English NLP fallback
-        const isVilla = /villa|فيلا/i.test(content);
-        const isTownhouse = /townhouse|تاون|توين/i.test(content);
-        const isPenthouse = /penthouse|بنتهاوس/i.test(content);
-        const type = isVilla ? 'villa' : isTownhouse ? 'townhouse' : isPenthouse ? 'penthouse' : 'apartment';
-        
-        let compound = 'New Cairo';
-=======
         // Deterministic Arabic/English NLP fallback — §21 no-fabrication:
         // extract ONLY what the message actually carries. Unfound fields stay
         // undefined so downstream slot-filling ASKS the sender instead of
@@ -130,37 +121,18 @@ export class WhatsAppParserService {
           : undefined;
 
         let compound: string | undefined;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         if (/hyde\s*park|هايد\s*بارك/i.test(content)) compound = 'Hyde Park';
         else if (/mivida|ميفيدا/i.test(content)) compound = 'Mivida';
         else if (/palm\s*hills|بالم\s*هيلز/i.test(content)) compound = 'Palm Hills';
         else if (/madinaty|مدينتي/i.test(content)) compound = 'Madinaty';
 
         const priceMatch = content.match(/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?)\s*(?:مليون|m|million|egp|جنيه)/i);
-<<<<<<< HEAD
-        let price = 18500000;
-=======
         let price: number | undefined;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         if (priceMatch) {
           const num = parseFloat(priceMatch[1].replace(/,/g, ''));
           price = num < 1000 ? num * 1000000 : num;
         }
 
-<<<<<<< HEAD
-        extractedData = {
-          isListing: true,
-          compound,
-          price,
-          bedrooms: 3,
-          area: 260,
-          type,
-          finishing: 'semi_finished',
-          sierraCode: 'HY-T-3S-18.5M',
-          technicalId: `WA-${Date.now()}`,
-          urgencyScore: 85,
-          valuationScore: 90,
-=======
         const bedsMatch = content.match(/(\d+)\s*(?:غرف|غرفة|نوم|beds?|bd)/i);
         const areaMatch = content.match(/(\d+)\s*(?:متر|م²|م٢|sqm|m2)/i);
 
@@ -180,7 +152,6 @@ export class WhatsAppParserService {
           type,
           finishing: undefined,
           technicalId: `WA-${Date.now()}`,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         };
       }
 

@@ -77,13 +77,10 @@ const LISTING_COLUMNS = new Set([
     'publishedAt', 'reservedUntil', 'reservationRef', 'daysOnMarket',
     'photoCount', 'hasFloorPlan', 'hasVirtualTour', 'dataQualityScore',
     'stale',
-<<<<<<< HEAD
-=======
     // Added by master-inventory activation (supabase/migrations/013):
     // publish gate phase D reads this column — ingest pipelines must be able
     // to write it so unverified rows are explicitly REVIEW_REQUIRED.
     'publishStatus',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 ]);
 
 /**

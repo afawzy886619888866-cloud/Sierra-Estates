@@ -17,11 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT UNIQUE NOT NULL,
     full_name TEXT,
     phone TEXT,
-<<<<<<< HEAD
-    role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'manager', 'agent', 'broker', 'viewer', 'client', 'owner')),
-=======
     role TEXT DEFAULT 'client' CHECK (role IN ('superadmin', 'admin', 'manager', 'agent', 'broker', 'viewer', 'client', 'owner', 'partner')),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     avatar_url TEXT,
     -- Recorded at sign-in by /api/auth; the Firestore users doc carried these.
     status TEXT DEFAULT 'active',
@@ -45,12 +41,6 @@ CREATE TABLE IF NOT EXISTS public.listings (
     description_ar TEXT,
     compound TEXT NOT NULL,
     developer TEXT,
-<<<<<<< HEAD
-    location_area TEXT DEFAULT 'New Cairo',
-    city TEXT DEFAULT 'Cairo',
-    property_type TEXT DEFAULT 'Apartment',
-    deal_type TEXT DEFAULT 'sale' CHECK (deal_type IN ('sale', 'rent', 'resale', 'primary')),
-=======
     -- §21 no-fabrication: unknown property facts stay NULL — never silently
     -- materialized as invented defaults ('New Cairo' / 'Cairo' / 'Apartment' /
     -- 'sale' / 'Core & Shell' / 'Fair Value'). Migration 20261003_022 drops
@@ -59,28 +49,19 @@ CREATE TABLE IF NOT EXISTS public.listings (
     city TEXT,
     property_type TEXT,
     deal_type TEXT CHECK (deal_type IN ('sale', 'rent', 'resale', 'primary')),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     price NUMERIC(15, 2) NOT NULL DEFAULT 0,
     price_currency TEXT DEFAULT 'EGP',
     bedrooms INT DEFAULT 0,
     bathrooms INT DEFAULT 0,
     area_sqm NUMERIC(10, 2) NOT NULL DEFAULT 0,
-<<<<<<< HEAD
-    finishing_type TEXT DEFAULT 'Core & Shell',
-=======
     finishing_type TEXT,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     delivery_year INT,
     down_payment NUMERIC(15, 2) DEFAULT 0,
     installment_years INT DEFAULT 0,
     monthly_installment NUMERIC(15, 2) DEFAULT 0,
     roi_percentage NUMERIC(5, 2),
     cap_rate NUMERIC(5, 2),
-<<<<<<< HEAD
-    valuation_status TEXT DEFAULT 'Fair Value',
-=======
     valuation_status TEXT,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     -- The public site and the legacy Firestore documents use a wider status
     -- vocabulary than the original six values: 'available' is what the client
     -- feed and the seed data emit, and 'Pending Review' is what the
@@ -136,10 +117,7 @@ CREATE TABLE IF NOT EXISTS public.listings (
     longitude NUMERIC,
     raw_data JSONB DEFAULT '{}'::jsonb,
     embedding vector(1536),
-<<<<<<< HEAD
-=======
     embedding_768 vector(768),          -- Gemini gemini-embedding-001 target (see 013)
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -156,17 +134,11 @@ CREATE TABLE IF NOT EXISTS public.leads (
     email TEXT,
     channel TEXT DEFAULT 'whatsapp' CHECK (channel IN ('whatsapp', 'telegram', 'web', 'phone', 'referral', 'property_finder')),
     lead_type TEXT DEFAULT 'buyer' CHECK (lead_type IN ('buyer', 'renter', 'investor', 'seller', 'owner')),
-<<<<<<< HEAD
-    -- 'Viewing Requested' is written by /api/leads/request-viewing; the rest
-    -- are the canonical pipeline values.
-    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture', 'Viewing Requested')),
-=======
     -- Canonical status values only (Phase 10 migration 016: the odd free-form
     -- 'Viewing Requested' value was normalized to 'viewing_scheduled' and the
     -- CHECK narrowed). leads.status is a DERIVED coarse projection of
     -- pipeline_stage — kept in sync by trigger_leads_status_sync.
     status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'qualified', 'viewing_scheduled', 'negotiating', 'won', 'lost', 'nurture')),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     target_compound TEXT,
     target_property_type TEXT,
     budget_min NUMERIC(15, 2) DEFAULT 0,
@@ -292,8 +264,6 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_queue (
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
-<<<<<<< HEAD
-=======
 -- Easy Listing (migration 018): broker MAP_SHEET staging. Written by
 -- /api/easy-listing through the service role; read by staff + the Excel
 -- map-sheet exports. A row is promoted to MAIN_INVENTORY only by an
@@ -324,7 +294,6 @@ CREATE TABLE IF NOT EXISTS public.map_sheet_entries (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 -- ------------------------------------------------------------------------------
 -- 8. Unified Memory & Vector Context Engine (for AI Agents)
 -- ------------------------------------------------------------------------------
@@ -410,8 +379,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-<<<<<<< HEAD
-=======
 -- ─── Phase 10 (migration 016): CRM pipeline unification ─────────────────────
 -- pipeline_stage is the canonical vocabulary; leads.status is a derived coarse
 -- projection kept in sync by trigger_leads_status_sync, and every stage/status
@@ -477,18 +444,14 @@ BEGIN
 END;
 $$;
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_profiles') THEN
         CREATE TRIGGER trigger_update_profiles BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
-<<<<<<< HEAD
-=======
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_map_sheet_entries') THEN
         CREATE TRIGGER trigger_update_map_sheet_entries BEFORE UPDATE ON public.map_sheet_entries FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_listings') THEN
         CREATE TRIGGER trigger_update_listings BEFORE UPDATE ON public.listings FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
@@ -504,15 +467,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_memory') THEN
         CREATE TRIGGER trigger_update_memory BEFORE UPDATE ON public.unified_memory FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
     END IF;
-<<<<<<< HEAD
-=======
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_leads_status_sync') THEN
         CREATE TRIGGER trigger_leads_status_sync BEFORE UPDATE ON public.leads FOR EACH ROW EXECUTE FUNCTION public.sync_lead_status_from_stage();
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_leads_stage_audit') THEN
         CREATE TRIGGER trigger_leads_stage_audit AFTER UPDATE ON public.leads FOR EACH ROW EXECUTE FUNCTION public.audit_lead_stage_transition();
     END IF;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 END $$;
 
 -- ------------------------------------------------------------------------------
@@ -608,14 +568,10 @@ BEGIN
     -- could edit or delete the whole catalogue.
     DROP POLICY IF EXISTS "Public can view active listings" ON public.listings;
     CREATE POLICY "Public can view active listings" ON public.listings
-<<<<<<< HEAD
-        FOR SELECT USING (status = 'active' OR public.is_staff());
-=======
         FOR SELECT USING (
             (status = 'active' AND publish_status = 'PUBLISHABLE')
             OR public.is_staff()
         );
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     DROP POLICY IF EXISTS "Authenticated users can manage listings" ON public.listings;
     DROP POLICY IF EXISTS "listings_staff_write" ON public.listings;
@@ -655,15 +611,12 @@ BEGIN
     CREATE POLICY "whatsapp_queue_staff_access" ON public.whatsapp_queue
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
-<<<<<<< HEAD
-=======
     -- Easy Listing broker staging: carries the uploader's contact details +
     -- unverified market intel, so staff-only like the queue above.
     DROP POLICY IF EXISTS "map_sheet_entries_staff_access" ON public.map_sheet_entries;
     CREATE POLICY "map_sheet_entries_staff_access" ON public.map_sheet_entries
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     DROP POLICY IF EXISTS "Authenticated users can access unified memory" ON public.unified_memory;
     DROP POLICY IF EXISTS "unified_memory_staff_access" ON public.unified_memory;
     CREATE POLICY "unified_memory_staff_access" ON public.unified_memory
@@ -790,8 +743,6 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     location TEXT,
     reminder_sent BOOLEAN DEFAULT FALSE,
     notes TEXT,
-<<<<<<< HEAD
-=======
     -- Phase 8 (migration 014): request-capture fields — the canonical table
     -- for ALL viewing flows (public site form, concierge, agent scheduling).
     property_code TEXT,
@@ -811,13 +762,10 @@ CREATE TABLE IF NOT EXISTS public.viewings (
     -- no anon-visible rows are needed.
     survey_token TEXT,
     survey_sent_at TIMESTAMPTZ,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
-<<<<<<< HEAD
-=======
 CREATE UNIQUE INDEX IF NOT EXISTS uq_viewings_survey_token
     ON public.viewings(survey_token)
     WHERE survey_token IS NOT NULL;
@@ -863,7 +811,6 @@ CREATE TABLE IF NOT EXISTS public.viewing_feedback (
 CREATE INDEX IF NOT EXISTS idx_viewing_feedback_lead ON public.viewing_feedback(lead_id);
 CREATE INDEX IF NOT EXISTS idx_viewing_feedback_review_status ON public.viewing_feedback(review_status);
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 -- ─── Concierge selections (S8 curated portfolios shared with a lead) ─────────
 -- Reachable by link at /concierge/{leadId}, so readable without an account.
 CREATE TABLE IF NOT EXISTS public.concierge_selections (
@@ -1044,9 +991,6 @@ CREATE TABLE IF NOT EXISTS public.failed_orchestrations (
     attempts INT DEFAULT 0,
     last_error TEXT,
     payload JSONB DEFAULT '{}'::jsonb,
-<<<<<<< HEAD
-    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-=======
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     -- Phase 11 dispatcher lifecycle: set when the same pipeline later
     -- succeeded. NULL = still on the dead letter queue.
@@ -1068,7 +1012,6 @@ CREATE TABLE IF NOT EXISTS public.automation_runs (
     summary JSONB DEFAULT '{}'::jsonb,
     error TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 );
 
 CREATE TABLE IF NOT EXISTS public.search_queries (
@@ -1104,8 +1047,6 @@ CREATE INDEX IF NOT EXISTS idx_pages_slug_locale ON public.pages(slug, locale);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bot_commands_bot ON public.bot_commands(bot_id, status);
 CREATE INDEX IF NOT EXISTS idx_workflow_executions_workflow ON public.workflow_executions(workflow_id);
-<<<<<<< HEAD
-=======
 CREATE INDEX IF NOT EXISTS idx_automation_runs_job_started ON public.automation_runs(job, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_automation_runs_failures ON public.automation_runs(job, started_at DESC) WHERE status = 'failed';
 CREATE INDEX IF NOT EXISTS idx_failed_orchestrations_open ON public.failed_orchestrations(pipeline, created_at DESC) WHERE resolved_at IS NULL;
@@ -1113,7 +1054,6 @@ CREATE INDEX IF NOT EXISTS idx_map_sheet_internal_code ON public.map_sheet_entri
 CREATE INDEX IF NOT EXISTS idx_map_sheet_uploader_phone ON public.map_sheet_entries(uploader_phone);
 CREATE INDEX IF NOT EXISTS idx_map_sheet_photo_status ON public.map_sheet_entries(photo_request_status);
 CREATE INDEX IF NOT EXISTS idx_map_sheet_created_at ON public.map_sheet_entries(created_at DESC);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 -- ==============================================================================
 -- RLS for the migrated tables.
@@ -1139,10 +1079,7 @@ ALTER TABLE public.bot_commands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workflows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workflow_executions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.failed_orchestrations ENABLE ROW LEVEL SECURITY;
-<<<<<<< HEAD
-=======
 ALTER TABLE public.automation_runs ENABLE ROW LEVEL SECURITY;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 ALTER TABLE public.search_queries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
@@ -1183,8 +1120,6 @@ BEGIN
     CREATE POLICY "viewings_staff_access" ON public.viewings
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
-<<<<<<< HEAD
-=======
     -- Phase 9 feedback rows: staff-only on purpose — the client survey is
     -- submitted through the server-side token-gated endpoint (the survey
     -- token on viewings IS the capability), so no anon policy exists.
@@ -1192,7 +1127,6 @@ BEGIN
     CREATE POLICY "viewing_feedback_staff_access" ON public.viewing_feedback
         FOR ALL TO authenticated USING (public.is_staff()) WITH CHECK (public.is_staff());
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     -- A concierge portfolio was previously readable by `anon` with USING (TRUE).
     -- Postgres has no get/list distinction, so that did not scope the read to a
     -- link the recipient already holds: it authorises `SELECT * FROM
@@ -1275,13 +1209,10 @@ BEGIN
     CREATE POLICY "failed_orchestrations_admin_read" ON public.failed_orchestrations
         FOR SELECT TO authenticated USING (public.is_admin());
 
-<<<<<<< HEAD
-=======
     DROP POLICY IF EXISTS "automation_runs_staff_read" ON public.automation_runs;
     CREATE POLICY "automation_runs_staff_read" ON public.automation_runs
         FOR SELECT TO authenticated USING (public.is_staff());
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     DROP POLICY IF EXISTS "search_queries_staff_read" ON public.search_queries;
     CREATE POLICY "search_queries_staff_read" ON public.search_queries
         FOR SELECT TO authenticated USING (public.is_staff());
@@ -2009,11 +1940,8 @@ $$;
 
 -- ------------------------------------------------------------------------------
 -- 16. Gemini 768-Dimension Vector Search Function
-<<<<<<< HEAD
-=======
 --    Targets embedding_768 (added in 013_master_inventory_activation — audit
 --    finding B5: the column the generators write to was missing from schema).
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION match_listings_gemini(
     query_embedding vector(768),
@@ -2521,12 +2449,8 @@ BEGIN
       ST_SetSRID(ST_MakePoint(capital_lng::float8, capital_lat::float8), 4326)::geography,
       radius_meters::float8
     )
-<<<<<<< HEAD
-    AND (status = 'available' OR status = 'active');
-=======
     AND (status = 'available' OR status = 'active')
     AND publish_status = 'PUBLISHABLE';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 END;
 $$ LANGUAGE plpgsql;
 
@@ -2546,8 +2470,6 @@ BEGIN
   EXCEPTION WHEN duplicate_object THEN NULL;
   END;
 END $$;
-<<<<<<< HEAD
-=======
 
 -- ─── 49. Broker sessions (folded from infra/supabase/migrations, policy fixed) ──
 -- RAG conversation memory per client session. Policy is restricted to
@@ -2581,4 +2503,3 @@ DROP POLICY IF EXISTS "service_role_all" ON public.broker_sessions;
 CREATE POLICY "service_role_all" ON public.broker_sessions
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1

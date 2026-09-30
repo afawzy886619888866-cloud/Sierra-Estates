@@ -1,12 +1,6 @@
 /**
  * GET /api/feeds/property-finder — PropertyFinder XML listing feed.
  *
-<<<<<<< HEAD
- * Serves REAL inventory: the canonical `units` collection via
- * InventoryQueryService (same source as /api/inventory), filtered to
- * broker-listed sale units with a price. Falls back to the committed
- * snapshot so the feed never returns fabricated demo listings.
-=======
  * PUBLISH GATE (activation plan Phase D): this feed advertises units on a
  * public third-party portal, so it exports ONLY verified
  * `publish_status = 'PUBLISHABLE'` rows from the canonical `units`
@@ -20,16 +14,11 @@
  * The committed-snapshot fallback was removed with the same doctrine
  * /api/listings applies: unverified rows never reach a public surface, so
  * when nothing verified exists the honest answer is an empty <list>.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  */
 import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { InventoryQueryService } from '@/lib/services/inventory-query';
-<<<<<<< HEAD
-import snapshot from '@/lib/inventory/snapshot.json';
-=======
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -75,12 +64,6 @@ type FeedUnit = {
 };
 
 async function loadUnits(): Promise<FeedUnit[]> {
-<<<<<<< HEAD
-  // 1. Canonical Supabase `units` collection (broker listings only)
-  try {
-    const rows = await InventoryQueryService.query({
-      status: 'available',
-=======
   // Canonical Supabase `units` collection (broker listings only) — PUBLISH
   // GATED (Phase D): only verified PUBLISHABLE rows may be advertised on an
   // external portal, enforced inside the query itself.
@@ -88,27 +71,12 @@ async function loadUnits(): Promise<FeedUnit[]> {
     const rows = await InventoryQueryService.query({
       status: 'available',
       publishStatus: 'PUBLISHABLE',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       ownerType: 'broker',
       limit: 1000,
     });
     const units = (rows as unknown as FeedUnit[]).filter((u) => Number(u.price) > 0);
     if (units.length > 0) return units;
   } catch (err) {
-<<<<<<< HEAD
-    logger.warn('[feeds/property-finder] Supabase query failed, falling back to snapshot:', err);
-  }
-
-  // 2. Committed snapshot (real synced data — never fabricated)
-  const snapUnits = ((snapshot as any)?.units || []) as FeedUnit[];
-  return snapUnits.filter(
-    (u) =>
-      u &&
-      (u.mode === 'sale' || u.dealType === 'sale') &&
-      (Number(u.price) > 0 || Number(u.egpM) > 0) &&
-      !String(u.segment || '').startsWith('owners_')
-  );
-=======
     logger.warn('[feeds/property-finder] Supabase query failed:', err);
   }
 
@@ -136,7 +104,6 @@ function deriveCity(compound: string, unitCity?: string | null): string {
   if (/shorouk|شروق/.test(lower)) return 'Cairo';
   if (/alex|إسكندرية|اسكندرية/.test(lower)) return 'Alexandria';
   return 'Cairo';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export async function GET() {
@@ -192,42 +159,16 @@ export async function GET() {
       .filter(Boolean)
       .slice(0, 10);
 
-<<<<<<< HEAD
-  for (const u of units.slice(0, 1000)) {
-    const reference = u.code || u.id || '';
-    if (!reference) continue;
-    const price = Number(u.price) > 0 ? Number(u.price) : Number(u.egpM) * 1_000_000;
-    if (!(price > 0)) continue;
-
-    const compound = u.compound || u.location || 'New Cairo';
-    const city = u.city || 'Cairo';
-    const type = u.propertyType || u.type || 'Apartment';
-    const beds = Number(u.bedrooms ?? u.beds) || 0;
-    const images = [u.img || u.photoUrl || '', ...(Array.isArray(u.images) ? u.images : [])]
-      .filter(Boolean)
-      .slice(0, 10);
-
-=======
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     xml += `  <property>\n`;
     xml += `    <reference_number>${xmlEscape(reference)}</reference_number>\n`;
     xml += `    <title_en>${xmlEscape(`${type} in ${compound}`)}</title_en>\n`;
     xml += `    <description_en>${xmlEscape(
-<<<<<<< HEAD
-      `${type} for sale in ${compound}${u.zone ? `, ${u.zone}` : ''}. ${beds} bedrooms, ${Number(u.area) || 0} sqm. Verified Sierra Estates inventory.`
-    )}</description_en>\n`;
-    xml += `    <price>${price}</price>\n`;
-    xml += `    <bedroom>${beds}</bedroom>\n`;
-    xml += `    <bathroom>${Number(u.bath) || 0}</bathroom>\n`;
-    xml += `    <size>${Number(u.area) || 0}</size>\n`;
-=======
       `${type} for sale in ${compound}${u.zone ? `, ${u.zone}` : ''}. ${Number(beds)} bedrooms, ${Number(area)} sqm. Sierra Estates inventory.`
     )}</description_en>\n`;
     xml += `    <price>${price}</price>\n`;
     xml += `    <bedroom>${Number(beds)}</bedroom>\n`;
     xml += `    <bathroom>${Number(baths)}</bathroom>\n`;
     xml += `    <size>${Number(area)}</size>\n`;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     xml += `    <property_type>${xmlEscape(type)}</property_type>\n`;
     xml += `    <city>${xmlEscape(city)}</city>\n`;
     xml += `    <community>${xmlEscape(compound)}</community>\n`;
@@ -244,10 +185,7 @@ export async function GET() {
       xml += `    </photo>\n`;
     }
     xml += `  </property>\n`;
-<<<<<<< HEAD
-=======
     exported++;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 
   xml += `</list>`;

@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
-import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
-=======
 import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { getRecord, insertRecord, updateRecord, deleteRecord, type RecordData } from '@sierra-estates/db';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
 import { leadInScope } from '@/lib/server/partner-scope';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { logger } from '@/lib/logger';
 
 // Force dynamic rendering — uses Supabase/auth at runtime
@@ -43,8 +37,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json();
     const patch = leadPatchToColumns(mapSpaToLeadPatch(body));
 
-<<<<<<< HEAD
-=======
     // Phase 10 transition audit: capture the stage BEFORE the write so the
     // actor-context record (audit_logs) complements the DB trigger that logs
     // into orchestration_history.
@@ -72,14 +64,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const updated = await updateRecord('leads', id, { ...patch, updatedAt: new Date().toISOString() });
     if (!updated) {
       return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
     }
 
-<<<<<<< HEAD
-=======
     if (patch.pipelineStage !== undefined && previous && previous.pipelineStage !== undefined
         && String(previous.pipelineStage) !== String(patch.pipelineStage)) {
       await insertRecord('audit_logs', {
@@ -94,7 +83,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return NextResponse.json({ success: true, lead: mapLeadToSpa(id, rowToLeadDoc(updated)) });
   } catch (err) {
     logger.error('Error updating lead:', err);

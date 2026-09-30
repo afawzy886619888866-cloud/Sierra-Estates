@@ -8,15 +8,12 @@ jest.mock('@sierra-estates/db', () => ({
 
 jest.mock('@/lib/server/auth-guard', () => ({
   verifyAdminRequest: (...args: unknown[]) => verifyAdminRequestMock(...args),
-<<<<<<< HEAD
-=======
   // The leads route now serves partner accounts too (scoped reads) — the
   // legacy tests exercise it as staff, so the portal guard resolves admin.
   verifyPortalRequest: (...args: unknown[]) =>
     verifyAdminRequestMock(...args).then((r: any) =>
       r?.authenticated ? { ...r, access: 'admin', scope: null } : { authenticated: false, method: 'none' }
     ),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }));
 
 import { GET } from '@/app/api/admin/leads/route';

@@ -213,29 +213,14 @@ async function buildRecommendationMessage(
     });
 
     // Also pull latest direct-owner units from Shared Memory Bus RAG
-<<<<<<< HEAD
-=======
     // §21 no-fabrication: unknown fields stay empty — never default to
     // 'New Cairo'/'Apartment'/3 beds; photo availability is derived from the
     // record itself, never claimed.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     try {
       const ownerMemories = await sharedMemory.search('', ['owner_unit']);
       for (const mem of ownerMemories) {
         const d = (mem.value as any)?.data || mem.value;
         if (d && (d.compound || d.priceEgp)) {
-<<<<<<< HEAD
-          units.unshift({
-            id: d.sierraCode || mem.id,
-            compound: d.compound || 'New Cairo',
-            title: `${d.compound} (${d.propertyType || 'Apartment'})`,
-            price: d.priceEgp || d.price || 0,
-            area: d.areaSqm || d.area_sqm || 0,
-            bedrooms: d.bedrooms || 3,
-            type: d.propertyType || d.type || 'Apartment',
-            finishing: d.finishing || 'Semi-Finished',
-            hasPhoto: true,
-=======
           const rawPhotos = d.photos ?? d.images ?? d.imageUrls ?? d.img;
           const photoCount = Array.isArray(rawPhotos)
             ? rawPhotos.length
@@ -253,7 +238,6 @@ async function buildRecommendationMessage(
             type: knownType,
             finishing: d.finishing || '',
             hasPhoto: photoCount > 0,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             status: 'available',
             isOwner: true,
           });
@@ -269,16 +253,6 @@ async function buildRecommendationMessage(
         // Direct Owner Golden Deal bonus
         if (u.isOwner) score += 25;
 
-<<<<<<< HEAD
-        // Compound match
-        if (data.compounds?.length) {
-          const nameMatch = data.compounds.some(
-            (c) =>
-              u.compound?.toLowerCase().includes(c.toLowerCase()) ||
-              c.toLowerCase().includes(u.compound?.toLowerCase() || '')
-          );
-          if (nameMatch) score += 40;
-=======
         // Compound match — only when the unit actually carries a compound;
         // unknown ('') must NOT match every preference.
         if (data.compounds?.length) {
@@ -291,7 +265,6 @@ async function buildRecommendationMessage(
             );
             if (nameMatch) score += 40;
           }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         } else {
           score += 20; // no preference = any compound is ok
         }
@@ -339,17 +312,11 @@ async function buildRecommendationMessage(
       const ownerBadge = u.isOwner
         ? (lang === 'ar' ? '   💎 *مباشر من المالك (بدون عمولة)*\n' : '   💎 *Direct Owner Deal (0% Commission)*\n')
         : '';
-<<<<<<< HEAD
-      if (lang === 'ar') {
-        lines.push(
-          `*${i + 1}. ${u.compound || 'New Cairo'}*\n` +
-=======
       // §21: unknown compound shows a generic honest label, never 'New Cairo'
       const unitLabel = u.compound || u.title || (lang === 'ar' ? 'وحدة عقارية' : 'Property listing');
       if (lang === 'ar') {
         lines.push(
           `*${i + 1}. ${unitLabel}*\n` +
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           ownerBadge +
           `   📐 ${u.area || '?'} م²  •  🛏️ ${u.bedrooms || '?'} غرف\n` +
           `   💰 ${priceM}\n` +
@@ -357,11 +324,7 @@ async function buildRecommendationMessage(
         );
       } else {
         lines.push(
-<<<<<<< HEAD
-          `*${i + 1}. ${u.compound || 'New Cairo'}*\n` +
-=======
           `*${i + 1}. ${unitLabel}*\n` +
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           ownerBadge +
           `   📐 ${u.area || '?'} sqm  •  🛏️ ${u.bedrooms || '?'} bed\n` +
           `   💰 ${priceM}\n` +
@@ -417,11 +380,7 @@ async function buildRecommendationMessage(
         type: 'buyer_preference',
         entityId: session.phone,
         actor: session.data.clientName || 'Buyer',
-<<<<<<< HEAD
-        summary: `Buyer profile: ${data.intent || 'buy'} in ${data.compounds?.join(', ') || 'Any'} with budget ${data.budgetEGP ? `${(data.budgetEGP / 1_000_000).toFixed(1)}M EGP` : 'flexible'}`,
-=======
         summary: `Buyer profile: ${data.intent || 'unspecified'} in ${data.compounds?.join(', ') || 'Any'} with budget ${data.budgetEGP ? `${(data.budgetEGP / 1_000_000).toFixed(1)}M EGP` : 'flexible'}`,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         data: {
           ...session.data,
           phone: session.phone,
@@ -437,11 +396,7 @@ async function buildRecommendationMessage(
         compound: data.compounds?.[0],
         budgetRange: data.budgetEGP ? { min: 0, max: data.budgetEGP } : undefined,
         targetPropertyType: data.unitType,
-<<<<<<< HEAD
-        tags: ['lead', data.intent || 'buy', session.lang],
-=======
         tags: ['lead', data.intent || 'unspecified', session.lang],
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         lastUpdated: new Date().toISOString(),
       });
     } catch (_eccErr) {

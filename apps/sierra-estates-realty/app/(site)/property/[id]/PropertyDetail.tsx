@@ -19,52 +19,15 @@ export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
 
-<<<<<<< HEAD
-  // Live inventory lookup — the same source that powers /properties and the
-  // map. Falls back to the static catalog only if the API has no match.
-=======
   // Phase 4/B3: single-row lookup via /api/listings/[id] instead of
   // downloading the entire inventory to render one unit. The endpoint returns
   // the app-vocabulary record (compound/price/beds/area/mode/…) and a real
   // 404 for unknown ids — no fabricated fallback (Master Rule 5).
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [liveUnit, setLiveUnit] = useState<CardListing | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-<<<<<<< HEAD
-    const needle = String(id).trim().toLowerCase();
-    fetch('/api/inventory')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled || !d || !Array.isArray(d.units)) return;
-        const u = d.units.find((x: any) =>
-          String(x.code || '').toLowerCase() === needle ||
-          String(x.id || '').toLowerCase() === needle
-        );
-        if (u) {
-          const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
-          setLiveUnit({
-            id: 0,
-            code: u.code || u.id,
-            cmp: u.compound || u.location || 'New Cairo',
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds ?? 3,
-            bath: u.bath ?? 2,
-            area: u.area ?? 0,
-            egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
-            usd: u.usd ?? (u.price ? (mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5)) : 0),
-            ai: Number(u.aiScore ?? 8.5),
-            tag: u.isNew ? 'New Listing' : 'Live Inventory',
-            mode,
-            agent: 'Sierra Advisor Desk',
-            ago: u.timestamp || 'Live sync',
-            img: u.img || u.photoUrl || (Array.isArray(u.images) && u.images[0]) || '',
-          });
-        }
-=======
     fetch(`/api/listings/${encodeURIComponent(String(id))}`)
       .then((r) => {
         if (r.status === 404) return null;
@@ -93,7 +56,6 @@ export default function PropertyDetail({ id }: { id: string }) {
           ago: u.ago || 'Live sync',
           img: u.img || (Array.isArray(u.images) && u.images[0]) || '',
         });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       })
       .catch(() => {})
       .finally(() => {
@@ -111,8 +73,6 @@ export default function PropertyDetail({ id }: { id: string }) {
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-<<<<<<< HEAD
-=======
 
   // ── Phase 8: real viewing request flow (PROPERTY → REQUEST → SLOT →
   // CONFIRM). The old block here downloaded an .ics with a HARDCODED PAST
@@ -160,7 +120,6 @@ export default function PropertyDetail({ id }: { id: string }) {
       setViewingSubmitting(false);
     }
   };
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
   const openLightbox = (idx: number) => {
@@ -360,11 +319,7 @@ export default function PropertyDetail({ id }: { id: string }) {
             <span className="sep">/</span>
             <Link href="/properties">{t('navProps')}</Link>
             <span className="sep">/</span>
-<<<<<<< HEAD
-            <span>{p.type} in {p.cmp}</span>
-=======
             <span>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</span>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
         </div>
       </header>
@@ -372,17 +327,10 @@ export default function PropertyDetail({ id }: { id: string }) {
       <section className="block">
         <div className="wrap">
           <div className="pdetail-head rv">
-<<<<<<< HEAD
-            <h1 className="pdetail-title">{p.type} in {p.cmp}</h1>
-            <div className="pdetail-loc">
-              <MapPin style={{ width: 15, height: 15 }} />
-              <span>{p.cmp} · {p.zone}, New Cairo</span>
-=======
             <h1 className="pdetail-title">{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</h1>
             <div className="pdetail-loc">
               <MapPin style={{ width: 15, height: 15 }} />
               <span>{[p.cmp, p.zone].filter(Boolean).join(' · ')}</span>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               <span>·</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{p.code}</span>
             </div>
@@ -392,10 +340,6 @@ export default function PropertyDetail({ id }: { id: string }) {
             <div>
               <div className="gallery-main rv" onClick={() => openLightbox(0)} style={{ cursor: 'zoom-in' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-<<<<<<< HEAD
-                <img src={hero} alt={`${p.type} in ${p.cmp}`} />
-                <div className="gallery-badges flex flex-wrap gap-1.5">
-=======
                 <img src={hero} alt={`${p.type || 'Property'} in ${p.cmp || '—'}`} />
                 <div className="gallery-badges flex flex-wrap gap-1.5">
                   {!photo && !p.img && (
@@ -407,7 +351,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                       {isAr ? '📷 صورة تعبيرية' : '📷 Representative imagery'}
                     </span>
                   )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <ShieldCheck style={{ width: 12, height: 12 }} />
                     <span>{isAr ? 'مالك مباشر' : 'Direct Owner'}</span>
@@ -448,26 +391,6 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="specs-grid rv">
                 <div className="spec-box">
                   <span>{t('beds')}</span>
-<<<<<<< HEAD
-                  <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds}</b>
-                </div>
-                <div className="spec-box">
-                  <span>{t('baths')}</span>
-                  <b><Bath style={{ width: 15, height: 15 }} /> {p.bath}</b>
-                </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'المساحة' : 'Area'}</span>
-                  <b><Scaling style={{ width: 15, height: 15 }} /> {p.area} m²</b>
-                </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
-                  <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing || 'Ultra Super Lux'}</b>
-                </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
-                  <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability || 'Available'}</b>
-                </div>
-=======
                   <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds > 0 ? p.beds : '?'}</b>
                 </div>
                 <div className="spec-box">
@@ -490,7 +413,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                     <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability}</b>
                   </div>
                 )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
                   <div className="spec-box">
                     <span>{isAr ? 'سعر المتر' : 'Price / m²'}</span>
@@ -509,13 +431,8 @@ export default function PropertyDetail({ id }: { id: string }) {
                 </h2>
                 <p style={{ color: 'var(--muted)', maxWidth: '68ch' }}>
                   {isAr
-<<<<<<< HEAD
-                    ? `${p.type} بمساحة ${p.area} م² في ${p.cmp}، ${p.zone}. تضم ${p.beds} غرف نوم و${p.bath} حمامات، ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.`
-                    : `A ${p.area} m² ${p.type.toLowerCase()} in ${p.cmp}, ${p.zone}. ${p.beds} bedrooms and ${p.bath} bathrooms, scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.`}
-=======
                     ? `${p.type || 'وحدة'} بمساحة ${p.area > 0 ? p.area : '—'} م² في ${p.cmp || '—'}${p.zone ? `، ${p.zone}` : ''}.${p.beds > 0 ? ` تضم ${p.beds} غرف نوم و${p.bath > 0 ? p.bath : '—'} حمامات.` : ''}${p.ai > 0 ? ` ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.` : ''}`
                     : `A ${p.area > 0 ? p.area : '—'} m² ${p.type ? p.type.toLowerCase() : 'property'} in ${p.cmp || '—'}${p.zone ? `, ${p.zone}` : ''}.${p.beds > 0 ? ` ${p.beds} bedrooms and ${p.bath > 0 ? p.bath : '—'} bathrooms.` : ''}${p.ai > 0 ? ` Scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.` : ''}`}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                 </p>
 
                 {/* Mortgage & Investment Yield Analyzer */}
@@ -540,9 +457,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                   </div>
 
                   {(() => {
-<<<<<<< HEAD
-                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 12_000_000);
-=======
                     // §21 no-fabrication: the analyzer needs a REAL price.
                     // Without one it says so — it never computes from a
                     // invented 12M EGP base.
@@ -557,7 +471,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                       );
                     }
                     const baseEGP = p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                     const downPayment = (baseEGP * 30) / 100;
                     const financedAmount = baseEGP - downPayment;
                     const monthlyMortgage = Math.round((financedAmount * (1 + 0.12 * 7)) / (7 * 12));
@@ -593,11 +506,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                         <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'العائد الصافي (Cap Rate)' : 'Net Cap Rate / Yield'}</span>
                           <strong style={{ fontSize: 15, color: '#38BDF8', fontFamily: 'var(--mono)' }}>
-<<<<<<< HEAD
-                            {p.yield ? `${p.yield}%` : '8.5%'}
-=======
                             {p.yield ? `${p.yield}%` : (isAr ? 'غير متاح' : 'N/A')}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                           </strong>
                         </div>
                       </div>
@@ -612,10 +521,6 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="pdetail-cta luxury-inst-card rv">
                 {(() => {
                   const isRent = p.mode === 'rent';
-<<<<<<< HEAD
-                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10_000_000));
-                  const formattedEgpPrice = `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`;
-=======
                   // §21: honest price — "Price on request" when unknown,
                   // never an invented 10M EGP figure.
                   const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 0));
@@ -623,7 +528,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                   const formattedEgpPrice = hasPrice
                     ? `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`
                     : (isAr ? 'السعر عند الطلب' : 'Price on request');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
                   return (
                     <>
@@ -631,14 +535,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                         {formattedEgpPrice}
                       </div>
                       <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
-<<<<<<< HEAD
-                        {isRent ? (isAr ? 'إيجار شهري موثق' : 'Verified Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
-                      </div>
-
-                      <div style={{ marginBottom: 16 }}>
-                        <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
-                      </div>
-=======
                         {isRent ? (isAr ? 'إيجار شهري' : 'Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
                       </div>
 
@@ -647,7 +543,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                           <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65} />
                         </div>
                       )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
                       <button
                         type="button"
@@ -727,41 +622,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <FileText className="i" style={{ width: 14, height: 14 }} />
                   <span>{isAr ? 'تحميل البروشور (PDF)' : 'Download PDF Brochure'}</span>
                 </button>
-<<<<<<< HEAD
-                <button
-                  type="button"
-                  onClick={() => {
-                    const icsContent = [
-                      'BEGIN:VCALENDAR',
-                      'VERSION:2.0',
-                      'PRODID:-//Sierra Estates//VIP Viewing//EN',
-                      'BEGIN:VEVENT',
-                      `SUMMARY:VIP Viewing: ${p.code} (${p.type} in ${p.cmp})`,
-                      `DESCRIPTION:Private property walkthrough scheduled with ${p.agent} (Sierra Estates). Contact: +201092048333`,
-                      `LOCATION:${p.cmp}, ${p.zone}, New Cairo`,
-                      'DTSTART:20260901T100000Z',
-                      'DTEND:20260901T110000Z',
-                      'END:VEVENT',
-                      'END:VCALENDAR',
-                    ].join('\r\n');
-                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', `sierra-viewing-${p.code}.ics`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="btn btn-ghost"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
-                >
-                  <Calendar className="i" style={{ width: 14, height: 14 }} />
-                  <span>{isAr ? 'حفظ الموعد في التقويم (.ics)' : 'Add to Calendar (.ics)'}</span>
-                </button>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.cmp} ${p.zone || 'New Cairo'} Egypt`)}`}
-=======
                 {/* Phase 8 — real viewing request flow (replaces the old
                     hardcoded-date .ics download, which fabricated a slot) */}
                 <button
@@ -813,7 +673,6 @@ export default function PropertyDetail({ id }: { id: string }) {
                 )}
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${[p.cmp, p.zone].filter(Boolean).join(' ')} Egypt`.trim())}`}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-ghost"

@@ -118,19 +118,6 @@ async function processBatch(batchSize: number): Promise<number> {
     for (let i = 0; i < listings.length; i++) {
         const listing = listings[i];
         try {
-<<<<<<< HEAD
-            const contextText = [
-                `Title: ${listing.title || 'Luxury Unit'}`,
-                `Compound: ${listing.compound || 'New Cairo'}`,
-                `Type: ${listing.property_type || 'Apartment'}`,
-                `Deal: ${listing.deal_type || 'sale'}`,
-                `Price: ${listing.price ? Number(listing.price).toLocaleString() + ' EGP' : 'Price on request'}`,
-                `Bedrooms: ${listing.bedrooms || '3'}`,
-                `Area: ${listing.area_sqm || '200'} sqm`,
-                `Finishing: ${listing.finishing_type || 'Finished'}`,
-                `Description: ${listing.description || ''}`,
-            ].join(' | ');
-=======
             // §21 no-fabrication: the embedding context carries only fields the
             // row actually states — absent fields are omitted entirely, never
             // filled with invented 'New Cairo' / 'Apartment' / 'sale' / 3BR /
@@ -146,7 +133,6 @@ async function processBatch(batchSize: number): Promise<number> {
                 listing.finishing_type ? `Finishing: ${listing.finishing_type}` : null,
                 listing.description ? `Description: ${listing.description}` : null,
             ].filter(Boolean).join(' | ');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
             const embedding = await embedWithRetry(contextText);
 
@@ -158,11 +144,7 @@ async function processBatch(batchSize: number): Promise<number> {
             if (!updateErr) {
                 batchSuccess++;
                 const percent = Math.round(((i + 1) / listings.length) * 100);
-<<<<<<< HEAD
-                process.stdout.write(`\r[${i + 1}/${listings.length}] (${percent}%) - ${listing.compound || 'New Cairo'}: ${listing.title?.slice(0, 35)}...`);
-=======
                 process.stdout.write(`\r[${i + 1}/${listings.length}] (${percent}%) - ${listing.compound || listing.ref_id || listing.id}: ${listing.title?.slice(0, 35)}...`);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             }
 
             // Pacing delay to avoid burst rate limits

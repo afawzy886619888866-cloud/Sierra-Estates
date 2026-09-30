@@ -257,13 +257,8 @@ export class OpenClawAgent {
     else if (/(شقة|apartment|شقه)/i.test(normalizedRawText))
       propertyType = "Apartment";
 
-<<<<<<< HEAD
-    // 4. Extract Area (sqm)
-    let area_sqm = 200;
-=======
     // 4. Extract Area (sqm) — never defaulted; unknown stays null (anti-fabrication)
     let area_sqm: number | null = null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const areaMatch = normalizedRawText.match(
       /(\d{2,4})\s*(?:متر|م²|م2|م(?!\p{L})|sqm|sq\.m|m2|meter)/iu,
     );
@@ -279,10 +274,7 @@ export class OpenClawAgent {
 
     // 6. Extract Price with Advanced Arabic Idioms
     let price = 0;
-<<<<<<< HEAD
-=======
     let priceNeedsVerification = false;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     // Pattern A: "مليون ونصف" or "مليون ونص" (1.5M) / "مليون وربع" (1.25M)
     if (/(مليون\s+ونصف|مليون\s+ونص)/i.test(normalizedRawText)) {
@@ -335,12 +327,6 @@ export class OpenClawAgent {
         }
       }
     }
-<<<<<<< HEAD
-    if (price === 0) price = operation === "Rent" ? 35_000 : 12_500_000;
-
-    // 7. Extract Bedrooms
-    let bedrooms = 3;
-=======
     // ANTI-FABRICATION: missing price stays 0/unknown — flagged for follow-up, never guessed
     if (price === 0) {
       price = 0;
@@ -349,7 +335,6 @@ export class OpenClawAgent {
 
     // 7. Extract Bedrooms — never defaulted; unknown stays null (anti-fabrication)
     let bedrooms: number | null = null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const bedMatch = normalizedRawText.match(
       /(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i,
     );
@@ -440,16 +425,10 @@ export class OpenClawAgent {
       valuationScore = 90;
     }
 
-<<<<<<< HEAD
-    // 13. Sierra Code Synthesis
-    const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
-    const typePrefix = propertyType.slice(0, 1).toUpperCase();
-=======
     // 13. Sierra Code Synthesis (beds unknown -> "U" marker instead of fabricated count)
     const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
     const typePrefix = propertyType.slice(0, 1).toUpperCase();
     const bedsToken = bedrooms === null ? "U" : String(bedrooms);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const finishPrefix =
       finishing === "fully_finished"
         ? "F"
@@ -458,11 +437,7 @@ export class OpenClawAgent {
           : "U";
     const priceM = (price / 1_000_000).toFixed(1).replace(/\.0$/, "");
     const featSuffix = features.length > 0 ? `+${features.join("+")}` : "";
-<<<<<<< HEAD
-    const sierraCode = `${locPrefix}-${typePrefix}-${bedrooms}${finishPrefix}-${priceM}M${featSuffix}`;
-=======
     const sierraCode = `${locPrefix}-${typePrefix}-${bedsToken}${finishPrefix}-${priceM}M${featSuffix}`;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     // 14. Source Type & Group Classification
     const registryGroup = groupId ? findGroup(groupId) : findGroup(groupName);
@@ -483,16 +458,10 @@ export class OpenClawAgent {
       compound: detectedCompound,
       price,
       currency,
-<<<<<<< HEAD
-      area_sqm,
-      bedrooms,
-      bathrooms: Math.max(1, bedrooms - 1),
-=======
       area_sqm: area_sqm ?? undefined,
       bedrooms: bedrooms ?? undefined,
       bathrooms: bedrooms === null ? undefined : Math.max(1, bedrooms - 1),
       priceNeedsVerification,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       finishing,
       furnishing,
       operation,
@@ -643,20 +612,6 @@ export class OpenClawAgent {
         const listedAt = u.updatedAt || new Date().toISOString();
 
         return {
-<<<<<<< HEAD
-          type: u.type || "Apartment",
-          location: u.compound || u.cmp || u.zone || "New Cairo",
-          compound: u.compound || u.cmp || "New Cairo",
-          price: u.price || 0,
-          currency: "EGP",
-          area_sqm: u.area || 0,
-          bedrooms: u.beds || 3,
-          bathrooms: u.baths || 2,
-          contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName || "",
-          notes: u.comment || u.tag || "",
-          sierraCode: u.code || undefined,
-          finishing: u.finishing || "semi_finished",
-=======
           // §21 no-fabrication: unknown type/compound render as empty and
           // bedrooms/bathrooms/finishing stay absent — never 'Apartment',
           // 'New Cairo', 3 beds, 2 baths, or 'semi_finished'.
@@ -672,7 +627,6 @@ export class OpenClawAgent {
           notes: u.comment || u.tag || "",
           sierraCode: u.code || undefined,
           finishing: u.finishing,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           sourceType,
           whatsappGroupName: "Master Sheet Import",
           operation: u.mode === "rent" ? "Rent" : "Sale",
@@ -735,25 +689,16 @@ export class OpenClawAgent {
         return undefined;
       };
 
-<<<<<<< HEAD
-      const compound =
-        getVal([
-=======
       // §21 no-fabrication: an unrecognized compound column yields an empty
       // string (unknown), never a default 'New Cairo'.
       const compound = getVal([
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           "compound",
           "cmp",
           "المشروع",
           "الكمبوند",
           "الموقع",
           "Location",
-<<<<<<< HEAD
-        ]) || "New Cairo";
-=======
         ]) || "";
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const priceRaw =
         getVal([
           "price",
@@ -767,16 +712,10 @@ export class OpenClawAgent {
         typeof priceRaw === "number"
           ? priceRaw
           : parseFloat(String(priceRaw).replace(/[^0-9.]/g, "")) || 0;
-<<<<<<< HEAD
-      const type =
-        getVal(["type", "unit type", "نوع الوحدة", "Type", "UnitType"]) ||
-        "Apartment";
-=======
       // §21 no-fabrication: unparsed numeric/type fields surface as empty
       // or 0 — never 'Apartment'/3/2/'semi_finished' defaults.
       const type =
         getVal(["type", "unit type", "نوع الوحدة", "Type", "UnitType"]) || "";
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const areaRaw =
         getVal(["area", "area_sqm", "المساحة", "BUA", "Area"]) || 0;
       const area =
@@ -784,23 +723,6 @@ export class OpenClawAgent {
           ? areaRaw
           : parseFloat(String(areaRaw).replace(/[^0-9.]/g, "")) || 0;
       const bedsRaw =
-<<<<<<< HEAD
-        getVal(["beds", "bedrooms", "غرف", "غرف النوم", "Bedrooms", "Beds"]) ||
-        3;
-      const beds =
-        typeof bedsRaw === "number"
-          ? bedsRaw
-          : parseInt(String(bedsRaw).replace(/[^0-9]/g, ""), 10) || 3;
-      const bathsRaw =
-        getVal(["baths", "bathrooms", "حمامات", "Bathrooms", "Baths"]) || 2;
-      const baths =
-        typeof bathsRaw === "number"
-          ? bathsRaw
-          : parseInt(String(bathsRaw).replace(/[^0-9]/g, ""), 10) || 2;
-      const finishing =
-        getVal(["finishing", "تشطيب", "حالة التشطيب", "Finishing"]) ||
-        "semi_finished";
-=======
         getVal(["beds", "bedrooms", "غرف", "غرف النوم", "Bedrooms", "Beds"]) || 0;
       const beds =
         typeof bedsRaw === "number"
@@ -814,7 +736,6 @@ export class OpenClawAgent {
           : parseInt(String(bathsRaw).replace(/[^0-9]/g, ""), 10) || 0;
       const finishing =
         getVal(["finishing", "تشطيب", "حالة التشطيب", "Finishing"]) || "";
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const ownerType =
         getVal([
           "ownerType",

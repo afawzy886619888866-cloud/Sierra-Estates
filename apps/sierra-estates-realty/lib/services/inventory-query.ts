@@ -90,13 +90,6 @@ export const InventoryQueryService = {
         ? Array.isArray(criteria.status) ? criteria.status : [criteria.status]
         : ['available'];
 
-<<<<<<< HEAD
-      let units = await listRecords<InventoryUnit>(COLLECTIONS.units, {
-        where: [{ column: 'status', op: 'in', value: statuses }],
-        limit: 300,
-      });
-
-=======
       // PUBLISH GATE (Phase D): public callers pass publishStatus so only
       // verified rows leave the database; internal callers omit it.
       const publishWhere = criteria.publishStatus
@@ -117,7 +110,6 @@ export const InventoryQueryService = {
         limit: 300,
       });
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       // In-memory filters: the remaining predicates are fuzzy (substring
       // compound match, budget bands) and not worth pushing into SQL here.
       if (criteria.propertyType) {

@@ -80,8 +80,6 @@ describe('/api/admin/contracts authorization', () => {
     expect(body.error).toContain('Contract registry unavailable');
     expect(body.contracts).toBeUndefined();
   });
-<<<<<<< HEAD
-=======
 
   it('refuses to create a contract with invented terms — missing fields are a 400', async () => {
     // §21: the old POST defaulted compoundName 'New Cairo', propertyType
@@ -127,9 +125,6 @@ describe('/api/admin/contracts authorization', () => {
     expect(body.missing).toContain('sierraSharePercentage');
     expect(body.missing).toContain('brokerSharePercentage');
   });
-<<<<<<< HEAD
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
-=======
 
   it('persists a fully-specified contract and echoes it (success only after the DB write)', async () => {
     verifyAdminRequestMock.mockResolvedValue({ authenticated: true, uid: 'u1', role: 'admin' });
@@ -187,9 +182,4 @@ describe('/api/admin/contracts authorization', () => {
     expect(body.error).toContain('no contract record was created');
     expect(body.contract).toBeUndefined();
   });
-<<<<<<< HEAD
->>>>>>> 07e94f3edebe105ec6bf01e86d601f7f16d70325
-=======
->>>>>>> origin/main
->>>>>>> d2b8a29c09aad3d3015897345ba8ee9ad9e55824
 });

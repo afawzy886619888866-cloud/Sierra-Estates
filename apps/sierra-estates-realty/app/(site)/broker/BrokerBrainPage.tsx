@@ -94,11 +94,7 @@ function ListingCard({ listing }: { listing: Listing }) {
 function StatsBar({ stats }: { stats: MarketStats }) {
   return (
     <div className="br-stats-bar">
-<<<<<<< HEAD
-      <div className="br-stats-label">Market Intelligence · {stats.compound || 'New Cairo'}</div>
-=======
       <div className="br-stats-label">Market Intelligence{stats.compound ? ` · ${stats.compound}` : ''}</div>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       <div className="br-stats-grid">
         <div className="br-stat"><span className="br-stat-val">{stats.count}</span><span className="br-stat-key">units</span></div>
         <div className="br-stat"><span className="br-stat-val">EGP {stats.min?.toLocaleString()}</span><span className="br-stat-key">from</span></div>

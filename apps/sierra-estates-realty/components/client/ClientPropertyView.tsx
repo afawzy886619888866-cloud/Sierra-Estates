@@ -80,21 +80,6 @@ export default function ClientPropertyView({ property }: ClientPropertyViewProps
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
             <span className="text-xs text-gray-400 block">Area</span>
-<<<<<<< HEAD
-            <span className="text-xl font-bold text-[#0A1628]">{property?.area || 185} m²</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-            <span className="text-xs text-gray-400 block">Bedrooms</span>
-            <span className="text-xl font-bold text-[#0A1628]">{property?.rooms || property?.beds || 3} Beds</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-            <span className="text-xs text-gray-400 block">Finishing</span>
-            <span className="text-xl font-bold text-[#0A1628]">{property?.finishing || "Super Lux"}</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-            <span className="text-xs text-gray-400 block">Furnishing</span>
-            <span className="text-xl font-bold text-[#0A1628]">{property?.furnishing || "Unfurnished"}</span>
-=======
             <span className="text-xl font-bold text-[#0A1628]">{property?.area ? `${property.area} m²` : '—'}</span>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
@@ -108,7 +93,6 @@ export default function ClientPropertyView({ property }: ClientPropertyViewProps
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
             <span className="text-xs text-gray-400 block">Furnishing</span>
             <span className="text-xl font-bold text-[#0A1628]">{property?.furnishing || "—"}</span>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
         </div>
 
@@ -116,11 +100,7 @@ export default function ClientPropertyView({ property }: ClientPropertyViewProps
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-3">
           <h3 className="text-lg font-bold text-[#0A1628]">Property Overview</h3>
           <p className="text-gray-600 leading-relaxed text-sm">
-<<<<<<< HEAD
-            {property?.notes || property?.description || "Prime location property with unobstructed landscape view, ready for delivery with all operational clearances."}
-=======
             {property?.notes || property?.description || "Contact our advisory desk for a full specification sheet and latest availability on this unit."}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </p>
         </div>
       </main>

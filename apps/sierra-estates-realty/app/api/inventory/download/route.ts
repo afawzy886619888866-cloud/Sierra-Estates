@@ -57,15 +57,9 @@ function normalizeUnitRow(u: any) {
   return {
     'Listing ID': u.id || u.sierraCode || u.code || '',
     'Sierra Code': u.code || u.sierraCode || u.id || '',
-<<<<<<< HEAD
-    'Compound / Project': u.compound || u.location || 'New Cairo',
-    'Location': u.location || u.rawLocation || u.compound || 'New Cairo, Cairo',
-    'Unit Type': u.propertyType || u.type || u.unit_type || 'Apartment',
-=======
     'Compound / Project': u.compound || u.location || '',
     'Location': u.location || u.rawLocation || u.compound || '',
     'Unit Type': u.propertyType || u.type || u.unit_type || '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     'Deal Type': dealType,
     'Price (EGP)': priceNum,
     'Price Formatted': u.priceLabel || u.priceFormatted || (priceNum > 0 ? `${priceNum.toLocaleString()} EGP` : 'Price on Request'),

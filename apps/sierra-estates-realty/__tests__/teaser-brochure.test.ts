@@ -1,10 +1,7 @@
 import { TearSheetGenerator, TearSheetListingInput } from '../../../packages/agents-core/src/memo-generator';
-<<<<<<< HEAD
-=======
 import { POST as postTeaserGenerate } from '../app/api/teasers/generate/route';
 import { POST as postWealthTearsheet } from '../app/api/wealth/tearsheet/route';
 import { NextRequest } from 'next/server';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 describe('Luxury Property Brochure & Investment Teaser Suite', () => {
   it('generates a full luxury tear sheet with 5-year growth and rental forecast', () => {
@@ -37,8 +34,6 @@ describe('Luxury Property Brochure & Investment Teaser Suite', () => {
     expect(sheet.whatsAppBroadcastCopy.ar).toContain('سييرا إستيتس');
     expect(sheet.whatsAppBroadcastCopy.en).toContain('Hyde Park');
   });
-<<<<<<< HEAD
-=======
 
   describe('§21 no-fabrication: tear-sheet routes refuse to invent listings', () => {
     const postJson = (url: string, payload: unknown) =>
@@ -179,5 +174,4 @@ describe('Luxury Property Brochure & Investment Teaser Suite', () => {
       expect(body.tearSheet.unitSpecs.bua).toBe('160 m²');
     });
   });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 });

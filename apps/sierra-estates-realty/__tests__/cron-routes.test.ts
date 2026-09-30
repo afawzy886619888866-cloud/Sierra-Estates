@@ -4,20 +4,12 @@
  *   /api/cron/sync-leads          /api/cron/sync-listings
  *   /api/cron/maintenance         /api/cron/sync-master-sheet
  *
-<<<<<<< HEAD
- * These are now driven on a schedule by
- * .github/workflows/vercel-cron-bridge.yml, so their auth contract and their
- * failure handling are load-bearing: a route that throws on a transient
- * upstream error must return a 5xx (so the workflow retries and reports)
- * rather than a misleading 200.
-=======
  * These are scheduled via the Phase 11 dispatcher — vercel.json fires the
  * night/morning windows and .github/workflows/automations.yml adds the
  * per-job schedules — so their auth contract and their failure handling are
  * load-bearing: a route that throws on a transient upstream error must
  * return a 5xx (so the schedulers retry and report) rather than a
  * misleading 200.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  *
  * ⚠️ All four are FAIL-OPEN when CRON_SECRET is unset — pinned below, because
  * it means an unconfigured deployment leaves them publicly triggerable.

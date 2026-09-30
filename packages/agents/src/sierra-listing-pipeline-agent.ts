@@ -139,14 +139,10 @@ export class SierraListingPipelineAgent {
       'Beit El Watan': /بيت\s*الوطن|beit\s*el\s*watan/i,
     };
 
-<<<<<<< HEAD
-    let compound = 'New Cairo';
-=======
     // §21 no-fabrication: no compound matched → '' (unknown). Never
     // default to 'New Cairo' — downstream missingFields logic treats '' the
     // same as a legacy 'New Cairo' placeholder and prompts the sender.
     let compound = '';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     for (const [name, regex] of Object.entries(compounds)) {
       if (regex.test(raw)) {
         compound = name;
@@ -155,13 +151,9 @@ export class SierraListingPipelineAgent {
     }
 
     // Property Type
-<<<<<<< HEAD
-    let propertyType = 'Apartment';
-=======
     // §21 no-fabrication: unmatched property type stays '' (unknown),
     // never 'Apartment'.
     let propertyType = '';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     if (/فيلا|standalone|villa/i.test(raw)) propertyType = 'Standalone Villa';
     else if (/توين|twin\s*house/i.test(raw)) propertyType = 'Twin House';
     else if (/تاون|town\s*house/i.test(raw)) propertyType = 'Townhouse';
@@ -195,29 +187,19 @@ export class SierraListingPipelineAgent {
     const bathsMatch = raw.match(/(\d)\s*(?:حمام|حمامات|baths?|bathrooms?)/i);
     const areaMatch = raw.match(/(\d{2,4})\s*(?:متر|م²|m2|sqm)/i);
 
-<<<<<<< HEAD
-    const beds = bedsMatch ? Number(bedsMatch[1]) : 3;
-    const baths = bathsMatch ? Number(bathsMatch[1]) : 2;
-    const area = areaMatch ? Number(areaMatch[1]) : 150;
-=======
     // §21 no-fabrication: unparsed beds/baths/area surface as 0 (unknown),
     // never 3/2/150 defaults.
     const beds = bedsMatch ? Number(bedsMatch[1]) : 0;
     const baths = bathsMatch ? Number(bathsMatch[1]) : 0;
     const area = areaMatch ? Number(areaMatch[1]) : 0;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     const calibrated = this.calibratePrice(rawPrice, initialDeal, raw);
 
     return {
       compound,
-<<<<<<< HEAD
-      zone: '5th Settlement',
-=======
       // §21: zone is only claimed when the message actually carries one —
       // '5th Settlement' is never assumed.
       zone: '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       dealType: calibrated.deal,
       propertyType,
       price: calibrated.price,
@@ -245,35 +227,16 @@ export class SierraListingPipelineAgent {
     if (!parsed.compound || parsed.compound === 'New Cairo') missingFields.push('الكومباوند');
     if (!parsed.price || parsed.price <= 0) missingFields.push('السعر المطلوب');
     if (!parsed.ownerPhone) missingFields.push('رقم الهاتف');
-<<<<<<< HEAD
-=======
     // §21 no-fabrication: the bot ASKS for descriptive fields it cannot
     // extract — it never invents 'Apartment'/3 beds/150 sqm.
     if (!parsed.propertyType) missingFields.push('نوع الوحدة');
     if (!parsed.bedrooms) missingFields.push('عدد الغرف');
     if (!parsed.areaSqm) missingFields.push('المساحة');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     const photoUrls = input.mediaUrls || [];
     const hasPhotos = photoUrls.length > 0;
     const pfReady = hasPhotos && parsed.price! > 0;
 
-<<<<<<< HEAD
-    const unit: CalibratedUnit = {
-      code: listingCode,
-      titleEn: `${parsed.propertyType} in ${parsed.compound}`,
-      titleAr: `${parsed.propertyType} في ${parsed.compound}`,
-      compound: parsed.compound || 'New Cairo',
-      zone: parsed.zone || '5th Settlement',
-      dealType: parsed.dealType || 'Rent',
-      propertyType: parsed.propertyType || 'Apartment',
-      price: parsed.price || 0,
-      priceDisplay: parsed.priceDisplay || 'Price on Request',
-      bedrooms: parsed.bedrooms || 3,
-      bathrooms: parsed.bathrooms || 2,
-      areaSqm: parsed.areaSqm || 150,
-      finishing: 'Super Lux',
-=======
     // §21 no-fabrication: titles are built only from extracted facts; when
     // neither type nor compound is known the title says so honestly.
     const titleCoreEn = [parsed.propertyType, parsed.compound].filter(Boolean).join(' in ');
@@ -295,7 +258,6 @@ export class SierraListingPipelineAgent {
       bathrooms: parsed.bathrooms || 0,
       areaSqm: parsed.areaSqm || 0,
       finishing: parsed.finishing || '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       ownerPhone: parsed.ownerPhone || input.sender,
       ownerName: input.sender,
       photoUrls,

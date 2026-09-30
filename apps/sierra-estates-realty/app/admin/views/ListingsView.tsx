@@ -1,10 +1,6 @@
 'use client';
 
-<<<<<<< HEAD
-import React, { useState, useMemo, useEffect } from 'react';
-=======
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
@@ -121,11 +117,7 @@ function buildUnifiedBaseline(): any[] {
   return Array.from(map.values());
 }
 
-<<<<<<< HEAD
-export default function ListingsView({ lang = 'en' }: { lang?: string }) {
-=======
 export default function ListingsView({ lang = 'en', restricted = false }: { lang?: string; restricted?: boolean }) {
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const isAr = lang === 'ar';
   const [activeTab, setActiveTab] = useState<'inventory' | 'easy-listing' | 'whatsapp-sender' | 'whatsapp-scanner' | 'brochure' | 'valuation'>('inventory');
   const [searchQuery, setSearchQuery] = useState('');
@@ -152,8 +144,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
   // Photo Attach Modal State
   const [activePhotoModalUnit, setActivePhotoModalUnit] = useState<any | null>(null);
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string>('');
-<<<<<<< HEAD
-=======
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [photoRequestSending, setPhotoRequestSending] = useState(false);
@@ -178,7 +168,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
       return false;
     }
   }, []);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   useEffect(() => {
     let active = true;
@@ -374,22 +363,11 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
     );
   };
 
-<<<<<<< HEAD
-  // Attach / Apply photos to a listing
-=======
   // Attach / Apply photos to a listing — persists to the DB, then updates state.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const handleApplyPhotos = (code: string, photoUrls: string[]) => {
     setAllListingsData((prev) =>
       prev.map((item) => {
         if ((item.sierraCode || item.code || item.id) === code) {
-<<<<<<< HEAD
-          return {
-            ...item,
-            photos: photoUrls,
-            hasPhotos: photoUrls.length > 0,
-            image: photoUrls[0],
-=======
           const merged = Array.from(
             new Set([...(item.photos || []), ...photoUrls])
           ).filter(Boolean);
@@ -398,7 +376,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
             photos: merged,
             hasPhotos: merged.length > 0,
             image: merged[0],
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           };
         }
         return item;
@@ -406,10 +383,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
     );
     setActivePhotoModalUnit(null);
     setCustomPhotoUrl('');
-<<<<<<< HEAD
-    setBulkNotification(`Attached ${photoUrls.length} verified photo(s) to ${code}. Unit is now ready for syndication!`);
-    setTimeout(() => setBulkNotification(null), 4000);
-=======
     setBulkNotification(`Attaching ${photoUrls.length} verified photo(s) to ${code}…`);
     setTimeout(() => setBulkNotification(null), 4000);
     // Persistence: photos now live on the listing row, not just in this tab's
@@ -476,7 +449,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
     } finally {
       setPhotoRequestSending(false);
     }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   };
 
   const handleToggleSelectAllPage = () => {
@@ -591,50 +563,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
 
         {/* Action Controls & Tab Switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-<<<<<<< HEAD
-          {/* Download Spreadsheets links */}
-          <a
-            href="/downloads/Sierra_Estates_Owners_Rent_Master.xlsx"
-            download="Sierra_Estates_Owners_Rent_Master.xlsx"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 10,
-              background: 'var(--bg-e)',
-              border: '1px solid var(--bd)',
-              color: 'var(--tx)',
-              fontSize: 11,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              textDecoration: 'none',
-            }}
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isAr ? 'شيت إيجارات الملاك' : 'Owners Rent (.xlsx)'}</span>
-          </a>
-
-          <a
-            href="/downloads/Sierra_Estates_Rent_Master_Inventory.xlsx"
-            download="Sierra_Estates_Rent_Master_Inventory.xlsx"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 10,
-              background: 'var(--bg-e)',
-              border: '1px solid var(--bd)',
-              color: 'var(--tx)',
-              fontSize: 11,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              textDecoration: 'none',
-            }}
-          >
-            <Download className="w-3.5 h-3.5 text-[#E9C176]" />
-            <span>{isAr ? 'شيت الإيجار الشامل' : 'Rent Master (.xlsx)'}</span>
-          </a>
-=======
           {/* Download Spreadsheets links (staff only — the master sheets carry
               the whole company's data, not a partner's scoped portfolio) */}
           {!restricted && (
@@ -682,7 +610,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
             </a>
             </>
           )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
           {/* Tab Controls */}
           <div style={{ display: 'flex', padding: 3, borderRadius: 12, background: 'var(--surf)', border: '1px solid var(--bd)' }}>
@@ -703,25 +630,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
               <span>{isAr ? 'المخزون الموحد' : 'All Listings'}</span>
             </button>
             <button
-<<<<<<< HEAD
-              onClick={() => setActiveTab('valuation')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 8,
-                fontSize: 11,
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                background: activeTab === 'valuation' ? 'var(--emerald)' : 'transparent',
-                color: activeTab === 'valuation' ? '#07111E' : 'var(--tx-m)',
-              }}
-            >
-              <Calculator className="w-3.5 h-3.5 inline mr-1" />
-              <span>{isAr ? 'التقييم والمراجحة' : 'AVM Arbitrage'}</span>
-            </button>
-            <button
-=======
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
               onClick={() => setActiveTab('easy-listing')}
               style={{
                 padding: '6px 12px',
@@ -737,8 +645,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
               <Sparkles className="w-3.5 h-3.5 inline mr-1" />
               <span>{isAr ? 'إدراج ذكي' : 'Easy Add'}</span>
             </button>
-<<<<<<< HEAD
-=======
             {/* Internal marketing tools — staff only (partner accounts see the
                 listing grid + Easy Add, never the outreach/scanner/AVM/brochure) */}
             {!restricted && (
@@ -759,7 +665,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
               <Calculator className="w-3.5 h-3.5 inline mr-1" />
               <span>{isAr ? 'التقييم والمراجحة' : 'AVM Arbitrage'}</span>
             </button>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             <button
               onClick={() => setActiveTab('whatsapp-sender')}
               style={{
@@ -808,29 +713,18 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
               <FileText className="w-3.5 h-3.5 inline mr-1" />
               <span>PDF Teaser</span>
             </button>
-<<<<<<< HEAD
-=======
               </>
             )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           </div>
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* Tab Content */}
-      {activeTab === 'valuation' && <ValuationArbitrageStudio lang={lang} />}
-      {activeTab === 'easy-listing' && <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />}
-      {activeTab === 'whatsapp-sender' && <WhatsAppScheduledSender lang={lang} />}
-      {activeTab === 'whatsapp-scanner' && (
-=======
       {/* Tab Content — restricted (partner) sessions can never land on the
           staff-only tools even if a stale tab id survives in state */}
       {activeTab === 'valuation' && !restricted && <ValuationArbitrageStudio lang={lang} />}
       {activeTab === 'easy-listing' && <EasyListingStudio lang={lang} onListingPublishedAction={() => setActiveTab('inventory')} />}
       {activeTab === 'whatsapp-sender' && !restricted && <WhatsAppScheduledSender lang={lang} />}
       {activeTab === 'whatsapp-scanner' && !restricted && (
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         <WhatsAppChatScanner
           lang={lang}
           onUnitsIngested={() => {
@@ -852,11 +746,7 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
           }}
         />
       )}
-<<<<<<< HEAD
-      {activeTab === 'brochure' && <PropertyTeaserBrochure />}
-=======
       {activeTab === 'brochure' && !restricted && <PropertyTeaserBrochure />}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
       {activeTab === 'inventory' && (
         <div className="space-y-4">
@@ -1418,26 +1308,15 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
 
                       {/* Compound & Location */}
                       <td style={{ padding: '12px 14px' }}>
-<<<<<<< HEAD
-                        <div style={{ fontWeight: 600, color: 'var(--tx-s)' }}>{item.compound || item.location || 'New Cairo'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>{item.location || item.zone || '5th Settlement'}</div>
-=======
                         <div style={{ fontWeight: 600, color: 'var(--tx-s)' }}>{item.compound || item.location || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>{item.location || item.zone || '—'}</div>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                       </td>
 
                       {/* Specs */}
                       <td style={{ padding: '12px 14px' }}>
-<<<<<<< HEAD
-                        <div style={{ fontWeight: 500, color: 'var(--tx)' }}>{item.type || 'Apartment'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>
-                          {item.bedrooms || item.beds || 3} Beds · {item.bathrooms || item.baths || 2} Baths · {item.area_sqm || item.area || 180}m²
-=======
                         <div style={{ fontWeight: 500, color: 'var(--tx)' }}>{item.type || '—'}</div>
                         <div style={{ fontSize: 11, color: 'var(--tx-f)', marginTop: 2 }}>
                           {item.bedrooms || item.beds || '?'} Beds · {item.bathrooms || item.baths || '?'} Baths · {item.area_sqm || item.area || '?'}m²
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
                         </div>
                       </td>
 
@@ -1715,8 +1594,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
 
             <div style={{ fontSize: 12, color: 'var(--tx-m)', lineHeight: 1.5 }}>
               Attach verified photos for <strong>{activePhotoModalUnit.compound}</strong> ({activePhotoModalUnit.type} · {activePhotoModalUnit.priceFormatted || `${activePhotoModalUnit.price?.toLocaleString()} EGP`}). Units with photos achieve 4.2x higher conversion on Property Finder and Client Portal.
-<<<<<<< HEAD
-=======
               <div style={{ marginTop: 4, fontSize: 11, color: 'var(--tx-f)' }}>
                 {isAr
                   ? 'ℹ️ البوت بيستقبل النصوص فقط — الصور بتترفع من هنا وتتحفظ على الوحدة مباشرة.'
@@ -1803,7 +1680,6 @@ export default function ListingsView({ lang = 'en', restricted = false }: { lang
                   {photoRequestResult}
                 </div>
               )}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             </div>
 
             {/* Presets based on compound */}

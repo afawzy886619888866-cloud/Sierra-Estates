@@ -6,14 +6,6 @@ import { ArrowRight, Pause, Play, Sparkles } from 'lucide-react';
 import type { CardListing } from './PropertyCard';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
-<<<<<<< HEAD
-
-const ROTATION_MS = 5200;
-
-export default function PropertyShowcaseVideo() {
-  const { isAr } = useSite();
-  const listings = useMemo(() => (HZDATA.listings as CardListing[]).slice(0, 5), []);
-=======
 import { usePublicListings } from '@/lib/site/usePublicListings';
 
 const ROTATION_MS = 5200;
@@ -32,7 +24,6 @@ export default function PropertyShowcaseVideo() {
     () => (units as CardListing[]).filter((u) => Boolean(u && u.id && u.img)).slice(0, 5),
     [units]
   );
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -81,11 +72,7 @@ export default function PropertyShowcaseVideo() {
           <p className="showcase-video__eyebrow">
             <Sparkles size={14} /> {isAr ? 'اختيارات من محرك Sierra' : 'Curated by Sierra intelligence'}
           </p>
-<<<<<<< HEAD
-          <h3>{current.type} in {current.cmp}</h3>
-=======
           <h3>{current.type || (isAr ? 'وحدة' : 'Unit')} in {current.cmp || current.zone || (isAr ? 'القاهرة الجديدة' : 'New Cairo')}</h3>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           <p>{current.zone} · {current.beds} {isAr ? 'غرف' : 'beds'} · {current.area} m²</p>
           <div className="showcase-video__actions">
             <Link href={'/property/' + current.id} className="showcase-video__cta">
@@ -104,11 +91,7 @@ export default function PropertyShowcaseVideo() {
         </div>
         <div className="showcase-video__meta">
           <span className="showcase-video__price">{HZDATA.price(current)}</span>
-<<<<<<< HEAD
-          <span className="showcase-video__score">AI {current.ai.toFixed(1)}</span>
-=======
           <span className="showcase-video__score">AI {fmtAi(current.ai)}</span>
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         </div>
         <div className="showcase-video__progress">
           <span style={{ width: (progress * 100) + '%' }} />

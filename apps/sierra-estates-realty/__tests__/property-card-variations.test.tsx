@@ -72,22 +72,16 @@ describe('PropertyCard Variations Suite', () => {
     expect(html).toContain('9.1% Yield');
     expect(html).toContain('Net Cap Rate');
     expect(html).toContain('Est. Payback');
-<<<<<<< HEAD
-    expect(html).toContain('Underpriced (-6%)');
-=======
     // §21 honest contract: value badge shows the assessment WITHOUT a
     // fabricated "-6%" delta (the number was never backed by a valuation).
     expect(html).toContain('Underpriced');
     expect(html).not.toContain('(-6%)');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     expect(html).toContain('spec-sqm');
     expect(html).toContain('80,000');
     expect(html).toContain('Analyze Deal');
     expect(html).toContain('href="/property/888"');
   });
 
-<<<<<<< HEAD
-=======
   it('§21: renders honest placeholders when a record carries no yield/finishing', () => {
     const stripped: typeof mockListing = { ...mockListing, yield: 0, finishing: undefined, ai: 0 };
     const html = renderToStaticMarkup(<PropertyCard p={stripped} variant="bento" />);
@@ -100,7 +94,6 @@ describe('PropertyCard Variations Suite', () => {
     expect(html).toContain('Not scored');
   });
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   it('renders architectural quiet luxury editorial variation', () => {
     const html = renderToStaticMarkup(<PropertyCard p={mockListing} variant="editorial" />);
     expect(html).toContain('pcard-editorial');

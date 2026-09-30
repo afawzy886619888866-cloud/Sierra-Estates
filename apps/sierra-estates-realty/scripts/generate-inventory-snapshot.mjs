@@ -101,11 +101,7 @@ function priceLabel(price, mode) {
 
 /** Map a PostgREST listings row to the public InventoryUnit shape. */
 function toMapUnit(listing, compoundGeo) {
-<<<<<<< HEAD
-  const locationLabel = listing.location_area || listing.compound || 'New Cairo';
-=======
   const locationLabel = listing.location_area || listing.compound || '';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const matched =
     (listing.compound && compoundGeo.get(listing.compound.trim().toLowerCase())) || null;
   const resolved = matched || resolveLocation(locationLabel);
@@ -130,13 +126,8 @@ function toMapUnit(listing, compoundGeo) {
     lat: resolved.lat,
     lng: resolved.lng,
     approxLocation: !matched,
-<<<<<<< HEAD
-    propertyType: listing.property_type || 'Apartment',
-    type: listing.property_type || 'Apartment',
-=======
     propertyType: listing.property_type || '',
     type: listing.property_type || '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     beds: listing.bedrooms ?? null,
     baths: listing.bathrooms ?? null,
     area: Number(listing.area_sqm) || null,

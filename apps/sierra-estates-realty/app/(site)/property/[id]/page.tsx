@@ -4,32 +4,6 @@ import '../../../site-styles/site-refinements.css';
 import PropertyDetail from './PropertyDetail';
 import { HZDATA } from '@/lib/site/data';
 import snapshot from '@/lib/inventory/snapshot.json';
-<<<<<<< HEAD
-import waIngested from '@/data/whatsapp-ingested-units.json';
-
-/** Resolve a listing for metadata: live sources first, static fallback. */
-function resolveForMeta(id: string) {
-  const needle = String(id).trim().toLowerCase();
-
-  // 1. WhatsApp-ingested real listings (same file /api/inventory serves)
-  const waUnit = (waIngested as any[]).find(
-    (u) =>
-      String(u.sierraCode || u.code || '').toLowerCase() === needle ||
-      String(u.id || '').toLowerCase() === needle
-  );
-  if (waUnit) {
-    return {
-      type: u_type(waUnit),
-      cmp: waUnit.compound || waUnit.location || 'New Cairo',
-      zone: 'New Cairo',
-      beds: waUnit.beds ?? waUnit.bedrooms ?? 3,
-      area: waUnit.area ?? waUnit.area_sqm ?? 0,
-      ai: 8.5,
-    };
-  }
-
-  // 2. Committed catalog snapshot
-=======
 import { getRecord } from '@sierra-estates/db';
 
 /**
@@ -63,7 +37,6 @@ async function resolveForMeta(id: string): Promise<Record<string, any> | null> {
   }
 
   // 2. Committed catalog snapshot (server-side only)
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const units: any[] = (snapshot as any)?.units || [];
   const unit = units.find(
     (u) =>
@@ -72,27 +45,6 @@ async function resolveForMeta(id: string): Promise<Record<string, any> | null> {
   );
   if (unit) {
     return {
-<<<<<<< HEAD
-      type: unit.propertyType || unit.type || 'Apartment',
-      cmp: unit.compound || unit.location || 'New Cairo',
-      zone: unit.zone || 'New Cairo',
-      beds: unit.beds ?? 3,
-      area: unit.area ?? 0,
-      ai: Number(unit.aiScore ?? 8.5),
-    };
-  }
-
-  // 3. Static featured catalog
-  return (HZDATA.listings as any[]).find(
-    (x) =>
-      String(x.id) === String(id) ||
-      String(x.code).toLowerCase() === needle
-  );
-}
-
-function u_type(u: any): string {
-  return u.propertyType || u.type || 'Apartment';
-=======
       type: unit.propertyType || unit.type || '',
       cmp: unit.compound || unit.location || '',
       zone: unit.zone || '',
@@ -105,23 +57,12 @@ function u_type(u: any): string {
   return (HZDATA.listings as any[]).find(
     (x) => String(x.id) === String(id) || String(x.code).toLowerCase() === needle
   ) || null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
   const { id } = await params;
-<<<<<<< HEAD
-  const p = resolveForMeta(id);
-  if (!p) return { title: 'Listing' };
-  return {
-    title: `${p.type} in ${p.cmp}`,
-    description: `${p.beds}-bed ${String(p.type).toLowerCase()}, ${p.area} m² in ${p.cmp}, ${p.zone}. AI score ${Number(p.ai).toFixed(1)}.`,
-    openGraph: {
-      title: `${p.type} in ${p.cmp} | Sierra Estates`,
-      description: `${p.beds}-bed ${String(p.type).toLowerCase()}, ${p.area} m² in ${p.cmp}, ${p.zone}.`,
-=======
   const p = await resolveForMeta(id);
   if (!p) return { title: 'Listing' };
   const bedsPart = p.beds ? `${p.beds}-bed ` : '';
@@ -133,7 +74,6 @@ export async function generateMetadata(
     openGraph: {
       title: `${p.type} in ${p.cmp} | Sierra Estates`,
       description: `${bedsPart}${String(p.type).toLowerCase()}${areaPart} in ${p.cmp}${zonePart}.`,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       type: 'website',
     },
   };

@@ -74,16 +74,6 @@ describe('Quiet Luxury V12.0 UI Upgrade (Milestone M15)', () => {
   });
 
   describe('3. Full-Bleed Property Showcase & Sticky ROI Calculator (M15-C03)', () => {
-<<<<<<< HEAD
-    it('renders Price/m² spec and Net Cap Rate inside PropertyDetail', () => {
-      // Mock listing ID from data
-      const html = renderToStaticMarkup(React.createElement(PropertyDetail, { id: '1' }));
-
-      expect(html).toContain('Price / m²');
-      expect(html).toContain('Net Cap Rate / Yield');
-      expect(html).toContain('Add to VIP Viewing Basket');
-      expect(html).toContain('Mortgage &amp; Investment Yield Analyzer');
-=======
     it('renders an honest loading state (no fabricated unit) before the live row arrives', async () => {
       // Phase 4 wiring: PropertyDetail now fetches its single row from
       // /api/listings/[id]. renderToStaticMarkup does not run effects, so the
@@ -107,7 +97,6 @@ describe('Quiet Luxury V12.0 UI Upgrade (Milestone M15)', () => {
       } finally {
         global.fetch = realFetch;
       }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 

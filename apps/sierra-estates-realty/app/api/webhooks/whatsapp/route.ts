@@ -3,23 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
-<<<<<<< HEAD
-=======
 import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
 import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
  * Receives real-time streams from Meta WhatsApp Business Cloud API, Twilio, or Automation Bridges.
-<<<<<<< HEAD
- */
-
-function verifyMetaSignature(payload: string, signatureHeader: string | null, appSecret: string): boolean {
-  if (!signatureHeader || !appSecret) return true; // Optional if secret is not configured
-  try {
-    const signature = signatureHeader.replace('sha256=', '');
-=======
  *
  * MEDIA POLICY — the bot accepts CONVERSATIONS (text, voice transcripts, image
  * captions) but NOT IMAGES: media is never downloaded, never parsed into a
@@ -47,7 +36,6 @@ function verifyMetaSignature(payload: string, signatureHeader: string, appSecret
   if (!signatureHeader || !appSecret) return false;
   try {
     const signature = signatureHeader.replace(/^sha256=/, '');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const hmac = crypto.createHmac('sha256', appSecret);
     const digest = hmac.update(payload).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(digest, 'hex'));
@@ -63,62 +51,6 @@ async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean
   if (!token || !phoneId || !toPhone) {
     console.log(`ℹ️ [WhatsApp Webhook] Outbound API credentials not configured; response generated in payload mode.`);
     return false;
-<<<<<<< HEAD
-  }
-
-  try {
-    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
-    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: cleanPhone,
-        type: 'text',
-        text: { body: text },
-      }),
-    });
-
-    if (!res.ok) {
-      console.error(`⚠️ [WhatsApp Webhook] Outbound message failed with status ${res.status}: ${await res.text()}`);
-      return false;
-    }
-    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${cleanPhone}`);
-    return true;
-  } catch (err) {
-    console.error(`❌ [WhatsApp Webhook] Outbound dispatch error:`, err);
-    return false;
-  }
-}
-
-export async function POST(req: NextRequest) {
-  // Shared-secret verification. This used to be `if (SECRET_KEY) { ...check... }`,
-  // i.e. FAIL-OPEN: with SBR_SECRET_KEY unset the webhook accepted anything from
-  // anyone and fed it straight into the listing parser. `verifySharedSecret`
-  // fails closed in production (503 when unconfigured) while still allowing
-  // local development without a secret — the same contract as
-  // /api/ingest/whatsapp and /api/telegram/webhook.
-  const denied = verifySharedSecret(req, {
-    header: 'x-sbr-secret-key',
-    secret: process.env.SBR_SECRET_KEY,
-    name: 'SBR_SECRET_KEY',
-  });
-  if (denied) return denied;
-
-  const rawBody = await req.text();
-
-  // Meta X-Hub-Signature-256 validation
-  const metaSecret = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN || '';
-  const hubSignature = req.headers.get('x-hub-signature-256');
-  if (hubSignature && metaSecret && !verifyMetaSignature(rawBody, hubSignature, metaSecret)) {
-    return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 403 });
-  }
-
-  try {
-=======
   }
 
   try {
@@ -196,7 +128,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const body = rawBody ? JSON.parse(rawBody) : {};
     
     // Log incoming payload for audit
@@ -214,15 +145,6 @@ export async function POST(req: NextRequest) {
     const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
     const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
-<<<<<<< HEAD
-    // Support text messages and audio/voice note messages
-    let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
-    const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
-
-    if (!message && isVoiceMessage) {
-      const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
-      const voiceTranscript = body.transcript || 'معايا شقة للإيجار في إيستاون التجمع الخامس مساحتها ١٦٥ متر ٣ غرف و٢ حمام تشطيب الترا سوبر لوكس مطلوب ٤٥ ألف جنية شهرياً من المالك مباشرة';
-=======
     // Support text messages and audio/voice note messages. An image caption
     // IS conversation text (the bot accepts the conversation, not the image).
     let message =
@@ -245,13 +167,10 @@ export async function POST(req: NextRequest) {
         console.warn('[WhatsApp Webhook] Voice note received without transcript — skipping parse (no fabricated listings).');
         return NextResponse.json({ status: 'skipped', reason: 'voice_note_without_transcript' });
       }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
       message = parsedVoice.rawTranscript;
       console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
     }
-<<<<<<< HEAD
-=======
 
     // ── MEDIA POLICY: accept the conversation, decline the media ──
     // A media message carrying no text (no caption) is acknowledged, never
@@ -269,7 +188,6 @@ export async function POST(req: NextRequest) {
         processed_at: new Date().toISOString(),
       });
     }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     if (!message) {
       return NextResponse.json({ error: "Empty signal ignored" }, { status: 400 });

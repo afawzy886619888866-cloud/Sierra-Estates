@@ -20,32 +20,6 @@ import type { RealListing } from '@/app/(site)/properties/PropertiesPage';
 type SetListings = React.Dispatch<React.SetStateAction<RealListing[]>>;
 
 function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): RealListing {
-<<<<<<< HEAD
-  const compound = String(raw.compound || raw.location || 'New Cairo');
-  const price = Number(raw.price || 8_500_000);
-  const isRent =
-    raw.mode === 'rent' ||
-    (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1_000_000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5_000);
-  const priceLabel = isRent
-    ? `${price.toLocaleString()} EGP / mo`
-    : egpM >= 1
-    ? `${egpM}M EGP`
-    : `${price.toLocaleString()} EGP`;
-
-  return {
-    id: String(raw.id || `rt-${index}`),
-    code: String(raw.code || `SE-RT-${String(index + 1).padStart(4, '0')}`),
-    cmp: compound,
-    compound,
-    location: String(raw.location || compound),
-    zone: String(raw.zone || 'New Cairo'),
-    type: String(raw.type || raw.propertyType || 'Apartment'),
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
-=======
   // ANTI-FABRICATION: no invented defaults. Missing values surface as honest
   // zeros / "Unspecified" / "Price on request" exactly like the page-level
   // sanitizer. A realtime row is real data, not a template to embellish.
@@ -76,26 +50,10 @@ function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): R
     beds: Number(raw.beds ?? raw.bedrooms ?? 0) || 0,
     bath: Number(raw.bath ?? raw.bathrooms ?? 0) || 0,
     area: Number(raw.area ?? raw.area_sqm ?? 0) || 0,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     price,
     priceLabel: String(raw.priceLabel || priceLabel),
     egpM,
     usd,
-<<<<<<< HEAD
-    ai: Number(raw.aiScore || 9.1),
-    tag: 'Verified Portfolio',
-    mode: isRent ? 'rent' : 'sale',
-    agent: 'Sierra Advisor Desk',
-    ago: 'Live',
-    img: String(
-      (raw.raw_data as Record<string, unknown> | undefined)?.img ||
-        raw.img ||
-        "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/c1817868-a833-4e1b-bdd0-e3de3dafdd39.png"
-    ),
-    whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.latitude || raw.lat || 30.045),
-    lng: Number(raw.longitude || raw.lng || 31.59),
-=======
     ai: Number(raw.aiScore) > 0 ? Number(raw.aiScore) : 0,
     tag: raw.tag ? String(raw.tag) : '',
     mode: isRent ? 'rent' : 'sale',
@@ -109,20 +67,15 @@ function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): R
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.latitude || raw.lat || 0),
     lng: Number(raw.longitude || raw.lng || 0),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     segment: raw.segment ? String(raw.segment) : undefined,
     description: raw.description ? String(raw.description) : undefined,
   };
 }
 
-<<<<<<< HEAD
-export function useListingsRealtime(setListings: SetListings) {
-=======
 export function useListingsRealtime(
   setListings: SetListings,
   onStatus?: (connected: boolean) => void
 ) {
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const channelRef = useRef<ReturnType<
     typeof import('@supabase/supabase-js').createClient
   >['channel'] extends (...args: infer _A) => infer R ? R : never | null>(null);
@@ -216,15 +169,10 @@ export function useListingsRealtime(
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.info('[useListingsRealtime] ✅ Realtime channel connected.');
-<<<<<<< HEAD
-            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn('[useListingsRealtime] ⚠️ Realtime channel error:', status);
-=======
               onStatus?.(true);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
               console.warn('[useListingsRealtime] ⚠️ Realtime channel error:', status);
               onStatus?.(false);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
             }
           });
 
@@ -240,9 +188,5 @@ export function useListingsRealtime(
         channelRef.current = null;
       }
     };
-<<<<<<< HEAD
-  }, [setListings]);
-=======
   }, [setListings, onStatus]);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }

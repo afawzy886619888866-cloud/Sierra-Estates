@@ -5,12 +5,6 @@
  * schema.sql + the Phase 2/3 blueprints.
  */
 
-<<<<<<< HEAD
-export type Role = "viewer" | "owner" | "agent" | "manager" | "admin" | "superadmin";
-
-/** Roles that may enter the staff admin portal after Firebase authentication. */
-export const ADMIN_PORTAL_ROLES = ["owner", "agent", "manager", "admin", "superadmin"] as const;
-=======
 export type Role =
   | "viewer"
   | "owner"
@@ -29,7 +23,6 @@ export const ADMIN_PORTAL_ROLES = [
   "admin",
   "superadmin",
 ] as const;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 export function isAdminPortalRole(role: unknown): boolean {
   return typeof role === "string" && ADMIN_PORTAL_ROLES.includes(role.trim().toLowerCase() as (typeof ADMIN_PORTAL_ROLES)[number]);

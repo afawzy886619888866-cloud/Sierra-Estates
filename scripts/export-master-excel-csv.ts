@@ -59,26 +59,6 @@ export function generateMasterCSV() {
   ];
 
   const rows = data.map((item: any) => {
-<<<<<<< HEAD
-    const cmp = item.compound || item.cmp || item.location || 'New Cairo';
-    const coords = compoundCoords[cmp] || compoundCoords['New Cairo'];
-    const price = item.price || 0;
-    const area = item.area_sqm || item.area || 0;
-    const beds = item.bedrooms || item.beds || 3;
-    const baths = item.bathrooms || item.baths || 2;
-    const img =
-      item.images && item.images.length > 0
-        ? item.images[0]
-        : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
-    const desc = (item.notes || item.comment || item.description || '').replace(/[\r\n]/g, ' ');
-
-    const fields = [
-      item.sierraCode || item.code || 'SE-UNIT',
-      cmp,
-      item.location || cmp,
-      item.type || 'Apartment',
-      item.operation || (item.mode === 'rent' ? 'Rent' : 'Sale'),
-=======
     // §21 no-fabrication: unknown fields export as empty/0 — never invented
     // 'New Cairo' compounds, New-Cairo GPS pins, 3/2 beds/baths, 'Apartment'
     // types, 'Semi-Finished' finishing, 'SE-UNIT' codes, or stock render photos.
@@ -103,20 +83,10 @@ export function generateMasterCSV() {
       item.type || '',
       // §21: operation only when stated or derivable from a real mode value.
       item.operation || (item.mode === 'rent' ? 'Rent' : item.mode === 'sale' ? 'Sale' : ''),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       price,
       area,
       beds,
       baths,
-<<<<<<< HEAD
-      item.finishing || 'Semi-Finished',
-      item.sourceType === 'owner' ? 'Direct Owner' : 'Broker Network',
-      item.whatsappGroupName || 'Master Sheet Direct Drop',
-      item.contact_info || item.ownerName || '',
-      item.listedAt || '',
-      coords.lat,
-      coords.lng,
-=======
       item.finishing || '',
       sourceLabel,
       item.whatsappGroupName || item.sourceGroup || '',
@@ -124,7 +94,6 @@ export function generateMasterCSV() {
       item.listedAt || '',
       coords ? coords.lat : '',
       coords ? coords.lng : '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       img,
       desc,
     ];
@@ -135,11 +104,7 @@ export function generateMasterCSV() {
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n'); // UTF-8 BOM for Excel Arabic compatibility
   fs.writeFileSync(csvPath, csvContent, 'utf-8');
   console.log(`\n✅ Generated clean master CSV (Single Source of Truth): ${csvPath}`);
-<<<<<<< HEAD
-  console.log(`📊 Total reconciled properties: ${data.length} units with GPS coordinates and images.`);
-=======
   console.log(`📊 Total reconciled properties: ${data.length} units (GPS/photo columns filled only where verified).`);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   return { total: data.length, path: csvPath };
 }
 

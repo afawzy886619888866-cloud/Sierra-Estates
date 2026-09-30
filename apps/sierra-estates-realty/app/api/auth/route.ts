@@ -18,11 +18,8 @@ import {
 } from "@/lib/auth";
 import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
-<<<<<<< HEAD
-=======
 import { isPartnerRole } from "@/lib/partner-access";
 import { scopeFromProfile } from "@/lib/server/partner-scope";
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import type { Role, User } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -55,12 +52,9 @@ export async function GET(req: Request) {
       name: sess.name,
       email: sess.email,
       uid: sess.uid,
-<<<<<<< HEAD
-=======
       // Partners carry their portfolio scope so the portal shell can adapt
       // (restricted nav) without another round trip.
       ...(isPartnerRole(sess.role) ? { scope: sess.scope } : {}),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     },
     { headers: NO_STORE_HEADERS }
   );
@@ -133,12 +127,9 @@ export async function POST(req: Request) {
               verifiedEmail.split("@")[0] ??
               "Sierra Staff",
             role,
-<<<<<<< HEAD
-=======
             // Partner accounts carry their portfolio scope into the session;
             // source of truth is profiles.metadata.partner_scope.
             ...(isPartnerRole(role) ? { scope: scopeFromProfile(profile) } : {}),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           });
           const res = NextResponse.json({ ok: true, role }, { headers: NO_STORE_HEADERS });
           res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
@@ -159,8 +150,6 @@ export async function POST(req: Request) {
       );
     }
 
-<<<<<<< HEAD
-=======
     // Path B — Partner accounts (email + password, PARTNER_ACCOUNTS env).
     // Merged-in property accounts: restricted portal, own-data scope only.
     const partner = tryPartnerLogin(targetEmail, password || "");
@@ -174,7 +163,6 @@ export async function POST(req: Request) {
       return res;
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     // Path C — Staff Admin Fallback (Email + Password)
     const demo = tryDemoLogin(targetEmail, password || "");
     if (!demo) {

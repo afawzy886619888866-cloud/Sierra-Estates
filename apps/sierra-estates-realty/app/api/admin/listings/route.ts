@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-<<<<<<< HEAD
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
-import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
-import { toListingColumns } from '@/lib/server/listing-columns';
-=======
 import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
 import { toListingColumns } from '@/lib/server/listing-columns';
 import { listingInScope } from '@/lib/server/partner-scope';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { fingerprint } from '@/lib/services/inventory/dedupe';
 import { logger } from '@/lib/logger';
 
@@ -72,18 +65,12 @@ export async function GET(req: NextRequest) {
     // Archived rows are excluded by default: they are retained for audit but
     // are not inventory, and a recent bulk archive (9.7k stale sheet rows)
     // would otherwise bury every live listing inside the first page.
-<<<<<<< HEAD
-    const rows = await listRecords('listings', {
-=======
     let rows = await listRecords('listings', {
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       limit,
       orderBy: { column: 'updatedAt', ascending: false },
       ...(includeArchived ? {} : { where: [{ column: 'status', op: 'neq', value: 'archived' }] }),
     });
 
-<<<<<<< HEAD
-=======
     // Partner accounts (merged-in property accounts) see only their own
     // portfolio — filter on the raw rows BEFORE the SPA mapping so compound /
     // developer matching works on the real column names.
@@ -91,7 +78,6 @@ export async function GET(req: NextRequest) {
       rows = rows.filter((row) => listingInScope(row, auth.scope));
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const listings = rows.map((row) => mapListingToSpa(String(row.id), rowToListingDoc(row)));
 
     return NextResponse.json({ success: true, listings, count: listings.length });

@@ -59,12 +59,9 @@ const validSubmission = {
   compound: 'Mivida',
   propertyType: 'Villa',
   mode: 'sale',
-<<<<<<< HEAD
-=======
   beds: 4,
   baths: 3,
   area: 260,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   price: 12_000_000,
   ownerName: 'Test Owner',
   mobile: '+201001112233',
@@ -123,8 +120,6 @@ describe('/api/listings/submit — moderation', () => {
     expect(res.status).toBe(400);
     expect(insertMock).not.toHaveBeenCalled();
   });
-<<<<<<< HEAD
-=======
 
   it('refuses to invent unit specs — missing beds/baths/area is a 400, not a default', async () => {
     // §21: the old schema silently defaulted beds 3 / baths 2 / area 150 /
@@ -164,7 +159,6 @@ describe('/api/listings/submit — moderation', () => {
     expect(rawData.zone).toBeUndefined();
     expect(written.zone).toBeUndefined();
   });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 });
 
 describe('isPubliclyVisibleListingStatus', () => {

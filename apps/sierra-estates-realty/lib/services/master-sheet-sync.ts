@@ -174,62 +174,6 @@ function canTransition(fromRaw?: string | null, toRaw?: string | null): boolean 
   return LIFECYCLE_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-/** 'مفروش'/'F' → 'F' (furnished), 'نص مفروش'/'S' → 'S', 'غير مفروش'/'U' → 'U'. */
-function parseFurnishing(raw?: string): FurnishingCode | undefined {
-  const s = convertArabicNumerals(raw || '').trim().toLowerCase();
-  if (!s) return undefined;
-  // Negations first — 'غير مفروش' contains 'مفروش'.
-  if (s.includes('غير مفروش') || s.includes('unfurnish') || s === 'u') return 'U';
-  if (s.includes('نص مفروش') || s.includes('semi') || s === 's') return 'S';
-  if (s.includes('مفروش') || s.includes('furnish') || s === 'f') return 'F';
-  if (s === 'k') return 'K';
-  return undefined;
-}
-
-// ─── Status lifecycle mirror ─────────────────────────────────────────────────
-//
-// Inventory OS v2 (migrations/011) enforces the canonical lifecycle at the
-// database level with a BEFORE UPDATE trigger: an UPDATE whose status change
-// is not on the transition matrix raises an exception, which would abort the
-// whole 500-row upsert chunk. The matrix below mirrors
-// normalize_listing_status() + can_transition_listing() so the sync can
-// decide per row, up front, whether to apply the sheet's status or defer to
-// the lifecycle queue (the desired state is parked in raw_data.sheet_status
-// for the ops team to action through the Inventory OS view).
-
-function normalizeStatus(raw?: string | null): string {
-  const s = String(raw ?? '').trim().toLowerCase();
-  if (s === '') return 'draft';
-  if (['available', 'active', 'verified'].includes(s)) return 'published';
-  if (['pending', 'pending review', 'pending_review', 'pending_verification'].includes(s)) return 'pending_verification';
-  if (s === 'sold') return 'sold';
-  if (s === 'rented') return 'rented';
-  if (s === 'reserved') return 'reserved';
-  if (s === 'off-market' || s === 'off_market') return 'off_market';
-  if (s === 'expired') return 'expired';
-  if (s === 'archived') return 'archived';
-  return 'draft';
-}
-
-const LIFECYCLE_TRANSITIONS: Record<string, readonly string[]> = {
-  draft: ['pending_verification', 'archived'],
-  pending_verification: ['verified', 'draft', 'archived'],
-  verified: ['published', 'pending_verification', 'archived'],
-  published: ['reserved', 'rented', 'off_market', 'expired', 'pending_verification', 'archived'],
-  reserved: ['sold', 'rented', 'published', 'archived'],
-  rented: ['published', 'archived'],
-  off_market: ['published', 'archived'],
-  expired: ['pending_verification', 'archived'],
-  // sold / archived are terminal
-};
-
-function canTransition(fromRaw?: string | null, toRaw?: string | null): boolean {
-  const from = normalizeStatus(fromRaw);
-  const to = normalizeStatus(toRaw);
-  if (from === to) return true;
-  return LIFECYCLE_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
 export async function syncMasterOwnerSheet(sheetId?: string) {
   const spreadsheetId = sheetId || process.env.MASTER_SHEET_ID || MASTER_SHEET_ID_DEFAULT;
   logger.info(`[MasterSheetSync] Starting sync for sheet ID: ${spreadsheetId}`);
@@ -316,40 +260,6 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         id: sanitizedDocId,
         code: unitCode,
         unitCode, // Inventory OS v2 cross-source unit identity
-<<<<<<< HEAD
-        title: `${propertyType.toUpperCase()} in ${location || 'New Cairo'} - ${unitCode}`,
-        compound: (location || 'New Cairo').trim(),
-        locationArea: (location || 'New Cairo').trim(),
-        city: geo.zone, // canonical zone from the gazetteer, not hardcoded
-        propertyType,
-        dealType: 'resale', // owner sheet is secondary-market inventory
-        category: 'residential',
-        price,
-        priceCurrency: 'EGP',
-        egpM: price > 0 ? Number((price / 1_000_000).toFixed(2)) : undefined,
-        usd: price > 0 ? egpToUsd(price) : undefined,
-        areaSqm: area,
-        pricePerSqm: price > 0 && area > 0 ? Math.round(price / area) : undefined,
-        bedrooms: bedCount,
-        furnishingStatus: furnishing,
-        ownerType: (ownerTypeRaw || '').toLowerCase().includes('broker') ? 'broker' : 'owner',
-        ownerPhone: mobile || '',
-        description: comment || `${furnished || ''} ${typeRaw || ''}`.trim(),
-        latitude: geo.lat,
-        longitude: geo.lng,
-        syncSource: SYNC_SOURCE,
-        sheetPriceRaw: priceRaw || '', // traceability: original sheet quote (→ raw_data)
-      };
-
-      // App-shaped twin for the response — the shape callers of this sync
-      // have always received.
-      const appUnit: Partial<Unit> = {
-        code: unitCode,
-        title: columnPayload.title as string,
-        compound: (location || 'New Cairo').trim(),
-        location: (location || 'New Cairo').trim(),
-        city: geo.zone,
-=======
         // §21 no-fabrication: title/compound/location only claim what the
         // sheet row actually carries (no 'New Cairo' / type invention)
         title: [propertyType && location ? `${propertyType.toUpperCase()} in ${location}` : propertyType || location || 'Unit', unitCode]
@@ -358,7 +268,6 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
         compound: (location || '').trim(),
         locationArea: (location || '').trim(),
         city: geo.zone, // canonical zone from the gazetteer, not hardcoded
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         propertyType,
         dealType: 'resale', // owner sheet is secondary-market inventory
         category: 'residential',

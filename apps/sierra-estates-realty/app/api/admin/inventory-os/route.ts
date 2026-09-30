@@ -12,14 +12,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-<<<<<<< HEAD
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { listRecords, getRecord, updateRecord, insertRecord, type RecordData } from '@sierra-estates/db';
-=======
 import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { listRecords, getRecord, updateRecord, insertRecord, type RecordData } from '@sierra-estates/db';
 import { listingInScope } from '@/lib/server/partner-scope';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -54,11 +49,7 @@ const priceSchema = z.object({
 const bodySchema = z.discriminatedUnion('action', [transitionSchema, priceSchema]);
 
 export async function GET(req: NextRequest) {
-<<<<<<< HEAD
-  const auth = await verifyAdminRequest(req);
-=======
   const auth = await verifyPortalRequest(req);
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   if (!auth.authenticated) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
@@ -69,13 +60,10 @@ export async function GET(req: NextRequest) {
     if (unitId) {
       const unit = await getRecord('listings', unitId);
       if (!unit) return NextResponse.json({ error: 'Unit not found' }, { status: 404 });
-<<<<<<< HEAD
-=======
       // A partner may only open units inside their own portfolio.
       if (auth.access === 'partner' && !listingInScope(unit, auth.scope)) {
         return NextResponse.json({ error: 'Forbidden — unit outside partner portfolio' }, { status: 403 });
       }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const [plans, priceHistory, statusHistory] = await Promise.all([
         listRecords('payment_plans', { where: [{ column: 'unitId', value: unitId }], limit: 50 }).catch(() => [] as RecordData[]),
         listRecords('price_history', { where: [{ column: 'unitId', value: unitId }], orderBy: { column: 'createdAt', ascending: false }, limit: 50 }).catch(() => [] as RecordData[]),
@@ -100,8 +88,6 @@ export async function GET(req: NextRequest) {
     } catch {
       rows = await listRecords('listings', filters);
     }
-<<<<<<< HEAD
-=======
 
     // Partner accounts see ONLY their own units — filter after the read (the
     // service-role client bypasses RLS, and developer/compound name matching
@@ -110,7 +96,6 @@ export async function GET(req: NextRequest) {
       rows = rows.filter((row) => listingInScope(row, auth.scope));
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     return NextResponse.json({ success: true, units: rows, count: rows.length });
   } catch (err) {
     logger.error('inventory-os GET failed:', err);

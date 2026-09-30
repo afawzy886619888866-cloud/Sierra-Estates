@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-<<<<<<< HEAD
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
-import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
-=======
 import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
 import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
 import { leadInScope } from '@/lib/server/partner-scope';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { logger } from '@/lib/logger';
 
 // Validates the SPA lead shape; passthrough keeps any extra fields the mapper reads.
@@ -67,9 +61,6 @@ export async function GET(req: NextRequest) {
     // (once as 'stakeholders', once as 'leads') and merge the results: every
     // intake path (website, Property Finder, WhatsApp, ...) already writes
     // into the one table, distinguished by `source`.
-<<<<<<< HEAD
-    const rows = await listRecords('leads', { limit });
-=======
     let rows = await listRecords('leads', { limit });
 
     // Partner accounts see only leads targeting their own compounds —
@@ -77,7 +68,6 @@ export async function GET(req: NextRequest) {
     if (auth.access === 'partner') {
       rows = rows.filter((row) => leadInScope(row, auth.scope));
     }
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     const leads = rows.map((row) => mapLeadToSpa(String(row.id), rowToLeadDoc(row)));
 

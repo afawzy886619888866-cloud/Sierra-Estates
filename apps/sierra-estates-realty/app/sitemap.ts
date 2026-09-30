@@ -1,18 +1,11 @@
 import type { MetadataRoute } from 'next';
-<<<<<<< HEAD
-import snapshot from '@/lib/inventory/snapshot.json';
-import waIngested from '@/data/whatsapp-ingested-units.json';
-=======
 import fs from 'node:fs';
 import path from 'node:path';
 import snapshot from '@/lib/inventory/snapshot.json';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const SITE_URL = process.env.NEXT_PUBLIC_CLIENT_URL || 'https://sierra-estates.net';
 
 /**
-<<<<<<< HEAD
-=======
  * Phase 4 fix: this module previously imported @/data/whatsapp-ingested-units.json
  * statically — a gitignored file that does not exist on fresh clones, breaking
  * the build. It is now read defensively from disk when present (the same
@@ -36,7 +29,6 @@ function readWhatsAppIngestedUnits(): any[] {
 }
 
 /**
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  * Dynamic sitemap: static marketing routes + compound pages + one URL per
  * live catalog listing (from the committed snapshot, which the prebuild
  * `ensure-snapshot` step refreshes from the master sheet).
@@ -67,11 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Live catalog listing pages
   const snapUnits: any[] = (snapshot as any)?.units || [];
-<<<<<<< HEAD
-  const waUnits: any[] = Array.isArray(waIngested) ? waIngested : [];
-=======
   const waUnits: any[] = readWhatsAppIngestedUnits();
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const liveUnits = [
     ...waUnits.map((u) => ({ ...u, code: u.sierraCode || u.code || u.id })),
     ...snapUnits,

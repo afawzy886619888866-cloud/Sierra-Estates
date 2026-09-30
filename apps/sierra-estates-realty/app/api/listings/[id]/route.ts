@@ -4,11 +4,7 @@
  * DELETE /api/listings/[id]   (admin) — soft delete (status=archived)
  */
 import { NextResponse } from "next/server";
-<<<<<<< HEAD
-import { SEED_LISTINGS } from "@/lib/seed";
-=======
 // SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5)
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 import { getRecord, updateRecord } from "@sierra-estates/db";
 import { toListingColumns, toListingRecord } from "@/lib/server/listing-columns";
 import { requireRole } from "@/lib/auth";

@@ -5,15 +5,11 @@
  *                         queue, duplicate bookkeeping — Phase 12)
  *     + automationHealth  (per-job last run + open DLQ — Phase 11/12 tie-in)
  *
-<<<<<<< HEAD
- * Computes KPIs from Supabase.
-=======
  * Computes everything from Supabase. The Phase 12 sections are wrapped in
  * their own guards: if their tables/columns are not applied yet (migration
  * 013 for inventory columns, 017 for automation_runs), the endpoint still
  * returns the core KPIs and simply reports the sections as null — the
  * control center degrades honestly instead of taking the dashboard down.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
  */
 import { NextResponse } from "next/server";
 import { listRecords, countRecords } from "@sierra-estates/db";
@@ -51,25 +47,18 @@ export async function GET(req: Request) {
   let leads: Lead[] = [];
   let usersCount = 0;
   let compoundsCount = 0;
-<<<<<<< HEAD
-=======
   let inventoryRows: InventoryHealthRow[] = [];
   let inventoryHealthAvailable = false;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   try {
     // database-design optimization: select only required columns to avoid
     // loading heavy pgvector embeddings (1536 floats) and unneeded media arrays into memory
-<<<<<<< HEAD
-    const [listingRows, inquiryRows, leadRows, uCount, cCount] = await Promise.all([
-=======
     //
     // The Phase 12 projection rides along in the same Promise.all; when the
     // 013 columns are not applied on this database the WHOLE read rejects,
     // and the catch below retries the core KPIs without the new columns
     // (inventoryHealth then reports null — unavailable, never fake zeros).
     const [listingRows, inquiryRows, leadRows, uCount, cCount, inventoryHealthRows] = await Promise.all([
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       listRecords("listings", {
         select: "id,status,agent_name,valuation_status,price",
       }),
@@ -85,14 +74,11 @@ export async function GET(req: Request) {
       }),
       countRecords("profiles"),
       countRecords("compounds"),
-<<<<<<< HEAD
-=======
       // Phase 12 control center: freshness / publishability / verification
       // columns (013) — one lightweight projection of the whole table.
       listRecords("listings", {
         select: "id,source_verified_at,publish_status,verified,dupe_check_hash",
       }),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     ]);
 
     listings = listingRows as unknown as Listing[];
@@ -104,17 +90,6 @@ export async function GET(req: Request) {
     }) as unknown as Lead[];
     usersCount = uCount;
     compoundsCount = cCount;
-<<<<<<< HEAD
-  } catch (err) {
-    console.error("[dashboard] Supabase read failed:", err);
-    return NextResponse.json(
-      { error: "Failed to read from database", details: (err as Error)?.message },
-      { status: 500 }
-    );
-  }
-
-  const activeListings = listings.filter((l) => l.status === "available" || (l.status as string) === "active");
-=======
     inventoryRows = inventoryHealthRows as unknown as InventoryHealthRow[];
     inventoryHealthAvailable = true;
   } catch (err) {
@@ -158,7 +133,6 @@ export async function GET(req: Request) {
   // When the 013 projection was unavailable the section is null — the widget
   // then shows "not available" instead of fake zeros.
   let inventoryHealth: DashboardKPIs["inventoryHealth"] = null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const now = Date.now();
   if (inventoryHealthAvailable) {
     const freshness = { fresh: 0, aging: 0, stale: 0, never: 0 };
@@ -229,11 +203,6 @@ export async function GET(req: Request) {
     ? (closed / inquiries.length) * 100
     : 0;
   const pendingApprovals = inquiries.filter((i) => i.status === "new" || (i.status as string) === "pending").length;
-<<<<<<< HEAD
-  const avgAiScore = listings.length
-    ? listings.reduce((s, l: any) => s + (l.aiScore || (l.valuationStatus === 'Underpriced' ? 9.5 : 8.5)), 0) / listings.length
-    : 8.8;
-=======
   // Honest average: only over listings that actually carry an aiScore. The
   // previous fallback invented 8.5/9.5 per listing (and 8.8 when empty),
   // fabricating an "AI quality" figure for the admin dashboard.
@@ -243,7 +212,6 @@ export async function GET(req: Request) {
   const avgAiScore = realScores.length
     ? realScores.reduce((s, v) => s + v, 0) / realScores.length
     : null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
   // Recent activity feed (merge inquiries + leads, top 10)
   const recentActivity: DashboardKPIs["recentActivity"] = [

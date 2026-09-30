@@ -26,15 +26,12 @@ export interface ClientProfile {
   minBedrooms?: number;
   finishing?: string;
   urgency?: 'high' | 'medium' | 'low';
-<<<<<<< HEAD
-=======
   // Phase 5 profile gap-fill (master-spec qualification set):
   dealType?: 'sale' | 'rent';
   furnishing?: 'furnished' | 'semi_furnished' | 'unfurnished' | 'any';
   moveInDate?: string;
   nationality?: string;
   specialRequirements?: string;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 }
 
 export interface MatchResult {
@@ -42,11 +39,6 @@ export interface MatchResult {
   matchScore: number; // 0 - 100%
   confidence: 'high' | 'medium' | 'low';
   reasons: string[];
-<<<<<<< HEAD
-}
-
-export class PropertyMatchmaker {
-=======
   /** Hard constraints this property violates (empty for normal results). */
   hardConstraintViolations: string[];
   /** True ⇒ surfaced only because compliant results < limit, per the
@@ -70,7 +62,6 @@ export class PropertyMatchmaker {
     return violations;
   }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   /**
    * Calculate cosine-weighted multi-attribute match score for a property against client profile.
    */
@@ -134,14 +125,10 @@ export class PropertyMatchmaker {
 
     // 4. Quality & Valuation Boost (Weight: 20)
     maxScore += 20;
-<<<<<<< HEAD
-    const quality = property.valuationScore || 75;
-=======
     // §21 no-fabrication: the quality boost is computed only from a real
     // valuation score — an unscored property earns no boost, never an
     // assumed 75/100.
     const quality = property.valuationScore ?? 0;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const qualityBoost = Math.round((quality / 100) * 20);
     score += qualityBoost;
     if (quality >= 85) {
@@ -156,23 +143,11 @@ export class PropertyMatchmaker {
       matchScore: finalPercent,
       confidence,
       reasons,
-<<<<<<< HEAD
-=======
       hardConstraintViolations: this.hardViolations(property, client),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     };
   }
 
   /**
-<<<<<<< HEAD
-   * Rank a collection of property listings for a client profile.
-   */
-  public static rankProperties(listings: PropertyListing[], client: ClientProfile, limit: number = 5): MatchResult[] {
-    return listings
-      .map((p) => this.calculateMatch(p, client))
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, limit);
-=======
    * Rank a collection of property listings for a client profile. Compliant
    * results come first (by score); hard-constraint violators only ever
    * surface after them, explicitly flagged as alternatives, and only when
@@ -194,6 +169,5 @@ export class PropertyMatchmaker {
       .map((m) => ({ ...m, alternative: true }));
 
     return [...compliant.map((m) => ({ ...m, alternative: false })), ...alternatives];
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 }

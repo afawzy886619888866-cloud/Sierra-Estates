@@ -55,8 +55,6 @@ export async function POST(req: NextRequest) {
     const contractNumber = generateContractNumber(contractType);
     const contractId = `con-${Date.now()}`;
 
-<<<<<<< HEAD
-=======
     // §21: a contract is a legal record — its terms may never be invented.
     // The old defaults ('New Cairo', 'Apartment', beds 3, 150 sqm, 10%
     // deposit, 50/50 commission split) fabricated binding terms whenever a
@@ -95,7 +93,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     const newContract: DigitalContractData = {
       id: contractId,
       contractNumber,
@@ -103,22 +100,6 @@ export async function POST(req: NextRequest) {
       status: 'pending_signatures',
       createdAt: new Date().toISOString(),
       unit: {
-<<<<<<< HEAD
-        unitCode: body.unitCode || 'SE-UNIT-NEW',
-        compoundName: body.compoundName || 'New Cairo',
-        propertyType: body.propertyType || 'Apartment',
-        areaSqm: Number(body.areaSqm) || 150,
-        bedrooms: Number(body.bedrooms) || 3,
-        bathrooms: Number(body.bathrooms) || 2,
-        finishing: body.finishing || 'Super Lux',
-        dealType: body.dealType || 'rent',
-        agreedPrice: Number(body.agreedPrice) || 0,
-        reservationDeposit: Number(body.reservationDeposit) || (Number(body.agreedPrice) * 0.1),
-        paymentPlanDescription: body.paymentPlanDescription || '',
-      },
-      buyer: {
-        name: body.buyerName || 'Buyer',
-=======
         unitCode: body.unitCode,
         compoundName: body.compoundName,
         propertyType: body.propertyType,
@@ -133,7 +114,6 @@ export async function POST(req: NextRequest) {
       },
       buyer: {
         name: body.buyerName,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         nationalIdOrPassport: body.buyerNationalId || 'N/A',
         phone: body.buyerPhone || '',
         email: body.buyerEmail || '',
@@ -144,17 +124,10 @@ export async function POST(req: NextRequest) {
         phone: body.sellerPhone || '',
       },
       commission: body.commissionPercentage ? {
-<<<<<<< HEAD
-        totalCommissionAmount: (Number(body.agreedPrice) || 0) * (Number(body.commissionPercentage) / 100),
-        commissionPercentage: Number(body.commissionPercentage) || 2.5,
-        sierraSharePercentage: Number(body.sierraSharePercentage) || 50,
-        brokerSharePercentage: Number(body.brokerSharePercentage) || 50,
-=======
         totalCommissionAmount: Number(body.agreedPrice) * (Number(body.commissionPercentage) / 100),
         commissionPercentage: Number(body.commissionPercentage),
         sierraSharePercentage: Number(body.sierraSharePercentage),
         brokerSharePercentage: Number(body.brokerSharePercentage),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
         externalBrokerName: body.externalBrokerName || '',
         externalBrokerPhone: body.externalBrokerPhone || '',
         vatIncluded: true,

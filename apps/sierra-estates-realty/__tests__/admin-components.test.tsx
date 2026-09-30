@@ -52,12 +52,6 @@ describe('Admin Components Suite', () => {
       expect(html).toContain('Easy Listing Studio');
     });
 
-<<<<<<< HEAD
-    it('contains Mivida compound sample and AI score', () => {
-      const html = render(<EasyListingStudio />);
-      expect(html).toContain('Mivida');
-      expect(html).toContain('9.6');
-=======
     it('starts empty and honest — no prefilled demo listing, no fabricated AI score', () => {
       // §21: the studio used to prefill a fake 'Mivida' 14.5M listing with
       // aiScore 9.6 and a sample PF CDN photo before anything was parsed.
@@ -70,7 +64,6 @@ describe('Admin Components Suite', () => {
       expect(html).not.toContain('14500000');
       expect(html).not.toContain('Sierra Estates Portfolio');
       expect(html).not.toContain('propertyfinder.eg/media');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 
@@ -111,8 +104,6 @@ describe('Admin Components Suite', () => {
       const html = render(<PropertyTeaserBrochure lang="en" />);
       expect(html).toContain('Brochure');
     });
-<<<<<<< HEAD
-=======
 
     it('§21: starts empty — no prefilled demo villa and no invented broker desk', () => {
       const html = render(<PropertyTeaserBrochure lang="en" />);
@@ -139,7 +130,6 @@ describe('Admin Components Suite', () => {
       expect(html).toContain('missing — the teaser is generated only from complete, real listing data');
       expect(html).toContain('disabled');
     });
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   });
 
   describe('WhatsAppScheduledSender', () => {

@@ -11,14 +11,6 @@ interface AudioBriefingPlayerProps {
   initialLanguage?: 'ar-EG' | 'en-US';
 }
 
-<<<<<<< HEAD
-export default function AudioBriefingPlayer({
-  propertyCode = 'SE-MIV-01',
-  compound = 'Mivida',
-  unitType = 'Apartment',
-  price = 12500000,
-  areaSqm = 185,
-=======
 // §21: no fabricated default property (the old 'Mivida' / 12.5M / 185 sqm
 // defaults invented a unit when the caller passed nothing). The player only
 // requests a briefing when real property data is supplied.
@@ -28,7 +20,6 @@ export default function AudioBriefingPlayer({
   unitType,
   price,
   areaSqm,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   initialLanguage = 'ar-EG',
 }: AudioBriefingPlayerProps) {
   const [lang, setLang] = useState<'ar-EG' | 'en-US'>(initialLanguage);
@@ -38,8 +29,6 @@ export default function AudioBriefingPlayer({
   const [metrics, setMetrics] = useState<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-<<<<<<< HEAD
-=======
   const numericPrice =
     typeof price === 'number' ? price : parseInt(String(price ?? '').replace(/\D/g, ''), 10) || null;
   // §21: a briefing needs real inputs — no property data, no briefing.
@@ -47,7 +36,6 @@ export default function AudioBriefingPlayer({
     compound && unitType && numericPrice && numericPrice > 0 && areaSqm && areaSqm > 0
   );
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   const handleFetchAndPlay = async () => {
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
@@ -55,8 +43,6 @@ export default function AudioBriefingPlayer({
       return;
     }
 
-<<<<<<< HEAD
-=======
     // Refuse to fabricate: without real compound / type / price / area there
     // is nothing honest to brief about.
     if (!canBrief) {
@@ -65,24 +51,16 @@ export default function AudioBriefingPlayer({
       return;
     }
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     setIsLoading(true);
     try {
       const res = await fetch('/api/audio-briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-<<<<<<< HEAD
-          sierraCode: propertyCode,
-          compound,
-          unitType,
-          priceEGP: typeof price === 'number' ? price : parseInt(String(price).replace(/\D/g, ''), 10) || 12000000,
-=======
           sierraCode: propertyCode || 'UNSPECIFIED',
           compound,
           unitType,
           priceEGP: numericPrice,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           areaSqm,
           language: lang,
         }),
@@ -180,12 +158,8 @@ export default function AudioBriefingPlayer({
         <button
           type="button"
           onClick={handleFetchAndPlay}
-<<<<<<< HEAD
-          disabled={isLoading}
-=======
           disabled={isLoading || !canBrief}
           title={canBrief ? 'Generate briefing' : 'Real property data (compound, type, price, area) required'}
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           style={{
             background: '#d4af37',
             color: '#111827',

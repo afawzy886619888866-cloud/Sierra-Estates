@@ -121,17 +121,11 @@ export class LeadRouterEngine {
       matchScore: highestScore,
       slaDeadline,
       escalationStatus: 'pending_broker_ack',
-<<<<<<< HEAD
-      notificationMessage: {
-        ar: `تم تحويل عميل جديد (${lead.clientName}) لمشروع ${lead.targetCompound || 'القاهرة الجديدة'}. مهلة الاستجابة 15 دقيقة.`,
-        en: `New VIP lead (${lead.clientName}) dispatched for ${lead.targetCompound || 'New Cairo'}. 15-min SLA active.`,
-=======
       // §21 no-fabrication: omit the compound clause when the lead carries no
       // target — never claim 'New Cairo'/'القاهرة الجديدة' by default.
       notificationMessage: {
         ar: `تم تحويل عميل جديد (${lead.clientName})${lead.targetCompound ? ` لمشروع ${lead.targetCompound}` : ' (لم يُحدد المشروع)'}. مهلة الاستجابة 15 دقيقة.`,
         en: `New VIP lead (${lead.clientName}) dispatched${lead.targetCompound ? ` for ${lead.targetCompound}` : ' (target compound not specified)'}. 15-min SLA active.`,
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       },
     };
   }

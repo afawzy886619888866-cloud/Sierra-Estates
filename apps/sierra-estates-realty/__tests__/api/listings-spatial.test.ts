@@ -22,10 +22,7 @@ jest.mock('@/lib/supabase', () => ({
           latitude: 30.045,
           longitude: 31.635,
           status: 'available',
-<<<<<<< HEAD
-=======
           publish_status: 'PUBLISHABLE',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           images: ['https://images.unsplash.com/sample.jpg'],
         },
         {
@@ -41,10 +38,7 @@ jest.mock('@/lib/supabase', () => ({
           latitude: 30.015,
           longitude: 31.545,
           status: 'available',
-<<<<<<< HEAD
-=======
           publish_status: 'PUBLISHABLE',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           images: [],
         },
       ],
@@ -159,8 +153,6 @@ describe('GET /api/listings/spatial Endpoint', () => {
     }
   });
 
-<<<<<<< HEAD
-=======
   it('drops unverified rows the RPC returns (Phase D defense-in-depth)', async () => {
     // The canonical RPC filters publish_status in SQL (migration 020), but
     // the function deployed on the live project may predate that gate — the
@@ -218,7 +210,6 @@ describe('GET /api/listings/spatial Endpoint', () => {
     expect(body.listings.map((l: any) => l.id)).not.toContain('rpc-unverified');
   });
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   it('falls back to live public.listings rows when the PostGIS RPC is not deployed', async () => {
     const { supabase } = await import('@/lib/supabase');
 
@@ -227,47 +218,6 @@ describe('GET /api/listings/spatial Endpoint', () => {
       data: null,
       error: { message: 'function public.get_listings_near_capital does not exist' },
     });
-<<<<<<< HEAD
-    (supabase.from as jest.Mock).mockReturnValueOnce({
-      select: jest.fn().mockReturnValue({
-        in: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue({
-            data: [
-              {
-                id: 'live-pf-1',
-                ref_id: 'PF-LIVE-1',
-                code: 'PF-LIVE-1',
-                compound: 'Uptown Cairo',
-                location_area: 'Uptown Cairo',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 8000000,
-                bedrooms: 3,
-                bathrooms: 3,
-                area_sqm: 190,
-                latitude: 30.04,
-                longitude: 31.58,
-                status: 'active',
-                images: [
-                  'https://static.shared.propertyfinder.eg/media/images/listing/x/1.jpg',
-                ],
-                description: 'Live PF listing',
-                raw_data: { img: 'https://static.shared.propertyfinder.eg/media/images/listing/x/raw.jpg' },
-              },
-              // No coordinates → must be dropped by the live fallback tier.
-              {
-                id: 'live-nocoord',
-                code: 'PF-NOCOORD',
-                compound: 'Maadi',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 4000000,
-                status: 'active',
-                images: [],
-              },
-            ],
-            error: null,
-=======
     // PUBLISH GATE: the fallback tier filters publish_status = 'PUBLISHABLE'
     // inside the query (activation plan Phase D), so the mocked chain needs
     // .eq() and the fixture row must carry the gated column.
@@ -314,7 +264,6 @@ describe('GET /api/listings/spatial Endpoint', () => {
               ],
               error: null,
             }),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
           }),
         }),
       }),

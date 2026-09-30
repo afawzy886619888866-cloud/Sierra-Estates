@@ -31,17 +31,12 @@ describe('Easy Listing AI Parser API Endpoint', () => {
     expect(json.data.beds).toBe(3);
     expect(json.data.baths).toBe(2);
     expect(json.data.area).toBe(185);
-<<<<<<< HEAD
-=======
     expect(json.data.mobile).toBe('01001234567');
     expect(json.data.mode).toBe('sale');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     expect(json.data.sierraCode).toBeDefined();
     expect(json.images).toHaveLength(1);
   });
 
-<<<<<<< HEAD
-=======
   it('returns null for every field the text does not state — no fabricated defaults', async () => {
     // §21: text with NO compound, NO price, NO phone, NO type. The old
     // heuristic defaulted '5th Settlement' / 'Apartment' / beds 3 / baths 2 /
@@ -89,7 +84,6 @@ describe('Easy Listing AI Parser API Endpoint', () => {
     expect(json.missing).toContain('mobile');
   });
 
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   it('rejects invalid payload with short text', async () => {
     const req = new Request('http://localhost:3000/api/listings/easy-parse', {
       method: 'POST',

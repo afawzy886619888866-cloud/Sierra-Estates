@@ -38,29 +38,6 @@ describe('Admin Portal Extended Suite', () => {
     });
   });
 
-<<<<<<< HEAD
-  describe('4. LeadsPage · lead source attribution', () => {
-    const T = (k: string) => k;
-
-    it('renders a Source column with a badge per lead, grouping every intake channel in one table', () => {
-      const html = render(<LeadsPage T={T} />);
-
-      // Placeholder data covers property-finder, website, whatsapp, and
-      // referral - the same acquisition channels real leads carry via
-      // StakeholderAcquisitionSource, so the admin page shows every source
-      // gathered in one place rather than needing separate views per channel.
-      expect(html).toContain('Property Finder');
-      expect(html).toContain('Website');
-      expect(html).toContain('WhatsApp');
-      expect(html).toContain('Referral');
-    });
-
-    it('offers a source filter dropdown covering every channel present in the lead list', () => {
-      const html = render(<LeadsPage T={T} />);
-      expect(html).toContain('>allSources</option>');
-      expect(html).toContain('<option value="property-finder">Property Finder</option>');
-      expect(html).toContain('<option value="website">Website</option>');
-=======
   describe('4. LeadsPage · lead source attribution (anti-fabrication contract)', () => {
     const T = (k: string) => k;
 
@@ -80,18 +57,13 @@ describe('Admin Portal Extended Suite', () => {
     it('renders the all-sources filter control', () => {
       const html = render(<LeadsPage T={T} />);
       expect(html).toContain('>allSources</option>');
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
   });
 
   describe('3. Admin RBAC & Audit Actions', () => {
     it('enforces RBAC role validation (super_admin, sales_agent, analyst)', () => {
       const allowedRoles = ['super_admin', 'sales_agent', 'analyst'];
-<<<<<<< HEAD
-      const testUser = { id: 'usr-1', email: 'admin@sierraestates.com', role: 'super_admin' };
-=======
       const testUser = { id: 'usr-1', email: 'admin@sierra-estates.net', role: 'super_admin' };
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       
       expect(allowedRoles).toContain(testUser.role);
       const isSuperAdmin = testUser.role === 'super_admin';

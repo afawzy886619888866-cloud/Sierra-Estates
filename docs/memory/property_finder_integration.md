@@ -16,13 +16,8 @@ This document details the integration routes and webhook synchronization mechani
 > chat transcripts that get committed.
 
 * **API Gateway URL:** `https://atlas.propertyfinder.com`
-<<<<<<< HEAD
-* **API Key:** `dghXI.xvR0qLbmNzhEy4APzqRRTotc8JJZHTHKP2`
-* **API Secret:** `WXod450Dj5eVNISsmFA1DCr0oPNuyucH`
-=======
 * **API Key:** → Vercel env `PROPERTY_FINDER_API_KEY` (both projects)
 * **API Secret:** → Vercel env `PROPERTY_FINDER_API_SECRET` (both projects)
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 *Note: Access tokens expire every 30 minutes. The `PropertyFinderClient` class automatically handles token retrieval and refresh on demand.*
 

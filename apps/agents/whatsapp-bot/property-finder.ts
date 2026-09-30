@@ -97,14 +97,6 @@ export async function fetchListings(options: { limit?: number } = {}): Promise<R
  * convention and the client profile extractor below.
  */
 function toPropertyListing(r: RawListing): PropertyListing {
-<<<<<<< HEAD
-  return {
-    id: r.id,
-    sierraCode: r.code || r.id,
-    title: `${r.type || 'Unit'} · ${r.compound || 'Sierra'}`,
-    compound: r.compound || 'New Cairo',
-    type: r.type || 'Apartment',
-=======
   // §21 no-fabrication: unknown compound/type render as empty and the title
   // is built only from fields the listing actually carries — never
   // 'New Cairo'/'Apartment'/'Sierra' defaults.
@@ -115,7 +107,6 @@ function toPropertyListing(r: RawListing): PropertyListing {
     title: titleParts || 'Property listing',
     compound: r.compound || '',
     type: r.type || '',
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     price: r.usd || 0,
     area_sqm: r.area || 0,
     bedrooms: r.beds || 0,

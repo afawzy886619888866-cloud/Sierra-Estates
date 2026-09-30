@@ -64,16 +64,11 @@ describe('WhatsApp Agent Concierge Suite', () => {
     });
   });
 
-<<<<<<< HEAD
-  describe('2. PropertyMatcher', () => {
-    it('matches rental query for 3 bedrooms in Mivida', async () => {
-=======
   describe('2. PropertyMatcher (anti-fabrication contract)', () => {
     it('returns ZERO matches when the database is empty — never fabricated listings', async () => {
       // Master Rule 5: with no live inventory the matcher must return an
       // empty set (the bot then sends the honest no-match message), not
       // the former FALLBACK_INVENTORY of five fictional rentals.
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
       const matches = await propertyMatcher.findMatches({
         locations: ['Mivida'],
         bedrooms: 3,
@@ -82,21 +77,6 @@ describe('WhatsApp Agent Concierge Suite', () => {
 
       expect(matches).toBeDefined();
       expect(Array.isArray(matches)).toBe(true);
-<<<<<<< HEAD
-      expect(matches.length).toBeGreaterThan(0);
-      expect(matches[0].bedrooms).toBe(3);
-    });
-
-    it('respects maximum budget constraints', async () => {
-      const matches = await propertyMatcher.findMatches({
-        budget: 50000,
-      });
-
-      expect(matches.length).toBeGreaterThan(0);
-      for (const m of matches) {
-        expect(m.price).toBeLessThanOrEqual(55000); // within tolerance
-      }
-=======
       expect(matches.length).toBe(0);
     });
 
@@ -114,7 +94,6 @@ describe('WhatsApp Agent Concierge Suite', () => {
       const card = propertyMatcher.formatRecommendationCards(sample, false);
       expect(card).toContain('52,000');
       expect(sample[0].price).toBeLessThanOrEqual(55000); // within tolerance
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     });
 
     it('formats rich WhatsApp card with property details and CTA in English and Arabic', () => {

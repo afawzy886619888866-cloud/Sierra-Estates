@@ -1,28 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TearSheetGenerator, TearSheetListingInput } from '@sierra-estates/agents-core/src/memo-generator';
 
-<<<<<<< HEAD
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-
-    const input: TearSheetListingInput = {
-      referenceId: body.referenceId || 'REF-HYDE-001',
-      title: body.title || 'Luxury Standalone Villa',
-      compoundName: body.compoundName || 'Hyde Park',
-      unitType: body.unitType || 'Standalone Villa',
-      buaSqm: Number(body.buaSqm) || 380,
-      landSqm: body.landSqm ? Number(body.landSqm) : 450,
-      bedrooms: Number(body.bedrooms) || 5,
-      bathrooms: Number(body.bathrooms) || 5,
-      finishing: body.finishing || 'ultra_lux',
-      askingPriceEGP: Number(body.askingPriceEGP) || 35000000,
-      downPaymentPercent: Number(body.downPaymentPercent) || 10,
-      installmentTenureYears: Number(body.installmentTenureYears) || 7,
-      deliveryYear: Number(body.deliveryYear) || 2026,
-      brokerName: body.brokerName || 'Sierra Elite Desk',
-      brokerPhone: body.brokerPhone || '+201092048333',
-=======
 /**
  * §21 no-fabrication contract: a tear-sheet documents a REAL listing. Every
  * property fact and every deal term printed on the sheet must arrive
@@ -94,7 +72,6 @@ export async function POST(request: Request) {
       deliveryYear: Number(body.deliveryYear),
       brokerName: String(body.brokerName),
       brokerPhone: String(body.brokerPhone),
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
     };
 
     const tearSheet = TearSheetGenerator.generateTearSheet(input);

@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-import snapshot from '@/lib/inventory/snapshot.json';
-import { getCuratedListingImage, COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
-=======
 // NOTE (Phase 4 / B3 + Master Rule 5): this module previously imported the
 // 6.5 MB lib/inventory/snapshot.json — every client page importing HZDATA
 // shipped the whole catalog in its JS bundle, and when the snapshot was
@@ -11,7 +7,6 @@ import { getCuratedListingImage, COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-
 // here; REAL unit data comes from /api/inventory (server-side, PII-stripped,
 // cached) via lib/site/usePublicListings.ts.
 import { COMPOUND_HERO_IMAGES } from '@/lib/site/luxury-images';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const EAST_CAIRO_TARGETS = [
   'Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette',
@@ -20,64 +15,12 @@ const EAST_CAIRO_TARGETS = [
   'Stone Residence', 'District 5', 'Madinaty', 'Al Rehab', 'Uptown Cairo',
   'Al Burouj', 'Sarai', 'STEI8HT', 'Bloomfields', 'The Brooks', 'El Patio Oro'
 ];
-<<<<<<< HEAD
-
-const validUnits: any[] = ((snapshot as any)?.units || []).filter(
-  (u: any) =>
-    u.price > 0 &&
-    u.compound &&
-    EAST_CAIRO_TARGETS.includes(u.compound) &&
-    u.party !== 'Owner' &&
-    u.sourceType !== 'owner' &&
-    u.segment !== 'owners_rent' &&
-    u.segment !== 'owners_buy' &&
-    u.tag !== 'Direct Owner'
-);
-
-const defaultListings = validUnits.length > 0
-  ? validUnits.slice(0, 48).map((u: any, i: number) => {
-      const mode = u.dealType || u.mode || (u.price < 500000 ? 'rent' : 'sale');
-      const egpM = Number(((u.price || 8000000) / 1000000).toFixed(1));
-      const usd = mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5);
-      return {
-        id: i + 1,
-        code: u.code || u.id || `SE-${String(i + 1).padStart(3, '0')}`,
-        cmp: u.compound,
-        zone: u.zone || '5th Settlement',
-        type: u.type || 'Apartment',
-        beds: u.bedrooms || u.beds || 3,
-        bath: u.bathrooms || u.bath || 2,
-        area: u.area_sqm || u.area || 165,
-        egpM: egpM > 0 ? egpM : 8.5,
-        usd: usd > 0 ? usd : (mode === 'rent' ? 2200 : 175000),
-        ai: u.aiScore || Number((9.0 + (i % 9) * 0.1).toFixed(1)),
-        tag: u.isNew ? 'New Listing' : (i % 3 === 0 ? 'AI Top Pick' : 'Verified Portfolio'),
-        mode,
-        agent: 'Sierra Advisor Desk',
-        ago: u.listedAt || 'Verified Sync',
-        img: getCuratedListingImage(u, i),
-        whatsapp: 'https://wa.me/201092048333',
-        segment: u.segment || (mode === 'rent' ? 'broker_rent' : 'broker_buy'),
-      };
-    })
-  : [
-      { id: 1, code: 'HP-VL-01', cmp: 'Hyde Park', zone: '5th Settlement', type: 'Villa', beds: 5, bath: 5, area: 480, egpM: 28.5, usd: 5200, ai: 9.8, tag: 'Premium', mode: 'sale', agent: 'Layla Mansour', ago: '2d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/b055903b-8fba-485e-a052-902edfd9ef9d.png' },
-      { id: 2, code: 'MVW-TH-02', cmp: 'Mountain View iCity', zone: '5th Settlement', type: 'Twin House', beds: 4, bath: 3, area: 280, egpM: 15.5, usd: 2400, ai: 9.6, tag: 'Featured', mode: 'sale', agent: 'Karim Fahmy', ago: '5h ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHCH8F2QJGMX0JKFDC4F2RS/d5a4c65a-ed1e-11ef-8581-0a1a96148fff-6c075407-d0dd-4773-95fc-9b55a28d83ec.png' },
-      { id: 3, code: 'MV-AP-03', cmp: 'Mivida', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 145, egpM: 6.8, usd: 1650, ai: 9.1, tag: 'Smart Match', mode: 'rent', agent: 'Nour Saleh', ago: '1d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHJWNY2C8HBCSBTEGVDF/c93e501a-d293-4367-8793-a4de870f6f6b.png' },
-      { id: 4, code: 'UPC-PH-04', cmp: 'Uptown Cairo', zone: 'Mokattam', type: 'Penthouse', beds: 4, bath: 3, area: 300, egpM: 18.5, usd: 3800, ai: 9.5, tag: 'Exclusive', mode: 'sale', agent: 'Omar Magdy', ago: '6h ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/22577be2-22ec-4ebc-a513-36f4cec53d2e.jpg' },
-      { id: 5, code: 'TAJ-VL-05', cmp: 'Taj City', zone: 'New Cairo', type: 'Villa', beds: 5, bath: 5, area: 500, egpM: 35.0, usd: 6500, ai: 9.5, tag: 'Premium', mode: 'sale', agent: 'Yara Hakim', ago: '4d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/79f8e83c-21d9-4901-91cc-a04b0ea69134.png' },
-      { id: 6, code: 'VLT-VL-06', cmp: 'Villette', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 4, area: 390, egpM: 24.5, usd: 4400, ai: 9.3, tag: 'New', mode: 'sale', agent: 'Rana Adel', ago: '3d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/b4044bfe-eee5-4941-891a-1654b12ea064.png' },
-      { id: 7, code: 'PH-VL-07', cmp: 'Palm Hills NC', zone: '5th Settlement', type: 'Villa', beds: 4, bath: 3, area: 380, egpM: 23.5, usd: 4200, ai: 9.2, tag: 'Best ROI', mode: 'sale', agent: 'Layla Mansour', ago: '1w ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/0c8bb477-7853-41be-a1ec-a3d5cbce74de.png' },
-      { id: 8, code: 'EST-DX-08', cmp: 'Eastown', zone: '5th Settlement', type: 'Duplex', beds: 3, bath: 2, area: 220, egpM: 11.5, usd: 2400, ai: 9.1, tag: null, mode: 'rent', agent: 'Karim Fahmy', ago: '2d ago', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPEKHYC2SMG6M8D1278Q0FCK/7563b543-1bcf-46f5-aaf0-f5fa0af9e3e6.png' },
-    ];
-=======
 export { EAST_CAIRO_TARGETS };
 
 // Curated listings are intentionally EMPTY: pages that need real units fetch
 // them from /api/inventory (see usePublicListings). An empty array is the
 // honest state — fabricating units, prices or agents violates Master Rule 5.
 const defaultListings: any[] = [];
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
 const DATA: any = {
   slides: [
@@ -293,9 +236,6 @@ const DATA: any = {
   featured: ['Mivida', 'Hyde Park', 'Mountain View iCity', 'Eastown', 'Villette', 'Madinaty', 'Al Rehab', 'Taj City'],
   compoundImgs: COMPOUND_HERO_IMAGES,
   price: function (p: any) {
-<<<<<<< HEAD
-    return p.mode === 'rent' ? '$' + p.usd.toLocaleString() + '/mo' : 'EGP ' + p.egpM.toFixed(1) + 'M';
-=======
     // Public inventory API units ship raw `price` only (egpM/usd are derived
     // client-side). Derive what is knowable from the record's own price and
     // fall back to an honest "Price on request" — never throw, never invent.
@@ -307,7 +247,6 @@ const DATA: any = {
     }
     const egpM = Number(rec.egpM) > 0 ? Number(rec.egpM) : rawPrice > 0 ? rawPrice / 1000000 : 0;
     return egpM > 0 ? 'EGP ' + egpM.toFixed(1) + 'M' : 'Price on request';
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   }
 };
 
@@ -337,46 +276,11 @@ const DATA: any = {
     if (cache[name]) return cache[name];
     const target = cleanCpd(name);
 
-<<<<<<< HEAD
-    // 1. Look up real master inventory units
-    const snapshotUnits: any[] = (snapshot as any)?.units || [];
-    const matched = snapshotUnits.filter((u: any) => {
-      const cmp = cleanCpd(u.compound || u.location);
-      if (!cmp) return false;
-      return cmp === target || cmp.startsWith(target) || target.startsWith(cmp);
-    });
-
-    if (matched.length > 0) {
-      const mapped = matched.map((u: any, idx: number) => ({
-        code: u.code || `SE-${String(idx + 1).padStart(4, '0')}`,
-        type: u.type || u.propertyType || 'Apartment',
-        beds: Number(u.beds || 3),
-        bath: Number(u.bath || 2),
-        area: Number(u.area || 160),
-        floor: u.type === 'Villa' || u.type === 'Twin House' || u.type === 'Townhouse' ? 'G+2' : `${(idx % 5) + 1}th Floor`,
-        mode: u.mode === 'rent' ? 'rent' : 'sale',
-        egpM: u.egpM || Number(((u.price || 8000000) / 1000000).toFixed(1)),
-        usd: u.usd || (u.mode === 'rent' ? Math.round((u.price || 40000) / 50) : Math.round((u.price || 8000000) / 5000)),
-        ai: u.aiScore || 9.0,
-        status: u.status || 'available',
-        delivery: idx % 3 === 0 ? 'under_construction' : 'ready',
-        agent: 'Sierra Advisor Desk',
-        img: u.img || IMGS[idx % IMGS.length],
-        whatsapp: 'https://wa.me/201092048333',
-        segment: u.segment || 'all',
-        segmentLabel: u.segmentLabel || 'Verified Inventory',
-        description: u.description || ''
-      }));
-      cache[name] = mapped;
-      return mapped;
-    }
-=======
     // Phase 4/B3: the snapshot no longer ships in the client bundle.
     // CompoundsPage passes live /api/inventory units first; when the live
     // fetch has no units for this compound the honest answer is an empty
     // list — the UI shows its \"request inventory\" state.
     const matched: any[] = [];
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
     // 2. No fabrication: if the catalog has no real units for this compound,
   //    return an empty list and let the UI show an honest "request inventory"
@@ -388,39 +292,6 @@ const DATA: any = {
   D.findListing = function (id: any) {
     if (!id) return null;
     const strId = String(id).trim().toLowerCase();
-<<<<<<< HEAD
-    const foundDef = defaultListings.find(
-      (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
-    );
-    if (foundDef) return foundDef;
-
-    const raw = validUnits.find(
-      (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
-    );
-    if (raw) {
-      return {
-        id: raw.id,
-        code: raw.code || raw.id,
-        cmp: raw.compound || raw.location || 'New Cairo',
-        zone: raw.zone || '5th Settlement',
-        type: raw.type || 'Apartment',
-        beds: Number(raw.bedrooms || raw.beds || 3),
-        bath: Number(raw.bathrooms || raw.bath || 2),
-        area: Number(raw.area_sqm || raw.area || 160),
-        egpM: raw.egpM || Number(((raw.price || 8000000) / 1000000).toFixed(1)),
-        usd: raw.usd || (raw.mode === 'rent' ? Math.round((raw.price || 40000) / 50) : Math.round((raw.price || 8000000) / 5000)),
-        ai: Number(raw.aiScore || 9.2),
-        tag: raw.tag || (raw.mode === 'rent' ? 'Verified Rent' : 'Verified Sale'),
-        mode: raw.mode || 'sale',
-        agent: 'Sierra Advisor Desk',
-        ago: raw.listedAt || 'Master Inventory Sync',
-        img: getCuratedListingImage(raw),
-        whatsapp: 'https://wa.me/201092048333',
-        segment: raw.segment,
-      };
-    }
-    return null;
-=======
     // Phase 4/B3: snapshot-free. Real unit lookups go through
     // /api/listings/[id] (single-row, honest 404). The curated static list is
     // empty by design (anti-fabrication), so this only resolves ids that
@@ -428,7 +299,6 @@ const DATA: any = {
     return defaultListings.find(
       (x: any) => String(x.id).toLowerCase() === strId || String(x.code).toLowerCase() === strId
     ) || null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   };
 })(DATA);
 

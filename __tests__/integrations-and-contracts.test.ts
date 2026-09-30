@@ -193,16 +193,6 @@ describe('Integrations, Security Guards & API Contracts Test Suite', () => {
           return undefined;
         };
 
-<<<<<<< HEAD
-        const compound = getVal(['Compound', 'الكمبوند']) || 'New Cairo';
-        const priceRaw = getVal(['Price', 'السعر']) || 0;
-        const price = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw).replace(/[^0-9.]/g, '')) || 0;
-        const type = getVal(['Type', 'نوع الوحدة']) || 'Apartment';
-        const areaRaw = getVal(['BUA', 'المساحة']) || 0;
-        const area = typeof areaRaw === 'number' ? areaRaw : parseFloat(String(areaRaw).replace(/[^0-9.]/g, '')) || 0;
-        const bedsRaw = getVal(['Bedrooms', 'غرف']) || 3;
-        const beds = typeof bedsRaw === 'number' ? bedsRaw : parseInt(String(bedsRaw).replace(/[^0-9]/g, ''), 10) || 3;
-=======
         // §21 no-fabrication: absent columns map to undefined/null — never
         // invented 'New Cairo' / 'Apartment' / 3-bed defaults.
         const compound = getVal(['Compound', 'الكمبوند']);
@@ -218,7 +208,6 @@ describe('Integrations, Security Guards & API Contracts Test Suite', () => {
             : typeof bedsRaw === 'number'
               ? bedsRaw
               : parseInt(String(bedsRaw).replace(/[^0-9]/g, ''), 10) || null;
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
 
         return { id: idx + 1, compound, price, type, area, beds };
       });
