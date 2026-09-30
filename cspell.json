@@ -6,6 +6,7 @@
     "**/*.xlsx",
     "**/*.tsv",
     "**/public/downloads/**",
+    "**/public/feeds/**",
     "**/node_modules/**",
     "**/.next/**",
     "**/.turbo/**",
@@ -476,6 +477,21 @@
     "zchip",
     "zenaq",
     "zencoder",
-    "zline"
+    "zline",
+    "behaviour",
+    "shazly",
+    "unprovisioned",
+    "villete",
+    "swanlake",
+    "characterisation",
+    "serialises",
+    "triggerable",
+    "unauthorised",
+    "sayed",
+    "egpm",
+    "unrecognised",
+    "helmy",
+    "youssef",
+    "madinat"
   ]
 }
