@@ -187,5 +187,9 @@ describe('/api/admin/contracts authorization', () => {
     expect(body.error).toContain('no contract record was created');
     expect(body.contract).toBeUndefined();
   });
+<<<<<<< HEAD
+>>>>>>> 07e94f3edebe105ec6bf01e86d601f7f16d70325
+=======
 >>>>>>> origin/main
+>>>>>>> d2b8a29c09aad3d3015897345ba8ee9ad9e55824
 });
