@@ -12,66 +12,12 @@ interface AlertItem {
   badgeLabel?: string;
 }
 
-const INITIAL_ALERTS: AlertItem[] = [
-  {
-    id: 'alt-1',
-    title: {
-      en: 'AVM Deviation Alert: Katameya Dunes Unit',
-      ar: 'تنبيه انحراف السعر: وحدة في قطامية ديونز'
-    },
-    description: {
-      en: 'Asking price is 28% below median compound market value. Urgent review recommended before syndication.',
-      ar: 'سعر الطلب أقل بنسبة 28% من متوسط سعر السوق في الكمبوند. يوصى بالمراجعة العاجلة قبل النشر.'
-    },
-    severity: 'critical',
-    timestamp: '10m ago',
-    status: 'active',
-    badgeLabel: 'PRIORITY: HIGH',
-  },
-  {
-    id: 'alt-2',
-    title: {
-      en: 'VIP Hot Lead: Instant Viewing Request Mivida',
-      ar: 'عميل ساخن VIP: طلب معاينة فورية في ميفيدا'
-    },
-    description: {
-      en: 'Lead Ahmed Al-Rashid requested 4:00 PM viewing tomorrow. Assigned to Senior VIP Closer.',
-      ar: 'طلب العميل أحمد الرشيد معاينة الساعة 4:00 مساءً غداً. تم التعيين لكبير وسطاء VIP.'
-    },
-    severity: 'high',
-    timestamp: '25m ago',
-    status: 'active',
-    badgeLabel: 'ACTION REQUIRED',
-  },
-  {
-    id: 'alt-3',
-    title: {
-      en: 'WhatsApp Bot Memory Sync Latency Spike',
-      ar: 'ارتفاع زمن استجابة مزامنة ذاكرة بوت واتساب'
-    },
-    description: {
-      en: 'Vector store memory update latency reached 480ms (threshold: 300ms). System auto-recovered.',
-      ar: 'وصل زمن استجابة تحديث الذاكرة المتجهية إلى 480 مللي ثانية (الحد: 300 مللي ثانية). تم التعافي التلقائي.'
-    },
-    severity: 'warning',
-    timestamp: '1h ago',
-    status: 'acknowledged',
-  },
-  {
-    id: 'alt-4',
-    title: {
-      en: 'PropertyFinder Ingestion Batch Completed',
-      ar: 'اكتملت دفعة استيراد بيانات بروبرتي فايندر'
-    },
-    description: {
-      en: 'Successfully synchronized 142 verified units with automated price index normalization.',
-      ar: 'تمت مزامنة 142 وحدة معتمدة بنجاح مع مطابقة وتوحيد مؤشر الأسعار التلقائي.'
-    },
-    severity: 'info',
-    timestamp: '2h ago',
-    status: 'resolved',
-  },
-];
+// ANTI-FABRICATION (§21 wave 5): four fabricated demo alerts (an invented
+// AVM deviation, a fake VIP viewing request naming a demo lead, a made-up
+// latency spike and a fictitious ingestion batch) were previously rendered
+// here as live system warnings. Alerts must originate from real monitoring
+// — until an alert feed is wired in, the center starts honestly empty.
+const INITIAL_ALERTS: AlertItem[] = [];
 
 export default function AlertsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
@@ -166,7 +112,21 @@ export default function AlertsView({ lang = 'en' }: { lang?: string }) {
       </div>
 
       {/* Alerts List */}
-      {filteredAlerts.length === 0 ? (
+      {alerts.length === 0 ? (
+        <div
+          data-testid="alerts-empty-state"
+          className="p-10 rounded-xl bg-slate-900/50 border border-slate-800 text-center space-y-2"
+        >
+          <div className="text-slate-300 text-sm font-semibold">
+            {isAr ? 'لا توجد تنبيهات' : 'No alerts'}
+          </div>
+          <p className="text-slate-500 text-xs max-w-md mx-auto leading-relaxed">
+            {isAr
+              ? 'لا توجد تنبيهات مراقبة حقيقية حالياً. ستظهر هنا التنبيهات الصادرة من أنظمة المراقبة الفعلية — لا يتم اختراع تنبيهات تجريبية.'
+              : 'There are no real monitoring alerts right now. Alerts raised by the actual monitoring systems will appear here — demo alerts are never invented.'}
+          </p>
+        </div>
+      ) : filteredAlerts.length === 0 ? (
         <div className="p-8 rounded-xl bg-slate-900/50 border border-slate-800 text-center text-slate-400 text-sm">
           {isAr ? 'لا توجد تنبيهات تطابق الفلتر المحدد.' : 'No alerts match the selected criteria.'}
         </div>

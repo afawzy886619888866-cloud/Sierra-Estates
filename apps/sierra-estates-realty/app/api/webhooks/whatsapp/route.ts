@@ -163,6 +163,15 @@ export async function POST(req: NextRequest) {
   });
   if (denied) return denied;
 
+  // OPPORTUNISTIC SCHEDULED-SEND DRAIN (fire-and-forget): every authenticated
+  // inbound hit also nudges the outbound queue so scheduled jobs dispatch
+  // within seconds of live traffic instead of waiting for the daily cron
+  // piggyback. In-flight-guarded inside the drain module; never throws and
+  // never blocks this request. The /api/cron/whatsapp-dispatch route remains
+  // the authoritative scheduled drain.
+  const { piggybackWhatsAppDrain } = await import('@/lib/server/whatsapp-drain');
+  piggybackWhatsAppDrain();
+
   const rawBody = await req.text();
 
   // Meta X-Hub-Signature-256 validation (defense in depth on top of the
