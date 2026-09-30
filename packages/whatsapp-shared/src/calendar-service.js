@@ -8,7 +8,10 @@ class CalendarService {
    * Generates a 1-click Google Calendar reservation URL
    */
   generateGoogleCalendarUrl(appointment) {
-    const title = encodeURIComponent(`🏡 Sierra Estates Viewing — ${appointment.clientName || 'VIP Client'} (${appointment.location || 'New Cairo'})`);
+    // §21 no-fabrication: the event title/description carry only what the
+    // appointment actually holds — no invented client name or 'New Cairo'
+    // location when the record is incomplete.
+    const title = encodeURIComponent(`🏡 Sierra Estates Viewing — ${appointment.clientName || 'Client'} (${appointment.location || 'Location TBD'})`);
     
     // Parse viewing date or default to next day 3:00 PM UTC+2
     const startDate = this._parseStartDate(appointment.preferred_viewing);
@@ -20,14 +23,14 @@ class CalendarService {
     const details = encodeURIComponent(
       `Sierra Estates Realty — Private Property Viewing\n\n` +
       `👤 Client: ${appointment.clientName || 'Client'} (+${appointment.phone || 'N/A'})\n` +
-      `📍 Location: ${appointment.location || 'New Cairo Compound'}\n` +
+      `📍 Location: ${appointment.location || 'To be confirmed'}\n` +
       `💰 Budget: ${appointment.budget || 'N/A'} ${appointment.currency || 'EGP'}\n` +
       `🛏️ Requirement: ${appointment.bedrooms || 'Any'} (${appointment.furnishing_status || 'Standard'})\n` +
       `📞 Advisor: Sierra Estates Executive Concierge (+201000000000)\n\n` +
       `Managed via Sierra Intelligence OS.`
     );
 
-    const location = encodeURIComponent(appointment.location || 'New Cairo, Cairo Governorate, Egypt');
+    const location = encodeURIComponent(appointment.location || 'To be confirmed');
 
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
   }

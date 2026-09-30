@@ -257,6 +257,46 @@ describe('public publish gate — every public listing surface filters publish_s
     });
 });
 
+// ─── §21 no-fabrication fallback guard (Rule B regression) ──────────────────
+describe('§21 no-fabrication — runtime sources carry no invented defaults', () => {
+    const FABRICATION_PATTERNS: Array<[string, RegExp]> = [
+        ['default compound', /\|\|\s*['"]New Cairo['"]/],
+        ['default property type', /\|\|\s*['"]Apartment['"]/],
+        ['default compound (Sierra)', /\|\|\s*['"]Sierra['"]/],
+        ['default finishing', /\|\|\s*['"](?:semi_finished|Super Lux)['"]/],
+        ['default zone', /\|\|\s*['"]5th Settlement['"]/],
+        ['default client name', /\|\|\s*['"]VIP Client['"]/],
+        ['default source label', /\|\|\s*['"]Master Sheet['"]/],
+        ['fabricated inventory count', /\|\|\s*306\b/],
+        ['fabricated valuation score', /valuationScore\s*\|\|\s*(?:75|80)\b/],
+        ['fabricated USD price', /usd\s*\|\|\s*1500\b/],
+        ['fabricated bedroom count', /\b(?:beds|bedrooms)\s*\|\|\s*3\b/],
+        ['fabricated bathroom count', /\b(?:baths|bathrooms)\s*\|\|\s*2\b/],
+    ];
+    const RUNTIME_ROOTS = [
+        join(REPO_ROOT, 'packages'),
+        join(APP_DIR, 'lib'),
+        join(APP_DIR, 'app'),
+        join(REPO_ROOT, 'apps', 'agents'),
+    ];
+
+    it('finds no invented fallback defaults in runtime sources', () => {
+        const offenders: string[] = [];
+        offenders.push(
+            ...walkFor(RUNTIME_ROOTS, (content, file) => {
+                if (file.includes('__tests__') || file.includes('.test.') || file.includes('__mocks__')) {
+                    return null;
+                }
+                for (const [label, pattern] of FABRICATION_PATTERNS) {
+                    if (pattern.test(content)) return `${file}: ${label}`;
+                }
+                return null;
+            }),
+        );
+        expect(offenders).toEqual([]);
+    });
+});
+
 // ─── Secrets scan ────────────────────────────────────────────────────────────
 describe('secrets scan — no credential-shaped literals in committed source', () => {
     const CREDENTIAL_PATTERNS: Array<[string, RegExp]> = [

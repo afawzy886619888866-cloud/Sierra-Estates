@@ -168,6 +168,10 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
 
+      // §21 no-fabrication: the party is only classified when the record
+      // actually carries a Source Classification — an absent column yields
+      // 'Unknown', never a silent 'Broker'.
+      const sourceClassification = String(row['Source Classification'] || '').trim();
       const unit: InventoryUnit = {
         id: `AT-${rawCode}`,
         code: rawCode,
@@ -197,8 +201,10 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Notes & Broker Description'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Airtable Import',
-        tag: row['Source Classification'] || 'Airtable Master',
-        party: String(row['Source Classification'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Classification'] || 'Airtable Import',
+        party: sourceClassification
+          ? (sourceClassification.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -249,6 +255,11 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
 
+      // §21 no-fabrication: the party is only classified when the row
+      // carries a Source Type — an absent column yields 'Unknown', never a
+      // silent 'Broker'.
+      const sourceTypeCol = String(row['Source Type (Owner / Broker)'] || '').trim();
+
       const unit: InventoryUnit = {
         id: `MASTER-${rawCode}`,
         code: rawCode,
@@ -278,8 +289,10 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Listing Description & Notes'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Master Excel',
-        tag: row['Source Type (Owner / Broker)'] || 'Master Sheet',
-        party: String(row['Source Type (Owner / Broker)'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Type (Owner / Broker)'] || 'Master Excel',
+        party: sourceTypeCol
+          ? (sourceTypeCol.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -352,6 +365,12 @@ function readInventoryWithPhotosInternal(options?: {
         const recordId = String(row.RecordID || row.UnitCode || `EXCEL-${segment}-${i + 1}`).trim();
         const unitCode = row.UnitCode ? String(row.UnitCode).trim() : null;
 
+        // §21 no-fabrication: "Verified" is only claimed when the row's own
+        // Source field says so; otherwise the tag reflects the sheet honestly
+        // and an unclassifiable sheet yields party 'Unknown'.
+        const sheetImpliesOwner = sheetName.includes('Owner');
+        const sheetImpliesBroker = /broker/i.test(sheetName);
+
         const unit: InventoryUnit = {
           id: recordId,
           code: unitCode || recordId,
@@ -381,8 +400,8 @@ function readInventoryWithPhotosInternal(options?: {
           description: row.Description || undefined,
           segment,
           segmentLabel: sheetName,
-          tag: row.Source || (sheetName.includes('Owner') ? 'Verified Owner' : 'Verified Broker'),
-          party: sheetName.includes('Owner') ? 'Owner' : 'Broker',
+          tag: row.Source || (sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : sheetName),
+          party: sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : 'Unknown',
         };
 
         if (!stripPII) {
