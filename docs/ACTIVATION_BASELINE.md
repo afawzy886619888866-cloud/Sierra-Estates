@@ -258,6 +258,15 @@ this document says so.
    20261002_020_public_publish_gate.sql` (RLS policy + gated RPC) to the live
    project — requires Supabase service credentials. Destructive-change rules
    apply (Rule E).
+   CREDENTIAL-FREE PREP COMPLETE (2026-10-01): both `schema.sql` copies carry
+   the publish-gate policy + gated RPC (recovered from committed merge-conflict
+   markers, commit daf8873c); the app migration mirror is in sync (019 + 021
+   mirrored, parity guarded by `supabase-migration-mirror.test.ts`); the
+   previously dangling `pnpm test:rls` target now runs
+   `supabase/tests/run-rls-tests.sh` — offline policy checks green, live
+   pg_policies + anon-role probes activate automatically once
+   `SUPABASE_ACCESS_TOKEN` is present. Applying migration 020 + re-running
+   `pnpm test:rls` is the complete live cutover runbook.
 3. **No-fabrication violations in client-facing code (Rule B / §21)** —
    `/api/listings` invents defaults for missing data: `usd || 1500`,
    `compound || 'New Cairo'`, `zone || '5th Settlement'`, `type ||
@@ -276,7 +285,9 @@ this document says so.
    design for repo weight; blocks offline canonical builds (documented above).
 7. **Toolchain debt (pre-existing at HEAD)**: TS 7.0.2 pin breaks
    typescript-eslint + ts-jest in several packages; 14 root-vitest hygiene
-   failures; app migration mirror missing `019`.
+   failures. (RESOLVED 2026-10-01: app migration mirror missing `019` — mirror
+   now carries every root migration 1:1 and is guarded by
+   `supabase-migration-mirror.test.ts`.)
 8. **Prior phase-report drift**: Phase-14 readiness report cites 116/116 jest
    suites vs current 124; test/impl drift items listed under INTEGRATION TESTS.
 
