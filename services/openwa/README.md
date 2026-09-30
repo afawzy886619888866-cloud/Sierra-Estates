@@ -28,6 +28,19 @@ every queued send lands on this gateway the moment the env vars below are set.
 > on Vercel serverless. Run it on any always-on host; the Next.js app on
 > Vercel calls it over HTTP.
 
+### Quick install (fresh Ubuntu 22.04/24.04 VPS — one command)
+
+```bash
+git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git /opt/se
+bash /opt/se/services/openwa/bootstrap-vps.sh
+```
+
+Installs Node 22 + Chromium libs, the gateway into `/opt/openwa`, a
+systemd unit (auto-restart + boot-enabled), and opens only SSH + 2785 in
+ufw. Ends with the pairing / API-key / Vercel-env checklist.
+
+### Manual install
+
 ```bash
 # on the gateway host, from a checkout of SE-Vercel-deploy-main:
 bash services/openwa/setup.sh                       # installs into ./openwa
