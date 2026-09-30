@@ -171,26 +171,60 @@ export async function sendWhatsApp(
     logger.warn('[OpenWA Gateway] Not configured (OPENWA_HOST/OPENWA_ADMIN_API_KEY unset) — skipping gateway channel');
   }
 
+  // OpenWA v0.23.x: the message endpoints require the session UUID, while
+  // OPENWA_SESSION_ID is operator-facing and usually a NAME ('session-default').
+  // Resolve name -> UUID once per process (cache-busted on 400 so a re-created
+  // gateway database picks up the new UUID transparently).
+  let openwaSessionUuidCache: string | null = null;
+  const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+  const resolveOpenwaSessionId = async (): Promise<string> => {
+    if (isUuid(openwaSession)) return openwaSession;
+    if (openwaSessionUuidCache) return openwaSessionUuidCache;
+    const listBase = openwaUrl!.replace(/\/+$/, '');
+    const listRes = await fetch(`${listBase}/api/sessions`, {
+      headers: { 'X-API-Key': openwaKey! },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!listRes.ok) return openwaSession;
+    const list = (await listRes.json().catch(() => [])) as Array<{ id?: string; name?: string }>;
+    const arr = Array.isArray(list) ? list : [];
+    const found = arr.find((s) => s.name === openwaSession) || arr[0];
+    if (found?.id) {
+      openwaSessionUuidCache = found.id;
+      return found.id;
+    }
+    return openwaSession;
+  };
+
   try {
     if (!openwaUrl || !openwaKey) {
       throw new Error('gateway_not_configured');
     }
     const rawDigits = toPhone.replace(/\D/g, '');
     const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
-    const openwaEndpoint = `${openwaUrl.replace(/\/+$/, '')}/api/sessions/${openwaSession}/messages/send-text`;
+    const sendBase = openwaUrl.replace(/\/+$/, '');
+    const sendVia = async (sessionId: string) =>
+      fetch(`${sendBase}/api/sessions/${sessionId}/messages/send-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': openwaKey,
+        },
+        body: JSON.stringify({
+          chatId,
+          text: body,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
 
-    const res = await fetch(openwaEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': openwaKey,
-      },
-      body: JSON.stringify({
-        chatId,
-        text: body,
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
+    let res = await sendVia(await resolveOpenwaSessionId());
+
+    // Session database may have been rebuilt since the UUID was cached — bust
+    // the cache and re-resolve exactly once before giving up on the gateway.
+    if (!res.ok && res.status === 400 && !isUuid(openwaSession)) {
+      openwaSessionUuidCache = null;
+      res = await sendVia(await resolveOpenwaSessionId());
+    }
 
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
