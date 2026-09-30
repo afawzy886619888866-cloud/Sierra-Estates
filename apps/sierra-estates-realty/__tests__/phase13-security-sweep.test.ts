@@ -278,6 +278,14 @@ describe('§21 no-fabrication — runtime sources carry no invented defaults', (
         ['fabricated USD price', /usd\s*(?:\|\||\?\?)\s*1500\b/],
         ['fabricated bedroom count', /\b(?:beds|bedrooms)\s*(?:\|\||\?\?)\s*3\b/],
         ['fabricated bathroom count', /\b(?:baths|bathrooms)\s*(?:\|\||\?\?)\s*2\b/],
+        // Wave-4: legal documents and operational parameters.
+        ['default compound (Mivida)', /(?:\|\||\?\?)\s*['"]Mivida['"]/],
+        ['default unit identity', /(?:\|\||\?\?)\s*['"](?:Villa 142-B|Standalone Villa)['"]/],
+        ['default delivery date', /(?:\|\||\?\?)\s*['"]December 2026['"]/],
+        ['default invented party name', /(?:\|\||\?\?)\s*['"](?:Dr\. Karim Mansour|Emaar Misr Developments)['"]/],
+        ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
+        ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
+        ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
     ];
     const RUNTIME_ROOTS = [
         join(REPO_ROOT, 'packages'),

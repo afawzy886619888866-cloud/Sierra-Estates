@@ -28,7 +28,21 @@ interface ScanResponse {
 export async function POST(req: NextRequest): Promise<NextResponse<ScanResponse>> {
   try {
     const body = await req.json().catch(() => ({}));
-    const targetDir = body.targetDir || 'I:\\supabase\\Sheets';
+    // §21 no-fabrication: a server route must not silently fall back to a
+    // developer's local machine path ('I:\supabase\Sheets') — the scan
+    // directory is an explicit operational parameter.
+    const targetDir =
+      typeof body.targetDir === 'string' ? body.targetDir.trim() : '';
+    if (!targetDir) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'targetDir is required — refusing to default to a local machine path',
+        },
+        { status: 400 }
+      );
+    }
 
     const rootDir = path.resolve(process.cwd(), '..', '..');
     const scriptPath = path.resolve(rootDir, 'scripts', 'scan-and-merge-inventory.py');
