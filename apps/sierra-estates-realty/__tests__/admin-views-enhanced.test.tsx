@@ -30,46 +30,55 @@ function render(el: React.ReactElement): string {
 
 describe('Enhanced Admin Views Test Suite', () => {
   describe('RecommendationsView', () => {
-    it('renders correctly in English', () => {
+    it('renders the hub shell with an honest empty state in English', () => {
+      // §21 (wave 5): the four fabricated demo leads were removed — the
+      // hub renders its shell plus an explicit "nothing generated yet"
+      // state instead of invented recommendations.
       const html = render(<RecommendationsView lang="en" />);
       expect(html).toContain('AI Recommendations Hub');
-      expect(html).toContain('Mivida 3-Bed Apartment');
-      expect(html).toContain('Sara Mohamed');
-      expect(html).toContain('Dispatch WhatsApp');
-      expect(html).toContain('Match: 96%');
+      expect(html).toContain('No recommendations yet');
+      expect(html).toContain('demo recommendations are never invented');
+      expect(html).not.toContain('Mivida 3-Bed Apartment');
+      expect(html).not.toContain('Dispatch WhatsApp');
+      expect(html).not.toContain('Match: 96%');
     });
 
-    it('renders correctly in Arabic', () => {
+    it('renders the honest empty state in Arabic', () => {
       const html = render(<RecommendationsView lang="ar" />);
       expect(html).toContain('مركز التوصيات الذكية');
-      expect(html).toContain('ميفيدا');
-      expect(html).toContain('إرسال عبر واتساب');
+      expect(html).toContain('لا توجد توصيات بعد');
       expect(html).toContain('قائمة الانتظار');
+      expect(html).not.toContain('ميفيدا');
+      expect(html).not.toContain('إرسال عبر واتساب');
     });
 
-    it('displays price information and match rationale', () => {
+    it('keeps the filter and search controls ready for real recommendations', () => {
       const html = render(<RecommendationsView lang="en" />);
-      expect(html).toContain('EGP 8,200,000');
-      expect(html).toContain('Matches target budget');
-      expect(html).toContain('Hyde Park');
+      expect(html).toContain('Pending Queue (0)');
+      expect(html).toContain('Dispatched (0)');
+      expect(html).toContain('Search by lead or compound');
+      expect(html).toContain('VIP Buyers');
     });
   });
 
   describe('AlertsView', () => {
-    it('renders correctly in English', () => {
+    it('renders the shell with an honest empty state in English', () => {
+      // §21 (wave 5): the four fabricated demo alerts were removed — no
+      // invented AVM deviations or fake VIP viewing requests are shown.
       const html = render(<AlertsView lang="en" />);
       expect(html).toContain('System Alerts &amp; Threshold Warnings');
-      expect(html).toContain('AVM Deviation Alert: Katameya Dunes Unit');
-      expect(html).toContain('CRITICAL');
-      expect(html).toContain('HIGH');
+      expect(html).toContain('No alerts');
+      expect(html).toContain('demo alerts are never invented');
+      expect(html).not.toContain('AVM Deviation Alert: Katameya Dunes Unit');
+      expect(html).not.toContain('PRIORITY: HIGH');
     });
 
-    it('renders correctly in Arabic', () => {
+    it('renders the honest empty state in Arabic', () => {
       const html = render(<AlertsView lang="ar" />);
       expect(html).toContain('مركز التنبيهات الذكية');
-      expect(html).toContain('تنبيه انحراف السعر');
-      expect(html).toContain('تأكيد الاستلام');
-      expect(html).toContain('إغلاق التنبيه');
+      expect(html).toContain('لا توجد تنبيهات');
+      expect(html).not.toContain('تأكيد الاستلام');
+      expect(html).not.toContain('إغلاق التنبيه');
     });
 
     it('displays severity filter buttons', () => {
@@ -172,12 +181,17 @@ describe('Enhanced Admin Views Test Suite', () => {
   });
 
   describe('MonitoringView', () => {
-    it('renders telemetry logs and SLA trackers', () => {
+    it('renders telemetry shell with honest placeholders and empty stream', () => {
+      // §21 (wave 5): fabricated SLA figures and invented log lines were
+      // removed — trackers show "Awaiting telemetry" and the log stream
+      // shows its honest empty state.
       const html = render(<MonitoringView lang="en" />);
       expect(html).toContain('Live Operations Monitoring');
       expect(html).toContain('WHATSAPP BOT SLA');
       expect(html).toContain('PUBSUB DISPATCH');
-      expect(html).toContain('AI Orchestrator running workflow');
+      expect(html).toContain('Awaiting telemetry');
+      expect(html).toContain('No real telemetry logged yet');
+      expect(html).not.toContain('AI Orchestrator running workflow');
     });
   });
 

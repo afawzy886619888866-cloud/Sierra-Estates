@@ -278,6 +278,18 @@ describe('§21 no-fabrication — runtime sources carry no invented defaults', (
         ['fabricated USD price', /usd\s*(?:\|\||\?\?)\s*1500\b/],
         ['fabricated bedroom count', /\b(?:beds|bedrooms)\s*(?:\|\||\?\?)\s*3\b/],
         ['fabricated bathroom count', /\b(?:baths|bathrooms)\s*(?:\|\||\?\?)\s*2\b/],
+        // Wave-4: legal documents and operational parameters.
+        ['default compound (Mivida)', /(?:\|\||\?\?)\s*['"]Mivida['"]/],
+        ['default unit identity', /(?:\|\||\?\?)\s*['"](?:Villa 142-B|Standalone Villa)['"]/],
+        ['default delivery date', /(?:\|\||\?\?)\s*['"]December 2026['"]/],
+        ['default invented party name', /(?:\|\||\?\?)\s*['"](?:Dr\. Karim Mansour|Emaar Misr Developments)['"]/],
+        ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
+        ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
+        ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
+        // Wave-5: admin-portal demo data — fabricated legal records and
+        // invented persons must not be seeded into runtime surfaces.
+        ['fabricated sample contract seed', /con-sample-|SAMPLE-NATIONAL-ID|SBR-RES-2026-A8F2/],
+        ['fabricated demo person', /['"](?:Sara Mohamed|Ahmed Al-Rashid|Nadia El-Gohary|Mohamed El-Sayed|Dr\. Tarek Fouad|Eng\. Amr Soliman)['"]/],
     ];
     const RUNTIME_ROOTS = [
         join(REPO_ROOT, 'packages'),

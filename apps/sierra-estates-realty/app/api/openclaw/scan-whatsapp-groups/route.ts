@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runOpenClawDailyScan } from '../../../../../../scripts/openclaw-daily-scanner';
+import { WHATSAPP_GROUP_REGISTRY } from '../../../../../../packages/agents/tools/whatsappGroupRegistry';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,7 +19,21 @@ const REPORT_PATH = path.resolve(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const targetGroup = body.targetGroup || 'Owners August 2026';
+    // §21 no-fabrication: the scan target is the caller's decision — the
+    // old 'Owners August 2026' default silently scanned a group the
+    // caller never chose.
+    const targetGroup =
+      typeof body.targetGroup === 'string' ? body.targetGroup.trim() : '';
+    if (!targetGroup) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'targetGroup is required — refusing to default to an assumed WhatsApp group',
+          missing: ['targetGroup'],
+        },
+        { status: 400 }
+      );
+    }
 
     const summary = await runOpenClawDailyScan(targetGroup);
 
@@ -86,8 +101,16 @@ export async function GET() {
   return NextResponse.json({
     status: 'online',
     agent: 'openclaw',
-    monitoredGroup: 'Owners August 2026',
-    groupId: '120363044918239011@g.us',
+    // §21 no-fabrication: report the group the last scan ACTUALLY ran
+    // against (from the persisted report), not an assumed hard-coded one.
+    monitoredGroup: lastReport?.targetGroup ?? null,
+    groupId: lastReport
+      ? WHATSAPP_GROUP_REGISTRY.find(
+          (g) =>
+            g.name.toLowerCase() === String(lastReport.targetGroup).toLowerCase() ||
+            g.id === lastReport.targetGroup
+        )?.id ?? null
+      : null,
     totalExtractedUnits,
     directOwnersCount,
     pendingOutreachCount,
