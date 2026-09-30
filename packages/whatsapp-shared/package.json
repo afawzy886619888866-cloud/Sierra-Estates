@@ -5,10 +5,6 @@
   "main": "src/index.js",
   "description": "Shared WhatsApp agent utilities backed by Supabase",
   "dependencies": {
-<<<<<<< HEAD
-    "@supabase/supabase-js": "^2.48.0"
-=======
-    "@supabase/supabase-js": "^2.117.1"
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
+"@supabase/supabase-js": "^2.117.1"
   }
 }

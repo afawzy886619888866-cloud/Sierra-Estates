@@ -8,11 +8,7 @@
     "axios": "^1.19.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "typescript": "^5.9.3"
-=======
-    "typescript": "^7.0.2"
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
+"typescript": "^5.9.3"
   },
   "scripts": {
     "lint": "eslint ."
