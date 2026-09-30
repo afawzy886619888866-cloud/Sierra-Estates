@@ -12,6 +12,7 @@
  * drift, so a migration can never again land in only one of them.
  */
 import { readdirSync, readFileSync, existsSync, statSync } from 'fs';
+import { execSync } from 'child_process';
 import { join } from 'path';
 
 const APP_DIR = join(__dirname, '..');
@@ -23,6 +24,20 @@ function sqlFiles(dir: string): string[] {
     return readdirSync(dir)
         .filter((name) => name.endsWith('.sql'))
         .sort();
+}
+
+function isTrackedInGit(repoRelativePath: string): boolean {
+    try {
+        const out = execSync(`git ls-files -- "${repoRelativePath}"`, {
+            cwd: REPO_ROOT,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        });
+        return out.trim().length > 0;
+    } catch {
+        // git unavailable (exotic runner) — cannot assert tracking; skip silently
+        return true;
+    }
 }
 
 describe('App migration mirror parity (root supabase/migrations <-> app copy)', () => {
@@ -60,6 +75,25 @@ describe('App migration mirror parity (root supabase/migrations <-> app copy)', 
         const rootFiles = new Set(sqlFiles(ROOT_MIGRATIONS));
         const extras = sqlFiles(APP_MIRROR).filter((name) => !rootFiles.has(name));
         expect(extras).toEqual([]);
+    });
+
+    it('every mirrored migration is COMMITTED to git (not just on disk)', () => {
+        // .gitignore:132 ignores apps/sierra-estates-realty/supabase/, so plain
+        // `git add` silently skips new mirror files — which is exactly how
+        // migration 019 went missing while the Vercel rootDirectory build kept
+        // reading the tracked mirror as its only migration source. New mirror
+        // files must be force-added (`git add -f`); this assertion makes a
+        // forgotten force-add fail loudly instead of silently.
+        const untracked: string[] = [];
+        for (const name of sqlFiles(ROOT_MIGRATIONS)) {
+            const repoRelative = `apps/sierra-estates-realty/supabase/migrations/${name}`;
+            if (!isTrackedInGit(repoRelative)) {
+                untracked.push(name);
+            }
+        }
+        expect(untracked).toEqual([]);
+        expect(untracked.length === 0 ? 'all mirror files tracked' : `untracked: ${untracked.join(', ')}`)
+            .toBe('all mirror files tracked');
     });
 
     it('each migration file is a regular file (no stray directories or symlinks)', () => {

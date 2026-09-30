@@ -128,7 +128,12 @@ obsidian-store.json
 # public map serves it as the offline fallback, so a clean checkout must
 # contain it. scripts/generate-inventory-snapshot.mjs refreshes it at build.
 # Build artifact: prebuild mirrors repo supabase/migrations into the app for
-# the runtime applier lambda — never commit the mirror.
+# the runtime applier lambda. NOTE: when Vercel builds with
+# rootDirectory=apps/sierra-estates-realty the repo root is unreachable, so
+# the TRACKED mirror files are the only migration source there — new mirror
+# migrations MUST be force-added (git add -f apps/sierra-estates-realty/
+# supabase/migrations/<file>). __tests__/supabase-migration-mirror.test.ts
+# fails if a mirror file is on disk but not committed.
 apps/sierra-estates-realty/supabase/
 apps/sierra-estates-realty/data/master-inventory-9k.json
 
