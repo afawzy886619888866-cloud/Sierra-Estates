@@ -7,71 +7,27 @@ import {
 import { listRecords, upsertRecord } from '@sierra-estates/db';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
 
-// In-memory store fallback for development and test environments
-const inMemoryContracts: Map<string, DigitalContractData> = new Map();
-
-// Sample seed contract
-const sampleContract: DigitalContractData = {
-  id: 'con-sample-001',
-  contractNumber: 'SBR-RES-2026-A8F2',
-  contractType: 'unit_reservation',
-  status: 'pending_signatures',
-  createdAt: new Date().toISOString(),
-  unit: {
-    unitCode: 'MT-B14-3U',
-    compoundName: 'Madinaty B14',
-    propertyType: 'Apartment',
-    areaSqm: 140,
-    bedrooms: 3,
-    bathrooms: 2,
-    finishing: 'Ultra Super Lux',
-    dealType: 'rent',
-    agreedPrice: 35000,
-    reservationDeposit: 35000,
-    paymentPlanDescription: '1 Month Deposit + 1 Month Advance',
-  },
-  buyer: {
-    name: 'Karim Mansour',
-    nationalIdOrPassport: 'SAMPLE-NATIONAL-ID-1',
-    phone: '+20-000-000-0001',
-    email: 'karim.m@example.com',
-  },
-  sellerOrOwner: {
-    name: 'Mohamed El-Sayed',
-    nationalIdOrPassport: 'SAMPLE-NATIONAL-ID-2',
-    phone: '+20-000-000-0002',
-  },
-  signatureHash: 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8',
-};
-
-inMemoryContracts.set(sampleContract.id, sampleContract);
+// §21 (wave 5): this module previously seeded a fabricated sample contract
+// (an invented buyer/seller pair, a sample unit, a sample contract number
+// and a decorative signature hash) into an in-memory Map at module load and
+// served it whenever the database held no contracts. A contract is a legal
+// record: an empty registry now returns an honest empty list, a persistence
+// failure is reported — never papered over with invented records.
 
 export async function GET(req: NextRequest) {
   const auth = await verifyAdminRequest(req);
   if (!auth.authenticated) return unauthorizedResponse();
 
+  // §21: only persisted contracts are listed. An empty database yields an
+  // honest empty list — no sample records are invented to fill the screen.
   try {
-    const contracts: DigitalContractData[] = [];
-
-    // Attempt to query Supabase
-    try {
-      const rows = await listRecords('contracts', {
-        orderBy: { column: 'createdAt', ascending: false },
-        limit: 100,
-      });
-      for (const row of rows) {
-        contracts.push(row as unknown as DigitalContractData);
-      }
-    } catch {
-      // Fallback silently to in-memory store
-    }
-
-    if (contracts.length === 0) {
-      const fallbackList = Array.from(inMemoryContracts.values()).sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      contracts.push(...fallbackList);
-    }
+    const rows = await listRecords('contracts', {
+      orderBy: { column: 'createdAt', ascending: false },
+      limit: 100,
+    });
+    const contracts: DigitalContractData[] = rows.map(
+      (row) => row as unknown as DigitalContractData
+    );
 
     return NextResponse.json({
       success: true,
@@ -79,7 +35,13 @@ export async function GET(req: NextRequest) {
       contracts,
     });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Contract registry unavailable: ${err?.message ?? 'database error'}`,
+      },
+      { status: 502 }
+    );
   }
 }
 
@@ -175,15 +137,21 @@ export async function POST(req: NextRequest) {
     };
 
     newContract.signatureHash = generateSignatureHash(newContract);
-    inMemoryContracts.set(newContract.id, newContract);
 
-    // Attempt Supabase persistence. The DigitalContractData payload maps onto
-    // dedicated columns (contract_number, unit, buyer, seller_or_owner,
-    // commission, notes_ar/en, signature_hash) — see supabase/schema.sql.
+    // §21: a created contract must actually be persisted before success is
+    // claimed. The old flow swallowed persistence failures silently (an
+    // in-memory copy made the response look successful while no durable
+    // legal record existed) — a failed upsert now fails the request.
     try {
       await upsertRecord('contracts', { ...newContract });
-    } catch {
-      // Graceful fallback
+    } catch (err: any) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Contract could not be persisted — no contract record was created: ${err?.message ?? 'database error'}`,
+        },
+        { status: 502 }
+      );
     }
 
     const host = req.headers.get('host') || 'sierra-estates.net';

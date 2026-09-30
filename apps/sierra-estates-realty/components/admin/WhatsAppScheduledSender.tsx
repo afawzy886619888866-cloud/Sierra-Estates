@@ -327,10 +327,15 @@ export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string
                   <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[#005c4b] text-white p-3 shadow-lg border border-emerald-500/20 text-xs relative space-y-1">
                     <div className="text-[10px] font-bold text-[#E9C176]">Sierra Estates Luxury Concierge</div>
                     <div className="text-slate-100 whitespace-pre-line text-[11px] leading-relaxed">
+                      {/* §21 no-fabrication: the preview previously substituted
+                          an invented client name, compound and price into the
+                          template. It now renders explicit placeholder tokens —
+                          real values arrive from the actual recipients at send
+                          time, never from imagination. */}
                       {messageBody
-                        .replace(/\{\{name\}\}/g, isAr ? 'أحمد الرشيد' : 'Ahmed Al-Rashid')
-                        .replace(/\{\{compound\}\}/g, isAr ? 'ميفيدا التجمع الخامس' : 'Mivida New Cairo')
-                        .replace(/\{\{price\}\}/g, isAr ? '18,500,000 ج.م' : '18,500,000 EGP')}
+                        .replace(/\{\{name\}\}/g, isAr ? '[اسم العميل]' : '[Client Name]')
+                        .replace(/\{\{compound\}\}/g, isAr ? '[المجمع]' : '[Compound]')
+                        .replace(/\{\{price\}\}/g, isAr ? '[السعر]' : '[Price]')}
                     </div>
                     <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200/70 font-mono pt-0.5">
                       <span>14:00</span>

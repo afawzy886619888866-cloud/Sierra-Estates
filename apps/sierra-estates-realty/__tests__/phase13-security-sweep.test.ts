@@ -286,6 +286,10 @@ describe('§21 no-fabrication — runtime sources carry no invented defaults', (
         ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
         ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
         ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
+        // Wave-5: admin-portal demo data — fabricated legal records and
+        // invented persons must not be seeded into runtime surfaces.
+        ['fabricated sample contract seed', /con-sample-|SAMPLE-NATIONAL-ID|SBR-RES-2026-A8F2/],
+        ['fabricated demo person', /['"](?:Sara Mohamed|Ahmed Al-Rashid|Nadia El-Gohary|Mohamed El-Sayed|Dr\. Tarek Fouad|Eng\. Amr Soliman)['"]/],
     ];
     const RUNTIME_ROOTS = [
         join(REPO_ROOT, 'packages'),
