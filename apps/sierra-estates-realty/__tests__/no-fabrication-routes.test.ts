@@ -12,11 +12,18 @@
 const getRecordMock = jest.fn();
 const sharedMemoryWriteMock = jest.fn();
 const runOpenClawDailyScanMock = jest.fn();
+const verifyAdminRequestMock = jest.fn();
 
 jest.mock('@sierra-estates/db', () => ({
   getRecord: (...args: unknown[]) => getRecordMock(...args),
   listRecords: jest.fn(async () => []),
   upsertRecord: jest.fn(async () => ({})),
+}));
+
+jest.mock('@/lib/server/auth-guard', () => ({
+  verifyAdminRequest: (...args: unknown[]) => verifyAdminRequestMock(...args),
+  unauthorizedResponse: () =>
+    new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
 }));
 
 jest.mock('@sierra-estates/memory-engine', () => ({
@@ -39,7 +46,7 @@ jest.mock('../../../scripts/openclaw-daily-scanner', () => ({
   runOpenClawDailyScan: (...args: unknown[]) => runOpenClawDailyScanMock(...args),
 }));
 
-import { POST as closerContractPOST } from '@/app/api/closer/contract/route';
+import { POST as closerContractPOST, GET as closerContractGET } from '@/app/api/closer/contract/route';
 import {
   GET as signGET,
   POST as signPOST,
@@ -258,5 +265,139 @@ describe('/api/inventory/scan-and-merge — scan directory is explicit', () => {
     const body = await res.json();
     expect(body.success).toBe(false);
     expect(body.message).toContain('targetDir');
+  });
+});
+
+/* ─── /api/closer/contract GET — AdminPortal Contract button wiring ─────── */
+
+const FULL_DEAL = {
+  id: 'deal-001',
+  lead_id: 'lead-001',
+  listing_id: 'listing-001',
+  deal_value: 8000000,
+  metadata: {
+    seller: {
+      name: 'Recorded Owner',
+      nationalIdOrPassport: 'ID-OWNER-1',
+      nationality: 'Egyptian',
+      address: 'Cairo',
+      phone: '+201000000001',
+    },
+  },
+};
+const FULL_LEAD = {
+  full_name: 'Recorded Buyer',
+  phone: '+201000000002',
+  metadata: { nationalId: 'ID-BUYER-1' },
+};
+const FULL_LISTING = {
+  compound: 'Taj City',
+  ref_id: 'TJ-A-101',
+  property_type: 'Apartment',
+  area_sqm: 150,
+  price: 8500000,
+  down_payment: 1000000,
+  installment_years: 7,
+  delivery_year: 2027,
+};
+
+function mockDealTables(deal: unknown, lead: unknown, listing: unknown) {
+  getRecordMock.mockImplementation(async (table: string, id: string) => {
+    if (table === 'deals' && id === (deal as { id?: string })?.id) return deal;
+    if (table === 'leads' && id === (deal as { lead_id?: string })?.lead_id) return lead;
+    if (table === 'listings' && id === (deal as { listing_id?: string })?.listing_id) return listing;
+    return null;
+  });
+}
+
+describe('/api/closer/contract GET — SPA from the real deal record', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    verifyAdminRequestMock.mockResolvedValue({ authenticated: true, uid: 'u1', role: 'admin' });
+  });
+
+  it('rejects an unauthenticated caller — deals carry buyer PII', async () => {
+    verifyAdminRequestMock.mockResolvedValue({ authenticated: false });
+    const res = await closerContractGET(req('/api/closer/contract?id=deal-001'));
+    expect(res.status).toBe(401);
+  });
+
+  it('requires an explicit deal id', async () => {
+    const res = await closerContractGET(req('/api/closer/contract'));
+    expect(res.status).toBe(400);
+    expect((await res.json()).missing).toContain('id');
+  });
+
+  it('returns 404 for an unknown deal — never a fabricated sample', async () => {
+    mockDealTables(null, null, null);
+    const res = await closerContractGET(req('/api/closer/contract?id=nope&format=json'));
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('not found');
+  });
+
+  it('lists missing terms instead of inventing them (partial record)', async () => {
+    mockDealTables(
+      { id: 'deal-p', lead_id: 'lead-p', listing_id: 'listing-p', deal_value: 0 },
+      { full_name: 'Recorded Buyer' }, // no phone, no national id
+      { compound: 'Taj City' },        // nothing else
+    );
+    const res = await closerContractGET(req('/api/closer/contract?id=deal-p&format=json'));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.missing).toContain('buyer.phone');
+    expect(body.missing).toContain('buyer.nationalIdOrPassport');
+    expect(body.missing).toContain('unitNumber');
+    expect(body.missing).toContain('buaSqm');
+    expect(body.missing).toContain('totalPriceEGP');
+    expect(body.error.toLowerCase()).toContain('refus');
+  });
+
+  it('renders an HTML readiness page (not a contract) for the browser flow', async () => {
+    mockDealTables(
+      { id: 'deal-p', lead_id: 'lead-p', listing_id: 'listing-p', deal_value: 0 },
+      { full_name: 'Recorded Buyer' },
+      { compound: 'Taj City' },
+    );
+    const res = await closerContractGET(req('/api/closer/contract?id=deal-p'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    const html = await res.text();
+    expect(html).toContain('Contract not generatable yet');
+    expect(html).toContain('Taj City');
+    expect(html).not.toContain('SE-SPA-'); // no contract reference was minted
+  });
+
+  it('generates the SPA from a fully recorded deal — real compound, derived quarterly', async () => {
+    mockDealTables(FULL_DEAL, FULL_LEAD, FULL_LISTING);
+    const res = await closerContractGET(req('/api/closer/contract?id=deal-001&format=json'));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.spa.contractReference).toContain('SE-SPA-');
+    expect(body.spa.property.compoundName).toBe('Taj City');
+    expect(body.spa.property.unitNumber).toBe('TJ-A-101');
+    expect(body.spa.buyer.name).toBe('Recorded Buyer');
+    expect(body.spa.buyer.nationalIdOrPassport).toBe('ID-BUYER-1');
+    expect(body.spa.seller.name).toBe('Recorded Owner');
+    // total 8,000,000 − down 1,000,000 over 7×4 quarters = 250,000
+    expect(body.spa.property.quarterlyInstallmentEGP).toBe(250000);
+    expect(body.spa.property.deliveryDateStr).toBe('2027');
+    // the recorded deal_value (8M) wins over the listing price (8.5M)
+    expect(body.spa.property.totalPriceEGP).toBe(8000000);
+  });
+
+  it('renders the bilingual contract HTML sheet for the browser flow', async () => {
+    mockDealTables(FULL_DEAL, FULL_LEAD, FULL_LISTING);
+    const res = await closerContractGET(req('/api/closer/contract?id=deal-001'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    const html = await res.text();
+    expect(html).toContain('Sales &amp; Purchase Agreement');
+    expect(html).toContain('Taj City');
+    expect(html).toContain('Recorded Buyer');
+    expect(html).toContain('dir="rtl"'); // Arabic articles present
   });
 });
