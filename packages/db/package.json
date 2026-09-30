@@ -6,20 +6,13 @@
   "types": "lib/index.ts",
   "private": true,
   "dependencies": {
-<<<<<<< HEAD
-    "@supabase/supabase-js": "^2.116.0",
-=======
     "@supabase/supabase-js": "^2.117.1",
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
+    "@sierra-estates/obsidian": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26",
-<<<<<<< HEAD
+    "@types/node": "^26.6.2",
     "typescript": "^5.9.3"
-=======
-    "typescript": "^7.0.2"
->>>>>>> 41d87c02bd108a456b6da133e2eb59618ef51ab1
   },
   "scripts": {
     "lint": "eslint .",

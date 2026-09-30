@@ -95,7 +95,6 @@
         "@types/jest": "^30",
         "@types/ms": "^2.1.0",
         "@types/node": "^26",
-        "@types/pg": "^8.11.10",
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "@types/three": "^0.185.1",
