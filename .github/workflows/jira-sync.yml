@@ -1,11 +1,6 @@
 name: Jira Sync
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize, reopened]
-    branches: [main]
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,7 +11,6 @@ permissions:
 jobs:
   jira-sync:
     name: Detect Jira Issue & Link GitHub Activity
-    if: github.event_name == 'workflow_dispatch' || (secrets.JIRA_BASE_URL != '' && secrets.JIRA_API_TOKEN != '')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
