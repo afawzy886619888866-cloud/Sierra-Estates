@@ -371,7 +371,7 @@ function walkFor(
             return;
         }
         for (const entry of entries) {
-            if (entry === 'node_modules' || entry === '.next' || entry.startsWith('.git')) continue;
+            if (entry === 'node_modules' || entry === '.next' || entry === 'dist' || entry === 'coverage' || entry.startsWith('.git')) continue;
             const full = join(dir, entry);
             let st;
             try {

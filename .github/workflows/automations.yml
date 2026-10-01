@@ -22,18 +22,6 @@ name: Automations
 # visible, not silent.
 
 on:
-  schedule:
-    # Hourly: drain queued WhatsApp bot replies (the route itself no-ops
-    # outside the Africa/Cairo outreach window and respects sender quotas).
-    - cron: '10 * * * *'
-    # Every 3 hours: lead timers + availability SLA want a tight cadence.
-    - cron: '25 */3 * * *'
-    # Daily windows (10 min after the Vercel fallback slots: if Vercel already
-    # ran the window successfully, every job inside is deduped to "skipped").
-    - cron: '10 2 * * *'
-    - cron: '10 6 * * *'
-    # Daily sync-leads (historically 10:00 via vercel.json; keep that hour).
-    - cron: '10 10 * * *'
   workflow_dispatch:
     inputs:
       target:
