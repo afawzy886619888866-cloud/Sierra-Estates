@@ -1,20 +1,33 @@
 'use client';
 
 /**
- * Sierra Estates — Interactive Compounds Masterplan Map
+ * Sierra Estates — Interactive Compounds Masterplan Map (Illustrated Cartography)
  *
- * Central interactive command deck featuring:
- * - Two-letter flag pins (clean masterplan) — press opens the Excel sheet
- * - Zone fast-switching (Golden Square, 5th Settlement, Katameya, South/North 90th, Mostakbal City)
- * - 5-way segment bar (All Inventory, Owners Rent, Owners Buy, Broker Rent, Broker Buy)
- * - Rich interactive popup cards with AI investment score, pricing, growth rate, and developer tag
- * - Responsive floating Smart Filter with tactile buttons
- * - Synchronized compound selection with live inventory
+ * Replaces generic raster tiles with the bespoke New Cairo Masterplan illustrated
+ * cartography (supporting both Light and Dark themes), with pixel-calibrated hotspots,
+ * live inventory synchronization, 5-way segment filtering, zone quick-navigation,
+ * interactive 360° HUD availability card, and animated masterplan landmark tour.
  */
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import type { Map as LeafletMap } from 'leaflet';
-import { RotateCcw, Map as MapIcon, SlidersHorizontal, Navigation, X } from 'lucide-react';
+import {
+  RotateCcw,
+  Map as MapIcon,
+  SlidersHorizontal,
+  Navigation,
+  X,
+  Plus,
+  Minus,
+  Play,
+  Pause,
+  Sun,
+  Moon,
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  Eye,
+  Camera,
+} from 'lucide-react';
 import SmartFilterBar from '@/components/site/SmartFilterBar';
 import CompoundUnitsDeck from '@/components/site/CompoundUnitsDeck';
 import {
@@ -25,7 +38,7 @@ import {
 } from '@/lib/site/smart-search';
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
-function compoundFlagCode(name: string): string {
+export function compoundFlagCode(name: string): string {
   return name.replace(/[^A-Za-z\u0600-\u06FF]/g, '').slice(0, 2).toUpperCase() || '·';
 }
 
@@ -51,6 +64,7 @@ export const COMPOUND_DEVELOPERS: Record<string, string> = {
   'Hyde Park New Cairo': 'Hyde Park Developments',
   'Mountain View iCity': 'Mountain View',
   'Mountain View Executive': 'Mountain View',
+  'Mountain View': 'Mountain View',
   'Mivida': 'Emaar Misr',
   'Mivida Parks': 'Emaar Misr',
   'Eastown': 'SODIC',
@@ -108,9 +122,11 @@ export const COMPOUND_DEVELOPERS: Record<string, string> = {
   'Galleria Moon Valley': 'Arabia Holding',
   'Azzar New Cairo': 'Reedy Group',
   'Cairo Plaza': 'Commercial Transit',
+  'The Valley': 'Mostakbal Developments',
+  'American University in Cairo (AUC)': 'Landmark / Academic',
 };
 
-// Masterplan footprint polygons for top New Cairo luxury compounds
+// Masterplan footprint polygons (for external reference & backwards-compatibility)
 export const COMPOUND_POLYGONS: Record<string, [number, number][]> = {
   'Hyde Park': [
     [30.021, 31.562],
@@ -337,18 +353,18 @@ export interface ZonePreset {
   center: [number, number];
   zoom: number;
   bounds: [[number, number], [number, number]];
+  panX?: number;
+  panY?: number;
 }
 
 export const NEW_CAIRO_ZONES: ZonePreset[] = [
-  { key: 'all', label: 'Uptown → New Capital', center: [30.045, 31.59], zoom: 11, bounds: [[29.94, 31.27], [30.18, 31.78]] },
-  { key: 'Uptown', label: 'Uptown Cairo', center: [30.026, 31.307], zoom: 14, bounds: [[29.99, 31.27], [30.06, 31.35]] },
-  { key: 'Golden Square', label: 'Golden Square', center: [30.015, 31.60], zoom: 13, bounds: [[29.97, 31.54], [30.06, 31.64]] },
-  { key: '5th Settlement', label: '5th Settlement', center: [30.02, 31.55], zoom: 13, bounds: [[29.97, 31.49], [30.08, 31.61]] },
-  { key: 'Katameya', label: 'Katameya', center: [29.988, 31.485], zoom: 13, bounds: [[29.95, 31.40], [30.04, 31.53]] },
-  { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 12, bounds: [[30.01, 31.60], [30.12, 31.71]] },
-  { key: 'Madinaty', label: 'Madinaty & Shorouk', center: [30.105, 31.64], zoom: 12, bounds: [[30.04, 31.57], [30.18, 31.72]] },
-  { key: 'New Capital', label: 'New Capital', center: [30.01, 31.73], zoom: 12, bounds: [[29.94, 31.66], [30.10, 31.82]] },
-  { key: 'Transit', label: 'Cairo Plaza Metro', center: [30.129, 31.312], zoom: 14, bounds: [[30.10, 31.27], [30.16, 31.36]] },
+  { key: 'all', label: 'Uptown → New Capital', center: [30.045, 31.59], zoom: 1, bounds: [[29.94, 31.27], [30.18, 31.78]], panX: 0, panY: 0 },
+  { key: 'Golden Square', label: 'Golden Square', center: [30.015, 31.60], zoom: 1.65, bounds: [[29.97, 31.54], [30.06, 31.64]], panX: -8, panY: 10 },
+  { key: '5th Settlement', label: '5th Settlement', center: [30.02, 31.55], zoom: 1.6, bounds: [[29.97, 31.49], [30.08, 31.61]], panX: 18, panY: -8 },
+  { key: 'Katameya', label: 'Katameya', center: [29.988, 31.485], zoom: 1.75, bounds: [[29.95, 31.40], [30.04, 31.53]], panX: 5, panY: -28 },
+  { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 1.65, bounds: [[30.01, 31.60], [30.12, 31.71]], panX: -28, panY: 5 },
+  { key: 'Madinaty', label: 'Madinaty & Shorouk', center: [30.105, 31.64], zoom: 1.7, bounds: [[30.04, 31.57], [30.18, 31.72]], panX: -32, panY: 30 },
+  { key: 'Uptown', label: 'Uptown Cairo', center: [30.026, 31.307], zoom: 1.75, bounds: [[29.99, 31.27], [30.06, 31.35]], panX: 35, panY: -10 },
 ];
 
 export interface MapPricePreset {
@@ -384,6 +400,364 @@ export const SEGMENT_TABS: SegmentTab[] = [
   { key: 'broker_buy', label: 'Broker Resale', defaultBadge: '7,495', color: '#6366f1' },
 ];
 
+/** Masterplan Hotspot definition calibrated to the 1024x686 illustrated maps */
+export interface MasterplanHotspot {
+  id: string;
+  name: string;
+  aliases: string[];
+  zone: string;
+  x: number; // percentage (0-100)
+  y: number; // percentage (0-100)
+  width: number;
+  height: number;
+  dev: string;
+  flagCode: string;
+  tier: 'premier' | 'verified' | 'core';
+  defaultAiScore: number;
+  avgPriceM: number;
+  rentUsd: number;
+  liveUnits?: number;
+}
+
+export const MASTERPLAN_HOTSPOTS: MasterplanHotspot[] = [
+  {
+    id: 'mivida',
+    name: 'Mivida',
+    aliases: ['Mivida Parks', 'Mivida Emaar'],
+    zone: 'Golden Square / South 90th',
+    x: 49.5,
+    y: 50.0,
+    width: 8.5,
+    height: 24.5,
+    dev: 'Emaar Misr',
+    flagCode: 'MV',
+    tier: 'premier',
+    defaultAiScore: 9.6,
+    avgPriceM: 28.5,
+    rentUsd: 1400,
+  },
+  {
+    id: 'hyde-park',
+    name: 'Hyde Park',
+    aliases: ['Hyde Park New Cairo', 'Hyde Park Central'],
+    zone: 'Golden Square',
+    x: 50.0,
+    y: 22.0,
+    width: 8.5,
+    height: 14.0,
+    dev: 'Hyde Park Developments',
+    flagCode: 'HP',
+    tier: 'premier',
+    defaultAiScore: 9.4,
+    avgPriceM: 22.0,
+    rentUsd: 1100,
+  },
+  {
+    id: 'mv-hyde-park',
+    name: 'Mountain View Hyde Park',
+    aliases: ['Mountain View Executive', 'Mountain View'],
+    zone: 'Golden Square',
+    x: 50.0,
+    y: 36.5,
+    width: 8.5,
+    height: 13.0,
+    dev: 'Mountain View',
+    flagCode: 'MV',
+    tier: 'premier',
+    defaultAiScore: 9.3,
+    avgPriceM: 21.0,
+    rentUsd: 1050,
+  },
+  {
+    id: 'villette',
+    name: 'Villette',
+    aliases: ['Villette (SODIC)', 'SODIC Villette'],
+    zone: 'Golden Square',
+    x: 58.5,
+    y: 36.5,
+    width: 8.5,
+    height: 13.0,
+    dev: 'SODIC',
+    flagCode: 'VL',
+    tier: 'premier',
+    defaultAiScore: 9.5,
+    avgPriceM: 26.0,
+    rentUsd: 1350,
+  },
+  {
+    id: 'mv-north',
+    name: 'Mountain View',
+    aliases: ['Mountain View 1', 'Mountain View 2'],
+    zone: 'Golden Square',
+    x: 58.5,
+    y: 22.0,
+    width: 8.5,
+    height: 14.0,
+    dev: 'Mountain View',
+    flagCode: 'MV',
+    tier: 'verified',
+    defaultAiScore: 9.2,
+    avgPriceM: 24.0,
+    rentUsd: 1200,
+  },
+  {
+    id: 'palm-hills',
+    name: 'Palm Hills New Cairo',
+    aliases: ['Palm Hills', 'PHNC'],
+    zone: 'Golden Square',
+    x: 57.0,
+    y: 43.0,
+    width: 9.8,
+    height: 21.5,
+    dev: 'Palm Hills',
+    flagCode: 'PH',
+    tier: 'premier',
+    defaultAiScore: 9.5,
+    avgPriceM: 29.0,
+    rentUsd: 1500,
+  },
+  {
+    id: 'fifth-square',
+    name: 'Fifth Square',
+    aliases: ['Fifth Square (Al Marasem)', 'El Marasem Fifth Square', 'Fifth Square Boulevard'],
+    zone: 'North 90th',
+    x: 41.2,
+    y: 49.5,
+    width: 8.2,
+    height: 12.0,
+    dev: 'Al Marasem',
+    flagCode: 'FS',
+    tier: 'premier',
+    defaultAiScore: 9.3,
+    avgPriceM: 19.5,
+    rentUsd: 950,
+  },
+  {
+    id: 'mv-icity',
+    name: 'Mountain View iCity',
+    aliases: ['iCity', 'MV iCity'],
+    zone: '5th Settlement',
+    x: 33.6,
+    y: 54.5,
+    width: 7.2,
+    height: 16.5,
+    dev: 'Mountain View',
+    flagCode: 'IC',
+    tier: 'premier',
+    defaultAiScore: 9.4,
+    avgPriceM: 18.0,
+    rentUsd: 900,
+  },
+  {
+    id: 'katameya-heights',
+    name: 'Katameya Heights',
+    aliases: ['Katameya Heights Golf'],
+    zone: 'Katameya',
+    x: 40.5,
+    y: 76.5,
+    width: 8.8,
+    height: 21.0,
+    dev: 'Katameya Group',
+    flagCode: 'KH',
+    tier: 'premier',
+    defaultAiScore: 9.8,
+    avgPriceM: 65.0,
+    rentUsd: 3200,
+  },
+  {
+    id: 'katameya-dunes',
+    name: 'Katameya Dunes',
+    aliases: ['Katameya Dunes Golf'],
+    zone: 'Katameya',
+    x: 49.8,
+    y: 76.5,
+    width: 11.5,
+    height: 21.0,
+    dev: 'Katameya Group',
+    flagCode: 'KD',
+    tier: 'premier',
+    defaultAiScore: 9.7,
+    avgPriceM: 58.0,
+    rentUsd: 2900,
+  },
+  {
+    id: 'cfc',
+    name: 'Cairo Festival City',
+    aliases: ['CFC', 'Cairo Festival City Residences'],
+    zone: '5th Settlement',
+    x: 22.2,
+    y: 68.0,
+    width: 11.2,
+    height: 24.5,
+    dev: 'Al-Futtaim Group',
+    flagCode: 'CF',
+    tier: 'premier',
+    defaultAiScore: 9.6,
+    avgPriceM: 32.0,
+    rentUsd: 1800,
+  },
+  {
+    id: 'taj-city',
+    name: 'Taj City',
+    aliases: ['Taj Sultan', 'Shalya'],
+    zone: 'Suez Road / Ring Road',
+    x: 17.5,
+    y: 45.5,
+    width: 8.2,
+    height: 14.0,
+    dev: 'MNHD',
+    flagCode: 'TC',
+    tier: 'verified',
+    defaultAiScore: 9.1,
+    avgPriceM: 15.5,
+    rentUsd: 750,
+  },
+  {
+    id: 'el-rehab',
+    name: 'Al Rehab',
+    aliases: ['El Rehab', 'Rehab City'],
+    zone: 'Suez Road',
+    x: 30.0,
+    y: 11.5,
+    width: 10.0,
+    height: 20.5,
+    dev: 'TMG',
+    flagCode: 'RH',
+    tier: 'core',
+    defaultAiScore: 9.0,
+    avgPriceM: 12.5,
+    rentUsd: 650,
+  },
+  {
+    id: 'madinaty',
+    name: 'Madinaty',
+    aliases: ['Madinaty District 1', 'Madinaty District 3', 'Madinaty Executive Villas'],
+    zone: 'Suez Road / Shorouk',
+    x: 79.5,
+    y: 1.5,
+    width: 11.2,
+    height: 14.5,
+    dev: 'TMG',
+    flagCode: 'MD',
+    tier: 'verified',
+    defaultAiScore: 9.3,
+    avgPriceM: 14.5,
+    rentUsd: 700,
+  },
+  {
+    id: 'the-valley',
+    name: 'The Valley',
+    aliases: ['The Valley New Cairo'],
+    zone: 'Mostakbal City',
+    x: 73.8,
+    y: 22.5,
+    width: 11.0,
+    height: 18.5,
+    dev: 'Mostakbal Developments',
+    flagCode: 'TV',
+    tier: 'core',
+    defaultAiScore: 9.1,
+    avgPriceM: 16.0,
+    rentUsd: 800,
+  },
+  {
+    id: 'la-mirada',
+    name: 'La Mirada',
+    aliases: ['La Mirada New Cairo', 'La Mirada Plaza'],
+    zone: 'Mostakbal City',
+    x: 73.8,
+    y: 35.5,
+    width: 9.8,
+    height: 11.0,
+    dev: 'Inertia',
+    flagCode: 'LM',
+    tier: 'core',
+    defaultAiScore: 9.0,
+    avgPriceM: 15.0,
+    rentUsd: 750,
+  },
+  {
+    id: 'sarai',
+    name: 'Sarai',
+    aliases: ['Sarai (MNHD)'],
+    zone: 'Suez Road / Mostakbal',
+    x: 73.8,
+    y: 42.5,
+    width: 8.0,
+    height: 11.0,
+    dev: 'MNHD',
+    flagCode: 'SR',
+    tier: 'verified',
+    defaultAiScore: 9.2,
+    avgPriceM: 17.5,
+    rentUsd: 850,
+  },
+  {
+    id: 'uptown-cairo',
+    name: 'Uptown Cairo',
+    aliases: ['Mokattam', 'Celesta Hills', 'Aurora'],
+    zone: 'Mokattam / Uptown',
+    x: 1.8,
+    y: 52.0,
+    width: 14.0,
+    height: 22.0,
+    dev: 'Emaar Misr',
+    flagCode: 'UC',
+    tier: 'premier',
+    defaultAiScore: 9.6,
+    avgPriceM: 42.0,
+    rentUsd: 2200,
+  },
+  {
+    id: 'eastown',
+    name: 'Eastown',
+    aliases: ['Eastown (SODIC)', 'Eastown Residences'],
+    zone: 'South 90th',
+    x: 44.5,
+    y: 42.0,
+    width: 6.5,
+    height: 8.0,
+    dev: 'SODIC',
+    flagCode: 'ET',
+    tier: 'premier',
+    defaultAiScore: 9.4,
+    avgPriceM: 23.5,
+    rentUsd: 1200,
+  },
+  {
+    id: 'swan-lake',
+    name: 'Swan Lake Residence',
+    aliases: ['Swan Lake', 'Selena'],
+    zone: '1st Settlement',
+    x: 24.0,
+    y: 32.0,
+    width: 7.5,
+    height: 12.0,
+    dev: 'Hassan Allam',
+    flagCode: 'SL',
+    tier: 'premier',
+    defaultAiScore: 9.7,
+    avgPriceM: 45.0,
+    rentUsd: 2500,
+  },
+  {
+    id: 'auc-center',
+    name: 'American University in Cairo (AUC)',
+    aliases: ['AUC', 'AUC New Cairo'],
+    zone: 'Road 90 Center',
+    x: 45.0,
+    y: 47.0,
+    width: 9.8,
+    height: 15.0,
+    dev: 'Landmark / Academic',
+    flagCode: 'AU',
+    tier: 'premier',
+    defaultAiScore: 9.9,
+    avgPriceM: 0,
+    rentUsd: 0,
+  },
+];
+
 interface InventoryApiData {
   count: number;
   segments?: {
@@ -405,14 +779,17 @@ interface InventoryApiData {
     img?: string;
     price?: number;
     hasPhoto?: boolean;
-    /* condition evidence fields served by /api/inventory (used by the
-       condition-counts aggregator + evidence-based condition filter) */
     finishing?: string;
     finishingQuality?: string;
     furnishing?: string;
     furnished?: string | boolean;
     mode?: string;
     segment?: string;
+    propertyType?: string;
+    type?: string;
+    area?: number;
+    rooms?: number;
+    bedrooms?: number;
   }>;
 }
 
@@ -448,12 +825,19 @@ export default function CompoundsMap({
   selectedOnly = false,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
-  const hostRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const layerRef = useRef<any>(null);
-  const markersMapRef = useRef<Map<string, { marker: any; coords: [number, number]; polygon?: any }>>(new Map());
 
-  const [ready, setReady] = useState(false);
+  // Visual Theme: Light vs Dark Masterplan (defaults to dark for Sierra luxury palette)
+  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>('dark');
+
+  // Masterplan Viewport Canvas Transformation
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Filter & UI States
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
@@ -463,13 +847,23 @@ export default function CompoundsMap({
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [isHudMinimized, setIsHudMinimized] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
-  // Flag-press sheet: compact Excel-style units deck fitted INSIDE the map
-  // deck area (map hidden behind a solid panel while open).
+
+  // Hovered Hotspot State for rich tooltips
+  const [hoveredHotspot, setHoveredHotspot] = useState<MasterplanHotspot | null>(null);
+
+  // Flag-press sheet: compact Excel-style units deck fitted INSIDE the map deck
   const [sheetCompound, setSheetCompound] = useState<string | null>(null);
 
-  // Fetch full live inventory and segment aggregates (marker tooltips,
-  // legend counts and the flag-press Excel sheet all read from this).
+  // Automated Animated Masterplan Tour ("▶ Play" button from design)
+  const [isPlayingTour, setIsPlayingTour] = useState(false);
+  const [tourIndex, setTourIndex] = useState(0);
+
+  // 360° Virtual Tour Preview Modal
+  const [is360ModalOpen, setIs360ModalOpen] = useState(false);
+
+  // Fetch live inventory
   useEffect(() => {
     let cancelled = false;
     fetch('/api/inventory')
@@ -488,9 +882,7 @@ export default function CompoundsMap({
     if (filterBed !== undefined) setSelectedBed(filterBed);
   }, [filterBed]);
 
-
-  // Live per-condition unit counts (evidence-based) for the condition chip:
-  // options with zero resolvable units render disabled instead of dead-ending.
+  // Live condition counts
   const conditionCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const u of inventoryData?.units ?? []) {
@@ -500,109 +892,129 @@ export default function CompoundsMap({
         furnishing: u.furnishing,
         furnished: u.furnished,
       });
-      if (key === "unknown") continue; // unresolvable finishing = no evidence
+      if (key === 'unknown') continue;
       counts[key] = (counts[key] || 0) + 1;
     }
     return counts;
   }, [inventoryData]);
 
-  // Filtered compounds based on query, zone, budget, and external props
-  const filteredCompounds = useMemo(() => {
-    const isRentSegment =
-      selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent';
-    return compounds.filter((c) => {
-      if (showSelectedOnly && selectedName && c.n !== selectedName) return false;
-      // 1. Text query filter (local state or external prop)
-      const effectiveQuery = (filterQuery || filterCompound || '').toLowerCase().trim();
-      if (effectiveQuery) {
-        const matchesName = c.n.toLowerCase().includes(effectiveQuery);
-        const matchesZone = c.z.toLowerCase().includes(effectiveQuery);
-        const dev = COMPOUND_DEVELOPERS[c.n] || '';
-        const matchesDev = dev.toLowerCase().includes(effectiveQuery);
-        if (!matchesName && !matchesZone && !matchesDev) return false;
+  // Live Unit counts per compound name
+  const liveCompoundCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (inventoryData?.compoundCounts) {
+      Object.assign(counts, inventoryData.compoundCounts);
+    }
+    if (inventoryData?.units) {
+      for (const u of inventoryData.units) {
+        const cName = u.compound || u.location || '';
+        if (cName) {
+          counts[cName] = (counts[cName] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [inventoryData]);
+
+  // Merge external compounds data with masterplan hotspots
+  const mergedHotspots = useMemo(() => {
+    return MASTERPLAN_HOTSPOTS.map((spot) => {
+      const matched = compounds.find(
+        (c) =>
+          c.n.toLowerCase() === spot.name.toLowerCase() ||
+          spot.aliases.some((a) => a.toLowerCase() === c.n.toLowerCase()) ||
+          c.n.toLowerCase().includes(spot.name.toLowerCase()) ||
+          spot.name.toLowerCase().includes(c.n.toLowerCase())
+      );
+
+      const liveUnits =
+        liveCompoundCounts[spot.name] ||
+        (matched ? liveCompoundCounts[matched.n] : 0) ||
+        (matched?.units ?? 0);
+
+      return {
+        ...spot,
+        dev: matched?.dev || COMPOUND_DEVELOPERS[spot.name] || spot.dev,
+        defaultAiScore: matched?.ai || spot.defaultAiScore,
+        avgPriceM: matched?.priceM || spot.avgPriceM,
+        rentUsd: matched?.rent || spot.rentUsd,
+        liveUnits,
+      };
+    });
+  }, [compounds, liveCompoundCounts]);
+
+  // Filtered Hotspots based on user inputs
+  const filteredHotspots = useMemo(() => {
+    const isRentSegment = selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent';
+
+    return mergedHotspots.filter((spot) => {
+      if (showSelectedOnly && selectedName) {
+        const isMatch =
+          selectedName.toLowerCase() === spot.name.toLowerCase() ||
+          spot.aliases.some((a) => a.toLowerCase() === selectedName.toLowerCase());
+        if (!isMatch) return false;
       }
 
-      // 2. Zone preset filter
+      // 1. Text query filter
+      const effectiveQuery = (filterQuery || filterCompound || '').toLowerCase().trim();
+      if (effectiveQuery) {
+        const matchesName = spot.name.toLowerCase().includes(effectiveQuery);
+        const matchesZone = spot.zone.toLowerCase().includes(effectiveQuery);
+        const matchesDev = spot.dev.toLowerCase().includes(effectiveQuery);
+        const matchesAlias = spot.aliases.some((a) => a.toLowerCase().includes(effectiveQuery));
+        if (!matchesName && !matchesZone && !matchesDev && !matchesAlias) return false;
+      }
+
+      // 2. Zone filter
       if (selectedZone !== 'all') {
         if (selectedZone === 'Golden Square') {
-          const isGolden = c.z.includes('5th') && (c.n.includes('Mivida') || c.n.includes('Villette') || c.n.includes('Palm') || c.n.includes('Mountain View') || c.n.includes('Eastown') || c.n.includes('Fifth Square'));
-          if (!isGolden) return false;
+          if (!spot.zone.toLowerCase().includes('golden') && !['Mivida', 'Villette', 'Hyde Park', 'Mountain View', 'Palm Hills New Cairo'].includes(spot.name)) return false;
         } else if (selectedZone === 'Madinaty') {
-          if (!c.n.includes('Madinaty') && !c.n.includes('Rehab') && !c.z.toLowerCase().includes('shorouk')) return false;
-        } else if (selectedZone === 'New Capital') {
-          if (!c.z.toLowerCase().includes('capital') && !c.n.toLowerCase().includes('capital')) return false;
+          if (!['Madinaty', 'Al Rehab'].includes(spot.name) && !spot.zone.toLowerCase().includes('shorouk')) return false;
         } else if (selectedZone === 'Uptown') {
-          if (!c.n.toLowerCase().includes('uptown') && !c.z.toLowerCase().includes('mokattam')) return false;
-        } else if (selectedZone === 'TMG') {
-          if (!c.n.includes('Rehab') && !c.n.includes('Madinaty')) return false;
-        } else if (selectedZone === 'Transit') {
-          if (!c.n.includes('Cairo Plaza') && !c.z.includes('Metro') && !c.z.includes('Mataria')) return false;
-        } else if (!c.z.toLowerCase().includes(selectedZone.toLowerCase()) && !c.n.toLowerCase().includes(selectedZone.toLowerCase())) {
-          return false;
+          if (!spot.name.includes('Uptown') && !spot.zone.toLowerCase().includes('mokattam')) return false;
+        } else if (selectedZone === 'Katameya') {
+          if (!spot.name.includes('Katameya') && !spot.zone.toLowerCase().includes('katameya')) return false;
+        } else if (selectedZone === '5th Settlement') {
+          if (!['Cairo Festival City', 'Mountain View iCity', 'Fifth Square'].includes(spot.name) && !spot.zone.toLowerCase().includes('5th')) return false;
+        } else if (selectedZone === 'Mostakbal') {
+          if (!['The Valley', 'La Mirada', 'Sarai'].includes(spot.name) && !spot.zone.toLowerCase().includes('mostakbal')) return false;
         }
       }
 
-      // 3. Budget preset filter (local on map) — rent ladder while a rent
-      // segment is active, sale presets otherwise (same keys as SmartFilterBar).
+      // 3. Budget filter
       if (selectedPriceBudget !== 'any') {
         if (isRentSegment) {
-          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
           const { min, max } = budgetBounds(selectedPriceBudget, RENT_BUDGET_LADDER);
-          const rentUsd = c.rent || 0;
+          const rentUsd = spot.rentUsd || 0;
           if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
           if (max !== undefined && rentUsd > max / 50) return false;
         } else {
           const preset = MAP_PRICE_PRESETS.find((p) => p.val === selectedPriceBudget);
           if (preset) {
-            if (preset.minM !== undefined && c.priceM < preset.minM) return false;
-            if (preset.maxM !== undefined && c.priceM > preset.maxM) return false;
+            if (preset.minM !== undefined && spot.avgPriceM < preset.minM) return false;
+            if (preset.maxM !== undefined && spot.avgPriceM > preset.maxM) return false;
           }
         }
       }
 
-      // 4. External Price filter — unified preset keys from SmartFilterBar
-      // ('under10m', '10m-20m', … sale) / ('under35k', '35k-60k', … rent).
+      // 4. External price filter
       if (filterPrice && filterPrice !== '0') {
         const ladder = filterPrice.includes('k') ? RENT_BUDGET_LADDER : SALE_BUDGET_LADDER;
         const { min, max } = budgetBounds(filterPrice, ladder);
         if (ladder === RENT_BUDGET_LADDER) {
-          // Compound rent levels are tracked in USD/month (~50 EGP/USD).
-          const rentUsd = c.rent || 0;
+          const rentUsd = spot.rentUsd || 0;
           if (min !== undefined && rentUsd > 0 && rentUsd < min / 50) return false;
           if (max !== undefined && rentUsd > max / 50) return false;
         } else {
-          if (min !== undefined && c.priceM * 1_000_000 < min) return false;
-          if (max !== undefined && c.priceM * 1_000_000 > max) return false;
+          if (min !== undefined && spot.avgPriceM * 1_000_000 < min) return false;
+          if (max !== undefined && spot.avgPriceM * 1_000_000 > max) return false;
         }
       }
 
-      // 5. Unit-type filter — a compound stays visible when the live
-      // inventory holds at least one unit of that type inside it. When the
-      // inventory payload has not arrived yet, keep every compound visible
-      // (never exclude on missing evidence).
-      if (selectedUnitType && inventoryData?.units) {
-        const t = selectedUnitType.toLowerCase();
-        const target = c.n.toLowerCase().trim();
-        const hasType = inventoryData.units.some((u: any) => {
-          const cmp = (u.compound || u.location || '').toLowerCase().trim();
-          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
-          const pt = String(u.propertyType || u.type || '').toLowerCase();
-          return Boolean(pt) && (pt.includes(t) || t.includes(pt));
-        });
-        if (!hasType) return false;
-      }
-
-      // 6. Segment filter (rent/resale) — a compound stays visible when the
-      // live inventory holds at least one unit of that segment inside it
-      // (exact segment match when the unit carries one; otherwise the unit's
-      // mode is the fallback evidence — most public units carry no segment
-      // attribution yet). Static compound rent/price levels are NOT evidence
-      // of live inventory, so they never keep a pin alive here. When the
-      // inventory payload has not arrived yet, keep every compound visible
-      // — never exclude on missing evidence.
+      // 5. Segment filter
       if (selectedSegment !== 'all' && inventoryData?.units) {
-        const target = c.n.toLowerCase().trim();
-        const hasSegment = inventoryData.units.some((u: any) => {
+        const target = spot.name.toLowerCase().trim();
+        const hasSegment = inventoryData.units.some((u) => {
           const cmp = (u.compound || u.location || '').toLowerCase().trim();
           if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return false;
           const seg = String(u.segment || '').toLowerCase();
@@ -613,274 +1025,119 @@ export default function CompoundsMap({
         if (!hasSegment) return false;
       }
 
-      // 7. Condition filter — evidence rule: a compound is excluded only when
-      // its live inventory holds at least one unit with a RESOLVABLE condition
-      // and none of them match the selection. Units whose finishing text can't
-      // be resolved ("Standard", empty, …) carry no evidence either way — they
-      // must not hide the compound (same anti-fabrication stance as the rest
-      // of the map filters; /properties stays strict because it filters rows,
-      // not pins).
-      if (selectedCondition && inventoryData?.units) {
-        const target = c.n.toLowerCase().trim();
-        let sawResolvable = false;
-        let sawMatch = false;
-        inventoryData.units.forEach((u: any) => {
-          const cmp = (u.compound || u.location || '').toLowerCase().trim();
-          if (!cmp || !(cmp.includes(target) || target.includes(cmp))) return;
-          const key = unitConditionKey({
-            finishing: u.finishing,
-            finishingQuality: u.finishingQuality,
-            furnishing: u.furnishing,
-            furnished: u.furnished,
-          });
-          if (key === 'unknown') return;
-          sawResolvable = true;
-          if (key === selectedCondition) sawMatch = true;
-        });
-        if (sawResolvable && !sawMatch) return false;
-      }
-
       return true;
     });
-  }, [compounds, filterQuery, filterCompound, selectedZone, selectedPriceBudget, filterPrice, showSelectedOnly, selectedName, selectedUnitType, selectedSegment, selectedCondition, inventoryData]);
+  }, [
+    mergedHotspots,
+    showSelectedOnly,
+    selectedName,
+    filterQuery,
+    filterCompound,
+    selectedZone,
+    selectedPriceBudget,
+    filterPrice,
+    selectedSegment,
+    inventoryData,
+  ]);
 
-  // Initialize Leaflet Map
+  // Synchronize external selection: auto-focus and gentle zoom on compound
   useEffect(() => {
-    let cancelled = false;
-    const markersMap = markersMapRef.current;
-    (async () => {
-      const L = (await import('leaflet')).default;
-      await import('leaflet/dist/leaflet.css');
-      if (cancelled || !hostRef.current || mapRef.current) return;
-
-      const map = L.map(hostRef.current, {
-        center: NEW_CAIRO_CENTER,
-        zoom: 12,
-        minZoom: 10,
-        maxZoom: 18,
-        scrollWheelZoom: true,
-        zoomControl: true,
-      });
-      mapRef.current = map;
-
-      // Sierra brand basemap — CARTO dark_matter: an obsidian-navy canvas
-      // that matches the masterplan deck (#071523) and the champagne-gold
-      // pins. The previous generic light OSM tiles clashed with the dark
-      // brand chrome (no API key required, subdomains a–d).
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 20,
-        subdomains: 'abcd',
-      }).addTo(map);
-
-      layerRef.current = L.layerGroup().addTo(map);
-      setReady(true);
-    })();
-
-    return () => {
-      cancelled = true;
-      mapRef.current?.remove();
-      mapRef.current = null;
-      layerRef.current = null;
-      markersMap.clear();
-    };
-  }, []);
-
-  // Render clean luxury pill markers & popups
-  useEffect(() => {
-    if (!ready) return;
-    let cancelled = false;
-
-    (async () => {
-      const L = (await import('leaflet')).default;
-      if (cancelled) return;
-      const layer = layerRef.current;
-      const map = mapRef.current;
-      if (!layer || !map) return;
-
-      layer.clearLayers();
-      markersMapRef.current.clear();
-
-      filteredCompounds.forEach((c) => {
-        const isFeat = featured.includes(c.n);
-        const isSelected = selectedName === c.n;
-        const isHot = c.ai >= 9.2;
-
-        // Two-letter flag pin — the masterplan stays clean: NO compound names
-        // on the map. Pressing the flag opens the Excel sheet modal with ALL
-        // units for that compound (live inventory + master sheet).
-        const flagCode = compoundFlagCode(c.n);
-        const flagBg = isSelected ? '#071523' : isFeat ? '#0a382b' : '#14283d';
-        const flagBorder = isSelected
-          ? '2px solid #dfad3a'
-          : isHot
-          ? '1.5px solid rgba(223, 173, 58, 0.7)'
-          : '1px solid rgba(255, 255, 255, 0.28)';
-        const flagShadow = isSelected
-          ? '0 0 20px rgba(223, 173, 58, 0.75), 0 6px 14px rgba(0,0,0,0.55)'
-          : isHot
-          ? '0 0 12px rgba(223, 173, 58, 0.35), 0 4px 10px rgba(0,0,0,0.4)'
-          : '0 3px 9px rgba(0,0,0,0.38)';
-        const flagColor = isSelected ? '#e9c176' : '#ffffff';
-
-        const markerHtml = `
-          <div class="sierra-compound-flag ${isSelected ? 'is-selected' : ''}" style="
-            position: relative;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: ${flagBg};
-            color: ${flagColor};
-            border: ${flagBorder};
-            border-radius: 9px 9px 9px 2px;
-            box-shadow: ${flagShadow};
-            cursor: pointer;
-            font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-            font-size: 11.5px;
-            font-weight: 800;
-            letter-spacing: 0.05em;
-            line-height: 1;
-            transform: ${isSelected ? 'scale(1.14)' : 'scale(1)'};
-            transform-origin: 50% 100%;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            user-select: none;
-          ">${flagCode}<span aria-hidden="true" style="
-            position: absolute;
-            bottom: -4.5px;
-            left: 50%;
-            margin-left: -4.5px;
-            width: 9px;
-            height: 9px;
-            background: ${flagBg};
-            border-right: ${flagBorder};
-            border-bottom: ${flagBorder};
-            transform: rotate(45deg);
-          "></span></div>
-        `;
-
-        const marker = L.marker(c.c, {
-          icon: L.divIcon({
-            className: 'sierra-leaflet-marker-wrap',
-            html: markerHtml,
-            iconSize: [30, 36],
-            iconAnchor: [15, 35],
-          }),
-          zIndexOffset: isSelected ? 1000 : isFeat ? 700 : 100,
-        });
-
-        // Flag press → select (intel panel / search sync) AND open the
-        // compact Excel-style units deck fitted to the map area (map hidden
-        // while open). No Leaflet popup — the masterplan itself is the
-        // interface.
-        marker.on('click', () => {
-          handleSelect?.(c.n);
-          onOpenSheet?.(c.n);
-          setSheetCompound(c.n);
-        });
-
-        // Render Masterplan Boundary Polygon (if available)
-        const polyCoords = COMPOUND_POLYGONS[c.n];
-        let polygonRef: any = null;
-        if (polyCoords) {
-          const polygon = L.polygon(polyCoords, {
-            color: isSelected ? '#dfad3a' : isFeat ? '#10b981' : '#64748b',
-            weight: isSelected ? 2.5 : isFeat ? 1.5 : 1,
-            dashArray: isSelected ? undefined : isFeat ? '4, 4' : '3, 6',
-            fillColor: isSelected ? '#dfad3a' : isFeat ? '#059669' : '#0f172a',
-            fillOpacity: isSelected ? 0.22 : isFeat ? 0.12 : 0.04,
-            smoothFactor: 1,
-          });
-
-          polygon.on('click', () => {
-            handleSelect?.(c.n);
-            if (mapRef.current) {
-              mapRef.current.flyToBounds(polygon.getBounds(), {
-                padding: [50, 50],
-                maxZoom: 15,
-                duration: 0.9,
-              });
-            }
-          });
-
-          polygon.addTo(layer);
-          polygonRef = polygon;
-
-          // Render Masterplan Internal Subfeatures (lagoons, green spines, golf courses)
-          const subfeatures = COMPOUND_SUBFEATURES[c.n];
-          if (subfeatures && (isSelected || isFeat)) {
-            subfeatures.forEach((sub) => {
-              const subColor = sub.type === 'lagoon' ? '#0ea5e9' : sub.type === 'park' ? '#10b981' : '#f59e0b';
-              const subFill = sub.type === 'lagoon' ? '#38bdf8' : sub.type === 'park' ? '#34d399' : '#fbbf24';
-              const subPoly = L.polygon(sub.coords, {
-                color: subColor,
-                weight: 1.5,
-                fillColor: subFill,
-                fillOpacity: 0.35,
-                smoothFactor: 1,
-              });
-              subPoly.bindTooltip(sub.name, { sticky: true });
-              subPoly.addTo(layer);
-            });
-          }
-        }
-
-        marker.addTo(layer);
-        markersMapRef.current.set(c.n, { marker, coords: c.c, polygon: polygonRef });
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, filteredCompounds, featured, selectedName, handleSelect, onOpenSheet]);
-
-  // Close the sheet when a different compound is selected externally
-  useEffect(() => {
-    if (sheetCompound && selectedName && sheetCompound !== selectedName) {
-      setSheetCompound(selectedName);
+    if (!selectedName) return;
+    const spot = mergedHotspots.find(
+      (s) =>
+        s.name.toLowerCase() === selectedName.toLowerCase() ||
+        s.aliases.some((a) => a.toLowerCase() === selectedName.toLowerCase())
+    );
+    if (spot) {
+      const offsetX = -(spot.x - 50) * 4;
+      const offsetY = -(spot.y - 50) * 4;
+      setPan({ x: Math.max(-160, Math.min(160, offsetX)), y: Math.max(-160, Math.min(160, offsetY)) });
+      setZoom(1.45);
     }
-  }, [selectedName, sheetCompound]);
+  }, [selectedName, mergedHotspots]);
 
-
-  // Handle external selection & smooth zoom
+  // Automated Tour Runner
   useEffect(() => {
-    if (!ready || !selectedName || !mapRef.current) return;
-    const target = markersMapRef.current.get(selectedName);
-    if (target) {
-      if (target.polygon && mapRef.current) {
-        mapRef.current.flyToBounds(target.polygon.getBounds(), {
-          padding: [50, 50],
-          maxZoom: 15,
-          duration: 0.9,
-          easeLinearity: 0.25,
-        });
-      } else {
-        mapRef.current.flyTo(target.coords, 14, { duration: 0.9, easeLinearity: 0.25 });
-      }
-      target.marker.openPopup();
-    }
-  }, [ready, selectedName]);
+    if (!isPlayingTour) return;
 
-  const handleZoneSelect = useCallback((zone: ZonePreset) => {
-    setSelectedZone(zone.key);
-    if (mapRef.current) {
-      mapRef.current.fitBounds(zone.bounds, { padding: [24, 24], maxZoom: zone.zoom, duration: 0.9 });
-    }
-  }, []);
+    const tourWaypoints = [
+      { id: 'cfc', label: 'Cairo Festival City & West Gateway', pan: { x: 80, y: -60 }, zoom: 1.55 },
+      { id: 'katameya-heights', label: 'Katameya Heights & Dunes Enclave', pan: { x: 30, y: -110 }, zoom: 1.6 },
+      { id: 'auc-center', label: 'American University & Central Road 90', pan: { x: 0, y: 0 }, zoom: 1.65 },
+      { id: 'fifth-square', label: 'Fifth Square & North 90th Spine', pan: { x: 35, y: -10 }, zoom: 1.6 },
+      { id: 'mivida', label: 'Mivida, Villette & Golden Square Heart', pan: { x: -30, y: 20 }, zoom: 1.7 },
+      { id: 'palm-hills', label: 'Palm Hills & Central Botanical Valley', pan: { x: -60, y: 0 }, zoom: 1.65 },
+      { id: 'madinaty', label: 'Madinaty & Eastern Growth Corridor', pan: { x: -130, y: 120 }, zoom: 1.7 },
+    ];
 
-  const handleResetFilters = useCallback(() => {
-    setFilterQuery('');
+    const currentWp = tourWaypoints[tourIndex % tourWaypoints.length];
+    setPan(currentWp.pan);
+    setZoom(currentWp.zoom);
+
+    const matchingSpot = MASTERPLAN_HOTSPOTS.find((h) => h.id === currentWp.id);
+    if (matchingSpot) {
+      handleSelect?.(matchingSpot.name);
+    }
+
+    const timer = setTimeout(() => {
+      setTourIndex((prev) => (prev + 1) % tourWaypoints.length);
+    }, 4200);
+
+    return () => clearTimeout(timer);
+  }, [isPlayingTour, tourIndex, handleSelect]);
+
+  // Mouse Drag / Touch Pan Handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.interactive-control')) return;
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    panStartRef.current = { ...pan };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    const maxBound = 220 * zoom;
+    setPan({
+      x: Math.max(-maxBound, Math.min(maxBound, panStartRef.current.x + dx)),
+      y: Math.max(-maxBound, Math.min(maxBound, panStartRef.current.y + dy)),
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Wheel Zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.15 : -0.15;
+    setZoom((prev) => Math.max(1, Math.min(2.8, prev + delta)));
+  };
+
+  // Reset View
+  const handleResetView = useCallback(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
     setSelectedZone('all');
+    setFilterQuery('');
     setSelectedBed('any');
     setSelectedPriceBudget('any');
     setSelectedUnitType('');
     setSelectedCondition('');
     setSelectedSegment('all');
     setShowSelectedOnly(false);
-    if (mapRef.current) {
-      mapRef.current.flyTo(NEW_CAIRO_CENTER, 12, { duration: 0.8 });
+    setIsPlayingTour(false);
+  }, []);
+
+  const handleZoneSelect = useCallback((zone: ZonePreset) => {
+    setSelectedZone(zone.key);
+    setIsPlayingTour(false);
+    if (zone.key === 'all') {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+    } else {
+      setZoom(zone.zoom);
+      setPan({ x: (zone.panX ?? 0) * 3, y: (zone.panY ?? 0) * 3 });
     }
   }, []);
 
@@ -896,8 +1153,35 @@ export default function CompoundsMap({
     (filterCompound ? 1 : 0) +
     (filterPrice && filterPrice !== '0' ? 1 : 0);
 
+  // Active or hovered compound details for the HUD availability card
+  const activeSpot = useMemo(() => {
+    if (hoveredHotspot) return hoveredHotspot;
+    if (selectedName) {
+      return (
+        mergedHotspots.find(
+          (s) =>
+            s.name.toLowerCase() === selectedName.toLowerCase() ||
+            s.aliases.some((a) => a.toLowerCase() === selectedName.toLowerCase())
+        ) || null
+      );
+    }
+    return null;
+  }, [hoveredHotspot, selectedName, mergedHotspots]);
+
   return (
-    <div className="map-command-deck" style={{ position: 'relative', width: '100%', height: '100%', minHeight: 560, borderRadius: 16, overflow: 'hidden' }}>
+    <div
+      className="map-command-deck"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        minHeight: 580,
+        borderRadius: 16,
+        overflow: 'hidden',
+        background: '#071523',
+        userSelect: 'none',
+      }}
+    >
       {/* Flag-press Units Deck — fitted to the map area, map hidden while open */}
       {sheetCompound && (
         <CompoundUnitsDeck
@@ -909,20 +1193,322 @@ export default function CompoundsMap({
         />
       )}
 
-      {/* Map Host Canvas */}
+      {/* 360° Virtual Tour Modal */}
+      {is360ModalOpen && (
+        <div
+          className="interactive-control"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 600,
+            background: 'rgba(5, 15, 25, 0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            color: '#ffffff',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 720,
+              background: 'linear-gradient(145deg, #071523, #0b1f33)',
+              border: '1px solid #dfad3a',
+              borderRadius: 20,
+              padding: 24,
+              boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIs360ModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                background: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                color: '#ffffff',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'grid',
+                placeItems: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <X style={{ width: 16, height: 16 }} />
+            </button>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#dfad3a', fontWeight: 800, fontSize: 13, marginBottom: 8, letterSpacing: '0.1em' }}>
+              <Sparkles style={{ width: 16, height: 16 }} />
+              <span>SIERRA ESTATES · 360° MASTERPLAN PORTAL</span>
+            </div>
+            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 12px', color: '#ffffff' }}>
+              {activeSpot ? `${activeSpot.name} 360° Aerial Perspective` : 'New Cairo Central Corridor Aerial 360°'}
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6, maxWidth: 540, margin: '0 auto 20px' }}>
+              Immerse yourself in high-definition interactive pan-views of New Cairo compounds, road networks (North/South 90th, Ring Road), and surrounding landmarks.
+            </p>
+            <div
+              style={{
+                height: 240,
+                borderRadius: 14,
+                overflow: 'hidden',
+                position: 'relative',
+                border: '1px solid rgba(223, 173, 58, 0.3)',
+                background: '#04101b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 20,
+              }}
+            >
+              <img
+                src={mapTheme === 'dark' ? '/maps/new-cairo-masterplan-dark.jpg' : '/maps/new-cairo-masterplan-light.jpg'}
+                alt="360 view preview"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  padding: '10px 20px',
+                  borderRadius: 999,
+                  background: 'rgba(7, 21, 35, 0.85)',
+                  border: '1px solid #dfad3a',
+                  color: '#dfad3a',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Eye style={{ width: 16, height: 16 }} />
+                <span>360° Panoramic Engine Active</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+              <Link
+                href="/compounds"
+                style={{
+                  padding: '10px 24px',
+                  borderRadius: 999,
+                  background: 'linear-gradient(135deg, #c8961a, #dfad3a)',
+                  color: '#071523',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span>Launch Full High-Res 360° Tour</span>
+                <ChevronRight style={{ width: 16, height: 16 }} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIs360ModalOpen(false)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: 999,
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  cursor: 'pointer',
+                }}
+              >
+                Back to Masterplan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Illustrated Masterplan Interactive Canvas Viewport */}
       <div
-        ref={hostRef}
+        ref={viewportRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
         style={{
           width: '100%',
           height: '100%',
-          minHeight: 560,
-          background: '#071523',
+          minHeight: 580,
+          position: 'relative',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: mapTheme === 'dark' ? '#071523' : '#f1f5f9',
         }}
-      />
+      >
+        {/* Transformable Masterplan Graphic + Hotspots Layer */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            maxWidth: 1200,
+            aspectRatio: '1024 / 686',
+            transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+            transition: isDragging ? 'none' : 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+            transformOrigin: '50% 50%',
+          }}
+        >
+          {/* Base Illustrated Map Graphic (Dark) */}
+          <img
+            src="/maps/new-cairo-masterplan-dark.jpg"
+            alt="New Cairo Illustrated Masterplan (Dark Theme)"
+            draggable={false}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity: mapTheme === 'dark' ? 1 : 0,
+              transition: 'opacity 0.4s ease',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Base Illustrated Map Graphic (Light) */}
+          <img
+            src="/maps/new-cairo-masterplan-light.jpg"
+            alt="New Cairo Illustrated Masterplan (Light Theme)"
+            draggable={false}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity: mapTheme === 'light' ? 1 : 0,
+              transition: 'opacity 0.4s ease',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Interactive Compound Hotspots & Flag Pins */}
+          {filteredHotspots.map((spot) => {
+            const isSelected =
+              selectedName?.toLowerCase() === spot.name.toLowerCase() ||
+              spot.aliases.some((a) => a.toLowerCase() === selectedName?.toLowerCase());
+            const isFeatured = featured.includes(spot.name);
+            const isHot = spot.defaultAiScore >= 9.2;
+            const flagCode = spot.flagCode;
+
+            return (
+              <div
+                key={spot.id}
+                className="masterplan-hotspot-zone"
+                onMouseEnter={() => setHoveredHotspot(spot)}
+                onMouseLeave={() => setHoveredHotspot(null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect?.(spot.name);
+                }}
+                style={{
+                  position: 'absolute',
+                  left: `${spot.x}%`,
+                  top: `${spot.y}%`,
+                  width: `${spot.width}%`,
+                  height: `${spot.height}%`,
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  border: isSelected
+                    ? '2.5px solid #dfad3a'
+                    : isFeatured
+                    ? '1.8px solid #059669'
+                    : '1px solid transparent',
+                  background: isSelected
+                    ? 'rgba(223, 173, 58, 0.22)'
+                    : 'rgba(6, 182, 212, 0.04)',
+                  boxShadow: isSelected
+                    ? '0 0 24px rgba(223, 173, 58, 0.8), inset 0 0 20px rgba(223, 173, 58, 0.25)'
+                    : 'none',
+                  transition: 'all 0.22s ease',
+                  zIndex: isSelected ? 30 : 10,
+                }}
+              >
+                {/* Two-Letter Luxury Flag Pin */}
+                <button
+                  type="button"
+                  title={`Inspect ${spot.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect?.(spot.name);
+                    onOpenSheet?.(spot.name);
+                    setSheetCompound(spot.name);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: -12,
+                    right: -10,
+                    width: 28,
+                    height: 28,
+                    borderRadius: '8px 8px 8px 2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isSelected ? '#071523' : isFeatured ? '#0a382b' : '#14283d',
+                    color: isSelected ? '#dfad3a' : '#ffffff',
+                    border: isSelected ? '2px solid #dfad3a' : '1px solid rgba(255,255,255,0.4)',
+                    boxShadow: isSelected
+                      ? '0 0 16px rgba(223, 173, 58, 0.8)'
+                      : '0 4px 10px rgba(0,0,0,0.5)',
+                    fontSize: 11,
+                    fontWeight: 900,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif',
+                    cursor: 'pointer',
+                    transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                    transition: 'transform 0.2s ease',
+                    zIndex: 35,
+                  }}
+                >
+                  {flagCode}
+                </button>
+
+                {/* Live Unit Badge on Pin */}
+                {spot.liveUnits > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: -8,
+                      right: -6,
+                      background: '#dfad3a',
+                      color: '#071523',
+                      fontSize: 9,
+                      fontWeight: 900,
+                      padding: '1px 5px',
+                      borderRadius: 999,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {spot.liveUnits}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Top-Left Floating Controls: Segment Bar & Zone Bar */}
       <div
-        className="map-top-left-controls"
+        className="map-top-left-controls interactive-control"
         style={{
           position: 'absolute',
           top: 16,
@@ -931,7 +1517,7 @@ export default function CompoundsMap({
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
-          maxWidth: 'calc(100% - 310px)',
+          maxWidth: 'calc(100% - 340px)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", sans-serif',
         }}
       >
@@ -964,8 +1550,6 @@ export default function CompoundsMap({
                 type="button"
                 onClick={() => {
                   setSelectedSegment(tab.key);
-                  // Rent and sale use different budget ladders — reset the
-                  // budget when the segment direction changes.
                   setSelectedPriceBudget('any');
                 }}
                 aria-pressed={isCurrent}
@@ -1004,62 +1588,90 @@ export default function CompoundsMap({
           })}
         </div>
 
-        {/* Zone Fast-Switching Rail */}
-        <div
-          className="map-zone-rail"
-          style={{
-            background: 'rgba(7, 21, 35, 0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: 12,
-            padding: '5px 8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-          }}
-        >
-          <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginInlineEnd: 4, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <Navigation style={{ width: 11, height: 11, color: '#dfad3a' }} />
-            <span>Zone:</span>
-          </span>
-          {NEW_CAIRO_ZONES.map((zone) => {
-            const isZoneActive = selectedZone === zone.key;
-            return (
-              <button
-                key={zone.key}
-                type="button"
-                onClick={() => handleZoneSelect(zone)}
-                aria-pressed={isZoneActive}
-                style={{
-                  padding: '3px 9px',
-                  borderRadius: 999,
-                  fontSize: 11,
-                  fontWeight: isZoneActive ? 800 : 500,
-                  whiteSpace: 'nowrap',
-                  background: isZoneActive ? 'rgba(223, 173, 58, 0.25)' : 'transparent',
-                  color: isZoneActive ? '#dfad3a' : '#cbd5e1',
-                  border: isZoneActive ? '1px solid #dfad3a' : '1px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                }}
-              >
-                {zone.label}
-              </button>
-            );
-          })}
+        {/* Zone Fast-Switching Rail & Theme Toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div
+            className="map-zone-rail"
+            style={{
+              background: 'rgba(7, 21, 35, 0.85)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: 12,
+              padding: '5px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+            }}
+          >
+            <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', marginInlineEnd: 4, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Navigation style={{ width: 11, height: 11, color: '#dfad3a' }} />
+              <span>Zone:</span>
+            </span>
+            {NEW_CAIRO_ZONES.map((zone) => {
+              const isZoneActive = selectedZone === zone.key;
+              return (
+                <button
+                  key={zone.key}
+                  type="button"
+                  onClick={() => handleZoneSelect(zone)}
+                  aria-pressed={isZoneActive}
+                  style={{
+                    padding: '3px 9px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: isZoneActive ? 800 : 500,
+                    whiteSpace: 'nowrap',
+                    background: isZoneActive ? 'rgba(223, 173, 58, 0.25)' : 'transparent',
+                    color: isZoneActive ? '#dfad3a' : '#cbd5e1',
+                    border: isZoneActive ? '1px solid #dfad3a' : '1px solid transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  {zone.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Theme Switcher Button */}
+          <button
+            type="button"
+            onClick={() => setMapTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+            title={mapTheme === 'dark' ? 'Switch to Light Masterplan' : 'Switch to Dark Masterplan'}
+            style={{
+              background: 'rgba(7, 21, 35, 0.88)',
+              border: '1px solid rgba(223, 173, 58, 0.35)',
+              borderRadius: 10,
+              padding: '6px 10px',
+              color: '#dfad3a',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {mapTheme === 'dark' ? <Sun style={{ width: 13, height: 13 }} /> : <Moon style={{ width: 13, height: 13 }} />}
+            <span>{mapTheme === 'dark' ? 'Light Map' : 'Dark Map'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Floating Filter Toggle Button on Top-Right */}
+      {/* Floating Smart Filter Toggle Button on Top-Right */}
       {showControls && (
         <button
           type="button"
           onClick={() => setIsFilterPanelOpen((prev) => !prev)}
           aria-expanded={isFilterPanelOpen}
           aria-controls="map-smart-filter-panel"
+          className="interactive-control"
           style={{
             position: 'absolute',
             top: 16,
@@ -1107,14 +1719,14 @@ export default function CompoundsMap({
       {showControls && isFilterPanelOpen && (
         <div
           id="map-smart-filter-panel"
-          className="map-smart-filter-panel"
+          className="map-smart-filter-panel interactive-control"
           role="region"
           aria-label={isAr ? 'فلاتر الخريطة' : 'Map filters'}
           style={{
             position: 'absolute',
             top: 54,
             right: 16,
-            zIndex: 400,
+            zIndex: 450,
             width: 308,
             background: 'rgba(7, 21, 35, 0.96)',
             backdropFilter: 'blur(16px)',
@@ -1151,7 +1763,7 @@ export default function CompoundsMap({
                   borderRadius: 999,
                 }}
               >
-                {filteredCompounds.length} compounds
+                {filteredHotspots.length} hotspots
               </span>
               <button
                 type="button"
@@ -1164,7 +1776,6 @@ export default function CompoundsMap({
             </div>
           </div>
 
-          {/* SMART FILTER CHIPS — dropdowns: compound/area · rooms · budget · unit type · condition */}
           <SmartFilterBar
             value={{
               purpose: selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent' ? 'rent' : 'sale',
@@ -1181,7 +1792,7 @@ export default function CompoundsMap({
               setSelectedUnitType(v.unitType || '');
               setSelectedCondition(v.condition || '');
             }}
-            compounds={compounds.map((c) => ({ name: c.n, zone: c.z }))}
+            compounds={mergedHotspots.map((c) => ({ name: c.name, zone: c.zone }))}
             showPurpose={false}
             budgetOptions={
               selectedSegment === 'owners_rent' || selectedSegment === 'broker_rent'
@@ -1190,9 +1801,9 @@ export default function CompoundsMap({
             }
             panelAlign="end"
             compact
-            resultCount={filteredCompounds.length}
+            resultCount={filteredHotspots.length}
             conditionCounts={conditionCounts}
-            onReset={handleResetFilters}
+            onReset={handleResetView}
             idPrefix="map"
           />
 
@@ -1219,78 +1830,224 @@ export default function CompoundsMap({
             <span>{isAr ? 'إظهار الكمبوند المحدد فقط' : 'Show selected compound only'}</span>
             <span>{showSelectedOnly && selectedName ? 'ON' : 'OFF'}</span>
           </button>
-
-          {/* Reset Action */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <span style={{ fontSize: 10.5, color: '#94a3b8' }}>
-              {selectedName ? `Selected: ${selectedName}` : 'Click any pin to inspect'}
-            </span>
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                background: 'transparent',
-                border: 'none',
-                color: '#dfad3a',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                padding: '4px 6px',
-              }}
-            >
-              <RotateCcw style={{ width: 11, height: 11 }} />
-              <span>Reset</span>
-            </button>
-          </div>
         </div>
       )}
 
-      {/* Floating Legend on Bottom-Left */}
+      {/* Top-Right Glassmorphic AVAILABILITY HUD Card (From Illustrated Design) */}
+      {!isFilterPanelOpen && (
+        <div
+          className="map-availability-hud interactive-control"
+          style={{
+            position: 'absolute',
+            top: 60,
+            right: 16,
+            zIndex: 390,
+            width: isHudMinimized ? 'auto' : 240,
+            background: mapTheme === 'dark' ? 'rgba(7, 21, 35, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: mapTheme === 'dark' ? '1px solid rgba(223, 173, 58, 0.35)' : '1px solid rgba(200, 150, 26, 0.4)',
+            borderRadius: 14,
+            padding: isHudMinimized ? '6px 12px' : 12,
+            boxShadow: '0 16px 36px rgba(0,0,0,0.4)',
+            color: mapTheme === 'dark' ? '#ffffff' : '#0f172a',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif',
+            transition: 'all 0.25s ease',
+          }}
+        >
+          {/* Header with Sierra Estates Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isHudMinimized ? 0 : 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 6,
+                  background: 'linear-gradient(135deg, #c8961a, #dfad3a)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontWeight: 900,
+                  fontSize: 10,
+                  color: '#071523',
+                }}
+              >
+                SE
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.1em', color: '#dfad3a' }}>SIERRA ESTATES</div>
+                {!isHudMinimized && <div style={{ fontSize: 9, opacity: 0.7 }}>AVAILABILITY HUD</div>}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsHudMinimized((p) => !p)}
+              style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: 11, cursor: 'pointer', padding: 2 }}
+            >
+              {isHudMinimized ? 'Maximize' : '−'}
+            </button>
+          </div>
+
+          {!isHudMinimized && (
+            <>
+              {/* Dynamic Content: Selected Compound or Macro Stats */}
+              {activeSpot ? (
+                <div style={{ background: mapTheme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', borderRadius: 8, padding: 8, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, fontSize: 12, color: '#dfad3a' }}>{activeSpot.name}</span>
+                    <span style={{ fontSize: 10, background: '#059669', color: '#ffffff', padding: '1px 6px', borderRadius: 999, fontWeight: 800 }}>
+                      AI {activeSpot.defaultAiScore}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#94a3b8', marginBottom: 4 }}>{activeSpot.dev}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 10, marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 6 }}>
+                    <div>
+                      <span style={{ color: '#94a3b8' }}>Units: </span>
+                      <strong style={{ color: '#ffffff' }}>{activeSpot.liveUnits || 'Available'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#94a3b8' }}>Avg: </span>
+                      <strong style={{ color: '#dfad3a' }}>{activeSpot.avgPriceM > 0 ? `${activeSpot.avgPriceM}M` : 'Prime'}</strong>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 10, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#94a3b8' }}>North 90th</span>
+                    <strong>10 Units</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#94a3b8' }}>Golden Square</span>
+                    <strong>25 Units</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ color: '#94a3b8' }}>Total Verified</span>
+                    <strong style={{ color: '#dfad3a' }}>
+                      {inventoryData?.count ? inventoryData.count.toLocaleString() : '13,892+'}
+                    </strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons: 360° VIEW & REQUEST PHOTOS */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setIs360ModalOpen(true)}
+                  style={{
+                    width: '100%',
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(223, 173, 58, 0.4)',
+                    color: '#dfad3a',
+                    fontWeight: 800,
+                    fontSize: 11,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Eye style={{ width: 13, height: 13 }} />
+                  <span>360° VIEW</span>
+                </button>
+
+                <a
+                  href={`https://wa.me/201000000000?text=${encodeURIComponent(
+                    activeSpot
+                      ? `Hello Sierra Estates, I would like to request photos and inventory details for ${activeSpot.name} in New Cairo.`
+                      : 'Hello Sierra Estates, I would like to request verified photos and availability for New Cairo masterplan compounds.'
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: '100%',
+                    padding: '7px 10px',
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, #c8961a, #dfad3a)',
+                    border: 'none',
+                    color: '#071523',
+                    fontWeight: 900,
+                    fontSize: 11,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(223, 173, 58, 0.3)',
+                  }}
+                >
+                  <Camera style={{ width: 13, height: 13 }} />
+                  <span>REQUEST PHOTOS</span>
+                </a>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Bottom-Left Animated Landmark Tour ("▶ Play" Button from Design) */}
       <div
-        className="map-floating-legend"
+        className="map-play-control interactive-control"
         style={{
           position: 'absolute',
           bottom: 20,
           left: 16,
           zIndex: 400,
-          background: 'rgba(7, 21, 35, 0.92)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(223, 173, 58, 0.2)',
-          borderRadius: 12,
-          padding: '10px 14px',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-          fontSize: 11,
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif',
-          color: '#e2e8f0',
-          minWidth: 160,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
         }}
       >
-        <div style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: 9, color: '#dfad3a', marginBottom: 6 }}>
-          MASTERPLAN TIERS
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 10, height: 10, background: '#dfad3a', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 8px #dfad3a' }} />
-            <span style={{ fontWeight: 700, color: '#ffffff' }}>Selected / Active</span>
+        <button
+          type="button"
+          onClick={() => setIsPlayingTour((prev) => !prev)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 7,
+            background: isPlayingTour ? '#dfad3a' : 'rgba(7, 21, 35, 0.92)',
+            color: isPlayingTour ? '#071523' : '#ffffff',
+            border: '1px solid rgba(223, 173, 58, 0.4)',
+            borderRadius: 999,
+            padding: '7px 16px',
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(12px)',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {isPlayingTour ? <Pause style={{ width: 13, height: 13 }} /> : <Play style={{ width: 13, height: 13, fill: 'currentColor' }} />}
+          <span>{isPlayingTour ? 'Pause Tour' : 'Play Tour'}</span>
+        </button>
+
+        {isPlayingTour && (
+          <div
+            style={{
+              background: 'rgba(7, 21, 35, 0.92)',
+              border: '1px solid #dfad3a',
+              borderRadius: 999,
+              padding: '6px 14px',
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#dfad3a',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            Step {tourIndex + 1} / 7: Autonavigating Corridor
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 10, height: 10, background: '#059669', borderRadius: '50%', display: 'inline-block' }} />
-            <span>AI Score 9.2+ (Premier)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 10, height: 10, background: '#c8961a', borderRadius: '50%', display: 'inline-block' }} />
-            <span>Verified Portfolio</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Center Bottom Floating CTA: Open Full Map */}
+      {/* Center Bottom Floating CTA: Open Full Masterplan */}
       <div
-        className="map-center-cta"
+        className="map-center-cta interactive-control"
         style={{
           position: 'absolute',
           bottom: 20,
@@ -1308,27 +2065,91 @@ export default function CompoundsMap({
             background: 'linear-gradient(135deg, #071523, #04261c)',
             color: '#ffffff',
             border: '1px solid #dfad3a',
-            padding: '10px 24px',
+            padding: '9px 22px',
             borderRadius: 999,
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: 800,
             letterSpacing: '0.02em',
             textDecoration: 'none',
             boxShadow: '0 10px 25px -3px rgba(0,0,0,0.5)',
             transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = '#c8961a';
-            e.currentTarget.style.color = '#071523';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = 'linear-gradient(135deg, #071523, #04261c)';
-            e.currentTarget.style.color = '#ffffff';
+        >
+          <MapIcon style={{ width: 14, height: 14, color: '#dfad3a' }} />
+          <span>Open Full Masterplan Directory</span>
+        </Link>
+      </div>
+
+      {/* Bottom-Right Zoom & View Controls */}
+      <div
+        className="interactive-control"
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 16,
+          zIndex: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setZoom((prev) => Math.min(2.8, prev + 0.25))}
+          title="Zoom In"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: 'rgba(7, 21, 35, 0.9)',
+            border: '1px solid rgba(223, 173, 58, 0.3)',
+            color: '#ffffff',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
           }}
         >
-          <MapIcon style={{ width: 15, height: 15 }} />
-          <span>Open Full Interactive Masterplan</span>
-        </Link>
+          <Plus style={{ width: 15, height: 15 }} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setZoom((prev) => Math.max(1, prev - 0.25))}
+          title="Zoom Out"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: 'rgba(7, 21, 35, 0.9)',
+            border: '1px solid rgba(223, 173, 58, 0.3)',
+            color: '#ffffff',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          }}
+        >
+          <Minus style={{ width: 15, height: 15 }} />
+        </button>
+        <button
+          type="button"
+          onClick={handleResetView}
+          title="Reset Masterplan View"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            background: 'rgba(7, 21, 35, 0.9)',
+            border: '1px solid rgba(223, 173, 58, 0.3)',
+            color: '#dfad3a',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          }}
+        >
+          <RotateCcw style={{ width: 14, height: 14 }} />
+        </button>
       </div>
     </div>
   );
