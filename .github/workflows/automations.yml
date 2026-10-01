@@ -67,11 +67,10 @@ jobs:
       - name: Resolve target for this event
         id: target
         env:
-          SCHEDULE: ${{ github.event.schedule }}
           INPUT_TARGET: ${{ inputs.target }}
         run: |
-          # Scheduled runs pick the job from the cron expression itself, so
-          # each schedule entry in `on:` maps to exactly one dispatch target.
+          # Read schedule dynamically from event payload if triggered by cron; otherwise use input
+          SCHEDULE=$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
           case "${SCHEDULE}" in
             '10 * * * *')    TARGET='whatsapp-dispatch' ;;
             '25 */3 * * *')  TARGET='lead-timers,check-availability-sla' ;;

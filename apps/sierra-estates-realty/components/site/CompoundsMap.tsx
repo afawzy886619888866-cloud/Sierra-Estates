@@ -2040,7 +2040,7 @@ export default function CompoundsMap({
               backdropFilter: 'blur(12px)',
             }}
           >
-            Step {tourIndex + 1} / 7: Autonavigating Corridor
+            Step {tourIndex + 1} / 7: Navigating Corridor
           </div>
         )}
       </div>

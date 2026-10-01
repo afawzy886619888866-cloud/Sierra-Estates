@@ -23,8 +23,10 @@ jobs:
         shell: bash
         run: |
           SEARCH_TEXT=""
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            SEARCH_TEXT="${{ github.head_ref }} ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+          PR_TITLE=$(jq -r '.pull_request.title // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+          PR_BODY=$(jq -r '.pull_request.body // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+          if [ -n "$PR_TITLE" ] || [ -n "$PR_BODY" ]; then
+            SEARCH_TEXT="${PR_TITLE} ${PR_BODY}"
           else
             SEARCH_TEXT="$(git log -1 --pretty=%B) $(git branch --show-current)"
           fi
@@ -34,22 +36,26 @@ jobs:
           JIRA_KEY=$(echo "$SEARCH_TEXT" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -n 1 || true)
 
           if [ -n "$JIRA_KEY" ]; then
-            echo "found=true" >> $GITHUB_OUTPUT
-            echo "key=$JIRA_KEY" >> $GITHUB_OUTPUT
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "key=$JIRA_KEY" >> "$GITHUB_OUTPUT"
             echo "Detected Jira issue key: $JIRA_KEY"
           else
-            echo "found=false" >> $GITHUB_OUTPUT
+            echo "found=false" >> "$GITHUB_OUTPUT"
             echo "No Jira issue key detected in branch or PR title."
           fi
 
       - name: Verify Jira Configuration Secrets
         id: check_secrets
         shell: bash
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         run: |
-          if [ -n "${{ secrets.JIRA_BASE_URL }}" ] && [ -n "${{ secrets.JIRA_API_TOKEN }}" ] && [ -n "${{ secrets.JIRA_USER_EMAIL }}" ]; then
-            echo "configured=true" >> $GITHUB_OUTPUT
+          if [ -n "$JIRA_BASE_URL" ] && [ -n "$JIRA_API_TOKEN" ] && [ -n "$JIRA_USER_EMAIL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
           else
-            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice ::Jira credentials (JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN) are not configured in repository secrets."
           fi
 
@@ -65,8 +71,12 @@ jobs:
           CLEAN_URL=$(echo "$JIRA_BASE_URL" | sed 's:/*$::')
           AUTH_HEADER="Basic $(echo -n "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" | base64 -w 0)"
 
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            MSG="GitHub PR #${{ github.event.pull_request.number }} linked by @${{ github.actor }}: ${{ github.event.pull_request.html_url }}\nTitle: ${{ github.event.pull_request.title }}"
+          PR_NUM=$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+          PR_URL=$(jq -r '.pull_request.html_url // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+          PR_TITLE=$(jq -r '.pull_request.title // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+
+          if [ -n "$PR_NUM" ]; then
+            MSG="GitHub PR #${PR_NUM} linked by @${{ github.actor }}: ${PR_URL}\nTitle: ${PR_TITLE}"
           else
             MSG="GitHub commit ${{ github.sha }} pushed to main by @${{ github.actor }}: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}\nCommit: $(git log -1 --pretty=%s)"
           fi
