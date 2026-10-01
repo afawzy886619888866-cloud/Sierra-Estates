@@ -267,6 +267,21 @@ this document says so.
    pg_policies + anon-role probes activate automatically once
    `SUPABASE_ACCESS_TOKEN` is present. Applying migration 020 + re-running
    `pnpm test:rls` is the complete live cutover runbook.
+   LIVE CUTOVER STATUS (2026-10-01): app-layer gate CONFIRMED live on
+   https://sierra-estates.net (`/api/listings` → honest empty set,
+   source:"none", seeded:false). DB-layer apply attempted via GitHub Actions
+   dispatch (deploy-supabase.yml) — ALL workflow runs (push + manual) end in
+   `startup_failure` with zero jobs: the account has EXCEEDED ITS GITHUB
+   ACTIONS SPENDING LIMIT (see docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md;
+   startup_failure runs are terminal and do not re-queue). Surgical runbook
+   ready: `node scripts/apply-migration-020.mjs` (takes SUPABASE_ACCESS_TOKEN
+   env or sbp_... CLI arg; pre-checks pg_policies for idempotency, applies
+   migration 020 ONLY — no 021 account provisioning riding along — then runs
+   the full RLS harness). Unblock paths, any one of: (a) raise the Actions
+   spending limit in GitHub billing UI then re-dispatch deploy-supabase.yml;
+   (b) provide SUPABASE_ACCESS_TOKEN and run the surgical script;
+   (c) provide CRON_SECRET and POST the live site's own deliberate migration
+   route /api/cron/apply-migrations (idempotent, ledgered, advisory-locked).
 3. **No-fabrication violations in client-facing code (Rule B / §21)** —
    `/api/listings` invents defaults for missing data: `usd || 1500`,
    `compound || 'New Cairo'`, `zone || '5th Settlement'`, `type ||
