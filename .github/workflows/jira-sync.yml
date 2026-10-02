@@ -12,6 +12,10 @@ jobs:
   jira-sync:
     name: Detect Jira Issue & Link GitHub Activity
     runs-on: ubuntu-latest
+    env:
+      JIRA_BASE_URL: ${{ secrets['JIRA_BASE_URL'] }}
+      JIRA_API_TOKEN: ${{ secrets['JIRA_API_TOKEN'] }}
+      JIRA_USER_EMAIL: ${{ secrets['JIRA_USER_EMAIL'] }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,10 +51,6 @@ jobs:
       - name: Verify Jira Configuration Secrets
         id: check_secrets
         shell: bash
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
         run: |
           if [ -n "$JIRA_BASE_URL" ] && [ -n "$JIRA_API_TOKEN" ] && [ -n "$JIRA_USER_EMAIL" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
@@ -63,9 +63,6 @@ jobs:
         if: steps.jira_key.outputs.found == 'true' && steps.check_secrets.outputs.configured == 'true'
         shell: bash
         env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_KEY: ${{ steps.jira_key.outputs.key }}
         run: |
           CLEAN_URL=$(echo "$JIRA_BASE_URL" | sed 's:/*$::')
