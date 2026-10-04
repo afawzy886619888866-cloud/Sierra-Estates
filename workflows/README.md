@@ -200,3 +200,30 @@ Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/op
 
 ### New env vars (see .env.example)
 `WF_DIGEST_TO`, `WF_ALERT_TO`, `WF_ALERT_EMAIL_TO`, `WF_ALERT_FAIL_THRESHOLD`, `SCRAPER_GROUP_CHATIDS`
+
+## 2026-10 (later) — Workflow 08: Units Sheet Sync (owner inventory → Supabase)
+
+- **08-units-sync/sync.js** — reads the owner's authoritative inventory Google
+  Sheet via the **public gviz CSV endpoint** (no service account needed for
+  read) and syncs every unit into `public.listings`, keyed by
+  `dupe_check_hash = sha256('sierra-units|' + Code)` (the sheet's own SBR-style
+  codes, e.g. `MT-B14-3U-8.34M`).
+- Schedule `23 */2 * * *` (every 2 h), category `ingestion`, status `active`;
+  also triggerable from the admin Workflow Ops screen ("Run now") — both the
+  direct `:2786` HTTP path and the Supabase `run-requested` marker path are
+  wired and verified live.
+- Live-DB-safe mapping: `garden_sqm` / `furnishing_status` / `verified_at` /
+  `publish_status` (PUBLISHABLE for Available units, REVIEW_REQUIRED otherwise)
+  — verified against the deployed database via the PostgREST OpenAPI
+  definition; repo-only column names (`garden_area`, `verified`,
+  `publish_to_client`) are intentionally NOT used.
+- Upsert strategy: no ON CONFLICT (the live DB lacks a usable unique
+  constraint on `dupe_check_hash`) — probe hashes → PATCH existing, INSERT
+  fresh, in-batch dedup (last row per Code wins). Verified idempotent:
+  second run = 0 inserted / 242 updated / 0 errors.
+- First production run: 324 sheet rows → 264 valid units → **240 inserted +
+  2 updated, 0 errors** (60 rows had no Code; 22 duplicate codes collapsed).
+
+### New env vars
+`UNITS_SHEET_ID` (default = owner's sheet), `UNITS_SHEET_GID` (default =
+inventory tab). Uses existing `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.

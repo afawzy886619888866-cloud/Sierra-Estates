@@ -56,6 +56,7 @@ const SLUGS = [
   'unit-adder',
   'gateway-sentinel',
   'daily-digest',
+  'units-sync',
 ];
 
 const SCRIPTS = {
@@ -66,6 +67,7 @@ const SCRIPTS = {
   'unit-adder': '05-unit-adder/add.js',
   'gateway-sentinel': '06-gateway-sentinel/sentinel.js',
   'daily-digest': '07-daily-digest/digest.js',
+  'units-sync': '08-units-sync/sync.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -360,6 +362,24 @@ async function main() {
     if (seeded) log('daily-digest row present in workflows registry');
   } catch (e) {
     log(`daily-digest seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the units-sync row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'units-sync',
+      name: 'Units Sheet Sync',
+      name_ar: 'مزامنة وحدات شيت الجرد',
+      description: 'Reads the owner inventory Google Sheet (public gviz CSV) and upserts every unit into Supabase listings by unit Code — availability, price, owner contact. Runs every 2 hours.',
+      status: 'active',
+      schedule: '23 */2 * * *',
+      category: 'ingestion',
+      trigger_type: 'cron',
+      source_path: 'workflows/08-units-sync/sync.js',
+    });
+    if (seeded) log('units-sync row present in workflows registry');
+  } catch (e) {
+    log(`units-sync seeding skipped: ${e.message}`);
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));
