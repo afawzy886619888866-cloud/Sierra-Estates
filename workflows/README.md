@@ -175,3 +175,28 @@ For production, integrate with:
 - **Sentry** for error tracking
 - **DataDog** for metrics
 - **Telegram** for alerts
+
+---
+
+## 2026-10 — Workflow plane improvements (v1.2)
+
+Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/opt/se/workflows`, runner restart required):
+
+### Runner
+- **Honest telemetry** — `last_run_label` now carries the exit kind: `ec2-runner:ok`, `:error`, `:timeout`, `:unconfigured`. The Workflow Studio can no longer dress up a blocked run as a healthy one.
+- **Inbound webhook receiver** — `POST /api/inbound` (X-API-Key guarded) is the delivery target for the gateway's `message.received` webhook; raw deliveries land in `.state/inbox.jsonl` (rotating) and, when Sheets creds are configured, broker-group chatter flows to the `raw_messages` tab — the safe replacement for the banned second-session scraper (workflow 01). Inspect with `GET /api/inbound/preview`.
+- **Runner body cap** 256 KB per inbound delivery.
+
+### Scheduler
+- `lib/crone.js` upgraded from minute/hour-only to **full 5-field cron** (dom/month/dow with `* , - /`, month names JAN-DEC, day names SUN-SAT, `7 == 0 == Sunday`, POSIX dom/dow OR-semantics). Any cron typed in the Studio now behaves exactly as written, in Africa/Cairo time.
+
+### Workflows
+- **06-gateway-sentinel** — escalation path: after `WF_ALERT_FAIL_THRESHOLD` (default 2 ≈ 10 min) consecutive failed probes it writes `.state/alerts.jsonl` and emails `WF_ALERT_EMAIL_TO` via SendGrid when available. On recovery it sends a WhatsApp confirmation to `WF_ALERT_TO` (fallback: the session's own number, "message yourself").
+- **07-daily-digest (new)** — 08:00 Cairo Arabic WhatsApp digest: gateway health, per-workflow last exit + success rate, new leads and new units in the last 24 h. Target: `WF_DIGEST_TO` → `LEAD_NOTIFY_WHATSAPP_NUMBER` → session self-chat. Internal ops content — no Cairo Plaza notice per `lib/notice.js` decision table.
+
+### One-time operator actions (2026-10)
+- `whatsapp-scraper` row set to **paused** in the workflows registry: it is designed NOT to run on the gateway SIM (second-session ban risk). Its long-term replacement is the inbound webhook → `lib/inbox.js` path above.
+- Gateway webhook subscription created for `message.received` → `http://127.0.0.1:2786/api/inbound` with the runner API key as `X-API-Key` header.
+
+### New env vars (see .env.example)
+`WF_DIGEST_TO`, `WF_ALERT_TO`, `WF_ALERT_EMAIL_TO`, `WF_ALERT_FAIL_THRESHOLD`, `SCRAPER_GROUP_CHATIDS`
