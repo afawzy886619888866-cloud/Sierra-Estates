@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<list date="2026-10-04 05:23:07" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <property last_update="2026-10-04 05:23:07" id="1">
+<list date="2026-10-04 05:39:24" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <property last_update="2026-10-04 05:39:24" id="1">
     <reference_number>SE-00430</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -16,10 +16,10 @@
     <bathroom>2</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="2">
+  <property last_update="2026-10-04 05:39:24" id="2">
     <reference_number>SE-00431</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -35,12 +35,12 @@
     <bathroom>1</bathroom>
     <size>50</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0070_21e9946b.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0079_16f94fff.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0070_21e9946b.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0079_16f94fff.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="3">
+  <property last_update="2026-10-04 05:39:24" id="3">
     <reference_number>RERH-3F-40K</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -51,35 +51,19 @@
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
     <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[code: RERH-3F-40K | location: rehab | property_type: Furnished rent | rooms: 3 | furnishing: تشطيبات خاصه | price: 38000 | contact: 1115598564 | name: ahmed | price_header: Unit Price]]></description_en>
+    <description_en><![CDATA[متاح شقهومدينتي | متاحه مايو | متاح 2شقه سوديك ومتاح شقه ليك فيو]]></description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>131</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0085_fb789252.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0094_0c075d25.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0085_fb789252.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0094_0c075d25.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260621-WA0065_40f45f3b.jpg</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="4">
-    <reference_number>RH-3U-40K</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>40000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>Al Rehab</community>
-    <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[11.0 | 20.0 | 44.0]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>2</bathroom>
-    <size>180</size>
-    <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260621-WA0065_40f45f3b.jpg</url>
-    </photo>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="5">
+  <property last_update="2026-10-04 05:39:24" id="4">
     <reference_number>SE-00249</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -95,10 +79,10 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="6">
+  <property last_update="2026-10-04 05:39:24" id="5">
     <reference_number>OWNERS-AUG26-00012</reference_number>
     <offering_type>RR</offering_type>
     <property_type>TH</property_type>
@@ -114,10 +98,10 @@
     <bathroom>3</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="7">
+  <property last_update="2026-10-04 05:39:24" id="6">
     <reference_number>SE-5SC-0</reference_number>
     <offering_type>RR</offering_type>
     <property_type>TH</property_type>
@@ -133,10 +117,10 @@
     <bathroom>3</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="8">
+  <property last_update="2026-10-04 05:39:24" id="7">
     <reference_number>SE-00532</reference_number>
     <offering_type>RR</offering_type>
     <property_type>TH</property_type>
@@ -152,10 +136,10 @@
     <bathroom>3</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="9">
+  <property last_update="2026-10-04 05:39:24" id="8">
     <reference_number>SE-1TL4-0</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -171,10 +155,10 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="10">
+  <property last_update="2026-10-04 05:39:24" id="9">
     <reference_number>SE-R08-0</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -190,10 +174,10 @@
     <bathroom>2</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="11">
+  <property last_update="2026-10-04 05:39:24" id="10">
     <reference_number>OWNERS-AUG26-00014</reference_number>
     <offering_type>RR</offering_type>
     <property_type>DU</property_type>
@@ -209,10 +193,10 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="12">
+  <property last_update="2026-10-04 05:39:24" id="11">
     <reference_number>SE-334-0</reference_number>
     <offering_type>RR</offering_type>
     <property_type>DU</property_type>
@@ -228,10 +212,10 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="13">
+  <property last_update="2026-10-04 05:39:24" id="12">
     <reference_number>SE-00536</reference_number>
     <offering_type>RR</offering_type>
     <property_type>DU</property_type>
@@ -247,10 +231,10 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="14">
+  <property last_update="2026-10-04 05:39:24" id="13">
     <reference_number>CMP-93-230</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
@@ -266,512 +250,698 @@
     <bathroom>3</bathroom>
     <size>230</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0052_3419c8c6.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0054_6f743a61.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0052_3419c8c6.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260815-WA0054_6f743a61.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260416-WA0018_8a75b8f0.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="15">
-    <reference_number>SE-0-0</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="14">
+    <reference_number>SE-PF-14</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>120000</price>
+    <price>25000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>Up Town Cairo</community>
-    <sub_community>Up Town Cairo</sub_community>
-    <title_en><![CDATA[Apartment in Up Town Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[236 m + 100 m garden]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>3</bathroom>
-    <size>265</size>
-    <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
-    </photo>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[روف]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>2</bathroom>
+    <size>135</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="16">
+  <property last_update="2026-10-04 05:39:24" id="15">
+    <reference_number>SE-PF-15</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>25000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[روف]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>2</bathroom>
+    <size>135</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="16">
     <reference_number>SE-PF-16</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>45000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[...]]></description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
-    <size>6400</size>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="17">
+  <property last_update="2026-10-04 05:39:24" id="17">
     <reference_number>SE-PF-17</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>45000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[...]]></description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
-    <size>6400</size>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="18">
+  <property last_update="2026-10-04 05:39:24" id="18">
     <reference_number>SE-PF-18</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>48000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[...]]></description_en>
+    <bedroom>3</bedroom>
     <bathroom>0</bathroom>
-    <size>6400</size>
+    <size>222</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="19">
+  <property last_update="2026-10-04 05:39:24" id="19">
     <reference_number>SE-PF-19</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>48000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[...]]></description_en>
+    <bedroom>3</bedroom>
     <bathroom>0</bathroom>
-    <size>6400</size>
+    <size>222</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="20">
+  <property last_update="2026-10-04 05:39:24" id="20">
     <reference_number>SE-PF-20</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>135000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[جاردن 400م]]></description_en>
+    <bedroom>7</bedroom>
+    <bathroom>7</bathroom>
+    <size>600</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="21">
+  <property last_update="2026-10-04 05:39:24" id="21">
     <reference_number>SE-PF-21</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>135000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
+    <community>...</community>
+    <sub_community>...</sub_community>
+    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
+    <description_en><![CDATA[جاردن 400م]]></description_en>
+    <bedroom>7</bedroom>
+    <bathroom>7</bathroom>
+    <size>600</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="22">
+  <property last_update="2026-10-04 05:39:24" id="22">
     <reference_number>SE-PF-22</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>85000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
+    <community>1st Settlement</community>
+    <sub_community>1st Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 1st Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[شقة أرضي بجاردن مفروشة بالكامل مودرن - موقع هادئ | شقة مفروشة بالكامل مودرن - جاهزة | شقة مفروشة بالكامل مودرن - رفاهية]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <size>200</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="23">
+  <property last_update="2026-10-04 05:39:24" id="23">
     <reference_number>SE-PF-23</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>90000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
+    <community>2025-10-06 00:00:00</community>
+    <sub_community>2025-10-06 00:00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[نموذج ii كلاسيك - فرش فندقي بالكامل - مكيفة بالكامل]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <size>191</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="24">
+  <property last_update="2026-10-04 05:39:24" id="24">
     <reference_number>SE-PF-24</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>6400</price>
+    <price>180000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="25">
-    <reference_number>SE-PF-25</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="26">
-    <reference_number>SE-PF-26</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="27">
-    <reference_number>SE-PF-27</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="28">
-    <reference_number>SE-PF-28</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="29">
-    <reference_number>SE-PF-29</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="30">
-    <reference_number>SE-PF-30</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="31">
-    <reference_number>SE-PF-31</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="32">
-    <reference_number>SE-PF-32</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="33">
-    <reference_number>SE-PF-33</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>6400</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مزرعة 6400 فدان - زراعات برتقال ومانجو ورمان]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>6400</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="34">
-    <reference_number>SE-PF-34</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>70000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>2025-10-06 00:00:00</community>
+    <sub_community>2025-10-06 00:00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[نموذج H - تشطيبات الترا سوبر لوكس - فرش هاي لوكس]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>3</bathroom>
+    <size>280</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="35">
-    <reference_number>SE-PF-35</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="25">
+    <reference_number>b076d3ad-0a73-41e7-bce1-8a5f7a5c9628</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>16000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Office in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="36">
+  <property last_update="2026-10-04 05:39:24" id="26">
+    <reference_number>9b458fae-6099-4bec-8c4a-d1fed93b4d3a</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>17000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="27">
+    <reference_number>SIG|5th settlement|apartment|140|3||20000|unknown</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>20000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[شقه للايجار بفيلا ١٦٠ م في تمر حنه تشطيب الترا سوبر لوكس اول سكن ثلاث غرف ٢ حمام ريسبشن ٣ قطع فيو جاردن علي بعد دقائق من نادي وادي دجله، الاهلي وبلاتينيوم وكمبوند مراسم مطلوب ٢٠ Code 244 | شقه للايجار علي محور السادات مباشرة ٢٠٠ متر دور ثالث بمصعد ٣نوم ٢حمام ٣رسبشن ليفنج مطلوب ٢٢الف Code 245 | للايجار شقه فندقيه دور اول فوق الارضي تشطيب هاي لوكس  بالحي الرابع خطوات من 7استارز وميدان الحمد ومنطقه خدمات الحي الرابع والمدارس الدوليه الكنديه واخناتون والمصريه للغات والغد الا زهرية ارضيات بورسلين وباركيه جبسنبورد واسبوتات ليد ٣ حجرات كبيره جدا منهم ماستر منهم حجرتين ابعادها ٥.٧ في ٥.٤ مطبخ كبير واسع يسع ترابيزه سفره ٢ حمام ريسبشن قطعتين كبار بلكونه بالمطبخ منشر بلكونه على الشارع كبيره باب مصفح تليفون ارضي ونت مطلوب 25 Code 255]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>140</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="28">
+    <reference_number>c6ff6113-a942-476a-a230-2dc67c920d74</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>20000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Studio in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="29">
+    <reference_number>SIG|5th settlement|apartment|210|3||25000|not furnished</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>25000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[للايجار السكنى الاسرى فقط
+
+ شقة بحرى 200م بالتجمع الخامس/ كمبوند ريتاج 
+  الدور الرابع
+
+3 غرف / 2 بلكونه
+(ارضيات باركيه)
+حجرة خادمه مستقله.
+
+3 قطع ريسبشن / بلكونة  للرسيبشن
+(ارضيات سيراميك) 
+3 حمام سوبر لوكس
+ مطبخ 
+اسانسير
+ غاز طبيعي 
+انتركم 
+ أمن وجراج خاص
+
+الايجار  
+شامل الصيانة الشهريه 
+
+التفاصيل والصور واتس
+
+السعر 20 الاف 
+
+المالك بيدفع 6 الاف فقط | price_not_found; availability_not_explicit; low_extraction_confidence | شقة للإيجار بالياسمين 7 (التجمع الخامس)
+
+​ مساحة 210 متر
+ تضم 3 غرف (منها غرفة ماستر) و3 حمامات.
+​الدور والتشطيب: الدور الأول (يوجد أسانسير)، تشطيب سوبر لوكس، للاستخدام السكني فقط.
+​الحالة: غير مفروشة.
+​المرافق: عداد كهرباء، عداد مياه، غاز طبيعي، بلكونة/تراس، وأمن للمبنى.
+​💰 التفاصيل المالية:
+​الإيجار الشهري: 25,000 جنيه مصري (سعر نهائي).
+​مصاريف الصيانة: 1,000 جنيه.
+​شروط التعاقد: دفع شهر مقدم + شهرين تأمين. | availability_not_explicit; price evidence: 25,000 | *شقة مفروشة للإيجار - النرجس 1 فيلات | التجمع الخامس*
+
+📐 *المساحة*: 115م² + تراس 60م² فيو مفتوح
+
+*التفاصيل*:
+- 2 غرفة نوم
+- 1 حمام
+- مطبخ مجهز بالكامل
+- جميع الأجهزة الكهربائية
+- 3 تكييفات
+- تراس مفروش بإطلالة رائعة
+
+*الموقع*:
+- مدارس دولية: Capital - Narmer - Leaders
+- الجامعة الأمريكية - جامعة المستقبل
+- مستشفى الجوي - مستشفى الشفا - نسايم
+- منطقة تجارية وترفيهية
+
+*الإيجار*: 27,000 جنيه | availability_not_explicit; price evidence: 27,000]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>1</bathroom>
+    <size>210</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="30">
+    <reference_number>SIG|5th settlement|apartment|42|||30000|unknown</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>30000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[فرصه نادرة لهواة التميز شقه للبيع 200 م امام نادى الشمس 3 غرف 2 حمام ريسبشن 3 قطع تراس كبير على الشارع فيو مفتوح على نادى الشمس  مطبخ كبير خشب دور أول فوق الدور الأرضى اسانسير مسجله شهرعقارى حصه فى الأرض مبانى ثمانينات عمارة و مدخل شيك البيع شامل تكيفات الشقه بالكامل المطبخ الخشب متاح فيديو لللشقة السعر 6مليون و300 الف  قابل للتفاوض | دوبلكسللايجار كمبوند بروميندا  بمساحة 255 متر + روف بمساحة 133 متر + جراچ  المكونات:  •	3 غرف نوم (منها غرفة ماستر) •	4 حمامات •	مطبخ •	ريسبشن •	ليفينج  تشطيب فاخر يشمل 6 تكييفات وسلم داخلي  الواجهة بحرية تطل على الحديقة  المرافق: كلوب هاوس، حمام سباحة، كافيه مطلوب 40 الف | مطلوب  صيدلية ايجار ضرورى فى التجمع او مدينة نصر او مصر الجديدة باجديت 80 الف تنفيذ فورى عميل جاد جداااااااا]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>42</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="31">
+    <reference_number>SIG|5th settlement|office|30|||30000|unknown</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>30000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[محتاج مكتب في التجمع الخامس ايجار متشطب مساحة 30/50sqm | availability_not_explicit; price evidence: 30]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>30</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="32">
+    <reference_number>992380fc-7fc3-4254-9b9d-11e3751b2700</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>30000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="33">
+    <reference_number>0077df01-e223-4b0c-8e71-33cde5a2848a</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>30000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="34">
+    <reference_number>SIG|5th settlement|duplex|210|3||33000|furnished</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>33000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[مطلوب شقة 3غرف و2حمام تشطيب مالك بالمطبخ بادجيت لحد 25000/27000 عميلة 👆 جاهزة تنفذ للتواصل والمعاينة ☎️ 01153180304 Naglaa Elgamal 🌹🌹 | *فرصة استثمارية نادرة للبيع – مول تجاري بالكامل في قلب التجمع الأول*  إذا كنت تبحث عن أصل استثماري قوي يجمع بين دخل حالي مستقر وفرصة نمو كبيرة في القيمة والعائد، فهذه فرصة يصعب تكرارها.  - الموقع: محور مصطفى كامل – التجمع الأول - مساحة المباني: 1,200 م² - يتكون من : بدروم + أرضي + أول + ثاني + ثالث + روف  - المول مؤجر بالكامل لعلامة تجارية معروفة منذ سنوات، ويوفر عائدًا استثماريًا مجزيًا ومستقرًا.  - ينتهي عقد الإيجار في شهر 11 الجاري، والمستأجر الحالي لديه رغبة مؤكدة في التجديد بقيمة إيجارية أع | متاح دوبليكس للايجار المفروش مكيف 320م بحديقة وحمام سباحة بكمبوند الدبلوماسين مطلوب 60000الف للتواصل والمعاينة ☎️ 01153180304🌹 من طرف 👆]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>210</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="35">
+    <reference_number>SIG|5th settlement|apartment|165|3||33000|unknown</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>33000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Code : R-TSQ-001 Apartment for rent in The square Fifth Settlement  Area 165m First floor  3 bedrooms 3 bathrooms With Kitchen only  Price 33.000 | Code : R-TSQ-001
+Apartment for rent in The square Fifth Settlement 
+
+Area 165m
+First floor 
+
+3 bedrooms
+3 bathrooms
+With Kitchen only 
+
+Price 33.000 | availability_not_explicit; price evidence: 33.000]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>165</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="36">
     <reference_number>SE-PF-36</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[مكيفة بالكامل - دور ثاني]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>170</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="37">
+  <property last_update="2026-10-04 05:39:24" id="37">
     <reference_number>SE-PF-37</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[...]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="38">
-    <reference_number>SE-PF-38</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="38">
+    <reference_number>SIG|5th settlement|apartment|40|||35000|unknown</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[🏢 **مكتب إداري للإيجار – برايم لوكيشن في التجمع الخامس**  📍 **علي شارع الجامعة الأمريكية مباشره. علي مساحه 450 متر ✨ مواصفات المكتب: ✔️ برايم لوكيشن ✔️ مساحه مفتوحه ✔️ تشطيب فاخر ✔️ تكييف مركزي ✔️ استلام فوري  💰 **الإيجار الشهري:**  🔹 1100 جنيه للمتر | عمارة للإيجار بالكامل – مدينة نصر | الحي السابع قريب من المحكمة فرصة مميزة للشركات، المراكز الطبية، العيادات، أو الأنشطة الإدارية والتجارية. 🏗️ التكوين: أرضي + 3 أدوار ✨ العمارة بحالة جيدة، ومناسبة لمختلف الأنشطة حسب طبيعة الاستخدام. للاستفسار أو معاينة العقار، .مطلوب 130 قابل للتفاوض في الشهر | 🏥 **عيادة للإيجار – مبنى إيترنا الطبي**
+📍 **شارع التسعين الجنوبي مباشرة – التجمع الخامس**
+
+✨ فرصة مميزة للأطباء وأصحاب العيادات
+
+🔹 المساحة: **40 متر**
+🔹 **تشطيب كامل بالتكييفات**
+🔹 **أول استخدام**
+🔹 تقسيمة عملية: **غرفة + ريسبشن + حمام**
+🔹 **فيو مميز جدًا**
+🔹 جاهزة للاستلام والتشغيل فورًا
+
+💰 **الإيجار: 35,000 جنيه شهريًا (نهائي)**
+
+📞 للتواصل: | availability_not_explicit; price evidence: 35,000]]></description_en>
+    <bedroom>4</bedroom>
+    <bathroom>2</bathroom>
+    <size>40</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="39">
-    <reference_number>SE-PF-39</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="39">
+    <reference_number>SIG|5th settlement|apartment|142|3||35000|unknown</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[ستوديو للايجار المفروش في قطامية بلازا 
+
+ستوديو مفروش و مجهز بالكامل
+
+
+مساحة 80 م 
+
+
+الدور الاول 
+
+
+1 غرفة 
+
+
+1 حمام
+
+
+الايجار 30 الف
+
+rRr6 | location_unresolved; availability_not_explicit; price evidence: 30 الف | شقة للايجار بالتكيفات و المطبخ في كمبوند
+ ماونت فيو هايد بارك - التجمع الخامس 
+
+مساحة 142 م 
+
+الدور الاول ( يوجد اسانسير) 
+
+3 غرف 
+
+3 حمام 
+
+رسيبشن 3 قطع 
+
+بها مطبخ راكب - تكيفات - شفاط -  خط ارضي - نت -كاميرات مراقبة - ساوند سيستم بلوتوث - شبابيك عازله للصوت - ارضيات رخاف و الفرف باركية
+
+فيو حمام سباحة و جاردن 
+
+
+(( المالك لا يدفع عموله ))
+
+الايجار 35 الف 
+
+rRr5 | availability_not_explicit; price evidence: 35 الف | ستوديو للإيجار المفروش في كمبوند هايد بارك 
+
+مساحة 80 م 
+
+الدور الارضي
+
+1 غرفة 
+
+2 حمام 
+
+رسيبشن 
+
+مطبخ 
+
+مفروشة و مجهزة بالكامل 
+
+الايجار 40 الف مده السنه 
+المدد القصيرة 45 الف 
+
+rRr9 | availability_not_explicit; price evidence: 40 الف]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>1</bathroom>
+    <size>142</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="40">
-    <reference_number>SE-PF-40</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="40">
+    <reference_number>SIG|5th settlement|apartment|185|3||35000|not furnished</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[🏢 شقة مميزة للإيجار من المالك مباشرة في كمبوند ذا سكوير (The Square) 🏢
+
+✨ تفاصيل العقار:
+• المساحة: 185 متر مربع.
+• الطابق: الدور الثالث.
+• الموقع: كمبوند ذا سكوير، التجمع الخامس، القاهرة الجديدة.
+
+✨ التقسيم الداخلي المميز:
+• 3 غرف نوم (منهم غرفة ماستر راقية بحمام مستقل ودريسنج روم).
+• 2 غرف نوم فرعية ممتازة + حمام إضافي مجهز.
+• ريسيبشن مفتوح ومميز.
+• مطبخ كبير ومجهز بالكامل (راكب به البوتاجاز، فرن بلت إن، و2 شفاط كما هو موضح بالصور).
+
+✨ الإطلالة والمميزات:
+• الفيو الأمامي: إطلالة ساحرة ومباشرة على البحيرات واللاندسكيب.
+• الفيو الخلفي: إطلالة مميزة على نادي RYZE وسعودي ماركت.
+• المرافق كاملة: عداد الكهرباء، الغاز، المياه، التليفون الأرضي، الإنترنت، شبكة كمبيوتر متكاملة، ودش مركزي.
+
+💵 القيمة الإيجارية: 35,000 جنيه مصري شهرياً (غير مفروش).
+💵 قيمة التأمين: 70,000 جنيه مصري. | availability_not_explicit; price evidence: 35,000 | فيلا ايجار  فى التجمع الخامس 
+ارض570م التجمع الخامس بالحي الثالث 
+تشطيب لوكس
+ 
+3 طوابق  وروف 
+مكونين من شقتين في كل طابق عدا الارضي :
+3غرف 
+2حمام 
+الطابق الارضي  مكون من شقة واحدة:
+3غرف 
+3حمام 
+بيزمنت باركينج
+ب250 الف في الشهر سكني فقط | availability_not_explicit; price evidence: 250 الف | شقة مفروشة للبيع  اول ساكن مساحتها 160 متر مربع  قريبة من المطار
+في حصة بالأرض 
+جاردن فيو
+الشقة مصروف عليها و متجهزة بشكل عالي
+مكونة من 3 غرف + ريسيبشن كبير + حمام / مع امكانية وجود تواليت بال ريسيبشن+ بلكونة كبيرة طول 6 متر * 1.2 متر بللور دبل + بلكونة صغيرة اتجاه البحري
+دور 12 قبل الآخير
+لكل دور بالعمارة فيه شقتين بس
+اسانسير
+يوجد للشقة ماتور مياه خاص للمطبخ + ميتور مياه خاص للحمام 
+عداد كهرباء كودي الجديد
+الشقة غير مجروحة اتجاهات بحري قبلي ( شرقي )
+قريب من محطة ميترو هشام بركات
+خلف التوربيني و الدولار يلي ب طه حسين
+3 مكيفات / 2 شارب / 1 سامسونج 
+تلاجة سامسونج 440 لتر
+غسالة زانوسي  8 كغ
+بوتاجاز فريش بروفيشنال
+مبرد ماء / بيرجن
+سخان ماء فوري تركي
+2 انبوبة غاز
+شاشة سامسونج 48
+فرش الريسيبشن 1 ثلاثية و 1 ثنائية و 2 فوتيه من قباني
+مكتبة للشاشة مع فرش 1 ثلاثية و 2 فوتيه من الفينو
+السفرة  و نيش و بوفيه و 8 كراسي من ان اند اوت
+غرفة ماستر من سمارت
+سرير قلاب من واي
+جزامة
+سجاد عدد 3 و 2 موكيت
+الحمام من ديروفيت
+سخان ماء من تورنيدو
+
+
+
+
+ مع الفرش بالكامل
+( كل الفرش بحكم الجديد استعمال خفيف )
+
+
+تم تخفيض السعر الى 4 مليون جنيه🎳 | price_not_found; location_unresolved; availability_not_explicit; low_extraction_confidence]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>185</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="41">
-    <reference_number>SE-PF-41</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="41">
+    <reference_number>5cfdd16e-620f-45c3-9dfb-0cc8417b6657</reference_number>
+    <offering_type>RR</offering_type>
+    <property_type>TH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>35000</price>
+    <rental_period>M</rental_period>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Townhouse in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="42">
+    <reference_number>baef6fd4-c61b-4267-b63c-b96f78d8ba8f</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>35000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="42">
-    <reference_number>SE-PF-42</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="43">
+    <reference_number>890bce49-4363-411d-8430-fe231da31463</reference_number>
     <offering_type>RR</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>70000</price>
+    <price>40000</price>
     <rental_period>M</rental_period>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
     <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
+    <bathroom>2</bathroom>
+    <size>0</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="43">
-    <reference_number>SE-PF-43</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>70000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="44">
-    <reference_number>SE-PF-44</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>70000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="45">
-    <reference_number>SE-PF-45</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>70000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Villa with garden + large swimming pool - Ultra Super Luxury]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>500</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="46">
+  <property last_update="2026-10-04 05:39:24" id="44">
     <reference_number>SE-0-3E</reference_number>
     <offering_type>RS</offering_type>
     <property_type>VH</property_type>
@@ -780,16 +950,16 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Standalone Villa in Al Rehab - Sierra Estates]]></title_en>
+    <title_en><![CDATA[Villa in Al Rehab - Sierra Estates]]></title_en>
     <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="47">
+  <property last_update="2026-10-04 05:39:24" id="45">
     <reference_number>OWNERS-AUG26-00001</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -804,11 +974,11 @@
     <bathroom>2</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="48">
+  <property last_update="2026-10-04 05:39:24" id="46">
     <reference_number>IMG-20260810-WA0000.JPG</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -823,11 +993,11 @@
     <bathroom>2</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0000_79f262af.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0010_75963abb.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0000_79f262af.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0010_75963abb.jpg</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="49">
+  <property last_update="2026-10-04 05:39:24" id="47">
     <reference_number>SE-00902</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -842,11 +1012,11 @@
     <bathroom>2</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0063_11205d91.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260810-WA0077_7c870594.jpg</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="50">
+  <property last_update="2026-10-04 05:39:24" id="48">
     <reference_number>SE-8MS9S-4Q</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -861,10 +1031,10 @@
     <bathroom>2</bathroom>
     <size>170</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+      <url last_update="2026-10-04 05:39:24">https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="51">
+  <property last_update="2026-10-04 05:39:24" id="49">
     <reference_number>TEST-OWNER-MU50A005</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -879,10 +1049,10 @@
     <bathroom>2</bathroom>
     <size>170</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
+      <url last_update="2026-10-04 05:39:24">https://images.unsplash.com/photo-1600596542815-ffad4c1539a9</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="52">
+  <property last_update="2026-10-04 05:39:24" id="50">
     <reference_number>OWNERS-AUG26-00007</reference_number>
     <offering_type>RS</offering_type>
     <property_type>VH</property_type>
@@ -891,16 +1061,16 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Standalone Villa in New Cairo - Sierra Estates]]></title_en>
+    <title_en><![CDATA[Villa in New Cairo - Sierra Estates]]></title_en>
     <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="53">
+  <property last_update="2026-10-04 05:39:24" id="51">
     <reference_number>SE-00742</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
@@ -915,11 +1085,11 @@
     <bathroom>0</bathroom>
     <size>0</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0126_ea3df351.jpg</url>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0134_e0759feb.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0126_ea3df351.jpg</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/IMG-20260808-WA0134_e0759feb.jpg</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="54">
+  <property last_update="2026-10-04 05:39:24" id="52">
     <reference_number>SE-00904</reference_number>
     <offering_type>RS</offering_type>
     <property_type>VH</property_type>
@@ -928,16 +1098,16 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Standalone Villa in New Cairo - Sierra Estates]]></title_en>
+    <title_en><![CDATA[Villa in New Cairo - Sierra Estates]]></title_en>
     <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
+      <url last_update="2026-10-04 05:39:24">https://sierra-rent-gg2addxq.manus.space/manus-storage/STK-20260812-WA0045_58fd2d65.webp</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="55">
+  <property last_update="2026-10-04 05:39:24" id="53">
     <reference_number>OWNER-MU50JYE4</reference_number>
     <offering_type>RS</offering_type>
     <property_type>TW</property_type>
@@ -952,457 +1122,557 @@
     <bathroom>4</bathroom>
     <size>310</size>
     <photo>
-      <url last_update="2026-10-04 05:23:07">https://images.unsplash.com/photo-1600585154340-be6161a56a0c</url>
+      <url last_update="2026-10-04 05:39:24">https://images.unsplash.com/photo-1600585154340-be6161a56a0c</url>
     </photo>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="56">
-    <reference_number>SE-PF-56</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="54">
+    <reference_number>SE-PF-54</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>2000000</price>
+    <price>19000000</price>
     <city>Cairo</city>
     <community>-</community>
     <sub_community>-</sub_community>
     <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
+    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل | فيلا في الساحل الشمالي - تشطيب عادل ايوب - تطل مباشره علي اللاجون | عماره 128 خامس بحري - باقي 10 اقساط نصف سنوي]]></description_en>
+    <bedroom>4</bedroom>
+    <bathroom>4</bathroom>
+    <size>190</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="57">
+  <property last_update="2026-10-04 05:39:24" id="55">
+    <reference_number>SE-PF-55</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>29500000</price>
+    <city>Cairo</city>
+    <community>1st Settlement</community>
+    <sub_community>1st Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 1st Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[تاون هاوس مفروش بمسبح - السعر أصلاً 4800 دولار - فخامة | فيلا نصف مفروشة - السعر أصلاً 5500 دولار - مساحة كبيرة | فيلا مستقلة - كور آند شل]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>3</bathroom>
+    <size>268</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="56">
+    <reference_number>SIG|new cairo|duplex||3|||furnished</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>4348828</price>
+    <city>Cairo</city>
+    <community>2025-10-06 00:00:00</community>
+    <sub_community>2025-10-06 00:00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[أمام مول العرب | ٣ ادوار - ٣٠ محل - سعر مميز | تشطيب ألترا سوبر لوكس - في الروف - دور خامس]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>970</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="57">
     <reference_number>SE-PF-57</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>2000000</price>
+    <price>14000000</price>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
+    <community>2025-10-06 00:00:00</community>
+    <sub_community>2025-10-06 00:00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[نموذج i مودرن - فيو جاردن - متبقي 6.5 مليون أقساط | فلتين - نموذج B - فيو مباشر على الجولف - أول سكن | نموذج j مودرن - بدون تشطيب - ناصية مميزة]]></description_en>
+    <bedroom>4</bedroom>
+    <bathroom>3</bathroom>
+    <size>231</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="58">
+  <property last_update="2026-10-04 05:39:24" id="58">
     <reference_number>SE-PF-58</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>2000000</price>
+    <price>22000000</price>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="59">
-    <reference_number>SE-PF-59</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="60">
-    <reference_number>SE-PF-60</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="61">
-    <reference_number>SE-PF-61</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="62">
-    <reference_number>SE-PF-62</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="63">
-    <reference_number>SE-PF-63</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="64">
-    <reference_number>SE-PF-64</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="65">
-    <reference_number>SE-PF-65</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="66">
-    <reference_number>SE-PF-66</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="67">
-    <reference_number>SE-PF-67</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="68">
-    <reference_number>SE-PF-68</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="69">
-    <reference_number>SE-PF-69</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>2000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون]]></description_en>
-    <bedroom>2</bedroom>
-    <bathroom>1</bathroom>
-    <size>85</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="70">
-    <reference_number>SE-PF-70</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="71">
-    <reference_number>SE-PF-71</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="72">
-    <reference_number>SE-PF-72</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="73">
-    <reference_number>SE-PF-73</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="74">
-    <reference_number>SE-PF-74</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="75">
-    <reference_number>SE-PF-75</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="76">
-    <reference_number>SE-PF-76</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="77">
-    <reference_number>SE-PF-77</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="78">
-    <reference_number>SE-PF-78</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="79">
-    <reference_number>SE-PF-79</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="80">
-    <reference_number>SE-PF-80</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="81">
-    <reference_number>SE-PF-81</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="82">
-    <reference_number>SE-PF-82</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="83">
-    <reference_number>SE-PF-83</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>14000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Chalet in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
-    <bedroom>3</bedroom>
-    <bathroom>4</bathroom>
-    <size>215</size>
-  </property>
-  <property last_update="2026-10-04 05:23:07" id="84">
-    <reference_number>SE-PF-84</reference_number>
-    <offering_type>RS</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>19000000</price>
-    <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[فيلا في الساحل الشمالي - تشطيب عادل ايوب - تطل مباشره علي اللاجون]]></description_en>
+    <community>2025-10-06 00:00:00</community>
+    <sub_community>2025-10-06 00:00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[نموذج j مودرن - بدون تشطيب - ناصية مميزة]]></description_en>
     <bedroom>4</bedroom>
-    <bathroom>0</bathroom>
-    <size>190</size>
+    <bathroom>3</bathroom>
+    <size>265</size>
   </property>
-  <property last_update="2026-10-04 05:23:07" id="85">
-    <reference_number>SE-PF-85</reference_number>
+  <property last_update="2026-10-04 05:39:24" id="59">
+    <reference_number>369b623d-7fa4-4b51-a5be-2118d0c38135</reference_number>
     <offering_type>RS</offering_type>
     <property_type>AP</property_type>
     <price_on_application>0</price_on_application>
-    <price>19000000</price>
+    <price>5000000</price>
     <city>Cairo</city>
-    <community>-</community>
-    <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[فيلا في الساحل الشمالي - تشطيب عادل ايوب - تطل مباشره علي اللاجون]]></description_en>
+    <community>2026-04-14 00:00</community>
+    <sub_community>2026-04-14 00:00</sub_community>
+    <title_en><![CDATA[Apartment in 2026-04-14 00:00 - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="60">
+    <reference_number>65a5ea07-b5bc-4c12-9e96-2358ff36dd20</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>489000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="61">
+    <reference_number>SIG|5th settlement|villa|240|3||500000|unknown</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>500000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[​🏢 شقة أول ساكن للإيجار – المستثمرين الجنوبية (عائلي 4 - التجمع الخامس)! ​فرصة مميزة للسكن الراقي في موقع حيوي وهادئ بالقرب من كافة الخدمات، الشقة جديدة بالكامل وبها غاز طبيعي. ​الموقع: التجمع الخامس – المستثمرين الجنوبية (منطقة عائلي 4) 📍 ​الدور: الثالث (بدون أسانسير) 🚪 ​الحالة: أول ساكن ✨ / جديدة بالكامل 🔑 ​خدمات إضافية: متوفر غاز طبيعي 🔥 ​🛋️ التقسيم الداخلي: ​غرف النوم: 2 غرفة نوم 🛏️ ​الريسبشن: صالة استقبال واسعة ومريحة 🛋️ ​المرافق: حمام ومطبخ بتشطيب ممتاز 🚿🍳 ​💰 السعر: ​الإيجار الشهري: 12,000 | ​🏡 شقة مفروشة للإيجار – بجوار الجامعة الألمانية ومنطقة النوادي! ​فرصة مميزة لسكن مريح ومجهز بالكامل بموقع حيوي بقلب التجمع، بالقرب من الخدمات الرئيسية والجامعة. ​الموقع: التجمع – بجوار الجامعة الألمانية (GUC) ومنطقة النوادي (تطل مباشرة على سكن مصر) 📍 ​المساحة: 70 متر مربع ​الدور: الأول بعد الأرضي 🏢 ​المرافق: كاملة العدادات (كهرباء + غاز طبيعي 🔥 + مياه) ​🛋️ تفاصيل الفرش والتجهيزات الداخليّة: ​الغرف: 2 سرير (مقاس 120 سم + مقاس 100 سم) + دولاب ملابس 🛏️ ​الاستقبال والمعيشة: أنتريه صالون + مروحة معلق | 🍃 شقة للإيجار – دور أرضي مرتفع بحري (عائلي 2 - المستثمرين الجنوبية)! فرصة مميزة لسكن مريح وموقع ممتاز بقلب التجمع الخامس، ناصية وبواجهة بحرية بالكامل. الموقع: التجمع الخامس – المستثمرين الجنوبية (منطقة عائلي 2) 📍 المساحة: 185 متر مربع الدور: أرضي مرتفع (ناصية بحري 💨) التشطيب: سوبر لوكس ✨ 📅 الإتاحة والسعر: تاريخ الاستلام: متاحة للسكن ابتداءً من أول سبتمبر 🔑 الإيجار الشهري: 18,000 ج.م 📞 للتواصل والاستعلام: 01011381455]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>240</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="62">
+    <reference_number>f7e50870-b0ae-4925-9a98-259593d74ece</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>500000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="63">
+    <reference_number>d911647e-aa62-45e2-a25b-55b74c1c8584</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>557000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="64">
+    <reference_number>eb7e9591-1503-41eb-9647-f476a9e67063</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>DU</property_type>
+    <price_on_application>0</price_on_application>
+    <price>560000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Duplex in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
     <bedroom>4</bedroom>
-    <bathroom>0</bathroom>
-    <size>190</size>
+    <bathroom>3</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="65">
+    <reference_number>dd844ae7-f67e-4567-9e50-b50fc5726aad</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>724000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="66">
+    <reference_number>38e9d3d9-7432-4679-85c6-04a3d30c46b7</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>838000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="67">
+    <reference_number>b759b38f-5893-4e5d-817c-38ca7d3eea47</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>839000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>1</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="68">
+    <reference_number>11a7ecde-e7ca-4340-8486-fb4e71a5feec</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>841000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="69">
+    <reference_number>a052bf8a-4d88-4bdf-882a-d35cf8082cbf</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>VH</property_type>
+    <price_on_application>0</price_on_application>
+    <price>842000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="70">
+    <reference_number>61fc6922-30ad-4f4c-a5f1-97d2bbd2230a</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>846000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>1</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="71">
+    <reference_number>bd0e55a0-9917-47e8-a005-204c788bd9aa</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>847000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="72">
+    <reference_number>fcd8a90f-329a-4663-a53f-f2ff56a4e941</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>853000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="73">
+    <reference_number>e8da9f26-ff57-464d-a93d-394b72251063</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>856000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="74">
+    <reference_number>TXT|5d50539166bd8f7a0289</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>879366</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[*🚩 للايجار هايبر ماركت. 
+ *موقع مميز جدا التجمع الخامس مباشر
+ على التسعين الجنوبي
+ القطاع الرابع * 
+ مساحه اداري 1700متر 
+دور أول 
+علي التسعين الشمالي
+ليه مدخل خاص 2اسانسير
+ومدخل آخر 
+
+ الايجار 1200جنيه للمتر 
+تشطيب كامل بالتكيفات | price_not_found; availability_not_explicit; low_extraction_confidence | *🚩 للايجار مقر اداري 🚩* 
+ *موقع مميز جدا التجمع الخامس مباشر
+ على التسعين الجنوبي
+ القطاع الرابع * 
+ مساحه اداري 1700متر 
+دور أول 
+علي التسعين الشمالي
+ليه مدخل خاص 2اسانسير
+ومدخل آخر 
+
+ الايجار 1200جنيه للمتر 
+تشطيب كامل بالتكيفات
+امكانيه التقسيم  
+للتواصل 01100879366 | price_not_found; availability_not_explicit; low_extraction_confidence | ◾Compound name : *Mivida  ()* 
+◾Unit type : *Villa for sale or rent 
+▪️Area :*250m BUA / 450m lamd* 
+✨ GROUND FLOOR ✨
+▪️ Reception (3P)
+▪️ Kitchen with appliances 
+▪️Nany or office room
+▪️G. TOILET 
+✨ First Floor ✨
+▪️3 Bedrooms (1master+Dressing)
+▪️2 bathrooms
+▪️ Washing room
+▪️ Fully Furnished 
+▪️Price : 65.000.00 | availability_not_explicit; price evidence: 65.000]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>1</bathroom>
+    <size>1700</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="75">
+    <reference_number>754f17d2-2d94-4b56-a3ec-455a2aeff4b6</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>886000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="76">
+    <reference_number>6e6df3d9-867f-4870-a121-dbf8b18486d8</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>887000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>2</bedroom>
+    <bathroom>1</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="77">
+    <reference_number>5b8cbc3c-0fc9-4ace-8a58-9d1f42271b47</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>895000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="78">
+    <reference_number>7526f357-9f9c-41c1-94ac-6076b94be073</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>896000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="79">
+    <reference_number>6da84dc9-07dd-4699-aa7a-60d4a5ed658e</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>897000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="80">
+    <reference_number>SIG|5th settlement|office|35|||913000|furnished</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>913000</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[📢 مكتب إداري للإيجار – موقع مميز جدًا بالتجمع الخامس
+مكتب إداري للإيجار مباشرة على شارع التسعين
+بجوار محطة المونوريل وFuture University in Egypt – التجمع الخامس – القاهرة الجديدة
+📐 المساحة: 51 متر
+❄️ كامل التكييفات
+🛡️ أمن وحراسة
+🚗 موقف سيارات مغطى
+📦 مخزن
+💰 الإيجار الشهري: 51,500 جنيه
+✨ قابل للتفاوض
+مناسب للشركات والإدارات والأنشطة الراقية بموقع حيوي وسهل الوصول.
+Cod 913 | availability_not_explicit; price evidence: 51,500 | 🏢 للإيجار – مكتب أو عيادة بموقع مميز جدًا ✨  📍 ، أمام مديرية الأمن – منطقة القرنفل، التجمع الخامس.  📐 المساحة: 35 متر. 🎨 التشطيب: تشطيب فاخر (هاي إند). 🛋️ الحالة: مفروش بالكامل وجاهز للاستخدام. ✅ بدون فروق صيانة.  ✔️ مناسب لـ: 🏢 مكتب إداري 🩺 عيادة 💼 مقر شركة أو أي نشاط مهني  🌟 المول يخدم مناطق: 🏘️ دار مصر القرنفل (أكثر من 500 عمارة) 🏡 القرنفل هايتس 🏢 عمارات القرنفل 🌳 الرحاب 🏠 بيت الوطن  💰 الإيجار: 30,000 جنيه شهريًا. Cod 913 <This message was edited> | التجمع الخامس –للبيع  المستثمرين الجنوبية ✨ تفاصيل العقار: 🔹 العمارة بالكامل مرخصة، وجميع الأوراق سليمة وجاهزة. 🔹 مبنية حتى الدور الثالث. 🔹 ترخيص بناء حتى 4 أدوار. 🔹 مساحة الأرض: 270 م². 🔹 مساحة كل شقة: 170 م². 🏢 الوحدات المتاحة للبيع: ✅ شقة بيزمنت. ✅ شقة أرضي. ✅ شقة دور أول. 💰 الأسعار: 💵 شقة البيزمنت: 4.5 مليون جنيه. 💵 شقة الأرضي: 7 مليون جنيه. 💵 شقة الدور الأول: 7 مليون جنيه. ⭐ يوجد إمكانية بيع العمارة بالكامل بعد الرجوع للشريك في العمارة Cod 909]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>35</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="81">
+    <reference_number>SIG|5th settlement|villa||5|||furnished</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>1045543</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[مُتاح فيلا إيجار فاخرة في أرقي مناطق التجمع الخامس الحي الأول المنطقه الثانيه شارع 1🥰
+2 مطبخ 
+5 غرف نوم 
+3 غرف للبواب و الشغاله 
+جراج للسيارات 
+مفروشه و مكيفه بالكامل
+إيجار من 6 شهور ل سنه 
+للتواصل: 01091045543 | price_not_found; availability_not_explicit; low_extraction_confidence]]></description_en>
+    <bedroom>5</bedroom>
+    <bathroom>4</bathroom>
+    <size>0</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="82">
+    <reference_number>SIG|5th settlement|apartment|160|3|||furnished</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>1736924</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[شقة للايجار اول ايجار فى التجمع الخامس كمبوند براديس 160 متر
+3 غرف نوم ، 2 حمام ، 2 بلكونة غير مجروحة ، ريسبش و سفرة. 
+مفروشة بالكامل بالتكييفات و الأجهزة الكهربائية 
+دور 3 فى 2  اسانسير 
+عداد غاز و عداد مياه ، تليفون ارضى و انترنت
+5 دقائق من الجامعه الأمريكية AUC
+5 دقائق من point 90 mall
+7 دقائق من منطقة النوادي | price_not_found; availability_not_explicit; low_extraction_confidence | 🏡 للإيجار | شقة مفروشة فاخرة في اللوتس الشمالية
+
+📍 الموقع:
+اللوتس الشمالية.
+
+✨ تفاصيل الوحدة:
+▪️ المساحة: 180 م²
+▪️ 3 غرف نوم
+▪️ 3 حمامات
+▪️ الدور الخامس
+▪️ يوجد أسانسير
+
+🌟 مميزات الوحدة:
+✅ مفروشة بالكامل.
+✅ مكيفة بالكامل.
+✅ غاز طبيعي.
+✅ تشطيب ممتاز وجاهزة للسكن الفوري.
+
+💰 الإيجار الشهري: 33,000 جنيه
+
+🆔 كود الوحدة: KRM2 | location_unresolved; availability_not_explicit; price evidence: 33,000 | شقو للايجار فى كمبوند La Vie
+
+مفروش بلكامل 
+بلمكيفات 
+135 متر 
+2 غرفة 
+1 حمام 
+الايجار 40 الف | location_unresolved; availability_not_explicit; price evidence: 40 الف]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>2</bathroom>
+    <size>160</size>
+  </property>
+  <property last_update="2026-10-04 05:39:24" id="83">
+    <reference_number>TXT|daa38528ae79964d323d</reference_number>
+    <offering_type>RS</offering_type>
+    <property_type>AP</property_type>
+    <price_on_application>0</price_on_application>
+    <price>3990772</price>
+    <city>Cairo</city>
+    <community>5th Settlement</community>
+    <sub_community>5th Settlement</sub_community>
+    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
+    <description_en><![CDATA[*عموله كامله للبروكرز* *من المالك مباشره* *اول سكن* *اول سكن*  *دوبلكس بايستاون سوديك* 3 غرف 4 حمام غرفه ناني  يومي .. 13k شهري.  250k سنوي.   175k متاح للايجار  من 3 اغسطس | *عموله كامله للبروكرز*
+*من المالك مباشره*
+*اول سكن* *اول سكن* 
+
+*دوبلكس بايستاون سوديك*
+3 غرف 4 حمام 
+غرفه ناني 
+
+يومي .. 13k 
+شهري.  250k 
+سنوي.   175k
+متاح للايجار  من 3 اغسطس | price evidence: 175k | *Eastown* •1 bedroom •1 bathroom •Fully furnished 💥   Rooftop • Year  *55k* •  Day *4000*  Code: b33/64 *Available*]]></description_en>
+    <bedroom>3</bedroom>
+    <bathroom>1</bathroom>
+    <size>0</size>
   </property>
 </list>
