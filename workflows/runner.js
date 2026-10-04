@@ -269,6 +269,7 @@ function server() {
       }
 
       if (p === '/api/workflows' && req.method === 'GET') {
+        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
         const [rows, local] = await Promise.all([
           sb.configured() ? sb.getWorkflows(SLUGS) : Promise.resolve([]),
           Promise.resolve(state.all()),
@@ -295,6 +296,7 @@ function server() {
 
       const logsMatch = p.match(/^\/api\/workflows\/([\w-]+)\/logs$/);
       if (logsMatch && req.method === 'GET') {
+        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
         const n = Math.min(parseInt(url.searchParams.get('n') || '10', 10) || 10, 20);
         return json(res, 200, { ok: true, slug: logsMatch[1], history: state.tail(logsMatch[1], n) });
       }
