@@ -17,6 +17,7 @@ import {
   ChevronRight,
   TrendingUp,
   Percent,
+  Camera,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import { Reveal } from '@/components/site/Reveal';
@@ -168,6 +169,7 @@ export default function CompoundsPage() {
         const egpM = u.egpM ?? (price ? Number((price / 1_000_000).toFixed(1)) : 0);
         const usd = u.usd ?? (price ? Math.round(price / 48.5) : 0);
 
+        const hasPhoto = Boolean(u.hasPhoto && u.img);
         return {
           code: u.code || u.id || `${compoundFlagCode(selected)}-${i + 1}`,
           type: u.propertyType || u.type || '',
@@ -181,6 +183,8 @@ export default function CompoundsPage() {
           usd,
           isDirectOwner: isOwner,
           finishing: u.finishing || '',
+          hasPhoto,
+          img: u.img as string | undefined,
         };
       });
 
@@ -198,6 +202,8 @@ export default function CompoundsPage() {
       usd: u.usd || 0,
       isDirectOwner: false,
       finishing: '',
+      hasPhoto: Boolean(u.img || u.hasPhoto),
+      img: (u.img as string) || undefined,
     }));
 
     return [...live, ...catalog];
@@ -859,11 +865,83 @@ export default function CompoundsPage() {
                                 {u.area > 0 && <span>• {u.area} م²</span>}
                               </div>
 
-                              {/* Price + WhatsApp CTA */}
+                              {/* Photo / Pending Photo State */}
+                              {u.hasPhoto && u.img ? (
+                                <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 8, overflow: 'hidden', marginTop: 2 }}>
+                                  <img
+                                    src={u.img}
+                                    alt={`Unit ${u.code}`}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    loading="lazy"
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      bottom: 5,
+                                      left: 5,
+                                      background: 'rgba(7, 21, 35, 0.8)',
+                                      backdropFilter: 'blur(4px)',
+                                      borderRadius: 4,
+                                      padding: '2px 6px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                      fontSize: 9.5,
+                                      color: '#f6d88b',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    <Camera style={{ width: 10, height: 10 }} />
+                                    <span>{isAr ? 'صور موثقة' : 'Verified Photos'}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '5px 8px',
+                                    borderRadius: 6,
+                                    background: 'rgba(223, 173, 58, 0.08)',
+                                    border: '1px dashed rgba(223, 173, 58, 0.35)',
+                                    fontSize: 10,
+                                    color: '#f6d88b',
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <Camera style={{ width: 11, height: 11, opacity: 0.85 }} />
+                                    <span style={{ fontWeight: 700 }}>
+                                      {isAr ? '📷 بانتظار الصور' : '📷 Pending Photos'}
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={`https://wa.me/201092048333?text=${encodeURIComponent(
+                                      isAr
+                                        ? `مرحبًا سيرّا، أود طلب صور الوحدة #${u.code} في ${selected} فور توفرها.`
+                                        : `Hello Sierra, please send photos for unit #${u.code} in ${selected} once available.`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      fontSize: 9.5,
+                                      fontWeight: 800,
+                                      color: '#dfad3a',
+                                      textDecoration: 'underline',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {isAr ? 'طلب الصور ←' : 'Request Photos →'}
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Price (Strictly in EGP) + WhatsApp CTA */}
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                                 <span style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 800, color: '#dfad3a' }}>
                                   {u.mode === 'rent'
-                                    ? (u.usd ? `$${u.usd.toLocaleString()}/mo` : `EGP ${u.price ? u.price.toLocaleString() : '—'}/mo`)
+                                    ? `EGP ${u.price ? u.price.toLocaleString() : '—'}/mo`
                                     : (u.egpM ? `EGP ${u.egpM}M` : `EGP ${u.price ? u.price.toLocaleString() : '—'}`)}
                                 </span>
 
