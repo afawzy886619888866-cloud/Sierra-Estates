@@ -63,6 +63,44 @@ async function getOwnerLeads() {
 }
 
 async function sendWhatsAppMessage(phoneNumber, text) {
+  // V3.0: the OpenWA gateway (paired Sierra Estates device) is the PRIMARY
+  // channel. WHATSAPP_API_URL points at the gateway (e.g.
+  // http://54.89.162.250:2785) and WHATSAPP_API_TOKEN is the operator key
+  // (owa_k1_...). The Meta Cloud API remains the outage fallback when the
+  // legacy WHATSAPP_PHONE_NUMBER_ID vars are present.
+  try {
+    const digits = String(phoneNumber).replace(/[^0-9]/g, '');
+    const chatId = digits.endsWith('@c.us') ? digits : `${digits}@c.us`;
+
+    const sessionList = await axios.get(`${WA_API_URL}/api/sessions`, {
+      headers: { 'X-API-Key': WA_TOKEN },
+      timeout: 8000,
+    });
+    const sessions = Array.isArray(sessionList.data) ? sessionList.data : [];
+    const target = sessions.find(s => s.name === (process.env.OPENWA_SESSION_ID || 'session-default')) || sessions[0];
+    const sessionId = process.env.OPENWA_SESSION_ID || target?.id || 'session-default';
+
+    const res = await axios.post(
+      `${WA_API_URL}/api/sessions/${sessionId}/messages/send-text`,
+      { chatId, text },
+      {
+        headers: {
+          'X-API-Key': WA_TOKEN,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      }
+    );
+    if (res.status === 200 || res.status === 201) {
+      console.log(`✅ Sent via OpenWA gateway to ${chatId}`);
+      return true;
+    }
+    throw new Error(`gateway status ${res.status}`);
+  } catch (err) {
+    console.warn(`⚠️ Gateway send failed for ${phoneNumber} (${err.message}) — trying Meta fallback`);
+  }
+
+  // Meta Cloud API fallback (legacy WHATSAPP_API_URL=graph.facebook.com shape)
   try {
     const response = await axios.post(
       `${WA_API_URL}/send`,

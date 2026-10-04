@@ -44,6 +44,7 @@ import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } fr
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
+import WhatsAppOutboxView from '@/app/admin/views/WhatsAppOutboxView';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -2341,7 +2342,7 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach'>('scan');
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('scan');
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
@@ -2414,6 +2415,26 @@ function AdminApp() {
             <span>🚀</span>
             <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
           </button>
+
+          <button
+            onClick={() => setSubTab('outbox')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outbox' ? '1px solid #60A5FA' : '1px solid var(--bd)',
+              background: subTab === 'outbox' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outbox' ? '#60A5FA' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📤</span>
+            <span>{isArabic ? 'صندوق الإرسال وحالة البوابة' : 'Outbox & Gateway Status'}</span>
+          </button>
         </div>
 
         {subTab === 'scan' && <WhatsAppChatScanner lang={lang} />}
@@ -2452,6 +2473,7 @@ function AdminApp() {
           </div>
         )}
         {subTab === 'outreach' && <WhatsAppScheduledSender lang={lang} />}
+        {subTab === 'outbox' && <WhatsAppOutboxView lang={lang} />}
       </div>
     );
   }

@@ -7,14 +7,32 @@ import { logger } from '@/lib/logger';
  * lib/server/n8n-client.ts). Sends a WhatsApp message from one of the dedicated
  * sender numbers.
  *
- * Provider priority (ops decision 2026-09: "try Twilio first"):
- *   1. Twilio WhatsApp REST API   — primary, when real credentials are present
- *   2. OpenWA / custom gateway    — WHATSAPP_API_URL (EC2 WhatsApp Web bridge)
- *   3. Graceful simulation        — dev/preview only, never throws
+ * Provider priority (V3.0 master workflow, 2026-10):
+ *   · WHATSAPP_PROVIDER=openwa  → the OpenWA gateway is PRIMARY and Twilio only
+ *     runs as an outage fallback. This is the live production posture: the
+ *     gateway on 54.89.162.250:2785 is the paired Sierra Estates number, and
+ *     the Twilio vars are placeholders.
+ *   · anything else (legacy "try Twilio first"):
+ *     1. Twilio WhatsApp REST API — primary, when real credentials are present
+ *     2. OpenWA / custom gateway  — WHATSAPP_API_URL (EC2 WhatsApp Web bridge)
+ *     3. Graceful simulation      — dev/preview only, never throws
  *
- * Each real provider degrades to the next on failure, so a Twilio outage or a
+ * Each real provider degrades to the next on failure, so a gateway outage or a
  * misconfigured Messaging Service SID can never stall the queue worker.
  */
+
+export type WhatsAppSendProvider = 'openwa' | 'twilio' | 'simulated';
+
+/**
+ * Resolves the configured provider priority from WHATSAPP_PROVIDER.
+ * 'openwa' → gateway-first (production posture). Any other/missing value keeps
+ * the legacy Twilio-first order so existing preview/dev stacks do not flip.
+ */
+export function getConfiguredWhatsAppProvider(): 'openwa' | 'legacy-twilio-first' {
+  return (process.env.WHATSAPP_PROVIDER || '').trim().toLowerCase() === 'openwa'
+    ? 'openwa'
+    : 'legacy-twilio-first';
+}
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
@@ -103,6 +121,107 @@ export function isValidTwilioSignature(
 export interface TwilioSendResult {
   sid: string;
   simulated: boolean;
+  /** Which channel actually delivered — observability for the outbox UI. */
+  provider?: WhatsAppSendProvider;
+}
+
+// ─── OpenWA gateway sender (shared by the direct path AND the queue drain) ──
+
+const openwaUrlConfigured = () =>
+  WHATSAPP_API_URL ||
+  (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.OPENWA_PORT || '3000'}` : undefined);
+
+// OpenWA v0.23.x: the message endpoints require the session UUID, while
+// OPENWA_SESSION_ID is operator-facing and usually a NAME ('session-default').
+// Resolve name -> UUID once per process (cache-busted on 400 so a re-created
+// gateway database picks up the new UUID transparently).
+let openwaSessionUuidCache: string | null = null;
+const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+async function resolveOpenwaSessionId(): Promise<string> {
+  const openwaUrl = openwaUrlConfigured();
+  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
+  const openwaSession = process.env.OPENWA_SESSION_ID || 'session-default';
+  if (isUuid(openwaSession)) return openwaSession;
+  if (openwaSessionUuidCache) return openwaSessionUuidCache;
+  if (!openwaUrl || !openwaKey) return openwaSession;
+  try {
+    const listRes = await fetch(`${openwaUrl.replace(/\/+$/, '')}/api/sessions`, {
+      headers: { 'X-API-Key': openwaKey },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!listRes.ok) return openwaSession;
+    const list = (await listRes.json().catch(() => [])) as Array<{ id?: string; name?: string }>;
+    const arr = Array.isArray(list) ? list : [];
+    const found = arr.find((s) => s.name === openwaSession) || arr[0];
+    if (found?.id) {
+      openwaSessionUuidCache = found.id;
+      return found.id;
+    }
+  } catch {
+    // fall through — the direct send will surface the connection error
+  }
+  return openwaSession;
+}
+
+export interface GatewaySendResult {
+  ok: boolean;
+  sid?: string;
+  error?: string;
+}
+
+/**
+ * Sends one text message through the OpenWA gateway (the paired Sierra
+ * Estates device). Exported so the queue drain can use the exact same
+ * session-resolution and error semantics as the direct fallback path.
+ */
+export async function sendViaOpenwaGateway(toPhone: string, body: string): Promise<GatewaySendResult> {
+  const openwaUrl = openwaUrlConfigured();
+  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
+  if (!openwaUrl || !openwaKey) {
+    return { ok: false, error: 'gateway_not_configured' };
+  }
+
+  try {
+    const rawDigits = toPhone.replace(/\D/g, '');
+    const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
+    const sendBase = openwaUrl.replace(/\/+$/, '');
+    const sendVia = async (sessionId: string) =>
+      fetch(`${sendBase}/api/sessions/${sessionId}/messages/send-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': openwaKey,
+        },
+        body: JSON.stringify({ chatId, text: body }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+    let res = await sendVia(await resolveOpenwaSessionId());
+
+    // Session database may have been rebuilt since the UUID was cached — bust
+    // the cache and re-resolve exactly once before giving up on the gateway.
+    const openwaSession = process.env.OPENWA_SESSION_ID || 'session-default';
+    if (!res.ok && res.status === 400 && !isUuid(openwaSession)) {
+      openwaSessionUuidCache = null;
+      res = await sendVia(await resolveOpenwaSessionId());
+    }
+
+    if (res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { id?: string; messageId?: string };
+      const sid = data.id || data.messageId || `OPENWA_${Date.now()}`;
+      logger.info(`[OpenWA Gateway] Message sent successfully to ${toPhone} (SID: ${sid})`);
+      return { ok: true, sid };
+    }
+
+    const errData = (await res.json().catch(() => ({}))) as { message?: string };
+    const msg = `(${res.status}): ${errData.message || 'client not connected'}`;
+    logger.warn(`[OpenWA Gateway] ${msg}`);
+    return { ok: false, error: msg };
+  } catch (err: any) {
+    logger.debug(`[OpenWA Gateway] Connection failed: ${err?.message}`);
+    return { ok: false, error: err?.message || 'gateway connection failed' };
+  }
 }
 
 function toWhatsApp(addr: string): string {
@@ -122,7 +241,17 @@ export async function sendWhatsApp(
   body: string,
   statusCallback?: string,
 ): Promise<TwilioSendResult> {
-  // 1. Twilio FIRST (ops decision: try Twilio before the OpenWA gateway).
+  // 0. Gateway-FIRST posture (WHATSAPP_PROVIDER=openwa): the paired Sierra
+  //    Estates device is the primary channel; Twilio degrades to fallback.
+  if (getConfiguredWhatsAppProvider() === 'openwa') {
+    const gw = await sendViaOpenwaGateway(toPhone, body);
+    if (gw.ok) {
+      return { sid: gw.sid!, simulated: false, provider: 'openwa' };
+    }
+    logger.warn(`[whatsapp-client] gateway-first send failed (${gw.error}) — trying Twilio fallback`);
+  }
+
+  // 1. Twilio (legacy primary, gateway-mode fallback).
   if (twilioConfigured) {
     try {
       const form = new URLSearchParams();
@@ -154,7 +283,7 @@ export async function sendWhatsApp(
       if (!res.ok || !data.sid) {
         throw new Error(`Twilio send failed (${res.status}): ${data.message || 'unknown error'}`);
       }
-      return { sid: data.sid, simulated: false };
+      return { sid: data.sid, simulated: false, provider: 'twilio' };
     } catch (err: any) {
       // Degrade to the next provider instead of failing the job — the queue
       // worker treats a throw as a permanent job failure.
@@ -162,84 +291,16 @@ export async function sendWhatsApp(
     }
   }
 
-  // 2. Direct custom WhatsApp Gateway (AWS EC2 OpenWA / Custom URL) — env-configured only
-  const openwaUrl = WHATSAPP_API_URL || (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.OPENWA_PORT || '3000'}` : undefined);
-  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
-  const openwaSession = process.env.OPENWA_SESSION_ID || 'session-default';
-
-  if (!openwaUrl || !openwaKey) {
-    logger.warn('[OpenWA Gateway] Not configured (OPENWA_HOST/OPENWA_ADMIN_API_KEY unset) — skipping gateway channel');
-  }
-
-  // OpenWA v0.23.x: the message endpoints require the session UUID, while
-  // OPENWA_SESSION_ID is operator-facing and usually a NAME ('session-default').
-  // Resolve name -> UUID once per process (cache-busted on 400 so a re-created
-  // gateway database picks up the new UUID transparently).
-  let openwaSessionUuidCache: string | null = null;
-  const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-  const resolveOpenwaSessionId = async (): Promise<string> => {
-    if (isUuid(openwaSession)) return openwaSession;
-    if (openwaSessionUuidCache) return openwaSessionUuidCache;
-    const listBase = openwaUrl!.replace(/\/+$/, '');
-    const listRes = await fetch(`${listBase}/api/sessions`, {
-      headers: { 'X-API-Key': openwaKey! },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!listRes.ok) return openwaSession;
-    const list = (await listRes.json().catch(() => [])) as Array<{ id?: string; name?: string }>;
-    const arr = Array.isArray(list) ? list : [];
-    const found = arr.find((s) => s.name === openwaSession) || arr[0];
-    if (found?.id) {
-      openwaSessionUuidCache = found.id;
-      return found.id;
+  // 2. Gateway as FALLBACK in the legacy posture (already tried above when
+  //    provider=openwa) — still honours the degrade chain.
+  if (getConfiguredWhatsAppProvider() !== 'openwa') {
+    const gw = await sendViaOpenwaGateway(toPhone, body);
+    if (gw.ok) {
+      return { sid: gw.sid!, simulated: false, provider: 'openwa' };
     }
-    return openwaSession;
-  };
-
-  try {
-    if (!openwaUrl || !openwaKey) {
-      throw new Error('gateway_not_configured');
-    }
-    const rawDigits = toPhone.replace(/\D/g, '');
-    const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
-    const sendBase = openwaUrl.replace(/\/+$/, '');
-    const sendVia = async (sessionId: string) =>
-      fetch(`${sendBase}/api/sessions/${sessionId}/messages/send-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': openwaKey,
-        },
-        body: JSON.stringify({
-          chatId,
-          text: body,
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-
-    let res = await sendVia(await resolveOpenwaSessionId());
-
-    // Session database may have been rebuilt since the UUID was cached — bust
-    // the cache and re-resolve exactly once before giving up on the gateway.
-    if (!res.ok && res.status === 400 && !isUuid(openwaSession)) {
-      openwaSessionUuidCache = null;
-      res = await sendVia(await resolveOpenwaSessionId());
-    }
-
-    if (res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const sid = data.id || data.messageId || `OPENWA_${Date.now()}`;
-      logger.info(`[OpenWA Gateway] Message sent successfully to ${toPhone} (SID: ${sid})`);
-      return { sid, simulated: false };
-    }
-
-    const errData = await res.json().catch(() => ({}));
-    logger.warn(`[OpenWA Gateway] (${res.status}): ${errData.message || 'client not connected'}`);
-  } catch (err: any) {
-    logger.debug(`[OpenWA Gateway] Connection failed: ${err.message}`);
   }
 
   // 3. Fallback: Graceful Simulation in dev/preview
   logger.warn(`⚠️ [whatsapp-client] Neither Twilio nor custom WHATSAPP_API_URL delivered — simulating send to ${toPhone}`);
-  return { sid: `SIMULATED_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, simulated: true };
+  return { sid: `SIMULATED_${Date.now()}_${Math.floor(Math.random() * 1e6)}`, simulated: true, provider: 'simulated' };
 }
