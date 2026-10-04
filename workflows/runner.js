@@ -272,6 +272,57 @@ function server() {
         });
       }
 
+      // ── Pairing portal: always-fresh QR so the owner can re-link anytime ──
+      if (p === '/pair' && req.method === 'GET') {
+        const html = `<!doctype html><html lang="ar"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Sierra Estates — WhatsApp Link</title>
+<style>body{font-family:system-ui,'Segoe UI',Tahoma,sans-serif;background:#0b141a;color:#e9edef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+.card{background:#111b21;border:1px solid #2a3942;border-radius:16px;padding:28px 24px;max-width:420px;text-align:center}
+h1{font-size:18px;margin:0 0 6px;color:#00a884}p{font-size:13px;line-height:1.7;color:#8696a0;margin:8px 0}
+img{width:270px;height:270px;border-radius:10px;background:#fff;padding:8px}
+.st{font-size:13px;margin-top:10px;padding:6px 10px;border-radius:8px;display:inline-block}
+.ok{background:#0b3d2e;color:#00d95f}.bad{background:#3d2b0b;color:#ffc861}
+b{color:#e9edef}</style></head><body><div class="card">
+<h1>Sierra Estates — ربط الواتساب</h1>
+<p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
+<img id="qr" src="/pair/qr?t=0" alt="QR">
+<p class="st bad" id="st">…</p>
+<p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
+</div><script>
+const img=document.getElementById('qr'), st=document.getElementById('st');
+async function tick(){
+  img.src='/pair/qr?t='+Date.now();
+  try{const h=await fetch('/api/health');const j=await h.json();
+  const s=j.gateway&&j.gateway.status;
+  if(s==='ready'){st.className='st ok';st.textContent='تم الربط بنجاح ✓ — يمكنك إغلاق الصفحة';}
+  else{st.className='st bad';st.textContent='بانتظار الربط… ('+(s||'offline')+')';}
+  }catch(e){st.className='st bad';st.textContent='تعذر الاتصال بالخادم';}
+}
+setInterval(tick,5000);tick();
+</script></body></html>`;
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+        return res.end(html);
+      }
+
+      if (p === '/pair/qr' && req.method === 'GET') {
+        try {
+          const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+          const sid = process.env.OPENWA_SESSION_ID || '';
+          const r = await fetch(`${base}/api/sessions/${sid}/qr`, {
+            headers: { 'X-API-Key': process.env.OPENWA_OPERATOR_KEY || process.env.WHATSAPP_API_TOKEN || '' },
+            signal: AbortSignal.timeout(8000),
+          });
+          const d = await r.json();
+          const b64 = String(d.qrCode || d.qr || '').includes(',') ? String(d.qrCode || d.qr).split(',')[1] : String(d.qrCode || d.qr || '');
+          if (!b64) return json(res, 404, { ok: false, error: 'no qr available' });
+          const img = Buffer.from(b64, 'base64');
+          res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
+          return res.end(img);
+        } catch (e) {
+          return json(res, 502, { ok: false, error: e.message });
+        }
+      }
+
       if (p === '/api/workflows' && req.method === 'GET') {
         if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
         const [rows, local] = await Promise.all([
