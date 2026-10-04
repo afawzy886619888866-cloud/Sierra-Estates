@@ -50,7 +50,7 @@ export default function CompoundsPage() {
 
   // Smart Filter State (mirrors hero SmartFilterBar with compact={true})
   const [smartFilter, setSmartFilter] = useState<SmartFilterValue>({
-    purpose: 'all',
+    purpose: 'sale',
     compound: '',
     rooms: '',
     budget: 'any',
