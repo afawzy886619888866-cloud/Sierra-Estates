@@ -41,6 +41,28 @@ function mapPropertyType(type) {
   return 'AP'; // Apartment
 }
 
+/** The AUG26 WhatsApp ingest glued image entries ("/manus-storage/IMG-20 https://real.jpg",
+ *  "https://a.jpg https://b.jpg"). Extract every clean http(s) URL so the feed
+ *  never carries malformed or relative junk, and URLs trapped inside glued
+ *  entries are not silently lost. Mirrors scripts/export-ad-kit.mjs sanitizeImages. */
+function sanitizeFeedImages(raw) {
+  const entries = Array.isArray(raw) ? raw
+    : typeof raw === 'string' && raw.trim() ? (() => {
+        try { const v = JSON.parse(raw); return Array.isArray(v) ? v : [raw]; }
+        catch { return [raw]; }
+      })()
+    : [];
+  const urls = [];
+  for (const e of entries) {
+    if (typeof e !== 'string') continue;
+    for (const m of e.matchAll(/https?:\/\/[^\s"'<>\\]+/g)) {
+      const u = m[0].replace(/[),.;]+$/, '');
+      if (u && !urls.includes(u)) urls.push(u);
+    }
+  }
+  return urls;
+}
+
 function escapeXml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -93,11 +115,8 @@ async function exportPropertyFinderFeed() {
     const beds = Number(item.bedrooms) || 0;
     const baths = Number(item.bathrooms) || 0;
 
-    let images = [];
-    if (Array.isArray(item.images)) images = item.images;
-    else if (typeof item.images === 'string') {
-      try { images = JSON.parse(item.images); } catch { if (item.images.startsWith('http')) images = [item.images]; }
-    }
+    // sanitized: only clean http(s) URLs survive (glued/relative junk dropped)
+    const images = sanitizeFeedImages(item.images);
 
     xml += `  <property last_update="${new Date(item.updated_at || Date.now()).toISOString().replace('T', ' ').slice(0, 19)}">\n`;
     xml += `    <reference_number>${escapeXml(ref)}</reference_number>\n`;
@@ -134,9 +153,7 @@ async function exportPropertyFinderFeed() {
     if (images.length > 0) {
       xml += `    <photo>\n`;
       for (const imgUrl of images) {
-        if (typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-          xml += `      <url>${escapeXml(imgUrl)}</url>\n`;
-        }
+        xml += `      <url>${escapeXml(imgUrl)}</url>\n`;
       }
       xml += `    </photo>\n`;
     }
