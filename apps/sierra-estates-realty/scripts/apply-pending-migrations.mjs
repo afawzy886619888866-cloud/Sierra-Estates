@@ -153,7 +153,8 @@ try {
   let pending = 0;
   for (const file of files) {
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
-    const checksum = crypto.createHash('sha256').update(sql).digest('hex').slice(0, 16);
+    // EOL-normalize before hashing (see route.ts — ledger must be checkout-EOL independent).
+    const checksum = crypto.createHash('sha256').update(sql.replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
     const seen = applied.get(file);
 
     if (seen === checksum) continue; // applied, unchanged
