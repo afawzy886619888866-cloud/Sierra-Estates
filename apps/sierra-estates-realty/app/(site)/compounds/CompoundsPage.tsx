@@ -170,7 +170,7 @@ export default function CompoundsPage() {
 
         return {
           code: u.code || u.id || `${compoundFlagCode(selected)}-${i + 1}`,
-          type: u.propertyType || u.type || 'Apartment',
+          type: u.propertyType || u.type || '',
           beds: u.beds ?? 0,
           bath: u.bath ?? 0,
           area: u.area ?? 0,
@@ -187,7 +187,7 @@ export default function CompoundsPage() {
     // 2. Fallback catalog data if no live
     const catalog: any[] = live.length ? [] : ((HZDATA as any).unitsFor?.(selected) || []).map((u: any, i: number) => ({
       code: u.code || `${compoundFlagCode(selected)}-${i + 1}`,
-      type: u.type || 'Apartment',
+      type: u.type || '',
       beds: u.beds ?? 0,
       bath: u.bath ?? 0,
       area: u.area ?? 0,
@@ -568,7 +568,7 @@ export default function CompoundsPage() {
                                       {cpdName}
                                     </span>
                                     <span style={{ fontSize: 10, color: 'var(--muted)' }}>
-                                      {match?.z || 'New Cairo'}
+                                      {match?.z || ''}
                                     </span>
                                   </div>
                                   <ChevronRight style={{ width: 13, height: 13, color: '#dfad3a' }} />
@@ -651,7 +651,7 @@ export default function CompoundsPage() {
                               {selected}
                             </h3>
                             <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                              {selectedCompound?.z || 'New Cairo'} · <b>{compoundUnits.length}</b> {isAr ? 'وحدة متوفرة' : 'verified units'}
+                              {selectedCompound?.z ? `${selectedCompound.z} · ` : ''}<b>{compoundUnits.length}</b> {isAr ? 'وحدة متوفرة' : 'verified units'}
                             </span>
                           </div>
                         </div>
