@@ -348,7 +348,7 @@ export default function AdminMiniMap({ isAr = false }: { isAr?: boolean }) {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className={`relative w-full h-[320px] bg-slate-950 overflow-hidden cursor-${isDragging ? 'grabbing' : 'grab'} select-none`}
+        className={`relative w-full h-80 bg-slate-950 overflow-hidden cursor-${isDragging ? 'grabbing' : 'grab'} select-none`}
       >
         <div
           className="absolute inset-0 transition-transform duration-100 ease-out origin-center"

@@ -28,7 +28,6 @@ import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
-  unitConditionKey,
 } from '@/lib/site/smart-search';
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
@@ -1037,10 +1036,10 @@ export default function CompoundsMap({
   // Filter & UI States
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
-  const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
+  const [_selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
-  const [selectedUnitType, setSelectedUnitType] = useState<string>('');
-  const [selectedCondition, setSelectedCondition] = useState<string>('');
+  const [_selectedUnitType, setSelectedUnitType] = useState<string>('');
+  const [_selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
