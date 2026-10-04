@@ -282,14 +282,36 @@ h1{font-size:18px;margin:0 0 6px;color:#00a884}p{font-size:13px;line-height:1.7;
 img{width:270px;height:270px;border-radius:10px;background:#fff;padding:8px}
 .st{font-size:13px;margin-top:10px;padding:6px 10px;border-radius:8px;display:inline-block}
 .ok{background:#0b3d2e;color:#00d95f}.bad{background:#3d2b0b;color:#ffc861}
+.code{font-size:26px;letter-spacing:6px;font-weight:700;color:#00d95f;background:#0b3d2e;border-radius:10px;padding:10px 16px;margin:12px 0;display:none;font-family:monospace}
+.code.show{display:block}
+.btn{background:#00a884;color:#0b141a;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.5}
+.divider{display:flex;align-items:center;gap:10px;color:#8696a0;font-size:12px;margin:14px 0 0}
+.divider:before,.divider:after{content:'';flex:1;height:1px;background:#2a3942}
 b{color:#e9edef}</style></head><body><div class="card">
 <h1>Sierra Estates — ربط الواتساب</h1>
 <p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
 <img id="qr" src="/pair/qr?t=0" alt="QR">
 <p class="st bad" id="st">…</p>
 <p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
+<div class="divider">أو بدون كاميرا</div>
+<button class="btn" id="mint" onclick="mintCode()">🔗 إنشاء رمز ربط برقم الهاتف</button>
+<div class="code" id="code"></div>
+<p id="codehint" style="display:none">1) واتساب ← الأجهزة المرتبطة ← ربط جهاز<br>2) اختر «الربط برقم الهاتف بدلاً من ذلك»<br>3) أدخل الرمز أعلاه (صالح لعدة دقائق فقط)</p>
 </div><script>
 const img=document.getElementById('qr'), st=document.getElementById('st');
+async function mintCode(){
+  const b=document.getElementById('mint'), c=document.getElementById('code'), h=document.getElementById('codehint');
+  b.disabled=true; b.textContent='… جاري إنشاء الرمز';
+  c.className='code show'; c.textContent='…';
+  try{
+    const r=await fetch('/pair/code',{method:'POST'}); const j=await r.json();
+    if(j&&j.ok&&j.code){ c.textContent=String(j.code).replace(/[^A-Z0-9]/gi,'').toUpperCase(); h.style.display='block'; }
+    else{ c.className='code show'; c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
+      c.textContent='تعذر إنشاء رمز الآن — واتساب يفرض حظراً مؤقتاً على الرموز لهذا الرقم. استخدم مسح QR أعلاه، أو حاول بعد ٣٠ دقيقة.'; h.style.display='none'; }
+  }catch(e){ c.className='code show'; c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit'; c.textContent='خطأ في الاتصال — حاول مرة أخرى'; h.style.display='none'; }
+  b.disabled=false; b.textContent='🔗 إنشاء رمز ربط برقم الهاتف';
+}
 async function tick(){
   img.src='/pair/qr?t='+Date.now();
   try{const h=await fetch('/api/health');const j=await h.json();
@@ -302,6 +324,31 @@ setInterval(tick,5000);tick();
 </script></body></html>`;
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
         return res.end(html);
+      }
+
+      // On-demand pairing code (phone-number link, no camera needed). Safe to expose:
+      // a minted code is useless unless typed by the phone owner on the business number.
+      if (p === '/pair/code' && req.method === 'POST') {
+        try {
+          const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
+          const sid = process.env.OPENWA_SESSION_ID || '';
+          const phone = (process.env.WHATSAPP_DEFAULT_PHONE || '201061399688').replace(/\D/g, '');
+          const r = await fetch(`${base}/api/sessions/${sid}/pairing-code`, {
+            method: 'POST',
+            headers: {
+              'X-API-Key': process.env.OPENWA_OPERATOR_KEY || process.env.WHATSAPP_API_TOKEN || '',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phoneNumber: phone }),
+            signal: AbortSignal.timeout(20000),
+          });
+          const d = await r.json().catch(() => ({}));
+          const code = String(d.code || d.pairingCode || d.pairing_code || '').trim();
+          if (!r.ok || !code) return json(res, 502, { ok: false, error: (d && d.message) || `gateway ${r.status}` });
+          return json(res, 200, { ok: true, code });
+        } catch (e) {
+          return json(res, 502, { ok: false, error: e.message });
+        }
       }
 
       if (p === '/pair/qr' && req.method === 'GET') {
