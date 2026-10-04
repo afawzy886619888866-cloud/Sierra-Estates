@@ -35,6 +35,7 @@ import {
   InventoryCommandView,
   InventoryOsView,
   WorkflowStudioView,
+  WorkflowOpsView,
   MemoryBrainView,
   CairoPlazaAdminView,
   ViewingsView,
@@ -2490,6 +2491,7 @@ function AdminApp() {
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
       case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
+      case 'workflow_ops':return <WorkflowOpsView lang={langKey}/>;
       case 'whatsapp_outreach':
       case 'whatsapp_sync':
       case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;
