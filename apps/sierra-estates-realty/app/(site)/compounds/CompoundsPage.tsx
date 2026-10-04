@@ -260,7 +260,7 @@ export default function CompoundsPage() {
     setQuickFacet('all');
     setUnitSubTab('all');
     setSmartFilter({
-      purpose: 'all',
+      purpose: 'sale',
       compound: '',
       rooms: '',
       budget: 'any',
