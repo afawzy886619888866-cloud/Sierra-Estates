@@ -83,7 +83,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         .select(
           "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
         )
-        .in("status", ["active", "available"])
+        .eq("status", "active")
         // PUBLISH GATE (Phase D): only verified rows may reach the public map.
         .eq("publish_status", "PUBLISHABLE")
         .order("updated_at", { ascending: false })
