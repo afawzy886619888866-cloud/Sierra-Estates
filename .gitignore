@@ -189,3 +189,4 @@ tools/claude-proxy/
 # copies with root content at every build, so no drift is possible.
 # IF YOU ADD A MIGRATION: commit it in BOTH supabase/migrations/ (canonical)
 # AND apps/sierra-estates-realty/supabase/migrations/ (git add -f).
+workflows/.state/
