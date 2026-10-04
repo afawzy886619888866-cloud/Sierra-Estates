@@ -143,8 +143,8 @@ export async function drainWhatsAppQueue(): Promise<WhatsAppDrainSummary> {
       countSentSince(hourAgoIso),
       countSentSince(dayStartCairoIso),
     ]);
-    const hourlyCap = (config as Record<string, unknown>).gatewayHourlyCap as number | undefined ?? GATEWAY_HOURLY_CAP_DEFAULT;
-    const dailyCap = (config as Record<string, unknown>).gatewayDailyCap as number | undefined ?? GATEWAY_DAILY_CAP_DEFAULT;
+    const hourlyCap = (config as unknown as Record<string, unknown>).gatewayHourlyCap as number | undefined ?? GATEWAY_HOURLY_CAP_DEFAULT;
+    const dailyCap = (config as unknown as Record<string, unknown>).gatewayDailyCap as number | undefined ?? GATEWAY_DAILY_CAP_DEFAULT;
 
     if (sentLastHour >= hourlyCap || sentToday >= dailyCap) {
       logger.warn(`[whatsapp-drain] gateway quota reached (hour ${sentLastHour}/${hourlyCap}, day ${sentToday}/${dailyCap})`);

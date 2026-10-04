@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
-import { listRecords, updateRecord } from '@sierra-estates/db';
+import { listRecords, updateRecord, type WhereClause } from '@sierra-estates/db';
 import { drainWhatsAppQueue } from '@/lib/server/whatsapp-drain';
 import { logger } from '@/lib/logger';
 
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     const purposeFilter = url.searchParams.get('purpose') || undefined;
     const limit = Math.min(Number(url.searchParams.get('limit') || 100), 200);
 
-    const where: Array<{ column: string; value: unknown; op?: string }> = [];
+    const where: WhereClause[] = [];
     if (statusFilter && statusFilter !== 'all') where.push({ column: 'status', value: statusFilter });
     if (purposeFilter && purposeFilter !== 'all') where.push({ column: 'purpose', value: purposeFilter });
 
