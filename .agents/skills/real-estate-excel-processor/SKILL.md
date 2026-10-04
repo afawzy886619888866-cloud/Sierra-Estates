@@ -16,15 +16,22 @@ This skill defines the canonical rules, architectural standards, and data proces
 
 ## 1. Core Architectural Tenets & Invariant Rules
 
-### Rule 1: Advertiser Classification (The Owner Clue Rule)
-- **Default Classification is `Broker`**: Any unit listing where the advertiser type cannot be proven with an explicit clue is strictly classified as a **`Broker`**.
-- **`Direct Owner` Qualification Requires Explicit Evidence**: A listing is classified as **`Direct Owner`** *only* if at least one of the following clues is present:
-  1. **Source / Advertiser Column**: Contains `owner`, `مالك`, `عميل`, `direct`, `مباشر`, `صاحب الشأن`, `صاحب العقار`, `private`.
-  2. **Sheet Name**: Contains `owner`, `مالك`, `ملاك`, `عملاء` without broker words (`broker`, `بروكر`, `سمسار`).
-  3. **File Name**: Contains `owner`, `مالك`, `ملاك` without broker words.
-  4. **Listing Description / Notes**: Contains explicit phrases such as `من المالك`, `المالك مباشرة`, `صاحب الشقة`, `صاحب الفيلا`, `direct from owner`, `بدون عمولة`, `بدون وسيط`, `بدون سمسار`, `no commission`.
-  5. **Contact Person**: Contains `المالك`, `owner`, or `صاحب`.
-- If an entity cluster merges multiple duplicate records, if **any** merged record contains an explicit Direct Owner clue, the consolidated listing resolves to **`Direct Owner`**; otherwise, it remains **`Broker`**.
+### Rule 1: Advertiser Classification (Explicit Owner Evidence Required — Never Group Name Alone)
+- **Group Name / Sheet Name / File Name Alone Is Not Evidence**: Merely originating from an "August Owners" group, an "Owners" spreadsheet, or a group with "owner" in the title does **NOT** qualify a listing as Direct Owner.
+- **`Direct Owner` Qualification Requires Explicit Internal Clues**: A listing is placed in the **`Owners`** sheet *only* if explicit evidence is present within the listing's own data fields:
+  1. **Advertiser / Role Column**: Explicitly contains `owner`, `مالك`, `صاحب العقار`, `صاحب الشأن`, `direct owner` (and not broker, agency, or group intake).
+  2. **Contact Person**: Contains `المالك`, `owner`, or `صاحب` (and not broker/marketing).
+  3. **Listing Description / Notes**: Contains explicit phrases such as `من المالك`, `من المالك مباشرة`, `أنا المالك`, `المالك مباشر`, `المالك نفسه`, `صاحب الشقة`, `صاحب الوحدة`, `صاحب العقار`, `مالك الوحدة`, `مالك الشقة`, `direct from owner`, `from the owner`, `owner directly`, `by owner`, `fsbo`, `frbo`.
+- **Default & Fallback is `Broker`**: Any listing removed from the Owners sheet because it lacks explicit owner evidence is moved directly to the **`Brokers`** sheet and deduplicated by `(phone_last7, price)`.
+
+---
+
+### Rule 1.1: Client & Buyer Requests Isolation ("REQUESTED" / "مطلوب" Are Not Real Listings)
+- **Buyer & Tenant Requests Are Not Inventory**: Messages containing request terminology represent clients searching for properties to buy or rent, **NOT** available property listings.
+- **Request Detection Patterns**:
+  - English: `request`, `requested`, `urgent request`, `looking for`, `buyer request`, `client request`.
+  - Arabic: `مطلوب للشراء`, `مطلوب للايجار`, `مطلوب للإيجار`, `مطلوب فورا`, `مطلوب كود`, `طلب عميل`, `مطلوب شقة`, `مطلوب فيلا`, `مطلوب دوبلكس`, `مطلوب تاون`, `مطلوب توين`, `مطلوب ستوديو`, `مطلوب ارض`, `مطلوب مقر`, `مطلوب صيدلية`, `مطلوب محل`, `مطلوب من المالك`, `محتاج شقة`, `محتاج فيلا`, or text beginning with `مطلوب` not followed by a price/currency.
+- **Dedicated Requests Sheet**: All identified requests must be isolated into a dedicated **`Client_Requests`** sheet in both Rent and Resale master workbooks. They must **never** be mixed into `Owners` or `Brokers` available inventory sheets.
 
 ---
 

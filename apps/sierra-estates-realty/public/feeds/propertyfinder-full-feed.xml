@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<list date="2026-10-04 06:10:16" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version='1.0' encoding='utf-8'?>
+<list date="2026-10-04 06:10:16">
   <property last_update="2026-10-04 06:10:16" id="1">
     <reference_number>SE-00430</reference_number>
     <offering_type>RR</offering_type>
@@ -10,8 +10,8 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in Al Rehab - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -29,8 +29,8 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:25; price evidence=35,000 جنيه شهرياً; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Apartment in Al Rehab - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:25; price evidence=35,000 جنيه شهرياً; currency=EGP; media files in source message=0.</description_en>
     <bedroom>0</bedroom>
     <bathroom>1</bathroom>
     <size>50</size>
@@ -50,8 +50,8 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[متاح شقهومدينتي | متاحه مايو | متاح 2شقه سوديك ومتاح شقه ليك فيو]]></description_en>
+    <title_en>Apartment in Al Rehab - Sierra Estates</title_en>
+    <description_en>متاح شقهومدينتي | متاحه مايو | متاح 2شقه سوديك ومتاح شقه ليك فيو</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>131</size>
@@ -73,8 +73,8 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Apartment in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in Al Rehab - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -92,8 +92,8 @@
     <city>Cairo</city>
     <community>Eastown</community>
     <sub_community>Eastown</sub_community>
-    <title_en><![CDATA[Townhouse in Eastown - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:36; price evidence=7,500 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Townhouse in Eastown - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:36; price evidence=7,500 جنيه; currency=EGP; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>3</bathroom>
     <size>0</size>
@@ -111,8 +111,8 @@
     <city>Cairo</city>
     <community>Eastown</community>
     <sub_community>Eastown</sub_community>
-    <title_en><![CDATA[Townhouse in Eastown - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:36; price evidence=7,500 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Townhouse in Eastown - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:36; price evidence=7,500 جنيه; currency=EGP; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>3</bathroom>
     <size>0</size>
@@ -130,8 +130,8 @@
     <city>Cairo</city>
     <community>Eastown</community>
     <sub_community>Eastown</sub_community>
-    <title_en><![CDATA[Townhouse in Eastown - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Townhouse in Eastown - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>3</bathroom>
     <size>0</size>
@@ -149,8 +149,8 @@
     <city>Cairo</city>
     <community>Mivida</community>
     <sub_community>Mivida</sub_community>
-    <title_en><![CDATA[Apartment in Mivida - Sierra Estates]]></title_en>
-    <description_en><![CDATA[availability_not_explicit; price evidence: 85,000]]></description_en>
+    <title_en>Apartment in Mivida - Sierra Estates</title_en>
+    <description_en>availability_not_explicit; price evidence: 85,000</description_en>
     <bedroom>3</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -168,8 +168,8 @@
     <city>Cairo</city>
     <community>Mountain View</community>
     <sub_community>Mountain View</sub_community>
-    <title_en><![CDATA[Apartment in Mountain View - Sierra Estates]]></title_en>
-    <description_en><![CDATA[availability_not_explicit; price evidence: 35 الف]]></description_en>
+    <title_en>Apartment in Mountain View - Sierra Estates</title_en>
+    <description_en>availability_not_explicit; price evidence: 35 الف</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -187,8 +187,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Duplex in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:38; price evidence=4,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Duplex in New Cairo - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:38; price evidence=4,000 جنيه; currency=EGP; media files in source message=0.</description_en>
     <bedroom>2</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -206,8 +206,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Duplex in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:38; price evidence=4,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Duplex in New Cairo - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:38; price evidence=4,000 جنيه; currency=EGP; media files in source message=0.</description_en>
     <bedroom>2</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -225,8 +225,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Duplex in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Duplex in New Cairo - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>2</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -244,8 +244,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Apartment in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:05; price evidence=45,000 جنيه; currency=EGP; media files in source message=0.]]></description_en>
+    <title_en>Apartment in New Cairo - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-15T14:05; price evidence=45,000 جنيه; currency=EGP; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>3</bathroom>
     <size>230</size>
@@ -265,8 +265,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[روف]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>روف</description_en>
     <bedroom>2</bedroom>
     <bathroom>2</bathroom>
     <size>135</size>
@@ -281,8 +281,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[روف]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>روف</description_en>
     <bedroom>2</bedroom>
     <bathroom>2</bathroom>
     <size>135</size>
@@ -297,8 +297,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[على شارع البستان - 10 فدان - نسبة البناء 33% | تكرر اعلان سابق - 10 فدان | 10 فدان - على شارع البستان - 4 نواصى]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>على شارع البستان - 10 فدان - نسبة البناء 33% | تكرر اعلان سابق - 10 فدان | 10 فدان - على شارع البستان - 4 نواصى</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>42186</size>
@@ -313,8 +313,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[...]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>...</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -329,8 +329,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[...]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>...</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -345,8 +345,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[...]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>...</description_en>
     <bedroom>3</bedroom>
     <bathroom>0</bathroom>
     <size>222</size>
@@ -361,27 +361,11 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[...]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>...</description_en>
     <bedroom>3</bedroom>
     <bathroom>0</bathroom>
     <size>222</size>
-  </property>
-  <property last_update="2026-10-04 06:10:16" id="21">
-    <reference_number>SE-PF-21</reference_number>
-    <offering_type>RR</offering_type>
-    <property_type>AP</property_type>
-    <price_on_application>0</price_on_application>
-    <price>130000</price>
-    <rental_period>M</rental_period>
-    <city>Cairo</city>
-    <community>...</community>
-    <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مطلوب فيلا ايجار مفروشه مده سنه بادجت ١٢٠ او ١٣٠ الف]]></description_en>
-    <bedroom>0</bedroom>
-    <bathroom>0</bathroom>
-    <size>0</size>
   </property>
   <property last_update="2026-10-04 06:10:16" id="22">
     <reference_number>SE-PF-22</reference_number>
@@ -393,8 +377,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[جاردن 400م]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>جاردن 400م</description_en>
     <bedroom>7</bedroom>
     <bathroom>7</bathroom>
     <size>600</size>
@@ -409,8 +393,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[جاردن 400م]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>جاردن 400م</description_en>
     <bedroom>7</bedroom>
     <bathroom>7</bathroom>
     <size>600</size>
@@ -425,8 +409,8 @@
     <city>Cairo</city>
     <community>100000.0</community>
     <sub_community>100000.0</sub_community>
-    <title_en><![CDATA[Apartment in 100000.0 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 100000.0 - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -441,8 +425,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -457,8 +441,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -473,8 +457,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -489,8 +473,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -505,8 +489,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -521,8 +505,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -537,8 +521,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -553,8 +537,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -569,8 +553,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -585,8 +569,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -601,8 +585,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -617,8 +601,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -633,8 +617,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -649,8 +633,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -665,8 +649,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -681,8 +665,8 @@
     <city>Cairo</city>
     <community>140m</community>
     <sub_community>140m</sub_community>
-    <title_en><![CDATA[Apartment in 140m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 140m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -697,8 +681,8 @@
     <city>Cairo</city>
     <community>144 m</community>
     <sub_community>144 m</sub_community>
-    <title_en><![CDATA[Apartment in 144 m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 144 m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -713,8 +697,8 @@
     <city>Cairo</city>
     <community>144 m</community>
     <sub_community>144 m</sub_community>
-    <title_en><![CDATA[Apartment in 144 m - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 144 m - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -729,8 +713,8 @@
     <city>Cairo</city>
     <community>1st Settlement</community>
     <sub_community>1st Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 1st Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 1st Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>2</bedroom>
     <bathroom>2</bathroom>
     <size>175000000</size>
@@ -744,8 +728,8 @@
     <city>Cairo</city>
     <community>Al Rehab</community>
     <sub_community>Al Rehab</sub_community>
-    <title_en><![CDATA[Villa in Al Rehab - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
+    <title_en>Villa in Al Rehab - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
@@ -762,8 +746,8 @@
     <city>Cairo</city>
     <community>Madinaty</community>
     <sub_community>Madinaty</sub_community>
-    <title_en><![CDATA[Apartment in Madinaty - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:18; price evidence=الشهر 900 دولار; currency=USD; media files in source message=0.]]></description_en>
+    <title_en>Apartment in Madinaty - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:18; price evidence=الشهر 900 دولار; currency=USD; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -781,8 +765,8 @@
     <city>Cairo</city>
     <community>Madinaty</community>
     <sub_community>Madinaty</sub_community>
-    <title_en><![CDATA[Apartment in Madinaty - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:22; price evidence=; currency=unknown; media files in source message=1.]]></description_en>
+    <title_en>Apartment in Madinaty - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T16:22; price evidence=; currency=unknown; media files in source message=1.</description_en>
     <bedroom>2</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -800,8 +784,8 @@
     <city>Cairo</city>
     <community>Madinaty</community>
     <sub_community>Madinaty</sub_community>
-    <title_en><![CDATA[Apartment in Madinaty - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in Madinaty - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -819,8 +803,8 @@
     <city>Cairo</city>
     <community>Mivida</community>
     <sub_community>Mivida</sub_community>
-    <title_en><![CDATA[Apartment in Mivida - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <title_en>Apartment in Mivida - Sierra Estates</title_en>
+    <description_en>Automated Vitest Verification Unit</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>170</size>
@@ -837,8 +821,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Apartment in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Automated Vitest Verification Unit]]></description_en>
+    <title_en>Apartment in New Cairo - Sierra Estates</title_en>
+    <description_en>Automated Vitest Verification Unit</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>170</size>
@@ -855,8 +839,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Villa in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.]]></description_en>
+    <title_en>Villa in New Cairo - Sierra Estates</title_en>
+    <description_en>Imported from WhatsAppChatwithOwnersAugust2026.zip; timestamp=2026-08-12T17:24; price evidence=; currency=unknown; media files in source message=0.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
@@ -873,8 +857,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Chalet in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Chalet in New Cairo - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -892,8 +876,8 @@
     <city>Cairo</city>
     <community>New Cairo</community>
     <sub_community>New Cairo</sub_community>
-    <title_en><![CDATA[Villa in New Cairo - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in New Cairo - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>122</size>
@@ -910,8 +894,8 @@
     <city>Cairo</city>
     <community>Villette Sodic</community>
     <sub_community>Villette Sodic</sub_community>
-    <title_en><![CDATA[Twin House in Villette Sodic - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Live API test unit in Villette]]></description_en>
+    <title_en>Twin House in Villette Sodic - Sierra Estates</title_en>
+    <description_en>Live API test unit in Villette</description_en>
     <bedroom>4</bedroom>
     <bathroom>4</bathroom>
     <size>310</size>
@@ -928,8 +912,8 @@
     <city>Cairo</city>
     <community>-</community>
     <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون | تكرر اعلان سابق - ألترا سوبر لوكس | تكرر اعلان سابق - سعر اقل من 2 مليون]]></description_en>
+    <title_en>Apartment in - - Sierra Estates</title_en>
+    <description_en>تشطيب ألترا سوبر لوكس - سعر اقل من ٢ مليون | تكرر اعلان سابق - ألترا سوبر لوكس | تكرر اعلان سابق - سعر اقل من 2 مليون</description_en>
     <bedroom>2</bedroom>
     <bathroom>1</bathroom>
     <size>85</size>
@@ -943,8 +927,8 @@
     <city>Cairo</city>
     <community>-</community>
     <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شاليه برووف - الدور الاول - مفروش ومجهز بالكامل]]></description_en>
+    <title_en>Apartment in - - Sierra Estates</title_en>
+    <description_en>شاليه برووف - الدور الاول - مفروش ومجهز بالكامل</description_en>
     <bedroom>3</bedroom>
     <bathroom>4</bathroom>
     <size>215</size>
@@ -958,8 +942,8 @@
     <city>Cairo</city>
     <community>-</community>
     <sub_community>-</sub_community>
-    <title_en><![CDATA[Apartment in - - Sierra Estates]]></title_en>
-    <description_en><![CDATA[فيلا في الساحل الشمالي - تشطيب عادل ايوب - تطل مباشره علي اللاجون]]></description_en>
+    <title_en>Apartment in - - Sierra Estates</title_en>
+    <description_en>فيلا في الساحل الشمالي - تشطيب عادل ايوب - تطل مباشره علي اللاجون</description_en>
     <bedroom>4</bedroom>
     <bathroom>0</bathroom>
     <size>190</size>
@@ -973,8 +957,8 @@
     <city>Cairo</city>
     <community>...</community>
     <sub_community>...</sub_community>
-    <title_en><![CDATA[Apartment in ... - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شقة للبيع - أرضي مرتفع وجاردن 200م - تشطيب ألترا سوبر لوكس | الحي 3 مجاورة 3 - دور أرضي مرتفع - مكيفة | الحي 5 مجاورة 2 - تاني بلكونة - البيع يشمل المطبخ]]></description_en>
+    <title_en>Apartment in ... - Sierra Estates</title_en>
+    <description_en>شقة للبيع - أرضي مرتفع وجاردن 200م - تشطيب ألترا سوبر لوكس | الحي 3 مجاورة 3 - دور أرضي مرتفع - مكيفة | الحي 5 مجاورة 2 - تاني بلكونة - البيع يشمل المطبخ</description_en>
     <bedroom>2</bedroom>
     <bathroom>2</bathroom>
     <size>180</size>
@@ -988,8 +972,8 @@
     <city>Cairo</city>
     <community>1200 / 1400 /200 $</community>
     <sub_community>1200 / 1400 /200 $</sub_community>
-    <title_en><![CDATA[Apartment in 1200 / 1400 /200 $ - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 1200 / 1400 /200 $ - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -1003,8 +987,8 @@
     <city>Cairo</city>
     <community>1st Settlement</community>
     <sub_community>1st Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 1st Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[شقة تشطيب عالي - إطلالة رائعة]]></description_en>
+    <title_en>Apartment in 1st Settlement - Sierra Estates</title_en>
+    <description_en>شقة تشطيب عالي - إطلالة رائعة</description_en>
     <bedroom>3</bedroom>
     <bathroom>3</bathroom>
     <size>268</size>
@@ -1018,8 +1002,8 @@
     <city>Cairo</city>
     <community>2025-10-06 00:00:00</community>
     <sub_community>2025-10-06 00:00:00</sub_community>
-    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[نموذج i مودرن - فيو جاردن - متبقي 6.5 مليون أقساط]]></description_en>
+    <title_en>Apartment in 2025-10-06 00:00:00 - Sierra Estates</title_en>
+    <description_en>نموذج i مودرن - فيو جاردن - متبقي 6.5 مليون أقساط</description_en>
     <bedroom>4</bedroom>
     <bathroom>3</bathroom>
     <size>231</size>
@@ -1033,8 +1017,8 @@
     <city>Cairo</city>
     <community>2025-10-06 00:00:00</community>
     <sub_community>2025-10-06 00:00:00</sub_community>
-    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[نموذج j مودرن - بدون تشطيب - ناصية مميزة]]></description_en>
+    <title_en>Apartment in 2025-10-06 00:00:00 - Sierra Estates</title_en>
+    <description_en>نموذج j مودرن - بدون تشطيب - ناصية مميزة</description_en>
     <bedroom>4</bedroom>
     <bathroom>3</bathroom>
     <size>265</size>
@@ -1048,8 +1032,8 @@
     <city>Cairo</city>
     <community>2025-10-06 00:00:00</community>
     <sub_community>2025-10-06 00:00:00</sub_community>
-    <title_en><![CDATA[Apartment in 2025-10-06 00:00:00 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[نموذج j مودرن - بدون تشطيب - ناصية مميزة]]></description_en>
+    <title_en>Apartment in 2025-10-06 00:00:00 - Sierra Estates</title_en>
+    <description_en>نموذج j مودرن - بدون تشطيب - ناصية مميزة</description_en>
     <bedroom>4</bedroom>
     <bathroom>3</bathroom>
     <size>265</size>
@@ -1063,8 +1047,8 @@
     <city>Cairo</city>
     <community>2026-04-14 00:00</community>
     <sub_community>2026-04-14 00:00</sub_community>
-    <title_en><![CDATA[Apartment in 2026-04-14 00:00 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 2026-04-14 00:00 - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1078,8 +1062,8 @@
     <city>Cairo</city>
     <community>30000.0</community>
     <sub_community>30000.0</sub_community>
-    <title_en><![CDATA[Apartment in 30000.0 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 30000.0 - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -1093,8 +1077,8 @@
     <city>Cairo</city>
     <community>500 per meter negotiable</community>
     <sub_community>500 per meter negotiable</sub_community>
-    <title_en><![CDATA[Apartment in 500 per meter negotiable - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 500 per meter negotiable - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -1108,8 +1092,8 @@
     <city>Cairo</city>
     <community>50000.0</community>
     <sub_community>50000.0</sub_community>
-    <title_en><![CDATA[Apartment in 50000.0 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 50000.0 - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -1123,8 +1107,8 @@
     <city>Cairo</city>
     <community>50001.0</community>
     <sub_community>50001.0</sub_community>
-    <title_en><![CDATA[Apartment in 50001.0 - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 50001.0 - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>0</bedroom>
     <bathroom>0</bathroom>
     <size>0</size>
@@ -1138,8 +1122,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[مول تجاري للإيجار بمركز خدمات الحي الأول بالتجمع الخامس
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>مول تجاري للإيجار بمركز خدمات الحي الأول بالتجمع الخامس
 - المول في موقع متميز وحيوي جداً أمام مستشفى السلام الدولي وبجوار مول راية وخلف محكمة التجمع
 - المول على واجهتين المول فيه صيدلية فقط متاجرة وباقي المول للايجار
 - مساحة الجزء الارضي خلف الصيدلية 120م²
@@ -1152,7 +1136,7 @@
 - سعر ايجار المول بدون البيزمنت دورين ونص بمساحة 588م²  450,000 جنيه
 - سعر إيجار البيزمنت فقط بمساحة 450م² 200,000 جنيه
 - لو المول بالكامل بمساحة 1084م² 650,000
--1097975432 | Parsed from WhatsApp export; price evidence: 450,000]]></description_en>
+-1097975432 | Parsed from WhatsApp export; price evidence: 450,000</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>588</size>
@@ -1166,8 +1150,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1181,8 +1165,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[✨ فرصة استثنائية! شقتين بفيلا راقية (سكني أو إداري) في قلب النرجس فيلات – التجمع الخامس! 🍃🏢
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>✨ فرصة استثنائية! شقتين بفيلا راقية (سكني أو إداري) في قلب النرجس فيلات – التجمع الخامس! 🍃🏢
 ​موقع لا يُعوض على بُعد دقيقة واحدة فقط من شارع التسعين الجنوبي؛ شقتين بتشطيب سوبر لوكس وإمكانيات حديثة (أرضي مرتفع والأول)، أمام أهم المراكز الخدمية والتجارية مباشرة:
 ​📍 الموقع الجغرافي والتميز الاستراتيجي:
 ​الموقع: التجمع الخامس – منطقة فيلات النرجس (موقع حيوي وراقي جداً).
@@ -1208,7 +1192,7 @@
 ​🚫 تنويه مهم بخصوص الأنشطة الإدارية المقبولة:
 حرصاً على الهدوء والطابع الراقِ للفيلا، يُعتذر تماماً عن استقبال الأنشطة التالية: (العلاج الطبيعي، التسويق أو التطوير العقاري، الأتيليه، الشوروم، العيادات، الحضانات، أو البيوتي سنتر). الأنشطة المسموح بها هي المكاتب الإدارية الهادئة والشركات الفندقية/المقاولات/البرمجة فقط.
 ​📞 للحجز والاستعلام وتنسيق موعد للمعاينة الفورية، تواصل معنا مباشرة عبر الواتساب أو اتصال هاتفي على:
-📱 01011381455 | price evidence: 500 | Whatappgroups.zip::WhatsApp Chat with داتا شقق التجمع  مدينتى الرحاب .zip: Availability: Available <> Needs confirmation]]></description_en>
+📱 01011381455 | price evidence: 500 | Whatappgroups.zip::WhatsApp Chat with داتا شقق التجمع  مدينتى الرحاب .zip: Availability: Available &lt;&gt; Needs confirmation</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>240</size>
@@ -1222,8 +1206,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1237,8 +1221,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1252,8 +1236,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Duplex in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Duplex in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>4</bedroom>
     <bathroom>3</bathroom>
     <size>0</size>
@@ -1267,8 +1251,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[🏡 فيلا للإيجار بالكامل
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>🏡 فيلا للإيجار بالكامل
 الدور شقتين – الحي الثالث – التجمع الخامس
 
 ✨ فرصة مميزة للشركات، المقرات الإدارية، أو السكن الراقي.
@@ -1292,7 +1276,7 @@
   - 3 غرف نوم.
   - 2 حمام.
 
-✅ مناسبة للشركات، المراكز الطبية، المكاتب الإدارية، أو السكن العائلي. | availability_not_explicit; price evidence: 575]]></description_en>
+✅ مناسبة للشركات، المراكز الطبية، المكاتب الإدارية، أو السكن العائلي. | availability_not_explicit; price evidence: 575</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>575</size>
@@ -1306,12 +1290,12 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[*🚩 للايجار مقر اداري 🚩* 
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>*🚩 للايجار مقر اداري 🚩* 
  *موقع مميز جدا التجمع الخامس مباشر على التسعين الجنوبي القطاع الثالث* 
  مساحه اداري 1200متر على دورين كل دور 600 متر سعر متر الايجار 1000 جنيه للمتر نص تشطيب. 
 امكانيه ايجار دور واحد 600م 
-للتواصل وواتس 01555526667 | availability_not_explicit; price evidence: 600]]></description_en>
+للتواصل وواتس 01555526667 | availability_not_explicit; price evidence: 600</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>1200</size>
@@ -1325,8 +1309,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1340,8 +1324,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1355,8 +1339,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>2</bedroom>
     <bathroom>1</bathroom>
     <size>0</size>
@@ -1370,8 +1354,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1385,8 +1369,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Villa in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Villa in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1400,8 +1384,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>2</bedroom>
     <bathroom>1</bathroom>
     <size>0</size>
@@ -1415,8 +1399,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
@@ -1430,8 +1414,8 @@
     <city>Cairo</city>
     <community>5th Settlement</community>
     <sub_community>5th Settlement</sub_community>
-    <title_en><![CDATA[Apartment in 5th Settlement - Sierra Estates]]></title_en>
-    <description_en><![CDATA[Exclusive luxury property listed with Sierra Estates.]]></description_en>
+    <title_en>Apartment in 5th Settlement - Sierra Estates</title_en>
+    <description_en>Exclusive luxury property listed with Sierra Estates.</description_en>
     <bedroom>3</bedroom>
     <bathroom>2</bathroom>
     <size>0</size>
