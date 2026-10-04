@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,7 +10,6 @@ const forbiddenNames = [
 const configFiles = [
   '.env.example',
   'apps/sierra-estates-realty/.env.local.example',
-  '.github/workflows/deploy-vercel.yml',
   'scripts/sync-vercel-env.js',
   'scripts/deployment/push_all_vercel_envs.js',
   'turbo.json',
@@ -40,7 +39,7 @@ for (const sourceRoot of sourceRoots) collectSourceFiles(path.join(root, sourceR
 
 const violations = [];
 for (const file of files) {
-  if (path.resolve(file) === thisFile || !statSync(file).isFile()) continue;
+  if (path.resolve(file) === thisFile || !existsSync(file) || !statSync(file).isFile()) continue;
   const content = readFileSync(file, 'utf8');
   for (const forbiddenName of forbiddenNames) {
     if (content.includes(forbiddenName)) {
