@@ -123,6 +123,17 @@ function sanitizeImages(raw) {
 }
 function safeParse(s) { try { const v = JSON.parse(s); return Array.isArray(v) ? v : []; } catch { return []; } }
 
+/** Property Finder policy guard: stock imagery (Unsplash) risks feed rejection.
+ *  real = every photo is a real listing photo; stock-only = needs real photos
+ *  before PF submission (fine for the website); mixed = some stock left. */
+const STOCK_HOST = /(^|\.)images\.unsplash\.com$/i;
+function photoPolicy(urls) {
+  const real = urls.filter((u) => { try { return !STOCK_HOST.test(new URL(u).hostname); } catch { return false; } });
+  if (real.length === 0) return 'stock-only';
+  if (real.length === urls.length) return 'real';
+  return 'mixed';
+}
+
 async function downloadPhotos(dir, urls) {
   fs.mkdirSync(dir, { recursive: true });
   const files = [];
@@ -151,13 +162,14 @@ async function downloadPhotos(dir, urls) {
 }
 
 /* ---------- artifacts ---------- */
-function pfXml(r, ref) {
+function pfXml(r, ref, policy) {
   const offering = mapOfferingType(r.deal_type);
   const price = Number(r.price) || 0;
   const x = [];
   x.push('<?xml version="1.0" encoding="UTF-8"?>');
   x.push('<list>');
   x.push(`  <property last_update="${new Date(r.updated_at || Date.now()).toISOString().replace('T', ' ').slice(0, 19)}">`);
+  if (policy && policy !== 'real') x.push(`    <!-- PHOTO POLICY: ${policy} — replace with real listing photos before submitting this entry to Property Finder -->`);
   x.push(`    <reference_number>${escapeXml(ref)}</reference_number>`);
   x.push(`    <offering_type>${offering}</offering_type>`);
   x.push(`    <property_type>${mapPropertyType(r.property_type)}</property_type>`);
@@ -243,7 +255,7 @@ console.log(`Units with photos: ${listings.length}`);
 if (!listings.length) process.exit(0);
 
 fs.mkdirSync(OUT, { recursive: true });
-const manifest = [['ref', 'code', 'compound', 'community', 'city', 'property_type', 'deal_type', 'price_egp', 'bedrooms', 'bathrooms', 'area_sqm', 'photo_urls', 'photos_downloaded', 'folder', 'website_url']];
+const manifest = [['ref', 'code', 'compound', 'community', 'city', 'property_type', 'deal_type', 'price_egp', 'bedrooms', 'bathrooms', 'area_sqm', 'photo_policy', 'photo_urls', 'photos_downloaded', 'folder', 'website_url']];
 let done = 0;
 for (const r of listings) {
   const ref = r.pf_reference_number || r.code || r.ref_id || `SE-${r.id.slice(0, 8).toUpperCase()}`;
@@ -252,10 +264,11 @@ for (const r of listings) {
   fs.mkdirSync(dir, { recursive: true });
 
   const urls = r.images.filter((u) => typeof u === 'string' && u.startsWith('http'));
+  const policy = photoPolicy(urls);
   let files = [];
   if (DOWNLOAD) files = await downloadPhotos(path.join(dir, 'photos'), urls);
 
-  fs.writeFileSync(path.join(dir, 'propertyfinder.xml'), pfXml(r, ref), 'utf8');
+  fs.writeFileSync(path.join(dir, 'propertyfinder.xml'), pfXml(r, ref, policy), 'utf8');
   fs.writeFileSync(path.join(dir, 'website.json'), JSON.stringify({
     ref, code: r.code, title: r.title, title_ar: r.title_ar,
     compound: r.compound, area: r.location_area, city: r.city,
@@ -264,14 +277,14 @@ for (const r of listings) {
     bedrooms: r.bedrooms, bathrooms: r.bathrooms, area_sqm: r.area_sqm,
     finishing: r.finishing_type,
     description: r.description, description_ar: r.description_ar,
-    images: urls, updated_at: r.updated_at,
+    images: urls, photo_policy: policy, updated_at: r.updated_at,
     website_url: `https://sierra-estates.net/explore?ref=${encodeURIComponent(r.code || ref)}`,
   }, null, 2), 'utf8');
   fs.writeFileSync(path.join(dir, 'ad-copy.md'), adCopy(r, ref, files), 'utf8');
 
   manifest.push([ref, r.code || '', r.compound || '', r.location_area || '', r.city || '',
     r.property_type || '', r.deal_type || '', r.price || 0, r.bedrooms || 0, r.bathrooms || 0,
-    r.area_sqm || 0, urls.join(' | '), files.length, folder,
+    r.area_sqm || 0, policy, urls.join(' | '), files.length, folder,
     `https://sierra-estates.net/explore?ref=${encodeURIComponent(r.code || ref)}`]);
   done++;
   if (done % 25 === 0 || done === listings.length) console.log(`  ${done}/${listings.length}`);
