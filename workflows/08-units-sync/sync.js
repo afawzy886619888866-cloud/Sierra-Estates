@@ -161,7 +161,7 @@ function rowToListing(row) {
     furnishing_status: get('Furnished or not', 'Furnished') || null,
     status: mapStatus(get('Availablty', 'Availability')),
     availability: get('Availablty', 'Availability') || null,
-    verified_at: new Date().toISOString(),
+    verified_at: null,
     sync_source: 'sheets-units',
     source_channel: 'sheets',
     owner_name: get('Name', 'name') || null,
@@ -170,7 +170,9 @@ function rowToListing(row) {
     raw_data: row,
     updated_at: new Date().toISOString(),
   };
-  listing.publish_status = listing.status === 'available' ? 'PUBLISHABLE' : 'REVIEW_REQUIRED';
+  // ANTI-FABRICATION (Policy 020 / Migration 025): Raw sheet rows lack verified photos
+  // and live human owner confirmation — must land as REVIEW_REQUIRED, never PUBLISHABLE.
+  listing.publish_status = 'REVIEW_REQUIRED';
   if (listing.garden_sqm > 0) listing.amenities.push('garden');
   if (get('Pool', 'pool')) listing.amenities.push('pool');
   return listing;
