@@ -29,7 +29,7 @@ import {
   Camera,
 } from 'lucide-react';
 import SmartFilterBar from '@/components/site/SmartFilterBar';
-import CompoundUnitsDeck from '@/components/site/CompoundUnitsDeck';
+import { useSite } from '@/lib/site/SiteContext';
 import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
@@ -1020,9 +1020,17 @@ export default function CompoundsMap({
   selectedOnly = false,
 }: CompoundsMapProps) {
   const handleSelect = onSelectAction || onSelect;
+  const site = useSite();
+  const siteTheme = site?.theme;
 
-  // Visual Theme: Light vs Dark Masterplan (defaults to dark for Sierra luxury palette)
-  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>('dark');
+  // Visual Theme: Synchronized with site theme ("light for light mode and vice versa"), with manual toggle
+  const [mapTheme, setMapTheme] = useState<'dark' | 'light'>(siteTheme === 'light' ? 'light' : 'dark');
+
+  useEffect(() => {
+    if (siteTheme === 'light' || siteTheme === 'dark') {
+      setMapTheme(siteTheme);
+    }
+  }, [siteTheme]);
 
   // Masterplan Viewport Canvas Transformation
   const [zoom, setZoom] = useState(1);
@@ -1047,9 +1055,6 @@ export default function CompoundsMap({
 
   // Hovered Hotspot State for rich tooltips
   const [hoveredHotspot, setHoveredHotspot] = useState<MasterplanHotspot | null>(null);
-
-  // Flag-press sheet: compact Excel-style units deck fitted INSIDE the map deck
-  const [sheetCompound, setSheetCompound] = useState<string | null>(null);
 
   // Automated Animated Masterplan Tour ("▶ Play" button from design)
   const [isPlayingTour, setIsPlayingTour] = useState(false);
@@ -1348,66 +1353,6 @@ export default function CompoundsMap({
     (filterCompound ? 1 : 0) +
     (filterPrice && filterPrice !== '0' ? 1 : 0);
 
-  // Active or hovered compound details for the HUD availability card
-  const activeSpot = useMemo(() => {
-    if (hoveredHotspot) return hoveredHotspot;
-    if (selectedName) {
-      return (
-        mergedHotspots.find(
-          (s) =>
-            s.name.toLowerCase() === selectedName.toLowerCase() ||
-            s.aliases.some((a) => a.toLowerCase() === selectedName.toLowerCase())
-        ) || null
-      );
-    }
-    return null;
-  }, [hoveredHotspot, selectedName, mergedHotspots]);
-
-  // Active units for the Availability HUD table from the live clean database
-  const activeCompoundUnits = useMemo(() => {
-    if (!inventoryData?.units || !activeSpot) return [];
-    const targetNames = [
-      activeSpot.name.toLowerCase().trim(),
-      ...activeSpot.aliases.map((a) => a.toLowerCase().trim()),
-    ];
-    const matched = inventoryData.units.filter((u) => {
-      const c = (u.compound || u.location || '').toLowerCase().trim();
-      return targetNames.some((t) => c.includes(t) || t.includes(c));
-    });
-
-    if (matched.length === 0) return [];
-
-    return matched.slice(0, 5).map((u, i) => {
-      const type = u.propertyType || u.type || (i % 2 === 0 ? 'Apartment' : 'Villa');
-      const area = u.area && u.area > 0 ? String(Math.round(u.area)) : (140 + i * 45).toString();
-      const status = u.status === 'archived' ? 'Reserved' : 'Available';
-      const price =
-        u.price && u.price > 0
-          ? Number(u.price).toLocaleString('en-US')
-          : (8500000 + i * 5500000).toLocaleString('en-US');
-      return {
-        id: u.id || u.code || `unit-${i}`,
-        type,
-        area,
-        status,
-        price,
-      };
-    });
-  }, [inventoryData, activeSpot]);
-
-  // Fallback / Overview rows matching user mockups
-  const tableRows = useMemo(() => {
-    if (activeCompoundUnits.length > 0) return activeCompoundUnits;
-
-    return [
-      { id: '1', type: 'Apartment', area: '165', status: 'Available', price: '8,500,000' },
-      { id: '2', type: 'Duplex', area: '240', status: 'Available', price: '14,200,000' },
-      { id: '3', type: 'Penthouse', area: '290', status: 'Available', price: '19,800,000' },
-      { id: '4', type: 'Townhouse', area: '310', status: 'Reserved', price: '24,500,000' },
-      { id: '5', type: 'Stand Alone', area: '420', status: 'Available', price: '38,000,000' },
-    ];
-  }, [activeCompoundUnits]);
-
   return (
     <div
       className="map-command-deck"
@@ -1422,17 +1367,6 @@ export default function CompoundsMap({
         userSelect: 'none',
       }}
     >
-      {/* Flag-press Units Deck — fitted to the map area, map hidden while open */}
-      {sheetCompound && (
-        <CompoundUnitsDeck
-          compoundName={sheetCompound}
-          flagCode={compoundFlagCode(sheetCompound)}
-          units={(inventoryData?.units || []) as any}
-          onClose={() => setSheetCompound(null)}
-          isAr={isAr}
-        />
-      )}
-
       {/* 360° Virtual Tour Modal */}
       {is360ModalOpen && (
         <div
@@ -1490,7 +1424,7 @@ export default function CompoundsMap({
               <span>SIERRA ESTATES · 360° MASTERPLAN PORTAL</span>
             </div>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '6px 0 12px', color: '#ffffff' }}>
-              {activeSpot ? `${activeSpot.name} 360° Aerial Perspective` : 'New Cairo Central Corridor Aerial 360°'}
+              {selectedName ? `${selectedName} 360° Aerial Perspective` : 'New Cairo Central Corridor Aerial 360°'}
             </h3>
             <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6, maxWidth: 540, margin: '0 auto 20px' }}>
               Immerse yourself in high-definition interactive pan-views of New Cairo compounds, road networks (North/South 90th, Ring Road), and surrounding landmarks.
@@ -1573,14 +1507,13 @@ export default function CompoundsMap({
         </div>
       )}
 
-      {/* Illustrated Masterplan Interactive Canvas Viewport */}
+      {/* Illustrated Masterplan Interactive Canvas Viewport (Mouse drag to pan; wheel scroll reserved for normal page scroll) */}
       <div
         ref={viewportRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
         style={{
           width: '100%',
           height: '100%',
@@ -1607,7 +1540,7 @@ export default function CompoundsMap({
             transformOrigin: '50% 50%',
           }}
         >
-          {/* Base Illustrated Map Graphic (Dark) */}
+          {/* Base Illustrated Map Graphic (Dark Theme - High Resolution & Contrast Tuned) */}
           <img
             src="/maps/new-cairo-masterplan-dark.jpg"
             alt="New Cairo Illustrated Masterplan (Dark Theme)"
@@ -1621,10 +1554,14 @@ export default function CompoundsMap({
               opacity: mapTheme === 'dark' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
+              imageRendering: '-webkit-optimize-contrast',
+              transform: 'translateZ(0)',
+              filter: 'contrast(1.08) brightness(1.03) saturate(1.08)',
+              backfaceVisibility: 'hidden',
             }}
           />
 
-          {/* Base Illustrated Map Graphic (Light) */}
+          {/* Base Illustrated Map Graphic (Light Theme - High Resolution & Contrast Tuned) */}
           <img
             src="/maps/new-cairo-masterplan-light.jpg"
             alt="New Cairo Illustrated Masterplan (Light Theme)"
@@ -1638,6 +1575,10 @@ export default function CompoundsMap({
               opacity: mapTheme === 'light' ? 1 : 0,
               transition: 'opacity 0.4s ease',
               pointerEvents: 'none',
+              imageRendering: '-webkit-optimize-contrast',
+              transform: 'translateZ(0)',
+              filter: 'contrast(1.06) brightness(1.02) saturate(1.04)',
+              backfaceVisibility: 'hidden',
             }}
           />
 
@@ -1696,7 +1637,39 @@ export default function CompoundsMap({
                   transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   zIndex: isSelected ? 30 : isHovered ? 25 : 10,
                 }}
-              />
+              >
+                {(isHovered || isSelected) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%) translateY(-6px)',
+                      background: mapTheme === 'dark' ? 'rgba(7, 21, 35, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+                      border: isSelected ? '1.5px solid #dfad3a' : '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: 8,
+                      padding: '4px 10px',
+                      whiteSpace: 'nowrap',
+                      color: mapTheme === 'dark' ? '#f8fafc' : '#071523',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <span style={{ color: '#dfad3a', fontWeight: 800 }}>{compoundFlagCode(spot.name)}</span>
+                    <span>{spot.name}</span>
+                    {liveCompoundCounts[spot.name] ? (
+                      <span style={{ fontSize: 9.5, opacity: 0.75, padding: '1px 5px', borderRadius: 999, background: 'rgba(223, 173, 58, 0.2)' }}>
+                        {liveCompoundCounts[spot.name]} units
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -1754,9 +1727,9 @@ export default function CompoundsMap({
         </button>
       </div>
 
-      {/* Top-Right Discreet Zoom Controls */}
+      {/* Top-Right Prominent Tactile Zoom Controls HUD (+ / - buttons and Reset View) */}
       <div
-        className="interactive-control"
+        className="interactive-control map-zoom-hud"
         style={{
           position: 'absolute',
           top: 20,
@@ -1764,304 +1737,111 @@ export default function CompoundsMap({
           zIndex: 400,
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setZoom((prev) => Math.min(2.8, prev + 0.25))}
-          title="Zoom In"
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: '50%',
-            background: mapTheme === 'dark' ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.92)',
-            border: mapTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(226, 232, 240, 0.9)',
-            color: mapTheme === 'dark' ? '#ffffff' : '#0f172a',
-            display: 'grid',
-            placeItems: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <Plus style={{ width: 13, height: 13 }} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setZoom((prev) => Math.max(1, prev - 0.25))}
-          title="Zoom Out"
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: '50%',
-            background: mapTheme === 'dark' ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.92)',
-            border: mapTheme === 'dark' ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(226, 232, 240, 0.9)',
-            color: mapTheme === 'dark' ? '#ffffff' : '#0f172a',
-            display: 'grid',
-            placeItems: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <Minus style={{ width: 13, height: 13 }} />
-        </button>
-      </div>
-
-      {/* Floating Glassmorphic AVAILABILITY HUD Card (From Illustrated Design) */}
-      <div
-        className="map-availability-hud interactive-control"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: 28,
-          transform: 'translateY(-50%)',
-          zIndex: 400,
-          width: 320,
-          maxWidth: 'calc(100% - 48px)',
+          gap: 4,
+          padding: '5px 8px',
+          borderRadius: 999,
           background:
             mapTheme === 'dark'
-              ? 'rgba(14, 24, 38, 0.78)'
+              ? 'rgba(7, 21, 35, 0.88)'
               : 'rgba(255, 255, 255, 0.94)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
           border:
             mapTheme === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.18)'
-              : '1px solid rgba(226, 232, 240, 0.9)',
-          borderRadius: 20,
-          padding: '18px 18px 16px',
+              ? '1px solid rgba(223, 173, 58, 0.4)'
+              : '1px solid rgba(203, 213, 225, 0.9)',
           boxShadow:
             mapTheme === 'dark'
-              ? '0 24px 50px -10px rgba(0, 0, 0, 0.65), 0 0 30px rgba(0, 229, 255, 0.08)'
-              : '0 20px 40px -10px rgba(0, 0, 0, 0.15)',
-          color: mapTheme === 'dark' ? '#ffffff' : '#0f172a',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", sans-serif',
-          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              ? '0 10px 30px rgba(0,0,0,0.5), 0 0 16px rgba(223, 173, 58, 0.12)'
+              : '0 8px 24px rgba(0,0,0,0.08)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        {/* Speech Bubble Pointer Notch (Left pointing to compound) */}
+        <button
+          type="button"
+          onClick={() => setZoom((prev) => Math.min(2.8, Number((prev + 0.25).toFixed(2))))}
+          title={isAr ? 'تكبير (+)' : 'Zoom In (+)'}
+          aria-label="Zoom in"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: mapTheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: 'none',
+            color: mapTheme === 'dark' ? '#f8fafc' : '#071523',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Plus style={{ width: 15, height: 15, strokeWidth: 2.4 }} />
+        </button>
+
+        <span
+          style={{
+            fontFamily: 'var(--mono, "JetBrains Mono", monospace)',
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#dfad3a',
+            padding: '0 6px',
+            minWidth: 44,
+            textAlign: 'center',
+            userSelect: 'none',
+          }}
+        >
+          {Math.round(zoom * 100)}%
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setZoom((prev) => Math.max(1, Number((prev - 0.25).toFixed(2))))}
+          title={isAr ? 'تصغير (−)' : 'Zoom Out (−)'}
+          aria-label="Zoom out"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: mapTheme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            border: 'none',
+            color: mapTheme === 'dark' ? '#f8fafc' : '#071523',
+            display: 'grid',
+            placeItems: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Minus style={{ width: 15, height: 15, strokeWidth: 2.4 }} />
+        </button>
+
         <div
           style={{
-            position: 'absolute',
-            left: -9,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 0,
-            height: 0,
-            borderTop: '9px solid transparent',
-            borderBottom: '9px solid transparent',
-            borderRight:
-              mapTheme === 'dark'
-                ? '9px solid rgba(14, 24, 38, 0.85)'
-                : '9px solid rgba(255, 255, 255, 0.95)',
-            filter: 'drop-shadow(-2px 0 2px rgba(0,0,0,0.15))',
-            pointerEvents: 'none',
+            width: 1,
+            height: 16,
+            background: mapTheme === 'dark' ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)',
+            margin: '0 3px',
           }}
         />
 
-        {/* Close Button in top right */}
         <button
           type="button"
-          onClick={() => {
-            handleSelect?.('');
-            setHoveredHotspot(null);
-          }}
-          title="Clear selection"
+          onClick={handleResetView}
+          title={isAr ? 'إعادة ضبط العرض' : 'Reset View (⟲)'}
+          aria-label="Reset view"
           style={{
-            position: 'absolute',
-            top: 14,
-            right: 14,
+            width: 30,
+            height: 30,
+            borderRadius: '50%',
             background: 'transparent',
             border: 'none',
-            color: mapTheme === 'dark' ? '#94a3b8' : '#94a3b8',
-            cursor: 'pointer',
-            padding: 4,
+            color: mapTheme === 'dark' ? '#94a3b8' : '#64748b',
             display: 'grid',
             placeItems: 'center',
-            borderRadius: '50%',
-            transition: 'color 0.15s ease',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
           }}
         >
-          <X style={{ width: 14, height: 14 }} />
+          <RotateCcw style={{ width: 13, height: 13 }} />
         </button>
-
-        {/* Brand Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 12 }}>
-          <SierraMountainLogo size={36} style={{ color: mapTheme === 'dark' ? '#e2e8f0' : '#475569', marginBottom: 2 }} />
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 900,
-              letterSpacing: '0.12em',
-              color: mapTheme === 'dark' ? '#e2e8f0' : '#1e293b',
-              lineHeight: 1.2,
-            }}
-          >
-            SIERRA ESTATES
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: '0.08em',
-              color: mapTheme === 'dark' ? '#94a3b8' : '#64748b',
-              marginTop: 2,
-            }}
-          >
-            AVAILABILITY {activeSpot ? `· ${activeSpot.name.toUpperCase()}` : ''}
-          </div>
-        </div>
-
-        {/* Units Table */}
-        <div style={{ overflowX: 'auto', marginBottom: 14 }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: 9.5,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  borderBottom: mapTheme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
-                  color: mapTheme === 'dark' ? '#94a3b8' : '#64748b',
-                }}
-              >
-                <th style={{ textAlign: 'left', padding: '4px 3px', fontWeight: 700, fontSize: 8.5, letterSpacing: '0.04em' }}>UNIT TYPE</th>
-                <th style={{ textAlign: 'center', padding: '4px 3px', fontWeight: 700, fontSize: 8.5, letterSpacing: '0.04em' }}>AREA (SQM)</th>
-                <th style={{ textAlign: 'center', padding: '4px 3px', fontWeight: 700, fontSize: 8.5, letterSpacing: '0.04em' }}>STATUS</th>
-                <th style={{ textAlign: 'right', padding: '4px 3px', fontWeight: 700, fontSize: 8.5, letterSpacing: '0.04em' }}>PRICE (EGP)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((row, idx) => (
-                <tr
-                  key={row.id || idx}
-                  style={{
-                    borderBottom:
-                      idx < tableRows.length - 1
-                        ? mapTheme === 'dark'
-                          ? '1px solid rgba(255,255,255,0.04)'
-                          : '1px solid rgba(0,0,0,0.04)'
-                        : 'none',
-                    transition: 'background 0.15s ease',
-                  }}
-                >
-                  <td style={{ padding: '6px 3px', fontWeight: 600, color: mapTheme === 'dark' ? '#f1f5f9' : '#0f172a' }}>{row.type}</td>
-                  <td style={{ padding: '6px 3px', textAlign: 'center', color: mapTheme === 'dark' ? '#cbd5e1' : '#475569' }}>{row.area}</td>
-                  <td style={{ padding: '6px 3px', textAlign: 'center' }}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '1px 6px',
-                        borderRadius: 999,
-                        fontSize: 8.5,
-                        fontWeight: 700,
-                        background:
-                          row.status === 'Available'
-                            ? mapTheme === 'dark'
-                              ? 'rgba(16, 185, 129, 0.15)'
-                              : 'rgba(16, 185, 129, 0.12)'
-                            : 'rgba(239, 68, 68, 0.12)',
-                        color: row.status === 'Available' ? '#10b981' : '#f87171',
-                      }}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '6px 3px', textAlign: 'right', fontWeight: 700, color: mapTheme === 'dark' ? '#dfad3a' : '#c8961a' }}>
-                    {row.price}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {/* 360° VIEW Button */}
-          <button
-            type="button"
-            onClick={() => setIs360ModalOpen(true)}
-            style={{
-              width: '100%',
-              padding: '7px 12px',
-              borderRadius: 999,
-              background:
-                mapTheme === 'dark'
-                  ? 'rgba(255, 255, 255, 0.08)'
-                  : '#ffffff',
-              border:
-                mapTheme === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.18)'
-                  : '1px solid rgba(203, 213, 225, 0.8)',
-              color: mapTheme === 'dark' ? '#ffffff' : '#0f172a',
-              fontWeight: 800,
-              fontSize: 11,
-              letterSpacing: '0.04em',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              cursor: 'pointer',
-              boxShadow:
-                mapTheme === 'dark'
-                  ? '0 2px 8px rgba(0,0,0,0.3)'
-                  : '0 2px 6px rgba(0,0,0,0.05)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <RotateCcw style={{ width: 12, height: 12 }} />
-            <span>360° VIEW</span>
-          </button>
-
-          {/* REQUEST PHOTOS Button */}
-          <a
-            href={`https://wa.me/201092048333?text=${encodeURIComponent(
-              activeSpot
-                ? `Hello Sierra Estates, I am inquiring about availability and requesting verified photos for units in ${activeSpot.name}, New Cairo.`
-                : 'Hello Sierra Estates, I would like to request verified photos and availability for New Cairo masterplan compounds.'
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: 999,
-              background:
-                mapTheme === 'dark'
-                  ? 'rgba(255, 255, 255, 0.14)'
-                  : 'linear-gradient(135deg, #c39b56, #a87b38)',
-              border:
-                mapTheme === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.24)'
-                  : 'none',
-              color: '#ffffff',
-              fontWeight: 900,
-              fontSize: 11,
-              letterSpacing: '0.05em',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              boxShadow:
-                mapTheme === 'dark'
-                  ? '0 4px 12px rgba(0,0,0,0.4)'
-                  : '0 4px 12px rgba(195, 155, 86, 0.35)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Camera style={{ width: 12, height: 12 }} />
-            <span>REQUEST PHOTOS</span>
-          </a>
-        </div>
       </div>
 
       {/* Bottom-Left Animated Landmark Tour ("▶ Play" Button from Design) */}
