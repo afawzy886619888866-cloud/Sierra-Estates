@@ -57,6 +57,7 @@ const SLUGS = [
   'gateway-sentinel',
   'daily-digest',
   'units-sync',
+  'owner-outreach',
 ];
 
 const SCRIPTS = {
@@ -68,6 +69,7 @@ const SCRIPTS = {
   'gateway-sentinel': '06-gateway-sentinel/sentinel.js',
   'daily-digest': '07-daily-digest/digest.js',
   'units-sync': '08-units-sync/sync.js',
+  'owner-outreach': '09-owner-outreach/outreach.js',
 };
 
 const running = new Set(); // slugs currently executing
@@ -380,6 +382,24 @@ async function main() {
     if (seeded) log('units-sync row present in workflows registry');
   } catch (e) {
     log(`units-sync seeding skipped: ${e.message}`);
+  }
+
+  // ensure one-shot seeding of the owner-outreach row (idempotent)
+  try {
+    const seeded = await sb.upsertWorkflowRow({
+      slug: 'owner-outreach',
+      name: 'Owner Outreach',
+      name_ar: 'التواصل مع الملاك',
+      description: 'Daily Cairo-windowed WhatsApp introductions to property owners from the inventory sheet (gviz read, local ledger dedupe, cap 40/day, 10:00-20:00 Cairo only).',
+      status: 'active',
+      schedule: '11 11,16 * * *',
+      category: 'outreach',
+      trigger_type: 'cron',
+      source_path: 'workflows/09-owner-outreach/outreach.js',
+    });
+    if (seeded) log('owner-outreach row present in workflows registry');
+  } catch (e) {
+    log(`owner-outreach seeding skipped: ${e.message}`);
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));
