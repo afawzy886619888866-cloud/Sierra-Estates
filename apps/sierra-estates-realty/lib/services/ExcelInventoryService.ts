@@ -5,6 +5,7 @@ import { logger } from '../logger';
 import { resolveLocation } from '../inventory/gazetteer';
 import { getSupabaseAdmin } from '@sierra-estates/db';
 import { egpToUsd } from '../fx';
+import { normalizePriceToEGP } from '../eccMemoryEngine';
 import type { InventoryUnit } from '../inventory/types';
 
 export const EXCEL_COLUMNS = [
@@ -157,9 +158,14 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
       const compoundName = String(row['Compound Name'] || row.Compound || row['Location / Area'] || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
       const op = String(row['Operation (Sale / Rent)'] || row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'],
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const photoStatus = String(row['Has Photo? (YES / NO)'] || '').trim().toUpperCase();
       const primaryPhotoUrl = String(row['Primary Photo URL (Airtable Attachment)'] || '').trim();
@@ -245,9 +251,14 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
       const compoundName = String(row.Compound || row.Location || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
-      const op = String(row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'] || row.PropertyType,
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const primaryImgUrl = String(row['Primary Image URL'] || '').trim();
       const hasRealPhoto = isRealPhoto(primaryImgUrl);
@@ -344,9 +355,14 @@ function readInventoryWithPhotosInternal(options?: {
         const compoundName = String(row.Compound || row.Location || '').trim();
         const resolved = resolveLocation(compoundName);
 
-        const price = Number(row['Price (EGP)']) || 0;
-        const op = String(row.Operation || '').toLowerCase();
-        const mode: 'rent' | 'sale' = isRentSheet || op === 'rent' ? 'rent' : 'sale';
+        const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+        const norm = normalizePriceToEGP(row['Price (EGP)'] || row.Price || row['Unit Price'], {
+          propertyType: row['Property Type'] || row.PropertyType || row['Property Tybe'],
+          mode: isRentSheet ? 'rent' : op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+          compound: compoundName,
+        });
+        const price = norm.priceEGP;
+        const mode = norm.mode;
 
         // Extract primary photo and photo gallery
         const rawPhotos = String(row['Photo URLs'] || '').trim();

@@ -21,6 +21,7 @@ export const HOT_DEAL_THRESHOLD_PCT = 8.0;
 
 export type EpisodeType =
   | 'price_drop'
+  | 'price_normalized'
   | 'negotiation_offer'
   | 'ai_counter_offer'
   | 'viewing_scheduled'
@@ -33,6 +34,23 @@ export type EpisodeType =
   | 'lead_scored'
   | 'owner_listing_drop';
 
+export interface PriceNormalizationOptions {
+  propertyType?: string | null;
+  mode?: 'rent' | 'sale' | string | null;
+  currency?: string | null;
+  compound?: string | null;
+  usdToEgpRate?: number;
+}
+
+export interface PriceNormalizationResult {
+  priceEGP: number;
+  originalInput: string | number;
+  mode: 'rent' | 'sale';
+  confidence: number;
+  rationale: string;
+  isAdjusted: boolean;
+}
+
 export interface Episode {
   id: string;
   type: EpisodeType;
@@ -42,6 +60,184 @@ export interface Episode {
   summary: string;
   data: Record<string, any>;
   decayWeight?: number; // 0.0 to 1.0 based on recency
+}
+
+export const DEFAULT_USD_TO_EGP = 50.0;
+
+export const ECC_MARKET_FLOORS_EGP: Record<string, { rent: number; sale: number }> = {
+  villa:            { rent:  30_000, sale:  7_000_000 },
+  'standalone villa': { rent: 45_000, sale: 10_000_000 },
+  standalone:       { rent:  45_000, sale: 10_000_000 },
+  townhouse:        { rent:  20_000, sale:  5_000_000 },
+  'twin house':     { rent:  20_000, sale:  5_000_000 },
+  duplex:           { rent:  15_000, sale:  4_000_000 },
+  apartment:        { rent:   8_000, sale:  2_000_000 },
+  penthouse:        { rent:  25_000, sale:  6_500_000 },
+  studio:           { rent:   6_000, sale:  1_500_000 },
+  admin:            { rent:  10_000, sale:  1_800_000 },
+  clinic:           { rent:  10_000, sale:  2_000_000 },
+  default:          { rent:   8_000, sale:  2_000_000 },
+};
+
+/**
+ * Intelligent Real Estate Price Normalizer for Egypt (EGP).
+ * Handles user shorthands (e.g. "3" meaning 30,000 EGP or 3M EGP or $3,000 USD),
+ * currency conversion ($/USD -> EGP), and enforces realistic market floors so
+ * that a villa is never recorded as 3 LE.
+ */
+export function normalizePriceToEGP(
+  rawInput: unknown,
+  options: PriceNormalizationOptions = {}
+): PriceNormalizationResult {
+  const usdRate = options.usdToEgpRate || DEFAULT_USD_TO_EGP;
+  const str = String(rawInput ?? '').trim();
+  if (!str) {
+    return {
+      priceEGP: 0,
+      originalInput: '',
+      mode: (options.mode as 'rent' | 'sale') || 'sale',
+      confidence: 0,
+      rationale: 'Empty input',
+      isAdjusted: false,
+    };
+  }
+
+  // 1. Detect USD currency markers
+  const isUSD = Boolean(
+    options.currency?.toUpperCase() === 'USD' ||
+    /(\$|usd|dollar|دولار)/i.test(str)
+  );
+
+  // 2. Detect text multipliers
+  const hasK = /(?:k|الف|ألف)/i.test(str);
+  const hasM = /(?:m|مليون|م)/i.test(str);
+
+  // 3. Extract numeric value
+  const cleaned = str.replace(/[^0-9.]/g, '');
+  const rawNum = parseFloat(cleaned) || 0;
+
+  if (rawNum <= 0) {
+    return {
+      priceEGP: 0,
+      originalInput: rawInput as any,
+      mode: (options.mode as 'rent' | 'sale') || 'sale',
+      confidence: 0,
+      rationale: 'Could not extract numeric price',
+      isAdjusted: false,
+    };
+  }
+
+  // 4. Determine property type category
+  const rawType = (options.propertyType || '').toLowerCase().trim();
+  const isVillaFamily = /villa|فيلا|standalone|مستقل|town|twin|تاون|توين/.test(rawType);
+  const floors = ECC_MARKET_FLOORS_EGP[rawType] ||
+    (isVillaFamily ? ECC_MARKET_FLOORS_EGP.villa : ECC_MARKET_FLOORS_EGP.default);
+
+  // 5. Determine operation mode
+  const explicitMode = String(options.mode || '').toLowerCase();
+  const isRent = explicitMode.includes('rent') || /ايجار|إيجار|rent/i.test(str);
+  const mode: 'rent' | 'sale' = isRent ? 'rent' : 'sale';
+  const floor = mode === 'rent' ? floors.rent : floors.sale;
+
+  let priceEGP = rawNum;
+  let isAdjusted = false;
+  let rationale = 'Original price verified in realistic range';
+  let confidence = 0.95;
+
+  // Handle explicit USD conversion
+  if (isUSD) {
+    let numUSD = rawNum;
+    if (hasK) numUSD *= 1_000;
+    if (hasM) numUSD *= 1_000_000;
+    // If someone writes "$3" for rent, they mean $3,000
+    if (numUSD < 100 && mode === 'rent') {
+      numUSD *= 1_000;
+    }
+    priceEGP = Math.round(numUSD * usdRate);
+    isAdjusted = true;
+    rationale = `Converted from USD (${numUSD} USD × ${usdRate} EGP/USD)`;
+    confidence = 0.92;
+    return { priceEGP, originalInput: rawInput as any, mode, confidence, rationale, isAdjusted };
+  }
+
+  // Handle explicit "k" or "m" suffixes
+  if (hasM) {
+    priceEGP = Math.round(rawNum * 1_000_000);
+    isAdjusted = true;
+    rationale = `Scaled from millions suffix (${rawNum}M → ${priceEGP.toLocaleString()} EGP)`;
+    return { priceEGP, originalInput: rawInput as any, mode, confidence: 0.98, rationale, isAdjusted };
+  }
+
+  if (hasK) {
+    priceEGP = Math.round(rawNum * 1_000);
+    isAdjusted = true;
+    rationale = `Scaled from thousands suffix (${rawNum}k → ${priceEGP.toLocaleString()} EGP)`;
+    return { priceEGP, originalInput: rawInput as any, mode, confidence: 0.98, rationale, isAdjusted };
+  }
+
+  // Under-scaled shorthand disambiguation (e.g. 3, 30, 3000)
+  if (rawNum < floor) {
+    if (mode === 'sale') {
+      if (rawNum <= 50) {
+        // e.g. 3 -> 3,000,000 EGP; 35 -> 35,000,000 EGP
+        priceEGP = Math.round(rawNum * 1_000_000);
+        isAdjusted = true;
+        rationale = `Auto-corrected sale price from ${rawNum} to ${priceEGP.toLocaleString()} EGP (detected million-unit shorthand)`;
+        confidence = 0.92;
+      } else if (rawNum > 50 && rawNum <= 999) {
+        const x10k = rawNum * 10_000;
+        priceEGP = x10k >= floor ? x10k : Math.round(rawNum * 100_000);
+        isAdjusted = true;
+        rationale = `Auto-scaled sale price to ${priceEGP.toLocaleString()} EGP to meet market floor`;
+        confidence = 0.85;
+      } else if (rawNum >= 1_000 && rawNum <= 99_999) {
+        priceEGP = Math.round(rawNum * 1_000);
+        isAdjusted = true;
+        rationale = `Auto-corrected sale shorthand ${rawNum} → ${priceEGP.toLocaleString()} EGP`;
+        confidence = 0.9;
+      }
+    } else {
+      // Rent mode:
+      if (rawNum <= 50) {
+        // "3" for a villa means 30,000 EGP/mo (or $3,000 USD -> 150,000 EGP)
+        const scaled10k = Math.round(rawNum * 10_000);
+        if (scaled10k >= floor) {
+          priceEGP = scaled10k;
+          isAdjusted = true;
+          rationale = `Auto-corrected rent from ${rawNum} to ${priceEGP.toLocaleString()} EGP/mo (scaled shorthand to match 10k broker convention)`;
+          confidence = 0.88;
+        } else {
+          // If villa floor is higher, scale to 30,000 minimum
+          priceEGP = Math.max(scaled10k, floor);
+          isAdjusted = true;
+          rationale = `Auto-scaled villa rent from ${rawNum} to ${priceEGP.toLocaleString()} EGP/mo (villa rent cannot be 3 LE)`;
+          confidence = 0.84;
+        }
+      } else if (rawNum > 50 && rawNum < 1_000) {
+        priceEGP = Math.round(rawNum * 100);
+        isAdjusted = true;
+        rationale = `Auto-scaled rent shorthand ${rawNum} → ${priceEGP.toLocaleString()} EGP/mo`;
+        confidence = 0.85;
+      } else if (rawNum >= 1_000 && rawNum < floor) {
+        // e.g. 3,000 for a villa where rent floor is 30,000
+        if (isVillaFamily) {
+          priceEGP = Math.round(rawNum * 10);
+          isAdjusted = true;
+          rationale = `Auto-corrected villa rent from ${rawNum} to ${priceEGP.toLocaleString()} EGP/mo (villa rent cannot be 3,000 LE)`;
+          confidence = 0.85;
+        }
+      }
+    }
+  }
+
+  return {
+    priceEGP,
+    originalInput: rawInput as any,
+    mode,
+    confidence,
+    rationale,
+    isAdjusted,
+  };
 }
 
 export interface EntityProfile {
@@ -176,6 +372,34 @@ export class EpisodicContextCache {
     });
 
     return { episode, dropPct, isHotDeal };
+  }
+
+  public normalizeAndRecordPrice(
+    entityId: string,
+    rawPrice: unknown,
+    options: PriceNormalizationOptions = {}
+  ): PriceNormalizationResult {
+    const result = normalizePriceToEGP(rawPrice, options);
+
+    if (result.isAdjusted) {
+      this.recordEpisode({
+        type: 'price_normalized',
+        entityId,
+        actor: 'Sierra Price Memory Engine',
+        summary: `Price normalized for ${entityId}: "${rawPrice}" → ${result.priceEGP.toLocaleString()} EGP (${result.rationale})`,
+        data: {
+          entityId,
+          originalInput: rawPrice,
+          normalizedPriceEGP: result.priceEGP,
+          mode: result.mode,
+          propertyType: options.propertyType,
+          rationale: result.rationale,
+          confidence: result.confidence,
+        },
+      });
+    }
+
+    return result;
   }
 
   public trackAiCounterOffer(
@@ -342,6 +566,18 @@ export class EpisodicContextCache {
       if (episode.data.isHotDeal) {
         entity.tags.push('HOT_DISTRESSED_DEAL');
       }
+    }
+
+    if (episode.type === 'price_normalized' && episode.data?.normalizedPriceEGP) {
+      entity.historicalPrices = [
+        ...(entity.historicalPrices || []),
+        {
+          price: episode.data.normalizedPriceEGP,
+          timestamp: episode.timestamp,
+          source: 'Price Normalization Memory',
+        },
+      ];
+      entity.tags = Array.from(new Set([...entity.tags, 'PRICE_NORMALIZED']));
     }
 
     if (episode.type === 'buyer_preference' && episode.data?.budgetMax) {
