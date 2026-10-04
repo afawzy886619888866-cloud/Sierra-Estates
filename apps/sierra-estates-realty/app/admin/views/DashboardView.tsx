@@ -6,6 +6,8 @@ import DataPipelineTelemetryCard from '@/components/admin/DataPipelineTelemetryC
 import DatabaseHealthCard from '@/components/admin/DatabaseHealthCard';
 import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
+import AdminMiniMap from '@/components/admin/AdminMiniMap';
+import { Download, ExternalLink } from 'lucide-react';
 import { APPS_CATALOG, type AppService } from './AppsDirectoryView';
 
 interface ActivityFeedItem {
@@ -493,6 +495,176 @@ export default function DashboardView({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── CONSOLIDATED MASTER INVENTORY & CARTOGRAPHY RADAR ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Column: Consolidated Master Inventory Hub */}
+        <div className="xl:col-span-7 clay-card p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#C8961A]/30 to-[#E9C176]/10 border border-[#C8961A]/40 flex items-center justify-center text-xl shadow-inner">
+                  📊
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2 font-mono">
+                    <span>{isAr ? 'المخزون الرئيسي الموحد (12,443 وحدة)' : 'Consolidated Master Inventory'}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 text-[10px] font-bold">
+                      PRIORITY #1 GDRIVE + SYSTEM MERGED
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    {isAr
+                      ? 'تم التوحيد والدمج مع تسوية الأسعار وإزالة التكرارات'
+                      : 'Tri-tier deduplicated & normalized dot-pricing across Google Drive + Master archives'}
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 hover:border-[#C8961A]/60 text-slate-300 hover:text-[#E9C176] text-xs font-mono transition-colors"
+              >
+                <span>Google Drive Sheet</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#C8961A]" />
+              </a>
+            </div>
+
+            {/* Inventory Metric Tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5">
+              <div className="clay-inset p-3 border border-emerald-900/40 bg-emerald-950/20">
+                <div className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                  {isAr ? 'إيجار مباشر (ملاك)' : 'Direct Owners Rent'}
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono mt-1">1,831</div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  {isAr ? 'أولوية 1 من جوجل شيت' : 'GDrive Priority #1 verified'}
+                </div>
+              </div>
+
+              <div className="clay-inset p-3 border border-[#C8961A]/40 bg-[#211A0D]/40">
+                <div className="text-[10px] font-mono text-[#E9C176] font-bold uppercase tracking-wider">
+                  {isAr ? 'إعادة بيع مباشر (ملاك)' : 'Direct Owners Resale'}
+                </div>
+                <div className="text-2xl font-extrabold text-[#F5D78E] font-mono mt-1">948</div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  {isAr ? 'جولدن سكوير والتجمع' : 'Prime New Cairo enclaves'}
+                </div>
+              </div>
+
+              <div className="clay-inset p-3 border border-blue-900/40 bg-blue-950/20">
+                <div className="text-[10px] font-mono text-blue-400 font-bold uppercase tracking-wider">
+                  {isAr ? 'إيجار وسطاء' : 'Brokers Rent'}
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono mt-1">4,985</div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  {isAr ? 'مع تطهير أرقام الهاتف' : 'Phone last-7 validated'}
+                </div>
+              </div>
+
+              <div className="clay-inset p-3 border border-purple-900/40 bg-purple-950/20">
+                <div className="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-wider">
+                  {isAr ? 'إعادة بيع وسطاء' : 'Brokers Resale'}
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono mt-1">4,584</div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  {isAr ? 'قاعدة عريضة مسعرة' : 'Full market cross-inventory'}
+                </div>
+              </div>
+
+              <div className="clay-inset p-3 border border-amber-900/40 bg-amber-950/20">
+                <div className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">
+                  {isAr ? 'وحدات الفريق' : 'Team Exclusive Units'}
+                </div>
+                <div className="text-2xl font-extrabold text-white font-mono mt-1">95</div>
+                <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  {isAr ? 'حصرية لشركة سييرا' : 'Sierra internal contracts'}
+                </div>
+              </div>
+
+              <div className="clay-inset p-3 border border-slate-700/60 bg-slate-900/50">
+                <div className="text-[10px] font-mono text-slate-300 font-bold uppercase tracking-wider">
+                  {isAr ? 'إجمالي المخزون الموحد' : 'Total Master Listings'}
+                </div>
+                <div className="text-2xl font-extrabold text-[#E9C176] font-mono mt-1">12,443</div>
+                <div className="text-[10px] font-mono text-emerald-400 mt-0.5">
+                  100% {isAr ? 'خالٍ من التكرار' : 'deduplicated & clean'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 1-Click Workbook Direct Downloads */}
+          <div className="pt-4 border-t border-slate-800/80">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider font-mono mb-3 flex items-center gap-1.5">
+              <span>📥</span>
+              <span>{isAr ? 'تحميل شيتات الإكسيل الرسمية الموحدة' : 'Official Master Excel Downloads (1-Click)'}</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <a
+                href="/downloads/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx"
+                download="Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#211A0D] border border-[#C8961A]/50 hover:bg-[#C8961A]/20 hover:border-[#C8961A] text-left transition-all group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#C8961A]/20 flex items-center justify-center text-[#E9C176] shrink-0 group-hover:scale-110 transition-transform">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold text-white group-hover:text-[#E9C176] truncate">
+                    Consolidated Master
+                  </span>
+                  <span className="block text-[10px] text-slate-400 font-mono">
+                    All 8 Sheets · 12.4k units
+                  </span>
+                </div>
+              </a>
+
+              <a
+                href="/downloads/Sierra_Estates_Rent_Master.xlsx"
+                download="Sierra_Estates_Rent_Master.xlsx"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900/80 border border-emerald-800/50 hover:bg-emerald-950/40 hover:border-emerald-600 text-left transition-all group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-emerald-950/60 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold text-white group-hover:text-emerald-400 truncate">
+                    Rent Master
+                  </span>
+                  <span className="block text-[10px] text-slate-400 font-mono">
+                    Owners & Brokers · 6,816 units
+                  </span>
+                </div>
+              </a>
+
+              <a
+                href="/downloads/Sierra_Estates_Resale_Master.xlsx"
+                download="Sierra_Estates_Resale_Master.xlsx"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900/80 border border-blue-800/50 hover:bg-blue-950/40 hover:border-blue-600 text-left transition-all group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-950/60 flex items-center justify-center text-blue-400 shrink-0 group-hover:scale-110 transition-transform">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold text-white group-hover:text-blue-400 truncate">
+                    Resale Master
+                  </span>
+                  <span className="block text-[10px] text-slate-400 font-mono">
+                    Owners & Brokers · 5,532 units
+                  </span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Small Interactive Map */}
+        <div className="xl:col-span-5">
+          <AdminMiniMap isAr={isAr} />
+        </div>
       </div>
 
       {/* ── DATA INTEGRITY & AUTOMATION CONTROL CENTER (Phase 12) ──
