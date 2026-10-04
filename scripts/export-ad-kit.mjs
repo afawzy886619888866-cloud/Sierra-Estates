@@ -110,12 +110,12 @@ async function fetchListings(key) {
  *  Extract every clean http(s) URL from a possibly-polluted entry. */
 function sanitizeImages(raw) {
   const entries = Array.isArray(raw) ? raw
-    : typeof raw === 'string' ? (raw.startsWith('http') ? [raw] : safeParse(raw)) : [];
+    : typeof raw === 'string' && raw.trim() ? (raw.trim().startsWith('[') ? safeParse(raw) : [raw]) : [];
   const urls = [];
   for (const e of entries) {
     if (typeof e !== 'string') continue;
     for (const m of e.matchAll(/https?:\/\/[^\s"'<>\\]+/g)) {
-      const u = m[0].replace(/[),.;]+$/, '');
+      const u = m[0].replace(/[),.;]+$/, '').replace(/&amp;/g, '&'); // decode HTML-entity & from legacy ingest
       if (u && !urls.includes(u)) urls.push(u);
     }
   }
@@ -271,7 +271,7 @@ for (const r of listings) {
 
   manifest.push([ref, r.code || '', r.compound || '', r.location_area || '', r.city || '',
     r.property_type || '', r.deal_type || '', r.price || 0, r.bedrooms || 0, r.bathrooms || 0,
-    r.area_sqm || 0, urls.length, files.length, folder,
+    r.area_sqm || 0, urls.join(' | '), files.length, folder,
     `https://sierra-estates.net/explore?ref=${encodeURIComponent(r.code || ref)}`]);
   done++;
   if (done % 25 === 0 || done === listings.length) console.log(`  ${done}/${listings.length}`);

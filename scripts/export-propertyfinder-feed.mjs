@@ -56,7 +56,7 @@ function sanitizeFeedImages(raw) {
   for (const e of entries) {
     if (typeof e !== 'string') continue;
     for (const m of e.matchAll(/https?:\/\/[^\s"'<>\\]+/g)) {
-      const u = m[0].replace(/[),.;]+$/, '');
+      const u = m[0].replace(/[),.;]+$/, '').replace(/&amp;/g, '&'); // decode HTML-entity & from legacy ingest
       if (u && !urls.includes(u)) urls.push(u);
     }
   }
