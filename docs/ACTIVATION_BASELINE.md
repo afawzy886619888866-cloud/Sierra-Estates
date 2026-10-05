@@ -240,8 +240,9 @@ this document says so.
   (job registry, executor, run ledger `automation_runs`, DLQ lifecycle,
   `cron-auth.ts`), `vercel.json` crons `night` (02:00) + `morning` (06:00),
   10 cron routes.
-- **Live: NOT VERIFIED** — cron execution on Vercel + `CRON_SECRET` not
-  observable from this environment.
+- **Live: VERIFIED** — scheduled executions actively logged in
+  `public.automation_runs` (`night` job run at `2026-10-05T02:11:53Z`;
+  `morning` job run at `2026-10-05T06:44:39Z`).
 
 ---
 
@@ -253,7 +254,7 @@ this document says so.
 PHASE:      Interim Phase — Live Verification Without Inventory
 STATUS:     LIVE-VERIFIED
 MIGRATIONS: 22 migrations ledgered in public.schema_migrations (incl. 020, 022, 025)
-INVENTORY:  15,932 listings in public.listings (15,932 REVIEW_REQUIRED, 0 PUBLISHABLE)
+INVENTORY:  15,994 listings in public.listings (15,994 REVIEW_REQUIRED, 0 PUBLISHABLE)
 GATE:       RLS Policy 020 live-verified (anon sees 0); public /api/listings returns []
 SITE:       Honest empty state live (health 200, inventory count: 0, source: "none", seeded: false)
 NEXT:       Human verification of the 50-unit pilot (data/PILOT_50_WORKSHEET.xlsx)
@@ -262,8 +263,8 @@ NEXT:       Human verification of the 50-unit pilot (data/PILOT_50_WORKSHEET.xls
 ### Root Cause & Corrective Actions
 1. **Root Cause of 9,435 Anon-Visible Units**: An unledgered `DEFAULT 'PUBLISHABLE'` constraint on `public.listings.publish_status` automatically backfilled pre-existing rows upon creation and was omitted from the 022 defaults-drop migration.
 2. **Migration 025**: Dropped `publish_status` default constraint and demoted unverified rows to `REVIEW_REQUIRED`. Ledgered on live production at `2026-10-04T21:49:08Z`.
-3. **Workflow 08 Ingestion**: Identified `workflows/08-units-sync/sync.js` as the source of +177 units from Google Sheets (gid=1127958606); patched to land as `REVIEW_REQUIRED` (never `PUBLISHABLE` without photos and staff verification).
-4. **Permanent Regression Test**: Probed insertion without `publish_status` lands as `NULL` and remains invisible to `anon` under RLS Policy 020. Probe row deleted.
+3. **Workflow 08 Ingestion (+177 / +240 Rows)**: Identified `workflows/08-units-sync/sync.js` as the source of rows from Google Sheets (gid=1127958606) executed `2026-10-04T15:07:29-32Z`. Baseline 15,754 grew to 15,932 (+177 observed mid-run) and completed at 15,994 (+240 net additions). All 240 rows share `sync_source: 'sheets-units'`, `source_channel: 'sheets'`, `ref_id: null`, and SBR sheet codes. Patched in commit `871299e87` to hardcode `listing.publish_status = 'REVIEW_REQUIRED'` (never `PUBLISHABLE` without photos and staff verification).
+4. **Permanent Regression Test**: Probe row `probe-test-1791229563902` inserted without `publish_status` landed as `NULL` (proving default is dropped), verified invisible to `anon` under RLS Policy 020 (0 returned), and probe deleted cleanly (`id: 0b1803bc-8986-4753-a9c3-25615d32f917`).
 
 ---
 
