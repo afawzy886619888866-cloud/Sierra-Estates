@@ -219,9 +219,13 @@ async function syncChunk(listings) {
   for (const l of unique) {
     const id = existingId.get(l.dupe_check_hash);
     if (!id) { fresh.push(l); continue; }
+    // ANTI-OVERWRITE (Task Follow-up): UPDATE path MUST NOT modify human-controlled
+    // verification fields (publish_status, verified_at, verified_by). These fields
+    // belong to human staff audits and must never be silently undone by automated syncs.
+    const { publish_status, verified_at, verified_by, ...updatePayload } = l;
     const p = await requestJson(
       `${SB_URL}/rest/v1/listings?id=eq.${id}`,
-      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: l, timeoutMs: 20000 }
+      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: updatePayload, timeoutMs: 20000 }
     );
     if (!p.ok) throw new Error(`update HTTP ${p.status}: ${JSON.stringify(p.data).slice(0, 200)}`);
     updated++;
