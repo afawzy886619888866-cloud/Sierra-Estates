@@ -16,6 +16,7 @@ import type {
   SearchCriteria,
   UpsertPayload,
   UpsertResult,
+} from './types';
 import { checkGravityDedupe } from './dedupe';
 import { assertTransition, isStale, FRESHNESS_SLA_DAYS, VERIFIED_STATUSES, type VerificationMetadata } from './lifecycle';
 
