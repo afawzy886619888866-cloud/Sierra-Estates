@@ -24,12 +24,12 @@
   "author": "Sierra Estates Team",
   "license": "MIT",
   "dependencies": {
-"@supabase/supabase-js": "^2.117.1",
+    "@supabase/supabase-js": "^2.117.1",
     "@sierra-estates/obsidian": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   },
   "exports": {
     ".": {

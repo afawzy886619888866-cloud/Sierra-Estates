@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-"@google-cloud/pubsub": "^6.1.0",
+    "@google-cloud/pubsub": "^6.1.0",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
@@ -22,8 +22,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-"@types/node": "^26.6.2",
-    "typescript": "^7.0.2",
+    "@types/node": "^26.6.2",
+    "typescript": "^6.0.3",
     "vitest": "^5.0.1"
   }
 }
