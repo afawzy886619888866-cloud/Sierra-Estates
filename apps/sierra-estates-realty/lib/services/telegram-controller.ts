@@ -93,7 +93,8 @@ async function cmdLeads(chatId: string) {
     leads.forEach((l, idx) => {
       const budget = l.budget ? `${formatEGP(l.budget)}` : 'N/A';
       const stage = l.stage || 'inbound';
-      const target = l.preferencedCompounds?.[0] || l.preferredLocations?.[0] || 'New Cairo';
+      // §21: unknown preference shows an honest dash, never a fabricated area
+      const target = l.preferencedCompounds?.[0] || l.preferredLocations?.[0] || '—';
       text += `${idx + 1}. <b>${l.name}</b> (Stage: ${stage})\n` +
               `   💰 Budget: ${budget} | 📱 ${l.phone || l.email || 'Direct'}\n` +
               `   📍 Target: ${target}\n\n`;

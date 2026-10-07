@@ -59,35 +59,41 @@ export function generateMasterCSV() {
   ];
 
   const rows = data.map((item: any) => {
-    const cmp = item.compound || item.cmp || item.location || 'New Cairo';
-    const coords = compoundCoords[cmp] || compoundCoords['New Cairo'];
+    // §21 no-fabrication: unknown fields export as empty/0 — never invented
+    // 'New Cairo' compounds, New-Cairo GPS pins, 3/2 beds/baths, 'Apartment'
+    // types, 'Semi-Finished' finishing, 'SE-UNIT' codes, or stock render photos.
+    const cmp = item.compound || item.cmp || item.location || '';
+    const coords = compoundCoords[cmp] || null;
     const price = item.price || 0;
     const area = item.area_sqm || item.area || 0;
-    const beds = item.bedrooms || item.beds || 3;
-    const baths = item.bathrooms || item.baths || 2;
-    const img =
-      item.images && item.images.length > 0
-        ? item.images[0]
-        : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+    const beds = item.bedrooms || item.beds || 0;
+    const baths = item.bathrooms || item.baths || 0;
+    const img = item.images && item.images.length > 0 ? item.images[0] : '';
     const desc = (item.notes || item.comment || item.description || '').replace(/[\r\n]/g, ' ');
+    const sourceLabel =
+      item.sourceType === 'owner' ? 'Direct Owner'
+      : item.sourceType === 'broker' ? 'Broker Network'
+      : item.sourceType === 'archive' ? 'Archived Group Listing'
+      : '';
 
     const fields = [
-      item.sierraCode || item.code || 'SE-UNIT',
+      item.sierraCode || item.code || '',
       cmp,
       item.location || cmp,
-      item.type || 'Apartment',
-      item.operation || (item.mode === 'rent' ? 'Rent' : 'Sale'),
+      item.type || '',
+      // §21: operation only when stated or derivable from a real mode value.
+      item.operation || (item.mode === 'rent' ? 'Rent' : item.mode === 'sale' ? 'Sale' : ''),
       price,
       area,
       beds,
       baths,
-      item.finishing || 'Semi-Finished',
-      item.sourceType === 'owner' ? 'Direct Owner' : 'Broker Network',
-      item.whatsappGroupName || 'Master Sheet Direct Drop',
+      item.finishing || '',
+      sourceLabel,
+      item.whatsappGroupName || item.sourceGroup || '',
       item.contact_info || item.ownerName || '',
       item.listedAt || '',
-      coords.lat,
-      coords.lng,
+      coords ? coords.lat : '',
+      coords ? coords.lng : '',
       img,
       desc,
     ];
@@ -98,7 +104,7 @@ export function generateMasterCSV() {
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n'); // UTF-8 BOM for Excel Arabic compatibility
   fs.writeFileSync(csvPath, csvContent, 'utf-8');
   console.log(`\n✅ Generated clean master CSV (Single Source of Truth): ${csvPath}`);
-  console.log(`📊 Total reconciled properties: ${data.length} units with GPS coordinates and images.`);
+  console.log(`📊 Total reconciled properties: ${data.length} units (GPS/photo columns filled only where verified).`);
   return { total: data.length, path: csvPath };
 }
 

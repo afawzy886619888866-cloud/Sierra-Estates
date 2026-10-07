@@ -108,11 +108,11 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
     if (units && units.length > 0) {
       return units.map((u) => ({
         lastUpdate: u.lastUpdate || 'Synced',
-        availability: u.availability || (u as any).status || 'Available',
-        compound: u.compound || (u as any).location || 'New Cairo',
+        availability: u.availability || (u as any).status || '—',
+        compound: u.compound || (u as any).location || '—',
         price: u.price != null ? Number(u.price) : 0,
-        rooms: u.rooms ?? u.beds ?? 3,
-        phone: u.phone || u.contactPhone || '+201092048333',
+        rooms: u.rooms ?? u.beds ?? 0,
+        phone: u.phone || u.contactPhone || '—',
         deal: u.deal || ((u as any).mode === 'rent' ? 'Rent' : 'Sale'),
         advertiserType: u.advertiserType || ((u as any).isDirectOwner ? 'Owner' : 'Broker'),
       }));

@@ -77,13 +77,16 @@ export function exportAirtableSheet() {
   let withPhotosCount = 0;
 
   const rows = items.map((item, idx) => {
-    const rawCmp = (item.compound || item.cmp || item.location || 'New Cairo').trim();
+    // §21 no-fabrication: unknown compound stays '' — never 'New Cairo'.
+    const rawCmp = (item.compound || item.cmp || item.location || '').trim();
     const isKnown = Object.keys(VERIFIED_COMPOUND_COORDS).find(
       (k) => rawCmp.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(rawCmp.toLowerCase())
     );
 
-    let lat = '30.0263';
-    let lng = '31.4913';
+    // §21 no-fabrication: no default Cairo GPS pin (30.0263, 31.4913) —
+    // unknown compounds export empty coordinates pending human verification.
+    let lat = '';
+    let lng = '';
     let gpsStatus = '⚠️ Pending Coordinate Verification (Edit in Map)';
 
     if (isKnown && VERIFIED_COMPOUND_COORDS[isKnown]) {
@@ -98,35 +101,42 @@ export function exportAirtableSheet() {
     const hasRealPhotos = item.images && Array.isArray(item.images) && item.images.length > 0;
     if (hasRealPhotos) withPhotosCount++;
 
-    const primaryPhoto = hasRealPhotos
-      ? item.images[0]
-      : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+    // §21 no-fabrication: no stock render photo — the cell stays empty
+    // when the unit has no real photo.
+    const primaryPhoto = hasRealPhotos ? item.images[0] : '';
     const galleryLinks = hasRealPhotos ? item.images.join(', ') : 'No attached photos';
 
     const cleanNotes = (item.notes || item.comment || item.description || '').replace(/[\r\n]/g, ' ');
 
+    const sourceLabel =
+      item.sourceType === 'owner' ? '🟢 Direct Owner'
+      : item.sourceType === 'broker' ? '🔵 Broker Network'
+      : item.sourceType === 'archive' ? '🗃️ Archived Group Listing'
+      : '';
+
     const fields = [
       `REC-${String(idx + 1).padStart(4, '0')}`,
-      item.sierraCode || item.code || `SE-${idx + 1}`,
+      item.sierraCode || item.code || '',
       rawCmp,
       item.location || rawCmp,
-      item.type || 'Apartment',
-      item.operation || (item.mode === 'rent' ? 'Rent' : 'Sale'),
+      item.type || '',
+      // §21: operation only when stated or derivable from a real mode value.
+      item.operation || (item.mode === 'rent' ? 'Rent' : item.mode === 'sale' ? 'Sale' : ''),
       item.price || 0,
       item.area_sqm || item.area || 0,
-      item.bedrooms || item.beds || 3,
-      item.bathrooms || item.baths || 2,
-      item.finishing || 'Semi-Finished',
-      item.sourceType === 'owner' ? '🟢 Direct Owner' : '🔵 Broker Network',
-      item.whatsappGroupName || item.sourceGroup || 'Master Sheet Direct Drop',
+      item.bedrooms || item.beds || 0,
+      item.bathrooms || item.baths || 0,
+      item.finishing || '',
+      sourceLabel,
+      item.whatsappGroupName || item.sourceGroup || '',
       item.contact_info || item.ownerName || '',
       gpsStatus,
       lat,
       lng,
-      hasRealPhotos ? 'YES' : 'NO (Using Luxury Render)',
+      hasRealPhotos ? 'YES' : 'NO',
       primaryPhoto,
       galleryLinks,
-      item.listedAt || new Date().toISOString(),
+      item.listedAt || '',
       cleanNotes,
     ];
 

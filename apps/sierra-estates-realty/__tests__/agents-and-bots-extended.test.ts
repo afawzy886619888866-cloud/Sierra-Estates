@@ -58,7 +58,7 @@ describe('Agents & Bots Orchestration Suite', () => {
       expect(result.tier).toBe(1);
     });
 
-    it('finds top matching units for qualified buyer budget', async () => {
+    it('returns ZERO matches on empty inventory (anti-fabrication, Master Rule 5)', async () => {
       const matches = await propertyMatcher.findMatches({
         locations: ['Mivida'],
         bedrooms: 3,
@@ -67,7 +67,8 @@ describe('Agents & Bots Orchestration Suite', () => {
 
       expect(matches).toBeDefined();
       expect(Array.isArray(matches)).toBe(true);
-      expect(matches.length).toBeGreaterThan(0);
+      // With no live database inventory the matcher must NOT invent listings.
+      expect(matches.length).toBe(0);
     });
 
     it('generates bilingual WhatsApp engagement cards', () => {

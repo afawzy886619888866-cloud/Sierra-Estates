@@ -22,6 +22,7 @@ jest.mock('@/lib/supabase', () => ({
           latitude: 30.045,
           longitude: 31.635,
           status: 'available',
+          publish_status: 'PUBLISHABLE',
           images: ['https://images.unsplash.com/sample.jpg'],
         },
         {
@@ -37,6 +38,7 @@ jest.mock('@/lib/supabase', () => ({
           latitude: 30.015,
           longitude: 31.545,
           status: 'available',
+          publish_status: 'PUBLISHABLE',
           images: [],
         },
       ],
@@ -151,6 +153,63 @@ describe('GET /api/listings/spatial Endpoint', () => {
     }
   });
 
+  it('drops unverified rows the RPC returns (Phase D defense-in-depth)', async () => {
+    // The canonical RPC filters publish_status in SQL (migration 020), but
+    // the function deployed on the live project may predate that gate — the
+    // route must filter RPC output itself so unverified units can never
+    // reach the public map through this path.
+    const { supabase } = await import('@/lib/supabase');
+    (supabase.rpc as jest.Mock).mockResolvedValueOnce({
+      data: [
+        {
+          id: 'rpc-publishable',
+          title: 'Verified Villa',
+          compound: 'Mivida',
+          property_type: 'Villa',
+          deal_type: 'sale',
+          price: 9000000,
+          bedrooms: 4,
+          bathrooms: 4,
+          area_sqm: 280,
+          latitude: 30.045,
+          longitude: 31.6,
+          status: 'available',
+          publish_status: 'PUBLISHABLE',
+          images: [],
+        },
+        {
+          id: 'rpc-unverified',
+          title: 'Unreviewed Villa',
+          compound: 'Hyde Park',
+          property_type: 'Villa',
+          deal_type: 'sale',
+          price: 7000000,
+          bedrooms: 3,
+          bathrooms: 3,
+          area_sqm: 200,
+          latitude: 30.04,
+          longitude: 31.59,
+          status: 'available',
+          // REVIEW_REQUIRED must be dropped even though status is available.
+          publish_status: 'REVIEW_REQUIRED',
+          images: [],
+        },
+      ],
+      error: null,
+    });
+
+    const req = new Request('http://localhost:3000/api/listings/spatial?lat=30.045&lng=31.59&radiusKm=25');
+    const res = await spatialGET(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+
+    expect(body.success).toBe(true);
+    expect(body.meta.isLiveRpc).toBe(true);
+    expect(body.listings).toHaveLength(1);
+    expect(body.listings[0].id).toBe('rpc-publishable');
+    expect(body.listings.map((l: any) => l.id)).not.toContain('rpc-unverified');
+  });
+
   it('falls back to live public.listings rows when the PostGIS RPC is not deployed', async () => {
     const { supabase } = await import('@/lib/supabase');
 
@@ -159,45 +218,52 @@ describe('GET /api/listings/spatial Endpoint', () => {
       data: null,
       error: { message: 'function public.get_listings_near_capital does not exist' },
     });
+    // PUBLISH GATE: the fallback tier filters publish_status = 'PUBLISHABLE'
+    // inside the query (activation plan Phase D), so the mocked chain needs
+    // .eq() and the fixture row must carry the gated column.
     (supabase.from as jest.Mock).mockReturnValueOnce({
       select: jest.fn().mockReturnValue({
         in: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue({
-            data: [
-              {
-                id: 'live-pf-1',
-                ref_id: 'PF-LIVE-1',
-                code: 'PF-LIVE-1',
-                compound: 'Uptown Cairo',
-                location_area: 'Uptown Cairo',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 8000000,
-                bedrooms: 3,
-                bathrooms: 3,
-                area_sqm: 190,
-                latitude: 30.04,
-                longitude: 31.58,
-                status: 'active',
-                images: [
-                  'https://static.shared.propertyfinder.eg/media/images/listing/x/1.jpg',
-                ],
-                description: 'Live PF listing',
-                raw_data: { img: 'https://static.shared.propertyfinder.eg/media/images/listing/x/raw.jpg' },
-              },
-              // No coordinates → must be dropped by the live fallback tier.
-              {
-                id: 'live-nocoord',
-                code: 'PF-NOCOORD',
-                compound: 'Maadi',
-                property_type: 'Apartment',
-                deal_type: 'sale',
-                price: 4000000,
-                status: 'active',
-                images: [],
-              },
-            ],
-            error: null,
+          eq: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue({
+              data: [
+                {
+                  id: 'live-pf-1',
+                  ref_id: 'PF-LIVE-1',
+                  code: 'PF-LIVE-1',
+                  compound: 'Uptown Cairo',
+                  location_area: 'Uptown Cairo',
+                  property_type: 'Apartment',
+                  deal_type: 'sale',
+                  price: 8000000,
+                  publish_status: 'PUBLISHABLE',
+                  bedrooms: 3,
+                  bathrooms: 3,
+                  area_sqm: 190,
+                  latitude: 30.04,
+                  longitude: 31.58,
+                  status: 'active',
+                  images: [
+                    'https://static.shared.propertyfinder.eg/media/images/listing/x/1.jpg',
+                  ],
+                  description: 'Live PF listing',
+                  raw_data: { img: 'https://static.shared.propertyfinder.eg/media/images/listing/x/raw.jpg' },
+                },
+                // No coordinates → must be dropped by the live fallback tier.
+                {
+                  id: 'live-nocoord',
+                  code: 'PF-NOCOORD',
+                  compound: 'Maadi',
+                  property_type: 'Apartment',
+                  deal_type: 'sale',
+                  price: 4000000,
+                  publish_status: 'PUBLISHABLE',
+                  status: 'active',
+                  images: [],
+                },
+              ],
+              error: null,
+            }),
           }),
         }),
       }),

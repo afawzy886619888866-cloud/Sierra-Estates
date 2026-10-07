@@ -6,10 +6,19 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
   ArrowRight, Radar, TrendingUp, HeartHandshake, BadgeCheck, Search, Map as MapIcon,
-  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles, X, Check,
+  Star, Send, CheckCircle, Plus, Phone, Mail, RotateCcw, Sparkles,
 } from 'lucide-react';
 import SiteShell from '@/components/site/SiteShell';
 import PropertyCard, { type CardListing, type PropertyCardVariant } from '@/components/site/PropertyCard';
+import SmartFilterBar from '@/components/site/SmartFilterBar';
+import {
+  RENT_BUDGET_LADDER,
+  SALE_BUDGET_LADDER,
+  budgetBounds,
+  unitMatchesCondition,
+  unitPriceEgp,
+  type SmartFilterValue,
+} from '@/lib/site/smart-search';
 import HomeHero from '@/components/site/HomeHero';
 import PropertyShowcaseVideo from '@/components/site/PropertyShowcaseVideo';
 import VirtualTourBanner from '@/components/site/VirtualTourBanner';
@@ -28,6 +37,8 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
+// Flag-pin press now opens the compact in-map units deck rendered by
+// CompoundsMap itself — no fullscreen modal needed on the homepage.
 const COMPOUND_PICKS = ['Hyde Park', 'Mivida', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City', 'Al Rehab', 'Madinaty'];
 
 const AI_TOOLS = [
@@ -52,63 +63,14 @@ const TICKER_AR = [
   'بالم هيلز AI 9.2', 'إيستاون طلب متزايد', 'البروج نمو سنوي +18%',
 ];
 
-const SUGGESTED_COMPOUNDS = [
-  'Cairo Plaza',
-  'Mivida',
-  'Hyde Park',
-  'Mountain View iCity',
-  'Eastown',
-  'Villette',
-  'Palm Hills New Cairo',
-  'Cairo Festival City',
-  'Al Rehab',
-  'Madinaty',
-  'Uptown Cairo',
-  'The Waterway',
-  'Fifth Square',
-  'Lake View Residence',
-  'Swan Lake Residence',
-  'Stone Residence',
-  'Taj City',
-  'Zed East',
-  'Katameya Heights',
-];
-
-const POPULAR_COMPOUND_CHIPS = [
-  { en: 'All Compounds', ar: 'كل الكمبوندات', val: '' },
-  { en: 'Cairo Plaza', ar: 'كايرو بلازا', val: 'Cairo Plaza' },
-  { en: 'Mivida', ar: 'ميفيدا', val: 'Mivida' },
-  { en: 'Hyde Park', ar: 'هايد بارك', val: 'Hyde Park' },
-  { en: 'Mountain View iCity', ar: 'ماونتن فيو', val: 'Mountain View iCity' },
-  { en: 'Eastown', ar: 'إيستاون', val: 'Eastown' },
-  { en: 'Villette', ar: 'فيليت', val: 'Villette' },
-  { en: 'Palm Hills', ar: 'بالم هيلز', val: 'Palm Hills New Cairo' },
-  { en: 'Al Rehab', ar: 'الرحاب', val: 'Al Rehab' },
-  { en: 'Madinaty', ar: 'مدينتي', val: 'Madinaty' },
-  { en: 'Uptown Cairo', ar: 'أب تاون', val: 'Uptown Cairo' },
-];
-
-const RENT_PRICES = [
-  { val: '0', en: 'Any Rent Budget', ar: 'أي ميزانية إيجار' },
-  { val: '35k', en: 'Up to 35k EGP/mo', ar: 'حتى 35 ألف/شهر' },
-  { val: '60k', en: 'Up to 60k EGP/mo', ar: 'حتى 60 ألف/شهر' },
-  { val: '100k', en: 'Up to 100k EGP/mo', ar: 'حتى 100 ألف/شهر' },
-  { val: '150k', en: 'Up to 150k EGP/mo', ar: 'حتى 150 ألف/شهر' },
-  { val: '250k', en: '250k+ EGP/mo', ar: 'أكثر من 250 ألف/شهر' },
-];
-
-const SALE_PRICES = [
-  { val: '0', en: 'Any Price Budget', ar: 'أي ميزانية شراء' },
-  { val: '7m', en: 'Up to 7M EGP', ar: 'حتى 7 مليون' },
-  { val: '15m', en: 'Up to 15M EGP', ar: 'حتى 15 مليون' },
-  { val: '25m', en: 'Up to 25M EGP', ar: 'حتى 25 مليون' },
-  { val: '40m', en: 'Up to 40M EGP', ar: 'حتى 40 مليون' },
-  { val: '60m', en: '60M+ EGP', ar: 'أكثر من 60 مليون' },
-];
+const SMART_POPULAR_COMPOUNDS = new Set([
+  'Cairo Plaza', 'Mivida', 'Hyde Park', 'Mountain View iCity',
+  'Eastown', 'Villette', 'Al Rehab', 'Madinaty',
+]);
 
 export default function HomePage() {
   const { t, isAr } = useSite();
-  const [listings, setListings] = useState<CardListing[]>(HZDATA.listings as CardListing[]);
+  const [listings, setListings] = useState<CardListing[]>([]); // Phase 4/B3: real units arrive via the /api/inventory fetch below
   const [cardVariant, setCardVariant] = useState<PropertyCardVariant>('showcase');
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];
@@ -128,27 +90,42 @@ export default function HomePage() {
         setInventoryStatus('ready');
         if (data.units.length === 0) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
-          const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
-          const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
+          // §21 no-fabrication: real prices & verified direct owner detection
+          const price = Number(u.price || u.price_egp || 0);
+          const egpM = u.egpM || (price > 0 ? Number((price / 1000000).toFixed(1)) : 0);
+          const usd = u.usd || (price > 0 ? (u.mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0);
+          const isDirectOwner = Boolean(
+            u.isDirectOwner ||
+            u.advertiserType === 'Direct Owner' ||
+            u.advertiser_type === 'Direct Owner' ||
+            (typeof u.segment === 'string' && u.segment.includes('owner')) ||
+            String(u.code || '').startsWith('DO-') ||
+            String(u.code || '').startsWith('WA-')
+          );
           return {
             id: u.id || `REAL-${i + 1}`,
             code: u.code || `SE-REAL-${i + 1}`,
-            cmp: u.compound || u.location || 'New Cairo',
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds || 3,
-            bath: u.bath || 2,
-            area: u.area || 165,
-            egpM: egpM > 0 ? egpM : 8.5,
-            usd: usd > 0 ? usd : 175000,
-            ai: u.aiScore || Number((9.2 + ((i * 3) % 8) / 10).toFixed(1)),
-            tag: u.tag || 'Verified Real Inventory',
+            cmp: u.compound || u.location || '',
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            price,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.tag || (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
-            agent: 'Sierra Advisor Desk',
-            ago: 'Verified Master Sheet',
+            agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
+            ago: '',
             img: u.img || getCuratedListingImage(u, i),
+            imgCurated: !u.img,
             whatsapp: 'https://wa.me/201092048333',
-            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+            segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
+            finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+            isDirectOwner,
+            ownerType: isDirectOwner ? 'owner' : 'broker',
           };
         });
         setListings(mapped);
@@ -160,12 +137,11 @@ export default function HomePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isAr]);
 
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
-  const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '0' });
-  const [showCompoundDropdown, setShowCompoundDropdown] = useState(false);
+  const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
@@ -193,27 +169,41 @@ export default function HomePage() {
       .then((data) => {
         if (cancelled || !data?.units || !Array.isArray(data.units)) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
-          const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
-          const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
+          const price = Number(u.price || u.price_egp || 0);
+          const egpM = u.egpM || (price > 0 ? Number((price / 1000000).toFixed(1)) : 0);
+          const usd = u.usd || (price > 0 ? (u.mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0);
+          const isDirectOwner = Boolean(
+            u.isDirectOwner ||
+            u.advertiserType === 'Direct Owner' ||
+            u.advertiser_type === 'Direct Owner' ||
+            (typeof u.segment === 'string' && u.segment.includes('owner')) ||
+            String(u.code || '').startsWith('DO-') ||
+            String(u.code || '').startsWith('WA-')
+          );
           return {
             id: u.id || `LIVE-${i + 1}`,
             code: u.code || `SE-LIVE-${i + 1}`,
             cmp: u.compound || selectedMapCompound,
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds || 3,
-            bath: u.bath || 2,
-            area: u.area || 165,
-            egpM: egpM > 0 ? egpM : 8.5,
-            usd: usd > 0 ? usd : 175000,
-            ai: u.aiScore || 9.5,
-            tag: u.isNewListing ? 'New Listing' : 'Verified WhatsApp / Live Sync',
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            price,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.isNewListing ? (isAr ? 'عقار جديد' : 'New Listing') : (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
-            agent: 'Sierra Advisor Desk',
+            agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             ago: 'Live Sync',
             img: u.img || getCuratedListingImage(u, i),
+            imgCurated: !u.img,
             whatsapp: 'https://wa.me/201092048333',
-            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+            segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
+            finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+            isDirectOwner,
+            ownerType: isDirectOwner ? 'owner' : 'broker',
           };
         });
         setLiveCompoundUnits(mapped);
@@ -222,7 +212,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedMapCompound]);
+  }, [selectedMapCompound, isAr]);
 
   const matchingCompoundListings = useMemo(() => {
     if (!selectedMapCompound) return [];
@@ -241,16 +231,30 @@ export default function HomePage() {
     });
   }, [listings, selectedMapCompound, liveCompoundUnits]);
 
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'owner' | 'rent' | 'sale'>('all');
+
   const displayedFeatured = useMemo(() => {
+    let pool = [...listings];
+    if (featuredFilter === 'owner') {
+      const ownerUnits = pool.filter((p) => p.isDirectOwner);
+      if (ownerUnits.length > 0) pool = ownerUnits;
+    } else if (featuredFilter === 'rent') {
+      const rentUnits = pool.filter((p) => p.mode === 'rent');
+      if (rentUnits.length > 0) pool = rentUnits;
+    } else if (featuredFilter === 'sale') {
+      const saleUnits = pool.filter((p) => p.mode === 'sale');
+      if (saleUnits.length > 0) pool = saleUnits;
+    }
+
     // Prioritize units with real verified photos and high AI recommendation scores
-    const sorted = [...listings].sort((a, b) => {
+    const sorted = pool.sort((a, b) => {
       const aPhoto = a.img && !a.img.includes('placeholder') ? 1 : 0;
       const bPhoto = b.img && !b.img.includes('placeholder') ? 1 : 0;
       if (bPhoto !== aPhoto) return bPhoto - aPhoto;
       return (b.ai || 0) - (a.ai || 0);
     });
     return sorted.slice(0, 8);
-  }, [listings]);
+  }, [listings, featuredFilter]);
 
   const ticker = useMemo(() => {
     const items = isAr ? TICKER_AR : TICKER_EN;
@@ -263,7 +267,8 @@ export default function HomePage() {
     if (search.compound.trim()) params.set('compound', search.compound.trim());
     if (search.type) params.set('type', search.type);
     if (search.beds !== '0') params.set('beds', search.beds);
-    if (search.price !== '0') params.set('price', search.price);
+    if (search.price) params.set('price', search.price);
+    if (search.condition) params.set('condition', search.condition);
     const query = params.toString();
     return query ? `/properties?${query}` : '/properties';
   }, [search, searchMode]);
@@ -274,6 +279,7 @@ export default function HomePage() {
     if (search.compound.trim()) params.set('compound', search.compound.trim());
     if (search.type) params.set('type', search.type);
     if (search.beds !== '0') params.set('beds', search.beds);
+    if (search.price) params.set('price', search.price);
     const query = params.toString();
     return query ? `/net?${query}` : '/net';
   }, [search, searchMode]);
@@ -288,7 +294,18 @@ export default function HomePage() {
     []
   );
 
+  const compoundOptions = useMemo(
+    () =>
+      (HZDATA.compounds as MapCompound[]).map((c) => ({
+        name: c.n,
+        zone: c.z,
+        popular: SMART_POPULAR_COMPOUNDS.has(c.n),
+      })),
+    []
+  );
+
   const matchingCount = useMemo(() => {
+    const { min, max } = budgetBounds(search.price, searchMode === 'rent' ? RENT_BUDGET_LADDER : SALE_BUDGET_LADDER);
     return listings.filter((item) => {
       if (searchMode === 'rent' && item.mode !== 'rent') return false;
       if (searchMode === 'buy' && item.mode === 'rent') return false;
@@ -302,21 +319,36 @@ export default function HomePage() {
       if (search.beds !== '0' && item.beds) {
         if (item.beds < parseInt(search.beds, 10)) return false;
       }
-      if (search.price !== '0') {
-        const budget = parseInt(search.price.replace(/[^0-9]/g, ''), 10);
-        if (!Number.isNaN(budget) && budget > 0) {
-          if (searchMode === 'rent' && item.egpM * 1000 > budget * 1000) return false;
-          if (searchMode !== 'rent' && item.egpM > budget) return false;
+      if (min !== undefined || max !== undefined) {
+        const p = unitPriceEgp({ mode: item.mode, price: item.price, egpM: item.egpM });
+        if (p > 0) {
+          if (min !== undefined && p < min) return false;
+          if (max !== undefined && p > max) return false;
         }
       }
+      if (search.condition && !unitMatchesCondition({ finishing: item.finishing }, search.condition)) return false;
       return true;
     }).length;
   }, [listings, searchMode, search]);
 
-  const hasActiveFilters = Boolean(search.compound || search.type || search.beds !== '0' || search.price !== '0');
+  const hasActiveFilters = Boolean(search.compound || search.type || search.beds !== '0' || search.price || search.condition);
   const handleResetFilters = () => {
-    setSearch({ compound: '', type: '', beds: '0', price: '0' });
-    setShowCompoundDropdown(false);
+    setSearch({ compound: '', type: '', beds: '0', price: '', condition: '' });
+    setSearchMode('buy');
+  };
+
+  /** Bridge between SmartFilterBar state and the hero search state. */
+  const handleSmartChange = (v: SmartFilterValue) => {
+    const nextPurpose: 'buy' | 'rent' = v.purpose === 'rent' ? 'rent' : 'buy';
+    setSearchMode((prev) => (prev === 'new' ? nextPurpose : prev === nextPurpose ? prev : nextPurpose));
+    setSelectedMapCompound(v.compound || null);
+    setSearch({
+      compound: v.compound,
+      type: v.unitType,
+      beds: v.rooms || '0',
+      price: v.budget,
+      condition: v.condition,
+    });
   };
 
   async function submitInquiry(e: React.FormEvent) {
@@ -439,297 +471,26 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Compound Chips */}
-            <div
-              className="compounds-chip-rail"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch',
-                paddingBottom: 10,
-                marginBottom: 10,
-                scrollbarWidth: 'none',
-              }}
-            >
-              {POPULAR_COMPOUND_CHIPS.map((chip) => {
-                const isSelected = chip.val === '' ? !search.compound : search.compound.toLowerCase().includes(chip.val.toLowerCase());
-                return (
-                  <button
-                    key={chip.en}
-                    type="button"
-                    onClick={() => {
-                      setSearch({ ...search, compound: chip.val });
-                      setShowCompoundDropdown(false);
-                      if (chip.val) {
-                        handleLocateOnMap(chip.val);
-                      }
-                    }}
-                    style={{
-                      flex: 'none',
-                      padding: '6px 14px',
-                      minHeight: 42,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 999,
-                      fontSize: 12,
-                      fontWeight: isSelected ? 700 : 500,
-                      whiteSpace: 'nowrap',
-                      background: isSelected ? 'rgba(201, 148, 54, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                      color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
-                      border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      touchAction: 'manipulation',
-                    }}
-                  >
-                    {isAr ? chip.ar : chip.en}
-                  </button>
-                );
-              })}
-            </div>
+            {/* SMART COMPACT FILTER — dropdown chips: compound/area, rooms, budget, unit type, condition */}
+            <div className="search-fields" style={{ display: 'block' }}>
+              <SmartFilterBar
+                value={{
+                  purpose: searchMode === 'rent' ? 'rent' : 'sale',
+                  compound: search.compound,
+                  rooms: search.beds === '0' ? '' : search.beds,
+                  budget: search.price,
+                  unitType: search.type,
+                  condition: search.condition,
+                }}
+                onChange={handleSmartChange}
+                compounds={compoundOptions}
+                showPurpose={false}
+                showCondition
+                onReset={handleResetFilters}
+                idPrefix="hero"
+              />
 
-            <div className="search-fields">
-              {/* Compound search with autocomplete */}
-              <div className="field" style={{ position: 'relative' }}>
-                <label htmlFor="hero-compound-search">{t('fLoc')}</label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <input
-                    type="text"
-                    id="hero-compound-search"
-                    name="compound"
-                    className="hero-search-input"
-                    placeholder={t('heroCpdPh')}
-                    value={search.compound}
-                    onChange={(e) => {
-                      setSearch({ ...search, compound: e.target.value });
-                      setShowCompoundDropdown(true);
-                    }}
-                    onFocus={() => setShowCompoundDropdown(true)}
-                    autoComplete="off"
-                    style={{ paddingInlineEnd: search.compound ? 32 : 12 }}
-                  />
-                  {search.compound && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearch({ ...search, compound: '' });
-                        setShowCompoundDropdown(false);
-                      }}
-                      style={{
-                        position: 'absolute',
-                        insetInlineEnd: 8,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        cursor: 'pointer',
-                        padding: 4,
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
-                      title="Clear"
-                    >
-                      <X style={{ width: 13, height: 13 }} />
-                    </button>
-                  )}
-
-                  {/* Autocomplete Suggestions Dropdown */}
-                  {showCompoundDropdown && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 6px)',
-                        insetInlineStart: 0,
-                        width: '100%',
-                        minWidth: 220,
-                        maxHeight: 220,
-                        overflowY: 'auto',
-                        background: '#0d1522',
-                        border: '1px solid rgba(201, 148, 54, 0.3)',
-                        borderRadius: 12,
-                        boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
-                        zIndex: 100,
-                        padding: '6px',
-                      }}
-                    >
-                      {SUGGESTED_COMPOUNDS.filter((c) =>
-                        !search.compound.trim() || c.toLowerCase().includes(search.compound.toLowerCase().trim())
-                      ).slice(0, 8).map((c) => (
-                        <div
-                          key={c}
-                          onMouseDown={() => {
-                            setSearch({ ...search, compound: c });
-                            setShowCompoundDropdown(false);
-                            handleLocateOnMap(c);
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: '#FFFFFF',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            transition: 'background 0.15s ease',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(201, 148, 54, 0.15)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          <span>{c}</span>
-                          {search.compound.toLowerCase() === c.toLowerCase() && (
-                            <Check style={{ width: 13, height: 13, color: '#e9c176' }} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Property Type Pills */}
-              <div className="field" style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fType')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-                  {[
-                    { val: '', l: t('anyType') },
-                    { val: 'Apartment', l: t('tApt') },
-                    { val: 'Villa', l: t('tVilla') },
-                    { val: 'Townhouse', l: t('tTown') },
-                    { val: 'Twin House', l: t('tTwinH') },
-                    { val: 'Penthouse', l: t('tPent') },
-                    { val: 'Duplex', l: t('tDuplex') },
-                  ].map((pt) => {
-                    const isSelected = search.type === pt.val;
-                    return (
-                      <button
-                        key={pt.val || 'any'}
-                        type="button"
-                        onClick={() => setSearch({ ...search, type: pt.val })}
-                        style={{
-                          padding: '6px 14px',
-                          minHeight: 42,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: isSelected ? 700 : 500,
-                          whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          touchAction: 'manipulation',
-                        }}
-                      >
-                        {pt.l}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Bedrooms Pills */}
-              <div className="field" style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fBeds')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSearch({ ...search, beds: '0' })}
-                    style={{
-                      padding: '6px 14px',
-                      minHeight: 42,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 999,
-                      fontSize: 12,
-                      fontWeight: search.beds === '0' ? 700 : 500,
-                      whiteSpace: 'nowrap',
-                      background: search.beds === '0' ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
-                      color: search.beds === '0' ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
-                      border: search.beds === '0' ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      touchAction: 'manipulation',
-                    }}
-                  >
-                    {t('reqAny')}
-                  </button>
-                  {[1, 2, 3, 4, 5].map((n) => {
-                    const isSelected = search.beds === String(n);
-                    return (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setSearch({ ...search, beds: String(n) })}
-                        style={{
-                          padding: '6px 14px',
-                          minHeight: 42,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: isSelected ? 700 : 500,
-                          whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          touchAction: 'manipulation',
-                        }}
-                      >
-                        {n}+ {isAr ? 'غرف' : 'Beds'}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Dynamic Price Pills */}
-              <div className="field" style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8, fontFamily: "var(--font, 'Plus Jakarta Sans', sans-serif)" }}>{t('fPrice')}</label>
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-                  {(searchMode === 'rent' ? RENT_PRICES : SALE_PRICES).map((p) => {
-                    const isSelected = search.price === p.val;
-                    return (
-                      <button
-                        key={p.val}
-                        type="button"
-                        onClick={() => setSearch({ ...search, price: p.val })}
-                        style={{
-                          padding: '6px 14px',
-                          minHeight: 42,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: isSelected ? 700 : 500,
-                          whiteSpace: 'nowrap',
-                          background: isSelected ? 'rgba(201, 148, 54, 0.16)' : 'rgba(255, 255, 255, 0.04)',
-                          color: isSelected ? '#e9c176' : 'rgba(255, 255, 255, 0.7)',
-                          border: isSelected ? '1px solid #e9c176' : '1px solid rgba(255, 255, 255, 0.08)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          touchAction: 'manipulation',
-                        }}
-                      >
-                        {isAr ? p.ar : p.en}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Unit type / bedrooms / budget pills → replaced by SmartFilterBar above */}
 
               {/* Action Buttons */}
               <div className="field searchbtn" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -883,6 +644,8 @@ export default function HomePage() {
             )}
           </div>
 
+          {/* Flag-pin press → compact in-map units deck (rendered inside CompoundsMap) */}
+
           {/* Synchronized Properties Deck for Active Compound */}
           {selectedMapCompound && (
             <div className="active-compound-deck rv" style={{ marginTop: 28 }}>
@@ -955,36 +718,71 @@ export default function HomePage() {
               <h2>{t('featTit')}</h2>
               <p>{t('featSub')}</p>
 
-              {/* Card Style Variation Pills */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
-                  {isAr ? 'نمط العرض:' : 'Card Style:'}
-                </span>
-                {[
-                  { id: 'showcase', label: isAr ? 'معرض الصور' : 'Showcase' },
-                  { id: 'bento', label: isAr ? 'تحليلات العائد' : 'Financial Bento' },
-                  { id: 'compact', label: isAr ? 'موجز تنفيذي' : 'Compact' },
-                  { id: 'editorial', label: isAr ? 'تصميم هادئ' : 'Editorial' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setCardVariant(opt.id as PropertyCardVariant)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 20,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: cardVariant === opt.id ? '1px solid #C8961A' : '1px solid rgba(255,255,255,0.12)',
-                      background: cardVariant === opt.id ? 'rgba(200, 150, 26, 0.18)' : 'rgba(255,255,255,0.03)',
-                      color: cardVariant === opt.id ? '#E9C176' : 'var(--ink, #fff)',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              {/* Inventory Filter & Card Style Variation Controls */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                {/* Inventory Category Filter Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
+                    {isAr ? 'تصفية العقارات:' : 'Filter Units:'}
+                  </span>
+                  {[
+                    { id: 'all', label: isAr ? 'جميع العقارات' : 'All Listings' },
+                    { id: 'owner', label: isAr ? '🛡️ مباشر من المالك' : '🛡️ Direct Owner' },
+                    { id: 'sale', label: isAr ? 'إعادة بيع' : 'Resale' },
+                    { id: 'rent', label: isAr ? 'إيجار شهري' : 'Rent' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setFeaturedFilter(opt.id as any)}
+                      style={{
+                        padding: '5px 13px',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: featuredFilter === opt.id ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.12)',
+                        background: featuredFilter === opt.id ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255,255,255,0.03)',
+                        color: featuredFilter === opt.id ? '#34D399' : 'var(--ink, #fff)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Card Style Variation Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
+                    {isAr ? 'نمط العرض:' : 'Card Style:'}
+                  </span>
+                  {[
+                    { id: 'showcase', label: isAr ? 'معرض الصور' : 'Showcase' },
+                    { id: 'bento', label: isAr ? 'تحليلات العائد' : 'Financial Bento' },
+                    { id: 'compact', label: isAr ? 'موجز تنفيذي' : 'Compact' },
+                    { id: 'editorial', label: isAr ? 'تصميم هادئ' : 'Editorial' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setCardVariant(opt.id as PropertyCardVariant)}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: cardVariant === opt.id ? '1px solid #C8961A' : '1px solid rgba(255,255,255,0.12)',
+                        background: cardVariant === opt.id ? 'rgba(200, 150, 26, 0.18)' : 'rgba(255,255,255,0.03)',
+                        color: cardVariant === opt.id ? '#E9C176' : 'var(--ink, #fff)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <Link href="/properties" className="sec-link">

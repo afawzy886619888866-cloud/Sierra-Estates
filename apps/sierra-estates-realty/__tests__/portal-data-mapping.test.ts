@@ -5,9 +5,12 @@
  * whose rows carry `image`/`images[]`, `purpose` and `agent`. An earlier
  * mapper only understood `img`, `mode`/`listingType` and `agentName`, so
  * every live row rendered with the same static fallback photo and rentals
- * were labelled for-sale. These tests pin the corrected mapping.
+ * were labelled for-sale. These tests pin the corrected mapping AND the
+ * anti-fabrication contract: the static FALLBACK_LISTINGS array is gone, so
+ * missing fields map to honest empty values (never invented defaults) and
+ * failures resolve to an empty list that renders an honest empty state.
  */
-import { fetchListings } from '@/app/client/portalData';
+import { EMPTY_LISTINGS, fetchListings } from '@/app/client/portalData';
 
 const envelopeRow = (overrides: Record<string, unknown> = {}) => ({
   id: 'live-pf-1',
@@ -40,16 +43,14 @@ const mockEnvelope = (listings: unknown[]) =>
 describe('fetchListings — envelope row mapping', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('uses the live cover photo (image/images), never the static fallback', async () => {
+  it('uses the live cover photo (image/images), never a static fallback', async () => {
     mockEnvelope([envelopeRow()]);
 
     const listings = await fetchListings();
     expect(listings).toHaveLength(1);
     expect(listings[0].img).toContain('propertyfinder');
-    expect(listings[0].img).not.toEqual(
-      // FALLBACK_LISTINGS[0].img — same CDN host, so assert the exact URL.
-      'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png'
-    );
+    // The static fallback array is deleted; nothing may borrow its image.
+    expect(EMPTY_LISTINGS).toEqual([]);
   });
 
   it('maps purpose for-rent to mode rent', async () => {
@@ -77,7 +78,32 @@ describe('fetchListings — envelope row mapping', () => {
     expect(row.agent).toBe('Heba Mohamed');
   });
 
-  it('returns [] (→ static fallback) on a non-OK response', async () => {
+  it('maps missing fields to honest empty values — never invented defaults', async () => {
+    mockEnvelope([
+      envelopeRow({
+        compound: undefined, zone: undefined, propertyType: undefined,
+        beds: undefined, baths: undefined, area: undefined,
+        image: undefined, images: undefined, img: undefined,
+        agent: undefined, price: undefined, usd: undefined,
+      }),
+    ]);
+    const [row] = await fetchListings();
+    // ANTI-FABRICATION (activation plan Rule B): absent data surfaces as
+    // empty/0 — no 'New Cairo', no ||3 beds, no ||9.0 AI score, no 'Live'.
+    expect(row.cmp).toBe('');
+    expect(row.type).toBe('');
+    expect(row.beds).toBe(0);
+    expect(row.bath).toBe(0);
+    expect(row.area).toBe(0);
+    expect(row.img).toBe('');
+    expect(row.agent).toBe('');
+    expect(row.ago).toBe('');
+    expect(row.ai).toBe(0);
+    expect(row.egpM).toBe(0);
+    expect(row.usd).toBe(0);
+  });
+
+  it('returns [] on a non-OK response (honest empty state, no static fallback)', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(new Response('boom', { status: 500 }));
     expect(await fetchListings()).toEqual([]);
   });

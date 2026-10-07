@@ -122,7 +122,9 @@
       ],
       "inputs": [
         "$TURBO_DEFAULT$",
-        ".env*"
+        ".env*",
+        "supabase/migrations/**",
+        "../../supabase/migrations/**"
       ],
       "outputs": [
         ".next/**",

@@ -74,14 +74,29 @@ describe('Quiet Luxury V12.0 UI Upgrade (Milestone M15)', () => {
   });
 
   describe('3. Full-Bleed Property Showcase & Sticky ROI Calculator (M15-C03)', () => {
-    it('renders Price/m² spec and Net Cap Rate inside PropertyDetail', () => {
-      // Mock listing ID from data
-      const html = renderToStaticMarkup(React.createElement(PropertyDetail, { id: '1' }));
-
-      expect(html).toContain('Price / m²');
-      expect(html).toContain('Net Cap Rate / Yield');
-      expect(html).toContain('Add to VIP Viewing Basket');
-      expect(html).toContain('Mortgage &amp; Investment Yield Analyzer');
+    it('renders an honest loading state (no fabricated unit) before the live row arrives', async () => {
+      // Phase 4 wiring: PropertyDetail now fetches its single row from
+      // /api/listings/[id]. renderToStaticMarkup does not run effects, so the
+      // static markup is the pre-fetch state. The old test asserted the
+      // static-catalog fallback (id '1' resolved from the bundled snapshot);
+      // that fallback no longer exists (Master Rule 5), so the honest
+      // assertions are: the loading state renders, and NO fabricated listing
+      // content (compound, specs, scores) leaks into the pre-fetch markup.
+      const realFetch = global.fetch;
+      global.fetch = (async (..._args: unknown[]) => {
+        return { ok: true, status: 200, json: async () => ({}) } as unknown as Response;
+      }) as typeof fetch;
+      try {
+        const html = renderToStaticMarkup(React.createElement(PropertyDetail, { id: '1' }));
+        expect(html).toContain('Loading listing');
+        // No fabricated unit data in the pre-fetch markup:
+        expect(html).not.toContain('Price / m²');
+        expect(html).not.toContain('Net Cap Rate');
+        expect(html).not.toContain('Mivida');
+        expect(html).not.toContain('Hyde Park');
+      } finally {
+        global.fetch = realFetch;
+      }
     });
   });
 

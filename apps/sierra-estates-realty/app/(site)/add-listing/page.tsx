@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import SiteShell from '@/components/site/SiteShell';
 import AddListingForm from '@/components/client/AddListingForm';
 
 export const metadata: Metadata = {
@@ -9,5 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default function AddListingPage() {
-  return <AddListingForm />;
+  return (
+    <SiteShell active={null}>
+      <div style={{ paddingTop: 88, paddingBottom: 64 }}>
+        <AddListingForm />
+      </div>
+    </SiteShell>
+  );
 }

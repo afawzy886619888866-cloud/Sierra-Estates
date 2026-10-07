@@ -3,16 +3,39 @@ import { NextRequest, NextResponse } from 'next/server';
 import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
+import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
+import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
  * Receives real-time streams from Meta WhatsApp Business Cloud API, Twilio, or Automation Bridges.
+ *
+ * MEDIA POLICY — the bot accepts CONVERSATIONS (text, voice transcripts, image
+ * captions) but NOT IMAGES: media is never downloaded, never parsed into a
+ * listing, and never stored from the bot. Unit photos reach the system through
+ * the admin portal instead (/api/admin/listings/photos), which is also where
+ * the team re-requests photos from the owner/broker. A media-only message in
+ * a DM gets the polite decline copy; in a group it is skipped silently.
  */
 
-function verifyMetaSignature(payload: string, signatureHeader: string | null, appSecret: string): boolean {
-  if (!signatureHeader || !appSecret) return true; // Optional if secret is not configured
+/** Message types the conversation layer treats as media (never parsed). */
+const MEDIA_MESSAGE_TYPES = new Set([
+  'image', 'video', 'sticker', 'document', 'location', 'contacts', 'reaction', 'unsupported', 'template',
+]);
+
+/**
+ * Verify a Meta X-Hub-Signature-256 HMAC over the raw body.
+ *
+ * Phase 13 hardening: this used to `return true` when the signature header or
+ * the app secret was missing (fail-open), and it verified against the WHATSAPP
+ * API *token* — Meta signs webhooks with the App *secret*. The route-level
+ * logic now decides what "missing" means; this function ONLY answers whether
+ * the presented signature is valid. Missing inputs can never validate.
+ */
+function verifyMetaSignature(payload: string, signatureHeader: string, appSecret: string): boolean {
+  if (!signatureHeader || !appSecret) return false;
   try {
-    const signature = signatureHeader.replace('sha256=', '');
+    const signature = signatureHeader.replace(/^sha256=/, '');
     const hmac = crypto.createHmac('sha256', appSecret);
     const digest = hmac.update(payload).digest('hex');
     return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(digest, 'hex'));
@@ -22,40 +45,19 @@ function verifyMetaSignature(payload: string, signatureHeader: string | null, ap
 }
 
 async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean> {
-  const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_ID;
-
-  if (!token || !phoneId || !toPhone) {
-    console.log(`ℹ️ [WhatsApp Webhook] Outbound API credentials not configured; response generated in payload mode.`);
-    return false;
-  }
-
-  try {
-    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
-    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: cleanPhone,
-        type: 'text',
-        text: { body: text },
-      }),
-    });
-
-    if (!res.ok) {
-      console.error(`⚠️ [WhatsApp Webhook] Outbound message failed with status ${res.status}: ${await res.text()}`);
-      return false;
-    }
-    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${cleanPhone}`);
+  // Provider-aware reply: goes through the SAME sender chain as the queue
+  // drain (OpenWA gateway first when WHATSAPP_PROVIDER=openwa, Twilio next,
+  // graceful simulation last). The legacy inline Meta Graph call only worked
+  // with WHATSAPP_META_TOKEN + WHATSAPP_PHONE_NUMBER_ID and silently returned
+  // false under the openwa posture — auto-replies died with the bot.
+  const { sendWhatsApp } = await import('@/lib/server/twilio-client');
+  const result = await sendWhatsApp('', toPhone, text);
+  if (!result.simulated) {
+    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${toPhone} via ${result.provider}`);
     return true;
-  } catch (err) {
-    console.error(`❌ [WhatsApp Webhook] Outbound dispatch error:`, err);
-    return false;
   }
+  console.log('ℹ️ [WhatsApp Webhook] Outbound reply could not be delivered (no provider accepted it).');
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -72,17 +74,65 @@ export async function POST(req: NextRequest) {
   });
   if (denied) return denied;
 
+  // OPPORTUNISTIC SCHEDULED-SEND DRAIN (fire-and-forget): every authenticated
+  // inbound hit also nudges the outbound queue so scheduled jobs dispatch
+  // within seconds of live traffic instead of waiting for the daily cron
+  // piggyback. In-flight-guarded inside the drain module; never throws and
+  // never blocks this request. The /api/cron/whatsapp-dispatch route remains
+  // the authoritative scheduled drain.
+  const { piggybackWhatsAppDrain } = await import('@/lib/server/whatsapp-drain');
+  piggybackWhatsAppDrain();
+
   const rawBody = await req.text();
 
-  // Meta X-Hub-Signature-256 validation
-  const metaSecret = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN || '';
+  // Meta X-Hub-Signature-256 validation (defense in depth on top of the
+  // shared-secret gate above). Semantics after the Phase 13 hardening:
+  //   · Signature PRESENTED but no app secret configured → 403: a caller
+  //     presenting a Meta signature we cannot verify is not authenticatable.
+  //   · Signature PRESENTED and app secret configured → verify or 403.
+  //   · No signature header → allowed: the request already passed the
+  //     fail-closed shared-secret gate (automation bridges do not sign).
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
   const hubSignature = req.headers.get('x-hub-signature-256');
-  if (hubSignature && metaSecret && !verifyMetaSignature(rawBody, hubSignature, metaSecret)) {
-    return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 403 });
+  if (hubSignature) {
+    if (!appSecret) {
+      return NextResponse.json(
+        { error: 'Meta signature presented but WHATSAPP_APP_SECRET is not configured' },
+        { status: 403 },
+      );
+    }
+    if (!verifyMetaSignature(rawBody, hubSignature, appSecret)) {
+      return NextResponse.json({ error: 'Invalid HMAC signature' }, { status: 403 });
+    }
   }
 
   try {
     const body = rawBody ? JSON.parse(rawBody) : {};
+
+    // ── OpenWA gateway adapter (V3.0 wiring) ──
+    // The OpenWA gateway on 54.89.162.250 posts event envelopes of the shape
+    //   { event: 'message.received', sessionId, data: { id, chatId, body, type, sender, ... } }
+    // signed with X-OpenWA-Signature. The rest of this route speaks the Meta/
+    // bridge shape (from/text/isGroup), so flatten the envelope ONCE here and
+    // let the existing pipeline handle it unchanged.
+    const openwaEnvelope = body && typeof body === 'object' && (body as any).event === 'message.received'
+      ? ((body as any).data ?? null)
+      : null;
+    if (openwaEnvelope && typeof openwaEnvelope.chatId === 'string') {
+      const chatId: string = openwaEnvelope.chatId;
+      const isGroupChat = chatId.endsWith('@g.us');
+      const participant = [
+        openwaEnvelope.sender?.id,
+        openwaEnvelope.sender?._serialized,
+        openwaEnvelope.author,
+        typeof openwaEnvelope.sender === 'string' ? openwaEnvelope.sender : undefined,
+      ].find((v: unknown): v is string => typeof v === 'string' && v.length > 0);
+      (body as any).from = isGroupChat ? (participant || chatId) : chatId;
+      (body as any).text = openwaEnvelope.body || openwaEnvelope.caption || openwaEnvelope.text || '';
+      (body as any).type = openwaEnvelope.type || 'chat';
+      (body as any).isGroup = isGroupChat;
+      if (isGroupChat) (body as any).groupName = openwaEnvelope.chatName || chatId;
+    }
     
     // Log incoming payload for audit
     console.log("📥 Incoming Webhook Payload:", JSON.stringify(body, null, 2));
@@ -99,16 +149,48 @@ export async function POST(req: NextRequest) {
     const group = body.groupName || body.Source || (isSenderGroup ? sender : "WhatsApp Broker Group");
     const isGroup = body.isGroup === true || body.isGroup === 'true' || isSenderGroup;
 
-    // Support text messages and audio/voice note messages
-    let message = metaMessageObj?.text?.body || body.message?.text || body.text || body.Body;
-    const isVoiceMessage = metaMessageObj?.type === 'audio' || metaMessageObj?.type === 'voice' || body.type === 'audio' || body.type === 'voice';
+    // Support text messages and audio/voice note messages. An image caption
+    // IS conversation text (the bot accepts the conversation, not the image).
+    let message =
+      metaMessageObj?.text?.body ||
+      metaMessageObj?.image?.caption ||
+      body.message?.text ||
+      body.text ||
+      body.Body;
+    const messageType = metaMessageObj?.type || body.type;
+    const isVoiceMessage = messageType === 'audio' || messageType === 'voice';
+    const isMediaMessage = MEDIA_MESSAGE_TYPES.has(String(messageType));
 
     if (!message && isVoiceMessage) {
       const { extractEntitiesFromTranscript } = await import('@/lib/services/voice-inventory-parser');
-      const voiceTranscript = body.transcript || 'معايا شقة للإيجار في إيستاون التجمع الخامس مساحتها ١٦٥ متر ٣ غرف و٢ حمام تشطيب الترا سوبر لوكس مطلوب ٤٥ ألف جنية شهرياً من المالك مباشرة';
+      // ANTI-FABRICATION: the demo transcript fallback was removed. Without a
+      // real transcript the voice note is acknowledged but NOT parsed into a
+      // listing — a missing transcript must not become a fake unit.
+      const voiceTranscript = body.transcript;
+      if (!voiceTranscript) {
+        console.warn('[WhatsApp Webhook] Voice note received without transcript — skipping parse (no fabricated listings).');
+        return NextResponse.json({ status: 'skipped', reason: 'voice_note_without_transcript' });
+      }
       const parsedVoice = extractEntitiesFromTranscript(voiceTranscript, typeof sender === 'string' ? sender : undefined);
       message = parsedVoice.rawTranscript;
       console.log(`🎙️ [WhatsApp Webhook] Audio voice note transcribed & entity extracted:`, parsedVoice.extractedUnit.compound);
+    }
+
+    // ── MEDIA POLICY: accept the conversation, decline the media ──
+    // A media message carrying no text (no caption) is acknowledged, never
+    // parsed, and (in DMs) answered with the decline copy. Groups are skipped
+    // silently — the bot must not spam broker groups with auto-replies.
+    if (!message && isMediaMessage) {
+      if (isGroup) {
+        return NextResponse.json({ status: 'skipped', reason: 'media_not_supported_in_group' });
+      }
+      await sendWhatsAppReply(sender, botMediaDeclineMessage());
+      return NextResponse.json({
+        status: 'success',
+        type: 'media_declined_text_only_bot',
+        media_type: String(messageType),
+        processed_at: new Date().toISOString(),
+      });
     }
 
     if (!message) {
@@ -164,6 +246,14 @@ export async function POST(req: NextRequest) {
       // 3. Fall back to standard Conversational AI for Direct Messages (ECC Memory)
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
+
+      // MANDATORY Cairo Plaza notice: any auto-reply that discusses (or was
+      // prompted by a message discussing) Cairo Plaza El-Mataria carries the
+      // official Booking & Contracting steps verbatim at the bottom —
+      // announcement/DISCLAIMER-POLICY.md. Exact text, never altered.
+      if (replyText && (mentionsCairoPlaza(message) || mentionsCairoPlaza(replyText))) {
+        replyText = withCairoPlazaNotice(replyText);
+      }
       
       // Attempt Outbound Meta Dispatch if configured
       if (replyText && sender) {

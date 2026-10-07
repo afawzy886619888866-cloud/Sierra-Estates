@@ -15,22 +15,22 @@ import {
 } from "lucide-react";
 
 interface ParsedListingData {
-  compound: string;
-  propertyType: string;
+  compound: string | null;
+  propertyType: string | null;
   mode: "sale" | "rent";
-  beds: number;
-  baths: number;
-  area: number;
-  gardenArea?: number;
-  price: number;
-  downpayment?: number;
-  finishing: string;
-  ownerName: string;
-  mobile: string;
+  beds: number | null;
+  baths: number | null;
+  area: number | null;
+  gardenArea?: number | null;
+  price: number | null;
+  downpayment?: number | null;
+  finishing: string | null;
+  ownerName: string | null;
+  mobile: string | null;
   features: string[];
-  sierraCode: string;
-  aiScore: number;
-  aiSummary: string;
+  sierraCode: string | null;
+  aiScore: number | null;
+  aiSummary: string | null;
   confidence: number;
 }
 
@@ -66,34 +66,36 @@ export default function EasyListingStudio({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [imageUrls, setImageUrls] = useState<string[]>([
-    "https://static.shared.propertyfinder.eg/media/images/listing/01JP8XKZT6KJM7ZQB8NDKM8HEF/e7515103-ed1e-11ef-8cf7-0a8c5593e6a3-68dd5ffb-d0d6-4f24-baa5-f6b2ba5ea4cb.png",
-  ]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
 
-  // Structured Editable Form
+  // Structured Editable Form — starts EMPTY: no fabricated demo listing.
+  // Every field the parser cannot find in the text stays null until the
+  // operator fills it (§21: never prefill plausible-looking invented data).
   const [formData, setFormData] = useState<ParsedListingData>({
-    compound: "Mivida",
-    propertyType: "Apartment",
+    compound: null,
+    propertyType: null,
     mode: "sale",
-    beds: 3,
-    baths: 2,
-    area: 185,
+    beds: null,
+    baths: null,
+    area: null,
     gardenArea: 0,
-    price: 14500000,
-    downpayment: 1500000,
-    finishing: "Fully Finished",
-    ownerName: "Sierra Estates Portfolio",
-    mobile: "+20 109 204 8333",
-    features: ["Prime Lake View", "Underground Parking", "Terrace"],
-    sierraCode: "SE-MVD-3F-14.5M",
-    aiScore: 9.6,
-    aiSummary:
-      "Luxury 3-bedroom residence in Mivida with panoramic lake views and high-end finishes.",
-    confidence: 0.95,
+    price: null,
+    downpayment: null,
+    finishing: null,
+    ownerName: null,
+    mobile: null,
+    features: [],
+    sierraCode: null,
+    aiScore: null,
+    aiSummary: null,
+    confidence: 0,
   });
 
-  const pricePerSqm = formData.area > 0 ? Math.round(formData.price / formData.area) : 0;
+  const pricePerSqm =
+    formData.area && formData.price && formData.area > 0
+      ? Math.round(formData.price / formData.area)
+      : 0;
 
   const handleAIParse = async () => {
     if (!rawText.trim()) {
@@ -126,10 +128,14 @@ export default function EasyListingStudio({
       }
 
       setFormData(json.data);
+      const missing: string[] = json.missing || [];
+      const missingNote = missing.length
+        ? ` — fill manually: ${missing.join(", ")}`
+        : "";
       setSuccessMsg(
         isAr
-          ? `✓ تم تحليل البيانات بنجاح بنسبة دقة ${(json.data.confidence * 100).toFixed(0)}% (${json.source})`
-          : `✓ AI Extracted successfully (${json.source}, ${(json.data.confidence * 100).toFixed(0)}% confidence)`,
+          ? `✓ تم تحليل البيانات بنسبة دقة ${(json.data.confidence * 100).toFixed(0)}% (${json.source})${missing.length ? " — أكمل الحقول الناقصة يدوياً" : ""}`
+          : `✓ AI Extracted successfully (${json.source}, ${(json.data.confidence * 100).toFixed(0)}% confidence)${missingNote}`,
       );
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to connect to AI Parser");
@@ -146,18 +152,19 @@ export default function EasyListingStudio({
 
     try {
       const payload = {
-        compound: formData.compound,
-        propertyType: formData.propertyType,
+        compound: formData.compound || "",
+        propertyType: formData.propertyType || "",
         mode: formData.mode,
-        beds: Number(formData.beds),
-        baths: Number(formData.baths),
-        area: Number(formData.area),
-        gardenArea: Number(formData.gardenArea || 0),
-        price: Number(formData.price),
-        finishing: formData.finishing,
-        ownerName: formData.ownerName,
-        mobile: formData.mobile,
-        comment: formData.aiSummary,
+        offerType: formData.mode,
+        beds: formData.beds,
+        baths: formData.baths,
+        area: formData.area,
+        gardenArea: formData.gardenArea ?? 0,
+        price: formData.price,
+        finishing: formData.finishing || "",
+        ownerName: formData.ownerName || "",
+        mobile: formData.mobile || "",
+        comment: formData.aiSummary || "",
         photos: imageUrls,
         images: imageUrls,
       };
@@ -339,7 +346,7 @@ export default function EasyListingStudio({
                 type="url"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="https://static.shared.propertyfinder.eg/media/images/listing/..."
+                placeholder="https://paste-direct-photo-url…"
                 className="flex-1 p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
               />
               <button
@@ -388,16 +395,16 @@ export default function EasyListingStudio({
                 <Building2 className="w-4 h-4 text-[#E9C176]" />
                 <span className="text-xs font-bold uppercase tracking-wider text-white">
                   {isAr
-                    ? "البيانات المنظمة للمخزون"
-                    : "Verified Inventory Specification"}
+                    ? "البيانات المنظمة للمخزون (قيد المراجعة)"
+                    : "Inventory Specification (Pending Verification)"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="clay-stat-badge bg-[#211A0D] border border-[#C8961A]/40 text-[#E9C176]">
-                  {formData.sierraCode}
+                  {formData.sierraCode ?? "—"}
                 </span>
                 <span className="clay-stat-badge bg-purple-950/80 border border-purple-800/60 text-purple-300">
-                  AI: {formData.aiScore}/10
+                  AI: {formData.aiScore ?? "—"}/10
                 </span>
               </div>
             </div>
@@ -410,9 +417,9 @@ export default function EasyListingStudio({
                 </label>
                 <input
                   type="text"
-                  value={formData.compound}
+                  value={formData.compound ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, compound: e.target.value })
+                    setFormData({ ...formData, compound: e.target.value || null })
                   }
                   className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   required
@@ -425,12 +432,16 @@ export default function EasyListingStudio({
                   {isAr ? "نوع العقار" : "Property Type"}
                 </label>
                 <select
-                  value={formData.propertyType}
+                  value={formData.propertyType ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, propertyType: e.target.value })
+                    setFormData({ ...formData, propertyType: e.target.value || null })
                   }
+                  required
                   className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
+                  <option value="" disabled>
+                    {isAr ? "— اختر النوع —" : "— select type —"}
+                  </option>
                   <option value="Apartment">Apartment</option>
                   <option value="Standalone Villa">Standalone Villa</option>
                   <option value="Townhouse">Townhouse</option>
@@ -457,37 +468,47 @@ export default function EasyListingStudio({
                 </div>
                 <input
                   type="number"
-                  value={formData.price}
+                  value={formData.price ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, price: Number(e.target.value) })
+                    setFormData({
+                      ...formData,
+                      price: e.target.value === "" ? null : Number(e.target.value),
+                    })
                   }
                   className="w-full p-2.5 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-[#C8961A]"
                   required
                 />
               </div>
 
-              {/* Mode */}
+              {/* Offer Type Toggle (Sale / Rent) */}
               <div>
                 <label className="text-[11px] font-semibold text-slate-400 block mb-1">
-                  {isAr ? "النوع" : "Offering Mode"}
+                  {isAr ? "نوع العرض (بيع / إيجار)" : "Offer Type (Sale / Rent)"}
                 </label>
-                <select
-                  value={formData.mode}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      mode: e.target.value as "sale" | "rent",
-                    })
-                  }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
-                >
-                  <option value="sale">
-                    {isAr ? "بيع (Sale)" : "For Sale"}
-                  </option>
-                  <option value="rent">
-                    {isAr ? "إيجار (Rent)" : "For Rent"}
-                  </option>
-                </select>
+                <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950/90 border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: "sale" })}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      formData.mode === "sale"
+                        ? "bg-[#C8961A] text-slate-950 shadow-md font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {isAr ? "للبيع (Sale)" : "For Sale"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: "rent" })}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      formData.mode === "rent"
+                        ? "bg-[#C8961A] text-slate-950 shadow-md font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {isAr ? "للإيجار (Rent)" : "For Rent"}
+                  </button>
+                </div>
               </div>
 
               {/* Beds & Baths */}
@@ -498,10 +519,14 @@ export default function EasyListingStudio({
                   </label>
                   <input
                     type="number"
-                    value={formData.beds}
+                    value={formData.beds ?? ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, beds: Number(e.target.value) })
+                      setFormData({
+                        ...formData,
+                        beds: e.target.value === "" ? null : Number(e.target.value),
+                      })
                     }
+                    required
                     className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
@@ -511,13 +536,14 @@ export default function EasyListingStudio({
                   </label>
                   <input
                     type="number"
-                    value={formData.baths}
+                    value={formData.baths ?? ""}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        baths: Number(e.target.value),
+                        baths: e.target.value === "" ? null : Number(e.target.value),
                       })
                     }
+                    required
                     className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
@@ -531,10 +557,14 @@ export default function EasyListingStudio({
                   </label>
                   <input
                     type="number"
-                    value={formData.area}
+                    value={formData.area ?? ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, area: Number(e.target.value) })
+                      setFormData({
+                        ...formData,
+                        area: e.target.value === "" ? null : Number(e.target.value),
+                      })
                     }
+                    required
                     className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   />
                 </div>
@@ -544,11 +574,11 @@ export default function EasyListingStudio({
                   </label>
                   <input
                     type="number"
-                    value={formData.gardenArea || 0}
+                    value={formData.gardenArea ?? 0}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        gardenArea: Number(e.target.value),
+                        gardenArea: e.target.value === "" ? null : Number(e.target.value),
                       })
                     }
                     className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
@@ -562,12 +592,16 @@ export default function EasyListingStudio({
                   {isAr ? "حالة التشطيب" : "Finishing Status"}
                 </label>
                 <select
-                  value={formData.finishing}
+                  value={formData.finishing ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, finishing: e.target.value })
+                    setFormData({ ...formData, finishing: e.target.value || null })
                   }
+                  required
                   className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                 >
+                  <option value="" disabled>
+                    {isAr ? "— اختر التشطيب —" : "— select finishing —"}
+                  </option>
                   <option value="Fully Finished">
                     Fully Finished / Super Lux
                   </option>
@@ -585,9 +619,9 @@ export default function EasyListingStudio({
                 </label>
                 <input
                   type="text"
-                  value={formData.mobile}
+                  value={formData.mobile ?? ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, mobile: e.target.value })
+                    setFormData({ ...formData, mobile: e.target.value || null })
                   }
                   className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
                   required
@@ -603,9 +637,9 @@ export default function EasyListingStudio({
                   : "AI Luxury Brochure Description"}
               </label>
               <textarea
-                value={formData.aiSummary}
+                value={formData.aiSummary ?? ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, aiSummary: e.target.value })
+                  setFormData({ ...formData, aiSummary: e.target.value || null })
                 }
                 rows={2}
                 className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"

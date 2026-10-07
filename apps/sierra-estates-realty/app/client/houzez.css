@@ -11,14 +11,10 @@
    ============================================================================ */
 
 .hz {
-  /* Champagne-gold accent family, aligned with the site-wide brand tokens
-     (the portal kept the ported UI kit's cyan #00aeff after the Task-4
-     gold unification of the main site; the gold towers in the 3D explorer
-     made the mix clash). Gold-on-white needs dark text for contrast, so
-     filled accents pair #c8961a fills with near-black ink. */
-  --pri:#c8961a;
-  --pri-d:#a87c12;
-  --pri-soft:#fbf3e0;
+  /* Houzez luxury signature palette — clean white surfaces with light blue / cyan accents */
+  --pri:#00aeff;
+  --pri-d:#0098e0;
+  --pri-soft:#e9f8ff;
   --navy:#002b4b;
   --ink:#0d2136;
   --text:#52637a;
@@ -27,12 +23,13 @@
   --line-2:#dee4e9;
   --bg:#f8fafc;
   --surface:#ffffff;
-  --surface-2:#fdfcf9;
+  --surface-2:#fafbfc;
   --topbar:#002b4b;
   --footer:#001f38;
   --green:#28a745;
   --red:#e63946;
   --white:#fff;
+  --accent:#00aeff;
   --gold-lt:#e9c176;
   --r-btn:8px;
   --r-card:10px;
@@ -62,7 +59,7 @@
 .hz .i{width:18px;height:18px;vertical-align:middle;stroke-width:2;flex:none;}
 
 @keyframes hz-kenburns{from{transform:scale(1.02)}to{transform:scale(1.15)}}
-@keyframes hz-pulseDot{0%{box-shadow:0 0 0 0 rgba(200,150,26,.5)}70%{box-shadow:0 0 0 12px rgba(200,150,26,0)}100%{box-shadow:0 0 0 0 rgba(200,150,26,0)}}
+@keyframes hz-pulseDot{0%{box-shadow:0 0 0 0 rgba(0,174,255,.5)}70%{box-shadow:0 0 0 12px rgba(0,174,255,0)}100%{box-shadow:0 0 0 0 rgba(0,174,255,0)}}
 @keyframes hz-floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes hz-tickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @keyframes hz-blink{0%,100%{opacity:1}50%{opacity:.2}}

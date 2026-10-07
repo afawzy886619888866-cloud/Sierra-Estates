@@ -53,16 +53,14 @@ export const SLIDES: Slide[] = [
   { pre: 'CURATED PORTFOLIO', preAr: 'محفظة منتقاة', main: 'Your Journey to Exceptional Homes Begins Here', mainAr: 'رحلتك نحو منزل استثنائي تبدأ هنا', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d9354a6b-ed1e-11ef-9c46-0a0bf5daed27-4df385b4-7b6f-402c-84b8-ebded43f4525.png' },
 ];
 
-export const FALLBACK_LISTINGS: Listing[] = [
-  { id: 'INV-4F31AB8CB57C', code: 'NC-4U-95M+V', cmp: 'New Cairo', zone: 'New Cairo', type: 'Apartment', beds: 3, bath: 2, area: 180, egpM: 95.0, usd: 5200, ai: 9.8, tag: 'Direct Owner', mode: 'rent', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png' },
-  { id: 'INV-MEM-0034', code: 'MA-A-3F-12.5M+G', cmp: 'Madinaty', zone: 'Madinaty', type: 'Apartment', beds: 3, bath: 2, area: 200, egpM: 12.5, usd: 2500, ai: 9.6, tag: 'Direct Owner', mode: 'rent', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png' },
-  { id: 'INV-FBF9B4B646DA', code: 'MFS-3B-11.95M', cmp: 'Fifth Square', zone: '5th Settlement', type: 'Apartment', beds: 3, bath: 2, area: 180, egpM: 11.95, usd: 2400, ai: 9.4, tag: 'Direct Owner', mode: 'rent', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JMFXD63MAQEF8MW0QNXD96N8/00032040-ed1f-11ef-b066-0a1a96148fff-cca2e67e-f73e-4d13-808e-8b41ec505723.png' },
-  { id: 'INV-1ACF81EBB42D', code: 'FP-25R-11.5M', cmp: 'Al Rehab', zone: 'Al Rehab', type: 'Apartment', beds: 3, bath: 2, area: 180, egpM: 11.5, usd: 2300, ai: 9.3, tag: 'Direct Owner', mode: 'rent', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d796604f-ed1e-11ef-9c46-0a0bf5daed27-28f981b4-652b-4b2a-9f6b-247979184e07.png' },
-  { id: 'INV-ABD03C2726AE', code: 'REH-S-2399', cmp: 'Al Rehab', zone: 'Al Rehab', type: 'Apartment', beds: 3, bath: 2, area: 180, egpM: 55.0, usd: 1100000, ai: 9.7, tag: 'Direct Owner', mode: 'sale', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d8282b21-ed1e-11ef-9c46-0a0bf5daed27-9748ae3e-4be8-4af8-9809-a082356333b8.png' },
-  { id: 'INV-MEM-0033', code: 'MI-S-3S-48M', cmp: 'Mivida', zone: '5th Settlement', type: 'Standalone Villa', beds: 3, bath: 2, area: 200, egpM: 48.0, usd: 960000, ai: 9.8, tag: 'Direct Owner', mode: 'sale', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d8b70cdc-ed1e-11ef-9c46-0a0bf5daed27-16749c88-9c47-471b-91a0-37841318e1a8.png' },
-  { id: 'INV-MEM-0004', code: 'UNIT-WA-003', cmp: 'Mivida', zone: '5th Settlement', type: 'Villa', beds: 3, bath: 3, area: 450, egpM: 42.0, usd: 840000, ai: 9.5, tag: 'Direct Owner', mode: 'sale', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d9354a6b-ed1e-11ef-9c46-0a0bf5daed27-4df385b4-7b6f-402c-84b8-ebded43f4525.png' },
-  { id: 'INV-MEM-0008', code: 'UNIT-WA-006', cmp: 'Swan Lake', zone: '5th Settlement', type: 'Villa', beds: 3, bath: 3, area: 375, egpM: 38.0, usd: 760000, ai: 9.6, tag: 'Direct Owner', mode: 'sale', agent: 'Direct Owner Intake', ago: 'Live', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5A49GPYEBFPCP9JEJ8CF5/d883547f-ed1e-11ef-9b9a-0a6e1f0e9817-ff8db1b7-0f81-4f8b-b89f-c5daa6ce38b5.png' },
-];
+// ANTI-FABRICATION (activation plan Phase E / Master Rule 5): the static
+// FALLBACK_LISTINGS array was removed. It displayed 8 hardcoded units with
+// invented "Live" tags, hardcoded AI scores and frozen PropertyFinder image
+// URLs whenever the live verified inventory was empty. The portals now start
+// from an honest empty list and only render what the publish-gated
+// /api/listings endpoint actually returns; an empty inventory shows an honest
+// "no units published yet" state — never fabricated ones.
+export const EMPTY_LISTINGS: Listing[] = [];
 
 export const COMPOUNDS: Compound[] = [
   { n: 'Katameya Heights', g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000, c: [29.99, 31.48] },
@@ -134,13 +132,14 @@ export function priceLabel(p: Pick<Listing, 'mode' | 'usd' | 'egpM'>): string {
    Reads live inventory through the public /api/listings endpoint rather than
    querying the database from the browser. That endpoint is what applies the
    moderation filter — public submissions land as 'pending' and hidden — so a
-   direct table read here would surface unreviewed rows. Any failure → empty
-   array, so callers fall back to FALLBACK_LISTINGS. */
+   direct table read here would surface unreviewed rows, and only
+   publish_status = 'PUBLISHABLE' rows are served. Any failure → empty array:
+   callers render an honest empty state, never static fake units. */
 function mapRow(id: string, p: Record<string, unknown>): Listing {
   const num = (v: unknown, d: number): number => (typeof v === 'number' ? v : d);
   const str = (v: unknown, d: string): string => (typeof v === 'string' ? v : d);
   const rawPrice = p.price;
-  const egpM = typeof rawPrice === 'number' ? (rawPrice > 1000 ? rawPrice / 1e6 : rawPrice) : num(p.egpM, 10);
+  const egpM = typeof rawPrice === 'number' ? (rawPrice > 1000 ? rawPrice / 1e6 : rawPrice) : num(p.egpM, 0);
   // The envelope mode of /api/listings labels the deal `purpose`
   // ('for-rent' | 'for-sale'); filter mode and the sheet units use
   // `mode`/`listingType`. Accept all three so every source maps correctly.
@@ -151,20 +150,20 @@ function mapRow(id: string, p: Record<string, unknown>): Listing {
   return {
     id,
     code: str(p.code, id.slice(0, 8).toUpperCase()),
-    cmp: str(p.compound, str(p.location, 'New Cairo')),
-    zone: str(p.zone, str(p.district, 'New Cairo')),
-    type: str(p.propertyType, str(p.type, 'Villa')),
-    beds: num(p.bedrooms, num(p.beds, 3)),
-    bath: num(p.bathrooms, num(p.bath, 2)),
-    area: num(p.area, 200),
+    cmp: str(p.compound, str(p.location, '')),
+    zone: str(p.zone, str(p.district, '')),
+    type: str(p.propertyType, str(p.type, '')),
+    beds: num(p.bedrooms, num(p.beds, 0)),
+    bath: num(p.bathrooms, num(p.bath, 0)),
+    area: num(p.area, 0),
     egpM,
-    usd: num(p.usd, num(p.rent, Math.round(egpM * 180))),
-    ai: num(p.ai, num(p.aiScore, 9.0)),
+    usd: num(p.usd, num(p.rent, 0)),
+    ai: num(p.ai, num(p.aiScore, 0)),
     tag: typeof p.tag === 'string' ? p.tag : null,
     mode,
-    agent: str(p.agent, str(p.agentName, 'Sierra Advisor')),
-    ago: str(p.ago, 'Live'),
-    img: str(p.featuredImage, str(p.img, str(p.image, firstGalleryImage ?? FALLBACK_LISTINGS[0].img))),
+    agent: str(p.agent, str(p.agentName, '')),
+    ago: str(p.ago, ''),
+    img: str(p.featuredImage, str(p.img, str(p.image, firstGalleryImage ?? ''))),
   };
 }
 
