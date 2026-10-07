@@ -16,8 +16,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { InventoryUnit, InventoryStatus } from '@/lib/inventory/types';
 
-const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const OSM_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+// CARTO Voyager with {r} (@2x retina tiles) — denser road/POI detail than plain
+// OSM and sharper on high-DPI screens; z20 is CARTO's full zoom depth.
+const CARTO_TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const CARTO_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 const NEW_CAIRO: [number, number] = [30.03, 31.53];
 
 const STATUS_COLOR: Record<InventoryStatus, string> = {
@@ -146,7 +148,7 @@ export default function InventoryMap({
       scrollWheelZoom={false}
       style={{ height: '100%', width: '100%' }}
     >
-      <TileLayer url={OSM_TILES} attribution={OSM_ATTRIB} maxZoom={18} />
+      <TileLayer url={CARTO_TILES} attribution={CARTO_ATTRIB} maxZoom={20} />
       {placed.map((u) => (
         <Marker
           key={u.id}
