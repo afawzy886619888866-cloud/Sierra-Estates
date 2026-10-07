@@ -37,6 +37,9 @@ const config = {
       require.resolve('ts-jest'),
       {
         tsconfig: {
+          // TS 6 makes rootDir inference an error (TS5011) when the common
+          // source dir collapses to __tests__; pin it to the app root.
+          rootDir: __dirname,
           jsx: 'react',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
