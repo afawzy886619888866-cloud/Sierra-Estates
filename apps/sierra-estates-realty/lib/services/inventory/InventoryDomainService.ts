@@ -71,15 +71,19 @@ export class InventoryDomainService {
     const ref = this.db.collection(COLLECTION).doc(fp);
     const snap = await ref.get();
 
-    if (snap.exists || isDuplicate) {
-      const existing = snap.exists ? (snap.data() as InventoryListing) : null;
+    if (snap.exists) {
+      const existing = snap.data() as InventoryListing;
+      const existingSources = existing?.sources ?? {};
       await ref.set(
         {
           ...(existing ?? {}),
           ...payload,
           pricePerSqm: payload.area > 0 ? Math.round(payload.price / payload.area) : 0,
           updatedAt: nowIso,
-          [`sources.${source}`]: { lastSeenAt: nowIso, ref: payload.sourceRef ?? null },
+          sources: {
+            ...existingSources,
+            [source]: { lastSeenAt: nowIso, ref: payload.sourceRef ?? null },
+          },
         },
         { merge: true },
       );
@@ -118,6 +122,9 @@ export class InventoryDomainService {
       fingerprint: fp,
       source,
       sourceRef: payload.sourceRef,
+      sources: {
+        [source]: { lastSeenAt: nowIso, ref: payload.sourceRef ?? null },
+      },
       ownershipDocRef: payload.ownershipDocRef,
       verifiedBy: hasDocRef ? (payload.verifiedBy ?? actor) : undefined,
       verifiedAt: hasDocRef ? nowIso : undefined,
@@ -137,8 +144,8 @@ export class InventoryDomainService {
     metadataOrNote?: VerificationMetadata | string,
   ): Promise<void> {
     const meta: VerificationMetadata = typeof metadataOrNote === 'string'
-      ? { note: metadataOrNote }
-      : (metadataOrNote ?? {});
+      ? { note: metadataOrNote, verifiedBy: actor }
+      : { verifiedBy: actor, ...(metadataOrNote ?? {}) };
 
     const ref = this.db.collection(COLLECTION).doc(id);
     const snap = await ref.get();
