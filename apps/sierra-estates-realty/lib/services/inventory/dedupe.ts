@@ -7,6 +7,7 @@
  * identity of a unit, with price bucketed so minor price edits don't split it.
  */
 import { createHash } from 'node:crypto';
+import { GravityMemory } from '@sierra-estates/gravity-memory';
 
 /** Normalize free-text: lowercase, trim, collapse spaces, strip Arabic tatweel/diacritics. */
 export function normalizeText(input: string): string {
