@@ -371,11 +371,15 @@ function mapAssetType(type: SBRAsset["assetType"]): string {
     duplex:     "Duplex",
     townhouse:  "Town House",
   };
-  return map[type] ?? "Apartment";
+  // §21 no-fabrication: an unmapped asset type is 'Unspecified' — never
+  // mislabelled 'Apartment'.
+  return map[type] ?? "Unspecified";
 }
 
 function mapInteriorStandard(s: SBRAsset["interiorStandard"]): string {
-  return { furnished: "Furnished", semi_furnished: "Semi Furnished", unfurnished: "Unfurnished" }[s] ?? "Unfurnished";
+  // §21 no-fabrication: unknown interior standard is 'Unspecified' — never
+  // claimed 'Unfurnished'.
+  return { furnished: "Furnished", semi_furnished: "Semi Furnished", unfurnished: "Unfurnished" }[s] ?? "Unspecified";
 }
 
 function verifyRegistrySignature(payload: string, signature: string): boolean {

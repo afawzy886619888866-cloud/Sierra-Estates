@@ -240,12 +240,15 @@ class TestableOpenClawAgent {
         const sourceType: GroupSourceType = ownerType === 'owner' ? 'owner' : 'broker';
         const listedAt = u.updatedAt || new Date().toISOString();
         return {
-          type: u.type || 'Apartment', location: u.compound || u.cmp || 'New Cairo',
-          compound: u.compound || u.cmp || 'New Cairo', price: u.price || 0,
-          currency: 'EGP', area_sqm: u.area || 0, bedrooms: u.beds || 3, bathrooms: u.baths || 2,
+          // §21 no-fabrication (mirrors source mapping): unknown type/compound
+          // render as empty, bedrooms/bathrooms/finishing stay absent — never
+          // 'Apartment'/'New Cairo'/3/2/'semi_finished'.
+          type: u.type || '', location: u.compound || u.cmp || u.zone || '',
+          compound: u.compound || u.cmp || '', price: u.price || 0,
+          currency: 'EGP', area_sqm: u.area || 0, bedrooms: u.beds, bathrooms: u.baths,
           contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName || '',
           notes: u.ownerType || '', sierraCode: u.code || undefined,
-          finishing: u.finishing || 'semi_finished', sourceType,
+          finishing: u.finishing, sourceType,
           whatsappGroupName: 'Master Sheet Import',
           operation: u.mode === 'rent' ? 'Rent' : 'Sale',
           listedAt, isNewListing: _isNew(listedAt), fromArchivedGroup: false,

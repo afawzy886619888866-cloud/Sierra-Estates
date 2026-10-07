@@ -482,7 +482,9 @@ export async function semanticSearch(params: {
         description: item.description,
         compound: item.compound,
         district: item.location_area || item.compound,
-        city: item.city || 'Cairo',
+        // §21 no-fabrication: a listing with no city stays city-less — never
+        // silently re-labelled 'Cairo'.
+        city: item.city || undefined,
         price: Number(item.price) || 0,
         monthlyRent: item.deal_type === 'rent' ? Number(item.price) : undefined,
         currency: item.price_currency || 'EGP',

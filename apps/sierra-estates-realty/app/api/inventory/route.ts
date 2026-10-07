@@ -30,6 +30,7 @@ import { logger } from "@/lib/logger";
 import { InventoryQueryService } from "@/lib/services/inventory-query";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
+import { hasPendingPhoto } from "@/lib/inventory/normalize";
 import { getSupabase } from "@sierra-estates/db";
 import { appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
@@ -87,7 +88,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         // PUBLISH GATE (Phase D): only verified rows may reach the public map.
         .eq("publish_status", "PUBLISHABLE")
         .order("updated_at", { ascending: false })
-        .limit(1000),
+        .limit(5000),
       supabase
         .from("compounds")
         .select("name, lat, lng, zone, price_m, rent, ai_score"),
@@ -125,10 +126,18 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       // the deployed table (see lib/server/listing-columns.ts) — images[] is
       // the only real photo column, with raw_data.img as the curated primary.
       const raw = (listing.raw_data && typeof listing.raw_data === "object") ? listing.raw_data : {};
+      // Pick best available photo: curated img > first from images[] array.
+      // Then check with hasPendingPhoto so stock images don't count as real.
+      const imagesArr: string[] = Array.isArray(listing.images)
+        ? listing.images.filter((x: unknown) => typeof x === "string" && String(x).startsWith("http"))
+        : [];
       const primaryImg =
-        raw.img ||
-        (Array.isArray(listing.images) && listing.images[0] ? listing.images[0] : null) ||
+        (raw.img && !hasPendingPhoto(raw.img as string) ? raw.img as string : null) ||
+        imagesArr.find((u) => !hasPendingPhoto(u)) ||
+        raw.img as string ||
+        imagesArr[0] ||
         null;
+      const hasPhoto = !hasPendingPhoto(primaryImg as string | null);
 
       return {
         id: listing.id,
@@ -163,7 +172,8 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         priceLabel: price
           ? `EGP ${price.toLocaleString("en-US")}`
           : "Price on request",
-        img: primaryImg,
+        img: primaryImg ?? undefined,
+        hasPhoto,
         description: listing.description,
         updatedAt: listing.updated_at,
       };
@@ -237,15 +247,12 @@ export async function GET(request: Request) {
     if (key) seenCodes.add(key);
 
     const primaryImg = u.img;
+    // Use shared hasPendingPhoto so the pending-photo classification is
+    // consistent across the Supabase mapper above and this dedup loop.
     const hasPhoto =
       typeof u.hasPhoto === "boolean"
         ? u.hasPhoto
-        : Boolean(
-            primaryImg &&
-              String(primaryImg).startsWith("http") &&
-              !String(primaryImg).includes("unsplash.com") &&
-              !String(primaryImg).includes("placeholder")
-          );
+        : !hasPendingPhoto(primaryImg);
 
     deduplicatedUnits.push({
       ...u,

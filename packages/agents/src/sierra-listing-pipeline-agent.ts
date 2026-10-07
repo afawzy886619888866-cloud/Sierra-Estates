@@ -139,7 +139,10 @@ export class SierraListingPipelineAgent {
       'Beit El Watan': /بيت\s*الوطن|beit\s*el\s*watan/i,
     };
 
-    let compound = 'New Cairo';
+    // §21 no-fabrication: no compound matched → '' (unknown). Never
+    // default to 'New Cairo' — downstream missingFields logic treats '' the
+    // same as a legacy 'New Cairo' placeholder and prompts the sender.
+    let compound = '';
     for (const [name, regex] of Object.entries(compounds)) {
       if (regex.test(raw)) {
         compound = name;
@@ -148,7 +151,9 @@ export class SierraListingPipelineAgent {
     }
 
     // Property Type
-    let propertyType = 'Apartment';
+    // §21 no-fabrication: unmatched property type stays '' (unknown),
+    // never 'Apartment'.
+    let propertyType = '';
     if (/فيلا|standalone|villa/i.test(raw)) propertyType = 'Standalone Villa';
     else if (/توين|twin\s*house/i.test(raw)) propertyType = 'Twin House';
     else if (/تاون|town\s*house/i.test(raw)) propertyType = 'Townhouse';
@@ -182,15 +187,19 @@ export class SierraListingPipelineAgent {
     const bathsMatch = raw.match(/(\d)\s*(?:حمام|حمامات|baths?|bathrooms?)/i);
     const areaMatch = raw.match(/(\d{2,4})\s*(?:متر|م²|m2|sqm)/i);
 
-    const beds = bedsMatch ? Number(bedsMatch[1]) : 3;
-    const baths = bathsMatch ? Number(bathsMatch[1]) : 2;
-    const area = areaMatch ? Number(areaMatch[1]) : 150;
+    // §21 no-fabrication: unparsed beds/baths/area surface as 0 (unknown),
+    // never 3/2/150 defaults.
+    const beds = bedsMatch ? Number(bedsMatch[1]) : 0;
+    const baths = bathsMatch ? Number(bathsMatch[1]) : 0;
+    const area = areaMatch ? Number(areaMatch[1]) : 0;
 
     const calibrated = this.calibratePrice(rawPrice, initialDeal, raw);
 
     return {
       compound,
-      zone: '5th Settlement',
+      // §21: zone is only claimed when the message actually carries one —
+      // '5th Settlement' is never assumed.
+      zone: '',
       dealType: calibrated.deal,
       propertyType,
       price: calibrated.price,
@@ -218,25 +227,37 @@ export class SierraListingPipelineAgent {
     if (!parsed.compound || parsed.compound === 'New Cairo') missingFields.push('الكومباوند');
     if (!parsed.price || parsed.price <= 0) missingFields.push('السعر المطلوب');
     if (!parsed.ownerPhone) missingFields.push('رقم الهاتف');
+    // §21 no-fabrication: the bot ASKS for descriptive fields it cannot
+    // extract — it never invents 'Apartment'/3 beds/150 sqm.
+    if (!parsed.propertyType) missingFields.push('نوع الوحدة');
+    if (!parsed.bedrooms) missingFields.push('عدد الغرف');
+    if (!parsed.areaSqm) missingFields.push('المساحة');
 
     const photoUrls = input.mediaUrls || [];
     const hasPhotos = photoUrls.length > 0;
     const pfReady = hasPhotos && parsed.price! > 0;
 
+    // §21 no-fabrication: titles are built only from extracted facts; when
+    // neither type nor compound is known the title says so honestly.
+    const titleCoreEn = [parsed.propertyType, parsed.compound].filter(Boolean).join(' in ');
+    const titleCoreAr = [parsed.propertyType, parsed.compound].filter(Boolean).join(' في ');
+
     const unit: CalibratedUnit = {
       code: listingCode,
-      titleEn: `${parsed.propertyType} in ${parsed.compound}`,
-      titleAr: `${parsed.propertyType} في ${parsed.compound}`,
-      compound: parsed.compound || 'New Cairo',
-      zone: parsed.zone || '5th Settlement',
-      dealType: parsed.dealType || 'Rent',
-      propertyType: parsed.propertyType || 'Apartment',
+      titleEn: titleCoreEn || 'Unverified WhatsApp listing',
+      titleAr: titleCoreAr || 'إعلان واتساب قيد المراجعة',
+      // §21: unknown fields surface as empty/0 — never 'New Cairo'/'5th
+      // Settlement'/'Apartment'/3/2/150/'Super Lux'.
+      compound: parsed.compound || '',
+      zone: parsed.zone || '',
+      dealType: parsed.dealType || 'Resale',
+      propertyType: parsed.propertyType || '',
       price: parsed.price || 0,
       priceDisplay: parsed.priceDisplay || 'Price on Request',
-      bedrooms: parsed.bedrooms || 3,
-      bathrooms: parsed.bathrooms || 2,
-      areaSqm: parsed.areaSqm || 150,
-      finishing: 'Super Lux',
+      bedrooms: parsed.bedrooms || 0,
+      bathrooms: parsed.bathrooms || 0,
+      areaSqm: parsed.areaSqm || 0,
+      finishing: parsed.finishing || '',
       ownerPhone: parsed.ownerPhone || input.sender,
       ownerName: input.sender,
       photoUrls,

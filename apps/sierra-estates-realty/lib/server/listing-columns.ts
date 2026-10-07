@@ -81,6 +81,7 @@ const LISTING_COLUMNS = new Set([
     // publish gate phase D reads this column — ingest pipelines must be able
     // to write it so unverified rows are explicitly REVIEW_REQUIRED.
     'publishStatus',
+    'dupeCheckHash',
 ]);
 
 /**

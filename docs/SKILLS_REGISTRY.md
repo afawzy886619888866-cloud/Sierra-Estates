@@ -35,6 +35,8 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 
 - **`code-reviewer`**: Modern AI-powered code reviewer ensuring idiomatic TypeScript, security boundaries, and regression safety.
 - **`database-design`**: PostgreSQL schema design, indexing strategies, relationships, and serverless database optimization.
+- **`supabase`**: Official Supabase agent skill for products (Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues, SSR client integrations, and CLI/MCP).
+- **`supabase-postgres-best-practices`**: Official Postgres best practices maintained by Supabase (schema design, indexing, RLS security, EXPLAIN analysis, migrations, and pgvector).
 - **`nextjs-supabase-auth`**: Session management, middleware security gates, protected routes, and Row Level Security (RLS) policies.
 - **`sierra-deployment-ops`**: Deployment and infrastructure management for Vercel, Supabase PostgreSQL / pgvector schemas, and Cloud Storage.
 - **`full-output-enforcement` (`output-skill`)**: Enforces complete, unabridged code generation and bans placeholder patterns.

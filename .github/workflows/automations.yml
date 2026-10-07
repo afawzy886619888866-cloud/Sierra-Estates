@@ -1,11 +1,18 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Automations
 
-# Phase 11 — automation unification. This workflow is the CANONICAL scheduler;
-# the two Vercel Hobby cron slots (vercel.json → /api/cron/dispatch/night +
-# /dispatch/morning) are only a no-secrets fallback for the same windows.
+# GCP migration — AFTER infra/google-cloud is deployed this workflow is the
+# MANUAL EMERGENCY trigger (plus CI for the dispatcher contract). GCP Cloud
+# Scheduler is the canonical scheduler (5 jobs → the se-automation-dispatch
+# Workflow → the same dispatcher). Run this workflow from the Actions tab
+# whenever GCP scheduling is paused, broken, or you need a one-off forced
+# run (e.g. after fixing a failed job).
 #
-# Why both schedulers can fire the same job safely:
+# The schedule→target map in the "Resolve target" step documents the GCP cron
+# expressions so the two schedulers stay aligned, and keeps the mapping ready
+# if `schedule:` is ever re-enabled on this workflow.
+#
+# Why overlapping schedulers can fire the same job safely:
 #   every dispatch records an automation_runs row, and the dispatcher skips a
 #   job whose last success is fresher than its dedupe window (e.g. 20h for the
 #   daily syncs). Overlaps therefore collapse into one real execution plus one
@@ -17,23 +24,11 @@ name: Automations
 #   · failures also land in the failed_orchestrations DLQ (pipeline
 #     "cron:<job>") and a later success resolves them.
 #
-# Required repository secret: CRON_SECRET (same value as the Vercel env var).
-# Without it the scheduled runs fail auth and the workflow exits non-zero —
-# visible, not silent.
+# Required repository secret: CRON_SECRET (same value as the Vercel env var
+# and the GCP Secret Manager `cron_secret` entry). Without it the manual runs
+# fail auth and the workflow exits non-zero — visible, not silent.
 
 on:
-  schedule:
-    # Hourly: drain queued WhatsApp bot replies (the route itself no-ops
-    # outside the Africa/Cairo outreach window and respects sender quotas).
-    - cron: '10 * * * *'
-    # Every 3 hours: lead timers + availability SLA want a tight cadence.
-    - cron: '25 */3 * * *'
-    # Daily windows (10 min after the Vercel fallback slots: if Vercel already
-    # ran the window successfully, every job inside is deduped to "skipped").
-    - cron: '10 2 * * *'
-    - cron: '10 6 * * *'
-    # Daily sync-leads (historically 10:00 via vercel.json; keep that hour).
-    - cron: '10 10 * * *'
   workflow_dispatch:
     inputs:
       target:
@@ -79,11 +74,10 @@ jobs:
       - name: Resolve target for this event
         id: target
         env:
-          SCHEDULE: ${{ github.event.schedule }}
           INPUT_TARGET: ${{ inputs.target }}
         run: |
-          # Scheduled runs pick the job from the cron expression itself, so
-          # each schedule entry in `on:` maps to exactly one dispatch target.
+          # Read schedule dynamically from event payload if triggered by cron; otherwise use input
+          SCHEDULE=$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
           case "${SCHEDULE}" in
             '10 * * * *')    TARGET='whatsapp-dispatch' ;;
             '25 */3 * * *')  TARGET='lead-timers,check-availability-sla' ;;

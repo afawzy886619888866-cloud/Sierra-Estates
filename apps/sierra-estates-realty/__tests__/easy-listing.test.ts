@@ -437,12 +437,43 @@ describe('POST /api/easy-listing', () => {
         expect(doc.areaSqm).toBe(175);
         expect(doc.agentName).toBe('أحمد فوزي');
         expect(doc.syncSource).toBe('easy-listing');
+        // §21 pin: these are EXTRACTED facts (شقة / التجمع الخامس / ميفيلد),
+        // not fabricated defaults — the no-location case below proves it.
+        expect(doc.locationArea).toBe('New Cairo');
+        expect(doc.city).toBe('Cairo');
+        expect(doc.propertyType).toBe('Apartment');
         expect(doc.rawData.easy_listing.uploader_phone).toBe('+201012345678');
         // The code lands in the listings.code column.
         expect(doc.code).toBe('NC-MIV-APT-F2-175M');
         // Agent rows must not carry owner columns.
         expect(doc.ownerName).toBeUndefined();
         expect(mockEnqueueWhatsAppJob).not.toHaveBeenCalled();
+    });
+
+    it('§21 — stages unknown location/type as null, never invented defaults', async () => {
+        mockInsertRecord.mockResolvedValueOnce({ id: 'listing-no-loc' });
+
+        const res = await post({
+            role: 'AGENT',
+            name: 'Tester',
+            phone: '01012345678',
+            details: 'دور ثاني 175 متر للبيع',
+        });
+        expect(res.status).toBe(200);
+
+        const body = await res.json();
+        expect(body.ok).toBe(true);
+        // Ad copy carries no invented "prime location" claim.
+        expect(body.ads.facebook).not.toContain('موقع مميز');
+        expect(body.parse_warnings).toContain('region_not_detected');
+        expect(body.parse_warnings).toContain('unit_type_not_detected');
+
+        const [table, doc] = mockInsertRecord.mock.calls[0];
+        expect(table).toBe('listings');
+        // §21: absent facts are stored as null — never 'New Cairo'/'Cairo'/'Apartment'.
+        expect(doc.locationArea).toBeNull();
+        expect(doc.city).toBeNull();
+        expect(doc.propertyType).toBeNull();
     });
 
     it('extracts the phone from the details text when the field is omitted (route level)', async () => {

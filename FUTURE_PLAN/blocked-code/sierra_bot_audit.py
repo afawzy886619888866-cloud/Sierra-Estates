@@ -2,12 +2,11 @@ import sys
 import os
 from datetime import datetime
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '11_Core_Intelligence'))
+# Add packages/gravity-memory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../packages/gravity-memory')))
 
-# Local imports
-from memory.gravity_core import GravityMemory
-from config import SIERRA_PERSONA
+# Local imports from gravity-memory package
+from gravity_memory import GravityMemory, SIERRA_PERSONA
 
 class SierraBot:
     """
@@ -16,8 +15,7 @@ class SierraBot:
     """
     def __init__(self):
         print(f"Initializing {SIERRA_PERSONA['name']} Intelligence Core...")
-        # Vault stored in 11_Core_Intelligence/memory/
-        vault_path = os.path.join(os.path.dirname(__file__), '..', '11_Core_Intelligence', 'memory', 'vault.json')
+        vault_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../packages/gravity-memory/vault.json'))
         self.memory = GravityMemory(vault_path=vault_path)
         self.start_time = datetime.now()
         
