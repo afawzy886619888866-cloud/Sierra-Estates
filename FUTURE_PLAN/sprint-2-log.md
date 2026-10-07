@@ -40,5 +40,20 @@
     - **Recommendation:** Maintain the consolidated `app/admin` architecture within the Next.js App Router. Do NOT reintroduce a separate `apps/admin-dashboard` SPA. Benefits: unified deployment bundle, single auth cookie domain, shared TypeScript domain types, zero build duplication, and seamless server components.
   - **e) OpenClaw Token Audit:**
     - Token identified in local gitignored `.env` and `.env.local` line 295: `OPENCLAW_TOKEN="02b25ffca992d1128741c5fb58a34f8b680cfef51bfbec02"`.
-    - Rigorous full-repo scan confirmed that **0 git-tracked files** contain this token material.
     - Recommended for owner rotation at the OpenClaw gateway provider. Zero secrets committed.
+
+### Phase 2 — Inventory Domain Service (04 §D)
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - Added `GravityMemory` class with `.seen(record_hash)` to `packages/gravity-memory/src/index.ts` and added `@sierra-estates/gravity-memory: "workspace:*"` dependency to `apps/sierra-estates-realty/package.json`.
+  - Consolidated scattered listing logic into `InventoryDomainService`:
+    - `search(criteria)`: Added full pagination, filter predicates, and semantic fallback via `semanticSearch` in `search-service.ts`.
+    - `upsertFromSource(source, payload)`: Single entry point for Property Finder sync, sheets sync, WhatsApp ingest, and manual admin submissions.
+    - Lifecycle state machine: `draft → pending_verification → verified → published → reserved → sold | rented`, plus `expired` and `archived`.
+    - Document-backed verified flag: `ownershipDocRef` (Egyptian ownership document reference, e.g. Contract #, Shahr El Aqari ref) + `verifiedBy` + `verifiedAt` enforcing the 2026-08-17 Egypt compliance note before transitioning to `verified` or `published`.
+    - Deduplication: `hash(compound + propertyType + area + priceBand)` reusing `GravityMemory.seen()`.
+    - Freshness SLA hook: Auto-flagging listings unverified > 45 days in `MaintenanceMonitor.checkFreshnessSLA()`.
+  - Authoritative `InventoryService.ts` façade created for server-side usage, seamlessly replacing direct Firestore queries and respecting §21 no-fabrication standards.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/inventory-domain-service.test.ts`: Passed (131/131 total suites, 1,467/1,467 tests green).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.

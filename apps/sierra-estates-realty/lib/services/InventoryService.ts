@@ -16,7 +16,7 @@ import {
 } from './inventory';
 import { createSupabaseDbAdapter } from './inventory/db-adapter';
 import { MaintenanceMonitor } from './MaintenanceMonitor';
-import { SemanticSearchService } from '@/lib/server/search-service';
+import { semanticSearch, type SearchResult } from '@/lib/server/search-service';
 
 export * from './inventory';
 
@@ -93,7 +93,7 @@ export const InventoryService = {
     try {
       const dbListings = await listRecords<any>('listings', {
         limit: 1000,
-        order: { column: 'updatedAt', ascending: false },
+        orderBy: { column: 'updatedAt', ascending: false },
       });
       if (Array.isArray(dbListings)) {
         records = dbListings.map((r) => ({
@@ -130,11 +130,13 @@ export const InventoryService = {
     return await domainService.search(criteria, {
       catalog: records,
       semanticFallbackFn: async (query: string) => {
-        const fallback = await SemanticSearchService.search(query, {
+        const fallback = await semanticSearch({
+          query,
           locale: 'en',
           limit: criteria.limit ?? 20,
+          offset: 0,
         });
-        return (fallback.results || []).map((sr) => ({
+        return (fallback.results || []).map((sr: SearchResult) => ({
           id: sr.id,
           title: sr.title,
           compound: sr.compound,
