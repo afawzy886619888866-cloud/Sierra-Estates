@@ -144,3 +144,37 @@
 - **Verification Evidence:**
   - `apps/sierra-estates-realty/__tests__/whatsapp-proposal-pdf.test.ts`: Passed (135/135 total suites, 1,487/1,487 tests green).
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+### Phase 7 — Down-Payment Reservation Flow (04 §B3, GATED)
+
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **Feature Gate (`lib/config.ts`):**
+    - Added `FEATURE_FLAGS.ENABLE_UNIT_RESERVATIONS = process.env.ENABLE_UNIT_RESERVATIONS === 'true'` (DEFAULT-OFF).
+    - Requires signed Egyptian counsel authorization before toggling true.
+  - **Payment Service Upgrades (`lib/services/payment-service.ts`):**
+    - Added `isReservationsEnabled()` and gated checkout generator `createReservationCheckout`.
+    - Integrated with Stripe Checkout Sessions API (`mode: 'payment'`, EGP unit amount, metadata holding `unitId` and `investorId`).
+    - Added `confirmUnitReservation` tying payments to 14-day escrow hold locks and recording activity feed events.
+  - **API Endpoints:**
+    - `GET /api/reservations/status`: Informs frontends whether reservation flow is active or gated.
+    - `POST /api/reservations/checkout`: Creates reservation session, returning 403 Forbidden with legal checklist reference when gated.
+  - **Legal Compliance Checklist (`docs/RESERVATION_FLOW_LEGAL_CHECKLIST.md`):**
+    - Delivered compliance guide covering Egyptian Law No. 119 of 2008, Law No. 181 of 2018 (14-day statutory right of withdrawal), Prime Ministerial Decree No. 2184 of 2022 on off-plan escrow accounts, AML identification for deposits > EGP 100k, and required Cairo Economic Courts jurisdiction clauses.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/gated-reservations.test.ts`: Passed (136/136 total suites, 1,490/1,490 tests green).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+---
+
+## 30-Second Owner Executive Summary
+
+- **Sprint 2 Complete:** All targeted sections of `FUTURE_PLAN/04-growth-and-enhancements.md` (B, D, E) have been delivered and verified on branch `future-plan/sprint-2`.
+- **Repo Health & Hygiene (§E):** Untracked and legacy cache folders (`firebase/`, `_unused_archive/`) gitignored; duplicate admin SPA architecture resolved in favor of unified App Router with Edge Proxy; OpenClaw token verified isolated in local gitignored env.
+- **Unified Inventory Engine (§D):** Consolidated scattered ingestion into `InventoryDomainService` with document-backed Egyptian ownership verification (`ownershipDocRef`), Gravity deduplication, and automated 45-day freshness SLAs.
+- **Eco & Smart-Compound Intelligence (§B5) [UI Approved]:** 6 bilingual tag taxonomies deployed across ingestion, admin studio controls, and property showcase cards.
+- **Broker Saved Views & DSL v2 (§B4):** Restored and hardened Sierra DSL v2 parser with shareable filtered broker links and strict field visibility masks.
+- **Sierra Price Index (§B1) [UI Approved]:** Launched public SSR monthly market benchmark page with 6-month historical trends, bilingual telemetry, and Schema.org Dataset JSON-LD metadata for Google Rich Snippets.
+- **WhatsApp Proposal PDFs (§B2):** Implemented client-side proposal PDF generation with native Arabic RTL typography (`Cairo`/`Amiri`) and automatic WhatsApp queue dispatch.
+- **Reservation Flow (§B3, Gated):** Built credit card deposit checkout with 14-day escrow locks, safely gated behind `ENABLE_UNIT_RESERVATIONS=false` with a comprehensive legal checklist in `docs/RESERVATION_FLOW_LEGAL_CHECKLIST.md`.
+- **Zero Regressions:** 136/136 test suites passing (1,490 tests green), 17/17 Turbo packages type-checked with 0 errors.
