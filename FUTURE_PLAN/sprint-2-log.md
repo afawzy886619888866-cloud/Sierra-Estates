@@ -57,3 +57,23 @@
 - **Verification Evidence:**
   - `apps/sierra-estates-realty/__tests__/inventory-domain-service.test.ts`: Passed (131/131 total suites, 1,467/1,467 tests green).
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+### Phase 3 — Eco/Smart-Compound Tags (04 §B5) [UI]
+- **Approval Note:** Written approval granted by owner on 2026-10-07 ("apply all yes plz") for frontend work in phases marked [UI].
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **Tag Taxonomy & Extraction (`lib/services/listing-normalize.ts`):**
+    - Defined 6 canonical eco/smart compound tags (`solar_powered`, `smart_home`, `ev_charging`, `green_building`, `water_recycling`, `energy_efficient`) with bilingual (AR/EN) labels and categories (`eco`, `smart`).
+    - Implemented `extractEcoSmartTags` extracting tags from freeform Arabic and English listing text, specifications, and amenities.
+    - Integrated automatic tag extraction into `normalizeRow` / `mapRowToUnit`.
+  - **Schema & Ingestion Integration:**
+    - Added `tags?: string[]` to `Unit` (`lib/models/schema.ts`), `InventoryListing` and `UpsertPayload` (`lib/services/inventory/types.ts`).
+    - Updated `/api/listings/easy-parse` route and `/api/listings/submit` route to extract and persist `tags`.
+  - **Admin Tagging Control (`components/admin/EasyListingStudio.tsx`):**
+    - Added interactive toggle chip controls for operators to view AI-detected tags and manually toggle tags on/off prior to publishing.
+  - **Listing Cards Filter Chips [UI]:**
+    - Added minimal, on-brand bilingual tag chips to `PropertyCard.tsx` across showcase, compact, bento, and editorial variants.
+    - Wired live tag propagation through `HomePage.tsx` and `PropertyDetail.tsx`.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/eco-smart-tags.test.tsx`: 100% passed (132/132 total suites, 1,476/1,476 tests green).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.
