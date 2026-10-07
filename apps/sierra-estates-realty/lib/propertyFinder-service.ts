@@ -44,6 +44,8 @@ export interface PropertyFinderListing {
   status?: string;
   offering_type?: string;
   bedrooms?: number;
+  size?: number | string | { value?: number | string; unit?: string };
+  area?: number | string;
   city?: { name?: string };
   location?: PropertyFinderLocation;
   images?: PropertyFinderImage[];

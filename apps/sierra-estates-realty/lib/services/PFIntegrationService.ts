@@ -8,6 +8,7 @@ import { getRecord, insertRecord, listRecords, updateRecord } from '@sierra-esta
 import { Unit, Lead, COLLECTIONS } from '../models/schema';
 import { PFPropertyType } from '../property-finder/types';
 import { triggerNewListingNotification } from '../server/n8n';
+import { toListingColumns } from '../server/listing-columns';
 
 export interface PFLeadSyncSummary {
   created: number;
@@ -115,8 +116,14 @@ export class PFIntegrationService {
         images: listing.media?.images?.map(i => i.original.url) || [],
       };
 
+      const columnPayload = toListingColumns(payload as Record<string, unknown>);
+
       if (existing.length === 0) {
-        const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, payload);
+        const insertPayload = {
+          ...columnPayload,
+          publishStatus: 'REVIEW_REQUIRED',
+        };
+        const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, insertPayload);
         imported++;
 
         // Trigger n8n webhook for new listing matching
@@ -127,7 +134,9 @@ export class PFIntegrationService {
           compound: payload.compound || payload.location || payload.city || ''
         });
       } else {
-        await updateRecord(COLLECTIONS.units, existing[0].id, payload);
+        // ANTI-OVERWRITE: Do not touch human verification fields on automated update
+        const { publishStatus, verifiedAt, verifiedBy, ...updatePayload } = columnPayload;
+        await updateRecord(COLLECTIONS.units, existing[0].id, updatePayload);
         updated++;
       }
     }
@@ -138,8 +147,31 @@ export class PFIntegrationService {
   static async publishListing(unitId: string) {
     const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
     if (!unit) throw new Error('Unit not found');
+
+    // §21: a PF listing carries only real unit data. Missing price, type,
+    // bedroom/bathroom counts or area fail loudly instead of being defaulted
+    // (the old path invented 0 bedrooms / 1 bathroom / 1 sqm / a wrong
+    // location id 1 for incomplete units).
+    const incomplete: string[] = [];
+    if (!(Number(unit.price) > 0)) incomplete.push('price');
+    if (!unit.propertyType) incomplete.push('propertyType');
+    if (!(Number(unit.bedrooms) > 0)) incomplete.push('bedrooms');
+    if (!(Number(unit.bathrooms) > 0)) incomplete.push('bathrooms');
+    if (!(Number(unit.area) > 0)) incomplete.push('area');
+    if (!unit.title) incomplete.push('title');
+    if (incomplete.length > 0) {
+      throw new Error(
+        `Unit ${unitId} is not complete enough to publish to Property Finder — missing: ${incomplete.join(', ')}. Fill the record first; no default values are invented.`
+      );
+    }
+
     const locationId = await this.resolveLocationId(unit);
-    const _publicProfileId = await this.resolvePublicProfileId();
+    if (locationId === null) {
+      const lookup = unit.compound || unit.location || unit.city || '(no location on record)';
+      throw new Error(
+        `Could not resolve a Property Finder location for unit ${unitId} (searched: "${lookup}"). The old behavior silently published to location id 1 — add a compound→location mapping instead of guessing.`
+      );
+    }
 
     // FIX (Inventory OS v2): rent-vs-sale is an OFFER attribute (dealType),
     // not an availability attribute. Units that are genuinely rented
@@ -157,9 +189,9 @@ export class PFIntegrationService {
       type: this.mapPropertyType(unit.propertyType),
       category: 'residential',
       offeringType: isRent ? 'rent' : 'sale',
-      bedrooms: String(unit.bedrooms || 0),
-      bathrooms: String(unit.bathrooms || 1),
-      size: Math.max(unit.area || 0, 1),
+      bedrooms: String(unit.bedrooms),
+      bathrooms: String(unit.bathrooms),
+      size: Number(unit.area),
       location: { id: locationId },
       media: {
         images: (unit.images || []).map(url => ({ original: { url } })),
@@ -184,22 +216,16 @@ export class PFIntegrationService {
     return result;
   }
 
-  private static async resolveLocationId(unit: Unit): Promise<number> {
-    const lookup = unit.compound || unit.location || unit.city || 'New Cairo';
+  private static async resolveLocationId(unit: Unit): Promise<number | null> {
+    // §21: no 'New Cairo' fallback lookup and no fabricated location id 1 —
+    // an unresolved location is an error the caller must handle.
+    const lookup = unit.compound || unit.location || unit.city;
+    if (!lookup) return null;
     try {
       const result = await pfClient.searchLocations(lookup);
-      return result.data[0]?.id || 1;
+      return result.data[0]?.id ?? null;
     } catch {
-      return 1;
-    }
-  }
-
-  private static async resolvePublicProfileId(): Promise<number> {
-    try {
-      const users = await pfClient.getUsers({ perPage: '1' });
-      return users.data[0]?.publicProfile?.id || 1;
-    } catch {
-      return 1;
+      return null;
     }
   }
 

@@ -43,15 +43,17 @@ export interface InventoryListing {
   compound: string;
   propertyType: string;
   offerType: OfferType;
-  listingType: ListingType;
+  /** §21 no-fabrication: unset when the source did not state it. */
+  listingType: ListingType | null;
   status: ListingStatus;
-  city: string;
+  city: string | null;
   location: string;
   area: number;
   bedrooms: number;
   price: number;
   pricePerSqm: number;
-  currency: 'EGP' | 'USD';
+  /** §21 no-fabrication: unset when the source did not state it. */
+  currency: 'EGP' | 'USD' | null;
   coordinates?: { lat: number; lng: number };
   finishingType?: string;
   description?: string;

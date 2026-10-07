@@ -16,65 +16,13 @@ interface RecommendationItem {
   dispatched: boolean;
 }
 
-const INITIAL_RECOMMENDATIONS: RecommendationItem[] = [
-  {
-    id: 'rec-1',
-    propertyTitle: { en: 'Mivida 3-Bed Apartment', ar: 'شقة 3 غرف في ميفيدا' },
-    compound: 'Mivida',
-    leadName: 'Sara Mohamed',
-    leadType: 'rental',
-    matchScore: 96,
-    askingPrice: 'EGP 8,200,000',
-    monthlyRent: 'EGP 45,000 / mo',
-    rationale: {
-      en: 'Matches target budget (EGP 40k-50k), proximity to AUC, and immediate move-in requirement.',
-      ar: 'تطابق الميزانية المحددة (40-50 ألف)، القرب من الجامعة الأمريكية، وجاهزية الاستلام الفوري.'
-    },
-    dispatched: false,
-  },
-  {
-    id: 'rec-2',
-    propertyTitle: { en: 'Hyde Park 5-Bed Villa', ar: 'فيلا 5 غرف في هايد بارك' },
-    compound: 'Hyde Park',
-    leadName: 'Ahmed Al-Rashid',
-    leadType: 'vip-buyer',
-    matchScore: 92,
-    askingPrice: 'EGP 34,500,000',
-    rationale: {
-      en: 'Matches EGP 35M cash allocation, prime private garden request, and luxury gated security.',
-      ar: 'تطابق سيولة نقدية 35 مليون، طلب حديقة خاصة كبيرة، وأمان مجمع سكني فاخر.'
-    },
-    dispatched: false,
-  },
-  {
-    id: 'rec-3',
-    propertyTitle: { en: 'Villette Sky Condos Penthouse', ar: 'بنتهاوس سكاي كوندوز في فيليت سوديك' },
-    compound: 'Villette',
-    leadName: 'Karim Mansour',
-    leadType: 'investment',
-    matchScore: 91,
-    askingPrice: 'EGP 19,800,000',
-    rationale: {
-      en: 'Projected net rental yield of 9.4% with expected capital appreciation of 18% YoY.',
-      ar: 'عائد إيجاري صافٍ متوقع 9.4% مع نمو رأسمالي سنوي مقدر بنسبة 18%.'
-    },
-    dispatched: false,
-  },
-  {
-    id: 'rec-4',
-    propertyTitle: { en: 'Katameya Dunes Golf View Villa', ar: 'فيلا إطلالة جولف في قطامية ديونز' },
-    compound: 'Katameya Dunes',
-    leadName: 'Nadia El-Gohary',
-    leadType: 'vip-buyer',
-    matchScore: 89,
-    askingPrice: 'EGP 42,000,000',
-    rationale: {
-      en: 'Direct golf course frontage with ultra-luxury finishes, matching UHNW buyer brief.',
-      ar: 'واجهة مباشرة على ملعب الجولف بتشطيبات فائقة الفخامة تطابق متطلبات العميل المميز.'
-    },
-    dispatched: false,
-  },
-];
+// ANTI-FABRICATION (§21 wave 5): four fabricated demo leads with invented
+// names, match scores, prices and yield rationales were previously rendered
+// here as if the matching engine had produced them. Real recommendations
+// must come from the matching engine / CRM — until one is wired in, the hub
+// starts honestly empty. (Same treatment as LEADS_DATA and the Stage-9
+// closer board.)
+const INITIAL_RECOMMENDATIONS: RecommendationItem[] = [];
 
 export default function RecommendationsView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
@@ -181,7 +129,21 @@ export default function RecommendationsView({ lang = 'en' }: { lang?: string }) 
       </div>
 
       {/* Recommendations Grid */}
-      {filteredItems.length === 0 ? (
+      {recommendations.length === 0 ? (
+        <div
+          data-testid="recommendations-empty-state"
+          className="p-10 rounded-xl bg-slate-900/50 border border-slate-800 text-center space-y-2"
+        >
+          <div className="text-slate-300 text-sm font-semibold">
+            {isAr ? 'لا توجد توصيات بعد' : 'No recommendations yet'}
+          </div>
+          <p className="text-slate-500 text-xs max-w-md mx-auto leading-relaxed">
+            {isAr
+              ? 'لم يُنتج محرك المطابقة أي توصيات حتى الآن. عند توليد توصيات حقيقية للعملاء ستظهر هنا — لا يتم اختراع توصيات تجريبية.'
+              : 'The matching engine has not produced any recommendations yet. Real generated recommendations will appear here — demo recommendations are never invented.'}
+          </p>
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className="p-8 rounded-xl bg-slate-900/50 border border-slate-800 text-center text-slate-400 text-sm">
           {isAr ? 'لا توجد توصيات مطابقة للمحددات الحالية.' : 'No recommendations match the selected filters.'}
         </div>

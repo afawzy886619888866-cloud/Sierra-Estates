@@ -125,7 +125,10 @@ export class PropertyMatchmaker {
 
     // 4. Quality & Valuation Boost (Weight: 20)
     maxScore += 20;
-    const quality = property.valuationScore || 75;
+    // §21 no-fabrication: the quality boost is computed only from a real
+    // valuation score — an unscored property earns no boost, never an
+    // assumed 75/100.
+    const quality = property.valuationScore ?? 0;
     const qualityBoost = Math.round((quality / 100) * 20);
     score += qualityBoost;
     if (quality >= 85) {

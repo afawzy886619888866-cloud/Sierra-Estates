@@ -80,15 +80,20 @@ function loadRealListings(opts: { publishableOnly?: boolean } = {}): Listing[] {
     if (opts.publishableOnly ? status !== 'PUBLISHABLE' : status === 'DUPLICATE') continue;
     const price = Number(c[iPrice]);
     if (!Number.isFinite(price) || price <= 0) continue;
-    const currency = (c[iCur] || 'EGP').trim().toUpperCase();
+    // §21 no-fabrication: a real row with no stated currency cannot be
+    // priced in USD terms honestly — skip it rather than assume EGP.
+    const currency = (c[iCur] || '').trim().toUpperCase();
+    if (!currency) continue;
     const usd = currency === 'USD' ? price : price / EGP_PER_USD;
 
     listings.push({
       id: c[iUnit],
       code: c[iUnit],
       compound: c[iCompound],
-      zone: (c[iZone] || 'New Cairo') as Listing['zone'],
-      type: (c[iType] || 'Apartment') as Listing['type'],
+      // §21 no-fabrication: empty district/type stay '' — the CSV's real
+      // values are used verbatim, never 'New Cairo'/'Apartment' defaults.
+      zone: (c[iZone] || '') as Listing['zone'],
+      type: (c[iType] || '') as Listing['type'],
       beds: Number(c[iBeds]) || 0,
       bath: 0,
       area: Number(c[iArea]) || 0,
@@ -96,7 +101,7 @@ function loadRealListings(opts: { publishableOnly?: boolean } = {}): Listing[] {
       usd,
       aiScore: (Number(c[iQ]) || 0) / 10, // quality_score 0-100 → 0-10
       mode: c[iDeal] === 'rent' ? 'rent' : 'sale',
-      agent: 'Sierra',
+      agent: 'Unassigned',
       img: '',
       status: 'active',
     } as Listing);

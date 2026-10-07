@@ -41,23 +41,27 @@ CREATE TABLE IF NOT EXISTS public.listings (
     description_ar TEXT,
     compound TEXT NOT NULL,
     developer TEXT,
-    location_area TEXT DEFAULT 'New Cairo',
-    city TEXT DEFAULT 'Cairo',
-    property_type TEXT DEFAULT 'Apartment',
-    deal_type TEXT DEFAULT 'sale' CHECK (deal_type IN ('sale', 'rent', 'resale', 'primary')),
+    -- §21 no-fabrication: unknown property facts stay NULL — never silently
+    -- materialized as invented defaults ('New Cairo' / 'Cairo' / 'Apartment' /
+    -- 'sale' / 'Core & Shell' / 'Fair Value'). Migration 20261003_022 drops
+    -- the same defaults on already-deployed databases.
+    location_area TEXT,
+    city TEXT,
+    property_type TEXT,
+    deal_type TEXT CHECK (deal_type IN ('sale', 'rent', 'resale', 'primary')),
     price NUMERIC(15, 2) NOT NULL DEFAULT 0,
     price_currency TEXT DEFAULT 'EGP',
     bedrooms INT DEFAULT 0,
     bathrooms INT DEFAULT 0,
     area_sqm NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    finishing_type TEXT DEFAULT 'Core & Shell',
+    finishing_type TEXT,
     delivery_year INT,
     down_payment NUMERIC(15, 2) DEFAULT 0,
     installment_years INT DEFAULT 0,
     monthly_installment NUMERIC(15, 2) DEFAULT 0,
     roi_percentage NUMERIC(5, 2),
     cap_rate NUMERIC(5, 2),
-    valuation_status TEXT DEFAULT 'Fair Value',
+    valuation_status TEXT,
     -- The public site and the legacy Firestore documents use a wider status
     -- vocabulary than the original six values: 'available' is what the client
     -- feed and the seed data emit, and 'Pending Review' is what the

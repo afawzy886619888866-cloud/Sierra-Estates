@@ -34,7 +34,18 @@ const matchAnswersSchema = z.object({
 
 async function loadListings(): Promise<Listing[]> {
   try {
-    const rows = await listRecords<Record<string, unknown>>("listings");
+    // PUBLISH GATE (activation plan Phase D): the query itself filters to
+    // on-market statuses AND publish_status = 'PUBLISHABLE' — the live table
+    // buries ~9.7k archived rows above the active ones, and unverified rows
+    // (public submissions land as REVIEW_REQUIRED) must never reach a public
+    // match response regardless of their status.
+    const rows = await listRecords<Record<string, unknown>>("listings", {
+      where: [
+        { column: "status", op: "in", value: ["active", "available"] },
+        { column: "publish_status", op: "eq", value: "PUBLISHABLE" },
+      ],
+      limit: 500,
+    });
     if (rows.length > 0) {
       // toListingRecord restores the app vocabulary (beds / bath / area /
       // type / mode) the scorer below reads.

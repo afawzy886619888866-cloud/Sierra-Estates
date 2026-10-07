@@ -7,10 +7,11 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",
+    "@sierra-estates/obsidian": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26",
+    "@types/node": "^26.6.2",
     "typescript": "^7.0.2"
   },
   "scripts": {

@@ -35,6 +35,7 @@ import {
   InventoryCommandView,
   InventoryOsView,
   WorkflowStudioView,
+  WorkflowOpsView,
   MemoryBrainView,
   CairoPlazaAdminView,
   ViewingsView,
@@ -44,6 +45,7 @@ import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } fr
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
+import WhatsAppOutboxView from '@/app/admin/views/WhatsAppOutboxView';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -1509,14 +1511,23 @@ function ListingsHubPage({T}){
 }
 
 /* ── STAGE-9 CLOSER ──────────────────────────────────────────────────── */
-const DEALS_DATA=[
-  {id:'DL-0097',client:'Ahmed Al-Rashid',phone:'+20 100 111 2233',prop:'Villa Hyde Park · 5 Beds · 420m²',value:'EGP 35M',stage:'contract',prog:85,signed:false,deposit:true,c:'#C8961A'},
-  {id:'DL-0096',client:'Khalid Mansour',phone:'+971 50 333 4455',prop:'Penthouse Uptown · 4 Beds · 320m²',value:'EGP 28M',stage:'negotiation',prog:60,signed:false,deposit:false,c:'#1E88D9'},
-  {id:'DL-0095',client:'Omar Farouk',phone:'+20 100 555 6677',prop:'Twin House Mountain View · 4 Beds',value:'EGP 22M',stage:'contract',prog:72,signed:true,deposit:true,c:'#34D399'},
-  {id:'DL-0094',client:'Rania Nasser',phone:'+20 102 777 8899',prop:'Villa Villette · 5 Beds · 380m²',value:'EGP 31M',stage:'closed',prog:100,signed:true,deposit:true,c:'#7C3AED'},
-  {id:'DL-0093',client:'Hisham Bakr',phone:'+20 109 888 9900',prop:'Garden Villa Mivida · 3 Beds · 195m²',value:'EGP 8.5M',stage:'initial',prog:25,signed:false,deposit:false,c:'#E63946'},
-  {id:'DL-0092',client:'Layla Karim',phone:'+20 109 666 7788',prop:'Apartment Eastown · 3 Beds · 155m²',value:'EGP 7.2M',stage:'negotiation',prog:50,signed:false,deposit:false,c:'#f59e0b'},
-];
+// §21 no-fabrication: this board previously shipped six hardcoded demo
+// deals (Ahmed Al-Rashid EGP 35M, Omar Farouk, …) rendered as a live
+// "EGP 130.7M" pipeline. Real deals arrive via intake/CRM wiring — until
+// then the board stays honestly EMPTY, never seeded with fake clients.
+interface CloserDeal {
+  id: string;
+  client: string;
+  phone: string;
+  prop: string;
+  value: string;
+  stage: string;
+  prog: number;
+  signed: boolean;
+  deposit: boolean;
+  c: string;
+}
+const DEALS_DATA: CloserDeal[] = [];
 function Stage9CloserPage({T}){
   const [stageF,setStageF]=useState('all');
   const STAGES=[
@@ -1566,7 +1577,13 @@ function Stage9CloserPage({T}){
       </div>
       {/* Deal cards */}
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {filtered.map(deal=>(
+        {filtered.length===0?(
+          <div className="card" style={{padding:'28px 18px',textAlign:'center'}}>
+            <div style={{fontSize:34,marginBottom:8,opacity:.6}}>🗂️</div>
+            <div style={{fontWeight:700,fontSize:14,color:'var(--tx)',marginBottom:4}}>No deals on file</div>
+            <div style={{fontSize:11.5,color:'var(--tx-m)',maxWidth:460,margin:'0 auto'}}>The closer pipeline is empty until real deals are ingested — Sierra does not display demo clients, invented progress, or fabricated pipeline value.</div>
+          </div>
+        ):filtered.map(deal=>(
           <div key={deal.id} className="card" style={{borderLeft:`3px solid ${deal.c}`}}>
             <div style={{padding:'14px 16px'}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
@@ -1628,17 +1645,12 @@ interface PipeDeal {
   phone: string;
 }
 
-const INITIAL_PIPE_DEALS: PipeDeal[] = [
-  {id:'DL-01',n:'Ahmed Al-Rashid',d:'Villa · Hyde Park',v:'EGP 20M',s:'Negotiation',ai:9.4,src:'Property Finder',phone:'+201001112233'},
-  {id:'DL-02',n:'Khalid Mansour',d:'Penthouse · Uptown Cairo',v:'EGP 15M',s:'Negotiation',ai:9.1,src:'WhatsApp',phone:'+971503334455'},
-  {id:'DL-03',n:'Sara Mohamed',d:'3-Bed · Mivida · Rent',v:'$2.4K/mo',s:'Viewing',ai:8.7,src:'Website',phone:'+201012223344'},
-  {id:'DL-04',n:'Omar Farouk',d:'Twin House · Mountain View',v:'EGP 12.5M',s:'Viewing',ai:8.9,src:'Property Finder',phone:'+201005556677'},
-  {id:'DL-05',n:'Nadia Hassan',d:'Apartment · Madinaty',v:'EGP 5M',s:'Qualifying',ai:8.2,src:'Website',phone:'+201124445566'},
-  {id:'DL-06',n:'Layla Karim',d:'Furnished 2-Bed · Eastown',v:'$1.8K/mo',s:'New',ai:7.8,src:'Property Finder',phone:'+201096667788'},
-  {id:'DL-07',n:'Tarek Aziz',d:'Duplex · Villette',v:'EGP 9.8M',s:'New',ai:8.4,src:'WhatsApp',phone:'+201027778899'},
-  {id:'DL-08',n:'Mona Selim',d:'Villa · Katameya Heights',v:'EGP 38M',s:'Closed Won',ai:9.7,src:'Direct',phone:'+201098889900'},
-  {id:'DL-09',n:'Hassan Badr',d:'Studio · Taj City',v:'EGP 2.1M',s:'Closed Lost',ai:6.1,src:'Website',phone:'+201051112233'},
-];
+const INITIAL_PIPE_DEALS: PipeDeal[] = [];
+// §21 no-fabrication: the kanban previously shipped nine hardcoded demo
+// deals (DL-01…DL-09 — fake clients, fake ★ai scores, fake values) plus a
+// hardcoded "EGP 102.4M" pipeline total that was never even computed. Real
+// pipeline rows come from lead-intake wiring; until then the board stays
+// honestly EMPTY.
 
 function PipelinePage({ T }: { T: any }) {
   const ar = T('lang')==='ar';
@@ -1669,6 +1681,10 @@ function PipelinePage({ T }: { T: any }) {
     return true;
   });
 
+  // §21: pipeline value is COMPUTED from the rows on the board — never a
+  // hardcoded marketing number (was: a literal "EGP 102.4M" string).
+  const pipelineTotalM = filteredDeals.reduce((s, d) => s + parseFloat(d.v.replace(/[^\d.]/g, '')) || s, 0);
+
   const totals = {
     all: filteredDeals.length,
     active: filteredDeals.filter(d => !d.s.startsWith('Closed')).length,
@@ -1692,9 +1708,18 @@ function PipelinePage({ T }: { T: any }) {
         </div>
 
         <span style={{marginInlineStart:'auto',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)',alignSelf:'center'}}>
-          {ar?'قيمة الخط':'Pipeline value'}: <b style={{color:'var(--gold)'}}>EGP 102.4M</b> · {totals.active} {ar?'نشطة':'active'} · {totals.won} {ar?'مكسوبة':'won'}
+          {ar?'قيمة الخط':'Pipeline value'}: <b style={{color:'var(--gold)'}}>EGP {pipelineTotalM.toFixed(1)}M</b> · {totals.active} {ar?'نشطة':'active'} · {totals.won} {ar?'مكسوبة':'won'}
         </span>
       </div>
+
+      {/* §21 honest empty state — no demo deals, no invented kanban rows */}
+      {filteredDeals.length === 0 && (
+        <div className="card" style={{padding:'24px 18px',textAlign:'center',marginBottom:14}}>
+          <div style={{fontSize:30,marginBottom:6,opacity:.6}}>📋</div>
+          <div style={{fontWeight:700,fontSize:13,color:'var(--tx)',marginBottom:4}}>{ar?'لا توجد صفقات مسجلة':'No deals on file'}</div>
+          <div style={{fontSize:11,color:'var(--tx-m)',maxWidth:480,margin:'0 auto'}}>{ar?'خط الصفقات فارغ حتى إدخال بيانات عملاء حقيقية — لا يتم عرض صفقات تجريبية أو قيمة وهمية.':'The pipeline is empty until real client data is ingested — Sierra never displays demo deals, invented ai scores, or fabricated pipeline value.'}</div>
+        </div>
+      )}
 
       <div className="kanban">
         {stages.map(st=>{
@@ -1773,74 +1798,12 @@ interface TaskItem {
   tag?: string;
 }
 
-const TASKS_INIT: TaskItem[] = [
-  {
-    id: 'TSK-01',
-    t: '📸 Photo Hunter: Dispatch photographer to Mivida Villa (SE-MVD-VLA-0006) — high-yield luxury unit missing photos',
-    due: 'Today 14:00',
-    pr: 'high',
-    done: false,
-    ag: 'Photo Team',
-    tag: 'Photo Hunter',
-  },
-  {
-    id: 'TSK-02',
-    t: '🏢 Property Finder: Verify and syndicate 14 newly photographed units to Property Finder feed',
-    due: 'Today 16:00',
-    pr: 'high',
-    done: false,
-    ag: 'Property Finder',
-    tag: 'Syndication',
-  },
-  {
-    id: 'TSK-03',
-    t: 'Call Ahmed Al-Rashid — confirm Hyde Park viewing (PF Lead)',
-    due: 'Today 15:00',
-    pr: 'high',
-    done: false,
-    ag: 'Sierra Bot',
-    phone: '+201001112233',
-    tag: 'Viewing',
-  },
-  {
-    id: 'TSK-04',
-    t: 'Send Uptown Cairo contract draft to Khalid (Stage-9 Closer)',
-    due: 'Today 17:30',
-    pr: 'high',
-    done: false,
-    ag: 'Stage-9',
-    phone: '+971503334455',
-    tag: 'Closer',
-  },
-  {
-    id: 'TSK-05',
-    t: 'Follow up بالعربي with Gulf VIP lead on WhatsApp — Leila',
-    due: 'Tomorrow 10:00',
-    pr: 'med',
-    done: false,
-    ag: 'Leila',
-    phone: '+971503334455',
-    tag: 'Outreach',
-  },
-  {
-    id: 'TSK-06',
-    t: 'Review 23 scraped WhatsApp listings pending AVM pricing',
-    due: 'Tomorrow 12:00',
-    pr: 'med',
-    done: false,
-    ag: 'Curator',
-    tag: 'Inventory',
-  },
-  {
-    id: 'TSK-07',
-    t: 'Verify Madinaty B10 owner-direct listing photos and pricing',
-    due: 'Yesterday',
-    pr: 'low',
-    done: true,
-    ag: 'Scribe',
-    tag: 'Inventory',
-  },
-];
+// §21 no-fabrication (wave 5): this feed previously shipped seven
+// hardcoded demo tasks — invented client calls (fake names + phone numbers),
+// fictitious photo dispatches and made-up syndication counts — rendered as a
+// live operations queue. Tasks are real operational records: until tasks are
+// created here or synced from live workflows, the queue stays honestly EMPTY.
+const TASKS_INIT: TaskItem[] = [];
 
 function TasksPage({ T }: { T: any }) {
   const ar = T('lang')==='ar';
@@ -2070,7 +2033,8 @@ function TasksPage({ T }: { T: any }) {
             </div>
           </div>
         ))}
-        {shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام مطابقة للفلتر':'No tasks matching current filter'}</div>}
+        {tasks.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا توجد مهام بعد — ستظهر هنا المهام الحقيقية عند إنشائها أو مزامنتها من سير العمل. لا يتم اختراع مهام تجريبية.':'No tasks yet — real tasks will appear here once created or synced from live workflows. Demo tasks are never invented.'}</div>}
+        {tasks.length>0&&shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام مطابقة للفلتر':'No tasks matching current filter'}</div>}
       </div>
 
       {/* New Task Creation Modal */}
@@ -2379,7 +2343,7 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach'>('scan');
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('scan');
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
@@ -2452,6 +2416,26 @@ function AdminApp() {
             <span>🚀</span>
             <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
           </button>
+
+          <button
+            onClick={() => setSubTab('outbox')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outbox' ? '1px solid #60A5FA' : '1px solid var(--bd)',
+              background: subTab === 'outbox' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outbox' ? '#60A5FA' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📤</span>
+            <span>{isArabic ? 'صندوق الإرسال وحالة البوابة' : 'Outbox & Gateway Status'}</span>
+          </button>
         </div>
 
         {subTab === 'scan' && <WhatsAppChatScanner lang={lang} />}
@@ -2490,6 +2474,7 @@ function AdminApp() {
           </div>
         )}
         {subTab === 'outreach' && <WhatsAppScheduledSender lang={lang} />}
+        {subTab === 'outbox' && <WhatsAppOutboxView lang={lang} />}
       </div>
     );
   }
@@ -2506,6 +2491,7 @@ function AdminApp() {
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
       case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
+      case 'workflow_ops':return <WorkflowOpsView lang={langKey}/>;
       case 'whatsapp_outreach':
       case 'whatsapp_sync':
       case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;

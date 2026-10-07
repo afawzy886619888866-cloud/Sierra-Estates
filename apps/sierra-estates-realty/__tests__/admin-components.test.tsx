@@ -52,10 +52,18 @@ describe('Admin Components Suite', () => {
       expect(html).toContain('Easy Listing Studio');
     });
 
-    it('contains Mivida compound sample and AI score', () => {
+    it('starts empty and honest — no prefilled demo listing, no fabricated AI score', () => {
+      // §21: the studio used to prefill a fake 'Mivida' 14.5M listing with
+      // aiScore 9.6 and a sample PF CDN photo before anything was parsed.
+      // It now renders blank until real text is parsed / fields filled.
       const html = render(<EasyListingStudio />);
-      expect(html).toContain('Mivida');
-      expect(html).toContain('9.6');
+      expect(html).toContain('Easy Listing Studio');
+      expect(html).toContain('—'); // honest sierraCode / AI-score placeholders
+      expect(html).not.toContain('9.6');
+      expect(html).not.toContain('14,500,000');
+      expect(html).not.toContain('14500000');
+      expect(html).not.toContain('Sierra Estates Portfolio');
+      expect(html).not.toContain('propertyfinder.eg/media');
     });
   });
 
@@ -95,6 +103,32 @@ describe('Admin Components Suite', () => {
     it('contains Investment Brochure generator controls', () => {
       const html = render(<PropertyTeaserBrochure lang="en" />);
       expect(html).toContain('Brochure');
+    });
+
+    it('§21: starts empty — no prefilled demo villa and no invented broker desk', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).not.toContain('REF-HYD-042');
+      expect(html).not.toContain('Hyde Park');
+      expect(html).not.toContain('Sierra Elite Desk');
+      expect(html).not.toContain('38000000');
+      expect(html).not.toContain('420');
+    });
+
+    it('§21: every tear-sheet input is visible and editable — no hidden fixed specs', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).toContain('Reference ID');
+      expect(html).toContain('Unit Type');
+      expect(html).toContain('Bedrooms');
+      expect(html).toContain('Finishing');
+      expect(html).toContain('Down Payment');
+      expect(html).toContain('Broker Name');
+    });
+
+    it('§21: honest missing-fields note shown and generation disabled while incomplete', () => {
+      const html = render(<PropertyTeaserBrochure lang="en" />);
+      expect(html).toContain('required field');
+      expect(html).toContain('missing — the teaser is generated only from complete, real listing data');
+      expect(html).toContain('disabled');
     });
   });
 

@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sierra Estates — automation dispatch workflow (GCP Workflows).
+#
+# Invoked by the 5 Cloud Scheduler jobs (see ../scripts/create-scheduler-jobs.sh)
+# and manually via:
+#   gcloud workflows run se-automation-dispatch --location=europe-west1 \
+#     --data='{"argument": "{\"targets\": \"night\"}"}'
+#
+# Flow: Cloud Scheduler (OIDC) → this workflow → the EXISTING HTTP dispatcher
+#   ${siteUrl}/api/cron/dispatch/{target}  (Bearer CRON_SECRET from Secret
+#   Manager) — the same dispatcher Vercel's fallback crons (:45) and the
+#   GitHub emergency workflow call. Overlap is safe: the dispatcher dedupes
+#   on automation_runs (per-job dedupeHours) and records honest 'skipped'
+#   runs for the loser.
+#
+# Arguments (the execution "argument" JSON):
+#   targets (string, required): comma-separated dispatcher targets,
+#     e.g. "night" or "lead-timers,check-availability-sla"
+#   siteUrl (string, optional): defaults to https://sierra-estates.net
+#   force   (bool,   optional): pass ?force=1 to bypass the dedupe guard
+# ─────────────────────────────────────────────────────────────────────────────
+main:
+  params: [args]
+  steps:
+    - init:
+        assign:
+          - targets: ${text.split(args.targets, ",")}
+          - force: ${args.force or false}
+          - siteUrl: ${args.siteUrl or "https://sierra-estates.net"}
+          - projectId: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - outcomes: []
+
+    - read_cron_secret:
+        call: http.get
+        args:
+          url: ${"https://secretmanager.googleapis.com/v1/projects/" + projectId + "/secrets/cron_secret/versions/latest:access"}
+          auth:
+            type: OAuth2
+            scopes: https://www.googleapis.com/auth/cloud-platform
+        result: secretResponse
+
+    - decode_cron_secret:
+        assign:
+          - cronSecret: ${text.decode_base64(secretResponse.body.payload.data)}
+
+    - dispatch_targets:
+        for:
+          value: target
+          in: ${targets}
+          steps:
+            - call_dispatcher:
+                call: http.get
+                args:
+                  url: ${siteUrl + "/api/cron/dispatch/" + target + "?source=gcp-scheduler&force=" + (force ? "1" : "0")}
+                  headers:
+                    Authorization: ${"Bearer " + cronSecret}
+                  timeout: 300
+                # Transport-level retry: the dispatcher answers HTTP 500 when
+                # ANY job failed; the dedupe guard makes the retry re-execute
+                # ONLY the failed jobs (same contract as the GHA curl --retry).
+                retry:
+                  predicate: ${http.default_retry_predicate}
+                  max_retries: 3
+                result: dispatchResult
+            - record_outcome:
+                assign:
+                  - outcomes: ${list.concat(outcomes, dispatchResult.code)}
+
+    - done:
+        return:
+          targets: ${targets}
+          force: ${force}
+          httpCodes: ${outcomes}

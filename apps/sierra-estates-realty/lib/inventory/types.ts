@@ -70,7 +70,13 @@ export interface InventoryUnit {
 export interface InventoryResponse {
   /** ISO timestamp of when this dataset was produced. */
   generatedAt: string;
-  source: 'supabase' | 'domain' | 'live' | 'snapshot' | 'excel-hybrid';
+  /**
+   * Data tier that produced this payload. 'none' (Phase D/E honest-empty)
+   * means every gated live source was empty or unreachable — no unverified
+   * sheet/snapshot/Excel tier exists anymore, so the public map renders an
+   * honest empty state instead of unreviewed inventory.
+   */
+  source: 'supabase' | 'domain' | 'live' | 'snapshot' | 'excel-hybrid' | 'none';
   count: number;
   segments?: {
     total: number;

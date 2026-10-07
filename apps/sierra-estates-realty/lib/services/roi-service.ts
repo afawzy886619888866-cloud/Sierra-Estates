@@ -37,8 +37,10 @@ export async function analyzeAssetFinancials(unit: Unit): Promise<FinancialAnaly
   const valScore = (unit.intelligence?.valuationScore || 50) / 100;
 
   // --- SIERRA ESTATES UPGRADE: Use FinancialService for Valuation Context ---
+  // §21: valuation is null when the unit lacks real area/price — no market
+  // edge is fabricated from an invented appraisal.
   const valuation = FinancialService.calcAppraisedValue(unit);
-  const marketEdge = valuation.marketDifference > 0 ? valuation.marketDifference : 0;
+  const marketEdge = valuation && valuation.marketDifference > 0 ? valuation.marketDifference : 0;
 
   // 2. Premium Add-ons (Multipliers from Drive F)
   let featureMultiplier = 0;

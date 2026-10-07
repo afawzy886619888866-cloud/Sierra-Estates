@@ -246,8 +246,12 @@ function generateSBRCode(compound?: string, rooms?: number): string {
     'Zed': 'ZD',
   };
 
-  const code = compoundMap[compound || 'New Cairo'] || 'NC';
-  return `${code}-${rooms || 2}F-MOCK`;
+  // §21: an unknown compound degrades to an explicit 'XX' placeholder —
+  // never to 'New Cairo'/'NC', which would fabricate a location on a
+  // generated code.
+  const code = (compound ? compoundMap[compound] : undefined) ?? 'XX';
+  const roomPart = rooms ? `${rooms}F` : '0F';
+  return `${code}-${roomPart}-MOCK`;
 }
 
 // Export for testing
