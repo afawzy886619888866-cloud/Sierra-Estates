@@ -1,5 +1,5 @@
 import 'server-only';
-import { NEW_CAIRO_COMPOUND_STATS, type CompoundMarketStat } from './new-cairo-market-stats';
+import { NEW_CAIRO_COMPOUND_STATS } from './new-cairo-market-stats';
 import { HZDATA } from '../site/data';
 
 export interface CompoundIndexEntry {

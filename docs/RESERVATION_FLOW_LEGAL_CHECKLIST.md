@@ -34,10 +34,12 @@ The unit reservation flow introduces the capability for qualified buyers to init
 ## 3. Legal Review Checklist
 
 ### A. Escrow & Banking Partner Architecture
+
 - [ ] **Escrow Account Mandate:** Verify that earnest deposits are routed to a licensed Egyptian escrow intermediary (e.g., CIB Escrow Account, Banque Misr, NBE, or CBE-licensed payment aggregator Paymob) rather than co-mingled in operational operating accounts.
 - [ ] **Platform Role Definition:** Ensure terms of service explicitly clarify that Sierra Estates operates as an authorized digital brokerage platform (وسيط عقاري مرخص) and technology facilitator, not a non-bank financial institution holding fiduciary deposits.
 
 ### B. Buyer Terms & Cooling-Off Disclosures
+
 - [ ] **Bilingual Digital Terms (AR/EN):** Display a mandatory pre-payment consent modal stating in unambiguous Arabic and English:
   - *عربون حجز مؤقت (Earnest Reservation Hold)*: This payment constitutes a temporary lock of 14 calendar days, not a final contract of sale.
 - [ ] **Refundability Schedule:**
@@ -47,11 +49,13 @@ The unit reservation flow introduces the capability for qualified buyers to init
 - [ ] **Expiry Policy:** If the buyer does not execute the primary sales contract within 14 days, the unit automatically returns to public market availability via `ReservationExpiryMonitor`.
 
 ### C. Regulatory & Tax Compliance
+
 - [ ] **VAT Exemption Check:** Confirm whether the temporary reservation processing fee incurs 14% Egyptian VAT or is classified as an exempt financial deposit.
 - [ ] **National ID / Passport KYC:** For any reservation deposit exceeding EGP 100,000, enforce automated capture of Egyptian National ID (بطاقة الرقم القومي) or valid foreign passport prior to checkout.
 - [ ] **Document-Backed Verified Requirement:** Confirm that reservations can only be initiated on units where `ownershipDocRef` has been verified by the Sierra Estates compliance team (`status: 'verified'` or `'published'`).
 
 ### D. Dispute Resolution & Jurisdiction
+
 - [ ] **Governing Law:** All reservation disputes shall be governed by the laws of the Arab Republic of Egypt, with exclusive jurisdiction in Cairo Economic Courts (المحاكم الاقتصادية بالقاهرة).
 
 ---
@@ -59,7 +63,9 @@ The unit reservation flow introduces the capability for qualified buyers to init
 ## 4. Un-Gating Sign-Off Procedure
 
 To activate the reservation flow in production:
+
 1. Complete all checkmarks above with outside counsel (Egyptian Bar Association admitted).
 2. File signed legal memo in `docs/legal/signed-reservation-counsel-memo.pdf`.
 3. Set environment variable: `ENABLE_UNIT_RESERVATIONS=true`.
 4. Deploy with audit log entry in `FUTURE_PLAN/sprint-2-log.md`.
+

@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   TrendingUp,
-  Building2,
   Search,
   Filter,
   BarChart3,
@@ -12,13 +11,12 @@ import {
   ShieldCheck,
   Percent,
   Sparkles,
-  ChevronRight,
   Calendar,
 } from 'lucide-react';
 import AiToolPage from '@/components/site/AiToolPage';
 import { Reveal } from '@/components/site/Reveal';
 import { useSite } from '@/lib/site/SiteContext';
-import type { MonthlyPriceIndex, CompoundIndexEntry } from '@/lib/services/PriceIndexService';
+import type { MonthlyPriceIndex } from '@/lib/services/PriceIndexService';
 
 export default function PriceIndexClient({ initialData }: { initialData: MonthlyPriceIndex }) {
   const { isAr } = useSite();

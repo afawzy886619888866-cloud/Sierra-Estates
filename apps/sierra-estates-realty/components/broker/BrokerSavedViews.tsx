@@ -7,7 +7,6 @@ import {
   BookmarkPlus,
   Play,
   Check,
-  Copy,
   Building2,
   RefreshCw,
   Eye,
@@ -272,7 +271,7 @@ export default function BrokerSavedViews({ isAr = false }: { isAr?: boolean }) {
                 {isAr ? 'لا توجد عروض محفوظة حالياً. أنشئ أول عرض من النموذج.' : 'No saved views found. Create one using the DSL builder.'}
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-95 overflow-y-auto pr-1">
                 {viewsList.map((v) => (
                   <div
                     key={v.id}
