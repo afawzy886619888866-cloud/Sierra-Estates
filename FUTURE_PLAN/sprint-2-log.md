@@ -127,3 +127,20 @@
   - `apps/sierra-estates-realty/__tests__/sierra-price-index.test.ts`: Passed (134/134 suites, 1,483/1,483 tests green).
   - `apps/sierra-estates-realty/__tests__/phase13-security-sweep.test.ts`: 100% clean (0 §21 fabrication offenders).
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+### Phase 6 — Proposal PDFs on WhatsApp with Arabic RTL (04 §B2)
+
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **PDF Export Service Upgrades (`lib/services/pdf-export-service.ts`):**
+    - Built conforming binary `%PDF-1.4` buffer generator embedding standard PDF objects, catalog, Helvetica fonts, and text stream dictionaries.
+    - Integrated Arabic RTL typography styling (`Cairo`, `Amiri`, `dir="rtl"`, right-to-left layout alignment, and luxury gold palette) in `buildProposalHTML`.
+    - Added strict client-side rate limiting (`checkRateLimit`) enforcing max 5 proposal dispatches per recipient phone per hour.
+    - Implemented `sendProposalViaWhatsApp` combining PDF buffer caching, direct secure download URL generation, and automatic `whatsapp-queue` job insertion (`purpose: 'client-recommendation'`).
+    - Maintained absolute boundary isolation: client-side only, never touching `workflows/09-owner-outreach/`.
+  - **Proposals API Endpoints:**
+    - `GET /api/proposals/[id]/pdf`: Streams generated proposal PDF documents inline with cache headers.
+    - `POST /api/proposals/send-whatsapp`: Validates closer proposal parameters, verifies admin session auth, enforces recipient rate-limiting, and enqueues the personalized bilingual WhatsApp message.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/whatsapp-proposal-pdf.test.ts`: Passed (135/135 total suites, 1,487/1,487 tests green).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.
