@@ -97,7 +97,7 @@ catalog:
   tailwindcss: ^4.3.3
   tsx: ^4.21.0
   typescript: 7.0.2
-  vite: ^8.3.2
+  vite: ^8.3.1
   wouter: ^3.3.5
   zod: ^3.25.76
 
