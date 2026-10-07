@@ -68,4 +68,3 @@ To activate the reservation flow in production:
 2. File signed legal memo in `docs/legal/signed-reservation-counsel-memo.pdf`.
 3. Set environment variable: `ENABLE_UNIT_RESERVATIONS=true`.
 4. Deploy with audit log entry in `FUTURE_PLAN/sprint-2-log.md`.
-
