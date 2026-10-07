@@ -5,6 +5,7 @@ import { logger } from '../logger';
 import { resolveLocation } from '../inventory/gazetteer';
 import { getSupabaseAdmin } from '@sierra-estates/db';
 import { egpToUsd } from '../fx';
+import { normalizePriceToEGP } from '../eccMemoryEngine';
 import type { InventoryUnit } from '../inventory/types';
 
 export const EXCEL_COLUMNS = [
@@ -157,9 +158,14 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
       const compoundName = String(row['Compound Name'] || row.Compound || row['Location / Area'] || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
       const op = String(row['Operation (Sale / Rent)'] || row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'],
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const photoStatus = String(row['Has Photo? (YES / NO)'] || '').trim().toUpperCase();
       const primaryPhotoUrl = String(row['Primary Photo URL (Airtable Attachment)'] || '').trim();
@@ -168,6 +174,10 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
 
+      // §21 no-fabrication: the party is only classified when the record
+      // actually carries a Source Classification — an absent column yields
+      // 'Unknown', never a silent 'Broker'.
+      const sourceClassification = String(row['Source Classification'] || '').trim();
       const unit: InventoryUnit = {
         id: `AT-${rawCode}`,
         code: rawCode,
@@ -197,8 +207,10 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Notes & Broker Description'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Airtable Import',
-        tag: row['Source Classification'] || 'Airtable Master',
-        party: String(row['Source Classification'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Classification'] || 'Airtable Import',
+        party: sourceClassification
+          ? (sourceClassification.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -239,15 +251,25 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
       const compoundName = String(row.Compound || row.Location || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
-      const op = String(row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'] || row.PropertyType,
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const primaryImgUrl = String(row['Primary Image URL'] || '').trim();
       const hasRealPhoto = isRealPhoto(primaryImgUrl);
 
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
+
+      // §21 no-fabrication: the party is only classified when the row
+      // carries a Source Type — an absent column yields 'Unknown', never a
+      // silent 'Broker'.
+      const sourceTypeCol = String(row['Source Type (Owner / Broker)'] || '').trim();
 
       const unit: InventoryUnit = {
         id: `MASTER-${rawCode}`,
@@ -278,8 +300,10 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Listing Description & Notes'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Master Excel',
-        tag: row['Source Type (Owner / Broker)'] || 'Master Sheet',
-        party: String(row['Source Type (Owner / Broker)'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Type (Owner / Broker)'] || 'Master Excel',
+        party: sourceTypeCol
+          ? (sourceTypeCol.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -331,9 +355,14 @@ function readInventoryWithPhotosInternal(options?: {
         const compoundName = String(row.Compound || row.Location || '').trim();
         const resolved = resolveLocation(compoundName);
 
-        const price = Number(row['Price (EGP)']) || 0;
-        const op = String(row.Operation || '').toLowerCase();
-        const mode: 'rent' | 'sale' = isRentSheet || op === 'rent' ? 'rent' : 'sale';
+        const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+        const norm = normalizePriceToEGP(row['Price (EGP)'] || row.Price || row['Unit Price'], {
+          propertyType: row['Property Type'] || row.PropertyType || row['Property Tybe'],
+          mode: isRentSheet ? 'rent' : op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+          compound: compoundName,
+        });
+        const price = norm.priceEGP;
+        const mode = norm.mode;
 
         // Extract primary photo and photo gallery
         const rawPhotos = String(row['Photo URLs'] || '').trim();
@@ -351,6 +380,12 @@ function readInventoryWithPhotosInternal(options?: {
 
         const recordId = String(row.RecordID || row.UnitCode || `EXCEL-${segment}-${i + 1}`).trim();
         const unitCode = row.UnitCode ? String(row.UnitCode).trim() : null;
+
+        // §21 no-fabrication: "Verified" is only claimed when the row's own
+        // Source field says so; otherwise the tag reflects the sheet honestly
+        // and an unclassifiable sheet yields party 'Unknown'.
+        const sheetImpliesOwner = sheetName.includes('Owner');
+        const sheetImpliesBroker = /broker/i.test(sheetName);
 
         const unit: InventoryUnit = {
           id: recordId,
@@ -381,8 +416,8 @@ function readInventoryWithPhotosInternal(options?: {
           description: row.Description || undefined,
           segment,
           segmentLabel: sheetName,
-          tag: row.Source || (sheetName.includes('Owner') ? 'Verified Owner' : 'Verified Broker'),
-          party: sheetName.includes('Owner') ? 'Owner' : 'Broker',
+          tag: row.Source || (sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : sheetName),
+          party: sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : 'Unknown',
         };
 
         if (!stripPII) {

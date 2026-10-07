@@ -10,14 +10,12 @@ interface LogEntry {
   timestamp: string;
 }
 
-const LOG_ENTRIES: LogEntry[] = [
-  { id: 'log-1', type: 'info', text: '[INFO] AI Orchestrator running workflow wf-listing-175581002', timestamp: '12:04:02' },
-  { id: 'log-2', type: 'agent', text: '[INFO] Scribe Agent parsed listing SE-HYP-VLA-0040-2026 (Hyde Park Villa)', timestamp: '12:04:05' },
-  { id: 'log-3', type: 'agent', text: '[INFO] Vertex Omni generated AVM valuation: EGP 35,000,000 (Confidence: 94%)', timestamp: '12:04:09' },
-  { id: 'log-4', type: 'pubsub', text: '[INFO] Recommendation published to topic [ai.recommendations]', timestamp: '12:04:12' },
-  { id: 'log-5', type: 'info', text: '[INFO] Omnichannel Lead Router assigned lead Sara Mohamed to Concierge VIP Pool', timestamp: '12:04:18' },
-  { id: 'log-6', type: 'warn', text: '[WARN] Rate limit throttle window reached 65% capacity on WhatsApp Sandbox', timestamp: '12:04:22' },
-];
+// ANTI-FABRICATION (§21 wave 5): six fabricated log lines (invented AVM
+// valuations, a fake workflow run, a lead assignment naming a demo person)
+// were previously streamed here as live telemetry. Real log lines must come
+// from the actual telemetry pipeline — until it is wired in, the stream
+// stays honestly empty.
+const LOG_ENTRIES: LogEntry[] = [];
 
 export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
@@ -42,41 +40,45 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
       </div>
 
       {/* Omnichannel SLA & Health Trackers */}
+      {/* §21: these trackers previously displayed fabricated figures (an
+          invented in-flight count, a fake 100% SLA, a made-up message rate
+          and a fictitious verification percentage). They now render honest
+          placeholders until live telemetry is wired in (KPI_DATA pattern). */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>WHATSAPP BOT SLA</span>
-            <span className="text-emerald-400">&lt; 1.2s avg</span>
+            <span className="text-slate-500">Awaiting telemetry</span>
           </div>
-          <div className="text-xl font-bold text-white">18 In Flight</div>
-          <p className="text-[11px] text-slate-500">Auto-responding with localized property brochures</p>
+          <div className="text-xl font-bold text-white">&mdash;</div>
+          <p className="text-[11px] text-slate-500">Live value appears when the bot telemetry feed is connected</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>VIP VIEWING QUEUE</span>
-            <span className="text-[#E9C176]">100% SLA met</span>
+            <span className="text-slate-500">Awaiting telemetry</span>
           </div>
-          <div className="text-xl font-bold text-white">4 Scheduled</div>
-          <p className="text-[11px] text-slate-500">Mivida &amp; Katameya Dunes viewings for tomorrow</p>
+          <div className="text-xl font-bold text-white">&mdash;</div>
+          <p className="text-[11px] text-slate-500">Live value appears when the viewing scheduler is connected</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>PUBSUB DISPATCH</span>
-            <span className="text-purple-400">Zero Loss</span>
+            <span className="text-slate-500">Awaiting telemetry</span>
           </div>
-          <div className="text-xl font-bold text-white">482 msg / min</div>
-          <p className="text-[11px] text-slate-500">Active event bus sync across broker instances</p>
+          <div className="text-xl font-bold text-white">&mdash;</div>
+          <p className="text-[11px] text-slate-500">Live value appears when the event bus is connected</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
           <div className="flex justify-between text-xs text-slate-400 font-mono">
             <span>INVENTORY HEALTH</span>
-            <span className="text-amber-400">98.4% Verified</span>
+            <span className="text-slate-500">Awaiting telemetry</span>
           </div>
-          <div className="text-xl font-bold text-white">528 Active</div>
-          <p className="text-[11px] text-slate-500">High-res photos &amp; AVM price audited</p>
+          <div className="text-xl font-bold text-white">&mdash;</div>
+          <p className="text-[11px] text-slate-500">Live value appears when the inventory auditor is connected</p>
         </div>
       </div>
 
@@ -135,7 +137,17 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
         </div>
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {filteredLogs.map((log) => (
+          {filteredLogs.length === 0 ? (
+            <div
+              data-testid="telemetry-empty-state"
+              className="py-8 text-center text-slate-500"
+            >
+              {isAr
+                ? 'لا توجد سجلات تتبع حقيقية حالياً — ستظهر هنا عند اتصال خط التتبع الفعلي.'
+                : 'No real telemetry logged yet — entries appear here once the telemetry pipeline is connected.'}
+            </div>
+          ) : (
+            filteredLogs.map((log) => (
             <div key={log.id} className="flex gap-2">
               <span className="text-slate-500 shrink-0">[{log.timestamp}]</span>
               <span
@@ -152,88 +164,44 @@ export default function MonitoringView({ lang = 'en' }: { lang?: string }) {
                 {log.text}
               </span>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
       {/* Real-Time Inbound WhatsApp Lead Activity Stream */}
+      {/* §21: this panel previously showed three fabricated inbound leads
+          (invented names, phones, budgets and AI status labels) behind a
+          pulsing "Live Cloud Feed · Active" indicator. It now renders an
+          honest empty state until the real inbound feed is connected. */}
       <div className="p-5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-500 opacity-40"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600"></span>
             </span>
             <h3 className="text-sm font-bold text-white">
               {isAr ? 'البث المباشر للرسائل والعملاء المحتملين' : 'Real-Time Inbound WhatsApp & Lead Ingestion Stream'}
             </h3>
           </div>
-          <span className="text-[11px] text-emerald-400 font-mono font-semibold">
-            {isAr ? 'متصل بالشبكة السحابية' : 'Live Cloud Feed · Active'}
+          <span className="text-[11px] text-slate-500 font-mono font-semibold">
+            {isAr ? 'بانتظار اتصال البث الفعلي' : 'Awaiting live feed connection'}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            {
-              id: 'lead-act-1',
-              name: 'Dr. Tarek Fouad',
-              phone: '+201098887766',
-              compound: 'Mountain View iCity',
-              budget: '28.5M EGP',
-              aiStatus: 'QUALIFIED_VIP',
-              time: 'Just now',
-              message: 'طلب تفاصيل فيلا مستقلة مع حديقة للمعاينة غداً',
-            },
-            {
-              id: 'lead-act-2',
-              name: 'Nadia El-Gohary',
-              phone: '+201012345678',
-              compound: 'Katameya Dunes',
-              budget: '$850K USD',
-              aiStatus: 'USD_BUYER_HIGH_FIT',
-              time: '2 mins ago',
-              message: 'Interested in golf-front standalone properties for cash settlement',
-            },
-            {
-              id: 'lead-act-3',
-              name: 'Eng. Amr Soliman',
-              phone: '+201155443322',
-              compound: 'Hyde Park',
-              budget: '18M EGP',
-              aiStatus: 'INVESTOR_HIGH_YIELD',
-              time: '5 mins ago',
-              message: 'استفسار عن أعلى عائد إيجاري متاح لشقق 3 غرف',
-            },
-          ].map((lead) => (
-            <div
-              key={lead.id}
-              className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between space-y-2 text-xs"
-            >
-              <div>
-                <div className="flex justify-between items-start">
-                  <span className="font-semibold text-white">{lead.name}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                    {lead.aiStatus}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#E9C176] font-mono mt-0.5">{lead.phone}</div>
-                <div className="text-[11px] text-slate-300 mt-1 font-medium">
-                  {lead.compound} · <span className="text-amber-300">{lead.budget}</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1.5 italic line-clamp-2">
-                  &ldquo;{lead.message}&rdquo;
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500">
-                <span>{lead.time}</span>
-                <span className="text-emerald-400 font-medium cursor-pointer hover:underline">
-                  {isAr ? 'فتح المحادثة ↗' : 'Open WhatsApp ↗'}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div
+          data-testid="inbound-feed-empty-state"
+          className="py-10 rounded-xl bg-slate-950 border border-slate-800/80 text-center space-y-2"
+        >
+          <div className="text-slate-300 text-sm font-semibold">
+            {isAr ? 'لا توجد رسائل واردة حقيقية حالياً' : 'No real inbound activity yet'}
+          </div>
+          <p className="text-slate-500 text-xs max-w-md mx-auto leading-relaxed">
+            {isAr
+              ? 'ستظهر هنا الرسائل الواردة الفعلية من واتساب وقنوات الاستيعاب عند تشغيلها — لا يتم اختراع عملاء تجريبيين.'
+              : 'Real inbound WhatsApp and lead-ingestion messages will appear here once the channels are live — demo leads are never invented.'}
+          </p>
         </div>
       </div>
     </div>

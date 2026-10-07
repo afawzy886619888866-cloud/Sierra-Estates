@@ -264,4 +264,53 @@ describe('Episodic Context Cache (ECC) Memory Engine', () => {
       expect(loadRes.success).toBe(false);
     });
   });
+
+  describe('5. Intelligent Price Normalization & Villa Logic (All EGP)', () => {
+    it('normalizes a villa rent from shorthand "3" to 30,000 EGP/mo', () => {
+      const res = ecc.normalizeAndRecordPrice('UNIT-VILLA-01', '3', {
+        propertyType: 'Villa',
+        mode: 'rent',
+      });
+
+      expect(res.isAdjusted).toBe(true);
+      expect(res.priceEGP).toBe(30000);
+      expect(res.mode).toBe('rent');
+
+      const episodes = ecc.getEpisodesForEntity('UNIT-VILLA-01');
+      expect(episodes.some((e) => e.type === 'price_normalized')).toBe(true);
+      expect(ecc.getEntity('UNIT-VILLA-01')?.tags).toContain('PRICE_NORMALIZED');
+    });
+
+    it('normalizes a villa sale from shorthand "3" to 3,000,000 EGP', () => {
+      const res = ecc.normalizeAndRecordPrice('UNIT-VILLA-02', '3', {
+        propertyType: 'Standalone Villa',
+        mode: 'sale',
+      });
+
+      expect(res.isAdjusted).toBe(true);
+      expect(res.priceEGP).toBe(3000000);
+      expect(res.mode).toBe('sale');
+    });
+
+    it('converts USD rent ($3000) to EGP at 50 EGP/USD rate (150,000 EGP)', () => {
+      const res = ecc.normalizeAndRecordPrice('UNIT-VILLA-USD', '$3000', {
+        propertyType: 'Villa',
+        mode: 'rent',
+      });
+
+      expect(res.isAdjusted).toBe(true);
+      expect(res.priceEGP).toBe(150000); // 3,000 * 50
+      expect(res.rationale).toContain('Converted from USD');
+    });
+
+    it('normalizes apartment with decimal "3.5" in sale to 3,500,000 EGP', () => {
+      const res = ecc.normalizeAndRecordPrice('UNIT-APT-01', '3.5', {
+        propertyType: 'Apartment',
+        mode: 'sale',
+      });
+
+      expect(res.isAdjusted).toBe(true);
+      expect(res.priceEGP).toBe(3500000);
+    });
+  });
 });

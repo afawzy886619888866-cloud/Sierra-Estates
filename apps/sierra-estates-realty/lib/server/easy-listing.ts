@@ -379,7 +379,9 @@ export function generateAds(
   const dealWord = d.deal_type === 'rent' ? 'للإيجار' : 'للبيع';
 
   const facebook = [
-    `🏡 ${dealWord} — ${where || 'موقع مميز'}`,
+    // §21 no-fabrication: no invented "prime location" claim — the headline
+    // simply omits the location segment when none was extracted.
+    `🏡 ${dealWord}${where ? ` — ${where}` : ''}`,
     specs ? `📋 ${specs}` : null,
     `💰 ${priceLine}`,
     `🔖 كود الوحدة: ${internalCode}`,

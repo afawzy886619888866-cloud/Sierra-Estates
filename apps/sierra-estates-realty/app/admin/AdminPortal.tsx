@@ -35,6 +35,7 @@ import {
   InventoryCommandView,
   InventoryOsView,
   WorkflowStudioView,
+  WorkflowOpsView,
   MemoryBrainView,
   CairoPlazaAdminView,
   ViewingsView,
@@ -44,6 +45,7 @@ import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } fr
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
+import WhatsAppOutboxView from '@/app/admin/views/WhatsAppOutboxView';
 import { NegotiationSimulator } from '@/components/admin/NegotiationSimulator';
 import { PropertyTeaserBrochure } from '@/components/admin/PropertyTeaserBrochure';
 import { HarnessBenchmarkCard } from '@/components/admin/HarnessBenchmarkCard';
@@ -1796,74 +1798,12 @@ interface TaskItem {
   tag?: string;
 }
 
-const TASKS_INIT: TaskItem[] = [
-  {
-    id: 'TSK-01',
-    t: '📸 Photo Hunter: Dispatch photographer to Mivida Villa (SE-MVD-VLA-0006) — high-yield luxury unit missing photos',
-    due: 'Today 14:00',
-    pr: 'high',
-    done: false,
-    ag: 'Photo Team',
-    tag: 'Photo Hunter',
-  },
-  {
-    id: 'TSK-02',
-    t: '🏢 Property Finder: Verify and syndicate 14 newly photographed units to Property Finder feed',
-    due: 'Today 16:00',
-    pr: 'high',
-    done: false,
-    ag: 'Property Finder',
-    tag: 'Syndication',
-  },
-  {
-    id: 'TSK-03',
-    t: 'Call Ahmed Al-Rashid — confirm Hyde Park viewing (PF Lead)',
-    due: 'Today 15:00',
-    pr: 'high',
-    done: false,
-    ag: 'Sierra Bot',
-    phone: '+201001112233',
-    tag: 'Viewing',
-  },
-  {
-    id: 'TSK-04',
-    t: 'Send Uptown Cairo contract draft to Khalid (Stage-9 Closer)',
-    due: 'Today 17:30',
-    pr: 'high',
-    done: false,
-    ag: 'Stage-9',
-    phone: '+971503334455',
-    tag: 'Closer',
-  },
-  {
-    id: 'TSK-05',
-    t: 'Follow up بالعربي with Gulf VIP lead on WhatsApp — Leila',
-    due: 'Tomorrow 10:00',
-    pr: 'med',
-    done: false,
-    ag: 'Leila',
-    phone: '+971503334455',
-    tag: 'Outreach',
-  },
-  {
-    id: 'TSK-06',
-    t: 'Review 23 scraped WhatsApp listings pending AVM pricing',
-    due: 'Tomorrow 12:00',
-    pr: 'med',
-    done: false,
-    ag: 'Curator',
-    tag: 'Inventory',
-  },
-  {
-    id: 'TSK-07',
-    t: 'Verify Madinaty B10 owner-direct listing photos and pricing',
-    due: 'Yesterday',
-    pr: 'low',
-    done: true,
-    ag: 'Scribe',
-    tag: 'Inventory',
-  },
-];
+// §21 no-fabrication (wave 5): this feed previously shipped seven
+// hardcoded demo tasks — invented client calls (fake names + phone numbers),
+// fictitious photo dispatches and made-up syndication counts — rendered as a
+// live operations queue. Tasks are real operational records: until tasks are
+// created here or synced from live workflows, the queue stays honestly EMPTY.
+const TASKS_INIT: TaskItem[] = [];
 
 function TasksPage({ T }: { T: any }) {
   const ar = T('lang')==='ar';
@@ -2093,7 +2033,8 @@ function TasksPage({ T }: { T: any }) {
             </div>
           </div>
         ))}
-        {shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام مطابقة للفلتر':'No tasks matching current filter'}</div>}
+        {tasks.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا توجد مهام بعد — ستظهر هنا المهام الحقيقية عند إنشائها أو مزامنتها من سير العمل. لا يتم اختراع مهام تجريبية.':'No tasks yet — real tasks will appear here once created or synced from live workflows. Demo tasks are never invented.'}</div>}
+        {tasks.length>0&&shown.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--tx-f)',fontSize:12}}>{ar?'لا مهام مطابقة للفلتر':'No tasks matching current filter'}</div>}
       </div>
 
       {/* New Task Creation Modal */}
@@ -2402,7 +2343,7 @@ function AdminApp() {
 
   function WhatsAppHubWrapper({ lang }: { lang: string }) {
     const isArabic = lang === 'ar';
-    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach'>('scan');
+    const [subTab, setSubTab] = useState<'scan' | 'qr' | 'outreach' | 'outbox'>('scan');
 
     return (
       <div className="fade-up" style={{ paddingTop: 4 }}>
@@ -2475,6 +2416,26 @@ function AdminApp() {
             <span>🚀</span>
             <span>{isArabic ? 'حملات الإرسال المجدولة' : 'Scheduled Outreach & Broadcast'}</span>
           </button>
+
+          <button
+            onClick={() => setSubTab('outbox')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: subTab === 'outbox' ? '1px solid #60A5FA' : '1px solid var(--bd)',
+              background: subTab === 'outbox' ? 'rgba(96, 165, 250, 0.15)' : 'var(--bg-e)',
+              color: subTab === 'outbox' ? '#60A5FA' : 'var(--tx-m)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span>📤</span>
+            <span>{isArabic ? 'صندوق الإرسال وحالة البوابة' : 'Outbox & Gateway Status'}</span>
+          </button>
         </div>
 
         {subTab === 'scan' && <WhatsAppChatScanner lang={lang} />}
@@ -2513,6 +2474,7 @@ function AdminApp() {
           </div>
         )}
         {subTab === 'outreach' && <WhatsAppScheduledSender lang={lang} />}
+        {subTab === 'outbox' && <WhatsAppOutboxView lang={lang} />}
       </div>
     );
   }
@@ -2529,6 +2491,7 @@ function AdminApp() {
       case 'agents':return <AgentsView lang={langKey}/>;
       case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
       case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
+      case 'workflow_ops':return <WorkflowOpsView lang={langKey}/>;
       case 'whatsapp_outreach':
       case 'whatsapp_sync':
       case 'whatsapp_sender':return <WhatsAppHubWrapper lang={langKey} />;

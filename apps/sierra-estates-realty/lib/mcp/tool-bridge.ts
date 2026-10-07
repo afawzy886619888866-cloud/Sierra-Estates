@@ -391,14 +391,19 @@ export const TOOL_DEFINITIONS: Map<string, ToolDefinition> = new Map([
               };
             }
           } catch (err) {
-            logger.warn('[DocuSignMCP] DocuSign API call error, using fallback:', err);
+            logger.warn('[DocuSignMCP] DocuSign API call error:', err);
           }
         }
+        // §21 no-fabrication: without live DocuSign credentials we cannot
+        // mint an envelope or a signing URL. The old fallback invented
+        // `env_<timestamp>` IDs and a signing link on a non-existent
+        // Sierra-branded DocuSign subdomain while claiming success. Be
+        // honest instead: report that signing is not configured.
         return {
-          success: true,
-          envelopeId: `env_${Date.now()}`,
-          signingUrl: `https://docusign.sierra-estates.com/sign?id=${Date.now()}`,
-          recipientCount: args.recipients.length,
+          success: false,
+          error:
+            'DocuSign signing is not configured (missing DOCUSIGN_ACCOUNT_ID / DOCUSIGN_ACCESS_TOKEN) — no envelope was created and no signing URL exists',
+          liveDispatched: false,
         };
       },
     },
@@ -431,10 +436,21 @@ export const TOOL_DEFINITIONS: Map<string, ToolDefinition> = new Map([
               };
             }
           } catch (err) {
-            logger.warn('[DocuSignMCP] DocuSign status lookup error, using fallback:', err);
+            logger.warn('[DocuSignMCP] DocuSign status lookup error:', err);
           }
         }
-        return { envelopeId: args.envelopeId, status: 'sent', signedCount: 1, pendingCount: 1 };
+        // §21 no-fabrication: signature counts are legal facts — they can
+        // only come from the live envelope. The old fallback claimed one
+        // signer had completed and one was pending regardless of reality.
+        return {
+          envelopeId: args.envelopeId,
+          status: 'unknown',
+          signedCount: 0,
+          pendingCount: 0,
+          liveResolved: false,
+          error:
+            'DocuSign is not configured (missing DOCUSIGN_ACCOUNT_ID / DOCUSIGN_ACCESS_TOKEN) — signature status could not be verified',
+        };
       },
     },
   ],

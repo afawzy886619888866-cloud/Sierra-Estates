@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { sharedMemory } from '@sierra-estates/memory-engine';
 import { scheduleViewing } from './viewing-engine';
 import snapshot from '@/lib/inventory/snapshot.json';
+import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
 
 export interface VerificationUnitItem {
   unitId: string;
@@ -47,6 +48,19 @@ const SESSIONS_STORE_KEY = 'availability_batch_sessions';
 export class AvailabilityVerificationService {
   public static readonly MAX_UNITS_LIMIT = 40;
   public static readonly SLA_TIMEOUT_MS = 60 * 60 * 1000; // 1 Hour (3600s)
+
+  /**
+   * MANDATORY Cairo Plaza notice (announcement/DISCLAIMER-POLICY.md): every
+   * CLIENT-facing auto-sent message that involves (or mentions) Cairo Plaza
+   * El-Mataria must carry the official Booking & Contracting steps verbatim at
+   * the bottom. Broker/owner inquiries are B2B operational, not client-facing
+   * content, and stay unwrapped by design.
+   */
+  private static maybeApplyNotice(text: string, context: string): string {
+    return mentionsCairoPlaza(text) || mentionsCairoPlaza(context)
+      ? withCairoPlazaNotice(text)
+      : text;
+  }
 
   /**
    * Look up unit details from snapshot.json
@@ -296,7 +310,13 @@ export class AvailabilityVerificationService {
       `⏱️ نطبق معيار استجابة سريع (ساعة واحدة كحد أقصى)، وسيتم استبعاد أي وحدة لا يتم الرد عليها للحفاظ على وقتكم الثمين.\n\n` +
       `سنوافيكم هنا بالصور والتفاصيل المؤكدة تباعاً! 📸`;
 
-    await this.sendWhatsApp(clientPhone, clientConfirmation);
+    await this.sendWhatsApp(
+      clientPhone,
+      this.maybeApplyNotice(
+        clientConfirmation,
+        verificationUnits.map((u) => `${u.compound} ${u.unitCode}`).join(' ') + ' ' + (notes || '')
+      )
+    );
 
     return session;
   }
@@ -468,7 +488,10 @@ Determine:
           : `\n`) +
         `ما رأي حضرتك في الوحدة وتفاصيلها؟ وهل ترغب في تحديد موعد لمعاينتها على الطبيعة؟ 🗓️`;
 
-      await this.sendWhatsApp(matchedSession.clientPhone, clientUpdate);
+      await this.sendWhatsApp(
+        matchedSession.clientPhone,
+        this.maybeApplyNotice(clientUpdate, `${matchedUnit.compound} ${refinedSummary}`)
+      );
       matchedSession.viewingProposed = true;
       await this.saveSessions(sessions);
       return { matchedUnitCode: matchedUnit.unitCode, clientNotified: true, responseSummary: refinedSummary };
@@ -479,7 +502,10 @@ Determine:
         `أفادت جهة الاتصال بأن الوحدة غير متاحة حالياً (${refinedSummary}).\n` +
         `نواصل فحص باقي الوحدات المختارة في رادارك وسنوافيكم بالمتاح فوراً! 🔍`;
 
-      await this.sendWhatsApp(matchedSession.clientPhone, clientUnavailableUpdate);
+      await this.sendWhatsApp(
+        matchedSession.clientPhone,
+        this.maybeApplyNotice(clientUnavailableUpdate, `${matchedUnit.compound} ${refinedSummary}`)
+      );
       return { matchedUnitCode: matchedUnit.unitCode, clientNotified: true, responseSummary: 'Unit unavailable' };
     }
   }
@@ -532,7 +558,13 @@ Determine:
       `الموعد: ${scheduledDate.toLocaleDateString('ar-EG', { weekday: 'long', month: 'long', day: 'numeric' })} في تمام الساعة 4:00 عصراً.\n` +
       `سيتواصل معكم مستشار المعاينات الميدانية الخاص بكم لتأكيد نقطة الالتقاء وتنسيق تصريح الدخول. يسعدنا دائماً خدمتكم في سييرا العقارية!`;
 
-    await this.sendWhatsApp(matchedSession.clientPhone, confirmationMsg);
+    await this.sendWhatsApp(
+      matchedSession.clientPhone,
+      this.maybeApplyNotice(
+        confirmationMsg,
+        matchedSession.units.map((u) => `${u.compound} ${u.unitCode}`).join(' ')
+      )
+    );
 
     return { scheduled: true, viewingId, message: confirmationMsg };
   }

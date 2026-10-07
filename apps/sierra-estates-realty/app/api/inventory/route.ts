@@ -30,12 +30,36 @@ import { logger } from "@/lib/logger";
 import { InventoryQueryService } from "@/lib/services/inventory-query";
 import { queryUnitToMapUnit } from "@/lib/inventory/domain-map";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
+import { hasPendingPhoto } from "@/lib/inventory/normalize";
 import { getSupabase } from "@sierra-estates/db";
 import { appendToExcelInventory } from "@/lib/services/ExcelInventoryService";
 import type { InventoryResponse, InventoryUnit } from "@/lib/inventory/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Evidence-based segment attribution (Direct vs Broker) for the map's
+ * 5-way segment bar. Only EXPLICIT evidence is used — anything ambiguous
+ * stays unattributed (undefined → counted as 'unknown') rather than guessed,
+ * mirroring the anti-fabrication stance of this endpoint. Evidence source:
+ *   - source_channel containing 'owner'          → Direct (owners_*)
+ *   - source_channel broker/agent/portal channels → Broker (broker_*)
+ *     ('property_finder' and 'dubizzle' postings are broker-published inventory)
+ *   - 'direct' / 'website' / 'whatsapp_group' / '' → ambiguous, no attribution.
+ * The map's own filter falls back to unit.mode for unattributed units, so
+ * those remain visible in both rent tabs — the honest overlap we documented. */
+function deriveSegment(
+  sourceChannel: unknown,
+  mode: string,
+): InventoryUnit["segment"] | undefined {
+  const src = String(sourceChannel || "").toLowerCase();
+  const isRent = mode === "rent";
+  if (src.includes("owner")) return isRent ? "owners_rent" : "owners_buy";
+  if (/(broker|agent|property_finder|dubizzle)/.test(src)) {
+    return isRent ? "broker_rent" : "broker_buy";
+  }
+  return undefined;
+}
 
 /** Canonical Supabase listings, mapped to the public-safe map shape.
  *
@@ -64,7 +88,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         // PUBLISH GATE (Phase D): only verified rows may reach the public map.
         .eq("publish_status", "PUBLISHABLE")
         .order("updated_at", { ascending: false })
-        .limit(1000),
+        .limit(5000),
       supabase
         .from("compounds")
         .select("name, lat, lng, zone, price_m, rent, ai_score"),
@@ -102,10 +126,18 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       // the deployed table (see lib/server/listing-columns.ts) — images[] is
       // the only real photo column, with raw_data.img as the curated primary.
       const raw = (listing.raw_data && typeof listing.raw_data === "object") ? listing.raw_data : {};
+      // Pick best available photo: curated img > first from images[] array.
+      // Then check with hasPendingPhoto so stock images don't count as real.
+      const imagesArr: string[] = Array.isArray(listing.images)
+        ? listing.images.filter((x: unknown) => typeof x === "string" && String(x).startsWith("http"))
+        : [];
       const primaryImg =
-        raw.img ||
-        (Array.isArray(listing.images) && listing.images[0] ? listing.images[0] : null) ||
+        (raw.img && !hasPendingPhoto(raw.img as string) ? raw.img as string : null) ||
+        imagesArr.find((u) => !hasPendingPhoto(u)) ||
+        raw.img as string ||
+        imagesArr[0] ||
         null;
+      const hasPhoto = !hasPendingPhoto(primaryImg as string | null);
 
       return {
         id: listing.id,
@@ -123,6 +155,7 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         pfReference: listing.pf_reference_number || undefined,
         compound: label,
         mode,
+        segment: deriveSegment(listing.source_channel, mode),
         status: "available",
         statusLabel: "Available",
         location: label,
@@ -139,7 +172,8 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
         priceLabel: price
           ? `EGP ${price.toLocaleString("en-US")}`
           : "Price on request",
-        img: primaryImg,
+        img: primaryImg ?? undefined,
+        hasPhoto,
         description: listing.description,
         updatedAt: listing.updated_at,
       };
@@ -213,20 +247,36 @@ export async function GET(request: Request) {
     if (key) seenCodes.add(key);
 
     const primaryImg = u.img;
+    // Use shared hasPendingPhoto so the pending-photo classification is
+    // consistent across the Supabase mapper above and this dedup loop.
     const hasPhoto =
       typeof u.hasPhoto === "boolean"
         ? u.hasPhoto
-        : Boolean(
-            primaryImg &&
-              String(primaryImg).startsWith("http") &&
-              !String(primaryImg).includes("unsplash.com") &&
-              !String(primaryImg).includes("placeholder")
-          );
+        : !hasPendingPhoto(primaryImg);
 
     deduplicatedUnits.push({
       ...u,
       hasPhoto,
     });
+  }
+
+  // Live segment aggregates for the map's segment bar badges — computed from
+  // the same publish-gated, deduplicated set that powers the pins (pre-filter).
+  const segmentCounts = {
+    total: deduplicatedUnits.length,
+    owners_rent: 0,
+    owners_buy: 0,
+    broker_rent: 0,
+    broker_buy: 0,
+    unknown: 0,
+  };
+  for (const u of deduplicatedUnits) {
+    const s = String((u as { segment?: string }).segment || "").toLowerCase();
+    if (s === "owners_rent" || s === "owners_buy" || s === "broker_rent" || s === "broker_buy") {
+      segmentCounts[s]++;
+    } else {
+      segmentCounts.unknown++;
+    }
   }
 
   // Prioritize units that have real photos so they appear first across the system
@@ -305,7 +355,7 @@ export async function GET(request: Request) {
     generatedAt: sourceResponse?.generatedAt || new Date().toISOString(),
     source: sourceResponse?.source || "none",
     count: filteredUnits.length,
-    segments: sourceResponse?.segments,
+    segments: sourceResponse?.segments ?? segmentCounts,
     compoundCounts,
     compoundSheetCounts,
     compoundSegmentCounts: sourceResponse?.compoundSegmentCounts,
