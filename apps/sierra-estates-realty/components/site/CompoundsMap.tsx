@@ -12,9 +12,6 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import Link from 'next/link';
 import {
   RotateCcw,
-  Map as MapIcon,
-  SlidersHorizontal,
-  Navigation,
   X,
   Plus,
   Minus,
@@ -23,18 +20,14 @@ import {
   Sun,
   Moon,
   Sparkles,
-  ExternalLink,
   ChevronRight,
   Eye,
-  Camera,
 } from 'lucide-react';
-import SmartFilterBar from '@/components/site/SmartFilterBar';
 import { useSite } from '@/lib/site/SiteContext';
 import {
   RENT_BUDGET_LADDER,
   SALE_BUDGET_LADDER,
   budgetBounds,
-  unitConditionKey,
 } from '@/lib/site/smart-search';
 
 /** Two-letter flag code for a compound (matches the map pin badge). */
@@ -248,7 +241,7 @@ export interface MapCompound {
   units?: number;
 }
 
-const NEW_CAIRO_CENTER: [number, number] = [30.045, 31.59];
+export const NEW_CAIRO_CENTER: [number, number] = [30.045, 31.59];
 
 // Developer mapping for New Cairo compounds
 export const COMPOUND_DEVELOPERS: Record<string, string> = {
@@ -1006,12 +999,12 @@ export interface CompoundsMapProps {
 
 export default function CompoundsMap({
   compounds,
-  featured = [],
+  featured: _featured = [],
   selectedName,
   onSelectAction,
   onSelect,
-  onOpenSheet,
-  showControls = true,
+  onOpenSheet: _onOpenSheet,
+  showControls: _showControls = true,
   filterCompound,
   filterPrice,
   filterType: _filterType,
@@ -1043,14 +1036,12 @@ export default function CompoundsMap({
   // Filter & UI States
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
-  const [selectedBed, setSelectedBed] = useState<number | 'any'>('any');
+  const [_selectedBed, setSelectedBed] = useState<number | 'any'>('any');
   const [selectedPriceBudget, setSelectedPriceBudget] = useState<string>('any');
-  const [selectedUnitType, setSelectedUnitType] = useState<string>('');
-  const [selectedCondition, setSelectedCondition] = useState<string>('');
+  const [_selectedUnitType, setSelectedUnitType] = useState<string>('');
+  const [_selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedSegment, setSelectedSegment] = useState<SegmentKey>('all');
   const [showSelectedOnly, setShowSelectedOnly] = useState(selectedOnly);
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [isHudMinimized, setIsHudMinimized] = useState(false);
   const [inventoryData, setInventoryData] = useState<InventoryApiData | null>(null);
 
   // Hovered Hotspot State for rich tooltips
@@ -1081,22 +1072,6 @@ export default function CompoundsMap({
   useEffect(() => {
     if (filterBed !== undefined) setSelectedBed(filterBed);
   }, [filterBed]);
-
-  // Live condition counts
-  const conditionCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const u of inventoryData?.units ?? []) {
-      const key = unitConditionKey({
-        finishing: u.finishing,
-        finishingQuality: u.finishingQuality,
-        furnishing: u.furnishing,
-        furnished: u.furnished,
-      });
-      if (key === 'unknown') continue;
-      counts[key] = (counts[key] || 0) + 1;
-    }
-    return counts;
-  }, [inventoryData]);
 
   // Live Unit counts per compound name
   const liveCompoundCounts = useMemo(() => {
@@ -1307,13 +1282,6 @@ export default function CompoundsMap({
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Wheel Zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.15 : -0.15;
-    setZoom((prev) => Math.max(1, Math.min(2.8, prev + delta)));
-  };
-
   // Reset View
   const handleResetView = useCallback(() => {
     setZoom(1);
@@ -1328,30 +1296,6 @@ export default function CompoundsMap({
     setShowSelectedOnly(false);
     setIsPlayingTour(false);
   }, []);
-
-  const handleZoneSelect = useCallback((zone: ZonePreset) => {
-    setSelectedZone(zone.key);
-    setIsPlayingTour(false);
-    if (zone.key === 'all') {
-      setZoom(1);
-      setPan({ x: 0, y: 0 });
-    } else {
-      setZoom(zone.zoom);
-      setPan({ x: (zone.panX ?? 0) * 3, y: (zone.panY ?? 0) * 3 });
-    }
-  }, []);
-
-  const activeFilterCount =
-    (filterQuery ? 1 : 0) +
-    (selectedZone !== 'all' ? 1 : 0) +
-    (selectedBed !== 'any' ? 1 : 0) +
-    (selectedPriceBudget !== 'any' ? 1 : 0) +
-    (selectedUnitType ? 1 : 0) +
-    (selectedCondition ? 1 : 0) +
-    (selectedSegment !== 'all' ? 1 : 0) +
-    (showSelectedOnly ? 1 : 0) +
-    (filterCompound ? 1 : 0) +
-    (filterPrice && filterPrice !== '0' ? 1 : 0);
 
   return (
     <div
@@ -1443,6 +1387,7 @@ export default function CompoundsMap({
                 marginBottom: 20,
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={mapTheme === 'dark' ? '/maps/new-cairo-masterplan-dark.jpg' : '/maps/new-cairo-masterplan-light.jpg'}
                 alt="360 view preview"
@@ -1541,6 +1486,7 @@ export default function CompoundsMap({
           }}
         >
           {/* Base Illustrated Map Graphic (Dark Theme - High Resolution & Contrast Tuned) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/maps/new-cairo-masterplan-dark.jpg"
             alt="New Cairo Illustrated Masterplan (Dark Theme)"
@@ -1562,6 +1508,7 @@ export default function CompoundsMap({
           />
 
           {/* Base Illustrated Map Graphic (Light Theme - High Resolution & Contrast Tuned) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/maps/new-cairo-masterplan-light.jpg"
             alt="New Cairo Illustrated Masterplan (Light Theme)"

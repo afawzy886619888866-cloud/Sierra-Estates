@@ -6,7 +6,7 @@
   "types": "src/index.ts",
   "private": true,
   "dependencies": {
-"@google/genai": "^2.24.0",
+"@google/genai": "^2.27.0",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
@@ -18,7 +18,7 @@
   "devDependencies": {
     "@types/node": "^26",
     "@types/react": "^19",
-"typescript": "^5.9.3"
+"typescript": "^7.0.2"
   },
   "scripts": {
     "lint": "eslint .",

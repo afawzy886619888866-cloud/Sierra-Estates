@@ -17,6 +17,7 @@ This skill defines the canonical rules, architectural standards, and data proces
 ## 1. Core Architectural Tenets & Invariant Rules
 
 ### Rule 1: Advertiser Classification (Explicit Owner Evidence Required — Never Group Name Alone)
+
 - **Group Name / Sheet Name / File Name Alone Is Not Evidence**: Merely originating from an "August Owners" group, an "Owners" spreadsheet, or a group with "owner" in the title does **NOT** qualify a listing as Direct Owner.
 - **`Direct Owner` Qualification Requires Explicit Internal Clues**: A listing is placed in the **`Owners`** sheet *only* if explicit evidence is present within the listing's own data fields:
   1. **Advertiser / Role Column**: Explicitly contains `owner`, `مالك`, `صاحب العقار`, `صاحب الشأن`, `direct owner` (and not broker, agency, or group intake).
@@ -27,6 +28,7 @@ This skill defines the canonical rules, architectural standards, and data proces
 ---
 
 ### Rule 1.1: Client & Buyer Requests Isolation ("REQUESTED" / "مطلوب" Are Not Real Listings)
+
 - **Buyer & Tenant Requests Are Not Inventory**: Messages containing request terminology represent clients searching for properties to buy or rent, **NOT** available property listings.
 - **Request Detection Patterns**:
   - English: `request`, `requested`, `urgent request`, `looking for`, `buyer request`, `client request`.
@@ -60,6 +62,7 @@ Different listing sources require distinct deduplication keys to prevent over-co
 ### Rule 3: Price Routing Logic (Rent vs Resale Threshold)
 
 The single source of truth for segregating Rent and Resale deals is the **400,000 EGP** threshold:
+
 - **`Price > 400,000 EGP`**: Strictly routed to **`Sierra_Estates_Resale_Master.xlsx`** (`Sale`). Even if originally labelled as rent in a messy sheet, any listing above 400,000 EGP is reclassified as Resale.
 - **`0 < Price <= 400,000 EGP`**: Strictly routed to **`Sierra_Estates_Rent_Master.xlsx`** (`Rent`). Any listing under or equal to 400,000 EGP is classified as Rent.
 - **`Price == 0`**: Falls back to original sheet/file deal type.
@@ -72,9 +75,11 @@ All phone numbers and numeric fields must adhere to strict formatting to prevent
 
 1. **Float String Stripping**:
    - Excel often exports phone numbers as floats (e.g. `1067849072.0`). Stripping `.0` or `.00` before digit extraction is mandatory:
+
      ```python
      s = re.sub(r'\.0+$', '', str(val).strip())
      ```
+
 2. **Scientific Notation Handling**:
    - Strings like `1.067849072E+09` must be cast through `int(float(s))` before regex.
 3. **Leading Zero Restoration**:
@@ -84,11 +89,13 @@ All phone numbers and numeric fields must adhere to strict formatting to prevent
    - Egyptian mobile subscriber numbers are the last 7 digits (`digits[-7:]`). Used for deduplication and presented in the `Phone (Last 7)` column.
 5. **Excel Storage Format**:
    - Phone numbers must **always** be written as strings to cells formatted as Text (`@`):
+
      ```python
      cell.value = str(phone)
      cell.number_format = '@'
      cell.alignment = Alignment(horizontal="center", vertical="center")
      ```
+
 6. **Numeric Formatting**:
    - `Price`: Integer formatted as `#,##0 "EGP"` (right-aligned).
    - `Area`: Integer formatted as `#,##0` (center-aligned).
@@ -101,11 +108,13 @@ All phone numbers and numeric fields must adhere to strict formatting to prevent
 The pipeline produces exactly **2 final workbooks**:
 
 ### Workbook 1: `Sierra_Estates_Rent_Master.xlsx`
+
 - **Sheet 1 (`Owners_Rent`)**: All verified direct owner rental listings.
 - **Sheet 2 (`Brokers_Rent`)**: All broker-sourced rental listings.
 - **Sheet 3 (`Property_Finder_Ads`)**: High-priority rental listings with verified photos, structured with Property Finder XML syndication columns (`RR`, `Monthly`, property types `AP`/`VH`/`TW`/`TH`, bilingual titles & descriptions).
 
 ### Workbook 2: `Sierra_Estates_Resale_Master.xlsx`
+
 - **Sheet 1 (`Owners_Resale`)**: All verified direct owner resale listings.
 - **Sheet 2 (`Brokers_Resale`)**: All broker-sourced resale listings.
 - **Sheet 3 (`Property_Finder_Ads`)**: High-priority resale listings with verified photos, structured for Property Finder XML syndication (`RS`).
@@ -117,6 +126,7 @@ The pipeline produces exactly **2 final workbooks**:
 ### Distribution Locations
 
 Every run synchronizes the output workbooks across:
+
 1. `C:\Users\Sierr\Downloads\Sheets\` (Root contains **ONLY** the 2 final workbooks; all raw files preserved in `_raw_sheets_archive/`).
 2. Project Root: `H:\last\Main\SE-Vercel-deploy-main\`
 3. Project Data Directory: `H:\last\Main\SE-Vercel-deploy-main\data\`
@@ -135,6 +145,7 @@ python scratch/execute_last7_phone_price_dedup.py
 ```
 
 This single command executes:
+
 1. Recursive harvest of all files in `_raw_sheets_archive` and downloads directory.
 2. Clue-based advertiser classification (Default Broker, Explicit Owner).
 3. Dual-mode deduplication (Broker: Phone Last 7 + Price; Owner: Phone Last 7).

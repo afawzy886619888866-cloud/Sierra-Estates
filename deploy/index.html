@@ -1882,10 +1882,12 @@ a:hover{color:var(--pri-d);}
   var theme = (window.HZ && HZ.theme) ? HZ.theme() : 'light';
   var map = L.map('home-map', { scrollWheelZoom: false, zoomControl: true }).setView([30.03, 31.57], 11);
   var tiles = {
-    light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    // Voyager: denser roads/labels/POIs than light_all — reads as a far
+    // higher-resolution basemap; {r} already serves @2x on retina screens.
+    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
   };
-  var layer = L.tileLayer(tiles[theme], { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18 }).addTo(map);
+  var layer = L.tileLayer(tiles[theme], { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 20 }).addTo(map);
 
   document.addEventListener('hzp:theme', function (e) {
     layer.setUrl(tiles[e.detail]);

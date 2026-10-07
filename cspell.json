@@ -329,6 +329,7 @@
     "protobufjs",
     "psql",
     "ptype",
+    "publishability",
     "pycache",
     "pycodestyle",
     "pydantic",
@@ -435,6 +436,7 @@
     "unconfigured",
     "undeployed",
     "unfurnish",
+    "unledgered",
     "unparseable",
     "unranked",
     "unrequested",
@@ -495,6 +497,21 @@
     "madinat",
     "akia",
     "phnc",
-    "xoxb"
+    "xoxb",
+    "dummyimage",
+    "frbo",
+    "geospatial",
+    "lorempixel",
+    "openpyxl",
+    "pexels",
+    "pixabay",
+    "unphotographed",
+    "apikey",
+    "ejar",
+    "gviz",
+    "ledgered",
+    "pgrst",
+    "truthed",
+    "upserting"
   ]
 }

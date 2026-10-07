@@ -41,7 +41,6 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 - **`sierra-deployment-ops`**: Deployment and infrastructure management for Vercel, Supabase PostgreSQL / pgvector schemas, and Cloud Storage.
 - **`full-output-enforcement` (`output-skill`)**: Enforces complete, unabridged code generation and bans placeholder patterns.
 
-
 ---
 
 ## 2. Google Cloud Developer Plugin (Uninstalled)
