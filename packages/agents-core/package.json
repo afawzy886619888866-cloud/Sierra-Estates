@@ -17,7 +17,7 @@
     "@sierra-estates/exchange": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
-    "dotenv": "^18.0.3",
+    "dotenv": "^18.0.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
