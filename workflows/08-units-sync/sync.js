@@ -161,7 +161,7 @@ function rowToListing(row) {
     furnishing_status: get('Furnished or not', 'Furnished') || null,
     status: mapStatus(get('Availablty', 'Availability')),
     availability: get('Availablty', 'Availability') || null,
-    verified_at: new Date().toISOString(),
+    verified_at: null,
     sync_source: 'sheets-units',
     source_channel: 'sheets',
     owner_name: get('Name', 'name') || null,
@@ -170,7 +170,9 @@ function rowToListing(row) {
     raw_data: row,
     updated_at: new Date().toISOString(),
   };
-  listing.publish_status = listing.status === 'available' ? 'PUBLISHABLE' : 'REVIEW_REQUIRED';
+  // ANTI-FABRICATION (Policy 020 / Migration 025): Raw sheet rows lack verified photos
+  // and live human owner confirmation — must land as REVIEW_REQUIRED, never PUBLISHABLE.
+  listing.publish_status = 'REVIEW_REQUIRED';
   if (listing.garden_sqm > 0) listing.amenities.push('garden');
   if (get('Pool', 'pool')) listing.amenities.push('pool');
   return listing;
@@ -217,9 +219,13 @@ async function syncChunk(listings) {
   for (const l of unique) {
     const id = existingId.get(l.dupe_check_hash);
     if (!id) { fresh.push(l); continue; }
+    // ANTI-OVERWRITE (Task Follow-up): UPDATE path MUST NOT modify human-controlled
+    // verification fields (publish_status, verified_at, verified_by). These fields
+    // belong to human staff audits and must never be silently undone by automated syncs.
+    const { publish_status, verified_at, verified_by, ...updatePayload } = l;
     const p = await requestJson(
       `${SB_URL}/rest/v1/listings?id=eq.${id}`,
-      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: l, timeoutMs: 20000 }
+      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: updatePayload, timeoutMs: 20000 }
     );
     if (!p.ok) throw new Error(`update HTTP ${p.status}: ${JSON.stringify(p.data).slice(0, 200)}`);
     updated++;
