@@ -194,6 +194,40 @@ export default function PropertyCard({
     }
   };
 
+  const renderEcoTags = (max = 2) => {
+    if (!Array.isArray(p.tags) || p.tags.length === 0) return null;
+    const visible = p.tags.slice(0, max);
+    return (
+      <div className="eco-tags-chips flex flex-wrap gap-1 mt-1.5" role="list" aria-label={isAr ? 'ميزات بيئية وذكية' : 'Eco & Smart Features'}>
+        {visible.map((tagId) => {
+          const meta = getEcoSmartTagMeta(tagId);
+          if (!meta) return null;
+          return (
+            <span
+              key={tagId}
+              className="eco-tag-chip inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium tracking-wide"
+              style={{
+                background: meta.category === 'eco' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(59, 130, 246, 0.12)',
+                color: meta.category === 'eco' ? '#10B981' : '#60A5FA',
+                border: `1px solid ${meta.category === 'eco' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+              }}
+            >
+              {meta.category === 'eco' ? (
+                <Leaf style={{ width: 10, height: 10 }} />
+              ) : (
+                <Zap style={{ width: 10, height: 10 }} />
+              )}
+              <span>{isAr ? meta.labelAr : meta.labelEn}</span>
+            </span>
+          );
+        })}
+        {p.tags.length > max && (
+          <span className="text-[10px] text-slate-400 font-mono py-0.5">+{p.tags.length - max}</span>
+        )}
+      </div>
+    );
+  };
+
   /* ─────────────────────────────────────────────────────────────────
    * 1. COMPACT / EXECUTIVE HORIZONTAL CARD VARIANT
    * ───────────────────────────────────────────────────────────────── */
@@ -263,6 +297,8 @@ export default function PropertyCard({
               <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
             </div>
           </div>
+
+          {renderEcoTags(2)}
 
           <div className="foot" style={{ marginTop: 'auto', background: 'transparent', padding: '10px 0 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="agent">
@@ -348,6 +384,8 @@ export default function PropertyCard({
 
           <h3><Link href={href}>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</Link></h3>
           <div className="addr"><MapPin className="i" /> {[p.cmp, p.zone].filter(Boolean).join(', ')}</div>
+
+          {renderEcoTags(2)}
 
           {/* Bento Financial Metrics */}
           <div className="bento-grid">
@@ -459,6 +497,7 @@ export default function PropertyCard({
               </>
             )}
           </div>
+          {renderEcoTags(3)}
         </div>
 
         <div className="foot" style={{ background: 'transparent', padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -652,6 +691,8 @@ export default function PropertyCard({
             <span>+ VIP Tour</span>
           </button>
         </div>
+
+        {renderEcoTags(3)}
       </div>
 
       <div className="foot flex items-center justify-between">
