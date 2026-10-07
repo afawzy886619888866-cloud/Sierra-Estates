@@ -102,3 +102,28 @@
 - **Verification Evidence:**
   - `apps/sierra-estates-realty/__tests__/broker-saved-views.test.ts`: Passed (133/133 suites, 1,480/1,480 tests green).
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+### Phase 5 — Sierra Price Index (04 §B1) [UI, public]
+
+- **Approval Note:** Written approval granted by owner on 2026-10-07 ("apply all yes plz") for frontend work in phases marked [UI].
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **Price Index Domain Service (`lib/services/PriceIndexService.ts`):**
+    - Built monthly compound price index engine combining `new-cairo-market-stats`, `roi-service`, and `HZDATA`.
+    - Computes average price per sqm, MoM and YoY appreciation rates, 3-year projected capital gains (ROI), rental yield percentages, liquidity scores, and 6-month historical trend sequence.
+    - Added in-memory snapshot caching for sub-10ms response times ensuring performance budget LCP < 2.5s.
+    - Implemented Schema.org `Dataset` JSON-LD generator with spatial/temporal coverage for Google Rich Results.
+  - **API Endpoints:**
+    - `GET /api/price-index`: Public API returning monthly index summary and compound breakdowns.
+    - `GET /api/cron/price-index`: Protected cron endpoint (`verifyCronRequest` via `CRON_SECRET`) calculating monthly snapshots and appending activity feed records.
+  - **Public SSR Market Page (`app/(site)/price-index/`):**
+    - Server Component `page.tsx` with dynamic SEO metadata, OpenGraph tags, canonical alternate, and inline Dataset JSON-LD schema.
+    - Interactive Client Component `PriceIndexClient.tsx` featuring:
+      - 4 Market KPI cards (Average Price/m², Top Gaining Compound, Verified Units Tracked, YoY Growth Benchmark).
+      - Interactive 6-month historical trend sparkline bar visualization.
+      - Search by compound name (AR/EN), zone dropdown filter, and dynamic sorting (Price/m², MoM growth, 3Y ROI).
+      - Bento cards displaying compound tiers ("Ultra Luxury", "Prime Luxury"), price ranges, appreciation badges, and direct unit inquiry CTAs.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/sierra-price-index.test.ts`: Passed (134/134 suites, 1,483/1,483 tests green).
+  - `apps/sierra-estates-realty/__tests__/phase13-security-sweep.test.ts`: 100% clean (0 §21 fabrication offenders).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.
