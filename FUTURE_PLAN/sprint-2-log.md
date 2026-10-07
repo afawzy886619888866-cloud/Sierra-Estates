@@ -82,3 +82,23 @@
 - **Verification Evidence:**
   - `apps/sierra-estates-realty/__tests__/eco-smart-tags.test.tsx`: 100% passed (132/132 total suites, 1,476/1,476 tests green).
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
+
+### Phase 4 — Saved Views for Brokers (04 §B4)
+
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **Sierra DSL v2 Parser (`packages/db/lib/dsl/parser.ts`):**
+    - Enhanced parser to accept `COLLECTION <name>` directive, unquoted field names (`FILTER compound == "Mivida"`, `SHOW code, compound, price`), and flexible `SORT` / `SORT BY` syntax.
+    - Verified strict field-level masking via `applyFieldVisibility` to guarantee sensitive broker/owner fields are stripped on shared links.
+  - **Saved Views Domain Service (`lib/services/SavedViewsService.ts`):**
+    - Implemented `saveView`, `getView`, `listViews`, and `executeView`.
+    - Enforced broker visibility boundary and in-memory fallback with Supabase persistence.
+  - **API Endpoints:**
+    - `POST /api/views`: Validates and compiles DSL into a shareable saved view.
+    - `GET /api/views`: Lists views with visibility filtering.
+    - `GET /api/views/[id]`: Fetches a view specification and supports live execution (`?execute=true`) returning masked inventory records.
+  - **Broker UI Component (`components/broker/BrokerSavedViews.tsx`):**
+    - Built responsive broker workspace with preset DSL queries (Mivida Resale, Eastown Fast Deals, Fifth Square 3-Bed), syntax editor, one-click share link generator, and live result table preview.
+- **Verification Evidence:**
+  - `apps/sierra-estates-realty/__tests__/broker-saved-views.test.ts`: Passed (133/133 suites, 1,480/1,480 tests green).
+  - `turbo run type-check`: 17/17 packages passed, 0 errors.

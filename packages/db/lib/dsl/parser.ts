@@ -164,11 +164,12 @@ function parseFilterLine(line: string): FilterClause | null {
     return { field: pct[1], operator: op as DslFilterOp, value: parseFloat(pct[3]) };
   }
 
-  // Standard: FILTER "Field" op "value" | number
-  const std = line.match(/FILTER\s+"([^"]+)"\s+(>=|<=|>|<|!=|=)\s+("?[^";\n]+"?)/i);
+  // Standard: FILTER "Field" op "value" | number OR FILTER Field op "value" | number
+  const std = line.match(/FILTER\s+(?:"([^"]+)"|([a-zA-Z0-9_]+))\s+(>=|<=|>|<|!=|==|=)\s+("?[^";\n]+"?)/i);
   if (std) {
-    const op = std[2] === "=" ? "==" : std[2];
-    return { field: std[1], operator: op as DslFilterOp, value: coerce(std[3]) };
+    const rawOp = std[3];
+    const op = (rawOp === "=" || rawOp === "==") ? "==" : rawOp;
+    return { field: std[1] || std[2], operator: op as DslFilterOp, value: coerce(std[4]) };
   }
 
   return null;
@@ -200,44 +201,57 @@ export function parseDSL(dsl: string, collectionName = "listings"): ParsedView {
   for (const line of lines) {
     const U = line.toUpperCase();
 
+    // ── COLLECTION ──────────────────────────────────────────────
+    if (U.startsWith("COLLECTION")) {
+      const col = extractQuoted(line)[0] || line.split(/\s+/)[1];
+      if (col) result.collectionName = col.replace(/["']/g, "");
+    }
+
     // ── VISIBILITY ──────────────────────────────────────────────
-    if (U.startsWith("VISIBILITY")) {
+    else if (U.startsWith("VISIBILITY")) {
       result.visibility = (line.split(/\s+/)[1]?.toLowerCase() ?? "public") as Visibility;
     }
 
     // ── SHOW "SBR_Code" AS PRIMARY_ID ───────────────────────────
     else if (U.startsWith("SHOW") && U.includes("AS PRIMARY_ID")) {
-      const f = extractQuoted(line)[0];
+      const f = extractQuoted(line)[0] || line.replace(/^SHOW\s+/i, "").split(/\s+AS/i)[0].trim().replace(/["']/g, "");
       if (f) result.primaryIdField = f;
     }
 
     // ── SHOW ─────────────────────────────────────────────────────
     else if (U.startsWith("SHOW")) {
-      const fields = extractQuoted(line.replace(/^SHOW\s+/i, ""));
+      let fields = extractQuoted(line.replace(/^SHOW\s+/i, ""));
+      if (fields.length === 0) {
+        fields = line.replace(/^SHOW\s+/i, "").split(",").map(s => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+      }
       result.showFields = fields;
       for (const f of fields) result.showFieldsMap[f] = true;
     }
 
     // ── HIDE ─────────────────────────────────────────────────────
     else if (U.startsWith("HIDE")) {
-      result.hideFields = extractQuoted(line);
+      let fields = extractQuoted(line.replace(/^HIDE\s+/i, ""));
+      if (fields.length === 0) {
+        fields = line.replace(/^HIDE\s+/i, "").split(",").map(s => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+      }
+      result.hideFields = fields;
     }
 
-    // ── FILTER ──────────────────────────────────────────────────
+    // ── FILTER ───────────────────────────────────────────────────
     else if (U.startsWith("FILTER")) {
       const f = parseFilterLine(line);
       if (f) result.filters.push(f);
     }
 
-    // ── SORT BY ─────────────────────────────────────────────────
-    else if (U.startsWith("SORT BY")) {
-      const parts = line.replace(/^SORT BY\s+/i, "").split(",");
+    // ── SORT BY / SORT ───────────────────────────────────────────
+    else if (U.startsWith("SORT BY") || U.startsWith("SORT")) {
+      const parts = line.replace(/^SORT(\s+BY)?\s+/i, "").split(",");
       for (const p of parts) {
-        const m = p.trim().match(/"(.+?)"\s*(ASC|DESC)?/i);
+        const m = p.trim().match(/(?:"([^"]+)"|([a-zA-Z0-9_]+))\s*(ASC|DESC)?/i);
         if (m) {
           result.sortBy.push({
-            field:     m[1],
-            direction: (m[2]?.toLowerCase() ?? "asc") as SortDir,
+            field:     m[1] || m[2],
+            direction: (m[3]?.toLowerCase() ?? "asc") as SortDir,
           });
         }
       }
