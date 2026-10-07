@@ -180,10 +180,16 @@ function rowToListing(row) {
     raw_data: row,
     updated_at: new Date().toISOString(),
   };
-  // Phase 6 no-fabrication rule: NO verified_at / verified_by /
-  // source_verified_at and NO publish_status on this object — fresh rows
-  // get REVIEW_REQUIRED at the insert site; PATCHes never touch
-  // publishability or provenance (PostgREST only mutates provided keys).
+  // MERGED RULE (migration 026 + policy 020 + 025):
+  //   • Provenance keys (verified_at / verified_by / source_verified_at) are
+  //     NEVER written by this workflow — human provenance only (§21 + 026).
+  //   • Fresh rows land as REVIEW_REQUIRED explicitly (025 dropped the column
+  //     DEFAULT, so an omitted publish_status would be NULL/unclassified —
+  //     sheet rows must enter the human review queue, never PUBLISHABLE).
+  //   • PATCHes strip publish_status/verified_at/verified_by before sending
+  //     (anti-overwrite: automated sync must never undo human verification
+  //     decisions) — see syncChunk.
+  listing.publish_status = 'REVIEW_REQUIRED';
   if (listing.garden_sqm > 0) listing.amenities.push('garden');
   if (get('Pool', 'pool')) listing.amenities.push('pool');
   return listing;
@@ -230,9 +236,13 @@ async function syncChunk(listings) {
   for (const l of unique) {
     const id = existingId.get(l.dupe_check_hash);
     if (!id) { fresh.push(l); continue; }
+    // ANTI-OVERWRITE (Task Follow-up): UPDATE path MUST NOT modify human-controlled
+    // verification fields (publish_status, verified_at, verified_by). These fields
+    // belong to human staff audits and must never be silently undone by automated syncs.
+    const { publish_status, verified_at, verified_by, ...updatePayload } = l;
     const p = await requestJson(
       `${SB_URL}/rest/v1/listings?id=eq.${id}`,
-      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: l, timeoutMs: 20000 }
+      { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: updatePayload, timeoutMs: 20000 }
     );
     if (!p.ok) throw new Error(`update HTTP ${p.status}: ${JSON.stringify(p.data).slice(0, 200)}`);
     updated++;

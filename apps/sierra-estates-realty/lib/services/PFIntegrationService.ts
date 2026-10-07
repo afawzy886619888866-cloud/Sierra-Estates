@@ -8,6 +8,7 @@ import { getRecord, insertRecord, listRecords, updateRecord } from '@sierra-esta
 import { Unit, Lead, COLLECTIONS } from '../models/schema';
 import { PFPropertyType } from '../property-finder/types';
 import { triggerNewListingNotification } from '../server/n8n';
+import { toListingColumns } from '../server/listing-columns';
 
 export interface PFLeadSyncSummary {
   created: number;
@@ -115,8 +116,14 @@ export class PFIntegrationService {
         images: listing.media?.images?.map(i => i.original.url) || [],
       };
 
+      const columnPayload = toListingColumns(payload as Record<string, unknown>);
+
       if (existing.length === 0) {
-        const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, payload);
+        const insertPayload = {
+          ...columnPayload,
+          publishStatus: 'REVIEW_REQUIRED',
+        };
+        const newUnit = await insertRecord<{ id: string }>(COLLECTIONS.units, insertPayload);
         imported++;
 
         // Trigger n8n webhook for new listing matching
@@ -127,7 +134,9 @@ export class PFIntegrationService {
           compound: payload.compound || payload.location || payload.city || ''
         });
       } else {
-        await updateRecord(COLLECTIONS.units, existing[0].id, payload);
+        // ANTI-OVERWRITE: Do not touch human verification fields on automated update
+        const { publishStatus, verifiedAt, verifiedBy, ...updatePayload } = columnPayload;
+        await updateRecord(COLLECTIONS.units, existing[0].id, updatePayload);
         updated++;
       }
     }
