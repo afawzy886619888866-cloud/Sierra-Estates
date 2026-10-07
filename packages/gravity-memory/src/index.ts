@@ -32,3 +32,33 @@ export const SIERRA_PERSONA: GravityPersona = {
   version: '12.0',
   system: 'Sierra Blu Realty',
 };
+
+export class GravityMemory {
+  private static seenHashes: Set<string> = new Set();
+
+  /**
+   * Memory-backed deduplication hook: checks if a record hash has already been seen.
+   * Returns true if seen previously, false if new (and marks as seen).
+   */
+  static seen(recordHash: string): boolean {
+    if (!recordHash) return false;
+    if (this.seenHashes.has(recordHash)) {
+      return true;
+    }
+    this.seenHashes.add(recordHash);
+    return false;
+  }
+
+  static reset(): void {
+    this.seenHashes.clear();
+  }
+
+  seen(recordHash: string): boolean {
+    return GravityMemory.seen(recordHash);
+  }
+}
+
+export function seen(recordHash: string): boolean {
+  return GravityMemory.seen(recordHash);
+}
+

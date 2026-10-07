@@ -42,6 +42,7 @@
         "@sierra-estates/agents": "workspace:*",
         "@sierra-estates/agents-core": "workspace:*",
         "@sierra-estates/db": "workspace:*",
+        "@sierra-estates/gravity-memory": "workspace:*",
         "@sierra-estates/memory-engine": "workspace:*",
         "@sierra-estates/obsidian": "workspace:*",
         "@sierra-estates/ui": "workspace:*",
