@@ -1,41 +1,48 @@
 /**
- * Workflow 04: Email Sender
+ * Workflow 04: Email Sender  (hardened 2026-10)
  * ─────────────────────────────────────────
- * Sends bulk emails to investor stakeholders
- * Reads campaigns from Sheets
- * Tracks open/click rates via SendGrid
+ * Sends campaign emails from the Sheets "email_campaigns" tab via SendGrid,
+ * with open/click tracking enabled.
  *
- * Usage:
- *   node workflows/04-email-sender/send.js
- *   OR: cron job daily at 8am
+ * CHANGES over the previous revision:
+ *   - Variables cell (`email_campaigns!C`) is JSON — a malformed cell used to
+ *     crash the whole run mid-batch. Now parsed defensively; malformed rows
+ *     are marked ERROR and the batch continues.
+ *   - Missing SENDGRID_API_KEY exits 2 ("unconfigured") instead of crashing
+ *     at require-time via sgMail.setApiKey(undefined).
+ *   - Per-send try/catch already existed; kept. Template miss marks ERROR.
  *
- * Env vars required:
- *   - SENDGRID_API_KEY
- *   - SENDGRID_FROM_EMAIL
- *   - BROKER_INBOX_SHEET_ID
- *   - GOOGLE_SERVICE_ACCOUNT_KEY
+ * Env: SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, BROKER_INBOX_SHEET_ID,
+ *      GOOGLE_SERVICE_ACCOUNT_KEY
+ * Exit: 0 ok · 2 unconfigured · 1 error
  */
-
 const { google } = require('googleapis');
-const sgMail = require('@sendgrid/mail');
 const fs = require('fs');
 
-const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID;
-const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
+const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
+const SA_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '';
+const SENDGRID_KEY = process.env.SENDGRID_API_KEY || '';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@sierra-estates.com';
-const SERVICE_ACCOUNT_KEY = JSON.parse(
-  fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'utf8')
-);
 
-sgMail.setApiKey(SENDGRID_KEY);
+const summary = { pending: 0, sent: 0, failed: 0, malformed: 0 };
 
-const sheets = google.sheets({
-  version: 'v4',
-  auth: new google.auth.GoogleAuth({
-    credentials: SERVICE_ACCOUNT_KEY,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  }),
-});
+function failUnconfigured(msg) {
+  console.log(`UNCONFIGURED: ${msg}`);
+  process.exit(2);
+}
+
+function sheetsClient() {
+  if (!SHEET_ID) failUnconfigured('BROKER_INBOX_SHEET_ID missing');
+  if (!SA_PATH || !fs.existsSync(SA_PATH)) failUnconfigured('GOOGLE_SERVICE_ACCOUNT_KEY missing or file not found');
+  const creds = JSON.parse(fs.readFileSync(SA_PATH, 'utf8'));
+  return google.sheets({
+    version: 'v4',
+    auth: new google.auth.GoogleAuth({
+      credentials: creds,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    }),
+  });
+}
 
 const EMAIL_TEMPLATES = {
   welcome: {
@@ -67,98 +74,106 @@ const EMAIL_TEMPLATES = {
   },
 };
 
-async function getCampaignRecipients() {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: "'email_campaigns'!A:E",
-    });
-
-    const rows = response.data.values || [];
-    return rows.slice(1).filter(row => row[3] === 'PENDING'); // Filter by status
-  } catch (err) {
-    console.error('❌ Failed to read campaigns:', err.message);
-    return [];
-  }
+async function getCampaignRecipients(sheets) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: "'email_campaigns'!A:E",
+  });
+  const rows = response.data.values || [];
+  return rows
+    .slice(1)
+    .map((row, idx) => ({ row, sheetRow: idx + 2 }))
+    .filter(({ row }) => String(row[3] || '').trim().toUpperCase() === 'PENDING');
 }
 
 async function sendEmail(to, templateKey, variables = {}) {
-  try {
-    const template = EMAIL_TEMPLATES[templateKey];
-    if (!template) {
-      console.error(`❌ Template not found: ${templateKey}`);
-      return false;
-    }
+  const template = EMAIL_TEMPLATES[templateKey];
+  if (!template) throw new Error(`template not found: ${templateKey}`);
 
-    let html = template.html;
-    let subject = template.subject;
+  let html = template.html;
+  let subject = template.subject;
+  Object.entries(variables).forEach(([key, value]) => {
+    html = html.split(`{{${key}}}`).join(String(value ?? ''));
+    subject = subject.split(`{{${key}}}`).join(String(value ?? ''));
+  });
 
-    // Replace variables
-    Object.entries(variables).forEach(([key, value]) => {
-      html = html.replace(`{{${key}}}`, value);
-      subject = subject.replace(`{{${key}}}`, value);
-    });
-
-    await sgMail.send({
-      to,
-      from: FROM_EMAIL,
-      subject,
-      html,
-      trackingSettings: {
-        clickTracking: { enable: true },
-        openTracking: { enable: true },
-      },
-    });
-
-    console.log(`✅ Email sent to ${to}`);
-    return true;
-  } catch (err) {
-    console.error(`❌ Email send failed for ${to}:`, err.message);
-    return false;
-  }
+  // Lazy require so a missing key never 500s the module itself.
+  const sgMail = require('@sendgrid/mail');
+  sgMail.setApiKey(SENDGRID_KEY);
+  await sgMail.send({
+    to,
+    from: FROM_EMAIL,
+    subject,
+    html,
+    trackingSettings: {
+      clickTracking: { enable: true },
+      openTracking: { enable: true },
+    },
+  });
 }
 
-async function updateCampaignStatus(rowIndex, status) {
+async function updateStatus(sheets, sheetRow, status) {
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `'email_campaigns'!D${rowIndex + 2}`,
+      range: `'email_campaigns'!D${sheetRow}`,
       valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[status]],
-      },
+      resource: { values: [[status]] },
     });
   } catch (err) {
-    console.error('❌ Failed to update status:', err.message);
+    console.error(`status write failed row ${sheetRow}: ${err.message}`);
   }
 }
 
 async function main() {
-  console.log('📧 Starting email sender workflow...');
+  console.log('email-sender: starting');
+  if (!SENDGRID_KEY) failUnconfigured('SENDGRID_API_KEY missing');
 
-  const campaigns = await getCampaignRecipients();
-  console.log(`📊 Found ${campaigns.length} pending campaigns`);
+  const sheets = sheetsClient();
+  const campaigns = await getCampaignRecipients(sheets);
+  summary.pending = campaigns.length;
+  console.log(`pending campaigns: ${campaigns.length}`);
 
-  for (let i = 0; i < campaigns.length; i++) {
-    const campaign = campaigns[i];
-    const email = campaign[0];
-    const templateKey = campaign[1];
-    const variables = campaign[2] ? JSON.parse(campaign[2]) : {};
+  for (const { row, sheetRow } of campaigns) {
+    const email = String(row[0] || '').trim();
+    const templateKey = String(row[1] || '').trim();
 
-    const sent = await sendEmail(email, templateKey, variables);
-
-    if (sent) {
-      await updateCampaignStatus(i, 'SENT');
-    } else {
-      await updateCampaignStatus(i, 'ERROR');
+    let variables = {};
+    try {
+      variables = row[2] ? JSON.parse(row[2]) : {};
+    } catch (_) {
+      await updateStatus(sheets, sheetRow, 'ERROR');
+      summary.malformed++;
+      console.error(`malformed variables JSON row ${sheetRow} — marked ERROR, continuing`);
+      continue;
     }
 
-    // Rate limit: 500ms between emails
-    await new Promise(resolve => setTimeout(resolve, 500));
+    if (!email) {
+      await updateStatus(sheets, sheetRow, 'ERROR');
+      summary.malformed++;
+      continue;
+    }
+
+    try {
+      await sendEmail(email, templateKey, variables);
+      await updateStatus(sheets, sheetRow, 'SENT');
+      summary.sent++;
+      console.log(`sent → ${email} (${templateKey})`);
+    } catch (err) {
+      await updateStatus(sheets, sheetRow, 'ERROR');
+      summary.failed++;
+      console.error(`send failed for ${email}: ${err.message}`);
+    }
+
+    await new Promise((r) => setTimeout(r, 500));
   }
 
-  console.log('✅ Email sender workflow complete');
+  console.log(`SUMMARY ${JSON.stringify(summary)}`);
+  console.log('email-sender: done');
   process.exit(0);
 }
 
-main();
+main().catch((err) => {
+  console.error(`email-sender FAILED: ${err.message}`);
+  process.exit(1);
+});

@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Bed, Bath, Maximize } from 'lucide-react';
 
-interface Estate {
+export interface Estate {
   id: string;
   title: string;
   compound: string;
@@ -17,50 +17,18 @@ interface Estate {
   tag?: string;
 }
 
-const ESTATES_DATA: Estate[] = [
-  {
-    id: 'est-1',
-    title: 'Villa Lumière',
-    compound: 'Mivida',
-    location: 'Fifth Settlement, New Cairo',
-    price: 'EGP 32,500,000',
-    beds: 5,
-    baths: 6,
-    area: '480 m²',
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&fit=crop',
-    tag: 'Exclusive',
-  },
-  {
-    id: 'est-2',
-    title: 'The Alabaster Estate',
-    compound: 'Uptown Cairo',
-    location: 'Mokattam, Cairo',
-    price: 'EGP 48,000,000',
-    beds: 6,
-    baths: 7,
-    area: '620 m²',
-    img: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=800&fit=crop',
-    tag: 'Featured',
-  },
-  {
-    id: 'est-3',
-    title: 'Modernist Sanctuary',
-    compound: 'Mountain View iCity',
-    location: 'New Cairo',
-    price: 'EGP 24,200,000',
-    beds: 4,
-    baths: 4,
-    area: '360 m²',
-    img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800&fit=crop',
-    tag: 'High ROI',
-  },
-];
+// §21 no-fabrication: this showcase component carries NO built-in inventory —
+// callers must pass real, verified listings via `estates`. (The hardcoded demo
+// villas with invented asking prices were removed so the component can never
+// render fabricated inventory by accident.)
 
 interface FeaturedEstatesProps {
+  /** Real, verified listings to showcase — required (§21: no built-in inventory). */
+  estates: Estate[];
   isArabic?: boolean;
 }
 
-export default function FeaturedEstates({ isArabic = false }: FeaturedEstatesProps) {
+export default function FeaturedEstates({ estates, isArabic = false }: FeaturedEstatesProps) {
   return (
     <section className="py-24 bg-[#0A1628]" id="portfolio">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -89,7 +57,7 @@ export default function FeaturedEstates({ isArabic = false }: FeaturedEstatesPro
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {ESTATES_DATA.map((estate, idx) => (
+          {estates.map((estate, idx) => (
             <motion.div
               key={estate.id}
               initial={{ opacity: 0, y: 30 }}

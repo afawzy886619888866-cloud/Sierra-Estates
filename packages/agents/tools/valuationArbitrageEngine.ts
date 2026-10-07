@@ -173,7 +173,9 @@ export class RealEstateValuationAgent {
 
     return {
       property_type: input.property_type,
-      location: input.location || 'New Cairo',
+      // §21 no-fabrication: valuation output echoes the location actually
+      // supplied — never a default 'New Cairo' claim.
+      location: input.location || 'Unspecified location',
       size_sqm: input.size_sqm,
       annual_income_generated: Math.round(annualIncome),
       calculated_fair_value_range: {

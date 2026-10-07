@@ -115,12 +115,13 @@ async function handleCommand(text: string, chatId: number | string, senderName: 
     if (sample.length > 0) {
       for (const u of sample) {
         const price = u.usd ? `$${u.usd.toLocaleString()}` : `${u.egpM || 0}M EGP`;
-        msg += `• <b>[${u.code || u.id}] ${u.compound || 'New Cairo'}</b> — ${u.area || 'N/A'} sqm | ${price} | ${u.beds || 0} Beds | <i>${u.status || 'available'}</i>\n`;
+        // §21 no-fabrication: unknown compound shows an explicit marker, not 'New Cairo'.
+        msg += `• <b>[${u.code || u.id}] ${u.compound || 'unspecified compound'}</b> — ${u.area || 'N/A'} sqm | ${price} | ${u.beds || 0} Beds | <i>${u.status || 'unspecified'}</i>\n`;
       }
     } else {
-      msg += `• <b>[HP-VL-01] Hyde Park Villa</b> — 480 sqm | 28.5M EGP | 5 Beds | <i>Ready</i>\n` +
-             `• <b>[MVW-TH-02] Mountain View iCity</b> — 280 sqm | 15.5M EGP | 4 Beds | <i>Ready</i>\n` +
-             `• <b>[MV-AP-03] Mivida Crescent Park</b> — 145 sqm | 6.8M EGP | 3 Beds | <i>Ready</i>\n`;
+      // §21 no-fabrication: never print invented sample listings — say there
+      // are none.
+      msg += `• No listings are currently available.\n`;
     }
     return sendMessage(chatId, msg);
   }

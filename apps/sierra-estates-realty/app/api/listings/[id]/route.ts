@@ -4,7 +4,7 @@
  * DELETE /api/listings/[id]   (admin) — soft delete (status=archived)
  */
 import { NextResponse } from "next/server";
-import { SEED_LISTINGS } from "@/lib/seed";
+// SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5)
 import { getRecord, updateRecord } from "@sierra-estates/db";
 import { toListingColumns, toListingRecord } from "@/lib/server/listing-columns";
 import { requireRole } from "@/lib/auth";
@@ -22,9 +22,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   } catch (err) {
     console.warn("[listings/[id]] Supabase read failed:", err);
   }
-  const item = SEED_LISTINGS.find((l) => l.id === id);
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(item);
+  // ANTI-FABRICATION: no hardcoded fallback — unknown id is a real 404.
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {

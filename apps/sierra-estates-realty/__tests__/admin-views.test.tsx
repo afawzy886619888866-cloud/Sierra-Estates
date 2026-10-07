@@ -81,20 +81,24 @@ describe('AlertsView', () => {
     expect(render(<AlertsView lang="ar" />)).toContain('\u0645\u0631\u0643\u0632 \u0627\u0644\u062a\u0646\u0628\u064a\u0647\u0627\u062a \u0627\u0644\u0630\u0643\u064a\u0629');
   });
 
-  it('includes AVM deviation alert card', () => {
-    expect(render(<AlertsView lang="en" />)).toContain('AVM Deviation Alert');
+  it('renders an honest empty state instead of fabricated alerts', () => {
+    // §21 (wave 5): four fabricated demo alerts were previously seeded
+    // here (an invented AVM deviation, a fake VIP viewing request, a
+    // made-up latency spike, a fictitious ingestion batch). The alert
+    // center now starts honestly empty.
+    const html = render(<AlertsView lang="en" />);
+    expect(html).toContain('No alerts');
+    expect(html).toContain('demo alerts are never invented');
+    expect(html).not.toContain('AVM Deviation Alert');
+    expect(html).not.toContain('VIP Hot Lead');
+    expect(html).not.toContain('PRIORITY: HIGH');
+    expect(html).not.toContain('ACTION REQUIRED');
   });
 
-  it('includes VIP hot lead alert card', () => {
-    expect(render(<AlertsView lang="en" />)).toContain('VIP Hot Lead');
-  });
-
-  it('has PRIORITY: HIGH badge', () => {
-    expect(render(<AlertsView lang="en" />)).toContain('PRIORITY: HIGH');
-  });
-
-  it('has ACTION REQUIRED badge', () => {
-    expect(render(<AlertsView lang="en" />)).toContain('ACTION REQUIRED');
+  it('shows honest zero counters for the alert tallies', () => {
+    const html = render(<AlertsView lang="en" />);
+    expect(html).toContain('All (0)');
+    expect(html).toContain('Active (0)');
   });
 });
 
@@ -118,24 +122,29 @@ describe('DashboardView', () => {
     expect(render(<DashboardView lang="ar" />)).toContain('\u0644\u0648\u062d\u0629 \u0627\u0644\u0642\u064a\u0627\u062f\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629');
   });
 
-  it('shows AI Match Precision metric', () => {
+  it('shows Conversion Rate metric with an honest em-dash before data loads', () => {
     const html = render(<DashboardView lang="en" />);
-    expect(html).toContain('AI Match Precision');
-    expect(html).toContain('98.4%');
+    expect(html).toContain('Conversion Rate');
+    // Honest contract: no fabricated '98.4%' — the card renders '—' until
+    // /api/admin/dashboard returns real data.
+    expect(html).not.toContain('98.4%');
+    expect(html).not.toContain('AVM Tier 1');
   });
 
   it('shows Systems Operational badge', () => {
     expect(render(<DashboardView lang="en" />)).toContain('Systems Operational');
   });
 
-  it('shows Active Catalog value 585', () => {
-    expect(render(<DashboardView lang="en" />)).toContain('585');
+  it('shows honest em-dash for Active Catalog before data loads (no fabricated 585)', () => {
+    const html = render(<DashboardView lang="en" />);
+    expect(html).not.toContain('585');
   });
 
-  it('shows OpenClaw Autonomous Harvester Cockpit with 19 channels', () => {
+  it('shows OpenClaw Autonomous Harvester Cockpit with the registry channel count', () => {
     const html = render(<DashboardView lang="en" />);
     expect(html).toContain('OpenClaw Autonomous Harvester Cockpit');
-    expect(html).toContain('19 Channels Live');
+    // 15 = 20 registered − 5 archived in packages/agents/tools/whatsappGroupRegistry.ts
+    expect(html).toContain('15 Channels Live');
     expect(html).toContain('ingest:all');
   });
 
@@ -218,16 +227,33 @@ describe('MonitoringView', () => {
     expect(render(<MonitoringView lang="en" />)).toContain('Live Operations Monitoring');
   });
 
-  it('shows AVM valuation log entry', () => {
-    expect(render(<MonitoringView lang="en" />)).toContain('Vertex Omni generated AVM valuation');
+  it('renders an honest empty telemetry stream instead of fabricated logs', () => {
+    // §21 (wave 5): six invented log lines (fake AVM valuations, a fake
+    // workflow run, a lead assignment naming a demo person) were removed —
+    // the stream stays empty until real telemetry is connected.
+    const html = render(<MonitoringView lang="en" />);
+    expect(html).toContain('No real telemetry logged yet');
+    expect(html).not.toContain('Vertex Omni generated AVM valuation');
+    expect(html).not.toContain('AI Orchestrator running workflow');
+    expect(html).not.toContain('ai.recommendations');
   });
 
-  it('shows OpenClaw orchestrator log entry', () => {
-    expect(render(<MonitoringView lang="en" />)).toContain('AI Orchestrator running workflow');
+  it('renders honest placeholder SLA trackers instead of fabricated figures', () => {
+    const html = render(<MonitoringView lang="en" />);
+    expect(html).toContain('WHATSAPP BOT SLA');
+    expect(html).toContain('PUBSUB DISPATCH');
+    expect(html).toContain('Awaiting telemetry');
+    expect(html).not.toContain('18 In Flight');
+    expect(html).not.toContain('482 msg / min');
+    expect(html).not.toContain('98.4% Verified');
   });
 
-  it('shows ai.recommendations pub event', () => {
-    expect(render(<MonitoringView lang="en" />)).toContain('ai.recommendations');
+  it('renders an honest empty inbound feed instead of fabricated leads', () => {
+    const html = render(<MonitoringView lang="en" />);
+    expect(html).toContain('No real inbound activity yet');
+    expect(html).toContain('Awaiting live feed connection');
+    expect(html).not.toContain('Live Cloud Feed');
+    expect(html).not.toContain('QUALIFIED_VIP');
   });
 });
 
@@ -247,20 +273,27 @@ describe('RecommendationsView', () => {
     expect(render(<RecommendationsView lang="en" />)).toContain('AI Recommendations Hub');
   });
 
-  it('shows Mivida recommendation card with 96% match', () => {
+  it('renders an honest empty state instead of fabricated recommendations', () => {
+    // §21 (wave 5): four fabricated demo leads (invented names, match
+    // scores, prices, yield rationales) were removed — the hub starts
+    // honestly empty until the matching engine produces real output.
     const html = render(<RecommendationsView lang="en" />);
-    expect(html).toContain('Mivida 3-Bed Apartment');
-    expect(html).toContain('Match: 96%');
+    expect(html).toContain('No recommendations yet');
+    expect(html).toContain('demo recommendations are never invented');
+    expect(html).not.toContain('Mivida 3-Bed Apartment');
+    expect(html).not.toContain('Match: 96%');
   });
 
-  it('shows Hyde Park recommendation card with 92% match', () => {
+  it('renders honest zero counters for the queue tallies', () => {
     const html = render(<RecommendationsView lang="en" />);
-    expect(html).toContain('Hyde Park 5-Bed Villa');
-    expect(html).toContain('Match: 92%');
+    expect(html).toContain('Pending Queue (0)');
+    expect(html).toContain('Dispatched (0)');
+    expect(html).not.toContain('Hyde Park 5-Bed Villa');
+    expect(html).not.toContain('Match: 92%');
   });
 
-  it('shows WhatsApp dispatch buttons', () => {
-    expect(render(<RecommendationsView lang="en" />)).toContain('Dispatch WhatsApp');
+  it('renders the search control for when real recommendations exist', () => {
+    expect(render(<RecommendationsView lang="en" />)).toContain('Search by lead or compound');
   });
 });
 

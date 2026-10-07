@@ -77,6 +77,11 @@ const LISTING_COLUMNS = new Set([
     'publishedAt', 'reservedUntil', 'reservationRef', 'daysOnMarket',
     'photoCount', 'hasFloorPlan', 'hasVirtualTour', 'dataQualityScore',
     'stale',
+    // Added by master-inventory activation (supabase/migrations/013):
+    // publish gate phase D reads this column — ingest pipelines must be able
+    // to write it so unverified rows are explicitly REVIEW_REQUIRED.
+    'publishStatus',
+    'dupeCheckHash',
 ]);
 
 /**

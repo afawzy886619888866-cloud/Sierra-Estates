@@ -10,6 +10,7 @@ export const LANG: Record<string, Record<string, string>> = {
     brand:'SIERRA ESTATES 3.0', brandSub:'INTELLIGENCE OS',
     overview:'Intelligence OS', agents:'Agents & Bots', workflows:'Workflows',
     workflow_studio:'Workflow Studio', inventory_command:'Inventory Command',
+    workflow_ops:'Workflow Ops',
     inventory_os:'Inventory OS',
     openclaw:'OpenClaw Terminal', nexus:'Nexus-AI Telemetry', leads:'CRM · Leads',
     listings:'Listings Hub', curator:'The Curator', scribe:'The Scribe',
@@ -46,6 +47,7 @@ export const LANG: Record<string, Record<string, string>> = {
     brand:'سيير ايستيتس 3.0', brandSub:'نظام الذكاء',
     overview:'لوحة التحكم', agents:'الوكلاء والبوتات', workflows:'سير العمل',
     workflow_studio:'استوديو سير العمل', inventory_command:'مركز المخزون',
+    workflow_ops:'تشغيل سير العمل',
     inventory_os:'نظام المخزون',
     openclaw:'طرفية أوبن كلو', nexus:'نيكسوس · البث المباشر', leads:'إدارة العملاء',
     listings:'قاعدة العقارات', curator:'المنظم', scribe:'الكاتب',
@@ -81,14 +83,16 @@ export const LANG: Record<string, Record<string, string>> = {
 };
 
 export const KPI_DATA = (T: TranslationFn) => [
-  {val:'1,547',lbl:T('totalListings'),delta:'+12% this week',up:true,color:'#C8961A',spark:[42,55,48,70,62,85,95]},
-  {val:'284',lbl:T('activeLeads'),delta:'+8 today',up:true,color:'#1E88D9',spark:[30,45,38,55,48,70,80]},
-  {val:'EGP 6.2M',lbl:T('avgDeal'),delta:'+5% MoM',up:true,color:'#34D399',spark:[55,60,52,68,65,78,88]},
-  {val:'97',lbl:T('dealsClosed'),delta:'This month',up:true,color:'#7C3AED',spark:[20,35,28,48,42,65,75]},
-  {val:'4.1s',lbl:T('avgResponse'),delta:'-0.3s improved',up:true,color:'#C8961A',spark:[70,65,60,55,50,45,40]},
-  {val:'98.2%',lbl:T('aiMatch'),delta:'+0.4%',up:true,color:'#34D399',spark:[90,92,91,95,93,97,98]},
-  {val:'23',lbl:T('pending'),delta:'3 urgent',up:false,color:'#E63946',spark:[10,18,12,22,17,25,23]},
-  {val:'1,503',lbl:T('eliteBrokers'),delta:'+45 this month',up:true,color:'#E9C176',spark:[60,70,68,80,75,90,95]},
+  // ANTI-FABRICATION: placeholder values are honest "no data" markers. Real
+  // values are merged in by OverviewPage from /api/admin/dashboard when live.
+  {val:'—',lbl:T('totalListings'),delta:'Awaiting dashboard sync',up:null,color:'#C8961A',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('activeLeads'),delta:'Awaiting dashboard sync',up:null,color:'#1E88D9',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('avgDeal'),delta:'Awaiting dashboard sync',up:null,color:'#34D399',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('dealsClosed'),delta:'Awaiting dashboard sync',up:null,color:'#7C3AED',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('avgResponse'),delta:'Awaiting dashboard sync',up:null,color:'#C8961A',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('aiMatch'),delta:'Awaiting dashboard sync',up:null,color:'#34D399',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('pending'),delta:'Awaiting dashboard sync',up:null,color:'#E63946',spark:[0,0,0,0,0,0,0]},
+  {val:'—',lbl:T('eliteBrokers'),delta:'Awaiting dashboard sync',up:null,color:'#E9C176',spark:[0,0,0,0,0,0,0]},
 ];
 
 export const AGENTS_DATA = (T: TranslationFn) => [
@@ -115,14 +119,10 @@ export const WORKFLOWS_DATA = [
   {name:'Telegram Alert Dispatcher',status:'active',runs:5640,last:'4 min ago',color:'#34D399'},
 ];
 
-export const LEADS_DATA = [
-  {name:'Ahmed Al-Rashid',phone:'+20 100 111 2233',source:'property-finder',interest:'Villa · Hyde Park · EGP 20M+',stage:'Viewing Scheduled',color:'#C8961A',hot:true},
-  {name:'Sara Mohamed',phone:'+20 101 222 3344',source:'website',interest:'3-Bed · Mivida · Rent',stage:'AI Matched',color:'#1E88D9',hot:false},
-  {name:'Khalid Mansour',phone:'+971 50 333 4455',source:'whatsapp',interest:'Penthouse · Uptown · EGP 15M',stage:'Contract Draft',color:'#34D399',hot:true},
-  {name:'Nadia Hassan',phone:'+20 112 444 5566',source:'website',interest:'Apartment · Madinaty · EGP 5M',stage:'Initial Contact',color:'#7C3AED',hot:false},
-  {name:'Omar Farouk',phone:'+20 100 555 6677',source:'referral',interest:'Twin House · Mountain View',stage:'Negotiating',color:'#E63946',hot:true},
-  {name:'Layla Karim',phone:'+20 109 666 7788',source:'property-finder',interest:'Furnished 2-Bed · Eastown',stage:'AI Matched',color:'#E9C176',hot:false},
-];
+// ANTI-FABRICATION (Master Rule 5): fabricated demo leads with fake PII were
+// previously rendered whenever the leads API failed. The CRM now shows an
+// honest empty/loading state instead. Real leads come from /api/admin/leads.
+export const LEADS_DATA: any[] = [];
 
 export const COMPOUNDS_DATA: Record<string, {units:number; avgM:string; growth:string; zone:string; ai:number; color:string}> = {
   'Mountain View iCity':{units:1820,avgM:'EGP 11.2M',growth:'+24%',zone:'5th Settlement',ai:9.6,color:'#C8961A'},
@@ -154,6 +154,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'agents',label:T('agents'),icon:'🤖',section:T('main'),badge:'10',badgeCls:'nb-green'},
   {id:'workflows',label:T('workflows'),icon:'⚡',section:T('main'),badge:'8',badgeCls:'nb-blue'},
   {id:'workflow_studio',label:T('workflow_studio'),icon:'🧩',section:T('main'),badge:'NEW',badgeCls:'nb-green'},
+  {id:'workflow_ops',label:T('workflow_ops'),icon:'🛰️',section:T('main')},
   {id:'automations',label:T('lang')==='ar'?'الأتمتة':'Automations',icon:'🪄',section:T('main'),badge:'3',badgeCls:'nb-green'},
   {id:'openclaw',label:T('openclaw'),icon:'⚙️',section:T('main')},
   {id:'nexus',label:T('nexus'),icon:'📡',section:T('main'),badge:'LIVE',badgeCls:'nb-green'},
@@ -164,6 +165,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
   {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
+  {id:'viewings',label:T('lang')==='ar'?'المعاينات والتقييم':'Viewings & Feedback',icon:'👁️',section:T('operations'),badge:'P9',badgeCls:'nb-green'},
   {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('operations'),badge:'PRO',badgeCls:'nb-green'},
   {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
   {id:'whatsapp_chat_import',label:T('lang')==='ar'?'استيراد واتساب':'WA Chat Import',icon:'📲',section:T('operations'),badge:'AI',badgeCls:'nb-green'},

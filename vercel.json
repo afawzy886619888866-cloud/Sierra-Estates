@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter sierra-estates-client-page build",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {
@@ -9,32 +9,12 @@
   "regions": ["fra1"],
   "crons": [
     {
-      "path": "/api/cron/sync-leads",
-      "schedule": "0 0 * * *"
+      "path": "/api/cron/dispatch/night",
+      "schedule": "45 2 * * *"
     },
     {
-      "path": "/api/cron/sync-listings",
-      "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/ingest-from-sheets",
-      "schedule": "30 6 * * *"
-    },
-    {
-      "path": "/api/cron/maintenance",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/sync-master-sheet",
-      "schedule": "30 6 * * *"
-    },
-    {
-      "path": "/api/cron/expire-reservations",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/apply-migrations",
-      "schedule": "0 3 * * *"
+      "path": "/api/cron/dispatch/morning",
+      "schedule": "45 6 * * *"
     }
   ],
   "headers": [

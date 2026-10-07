@@ -249,10 +249,12 @@ export async function runOpenClawDailyScan(
       const unitRecord = {
         id: `WA-${Date.now()}-${i}`,
         sierraCode: parsed.sierraCode || `SE-WA-${i + 1}`,
-        type: data.type || parsed.propertyType || 'Apartment',
+        // §21 no-fabrication: unstated type/operation stay empty — never
+        // invented 'Apartment' / 'Sale'.
+        type: data.type || parsed.propertyType || '',
         compound: parsed.compound,
         location: data.location || parsed.compound,
-        operation: data.operation || 'Sale',
+        operation: data.operation || '',
         price: data.price || 0,
         currency: data.currency || 'EGP',
         priceFormatted: parsed.priceFormatted || `${data.price?.toLocaleString()} EGP`,
@@ -266,11 +268,13 @@ export async function runOpenClawDailyScan(
         contact_info: data.contact_info || msg.sender,
         listedAt: msg.timestamp || new Date().toISOString(),
         rawText: msg.text,
-        status: 'Available',
+        status: 'Unknown',
         verified: isOwner,
         isNewListing: true,
-        urgencyScore: parsed.urgencyScore || 70,
-        valuationScore: parsed.valuationScore || 75,
+        // §21 no-fabrication: scores only when the parser actually produced
+        // one — never invented 70/75 defaults.
+        urgencyScore: parsed.urgencyScore ?? null,
+        valuationScore: parsed.valuationScore ?? null,
       };
 
       if (isComplete) {

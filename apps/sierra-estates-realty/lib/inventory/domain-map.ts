@@ -29,7 +29,14 @@ function priceLabel(price: number): string {
 /** Canonical `units` doc (via InventoryQueryService) → public map unit. Strips PII. */
 export function queryUnitToMapUnit(u: QueryUnit): InventoryUnit {
   const coords = (u as unknown as { coordinates?: { lat: number; lng: number } }).coordinates;
-  const resolved = resolveLocation(u.location || u.compound);
+  // ANTI-FABRICATION (§21 Rule B): the gazetteer canonicalizes the label ONLY
+  // when it genuinely matched the stored location (approx=false). An unmatched
+  // or missing location surfaces the raw string / '' — never the 'New Cairo'
+  // centroid label it used to invent. The centroid still positions the map
+  // pin (flagged approxLocation), it just never rewrites the label.
+  const rawLoc = u.location || u.compound || '';
+  const resolved = resolveLocation(rawLoc);
+  const canonicalLabel = rawLoc && !resolved.approx ? resolved.label : rawLoc;
   const { status, label } = STATUS_MAP[u.status] ?? { status: 'unavailable' as const, label: 'Off-market' };
   return {
     id: u.id,
@@ -40,9 +47,9 @@ export function queryUnitToMapUnit(u: QueryUnit): InventoryUnit {
     mode: u.price > 0 && u.price < 1_000_000 ? 'rent' : 'sale',
     status,
     statusLabel: label,
-    location: u.compound || resolved.label,
+    location: u.compound || canonicalLabel,
     rawLocation: u.location || null,
-    zone: resolved.zone,
+    zone: rawLoc && !resolved.approx ? resolved.zone : '',
     lat: coords?.lat ?? resolved.lat,
     lng: coords?.lng ?? resolved.lng,
     approxLocation: coords ? false : resolved.approx,

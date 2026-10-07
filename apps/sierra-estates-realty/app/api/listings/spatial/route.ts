@@ -19,7 +19,7 @@ import {
   toGeoJsonFeatureCollection,
 } from '@/lib/server/spatial-utils';
 import { isPubliclyVisibleListingStatus } from '@/lib/models/schema';
-import { SEED_LISTINGS } from '@/lib/seed';
+// SEED_LISTINGS intentionally NOT imported (anti-fabrication, Master Rule 5)
 import type { Listing } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -95,7 +95,14 @@ export async function GET(request: Request) {
       );
 
       if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
-        rawItems = rpcData;
+        // PUBLISH GATE (activation plan Phase D, defense-in-depth): the
+        // canonical RPC filters publish_status inside SQL (migration 020),
+        // but the function deployed on the live project may predate that
+        // gate — filter again here so unverified units can never reach the
+        // public map through this route either.
+        rawItems = rpcData.filter(
+          (item: any) => String(item.publish_status ?? '') === 'PUBLISHABLE'
+        );
         isLiveRpc = true;
       } else if (rpcError) {
         logger.warn('[SPATIAL_RPC] Supabase RPC call returned an error, falling back:', rpcError.message);
@@ -107,9 +114,12 @@ export async function GET(request: Request) {
     // 2. Live-table fallback: the PostGIS RPC (`get_listings_near_capital`)
     //    is not deployed on the live Supabase project (deployed schema
     //    diverged from supabase/schema.sql), so read public.listings
-    //    directly — the same live read /api/listings filter mode uses — and
-    //    let the haversine pass below apply the radius. Seed data stays as
-    //    the final offline tier.
+    //    directly — the same publish-gated live read /api/listings filter
+    //    mode uses — and let the haversine pass below apply the radius.
+    //    PUBLISH GATE (activation plan Phase D): this read requires
+    //    publish_status = 'PUBLISHABLE' exactly like the RPC and RLS policy;
+    //    unverified units must never appear on the public map. Seed data
+    //    stays out entirely (anti-fabrication tier below).
     let isLive = isLiveRpc;
     if (!isLiveRpc || rawItems.length === 0) {
       try {
@@ -118,6 +128,7 @@ export async function GET(request: Request) {
           .from('listings')
           .select('*')
           .in('status', ['active', 'available'])
+          .eq('publish_status', 'PUBLISHABLE')
           .limit(500);
 
         if (!liveErr && Array.isArray(liveRows) && liveRows.length > 0) {
@@ -144,30 +155,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Seed fallback (offline / sandbox only)
+    // 3. ANTI-FABRICATION: no seed fallback — randomizing coordinates around
+    // New Cairo for stale seed rows fabricated locations. Empty stays empty.
     if (!isLive || rawItems.length === 0) {
-      // Map seed listings into spatial records using haversine
-      rawItems = SEED_LISTINGS.map((l) => {
-        // Approximate location around New Cairo if not set
-        const itemLat = (l as any).latitude ?? DEFAULT_NEW_CAIRO_LAT + (Math.random() - 0.5) * 0.1;
-        const itemLng = (l as any).longitude ?? DEFAULT_NEW_CAIRO_LNG + (Math.random() - 0.5) * 0.1;
-        return {
-          id: l.id,
-          title: `${l.type} in ${l.compound}`,
-          compound: l.compound,
-          property_type: l.type,
-          deal_type: l.mode,
-          price: l.usd * 50,
-          bedrooms: l.beds,
-          bathrooms: l.bath,
-          area_sqm: l.area,
-          latitude: itemLat,
-          longitude: itemLng,
-          status: l.status,
-          images: l.img ? [l.img] : [],
-          description: l.description,
-        };
-      });
+      rawItems = [];
     }
 
     // 4. Process, calculate exact geodesic distance, and filter
@@ -213,21 +204,25 @@ export async function GET(request: Request) {
 
       if (maxUsd != null && usd > maxUsd) continue;
 
+      // ANTI-FABRICATION (activation plan Rule B): missing values surface as
+      // empty/0 — no invented 'New Cairo', no ||150 area, no hardcoded
+      // 9.2/8.9 aiScore, no 'Verified Location' tag on unverified rows.
+      const raw = (item.raw_data && typeof item.raw_data === 'object') ? item.raw_data : {};
       processed.push({
         id: item.id || item.ref_id,
         code: item.code || item.reference_code || `SE-${String(item.id).substring(0, 4)}`,
-        compound: item.compound || 'New Cairo',
-        zone: item.location_area || item.zone || '5th Settlement',
-        type: item.property_type || 'Apartment',
+        compound: item.compound ?? '',
+        zone: item.location_area ?? item.zone ?? '',
+        type: item.property_type ?? '',
         beds: itemBeds,
-        bath: Number(item.bathrooms) || 1,
-        area: Number(item.area_sqm) || 150,
+        bath: Number(item.bathrooms) || 0,
+        area: Number(item.area_sqm) || 0,
         egpM: Number(egpM.toFixed(2)),
         usd,
-        aiScore: item.roi_percentage ? 9.2 : 8.9,
-        tag: item.featured ? 'Featured' : 'Verified Location',
+        aiScore: typeof raw.aiScore === 'number' ? raw.aiScore : 0,
+        tag: raw.tag || (item.featured ? 'Featured' : item.is_hot_deal ? 'Hot Deal' : ''),
         mode: itemMode,
-        agent: item.owner_name ? `${item.owner_name} (Owner)` : 'Sierra Advisor',
+        agent: item.agent_name || (item.owner_name ? `${item.owner_name} (Owner)` : ''),
         img: (item.images && item.images[0]) || '',
         status,
         description: item.description || '',

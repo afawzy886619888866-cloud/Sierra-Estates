@@ -257,8 +257,8 @@ export class OpenClawAgent {
     else if (/(شقة|apartment|شقه)/i.test(normalizedRawText))
       propertyType = "Apartment";
 
-    // 4. Extract Area (sqm)
-    let area_sqm = 200;
+    // 4. Extract Area (sqm) — never defaulted; unknown stays null (anti-fabrication)
+    let area_sqm: number | null = null;
     const areaMatch = normalizedRawText.match(
       /(\d{2,4})\s*(?:متر|م²|م2|م(?!\p{L})|sqm|sq\.m|m2|meter)/iu,
     );
@@ -274,6 +274,7 @@ export class OpenClawAgent {
 
     // 6. Extract Price with Advanced Arabic Idioms
     let price = 0;
+    let priceNeedsVerification = false;
 
     // Pattern A: "مليون ونصف" or "مليون ونص" (1.5M) / "مليون وربع" (1.25M)
     if (/(مليون\s+ونصف|مليون\s+ونص)/i.test(normalizedRawText)) {
@@ -326,10 +327,14 @@ export class OpenClawAgent {
         }
       }
     }
-    if (price === 0) price = operation === "Rent" ? 35_000 : 12_500_000;
+    // ANTI-FABRICATION: missing price stays 0/unknown — flagged for follow-up, never guessed
+    if (price === 0) {
+      price = 0;
+      priceNeedsVerification = true;
+    }
 
-    // 7. Extract Bedrooms
-    let bedrooms = 3;
+    // 7. Extract Bedrooms — never defaulted; unknown stays null (anti-fabrication)
+    let bedrooms: number | null = null;
     const bedMatch = normalizedRawText.match(
       /(\d)\s*(?:غرف|نوم|غرفة|bed|beds|bedrooms|bd)/i,
     );
@@ -420,9 +425,10 @@ export class OpenClawAgent {
       valuationScore = 90;
     }
 
-    // 13. Sierra Code Synthesis
+    // 13. Sierra Code Synthesis (beds unknown -> "U" marker instead of fabricated count)
     const locPrefix = detectedCompound.slice(0, 2).toUpperCase();
     const typePrefix = propertyType.slice(0, 1).toUpperCase();
+    const bedsToken = bedrooms === null ? "U" : String(bedrooms);
     const finishPrefix =
       finishing === "fully_finished"
         ? "F"
@@ -431,7 +437,7 @@ export class OpenClawAgent {
           : "U";
     const priceM = (price / 1_000_000).toFixed(1).replace(/\.0$/, "");
     const featSuffix = features.length > 0 ? `+${features.join("+")}` : "";
-    const sierraCode = `${locPrefix}-${typePrefix}-${bedrooms}${finishPrefix}-${priceM}M${featSuffix}`;
+    const sierraCode = `${locPrefix}-${typePrefix}-${bedsToken}${finishPrefix}-${priceM}M${featSuffix}`;
 
     // 14. Source Type & Group Classification
     const registryGroup = groupId ? findGroup(groupId) : findGroup(groupName);
@@ -452,9 +458,10 @@ export class OpenClawAgent {
       compound: detectedCompound,
       price,
       currency,
-      area_sqm,
-      bedrooms,
-      bathrooms: Math.max(1, bedrooms - 1),
+      area_sqm: area_sqm ?? undefined,
+      bedrooms: bedrooms ?? undefined,
+      bathrooms: bedrooms === null ? undefined : Math.max(1, bedrooms - 1),
+      priceNeedsVerification,
       finishing,
       furnishing,
       operation,
@@ -605,18 +612,21 @@ export class OpenClawAgent {
         const listedAt = u.updatedAt || new Date().toISOString();
 
         return {
-          type: u.type || "Apartment",
-          location: u.compound || u.cmp || u.zone || "New Cairo",
-          compound: u.compound || u.cmp || "New Cairo",
+          // §21 no-fabrication: unknown type/compound render as empty and
+          // bedrooms/bathrooms/finishing stay absent — never 'Apartment',
+          // 'New Cairo', 3 beds, 2 baths, or 'semi_finished'.
+          type: u.type || "",
+          location: u.compound || u.cmp || u.zone || "",
+          compound: u.compound || u.cmp || "",
           price: u.price || 0,
           currency: "EGP",
           area_sqm: u.area || 0,
-          bedrooms: u.beds || 3,
-          bathrooms: u.baths || 2,
+          bedrooms: u.beds,
+          bathrooms: u.baths,
           contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName || "",
           notes: u.comment || u.tag || "",
           sierraCode: u.code || undefined,
-          finishing: u.finishing || "semi_finished",
+          finishing: u.finishing,
           sourceType,
           whatsappGroupName: "Master Sheet Import",
           operation: u.mode === "rent" ? "Rent" : "Sale",
@@ -679,15 +689,16 @@ export class OpenClawAgent {
         return undefined;
       };
 
-      const compound =
-        getVal([
+      // §21 no-fabrication: an unrecognized compound column yields an empty
+      // string (unknown), never a default 'New Cairo'.
+      const compound = getVal([
           "compound",
           "cmp",
           "المشروع",
           "الكمبوند",
           "الموقع",
           "Location",
-        ]) || "New Cairo";
+        ]) || "";
       const priceRaw =
         getVal([
           "price",
@@ -701,9 +712,10 @@ export class OpenClawAgent {
         typeof priceRaw === "number"
           ? priceRaw
           : parseFloat(String(priceRaw).replace(/[^0-9.]/g, "")) || 0;
+      // §21 no-fabrication: unparsed numeric/type fields surface as empty
+      // or 0 — never 'Apartment'/3/2/'semi_finished' defaults.
       const type =
-        getVal(["type", "unit type", "نوع الوحدة", "Type", "UnitType"]) ||
-        "Apartment";
+        getVal(["type", "unit type", "نوع الوحدة", "Type", "UnitType"]) || "";
       const areaRaw =
         getVal(["area", "area_sqm", "المساحة", "BUA", "Area"]) || 0;
       const area =
@@ -711,21 +723,19 @@ export class OpenClawAgent {
           ? areaRaw
           : parseFloat(String(areaRaw).replace(/[^0-9.]/g, "")) || 0;
       const bedsRaw =
-        getVal(["beds", "bedrooms", "غرف", "غرف النوم", "Bedrooms", "Beds"]) ||
-        3;
+        getVal(["beds", "bedrooms", "غرف", "غرف النوم", "Bedrooms", "Beds"]) || 0;
       const beds =
         typeof bedsRaw === "number"
           ? bedsRaw
-          : parseInt(String(bedsRaw).replace(/[^0-9]/g, ""), 10) || 3;
+          : parseInt(String(bedsRaw).replace(/[^0-9]/g, ""), 10) || 0;
       const bathsRaw =
-        getVal(["baths", "bathrooms", "حمامات", "Bathrooms", "Baths"]) || 2;
+        getVal(["baths", "bathrooms", "حمامات", "Bathrooms", "Baths"]) || 0;
       const baths =
         typeof bathsRaw === "number"
           ? bathsRaw
-          : parseInt(String(bathsRaw).replace(/[^0-9]/g, ""), 10) || 2;
+          : parseInt(String(bathsRaw).replace(/[^0-9]/g, ""), 10) || 0;
       const finishing =
-        getVal(["finishing", "تشطيب", "حالة التشطيب", "Finishing"]) ||
-        "semi_finished";
+        getVal(["finishing", "تشطيب", "حالة التشطيب", "Finishing"]) || "";
       const ownerType =
         getVal([
           "ownerType",

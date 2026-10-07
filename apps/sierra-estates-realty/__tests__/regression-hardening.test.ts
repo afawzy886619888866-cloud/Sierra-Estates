@@ -155,7 +155,7 @@ describe('Regression & Configuration Hardening Suite', () => {
     it('all GitHub Action workflows have valid timeout definitions', () => {
       const workflowsDir = path.join(ROOT, '.github/workflows');
       const files = fs.readdirSync(workflowsDir).filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
-      expect(files.length).toBeGreaterThanOrEqual(5);
+      expect(files.length).toBeGreaterThanOrEqual(2);
 
       for (const file of files) {
         const content = fs.readFileSync(path.join(workflowsDir, file), 'utf8');

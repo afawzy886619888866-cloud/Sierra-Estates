@@ -50,6 +50,12 @@ export interface UnitListingData {
     installments?: number;
     deliveryDate?: string;
   };
+  /**
+   * True when no price could be extracted from the source message.
+   * Anti-fabrication flag: the unit must NOT be published or matched with a
+   * guessed price — it is queued for a verification call instead.
+   */
+  priceNeedsVerification?: boolean;
 }
 
 export interface BatchIngestResult {

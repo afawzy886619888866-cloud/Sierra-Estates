@@ -38,34 +38,32 @@ describe('Admin Portal Extended Suite', () => {
     });
   });
 
-  describe('4. LeadsPage · lead source attribution', () => {
+  describe('4. LeadsPage · lead source attribution (anti-fabrication contract)', () => {
     const T = (k: string) => k;
 
-    it('renders a Source column with a badge per lead, grouping every intake channel in one table', () => {
+    it('renders the standard channel pills and an empty CRM table when no live leads exist — no demo PII', () => {
       const html = render(<LeadsPage T={T} />);
 
-      // Placeholder data covers property-finder, website, whatsapp, and
-      // referral - the same acquisition channels real leads carry via
-      // StakeholderAcquisitionSource, so the admin page shows every source
-      // gathered in one place rather than needing separate views per channel.
+      // The channel pills come from SOURCE_META (fixed vocabulary), not from
+      // fabricated demo leads. With an empty database the table body stays
+      // empty instead of showing the former hardcoded fake contacts.
       expect(html).toContain('Property Finder');
       expect(html).toContain('Website');
       expect(html).toContain('WhatsApp');
-      expect(html).toContain('Referral');
+      expect(html).toContain('0 active leads');
+      expect(html).not.toContain('Ahmed Al-Rashid'); // fabricated demo lead must NOT render
     });
 
-    it('offers a source filter dropdown covering every channel present in the lead list', () => {
+    it('renders the all-sources filter control', () => {
       const html = render(<LeadsPage T={T} />);
       expect(html).toContain('>allSources</option>');
-      expect(html).toContain('<option value="property-finder">Property Finder</option>');
-      expect(html).toContain('<option value="website">Website</option>');
     });
   });
 
   describe('3. Admin RBAC & Audit Actions', () => {
     it('enforces RBAC role validation (super_admin, sales_agent, analyst)', () => {
       const allowedRoles = ['super_admin', 'sales_agent', 'analyst'];
-      const testUser = { id: 'usr-1', email: 'admin@sierraestates.com', role: 'super_admin' };
+      const testUser = { id: 'usr-1', email: 'admin@sierra-estates.net', role: 'super_admin' };
       
       expect(allowedRoles).toContain(testUser.role);
       const isSuperAdmin = testUser.role === 'super_admin';

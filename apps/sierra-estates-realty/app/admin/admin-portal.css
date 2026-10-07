@@ -647,6 +647,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -672,6 +673,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -696,6 +698,7 @@ table, th, td {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1651,8 +1654,8 @@ select.f-in option {
   var(--bg-s); }
 .wfs-world { position: absolute; top: 0; left: 0; transform-origin: top left; }
 .wfs-node { position: absolute; width: 196px; height: 62px; border-radius: var(--clay-rad-md); border: 1px solid var(--bd); background: var(--clay-bg-card); box-shadow: var(--clay-card-shadow); -webkit-user-select: none; user-select: none; }
-.wfs-node.wfs-sel { box-shadow: var(--clay-card-shadow), 0 0 18px color-mix(in srgb, var(--node-c) 30%, transparent); border-color: var(--node-c); }
-.wfs-node.wfs-live { box-shadow: 0 0 28px color-mix(in srgb, var(--node-c) 45%, transparent); border-color: var(--node-c); }
+.wfs-node.wfs-sel { box-shadow: var(--clay-card-shadow), 0 0 18px rgba(200, 150, 26, 0.3); box-shadow: var(--clay-card-shadow), 0 0 18px color-mix(in srgb, var(--node-c) 30%, transparent); border-color: var(--node-c); }
+.wfs-node.wfs-live { box-shadow: 0 0 28px rgba(200, 150, 26, 0.45); box-shadow: 0 0 28px color-mix(in srgb, var(--node-c) 45%, transparent); border-color: var(--node-c); }
 .wfs-node.wfs-dim { opacity: 0.5; }
 .wfs-node-bd { display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px; height: 100%; }
 .wfs-node-ic { flex-shrink: 0; margin-top: 1px; width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(200, 150, 26, 0.4); border: 1px solid color-mix(in srgb, var(--node-c) 40%, transparent); background: color-mix(in srgb, var(--node-c) 14%, transparent); color: var(--node-c); }
@@ -1750,11 +1753,13 @@ kbd {
 
 /* Focus ring — visible, on-brand, keyboard only */
 :focus-visible {
-  outline: 2px solid rgba(200, 150, 26, 0.7);
-  outline: 2px solid color-mix(in srgb, var(--gold-luxury) 70%, transparent);
+  outline: 2px solid rgba(212, 175, 55, 0.7);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Selection */
-::selection { background: color-mix(in srgb, var(--gold-luxury) 30%, transparent); }
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+}
+

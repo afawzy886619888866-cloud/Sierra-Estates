@@ -13,11 +13,13 @@
  */
 import { NextResponse } from "next/server";
 import {
-  signSession, verifySession, tryDemoLogin, cookieOpts, SESSION_COOKIE,
+  signSession, verifySession, tryDemoLogin, tryPartnerLogin, cookieOpts, SESSION_COOKIE,
   parseCookies,
 } from "@/lib/auth";
 import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
+import { isPartnerRole } from "@/lib/partner-access";
+import { scopeFromProfile } from "@/lib/server/partner-scope";
 import type { Role, User } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -50,6 +52,9 @@ export async function GET(req: Request) {
       name: sess.name,
       email: sess.email,
       uid: sess.uid,
+      // Partners carry their portfolio scope so the portal shell can adapt
+      // (restricted nav) without another round trip.
+      ...(isPartnerRole(sess.role) ? { scope: sess.scope } : {}),
     },
     { headers: NO_STORE_HEADERS }
   );
@@ -122,6 +127,9 @@ export async function POST(req: Request) {
               verifiedEmail.split("@")[0] ??
               "Sierra Staff",
             role,
+            // Partner accounts carry their portfolio scope into the session;
+            // source of truth is profiles.metadata.partner_scope.
+            ...(isPartnerRole(role) ? { scope: scopeFromProfile(profile) } : {}),
           });
           const res = NextResponse.json({ ok: true, role }, { headers: NO_STORE_HEADERS });
           res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
@@ -140,6 +148,19 @@ export async function POST(req: Request) {
         { error: "Invalid or expired session token." },
         { status: 401, headers: NO_STORE_HEADERS }
       );
+    }
+
+    // Path B — Partner accounts (email + password, PARTNER_ACCOUNTS env).
+    // Merged-in property accounts: restricted portal, own-data scope only.
+    const partner = tryPartnerLogin(targetEmail, password || "");
+    if (partner) {
+      const sess = await signSession({
+        uid: partner.uid, email: partner.email, name: partner.name, role: partner.role,
+        scope: partner.scope,
+      });
+      const res = NextResponse.json({ ok: true, role: partner.role }, { headers: NO_STORE_HEADERS });
+      res.cookies.set(SESSION_COOKIE, sess, cookieOpts(reqHost));
+      return res;
     }
 
     // Path C — Staff Admin Fallback (Email + Password)

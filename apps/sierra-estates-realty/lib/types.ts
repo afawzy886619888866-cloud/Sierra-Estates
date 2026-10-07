@@ -5,10 +5,24 @@
  * schema.sql + the Phase 2/3 blueprints.
  */
 
-export type Role = "viewer" | "owner" | "agent" | "manager" | "admin" | "superadmin";
+export type Role =
+  | "viewer"
+  | "owner"
+  | "agent"
+  | "partner"
+  | "manager"
+  | "admin"
+  | "superadmin";
 
 /** Roles that may enter the staff admin portal after Firebase authentication. */
-export const ADMIN_PORTAL_ROLES = ["owner", "agent", "manager", "admin", "superadmin"] as const;
+export const ADMIN_PORTAL_ROLES = [
+  "owner",
+  "agent",
+  "partner",
+  "manager",
+  "admin",
+  "superadmin",
+] as const;
 
 export function isAdminPortalRole(role: unknown): boolean {
   return typeof role === "string" && ADMIN_PORTAL_ROLES.includes(role.trim().toLowerCase() as (typeof ADMIN_PORTAL_ROLES)[number]);
@@ -175,6 +189,11 @@ export interface MatchResult {
   listing: Listing;
   score: number;           // 0-100
   reasons: string[];
+  /** Hard constraints the listing violates (empty for normal results). */
+  hardConstraintViolations: string[];
+  /** True ⇒ returned only because compliant results < limit; explicitly
+   *  flagged per the master spec ("alternatives" may not look normal). */
+  alternative?: boolean;
 }
 
 /* Dashboard KPIs returned by /api/admin/dashboard */
@@ -186,7 +205,7 @@ export interface DashboardKPIs {
   activeCompounds: number;
   totalUsers: number;
   pendingApprovals: number;
-  avgAiScore: number;
+  avgAiScore: number | null; // null when no listing carries a real aiScore
   recentActivity: Array<{
     id: string;
     type: "inquiry" | "listing" | "lead" | "user";
@@ -194,6 +213,29 @@ export interface DashboardKPIs {
     at: string;
   }>;
   topAgents: Array<{ name: string; listings: number; rating: number }>;
+  /* ── Phase 12: Data Integrity Control Center (from real listings rows) ── */
+  inventoryHealth?: {
+    /* source_verified_at recency buckets (30d / 90d / older / never) */
+    freshness: { fresh: number; aging: number; stale: number; never: number };
+    /* publishability cascade distribution (PUBLISHABLE / REVIEW_REQUIRED / …) */
+    publishStatusCounts: Record<string, number>;
+    /* listings where verified !== true (staff verification outstanding) */
+    needsVerification: number;
+    /* listings without a dupe_check_hash — not yet duplicate-fingerprinted */
+    unfingerprinted: number;
+    totalListings: number;
+  } | null;
+  /* ── Phase 11/12 tie-in: dispatcher run ledger + DLQ (migration 017) ── */
+  automationHealth?: {
+    jobs: Array<{
+      job: string;
+      status: string;
+      finishedAt: string | null;
+      durationMs: number | null;
+      triggerSource: string;
+    }>;
+    openDeadLetterQueue: number;
+  } | null;
 }
 
 /* Reports aggregation */
@@ -211,4 +253,10 @@ export interface Session {
   name: string;
   role: Role;
   exp: number;
+  /**
+   * Partner portfolio scope (developers + compounds). Only meaningful when
+   * role === 'partner' — the merged-in property accounts that see only their
+   * own Inventory / Ad Listing / CRM data. See lib/server/partner-scope.ts.
+   */
+  scope?: { developers: string[]; compounds: string[] };
 }

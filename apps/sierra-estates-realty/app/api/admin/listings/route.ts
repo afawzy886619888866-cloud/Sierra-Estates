@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminRequest } from '@/lib/server/auth-guard';
+import { verifyAdminRequest, verifyPortalRequest } from '@/lib/server/auth-guard';
 import { listRecords, insertRecord, type RecordData } from '@sierra-estates/db';
 import { mapListingToSpa, mapSpaToListingPatch } from '@/lib/server/admin-spa-mappers';
 import { toListingColumns } from '@/lib/server/listing-columns';
+import { listingInScope } from '@/lib/server/partner-scope';
 import { fingerprint } from '@/lib/services/inventory/dedupe';
 import { logger } from '@/lib/logger';
 
@@ -48,8 +49,8 @@ function listingPatchToColumns(patch: Record<string, unknown>): RecordData {
 
 /** Admin-scoped listings CRUD via the service-role client — unlike the public /api/listings. */
 export async function GET(req: NextRequest) {
-  const authResult = await verifyAdminRequest(req);
-  if (!authResult.authenticated) {
+  const auth = await verifyPortalRequest(req);
+  if (!auth.authenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -64,11 +65,18 @@ export async function GET(req: NextRequest) {
     // Archived rows are excluded by default: they are retained for audit but
     // are not inventory, and a recent bulk archive (9.7k stale sheet rows)
     // would otherwise bury every live listing inside the first page.
-    const rows = await listRecords('listings', {
+    let rows = await listRecords('listings', {
       limit,
       orderBy: { column: 'updatedAt', ascending: false },
       ...(includeArchived ? {} : { where: [{ column: 'status', op: 'neq', value: 'archived' }] }),
     });
+
+    // Partner accounts (merged-in property accounts) see only their own
+    // portfolio — filter on the raw rows BEFORE the SPA mapping so compound /
+    // developer matching works on the real column names.
+    if (auth.access === 'partner') {
+      rows = rows.filter((row) => listingInScope(row, auth.scope));
+    }
 
     const listings = rows.map((row) => mapListingToSpa(String(row.id), rowToListingDoc(row)));
 
@@ -106,11 +114,15 @@ export async function POST(req: NextRequest) {
     //    (the Egypt 2023 listing-transparency queue) unless an explicit legacy
     //    status is provided.
     const offerType: 'sale' | 'rent' =
-      parsed.data.offerType ?? parsed.data.offer ?? 'sale';
+      (patch.offerType as 'sale' | 'rent') ??
+      parsed.data.offerType ??
+      parsed.data.offer ??
+      'sale';
 
     const inventoryFields: RecordData = {
       syncSource: 'manual',
       dealType: offerType,
+      offerType,
     };
     if (
       typeof patch.bedrooms === 'number' &&

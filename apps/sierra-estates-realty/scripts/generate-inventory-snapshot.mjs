@@ -23,12 +23,31 @@
  *   node scripts/generate-inventory-snapshot.mjs --force   # fail loudly instead of keeping the old file
  */
 import { writeFile, readFile } from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SNAPSHOT_PATH = path.resolve(__dirname, '../lib/inventory/snapshot.json');
 const FORCE = process.argv.includes('--force');
+
+function loadEnv() {
+  const root = path.resolve(__dirname, '../../..');
+  for (const file of [
+    path.join(root, '.env.local'),
+    path.join(root, '.env'),
+    path.resolve(__dirname, '../.env.local'),
+    path.resolve(__dirname, '../.env'),
+  ]) {
+    if (!fs.existsSync(file)) continue;
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$/);
+      if (!match || process.env[match[1]]) continue;
+      process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
+    }
+  }
+}
+loadEnv();
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -82,7 +101,7 @@ function priceLabel(price, mode) {
 
 /** Map a PostgREST listings row to the public InventoryUnit shape. */
 function toMapUnit(listing, compoundGeo) {
-  const locationLabel = listing.location_area || listing.compound || 'New Cairo';
+  const locationLabel = listing.location_area || listing.compound || '';
   const matched =
     (listing.compound && compoundGeo.get(listing.compound.trim().toLowerCase())) || null;
   const resolved = matched || resolveLocation(locationLabel);
@@ -107,8 +126,8 @@ function toMapUnit(listing, compoundGeo) {
     lat: resolved.lat,
     lng: resolved.lng,
     approxLocation: !matched,
-    propertyType: listing.property_type || 'Apartment',
-    type: listing.property_type || 'Apartment',
+    propertyType: listing.property_type || '',
+    type: listing.property_type || '',
     beds: listing.bedrooms ?? null,
     baths: listing.bathrooms ?? null,
     area: Number(listing.area_sqm) || null,
@@ -141,8 +160,8 @@ async function generateFromSupabase() {
   // Public columns ONLY — owner phones/names never enter the snapshot.
   const listings = await fetchJson(
     `${base}/listings?select=id,ref_id,code,compound,location_area,property_type,deal_type,` +
-      `price,bedrooms,bathrooms,area_sqm,status,description,updated_at,img,photos,images` +
-      `&status=in.(active,available,published)&order=updated_at.desc&limit=1000`
+      `price,bedrooms,bathrooms,area_sqm,status,description,updated_at,images` +
+      `&status=in.(active,available,published)&order=updated_at.desc&limit=2500`
   );
   if (!Array.isArray(listings) || listings.length === 0) {
     throw new Error('Supabase reachable but zero active/available listings');
