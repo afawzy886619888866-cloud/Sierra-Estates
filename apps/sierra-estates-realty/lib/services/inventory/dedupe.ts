@@ -51,3 +51,13 @@ export function fingerprint(input: FingerprintInput): string {
   ].join('|');
   return createHash('sha256').update(key).digest('hex').slice(0, 24);
 }
+
+/**
+ * Dedupe via hash(compound+type+area+price-band) reusing Gravity Memory .seen()
+ */
+export function checkGravityDedupe(input: FingerprintInput): { hash: string; isDuplicate: boolean } {
+  const hash = fingerprint(input);
+  const isDuplicate = GravityMemory.seen(hash);
+  return { hash, isDuplicate };
+}
+
