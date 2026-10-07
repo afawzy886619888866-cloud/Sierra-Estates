@@ -91,6 +91,19 @@ export default function FeedbackForm() {
 
   return (
     <>
+      {/* Sierra brand bar — this token-gated micro-page is opened straight
+          from WhatsApp/SMS links, so it carries a minimal identity strip
+          (mark + wordmark) instead of the full site chrome. */}
+      <header className="vf-brandbar">
+        <div className="wrap vf-brandbar-in">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/logo-mark.png" alt="Sierra Estates" />
+          <div>
+            <strong>Sierra Estates</strong>
+            <span>Future of Real Estate</span>
+          </div>
+        </div>
+      </header>
       <section className="vf-hero">
         <div className="wrap">
           <h1>{heroTitle}</h1>
@@ -186,6 +199,14 @@ export default function FeedbackForm() {
           </form>
         )}
       </div>
+
+      <footer className="vf-footer">
+        <div className="wrap">
+          <span>Sierra Estates — New Cairo, Egypt</span>
+          <a href="tel:+201092048333">+2 01092048333</a>
+          <a href="mailto:info@sierra-estates.net">info@sierra-estates.net</a>
+        </div>
+      </footer>
     </>
   );
 }

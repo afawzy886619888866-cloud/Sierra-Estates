@@ -2,18 +2,22 @@
  * Phase 11 (automation unification) — the single source of truth for what
  * scheduled work exists and how it is grouped.
  *
- * Scheduling topology (roadmap: "unify crons, move off Hobby limits"):
+ * Scheduling topology (GCP migration era — infra/google-cloud):
+ *
+ *   · GCP Cloud Scheduler is the CANONICAL scheduler: 5 jobs drive the
+ *     se-automation-dispatch Workflow, which calls the dispatcher windows
+ *     and single jobs defined here (night 10 2 · morning 10 6 · whatsapp
+ *     hourly at :10 · timers :25 every 3h · sync-leads 10 10, all UTC).
  *
  *   · Vercel Cron (deployed vercel.json) is capped at TWO entries on the
- *     Hobby plan. Those two slots fire the dispatcher windows defined here
- *     (`night` + `morning`) — a no-secrets fallback that works even when
- *     GitHub Actions is not configured.
+ *     Hobby plan. Those two slots fire the `night` + `morning` windows at
+ *     02:45 / 06:45 UTC — a no-secrets FALLBACK 35 minutes behind GCP, so a
+ *     healthy GCP day records honest `skipped` runs instead of double work.
  *
- *   · GitHub Actions (.github/workflows/automations.yml) is the CANONICAL
- *     scheduler with one schedule per job/window — no entry-count limit,
- *     transport-level retries, and a manual dispatch matrix for every job.
+ *   · GitHub Actions (.github/workflows/automations.yml) is the MANUAL
+ *     EMERGENCY trigger with a dispatch matrix over every job — plus CI.
  *
- *   · Both schedulers call the same dispatcher, so jobs must be idempotent
+ *   · All schedulers call the same dispatcher, so jobs must be idempotent
  *     AND the dispatcher applies a per-job `dedupeHours` guard: when a fresh
  *     success exists in `automation_runs`, the second invocation of the day
  *     records an honest `skipped` run instead of doing the work twice.
@@ -83,13 +87,13 @@ export const AUTOMATION_JOBS: readonly AutomationJob[] = [
         name: 'sync-leads',
         window: 'morning',
         dedupeHours: 8,
-        description: 'Lead sources sync (CRM alignment). The morning fallback plus the 10:10 UTC GHA run both dedupe against this window.',
+        description: 'Lead sources sync (CRM alignment). The morning fallback plus the 10:10 UTC GCP run both dedupe against this window.',
     },
     {
         name: 'whatsapp-dispatch',
         window: null,
         dedupeHours: 0.5,
-        description: 'Drains queued WhatsApp bot replies inside the Africa/Cairo outreach window (hourly via GitHub Actions).',
+        description: 'Drains queued WhatsApp bot replies inside the Africa/Cairo outreach window (hourly via GCP Cloud Scheduler).',
     },
     {
         name: 'apply-migrations',

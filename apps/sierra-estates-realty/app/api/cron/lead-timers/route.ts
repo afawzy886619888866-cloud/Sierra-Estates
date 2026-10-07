@@ -37,14 +37,15 @@ export async function GET(req: NextRequest) {
     const now = new Date();
 
     // Active leads + all open-ish followups (bounded read, newest 500).
-    const [leads, followups] = await Promise.all([
+    // In-memory filter on !l.archived ensures resilience against PostgREST schema cache reload timing.
+    const [rawLeads, followups] = await Promise.all([
       listRecords<LeadLike>('leads', {
-        where: [{ column: 'archived', value: false }],
         orderBy: { column: 'updatedAt', ascending: false },
         limit: 500,
       }),
       listRecords<FollowupLike & { id: string }>('followups', { limit: 500 }),
     ]);
+    const leads = rawLeads.filter((l) => !l.archived);
 
     // ── 1. Overdue flip ──────────────────────────────────────────────────
     const overdueIds = selectOverdueFollowups(followups, now);

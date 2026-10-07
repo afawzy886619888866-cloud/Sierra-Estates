@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
       : '\n\nNo exact inventory match — provide general market guidance.\n';
 
     const statsContext = marketStats
-      ? `\nMARKET STATS for ${marketStats.compound || 'New Cairo'} (${dealType}):
+      ? `\nMARKET STATS for ${marketStats.compound || 'market-wide (all compounds)'} (${dealType}):
   Count: ${marketStats.count} available units
   Price range: EGP ${marketStats.min?.toLocaleString()} – ${marketStats.max?.toLocaleString()}
   Avg: EGP ${marketStats.avg?.toLocaleString()} | Median: EGP ${marketStats.median?.toLocaleString()}

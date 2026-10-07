@@ -245,6 +245,7 @@ function StudioCanvas({ wf, isAr, t, notify, onChanged, onRemove }: {
   const [desc, setDesc] = useState(wf.desc ?? '');
   const [schedule, setSchedule] = useState(wf.schedule ?? '');
   const [metaDirty, setMetaDirty] = useState(false);
+  const [runBusy, setRunBusy] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const panRef = useRef<{ x: number; y: number } | null>(null);
@@ -275,6 +276,33 @@ function StudioCanvas({ wf, isAr, t, notify, onChanged, onRemove }: {
   const saveScript = () => put({ script }, t(`Script saved — ${script.split('\n').length} lines persisted`, `تم حفظ السكربت — ${script.split('\n').length} سطرًا`)).then((ok) => ok && setScriptDirty(false) || onChanged());
   const saveMeta = () => put({ name, desc, schedule }, t('Details updated', 'تم تحديث التفاصيل')).then((ok) => ok && setMetaDirty(false) || onChanged());
   const setStatus = (s: string) => put({ status: s }, t(`Workflow ${s}`, `الحالة: ${s === 'active' ? 'نشط' : s === 'paused' ? 'متوقف' : 'مسودة'}`)).then((ok) => ok && onChanged());
+
+  /* run now — EC2 runner control plane via /api/admin/workflow-ops.
+   * Tries the instant HTTP path first; when the runner is unreachable from
+   * Vercel egress (502) it falls back to the DB marker ('run-requested')
+   * that the runner polls for within its 60 s loop. */
+  const runNow = async () => {
+    if (runBusy) return;
+    setRunBusy(true);
+    try {
+      let res = await fetch('/api/admin/workflow-ops', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'run', slug: wf.slug }),
+      });
+      if (res.status === 502) {
+        res = await fetch('/api/admin/workflow-ops', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'request', slug: wf.slug }),
+        });
+      }
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) throw new Error(json.error ?? `HTTP ${res.status}`);
+      notify(t('Run accepted — telemetry refreshes within 60 s', 'تم قبول التشغيل — تتحدث النتائج خلال 60 ثانية'));
+      onChanged();
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Run failed', false);
+    } finally { setRunBusy(false); }
+  };
 
   /* graph ops */
   const addNode = () => {
@@ -543,6 +571,12 @@ function StudioCanvas({ wf, isAr, t, notify, onChanged, onRemove }: {
                     ))}
                   </div>
 
+                  <button className="btn" onClick={runNow} disabled={runBusy}
+                    style={{ fontWeight: 800, width: '100%', padding: '8px 4px', fontSize: 12 }}
+                    title={t('Trigger this workflow on the EC2 runner now', 'شغّل هذا السير عمل الآن على المشغّل على EC2')}>
+                    ⚡ {runBusy ? t('Triggering…', 'جارٍ التشغيل…') : t('Run now on EC2', 'تشغيل الآن على EC2')}
+                  </button>
+
                   <div>
                     <span className="wfs-lbl">{t('Name', 'الاسم')}</span>
                     <input className="wfs-in" value={name} onChange={(e) => { setName(e.target.value); setMetaDirty(true) }} />
@@ -565,6 +599,15 @@ function StudioCanvas({ wf, isAr, t, notify, onChanged, onRemove }: {
                     <div className="wfs-stat"><div className="wfs-stat-l">{t('Last run', 'آخر تشغيل')}</div><div className="wfs-stat-v" style={{ fontSize: 12 }}>{relTime(wf.lastRunAt ?? null, isAr)}</div></div>
                     <div className="wfs-stat"><div className="wfs-stat-l">{t('Duration', 'المدة')}</div><div className="wfs-stat-v">{Number(wf.lastRunMs ?? 0) >= 1000 ? `${(Number(wf.lastRunMs) / 1000).toFixed(1)}s` : `${Number(wf.lastRunMs ?? 0)}ms`}</div></div>
                   </div>
+
+                  {wf.last ? (
+                    <div style={{ fontSize: 10.5, color: 'var(--tx-m)', borderTop: '1px solid var(--bd)', paddingTop: 8 }}>
+                      {t('Last label', 'آخر وسم')}:{' '}
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', wordBreak: 'break-all', color: /(:error|:timeout|:unconfigured|fail)/i.test(String(wf.last)) ? 'var(--amber)' : 'var(--emerald)' }}>
+                        {String(wf.last)}
+                      </span>
+                    </div>
+                  ) : null}
 
                   <div style={{ borderRadius: 'var(--clay-rad-md)', border: '1px solid var(--bd)', background: 'var(--surf2)', padding: 12 }}>
                     <div className="wfs-stat-l">{t('Source of truth', 'المصدر الأصلي')}</div>

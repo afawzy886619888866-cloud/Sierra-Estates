@@ -4,8 +4,15 @@
  * Easy Listing — the smart coding & routing endpoint.
  *
  * Input (the exact envelope a data-entry clerk / owner / broker pastes):
- *   { role, name, phone, details }        — role accepts موظف/مالك/وسيط or
+ *   { role, name, phone?, details }     — role accepts موظف/مالك/وسيط or
  *                                            the AGENT/OWNER/BROKER enums.
+ *                                            phone may be omitted when the
+ *                                            number is inside the details
+ *                                            text (WhatsApp channel flow):
+ *                                            the parser then extracts the
+ *                                            first strictly-valid Egyptian
+ *                                            mobile from the text, and
+ *                                            fails loudly if none is found.
  *
  * Routing (see lib/server/easy-listing.ts for the full contract):
  *   AGENT | OWNER → MAIN_INVENTORY — staged into public.listings with
@@ -44,7 +51,10 @@ export const dynamic = 'force-dynamic';
 const easyListingSchema = z.object({
   role: z.string().min(2, 'role (الصفة) is required'),
   name: z.string().min(2, 'name (الاسم) is required').max(120),
-  phone: z.string().min(8, 'phone (التليفون) is required').max(30),
+  // Optional: when omitted, the parser extracts a strictly-valid Egyptian
+  // mobile from the details text (WhatsApp channel flow). No valid number
+  // anywhere → loud 400 from parseEasyListing.
+  phone: z.string().min(8, 'phone (التليفون) is required').max(30).optional(),
   details: z.string().min(5, 'details (تفاصيل الوحدة) must be at least 5 characters').max(4000),
 });
 
@@ -119,9 +129,13 @@ export async function POST(request: Request) {
       code: r.internal_code,
       title: `${d.unit_type ?? 'Unit'} · ${d.compound ?? d.region ?? 'Unknown location'}`,
       compound: d.compound ?? d.region ?? 'Unknown',
-      locationArea: d.region ?? 'New Cairo',
-      city: 'Cairo',
-      propertyType: d.unit_type ?? 'Apartment',
+      // §21 no-fabrication: the parser returns null when the text names no
+      // region/type — write null, never an invented default. City is derived
+      // (the parser's region lexicon is Cairo-governorate only: New Cairo +
+      // Uptown), so it is only set when a region was actually extracted.
+      locationArea: d.region ?? null,
+      city: d.region != null ? 'Cairo' : null,
+      propertyType: d.unit_type ?? null,
       dealType: d.deal_type,
       price: d.price_egp ?? 0,
       priceCurrency: 'EGP',
@@ -266,7 +280,7 @@ export async function GET() {
     input: {
       role: 'AGENT | OWNER | BROKER (موظف / مالك / وسيط)',
       name: 'uploader name',
-      phone: 'Egyptian mobile 01xxxxxxxxx',
+      phone: 'optional — Egyptian mobile 01xxxxxxxxx; when omitted, a strictly-valid mobile is extracted from details',
       details: 'free text — المنطقة، الكمبوند، النوع، الدور، المساحة، السعر',
     },
     code_format: '[REGION]-[COMPOUND]-[UNIT_TYPE]-[FLOOR]-[AREA]M — e.g. NC-MIV-APT-F2-175M',

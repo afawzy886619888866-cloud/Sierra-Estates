@@ -170,6 +170,10 @@ export const CLIENT_ENV_VARS = {
   ADMIN_BOOTSTRAP_EMAIL: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@sierra-estates.net',
   ADMIN_BOOTSTRAP_PASSWORD: process.env.ADMIN_BOOTSTRAP_PASSWORD,
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
+  // Partner accounts (merged-in property companies — role 'partner').
+  // Format: apps/sierra-estates-realty/lib/server/partner-scope.ts.
+  // Unset/malformed provisions ZERO accounts (fail closed).
+  PARTNER_ACCOUNTS: process.env.PARTNER_ACCOUNTS,
 };
 
 export const ADMIN_ENV_VARS = {

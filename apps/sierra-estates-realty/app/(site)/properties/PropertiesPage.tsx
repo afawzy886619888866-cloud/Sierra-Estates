@@ -73,6 +73,7 @@ export interface RealListing {
   agent: string;
   ago: string;
   img: string;
+  imgCurated?: boolean;
   whatsapp: string;
   lat: number;
   lng: number;
@@ -225,6 +226,7 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     agent: 'Sierra Advisor Desk',
     ago: raw.ago || '',
     img: getCuratedListingImage(raw, index),
+    imgCurated: !raw.img,
     whatsapp: 'https://wa.me/201092048333',
     lat: Number(raw.lat) || 0,
     lng: Number(raw.lng) || 0,
@@ -249,11 +251,62 @@ export default function PropertiesPage() {
   const [realtimeLive, setRealtimeLive] = useState(false);
 
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
-  // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
-  useListingsRealtime(setAllUnits, setRealtimeLive);
+  // (visibility gate + row mapping live in lib/realtime/listings-realtime-logic).
+  // Degrades gracefully when Supabase env vars are absent (dev/CI builds).
+  // loadInventory doubles as the reconcile callback: after a channel drop the
+  // hook re-subscribes and refetches the authoritative snapshot.
+  const loadInventory = useCallback(async () => {
+    try {
+      const res = await fetch('/api/inventory', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      if (res.status === 401 || res.status === 403) {
+        console.error('[PropertiesPage] Authorization failed fetching inventory:', res.status);
+        return;
+      }
+      const data = res.ok ? await res.json() : null;
+      if (!data?.units || !Array.isArray(data.units)) return;
+      const validUnits = data.units.filter(
+        (raw: any) =>
+          raw.party !== 'Owner' &&
+          raw.sourceType !== 'owner' &&
+          raw.segment !== 'owners_rent' &&
+          raw.segment !== 'owners_buy' &&
+          raw.tag !== 'Direct Owner'
+      );
+      setAllUnits(validUnits.map(sanitizeUnit));
+    } catch (err) {
+      console.warn('[PropertiesPage] inventory fetch failed:', err);
+    }
+  }, []);
 
-  // Single authoritative inventory fetch on mount (below). The previous
-  // duplicate ?limit=500 fetch raced this one and was removed.
+  useListingsRealtime(setAllUnits, setRealtimeLive, loadInventory);
+
+  // Single authoritative inventory fetch on mount. The previous duplicate
+  // ?limit=500 fetch raced this one and was removed.
+  useEffect(() => {
+    let active = true;
+    loadInventory().finally(() => {
+      if (active) setInventoryLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadInventory]);
+
+  // Periodic reconciliation (every 5 min, matching /api/inventory's
+  // s-maxage=300 cache window): realtime is instant for the events the anon
+  // role can see, but an UPDATE whose NEW row is no longer SELECT-visible
+  // under the public RLS policy (e.g. a status flip) never arrives as an
+  // event — this refetch bounds that staleness. The snapshot is authoritative
+  // and intentionally overwrites any locally-patched rows.
+  useEffect(() => {
+    const RECONCILE_MS = 5 * 60 * 1000;
+    const id = setInterval(() => {
+      loadInventory();
+    }, RECONCILE_MS);
+    return () => clearInterval(id);
+  }, [loadInventory]);
 
   // Live indicator now reflects the ACTUAL realtime subscription status
   // (set by useListingsRealtime's onStatus callback). The previous 2.5s
@@ -306,41 +359,8 @@ export default function PropertiesPage() {
     if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
 
-  // Fetch freshest inventory from server in background
-  useEffect(() => {
-    let active = true;
-    fetch('/api/inventory', {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    })
-      .then((res) => {
-        if (res.status === 401 || res.status === 403) {
-          console.error('[PropertiesPage] Authorization failed fetching inventory:', res.status);
-        }
-        return res.ok ? res.json() : null;
-      })
-      .then((data) => {
-        if (!active || !data?.units || !Array.isArray(data.units)) return;
-        const validUnits = data.units.filter(
-          (raw: any) =>
-            raw.party !== 'Owner' &&
-            raw.sourceType !== 'owner' &&
-            raw.segment !== 'owners_rent' &&
-            raw.segment !== 'owners_buy' &&
-            raw.tag !== 'Direct Owner'
-        );
-        setAllUnits(validUnits.map(sanitizeUnit));
-      })
-      .catch((err) => {
-        console.warn('[PropertiesPage] inventory fetch failed:', err);
-      })
-      .finally(() => {
-        if (active) setInventoryLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Mount fetch, realtime re-sync and 5-min reconciliation all run through
+  // loadInventory above — no duplicate fetch effect here anymore.
 
   // Fetch proximity listings from spatial endpoint when radiusKm is active
   useEffect(() => {
@@ -592,8 +612,8 @@ export default function PropertiesPage() {
               </h1>
               <p className="props-hero-sub">
                 {isAr
-                  ? `تصفح المعروض الحقيقي المعتمد من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار الحقيقية وتواصل فوري.`
-                  : `Browse verified live listings across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} real units). Interactive map and instant advisor verification.`}
+                  ? `تصفح المعروض الحقيقي من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار وتواصل فوري — التحقق من كل وحدة يتم قبل نشرها.`
+                  : `Browse live listings from owners and brokers across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} units). Interactive map and instant advisor contact — every unit is verified before publication.`}
               </p>
             </div>
 

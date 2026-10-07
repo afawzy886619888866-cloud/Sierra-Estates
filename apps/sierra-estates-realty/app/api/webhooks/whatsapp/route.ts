@@ -4,6 +4,7 @@ import { WhatsAppStatusService } from '@/lib/services/WhatsAppStatusService';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
+import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
@@ -44,40 +45,19 @@ function verifyMetaSignature(payload: string, signatureHeader: string, appSecret
 }
 
 async function sendWhatsAppReply(toPhone: string, text: string): Promise<boolean> {
-  const token = process.env.WHATSAPP_API_TOKEN || process.env.WHATSAPP_META_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_ID;
-
-  if (!token || !phoneId || !toPhone) {
-    console.log(`ℹ️ [WhatsApp Webhook] Outbound API credentials not configured; response generated in payload mode.`);
-    return false;
-  }
-
-  try {
-    const cleanPhone = toPhone.replace(/[^0-9]/g, '');
-    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: cleanPhone,
-        type: 'text',
-        text: { body: text },
-      }),
-    });
-
-    if (!res.ok) {
-      console.error(`⚠️ [WhatsApp Webhook] Outbound message failed with status ${res.status}: ${await res.text()}`);
-      return false;
-    }
-    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${cleanPhone}`);
+  // Provider-aware reply: goes through the SAME sender chain as the queue
+  // drain (OpenWA gateway first when WHATSAPP_PROVIDER=openwa, Twilio next,
+  // graceful simulation last). The legacy inline Meta Graph call only worked
+  // with WHATSAPP_META_TOKEN + WHATSAPP_PHONE_NUMBER_ID and silently returned
+  // false under the openwa posture — auto-replies died with the bot.
+  const { sendWhatsApp } = await import('@/lib/server/twilio-client');
+  const result = await sendWhatsApp('', toPhone, text);
+  if (!result.simulated) {
+    console.log(`✅ [WhatsApp Webhook] Outbound reply dispatched to ${toPhone} via ${result.provider}`);
     return true;
-  } catch (err) {
-    console.error(`❌ [WhatsApp Webhook] Outbound dispatch error:`, err);
-    return false;
   }
+  console.log('ℹ️ [WhatsApp Webhook] Outbound reply could not be delivered (no provider accepted it).');
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -93,6 +73,15 @@ export async function POST(req: NextRequest) {
     name: 'SBR_SECRET_KEY',
   });
   if (denied) return denied;
+
+  // OPPORTUNISTIC SCHEDULED-SEND DRAIN (fire-and-forget): every authenticated
+  // inbound hit also nudges the outbound queue so scheduled jobs dispatch
+  // within seconds of live traffic instead of waiting for the daily cron
+  // piggyback. In-flight-guarded inside the drain module; never throws and
+  // never blocks this request. The /api/cron/whatsapp-dispatch route remains
+  // the authoritative scheduled drain.
+  const { piggybackWhatsAppDrain } = await import('@/lib/server/whatsapp-drain');
+  piggybackWhatsAppDrain();
 
   const rawBody = await req.text();
 
@@ -119,6 +108,31 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = rawBody ? JSON.parse(rawBody) : {};
+
+    // ── OpenWA gateway adapter (V3.0 wiring) ──
+    // The OpenWA gateway on 54.89.162.250 posts event envelopes of the shape
+    //   { event: 'message.received', sessionId, data: { id, chatId, body, type, sender, ... } }
+    // signed with X-OpenWA-Signature. The rest of this route speaks the Meta/
+    // bridge shape (from/text/isGroup), so flatten the envelope ONCE here and
+    // let the existing pipeline handle it unchanged.
+    const openwaEnvelope = body && typeof body === 'object' && (body as any).event === 'message.received'
+      ? ((body as any).data ?? null)
+      : null;
+    if (openwaEnvelope && typeof openwaEnvelope.chatId === 'string') {
+      const chatId: string = openwaEnvelope.chatId;
+      const isGroupChat = chatId.endsWith('@g.us');
+      const participant = [
+        openwaEnvelope.sender?.id,
+        openwaEnvelope.sender?._serialized,
+        openwaEnvelope.author,
+        typeof openwaEnvelope.sender === 'string' ? openwaEnvelope.sender : undefined,
+      ].find((v: unknown): v is string => typeof v === 'string' && v.length > 0);
+      (body as any).from = isGroupChat ? (participant || chatId) : chatId;
+      (body as any).text = openwaEnvelope.body || openwaEnvelope.caption || openwaEnvelope.text || '';
+      (body as any).type = openwaEnvelope.type || 'chat';
+      (body as any).isGroup = isGroupChat;
+      if (isGroupChat) (body as any).groupName = openwaEnvelope.chatName || chatId;
+    }
     
     // Log incoming payload for audit
     console.log("📥 Incoming Webhook Payload:", JSON.stringify(body, null, 2));
@@ -232,6 +246,14 @@ export async function POST(req: NextRequest) {
       // 3. Fall back to standard Conversational AI for Direct Messages (ECC Memory)
       const { WhatsAppConversationalService } = await import('@/lib/services/WhatsAppConversationalService');
       replyText = await WhatsAppConversationalService.processDirectMessage(message, sender);
+
+      // MANDATORY Cairo Plaza notice: any auto-reply that discusses (or was
+      // prompted by a message discussing) Cairo Plaza El-Mataria carries the
+      // official Booking & Contracting steps verbatim at the bottom —
+      // announcement/DISCLAIMER-POLICY.md. Exact text, never altered.
+      if (replyText && (mentionsCairoPlaza(message) || mentionsCairoPlaza(replyText))) {
+        replyText = withCairoPlazaNotice(replyText);
+      }
       
       // Attempt Outbound Meta Dispatch if configured
       if (replyText && sender) {

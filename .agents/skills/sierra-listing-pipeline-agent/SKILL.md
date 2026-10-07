@@ -11,7 +11,7 @@ The **Sierra Listing Pipeline Agent** is an autonomous OpenClaw agent dedicated 
 
 ## Core Autonomous Sequence
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ 1. WhatsApp Live Listener (Baileys Multi-Device Socket)    │
 │    • Ingests messages & attachments from Owner Groups       │
@@ -54,13 +54,16 @@ The **Sierra Listing Pipeline Agent** is an autonomous OpenClaw agent dedicated 
 ## Running the Pipeline
 
 ### 1. Start Local WhatsApp Socket & Harvester
+
 ```bash
 cd infra/whatsapp-scraper
 node src/owners-harvester.js
 ```
+
 Open **[http://localhost:3000/whatsapp_qr.html](http://localhost:3000/whatsapp_qr.html)** to scan the pairing QR code.
 
 ### 2. Programmatic Execution in Code
+
 ```typescript
 import { SierraListingPipelineAgent } from '@sierra-estates/agents';
 
@@ -78,11 +81,13 @@ console.log(result.action); // 'published_with_photos'
 ```
 
 ### 3. Regenerating Property Finder Feeds
+
 ```bash
 node scripts/generate-photos-propertyfinder-feed.mjs
 ```
 
 ## Price Governance Rules
+
 - **Rent**: Enforces mid-range floor of 7,000 EGP and ceiling of 300,000 EGP. Any rent $>300,000$ or $\ge 1,000,000$ is reclassified to Resale.
 - **Resale**: Enforces minimum 1,000,000 EGP floor.
 - **Currency**: Foreign currency ($ / USD) multiplied by 50 to reflect current Egyptian market rate.

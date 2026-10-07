@@ -25,7 +25,7 @@ async function resolveForMeta(id: string): Promise<Record<string, any> | null> {
     const row = await getRecord<Record<string, unknown>>('listings', id);
     if (row) {
       return {
-        type: (row.propertyType as string) || 'Apartment',
+        type: (row.propertyType as string) || '',
         cmp: (row.compound as string) || '',
         zone: (row.locationArea as string) || '',
         beds: (row.bedrooms as number) ?? null,
@@ -45,7 +45,7 @@ async function resolveForMeta(id: string): Promise<Record<string, any> | null> {
   );
   if (unit) {
     return {
-      type: unit.propertyType || unit.type || 'Apartment',
+      type: unit.propertyType || unit.type || '',
       cmp: unit.compound || unit.location || '',
       zone: unit.zone || '',
       beds: unit.beds ?? null,

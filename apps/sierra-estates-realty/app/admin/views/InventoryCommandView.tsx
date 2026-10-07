@@ -746,7 +746,7 @@ export default function InventoryCommandView({
   /* ── Map pins ── */
   const mapPins: MapUnitPin[] = useMemo(() => {
     return sorted.slice(0, 250).map((u, idx) => {
-      const compound = u.compound || u.cmp || u.location || "New Cairo";
+      const compound = u.compound || u.cmp || u.location || "";
       const loc = resolveLocation(compound);
       const [jLat, jLng] = hashJitter(String(u.sierraCode || u.code || idx));
       const price = unitPrice(u);
@@ -1422,7 +1422,7 @@ export default function InventoryCommandView({
                               {compound}
                             </div>
                             <div className="text-[9.5px] text-slate-400 truncate max-w-37.5">
-                              {u.zone || u.developer || "New Cairo"}
+                              {u.zone || u.developer || "—"}
                             </div>
                           </td>
                           <td className="px-3 py-2.5">

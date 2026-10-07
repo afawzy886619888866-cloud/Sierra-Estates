@@ -45,7 +45,9 @@ class EmailService {
     const moveIn = qualData.move_in_date || 'Immediate / Flexible';
     const duration = qualData.duration || 'Standard';
     const budget = qualData.budget || 'Flexible';
-    const locations = Array.isArray(qualData.locations) ? qualData.locations.join(', ') : (qualData.locations || 'New Cairo');
+    // §21 no-fabrication: target locations are only claimed when the lead
+    // actually stated them — never a default 'New Cairo'.
+    const locations = Array.isArray(qualData.locations) ? qualData.locations.join(', ') : (qualData.locations || 'Not specified');
     const bedrooms = qualData.bedrooms || 'Any';
     const furnished = qualData.furnished ? 'Yes (Furnished)' : 'No / Unfurnished';
 

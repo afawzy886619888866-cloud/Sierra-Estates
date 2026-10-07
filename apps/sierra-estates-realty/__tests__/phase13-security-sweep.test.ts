@@ -226,6 +226,98 @@ describe('service-role least privilege', () => {
     });
 });
 
+// ─── Public publish gate pins (activation plan Phase D) ─────────────────────
+describe('public publish gate — every public listing surface filters publish_status', () => {
+    it('/api/inventory gates the Supabase query AND drops unverified local-file tiers', () => {
+        const source = readFileSync(join(APP_DIR, 'app', 'api', 'inventory', 'route.ts'), 'utf8');
+        // The gate runs inside the query (RLS migration 020 may be unapplied).
+        expect(source).toContain('.eq("publish_status", "PUBLISHABLE")');
+        // Unverified local-file sources must never merge into the public GET.
+        expect(source).not.toContain('readExcelListings');
+        expect(source).not.toContain('fetchSheetUnits');
+        expect(source).not.toContain('whatsapp-ingested-units.json');
+        expect(source).not.toContain("from '@/lib/inventory/snapshot.json'");
+        // §21: no invented location label (either fallback operator).
+        expect(source).not.toContain('|| "New Cairo"');
+        expect(source).not.toContain("|| 'New Cairo'");
+        expect(source).not.toContain('?? "New Cairo"');
+        expect(source).not.toContain("?? 'New Cairo'");
+    });
+
+    it('/api/feeds/property-finder exports only verified (PUBLISHABLE) units', () => {
+        const source = readFileSync(
+            join(APP_DIR, 'app', 'api', 'feeds', 'property-finder', 'route.ts'),
+            'utf8'
+        );
+        expect(source).toContain("publishStatus: 'PUBLISHABLE'");
+        // The unverified snapshot fallback was removed (Phase D/E doctrine).
+        expect(source).not.toContain("snapshot.json");
+    });
+
+    it('/api/matches filters status AND publish_status inside the query', () => {
+        const source = readFileSync(join(APP_DIR, 'app', 'api', 'matches', 'route.ts'), 'utf8');
+        expect(source).toContain(`{ column: "publish_status", op: "eq", value: "PUBLISHABLE" }`);
+    });
+});
+
+// ─── §21 no-fabrication fallback guard (Rule B regression) ──────────────────
+describe('§21 no-fabrication — runtime sources carry no invented defaults', () => {
+    // Wave-3: patterns now also catch the nullish-coalescing (`??`) variant —
+    // `locationArea: region ?? 'New Cairo'` fabricates exactly like `||` did.
+    const FABRICATION_PATTERNS: Array<[string, RegExp]> = [
+        ['default compound', /(?:\|\||\?\?)\s*['"]New Cairo['"]/],
+        ['default property type', /(?:\|\||\?\?)\s*['"]Apartment['"]/],
+        ['default compound (Sierra)', /(?:\|\||\?\?)\s*['"]Sierra['"]/],
+        ['default finishing', /(?:\|\||\?\?)\s*['"](?:semi_finished|Super Lux|Semi-Finished|Unfurnished)['"]/],
+        ['default zone', /(?:\|\||\?\?)\s*['"]5th Settlement['"]/],
+        ['default client name', /(?:\|\||\?\?)\s*['"]VIP Client['"]/],
+        ['default source label', /(?:\|\||\?\?)\s*['"]Master Sheet['"]/],
+        ['fabricated inventory count', /(?:\|\||\?\?)\s*306\b/],
+        ['fabricated valuation score', /valuationScore\s*(?:\|\||\?\?)\s*(?:70|75|80)\b/],
+        ['fabricated urgency score', /urgencyScore\s*(?:\|\||\?\?)\s*(?:70|75)\b/],
+        ['fabricated USD price', /usd\s*(?:\|\||\?\?)\s*1500\b/],
+        ['fabricated bedroom count', /\b(?:beds|bedrooms)\s*(?:\|\||\?\?)\s*3\b/],
+        ['fabricated bathroom count', /\b(?:baths|bathrooms)\s*(?:\|\||\?\?)\s*2\b/],
+        // Wave-4: legal documents and operational parameters.
+        ['default compound (Mivida)', /(?:\|\||\?\?)\s*['"]Mivida['"]/],
+        ['default unit identity', /(?:\|\||\?\?)\s*['"](?:Villa 142-B|Standalone Villa)['"]/],
+        ['default delivery date', /(?:\|\||\?\?)\s*['"]December 2026['"]/],
+        ['default invented party name', /(?:\|\||\?\?)\s*['"](?:Dr\. Karim Mansour|Emaar Misr Developments)['"]/],
+        ['default local scan path', /(?:\|\||\?\?)\s*['"]I:\\\\supabase\\\\Sheets['"]/],
+        ['fabricated docusign domain', /docusign\.sierra-estates\.com/],
+        ['fabricated envelope id', /envelopeId:\s*`env_\$\{Date\.now\(\)\}`/],
+        // Wave-5: admin-portal demo data — fabricated legal records and
+        // invented persons must not be seeded into runtime surfaces.
+        ['fabricated sample contract seed', /con-sample-|SAMPLE-NATIONAL-ID|SBR-RES-2026-A8F2/],
+        ['fabricated demo person', /['"](?:Sara Mohamed|Ahmed Al-Rashid|Nadia El-Gohary|Mohamed El-Sayed|Dr\. Tarek Fouad|Eng\. Amr Soliman)['"]/],
+    ];
+    const RUNTIME_ROOTS = [
+        join(REPO_ROOT, 'packages'),
+        join(APP_DIR, 'lib'),
+        join(APP_DIR, 'app'),
+        join(REPO_ROOT, 'apps', 'agents'),
+        // Wave-3: repo ops scripts write to the database too (sync / merge /
+        // embed / export) — they must not fabricate either.
+        join(REPO_ROOT, 'scripts'),
+    ];
+
+    it('finds no invented fallback defaults in runtime sources', () => {
+        const offenders: string[] = [];
+        offenders.push(
+            ...walkFor(RUNTIME_ROOTS, (content, file) => {
+                if (file.includes('__tests__') || file.includes('.test.') || file.includes('__mocks__')) {
+                    return null;
+                }
+                for (const [label, pattern] of FABRICATION_PATTERNS) {
+                    if (pattern.test(content)) return `${file}: ${label}`;
+                }
+                return null;
+            }),
+        );
+        expect(offenders).toEqual([]);
+    });
+});
+
 // ─── Secrets scan ────────────────────────────────────────────────────────────
 describe('secrets scan — no credential-shaped literals in committed source', () => {
     const CREDENTIAL_PATTERNS: Array<[string, RegExp]> = [
@@ -279,7 +371,7 @@ function walkFor(
             return;
         }
         for (const entry of entries) {
-            if (entry === 'node_modules' || entry === '.next' || entry.startsWith('.git')) continue;
+            if (entry === 'node_modules' || entry === '.next' || entry === 'dist' || entry === 'coverage' || entry.startsWith('.git')) continue;
             const full = join(dir, entry);
             let st;
             try {

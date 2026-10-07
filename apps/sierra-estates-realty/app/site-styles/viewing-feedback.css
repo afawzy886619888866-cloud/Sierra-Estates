@@ -1,5 +1,17 @@
 /* /viewing-feedback — Phase 9 public client survey (token-gated). */
 
+/* Minimal Sierra identity strip — the page is opened from WhatsApp/SMS
+   links, so it carries the brand mark + wordmark instead of full chrome. */
+.vf-brandbar{background:#050b13;border-bottom:1px solid rgba(233,193,118,.16);}
+.vf-brandbar-in{display:flex;align-items:center;gap:11px;padding:12px 24px;}
+.vf-brandbar img{width:30px;height:30px;object-fit:contain;}
+.vf-brandbar strong{display:block;color:#fff;font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.02em;line-height:1.15;}
+.vf-brandbar span{display:block;color:rgba(255,255,255,.55);font-size:9px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;}
+.vf-footer{background:#050b13;border-top:1px solid rgba(233,193,118,.14);padding:18px 0;margin-top:56px;}
+.vf-footer .wrap{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between;color:rgba(255,255,255,.6);font-size:12px;}
+.vf-footer a{color:#e9c176;text-decoration:none;}
+.vf-footer a:hover{text-decoration:underline;}
+
 .vf-hero{background:linear-gradient(135deg,#07121e 0%,#0d1f30 60%,#07121e 100%);padding:56px 0 44px;position:relative;overflow:hidden;}
 .vf-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 360px at 78% 0%,rgba(201,148,54,.22),transparent 60%);}
 .vf-hero .wrap{position:relative;z-index:2;}

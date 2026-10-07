@@ -1,22 +1,27 @@
 /**
- * Workflow 05: Unit Adder (Supabase Authoritative)
+ * Workflow 05: Unit Adder — Supabase authoritative  (fixed 2026-10)
  * ─────────────────────────────────────────
- * Reads new units from Google Sheets
- * Normalizes and deduplicates
- * Writes to Supabase "listings" table
- * Syncs with SBR code generation
+ * Reads new units from the Sheets "new_units" tab, deduplicates via a
+ * SHA-256 sync hash, and inserts listings into Supabase with generated
+ * SBR codes.
  *
- * Usage:
- *   node workflows/05-unit-adder/add.js
- *   OR: cron job every 30 minutes
+ * FIXES over the previous revision:
+ *   - Column mapping was corrupted: `ownerContact: row[11]` read the STATUS
+ *     column, and the dedup hash mixed in `row[5]` (finishing) as "floor"
+ *     and `row[1]` (bedrooms) as "unit number" — neither exists in the
+ *     sheet. Sheet contract (README): Compound, BR, BA, Area, Price,
+ *     Finishing, Furnishing, Type, Address, Lat, Lng, Status (A..L).
+ *     Hash is now compound|area|price|bedrooms — the practical identity of
+ *     a unit in this sheet.
+ *   - @supabase/supabase-js + dotenv moved into production dependencies
+ *     (previously missing / dev-only → crash on a fresh install).
+ *   - Unconfigured Supabase exits 2; unconfigured Sheets degrades to
+ *     "0 pending" (already the case) with a visible log line.
  *
- * Env vars required:
- *   - NEXT_PUBLIC_SUPABASE_URL
- *   - SUPABASE_SERVICE_ROLE_KEY
- *   - BROKER_INBOX_SHEET_ID
- *   - GOOGLE_SERVICE_ACCOUNT_KEY
+ * Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+ *      BROKER_INBOX_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_KEY
+ * Exit: 0 ok · 2 unconfigured · 1 error
  */
-
 const { google } = require('googleapis');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -24,23 +29,24 @@ const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
-// Load environment
+// Load environment (repo root .env.local then .env)
 const ROOT = path.resolve(__dirname, '../..');
-[
-  path.resolve(ROOT, '.env.local'),
-  path.resolve(ROOT, '.env'),
-].forEach((envPath) => {
+[path.resolve(ROOT, '.env.local'), path.resolve(ROOT, '.env')].forEach((envPath) => {
   if (fs.existsSync(envPath)) dotenv.config({ path: envPath, override: false });
 });
 
-const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SHEET_ID = process.env.BROKER_INBOX_SHEET_ID || '';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://REDACTED-PROJECT.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-if (!SUPABASE_KEY) {
-  console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY.');
-  process.exit(1);
+const summary = { pending: 0, added: 0, deduplicated: 0, errors: 0 };
+
+function failUnconfigured(msg) {
+  console.log(`UNCONFIGURED: ${msg}`);
+  process.exit(2);
 }
+
+if (!SUPABASE_KEY) failUnconfigured('SUPABASE_SERVICE_ROLE_KEY missing');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -48,9 +54,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 
 let sheets = null;
 if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY && fs.existsSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)) {
-  const serviceAccountKey = JSON.parse(
-    fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'utf8')
-  );
+  const serviceAccountKey = JSON.parse(fs.readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'utf8'));
   sheets = google.sheets({
     version: 'v4',
     auth: new google.auth.GoogleAuth({
@@ -68,15 +72,15 @@ function generateSBRCode(compound, bedrooms, furnishing, price) {
   return `${compoundAbbr}-${bedrooms}${furnishCode}-${priceAbbr}`;
 }
 
-// Compute SHA256 hash for deduplication
-function computeSyncHash(compound, area, floor, unitNumber) {
-  const key = `${compound}|${area}|${floor}|${unitNumber}`;
+// Dedup identity: compound + area + price + bedrooms (sheet-real fields).
+function computeSyncHash(compound, area, price, bedrooms) {
+  const key = `${compound}|${area}|${price}|${bedrooms}`;
   return crypto.createHash('sha256').update(key).digest('hex');
 }
 
 async function getPendingUnits() {
   if (!sheets || !SHEET_ID) {
-    console.warn('⚠️ Google Sheets not configured or sheet ID missing. Skipping sheet fetch.');
+    console.warn('Sheets not configured — treating as 0 pending units');
     return [];
   }
   try {
@@ -84,116 +88,86 @@ async function getPendingUnits() {
       spreadsheetId: SHEET_ID,
       range: "'new_units'!A:L",
     });
-
     const rows = response.data.values || [];
-    return rows.slice(1).filter(row => row[11] === 'PENDING');
+    return rows
+      .slice(1)
+      .map((row, idx) => ({ row, sheetRow: idx + 2 }))
+      .filter(({ row }) => String(row[11] || '').trim().toUpperCase() === 'PENDING');
   } catch (err) {
-    console.error('❌ Failed to read pending units:', err.message);
+    console.error(`pending-units read failed: ${err.message}`);
     return [];
   }
 }
 
 async function checkDuplicate(syncHash) {
-  try {
-    const { data, error } = await supabase
-      .from('listings')
-      .select('id')
-      .eq('dupe_check_hash', syncHash)
-      .limit(1);
-
-    if (error) {
-      console.error('❌ Dedup check error:', error.message);
-      return false;
-    }
-    return Boolean(data && data.length > 0);
-  } catch (err) {
-    console.error('❌ Dedup check failed:', err.message);
-    return false;
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id')
+    .eq('dupe_check_hash', syncHash)
+    .limit(1);
+  if (error) {
+    console.error(`dedup check error: ${error.message}`);
+    return false; // fail-open to insert path, which reports its own error
   }
+  return Boolean(data && data.length > 0);
 }
 
 async function addUnitToSupabase(unit, syncHash) {
-  try {
-    const sbrCode = generateSBRCode(
-      unit.compound,
-      unit.bedrooms,
-      unit.furnishing,
-      unit.price
-    );
+  const sbrCode = generateSBRCode(unit.compound, unit.bedrooms, unit.furnishing, unit.price);
+  const price = parseFloat(unit.price) || 0;
+  const area = parseInt(unit.area) || 0;
+  const pricePerSqm = area > 0 ? Math.round(price / area) : 0;
 
-    const price = parseFloat(unit.price) || 0;
-    const area = parseInt(unit.area) || 0;
-    const pricePerSqm = area > 0 ? Math.round(price / area) : 0;
+  const record = {
+    title: `${unit.bedrooms}BR ${unit.compound}`,
+    title_ar: unit.titleAr || '',
+    code: sbrCode,
+    property_type: unit.propertyType?.toLowerCase() || 'apartment',
+    bedrooms: parseInt(unit.bedrooms) || 0,
+    bathrooms: parseInt(unit.bathrooms) || 0,
+    area,
+    finishing: unit.finishingType || 'not-finished',
+    price,
+    price_per_sqm: pricePerSqm,
+    compound: unit.compound,
+    location: unit.address || unit.compound,
+    lat: parseFloat(unit.lat) || 30.0,
+    lng: parseFloat(unit.lng) || 31.0,
+    dupe_check_hash: syncHash,
+    status: 'available',
+    owner_type: 'broker',
+    source: 'sheets_sync',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 
-    const record = {
-      title: `${unit.bedrooms}BR ${unit.compound}`,
-      title_ar: unit.titleAr || '',
-      code: sbrCode,
-      property_type: unit.propertyType?.toLowerCase() || 'apartment',
-      bedrooms: parseInt(unit.bedrooms) || 0,
-      bathrooms: parseInt(unit.bathrooms) || 0,
-      area,
-      finishing: unit.finishingType || 'not-finished',
-      price,
-      price_per_sqm: pricePerSqm,
-      compound: unit.compound,
-      location: unit.address || unit.compound,
-      lat: parseFloat(unit.lat) || 30.0,
-      lng: parseFloat(unit.lng) || 31.0,
-      dupe_check_hash: syncHash,
-      status: 'available',
-      owner_type: 'broker',
-      source: 'sheets_sync',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data, error } = await supabase
-      .from('listings')
-      .insert(record)
-      .select('id')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    console.log(`✅ Unit added to Supabase: ${sbrCode} (id: ${data.id})`);
-    return data.id;
-  } catch (err) {
-    console.error('❌ Supabase insert failed:', err.message);
-    return null;
-  }
+  const { data, error } = await supabase.from('listings').insert(record).select('id').single();
+  if (error) throw error;
+  return data.id;
 }
 
-async function updateUnitStatus(rowIndex, status) {
+async function updateUnitStatus(sheetRow, status) {
   if (!sheets || !SHEET_ID) return;
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `'new_units'!L${rowIndex + 2}`,
+      range: `'new_units'!L${sheetRow}`,
       valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[status]],
-      },
+      resource: { values: [[status]] },
     });
   } catch (err) {
-    console.error('❌ Failed to update status:', err.message);
+    console.error(`status write failed row ${sheetRow}: ${err.message}`);
   }
 }
 
 async function main() {
-  console.log('🏢 Starting unit adder workflow (Supabase)...');
-  console.log(`📡 Supabase Endpoint: ${SUPABASE_URL}`);
+  console.log(`unit-adder: starting → ${SUPABASE_URL}`);
 
   const pendingUnits = await getPendingUnits();
-  console.log(`📊 Found ${pendingUnits.length} pending units`);
+  summary.pending = pendingUnits.length;
+  console.log(`pending units: ${pendingUnits.length}`);
 
-  let added = 0;
-  let deduplicated = 0;
-
-  for (let i = 0; i < pendingUnits.length; i++) {
-    const row = pendingUnits[i];
+  for (const { row, sheetRow } of pendingUnits) {
     const unit = {
       compound: row[0],
       bedrooms: row[1],
@@ -206,46 +180,44 @@ async function main() {
       address: row[8],
       lat: row[9],
       lng: row[10],
-      ownerContact: row[11] || '',
     };
 
-    const syncHash = computeSyncHash(
-      unit.compound,
-      unit.area,
-      row[5], // floor level
-      row[1]  // unit number
-    );
+    try {
+      const syncHash = computeSyncHash(unit.compound, unit.area, unit.price, unit.bedrooms);
 
-    const isDuplicate = await checkDuplicate(syncHash);
+      if (await checkDuplicate(syncHash)) {
+        await updateUnitStatus(sheetRow, 'DUPLICATE');
+        summary.deduplicated++;
+        console.log(`duplicate skipped: ${unit.compound} ${unit.area}m²`);
+        continue;
+      }
 
-    if (isDuplicate) {
-      console.log(`⚠️ Skipping duplicate: ${unit.compound} ${unit.area}m²`);
-      await updateUnitStatus(i, 'DUPLICATE');
-      deduplicated++;
-      continue;
-    }
-
-    const insertedId = await addUnitToSupabase(unit, syncHash);
-
-    if (insertedId) {
-      await updateUnitStatus(i, 'ADDED');
-      added++;
-    } else {
-      await updateUnitStatus(i, 'ERROR');
+      const insertedId = await addUnitToSupabase(unit, syncHash);
+      if (insertedId) {
+        await updateUnitStatus(sheetRow, 'ADDED');
+        summary.added++;
+        console.log(`added: ${unit.compound} (id ${insertedId})`);
+      } else {
+        await updateUnitStatus(sheetRow, 'ERROR');
+        summary.errors++;
+      }
+    } catch (err) {
+      await updateUnitStatus(sheetRow, 'ERROR');
+      summary.errors++;
+      console.error(`row ${sheetRow} failed: ${err.message}`);
     }
   }
 
-  console.log('═══════════════════════════════════════');
-  console.log(`✅ Workflow complete: ${added} added, ${deduplicated} duplicates`);
+  console.log(`SUMMARY ${JSON.stringify(summary)}`);
+  console.log('unit-adder: done');
+  process.exit(0);
 }
 
 if (require.main === module) {
-  main().catch(console.error);
+  main().catch((err) => {
+    console.error(`unit-adder FAILED: ${err.message}`);
+    process.exit(1);
+  });
 }
 
-module.exports = {
-  generateSBRCode,
-  computeSyncHash,
-  addUnitToSupabase,
-  checkDuplicate,
-};
+module.exports = { generateSBRCode, computeSyncHash, addUnitToSupabase, checkDuplicate };

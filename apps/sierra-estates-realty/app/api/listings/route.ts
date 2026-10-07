@@ -116,28 +116,6 @@ function rowToEnvelope(row: Record<string, unknown>) {
   };
 }
 
-/** Map a seed Listing to the legacy envelope shape (offline / sandbox fallback). */
-function seedToEnvelope(l: Listing) {
-  return {
-    id: l.id,
-    title: `${l.type} · ${l.compound}`,
-    price: l.usd,
-    compound: l.compound,
-    beds: l.beds,
-    baths: l.bath,
-    area: l.area,
-    image: l.img || undefined,
-    images: l.img ? [l.img] : [],
-    description: l.description,
-    propertyType: l.type,
-    status: l.status,
-    amenities: [],
-    purpose: l.mode === 'rent' ? 'for-rent' : 'for-sale',
-    pfReferenceNumber: null,
-    publishToClient: true,
-  };
-}
-
 /**
  * Filter-mode read — PUBLISH GATE (activation plan Phase D/E):
  * serves ONLY public.listings rows whose publish_status = 'PUBLISHABLE'.
@@ -243,7 +221,12 @@ export async function GET(request: Request) {
         const listing = rowToEnvelope(row);
         // The submit endpoint hands the caller the new id, so fetch-by-id
         // would otherwise be a direct link to an unverified submission.
-        if (isPubliclyVisibleListingStatus(listing.status)) {
+        // PUBLISH GATE (activation plan Phase D): status alone is not enough —
+        // only publish_status = 'PUBLISHABLE' rows may be served publicly, so
+        // an unverified-but-active row 404s instead of leaking by direct link.
+        const publishable =
+          String((row as Record<string, unknown>).publishStatus ?? '') === 'PUBLISHABLE';
+        if (publishable && isPubliclyVisibleListingStatus(listing.status)) {
           return NextResponse.json({ success: true, listing });
         }
         return NextResponse.json({ success: false, error: 'Listing not found' }, { status: 404 });

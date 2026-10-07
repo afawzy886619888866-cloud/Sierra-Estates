@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter sierra-estates-client-page build",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter sierra-estates-client-page build",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {
@@ -10,11 +10,11 @@
   "crons": [
     {
       "path": "/api/cron/dispatch/night",
-      "schedule": "0 2 * * *"
+      "schedule": "45 2 * * *"
     },
     {
       "path": "/api/cron/dispatch/morning",
-      "schedule": "0 6 * * *"
+      "schedule": "45 6 * * *"
     }
   ],
   "headers": [

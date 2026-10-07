@@ -37,11 +37,8 @@ const CompoundsMap = dynamic(() => import('@/components/site/CompoundsMap'), {
   ),
 });
 
-// Excel sheet modal is heavy (table + lead form) — load on demand only.
-const CompoundExcelSheetModal = dynamic(() => import('@/components/site/CompoundExcelSheetModal'), {
-  ssr: false,
-});
-
+// Flag-pin press now opens the compact in-map units deck rendered by
+// CompoundsMap itself — no fullscreen modal needed on the homepage.
 const COMPOUND_PICKS = ['Hyde Park', 'Mivida', 'Mountain View iCity', 'Eastown', 'Villette', 'Taj City', 'Al Rehab', 'Madinaty'];
 
 const AI_TOOLS = [
@@ -93,28 +90,42 @@ export default function HomePage() {
         setInventoryStatus('ready');
         if (data.units.length === 0) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
-          const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
-          const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
+          // §21 no-fabrication: real prices & verified direct owner detection
+          const price = Number(u.price || u.price_egp || 0);
+          const egpM = u.egpM || (price > 0 ? Number((price / 1000000).toFixed(1)) : 0);
+          const usd = u.usd || (price > 0 ? (u.mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0);
+          const isDirectOwner = Boolean(
+            u.isDirectOwner ||
+            u.advertiserType === 'Direct Owner' ||
+            u.advertiser_type === 'Direct Owner' ||
+            (typeof u.segment === 'string' && u.segment.includes('owner')) ||
+            String(u.code || '').startsWith('DO-') ||
+            String(u.code || '').startsWith('WA-')
+          );
           return {
             id: u.id || `REAL-${i + 1}`,
             code: u.code || `SE-REAL-${i + 1}`,
-            cmp: u.compound || u.location || 'New Cairo',
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds || 3,
-            bath: u.bath || 2,
-            area: u.area || 165,
-            egpM: egpM > 0 ? egpM : 8.5,
-            usd: usd > 0 ? usd : 175000,
-            ai: u.aiScore || Number((9.2 + ((i * 3) % 8) / 10).toFixed(1)),
-            tag: u.tag || 'Verified Real Inventory',
+            cmp: u.compound || u.location || '',
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            price,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.tag || (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
-            agent: 'Sierra Advisor Desk',
-            ago: 'Verified Master Sheet',
+            agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
+            ago: '',
             img: u.img || getCuratedListingImage(u, i),
+            imgCurated: !u.img,
             whatsapp: 'https://wa.me/201092048333',
-            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+            segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+            isDirectOwner,
+            ownerType: isDirectOwner ? 'owner' : 'broker',
           };
         });
         setListings(mapped);
@@ -126,17 +137,12 @@ export default function HomePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isAr]);
 
   const [inqMode, setInqMode] = useState<'buy' | 'rent' | 'sell'>('buy');
   const [searchMode, setSearchMode] = useState<'buy' | 'rent' | 'new'>('buy');
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
-  // Flag-pin press → open the compound's Excel sheet (ALL units, fetched from /api/inventory).
-  const [sheetModal, setSheetModal] = useState<{ open: boolean; compound: string | null }>({
-    open: false,
-    compound: null,
-  });
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
@@ -163,27 +169,41 @@ export default function HomePage() {
       .then((data) => {
         if (cancelled || !data?.units || !Array.isArray(data.units)) return;
         const mapped: CardListing[] = data.units.map((u: any, i: number) => {
-          const egpM = u.egpM || Number(((u.price || 0) / 1000000).toFixed(1));
-          const usd = u.usd || (u.mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5));
+          const price = Number(u.price || u.price_egp || 0);
+          const egpM = u.egpM || (price > 0 ? Number((price / 1000000).toFixed(1)) : 0);
+          const usd = u.usd || (price > 0 ? (u.mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0);
+          const isDirectOwner = Boolean(
+            u.isDirectOwner ||
+            u.advertiserType === 'Direct Owner' ||
+            u.advertiser_type === 'Direct Owner' ||
+            (typeof u.segment === 'string' && u.segment.includes('owner')) ||
+            String(u.code || '').startsWith('DO-') ||
+            String(u.code || '').startsWith('WA-')
+          );
           return {
             id: u.id || `LIVE-${i + 1}`,
             code: u.code || `SE-LIVE-${i + 1}`,
             cmp: u.compound || selectedMapCompound,
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds || 3,
-            bath: u.bath || 2,
-            area: u.area || 165,
-            egpM: egpM > 0 ? egpM : 8.5,
-            usd: usd > 0 ? usd : 175000,
-            ai: u.aiScore || 9.5,
-            tag: u.isNewListing ? 'New Listing' : 'Verified WhatsApp / Live Sync',
+            zone: u.zone || '',
+            type: u.propertyType || u.type || '',
+            beds: u.beds || 0,
+            bath: u.bath || 0,
+            area: u.area || 0,
+            price,
+            egpM: egpM > 0 ? egpM : 0,
+            usd: usd > 0 ? usd : 0,
+            ai: u.aiScore || 0,
+            tag: u.isNewListing ? (isAr ? 'عقار جديد' : 'New Listing') : (isDirectOwner ? (isAr ? 'مالك مباشر' : 'Direct Owner') : null),
             mode: u.mode || 'sale',
-            agent: 'Sierra Advisor Desk',
+            agent: isDirectOwner ? (isAr ? 'مالك مباشر موثق' : 'Verified Direct Owner') : 'Sierra Advisor Desk',
             ago: 'Live Sync',
             img: u.img || getCuratedListingImage(u, i),
+            imgCurated: !u.img,
             whatsapp: 'https://wa.me/201092048333',
-            segment: u.segment || (u.mode === 'rent' ? 'broker_rent' : 'broker_buy'),
+            segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
+            finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+            isDirectOwner,
+            ownerType: isDirectOwner ? 'owner' : 'broker',
           };
         });
         setLiveCompoundUnits(mapped);
@@ -192,7 +212,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedMapCompound]);
+  }, [selectedMapCompound, isAr]);
 
   const matchingCompoundListings = useMemo(() => {
     if (!selectedMapCompound) return [];
@@ -211,16 +231,30 @@ export default function HomePage() {
     });
   }, [listings, selectedMapCompound, liveCompoundUnits]);
 
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'owner' | 'rent' | 'sale'>('all');
+
   const displayedFeatured = useMemo(() => {
+    let pool = [...listings];
+    if (featuredFilter === 'owner') {
+      const ownerUnits = pool.filter((p) => p.isDirectOwner);
+      if (ownerUnits.length > 0) pool = ownerUnits;
+    } else if (featuredFilter === 'rent') {
+      const rentUnits = pool.filter((p) => p.mode === 'rent');
+      if (rentUnits.length > 0) pool = rentUnits;
+    } else if (featuredFilter === 'sale') {
+      const saleUnits = pool.filter((p) => p.mode === 'sale');
+      if (saleUnits.length > 0) pool = saleUnits;
+    }
+
     // Prioritize units with real verified photos and high AI recommendation scores
-    const sorted = [...listings].sort((a, b) => {
+    const sorted = pool.sort((a, b) => {
       const aPhoto = a.img && !a.img.includes('placeholder') ? 1 : 0;
       const bPhoto = b.img && !b.img.includes('placeholder') ? 1 : 0;
       if (bPhoto !== aPhoto) return bPhoto - aPhoto;
       return (b.ai || 0) - (a.ai || 0);
     });
     return sorted.slice(0, 8);
-  }, [listings]);
+  }, [listings, featuredFilter]);
 
   const ticker = useMemo(() => {
     const items = isAr ? TICKER_AR : TICKER_EN;
@@ -592,10 +626,6 @@ export default function HomePage() {
                 setSelectedMapCompound(name);
                 setSearch((prev) => ({ ...prev, compound: name }));
               }}
-              onOpenSheet={(cpd) => {
-                setSelectedMapCompound(cpd);
-                setSheetModal({ open: true, compound: cpd });
-              }}
               showControls={true}
               filterCompound={search.compound}
               filterPrice={search.price}
@@ -614,13 +644,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Flag-pin press → ALL units for the compound in the Excel sheet */}
-          <CompoundExcelSheetModal
-            isOpen={sheetModal.open}
-            onClose={() => setSheetModal((prev) => ({ ...prev, open: false }))}
-            compoundName={sheetModal.compound}
-            isAr={isAr}
-          />
+          {/* Flag-pin press → compact in-map units deck (rendered inside CompoundsMap) */}
 
           {/* Synchronized Properties Deck for Active Compound */}
           {selectedMapCompound && (
@@ -694,36 +718,71 @@ export default function HomePage() {
               <h2>{t('featTit')}</h2>
               <p>{t('featSub')}</p>
 
-              {/* Card Style Variation Pills */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
-                  {isAr ? 'نمط العرض:' : 'Card Style:'}
-                </span>
-                {[
-                  { id: 'showcase', label: isAr ? 'معرض الصور' : 'Showcase' },
-                  { id: 'bento', label: isAr ? 'تحليلات العائد' : 'Financial Bento' },
-                  { id: 'compact', label: isAr ? 'موجز تنفيذي' : 'Compact' },
-                  { id: 'editorial', label: isAr ? 'تصميم هادئ' : 'Editorial' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setCardVariant(opt.id as PropertyCardVariant)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 20,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: cardVariant === opt.id ? '1px solid #C8961A' : '1px solid rgba(255,255,255,0.12)',
-                      background: cardVariant === opt.id ? 'rgba(200, 150, 26, 0.18)' : 'rgba(255,255,255,0.03)',
-                      color: cardVariant === opt.id ? '#E9C176' : 'var(--ink, #fff)',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              {/* Inventory Filter & Card Style Variation Controls */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14 }}>
+                {/* Inventory Category Filter Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
+                    {isAr ? 'تصفية العقارات:' : 'Filter Units:'}
+                  </span>
+                  {[
+                    { id: 'all', label: isAr ? 'جميع العقارات' : 'All Listings' },
+                    { id: 'owner', label: isAr ? '🛡️ مباشر من المالك' : '🛡️ Direct Owner' },
+                    { id: 'sale', label: isAr ? 'إعادة بيع' : 'Resale' },
+                    { id: 'rent', label: isAr ? 'إيجار شهري' : 'Rent' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setFeaturedFilter(opt.id as any)}
+                      style={{
+                        padding: '5px 13px',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: featuredFilter === opt.id ? '1px solid #10B981' : '1px solid rgba(255,255,255,0.12)',
+                        background: featuredFilter === opt.id ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255,255,255,0.03)',
+                        color: featuredFilter === opt.id ? '#34D399' : 'var(--ink, #fff)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Card Style Variation Pills */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted, #94a3b8)', marginRight: 4 }}>
+                    {isAr ? 'نمط العرض:' : 'Card Style:'}
+                  </span>
+                  {[
+                    { id: 'showcase', label: isAr ? 'معرض الصور' : 'Showcase' },
+                    { id: 'bento', label: isAr ? 'تحليلات العائد' : 'Financial Bento' },
+                    { id: 'compact', label: isAr ? 'موجز تنفيذي' : 'Compact' },
+                    { id: 'editorial', label: isAr ? 'تصميم هادئ' : 'Editorial' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setCardVariant(opt.id as PropertyCardVariant)}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: cardVariant === opt.id ? '1px solid #C8961A' : '1px solid rgba(255,255,255,0.12)',
+                        background: cardVariant === opt.id ? 'rgba(200, 150, 26, 0.18)' : 'rgba(255,255,255,0.03)',
+                        color: cardVariant === opt.id ? '#E9C176' : 'var(--ink, #fff)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <Link href="/properties" className="sec-link">

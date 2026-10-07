@@ -621,7 +621,7 @@ def main():
     print(f"\nWrote {out_csv} ({len(final)} rows)")
 
     # stash data for report generation
-    with open('/home/z/my-project/scripts/_phase1_data.json', 'w', encoding='utf-8') as f:
+    with open(f'{ROOT}/scripts/_phase1_data.json', 'w', encoding='utf-8') as f:
         json.dump({'final': final, 'survivor_count': len(survivors), 'near_pairs': near_pairs[:500],
                    'seen': {'xlsx': xlsx_stats['seen'], 'tsv1': tsv1_stats['seen'], 'tsv2': tsv2_stats['seen']},
                    'empty': {'xlsx': xlsx_stats['empty_rows']}}, f, ensure_ascii=False, default=str)

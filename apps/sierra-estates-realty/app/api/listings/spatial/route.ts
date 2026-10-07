@@ -95,7 +95,14 @@ export async function GET(request: Request) {
       );
 
       if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
-        rawItems = rpcData;
+        // PUBLISH GATE (activation plan Phase D, defense-in-depth): the
+        // canonical RPC filters publish_status inside SQL (migration 020),
+        // but the function deployed on the live project may predate that
+        // gate — filter again here so unverified units can never reach the
+        // public map through this route either.
+        rawItems = rpcData.filter(
+          (item: any) => String(item.publish_status ?? '') === 'PUBLISHABLE'
+        );
         isLiveRpc = true;
       } else if (rpcError) {
         logger.warn('[SPATIAL_RPC] Supabase RPC call returned an error, falling back:', rpcError.message);

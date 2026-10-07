@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
         action: 'ping',
         status: live ? 'connected' : 'standby',
         port: 3001,
-        liveProjects: live?.projects?.length || 2,
+        liveProjects: live?.projects?.length || 0,
         timestamp: new Date().toISOString(),
       });
     }

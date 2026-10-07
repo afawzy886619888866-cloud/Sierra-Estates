@@ -63,7 +63,7 @@ describe('Admin Portal Extended Suite', () => {
   describe('3. Admin RBAC & Audit Actions', () => {
     it('enforces RBAC role validation (super_admin, sales_agent, analyst)', () => {
       const allowedRoles = ['super_admin', 'sales_agent', 'analyst'];
-      const testUser = { id: 'usr-1', email: 'admin@sierraestates.com', role: 'super_admin' };
+      const testUser = { id: 'usr-1', email: 'admin@sierra-estates.net', role: 'super_admin' };
       
       expect(allowedRoles).toContain(testUser.role);
       const isSuperAdmin = testUser.role === 'super_admin';
