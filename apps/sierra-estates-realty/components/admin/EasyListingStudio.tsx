@@ -155,6 +155,7 @@ export default function EasyListingStudio({
         compound: formData.compound || "",
         propertyType: formData.propertyType || "",
         mode: formData.mode,
+        offerType: formData.mode,
         beds: formData.beds,
         baths: formData.baths,
         area: formData.area,
@@ -479,28 +480,35 @@ export default function EasyListingStudio({
                 />
               </div>
 
-              {/* Mode */}
+              {/* Offer Type Toggle (Sale / Rent) */}
               <div>
                 <label className="text-[11px] font-semibold text-slate-400 block mb-1">
-                  {isAr ? "النوع" : "Offering Mode"}
+                  {isAr ? "نوع العرض (بيع / إيجار)" : "Offer Type (Sale / Rent)"}
                 </label>
-                <select
-                  value={formData.mode}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      mode: e.target.value as "sale" | "rent",
-                    })
-                  }
-                  className="w-full p-2.5 rounded-lg bg-slate-950/80 border border-slate-700 text-white text-xs focus:outline-none focus:border-[#C8961A]"
-                >
-                  <option value="sale">
-                    {isAr ? "بيع (Sale)" : "For Sale"}
-                  </option>
-                  <option value="rent">
-                    {isAr ? "إيجار (Rent)" : "For Rent"}
-                  </option>
-                </select>
+                <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950/90 border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: "sale" })}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      formData.mode === "sale"
+                        ? "bg-[#C8961A] text-slate-950 shadow-md font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {isAr ? "للبيع (Sale)" : "For Sale"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, mode: "rent" })}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      formData.mode === "rent"
+                        ? "bg-[#C8961A] text-slate-950 shadow-md font-extrabold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {isAr ? "للإيجار (Rent)" : "For Rent"}
+                  </button>
+                </div>
               </div>
 
               {/* Beds & Baths */}

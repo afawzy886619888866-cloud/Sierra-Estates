@@ -1,4 +1,9 @@
-import { mapLeadToSpa, mapSpaToLeadPatch } from '@/lib/server/admin-spa-mappers';
+import {
+  mapLeadToSpa,
+  mapSpaToLeadPatch,
+  mapListingToSpa,
+  mapSpaToListingPatch,
+} from '@/lib/server/admin-spa-mappers';
 
 describe('mapLeadToSpa', () => {
   test('detects a Property Finder lead by the canonical hyphenated source value', () => {
@@ -44,5 +49,28 @@ describe('mapSpaToLeadPatch', () => {
   test('passes through a source override', () => {
     const patch = mapSpaToLeadPatch({ source: 'instagram' });
     expect(patch.source).toBe('instagram');
+  });
+});
+
+describe('mapListingToSpa and mapSpaToListingPatch offerType', () => {
+  test('mapSpaToListingPatch threads offerType and dealType', () => {
+    const patchRent = mapSpaToListingPatch({ offerType: 'rent', cmp: 'Mivida', type: 'Apartment' });
+    expect(patchRent.offerType).toBe('rent');
+    expect(patchRent.dealType).toBe('rent');
+
+    const patchSale = mapSpaToListingPatch({ offer: 'sale', cmp: 'Mivida', type: 'Apartment' });
+    expect(patchSale.offerType).toBe('sale');
+    expect(patchSale.dealType).toBe('sale');
+  });
+
+  test('mapListingToSpa returns offerType for rental and sale', () => {
+    const spa1 = mapListingToSpa('id-1', { dealType: 'rent' });
+    expect(spa1.offerType).toBe('rent');
+
+    const spa2 = mapListingToSpa('id-2', { dealType: 'sale' });
+    expect(spa2.offerType).toBe('sale');
+
+    const spa3 = mapListingToSpa('id-3', {});
+    expect(spa3.offerType).toBe('sale');
   });
 });

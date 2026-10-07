@@ -6,7 +6,7 @@
   "types": "src/index.ts",
   "private": true,
   "dependencies": {
-"@google/genai": "^2.24.0",
+"@google/genai": "^2.27.0",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",

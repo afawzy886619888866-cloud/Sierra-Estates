@@ -61,6 +61,7 @@ packages:
   - packages/db
   - packages/deepseek-harness
   - packages/exchange
+  - packages/gravity-memory
   - packages/memory-engine
   - packages/obsidian
   - packages/property-finder-api

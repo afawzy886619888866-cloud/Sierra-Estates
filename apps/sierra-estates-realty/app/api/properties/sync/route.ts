@@ -6,6 +6,7 @@ import {
   propertyFinderService,
   type PropertyFinderListing,
 } from '@/lib/propertyFinder-service';
+import { fingerprint } from '@/lib/services/inventory/dedupe';
 
 /**
  * Property Finder city sync → public.listings.
@@ -76,6 +77,19 @@ function getRentPeriods(property: PropertyFinderListing) {
   return [period.charAt(0).toUpperCase() + period.slice(1)];
 }
 
+function extractArea(property: PropertyFinderListing): number | null {
+  if (property.area !== undefined && property.area !== null) {
+    return toNumber(property.area);
+  }
+  if (property.size !== undefined && property.size !== null) {
+    if (typeof property.size === 'object' && property.size !== null && 'value' in property.size) {
+      return toNumber((property.size as { value?: unknown }).value);
+    }
+    return toNumber(property.size);
+  }
+  return null;
+}
+
 function mapProperty(property: PropertyFinderListing) {
   const latitude = property.location?.latitude ?? property.location?.coordinates?.lat ?? null;
   const longitude = property.location?.longitude ?? property.location?.coordinates?.lng ?? null;
@@ -89,17 +103,37 @@ function mapProperty(property: PropertyFinderListing) {
         : 'Unavailable'
       : property.status || 'Available';
 
+  const area = extractArea(property);
+  const bedrooms = toNumber(property.bedrooms);
+  const propertyType =
+    typeof property.type === 'string' ? property.type : property.type?.name || 'Property';
+  const offerType: 'sale' | 'rent' = property.offering_type === 'rent' ? 'rent' : 'sale';
+
+  const dupeCheckHash =
+    area !== null && bedrooms !== null && priceValue !== null && location && propertyType
+      ? fingerprint({
+          compound: location,
+          propertyType,
+          offerType,
+          bedrooms,
+          area,
+          price: priceValue,
+        })
+      : undefined;
+
   return {
     code,
     title: (typeof property.title === 'string' && property.title.trim()) || `Property ${code}`,
     agentName: property.agent?.name || 'Unknown',
     brokerPhone: property.agent?.phone || '',
-    bedrooms: toNumber(property.bedrooms),
+    bedrooms,
+    areaSqm: area ?? undefined,
+    dealType: offerType,
+    offerType,
     compound: location,
     locationArea: location,
     price: priceValue ?? 0,
-    propertyType:
-      typeof property.type === 'string' ? property.type : property.type?.name || 'Property',
+    propertyType,
     latitude,
     longitude,
     images: getImages(property),
@@ -111,21 +145,16 @@ function mapProperty(property: PropertyFinderListing) {
       availability,
       location,
       unitPrice: priceValue,
+      size: property.size ?? null,
+      area: area ?? null,
       furnitureStatus: property.furnish?.name || null,
       owner: property.postedBy === 'agent' ? 'Agent' : 'Owner',
       rentPeriodType: property.offering_type === 'rent' ? getRentPeriods(property) : [],
     },
-    // Inventory Domain Service (additive, non-breaking): `syncSource` and
-    // `lastSyncAt` already exist on the canonical Unit schema (lib/models/schema.ts)
-    // but were never populated by this route. Filled in here without changing any
-    // existing field name or value this route already writes.
-    //
-    // `dupeCheckHash` is intentionally NOT set here: PropertyFinderListing has no
-    // `area`/size field anywhere in this route's source type, and the dedupe
-    // fingerprint requires area to be meaningful. Faking a value would produce a
-    // wrong/lossy dedupe key, which is worse than leaving it unset. Tracked in
-    // FUTURE_PLAN/04 as a follow-up once the Property Finder payload is confirmed
-    // to expose area (or a size field it should be mapped from).
+    // Inventory Domain Service (additive, non-breaking): `syncSource`, `lastSyncAt`,
+    // and `dupeCheckHash` are now populated. Property Finder payloads provide `size`
+    // (and `area`), enabling the business fingerprint when area, bedrooms, and price are present.
+    ...(dupeCheckHash ? { dupeCheckHash } : {}),
     syncSource: 'property-finder' as const,
     lastSyncAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),

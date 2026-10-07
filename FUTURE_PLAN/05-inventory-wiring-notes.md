@@ -8,24 +8,21 @@ compiler options produces zero new errors on either file.
 
 | Route | Fields added | Notes |
 | --- | --- | --- |
-| `POST /api/admin/listings` | `dupeCheckHash` (real fingerprint), `syncSource: 'manual'` | fingerprint only computed when bedrooms+area+price are all present |
-| `POST /api/properties/sync` | `syncSource: 'property-finder'`, `lastSyncAt` | `dupeCheckHash` deliberately NOT set — see gap below |
+| `POST /api/admin/listings` | `dupeCheckHash` (real fingerprint), `syncSource: 'manual'`, `offerType` / `dealType` | fingerprint computed when bedrooms+area+price are present; respects explicit offerType toggle |
+| `POST /api/properties/sync` | `syncSource: 'property-finder'`, `lastSyncAt`, `areaSqm`, `dealType`, `offerType`, `dupeCheckHash` | fingerprint computed when bedrooms+area+price are present from mapped Property Finder `size`/`area` |
 
-## Known gaps (tracked, not silently patched)
+## Known gaps (status update — 2026-10-07)
 
-1. **Admin SPA has no offerType field.** `dupeCheckHash` on the admin route
-   hardcodes `offerType: 'sale'`. Nothing reads this field yet, so it's zero
-   live risk — but it will mislabel rentals if/when a consumer starts reading
-   it. Fix: add an offer-type toggle to the admin listing form, thread it
-   through `mapSpaToListingPatch`.
+1. **Admin SPA offerType toggle [RESOLVED — 2026-10-07]:**
+   - Added segmented Offer Type toggle (`For Sale` / `For Rent`) to the admin listing form (`components/admin/EasyListingStudio.tsx`), submitting both `mode` and `offerType`.
+   - Threaded `offerType` through `mapSpaToListingPatch` and `mapListingToSpa` in `lib/server/admin-spa-mappers.ts`.
+   - Removed the hardcoded `offerType: 'sale'` in `POST /api/admin/listings`: `offerType` now dynamically resolves `(patch.offerType) ?? parsed.data.offerType ?? parsed.data.offer ?? 'sale'`, properly powering both storage and the `fingerprint()` dedupe computation for rentals and sales alike.
 
-2. **PropertyFinderListing has no `area`/size field anywhere in
-   `lib/propertyFinder-service.ts`.** The dedupe fingerprint requires area to
-   be meaningful; faking it would produce a wrong dedupe key, worse than no
-   key. `/api/properties/sync` was left without `dupeCheckHash` for this
-   reason. Fix: confirm whether the real Property Finder API response has a
-   size/area field that just isn't mapped yet, or whether it's genuinely
-   absent from their payload.
+2. **PropertyFinderListing size/area field investigation [RESOLVED — 2026-10-07]:**
+   - **Investigation Result:** Confirmed that the real Property Finder API (Atlas v1/v2) returns `size` (either numeric/string or `{ value, unit }`) and `area` (as established in `scripts/sync-pf-real-data.mjs` and `lib/services/sync-engine.ts`). The field was present in the API payload but omitted from `PropertyFinderListing` typing.
+   - **Resolution:** Added `size?: number | string | { value?: number | string; unit?: string }` and `area?: number | string` to `PropertyFinderListing` in `lib/propertyFinder-service.ts`.
+   - Mapped `extractArea(property)` to `areaSqm` and enabled `dupeCheckHash` computation via `fingerprint()` in `app/api/properties/sync/route.ts` when compound/location, propertyType, offerType, bedrooms, area, and price are present.
+   - Added `'dupeCheckHash'` to `LISTING_COLUMNS` in `lib/server/listing-columns.ts` to allow persistence into `public.listings.dupe_check_hash`.
 
 ## Deliberately not touched this pass
 

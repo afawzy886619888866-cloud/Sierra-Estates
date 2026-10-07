@@ -505,6 +505,13 @@
     "openpyxl",
     "pexels",
     "pixabay",
-    "unphotographed"
+    "unphotographed",
+    "apikey",
+    "ejar",
+    "gviz",
+    "ledgered",
+    "pgrst",
+    "truthed",
+    "upserting"
   ]
 }

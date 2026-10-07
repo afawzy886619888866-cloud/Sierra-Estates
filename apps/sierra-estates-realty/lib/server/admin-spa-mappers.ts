@@ -106,6 +106,7 @@ export function mapListingToSpa(id: string, data: Record<string, any>) {
     beds: data.bedrooms ?? 0,
     area: data.area ?? 0,
     price: data.price ?? 0,
+    offerType: data.offerType || data.dealType || data.mode || 'sale',
     ai: data.intelligence?.valuationScore ?? data.intelligence?.urgencyScore ?? 0,
     status: STATUS_TO_LABEL[data.status as PropertyStatus] || 'Active',
     img: data.images?.length ?? 0,
@@ -128,6 +129,12 @@ export function mapSpaToListingPatch(patch: Record<string, any>) {
   if (patch.beds !== undefined) out.bedrooms = patch.beds;
   if (patch.area !== undefined) out.area = patch.area;
   if (patch.price !== undefined) out.price = patch.price;
+  if (patch.offerType !== undefined || patch.offer !== undefined || patch.dealType !== undefined || patch.mode !== undefined) {
+    const raw = patch.offerType ?? patch.offer ?? patch.dealType ?? patch.mode;
+    const normalized: 'sale' | 'rent' = String(raw).toLowerCase() === 'rent' ? 'rent' : 'sale';
+    out.offerType = normalized;
+    out.dealType = normalized;
+  }
   if (patch.status !== undefined) {
     const mapped = LABEL_TO_STATUS[patch.status] || patch.status;
     // Only forward statuses the deployed table can actually store.

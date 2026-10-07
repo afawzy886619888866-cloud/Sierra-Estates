@@ -114,11 +114,15 @@ export async function POST(req: NextRequest) {
     //    (the Egypt 2023 listing-transparency queue) unless an explicit legacy
     //    status is provided.
     const offerType: 'sale' | 'rent' =
-      parsed.data.offerType ?? parsed.data.offer ?? 'sale';
+      (patch.offerType as 'sale' | 'rent') ??
+      parsed.data.offerType ??
+      parsed.data.offer ??
+      'sale';
 
     const inventoryFields: RecordData = {
       syncSource: 'manual',
       dealType: offerType,
+      offerType,
     };
     if (
       typeof patch.bedrooms === 'number' &&

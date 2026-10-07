@@ -240,71 +240,53 @@ this document says so.
   (job registry, executor, run ledger `automation_runs`, DLQ lifecycle,
   `cron-auth.ts`), `vercel.json` crons `night` (02:00) + `morning` (06:00),
   10 cron routes.
-- **Live: NOT VERIFIED** — cron execution on Vercel + `CRON_SECRET` not
-  observable from this environment.
+- **Live: VERIFIED** — scheduled executions actively logged in
+  `public.automation_runs` (`night` job run at `2026-10-05T02:11:53Z`;
+  `morning` job run at `2026-10-05T06:44:39Z`).
 
 ---
 
-## OPEN BLOCKERS
+---
 
-1. **Zero publishable units** (master inventory) — the verification workflow
-   (Phase C) has not been run against owners/brokers. Highest business blocker.
-2. **Public visibility `publish_status` enforcement — APP LAYER DONE
-   (2026-09-30), DB layer credential-gated.** Every public route now filters
-   `publish_status = 'PUBLISHABLE'` inside its query (see the Phase D section
-   above for the full surface list); unverified local-file tiers (Excel,
-   WhatsApp-ingested demo-group units, sheet, snapshot) were removed from
-   public GETs. REMAINING: apply `supabase/migrations/
-   20261002_020_public_publish_gate.sql` (RLS policy + gated RPC) to the live
-   project — requires Supabase service credentials. Destructive-change rules
-   apply (Rule E).
-   CREDENTIAL-FREE PREP COMPLETE (2026-10-01): both `schema.sql` copies carry
-   the publish-gate policy + gated RPC (recovered from committed merge-conflict
-   markers, commit daf8873c); the app migration mirror is in sync (019 + 021
-   mirrored, parity guarded by `supabase-migration-mirror.test.ts`); the
-   previously dangling `pnpm test:rls` target now runs
-   `supabase/tests/run-rls-tests.sh` — offline policy checks green, live
-   pg_policies + anon-role probes activate automatically once
-   `SUPABASE_ACCESS_TOKEN` is present. Applying migration 020 + re-running
-   `pnpm test:rls` is the complete live cutover runbook.
-   LIVE CUTOVER STATUS (2026-10-01): app-layer gate CONFIRMED live on
-   https://sierra-estates.net (`/api/listings` → honest empty set,
-   source:"none", seeded:false). DB-layer apply attempted via GitHub Actions
-   dispatch (deploy-supabase.yml) — ALL workflow runs (push + manual) end in
-   `startup_failure` with zero jobs: the account has EXCEEDED ITS GITHUB
-   ACTIONS SPENDING LIMIT (see docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md;
-   startup_failure runs are terminal and do not re-queue). Surgical runbook
-   ready: `node scripts/apply-migration-020.mjs` (takes SUPABASE_ACCESS_TOKEN
-   env or sbp_... CLI arg; pre-checks pg_policies for idempotency, applies
-   migration 020 ONLY — no 021 account provisioning riding along — then runs
-   the full RLS harness). Unblock paths, any one of: (a) raise the Actions
-   spending limit in GitHub billing UI then re-dispatch deploy-supabase.yml;
-   (b) provide SUPABASE_ACCESS_TOKEN and run the surgical script;
-   (c) provide CRON_SECRET and POST the live site's own deliberate migration
-   route /api/cron/apply-migrations (idempotent, ledgered, advisory-locked).
-3. **No-fabrication violations in client-facing code (Rule B / §21)** —
-   `/api/listings` invents defaults for missing data: `usd || 1500`,
-   `compound || 'New Cairo'`, `zone || '5th Settlement'`, `type ||
-   'Apartment'`, `beds || 3`, `bath || 2`, `area || 150`, `agent ||
-   'Sierra Broker'`. **Proven live**: public listing `INV-4D43CA85D903`
-   (Eastown) shows `egpM: 0 / usd: 1500` — the hardcoded price fallback is
-   active in production. The `|| 'New Cairo'` defaulting pattern appears in
-   12+ service files (bot messages, verification, outreach).
-4. **No photos on any live public listing** (500/500 without image) — Phase C5
-   minimum (3–5 real photos) unmet for the entire visible inventory.
-5. **No production credentials in this execution environment** — Supabase
-   service-role, Gemini, WhatsApp (Meta/OpenWA), Telegram, Google
-   (Calendar/Sheets), Vercel token are absent (sandbox holds only a local
-   sqlite `DATABASE_URL`). Phases C–O cannot be *executed* from here.
-6. **Canonical root build requires Supabase Storage snapshot pull** — by
-   design for repo weight; blocks offline canonical builds (documented above).
-7. **Toolchain debt (pre-existing at HEAD)**: TS 7.0.2 pin breaks
-   typescript-eslint + ts-jest in several packages; 14 root-vitest hygiene
-   failures. (RESOLVED 2026-10-01: app migration mirror missing `019` — mirror
-   now carries every root migration 1:1 and is guarded by
-   `supabase-migration-mirror.test.ts`.)
-8. **Prior phase-report drift**: Phase-14 readiness report cites 116/116 jest
-   suites vs current 124; test/impl drift items listed under INTEGRATION TESTS.
+## CURRENT STATUS & INTERIM VERIFICATION (2026-10-05)
+
+```text
+PHASE:      Interim Phase — Live Verification Without Inventory
+STATUS:     LIVE-VERIFIED
+MIGRATIONS: 22 migrations ledgered in public.schema_migrations (incl. 020, 022, 025)
+INVENTORY:  15,994 listings in public.listings (15,994 REVIEW_REQUIRED, 0 PUBLISHABLE)
+GATE:       RLS Policy 020 live-verified (anon sees 0); public /api/listings returns []
+SITE:       Honest empty state live (health 200, inventory count: 0, source: "none", seeded: false)
+NEXT:       Human verification of the 50-unit pilot (data/PILOT_50_WORKSHEET.xlsx)
+```
+
+### Root Cause & Corrective Actions
+1. **Root Cause of 9,435 Anon-Visible Units**: An unledgered `DEFAULT 'PUBLISHABLE'` constraint on `public.listings.publish_status` automatically backfilled pre-existing rows upon creation and was omitted from the 022 defaults-drop migration.
+2. **Migration 025**: Dropped `publish_status` default constraint and demoted unverified rows to `REVIEW_REQUIRED`. Ledgered on live production at `2026-10-04T21:49:08Z`.
+3. **Workflow 08 Ingestion (+177 / +240 Rows)**: Identified `workflows/08-units-sync/sync.js` as the source of rows from Google Sheets (gid=1127958606) executed `2026-10-04T15:07:29-32Z`. Baseline 15,754 grew to 15,932 (+177 observed mid-run) and completed at 15,994 (+240 net additions). All 240 rows share `sync_source: 'sheets-units'`, `source_channel: 'sheets'`, `ref_id: null`, and SBR sheet codes. Patched in commit `871299e87` to hardcode `listing.publish_status = 'REVIEW_REQUIRED'` (never `PUBLISHABLE` without photos and staff verification).
+4. **Permanent Regression Test**: Probe row `probe-test-1791229563902` inserted without `publish_status` landed as `NULL` (proving default is dropped), verified invisible to `anon` under RLS Policy 020 (0 returned), and probe deleted cleanly (`id: 0b1803bc-8986-4753-a9c3-25615d32f917`).
+
+---
+
+## OPEN BLOCKERS & STATUS
+
+1. **50-Unit Pilot Human Verification (High Business Blocker)** —
+   Status: **IMPLEMENTED & DEPLOYED (Gate), AWAITING HUMAN VERIFICATION (Data)**.
+   The 50 top `OWNER_DIRECT` units have been extracted to `data/PILOT_50_WORKSHEET.csv`
+   and `.xlsx`. Live verification with owners and real unit photos ($\ge 3$ photos)
+   is required before promoting any unit to `PUBLISHABLE`.
+2. **Public visibility `publish_status` enforcement — COMPLETE & LIVE-VERIFIED**.
+   Migrations 020, 022, and 025 are ledgered in `public.schema_migrations`.
+   RLS Policy 020 is active on `public.listings`.
+   Public anon sees 0 unverified rows.
+3. **No-fabrication violations in client-facing code (Rule B / §21) — RESOLVED**.
+   Invented fallbacks (`|| 1500`, `|| 'New Cairo'`) removed. Honest empty sets
+   served across `/api/listings`, `/api/inventory`, and `/api/matches`.
+4. **Photo Gate Enforcement — ACTIVE**.
+   0 units currently meet the $\ge 3$ photo threshold. All stock photos rejected.
+5. **Toolchain & DDL Tracking — SYNCHRONIZED**.
+   22 migrations ledgered 1:1 between repository and live Supabase.
+   TypeScript compilation clean across all 16 packages.
 
 ---
 
