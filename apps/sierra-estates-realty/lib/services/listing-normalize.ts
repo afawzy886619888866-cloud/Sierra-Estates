@@ -442,8 +442,11 @@ export function extractEcoSmartTags(raw: unknown): string[] {
     text.includes('greywater') ||
     text.includes('smart irrigation') ||
     text.includes('تدوير المياه') ||
+    text.includes('تدوير مياه') ||
     text.includes('ري ذكي') ||
-    text.includes('معالجة المياه')
+    text.includes('ري معالج') ||
+    text.includes('معالجة المياه') ||
+    text.includes('معالجة مياه')
   ) {
     tags.push('water_recycling');
   }
@@ -462,3 +465,6 @@ export function extractEcoSmartTags(raw: unknown): string[] {
 
   return Array.from(new Set(tags));
 }
+
+/** Alias for mapRowToUnit for backwards compatibility and normalization scripts. */
+export const normalizeRow = mapRowToUnit;
