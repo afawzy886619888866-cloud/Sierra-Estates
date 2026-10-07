@@ -61,11 +61,11 @@ async function fetchRealData() {
       const rawCode = c[12] ? String(c[12]).trim() : `SE-REAL-${String(idx + 1).padStart(3, '0')}`;
       const ownerName = c[3] ? String(c[3]).trim() : 'Owner';
       const mobile = c[4] ? String(c[4]).trim() : '';
-      const statusRaw = c[5] ? String(c[5]).trim() : 'Available';
-      const beds = typeof c[6] === 'number' ? c[6] : parseInt(String(c[6] || '3'), 10) || 3;
-      const compound = c[7] ? String(c[7]).trim() : 'New Cairo';
+      const statusRaw = c[5] ? String(c[5]).trim() : '';
+      const beds = typeof c[6] === 'number' ? c[6] : parseInt(String(c[6] || ''), 10) || 0;
+      const compound = c[7] ? String(c[7]).trim() : '';
       const price = typeof c[8] === 'number' ? c[8] : parseFloat(String(c[8] || '0')) || 0;
-      const finishing = c[9] ? String(c[9]).trim() : 'Fully Furnished';
+      const finishing = c[9] ? String(c[9]).trim() : '';
       const modeRaw = c[10] ? String(c[10]).toLowerCase().trim() : 'sale';
       const mode = modeRaw.includes('rent') || modeRaw.includes('ايجار') ? 'rent' : 'sale';
       const propType = c[11] ? String(c[11]).trim() : 'Apartment';
@@ -127,25 +127,25 @@ async function fetchRealData() {
             ownerName: wu.sender || 'WhatsApp Owner',
             mobile: wu.sender || '',
             status: 'Available',
-            cmp: wu.compound || 'New Cairo',
-            compound: wu.compound || 'New Cairo',
+            cmp: wu.compound || '',
+            compound: wu.compound || '',
             zone: (wu.compound || '').toLowerCase().includes('madinaty') ? 'Madinaty' : '5th Settlement',
-            type: wu.type || 'Apartment',
-            beds: wu.bedrooms || 3,
-            baths: wu.bathrooms || 2,
-            area: wu.area_sqm || 150,
+            type: wu.type || '',
+            beds: wu.bedrooms || 0,
+            baths: wu.bathrooms || 0,
+            area: wu.area_sqm || 0,
             gardenArea: wu.garden_area_sqm || 0,
-            price: wu.price || 50000,
+            price: wu.price || 0,
             egpM: Number(egpM.toFixed(2)),
             usd,
             mode: (wu.operation || 'rent').toLowerCase().includes('sale') ? 'sale' : 'rent',
-            finishing: wu.furnishing || 'Furnished',
+            finishing: wu.furnishing || '',
             ownerType: 'Direct Owner',
-            tag: 'WhatsApp Verified',
-            aiScore: 9.2,
-            agent: `${wu.sender || 'WhatsApp Direct'} (WhatsApp Verified)`,
+            tag: 'WhatsApp Import',
+            aiScore: 0,
+            agent: `${wu.sender || 'WhatsApp Direct'}`,
             ago: 'WhatsApp Import',
-            img: getCompoundImage(wu.compound || 'New Cairo'),
+            img: getCompoundImage(wu.compound || ''),
             comment: wu.description || '',
             updatedAt: new Date().toISOString(),
           });

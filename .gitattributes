@@ -4,6 +4,10 @@
 # Shell scripts must always be LF (bash requires it)
 *.sh text eol=lf
 
+# SQL migrations must always be LF — the schema_migrations ledger checksums are
+# EOL-sensitive, and mixed-EOL checkouts (Vercel builders) break repo↔ledger parity
+*.sql text eol=lf
+
 # Python files - LF
 *.py text eol=lf
 

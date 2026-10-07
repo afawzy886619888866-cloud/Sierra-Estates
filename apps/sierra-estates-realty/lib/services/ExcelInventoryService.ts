@@ -5,6 +5,7 @@ import { logger } from '../logger';
 import { resolveLocation } from '../inventory/gazetteer';
 import { getSupabaseAdmin } from '@sierra-estates/db';
 import { egpToUsd } from '../fx';
+import { normalizePriceToEGP } from '../eccMemoryEngine';
 import type { InventoryUnit } from '../inventory/types';
 
 export const EXCEL_COLUMNS = [
@@ -151,12 +152,20 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const rawCode = String(row['Sierra Code'] || row['Record ID'] || `AT-${i + 1}`).trim();
-      const compoundName = String(row['Compound Name'] || row.Compound || row['Location / Area'] || 'New Cairo').trim();
+      // §21 no-fabrication: a row without location imports with an empty
+      // compound (coarse approx coordinates are gazetteer-flagged, never a
+      // invented compound name).
+      const compoundName = String(row['Compound Name'] || row.Compound || row['Location / Area'] || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
       const op = String(row['Operation (Sale / Rent)'] || row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'],
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const photoStatus = String(row['Has Photo? (YES / NO)'] || '').trim().toUpperCase();
       const primaryPhotoUrl = String(row['Primary Photo URL (Airtable Attachment)'] || '').trim();
@@ -165,18 +174,22 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
 
+      // §21 no-fabrication: the party is only classified when the record
+      // actually carries a Source Classification — an absent column yields
+      // 'Unknown', never a silent 'Broker'.
+      const sourceClassification = String(row['Source Classification'] || '').trim();
       const unit: InventoryUnit = {
         id: `AT-${rawCode}`,
         code: rawCode,
-        compound: compoundName || resolved.label,
-        location: compoundName || resolved.label,
+        compound: compoundName,
+        location: compoundName,
         rawLocation: row['Location / Area'] || compoundName,
         zone: resolved.zone,
         lat,
         lng,
         approxLocation: resolved.approx,
-        propertyType: row['Property Type'] || 'Apartment',
-        type: row['Property Type'] || 'Apartment',
+        propertyType: row['Property Type'] || '',
+        type: row['Property Type'] || '',
         mode,
         status: 'available',
         statusLabel: 'Available',
@@ -194,8 +207,10 @@ function readAirtableListingsInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Notes & Broker Description'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Airtable Import',
-        tag: row['Source Classification'] || 'Airtable Master',
-        party: String(row['Source Classification'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Classification'] || 'Airtable Import',
+        party: sourceClassification
+          ? (sourceClassification.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -233,12 +248,17 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
       const row = rows[i];
       // Note BOM on Sierra Code
       const rawCode = String(row['\ufeffSierra Code'] || row['Sierra Code'] || row.Code || `MASTER-${i + 1}`).trim();
-      const compoundName = String(row.Compound || row.Location || 'New Cairo').trim();
+      const compoundName = String(row.Compound || row.Location || '').trim();
       const resolved = resolveLocation(compoundName);
 
-      const price = Number(row['Price (EGP)']) || 0;
-      const op = String(row.Operation || '').toLowerCase();
-      const mode: 'rent' | 'sale' = op.includes('rent') || (price > 0 && price < 1_000_000) ? 'rent' : 'sale';
+      const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+      const norm = normalizePriceToEGP(row['Price (EGP)'], {
+        propertyType: row['Property Type'] || row.PropertyType,
+        mode: op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+        compound: compoundName,
+      });
+      const price = norm.priceEGP;
+      const mode = norm.mode;
 
       const primaryImgUrl = String(row['Primary Image URL'] || '').trim();
       const hasRealPhoto = isRealPhoto(primaryImgUrl);
@@ -246,18 +266,23 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
       const lat = Number(row.Latitude) || resolved.lat;
       const lng = Number(row.Longitude) || resolved.lng;
 
+      // §21 no-fabrication: the party is only classified when the row
+      // carries a Source Type — an absent column yields 'Unknown', never a
+      // silent 'Broker'.
+      const sourceTypeCol = String(row['Source Type (Owner / Broker)'] || '').trim();
+
       const unit: InventoryUnit = {
         id: `MASTER-${rawCode}`,
         code: rawCode,
-        compound: compoundName || resolved.label,
-        location: compoundName || resolved.label,
+        compound: compoundName,
+        location: compoundName,
         rawLocation: row.Location || compoundName,
         zone: resolved.zone,
         lat,
         lng,
         approxLocation: resolved.approx,
-        propertyType: row['Property Type'] || 'Apartment',
-        type: row['Property Type'] || 'Apartment',
+        propertyType: row['Property Type'] || '',
+        type: row['Property Type'] || '',
         mode,
         status: 'available',
         statusLabel: 'Available',
@@ -275,8 +300,10 @@ function readMasterExcelWorkbookInternal(stripPII: boolean): InventoryUnit[] {
         description: row['Listing Description & Notes'] || undefined,
         segment: mode === 'rent' ? 'broker_rent' : 'broker_buy',
         segmentLabel: 'Master Excel',
-        tag: row['Source Type (Owner / Broker)'] || 'Master Sheet',
-        party: String(row['Source Type (Owner / Broker)'] || '').includes('Owner') ? 'Owner' : 'Broker',
+        tag: row['Source Type (Owner / Broker)'] || 'Master Excel',
+        party: sourceTypeCol
+          ? (sourceTypeCol.includes('Owner') ? 'Owner' : 'Broker')
+          : 'Unknown',
       };
 
       if (!stripPII) {
@@ -325,12 +352,17 @@ function readInventoryWithPhotosInternal(options?: {
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const compoundName = String(row.Compound || row.Location || 'New Cairo').trim();
+        const compoundName = String(row.Compound || row.Location || '').trim();
         const resolved = resolveLocation(compoundName);
 
-        const price = Number(row['Price (EGP)']) || 0;
-        const op = String(row.Operation || '').toLowerCase();
-        const mode: 'rent' | 'sale' = isRentSheet || op === 'rent' ? 'rent' : 'sale';
+        const op = String(row.Operation || row['Operation (Sale / Rent)'] || '').toLowerCase();
+        const norm = normalizePriceToEGP(row['Price (EGP)'] || row.Price || row['Unit Price'], {
+          propertyType: row['Property Type'] || row.PropertyType || row['Property Tybe'],
+          mode: isRentSheet ? 'rent' : op.includes('rent') ? 'rent' : op.includes('sale') ? 'sale' : undefined,
+          compound: compoundName,
+        });
+        const price = norm.priceEGP;
+        const mode = norm.mode;
 
         // Extract primary photo and photo gallery
         const rawPhotos = String(row['Photo URLs'] || '').trim();
@@ -349,18 +381,24 @@ function readInventoryWithPhotosInternal(options?: {
         const recordId = String(row.RecordID || row.UnitCode || `EXCEL-${segment}-${i + 1}`).trim();
         const unitCode = row.UnitCode ? String(row.UnitCode).trim() : null;
 
+        // §21 no-fabrication: "Verified" is only claimed when the row's own
+        // Source field says so; otherwise the tag reflects the sheet honestly
+        // and an unclassifiable sheet yields party 'Unknown'.
+        const sheetImpliesOwner = sheetName.includes('Owner');
+        const sheetImpliesBroker = /broker/i.test(sheetName);
+
         const unit: InventoryUnit = {
           id: recordId,
           code: unitCode || recordId,
-          compound: compoundName || resolved.label,
-          location: compoundName || resolved.label,
+          compound: compoundName,
+          location: compoundName,
           rawLocation: row.Location || compoundName,
           zone: row.Zone || resolved.zone,
           lat: resolved.lat,
           lng: resolved.lng,
           approxLocation: resolved.approx,
-          propertyType: row.PropertyType || 'Apartment',
-          type: row.PropertyType || 'Apartment',
+          propertyType: row.PropertyType || '',
+          type: row.PropertyType || '',
           mode,
           status: 'available',
           statusLabel: 'Available',
@@ -378,8 +416,8 @@ function readInventoryWithPhotosInternal(options?: {
           description: row.Description || undefined,
           segment,
           segmentLabel: sheetName,
-          tag: row.Source || (sheetName.includes('Owner') ? 'Verified Owner' : 'Verified Broker'),
-          party: sheetName.includes('Owner') ? 'Owner' : 'Broker',
+          tag: row.Source || (sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : sheetName),
+          party: sheetImpliesOwner ? 'Owner' : sheetImpliesBroker ? 'Broker' : 'Unknown',
         };
 
         if (!stripPII) {
@@ -498,7 +536,7 @@ export async function appendToExcelInventory(
     const recordId = input.recordId || `${prefix}-${Date.now().toString(36).toUpperCase()}`;
     const unitCode = input.code || recordId;
 
-    const resolved = resolveLocation(input.compound || input.location || 'New Cairo');
+    const resolved = resolveLocation(input.compound || input.location || '');
 
     const formattedPrice =
       input.priceFormatted || formatPriceLabel(input.price, isRent ? 'rent' : 'sale');
@@ -510,10 +548,10 @@ export async function appendToExcelInventory(
     const newRowRecord: Record<string, any> = {
       RecordID: recordId,
       UnitCode: unitCode,
-      Compound: input.compound || resolved.label,
-      Location: input.location || input.compound || resolved.label,
+      Compound: input.compound || '',
+      Location: input.location || input.compound || '',
       Zone: input.zone || resolved.zone,
-      PropertyType: input.propertyType || 'Apartment',
+      PropertyType: input.propertyType || '',
       Operation: isRent ? 'Rent' : 'Sale',
       'Price (EGP)': input.price,
       'Price Formatted': formattedPrice,
@@ -558,9 +596,9 @@ export async function appendToExcelInventory(
           id: recordId,
           code: unitCode,
           ref_id: recordId,
-          compound: input.compound || resolved.label,
-          location_area: input.location || resolved.label,
-          property_type: input.propertyType || 'Apartment',
+          compound: input.compound || '',
+          location_area: input.location || '',
+          property_type: input.propertyType || '',
           deal_type: isRent ? 'rent' : 'sale',
           price: input.price,
           price_currency: 'EGP',
@@ -568,6 +606,7 @@ export async function appendToExcelInventory(
           bathrooms: input.bathrooms ? Number(input.bathrooms) : null,
           area_sqm: input.areaSqm ? Number(input.areaSqm) : null,
           status: 'active',
+          publish_status: 'REVIEW_REQUIRED',
           description: input.description || null,
           img: primaryPhoto,
           photos: photoUrlsStr ? photoUrlsStr.split(/[\n,;]+/).map((s) => s.trim()) : [],

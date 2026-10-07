@@ -11,6 +11,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
 import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail } from '@/lib/auth';
+import { isPartnerRole } from '@/lib/partner-access';
+import { normalizeScope, scopeFromProfile, type PartnerScope } from '@/lib/server/partner-scope';
 
 const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 
@@ -41,6 +43,11 @@ export interface AuthResult {
   uid?: string;
   email?: string;
   role?: string;
+  /**
+   * Partner portfolio scope — present ONLY on session-cookie sessions minted for
+   * role 'partner'. See lib/server/partner-scope.ts.
+   */
+  scope?: PartnerScope;
   /**
    * How the caller proved who they are.
    *
@@ -114,6 +121,7 @@ export async function verifyRequest(req: NextRequest): Promise<AuthResult> {
           uid: sess.uid,
           email: sess.email,
           role: sess.role,
+          scope: sess.role === 'partner' ? normalizeScope(sess.scope) : undefined,
           method: 'session-cookie',
         };
       }
@@ -156,6 +164,12 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   // Session cookie callers already carry a verified role minted by /api/auth
   if (result.method === 'session-cookie') {
+    // A partner session is a partner — even when the email lands on an owned
+    // domain (isAdminEmail). The explicit role always wins over the email
+    // fallback, or a partner1@sierra-estates.net account would escalate to admin.
+    if (isPartnerRole(result.role)) {
+      return { authenticated: false, method: 'none' };
+    }
     if (isAdminConsoleRole(result.role)) {
       return result;
     }
@@ -187,4 +201,113 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
     email: result.email,
     method: result.method,
   };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * PARTNER ACCESS — portal-level guard.
+ *
+ * Admins (admin/manager/superadmin) get the FULL portal. Partners (the
+ * merged-in property accounts) get access:'partner' + their portfolio scope;
+ * the scoped routes (inventory-os / listings / leads reads, own-lead PATCH,
+ * own-unit photo upload) must filter every row through that scope. Anything
+ * not explicitly allowed to a partner stays behind verifyAdminRequest.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+export type PortalAccess =
+  | { authenticated: false; method: 'none' }
+  | {
+      authenticated: true;
+      access: 'admin';
+      uid?: string;
+      email?: string;
+      role: string;
+      method: 'supabase' | 'session-cookie' | 'secret-key';
+      scope: null;
+    }
+  | {
+      authenticated: true;
+      access: 'partner';
+      uid: string;
+      email: string;
+      role: 'partner';
+      method: 'supabase' | 'session-cookie';
+      scope: PartnerScope;
+    };
+
+/**
+ * Verifies the caller for admin-portal routes that serve BOTH staff and
+ * partner accounts. Partners never get access:'admin' — an empty/mis-configured
+ * scope still authenticates (they can sign in) but every scoped read filters
+ * to zero rows (fail closed on data, not on login).
+ */
+export async function verifyPortalRequest(req: NextRequest): Promise<PortalAccess> {
+  const result = await verifyRequest(req);
+  if (!result.authenticated) return { authenticated: false, method: 'none' };
+
+  // Session cookie: role + scope were minted at sign-in by /api/auth.
+  if (result.method === 'session-cookie') {
+    // Partner role first: an owned-domain email (isAdminEmail) must never
+    // upgrade a partner session to full admin access.
+    if (isPartnerRole(result.role)) {
+      return {
+        authenticated: true,
+        access: 'partner',
+        uid: result.uid ?? `partner-${result.email ?? 'unknown'}`,
+        email: result.email ?? '',
+        role: 'partner',
+        method: 'session-cookie',
+        scope: normalizeScope(result.scope),
+      };
+    }
+    if (isAdminConsoleRole(result.role) || (result.email && isAdminEmail(result.email))) {
+      return {
+        authenticated: true,
+        access: 'admin',
+        uid: result.uid,
+        email: result.email,
+        role: result.role ?? 'admin',
+        method: 'session-cookie',
+        scope: null,
+      };
+    }
+    return { authenticated: false, method: 'none' };
+  }
+
+  // Secret-key callers carry no identity — they can neither be scoped as a
+  // partner nor satisfy the admin role check.
+  if (!result.uid) return { authenticated: false, method: 'none' };
+
+  // Supabase identity: the profiles row is the source of truth for role+scope.
+  try {
+    const profile = await getRecord<{ role?: string; metadata?: Record<string, unknown> }>(
+      'profiles',
+      result.uid
+    );
+    const profileRole = profile?.role;
+    if (isAdminConsoleRole(profileRole)) {
+      return {
+        authenticated: true,
+        access: 'admin',
+        uid: result.uid,
+        email: result.email,
+        role: profileRole as string,
+        method: 'supabase',
+        scope: null,
+      };
+    }
+    if (isPartnerRole(profileRole)) {
+      return {
+        authenticated: true,
+        access: 'partner',
+        uid: result.uid,
+        email: result.email ?? '',
+        role: 'partner',
+        method: 'supabase',
+        scope: scopeFromProfile(profile),
+      };
+    }
+  } catch {
+    // A lookup failure must deny, never admit.
+  }
+  return { authenticated: false, method: 'none' };
 }

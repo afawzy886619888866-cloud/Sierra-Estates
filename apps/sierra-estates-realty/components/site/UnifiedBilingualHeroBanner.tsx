@@ -636,7 +636,7 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-400">
                   <span>500+ PARTNER AGENCIES • 1,500+ CERTIFIED BROKERS</span>
                   <span className="text-[#c8961a] font-bold">
-                    sierraestates.eg
+                    sierra-estates.net
                   </span>
                 </div>
               </div>
@@ -700,7 +700,7 @@ export default function UnifiedBilingualHeroBanner({
                 <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-400">
                   <span>+500 شركة شريكة • +1,500 وسيط معتمد</span>
                   <span className="text-[#c8961a] font-bold">
-                    sierraestates.eg
+                    sierra-estates.net
                   </span>
                 </div>
               </div>

@@ -19,43 +19,43 @@ export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
   const listings = HZDATA.listings as CardListing[];
 
-  // Live inventory lookup — the same source that powers /properties and the
-  // map. Falls back to the static catalog only if the API has no match.
+  // Phase 4/B3: single-row lookup via /api/listings/[id] instead of
+  // downloading the entire inventory to render one unit. The endpoint returns
+  // the app-vocabulary record (compound/price/beds/area/mode/…) and a real
+  // 404 for unknown ids — no fabricated fallback (Master Rule 5).
   const [liveUnit, setLiveUnit] = useState<CardListing | null>(null);
   const [loadingLive, setLoadingLive] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    const needle = String(id).trim().toLowerCase();
-    fetch('/api/inventory')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled || !d || !Array.isArray(d.units)) return;
-        const u = d.units.find((x: any) =>
-          String(x.code || '').toLowerCase() === needle ||
-          String(x.id || '').toLowerCase() === needle
-        );
-        if (u) {
-          const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
-          setLiveUnit({
-            id: 0,
-            code: u.code || u.id,
-            cmp: u.compound || u.location || 'New Cairo',
-            zone: u.zone || 'New Cairo',
-            type: u.propertyType || u.type || 'Apartment',
-            beds: u.beds ?? 3,
-            bath: u.bath ?? 2,
-            area: u.area ?? 0,
-            egpM: u.egpM ?? (u.price ? Number((u.price / 1_000_000).toFixed(1)) : 0),
-            usd: u.usd ?? (u.price ? (mode === 'rent' ? Math.round(u.price / 50) : Math.round(u.price / 48.5)) : 0),
-            ai: Number(u.aiScore ?? 8.5),
-            tag: u.isNew ? 'New Listing' : 'Live Inventory',
-            mode,
-            agent: 'Sierra Advisor Desk',
-            ago: u.timestamp || 'Live sync',
-            img: u.img || u.photoUrl || (Array.isArray(u.images) && u.images[0]) || '',
-          });
-        }
+    fetch(`/api/listings/${encodeURIComponent(String(id))}`)
+      .then((r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error(`listings API ${r.status}`);
+        return r.json();
+      })
+      .then((u: any) => {
+        if (cancelled || !u || !u.id) return;
+        const mode = u.mode === 'rent' || u.dealType === 'rent' ? 'rent' : 'sale';
+        const price = Number(u.price) || 0;
+        setLiveUnit({
+          id: 0,
+          code: u.code || u.referenceCode || u.refId || String(u.id),
+          cmp: u.compound || u.locationArea || '',
+          zone: u.zone || u.locationArea || '',
+          type: u.type || u.propertyType || '',
+          beds: u.beds ?? 0,
+          bath: u.bath ?? 0,
+          area: u.area ?? u.areaSqm ?? 0,
+          egpM: price > 0 ? Number((price / 1_000_000).toFixed(1)) : 0,
+          usd: price > 0 ? (mode === 'rent' ? Math.round(price / 50) : Math.round(price / 48.5)) : 0,
+          ai: Number(u.ai ?? 0),
+          tag: u.tag || (mode === 'rent' ? 'Rent' : 'Sale'),
+          mode,
+          agent: 'Sierra Advisor Desk',
+          ago: u.ago || 'Live sync',
+          img: u.img || (Array.isArray(u.images) && u.images[0]) || '',
+        });
       })
       .catch(() => {})
       .finally(() => {
@@ -73,6 +73,53 @@ export default function PropertyDetail({ id }: { id: string }) {
   const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // ── Phase 8: real viewing request flow (PROPERTY → REQUEST → SLOT →
+  // CONFIRM). The old block here downloaded an .ics with a HARDCODED PAST
+  // DATE (2026-09-01) — a fabricated slot. This form writes a real
+  // public.viewings row via /api/viewing-requests and only then offers
+  // calendar/WhatsApp confirmation for the REAL chosen date.
+  const [showViewingForm, setShowViewingForm] = useState(false);
+  const [viewingDate, setViewingDate] = useState('');
+  const [viewingTime, setViewingTime] = useState('morning');
+  const [visitorName, setVisitorName] = useState('');
+  const [visitorPhone, setVisitorPhone] = useState('');
+  const [viewingSubmitting, setViewingSubmitting] = useState(false);
+  const [viewingResult, setViewingResult] = useState<
+    { ok: true; whatsappConfirmUrl: string; calendarLink: string; date: string } | { ok: false; error: string } | null
+  >(null);
+
+  const submitViewingRequest = async () => {
+    if (!viewingDate || !visitorName.trim() || !visitorPhone.trim()) {
+      setViewingResult({ ok: false, error: isAr ? 'يرجى إدخال الاسم والهاتف والتاريخ.' : 'Please provide your name, phone, and a preferred date.' });
+      return;
+    }
+    setViewingSubmitting(true);
+    setViewingResult(null);
+    try {
+      const res = await fetch('/api/viewing-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyCode: p?.code || String(id),
+          visitorName: visitorName.trim(),
+          visitorPhone: visitorPhone.trim(),
+          preferredDate: viewingDate,
+          preferredTime: viewingTime,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setViewingResult({ ok: true, whatsappConfirmUrl: data.whatsappConfirmUrl, calendarLink: data.calendarLink, date: viewingDate });
+      } else {
+        setViewingResult({ ok: false, error: data.error || `Request failed (HTTP ${res.status})` });
+      }
+    } catch (e: unknown) {
+      setViewingResult({ ok: false, error: e instanceof Error ? e.message : 'Network error' });
+    } finally {
+      setViewingSubmitting(false);
+    }
+  };
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
   const openLightbox = (idx: number) => {
@@ -272,7 +319,7 @@ export default function PropertyDetail({ id }: { id: string }) {
             <span className="sep">/</span>
             <Link href="/properties">{t('navProps')}</Link>
             <span className="sep">/</span>
-            <span>{p.type} in {p.cmp}</span>
+            <span>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</span>
           </div>
         </div>
       </header>
@@ -280,10 +327,10 @@ export default function PropertyDetail({ id }: { id: string }) {
       <section className="block">
         <div className="wrap">
           <div className="pdetail-head rv">
-            <h1 className="pdetail-title">{p.type} in {p.cmp}</h1>
+            <h1 className="pdetail-title">{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</h1>
             <div className="pdetail-loc">
               <MapPin style={{ width: 15, height: 15 }} />
-              <span>{p.cmp} · {p.zone}, New Cairo</span>
+              <span>{[p.cmp, p.zone].filter(Boolean).join(' · ')}</span>
               <span>·</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{p.code}</span>
             </div>
@@ -293,8 +340,17 @@ export default function PropertyDetail({ id }: { id: string }) {
             <div>
               <div className="gallery-main rv" onClick={() => openLightbox(0)} style={{ cursor: 'zoom-in' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={hero} alt={`${p.type} in ${p.cmp}`} />
+                <img src={hero} alt={`${p.type || 'Property'} in ${p.cmp || '—'}`} />
                 <div className="gallery-badges flex flex-wrap gap-1.5">
+                  {!photo && !p.img && (
+                    <span
+                      className="tag"
+                      title={isAr ? 'صورة تعبيرية من الكتالوج — صور الوحدة الفعلية قيد التحقق' : 'Representative catalog imagery — actual unit photos pending verification'}
+                      style={{ background: 'rgba(15,23,42,0.85)', color: '#e2e8f0', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      {isAr ? '📷 صورة تعبيرية' : '📷 Representative imagery'}
+                    </span>
+                  )}
                   <span className="tag" style={{ background: '#0A1628', color: '#C9A84C', border: '1px solid #C9A84C', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <ShieldCheck style={{ width: 12, height: 12 }} />
                     <span>{isAr ? 'مالك مباشر' : 'Direct Owner'}</span>
@@ -335,24 +391,28 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="specs-grid rv">
                 <div className="spec-box">
                   <span>{t('beds')}</span>
-                  <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds}</b>
+                  <b><BedDouble style={{ width: 15, height: 15 }} /> {p.beds > 0 ? p.beds : '?'}</b>
                 </div>
                 <div className="spec-box">
                   <span>{t('baths')}</span>
-                  <b><Bath style={{ width: 15, height: 15 }} /> {p.bath}</b>
+                  <b><Bath style={{ width: 15, height: 15 }} /> {p.bath > 0 ? p.bath : '?'}</b>
                 </div>
                 <div className="spec-box">
                   <span>{isAr ? 'المساحة' : 'Area'}</span>
-                  <b><Scaling style={{ width: 15, height: 15 }} /> {p.area} m²</b>
+                  <b><Scaling style={{ width: 15, height: 15 }} /> {p.area > 0 ? p.area : '?'} m²</b>
                 </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
-                  <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing || 'Ultra Super Lux'}</b>
-                </div>
-                <div className="spec-box">
-                  <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
-                  <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability || 'Available'}</b>
-                </div>
+                {p.finishing && (
+                  <div className="spec-box">
+                    <span>{isAr ? 'التشطيب' : 'Finishing'}</span>
+                    <b style={{ color: '#C9A84C' }}><Paintbrush style={{ width: 15, height: 15 }} /> {p.finishing}</b>
+                  </div>
+                )}
+                {p.availability && (
+                  <div className="spec-box">
+                    <span>{isAr ? 'الجاهزية' : 'Availability'}</span>
+                    <b style={{ color: '#10B981' }}><CheckCircle2 style={{ width: 15, height: 15 }} /> {p.availability}</b>
+                  </div>
+                )}
                 {p.area > 0 && (p.egpM > 0 || p.usd > 0) && (
                   <div className="spec-box">
                     <span>{isAr ? 'سعر المتر' : 'Price / m²'}</span>
@@ -371,8 +431,8 @@ export default function PropertyDetail({ id }: { id: string }) {
                 </h2>
                 <p style={{ color: 'var(--muted)', maxWidth: '68ch' }}>
                   {isAr
-                    ? `${p.type} بمساحة ${p.area} م² في ${p.cmp}، ${p.zone}. تضم ${p.beds} غرف نوم و${p.bath} حمامات، ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.`
-                    : `A ${p.area} m² ${p.type.toLowerCase()} in ${p.cmp}, ${p.zone}. ${p.beds} bedrooms and ${p.bath} bathrooms, scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.`}
+                    ? `${p.type || 'وحدة'} بمساحة ${p.area > 0 ? p.area : '—'} م² في ${p.cmp || '—'}${p.zone ? `، ${p.zone}` : ''}.${p.beds > 0 ? ` تضم ${p.beds} غرف نوم و${p.bath > 0 ? p.bath : '—'} حمامات.` : ''}${p.ai > 0 ? ` ومصنّفة ${p.ai.toFixed(1)} على مؤشر سييرا للذكاء العقاري بناءً على السعر مقارنة بالمثيل، ومعدل النمو، والطلب الحالي.` : ''}`
+                    : `A ${p.area > 0 ? p.area : '—'} m² ${p.type ? p.type.toLowerCase() : 'property'} in ${p.cmp || '—'}${p.zone ? `, ${p.zone}` : ''}.${p.beds > 0 ? ` ${p.beds} bedrooms and ${p.bath > 0 ? p.bath : '—'} bathrooms.` : ''}${p.ai > 0 ? ` Scored ${p.ai.toFixed(1)} on the Sierra intelligence index against live comparables, growth rate and current demand.` : ''}`}
                 </p>
 
                 {/* Mortgage & Investment Yield Analyzer */}
@@ -397,7 +457,20 @@ export default function PropertyDetail({ id }: { id: string }) {
                   </div>
 
                   {(() => {
-                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 12_000_000);
+                    // §21 no-fabrication: the analyzer needs a REAL price.
+                    // Without one it says so — it never computes from a
+                    // invented 12M EGP base.
+                    const hasBasePrice = p.egpM > 0 || p.usd > 0;
+                    if (!hasBasePrice) {
+                      return (
+                        <div style={{ fontSize: 12.5, color: 'var(--muted)', padding: '6px 2px' }}>
+                          {isAr
+                            ? 'السعر غير متاح لهذه الوحدة — لا يمكن احتساب التمويل أو العائد الاستثماري بدقة. تواصل معنا للحصول على التسعيرة المحدثة.'
+                            : 'No price on file for this unit — mortgage and yield figures cannot be calculated honestly. Contact us for the current asking price.'}
+                        </div>
+                      );
+                    }
+                    const baseEGP = p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65;
                     const downPayment = (baseEGP * 30) / 100;
                     const financedAmount = baseEGP - downPayment;
                     const monthlyMortgage = Math.round((financedAmount * (1 + 0.12 * 7)) / (7 * 12));
@@ -433,7 +506,7 @@ export default function PropertyDetail({ id }: { id: string }) {
                         <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'العائد الصافي (Cap Rate)' : 'Net Cap Rate / Yield'}</span>
                           <strong style={{ fontSize: 15, color: '#38BDF8', fontFamily: 'var(--mono)' }}>
-                            {p.yield ? `${p.yield}%` : '8.5%'}
+                            {p.yield ? `${p.yield}%` : (isAr ? 'غير متاح' : 'N/A')}
                           </strong>
                         </div>
                       </div>
@@ -448,8 +521,13 @@ export default function PropertyDetail({ id }: { id: string }) {
               <div className="pdetail-cta luxury-inst-card rv">
                 {(() => {
                   const isRent = p.mode === 'rent';
-                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10_000_000));
-                  const formattedEgpPrice = `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`;
+                  // §21: honest price — "Price on request" when unknown,
+                  // never an invented 10M EGP figure.
+                  const rawPrice = p.price || (p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 0));
+                  const hasPrice = rawPrice > 0;
+                  const formattedEgpPrice = hasPrice
+                    ? `${Math.round(rawPrice).toLocaleString()} EGP${isRent ? '/mo' : ''}`
+                    : (isAr ? 'السعر عند الطلب' : 'Price on request');
 
                   return (
                     <>
@@ -457,12 +535,14 @@ export default function PropertyDetail({ id }: { id: string }) {
                         {formattedEgpPrice}
                       </div>
                       <div style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 12 }}>
-                        {isRent ? (isAr ? 'إيجار شهري موثق' : 'Verified Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
+                        {isRent ? (isAr ? 'إيجار شهري' : 'Monthly Rent') : (isAr ? 'سعر البيع الإجمالي (معلن)' : 'Asking Price')}
                       </div>
 
-                      <div style={{ marginBottom: 16 }}>
-                        <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : (p.usd ? p.usd * 48.65 : 10000000)} />
-                      </div>
+                      {hasPrice && (
+                        <div style={{ marginBottom: 16 }}>
+                          <CurrencyGoldSelector basePriceEGP={p.egpM ? p.egpM * 1_000_000 : p.usd * 48.65} />
+                        </div>
+                      )}
 
                       <button
                         type="button"
@@ -542,39 +622,57 @@ export default function PropertyDetail({ id }: { id: string }) {
                   <FileText className="i" style={{ width: 14, height: 14 }} />
                   <span>{isAr ? 'تحميل البروشور (PDF)' : 'Download PDF Brochure'}</span>
                 </button>
+                {/* Phase 8 — real viewing request flow (replaces the old
+                    hardcoded-date .ics download, which fabricated a slot) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const icsContent = [
-                      'BEGIN:VCALENDAR',
-                      'VERSION:2.0',
-                      'PRODID:-//Sierra Estates//VIP Viewing//EN',
-                      'BEGIN:VEVENT',
-                      `SUMMARY:VIP Viewing: ${p.code} (${p.type} in ${p.cmp})`,
-                      `DESCRIPTION:Private property walkthrough scheduled with ${p.agent} (Sierra Estates). Contact: +201092048333`,
-                      `LOCATION:${p.cmp}, ${p.zone}, New Cairo`,
-                      'DTSTART:20260901T100000Z',
-                      'DTEND:20260901T110000Z',
-                      'END:VEVENT',
-                      'END:VCALENDAR',
-                    ].join('\r\n');
-                    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', `sierra-viewing-${p.code}.ics`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="btn btn-ghost"
-                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, border: '1px solid var(--line)' }}
+                  onClick={() => setShowViewingForm((v) => !v)}
+                  className="btn btn-navy"
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 12, marginBottom: showViewingForm ? 6 : 8 }}
                 >
                   <Calendar className="i" style={{ width: 14, height: 14 }} />
-                  <span>{isAr ? 'حفظ الموعد في التقويم (.ics)' : 'Add to Calendar (.ics)'}</span>
+                  <span>{isAr ? 'طلب موعد معاينة' : 'Request a Viewing'}</span>
                 </button>
+                {showViewingForm && (
+                  <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 14, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {viewingResult?.ok ? (
+                      <>
+                        <p style={{ fontSize: 12.5, color: '#0f9d76', fontWeight: 700, margin: 0 }}>
+                          {isAr ? `✓ تم استلام طلبك لموعد ${viewingResult.date} — سيتواصل الفريق للتأكيد.` : `✓ Request received for ${viewingResult.date} — our team will confirm shortly.`}
+                        </p>
+                        <a className="btn btn-pri" href={viewingResult.whatsappConfirmUrl} target="_blank" rel="noopener noreferrer" style={{ width: '100%', justifyContent: 'center', fontSize: 12, background: '#25D366', borderColor: '#25D366', color: '#fff' }}>
+                          {isAr ? 'تأكيد عبر واتساب' : 'Confirm via WhatsApp'}
+                        </a>
+                        <a className="btn btn-ghost" href={viewingResult.calendarLink} target="_blank" rel="noopener noreferrer" style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}>
+                          <Calendar className="i" style={{ width: 14, height: 14 }} />
+                          <span>{isAr ? 'أضف إلى تقويم جوجل' : 'Add to Google Calendar'}</span>
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        {viewingResult && !viewingResult.ok && (
+                          <p style={{ fontSize: 12, color: '#c75a4e', margin: 0 }} role="alert">⚠ {viewingResult.error}</p>
+                        )}
+                        <input type="date" value={viewingDate} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setViewingDate(e.target.value)} aria-label={isAr ? 'التاريخ المفضل' : 'Preferred date'} style={{ fontSize: 12 }} />
+                        <select value={viewingTime} onChange={(e) => setViewingTime(e.target.value)} aria-label={isAr ? 'الوقت المفضل' : 'Preferred time'} style={{ fontSize: 12 }}>
+                          <option value="morning">{isAr ? 'صباحاً (10ص - 12م)' : 'Morning (10:00–12:00)'}</option>
+                          <option value="afternoon">{isAr ? 'ظهراً (12م - 3م)' : 'Afternoon (12:00–15:00)'}</option>
+                          <option value="sunset">{isAr ? 'العصر (3م - 6م)' : 'Late afternoon (15:00–18:00)'}</option>
+                        </select>
+                        <input type="text" value={visitorName} onChange={(e) => setVisitorName(e.target.value)} placeholder={isAr ? 'الاسم' : 'Your name'} aria-label={isAr ? 'الاسم' : 'Your name'} style={{ fontSize: 12 }} maxLength={100} />
+                        <input type="tel" value={visitorPhone} onChange={(e) => setVisitorPhone(e.target.value)} placeholder={isAr ? 'رقم الهاتف / واتساب' : 'Phone / WhatsApp'} aria-label={isAr ? 'رقم الهاتف' : 'Phone number'} style={{ fontSize: 12 }} maxLength={20} />
+                        <button type="button" className="btn btn-gold" onClick={submitViewingRequest} disabled={viewingSubmitting} style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}>
+                          {viewingSubmitting ? (isAr ? 'جاري الإرسال…' : 'Submitting…') : isAr ? 'إرسال طلب المعاينة' : 'Send viewing request'}
+                        </button>
+                        <p style={{ fontSize: 10.5, color: 'var(--muted)', margin: 0 }}>
+                          {isAr ? 'يُسجَّل الطلب في نظامنا ويصل تنبيه فوري لفريق العمليات.' : 'Creates a real request in our system and instantly alerts our operations team.'}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.cmp} ${p.zone || 'New Cairo'} Egypt`)}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${[p.cmp, p.zone].filter(Boolean).join(' ')} Egypt`.trim())}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-ghost"

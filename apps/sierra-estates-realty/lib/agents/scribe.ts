@@ -55,6 +55,8 @@ Output ONLY a JSON object.`;
         );
 
         // --- SIERRA ESTATES UPGRADE: Automated Valuation (S2.5) ---
+        // §21: valuation is null when real area/price are absent — stored
+        // honestly as null, never computed on invented inputs.
         const unitData = { ...doc, intelligence: { ...doc?.intelligence, ...normalized } } as any;
         const valuation = FinancialService.calcAppraisedValue(unitData);
 

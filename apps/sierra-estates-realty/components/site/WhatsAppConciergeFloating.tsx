@@ -45,7 +45,7 @@ export default function WhatsAppConciergeFloating() {
 
   const handleSendShortlist = () => {
     if (shortlist.length === 0) return;
-    const codes = shortlist.map((item) => `${item.code || item.id} (${item.compound || 'New Cairo'})`).join(', ');
+    const codes = shortlist.map((item) => `${item.code || item.id}${item.compound ? ` (${item.compound})` : ''}`).join(', ');
     const msg = isAr
       ? `مرحباً ليلى · سييرا العقارية، أود حجز موعد معاينة خاصة للوحدات التالية في سلة المعاينة VIP:\n${codes}\nيرجى تأكيد التوافر وأحدث الصور.`
       : `Hello Leila · Sierra Estates, I would like to book a private VIP viewing tour for the following shortlisted units:\n${codes}\nPlease confirm availability and latest photographs.`;

@@ -141,6 +141,16 @@ describe('InventoryDomainService', () => {
     expect(doc.statusHistory.length).toBe(3);
   });
 
+  it('§21 — missing city/listingType/currency store as null, never invented defaults', async () => {
+    const { db, store } = fakeDb();
+    const svc = new InventoryDomainService(db);
+    const { id } = await svc.upsertFromSource('whatsapp_scrape', payload);
+    const doc = store.get(id) as { city: unknown; listingType: unknown; currency: unknown };
+    expect(doc.city).toBeNull();          // never 'New Cairo'
+    expect(doc.listingType).toBeNull();   // never 'resale'
+    expect(doc.currency).toBeNull();      // never 'EGP'
+  });
+
   it('requires a reservationRef to reserve', async () => {
     const { db } = fakeDb();
     const svc = new InventoryDomainService(db);

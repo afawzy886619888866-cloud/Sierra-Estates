@@ -1,4 +1,5 @@
 import 'server-only';
+import { createClient } from '@supabase/supabase-js';
 import { insertRecord } from '@sierra-estates/db';
 import { logger } from '@/lib/logger';
 import { toListingColumns } from '@/lib/server/listing-columns';
@@ -8,6 +9,7 @@ import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { COLLECTIONS } from '@/lib/models/schema';
 import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
+
 
 /**
  * AugustOwnersAgentService
@@ -35,18 +37,39 @@ export interface ProcessGroupMessageParams {
   sender: string;
   group: string;
   groupId?: string;
-  media?: { data: string; mimeType: string };
+  /** base64-encoded image data forwarded by owners-harvester */
+  media?: { data: string; mimeType: string; photoCode?: string };
 }
 
 export interface AugustAgentResult {
   handled: boolean;
   isListing: boolean;
-  action: 'missing_info_requested' | 'unit_published' | 'not_a_listing' | 'error';
+  action: 'missing_info_requested' | 'unit_recorded_pending_verification' | 'not_a_listing' | 'error';
   listingCode?: string;
   unitId?: string;
   pfReference?: string;
   missingFields?: string[];
   replyMessage?: string;
+}
+
+/**
+ * §21: city is derived ONLY from an explicit compound→city vocabulary and
+ * returned as undefined when the compound is not recognised — never the old
+ * blanket 'New Cairo' (which mislabelled Sheikh Zayed / Sokhna / North Coast
+ * posts). The units row then simply carries no city until verified.
+ */
+function deriveCityFromCompound(compound: string): string | undefined {
+  const c = (compound || '').toLowerCase();
+  if (!c) return undefined;
+  if (/sokhna|سوخنة|azha|أزها/.test(c)) return 'Ain Sokhna';
+  if (/hacienda|marassi|north coast|الساحل|marina/.test(c)) return 'North Coast';
+  if (/sheikh zayed|زايد|6th of october|أكتوبر|october/.test(c)) return 'Giza';
+  if (/new capital|العاصمة|newcapital/.test(c)) return 'New Administrative Capital';
+  if (/alex|إسكندرية|اسكندرية/.test(c)) return 'Alexandria';
+  if (/rehab|الرحاب|madinaty|مدينتي|new cairo|التجمع|5th settlement|5th|ميفيدا|hyde park|هايد|mivida/.test(c)) {
+    return 'New Cairo';
+  }
+  return undefined;
 }
 
 export class AugustOwnersAgentService {
@@ -99,6 +122,8 @@ export class AugustOwnersAgentService {
     const contactPhone = parsed.phoneNumber || (senderDigits.length >= 8 ? senderDigits : '');
 
     // 2. Step 4: Missing Information / Slot-Filling Check
+    // §21 no-fabrication: fields without a value are REQUESTED from the
+    // sender — never defaulted ('Apartment' / 3 beds / 'Fully Finished').
     const missingFields: string[] = [];
     if (!parsed.compound || parsed.compound === '5th Settlement' || parsed.compound === 'Unknown') {
       missingFields.push('compound');
@@ -112,6 +137,13 @@ export class AugustOwnersAgentService {
     if (!parsed.area || Number(parsed.area) <= 0) {
       missingFields.push('area');
     }
+    if (!parsed.type || parsed.type === 'Unknown') {
+      missingFields.push('type');
+    }
+    const parsedMode = typeof parsed.mode === 'string' ? parsed.mode.toLowerCase() : '';
+    if (parsedMode !== 'sale' && parsedMode !== 'rent') {
+      missingFields.push('mode');
+    }
     if (!contactPhone) {
       missingFields.push('contactPhone');
     }
@@ -123,6 +155,8 @@ export class AugustOwnersAgentService {
         price: 'السعر المطلوب بالجنيه',
         bedrooms: 'عدد غرف النوم',
         area: 'المساحة الإجمالية بالمتر المربع',
+        type: 'نوع الوحدة (شقة / فيلا / توين هاوس...)',
+        mode: 'نوع المعروض (بيع أم إيجار)',
         contactPhone: 'رقم هاتف المالك للتواصل',
       };
 
@@ -131,6 +165,8 @@ export class AugustOwnersAgentService {
         price: 'Required Price (EGP)',
         bedrooms: 'Number of Bedrooms',
         area: 'Total Area (m²)',
+        type: 'Unit Type (Apartment / Villa / Townhouse...)',
+        mode: 'Listing Type (Sale or Rent)',
         contactPhone: 'Contact Phone Number',
       };
 
@@ -166,18 +202,44 @@ export class AugustOwnersAgentService {
     }
 
     // 3. Complete Unit Processing -> Steps 1, 2, 3
+    // §21: every value below comes from the parsed message. Unknown optional
+    // fields stay undefined — nothing is invented.
     const now = new Date().toISOString();
     const listingCode = `SE-AUG-${Date.now().toString().slice(-6)}`;
     const pfReference = `PF-${listingCode}`;
     const compound = parsed.compound;
-    const propertyType = parsed.type || 'Apartment';
+    const propertyType = parsed.type;
     const price = Number(parsed.price);
-    const bedrooms = Number(parsed.bedrooms) || 3;
-    const bathrooms = Number(parsed.bathrooms) || 2;
-    const area = Number(parsed.area) || 150;
-    const finishing = parsed.finishing || 'Fully Finished';
-    const mode = (parsed.mode || 'sale').toLowerCase() as 'sale' | 'rent';
+    const bedrooms = Number.isFinite(Number(parsed.bedrooms)) ? Number(parsed.bedrooms) : undefined;
+    const bathrooms = Number.isFinite(Number(parsed.bathrooms)) ? Number(parsed.bathrooms) : undefined;
+    const area = Number.isFinite(Number(parsed.area)) ? Number(parsed.area) : undefined;
+    const finishing = parsed.finishing || undefined;
+    const mode = (parsedMode || 'sale') as 'sale' | 'rent';
+    // Honest display forms for notifications ('?' never a fabricated number)
+    const specStr = `${bedrooms ?? '?'} Beds · ${bathrooms ?? '?'} Baths · ${area ?? '?'} m²`;
+    const specStrAr = `${bedrooms ?? '?'} غرف · ${bathrooms ?? '?'} حمام · ${area ?? '?'} م²`;
 
+    // ─── Upload photo to Supabase Storage (must happen before DB insert so images[] is populated)
+    let uploadedImageUrls: string[] = [];
+    if (media?.data) {
+      try {
+        const publicUrl = await AugustOwnersAgentService.uploadPhotoToStorage(
+          media.data,
+          media.mimeType,
+          media.photoCode || listingCode,
+        );
+        if (publicUrl) {
+          uploadedImageUrls = [publicUrl];
+          logger.info(`[AugustOwnersAgent] Photo uploaded to Supabase Storage: ${publicUrl}`);
+        }
+      } catch (uploadErr: any) {
+        logger.warn(`[AugustOwnersAgent] Photo upload non-fatal: ${uploadErr?.message}`);
+      }
+    }
+
+    // Attach images to listing document before any DB insert
+    // §21 + Phase D: group-message listings are UNVERIFIED — they enter the
+    // pipeline as REVIEW_REQUIRED and stay private until human verification.
     const listingDocument = {
       code: listingCode,
       title: `${propertyType} · ${compound}`,
@@ -193,8 +255,10 @@ export class AugustOwnersAgentService {
       ownerName: parsed.ownerName || sender,
       ownerPhone: contactPhone,
       status: 'available',
-      verified: true,
+      verified: false,
+      publishStatus: 'REVIEW_REQUIRED',
       available: true,
+      images: uploadedImageUrls,
       sourceChannel: 'whatsapp-august-owners',
       description: rawMessage,
       createdAt: now,
@@ -220,20 +284,27 @@ export class AugustOwnersAgentService {
       logger.warn(`[AugustOwnersAgent] Direct DB write fallback: ${dbErr?.message}`);
     }
 
-    // Insert into units table (for Property Finder and inventory queries)
+    // Insert into units table with images already populated
     try {
       await insertRecord(COLLECTIONS.units, {
         title: `${propertyType} · ${compound}`,
         compound,
         location: compound,
-        city: 'New Cairo',
+        // §21: city is not invented — it is derived only from the compound
+        // vocabulary and omitted when unknown (was hardcoded 'New Cairo').
+        city: deriveCityFromCompound(compound),
         price,
         propertyType,
-        status: mode === 'rent' ? 'rented' : 'available',
+        // BUG FIX: a newly recorded FOR-RENT listing is AVAILABLE, not
+        // 'rented' — the old `mode === 'rent' ? 'rented' : 'available'`
+        // marked every fresh rent listing as already-rented (instantly
+        // invisible to availability-filtered queries).
+        status: 'available',
         category: 'residential',
         bedrooms,
         bathrooms,
         area,
+        images: uploadedImageUrls,
         pfReferenceNumber: pfReference,
         description: rawMessage,
         createdAt: now,
@@ -267,9 +338,8 @@ export class AugustOwnersAgentService {
       logger.warn(`[AugustOwnersAgent] Excel append error (non-fatal): ${excelErr?.message}`);
     }
 
-    // Step 1: Make ad in Property Finder + notify user
+    // Step 1: Publish to Property Finder — now that images are attached to the unit record
     try {
-      // Trigger Property Finder sync/publish
       await PFIntegrationService.publishListing(unitId).catch((e) => {
         logger.warn(`[AugustOwnersAgent] PF publishListing non-fatal: ${e?.message}`);
       });
@@ -280,16 +350,16 @@ export class AugustOwnersAgentService {
     // Immediate Telegram Notification
     try {
       const telegramAlert = `
-🚀 <b>New August Owner Unit Activated!</b>
+🚀 <b>New August Owner Unit Recorded!</b>
 <b>Compound:</b> ${escapeTelegramHtml(compound)}
 <b>Type:</b> ${escapeTelegramHtml(propertyType)} (${mode.toUpperCase()})
 <b>Price:</b> EGP ${price.toLocaleString('en-US')}
-<b>Specs:</b> ${bedrooms} Beds · ${bathrooms} Baths · ${area} m²
-<b>Finishing:</b> ${escapeTelegramHtml(finishing)}
+<b>Specs:</b> ${specStr}
+<b>Finishing:</b> ${escapeTelegramHtml(finishing ?? '—')}
 <b>Contact:</b> ${escapeTelegramHtml(contactPhone)}
 <b>Code:</b> <code>${listingCode}</code>
-<b>Property Finder:</b> Ad Generated (Ref: <code>${pfReference}</code>)
-<b>Live Map:</b> Activated on interactive 3D map & client page
+<b>Status:</b> Unverified — REVIEW_REQUIRED (private until verified)
+<b>Property Finder:</b> Draft prepared (Ref: <code>${pfReference}</code>)
 <b>Source:</b> WhatsApp Group (Owners August 2026)
       `.trim();
       await sendTelegramMessage(telegramAlert);
@@ -304,7 +374,7 @@ export class AugustOwnersAgentService {
         await enqueueWhatsAppJob({
           purpose: 'general-outreach',
           toPhone: notifyAdminNumber,
-          body: `🚀 [Sierra Admin Alert] New Unit Added from August Owners Group!\n📍 ${compound}\n💰 EGP ${price.toLocaleString('en-US')}\n📐 ${bedrooms}B / ${area} m²\n🔖 Code: ${listingCode}\n🏢 PF Ref: ${pfReference}\n🗺️ Live on Map & Sheet marked Available.`,
+          body: `🚀 [Sierra Admin Alert] New Unit Recorded from August Owners Group!\n📍 ${compound}\n💰 EGP ${price.toLocaleString('en-US')}\n📐 ${specStr}\n🔖 Code: ${listingCode}\n🏢 PF Ref: ${pfReference}\n⏳ Unverified (REVIEW_REQUIRED) — private until verified.`,
         });
       } catch (waAdminErr: any) {
         logger.warn(`[AugustOwnersAgent] Admin WhatsApp alert skipped: ${waAdminErr?.message}`);
@@ -312,15 +382,16 @@ export class AugustOwnersAgentService {
     }
 
     // Step 6: Confirmation message back into the August Owners WhatsApp group
-    const confirmationMsg = `✅ *تم تفعيل ونشر الوحدة بنجاح!* (Sierra Estates Agent)\n\n` +
+    // §21: honest status — recorded + pending verification, never "live now".
+    const confirmationMsg = `✅ *تم تسجيل الوحدة بنجاح!* (Sierra Estates Agent)\n\n` +
       `📍 *الكومباوند:* ${compound}\n` +
       `🏠 *النوع:* ${propertyType} (${mode === 'rent' ? 'إيجار' : 'بيع'})\n` +
       `💰 *السعر:* ${price.toLocaleString('en-US')} ج.م\n` +
-      `📐 *المواصفات:* ${bedrooms} غرف · ${bathrooms} حمام · ${area} م²\n` +
+      `📐 *المواصفات:* ${specStrAr}\n` +
       `🔖 *كود الوحدة:* ${listingCode}\n` +
       `📊 *شيت المخزون:* تم القيد بالحالة (Available)\n` +
       `🏢 *بروبيرتي فايندر:* تم إعداد مسودة الإعلان بالرقم المرجعي (${pfReference})\n` +
-      `🗺️ *الخريطة التفاعلية:* الوحدة معروضة الآن مباشرة لجميع العملاء عبر الموقع.\n` +
+      `⏳ *الحالة:* الوحدة تحت المراجعة والتحقق — سيتم عرضها للعملاء بعد التأكيد.\n` +
       `🌐 https://sierra-estates.net/properties`;
 
     try {
@@ -336,7 +407,7 @@ export class AugustOwnersAgentService {
     return {
       handled: true,
       isListing: true,
-      action: 'unit_published',
+      action: 'unit_recorded_pending_verification',
       listingCode,
       unitId,
       pfReference,
@@ -359,11 +430,11 @@ export class AugustOwnersAgentService {
   }): Promise<void> {
     const broadcastMsg = `📢 *[Sierra Estates Fleet] وحدة جديدة مضافة للنظام*\n\n` +
       `📍 *الكومباوند:* ${unitData.compound}\n` +
-      `🏠 *النوع:* ${unitData.propertyType} (${(unitData.mode || 'sale').toUpperCase()})\n` +
+      `🏠 *النوع:* ${unitData.propertyType} (${(unitData.mode || '').toString().toUpperCase() || '—'})\n` +
       `💰 *السعر:* ${Number(unitData.price).toLocaleString('en-US')} ج.م\n` +
-      `📐 *المواصفات:* ${unitData.beds || 3} غرف · ${unitData.area || 150} م²\n` +
+      `📐 *المواصفات:* ${unitData.beds ?? '?'} غرف · ${unitData.area ?? '?'} م²\n` +
       `🔖 *الكود:* ${unitData.code}\n` +
-      `🗺️ معروضة الآن على الخريطة التفاعلية وجاهزة للترشيح للعملاء.\n` +
+      `⏳ الوحدة مسجلة بالنظام وتخضع للمراجعة والتحقق قبل عرضها للعملاء.\n` +
       `🌐 https://sierra-estates.net/properties`;
 
     try {
@@ -379,7 +450,9 @@ export class AugustOwnersAgentService {
   }
 
   /**
-   * Heuristic fallback extractor if generative AI is offline
+   * Heuristic fallback extractor if generative AI is offline.
+   * §21 no-fabrication: fields the regexes cannot find stay UNDEFINED — the
+   * slot-filling gate will ask the sender for them. No invented defaults.
    */
   private static heuristicExtract(text: string): any {
     const priceMatch = text.match(/(\d[\d,\. ]{3,12})\s*(جنيه|ج\.م|egp|m|مليون|k|الف)?/i);
@@ -394,12 +467,12 @@ export class AugustOwnersAgentService {
     }
 
     const bedsMatch = text.match(/(\d+)\s*(غرف|غرفة|نوم|beds?|bd)/i);
-    const beds = bedsMatch ? parseInt(bedsMatch[1]) : 3;
+    const beds = bedsMatch ? parseInt(bedsMatch[1]) : undefined;
 
-    const areaMatch = text.match(/(\d+)\s*(متر|م²|م2|sqm|m2)/i);
-    const area = areaMatch ? parseInt(areaMatch[1]) : 160;
+    const areaMatch = text.match(/(\d+)\s*(متر|م²|م٢|sqm|m2)/i);
+    const area = areaMatch ? parseInt(areaMatch[1]) : undefined;
 
-    let compound = 'New Cairo';
+    let compound: string | undefined;
     const compounds = [
       'Mivida', 'Hyde Park', 'Mountain View', 'Villette', 'Palm Hills',
       'Eastown', 'Madinaty', 'Uptown Cairo', 'Swan Lake', 'Fifth Square',
@@ -412,14 +485,78 @@ export class AugustOwnersAgentService {
       }
     }
 
+    const isVilla = text.includes('فيلا') || text.includes('villa');
+    const isTownhouse = text.includes('توين') || text.includes('townhouse');
+    const isDuplex = text.includes('دوبلكس') || text.includes('duplex');
+    const isStudio = text.includes('استوديو') || text.includes('studio');
+    const isChalet = text.includes('شاليه') || text.includes('chalet');
+    const isApartment = text.includes('شقة') || text.includes('apartment');
+    const knownType = isVilla ? 'Villa'
+      : isTownhouse ? 'Townhouse'
+      : isDuplex ? 'Duplex'
+      : isStudio ? 'Studio'
+      : isChalet ? 'Chalet'
+      : isApartment ? 'Apartment'
+      : undefined;
+
+    const isRent = text.includes('ايجار') || text.includes('إيجار') || text.includes('rent');
+    const isSale = text.includes('للبيع') || text.includes('بيع') || text.includes('sale');
+    const knownMode = isRent ? 'rent' : isSale ? 'sale' : undefined;
+
     return {
       isListing: price > 0 || text.includes('للبيع') || text.includes('للايجار') || text.includes('شقة'),
       compound,
       price,
       bedrooms: beds,
       area,
-      type: text.includes('فيلا') || text.includes('villa') ? 'Villa' : 'Apartment',
-      mode: text.includes('ايجار') || text.includes('rent') ? 'rent' : 'sale',
+      type: knownType,
+      mode: knownMode,
     };
+  }
+
+  /**
+   * Upload a base64-encoded photo to Supabase Storage `listing-photos` bucket.
+   * Returns the public URL, or null on failure.
+   *
+   * Uses the service-role key (server-only context) so it can write to the
+   * bucket without requiring the anon policy to allow inserts.
+   */
+  private static async uploadPhotoToStorage(
+    base64Data: string,
+    mimeType: string,
+    photoCode: string,
+  ): Promise<string | null> {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) {
+      logger.warn('[AugustOwnersAgent] SUPABASE_SERVICE_ROLE_KEY not set — photo upload skipped');
+      return null;
+    }
+
+    const adminClient = createClient(url, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+    const storagePath = `whatsapp/${photoCode}_${Date.now()}.${ext}`;
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const { error } = await adminClient.storage
+      .from('listing-photos')
+      .upload(storagePath, buffer, {
+        contentType: mimeType,
+        upsert: false,
+      });
+
+    if (error) {
+      logger.warn(`[AugustOwnersAgent] Storage upload error: ${error.message}`);
+      return null;
+    }
+
+    const { data } = adminClient.storage
+      .from('listing-photos')
+      .getPublicUrl(storagePath);
+
+    return data?.publicUrl ?? null;
   }
 }

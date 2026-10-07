@@ -1,202 +1,154 @@
 ---
 name: real-estate-excel-processor
 description: >-
-  Standalone real estate data processor for Sierra Estates. Use this skill when
-  the user asks to run, deploy, fix, extend, or explain the Real Estate Processor
-  GUI tool. This tool ingests Excel spreadsheets (.xls/.xlsx) and WhatsApp chat
-  exports (.txt) from a source folder, normalises Arabic/English column headers,
-  deduplicates listings by phone+price+deal type, and exports a styled
-  Final_RealEstate_Database.xlsx with sheets for Summary, All_Units, Owners_Rent,
-  Owners_Sale, Brokers_Rent, and Brokers_Sale. The script is a single Python file
-  with a Tkinter GUI — no terminal required. Trigger this skill for any task
-  involving: running or launching the processor, debugging parse errors, adding
-  new compound names, adjusting column synonym mappings, changing the USD→EGP
-  rate, modifying deduplication logic, or extending the WhatsApp parser.
+  Authoritative Real Estate Inventory & Excel Processing Engine for Sierra Estates.
+  Governs end-to-end ingestion, bilingual column normalization, strict advertiser
+  classification (owner-clue rule vs default broker), phone Last-7 and price deduplication,
+  >400k price threshold routing between Rent and Resale, Property Finder ad syndication sheets,
+  and formatting standards across Excel workbooks.
 ---
 
-# Real Estate Excel Processor Skill
+# Sierra Estates Master Real Estate Excel Engine & Processing Skill
 
-A single-file, double-click Python GUI tool that consolidates real estate
-listings from Excel sheets and WhatsApp exports into one clean, deduplicated
-Excel database — no terminal, no setup wizard.
-
-## Script Location
-
-The canonical script lives at:
-`.agents/skills/real-estate-excel-processor/scripts/real_estate_processor.py`
+This skill defines the canonical rules, architectural standards, and data processing workflows for consolidating, deduplicating, classifying, and exporting Sierra Estates' multi-source real estate listings across historical Excel workbooks, Google Sheets exports, CRM records, and WhatsApp channels.
 
 ---
 
-## Architecture Overview
+## 1. Core Architectural Tenets & Invariant Rules
 
-```text
-real_estate_processor.py
-├── CONFIG          – Constants: USD_TO_EGP, ID_PREFIX, SKIP_FILES/SHEETS
-├── COLUMN_SYNONYMS – Bi-lingual header→field mapping dict (Arabic + English)
-├── COMPOUNDS       – Regex patterns for 18 known Egyptian compounds
-├── HELPERS         – Pure functions: clean_val, normalize_phone, parse_price,
-│                     parse_date, normalize_deal, normalize_compound, map_cols,
-│                     find_header
-├── WHATSAPP        – parse_whatsapp() + extract_msg() for .txt chat exports
-├── PIPELINE        – run_pipeline(): orchestrates load → clean → dedup → export
-├── style_file()    – openpyxl post-processing: freeze panes, auto-filter,
-│                     header fill, column widths, price number format
-└── GUI             – tkinter App class + Redirector (stdout → log widget)
-```
+### Rule 1: Advertiser Classification (Explicit Owner Evidence Required — Never Group Name Alone)
+
+- **Group Name / Sheet Name / File Name Alone Is Not Evidence**: Merely originating from an "August Owners" group, an "Owners" spreadsheet, or a group with "owner" in the title does **NOT** qualify a listing as Direct Owner.
+- **`Direct Owner` Qualification Requires Explicit Internal Clues**: A listing is placed in the **`Owners`** sheet *only* if explicit evidence is present within the listing's own data fields:
+  1. **Advertiser / Role Column**: Explicitly contains `owner`, `مالك`, `صاحب العقار`, `صاحب الشأن`, `direct owner` (and not broker, agency, or group intake).
+  2. **Contact Person**: Contains `المالك`, `owner`, or `صاحب` (and not broker/marketing).
+  3. **Listing Description / Notes**: Contains explicit phrases such as `من المالك`, `من المالك مباشرة`, `أنا المالك`, `المالك مباشر`, `المالك نفسه`, `صاحب الشقة`, `صاحب الوحدة`, `صاحب العقار`, `مالك الوحدة`, `مالك الشقة`, `direct from owner`, `from the owner`, `owner directly`, `by owner`, `fsbo`, `frbo`.
+- **Default & Fallback is `Broker`**: Any listing removed from the Owners sheet because it lacks explicit owner evidence is moved directly to the **`Brokers`** sheet and deduplicated by `(phone_last7, price)`.
 
 ---
 
-## Key Configuration Constants
+### Rule 1.1: Client & Buyer Requests Isolation ("REQUESTED" / "مطلوب" Are Not Real Listings)
 
-| Constant | Default | Purpose |
-| --- | --- | --- |
-| `USD_TO_EGP` | `48.0` | Currency conversion rate |
-| `ID_PREFIX` | `"SB"` | Prefix for generated Unit IDs (e.g. SB-0001) |
-| `SKIP_FILES` | `("Final_", "~$", "Missing_")` | File name prefixes to ignore |
-| `SKIP_SHEETS` | `("dashboard", "summary", "pivot", "تعليمات")` | Sheet names to skip |
-
----
-
-## Adding a New Compound
-
-Add an entry to the `COMPOUNDS` dict in the CONFIG section:
-
-```python
-"Compound English Name": [r"arabic_pattern", r"english_pattern"],
-```
-
-Patterns are Python regex strings matched case-insensitively against the
-combined `Location + Notes` fields.
+- **Buyer & Tenant Requests Are Not Inventory**: Messages containing request terminology represent clients searching for properties to buy or rent, **NOT** available property listings.
+- **Request Detection Patterns**:
+  - English: `request`, `requested`, `urgent request`, `looking for`, `buyer request`, `client request`.
+  - Arabic: `مطلوب للشراء`, `مطلوب للايجار`, `مطلوب للإيجار`, `مطلوب فورا`, `مطلوب كود`, `طلب عميل`, `مطلوب شقة`, `مطلوب فيلا`, `مطلوب دوبلكس`, `مطلوب تاون`, `مطلوب توين`, `مطلوب ستوديو`, `مطلوب ارض`, `مطلوب مقر`, `مطلوب صيدلية`, `مطلوب محل`, `مطلوب من المالك`, `محتاج شقة`, `محتاج فيلا`, or text beginning with `مطلوب` not followed by a price/currency.
+- **Dedicated Requests Sheet**: All identified requests must be isolated into a dedicated **`Client_Requests`** sheet in both Rent and Resale master workbooks. They must **never** be mixed into `Owners` or `Brokers` available inventory sheets.
 
 ---
 
-## Adding a New Column Synonym
+### Rule 2: Multi-Tier Deduplication Strategy
 
-Add the alias to the appropriate list in `COLUMN_SYNONYMS`:
+Different listing sources require distinct deduplication keys to prevent over-collapsing broker inventories while accurately consolidating owner listings:
 
-```python
-"Unit_Code": ["code", "كود", "your_new_alias", ...],
-```
-
-All matching is lowercase substring, so short aliases should be specific enough
-to avoid false positives.
-
----
-
-## Pipeline Steps (run_pipeline)
-
-1. **Load** — Glob `**/*.xls*` recursively; auto-detect header row (up to row 10)
-   using `find_header()` / `map_cols()`.
-2. **Load WhatsApp** — Glob `**/*.txt`; parse message timestamps + phone numbers
-   using regex; extract price, area, rooms, unit code via inline regex.
-3. **Concat** — All DataFrames unified with `pd.concat`.
-4. **Normalize phones** — Egyptian numbers → 11-digit `01XXXXXXXXX` format.
-   Rows with no valid phone are dropped.
-5. **Parse prices** — Handles EGP/USD, millions (مليون/million), thousands
-   (الف/k), comma/period separators.
-6. **Price sanity fix** — Bare small numbers (< 100) auto-multiplied by 1M
-   (sale) or 1K (rent).
-7. **Deduplicate** — Key: `Phone_Last7 | Price_EGP_rounded | Deal_Clean`.
-   Keeps the most-recently-updated record; aggregates listing count and all
-   known unit codes.
-8. **Export** — `Final_RealEstate_Database.xlsx` with sheets:
-   `Summary`, `All_Units`, `Owners_Rent`, `Owners_Sale`, `Brokers_Rent`,
-   `Brokers_Sale`.
-9. **Style** — Freeze row 1, auto-filter, dark blue header, Segoe UI font,
-   auto-column widths, price number format.
+1. **Unit Code Key (Primary)**:
+   - If clean `Sierra_Code` (or reference ID) is present, length > 3, and not a generic placeholder (`NAN`, `VILLA`, `APARTMENT`, `UNIT`, `0`), matching codes always merge.
+2. **Broker Listings Deduplication Key**:
+   - **Key**: `(Broker_Phone_Last7, round(Price_EGP))`
+   - **Rationale**: A broker often markets multiple distinct properties at different prices using their own single phone number. These distinct properties must **never** be collapsed into one. However, if the same broker lists the *same property at the same price* across multiple spreadsheets or updates, it is deduplicated.
+3. **Direct Owner Listings Deduplication Key**:
+   - **Key**: `Owner_Phone_Last7`
+   - **Rationale**: A property owner represents their individual real estate holding. Multiple spreadsheet rows from the same owner phone number collapse into a single consolidated record, retaining the most complete details.
+4. **Cross-Channel Resolution**:
+   - If a broker listing shares the exact phone number and rounded price with a direct owner listing, they merge, and the resulting record is assigned to `Direct Owner`.
+5. **Information Absorption during Merge**:
+   - Retain the highest-fidelity primary record (prioritizing: photo URLs > unit code > specific compound > area > bedrooms > description length).
+   - Merge all aliases/codes into `All_Codes` (sorted, pipe-delimited).
+   - Merge all unique photo URLs (newline-delimited).
+   - Absorb missing area, bedrooms, bathrooms, finishing status, and contact names from secondary records.
 
 ---
 
-## Running the GUI
+### Rule 3: Price Routing Logic (Rent vs Resale Threshold)
+
+The single source of truth for segregating Rent and Resale deals is the **400,000 EGP** threshold:
+
+- **`Price > 400,000 EGP`**: Strictly routed to **`Sierra_Estates_Resale_Master.xlsx`** (`Sale`). Even if originally labelled as rent in a messy sheet, any listing above 400,000 EGP is reclassified as Resale.
+- **`0 < Price <= 400,000 EGP`**: Strictly routed to **`Sierra_Estates_Rent_Master.xlsx`** (`Rent`). Any listing under or equal to 400,000 EGP is classified as Rent.
+- **`Price == 0`**: Falls back to original sheet/file deal type.
+
+---
+
+### Rule 4: Phone Normalization & Number Formatting Standards
+
+All phone numbers and numeric fields must adhere to strict formatting to prevent scientific notation, lost leading zeros, or corrupted string artifacts:
+
+1. **Float String Stripping**:
+   - Excel often exports phone numbers as floats (e.g. `1067849072.0`). Stripping `.0` or `.00` before digit extraction is mandatory:
+
+     ```python
+     s = re.sub(r'\.0+$', '', str(val).strip())
+     ```
+
+2. **Scientific Notation Handling**:
+   - Strings like `1.067849072E+09` must be cast through `int(float(s))` before regex.
+3. **Leading Zero Restoration**:
+   - 10-digit mobile numbers starting with `10`, `11`, `12`, `15` must have `0` prepended → `01xxxxxxxxx`.
+   - International prefixes (`+20`, `0020`, `20`) must be stripped.
+4. **Last 7 Digits Extraction**:
+   - Egyptian mobile subscriber numbers are the last 7 digits (`digits[-7:]`). Used for deduplication and presented in the `Phone (Last 7)` column.
+5. **Excel Storage Format**:
+   - Phone numbers must **always** be written as strings to cells formatted as Text (`@`):
+
+     ```python
+     cell.value = str(phone)
+     cell.number_format = '@'
+     cell.alignment = Alignment(horizontal="center", vertical="center")
+     ```
+
+6. **Numeric Formatting**:
+   - `Price`: Integer formatted as `#,##0 "EGP"` (right-aligned).
+   - `Area`: Integer formatted as `#,##0` (center-aligned).
+   - `Bedrooms` & `Bathrooms`: Integer formatted as `0` (center-aligned).
+
+---
+
+## 2. Final Workbook Structure & Distribution
+
+The pipeline produces exactly **2 final workbooks**:
+
+### Workbook 1: `Sierra_Estates_Rent_Master.xlsx`
+
+- **Sheet 1 (`Owners_Rent`)**: All verified direct owner rental listings.
+- **Sheet 2 (`Brokers_Rent`)**: All broker-sourced rental listings.
+- **Sheet 3 (`Property_Finder_Ads`)**: High-priority rental listings with verified photos, structured with Property Finder XML syndication columns (`RR`, `Monthly`, property types `AP`/`VH`/`TW`/`TH`, bilingual titles & descriptions).
+
+### Workbook 2: `Sierra_Estates_Resale_Master.xlsx`
+
+- **Sheet 1 (`Owners_Resale`)**: All verified direct owner resale listings.
+- **Sheet 2 (`Brokers_Resale`)**: All broker-sourced resale listings.
+- **Sheet 3 (`Property_Finder_Ads`)**: High-priority resale listings with verified photos, structured for Property Finder XML syndication (`RS`).
+
+*Note*: Main sheets (`Owners_*` and `Brokers_*`) must retain **all listings**, including those featured in Sheet 3 (`Property_Finder_Ads`).
+
+---
+
+### Distribution Locations
+
+Every run synchronizes the output workbooks across:
+
+1. `C:\Users\Sierr\Downloads\Sheets\` (Root contains **ONLY** the 2 final workbooks; all raw files preserved in `_raw_sheets_archive/`).
+2. Project Root: `H:\last\Main\SE-Vercel-deploy-main\`
+3. Project Data Directory: `H:\last\Main\SE-Vercel-deploy-main\data\`
+4. App Data Directory: `H:\last\Main\SE-Vercel-deploy-main\apps\sierra-estates-realty\data\`
+5. Property Finder XML Feed: `H:\last\Main\SE-Vercel-deploy-main\apps\sierra-estates-realty\public\feeds\propertyfinder-full-feed.xml`
+6. Interactive Map Geospatial Feeds: `consolidated-master-inventory.json` and `real-listings.json`.
+
+---
+
+## 3. Canonical Execution Script
+
+To run or re-generate the entire master pipeline:
 
 ```bash
-# Double-click in Explorer, or:
-python .agents/skills/real-estate-excel-processor/scripts/real_estate_processor.py
+python scratch/execute_last7_phone_price_dedup.py
 ```
 
-First run: click **📦 Install Deps** to auto-install `numpy`, `pandas`,
-`openpyxl` via `pip` (hidden console on Windows).
+This single command executes:
 
----
-
-## Dependencies
-
-| Package | Purpose |
-| --- | --- |
-| `pandas` | DataFrame engine |
-| `numpy` | Numeric helpers |
-| `openpyxl` | Excel read/write + styling |
-| `tkinter` | GUI (stdlib, always available) |
-
----
-
-## Output Schema (All_Units sheet)
-
-| Column | Source Field | Notes |
-| --- | --- | --- |
-| `Unit_ID` | Generated | `SB-XXXX` sequential |
-| `Phone` | `Phone_Clean` | Normalised 11-digit |
-| `Phone_Last7` | Derived | Dedup suffix |
-| `Deal` | `Deal_Clean` | Rent / Sale / Unknown |
-| `Status` | Derived | Active / Sold / Rented |
-| `Advertiser_Type` | `Advertiser_Clean` | Owner / Broker / Unknown |
-| `Availability` | `Availability_Clean` | — |
-| `Price_EGP` | Converted | Always in EGP |
-| `Price_Raw` | `Price` | Original parsed numeric |
-| `Currency` | Detected | EGP / USD |
-| `Compound` | `Location_Clean` | Normalised compound name |
-| `Unit_Type` | `Unit_Type_Clean` | — |
-| `Area_m2` | `Area_Num` | Numeric only |
-| `Rooms` | `Rooms_Num` | Numeric only |
-| `Bathrooms` | `Bathrooms_Num` | Numeric only |
-| `Furnishing` | `Furnishing_Clean` | — |
-| `Finishing` | `Finishing_Clean` | — |
-| `Owner_Name` | `Owner_Name_Clean` | — |
-| `Contact_Person` | `Contact_Name_Clean` | — |
-| `Unit_Code` | `Unit_Code_Clean` | Uppercase, stripped |
-| `All_Original_Codes` | Aggregated | Comma-separated across duplicates |
-| `First_Seen` | `Listing_Date_Clean` | Earliest date seen |
-| `Latest_Update` | `Update_Date_Clean` | Most recent update |
-| `Days_Advertised` | Derived | Latest − First |
-| `Listings_Count` | Aggregated | How many raw rows merged |
-| `Source_File` | Filename | — |
-| `Source_Sheet` | Sheet/WhatsApp | — |
-| `Notes` | `Notes_Clean` | Up to 500 chars from WhatsApp |
-
----
-
-## Common Modifications
-
-### Change exchange rate
-
-```python
-USD_TO_EGP = 50.0  # top of file
-```
-
-### Change output ID prefix
-
-```python
-ID_PREFIX = "SE"  # top of file
-```
-
-### Skip an additional sheet name
-
-```python
-SKIP_SHEETS = ("dashboard", "summary", "pivot", "تعليمات", "my_sheet")
-```
-
-### Extend WhatsApp phone regex
-
-Edit `WA_PHONE` at the top of the WHATSAPP section to add more number formats.
-
----
-
-## Verification
-
-After running, check the **Summary** sheet in the output Excel for:
-
-- `Total` — raw rows loaded
-- `Dropped (no phone)` — filter effectiveness
-- `Unique` — final record count
-- `Duplicates removed` — dedup effectiveness
-- `Duration (s)` — performance baseline
+1. Recursive harvest of all files in `_raw_sheets_archive` and downloads directory.
+2. Clue-based advertiser classification (Default Broker, Explicit Owner).
+3. Dual-mode deduplication (Broker: Phone Last 7 + Price; Owner: Phone Last 7).
+4. Price logic routing at 400,000 EGP.
+5. Professional openpyxl workbook rendering with Dark Slate `#0F172A` headers, alternating fills `#F8FAFC`, status pills, and text phone numbers.
+6. Downstream XML and JSON feed compilation.

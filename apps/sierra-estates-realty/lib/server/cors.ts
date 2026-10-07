@@ -9,7 +9,7 @@
  * (comma-separated) and echo the request `Origin` only when it is on the list.
  *
  * Example:
- *   ALLOWED_ORIGINS="https://sierraestates.luxury,https://app.sierraestates.luxury,http://localhost:3000"
+ *   ALLOWED_ORIGINS="https://sierra-estates.net,https://app.sierra-estates.net,http://localhost:3000"
  *
  * Edge-safe: pure string/Headers logic, no Node APIs — importable from
  * `middleware.ts` (Edge runtime) as well as route handlers.

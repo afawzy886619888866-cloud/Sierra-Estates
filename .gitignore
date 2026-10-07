@@ -128,7 +128,12 @@ obsidian-store.json
 # public map serves it as the offline fallback, so a clean checkout must
 # contain it. scripts/generate-inventory-snapshot.mjs refreshes it at build.
 # Build artifact: prebuild mirrors repo supabase/migrations into the app for
-# the runtime applier lambda — never commit the mirror.
+# the runtime applier lambda. NOTE: when Vercel builds with
+# rootDirectory=apps/sierra-estates-realty the repo root is unreachable, so
+# the TRACKED mirror files are the only migration source there — new mirror
+# migrations MUST be force-added (git add -f apps/sierra-estates-realty/
+# supabase/migrations/<file>). __tests__/supabase-migration-mirror.test.ts
+# fails if a mirror file is on disk but not committed.
 apps/sierra-estates-realty/supabase/
 apps/sierra-estates-realty/data/master-inventory-9k.json
 
@@ -167,3 +172,21 @@ obsidian-store.json
 .env*
 !.env.example
 !infra/.env.example
+
+# ============================================================================
+# Removed from repo (kept local): AI tooling artifacts & vendored dev tooling.
+# Not referenced by any build, CI workflow, or runtime code. (2026-09 audit)
+# ============================================================================
+.amphion/
+tools/claude-proxy/
+
+# NOTE: apps/sierra-estates-realty/supabase/ is intentionally gitignored, but
+# ALL files in supabase/migrations/ inside it are FORCE-TRACKED (git add -f):
+# the turbo-cached build replay lstats them at their app-dir paths, and any
+# traced-but-absent file breaks Vercel builds with ENOENT (observed for both
+# 011/012 and the mirrored 2025*/2026* files). Canonical copies live in
+# supabase/migrations/ at repo root; the prebuild mirror overwrites these app
+# copies with root content at every build, so no drift is possible.
+# IF YOU ADD A MIGRATION: commit it in BOTH supabase/migrations/ (canonical)
+# AND apps/sierra-estates-realty/supabase/migrations/ (git add -f).
+workflows/.state/

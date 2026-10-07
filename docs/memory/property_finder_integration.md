@@ -3,17 +3,21 @@
 > **Path:** `docs/memory/property_finder_integration.md`  
 > **Parent Node:** `docs/memory/index.md`
 
-This document details the active credentials, API routes, and webhook synchronization mechanisms for the **Property Finder (PF) Enterprise API** integration in Sierra Estates.
+This document details the integration routes and webhook synchronization mechanisms for the **Property Finder (PF) Enterprise API** integration in Sierra Estates.
 
 ---
 
-## 🔑 Active Credentials (PROVISIONED BY USER)
+## 🔑 Credentials (ROTATED 2026-09-29 — live values are NEVER stored in this repo)
 
-These credentials have been loaded into your local environment (`.env` and `apps/web/.env.local`):
+> ⚠️ **This repository is PUBLIC.** The previous API key/secret were committed
+> here in plaintext and were disabled by Property Finder (401 “invalid,
+> disabled, or expired”). The rotated pair now lives **only** in the Vercel
+> environment variables below — never paste live secrets into git, docs, or
+> chat transcripts that get committed.
 
 * **API Gateway URL:** `https://atlas.propertyfinder.com`
-* **API Key:** `dghXI.xvR0qLbmNzhEy4APzqRRTotc8JJZHTHKP2`
-* **API Secret:** `WXod450Dj5eVNISsmFA1DCr0oPNuyucH`
+* **API Key:** → Vercel env `PROPERTY_FINDER_API_KEY` (both projects)
+* **API Secret:** → Vercel env `PROPERTY_FINDER_API_SECRET` (both projects)
 
 *Note: Access tokens expire every 30 minutes. The `PropertyFinderClient` class automatically handles token retrieval and refresh on demand.*
 

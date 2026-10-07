@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Send, 
-  CheckCircle2, 
-  Clock, 
-  Printer, 
-  ShieldCheck, 
-  Sparkles, 
-  Building2, 
+import {
+  FileText,
+  Send,
+  CheckCircle2,
+  Clock,
+  Printer,
+  ShieldCheck,
+  Sparkles,
+  Building2,
   User,
-  ExternalLink
+  ExternalLink,
+  Percent
 } from 'lucide-react';
 
 interface ContractItem {
@@ -46,30 +47,33 @@ export function ContractsView() {
   const [submitting, setSubmitting] = useState(false);
   const [generatedResult, setGeneratedResult] = useState<any>(null);
 
-  // Form state
+  // Form state — starts EMPTY (§21: no demo legal data, no real-looking
+  // national IDs pre-filled; every term must be entered by the operator).
   const [contractType, setContractType] = useState<'unit_reservation' | 'broker_commission_split'>('unit_reservation');
-  const [compoundName, setCompoundName] = useState('Eastown (SODIC)');
-  const [unitCode, setUnitCode] = useState('ET-B04-3U');
-  const [propertyType] = useState('Apartment');
+  const [compoundName, setCompoundName] = useState('');
+  const [unitCode, setUnitCode] = useState('');
+  const [propertyType, setPropertyType] = useState('Apartment');
   const [dealType, setDealType] = useState<'sale' | 'rent'>('rent');
-  const [agreedPrice, setAgreedPrice] = useState(45000);
-  const [reservationDeposit, setReservationDeposit] = useState(45000);
-  const [areaSqm, setAreaSqm] = useState(165);
-  const [bedrooms] = useState(3);
-  const [bathrooms] = useState(2);
-  const [finishing] = useState('Ultra Super Lux');
+  const [agreedPrice, setAgreedPrice] = useState<number | ''>('');
+  const [reservationDeposit, setReservationDeposit] = useState<number | ''>('');
+  const [areaSqm, setAreaSqm] = useState<number | ''>('');
+  const [bedrooms, setBedrooms] = useState<number | ''>('');
+  const [bathrooms, setBathrooms] = useState<number | ''>('');
+  const [finishing, setFinishing] = useState('');
 
-  const [buyerName, setBuyerName] = useState('Omar Farouk');
-  const [buyerPhone, setBuyerPhone] = useState('+201011223344');
-  const [buyerNationalId, setBuyerNationalId] = useState('29001010101234');
-  
-  const [sellerName, setSellerName] = useState('Ahmed Mansour (Direct Owner)');
-  const [sellerPhone, setSellerPhone] = useState('+201022844661');
-  const [sellerNationalId, setSellerNationalId] = useState('28509090104829');
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerNationalId, setBuyerNationalId] = useState('');
 
-  const [commissionPercentage] = useState(2.5);
-  const [externalBrokerName] = useState('');
-  const [externalBrokerPhone] = useState('');
+  const [sellerName, setSellerName] = useState('');
+  const [sellerPhone, setSellerPhone] = useState('');
+  const [sellerNationalId, setSellerNationalId] = useState('');
+
+  const [commissionPercentage, setCommissionPercentage] = useState<number | ''>('');
+  const [sierraSharePercentage, setSierraSharePercentage] = useState<number | ''>('');
+  const [brokerSharePercentage, setBrokerSharePercentage] = useState<number | ''>('');
+  const [externalBrokerName, setExternalBrokerName] = useState('');
+  const [externalBrokerPhone, setExternalBrokerPhone] = useState('');
 
   useEffect(() => {
     fetchContracts();
@@ -115,7 +119,9 @@ export function ContractsView() {
           sellerName,
           sellerPhone,
           sellerNationalId,
-          commissionPercentage,
+          commissionPercentage: commissionPercentage === '' ? undefined : commissionPercentage,
+          sierraSharePercentage: sierraSharePercentage === '' ? undefined : sierraSharePercentage,
+          brokerSharePercentage: brokerSharePercentage === '' ? undefined : brokerSharePercentage,
           externalBrokerName,
           externalBrokerPhone,
         }),
@@ -231,6 +237,7 @@ export function ContractsView() {
                     <label className="block text-xs text-slate-400 mb-1">Compound / Location</label>
                     <input
                       type="text"
+                      required
                       value={compoundName}
                       onChange={(e) => setCompoundName(e.target.value)}
                       className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
@@ -240,6 +247,7 @@ export function ContractsView() {
                     <label className="block text-xs text-slate-400 mb-1">Unit Code</label>
                     <input
                       type="text"
+                      required
                       value={unitCode}
                       onChange={(e) => setUnitCode(e.target.value)}
                       className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none font-mono"
@@ -263,8 +271,10 @@ export function ContractsView() {
                     <label className="block text-xs text-slate-400 mb-1">Agreed Price (EGP)</label>
                     <input
                       type="number"
+                      required
+                      min={1}
                       value={agreedPrice}
-                      onChange={(e) => setAgreedPrice(Number(e.target.value))}
+                      onChange={(e) => setAgreedPrice(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none font-semibold"
                     />
                   </div>
@@ -272,8 +282,10 @@ export function ContractsView() {
                     <label className="block text-xs text-slate-400 mb-1">Reservation Deposit</label>
                     <input
                       type="number"
+                      required
+                      min={1}
                       value={reservationDeposit}
-                      onChange={(e) => setReservationDeposit(Number(e.target.value))}
+                      onChange={(e) => setReservationDeposit(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-emerald-400 focus:border-amber-500 focus:outline-none font-semibold"
                     />
                   </div>
@@ -281,18 +293,62 @@ export function ContractsView() {
                     <label className="block text-xs text-slate-400 mb-1">Area (m²)</label>
                     <input
                       type="number"
+                      required
+                      min={1}
                       value={areaSqm}
-                      onChange={(e) => setAreaSqm(Number(e.target.value))}
+                      onChange={(e) => setAreaSqm(e.target.value === '' ? '' : Number(e.target.value))}
                       className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Bedrooms / Baths</label>
+                    <label className="block text-xs text-slate-400 mb-1">Property Type</label>
+                    <select
+                      value={propertyType}
+                      onChange={(e) => setPropertyType(e.target.value)}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    >
+                      <option value="Apartment">Apartment</option>
+                      <option value="Standalone Villa">Standalone Villa</option>
+                      <option value="Townhouse">Townhouse</option>
+                      <option value="Twin House">Twin House</option>
+                      <option value="Penthouse">Penthouse</option>
+                      <option value="Duplex">Duplex</option>
+                      <option value="Studio">Studio</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Bedrooms</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={bedrooms}
+                      onChange={(e) => setBedrooms(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Bathrooms</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={bathrooms}
+                      onChange={(e) => setBathrooms(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Finishing</label>
                     <input
                       type="text"
-                      value={`${bedrooms} Beds / ${bathrooms} Baths`}
-                      disabled
-                      className="w-full bg-slate-950/30 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-400"
+                      required
+                      value={finishing}
+                      onChange={(e) => setFinishing(e.target.value)}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -311,6 +367,7 @@ export function ContractsView() {
                     <div>
                       <input
                         type="text"
+                        required
                         placeholder="Full Legal Name"
                         value={buyerName}
                         onChange={(e) => setBuyerName(e.target.value)}
@@ -367,6 +424,73 @@ export function ContractsView() {
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono"
                       />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commission Split (optional — blank = no commission block) */}
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-amber-400" />
+                  Commission Split (optional) | تقسيمة العمولة
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Leave blank to omit commission terms entirely. If a percentage is entered, the
+                  Sierra/broker share split must be stated explicitly — no silent 50/50 default.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Commission %</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={commissionPercentage}
+                      onChange={(e) => setCommissionPercentage(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Sierra Share %</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={sierraSharePercentage}
+                      onChange={(e) => setSierraSharePercentage(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Broker Share %</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={brokerSharePercentage}
+                      onChange={(e) => setBrokerSharePercentage(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">External Broker</label>
+                    <input
+                      type="text"
+                      value={externalBrokerName}
+                      onChange={(e) => setExternalBrokerName(e.target.value)}
+                      placeholder="Only for co-broke deals"
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">External Broker Phone</label>
+                    <input
+                      type="text"
+                      value={externalBrokerPhone}
+                      onChange={(e) => setExternalBrokerPhone(e.target.value)}
+                      placeholder="+20…"
+                      className="w-full bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none font-mono"
+                    />
                   </div>
                 </div>
               </div>

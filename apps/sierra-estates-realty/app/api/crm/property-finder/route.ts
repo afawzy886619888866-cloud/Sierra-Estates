@@ -41,10 +41,12 @@ export async function POST(request: NextRequest) {
       if (!cleanMobileId.startsWith('0') && cleanMobileId.length === 10) cleanMobileId = '0' + cleanMobileId;
 
       // Deduplication: SHA256(Location + BUA Area + Code + Owner)
-      const location = String(row.Location || 'New Cairo').trim();
-      const spaceBua = String(row.RentPeriodType || '150').trim();
+      // §21: missing sheet fields dedup on empty strings — never on invented
+      // 'New Cairo' / 'Direct Investor' identities.
+      const location = String(row.Location || '').trim();
+      const spaceBua = String(row.RentPeriodType || '').trim();
       const codeField = String(row.Code || '0').trim();
-      const ownerField = String(row.Owner || 'Direct Investor').trim();
+      const ownerField = String(row.Owner || '').trim();
 
       const rawTokenSignature = `${location}-${spaceBua}-${codeField}-${ownerField}`.toLowerCase().trim();
       const computedSyncHash = crypto.createHash('sha256').update(rawTokenSignature).digest('hex');

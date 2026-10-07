@@ -19,6 +19,7 @@ jest.mock('@/lib/server/auth-guard', () => ({
 
 import { POST } from '@/app/api/wealth/roi/route';
 import { NextRequest } from 'next/server';
+import { FinancialService } from '@/lib/services/financial-service';
 
 describe('POST /api/wealth/roi', () => {
   beforeEach(() => {
@@ -110,5 +111,39 @@ describe('POST /api/wealth/roi', () => {
 
     expect(res.status).toBe(500);
     expect(body).toEqual({ error: 'database unavailable' });
+  });
+});
+
+describe('§21 no-fabrication: FinancialService.calcAppraisedValue', () => {
+  test('returns null when area is missing — never appraises on an invented 150 sqm', () => {
+    const report = FinancialService.calcAppraisedValue({
+      price: 12_000_000,
+      area: undefined,
+    } as unknown as Parameters<typeof FinancialService.calcAppraisedValue>[0]);
+
+    expect(report).toBeNull();
+  });
+
+  test('returns null when price is missing or zero', () => {
+    expect(
+      FinancialService.calcAppraisedValue({ price: 0, area: 200 } as never)
+    ).toBeNull();
+    expect(
+      FinancialService.calcAppraisedValue({ price: undefined, area: 200 } as never)
+    ).toBeNull();
+  });
+
+  test('computes a full report from real area and price', () => {
+    const report = FinancialService.calcAppraisedValue({
+      price: 12_000_000,
+      area: 200,
+      intelligence: { finishingGrade: 'ultra-lux' },
+    } as never);
+
+    expect(report).not.toBeNull();
+    // 45000 EGP/sqm heuristic × 200 sqm × 1.4 ultra-lux multiplier
+    expect(report!.appraisedValue).toBe(12_600_000);
+    expect(['underpriced', 'fair', 'overpriced']).toContain(report!.valuationStatus);
+    expect(report!.monthlyInstallment).toBeGreaterThan(0);
   });
 });

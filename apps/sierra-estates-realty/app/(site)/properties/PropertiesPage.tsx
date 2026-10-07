@@ -31,11 +31,13 @@ import {
 import SiteShell from '@/components/site/SiteShell';
 import { useSite } from '@/lib/site/SiteContext';
 import { useReveal } from '@/lib/site/useReveal';
-import snapshot from '@/lib/inventory/snapshot.json';
+// Phase 4/B3: the 6.5 MB snapshot.json no longer ships in the client bundle —
+// real units arrive from /api/inventory below (loading state is honest).
 import type { CompoundLocation } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { useListingsRealtime } from '@/hooks/useListingsRealtime';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import { unitMatchesCondition, CONDITION_OPTIONS } from '@/lib/site/smart-search';
 
 // Dynamic import for Leaflet map to guarantee SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
@@ -71,6 +73,7 @@ export interface RealListing {
   agent: string;
   ago: string;
   img: string;
+  imgCurated?: boolean;
   whatsapp: string;
   lat: number;
   lng: number;
@@ -78,6 +81,8 @@ export interface RealListing {
   description?: string;
   distanceKm?: number;
   finishing?: string;
+  finishingQuality?: string;
+  furnishing?: string;
   availability?: string;
   isDirectOwner?: boolean;
   verifiedFresh?: boolean;
@@ -159,17 +164,23 @@ const SORT_OPTIONS = [
 ];
 
 function sanitizeUnit(raw: any, index: number): RealListing {
-  const code = raw.code || `SE-${String(index + 1).padStart(4, '0')}`;
-  const compound = raw.compound || raw.location || 'New Cairo';
-  const price = Number(raw.price || 8500000);
+  // ANTI-FABRICATION PASS (Master Rule 5): every value below is either the
+  // record's own data or an explicit "unknown" marker. Missing prices render
+  // as "Price on request"; missing coordinates do not get jittered stand-ins;
+  // missing AI scores are hidden rather than synthesized per-index.
+  const code = raw.code || raw.id || `REF-${String(index + 1).padStart(4, '0')}`;
+  const compound = raw.compound || raw.location || 'Unspecified';
+  const price = Number(raw.price) > 0 ? Number(raw.price) : 0;
   const isRent = raw.mode === 'rent' || (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1000000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5000);
+  const egpM = price > 0 ? Number((price / 1000000).toFixed(1)) : 0;
+  const usd = price > 0 ? (isRent ? Math.round(price / 50) : Math.round(price / 5000)) : 0;
 
-  // Strict Luxury Institutional Standard: Price (EGP with commas)
+  // Price label: real price with commas, or honest "on request" when missing
   let priceLabel = raw.priceLabel;
   if (!priceLabel || priceLabel.includes('M EGP')) {
-    priceLabel = isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`;
+    priceLabel = price > 0
+      ? (isRent ? `${price.toLocaleString()} EGP/mo` : `${price.toLocaleString()} EGP`)
+      : 'Price on request';
   }
 
   const isDirectOwner = Boolean(
@@ -191,8 +202,8 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     raw.ago?.toLowerCase().includes('h ago')
   );
 
-  const finishing = raw.finishing || (Number(raw.beds || raw.bedrooms || 3) >= 4 ? 'Ultra Super Lux' : 'Fully Finished');
-  const availability = raw.availability || raw.status || 'Available';
+  const finishing = raw.finishing || raw.furnishing || '';
+  const availability = raw.availability || raw.status || '';
 
   return {
     id: raw.id || `unit-${index + 1}`,
@@ -200,24 +211,25 @@ function sanitizeUnit(raw: any, index: number): RealListing {
     cmp: compound,
     compound,
     location: raw.location || compound,
-    zone: raw.zone || 'New Cairo',
-    type: raw.type || raw.propertyType || 'Apartment',
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
+    zone: raw.zone || compound,
+    type: raw.type || raw.propertyType || 'Unspecified',
+    beds: Number(raw.beds ?? raw.bedrooms ?? 0) || 0,
+    bath: Number(raw.bath ?? raw.bathrooms ?? 0) || 0,
+    area: Number(raw.area ?? raw.area_sqm ?? 0) || 0,
     price,
     priceLabel,
     egpM,
     usd,
-    ai: Number(raw.aiScore || (9.1 + ((index * 7) % 8) / 10).toFixed(1)),
-    tag: raw.tag && raw.tag !== 'Direct Owner' && raw.tag !== 'Verified Owner' ? raw.tag : 'Verified Portfolio',
+    ai: Number(raw.aiScore) > 0 ? Number(raw.aiScore) : 0,
+    tag: raw.tag || '',
     mode: isRent ? 'rent' : 'sale',
     agent: 'Sierra Advisor Desk',
-    ago: raw.ago || 'Verified Master Sync',
+    ago: raw.ago || '',
     img: getCuratedListingImage(raw, index),
+    imgCurated: !raw.img,
     whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.lat || 30.02 + (((index * 13) % 40) - 20) * 0.003),
-    lng: Number(raw.lng || 31.54 + (((index * 19) % 40) - 20) * 0.003),
+    lat: Number(raw.lat) || 0,
+    lng: Number(raw.lng) || 0,
     segment: raw.segment,
     description: raw.description,
     finishing,
@@ -231,40 +243,74 @@ export default function PropertiesPage() {
   const { t, isAr, theme } = useSite();
   const listingsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initial load directly from snapshot for instant zero-delay render (excluding owner listings)
-  const initialUnits: RealListing[] = useMemo(() => {
-    const rawList: any[] = (snapshot as any)?.units || [];
-    const valid = rawList.filter((raw: any) =>
-      raw.party !== 'Owner' &&
-      raw.sourceType !== 'owner' &&
-      raw.segment !== 'owners_rent' &&
-      raw.segment !== 'owners_buy' &&
-      raw.tag !== 'Direct Owner'
-    );
-    // Prioritize units with defined price and clean compound name
-    valid.sort((a: any, b: any) => {
-      const aScore = (a.price > 0 ? 100 : 0) + (a.compound && a.compound !== 'New Cairo' ? 50 : 0);
-      const bScore = (b.price > 0 ? 100 : 0) + (b.compound && b.compound !== 'New Cairo' ? 50 : 0);
-      return bScore - aScore;
-    });
-    return valid.map(sanitizeUnit);
-  }, []);
-
-  const [allUnits, setAllUnits] = useState<RealListing[]>(initialUnits);
+  // Phase 4/B3: real units come from /api/inventory (server-side snapshot of
+  // the same data, PII-stripped). The page starts empty and shows its
+  // loading state — never fabricated units. Owner direct listings excluded.
+  const [allUnits, setAllUnits] = useState<RealListing[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
   const [realtimeLive, setRealtimeLive] = useState(false);
 
   // Supabase Realtime: patches allUnits with live INSERT / UPDATE / DELETE
-  // Degrades gracefully when Supabase env vars are absent (dev/CI builds)
-  useListingsRealtime(setAllUnits);
-
-  // Single authoritative inventory fetch on mount (below). The previous
-  // duplicate ?limit=500 fetch raced this one and was removed.
-
-  // Optimistic live-indicator: show green dot 2.5s after mount if realtime starts
-  useEffect(() => {
-    const t = setTimeout(() => setRealtimeLive(true), 2500);
-    return () => clearTimeout(t);
+  // (visibility gate + row mapping live in lib/realtime/listings-realtime-logic).
+  // Degrades gracefully when Supabase env vars are absent (dev/CI builds).
+  // loadInventory doubles as the reconcile callback: after a channel drop the
+  // hook re-subscribes and refetches the authoritative snapshot.
+  const loadInventory = useCallback(async () => {
+    try {
+      const res = await fetch('/api/inventory', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      if (res.status === 401 || res.status === 403) {
+        console.error('[PropertiesPage] Authorization failed fetching inventory:', res.status);
+        return;
+      }
+      const data = res.ok ? await res.json() : null;
+      if (!data?.units || !Array.isArray(data.units)) return;
+      const validUnits = data.units.filter(
+        (raw: any) =>
+          raw.party !== 'Owner' &&
+          raw.sourceType !== 'owner' &&
+          raw.segment !== 'owners_rent' &&
+          raw.segment !== 'owners_buy' &&
+          raw.tag !== 'Direct Owner'
+      );
+      setAllUnits(validUnits.map(sanitizeUnit));
+    } catch (err) {
+      console.warn('[PropertiesPage] inventory fetch failed:', err);
+    }
   }, []);
+
+  useListingsRealtime(setAllUnits, setRealtimeLive, loadInventory);
+
+  // Single authoritative inventory fetch on mount. The previous duplicate
+  // ?limit=500 fetch raced this one and was removed.
+  useEffect(() => {
+    let active = true;
+    loadInventory().finally(() => {
+      if (active) setInventoryLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadInventory]);
+
+  // Periodic reconciliation (every 5 min, matching /api/inventory's
+  // s-maxage=300 cache window): realtime is instant for the events the anon
+  // role can see, but an UPDATE whose NEW row is no longer SELECT-visible
+  // under the public RLS policy (e.g. a status flip) never arrives as an
+  // event — this refetch bounds that staleness. The snapshot is authoritative
+  // and intentionally overwrites any locally-patched rows.
+  useEffect(() => {
+    const RECONCILE_MS = 5 * 60 * 1000;
+    const id = setInterval(() => {
+      loadInventory();
+    }, RECONCILE_MS);
+    return () => clearInterval(id);
+  }, [loadInventory]);
+
+  // Live indicator now reflects the ACTUAL realtime subscription status
+  // (set by useListingsRealtime's onStatus callback). The previous 2.5s
+  // optimistic timer fabricated a green dot even with no connection.
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -272,6 +318,7 @@ export default function PropertiesPage() {
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedCompound, setSelectedCompound] = useState('All Compounds');
   const [selectedBeds, setSelectedBeds] = useState('all');
+  const [selectedCondition, setSelectedCondition] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('ai');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
@@ -294,6 +341,7 @@ export default function PropertiesPage() {
     const compound = params.get('compound');
     const beds = params.get('beds');
     const price = params.get('price');
+    const condition = params.get('condition');
     const view = params.get('view');
     const radius = params.get('radius');
 
@@ -306,42 +354,13 @@ export default function PropertiesPage() {
     if (compound) setSelectedCompound(compound);
     if (beds) setSelectedBeds(beds);
     if (price) setSelectedPriceRange(price);
+    if (condition && CONDITION_OPTIONS.some((o) => o.val === condition)) setSelectedCondition(condition);
     if (view === 'grid' || view === 'map' || view === 'split') setViewMode(view);
     if (radius && !isNaN(Number(radius))) setRadiusKm(Number(radius));
   }, []);
 
-  // Fetch freshest inventory from server in background
-  useEffect(() => {
-    let active = true;
-    fetch('/api/inventory', {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    })
-      .then((res) => {
-        if (res.status === 401 || res.status === 403) {
-          console.error('[PropertiesPage] Authorization failed fetching inventory:', res.status);
-        }
-        return res.ok ? res.json() : null;
-      })
-      .then((data) => {
-        if (!active || !data?.units || !Array.isArray(data.units)) return;
-        const validUnits = data.units.filter(
-          (raw: any) =>
-            raw.party !== 'Owner' &&
-            raw.sourceType !== 'owner' &&
-            raw.segment !== 'owners_rent' &&
-            raw.segment !== 'owners_buy' &&
-            raw.tag !== 'Direct Owner'
-        );
-        setAllUnits(validUnits.map(sanitizeUnit));
-      })
-      .catch((err) => {
-        console.warn('[PropertiesPage] Using committed snapshot inventory:', err);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Mount fetch, realtime re-sync and 5-min reconciliation all run through
+  // loadInventory above — no duplicate fetch effect here anymore.
 
   // Fetch proximity listings from spatial endpoint when radiusKm is active
   useEffect(() => {
@@ -439,9 +458,14 @@ export default function PropertiesPage() {
         if (selectedPriceRange === 'above100k' && p <= 100000) return false;
       }
 
+      // Condition (finishing) — carried from the hero SmartFilterBar (?condition=)
+      if (selectedCondition !== 'all') {
+        if (!unitMatchesCondition({ finishing: item.finishing, finishingQuality: item.finishingQuality, furnishing: item.furnishing }, selectedCondition)) return false;
+      }
+
       return true;
     });
-  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange]);
+  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition]);
 
   // Sorting
   const sortedListings = useMemo(() => {
@@ -544,6 +568,7 @@ export default function PropertiesPage() {
     setSelectedCompound('All Compounds');
     setSelectedBeds('all');
     setSelectedPriceRange('all');
+    setSelectedCondition('all');
     setRadiusKm(null);
     setSortBy('ai');
     setActiveUnit(null);
@@ -587,8 +612,8 @@ export default function PropertiesPage() {
               </h1>
               <p className="props-hero-sub">
                 {isAr
-                  ? `تصفح المعروض الحقيقي المعتمد من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار الحقيقية وتواصل فوري.`
-                  : `Browse verified live listings across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} real units). Interactive map and instant advisor verification.`}
+                  ? `تصفح المعروض الحقيقي من الملاك والوسطاء (أكثر من ${allUnits.length.toLocaleString()} وحدة). خريطة تفاعلية بالأسعار وتواصل فوري — التحقق من كل وحدة يتم قبل نشرها.`
+                  : `Browse live listings from owners and brokers across New Cairo's top premier compounds (${allUnits.length.toLocaleString()} units). Interactive map and instant advisor contact — every unit is verified before publication.`}
               </p>
             </div>
 
@@ -725,6 +750,23 @@ export default function PropertiesPage() {
               </div>
 
               <div className="props-filter-row-2-right">
+                {/* Condition (Finishing) Filter */}
+                <select
+                  value={selectedCondition}
+                  onChange={(e) => setSelectedCondition(e.target.value)}
+                  className="props-select"
+                  style={{ width: 'auto', minWidth: 140 }}
+                  title={isAr ? 'حالة التشطيب' : 'Condition'}
+                  aria-label={isAr ? 'حالة التشطيب' : 'Condition'}
+                >
+                  <option value="all">{isAr ? 'أي حالة' : 'Any Condition'}</option>
+                  {CONDITION_OPTIONS.filter((o) => o.val).map((o) => (
+                    <option key={o.val} value={o.val}>
+                      {isAr ? o.ar : o.en}
+                    </option>
+                  ))}
+                </select>
+
                 {/* Price Range Filter */}
                 <select
                   value={selectedPriceRange}
@@ -923,7 +965,13 @@ export default function PropertiesPage() {
                   </span>
                 </div>
 
-                {sortedListings.length === 0 ? (
+                {inventoryLoading && sortedListings.length === 0 ? (
+                  <div className="empty-state">
+                    <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
+                    <h3>{isAr ? 'جاري تحميل الجرد العقاري…' : 'Loading inventory…'}</h3>
+                    <p>{isAr ? 'يتم جلب الوحدات الحقيقية من قاعدة البيانات.' : 'Fetching real units from the live inventory.'}</p>
+                  </div>
+                ) : sortedListings.length === 0 ? (
                   <div className="empty-state">
                     <Building style={{ width: 48, height: 48, margin: '0 auto 16px', opacity: 0.4 }} />
                     <h3>{isAr ? 'لم يتم العثور على وحدات مطابقة' : 'No properties match your filters'}</h3>

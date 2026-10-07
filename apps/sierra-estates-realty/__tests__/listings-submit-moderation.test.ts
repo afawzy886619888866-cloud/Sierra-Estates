@@ -59,6 +59,9 @@ const validSubmission = {
   compound: 'Mivida',
   propertyType: 'Villa',
   mode: 'sale',
+  beds: 4,
+  baths: 3,
+  area: 260,
   price: 12_000_000,
   ownerName: 'Test Owner',
   mobile: '+201001112233',
@@ -116,6 +119,45 @@ describe('/api/listings/submit — moderation', () => {
     const res = await POST(submit({ compound: '', price: 'not-a-number' }));
     expect(res.status).toBe(400);
     expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to invent unit specs — missing beds/baths/area is a 400, not a default', async () => {
+    // §21: the old schema silently defaulted beds 3 / baths 2 / area 150 /
+    // finishing 'Fully Furnished' / zone '5th Settlement'. A submission
+    // without the real specs must fail loudly instead.
+    const res = await POST(
+      submit({
+        compound: 'Mivida',
+        propertyType: 'Apartment',
+        mode: 'sale',
+        price: 8_000_000,
+        ownerName: 'Test Owner',
+        mobile: '+201001112233',
+      })
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    const flat = JSON.stringify(body.details?.fieldErrors ?? body);
+    expect(flat).toContain('beds');
+    expect(flat).toContain('baths');
+    expect(flat).toContain('area');
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it('never attaches stock photos or an invented zone to a media-less submission', async () => {
+    const res = await POST(submit(validSubmission));
+    expect(res.status).toBe(201);
+    const written = insertMock.mock.calls[0][1] as Record<string, unknown>;
+    const rawData = (written.rawData ?? {}) as Record<string, unknown>;
+
+    // No hardcoded PropertyFinder CDN imagery may ride along with a
+    // photo-less submission (§21: misrepresented the actual unit).
+    expect(rawData.img).toBeNull();
+    expect(rawData.photos).toEqual([]);
+    expect(written.images).toEqual([]);
+    // Zone is not guessed from the compound name anymore.
+    expect(rawData.zone).toBeUndefined();
+    expect(written.zone).toBeUndefined();
   });
 });
 

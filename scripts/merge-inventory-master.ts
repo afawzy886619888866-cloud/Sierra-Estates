@@ -9,7 +9,7 @@ interface UnifiedInventoryUnit {
   type: string;
   compound: string;
   location: string;
-  operation: 'Sale' | 'Rent';
+  operation: 'Sale' | 'Rent' | '';
   price: number;
   currency: string;
   priceFormatted: string;
@@ -18,7 +18,7 @@ interface UnifiedInventoryUnit {
   bathrooms: number;
   furnishing?: string;
   finishing?: string;
-  sourceType: 'owner' | 'broker' | 'archive';
+  sourceType: 'owner' | 'broker' | 'archive' | 'unknown';
   sourceGroup?: string;
   contact_info?: string;
   ownerName?: string;
@@ -41,7 +41,8 @@ function isNew(ts: string | Date | undefined): boolean {
 }
 
 function normalizeCompound(raw: string | undefined): string {
-  if (!raw) return 'New Cairo';
+  // §21 no-fabrication: unknown compounds stay '' — never 'New Cairo'.
+  if (!raw) return '';
   const l = raw.toLowerCase().trim();
   if (l.includes('mivida') || l.includes('ميفيدا')) return 'Mivida';
   if (l.includes('hyde park') || l.includes('هايد')) return 'Hyde Park';
@@ -58,11 +59,14 @@ function normalizeCompound(raw: string | undefined): string {
   if (l.includes('zed') || l.includes('زد')) return 'Zed East';
   if (l.includes('tag sultan') || l.includes('تاج')) return 'Tag Sultan';
   if (l.includes('uptown') || l.includes('ابتاون')) return 'Uptown Cairo';
-  return raw.trim() || 'New Cairo';
+  // §21 no-fabrication: unrecognized names pass through as-is (trimmed),
+  // never coerced to 'New Cairo'.
+  return raw.trim();
 }
 
 function normalizeType(raw: string | undefined): string {
-  if (!raw) return 'Apartment';
+  // §21 no-fabrication: unknown types stay '' — never 'Apartment'.
+  if (!raw) return '';
   const l = raw.toLowerCase().trim();
   if (l.includes('villa') || l.includes('فيلا مستقلة') || l.includes('standalone')) return 'Standalone Villa';
   if (l.includes('twin') || l.includes('توين')) return 'Twinhouse';
@@ -72,7 +76,9 @@ function normalizeType(raw: string | undefined): string {
   if (l.includes('floor with garden') || l.includes('ارضي بحديقة') || l.includes('أرضي')) return 'Ground with Garden';
   if (l.includes('chalet') || l.includes('شاليه')) return 'Chalet';
   if (l.includes('office') || l.includes('commercial') || l.includes('مكتب') || l.includes('تجاري')) return 'Commercial/Office';
-  return 'Apartment';
+  // §21 no-fabrication: unrecognized types pass through as-is (trimmed),
+  // never coerced to 'Apartment'.
+  return raw.trim();
 }
 
 function runMergeAndReport() {
@@ -92,9 +98,13 @@ function runMergeAndReport() {
     for (const u of rawMaster) {
       const compound = normalizeCompound(u.compound || u.cmp || u.zone);
       const propertyType = normalizeType(u.type);
-      const isRent = (u.mode || '').toLowerCase() === 'rent' || (u.price > 0 && u.price < 500000 && (u.mode || '').toLowerCase() !== 'sale');
-      const op = isRent ? 'Rent' : 'Sale';
-      const code = u.code || `SE-${compound.slice(0, 2).toUpperCase()}-${String(u.id).padStart(3, '0')}`;
+      // §21 no-fabrication: 'Rent'/'Sale' only when the mode column states it
+      // (or the documented sub-500k rent heuristic fires); an unstated mode
+      // stays '' — never a coerced 'Sale'.
+      const modeRaw = (u.mode || '').trim().toLowerCase();
+      const isRent = modeRaw === 'rent' || (u.price > 0 && u.price < 500000 && modeRaw !== 'sale');
+      const op: UnifiedInventoryUnit['operation'] = modeRaw ? (isRent ? 'Rent' : 'Sale') : '';
+      const code = u.code || `SE-${(compound || 'UN').slice(0, 2).toUpperCase()}-${String(u.id).padStart(3, '0')}`;
       const ownerTypeStr = (u.ownerType || '').toLowerCase();
       const isOwner = ownerTypeStr === 'owner' || (u.tag || '').includes('Owner') || Boolean(u.ownerName && !u.ownerName.toLowerCase().includes('broker'));
       const listedAt = u.updatedAt || new Date().toISOString();
@@ -111,20 +121,20 @@ function runMergeAndReport() {
         sierraCode: code,
         type: propertyType,
         compound,
-        location: u.zone ? `${compound} / ${u.zone}` : compound,
+        location: compound && u.zone ? `${compound} / ${u.zone}` : (u.zone || compound),
         operation: op,
         price: u.price || 0,
         currency: 'EGP',
         priceFormatted,
         area_sqm: u.area || 0,
-        bedrooms: u.beds || 3,
-        bathrooms: u.baths || 2,
-        finishing: u.finishing || 'semi_finished',
+        bedrooms: u.beds || 0,
+        bathrooms: u.baths || 0,
+        finishing: u.finishing || '',
         sourceType: isOwner ? 'owner' : 'broker',
         sourceGroup: 'Master Sheet Synchronized',
         contact_info: u.mobile ? `+20${u.mobile}` : u.ownerName,
         ownerName: u.ownerName,
-        status: u.status || 'Available',
+        status: u.status || 'Unknown',
         isNewListing: isNew(listedAt),
         listedAt,
         description: u.comment || u.tag,
@@ -145,7 +155,11 @@ function runMergeAndReport() {
     for (const u of rawWA) {
       const compound = normalizeCompound(u.compound || u.location);
       const propertyType = normalizeType(u.type);
-      const op = (u.operation || '').toLowerCase() === 'rent' ? 'Rent' : 'Sale';
+      // §21 no-fabrication: operation only when the source states it —
+      // 'Rent' / 'Sale' verbatim, '' when unstated (never a coerced 'Sale').
+      const opRaw = (u.operation || '').trim();
+      const op: UnifiedInventoryUnit['operation'] =
+        opRaw.toLowerCase() === 'rent' ? 'Rent' : opRaw ? 'Sale' : '';
       const isOwner = (u.groupName || '').toLowerCase().includes('owner') || (u.sender || '').toLowerCase().includes('owner');
       const isArchived = (u.groupName || '').toLowerCase().includes('archive') || (u.groupId || '').includes('363777777777777777');
       const listedAt = u.dateAdded || new Date().toISOString();
@@ -170,7 +184,7 @@ function runMergeAndReport() {
         sourceType: isArchived ? 'archive' : isOwner ? 'owner' : 'broker',
         sourceGroup: u.groupName,
         contact_info: u.sender,
-        status: u.status || 'Available',
+        status: u.status || 'Unknown',
         isNewListing: isNew(listedAt),
         listedAt,
         description: u.description,
@@ -197,7 +211,10 @@ function runMergeAndReport() {
         if (!unifiedMap.has(code) && v.price && v.price > 0) {
           const compound = normalizeCompound(v.compound || v.location);
           const propertyType = normalizeType(v.type);
-          const op = (v.operation || '').toLowerCase() === 'rent' ? 'Rent' : 'Sale';
+          // §21 no-fabrication: operation only when the source states it.
+          const opRaw = (v.operation || '').trim();
+          const op: UnifiedInventoryUnit['operation'] =
+            opRaw.toLowerCase() === 'rent' ? 'Rent' : opRaw ? 'Sale' : '';
           const listedAt = v.listedAt || v.createdAt || item.createdAt || new Date().toISOString();
 
           unifiedMap.set(code, {
@@ -211,13 +228,13 @@ function runMergeAndReport() {
             currency: v.currency || 'EGP',
             priceFormatted: op === 'Rent' ? `${v.price.toLocaleString()} EGP / Month` : `${v.price.toLocaleString()} EGP`,
             area_sqm: v.area_sqm || 0,
-            bedrooms: v.bedrooms || 3,
-            bathrooms: v.bathrooms || 2,
+            bedrooms: v.bedrooms || 0,
+            bathrooms: v.bathrooms || 0,
             finishing: v.finishing,
-            sourceType: v.sourceType || 'broker',
+            sourceType: v.sourceType || 'unknown',
             sourceGroup: v.whatsappGroupName || 'Direct Ingestion',
             contact_info: v.contact_info,
-            status: v.status || 'available',
+            status: v.status || 'unknown',
             isNewListing: isNew(listedAt),
             listedAt,
             description: v.notes,
@@ -253,8 +270,9 @@ function runMergeAndReport() {
     }
     const stat = compoundCounts[u.compound];
     stat.total++;
-    if (u.operation === 'Sale') stat.sale++; else stat.rent++;
-    if (u.sourceType === 'owner') stat.owner++; else stat.broker++;
+    // §21: units with unstated operation/source fall in neither bucket.
+    if (u.operation === 'Sale') stat.sale++; else if (u.operation === 'Rent') stat.rent++;
+    if (u.sourceType === 'owner') stat.owner++; else if (u.sourceType === 'broker') stat.broker++;
   }
 
   // Group by Property Type

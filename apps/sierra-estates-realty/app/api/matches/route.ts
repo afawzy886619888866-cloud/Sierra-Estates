@@ -3,15 +3,15 @@
  *   { budget, beds, type, mode, preferredZone? }
  *   → MatchResult[] (top 3 listings with score + reasons)
  *
- * Pure scoring — no DB writes. Reads listings (Supabase or seed),
+ * Pure scoring — no DB writes. Reads live listings from Supabase only,
  * ranks by composite score: budget fit + beds fit + type match +
- * zone match + AI score weight.
+ * zone match + AI score weight. Never falls back to hardcoded data.
  */
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { SEED_LISTINGS } from "@/lib/seed";
 import { listRecords } from "@sierra-estates/db";
 import { toListingRecord } from "@/lib/server/listing-columns";
+import { rankMatches } from "@/lib/server/match-scoring";
 import type { Listing, MatchAnswers, MatchResult } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -34,16 +34,29 @@ const matchAnswersSchema = z.object({
 
 async function loadListings(): Promise<Listing[]> {
   try {
-    const rows = await listRecords<Record<string, unknown>>("listings");
+    // PUBLISH GATE (activation plan Phase D): the query itself filters to
+    // on-market statuses AND publish_status = 'PUBLISHABLE' — the live table
+    // buries ~9.7k archived rows above the active ones, and unverified rows
+    // (public submissions land as REVIEW_REQUIRED) must never reach a public
+    // match response regardless of their status.
+    const rows = await listRecords<Record<string, unknown>>("listings", {
+      where: [
+        { column: "status", op: "in", value: ["active", "available"] },
+        { column: "publish_status", op: "eq", value: "PUBLISHABLE" },
+      ],
+      limit: 500,
+    });
     if (rows.length > 0) {
       // toListingRecord restores the app vocabulary (beds / bath / area /
       // type / mode) the scorer below reads.
       return rows.map((row) => toListingRecord(row)) as unknown as Listing[];
     }
   } catch (err) {
-    console.warn("[matches] Supabase read failed, using seed:", err);
+    console.warn("[matches] Supabase read failed — returning empty set, never fabricated data:", err);
   }
-  return SEED_LISTINGS;
+  // ANTI-FABRICATION (Master Rule 5): no hardcoded fallback. An empty or
+  // unreachable DB yields an honest "no matches" response, not stale seeds.
+  return [];
 }
 
 /**
@@ -67,51 +80,20 @@ export async function POST(req: Request) {
   const answers = parsed.data as MatchAnswers;
   const listings = await loadListings();
 
-  const results: MatchResult[] = listings
-    .filter((l) => isOnMarket(l.status) && l.mode === answers.mode)
-    .map((l) => {
-      const reasons: string[] = [];
-      let score = 0;
+  // Deterministic engine (lib/server/match-scoring): hard constraints first
+  // (budget cap, minimum bedrooms; mode filtered above), then soft ranking
+  // (budget 40 / beds 20 / type 15 / zone 15 / AI 10). Violators can only
+  // surface as explicitly flagged alternatives when compliant results < 3.
+  const onMarket = listings.filter((l) => isOnMarket(l.status) && l.mode === answers.mode);
 
-      // Budget fit (40 pts max) — within ±25% of budget is full score
-      const budgetDiff = Math.abs(l.usd - answers.budget) / answers.budget;
-      const budgetScore = Math.max(0, 40 - budgetDiff * 80);
-      score += budgetScore;
-      if (budgetDiff < 0.1) reasons.push("Exactly on budget");
-      else if (budgetDiff < 0.25) reasons.push("Within budget range");
-      else reasons.push(`${budgetDiff < 0.5 ? "Slightly over" : "Higher than"} budget`);
-
-      // Beds fit (20 pts) — exact match = 20, ±1 = 10
-      const bedDiff = Math.abs(l.beds - answers.beds);
-      score += bedDiff === 0 ? 20 : bedDiff === 1 ? 10 : 0;
-      if (bedDiff === 0) reasons.push(`${l.beds} bedrooms matches`);
-
-      // Type match (15 pts)
-      if (l.type === answers.type) {
-        score += 15;
-        reasons.push(`${l.type} matches preference`);
-      }
-
-      // Zone match (15 pts)
-      if (answers.preferredZone && l.zone === answers.preferredZone) {
-        score += 15;
-        reasons.push(`In ${l.zone}`);
-      } else if (answers.preferredZone) {
-        score += 5;
-      }
-
-      // AI score weight (10 pts) — normalized 0..10
-      score += l.aiScore;
-      reasons.push(`AI score ${l.aiScore.toFixed(1)}/10`);
-
-      return {
-        listing: l,
-        score: Math.round(Math.min(100, score)),
-        reasons,
-      };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+  const results: MatchResult[] = rankMatches(onMarket, answers).map((m) => ({
+    listing: m.listing,
+    score: m.score,
+    reasons: m.reasons,
+    ...(m.alternative
+      ? { alternative: true, hardConstraintViolations: m.hardConstraintViolations }
+      : { hardConstraintViolations: [] }),
+  }));
 
   return NextResponse.json(results);
 }

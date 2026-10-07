@@ -22,14 +22,15 @@ import {
 import AvailabilityInquiryModal from './AvailabilityInquiryModal';
 import { NEW_CAIRO_COMPOUNDS } from '@/components/Maps/compounds-data';
 import type { MapUnitPin } from '@/components/Maps/LiveMap';
+import { unitMatchesCondition } from '@/lib/site/smart-search';
 
 // Dynamic import for Leaflet map to ensure 100% SSR safety in Next.js
 const LiveMap = dynamic(() => import('@/components/Maps/LiveMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-112.5 rounded-2xl bg-[#080d18] border border-white/10 flex items-center justify-center text-white/50 text-sm">
+    <div className="lnm-root w-full h-112.5 rounded-2xl bg-[#080d18] border border-white/10 flex items-center justify-center text-white/50 text-sm">
       <div className="flex items-center gap-2">
-        <div className="w-4 h-4 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
+        <div className="w-4 h-4 animate-spin" />
         <span>جاري تحميل رادار الخريطة...</span>
       </div>
     </div>
@@ -54,6 +55,7 @@ export interface NetUnit {
   party?: string;
   whatsapp?: string;
   tag?: string;
+  finishing?: string;
 }
 
 const COMPOUNDS_LIST = [
@@ -134,6 +136,9 @@ function ListingNetMapContent({
   );
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>(
     searchParams?.get('price') || 'all'
+  );
+  const [selectedCondition, setSelectedCondition] = useState<string>(
+    searchParams?.get('condition') || 'all'
   );
 
   // Synchronize when initial props change
@@ -234,9 +239,14 @@ function ListingNetMapContent({
         if (selectedPriceRange === 'rent_above100k' && p <= 100000) return false;
       }
 
+      // Condition (finishing)
+      if (selectedCondition !== 'all') {
+        if (!unitMatchesCondition({ finishing: u.finishing }, selectedCondition)) return false;
+      }
+
       return true;
     });
-  }, [allUnits, query, selectedCompound, selectedType, selectedMode, selectedSegment, selectedBeds, selectedPriceRange]);
+  }, [allUnits, query, selectedCompound, selectedType, selectedMode, selectedSegment, selectedBeds, selectedPriceRange, selectedCondition]);
 
   // Handle Mark / Unmark unit with 40-unit quota constraint
   const toggleUnitSelection = useCallback((unitId: string) => {
@@ -280,7 +290,8 @@ function ListingNetMapContent({
     selectedMode !== 'all' ||
     selectedSegment !== 'all' ||
     selectedBeds !== 'all' ||
-    selectedPriceRange !== 'all';
+    selectedPriceRange !== 'all' ||
+    selectedCondition !== 'all';
 
   const resetFilters = () => {
     setQuery('');
@@ -290,7 +301,21 @@ function ListingNetMapContent({
     setSelectedSegment('all');
     setSelectedBeds('all');
     setSelectedPriceRange('all');
+    setSelectedCondition('all');
   };
+
+  // Show labelled cluster nodes ONLY for the compound/area selected in the
+  // smart filter — the radar map stays clean instead of populating all 30+.
+  const visibleCompoundCodes = useMemo(() => {
+    const target = selectedCompound.trim().toLowerCase();
+    if (!target || target === 'all compounds' || target === 'new cairo' || target === '5th settlement') return null;
+    const codes = NEW_CAIRO_COMPOUNDS.filter((c) => {
+      const en = c.nameEn.toLowerCase();
+      const ar = (c.nameAr || '').toLowerCase();
+      return en.includes(target) || target.includes(en) || (ar && (ar.includes(target) || target.includes(ar)));
+    }).map((c) => c.code);
+    return codes.length > 0 ? codes : null;
+  }, [selectedCompound]);
 
   const selectedUnitsList = useMemo(() => {
     const idSet = selectedUnitIds;
@@ -363,7 +388,7 @@ function ListingNetMapContent({
   }, [filteredUnits]);
 
   return (
-    <div className="w-full space-y-6 text-white">
+    <div className="lnm-root w-full space-y-6 text-white">
       {/* Top Banner / Radar Introduction */}
       <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#002b4b] via-[#09152a] to-[#040914] border border-[#c99436]/30 p-6 md:p-8 shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -438,7 +463,7 @@ function ListingNetMapContent({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="كود، كمبوند، حي..."
-              className="w-full pl-3 pr-9 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#c99436] transition-colors"
+              className="lnm-search"
             />
           </div>
 
@@ -519,6 +544,21 @@ function ListingNetMapContent({
             <option value="owners_buy">ملاك مباشر (بيع)</option>
             <option value="broker_rent">وسطاء (إيجار)</option>
             <option value="broker_buy">وسطاء (بيع)</option>
+          </select>
+
+          {/* Condition (Finishing) */}
+          <select
+            value={selectedCondition}
+            onChange={(e) => setSelectedCondition(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] border border-white/10 text-xs text-white focus:outline-none focus:border-[#c99436]"
+            aria-label="حالة التشطيب"
+          >
+            <option value="all">أي حالة تشطيب</option>
+            <option value="fully">تشطيب كامل (Fully Finished)</option>
+            <option value="semi">نصف تشطيب (Semi Finished)</option>
+            <option value="core">على الطوب (Core &amp; Shell)</option>
+            <option value="furnished">مفروش (Furnished)</option>
+            <option value="new">جديد تماماً (Brand New)</option>
           </select>
         </div>
 
@@ -623,6 +663,7 @@ function ListingNetMapContent({
                 units={mapUnitPins}
                 selectedUnitIds={selectedUnitIds}
                 onToggleUnit={toggleUnitSelection}
+                visibleCompoundCodes={visibleCompoundCodes}
               />
             </div>
           </div>
@@ -723,7 +764,7 @@ function ListingNetMapContent({
 
                           <div className="text-xs text-white/60 flex items-center justify-between gap-2">
                             <span>
-                              {unit.type} · {unit.beds || 3} غرف · {unit.area || 160} م²
+                              {unit.type} · {unit.beds ? `${unit.beds} غرف` : '—'} · {unit.area ? `${unit.area} م²` : '—'}
                             </span>
                             <span className="font-extrabold text-emerald-400 font-mono">
                               {unit.priceLabel}
@@ -823,9 +864,9 @@ export default function ListingNetMap(props: ListingNetMapProps) {
   return (
     <Suspense
       fallback={
-        <div className="w-full h-96 rounded-3xl bg-[#09152a]/60 border border-white/10 flex items-center justify-center text-white/50">
+        <div className="lnm-root w-full h-96 rounded-3xl bg-[#09152a]/60 border border-white/10 flex items-center justify-center text-white/50">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 border-2 border-[#c99436] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 animate-spin" />
             <span>جاري تحميل رادار الوحدات...</span>
           </div>
         </div>

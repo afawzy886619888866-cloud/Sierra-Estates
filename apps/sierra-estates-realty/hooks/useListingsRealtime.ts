@@ -3,73 +3,53 @@
 /**
  * useListingsRealtime
  *
- * Supabase Realtime subscription for the `listings` table.
- * Listens to INSERT / UPDATE / DELETE events and patches the local
- * in-memory listings array in real-time without a full page reload.
+ * Supabase Realtime subscription for the `listings` table. Listens to
+ * INSERT / UPDATE / DELETE events and patches the in-memory listings array
+ * in real-time without a full page reload, so the properties map (pins,
+ * fan-out, compound cluster badges) updates the instant an admin edit lands.
+ *
+ * All row decisions (visibility gate, raw-row → RealListing mapping,
+ * add/refresh/remove) live in `lib/realtime/listings-realtime-logic.ts` —
+ * this file ONLY owns the websocket lifecycle. The logic module is the
+ * single source of truth for the /api/inventory contract and is fully
+ * unit-tested (see __tests__/listings-realtime-logic.test.ts).
  *
  * Architecture notes:
  * - Uses the NEXT_PUBLIC_ anon key to open a wss:// channel — safe for
  *   browser use; RLS on the `listings` table protects data.
  * - Channel is cleaned up on unmount (single-use, not a shared singleton).
  * - Does NOT require SUPABASE_SERVICE_ROLE_KEY on the client.
+ * - onResync: called after the channel RE-subscribes following an error
+ *   (events were missed while disconnected — the page refetches the
+ *   authoritative /api/inventory snapshot to reconcile).
+ * - Known delivery limitation, by design: Realtime delivers an UPDATE to
+ *   the anon role only when the NEW row is still SELECT-visible under the
+ *   public RLS policy, so a status flip can leave a stale pin with no
+ *   event. The page's periodic reconciliation (5-min, aligned with the
+ *   route's s-maxage=300 cache window) bounds that staleness.
  */
 
 import { useEffect, useRef } from 'react';
 import type { RealListing } from '@/app/(site)/properties/PropertiesPage';
+import {
+  applyRealtimeInsert,
+  applyRealtimeUpdate,
+  applyRealtimeDelete,
+} from '@/lib/realtime/listings-realtime-logic';
 
 type SetListings = React.Dispatch<React.SetStateAction<RealListing[]>>;
 
-function sanitizeRealtimeListing(raw: Record<string, unknown>, index: number): RealListing {
-  const compound = String(raw.compound || raw.location || 'New Cairo');
-  const price = Number(raw.price || 8_500_000);
-  const isRent =
-    raw.mode === 'rent' ||
-    (raw.operation && String(raw.operation).toLowerCase() === 'rent');
-  const egpM = Number((price / 1_000_000).toFixed(1));
-  const usd = isRent ? Math.round(price / 50) : Math.round(price / 5_000);
-  const priceLabel = isRent
-    ? `${price.toLocaleString()} EGP / mo`
-    : egpM >= 1
-    ? `${egpM}M EGP`
-    : `${price.toLocaleString()} EGP`;
-
-  return {
-    id: String(raw.id || `rt-${index}`),
-    code: String(raw.code || `SE-RT-${String(index + 1).padStart(4, '0')}`),
-    cmp: compound,
-    compound,
-    location: String(raw.location || compound),
-    zone: String(raw.zone || 'New Cairo'),
-    type: String(raw.type || raw.propertyType || 'Apartment'),
-    beds: Number(raw.beds || raw.bedrooms || 3),
-    bath: Number(raw.bath || raw.bathrooms || 2),
-    area: Number(raw.area || raw.area_sqm || 160),
-    price,
-    priceLabel: String(raw.priceLabel || priceLabel),
-    egpM,
-    usd,
-    ai: Number(raw.aiScore || 9.1),
-    tag: 'Verified Portfolio',
-    mode: isRent ? 'rent' : 'sale',
-    agent: 'Sierra Advisor Desk',
-    ago: 'Live',
-    img: String(
-      (raw.raw_data as Record<string, unknown> | undefined)?.img ||
-        raw.img ||
-        "https://static.shared.propertyfinder.eg/media/images/listing/01JMGA94NXVF25Q8R6VYVRV0Z4/c1817868-a833-4e1b-bdd0-e3de3dafdd39.png"
-    ),
-    whatsapp: 'https://wa.me/201092048333',
-    lat: Number(raw.latitude || raw.lat || 30.045),
-    lng: Number(raw.longitude || raw.lng || 31.59),
-    segment: raw.segment ? String(raw.segment) : undefined,
-    description: raw.description ? String(raw.description) : undefined,
-  };
-}
-
-export function useListingsRealtime(setListings: SetListings) {
+export function useListingsRealtime(
+  setListings: SetListings,
+  onStatus?: (connected: boolean) => void,
+  onResync?: () => void
+) {
   const channelRef = useRef<ReturnType<
     typeof import('@supabase/supabase-js').createClient
   >['channel'] extends (...args: infer _A) => infer R ? R : never | null>(null);
+  // Track whether we have ever connected: a SUBSCRIBED after a CHANNEL_ERROR
+  // is a RE-subscribe — events were missed, so the page must reconcile.
+  const everConnectedRef = useRef(false);
 
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -94,74 +74,46 @@ export function useListingsRealtime(setListings: SetListings) {
 
         const channel = client
           .channel('sierra-listings-realtime')
+          // No channel-level filters on purpose: the visibility contract
+          // (status='active' AND publish_status='PUBLISHABLE' AND not
+          // owner-sourced) is enforced in ONE place — the logic module —
+          // for INSERT and UPDATE alike. A channel filter on publish_status
+          // would suppress the very demotion events the client needs to
+          // remove a row, leaving a stale pin.
           .on(
             'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'listings',
-              filter: "status=eq.active",
-            },
+            { event: 'INSERT', schema: 'public', table: 'listings' },
             (payload) => {
-              const newRow = payload.new as Record<string, unknown>;
-              // Skip owner-sourced listings (same filter as initial load)
-              if (
-                newRow.party === 'Owner' ||
-                newRow.sourceType === 'owner' ||
-                newRow.segment === 'owners_rent' ||
-                newRow.segment === 'owners_buy' ||
-                newRow.tag === 'Direct Owner'
-              ) {
-                return;
-              }
-              setListings((prev) => {
-                if (prev.some((l) => l.id === String(newRow.id))) return prev;
-                return [sanitizeRealtimeListing(newRow, prev.length), ...prev];
-              });
+              setListings((prev) => applyRealtimeInsert(prev, payload.new));
             }
           )
           .on(
             'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'listings',
-            },
+            { event: 'UPDATE', schema: 'public', table: 'listings' },
             (payload) => {
-              const updated = payload.new as Record<string, unknown>;
-              // If listing becomes unavailable, remove it
-              if (updated.status && updated.status !== 'available') {
-                setListings((prev) =>
-                  prev.filter((l) => l.id !== String(updated.id))
-                );
-                return;
-              }
-              setListings((prev) =>
-                prev.map((l) =>
-                  l.id === String(updated.id)
-                    ? { ...l, ...sanitizeRealtimeListing(updated, 0), id: l.id }
-                    : l
-                )
-              );
+              setListings((prev) => applyRealtimeUpdate(prev, payload.new));
             }
           )
           .on(
             'postgres_changes',
-            {
-              event: 'DELETE',
-              schema: 'public',
-              table: 'listings',
-            },
+            { event: 'DELETE', schema: 'public', table: 'listings' },
             (payload) => {
-              const deletedId = String((payload.old as Record<string, unknown>).id);
-              setListings((prev) => prev.filter((l) => l.id !== deletedId));
+              setListings((prev) => applyRealtimeDelete(prev, payload.old));
             }
           )
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               console.info('[useListingsRealtime] ✅ Realtime channel connected.');
+              if (everConnectedRef.current) {
+                // Re-connected after a drop: reconcile with a fresh snapshot
+                // instead of trusting a possibly-missed event window.
+                onResync?.();
+              }
+              everConnectedRef.current = true;
+              onStatus?.(true);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
               console.warn('[useListingsRealtime] ⚠️ Realtime channel error:', status);
+              onStatus?.(false);
             }
           });
 
@@ -177,5 +129,5 @@ export function useListingsRealtime(setListings: SetListings) {
         channelRef.current = null;
       }
     };
-  }, [setListings]);
+  }, [setListings, onStatus, onResync]);
 }
