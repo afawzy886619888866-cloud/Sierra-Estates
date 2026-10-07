@@ -16,8 +16,7 @@ import type {
   SearchCriteria,
   UpsertPayload,
   UpsertResult,
-} from './types';
-import { fingerprint, checkGravityDedupe } from './dedupe';
+import { checkGravityDedupe } from './dedupe';
 import { assertTransition, isStale, FRESHNESS_SLA_DAYS, VERIFIED_STATUSES, type VerificationMetadata } from './lifecycle';
 
 /** Minimal query surface this service needs from the data layer. */
@@ -58,7 +57,7 @@ export class InventoryDomainService {
    */
   async upsertFromSource(source: IngestionSource, payload: UpsertPayload, actor = 'system'): Promise<UpsertResult> {
     assertCanonicalBackendForWrites('inventory-listing-write');
-    const { hash: fp, isDuplicate } = checkGravityDedupe({
+    const { hash: fp, isDuplicate: _isDuplicate } = checkGravityDedupe({
       compound: payload.compound,
       propertyType: payload.propertyType,
       offerType: payload.offerType,

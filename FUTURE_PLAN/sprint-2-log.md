@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 # Sprint 2 Handoff & Execution Log
 
 **Branch:** `future-plan/sprint-2`  
@@ -10,18 +11,20 @@
 ## Log Entries
 
 ### Phase 0 — Baseline & Branch Setup
+
 - **Date:** 2026-10-08
 - **Branch Created:** `future-plan/sprint-2`
 - **Baseline Verification:**
   - `turbo run type-check`: 21 packages in scope, 17 successful (4 without typecheck script), 0 errors.
   - Pin reconciliation: Reconciled TypeScript to 5.9.3 in `package.json` pnpm overrides and `pnpm-workspace.yaml` (reverting unintended major bump from dependabot that broke ts-jest compiler API).
-  - Test suites: 
+  - Test suites:
     - `packages/memory-engine`: 3 passed, 3 total (19/19 tests green).
     - `packages/gravity-memory`: 5 passed, 5 total (5/5 tests green).
     - `apps/sierra-estates-realty`: 130 passed, 130 total (1,455/1,455 tests green).
   - Working tree clean, baseline fully established.
 
 ### Phase 1 — Repo Health (04 §E)
+
 - **Date:** 2026-10-08
 - **Tasks Executed:**
   - **a) Staged Files & Directory Hygiene:**
@@ -43,6 +46,7 @@
     - Recommended for owner rotation at the OpenClaw gateway provider. Zero secrets committed.
 
 ### Phase 2 — Inventory Domain Service (04 §D)
+
 - **Date:** 2026-10-08
 - **Tasks Executed:**
   - Added `GravityMemory` class with `.seen(record_hash)` to `packages/gravity-memory/src/index.ts` and added `@sierra-estates/gravity-memory: "workspace:*"` dependency to `apps/sierra-estates-realty/package.json`.
@@ -59,6 +63,7 @@
   - `turbo run type-check`: 17/17 packages passed, 0 errors.
 
 ### Phase 3 — Eco/Smart-Compound Tags (04 §B5) [UI]
+
 - **Approval Note:** Written approval granted by owner on 2026-10-07 ("apply all yes plz") for frontend work in phases marked [UI].
 - **Date:** 2026-10-08
 - **Tasks Executed:**
