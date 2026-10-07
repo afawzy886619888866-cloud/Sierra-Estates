@@ -70,6 +70,8 @@ export interface InventoryListing {
   ownershipDocRef?: string;
   /** Set when status = reserved; ties the lock to a payment intent. */
   reservationRef?: string;
+  /** Ingestion sources tracking for deduplication & provenance. */
+  sources?: Record<string, { lastSeenAt: string; ref: string | null }>;
   statusHistory: Array<{ from: ListingStatus | null; to: ListingStatus; at: string; by: string; note?: string }>;
 }
 
