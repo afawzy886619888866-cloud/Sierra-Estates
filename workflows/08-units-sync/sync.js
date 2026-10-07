@@ -24,13 +24,22 @@
  *   Availablty     → status: Available→available, Not available→off-market,
  *                    Sold→sold, No answer/Follow up/other→pending
  *                    (+ raw text into `availability`)
- *   Availability   → publish_status: available→PUBLISHABLE, else REVIEW_REQUIRED
+ *   Availability   → status only (never publishability — see Phase 6 note)
  *   Name/Mobile    → owner_name / owner_phone
  *   full row       → raw_data JSONB
- * Every synced row: verified_at=now(), sync_source='sheets-units',
+ * Every synced row: sync_source='sheets-units',
  * source_channel='sheets' — mapped to the LIVE listings columns (garden_sqm,
- * furnishing_status, verified_at, publish_status; the repo schema.sql names
+ * furnishing_status, publish_status; the repo schema.sql names
  * garden_area/verified/publish_to_client do not exist on the live DB).
+ *
+ * Phase 6 no-fabrication rule (migration 026 era):
+ *   sheet sync is DATA INGESTION ONLY — it never writes verified_at,
+ *   verified_by or source_verified_at (human verification is the only
+ *   source of those stamps), and it never promotes a row to PUBLISHABLE:
+ *   inserts land as REVIEW_REQUIRED, updates never touch publish_status
+ *   or provenance. The 8-condition verification gate (policy 020) is
+ *   the sole path to PUBLISHABLE. Migration 20261007_026 repaired the
+ *   rows the pre-fix workflow had stamped.
  *
  * No-fabrication rule respected: unknown facts stay null/0 — city, zone,
  * description are never invented.
@@ -57,8 +66,10 @@ function failUnconfigured(msg) {
   process.exit(2);
 }
 
-if (!SB_URL || !SB_KEY) failUnconfigured('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing');
-if (!SHEET_ID) failUnconfigured('UNITS_SHEET_ID missing');
+function assertConfigured() {
+  if (!SB_URL || !SB_KEY) failUnconfigured('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing');
+  if (!SHEET_ID) failUnconfigured('UNITS_SHEET_ID missing');
+}
 
 function sbHeaders(extra = {}) {
   return {
@@ -161,7 +172,6 @@ function rowToListing(row) {
     furnishing_status: get('Furnished or not', 'Furnished') || null,
     status: mapStatus(get('Availablty', 'Availability')),
     availability: get('Availablty', 'Availability') || null,
-    verified_at: new Date().toISOString(),
     sync_source: 'sheets-units',
     source_channel: 'sheets',
     owner_name: get('Name', 'name') || null,
@@ -170,7 +180,10 @@ function rowToListing(row) {
     raw_data: row,
     updated_at: new Date().toISOString(),
   };
-  listing.publish_status = listing.status === 'available' ? 'PUBLISHABLE' : 'REVIEW_REQUIRED';
+  // Phase 6 no-fabrication rule: NO verified_at / verified_by /
+  // source_verified_at and NO publish_status on this object — fresh rows
+  // get REVIEW_REQUIRED at the insert site; PATCHes never touch
+  // publishability or provenance (PostgREST only mutates provided keys).
   if (listing.garden_sqm > 0) listing.amenities.push('garden');
   if (get('Pool', 'pool')) listing.amenities.push('pool');
   return listing;
@@ -225,9 +238,11 @@ async function syncChunk(listings) {
     updated++;
   }
   if (fresh.length) {
+    // Phase 6: fresh sheet rows land as REVIEW_REQUIRED — never PUBLISHABLE.
+    const insertBody = fresh.map((l) => ({ ...l, publish_status: 'REVIEW_REQUIRED' }));
     const ins = await requestJson(
       `${SB_URL}/rest/v1/listings`,
-      { method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }), body: fresh, timeoutMs: 20000 }
+      { method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }), body: insertBody, timeoutMs: 20000 }
     );
     if (!ins.ok) throw new Error(`insert HTTP ${ins.status}: ${JSON.stringify(ins.data).slice(0, 200)}`);
     inserted = fresh.length;
@@ -236,6 +251,7 @@ async function syncChunk(listings) {
 }
 
 async function main() {
+  assertConfigured();
   console.log(`units-sync: starting → sheet ${SHEET_ID} gid ${SHEET_GID}`);
 
   const { headers, rows } = await fetchSheetRows();
@@ -275,7 +291,13 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error(`units-sync FAILED: ${err.message}`);
-  process.exit(1);
-});
+/* Unit-testable surface: the runner spawns this file as a child process
+ * (it never require()s it), so exporting the pure helpers is safe. */
+module.exports = { rowToListing, mapStatus, detectDealType, unitHash, parseCsv };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`units-sync FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}
