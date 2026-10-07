@@ -380,8 +380,8 @@ importers:
   lib/integrations/aws:
     dependencies:
       '@aws-sdk/client-ec2':
-        specifier: ^3.930.0
-        version: 3.1144.0
+        specifier: ^3.1146.0
+        version: 3.1146.0
       '@aws-sdk/client-lambda':
         specifier: ^3.1146.0
         version: 3.1146.0
@@ -764,8 +764,8 @@ packages:
   '@arizeai/openinference-semantic-conventions@2.12.0':
     resolution: {integrity: sha512-Yrd1sEEfDvTVLb5J1F1UfK6BYux0HsufBgXJAmH36T1/N0IQsmOkZQWskZL+aRKz/yO7JiRutuz7h7hCGTyiIA==}
 
-  '@aws-sdk/client-ec2@3.1144.0':
-    resolution: {integrity: sha512-ORxya+a6cku2ldKyJ8JdjThE7gj19mjcIwGFB5WPu9D9Ayoto31O8gd1RjRp67Vjh1NFrQECoWUTXAZlNUVqHQ==}
+  '@aws-sdk/client-ec2@3.1146.0':
+    resolution: {integrity: sha512-3z61SecUOH3OCdYyNPHHoHSxZpbFlTxscSsLvBL6zUAwsnpznKZWDTGtjcJMXIUBERpT3Sopnp8Vy+zAUcT6nQ==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-lambda@3.1146.0':
@@ -6293,13 +6293,13 @@ snapshots:
 
   '@arizeai/openinference-semantic-conventions@2.12.0': {}
 
-  '@aws-sdk/client-ec2@3.1144.0':
+  '@aws-sdk/client-ec2@3.1146.0':
     dependencies:
       '@aws-sdk/core': 3.978.1
       '@aws-sdk/credential-provider-node': 3.972.84
       '@aws-sdk/middleware-sdk-ec2': 3.972.60
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.35.0
+      '@smithy/core': 3.35.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
       '@smithy/types': 4.19.0
@@ -6415,7 +6415,7 @@ snapshots:
     dependencies:
       '@aws-sdk/core': 3.978.1
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.35.0
+      '@smithy/core': 3.35.1
       '@smithy/signature-v4': 5.7.4
       '@smithy/types': 4.19.0
       tslib: 2.8.1
