@@ -58,6 +58,10 @@ id_ed25519*
 *.db-wal
 *.db-shm
 
+# Legacy and Archive
+firebase/
+_unused_archive/
+
 # Python & Virtual Environments
 venv/
 .venv/

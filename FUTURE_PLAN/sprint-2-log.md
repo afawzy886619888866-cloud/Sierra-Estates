@@ -1,0 +1,44 @@
+# Sprint 2 Handoff & Execution Log
+
+**Branch:** `future-plan/sprint-2`  
+**Started:** 2026-10-08  
+**Scope:** `FUTURE_PLAN/04-growth-and-enhancements.md` sections B, D, E  
+**UI Approval:** Owner written approval on 2026-10-07 ("apply all yes plz") for phases marked [UI] (Phase 3 & Phase 5). Recorded in UI commits.
+
+---
+
+## Log Entries
+
+### Phase 0 — Baseline & Branch Setup
+- **Date:** 2026-10-08
+- **Branch Created:** `future-plan/sprint-2`
+- **Baseline Verification:**
+  - `turbo run type-check`: 21 packages in scope, 17 successful (4 without typecheck script), 0 errors.
+  - Pin reconciliation: Reconciled TypeScript to 5.9.3 in `package.json` pnpm overrides and `pnpm-workspace.yaml` (reverting unintended major bump from dependabot that broke ts-jest compiler API).
+  - Test suites: 
+    - `packages/memory-engine`: 3 passed, 3 total (19/19 tests green).
+    - `packages/gravity-memory`: 5 passed, 5 total (5/5 tests green).
+    - `apps/sierra-estates-realty`: 130 passed, 130 total (1,455/1,455 tests green).
+  - Working tree clean, baseline fully established.
+
+### Phase 1 — Repo Health (04 §E)
+- **Date:** 2026-10-08
+- **Tasks Executed:**
+  - **a) Staged Files & Directory Hygiene:**
+    - Verified `firebase/`, `.venv/`, and `_unused_archive/` are not tracked in git (0 files tracked).
+    - Explicitly added `firebase/` and `_unused_archive/` to root `.gitignore`.
+    - Verified staged files needed by later phases (`pdf-export-service.ts`, `payment-service.ts`, and full DSL parser in `packages/db/lib/dsl/parser.ts`) are already extracted and safely present.
+  - **b) Stale README Verification:**
+    - Root `README.md` is current and accurately presents the dual-domain Next.js 16 architecture (`sierra-estates.net` and `admin.sierra-estates.net`).
+  - **c) Legacy Duplicates Audit:**
+    - Completed duplicate audit across bot and service scripts.
+    - Verified that historical references to "7-20 copies" arose from a local untracked `SE-Vercel-deploy-main` folder (already gitignored).
+    - Verified `scripts/legacy-logic-archive/` is unreferenced. Active bot/service implementations in `packages/agents-core`, `apps/agents`, and `apps/sierra-estates-realty` remain authoritative.
+  - **d) Recommendation Memo — `apps/admin-dashboard` vs `(admin)` / `app/admin` Routes:**
+    - **Status:** The legacy standalone Vite/React SPA `apps/admin-dashboard` has already been consolidated into Next.js App Router under `apps/sierra-estates-realty/app/admin` (`AdminPortal.tsx`, `AdminPageShell.tsx`, and associated modular view panels in `app/admin/views`).
+    - **Routing:** Handled via Next.js 16 Edge Proxy (`proxy.ts`), which transparently rewrites `admin.sierra-estates.net` root requests to `/admin` with unified cookie-based RBAC session guards.
+    - **Recommendation:** Maintain the consolidated `app/admin` architecture within the Next.js App Router. Do NOT reintroduce a separate `apps/admin-dashboard` SPA. Benefits: unified deployment bundle, single auth cookie domain, shared TypeScript domain types, zero build duplication, and seamless server components.
+  - **e) OpenClaw Token Audit:**
+    - Token identified in local gitignored `.env` and `.env.local` line 295: `OPENCLAW_TOKEN="02b25ffca992d1128741c5fb58a34f8b680cfef51bfbec02"`.
+    - Rigorous full-repo scan confirmed that **0 git-tracked files** contain this token material.
+    - Recommended for owner rotation at the OpenClaw gateway provider. Zero secrets committed.
