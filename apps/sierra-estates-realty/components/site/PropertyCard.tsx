@@ -27,9 +27,12 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Leaf,
+  Zap,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { GsapMagnetic } from './GsapAnimations';
+import { getEcoSmartTagMeta } from '@/lib/services/listing-normalize';
 
 // AI scores are optional on public inventory units (anti-fabrication rule 5:
 // hide rather than synthesize). Never dereference an undefined score — render
@@ -62,6 +65,8 @@ export interface CardListing {
   verifiedFresh?: boolean;
   images?: string[];
   price?: number;
+  /** Eco & Smart compound classification tags */
+  tags?: string[];
   /** true when the displayed image is curated catalog imagery, not a real
    *  photo of this unit (§21: never imply unverified photos are the unit). */
   imgCurated?: boolean;

@@ -336,5 +336,129 @@ export function mapRowToUnit(row: Raw, opts: MapOptions = {}): Partial<Unit> | n
     unit.images = Array.from(new Set(extractedImages));
   }
 
+  // Eco and Smart Compound tags extraction
+  const textBlob = [
+    comment,
+    name,
+    location,
+    pick(row, ['Features', 'features', 'Tags', 'tags', 'Amenities', 'amenities', 'المميزات', 'المواصفات']),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const tags = extractEcoSmartTags(textBlob);
+  if (tags.length > 0) {
+    unit.tags = tags;
+  }
+
   return unit;
+}
+
+// ─── 4. Eco / Smart Compound Tags Taxonomy ──────────────────────────────────
+
+export interface CompoundTag {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  category: 'eco' | 'smart';
+  icon: string;
+}
+
+export const ECO_SMART_TAGS: readonly CompoundTag[] = [
+  { id: 'solar_powered', labelEn: 'Solar Powered', labelAr: 'طاقة شمسية', category: 'eco', icon: 'Sun' },
+  { id: 'smart_home', labelEn: 'Smart Home Automation', labelAr: 'منزل ذكي', category: 'smart', icon: 'Zap' },
+  { id: 'ev_charging', labelEn: 'EV Charging', labelAr: 'شحن سيارات كهربائية', category: 'eco', icon: 'BatteryCharging' },
+  { id: 'green_building', labelEn: 'Green Architecture', labelAr: 'عمارة خضراء', category: 'eco', icon: 'Leaf' },
+  { id: 'water_recycling', labelEn: 'Water Recycling', labelAr: 'تدوير المياه', category: 'eco', icon: 'Droplets' },
+  { id: 'energy_efficient', labelEn: 'Energy Efficient', labelAr: 'كفاءة الطاقة', category: 'eco', icon: 'ShieldCheck' },
+] as const;
+
+export function getEcoSmartTagMeta(tagId: string): CompoundTag | undefined {
+  return ECO_SMART_TAGS.find((t) => t.id === tagId);
+}
+
+/**
+ * Extracts eco and smart compound tags from raw text, amenities, or descriptions.
+ * Detects both English and Arabic real-estate terminology.
+ */
+export function extractEcoSmartTags(raw: unknown): string[] {
+  if (!raw) return [];
+  const text = String(raw).toLowerCase();
+  const tags: string[] = [];
+
+  // Solar Powered
+  if (
+    text.includes('solar') ||
+    text.includes('شمسية') ||
+    text.includes('طاقة شمسية') ||
+    text.includes('solar panel') ||
+    text.includes('ألواح شمسية')
+  ) {
+    tags.push('solar_powered');
+  }
+
+  // Smart Home
+  if (
+    text.includes('smart') ||
+    text.includes('smart home') ||
+    text.includes('smart-home') ||
+    text.includes('سمارت') ||
+    text.includes('منزل ذكي') ||
+    text.includes('بيت ذكي') ||
+    text.includes('automation') ||
+    text.includes('أتمتة')
+  ) {
+    tags.push('smart_home');
+  }
+
+  // EV Charging
+  if (
+    text.includes('ev charging') ||
+    text.includes('ev charger') ||
+    text.includes('electric car') ||
+    text.includes('شاحن سيارة كهربائية') ||
+    text.includes('شاحن كهربائي') ||
+    text.includes('شحن كهربائي') ||
+    /\bev\b/.test(text)
+  ) {
+    tags.push('ev_charging');
+  }
+
+  // Green Architecture
+  if (
+    text.includes('green building') ||
+    text.includes('leed') ||
+    text.includes('sustainable') ||
+    text.includes('مستدام') ||
+    text.includes('عمارة خضراء') ||
+    text.includes('مبنى أخضر') ||
+    text.includes('green spine')
+  ) {
+    tags.push('green_building');
+  }
+
+  // Water Recycling
+  if (
+    text.includes('water recycling') ||
+    text.includes('greywater') ||
+    text.includes('smart irrigation') ||
+    text.includes('تدوير المياه') ||
+    text.includes('ري ذكي') ||
+    text.includes('معالجة المياه')
+  ) {
+    tags.push('water_recycling');
+  }
+
+  // Energy Efficient
+  if (
+    text.includes('energy efficient') ||
+    text.includes('thermal insulation') ||
+    text.includes('عزل حراري') ||
+    text.includes('ترشيد الطاقة') ||
+    text.includes('كفاءة الطاقة') ||
+    text.includes('energy saving')
+  ) {
+    tags.push('energy_efficient');
+  }
+
+  return Array.from(new Set(tags));
 }

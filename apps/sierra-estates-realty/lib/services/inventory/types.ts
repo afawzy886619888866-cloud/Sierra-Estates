@@ -72,6 +72,8 @@ export interface InventoryListing {
   reservationRef?: string;
   /** Ingestion sources tracking for deduplication & provenance. */
   sources?: Record<string, { lastSeenAt: string; ref: string | null }>;
+  /** Eco / Smart and compound classification tags */
+  tags?: string[];
   statusHistory: Array<{ from: ListingStatus | null; to: ListingStatus; at: string; by: string; note?: string }>;
 }
 
@@ -93,6 +95,7 @@ export interface UpsertPayload {
   sourceRef?: string;
   ownershipDocRef?: string;
   verifiedBy?: string;
+  tags?: string[];
 }
 
 export interface SearchCriteria {
@@ -105,6 +108,7 @@ export interface SearchCriteria {
   maxPrice?: number;
   minArea?: number;
   bedrooms?: number;
+  tags?: string[];
   page?: number;
   limit?: number;
   cursor?: string;
