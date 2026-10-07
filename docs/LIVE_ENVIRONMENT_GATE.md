@@ -33,6 +33,7 @@ and automation runners. No credentials are revealed anywhere in this document.
 | Default constraints | **CONNECTED** | `column_default` on `listings.publish_status` is NULL (standing default dropped via 025). |
 
 ### Mechanism & Evidence: The +177 Listings Growth (Resolved)
+
 - **Baseline count**: 15,754 listings on 2026-09-28.
 - **Session growth**: Observed at 15,932 (+177) during Phase 2 mid-run, completed at 15,994 (+240 net additions).
 - **Ingestion process**: Workflow 08 (`workflows/08-units-sync/sync.js`) executed at `2026-10-04T15:07:29.211Z` to `15:07:32.068Z`. It fetched 324 rows from Google Sheets tab `gid=1127958606` via gviz CSV export, upserting 240 valid units into `public.listings`.
@@ -40,6 +41,7 @@ and automation runners. No credentials are revealed anywhere in this document.
 - **Preventive patch**: Patched in commit `871299e87` — `listing.publish_status = 'REVIEW_REQUIRED'` is now hardcoded. All 240 rows are held in `REVIEW_REQUIRED` (0 PUBLISHABLE).
 
 ### Permanent Regression Test (Migration 025)
+
 - **Probe execution**: Probe row `probe-test-1791229563902` was inserted into `public.listings` WITHOUT specifying `publish_status`.
 - **Landed state**: Row landed with `publish_status: null`, proving the database default was successfully dropped (no fallback to PUBLISHABLE).
 - **Anon visibility check**: Querying the probe row via the `anon` client returned 0 rows (error: null). Total visible to anon remained 0 under RLS Policy 020.
@@ -122,6 +124,7 @@ and automation runners. No credentials are revealed anywhere in this document.
 ## GATE
 
 Interim phase verification is **COMPLETE and ground-truthed with raw evidence**:
+
 1. All 22 migrations ledgered (incl. 020, 022, 025).
 2. Standing default constraint dropped; permanent regression probe verified (`publish_status: null`, anon sees 0).
 3. 15,994 listings held in `REVIEW_REQUIRED`, 0 `PUBLISHABLE`.
