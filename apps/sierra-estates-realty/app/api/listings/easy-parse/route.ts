@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
+import { extractEcoSmartTags } from '@/lib/services/listing-normalize';
 import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -33,6 +34,7 @@ interface ParsedListingResult {
   ownerName: string | null;
   mobile: string | null;
   features: string[];
+  tags: string[];
   sierraCode: string | null;
   /** Not fabricated: null unless a real extraction-quality signal exists. */
   aiScore: number | null;
@@ -207,6 +209,7 @@ function heuristicFallbackParse(rawText: string): ParsedListingResult {
     ownerName: null,
     mobile,
     features: gardenArea !== null ? ['Garden'] : [],
+    tags: extractEcoSmartTags(rawText),
     sierraCode: codeMeta?.code ?? null,
     aiScore: null,
     aiSummary,
@@ -318,6 +321,7 @@ Return STRICTLY a JSON object with this format (no markdown code fences):
           ownerName: typeof extracted.ownerName === 'string' && extracted.ownerName.trim() ? extracted.ownerName : null,
           mobile: typeof extracted.mobile === 'string' && extracted.mobile.trim() ? extracted.mobile : null,
           features: Array.isArray(extracted.features) ? extracted.features.filter((f: unknown) => typeof f === 'string' && f) : [],
+          tags: extractEcoSmartTags(rawText),
           sierraCode: codeMeta?.code ?? null,
           aiScore: null,
           aiSummary: typeof extracted.aiSummary === 'string' && extracted.aiSummary.trim() ? extracted.aiSummary : null,
