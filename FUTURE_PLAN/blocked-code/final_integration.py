@@ -8,12 +8,8 @@ from firebase_admin import credentials, firestore
 import google.generativeai as genai
 
 # Add local path for Gravity Memory
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../11_Core_Intelligence')))
-try:
-    from memory.gravity_core import GravityMemory
-except ImportError:
-    print("⚠️ GravityMemory import failed. Continuing without local memory vault.")
-    GravityMemory = None
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../packages/gravity-memory')))
+from gravity_memory import GravityMemory
 
 # ---------------------------------------------------------
 # 1. CONFIGURATION
@@ -44,10 +40,10 @@ def init_firebase():
             break
             
     if not key_path:
-        print("❌ Error: Firebase Service Account Key not found.")
+        print("[ERROR] Firebase Service Account Key not found.")
         return None
     
-    print(f"🔑 Using Service Account: {key_path}")
+    print(f"[AUTH] Using Service Account: {key_path}")
     cred = credentials.Certificate(key_path)
     if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
@@ -137,14 +133,15 @@ def map_row(row):
 # ---------------------------------------------------------
 
 def main():
-    print("💎 Sierra Blu: Institutional Integration Sequence Initiated")
+    print("[INIT] Sierra Blu: Institutional Integration Sequence Initiated")
     db = init_firebase()
     if not db: return
 
     df = pd.read_excel(EXCEL_PATH)
-    print(f"📈 Analyzing {len(df)} records from Master Portfolio...")
+    print(f"[DATA] Analyzing {len(df)} records from Master Portfolio...")
 
-    gm = GravityMemory(vault_path="../11_Core_Intelligence/memory/vault.json") if GravityMemory else None
+    vault_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../packages/gravity-memory/vault.json'))
+    gm = GravityMemory(vault_path=vault_path)
     
     success_count = 0
     duplicate_count = 0
@@ -168,7 +165,7 @@ def main():
         
         if batch_size >= 450: # Firestore limit is 500
             batch.commit()
-            print(f"✅ Committed batch of {batch_size} records...")
+            print(f"[COMMIT] Committed batch of {batch_size} records...")
             batch = db.batch()
             batch_size = 0
             
@@ -179,10 +176,10 @@ def main():
     if batch_size > 0:
         batch.commit()
     
-    print("\n🏁 Integration Summary:")
-    print(f"✨ Successfully Ingested: {success_count} units")
-    print(f"⏩ Duplicates Skipped: {duplicate_count}")
-    print(f"🏛️ Total Portfolio Records: {success_count + duplicate_count}")
+    print("\n[SUMMARY] Integration Summary:")
+    print(f"[OK] Successfully Ingested: {success_count} units")
+    print(f"[SKIP] Duplicates Skipped: {duplicate_count}")
+    print(f"[TOTAL] Total Portfolio Records: {success_count + duplicate_count}")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,21 @@
+{
+  "name": "@sierra-estates/gravity-memory",
+  "version": "1.0.0",
+  "description": "Gravity Memory adapter on top of OpenMemory",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "test": "python -m unittest discover -s tests"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}
