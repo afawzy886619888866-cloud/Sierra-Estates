@@ -419,19 +419,18 @@ export default function PropertyCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="pcard-btn-whatsapp"
-              style={{ padding: '6px 10px', fontSize: 11 }}
+              className="pcard-btn-whatsapp group"
+              style={{ padding: '6px 11px', fontSize: 11 }}
             >
-              <Phone style={{ width: 12, height: 12 }} />
+              <Phone style={{ width: 12, height: 12 }} className="transition-transform duration-300 group-hover:scale-110" />
               <span>WhatsApp</span>
             </a>
             <Link
               href={href}
-              className="pcard-btn-whatsapp"
-              style={{ textDecoration: 'none', background: 'rgba(201, 168, 76, 0.15)', borderColor: 'rgba(201, 168, 76, 0.4)', color: '#C9A84C' }}
+              className="pcard-btn-deal group"
             >
               <span>{isAr ? 'تحليل الاستثمار' : 'Analyze Deal'}</span>
-              <ArrowUpRight style={{ width: 14, height: 14 }} />
+              <ArrowUpRight style={{ width: 14, height: 14 }} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
         </div>
@@ -707,23 +706,23 @@ export default function PropertyCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="pcard-btn-whatsapp"
+            className="pcard-btn-whatsapp group"
             style={{
               background: '#25D366',
               color: '#FFFFFF',
               borderColor: '#25D366',
-              padding: '6px 10px',
+              padding: '6px 11px',
               fontSize: 11,
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 5,
               borderRadius: 8,
               textDecoration: 'none',
             }}
             title={isAr ? 'استفسار فوري عبر واتساب' : 'Instant WhatsApp Inquiry'}
           >
-            <Phone style={{ width: 12, height: 12 }} />
+            <Phone style={{ width: 12, height: 12 }} className="transition-transform duration-300 group-hover:scale-110" />
             <span>WhatsApp</span>
           </a>
 
