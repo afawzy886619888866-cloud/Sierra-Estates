@@ -177,47 +177,24 @@ export default function HomeHero() {
           </p>
 
           {s.href ? (
-            <div style={{ marginTop: '22px', display: 'flex', gap: '12px', flexWrap: 'wrap', ...captionStyle }}>
+            <div style={{ marginTop: '22px', display: 'flex', gap: '14px', flexWrap: 'wrap', ...captionStyle }}>
               <Link
                 href={isAr ? `/ar${s.href}` : s.href}
-                className="btn-hero-cinematic"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #DFAD3A 0%, #B38624 100%)',
-                  color: '#0a1622',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  boxShadow: '0 8px 24px rgba(223, 173, 58, 0.35)',
-                  transition: 'all 0.3s ease',
-                }}
+                className="btn-hero-cinematic group"
               >
                 <span>{isAr ? (s.ctaAr || 'عرض تفاصيل المشروع') : (s.cta || 'Explore Project Evidence')}</span>
-                <ArrowRight className="i" style={{ width: 16, height: 16 }} />
+                <span className="btn-icon-capsule">
+                  <ArrowRight className="i transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-[1px]" style={{ width: 15, height: 15 }} />
+                </span>
               </Link>
               <Link
                 href={isAr ? `/ar${s.href}/inventory` : `${s.href}/inventory`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 20px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#ffffff',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  transition: 'all 0.3s ease',
-                }}
+                className="btn-hero-secondary group"
               >
                 <span>{isAr ? 'الوحدات المتاحة والأسعار' : 'Available Inventory & Yields'}</span>
+                <span className="btn-icon-capsule-glass">
+                  <Sparkles className="i transition-transform duration-300 group-hover:scale-110" style={{ width: 14, height: 14 }} />
+                </span>
               </Link>
             </div>
           ) : (

@@ -24,7 +24,10 @@
  *
  * Env: UNITS_SHEET_ID / UNITS_SHEET_GID (defaults = owner inventory sheet),
  *      WHATSAPP_API_TOKEN, OPENWA_SESSION_ID, WHATSAPP_API_URL,
- *      WF_OWNER_CONTACT_DAILY_CAP (40), WF_DRY_RUN, WF_OUTREACH_AVAILABILITIES
+ *      OPENWA_SESSION_IDS (4-line pool: 'line1,line2,line3,line4' — overrides
+ *      OPENWA_SESSION_ID when set; cap becomes per-line × pool unless capped
+ *      explicitly), WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
+ *      WF_OUTREACH_AVAILABILITIES
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
 const fs = require('fs');
@@ -33,7 +36,11 @@ const { GatewayClient } = require('../lib/gateway-client');
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
-const DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
+const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
+// Pool-aware: recomputed in main() as per-line × pool unless the operator set
+// WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
+const CAP_EXPLICIT = process.env.WF_OWNER_CONTACT_DAILY_CAP != null && process.env.WF_OWNER_CONTACT_DAILY_CAP !== '';
+let DAILY_CAP = PER_LINE_DAILY_CAP;
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -44,7 +51,7 @@ const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state
 const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
 const DAILY = path.join(STATE_DIR, 'owner-outreach-daily.json');
 
-const summary = { candidates: 0, sent: 0, skippedDup: 0, skippedCap: 0, skippedHours: false, failed: 0, dryRun: DRY_RUN };
+const summary = { candidates: 0, sent: 0, skippedDup: 0, skippedCap: 0, skippedHours: false, failed: 0, dryRun: DRY_RUN, bySession: {} };
 
 function parseCsv(text) {
   const rows = []; let row = [], field = '', inQ = false;
@@ -138,7 +145,7 @@ async function main() {
     console.log('UNCONFIGURED: WHATSAPP_API_TOKEN (operator key) missing');
     process.exit(2);
   }
-  if (!process.env.OPENWA_SESSION_ID) { console.log('UNCONFIGURED: OPENWA_SESSION_ID missing'); process.exit(2); }
+  if (!process.env.OPENWA_SESSION_ID && !process.env.OPENWA_SESSION_IDS) { console.log('UNCONFIGURED: OPENWA_SESSION_ID / OPENWA_SESSION_IDS missing'); process.exit(2); }
 
   // Active-hours gate (Cairo) — never text owners at night
   const hr = cairoNow().getHours();
@@ -151,13 +158,33 @@ async function main() {
 
   // Gateway pre-flight (advisory in dry-run — validation must work without a live session)
   const gw = new GatewayClient();
+  // 4-line pool: resolve names→UUIDs up front and report each line's status.
+  const poolEntries = await gw.resolvePool().catch(() => []);
+  if (poolEntries.length) {
+    DAILY_CAP = CAP_EXPLICIT ? PER_LINE_DAILY_CAP : PER_LINE_DAILY_CAP * poolEntries.length;
+    const ready = [];
+    for (const e of poolEntries) {
+      try {
+        const one = await gw.statusFor(e.uuid);
+        console.log(`pool session ${e.name} (${e.uuid.slice(0, 8)}): ${one.status}${one.phone ? ` ${one.phone}` : ''}`);
+        if (one.status === 'ready') ready.push(e);
+      } catch (err) {
+        console.log(`pool session ${e.name}: unreachable (${err.message})`);
+      }
+    }
+    if (!ready.length && !DRY_RUN) {
+      console.log('no pool session ready — retry at next cron tick');
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      process.exit(0);
+    }
+  }
   const st = await gw.status();
-  if (st.status !== 'ready' && !DRY_RUN) {
+  if (st.status !== 'ready' && !poolEntries.length && !DRY_RUN) {
     console.log(`gateway session not ready (${st.status}) — retry at next cron tick`);
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
     process.exit(0);
   }
-  console.log(`gateway status: ${st.status} ${st.status === 'ready' ? `(${st.phone || '?'} push=${st.pushName || '?'})` : '(dry-run continues anyway)'} `);
+  console.log(`gateway status: ${st.status} ${st.status === 'ready' ? `(${st.phone || '?'} push=${st.pushName || '?'})` : '(dry-run continues anyway)'} | pool: ${poolEntries.length || 1} line(s), cap ${DAILY_CAP}/day`);
 
   // Fetch sheet
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
@@ -207,13 +234,15 @@ async function main() {
       continue;
     }
     try {
-      await gw.sendText(phone, text, { retries: 2 });
+      const sendRes = await gw.sendText(phone, text, { retries: 2 });
+      const usedSession = sendRes.session || 'default';
       summary.sent++;
+      summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
       daily.sent++;
       saveDaily(daily);
-      appendLedger({ phone, code: c.code, at: new Date().toISOString(), avail: c.avail });
+      appendLedger({ phone, code: c.code, at: new Date().toISOString(), avail: c.avail, session: usedSession });
       contacted.add(phone);
-      console.log(`sent → ${phone} (${c.code}) [${daily.sent}/${DAILY_CAP} today]`);
+      console.log(`sent → ${phone} (${c.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
     } catch (err) {
       summary.failed++;
       console.error(`send failed for ${phone}: ${err.message}`);

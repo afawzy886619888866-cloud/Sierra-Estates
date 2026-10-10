@@ -123,6 +123,8 @@ export interface TwilioSendResult {
   simulated: boolean;
   /** Which channel actually delivered — observability for the outbox UI. */
   provider?: WhatsAppSendProvider;
+  /** Gateway session (line) that delivered, when provider=openwa. */
+  session?: string;
 }
 
 // ─── OpenWA gateway sender (shared by the direct path AND the queue drain) ──
@@ -137,6 +139,68 @@ const openwaUrlConfigured = () =>
 // gateway database picks up the new UUID transparently).
 let openwaSessionUuidCache: string | null = null;
 const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+// ─── 4-line sender pool (Oct 2026) ──
+// Pool source, in order: explicit `sessions` argument (drain passes
+// system_config whatsapp_outreach.gatewaySessions) → env OPENWA_SESSION_IDS
+// (comma-separated names or UUIDs, matching the Lines sheet). Empty pool ⇒
+// exactly the legacy single-session behavior below.
+const OPENWA_POOL_CACHE_TTL_MS = 5 * 60_000;
+const OPENWA_SESSION_BACKOFF_MS = 2 * 60_000;
+let openwaPoolMapCache: { at: number; map: Map<string, string> } | null = null; // name → uuid
+const openwaBenchedUntil = new Map<string, number>(); // uuid → retry-after epoch ms
+let openwaPoolCursor = 0;
+
+function openwaPoolCandidatesFromEnv(): string[] {
+  return String(process.env.OPENWA_SESSION_IDS || '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+async function fetchOpenwaSessionMap(): Promise<Map<string, string>> {
+  if (openwaPoolMapCache && Date.now() - openwaPoolMapCache.at < OPENWA_POOL_CACHE_TTL_MS) {
+    return openwaPoolMapCache.map;
+  }
+  const map = new Map<string, string>();
+  const openwaUrl = openwaUrlConfigured();
+  const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
+  if (openwaUrl && openwaKey) {
+    try {
+      const res = await fetch(`${openwaUrl.replace(/\/+$/, '')}/api/sessions`, {
+        headers: { 'X-API-Key': openwaKey },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const list = (await res.json().catch(() => [])) as Array<{ id?: string; name?: string }>;
+        for (const s of Array.isArray(list) ? list : []) {
+          if (s?.id && s?.name) map.set(s.name, s.id);
+        }
+      }
+    } catch {
+      // unresolved this run — callers degrade gracefully
+    }
+  }
+  openwaPoolMapCache = { at: Date.now(), map };
+  return map;
+}
+
+/** Names → UUIDs (unresolvable names are dropped with a warning, never guessed). */
+async function resolveOpenwaSessionIds(candidates: string[]): Promise<string[]> {
+  const out: string[] = [];
+  const pending: string[] = [];
+  for (const raw of candidates) {
+    if (isUuid(raw)) out.push(raw);
+    else pending.push(raw);
+  }
+  if (pending.length) {
+    const map = await fetchOpenwaSessionMap();
+    for (const name of pending) {
+      const uuid = map.get(name);
+      if (uuid) out.push(uuid);
+      else logger.warn(`[OpenWA Gateway] pool session "${name}" not found on gateway — skipped`);
+    }
+  }
+  return out;
+}
 
 async function resolveOpenwaSessionId(): Promise<string> {
   const openwaUrl = openwaUrlConfigured();
@@ -168,14 +232,25 @@ export interface GatewaySendResult {
   ok: boolean;
   sid?: string;
   error?: string;
+  /** Session that actually carried the send (pool observability). */
+  session?: string;
 }
 
 /**
  * Sends one text message through the OpenWA gateway (the paired Sierra
  * Estates device). Exported so the queue drain can use the exact same
  * session-resolution and error semantics as the direct fallback path.
+ *
+ * 4-line pool: when `sessions` (or OPENWA_SESSION_IDS) is configured the send
+ * round-robins across healthy sessions — a session that answers 400 "not
+ * active" or a 5xx is benched for 2 minutes and the next line takes over;
+ * other 4xx failures are treated as permanent for that chatId (no pool burn).
  */
-export async function sendViaOpenwaGateway(toPhone: string, body: string): Promise<GatewaySendResult> {
+export async function sendViaOpenwaGateway(
+  toPhone: string,
+  body: string,
+  sessions?: string[],
+): Promise<GatewaySendResult> {
   const openwaUrl = openwaUrlConfigured();
   const openwaKey = WHATSAPP_API_TOKEN || process.env.OPENWA_ADMIN_API_KEY;
   if (!openwaUrl || !openwaKey) {
@@ -197,6 +272,60 @@ export async function sendViaOpenwaGateway(toPhone: string, body: string): Promi
         signal: AbortSignal.timeout(8000),
       });
 
+    // ── 4-line pool path ──
+    const poolCandidates = sessions && sessions.length ? sessions : openwaPoolCandidatesFromEnv();
+    if (poolCandidates.length) {
+      const pool = await resolveOpenwaSessionIds(poolCandidates);
+      if (!pool.length) {
+        return { ok: false, error: 'pool sessions unresolvable on gateway' };
+      }
+      const now = Date.now();
+      const healthy = pool.filter((id) => (openwaBenchedUntil.get(id) || 0) <= now);
+      if (!healthy.length) {
+        return { ok: false, error: 'all pool sessions benched (backoff active)' };
+      }
+      const start = openwaPoolCursor % healthy.length;
+      const ordered = healthy.slice(start).concat(healthy.slice(0, start));
+      let lastError: string | undefined;
+      for (const uuid of ordered) {
+        let res: Response;
+        try {
+          res = await sendVia(uuid);
+        } catch (e: any) {
+          lastError = e?.message || 'gateway connection failed';
+          openwaBenchedUntil.set(uuid, now + OPENWA_SESSION_BACKOFF_MS);
+          continue;
+        }
+        if (res.ok) {
+          openwaPoolCursor++;
+          const data = (await res.json().catch(() => ({}))) as { id?: string; messageId?: string };
+          const sid = data.id || data.messageId || `OPENWA_${Date.now()}`;
+          logger.info(`[OpenWA Gateway] Message sent to ${toPhone} via session ${uuid.slice(0, 8)} (SID: ${sid})`);
+          return { ok: true, sid, session: uuid };
+        }
+        const errData = (await res.json().catch(() => ({}))) as { message?: string };
+        const msg = `(${res.status}): ${errData.message || 'client not connected'}`;
+        // 400 "not active" = this SESSION is down, not the chatId — bench it
+        // and let the next line take the send.
+        if (res.status === 400 && /not active|session/i.test(errData.message || msg)) {
+          openwaBenchedUntil.set(uuid, now + OPENWA_SESSION_BACKOFF_MS);
+          lastError = msg;
+          continue;
+        }
+        if (res.status >= 400 && res.status < 500) {
+          // Permanent for this chatId (bad number/opt-out etc.) — do NOT burn
+          // the rest of the pool on it.
+          return { ok: false, error: msg, session: uuid };
+        }
+        // 5xx / odd status: bench briefly, try the next line
+        openwaBenchedUntil.set(uuid, now + OPENWA_SESSION_BACKOFF_MS);
+        lastError = msg;
+      }
+      logger.warn(`[OpenWA Gateway] pool exhausted: ${lastError}`);
+      return { ok: false, error: lastError || 'pool exhausted' };
+    }
+
+    // ── Legacy single-session path (unchanged) ──
     let res = await sendVia(await resolveOpenwaSessionId());
 
     // Session database may have been rebuilt since the UUID was cached — bust
@@ -234,19 +363,23 @@ function toWhatsApp(addr: string): string {
  * @param toPhone    E.164 recipient.
  * @param body       Message text.
  * @param statusCallback  Optional URL Twilio posts delivery/read status to.
+ * @param opts       Optional extras. `gatewaySessions` lists the 4-line pool
+ *                   (names or UUIDs) — typically system_config
+ *                   whatsapp_outreach.gatewaySessions threaded from the drain.
  */
 export async function sendWhatsApp(
   fromPhone: string,
   toPhone: string,
   body: string,
   statusCallback?: string,
+  opts?: { gatewaySessions?: string[] },
 ): Promise<TwilioSendResult> {
   // 0. Gateway-FIRST posture (WHATSAPP_PROVIDER=openwa): the paired Sierra
   //    Estates device is the primary channel; Twilio degrades to fallback.
   if (getConfiguredWhatsAppProvider() === 'openwa') {
-    const gw = await sendViaOpenwaGateway(toPhone, body);
+    const gw = await sendViaOpenwaGateway(toPhone, body, opts?.gatewaySessions);
     if (gw.ok) {
-      return { sid: gw.sid!, simulated: false, provider: 'openwa' };
+      return { sid: gw.sid!, simulated: false, provider: 'openwa', session: gw.session };
     }
     logger.warn(`[whatsapp-client] gateway-first send failed (${gw.error}) — trying Twilio fallback`);
   }
@@ -294,9 +427,9 @@ export async function sendWhatsApp(
   // 2. Gateway as FALLBACK in the legacy posture (already tried above when
   //    provider=openwa) — still honours the degrade chain.
   if (getConfiguredWhatsAppProvider() !== 'openwa') {
-    const gw = await sendViaOpenwaGateway(toPhone, body);
+    const gw = await sendViaOpenwaGateway(toPhone, body, opts?.gatewaySessions);
     if (gw.ok) {
-      return { sid: gw.sid!, simulated: false, provider: 'openwa' };
+      return { sid: gw.sid!, simulated: false, provider: 'openwa', session: gw.session };
     }
   }
 

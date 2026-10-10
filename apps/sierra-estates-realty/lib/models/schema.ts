@@ -187,6 +187,7 @@ export interface Unit extends BaseDocument {
   description?: string;
   descriptionAr?: string;
   isFeatured?: boolean;
+  tags?: string[];
   publishedAt?: Timestamp;
   archivedAt?: Timestamp | null;
 

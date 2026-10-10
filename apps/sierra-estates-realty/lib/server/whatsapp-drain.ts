@@ -71,12 +71,16 @@ export function enforceOutreachNotice(
 export const MAX_PER_RUN = 80;
 
 /**
- * Gateway-mode rate caps (WHATSAPP_PROVIDER=openwa). The gateway sends from ONE
- * paired device — the Sierra Estates number — so the 4-sender WABA quota model
- * does not apply. Counters are derived from the queue itself (sent rows since
- * the window start), which keeps the drain stateless and crash-safe. Both caps
- * are overridable through system_config whatsapp_outreach (gatewayHourlyCap /
- * gatewayDailyCap) as the number warms up.
+ * Gateway-mode rate caps (WHATSAPP_PROVIDER=openwa). The gateway historically
+ * sent from ONE paired device — the Sierra Estates number — so the 4-sender
+ * WABA quota model did not apply. With the 4-line pool (Oct 2026) the caps
+ * remain GLOBAL counters derived from the queue itself (sent rows since the
+ * window start — stateless and crash-safe): scale gatewayHourlyCap /
+ * gatewayDailyCap in system_config whatsapp_outreach once the extra lines are
+ * linked (e.g. 80/hr · 320/day for 4 lines). Per-line fairness is handled by
+ * the round-robin in the gateway client; per-line caps land in v2 using the
+ * metadata.gatewaySession stamp. Both caps are overridable through
+ * system_config whatsapp_outreach as the numbers warm up.
  */
 const GATEWAY_HOURLY_CAP_DEFAULT = 20;
 const GATEWAY_DAILY_CAP_DEFAULT = 80;
@@ -216,6 +220,12 @@ export async function drainWhatsAppQueue(): Promise<WhatsAppDrainSummary> {
         job.recipientPhone,
         outboundBody,
         statusCallback,
+        // 4-line pool: system_config whatsapp_outreach.gatewaySessions (names
+        // or UUIDs). Undefined/empty ⇒ the gateway client keeps today's
+        // single-session behavior — the pool is fully config-driven.
+        gatewayMode
+          ? { gatewaySessions: (config as unknown as Record<string, unknown>).gatewaySessions as string[] | undefined }
+          : undefined,
       );
       await updateRecord('whatsapp_queue', job.id, {
         status: 'sent',
@@ -223,10 +233,12 @@ export async function drainWhatsAppQueue(): Promise<WhatsAppDrainSummary> {
         sentAt: new Date().toISOString(),
         attempts: (job.attempts ?? 0) + 1,
         // Observability: record the real delivering channel on the job so the
-        // admin outbox can show openwa vs twilio vs simulated per message.
+        // admin outbox can show openwa vs twilio vs simulated per message —
+        // and with the 4-line pool, WHICH line carried it (metadata.gatewaySession).
         metadata: {
           ...(typeof job.metadata === 'object' && job.metadata ? job.metadata : {}),
           sentVia: result.provider || 'unknown',
+          ...(result.session ? { gatewaySession: result.session } : {}),
         },
         updatedAt: new Date().toISOString(),
       });

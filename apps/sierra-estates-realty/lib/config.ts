@@ -76,3 +76,16 @@ export const SierraEstatesOS = {
     orchestrationLedger: true
   }
 };
+
+/**
+ * Feature Flags — Gated Rollouts
+ */
+export const FEATURE_FLAGS = {
+  /**
+   * Down-payment reservation flow (04 §B3).
+   * GATED: Default false. Requires legal review completion
+   * per docs/RESERVATION_FLOW_LEGAL_CHECKLIST.md before turning on.
+   */
+  ENABLE_UNIT_RESERVATIONS: process.env.ENABLE_UNIT_RESERVATIONS === 'true',
+};
+

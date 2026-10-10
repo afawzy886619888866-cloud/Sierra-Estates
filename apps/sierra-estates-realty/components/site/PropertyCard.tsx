@@ -27,9 +27,12 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Leaf,
+  Zap,
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 import { GsapMagnetic } from './GsapAnimations';
+import { getEcoSmartTagMeta } from '@/lib/services/listing-normalize';
 
 // AI scores are optional on public inventory units (anti-fabrication rule 5:
 // hide rather than synthesize). Never dereference an undefined score — render
@@ -62,6 +65,8 @@ export interface CardListing {
   verifiedFresh?: boolean;
   images?: string[];
   price?: number;
+  /** Eco & Smart compound classification tags */
+  tags?: string[];
   /** true when the displayed image is curated catalog imagery, not a real
    *  photo of this unit (§21: never imply unverified photos are the unit). */
   imgCurated?: boolean;
@@ -189,6 +194,40 @@ export default function PropertyCard({
     }
   };
 
+  const renderEcoTags = (max = 2) => {
+    if (!Array.isArray(p.tags) || p.tags.length === 0) return null;
+    const visible = p.tags.slice(0, max);
+    return (
+      <div className="eco-tags-chips flex flex-wrap gap-1 mt-1.5" role="list" aria-label={isAr ? 'ميزات بيئية وذكية' : 'Eco & Smart Features'}>
+        {visible.map((tagId) => {
+          const meta = getEcoSmartTagMeta(tagId);
+          if (!meta) return null;
+          return (
+            <span
+              key={tagId}
+              className="eco-tag-chip inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium tracking-wide"
+              style={{
+                background: meta.category === 'eco' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(59, 130, 246, 0.12)',
+                color: meta.category === 'eco' ? '#10B981' : '#60A5FA',
+                border: `1px solid ${meta.category === 'eco' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+              }}
+            >
+              {meta.category === 'eco' ? (
+                <Leaf style={{ width: 10, height: 10 }} />
+              ) : (
+                <Zap style={{ width: 10, height: 10 }} />
+              )}
+              <span>{isAr ? meta.labelAr : meta.labelEn}</span>
+            </span>
+          );
+        })}
+        {p.tags.length > max && (
+          <span className="text-[10px] text-slate-400 font-mono py-0.5">+{p.tags.length - max}</span>
+        )}
+      </div>
+    );
+  };
+
   /* ─────────────────────────────────────────────────────────────────
    * 1. COMPACT / EXECUTIVE HORIZONTAL CARD VARIANT
    * ───────────────────────────────────────────────────────────────── */
@@ -258,6 +297,8 @@ export default function PropertyCard({
               <span>{isAr ? 'ج/م²' : 'EGP/m²'}</span>
             </div>
           </div>
+
+          {renderEcoTags(2)}
 
           <div className="foot" style={{ marginTop: 'auto', background: 'transparent', padding: '10px 0 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="agent">
@@ -344,6 +385,8 @@ export default function PropertyCard({
           <h3><Link href={href}>{p.type || (isAr ? 'وحدة عقارية' : 'Property')} in {p.cmp || '—'}</Link></h3>
           <div className="addr"><MapPin className="i" /> {[p.cmp, p.zone].filter(Boolean).join(', ')}</div>
 
+          {renderEcoTags(2)}
+
           {/* Bento Financial Metrics */}
           <div className="bento-grid">
             <div className="bento-metric-cell">
@@ -376,19 +419,18 @@ export default function PropertyCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="pcard-btn-whatsapp"
-              style={{ padding: '6px 10px', fontSize: 11 }}
+              className="pcard-btn-whatsapp group"
+              style={{ padding: '6px 11px', fontSize: 11 }}
             >
-              <Phone style={{ width: 12, height: 12 }} />
+              <Phone style={{ width: 12, height: 12 }} className="transition-transform duration-300 group-hover:scale-110" />
               <span>WhatsApp</span>
             </a>
             <Link
               href={href}
-              className="pcard-btn-whatsapp"
-              style={{ textDecoration: 'none', background: 'rgba(201, 168, 76, 0.15)', borderColor: 'rgba(201, 168, 76, 0.4)', color: '#C9A84C' }}
+              className="pcard-btn-deal group"
             >
               <span>{isAr ? 'تحليل الاستثمار' : 'Analyze Deal'}</span>
-              <ArrowUpRight style={{ width: 14, height: 14 }} />
+              <ArrowUpRight style={{ width: 14, height: 14 }} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
         </div>
@@ -454,6 +496,7 @@ export default function PropertyCard({
               </>
             )}
           </div>
+          {renderEcoTags(3)}
         </div>
 
         <div className="foot" style={{ background: 'transparent', padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -647,6 +690,8 @@ export default function PropertyCard({
             <span>+ VIP Tour</span>
           </button>
         </div>
+
+        {renderEcoTags(3)}
       </div>
 
       <div className="foot flex items-center justify-between">
@@ -661,23 +706,23 @@ export default function PropertyCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="pcard-btn-whatsapp"
+            className="pcard-btn-whatsapp group"
             style={{
               background: '#25D366',
               color: '#FFFFFF',
               borderColor: '#25D366',
-              padding: '6px 10px',
+              padding: '6px 11px',
               fontSize: 11,
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 5,
               borderRadius: 8,
               textDecoration: 'none',
             }}
             title={isAr ? 'استفسار فوري عبر واتساب' : 'Instant WhatsApp Inquiry'}
           >
-            <Phone style={{ width: 12, height: 12 }} />
+            <Phone style={{ width: 12, height: 12 }} className="transition-transform duration-300 group-hover:scale-110" />
             <span>WhatsApp</span>
           </a>
 

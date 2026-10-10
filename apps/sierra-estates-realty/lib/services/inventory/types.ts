@@ -66,8 +66,14 @@ export interface InventoryListing {
   /** Last time a human or trusted feed confirmed the unit is real & available. */
   verifiedAt?: string;
   verifiedBy?: string;
+  /** Document-backed verified flag: Egyptian ownership document reference (per 2026-08-17 compliance note). */
+  ownershipDocRef?: string;
   /** Set when status = reserved; ties the lock to a payment intent. */
   reservationRef?: string;
+  /** Ingestion sources tracking for deduplication & provenance. */
+  sources?: Record<string, { lastSeenAt: string; ref: string | null }>;
+  /** Eco / Smart and compound classification tags */
+  tags?: string[];
   statusHistory: Array<{ from: ListingStatus | null; to: ListingStatus; at: string; by: string; note?: string }>;
 }
 
@@ -87,9 +93,13 @@ export interface UpsertPayload {
   finishingType?: string;
   description?: string;
   sourceRef?: string;
+  ownershipDocRef?: string;
+  verifiedBy?: string;
+  tags?: string[];
 }
 
 export interface SearchCriteria {
+  query?: string;
   compound?: string;
   propertyType?: string;
   offerType?: OfferType;
@@ -98,6 +108,8 @@ export interface SearchCriteria {
   maxPrice?: number;
   minArea?: number;
   bedrooms?: number;
+  tags?: string[];
+  page?: number;
   limit?: number;
   cursor?: string;
 }

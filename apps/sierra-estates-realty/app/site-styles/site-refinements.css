@@ -2655,4 +2655,349 @@ textarea:focus-visible {
   gap: 4px;
 }
 
+/* ==========================================================================
+   ── AWWWARDS-TIER LUXURY MOTION & REFINED MICRO-INTERACTIONS ───────────────
+   Adheres to soft-skill ($150k agency tier) & taste-skill anti-slop guidelines:
+   - Double-Bezel (Doppelrand) nested hardware architecture
+   - Button-in-Button / Island CTA architecture with kinetic tension
+   - Custom cubic-bezier spring physics & silky hover lifts
+   - Specular gold highlights and diffused ambient halos
+   ========================================================================== */
+
+/* ── 1. Hero Island CTA & Button-in-Button Pattern ─────────────────────── */
+.btn-hero-cinematic {
+  position: relative !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 12px 10px 24px !important;
+  background: linear-gradient(135deg, #ECC274 0%, #D4AF37 48%, #B8861B 100%) !important;
+  color: #07111E !important;
+  font-weight: 750 !important;
+  font-size: 14.5px !important;
+  letter-spacing: 0.015em !important;
+  border-radius: 9999px !important;
+  text-decoration: none !important;
+  box-shadow: 0 10px 28px -4px rgba(212, 175, 55, 0.38),
+              0 0 20px rgba(236, 194, 116, 0.22),
+              inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 280ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform, box-shadow;
+}
+
+[dir="rtl"] .btn-hero-cinematic {
+  padding: 10px 24px 10px 12px !important;
+}
+
+.btn-hero-cinematic:hover {
+  transform: translateY(-2.5px);
+  box-shadow: 0 16px 38px -4px rgba(212, 175, 55, 0.52),
+              0 0 30px rgba(236, 194, 116, 0.4),
+              inset 0 1px 1.5px rgba(255, 255, 255, 0.6) !important;
+  filter: brightness(1.04);
+}
+
+.btn-hero-cinematic:active {
+  transform: scale(0.978) translateY(1px);
+  box-shadow: 0 6px 14px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Silky specular gleam across hero button */
+.btn-hero-cinematic::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -120%;
+  width: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.38) 50%, transparent 100%);
+  transform: skewX(-20deg);
+  animation: heroBtnSheen 4.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes heroBtnSheen {
+  0%, 25% { left: -120%; }
+  65%, 100% { left: 220%; }
+}
+
+.btn-icon-capsule {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: rgba(7, 17, 30, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-hero-cinematic:hover .btn-icon-capsule {
+  background: rgba(7, 17, 30, 0.22);
+}
+
+/* Secondary Frosted Glass CTA */
+.btn-hero-secondary {
+  position: relative !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 14px 10px 22px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #FFFFFF !important;
+  font-weight: 650 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+  border-radius: 9999px !important;
+  text-decoration: none !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.35),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+[dir="rtl"] .btn-hero-secondary {
+  padding: 10px 22px 10px 14px !important;
+}
+
+.btn-hero-secondary:hover {
+  transform: translateY(-2.5px);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(233, 193, 118, 0.6) !important;
+  box-shadow: 0 14px 32px -6px rgba(0, 0, 0, 0.5),
+              0 0 20px rgba(200, 150, 26, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+.btn-hero-secondary:active {
+  transform: scale(0.978) translateY(1px);
+}
+
+.btn-icon-capsule-glass {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-hero-secondary:hover .btn-icon-capsule-glass {
+  background: rgba(200, 150, 26, 0.25);
+  border-color: rgba(233, 193, 118, 0.5);
+  color: #E9C176;
+}
+
+/* ── 2. Double-Bezel (Doppelrand) Architecture for Cards ────────────────── */
+.luxury-inst-card,
+.pcard {
+  position: relative !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(201, 168, 76, 0.2) !important;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05),
+              0 10px 28px -6px rgba(10, 22, 40, 0.08),
+              inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  transition: transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 380ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 380ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform, box-shadow;
+}
+
+[data-theme="dark"] .luxury-inst-card,
+[data-theme="dark"] .pcard {
+  background: linear-gradient(165deg, #0e1c2e 0%, #081321 100%) !important;
+  border: 1px solid rgba(201, 168, 76, 0.22) !important;
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.08),
+              0 18px 42px -8px rgba(0, 0, 0, 0.76),
+              0 0 20px rgba(201, 168, 76, 0.06),
+              inset 0 1px 1.5px rgba(233, 193, 118, 0.16) !important;
+}
+
+.luxury-inst-card:hover,
+.pcard:hover {
+  transform: translateY(-5px) !important;
+  border-color: rgba(233, 193, 118, 0.52) !important;
+  box-shadow: 0 0 0 1px rgba(233, 193, 118, 0.25),
+              0 28px 56px -10px rgba(0, 0, 0, 0.82),
+              0 0 32px rgba(200, 150, 26, 0.22),
+              inset 0 1px 2px rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Smooth zoom with photographic clarity */
+.pcard .photo {
+  border-top-left-radius: 19px;
+  border-top-right-radius: 19px;
+  overflow: hidden;
+}
+
+.pcard .photo img {
+  transition: transform 650ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 650ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform;
+}
+
+.pcard:hover .photo img {
+  transform: scale(1.055) !important;
+  filter: contrast(1.05) brightness(1.02) !important;
+}
+
+/* Floating Price & Score Specular Badges */
+.pcard .price-float {
+  background: rgba(10, 22, 40, 0.94) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(201, 168, 76, 0.42) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5),
+              inset 0 1px 1px rgba(233, 193, 118, 0.3) !important;
+  border-radius: 10px !important;
+  font-feature-settings: "tnum" !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.pcard .ai-score {
+  background: rgba(10, 22, 40, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(201, 168, 76, 0.35) !important;
+  color: #E9C176 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
+  font-feature-settings: "tnum" !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ── 3. Interactive CTAs in Property Cards ─────────────────────────────── */
+.pcard-btn-whatsapp {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25) !important;
+}
+
+.pcard-btn-whatsapp:hover {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.45) !important;
+  filter: brightness(1.05);
+}
+
+.pcard-btn-whatsapp:active {
+  transform: scale(0.96) !important;
+}
+
+.pcard-btn-deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(201, 168, 76, 0.14);
+  border: 1px solid rgba(201, 168, 76, 0.42);
+  color: #C9A84C;
+  border-radius: 8px;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pcard-btn-deal:hover {
+  background: rgba(201, 168, 76, 0.24);
+  border-color: rgba(233, 193, 118, 0.65);
+  color: #F5D78E;
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px -4px rgba(201, 168, 76, 0.35);
+}
+
+.pcard-btn-deal:active {
+  transform: scale(0.96);
+}
+
+/* ── 4. Laser Tag & Ambient Header Glow ───────────────────────────────── */
+.laser-badge {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 18px rgba(200, 150, 26, 0.25),
+              inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  animation: luxuryLaserPulse 4.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes luxuryLaserPulse {
+  0%, 100% {
+    box-shadow: 0 0 18px rgba(200, 150, 26, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    border-color: rgba(233, 193, 118, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(200, 150, 26, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.35);
+    border-color: rgba(233, 193, 118, 0.7);
+  }
+}
+
+/* Slide Dots Luxury Capsule Animation */
+.hero .dots button {
+  transition: width 380ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 380ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 380ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.hero .dots button.on {
+  width: 32px !important;
+  background: linear-gradient(90deg, #DFAD3A 0%, #F5D78E 100%) !important;
+  box-shadow: 0 0 14px rgba(223, 173, 58, 0.65) !important;
+}
+
+/* ── 5. GIS Masterplan & Beacon Radars (Stitch Precision Engine) ────────── */
+@keyframes gisBeaconPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes gisRingPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.map-command-deck {
+  transition: background-color 0.4s ease;
+}
+
+.map-zoom-hud button:hover {
+  background: rgba(223, 173, 58, 0.22) !important;
+  color: #dfad3a !important;
+  transform: scale(1.06);
+}
+
+
 

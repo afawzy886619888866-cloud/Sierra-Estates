@@ -1502,7 +1502,7 @@ export default function CompoundsMap({
               pointerEvents: 'none',
               imageRendering: '-webkit-optimize-contrast',
               transform: 'translateZ(0)',
-              filter: 'contrast(1.08) brightness(1.03) saturate(1.08)',
+              filter: 'contrast(1.15) brightness(1.05) saturate(1.12) drop-shadow(0 0 1px rgba(223, 173, 58, 0.2))',
               backfaceVisibility: 'hidden',
             }}
           />
@@ -1524,10 +1524,106 @@ export default function CompoundsMap({
               pointerEvents: 'none',
               imageRendering: '-webkit-optimize-contrast',
               transform: 'translateZ(0)',
-              filter: 'contrast(1.06) brightness(1.02) saturate(1.04)',
+              filter: 'contrast(1.12) brightness(1.03) saturate(1.08)',
               backfaceVisibility: 'hidden',
             }}
           />
+
+          {/* Architectural SVG Spatial Intelligence & Blueprint Overlay (Stitch GIS Masterplan Blueprint) */}
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            viewBox="0 0 1024 686"
+            fill="none"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 6 }}
+          >
+            <defs>
+              <radialGradient id="slr-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#DFAD3A" stopOpacity={mapTheme === 'dark' ? '0.42' : '0.28'} />
+                <stop offset="60%" stopColor="#DFAD3A" stopOpacity="0.14" />
+                <stop offset="100%" stopColor="#DFAD3A" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="mvd-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#DFAD3A" stopOpacity={mapTheme === 'dark' ? '0.32' : '0.22'} />
+                <stop offset="100%" stopColor="#DFAD3A" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="ktd-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#10B981" stopOpacity={mapTheme === 'dark' ? '0.3' : '0.2'} />
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+              </radialGradient>
+              <pattern id="gis-dot-matrix" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="0.85" fill={mapTheme === 'dark' ? '#dfad3a' : '#c8961a'} fillOpacity={mapTheme === 'dark' ? 0.16 : 0.12} />
+              </pattern>
+            </defs>
+
+            {/* Water Corridors / Green Belts */}
+            <path
+              d="M 620,120 Q 670,160 740,150 T 820,240 Q 860,320 810,380 T 730,460"
+              stroke={mapTheme === 'dark' ? '#0a3568' : '#38bdf8'}
+              strokeWidth="24"
+              strokeLinecap="round"
+              opacity={mapTheme === 'dark' ? 0.38 : 0.22}
+            />
+
+            {/* Secondary GIS Grid Lines */}
+            <g opacity={mapTheme === 'dark' ? 0.45 : 0.25} stroke={mapTheme === 'dark' ? '#1e385b' : '#cbd5e1'} strokeWidth="1">
+              <path d="M 50,150 L 970,150 M 30,320 L 990,320 M 80,500 L 950,500" strokeDasharray="3,3" />
+              <path d="M 160,40 L 160,650 M 340,30 L 340,660 M 520,30 L 520,660 M 700,30 L 700,660 M 870,30 L 870,660" strokeDasharray="3,3" />
+            </g>
+
+            {/* Arterial Road Corridors: South 90th & Middle Ring Road */}
+            <g stroke={mapTheme === 'dark' ? '#E9C176' : '#C8961A'} strokeLinecap="round">
+              <path
+                d="M 20,440 C 260,420 440,390 610,360 S 840,320 1000,310"
+                strokeWidth="2.8"
+                strokeOpacity={mapTheme === 'dark' ? 0.5 : 0.4}
+              />
+              <path
+                d="M 770,20 C 740,240 700,480 640,680"
+                strokeWidth="2.4"
+                strokeOpacity={mapTheme === 'dark' ? 0.45 : 0.35}
+              />
+              <path
+                d="M 310,180 C 420,260 520,310 680,350"
+                strokeWidth="2"
+                strokeDasharray="6,4"
+                strokeOpacity={mapTheme === 'dark' ? 0.7 : 0.55}
+              />
+            </g>
+
+            {/* Golden Square High-Yield Investment Perimeter */}
+            <polygon
+              points="420,180 750,190 790,440 460,430"
+              fill="url(#gis-dot-matrix)"
+              stroke={mapTheme === 'dark' ? '#DFAD3A' : '#C8961A'}
+              strokeWidth="1.6"
+              strokeDasharray="5,4"
+              strokeOpacity={mapTheme === 'dark' ? 0.6 : 0.45}
+            />
+
+            {/* Key Compound Radiant Polygons */}
+            <polygon
+              points="470,220 600,210 620,310 500,320"
+              fill="url(#slr-glow)"
+              stroke="#DFAD3A"
+              strokeWidth="1.8"
+              strokeOpacity={mapTheme === 'dark' ? 0.8 : 0.6}
+            />
+            <polygon
+              points="640,340 770,330 760,440 650,430"
+              fill="url(#mvd-glow)"
+              stroke="#DFAD3A"
+              strokeWidth="1.5"
+              strokeOpacity={mapTheme === 'dark' ? 0.7 : 0.5}
+            />
+            <polygon
+              points="220,320 340,310 330,440 200,430"
+              fill="url(#ktd-glow)"
+              stroke="#10B981"
+              strokeWidth="1.5"
+              strokeOpacity={mapTheme === 'dark' ? 0.7 : 0.5}
+            />
+          </svg>
 
           {/* Interactive Compound Hotspots (Clean Neon/Gold Luminous Boundary) */}
           {filteredHotspots.map((spot) => {
@@ -1585,6 +1681,42 @@ export default function CompoundsMap({
                   zIndex: isSelected ? 30 : isHovered ? 25 : 10,
                 }}
               >
+                {/* Luminous beacon core for premier compounds */}
+                {spot.tier === 'premier' && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#dfad3a',
+                        boxShadow: '0 0 10px #dfad3a',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        left: -6,
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        border: '1.5px solid #dfad3a',
+                        animation: 'gisRingPulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite',
+                        opacity: mapTheme === 'dark' ? 0.75 : 0.45,
+                      }}
+                    />
+                  </div>
+                )}
+
                 {(isHovered || isSelected) && (
                   <div
                     style={{
@@ -1622,7 +1754,7 @@ export default function CompoundsMap({
         </div>
       </div>
 
-      {/* Top-Left Minimalist Masterplan Theme Switcher */}
+      {/* Top-Left GIS Masterplan Telemetry Badge & Theme Switcher */}
       <div
         className="interactive-control"
         style={{
@@ -1630,8 +1762,84 @@ export default function CompoundsMap({
           top: 20,
           left: 20,
           zIndex: 400,
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
         }}
       >
+        {/* Stitch Screen Inspired GIS Masterplan HUD Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 14px',
+            borderRadius: 999,
+            background:
+              mapTheme === 'dark'
+                ? 'rgba(7, 21, 35, 0.88)'
+                : 'rgba(255, 255, 255, 0.94)',
+            border:
+              mapTheme === 'dark'
+                ? '1px solid rgba(223, 173, 58, 0.4)'
+                : '1px solid rgba(203, 213, 225, 0.9)',
+            boxShadow:
+              mapTheme === 'dark'
+                ? '0 8px 24px rgba(0,0,0,0.4), 0 0 12px rgba(223, 173, 58, 0.12)'
+                : '0 4px 16px rgba(0,0,0,0.06)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+        >
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: '#10b981',
+              boxShadow: '0 0 8px #10b981',
+              display: 'inline-block',
+              animation: 'gisBeaconPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'var(--serif, "Cinzel", Georgia, serif)',
+              fontSize: 10.5,
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              color: '#dfad3a',
+            }}
+          >
+            SIERRA ESTATES
+          </span>
+          <span style={{ color: mapTheme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)' }}>·</span>
+          <span
+            style={{
+              fontFamily: 'var(--mono, "JetBrains Mono", monospace)',
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: mapTheme === 'dark' ? '#cbd5e1' : '#475569',
+              textTransform: 'uppercase',
+            }}
+          >
+            GIS MASTERPLAN v4.2
+          </span>
+          <span
+            className="hidden sm:inline-block"
+            style={{
+              fontFamily: 'var(--mono, "JetBrains Mono", monospace)',
+              fontSize: 9,
+              color: mapTheme === 'dark' ? '#64748b' : '#94a3b8',
+              letterSpacing: '0.04em',
+            }}
+          >
+            30.0131° N, 31.4989° E
+          </span>
+        </div>
+
         <button
           type="button"
           onClick={() => setMapTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}

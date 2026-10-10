@@ -124,6 +124,7 @@ export default function HomePage() {
             whatsapp: 'https://wa.me/201092048333',
             segment: u.segment || (u.mode === 'rent' ? (isDirectOwner ? 'owners_rent' : 'broker_rent') : (isDirectOwner ? 'owners_buy' : 'broker_buy')),
             finishing: u.finishing || u.finishingQuality || u.furnishing || (u.furnished ? 'furnished' : ''),
+            tags: Array.isArray(u.tags) ? u.tags : [],
             isDirectOwner,
             ownerType: isDirectOwner ? 'owner' : 'broker',
           };

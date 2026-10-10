@@ -1763,3 +1763,172 @@ kbd {
   background: rgba(212, 175, 55, 0.3);
 }
 
+/* ==========================================================================
+   ── ADMIN INTELLIGENCE OS · LUXURY MOTION & REFINED POLISH ─────────────────
+   Adheres to soft-skill, taste-skill, and ui-ux-pro-max guidelines:
+   - Silky sidebar nav micro-interactions with gold rail indicator
+   - Double-bezel KPI card elevation with diffused ambient halos
+   - Table row hover highlight and tabular metric alignment
+   - Tactile button press physics and pulsing live beacon indicators
+   ========================================================================== */
+
+/* ── 1. Sidebar Navigation Transitions ─────────────────────────────────── */
+.nav-item {
+  position: relative !important;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              color 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform;
+}
+
+.nav-item:hover {
+  transform: translateX(4px) !important;
+  background: var(--surf) !important;
+}
+
+[dir="rtl"] .nav-item:hover {
+  transform: translateX(-4px) !important;
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(200, 150, 26, 0.16) 0%, rgba(200, 150, 26, 0.04) 100%) !important;
+  color: var(--gold-lt) !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--gold) !important;
+  box-shadow: inset 0 0 16px rgba(200, 150, 26, 0.08) !important;
+}
+
+[dir="rtl"] .nav-item.active {
+  border-left: none !important;
+  border-right: 3px solid var(--gold) !important;
+}
+
+.nav-item.active .nav-icon {
+  color: var(--gold-lt) !important;
+  filter: drop-shadow(0 0 6px rgba(200, 150, 26, 0.5));
+}
+
+/* ── 2. KPI Cards & Clay Containers Elevation ──────────────────────────── */
+.kpi-card {
+  position: relative !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(200, 150, 26, 0.16) !important;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 320ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform, box-shadow;
+}
+
+.kpi-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(233, 193, 118, 0.09) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3.5px) !important;
+  border-color: rgba(233, 193, 118, 0.5) !important;
+  box-shadow: 0 20px 42px -8px rgba(0, 0, 0, 0.85),
+              0 0 24px rgba(200, 150, 26, 0.18),
+              var(--clay-card-inset) !important;
+}
+
+.kpi-card:hover::after {
+  opacity: 1;
+}
+
+.clay-card, .card {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.clay-card:hover, .card:hover {
+  border-color: rgba(200, 150, 26, 0.35) !important;
+  box-shadow: 0 22px 48px -8px rgba(0, 0, 0, 0.8),
+              0 0 22px rgba(200, 150, 26, 0.12),
+              var(--clay-card-inset) !important;
+}
+
+/* ── 3. Table Rows & List Hover Transitions ────────────────────────────── */
+table tbody tr, .table tbody tr {
+  transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+table tbody tr:hover, .table tbody tr:hover {
+  background-color: rgba(200, 150, 26, 0.055) !important;
+}
+
+/* ── 4. Tactile Button Push Physics ────────────────────────────────────── */
+.btn, button.btn {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn:active, button.btn:active {
+  transform: scale(0.978) translateY(1px) !important;
+}
+
+.btn.primary, .btn.gold {
+  background: linear-gradient(135deg, #DFAD3A 0%, #B38624 100%) !important;
+  color: #07111E !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 18px rgba(223, 173, 58, 0.32),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+}
+
+.btn.primary:hover, .btn.gold:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 26px rgba(223, 173, 58, 0.48),
+              0 0 18px rgba(223, 173, 58, 0.28) !important;
+  filter: brightness(1.04);
+}
+
+/* ── 5. Live Telemetry Pulse & Status Badges ───────────────────────────── */
+.status-beacon-live {
+  position: relative;
+  display: inline-block;
+}
+
+.status-beacon-live::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.6;
+  animation: adminBeaconPulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes adminBeaconPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  70%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* ── 6. Custom Sleek Gold Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(200, 150, 26, 0.22);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 150, 26, 0.5);
+}
+
+
