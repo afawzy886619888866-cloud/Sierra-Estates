@@ -1,17 +1,15 @@
 name: CI
 
-# Gates the app that actually deploys to production (deploy-vercel.yml →
-# apps/sierra-estates-realty) plus the workspace packages it consumes.
+# MANUAL FALLBACK ONLY — the primary CI gate now runs INSIDE the Vercel
+# production build (scripts/ci-preflight.sh, chained in vercel.json
+# buildCommand), after the GitHub Free-plan Actions minute quota was
+# exhausted. See docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md section 0.
+# Run this job on demand via the "Run workflow" button when Actions minutes
+# are available again.
 #
-# Trigger philosophy: run only on main branch pushes/PRs and on manual dispatch.
-# Scheduled scans, PR-size labels, and auto-assign are removed to preserve
-# GitHub Free-plan minute quota. CodeQL runs on a separate weekly schedule only.
+# Scheduled scans, PR-size labels, and auto-assign remain removed.
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
