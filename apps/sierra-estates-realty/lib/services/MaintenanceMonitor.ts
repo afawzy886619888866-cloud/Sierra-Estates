@@ -72,4 +72,18 @@ export class MaintenanceMonitor {
       return false;
     }
   }
+
+  /**
+   * Freshness SLA hook: Auto-flag listings unverified > N days.
+   * Hosted in MaintenanceMonitor per FUTURE_PLAN/04 §D.
+   */
+  static async checkFreshnessSLA(daysThreshold = 30): Promise<{ flaggedCount: number; thresholdDays: number; timestamp: string }> {
+    const flagged = await this.flagStaleListings();
+    return {
+      flaggedCount: flagged,
+      thresholdDays: daysThreshold,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }
+

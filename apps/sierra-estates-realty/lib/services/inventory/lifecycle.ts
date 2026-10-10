@@ -6,7 +6,7 @@
 import type { ListingStatus } from './types';
 
 const TRANSITIONS: Record<ListingStatus, ListingStatus[]> = {
-  draft: ['pending_verification', 'archived'],
+  draft: ['pending_verification', 'verified', 'archived'],
   pending_verification: ['verified', 'draft', 'archived'],
   verified: ['published', 'pending_verification', 'archived'],
   published: ['reserved', 'expired', 'pending_verification', 'archived'],
@@ -21,9 +21,22 @@ export function canTransition(from: ListingStatus, to: ListingStatus): boolean {
   return TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function assertTransition(from: ListingStatus, to: ListingStatus): void {
+export interface VerificationMetadata {
+  ownershipDocRef?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  note?: string;
+  reservationRef?: string;
+}
+
+export function assertTransition(from: ListingStatus, to: ListingStatus, metadata?: VerificationMetadata): void {
   if (!canTransition(from, to)) {
     throw new Error(`Illegal listing transition: ${from} → ${to}`);
+  }
+  if (to === 'verified' && metadata) {
+    if (!metadata.ownershipDocRef && !metadata.verifiedBy) {
+      throw new Error('Verification requires document reference (ownershipDocRef) or verifiedBy (per 2026-08-17 compliance note)');
+    }
   }
 }
 

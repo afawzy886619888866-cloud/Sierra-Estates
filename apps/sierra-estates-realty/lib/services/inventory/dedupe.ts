@@ -7,6 +7,7 @@
  * identity of a unit, with price bucketed so minor price edits don't split it.
  */
 import { createHash } from 'node:crypto';
+import { GravityMemory } from '@sierra-estates/gravity-memory';
 
 /** Normalize free-text: lowercase, trim, collapse spaces, strip Arabic tatweel/diacritics. */
 export function normalizeText(input: string): string {
@@ -50,3 +51,13 @@ export function fingerprint(input: FingerprintInput): string {
   ].join('|');
   return createHash('sha256').update(key).digest('hex').slice(0, 24);
 }
+
+/**
+ * Dedupe via hash(compound+type+area+price-band) reusing Gravity Memory .seen()
+ */
+export function checkGravityDedupe(input: FingerprintInput): { hash: string; isDuplicate: boolean } {
+  const hash = fingerprint(input);
+  const isDuplicate = GravityMemory.seen(hash);
+  return { hash, isDuplicate };
+}
+

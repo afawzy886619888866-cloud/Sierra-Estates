@@ -55,6 +55,7 @@ export default function PropertyDetail({ id }: { id: string }) {
           agent: 'Sierra Advisor Desk',
           ago: u.ago || 'Live sync',
           img: u.img || (Array.isArray(u.images) && u.images[0]) || '',
+          tags: Array.isArray(u.tags) ? u.tags : [],
         });
       })
       .catch(() => {})

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
-  "description": "Sierra Estates \u2014 Luxury PropTech Platform for New Cairo",
+  "description": "Sierra Estates — Luxury PropTech Platform for New Cairo",
   "scripts": {
     "dev": "pnpm --filter sierra-estates-client-page dev",
     "dev:web": "pnpm --filter sierra-estates-client-page dev",

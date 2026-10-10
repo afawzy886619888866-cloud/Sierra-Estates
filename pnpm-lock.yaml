@@ -165,6 +165,9 @@ importers:
       '@sierra-estates/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@sierra-estates/gravity-memory':
+        specifier: workspace:*
+        version: link:../../packages/gravity-memory
       '@sierra-estates/memory-engine':
         specifier: workspace:*
         version: link:../../packages/memory-engine

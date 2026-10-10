@@ -1,14 +1,45 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { Marker, Popup, MapContainer, TileLayer, useMap, Circle, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import {
+  Moon,
+  Sun,
+  Globe,
+  Compass,
+  Crosshair,
+  MapPin,
+  ExternalLink,
+  MessageCircle,
+  Sparkles,
+  Check,
+  Plus,
+  Search,
+  Layers,
+} from 'lucide-react';
 
 import { CompoundLocation, NEW_CAIRO_COMPOUNDS } from './compounds-data';
 import { compoundShortName } from '@/lib/site/smart-search';
 export type { CompoundLocation };
 export { NEW_CAIRO_COMPOUNDS };
+
+export interface MapZonePreset {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  coords: [number, number];
+  zoom: number;
+}
+
+export const NEW_CAIRO_ZONES: MapZonePreset[] = [
+  { id: 'golden-square', nameEn: 'Golden Square', nameAr: 'المربع الذهبي', coords: [30.015, 31.605], zoom: 14 },
+  { id: 'south-90', nameEn: 'South 90th', nameAr: 'التسعين الجنوبي', coords: [30.005, 31.520], zoom: 14 },
+  { id: 'north-exp', nameEn: 'North Exp', nameAr: 'التوسعات', coords: [30.055, 31.595], zoom: 14 },
+  { id: 'capital-axis', nameEn: 'New Capital', nameAr: 'محور العاصمة', coords: [30.020, 31.670], zoom: 14 },
+];
 
 export type MapUnitPin = {
   id: string;
@@ -506,6 +537,7 @@ export default function LiveMap({
       directWhatsapp: isAr ? 'واتساب مباشر' : 'Direct WhatsApp',
       addToSelection: isAr ? '+ أضف للمختار' : '+ Add to Selection',
       beds: isAr ? 'غرف' : 'Beds',
+      keyZones: isAr ? 'المناطق الرئيسية' : 'Key Zones',
       viewingQ: isAr
         ? 'مرحباً سييرا العقارية، أود الاستفسار عن الوحدة'
         : 'Hello Sierra Estates, I would like to ask about unit',
@@ -540,7 +572,7 @@ export default function LiveMap({
       <style dangerouslySetInnerHTML={{ __html: MAP_MOTION_CSS }} />
       {/* ── ORGANIZED CONTROL PANEL (top-left) ── */}
       <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ ...panelStyle, padding: controlsOpen ? '10px 12px' : '8px 12px', width: 218 }}>
+        <div style={{ ...panelStyle, padding: controlsOpen ? '10px 12px' : '8px 12px', width: 236 }}>
           <button
             type="button"
             onClick={() => setControlsOpen((v) => !v)}
@@ -551,30 +583,75 @@ export default function LiveMap({
             }}
             aria-expanded={controlsOpen}
           >
-            <span style={sectionLabelStyle}>{t.basemap} · Sierra Live Map</span>
+            <span style={{ ...sectionLabelStyle, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <Layers size={11} className="shrink-0" />
+              {t.basemap} · Sierra GIS
+            </span>
             <span style={{ fontSize: 10, opacity: 0.7 }}>{controlsOpen ? '▾' : '▸'}</span>
           </button>
 
           {controlsOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-              {/* Basemap */}
+              {/* Basemap Selection */}
               <div style={{ display: 'flex', gap: 4 }}>
-                {(['dark', 'light', 'satellite'] as MapTileStyle[]).map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => setTileStyle(style)}
-                    style={{ ...panelButton(tileStyle === style), flex: 1 }}
-                  >
-                    {style === 'dark' ? `🌙 ${t.dark}` : style === 'light' ? `☀️ ${t.light}` : `🛰️ ${t.satellite}`}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setTileStyle('dark')}
+                  style={{ ...panelButton(tileStyle === 'dark'), flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                >
+                  <Moon size={11} /> {t.dark}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTileStyle('light')}
+                  style={{ ...panelButton(tileStyle === 'light'), flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                >
+                  <Sun size={11} /> {t.light}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTileStyle('satellite')}
+                  style={{ ...panelButton(tileStyle === 'satellite'), flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                >
+                  <Globe size={11} /> {t.satellite}
+                </button>
               </div>
 
-              {/* Radius (only when the host page wires the filter) */}
+              {/* Key Zones Quick Jump */}
+              <div>
+                <div style={{ ...sectionLabelStyle, marginBottom: 5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Compass size={10} /> {t.keyZones}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                  {NEW_CAIRO_ZONES.map((z) => (
+                    <button
+                      key={z.id}
+                      type="button"
+                      onClick={() => {
+                        onCenterChange?.(z.coords);
+                      }}
+                      style={{
+                        ...panelButton(false),
+                        fontSize: 9.5,
+                        padding: '3px 6px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        textAlign: 'center',
+                      }}
+                      title={isAr ? z.nameAr : z.nameEn}
+                    >
+                      {isAr ? z.nameAr : z.nameEn}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Radius Filter */}
               {onRadiusChange && (
                 <div>
-                  <div style={{ ...sectionLabelStyle, marginBottom: 5 }}>📍 {t.radius}</div>
+                  <div style={{ ...sectionLabelStyle, marginBottom: 5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <MapPin size={10} /> {t.radius}
+                  </div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     {[null, 5, 10, 25].map((r) => {
                       const isSelected = r === radiusKm || (r === null && !radiusKm);
@@ -598,9 +675,16 @@ export default function LiveMap({
                 type="button"
                 onClick={handleRecenter}
                 title={t.recenterTitle}
-                style={{ ...panelButton(false, { wide: true }), width: '100%' }}
+                style={{
+                  ...panelButton(false, { wide: true }),
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
               >
-                🎯 {t.recenter}
+                <Crosshair size={12} /> {t.recenter}
               </button>
             </div>
           )}
@@ -647,9 +731,12 @@ export default function LiveMap({
                 fontSize: 9.5,
                 fontWeight: 700,
                 padding: '2px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
               }}
             >
-              🔍 {t.zoomHint}
+              <Search size={9} /> {t.zoomHint}
             </span>
           )}
         </div>
@@ -799,51 +886,64 @@ export default function LiveMap({
                   click: () => onSelectUnit?.(unit),
                 }}
               >
-                <Popup className="custom-unit-popup" maxWidth={260}>
-                  <div style={{ width: 230, fontFamily: 'system-ui, sans-serif', color: '#0d0d0f' }}>
+                <Popup className="custom-unit-popup" maxWidth={270}>
+                  <div style={{ width: 242, fontFamily: "var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, sans-serif", color: '#f8fafc', background: '#0d1f33', padding: 12, borderRadius: 12 }}>
                     {unit.img && (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={unit.img}
-                        alt={unit.code}
-                        style={{
-                          width: '100%',
-                          height: 120,
-                          objectFit: 'cover',
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          backgroundColor: '#f1f5f9',
-                        }}
-                      />
+                      <div style={{ position: 'relative', width: '100%', height: 120, borderRadius: 8, overflow: 'hidden', marginBottom: 8, backgroundColor: '#071523' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={unit.img}
+                          alt={unit.code}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(13,31,51,0.65) 0%, transparent 50%)' }} />
+                      </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <strong style={{ fontSize: 13, color: '#8a6414' }}>{unit.code}</strong>
+                      <Link
+                        href={`/property/${encodeURIComponent(unit.id || unit.code)}`}
+                        style={{ fontSize: 13, color: GOLD_LT, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        {unit.code}
+                        <ExternalLink size={10} style={{ opacity: 0.7 }} />
+                      </Link>
                       <span
                         style={{
-                          fontSize: 10,
-                          padding: '2px 6px',
+                          fontSize: 9.5,
+                          padding: '2px 7px',
                           borderRadius: 6,
-                          background: unit.mode === 'rent' ? '#e0f2fe' : '#faf0d7',
-                          color: unit.mode === 'rent' ? '#0369a1' : '#8a6414',
+                          background: unit.mode === 'rent' ? 'rgba(79,163,209,0.2)' : 'rgba(201,148,54,0.2)',
+                          color: unit.mode === 'rent' ? '#7dd3fc' : GOLD_LT,
+                          border: `1px solid ${unit.mode === 'rent' ? 'rgba(79,163,209,0.4)' : 'rgba(201,148,54,0.4)'}`,
                           fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
                         }}
                       >
                         {unit.mode === 'rent' ? t.forRent : t.forSale}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1f2937', marginBottom: 2 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#ffffff', marginBottom: 2 }}>
                       {unit.compound}
                     </div>
-                    <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>
-                      {unit.type} · {unit.beds ? `${unit.beds} ${t.beds}` : `3 ${t.beds}`} · {unit.area ? `${unit.area} m²` : '160 m²'}
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                      <span>{unit.type}</span>
+                      <span>·</span>
+                      <span>{unit.beds ? `${unit.beds} ${t.beds}` : `3 ${t.beds}`}</span>
+                      <span>·</span>
+                      <span style={{ fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>{unit.area ? `${unit.area} m²` : '160 m²'}</span>
                       {unit.distanceKm != null && (
-                        <span style={{ color: '#8a6414', fontWeight: 700, marginLeft: 4 }}>
-                          · 📍 {unit.distanceKm.toFixed(1)} km
+                        <span style={{ color: GOLD_LT, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                          · <MapPin size={10} /> {unit.distanceKm.toFixed(1)} km
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#059669', marginBottom: 8, fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#34d399', marginBottom: 9, fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>
                       {unit.priceLabel}
                     </div>
 
@@ -866,10 +966,11 @@ export default function LiveMap({
                           fontWeight: 700,
                           fontSize: 11.5,
                           textDecoration: 'none',
-                          boxShadow: '0 2px 6px rgba(16,185,129,0.2)',
+                          boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
                         }}
                       >
-                        <span>💬 {t.directWhatsapp}</span>
+                        <MessageCircle size={13} />
+                        <span>{t.directWhatsapp}</span>
                       </a>
 
                       {onToggleUnit && (
@@ -880,15 +981,20 @@ export default function LiveMap({
                             width: '100%',
                             padding: '6px 0',
                             borderRadius: 8,
-                            border: 'none',
-                            background: isMarked ? '#002b4b' : '#f3f4f6',
-                            color: isMarked ? GOLD_LT : '#374151',
+                            border: `1px solid ${isMarked ? GOLD_LT : 'rgba(255,255,255,0.1)'}`,
+                            background: isMarked ? '#002b4b' : 'rgba(255,255,255,0.06)',
+                            color: isMarked ? GOLD_LT : '#cbd5e1',
                             fontWeight: 700,
                             fontSize: 11,
                             cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 5,
                           }}
                         >
-                          {isMarked ? `✓ ${t.inSelection}` : t.addToSelection}
+                          {isMarked ? <Check size={12} /> : <Plus size={12} />}
+                          {isMarked ? t.inSelection : t.addToSelection}
                         </button>
                       )}
                     </div>

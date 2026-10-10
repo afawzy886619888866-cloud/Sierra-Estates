@@ -44,6 +44,7 @@ const submitListingSchema = z.object({
   comment: z.string().max(2000).optional().default(''),
   photos: z.array(z.string()).optional().default([]),
   images: z.array(z.string()).optional().default([]),
+  tags: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(request: Request) {
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
       img: (data.photos?.[0] || data.images?.[0]) || null,
       photos: data.photos?.length ? data.photos : data.images?.length ? data.images : [],
       images: data.images?.length ? data.images : data.photos?.length ? data.photos : [],
+      tags: data.tags,
       comment: data.comment,
       submittedAt: now,
       source: 'web-submission',
