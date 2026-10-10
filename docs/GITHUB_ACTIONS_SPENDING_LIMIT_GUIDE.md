@@ -1,5 +1,13 @@
 # GitHub Actions Spending Limit & Billing Recovery Guide
 
+## 0. Current Status (2026-10-10): CI runs inside the Vercel build
+
+The primary CI gate NO LONGER runs on GitHub Actions. `vercel.json`'s `buildCommand` now chains `scripts/ci-preflight.sh` ahead of the app build, so every production deploy runs the full check set — master-inventory regeneration, workspace package builds, type-checks, canonical backend policy, public-env safety, legacy-runtime boundary, lint, and the complete app test suite — inside the Vercel build itself. Cost: roughly +2-3 minutes of build time per deploy; zero Actions minutes.
+
+`.github/workflows/ci.yml` is demoted to `workflow_dispatch` (a manual "Run workflow" fallback). It can be re-enabled as the automatic gate once a spending limit is configured per section 2 below and included minutes are available again. Until then, do NOT expect pushes or PRs to trigger Actions runs: that silence is by design, not a failure.
+
+The sections below remain the reference for restoring Actions capacity (spending limit configuration and quota hygiene).
+
 ## 1. Root Cause: Why Actions Stop Running
 
 On GitHub Free accounts, public and private repositories share a pool of included CI/CD runner minutes (2,000 minutes/month for personal free accounts). When those minutes are consumed:
