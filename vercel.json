@@ -9,12 +9,12 @@
   "regions": ["fra1"],
   "crons": [
     {
-      "path": "/api/cron/apply-migrations",
-      "schedule": "25 12 * * *"
-    },
-    {
       "path": "/api/cron/dispatch/morning",
       "schedule": "45 6 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/night",
+      "schedule": "45 2 * * *"
     }
   ],
   "headers": [
