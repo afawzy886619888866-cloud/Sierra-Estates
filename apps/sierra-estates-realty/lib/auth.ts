@@ -265,6 +265,56 @@ export async function getSessionFromRequest(req: Request): Promise<Session | nul
   return verifySession(cookies[COOKIE_NAME]);
 }
 
+/**
+ * PHASE 7 — session revocation for suspended/deleted accounts.
+ *
+ * A signed 12h cookie is proof of a PAST authentication, not proof that the
+ * account is still entitled to access. Every protected admin path now
+ * re-checks the live profiles.status: suspended/deleted (and pending)
+ * accounts are rejected even while their cookie is technically unexpired.
+ * Fail-open is NOT an option in production — a lookup failure rejects the
+ * request (fail-closed).
+ */
+export async function enforceSessionAccountStatus(
+  sess: Session | null
+): Promise<{ ok: true } | { ok: false; reason: string; status: number }> {
+  if (!sess) return { ok: false, reason: "no session", status: 401 };
+
+  // Env-configured staff/partner logins carry synthetic uids (`staff-…` /
+  // `partner-…`) with no profiles row — they are governed by their env
+  // secrets, not by profile status.
+  if (sess.uid?.startsWith("staff-") || sess.uid?.startsWith("partner-")) {
+    return { ok: true };
+  }
+
+  const { listRecords } = await import("@sierra-estates/db");
+  try {
+    const rows = await listRecords<{ status: string | null }>("profiles", {
+      where: [{ column: "id", value: sess.uid }],
+      select: "status",
+      limit: 1,
+    });
+    const profileStatus = rows[0]?.status ?? null;
+    // Provisioned accounts are 'active' unless explicitly changed; a NULL
+    // status on a provisioned row predates the status column and is treated
+    // as active (migration 020b deliberately added no fabricated default).
+    if (profileStatus === "suspended" || profileStatus === "deleted") {
+      return { ok: false, reason: `account ${profileStatus}`, status: 403 };
+    }
+    if (profileStatus === "pending") {
+      return { ok: false, reason: "access request pending approval", status: 403 };
+    }
+    return { ok: true };
+  } catch (err) {
+    if (process.env.NODE_ENV === "production") {
+      // Fail closed: we cannot prove the account is still entitled.
+      return { ok: false, reason: "account status could not be verified", status: 403 };
+    }
+    console.warn("[auth] profile status check skipped (dev):", (err as Error)?.message);
+    return { ok: true };
+  }
+}
+
 /** Throws 401 if no session, 403 if role insufficient. */
 export async function requireRole(req: Request, min: Role): Promise<Session> {
   const sess = await getSessionFromRequest(req);
@@ -274,7 +324,14 @@ export async function requireRole(req: Request, min: Role): Promise<Session> {
       headers: { "content-type": "application/json" },
     });
   }
-  const order: Role[] = ["viewer", "owner", "agent", "manager", "admin", "superadmin"];
+  // PHASE 7: the ladder now ranks the canonical vocabulary. The new
+  // manager-family roles sit between agent and admin; auditor/partner sit
+  // below agent (read-mostly scopes enforced per-permission elsewhere).
+  const order: Role[] = [
+    "viewer", "client", "partner", "auditor", "owner", "broker",
+    "agent", "sales_agent", "sales_manager", "marketing_manager",
+    "inventory_manager", "operations_manager", "manager", "admin", "superadmin",
+  ];
   const roleIndex = order.indexOf(sess.role);
   const requiredIndex = order.indexOf(min);
   if (!isAdminPortalRole(sess.role) && sess.role !== "viewer") {

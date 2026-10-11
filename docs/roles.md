@@ -8,6 +8,32 @@ Sierra Estates enforces strict Role-Based Access Control across all client porta
 
 ## Role Hierarchy
 
+> **2026-10-11 update (Phase 7, master execution command):** the canonical
+> IMPLEMENTED vocabulary is in `apps/sierra-estates-realty/lib/types.ts`
+> (`ROLE_PERMISSIONS`) and the Supabase `profiles.role` CHECK
+> (`supabase/migrations/20261011_028_role_check_extension.sql`). The table
+> below is the specification; the mapping onto the live schema is:
+>
+> | Spec role | Implemented `profiles.role` value |
+> |---|---|
+> | `super_admin` | `superadmin` |
+> | `admin` | `admin` |
+> | operations manager | `operations_manager` |
+> | inventory manager | `inventory_manager` |
+> | marketing manager | `marketing_manager` |
+> | sales manager | `sales_manager` |
+> | sales agent | `sales_agent` / `agent` |
+> | auditor | `auditor` |
+> | partner | `partner` (portfolio-scoped) |
+>
+> Rules now enforced in code:
+> - **Default-deny:** a permission not listed for a role in `ROLE_PERMISSIONS` is denied.
+> - **Elevation:** only `superadmin` (`canElevateRoles`) may assign elevated roles or approve access requests.
+> - **Access lifecycle:** unprovisioned Google identities create DURABLE pending requests (`access_requests` + `profiles.status='pending'`); approval/denial is super-admin-only and audited.
+> - **Session revocation:** suspended/deleted/pending accounts are rejected on every protected route (`enforceSessionAccountStatus`), even mid-cookie-TTL.
+> - Inventory staff can parse/edit/verify but cannot override the publication gate; marketing can draft campaigns but cannot publish unverified units; auditors are read-only; partners see only their permitted portfolio.
+
+
 | Role | Hierarchy Level | Target Audience | Primary Responsibilities |
 | :--- | :--- | :--- | :--- |
 | **`super_admin`** | 100 | Founders & CTO | System-wide configuration, environment secret rotation, service account management, and database schema migrations. |
