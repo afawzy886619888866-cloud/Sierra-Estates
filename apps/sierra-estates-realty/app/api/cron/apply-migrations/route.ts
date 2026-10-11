@@ -22,9 +22,12 @@ import { logger } from '@/lib/logger';
  *  - public.schema_migrations tracks applied files by name + checksum;
  *    each migration runs in ONE transaction (rollback on error).
  *
- * Scheduled daily at 03:00 UTC via vercel.json — also the self-healing path:
- * dropping a new migration file into supabase/migrations/ is enough, it will
- * be applied within 24h (or immediately via a manual authenticated call).
+ * NOT scheduled — deliberately manual-dispatch only (window: null in
+ * lib/server/automation-jobs.ts; the Vercel Hobby plan's two cron slots are
+ * reserved for the night/morning windows). DDL moves from the migration
+ * ledger only as a deliberate act: an authenticated call to this route, or
+ * the GHA Automations workflow's apply-migrations dispatch (which requires
+ * CRON_SECRET as a repository secret and Actions minutes to be available).
  */
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
