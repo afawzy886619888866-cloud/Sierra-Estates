@@ -824,12 +824,12 @@ export default function DashboardView({
               </div>
 
               <a
-                href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=1127958606#gid=1127958606"
+                href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 hover:border-[#C8961A]/60 text-slate-300 hover:text-[#E9C176] text-xs font-mono transition-colors"
               >
-                <span>Google Drive Sheet</span>
+                <span>{isAr ? 'شيت جوجل الرئيسي (أونلاين)' : 'Online Master Sheet'}</span>
                 <ExternalLink className="w-3.5 h-3.5 text-[#C8961A]" />
               </a>
             </div>
