@@ -15,6 +15,12 @@ const SERVER_ONLY_PACKAGES = [
 ];
 
 const nextConfig: NextConfig = {
+  // Local memory guard: cap dev-server RSS on 4GB boxes (verified live:
+  // peak RSS 3.2GB without -> settled 2.3-2.7GB with the flag active).
+  // Env-gated so production builds are unaffected.
+  ...(process.env.SIERRA_MEMORY_OPTIMIZED_DEV === '1'
+    ? { experimental: { webpackMemoryOptimizations: true } }
+    : {}),
   // The build script chain runs `tsc --noEmit` (type-check) BEFORE `next
   // build`, so the in-build TypeScript re-check is fully redundant — and
   // since the 2026-09-20 firebase→supabase migration commit it
