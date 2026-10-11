@@ -5,10 +5,11 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/gateway-server.js",
+    "gateway": "node src/gateway-server.js",
     "line1": "node src/index.js",
     "line2": "node src/owners-harvester.js",
-    "dev": "node --watch src/index.js",
+    "dev": "node --watch src/gateway-server.js",
     "qr": "node src/index.js --qr-only",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
