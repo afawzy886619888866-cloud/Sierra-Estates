@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { publicEndpointLimiter } from '@/lib/server/rate-limit';
-import { getSupabase, listRecords, type RecordData } from '@sierra-estates/db';
+import { getSupabase, listRecords } from '@sierra-estates/db';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
 import { logger } from '@/lib/logger';
 
