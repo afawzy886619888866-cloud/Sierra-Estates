@@ -10,7 +10,7 @@
   "crons": [
     {
       "path": "/api/cron/apply-migrations",
-      "schedule": "25 10 * * *"
+      "schedule": "25 12 * * *"
     },
     {
       "path": "/api/cron/dispatch/morning",
