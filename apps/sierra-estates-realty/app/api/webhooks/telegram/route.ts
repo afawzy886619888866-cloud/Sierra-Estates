@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { insertRecord } from '@sierra-estates/db';
+import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import { handleTelegramCommand, sendTelegramMessage } from '@/lib/services/telegram-controller';
 
@@ -32,6 +34,27 @@ export async function POST(req: NextRequest) {
     if (denied) return denied;
 
     const body = await req.json();
+
+    // ── PHASE 6: update_id idempotency ledger ──
+    // /approve on this route mutates orchestration state; a Telegram retry
+    // (this route answers 500 on processing errors, which triggers exactly
+    // that) re-ran the command. Every update is now ledgered in
+    // telegram_processed_updates and replays are skipped.
+    const updateId: number | null =
+      typeof body.update_id === 'number' ? body.update_id : null;
+    if (updateId != null) {
+      try {
+        await insertRecord('telegram_processed_updates', {
+          updateId,
+          kind: 'command-os',
+        });
+      } catch (err: any) {
+        if (/duplicate key|unique constraint/i.test(String(err?.message ?? err))) {
+          return NextResponse.json({ status: 'skipped', reason: 'duplicate update_id' });
+        }
+        logger.warn(`[telegram] update ledger write failed: ${err?.message}`);
+      }
+    }
 
     // 2. Extract Message / Command Payload
     const message = body.message || body.edited_message || body.channel_post;
