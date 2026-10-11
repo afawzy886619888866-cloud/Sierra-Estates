@@ -197,7 +197,7 @@ export class WhatsAppParserService {
           new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 2000)),
         ]);
 
-        let uploadedMediaUrls: string[] = [];
+        const uploadedMediaUrls: string[] = [];
         if (media && created?.id) {
           try {
             const mediaUrl = await StorageService.uploadPropertyMedia(created.id, media.data, media.mimeType);
