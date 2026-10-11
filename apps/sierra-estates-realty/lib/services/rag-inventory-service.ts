@@ -87,5 +87,4 @@ export class RagInventoryService {
       return "LIVE INVENTORY STATUS: Database temporarily unreachable. Offer to schedule a callback with a human broker.";
     }
   }
-  }
 }
