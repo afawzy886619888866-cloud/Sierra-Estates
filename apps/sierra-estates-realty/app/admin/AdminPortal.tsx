@@ -481,13 +481,13 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
               📁 {isAr ? 'فتح جوجل درايف' : 'Open Google Drive Folder'} ↗
             </a>
             <a 
-              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606" 
+              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn btn-ghost"
               style={{fontSize:11,textDecoration:'none',padding:'6px 14px',borderColor:'rgba(62,207,142,.4)',color:'var(--emerald)'}}
             >
-              📊 {isAr ? 'شيت المخزون الرئيسي' : 'Master Google Sheet'} ↗
+              📊 {isAr ? 'شيت المخزون الرئيسي المباشر' : 'Master Online Sheet (Live)'} ↗
             </a>
             <a 
               href="/downloads/sierra-estates-master-inventory.xlsx" 
