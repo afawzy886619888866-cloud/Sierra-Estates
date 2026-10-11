@@ -5,6 +5,7 @@ import { buildSierraCodeMetadata, type PropertyCodeInput } from "./coding-algori
 import { StorageService } from "./StorageService";
 import { logger } from '@/lib/logger';
 import { enqueueWhatsAppJob } from '@/lib/server/whatsapp-queue';
+import { GoogleSheetBridge } from './GoogleSheetBridge';
 
 /**
  * sierra estates WHATSAPP INTELLIGENCE SERVICE
@@ -196,9 +197,11 @@ export class WhatsAppParserService {
           new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 2000)),
         ]);
 
+        let uploadedMediaUrls: string[] = [];
         if (media && created?.id) {
           try {
             const mediaUrl = await StorageService.uploadPropertyMedia(created.id, media.data, media.mimeType);
+            uploadedMediaUrls.push(mediaUrl);
             // `intelligence` is one JSONB column, so the dotted-path update
             // becomes a merge of the object we just wrote.
             await updateRecord(COLLECTIONS.brokerListings, created.id, {
@@ -206,6 +209,23 @@ export class WhatsAppParserService {
               intelligence: { ...signal.intelligence, hasVisualReference: true },
             });
           } catch {}
+        }
+
+        // Autonomous Bridge: Push parsed unit to live Google Sheet (tab 341562911)
+        if (extractedData.isListing && !duplicateId) {
+          GoogleSheetBridge.pushUnitToSheet({
+            code: extractedData.sierraCode,
+            compound: extractedData.compound || 'New Cairo',
+            propertyType: extractedData.type || 'apartment',
+            mode: /rent|إيجار|ايجار/i.test(content) ? 'Rent' : 'Sale',
+            price: extractedData.price || 0,
+            bedrooms: extractedData.bedrooms,
+            space: extractedData.area,
+            mediaUrls: uploadedMediaUrls,
+            phone: sender,
+            groupName: groupName,
+            notes: content.slice(0, 300),
+          }).catch((err) => logger.warn('[WhatsAppParserService] Sheet bridge sync skipped:', err));
         }
 
         return { id: created.id, data: extractedData, isDuplicate: !!duplicateId };
