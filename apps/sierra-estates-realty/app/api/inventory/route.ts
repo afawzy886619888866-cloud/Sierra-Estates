@@ -78,32 +78,56 @@ function deriveSegment(
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
   try {
     const supabase = getSupabase();
-    const [listingsRes, compoundsRes] = await Promise.all([
-      supabase
-        .from("listings")
-        .select(
-          "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
-        )
-        .eq("status", "active")
-        // PUBLISH GATE (Phase D): only verified rows may reach the public map.
-        .eq("publish_status", "PUBLISHABLE")
-        .order("updated_at", { ascending: false })
-        .limit(5000),
-      supabase
-        .from("compounds")
-        .select("name, lat, lng, zone, price_m, rent, ai_score"),
-    ]);
-
-    if (listingsRes.error) throw new Error(listingsRes.error.message);
+    // PAGINATION (2026-10-11): the project's PostgREST max-rows (default
+    // 1000) silently caps any single non-Range request, so .limit(5000)
+    // alone only ever returned ~1000 rows — the map was blind to 3/4 of
+    // the published inventory. Explicit .range() pages reach the budget.
+    const PAGE = 1000;
+    const HARD_CAP = 5000;
+    const allListings: unknown[] = [];
+    let compoundsData: Array<{ name: string | null; lat: number | null; lng: number | null; zone?: string | null }> | null = null;
+    for (let from = 0; from < HARD_CAP; from += PAGE) {
+      const [pageRes, compoundsPageRes] = await Promise.all([
+        supabase
+          .from("listings")
+          .select(
+            "id, ref_id, code, sbr_code, title, title_ar, compound, location_area, city, property_type, deal_type, price, price_currency, bedrooms, bathrooms, area_sqm, status, description, description_ar, finishing_type, furnishing_status, agent_name, amenities, images, raw_data, latitude, longitude, featured, is_hot_deal, source_channel, pf_reference_number, updated_at",
+          )
+          .eq("status", "active")
+          // PUBLISH GATE (Phase D): only verified rows may reach the public map.
+          .eq("publish_status", "PUBLISHABLE")
+          .order("updated_at", { ascending: false })
+          .range(from, from + PAGE - 1),
+        from === 0
+          ? supabase
+              .from("compounds")
+              .select("name, lat, lng, zone, price_m, rent, ai_score")
+          : Promise.resolve(null),
+      ]);
+      if (pageRes.error) throw new Error(pageRes.error.message);
+      if (from === 0) {
+        if (compoundsPageRes && "error" in compoundsPageRes && (compoundsPageRes as { error: unknown }).error) {
+          // non-fatal: compound geo is an enrichment, pins fall back to gazetteer
+          logger.warn("[inventory] compounds read failed — gazetteer fallback for pins");
+          compoundsData = [];
+        } else {
+          compoundsData = ((compoundsPageRes as { data?: unknown }).data ?? []) as typeof compoundsData;
+        }
+      }
+      const data = (pageRes.data ?? []) as unknown[];
+      allListings.push(...data);
+      if (data.length < PAGE) break;
+    }
+    const listingsData = allListings as any[];
 
     const compoundGeo = new Map<string, { lat: number; lng: number; zone?: string }>();
-    for (const c of compoundsRes.data ?? []) {
+    for (const c of compoundsData ?? []) {
       if (c.name && c.lat && c.lng) {
-        compoundGeo.set(c.name.trim().toLowerCase(), { lat: c.lat, lng: c.lng, zone: c.zone });
+        compoundGeo.set(c.name.trim().toLowerCase(), { lat: c.lat, lng: c.lng, zone: c.zone ?? undefined });
       }
     }
 
-    const units: InventoryUnit[] = (listingsRes.data ?? []).map((listing: any) => {
+    const units: InventoryUnit[] = listingsData.map((listing: any) => {
       // ANTI-FABRICATION (§21 Rule B): the label is whatever the row actually
       // carries — known compound, else the raw location string, else ''. The
       // old hard-coded New Cairo default invented a location for rows that
