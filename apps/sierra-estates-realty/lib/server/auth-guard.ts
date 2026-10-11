@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, getRecord } from '@sierra-estates/db';
-import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE, parseCookies, isAdminEmail, enforceSessionAccountStatus } from '@/lib/auth';
 import { isPartnerRole } from '@/lib/partner-access';
 import { normalizeScope, scopeFromProfile, type PartnerScope } from '@/lib/server/partner-scope';
 
@@ -19,8 +19,14 @@ const SECRET_KEY = process.env.SBR_SECRET_KEY || '';
 /**
  * Canonical roles permitted to access administrative APIs and console operations.
  * Single source of truth for both verifyAdminRequest and /api/admin/auth.
+ * PHASE 7: the manager-family roles join the console set (mapped onto the
+ * same profiles.role vocabulary; see lib/types.ts ROLE_PERMISSIONS for the
+ * per-permission defaults — every grant is still default-deny).
  */
-export const ADMIN_CONSOLE_ROLES = ['admin', 'manager', 'superadmin'] as const;
+export const ADMIN_CONSOLE_ROLES = [
+  'admin', 'manager', 'superadmin',
+  'operations_manager', 'inventory_manager', 'marketing_manager',
+] as const;
 export type AdminConsoleRole = (typeof ADMIN_CONSOLE_ROLES)[number];
 
 export function isAdminConsoleRole(role: unknown): boolean {
@@ -164,6 +170,20 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   // Session cookie callers already carry a verified role minted by /api/auth
   if (result.method === 'session-cookie') {
+    // PHASE 7 — session revocation: the signed cookie is not proof of current
+    // entitlement. A suspended/deleted (or pending) account is rejected here
+    // even mid-cookie-TTL.
+    const statusCheck = await enforceSessionAccountStatus({
+      uid: result.uid,
+      email: result.email,
+      role: result.role,
+      name: '',
+      exp: Number.MAX_SAFE_INTEGER,
+    } as any);
+    if (!statusCheck.ok) {
+      return { authenticated: false, method: 'none' };
+    }
+
     // A partner session is a partner — even when the email lands on an owned
     // domain (isAdminEmail). The explicit role always wins over the email
     // fallback, or a partner1@sierra-estates.net account would escalate to admin.
@@ -185,8 +205,13 @@ export async function verifyAdminRequest(req: NextRequest): Promise<AuthResult> 
 
   let profileRole: string | undefined;
   try {
-    const profile = await getRecord<{ role?: string }>('profiles', result.uid);
+    const profile = await getRecord<{ role?: string; status?: string | null }>('profiles', result.uid);
     profileRole = profile?.role;
+    // PHASE 7 — Supabase-token callers are equally subject to account status.
+    const profileStatus = (profile?.status ?? '').toString().toLowerCase();
+    if (profileStatus === 'suspended' || profileStatus === 'deleted' || profileStatus === 'pending') {
+      return { authenticated: false, method: 'none' };
+    }
     if (!isAdminConsoleRole(profileRole)) {
       return { authenticated: false, method: 'none' };
     }
@@ -246,6 +271,18 @@ export async function verifyPortalRequest(req: NextRequest): Promise<PortalAcces
 
   // Session cookie: role + scope were minted at sign-in by /api/auth.
   if (result.method === 'session-cookie') {
+    // PHASE 7 — session revocation applies to partner sessions identically.
+    const statusCheck = await enforceSessionAccountStatus({
+      uid: result.uid,
+      email: result.email,
+      role: result.role,
+      name: '',
+      exp: Number.MAX_SAFE_INTEGER,
+    } as any);
+    if (!statusCheck.ok) {
+      return { authenticated: false, method: 'none' };
+    }
+
     // Partner role first: an owned-domain email (isAdminEmail) must never
     // upgrade a partner session to full admin access.
     if (isPartnerRole(result.role)) {
@@ -279,10 +316,15 @@ export async function verifyPortalRequest(req: NextRequest): Promise<PortalAcces
 
   // Supabase identity: the profiles row is the source of truth for role+scope.
   try {
-    const profile = await getRecord<{ role?: string; metadata?: Record<string, unknown> }>(
+    const profile = await getRecord<{ role?: string; status?: string | null; metadata?: Record<string, unknown> }>(
       'profiles',
       result.uid
     );
+    // PHASE 7 — account status applies to Supabase-token portal callers too.
+    const profileStatus = (profile?.status ?? '').toString().toLowerCase();
+    if (profileStatus === 'suspended' || profileStatus === 'deleted' || profileStatus === 'pending') {
+      return { authenticated: false, method: 'none' };
+    }
     const profileRole = profile?.role;
     if (isAdminConsoleRole(profileRole)) {
       return {
