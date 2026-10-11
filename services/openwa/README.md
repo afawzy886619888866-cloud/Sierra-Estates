@@ -121,6 +121,14 @@ scraped lists), stay inside the configured operating window and caps, prefer a
 residential IP / proxy for the gateway host, and warm the number gradually
 after first pairing. The gateway's own docs cover per-session proxy settings.
 
+## 6b. Hardening & incident runbook
+
+[`SECURITY_HARDENING.md`](./SECURITY_HARDENING.md) — root-cause analysis of the
+2026-10-11 all-lines outage (single-process multi-Chromium OOM blast radius),
+on-box confirmation commands, systemd memory guards, swap, per-browser heap
+ceilings, network exposure fixes, and session-credential resilience. Read it
+before adding a fourth line or scaling the box.
+
 ## 7. Local install proof (sandbox-verified 2026-09-30)
 
 v0.23.7 was installed and exercised end-to-end during integration (Node 24):
