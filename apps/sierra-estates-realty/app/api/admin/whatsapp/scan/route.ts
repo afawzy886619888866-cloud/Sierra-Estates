@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/server/auth-guard';
-import fs from 'node:fs';
-import path from 'node:path';
 import { z } from 'zod';
 import { insertRecord } from '@sierra-estates/db';
 import { toListingColumns } from '@/lib/server/listing-columns';
@@ -24,19 +22,21 @@ export interface ParsedWhatsAppUnit {
   id: string;
   timestamp: string;
   sender: string;
-  phone: string;
-  compound: string;
-  propertyType: string;
-  mode: 'sale' | 'rent';
-  beds: number;
-  baths: number;
-  area: number;
-  price: number;
-  finishing: string;
-  sierraCode: string;
+  phone: string | null;
+  compound: string | null;
+  propertyType: string | null;
+  mode: 'sale' | 'rent' | null;
+  beds: number | null;
+  baths: number | null;
+  area: number | null;
+  price: number | null;
+  finishing: string | null;
+  sierraCode: string | null;
   rawText: string;
+  /** Source classification signal — NEVER a human verification. */
   isOwner: boolean;
-  confidence: number;
+  /** Honest signal label replacing the old fabricated 95/82 confidence. */
+  sourceClass: 'owner_group' | 'owner_signal' | 'broker';
   isDuplicate: boolean;
   duplicateOf?: string;
   summary: string;
@@ -118,14 +118,17 @@ function hasRealEstateSignal(text: string): boolean {
 
 /**
  * Extracts phone numbers from text or sender name.
+ * §21 no-fabrication: the old fallback invented '+201000000000' — a fake
+ * contact number that could end up on listing records. Unknown stays null.
  */
-function extractPhone(sender: string, text: string): string {
+function extractPhone(sender: string, text: string): string | null {
   const phoneRegex = /(?:\+?20|0)?1[0125]\d{8}/g;
   const inText = text.match(phoneRegex);
   if (inText && inText.length > 0) return inText[0];
   const inSender = sender.match(phoneRegex);
   if (inSender && inSender.length > 0) return inSender[0];
-  return sender.replace(/[^\d+]/g, '') || '+201000000000';
+  const senderDigits = sender.replace(/[^\d+]/g, '');
+  return senderDigits.length >= 8 ? senderDigits : null;
 }
 
 /**
@@ -139,7 +142,8 @@ function parseListingMessage(
   const lower = msg.text.toLowerCase();
   const phone = extractPhone(msg.sender, msg.text);
 
-  // 1. Compound detection
+  // 1. Compound detection — §21: undetected stays null (was defaulted to
+  // 'New Cairo (Fifth Settlement)', mislabelling every unmatched message).
   const compounds = [
     { name: 'Mivida', matches: ['mivida', 'ميفيدا'] },
     { name: 'Villette (SODIC)', matches: ['villette', 'فيليت', 'فيلييت', 'sodic villette'] },
@@ -156,8 +160,7 @@ function parseListingMessage(
     { name: 'Katameya Heights', matches: ['katameya heights', 'قطامية هايتس'] },
     { name: 'New Cairo 5th Settlement', matches: ['التجمع الخامس', 'تجمع خامس', 'fifth settlement', 'new cairo'] },
   ];
-
-  let detectedCompound = 'New Cairo (Fifth Settlement)';
+  let detectedCompound: string | null = null;
   for (const c of compounds) {
     if (c.matches.some((m) => lower.includes(m))) {
       detectedCompound = c.name;
@@ -165,8 +168,8 @@ function parseListingMessage(
     }
   }
 
-  // 2. Property Type
-  let propertyType = 'Apartment';
+  // 2. Property Type — §21: undetected stays null (was defaulted 'Apartment').
+  let propertyType: string | null = null;
   if (lower.includes('villa') || lower.includes('فيلا') || lower.includes('مستقلة')) {
     propertyType = 'Standalone Villa';
   } else if (lower.includes('townhouse') || lower.includes('تاون هاوس') || lower.includes('تاون')) {
@@ -177,37 +180,41 @@ function parseListingMessage(
     propertyType = 'Duplex';
   } else if (lower.includes('penthouse') || lower.includes('بنتهاوس') || lower.includes('روف')) {
     propertyType = 'Penthouse';
+  } else if (lower.includes('شقة') || lower.includes('apartment')) {
+    propertyType = 'Apartment';
   } else if (lower.includes('office') || lower.includes('مكتب') || lower.includes('تجاري')) {
     propertyType = 'Commercial Office';
   }
 
-  // 3. Mode (Sale vs Rent)
+  // 3. Mode (Sale vs Rent) — §21: undetected stays null (was defaulted 'sale').
   const isRent = lower.includes('للايجار') || lower.includes('ايجار') || lower.includes('إيجار') || lower.includes('rent');
-  const mode: 'sale' | 'rent' = isRent ? 'rent' : 'sale';
+  const isSale = lower.includes('للبيع') || lower.includes('بيع') || lower.includes('sale');
+  const mode: 'sale' | 'rent' | null = isRent ? 'rent' : isSale ? 'sale' : null;
 
-  // 4. Area (sqm)
-  let area = 165;
+  // 4. Area (sqm) — §21: undetected stays null (was defaulted 165).
+  let area: number | null = null;
   const areaMatch = msg.text.match(/(?:مساحة|مساحه|م2|متر|area|sqm)?\s*[:=\-]?\s*(\d{2,4})\s*(?:متر|م2|م|sqm)?/i);
   if (areaMatch && Number(areaMatch[1]) >= 40 && Number(areaMatch[1]) <= 2500) {
     area = Number(areaMatch[1]);
   }
 
-  // 5. Bedrooms
-  let beds = 3;
+  // 5. Bedrooms — §21: undetected stays null (was defaulted 3).
+  let beds: number | null = null;
   const bedsMatch = msg.text.match(/(\d+)\s*(?:غرف|غرفة|نوم|beds|bedrooms)/i);
   if (bedsMatch) {
     beds = Math.min(Math.max(Number(bedsMatch[1]), 1), 10);
   }
 
-  // 6. Bathrooms
-  let baths = 2;
+  // 6. Bathrooms — §21: undetected stays null (was defaulted 2).
+  let baths: number | null = null;
   const bathsMatch = msg.text.match(/(\d+)\s*(?:حمام|حمامات|baths|bathrooms)/i);
   if (bathsMatch) {
     baths = Math.min(Math.max(Number(bathsMatch[1]), 1), 8);
   }
 
-  // 7. Price
-  let price = mode === 'rent' ? 45000 : 12500000;
+  // 7. Price — §21: undetected stays null (was defaulted 45000/12500000 —
+  // fabricated prices on unverified records are the worst kind of invention).
+  let price: number | null = null;
   // Millions pattern: 16.5M, 16.5 مليون, 16,500,000
   const millionMatch = msg.text.match(/(\d+(?:[.,]\d+)?)\s*(?:مليون|م|million|m)\b/i);
   const rawNumberMatch = msg.text.match(/(?:سعر|مطلوب|ب|total|price)?\s*[:=\-]?\s*(\d{1,3}(?:[,\s]\d{3})+(?:\.\d+)?|\d{5,9})/i);
@@ -222,8 +229,8 @@ function parseListingMessage(
     }
   }
 
-  // 8. Finishing
-  let finishing = 'Semi-Finished';
+  // 8. Finishing — §21: undetected stays null (was defaulted 'Semi-Finished').
+  let finishing: string | null = null;
   if (lower.includes('الترا سوبر لوكس') || lower.includes('ultra super lux') || lower.includes('مودرن')) {
     finishing = 'Ultra Super Lux';
   } else if (lower.includes('سوبر لوكس') || lower.includes('super lux') || lower.includes('تشطيب كامل') || lower.includes('fully finished')) {
@@ -232,31 +239,46 @@ function parseListingMessage(
     finishing = 'Core & Shell';
   }
 
-  // 9. Sierra SBR code
-  const sbr = buildSierraCodeMetadata({
-    compound: detectedCompound,
-    rooms: beds,
-    furnishingStatus: finishing,
-    price,
-  });
+  // 9. Sierra SBR code — Phase 3: a code is derived ONLY when the required
+  // inputs exist. Missing inputs → null code + the record is staged
+  // NEEDS_CODE (private, queued for staff resolution) instead of a guessed code.
+  const sbr = detectedCompound && beds != null && price != null
+    ? buildSierraCodeMetadata({
+        compound: detectedCompound,
+        rooms: beds,
+        furnishingStatus: finishing ?? undefined,
+        price,
+      })
+    : null;
 
-  // 10. Direct Owner check
+  // 10. Direct Owner check — PHASE 5 FIX: this is a SOURCE CLASSIFICATION
+  // signal only. Group membership and Arabic keywords are NOT human
+  // verification; nothing derived here may set a verified flag.
   const isDirectOwnerGroup = groupType === 'owner' || msg.groupName.toLowerCase().includes('owner');
   const hasDirectOwnerSignal = lower.includes('من المالك') || lower.includes('مالك مباشر') || lower.includes('direct from owner');
   const isOwner = isDirectOwnerGroup || hasDirectOwnerSignal;
+  const sourceClass: 'owner_group' | 'owner_signal' | 'broker' = isDirectOwnerGroup
+    ? 'owner_group'
+    : hasDirectOwnerSignal
+      ? 'owner_signal'
+      : 'broker';
 
-  // 11. Deduplication check
+  // 11. Deduplication check — duplicated input must reuse or link the
+  // existing unit, never create a second one.
   let isDuplicate = false;
   let duplicateOf = undefined;
 
   const duplicateCandidate = existingInventory.find((inv: any) => {
+    if (!detectedCompound) return false;
     const invCompound = (inv.compound || inv.location || '').toLowerCase();
     const invPrice = Number(inv.price || 0);
     const invPhone = (inv.mobile || inv.phone || inv.sender || '').replace(/[^\d]/g, '');
-    const currentCleanPhone = phone.replace(/[^\d]/g, '');
+    const currentCleanPhone = phone ? phone.replace(/[^\d]/g, '') : '';
 
-    const sameCompound = invCompound.includes(detectedCompound.toLowerCase().split(' ')[0]);
-    const samePrice = invPrice > 0 && Math.abs(invPrice - price) / invPrice < 0.05;
+    const invCompoundToken = detectedCompound.toLowerCase().split(' ')[0];
+    if (!invCompoundToken) return false;
+    const sameCompound = invCompound.includes(invCompoundToken);
+    const samePrice = invPrice > 0 && price != null && Math.abs(invPrice - price) / invPrice < 0.05;
     const samePhone = currentCleanPhone && invPhone && currentCleanPhone.length > 8 && invPhone.includes(currentCleanPhone.slice(-8));
 
     return (sameCompound && samePrice) || (samePhone && sameCompound);
@@ -271,6 +293,8 @@ function parseListingMessage(
   const attachedPhotos = extractAttachedPhotos(msg.text);
   const primaryPhoto = attachedPhotos[0] || undefined;
 
+  // Honest summary: '?' for unknown values — never the old fabricated defaults.
+  const unknown = '?';
   return {
     id: `WA-UNIT-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
     timestamp: msg.timestamp,
@@ -284,13 +308,13 @@ function parseListingMessage(
     area,
     price,
     finishing,
-    sierraCode: sbr.code,
+    sierraCode: sbr?.code ?? null,
     rawText: msg.text,
     isOwner,
-    confidence: isOwner ? 95 : 82,
+    sourceClass,
     isDuplicate,
     duplicateOf,
-    summary: `${propertyType} in ${detectedCompound} · ${area} sqm · ${beds} BD · ${(price / 1000000).toFixed(1)}M EGP`,
+    summary: `${propertyType ?? unknown} in ${detectedCompound ?? unknown} · ${area ?? unknown} sqm · ${beds ?? unknown} BD · ${price != null ? `${(price / 1000000).toFixed(1)}M EGP` : unknown}`,
     photoUrl: primaryPhoto,
     images: attachedPhotos.length > 0 ? attachedPhotos : undefined,
   };
@@ -333,30 +357,51 @@ export async function POST(request: NextRequest) {
       parseListingMessage(m, groupType, existingListings)
     );
 
-    // Step 4: If action is "ingest", persist non-duplicate units to Supabase & local snapshot
+    // Step 4: If action is "ingest", persist non-duplicate units to Supabase.
+    // PHASE 5 FIX: every scanned unit enters the common review queue as
+    // REVIEW_REQUIRED — the source classification (owner group / owner
+    // signal / broker) is recorded as a SIGNAL, never as `verified`, and
+    // `ownerType` no longer stamps brokers as "Broker Verified". The local
+    // JSON snapshot staging was REMOVED: a serverless filesystem is not a
+    // canonical store, and the Supabase row (plus the admin review queue)
+    // is the single source of truth. Duplicated input links to the existing
+    // unit instead of creating a second one.
     let ingestedCount = 0;
+    let needsCodeCount = 0;
     if (action === 'ingest') {
       const unitsToIngest = parsedUnits.filter((u) => !u.isDuplicate);
       for (const unit of unitsToIngest) {
         try {
           const payload = {
-            compound: unit.compound,
-            propertyType: unit.propertyType,
-            mode: unit.mode,
-            beds: unit.beds,
-            baths: unit.baths,
-            area: unit.area,
-            price: unit.price,
-            finishing: unit.finishing,
+            compound: unit.compound ?? undefined,
+            propertyType: unit.propertyType ?? undefined,
+            mode: unit.mode ?? undefined,
+            beds: unit.beds ?? undefined,
+            baths: unit.baths ?? undefined,
+            area: unit.area ?? undefined,
+            price: unit.price ?? undefined,
+            finishing: unit.finishing ?? undefined,
             ownerName: unit.sender || 'Direct Owner (WhatsApp Intake)',
-            ownerType: unit.isOwner ? 'Owner' : 'Broker Verified',
-            mobile: unit.phone,
-            comment: `Imported via WhatsApp Mobile Chat Scanner [${groupName}] at ${unit.timestamp}\nOriginal text: ${unit.rawText.slice(0, 300)}`,
+            // Honest relationship label — no "Verified" claim from a scan.
+            ownerType: unit.isOwner ? 'Owner' : 'Broker',
+            mobile: unit.phone ?? undefined,
+            comment: `Imported via WhatsApp Mobile Chat Scanner [${groupName}] at ${unit.timestamp}\nSource classification: ${unit.sourceClass} (signal, not verification)\nOriginal text: ${unit.rawText.slice(0, 300)}`,
             photos: unit.images || (unit.photoUrl ? [unit.photoUrl] : []),
             images: unit.images || (unit.photoUrl ? [unit.photoUrl] : []),
             featured_image: unit.photoUrl || null,
             status: 'available',
-            verified: unit.isOwner,
+            // PHASE 5: scanned units are PRIVATE until staff review — the
+            // old payload had no publishStatus and even set a `verified`
+            // boolean from group membership.
+            publishStatus: 'REVIEW_REQUIRED',
+            // Phase 3: no safe code derivable → NEEDS_CODE staging, private.
+            code: unit.sierraCode ?? undefined,
+            rawData: {
+              scannedUnitId: unit.id,
+              sourceClass: unit.sourceClass,
+              needsCode: unit.sierraCode == null,
+              whatsappGroupName: groupName,
+            },
             source: `WhatsApp: ${groupName}`,
           };
 
@@ -364,58 +409,9 @@ export async function POST(request: NextRequest) {
 
           await insertRecord('listings', cols);
           ingestedCount++;
+          if (unit.sierraCode == null) needsCodeCount++;
         } catch (dbErr) {
           logger.warn(`Failed to insert scanned unit ${unit.id}:`, dbErr);
-        }
-      }
-
-      // Stage newly ingested units into local snapshot for instant live map availability
-      if (unitsToIngest.length > 0) {
-        try {
-          const stagedPaths = [
-            path.join(process.cwd(), 'apps/sierra-estates-realty/data/whatsapp-ingested-units.json'),
-            path.join(process.cwd(), 'data/whatsapp-ingested-units.json'),
-          ];
-          for (const sp of stagedPaths) {
-            try {
-              let existing: any[] = [];
-              if (fs.existsSync(sp)) {
-                try { existing = JSON.parse(fs.readFileSync(sp, 'utf-8')); } catch {}
-              }
-              const newlyStaged = unitsToIngest.map((u) => ({
-                type: u.propertyType,
-                location: u.compound,
-                compound: u.compound,
-                price: u.price,
-                currency: 'EGP',
-                area_sqm: u.area,
-                bedrooms: u.beds,
-                bathrooms: u.baths,
-                finishing: u.finishing,
-                sierraCode: u.sierraCode,
-                valuationScore: 85,
-                urgencyScore: 70,
-                contact_info: `${u.sender} (${u.phone})`,
-                sourceType: u.isOwner ? 'owner' : 'broker',
-                whatsappGroupName: groupName,
-                listedAt: u.timestamp,
-                isNewListing: true,
-                fromArchivedGroup: false,
-                notes: u.rawText,
-                photoUrl: u.photoUrl || null,
-                images: u.images || (u.photoUrl ? [u.photoUrl] : []),
-              }));
-              const merged = [...newlyStaged, ...existing];
-              const deduped = Array.from(new Map(merged.map((m) => [m.sierraCode, m])).values());
-              fs.mkdirSync(path.dirname(sp), { recursive: true });
-              fs.writeFileSync(sp, JSON.stringify(deduped, null, 2), 'utf-8');
-            } catch (fsErr) {
-              // Serverless (Vercel) filesystem is read-only; canonical data lives in Supabase
-              logger.info(`[whatsapp-scan] Serverless filesystem write skipped: ${(fsErr as Error).message}`);
-            }
-          }
-        } catch (stageErr) {
-          logger.warn('Failed to stage newly ingested WhatsApp units to JSON:', stageErr);
         }
       }
     }
@@ -431,6 +427,7 @@ export async function POST(request: NextRequest) {
         directOwnersCount: parsedUnits.filter((u) => u.isOwner).length,
         duplicatesCount: parsedUnits.filter((u) => u.isDuplicate).length,
         ingestedCount,
+        needsCodeCount,
       },
       units: parsedUnits,
     });

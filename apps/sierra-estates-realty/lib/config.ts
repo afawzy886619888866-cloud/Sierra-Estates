@@ -6,7 +6,11 @@
 
 export const SiteConfig = {
   branding: {
-    name: "Sierra Blu Realty / Sierra Estates",
+    // PHASE 1: the active display brand is exactly "Sierra Estates" (was the
+    // blended "Sierra Blu Realty / Sierra Estates"). The legally registered
+    // entity name stays truthful and separate below — do not alter it
+    // without authoritative evidence.
+    name: "Sierra Estates",
     legalName: "Sierra Blu Realty & Sierra Estates Real Estate Investment",
     tagline: "Beyond Brokerage — Smarter Decisions, AI-Driven.",
     foundedIn: "2026",

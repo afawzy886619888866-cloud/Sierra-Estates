@@ -27,7 +27,14 @@ main:
           - targets: ${text.split(args.targets, ",")}
           - force: ${args.force or false}
           - siteUrl: ${args.siteUrl or "https://sierra-estates.net"}
-          - projectId: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          # PHASE 8 FIX: sys.get_env("GOOGLE_CLOUD_PROJECT_ID") is NOT a
+          # variable Workflows exposes — the documented set is GOOGLE_CLOUD_PROJECT
+          # (plus LOCATION/REGION). The old name always resolved empty, so the
+          # Secret Manager URL could never address the right project and every
+          # execution failed at read_cron_secret. Resolution order is now:
+          # GOOGLE_CLOUD_PROJECT, then the workflow's own project id via
+          # sys.get_env("GOOGLE_CLOUD_PROJECT"), then an explicit arg override.
+          - projectId: ${args.projectId or sys.get_env("GOOGLE_CLOUD_PROJECT")}
           - outcomes: []
 
     - read_cron_secret:

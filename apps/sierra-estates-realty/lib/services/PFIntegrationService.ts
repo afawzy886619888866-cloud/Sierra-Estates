@@ -9,11 +9,33 @@ import { Unit, Lead, COLLECTIONS } from '../models/schema';
 import { PFPropertyType } from '../property-finder/types';
 import { triggerNewListingNotification } from '../server/n8n';
 import { toListingColumns } from '../server/listing-columns';
+import {
+  PublishGate,
+  PublishGateError,
+  PublishGateResult,
+  PublishGateUnit,
+} from './publish-gate';
+import { EgyptListingValidator } from '../property-finder/validation';
 
 export interface PFLeadSyncSummary {
   created: number;
   updated: number;
   skipped: number;
+}
+
+export interface PublishListingOptions {
+  /** Validate the gate + provider field contract WITHOUT calling the remote
+   * PF API. Used by the controlled live test (Phase 12: "run Property Finder
+   * in dry-run mode first"). Can also be forced globally with PF_DRY_RUN=true. */
+  dryRun?: boolean;
+}
+
+export interface PublishListingResult {
+  id?: string | number;
+  reference?: string;
+  dryRun?: boolean;
+  alreadyPublished?: boolean;
+  gate: PublishGateResult;
 }
 
 export class PFIntegrationService {
@@ -144,9 +166,43 @@ export class PFIntegrationService {
     return { imported, updated };
   }
 
-  static async publishListing(unitId: string) {
-    const unit = await getRecord<Unit>(COLLECTIONS.units, unitId);
+  /**
+   * Evaluate the 8-condition C6 publish gate for a unit WITHOUT any remote
+   * calls. Exposed so admin preview queues and tests can show exactly why a
+   * record is or is not eligible.
+   */
+  static async evaluatePublishGate(unitId: string): Promise<PublishGateResult> {
+    const unit = await getRecord<PublishGateUnit>(COLLECTIONS.units, unitId);
     if (!unit) throw new Error('Unit not found');
+    return PublishGate.evaluate(unit);
+  }
+
+  static async publishListing(unitId: string, options: PublishListingOptions = {}): Promise<PublishListingResult> {
+    const unit = await getRecord<PublishGateUnit>(COLLECTIONS.units, unitId);
+    if (!unit) throw new Error('Unit not found');
+
+    // ── PUBLISH GATE (Phase 4) ──
+    // The complete C6 gate is enforced HERE, inside the service, so no caller
+    // (August agent, chat scan, Easy Listing, Telegram, Sheet sync, admin bulk
+    // action, AI parser, manual dispatcher) can bypass it. REVIEW_REQUIRED
+    // means private staging, never external publication.
+    const gate = PublishGate.evaluate(unit);
+    if (!gate.eligible) {
+      throw new PublishGateError(gate);
+    }
+
+    // ── IDEMPOTENCY ──
+    // Re-invoking publishListing on a unit that already carries a genuine
+    // remote acceptance must not create a duplicate remote listing.
+    const automation = (unit as any).automation ?? {};
+    if (automation.isPublishedToPF === true && unit.pfReferenceNumber) {
+      return {
+        id: unit.pfReferenceNumber,
+        reference: unit.pfReferenceNumber,
+        alreadyPublished: true,
+        gate,
+      };
+    }
 
     // §21: a PF listing carries only real unit data. Missing price, type,
     // bedroom/bathroom counts or area fail loudly instead of being defaulted
@@ -155,8 +211,10 @@ export class PFIntegrationService {
     const incomplete: string[] = [];
     if (!(Number(unit.price) > 0)) incomplete.push('price');
     if (!unit.propertyType) incomplete.push('propertyType');
-    if (!(Number(unit.bedrooms) > 0)) incomplete.push('bedrooms');
-    if (!(Number(unit.bathrooms) > 0)) incomplete.push('bathrooms');
+    // Studios legitimately have 0 bedrooms — treat 0+ as present, only an
+    // absent/negative value is incomplete.
+    if (!(Number(unit.bedrooms) >= 0) || unit.bedrooms == null) incomplete.push('bedrooms');
+    if (!(Number(unit.bathrooms) >= 0) || unit.bathrooms == null) incomplete.push('bathrooms');
     if (!(Number(unit.area) > 0)) incomplete.push('area');
     if (!unit.title) incomplete.push('title');
     if (incomplete.length > 0) {
@@ -198,22 +256,62 @@ export class PFIntegrationService {
       },
     };
 
+    // Provider-side contract validation runs for BOTH dry-run and live, so a
+    // dry run reports the same field-level problems a live call would hit.
+    const validation = EgyptListingValidator.validate(pfListing);
+    if (!validation.isValid) {
+      throw new Error(
+        `PF listing request failed provider validation: ${validation.errors.join('; ')}`
+      );
+    }
+
+    const dryRun = options.dryRun === true || process.env.PF_DRY_RUN === 'true';
+    if (dryRun) {
+      return {
+        dryRun: true,
+        gate,
+        reference: pfListing.reference,
+      };
+    }
+
     const result = await pfClient.createListing(pfListing);
+
+    if (result.id) {
+      // ── ORDERING FIX ──
+      // The remote /publish call happens BEFORE the local row is marked
+      // published. If the publish step fails, the DB no longer claims
+      // success it did not earn (old bug: isPublishedToPF:true was written
+      // before pfClient.publishListing, so a failed publish still reported
+      // as live).
+      try {
+        await pfClient.publishListing(result.id);
+      } catch (publishErr: any) {
+        // The remote draft EXISTS but is not live. Record the honest state:
+        // created (with reference) but pending publication, retryable.
+        await updateRecord(COLLECTIONS.units, unitId, {
+          automation: { ...automation, isPublishedToPF: false, pfPendingPublish: true },
+          pfReferenceNumber: result.reference || String(result.id),
+          pfStatus: 'pending_publish',
+          lastSyncAt: new Date().toISOString(),
+          syncSource: 'property-finder',
+        });
+        throw new Error(
+          `PF listing created (id ${result.id}) but remote publish failed: ${publishErr?.message ?? publishErr}. Record marked pending_publish — retry is safe.`
+        );
+      }
+    }
 
     // `automation` is one JSONB column, so the dotted-path update becomes a
     // merge onto the object already on the unit.
     await updateRecord(COLLECTIONS.units, unitId, {
-      automation: { ...((unit as any).automation ?? {}), isPublishedToPF: true },
+      automation: { ...automation, isPublishedToPF: true, pfPendingPublish: false },
       pfReferenceNumber: result.reference || String(result.id),
+      pfStatus: 'published',
       lastSyncAt: new Date().toISOString(),
       syncSource: 'property-finder',
     });
 
-    if (result.id) {
-      await pfClient.publishListing(result.id);
-    }
-
-    return result;
+    return { ...result, gate };
   }
 
   private static async resolveLocationId(unit: Unit): Promise<number | null> {
@@ -235,7 +333,17 @@ export class PFIntegrationService {
       penthouse: 'penthouse', duplex: 'duplex', chalet: 'chalet',
       'twin-house': 'twin-house', palace: 'palace', land: 'land',
     };
-    return mapping[type?.toLowerCase()] || 'apartment';
+    const mapped = mapping[type?.toLowerCase()];
+    if (!mapped) {
+      // Phase 4: the old code silently defaulted unknown types to
+      // 'apartment' — a fabrication inside the publish path. Unknown types
+      // now fail loudly (the C6 gate rejects them first; this guard covers
+      // direct mapPropertyType callers).
+      throw new Error(
+        `Unknown property type "${type}" has no Property Finder mapping — refusing to default to 'apartment'.`
+      );
+    }
+    return mapped;
   }
 }
 

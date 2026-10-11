@@ -82,3 +82,41 @@ Follow `infra/google-cloud/README.md` top to bottom:
 **Production-ready when every box above is ticked. Until then, the system is
 in pilot: scheduling is live but the public catalog must show only
 human-verified inventory.**
+
+---
+
+## 2026-10-11 master-execution update (branch `agents/master-execution-glm`)
+
+Code-side repairs applied to this pipeline (all verified by the repo test
+suite — 141 suites / 1524 tests):
+
+- [x] **`workflows/dispatch.yaml` env bug fixed** — `sys.get_env("GOOGLE_CLOUD_PROJECT_ID")`
+      is not a variable GCP Workflows exposes; the Secret Manager URL could
+      never resolve the project, so EVERY workflow execution failed at
+      `read_cron_secret`. Now reads `GOOGLE_CLOUD_PROJECT` (documented set)
+      with an `args.projectId` override for explicit pinning.
+- [x] **Hardcoded runner IP removed from the app** —
+      `app/api/admin/workflow-ops/route.ts` no longer falls back to
+      `http://54.89.162.250:2786`; the endpoint is env-only
+      (`WORKFLOW_OPS_URL` / `OPENWA_HOST` + `RUNNER_PORT`) and unset config
+      yields an explicit 503 instead of silently dialing a baked-in IP.
+- [x] **Live stack health verified read-only (2026-10-11 ~03:15Z):**
+      runner `54.89.162.250:2786` alive (uptime ≈3.2d, tz Africa/Cairo,
+      supabase connected, `gateway-sentinel` running); gateway `:2785`
+      alive; session `status:"ready"`, phone `201031622600`,
+      `engineLoaded:true`, lastActive now. The `18.232.148.172` references
+      in `infra/aws/*` are stale.
+
+Still blocking ACTUAL go-live (unchanged, operator actions):
+
+- [ ] Authenticated `gcloud` access + billing state confirmation before the
+      5 scheduler jobs are created (`scripts/create-scheduler-jobs.sh`).
+- [ ] One verified Workflow execution with `trigger_source='gcp-scheduler'`
+      rows in `automation_runs` (the smoke SQL in README).
+- [ ] One safe overlap cycle (GCP `:10` runs, Vercel `:45` records
+      `skipped (recent_success)`) before retiring the Vercel fallbacks.
+- [ ] Migration ledger note: two applied files share number `026`
+      (`20261005_026_leads_archived_column.sql`,
+      `20261007_026_units_sync_provenance_repair.sql`) — left as-is because
+      renaming applied migrations rewrites history; the apply script
+      tolerates the collision.

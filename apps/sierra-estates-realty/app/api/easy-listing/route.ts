@@ -62,7 +62,7 @@ const easyListingSchema = z.object({
 function brokerPhotoRequestMessage(name: string, code: string): string {
   return [
     `مرحباً ${name} 👋`,
-    `معاك بوت Sierra Blu Realty — تم تسجيل الوحدة ${code} على شيت الخريطة (MAP_SHEET).`,
+    `معاك بوت Sierra Estates — تم تسجيل الوحدة ${code} على شيت الخريطة (MAP_SHEET).`,
     ``,
     `عند وجود عميل جاد على الوحدة، سنحتاج منك:`,
     `📷 3 صور على الأقل للوحدة (واجهة + داخل)`,
