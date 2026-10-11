@@ -29,7 +29,7 @@ describe('MapCommanderAgent', () => {
       expect(results.length).toBe(NEW_CAIRO_COMPOUNDS.length);
 
       // Verify Mivida specifically
-      const mivida = results.find((r) => r.code === 'mivida');
+      const mivida = results.find((r) => r.code === 'MIV');
       expect(mivida).toBeDefined();
       expect(mivida?.withinExpectedBounds).toBe(true);
       expect(mivida?.distanceFromCairoCenterKm).toBeGreaterThan(0);
@@ -48,7 +48,7 @@ describe('MapCommanderAgent', () => {
           priceLabel: '15,000,000 EGP',
           type: 'Villa',
           mode: 'sale',
-          img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750', // valid photo
+          img: 'https://sierra-estates.com/cdn/properties/miv-villa.jpg', // real property photo
         },
         {
           id: 'u2',
@@ -68,7 +68,7 @@ describe('MapCommanderAgent', () => {
         mockUnits
       );
 
-      const mividaStats = stats.find((s) => s.compoundCode === 'mivida');
+      const mividaStats = stats.find((s) => s.compoundCode === 'MIV');
       expect(mividaStats).toBeDefined();
       expect(mividaStats?.totalUnits).toBe(2);
       expect(mividaStats?.saleUnits).toBe(1);
@@ -113,7 +113,7 @@ describe('MapCommanderAgent', () => {
           priceLabel: '12,000,000 EGP',
           type: 'Apartment',
           mode: 'sale',
-          img: 'https://images.unsplash.com/photo-real.jpg', // has photo
+          img: 'https://sierra-estates.com/cdn/properties/real-photo.jpg', // real photo
         },
       ];
 
