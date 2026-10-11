@@ -2,7 +2,8 @@
 .agent
 .agents
 .git
-.github
+.github/*
+!.github/workflows
 .next
 .turbo
 .venv
@@ -90,6 +91,20 @@ FUTURE_PLAN
 deploy/
 docker-compose*.yml
 
-# Jest suites run in CI only, never inside Vercel builds
+# Jest suites: the realty app suite now RUNS inside the Vercel build
+# (scripts/ci-preflight.sh gate 8), so the app's __tests__ must upload.
+# Root /__tests__/ stays local-only (repo-hygiene suites, not part of the
+# web build); other packages' test dirs stay excluded too.
+# NOTE: negations must come AFTER the catch-all __tests__/ rule — the last
+# matching pattern wins.
 /__tests__/
 __tests__/
+!apps/sierra-estates-realty/__tests__
+!apps/sierra-estates-realty/__tests__/**
+
+# CI gate inputs: the Phase-1 pipeline sources must reach the Vercel build
+# (ci-preflight gate 0 regenerates data/MASTER_INVENTORY_V1.csv from them).
+# The generated CSV itself stays excluded (data/**, *.csv above).
+!data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx
+!owners_rent_tab_separated.tsv
+!owners_rent_with_photos.tsv
