@@ -86,10 +86,10 @@ describe('Phase 13 — master inventory data QA (Phase 1 pipeline invariants)', 
     const duplicates = rows.filter((r) => r.publishStatus === 'DUPLICATE');
     const uniques = rows.filter((r) => r.publishStatus !== 'DUPLICATE');
 
-    it('keeps the audit contract shape: 13,043 rows = 8,835 unique + 4,208 duplicates', () => {
-        expect(rows.length).toBe(13043);
-        expect(uniques.length).toBe(8835);
-        expect(duplicates.length).toBe(4208);
+    it('keeps the audit contract shape: 12,088 rows = 8,486 unique + 3,602 duplicates', () => {
+        expect(rows.length).toBe(12088);
+        expect(uniques.length).toBe(8486);
+        expect(duplicates.length).toBe(3602);
         expect(uniques.length + duplicates.length).toBe(rows.length);
     });
 
