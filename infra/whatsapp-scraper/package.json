@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
+    "line1": "node src/index.js",
+    "line2": "node src/owners-harvester.js",
     "dev": "node --watch src/index.js",
     "qr": "node src/index.js --qr-only",
     "test": "echo \"Error: no test specified\" && exit 0"
