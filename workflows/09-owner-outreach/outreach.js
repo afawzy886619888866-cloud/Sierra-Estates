@@ -35,7 +35,7 @@ const path = require('path');
 const { GatewayClient } = require('../lib/gateway-client');
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
-const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
+const SHEET_GID = process.env.UNITS_SHEET_GID || '341562911';
 const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 // Pool-aware: recomputed in main() as per-line × pool unless the operator set
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
