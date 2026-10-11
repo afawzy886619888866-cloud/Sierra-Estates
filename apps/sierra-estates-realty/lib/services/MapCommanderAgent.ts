@@ -16,7 +16,8 @@ export interface GisAuditResult {
   lat: number;
   lng: number;
   isGpsVerified: boolean;
-  zone: string;
+  /** Present only when the compound row carries it (§21: no invented zone). */
+  zone?: string;
   withinExpectedBounds: boolean;
   distanceFromCairoCenterKm: number;
 }
@@ -98,7 +99,9 @@ export class MapCommanderAgent {
         lat: c.lat,
         lng: c.lng,
         isGpsVerified: Boolean(c.isGpsVerified),
-        zone: c.zone || 'New Cairo',
+        // §21 Rule B: the zone is whatever the row actually carries — no
+        // hard-coded 'New Cairo' default for compounds that have none.
+        zone: c.zone,
         withinExpectedBounds,
         distanceFromCairoCenterKm,
       };
