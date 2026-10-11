@@ -118,8 +118,15 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       const label: string = listing.compound || rawLocation;
 
       const price = Number(listing.price) || 0;
+      // Mode honors the row's real deal_type first (§21: never relabel real
+      // data). The price heuristic only disambiguates rows with no deal_type:
+      // in this market a recorded EGP value under 1M is monthly-rent scale.
       const mode =
-        listing.deal_type === "rent" || (price > 0 && price < 1_000_000)
+        listing.deal_type === "rent"
+          ? "rent"
+          : listing.deal_type === "sale"
+          ? "sale"
+          : price > 0 && price < 1_000_000
           ? "rent"
           : "sale";
       // img/tag/aiScore/publishToClient live in the raw_data JSONB blob on
