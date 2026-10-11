@@ -41,6 +41,7 @@ const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '4
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
 const CAP_EXPLICIT = process.env.WF_OWNER_CONTACT_DAILY_CAP != null && process.env.WF_OWNER_CONTACT_DAILY_CAP !== '';
 let DAILY_CAP = PER_LINE_DAILY_CAP;
+const BATCH_CAP = parseInt(process.env.WF_SLOT_BATCH || '20', 10);
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -285,6 +286,10 @@ async function main() {
   }
 
   while (checkpoint.topCursor <= checkpoint.bottomCursor) {
+    if (summary.sent >= BATCH_CAP) {
+      console.log(`hourly slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next hour`);
+      break;
+    }
     if (daily.sent >= DAILY_CAP) {
       summary.skippedCap++;
       console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next window`);
@@ -341,6 +346,10 @@ async function main() {
       break;
     }
 
+    if (summary.sent >= BATCH_CAP) {
+      console.log(`hourly slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next hour`);
+      break;
+    }
     if (daily.sent >= DAILY_CAP) {
       summary.skippedCap++;
       console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing`);
