@@ -2248,7 +2248,7 @@ function AdminApp() {
         if (data?.signedIn) {
           setCurrentUser({
             email: data.email || 'admin@sierra-estates.net',
-            role: data.role || 'super_admin',
+            role: data.role || 'superadmin',
             name: data.name || 'Executive Admin',
             ...(data.scope ? { scope: data.scope } : {}),
           });
@@ -2257,7 +2257,7 @@ function AdminApp() {
           // Data APIs enforce the same rule server-side (auth-guard.ts).
           setCurrentUser({
             email: 'dev@sierra-estates.net',
-            role: 'super_admin',
+            role: 'superadmin',
             name: 'Dev Admin',
           });
         } else {
@@ -2782,7 +2782,7 @@ function AdminApp() {
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
                 {isPartner
                   ? (isAr ? 'حساب شريك · بروبرتي' : 'Partner Account')
-                  : currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+                  : currentUser?.role === 'superadmin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
               </span>
             </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>

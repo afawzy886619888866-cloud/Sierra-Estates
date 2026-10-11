@@ -105,32 +105,28 @@ export class VertexAgent extends BaseAgent {
         },
       };
     } catch (error: any) {
-      console.warn(`[VertexAgent:${this.name}] Vertex API call unauthenticated (${error.message || '403'}). Engaging deterministic offline reasoning engine...`);
-      
-      const fallbackResponse = `[Titan Vertex AI Engine — Intelligence Briefing]
-Target Analysis: "${prompt}"
-
-• Market Segment: Luxury Compounds & Penthouses (New Cairo / 5th Settlement)
-• Key Monitored Enclaves: Mivida (Emaar), Hyde Park, Uptown Cairo, Palm Hills
-• AVM Pricing Index: Average finished penthouses range 16.5M - 24.0M EGP (62,500 EGP/sqm)
-• Capital Appreciation Horizon: +24.5% projected 12-month capital growth
-• Rental Yield Performance: 8.4% gross annual yields with high Gulf-investor liquidity
-• Actionable Recommendation: Route high-urgency cash buyer requests directly to Stage-9 Closer and sync active listings with PropertyFinder.`;
+      // PHASE 10 FIX (no-fabrication): the old catch block returned
+      // success:true with an invented "Titan Vertex AI Engine" market
+      // briefing — fabricated prices, yields and appreciation numbers
+      // presented as grounded Vertex AI Search output. A failed provider
+      // call is now an honest failure: the caller learns the API call did
+      // not happen and no synthetic market data is emitted anywhere.
+      console.warn(`[VertexAgent:${this.name}] Vertex API call failed (${error.message || 'unknown'}). Reporting the failure honestly — no fabricated briefing.`);
 
       if (this.memory && typeof this.memory.set === 'function') {
         await this.memory.set(`vertex-task-${this.name}-${Date.now()}`, {
           prompt,
-          response: fallbackResponse,
-          mode: 'offline-reasoning-fallback',
+          error: error?.message ?? String(error),
           timestamp: new Date().toISOString(),
-        }, ['vertex-agent', this.name, 'offline-briefing']);
+        }, ['vertex-agent', this.name, 'failed']);
       }
 
       return {
-        success: true,
+        success: false,
+        error: `Vertex AI call failed: ${error?.message ?? 'unknown error'}`,
         data: {
-          text: fallbackResponse,
-          mode: 'offline-reasoning-fallback',
+          text: 'Vertex AI grounded search is unavailable — no market briefing can be produced without the provider. Configure GOOGLE_CLOUD_PROJECT and VERTEX_SEARCH_DATASTORE_ID credentials; no fabricated figures are shown.',
+          mode: 'unavailable-honest-failure',
         },
       };
     }

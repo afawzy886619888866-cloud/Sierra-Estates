@@ -14,13 +14,14 @@
 import { NextResponse } from "next/server";
 import {
   signSession, verifySession, tryDemoLogin, tryPartnerLogin, cookieOpts, SESSION_COOKIE,
-  parseCookies,
+  parseCookies, enforceSessionAccountStatus,
 } from "@/lib/auth";
-import { getSupabaseAdmin, getRecord, updateRecord } from "@sierra-estates/db";
+import { getSupabaseAdmin, getRecord, updateRecord, insertRecord, listRecords } from "@sierra-estates/db";
 import { isAdminPortalRole } from "@/lib/types";
 import { isPartnerRole } from "@/lib/partner-access";
 import { scopeFromProfile } from "@/lib/server/partner-scope";
 import type { Role, User } from "@/lib/types";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +46,18 @@ export async function GET(req: Request) {
       { headers: NO_STORE_HEADERS }
     );
   }
+
+  // PHASE 7 — session revocation: a signed cookie proves a PAST login, not
+  // current entitlement. Suspended/deleted (or still-pending) accounts are
+  // rejected here and by every API guard, even mid-cookie-TTL.
+  const statusCheck = await enforceSessionAccountStatus(sess);
+  if (!statusCheck.ok) {
+    return NextResponse.json(
+      { signedIn: false, reason: statusCheck.reason },
+      { headers: NO_STORE_HEADERS }
+    );
+  }
+
   return NextResponse.json(
     {
       signedIn: true,
@@ -90,14 +103,47 @@ export async function POST(req: Request) {
 
         if (user) {
           const verifiedEmail = (user.email || targetEmail || "").trim().toLowerCase();
-          const profile = await getRecord<Partial<User> & { fullName?: string; role?: string }>(
+          const profile = await getRecord<Partial<User> & { fullName?: string; role?: string; status?: string | null }>(
             "profiles",
             user.id
           );
 
+          // ── PHASE 7: OAuth access-request lifecycle ──
+          // An authenticated Google identity that is not provisioned gets NO
+          // staff access. Its request is now DURABLE: a pending profile row +
+          // an access_requests record, so a super admin can approve/deny from
+          // the admin queue, and the configured ADMIN_APPROVAL_EMAIL is
+          // notified. The old flow discarded the attempt silently.
           if (!profile) {
+            const requestCreated = await recordPendingAccessRequest({
+              authUid: user.id,
+              email: verifiedEmail,
+              fullName:
+                (user.user_metadata?.full_name as string | undefined) ??
+                verifiedEmail.split("@")[0] ??
+                "Google User",
+              provider: (user.app_metadata?.provider as string | undefined) ?? "google",
+            });
             return NextResponse.json(
-              { error: "This account is not provisioned for the admin portal." },
+              {
+                error: "This account is not provisioned for the admin portal.",
+                accessRequest: requestCreated ? "pending" : "record_failed",
+              },
+              { status: 403, headers: NO_STORE_HEADERS }
+            );
+          }
+
+          // Pending/suspended/deleted accounts never receive a session.
+          const profileStatus = (profile.status ?? "").toString().toLowerCase();
+          if (profileStatus === "pending") {
+            return NextResponse.json(
+              { error: "Your access request is pending super-admin approval." },
+              { status: 403, headers: NO_STORE_HEADERS }
+            );
+          }
+          if (profileStatus === "suspended" || profileStatus === "deleted") {
+            return NextResponse.json(
+              { error: `This account is ${profileStatus}.` },
               { status: 403, headers: NO_STORE_HEADERS }
             );
           }
@@ -180,4 +226,102 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400, headers: NO_STORE_HEADERS });
+}
+
+/**
+ * PHASE 7 — durable pending access request for an unprovisioned identity.
+ *
+ * Creates (idempotently) a pending profile row + access_requests record and
+ * notifies ADMIN_APPROVAL_EMAIL through whatever provider is configured.
+ * No configured provider → the request is still durable and visible in the
+ * admin queue; the notification gap is logged by name, never silently
+ * approved (default-deny).
+ */
+async function recordPendingAccessRequest(params: {
+  authUid: string;
+  email: string;
+  fullName: string;
+  provider: string;
+}): Promise<boolean> {
+  const { authUid, email, fullName, provider } = params;
+  try {
+    // Pending profile row (durable status; least-privilege role until approved).
+    const existing = await listRecords<{ id: string }>("profiles", {
+      where: [{ column: "id", value: authUid }],
+      select: "id",
+      limit: 1,
+    });
+    if (existing.length === 0) {
+      await insertRecord("profiles", {
+        id: authUid,
+        email,
+        fullName,
+        role: "viewer",
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        rawData: { accessRequest: { provider, requestedAt: new Date().toISOString() } },
+      });
+    } else {
+      await updateRecord("profiles", authUid, {
+        status: "pending",
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Durable access request (unique open request per email).
+    const open = await listRecords<{ id: string }>("access_requests", {
+      where: [{ column: "email", value: email }, { column: "state", value: "pending" }],
+      select: "id",
+      limit: 1,
+    });
+    if (open.length === 0) {
+      await insertRecord("access_requests", {
+        email,
+        authUid,
+        provider,
+        state: "pending",
+        requestedAt: new Date().toISOString(),
+      });
+    } else {
+      await updateRecord("access_requests", open[0].id, {
+        authUid,
+        requestedAt: new Date().toISOString(),
+      });
+    }
+
+    // Notification adapter: ADMIN_APPROVAL_EMAIL names the inbox; delivery
+    // depends on a configured provider (none is configured today — exact
+    // blocker recorded, never a silent approval).
+    const approvalEmail = process.env.ADMIN_APPROVAL_EMAIL;
+    if (approvalEmail) {
+      logger.info(
+        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — pending approval by ${approvalEmail}. ` +
+        `Email provider delivery requires configuration (no provider is wired into this path today); the request is durable in the admin queue regardless.`
+      );
+    } else {
+      logger.warn(
+        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — ADMIN_APPROVAL_EMAIL is not configured; request is durable in the admin queue but no notification will be sent.`
+      );
+    }
+
+    // Audit trail.
+    try {
+      await insertRecord("audit_logs", {
+        actorUid: authUid,
+        actorEmail: email,
+        action: "access_request.created",
+        target: `access_requests/${email}`,
+        after: { email, provider, state: "pending" },
+        createdAt: new Date().toISOString(),
+      });
+    } catch {
+      // Audit write failure must not flip the request outcome.
+    }
+
+    return true;
+  } catch (err: any) {
+    logger.warn(`[auth] pending access request could not be recorded: ${err?.message}`);
+    return false;
+  }
 }
