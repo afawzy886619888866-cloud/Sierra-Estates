@@ -50,8 +50,47 @@ const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || A
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
 const DAILY = path.join(STATE_DIR, 'owner-outreach-daily.json');
+const CHECKPOINT = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
 
-const summary = { candidates: 0, sent: 0, skippedDup: 0, skippedCap: 0, skippedHours: false, failed: 0, dryRun: DRY_RUN, bySession: {} };
+const summary = {
+  candidates: 0,
+  sent: 0,
+  topSent: 0,
+  bottomSent: 0,
+  skippedDup: 0,
+  skippedCap: 0,
+  skippedHours: false,
+  failed: 0,
+  dryRun: DRY_RUN,
+  bySession: {},
+  metInTheMiddle: false,
+};
+
+function loadCheckpoint(totalCount) {
+  try {
+    const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
+    if (typeof cp.topCursor === 'number' && typeof cp.bottomCursor === 'number') {
+      return cp;
+    }
+  } catch { /* first run */ }
+  return {
+    topCursor: 0,
+    bottomCursor: Math.max(0, totalCount - 1),
+    totalCount,
+    metInTheMiddle: false,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function saveCheckpoint(cp) {
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    cp.updatedAt = new Date().toISOString();
+    fs.writeFileSync(CHECKPOINT, JSON.stringify(cp, null, 2));
+  } catch (err) {
+    console.warn(`[outreach] failed to write checkpoint: ${err.message}`);
+  }
+}
 
 function parseCsv(text) {
   const rows = []; let row = [], field = '', inQ = false;
@@ -178,7 +217,7 @@ async function main() {
       process.exit(0);
     }
   }
-  const st = await gw.status();
+  const st = await gw.status().catch(() => ({ status: 'offline' }));
   if (st.status !== 'ready' && !poolEntries.length && !DRY_RUN) {
     console.log(`gateway session not ready (${st.status}) — retry at next cron tick`);
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
@@ -192,23 +231,34 @@ async function main() {
   if (!res.ok) throw new Error(`sheet fetch HTTP ${res.status}`);
   const parsed = parseCsv(await res.text());
   const headers = parsed[0].map((h) => String(h).trim());
-  const col = (names) => headers.findIndex((h) => names.some((n) => h.toLowerCase() === n));
-  const iCode = col(['code']), iName = col(['name', 'owner']), iMob = col(['mobile', 'phone']),
-    iAvail = col(['availablty', 'availability']), iLoc = col(['location']),
-    iPrice = col(['unit price', 'price']), iBed = col(['bedrooms']), iType = col(['property tybe', 'property type']);
-  if (iMob < 0) { console.log('UNCONFIGURED: no Mobile column in sheet'); process.exit(2); }
+  const col = (names) => headers.findIndex((h) => {
+    const clean = h.trim().toLowerCase();
+    return names.some((n) => clean === n || clean.includes(n));
+  });
+  const iCode = col(['code', 'كود']),
+    iName = col(['name', 'owner', 'الاسم', 'مالك', 'المرسل']),
+    iMob = col(['mobile', 'phone', 'موبايل', 'هاتف', 'تليفون', 'المرسل', 'sender']),
+    iAvail = col(['availablty', 'availability', 'الحالة']),
+    iLoc = col(['location', 'الكمبوند', 'الموقع']),
+    iPrice = col(['unit price', 'price', 'السعر']),
+    iBed = col(['bedrooms', 'غرف', 'الغرف']),
+    iType = col(['property tybe', 'property type', 'نوع العقار', 'النوع']);
+  if (iMob < 0) {
+    console.log(`UNCONFIGURED: no Mobile column in sheet. Found headers: [${headers.join(', ')}]`);
+    process.exit(2);
+  }
 
   const contacted = loadLedgerPhones();
   const daily = loadDaily();
 
   const candidates = [];
   for (const r of parsed.slice(1)) {
-    const code = (iCode >= 0 ? (r[iCode] || '') : '').trim();
-    const name = (iName >= 0 ? (r[iName] || '') : '').trim();
+    const code = (iCode >= 0 ? (r[iCode] || '') : '').trim() || `SE-${candidates.length + 1}`;
+    const name = (iName >= 0 ? (r[iName] || '') : '').trim() || 'صاحب الإعلان';
     const phone = normalizePhone(iMob >= 0 ? r[iMob] : '');
-    const avail = (iAvail >= 0 ? (r[iAvail] || '') : '').trim().toLowerCase();
-    if (!code || !phone) continue; // no code (junk row) or no usable mobile
-    if (!AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
+    const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
+    if (!phone) continue; // no usable mobile
+    if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
     candidates.push({
       code, name, phone, avail,
       location: (iLoc >= 0 ? (r[iLoc] || '') : '').trim(),
@@ -217,46 +267,140 @@ async function main() {
       propertyType: (iType >= 0 ? (r[iType] || '') : '').trim(),
     });
   }
-  // dedupe by phone (a person owning several units gets ONE message)
-  const byPhone = new Map();
-  for (const c of candidates) if (!byPhone.has(c.phone)) byPhone.set(c.phone, c);
-  summary.candidates = byPhone.size;
-  console.log(`candidates: ${byPhone.size} unique phones (${candidates.length} rows) | already-contacted ledger: ${contacted.size}`);
+  const topSession = poolEntries.length > 0 ? poolEntries[0] : { name: 'line1', uuid: gw.sessionId };
+  const bottomSession = poolEntries.length > 1 ? poolEntries[1] : (poolEntries.length > 0 ? poolEntries[0] : { name: 'line2', uuid: gw.sessionId });
+  console.log(`Top Worker Line: ${topSession.name} | Bottom Worker Line: ${bottomSession.name}`);
 
-  for (const [phone, c] of byPhone) {
-    if (contacted.has(phone)) { summary.skippedDup++; continue; }
-    if (daily.sent >= DAILY_CAP) { summary.skippedCap++; continue; }
+  summary.candidates = candidates.length;
+  console.log(`candidates: ${candidates.length} valid rows in sheet | already-contacted ledger: ${contacted.size}`);
 
-    const text = buildMessage(c);
-    if (DRY_RUN) {
-      console.log(`[dry-run] would send → ${phone} (${c.code}, ${c.avail}): ${text.split('\n')[0]}…`);
-      summary.sent++;
-      continue;
+  const checkpoint = loadCheckpoint(candidates.length);
+  console.log(`checkpoint: topCursor=${checkpoint.topCursor}, bottomCursor=${checkpoint.bottomCursor}, metInTheMiddle=${checkpoint.metInTheMiddle}`);
+
+  if (checkpoint.topCursor > checkpoint.bottomCursor || checkpoint.metInTheMiddle) {
+    summary.metInTheMiddle = true;
+    console.log('🏁 All candidates in the sheet have already been covered (Top and Bottom met in the middle)!');
+    console.log(`SUMMARY ${JSON.stringify(summary)}`);
+    return;
+  }
+
+  while (checkpoint.topCursor <= checkpoint.bottomCursor) {
+    if (daily.sent >= DAILY_CAP) {
+      summary.skippedCap++;
+      console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next window`);
+      break;
     }
-    try {
-      const sendRes = await gw.sendText(phone, text, { retries: 2 });
-      const usedSession = sendRes.session || 'default';
-      summary.sent++;
-      summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
-      daily.sent++;
-      saveDaily(daily);
-      appendLedger({ phone, code: c.code, at: new Date().toISOString(), avail: c.avail, session: usedSession });
-      contacted.add(phone);
-      console.log(`sent → ${phone} (${c.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-    } catch (err) {
-      summary.failed++;
-      console.error(`send failed for ${phone}: ${err.message}`);
-      if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-        console.error('permanent failure — aborting batch to protect the session');
-        break;
+
+    // ── 1. TOP-DOWN WORKER (Line 1) ──────────────────────────────
+    if (checkpoint.topCursor <= checkpoint.bottomCursor) {
+      const topCand = candidates[checkpoint.topCursor];
+      const phone = topCand.phone;
+
+      if (!contacted.has(phone)) {
+        const text = buildMessage(topCand);
+        if (DRY_RUN) {
+          console.log(`[dry-run][TOP #${checkpoint.topCursor}] would send → ${phone} (${topCand.code}) via ${topSession.name}`);
+          summary.sent++;
+          summary.topSent++;
+          summary.bySession[topSession.name] = (summary.bySession[topSession.name] || 0) + 1;
+        } else {
+          try {
+            const sendRes = await gw.sendText(phone, text, { sessionId: topSession.uuid, retries: 2 });
+            const usedSession = sendRes.session || topSession.name;
+            summary.sent++;
+            summary.topSent++;
+            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
+            daily.sent++;
+            saveDaily(daily);
+            appendLedger({ phone, code: topCand.code, at: new Date().toISOString(), avail: topCand.avail, session: usedSession, worker: 'top', cursor: checkpoint.topCursor });
+            console.log(`sent [TOP #${checkpoint.topCursor}] → ${phone} (${topCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+          } catch (err) {
+            summary.failed++;
+            console.error(`TOP send failed for ${phone}: ${err.message}`);
+            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
+              console.error('permanent failure on TOP session — aborting batch');
+              break;
+            }
+          }
+        }
+        contacted.add(phone);
+        await sleep(3000 + Math.floor(Math.random() * 3000));
+      } else {
+        summary.skippedDup++;
       }
+
+      checkpoint.topCursor++;
+      saveCheckpoint(checkpoint);
     }
-    await sleep(3000 + Math.floor(Math.random() * 3000));
+
+    if (checkpoint.topCursor > checkpoint.bottomCursor) {
+      checkpoint.metInTheMiddle = true;
+      summary.metInTheMiddle = true;
+      saveCheckpoint(checkpoint);
+      console.log('🤝 Top and Bottom workers have MET IN THE MIDDLE! Full sheet completed.');
+      break;
+    }
+
+    if (daily.sent >= DAILY_CAP) {
+      summary.skippedCap++;
+      console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing`);
+      break;
+    }
+
+    // ── 2. BOTTOM-UP WORKER (Line 2) ───────────────────────────
+    if (checkpoint.bottomCursor >= checkpoint.topCursor) {
+      const bottomCand = candidates[checkpoint.bottomCursor];
+      const phone = bottomCand.phone;
+
+      if (!contacted.has(phone)) {
+        const text = buildMessage(bottomCand);
+        if (DRY_RUN) {
+          console.log(`[dry-run][BOTTOM #${checkpoint.bottomCursor}] would send → ${phone} (${bottomCand.code}) via ${bottomSession.name}`);
+          summary.sent++;
+          summary.bottomSent++;
+          summary.bySession[bottomSession.name] = (summary.bySession[bottomSession.name] || 0) + 1;
+        } else {
+          try {
+            const sendRes = await gw.sendText(phone, text, { sessionId: bottomSession.uuid, retries: 2 });
+            const usedSession = sendRes.session || bottomSession.name;
+            summary.sent++;
+            summary.bottomSent++;
+            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
+            daily.sent++;
+            saveDaily(daily);
+            appendLedger({ phone, code: bottomCand.code, at: new Date().toISOString(), avail: bottomCand.avail, session: usedSession, worker: 'bottom', cursor: checkpoint.bottomCursor });
+            console.log(`sent [BOTTOM #${checkpoint.bottomCursor}] → ${phone} (${bottomCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+          } catch (err) {
+            summary.failed++;
+            console.error(`BOTTOM send failed for ${phone}: ${err.message}`);
+            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
+              console.error('permanent failure on BOTTOM session — aborting batch');
+              break;
+            }
+          }
+        }
+        contacted.add(phone);
+        await sleep(3000 + Math.floor(Math.random() * 3000));
+      } else {
+        summary.skippedDup++;
+      }
+
+      checkpoint.bottomCursor--;
+      saveCheckpoint(checkpoint);
+    }
+
+    if (checkpoint.topCursor > checkpoint.bottomCursor) {
+      checkpoint.metInTheMiddle = true;
+      summary.metInTheMiddle = true;
+      saveCheckpoint(checkpoint);
+      console.log('🤝 Top and Bottom workers have MET IN THE MIDDLE! Full sheet completed.');
+      break;
+    }
   }
 
   console.log(`SUMMARY ${JSON.stringify(summary)}`);
   console.log('owner-outreach: done');
-  process.exit(0);
+  return;
 }
 
 main().catch((err) => {
