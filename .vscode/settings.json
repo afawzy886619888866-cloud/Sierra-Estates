@@ -92,6 +92,7 @@
   "gitlens.showWelcomeOnInstall": false,
   "gitlens.showWhatsNewAfterUpgrades": false,
   "markdown.validate.ignoredLinks": [
-    "#license--maintainers"
+    "#license--maintainers",
+    "#scheduling-topology"
   ]
 }
