@@ -36,10 +36,15 @@ import qrcode from 'qrcode-terminal';
 import fetch from 'node-fetch';
 import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ── Configuration from env vars ──
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || '';
-const BOT_NAME = process.env.BOT_NAME ? String(process.env.BOT_NAME) : 'Sierra Estates';
+const BOT_NAME = process.env.BOT_NAME ? String(process.env.BOT_NAME) : 'Sierra Estates (Line 1)';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const QR_ONLY = process.argv.includes('--qr-only');
 
@@ -195,8 +200,9 @@ async function createInquiryInSupabase(clientId, messageText, phone) {
  * ────────────────────────────────────────────────────────────────────────── */
 
 async function startSock() {
-  // Auth state persisted to ./auth/ (mapped to docker volume)
-  const { state, saveCreds } = await useMultiFileAuthState('./auth');
+  // Auth state persisted to ./auth_line1/
+  const authDir = process.env.AUTH_DIR || path.join(__dirname, '../auth_line1');
+  const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
   const sock = makeWASocket({
     auth: state,

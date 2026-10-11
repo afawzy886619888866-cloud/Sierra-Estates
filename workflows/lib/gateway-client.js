@@ -203,8 +203,8 @@ class GatewayClient {
    * With no pool: legacy behavior — retries transient failures (network/5xx)
    * up to `retries` times with linear backoff on the single session.
    */
-  async sendText(chatId, text, { retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
-    if (!this.sessionId && !this.sessionPool.length) throw new Error('OPENWA_SESSION_ID missing');
+  async sendText(chatId, text, { sessionId = null, retries = 2, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+    if (!this.sessionId && !this.sessionPool.length && !sessionId) throw new Error('OPENWA_SESSION_ID missing');
     if (!this.operatorKey) throw new Error('no operator/API key configured');
     const target = normalizeChatId(chatId);
     if (!/^\d+@c\.us$/.test(target)) {
@@ -212,7 +212,9 @@ class GatewayClient {
       err.permanent = true;
       throw err;
     }
-    const pool = await this.healthyPool();
+    const pool = sessionId
+      ? [{ name: sessionId, uuid: sessionId }]
+      : await this.healthyPool();
     if (!pool.length) throw new Error('no gateway session available (pool empty)');
 
     let lastErr = null;

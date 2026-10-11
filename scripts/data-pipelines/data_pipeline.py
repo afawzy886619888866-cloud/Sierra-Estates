@@ -15,7 +15,7 @@ from memory.gravity_core import GravityMemory
 # 1. Configuration & Constants
 # ---------------------------------------------------------
 SOURCE_FOLDER_ID = '1RGuki2ECPK4DHNXgzlinQ2QTFAMBnC1z'
-TARGET_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606'
+TARGET_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=341562911'
 
 # Exact columns from the screenshot
 TARGET_COLUMNS = [

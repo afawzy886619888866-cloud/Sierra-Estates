@@ -13,7 +13,7 @@
 export function adminPhotoRequestMessage(name: string, code: string): string {
   return [
     `مرحباً ${name} 👋`,
-    `معاك بوت Sierra Blu Realty بخصوص الوحدة ${code}.`,
+    `معاك بوت Sierra Estates بخصوص الوحدة ${code}.`,
     ``,
     `محتاجين منك صور الوحدة لاستكمال الاعلان:`,
     `📷 3 صور على الأقل (واجهة + داخل)`,

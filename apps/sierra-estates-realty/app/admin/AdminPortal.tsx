@@ -481,13 +481,13 @@ function WorkflowsPage({ T, onNavigate, lang = 'en' }: { T: any; onNavigate?: (t
               📁 {isAr ? 'فتح جوجل درايف' : 'Open Google Drive Folder'} ↗
             </a>
             <a 
-              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606" 
+              href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn btn-ghost"
               style={{fontSize:11,textDecoration:'none',padding:'6px 14px',borderColor:'rgba(62,207,142,.4)',color:'var(--emerald)'}}
             >
-              📊 {isAr ? 'شيت المخزون الرئيسي' : 'Master Google Sheet'} ↗
+              📊 {isAr ? 'شيت المخزون الرئيسي المباشر' : 'Master Online Sheet (Live)'} ↗
             </a>
             <a 
               href="/downloads/sierra-estates-master-inventory.xlsx" 
@@ -2248,7 +2248,7 @@ function AdminApp() {
         if (data?.signedIn) {
           setCurrentUser({
             email: data.email || 'admin@sierra-estates.net',
-            role: data.role || 'super_admin',
+            role: data.role || 'superadmin',
             name: data.name || 'Executive Admin',
             ...(data.scope ? { scope: data.scope } : {}),
           });
@@ -2257,7 +2257,7 @@ function AdminApp() {
           // Data APIs enforce the same rule server-side (auth-guard.ts).
           setCurrentUser({
             email: 'dev@sierra-estates.net',
-            role: 'super_admin',
+            role: 'superadmin',
             name: 'Dev Admin',
           });
         } else {
@@ -2667,8 +2667,16 @@ function AdminApp() {
                   onClick={() => setIsAppSwitcherOpen(false)}
                 >
                   {[
-                    { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
+                    // Stage 1 · Most Used Real Estate Operations
+                    { id: 'inventory_command', label: isAr ? 'المخزون العقاري الموحد' : 'Inventory Command & OS', icon: '🏢' },
+                    { id: 'easy_listing', label: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio', icon: '🏷️' },
+                    { id: 'whatsapp_outreach', label: isAr ? 'مرسل الواتساب المجدول' : 'WhatsApp Sender & Outreach', icon: '💬' },
+                    // Stage 2 · Autonomous AI & Workflows
+                    { id: 'agents', label: isAr ? 'أسطول الوكلاء الذكي' : 'Autonomous Agents Fleet', icon: '🤖' },
+                    { id: 'workflows', label: isAr ? 'محرك الأتمتة وسير العمل' : 'Workflows & Orchestrator', icon: '⚡' },
+                    // Operations & Platform
                     { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
+                    { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
                     { id: 'cairo_plaza', label: isAr ? 'مشروع كايرو بلازا والتسويق' : 'Cairo Plaza Media Hub', icon: '🏢' },
                     { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
                     { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
@@ -2677,7 +2685,6 @@ function AdminApp() {
                     { id: 'notebookllm', label: isAr ? 'استوديو الملخصات الصوتية' : 'NotebookLM Audio Studio', icon: '🎙️' },
                     { id: 'contracts', label: isAr ? 'العقود الإلكترونية' : 'Digital Contracts Desk', icon: '📜' },
                     { id: 'excel_merger', label: isAr ? 'أداة دمج الإكسل' : 'Excel & CSV Merger', icon: '🗂️' },
-                    { id: 'inventory_command', label: isAr ? 'قيادة المخزون' : 'Inventory Command', icon: '🏢' },
                     { id: 'deployment', label: isAr ? 'خطوط النشر والإنتاج' : 'CI/CD Deployment Console', icon: '🚀' },
                     { id: 'api_gateway', label: isAr ? 'بوابة واجهات البرمجة' : 'RESTful API Gateway', icon: '🌐' },
                   ].map((app) => (
@@ -2782,7 +2789,7 @@ function AdminApp() {
               <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tx)' }}>
                 {isPartner
                   ? (isAr ? 'حساب شريك · بروبرتي' : 'Partner Account')
-                  : currentUser?.role === 'super_admin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
+                  : currentUser?.role === 'superadmin' ? (isAr ? 'مشرف أعلى' : 'Superadmin') : (isAr ? 'مشرف' : 'Admin')}
               </span>
             </div>
             <button className="topbar-pill" onClick={handleSignOut} style={{color:'var(--crimson)',borderColor:'rgba(230,57,70,0.3)',cursor:'pointer'}}>

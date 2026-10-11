@@ -12,6 +12,7 @@ export interface CompoundLocation {
   lng: number;
   unitsCount: number;
   isGpsVerified: boolean;
+  zone?: string;
   notes?: string;
 }
 
@@ -29,7 +30,7 @@ export const NEW_CAIRO_COMPOUNDS: CompoundLocation[] = [
   {
     code: 'MVI',
     nameEn: 'Mountain View iCity',
-    nameAr: 'ماونتن فيو أيكتي',
+    nameAr: 'ماونتن فيو آي سيتي',
     developer: 'Mountain View',
     lat: 30.014,
     lng: 31.618,
@@ -140,7 +141,7 @@ export const NEW_CAIRO_COMPOUNDS: CompoundLocation[] = [
   {
     code: 'FS',
     nameEn: 'Fifth Square',
-    nameAr: 'فيفت سكوير',
+    nameAr: 'فيفث سكوير',
     developer: 'Al Marasem',
     lat: 30.0412,
     lng: 31.5123,

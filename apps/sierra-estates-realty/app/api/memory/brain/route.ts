@@ -4,8 +4,13 @@ import path from 'path';
 import { DeepSeekHarness, BENCHMARK_SCENARIOS } from '@sierra-estates/deepseek-harness';
 import { mempalace, brainRAG } from '@sierra-estates/memory-engine';
 import { eccMemory } from '@/lib/eccMemoryEngine';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
+
+function unauthorized() {
+  return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+}
 
 function getVaultNotes() {
   const possiblePaths = [
@@ -48,6 +53,9 @@ function getVaultNotes() {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorized();
+
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
@@ -127,8 +135,8 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString(),
       deepseek: {
         model: 'deepseek-v3 / deepseek-chat',
-        status: 'online',
-        provider: 'DeepSeek Native API + Claude Proxy',
+        status: process.env.DEEPSEEK_API_KEY ? 'configured' : 'unconfigured',
+        provider: 'DeepSeek Native API',
         totalScenarios: scenarios.length,
         scenarios,
       },
@@ -140,10 +148,10 @@ export async function GET(req: NextRequest) {
       },
       ecc: {
         status: 'active',
-        totalEntities: stats.totalEntities || entities.length || 14,
-        totalHotDeals: stats.totalHotDeals || hotDeals.length,
-        totalEpisodes: stats.totalEpisodes || 46,
-        workingSessions: stats.totalWorkingSessions || 12,
+        totalEntities: stats.totalEntities ?? entities.length,
+        totalHotDeals: stats.totalHotDeals ?? hotDeals.length,
+        totalEpisodes: stats.totalEpisodes ?? 0,
+        workingSessions: stats.totalWorkingSessions ?? 0,
         hotDealThresholdPct: 8.0,
         entities: entities.slice(0, 8),
         hotDeals: hotDeals.slice(0, 6),
@@ -165,6 +173,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return unauthorized();
+
   try {
     const body = await req.json();
     const { action } = body;

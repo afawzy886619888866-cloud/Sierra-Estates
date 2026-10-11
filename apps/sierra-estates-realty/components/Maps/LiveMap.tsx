@@ -23,6 +23,7 @@ import {
 
 import { CompoundLocation, NEW_CAIRO_COMPOUNDS } from './compounds-data';
 import { compoundShortName } from '@/lib/site/smart-search';
+import CompoundUnitsExcelDrawer from './CompoundUnitsExcelDrawer';
 export type { CompoundLocation };
 export { NEW_CAIRO_COMPOUNDS };
 
@@ -241,11 +242,11 @@ function createCompoundIcon(
         animation-delay:${pinDelay(index, 26)}ms;
         position: absolute;
         left: 0; top: 0;
-        transform: translate(-50%, -50%) ${isSelected ? 'scale(1.12)' : 'scale(1)'};
+        transform: translate(-50%, -50%) ${isSelected ? 'perspective(400px) rotateX(10deg) scale(1.18)' : 'scale(1)'};
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 12px;
+        padding: ${isSelected ? '7px 14px' : '6px 12px'};
         border-radius: 9999px;
         font-family: var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, sans-serif;
         font-size: 10.5px;
@@ -253,15 +254,17 @@ function createCompoundIcon(
         white-space: nowrap;
         color: ${isSelected ? '#0d0d0f' : '#ffffff'};
         background: ${isSelected ? GOLD_PILL : NAVY_PILL};
-        box-shadow: ${isSelected ? `0 0 20px rgba(233,193,118,0.7), 0 4px 16px rgba(0,0,0,0.5)` : '0 4px 14px rgba(0,0,0,0.45)'};
+        box-shadow: ${isSelected ? `0 0 28px rgba(233,193,118,0.85), 0 6px 20px rgba(0,0,0,0.6)` : '0 4px 14px rgba(0,0,0,0.45)'};
         border: ${isSelected ? '2.5px solid #ffffff' : `1.5px solid ${verified ? 'rgba(233,193,118,0.6)' : 'rgba(245,158,11,0.7)'}`};
         cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
       ">
+        ${isSelected ? '<span class="se-spark-ring"></span>' : ''}
         <span title="${verified ? 'GPS verified' : 'Location pending verification'}" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isSelected ? '#0d0d0f' : verified ? '#34d399' : '#f59e0b'};box-shadow:0 0 6px ${verified ? 'rgba(52,211,153,0.8)' : 'rgba(245,158,11,0.8)'};"></span>
+        ${isSelected ? '<span class="se-spark-icon">✨</span>' : ''}
         <span style="letter-spacing:-0.01em;">${name}</span>
         <span style="
-          background: ${isSelected ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)'};
+          background: ${isSelected ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.2)'};
           color: inherit;
           font-size: 10px;
           padding: 2px 6px;
@@ -439,9 +442,17 @@ const MAP_MOTION_CSS = `
 @keyframes se-pop-in{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
 .se-wa-btn{transition:transform .15s ease,filter .15s ease}
 .se-wa-btn:hover{transform:translateY(-1px);filter:brightness(1.07)}
+
+/* 3D golden spark animations */
+@keyframes se-sparkle{0%,100%{transform:scale(1) rotate(0deg);opacity:.9;filter:drop-shadow(0 0 4px #e9c176)}50%{transform:scale(1.3) rotate(15deg);opacity:1;filter:drop-shadow(0 0 10px #f5d78e)}}
+@keyframes se-spark-pulse{0%{transform:scale(.7);opacity:.95}60%{transform:scale(1.5);opacity:.35}100%{transform:scale(2.2);opacity:0}}
+.se-spark-ring{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;border:2px solid rgba(245,215,142,.85);box-shadow:0 0 14px rgba(200,150,26,.65);animation:se-spark-pulse 1.6s cubic-bezier(0,0,.2,1) infinite;pointer-events:none}
+.se-spark-icon{display:inline-block;font-size:11px;animation:se-sparkle 2.2s ease-in-out infinite;color:#f5d78e;margin-right:2px}
+.se-compound-pill.se-pill-on{transform:translate(-50%,-50%) perspective(400px) rotateX(10deg) scale(1.18) !important;box-shadow:0 0 28px rgba(233,193,118,.9),0 8px 24px rgba(7,15,27,.75) !important}
+
 @media(prefers-reduced-motion:reduce){
   .se-map-root,.se-unit-pin,.se-compound-pill,.se-radius-ring,.custom-unit-popup .leaflet-popup-content-wrapper{animation:none}
-  .se-ping{display:none}
+  .se-ping,.se-spark-ring,.se-spark-icon{display:none}
 }
 `;
 
@@ -476,6 +487,8 @@ export interface LiveMapProps {
   /** When non-empty, ONLY these compound codes render as labelled cluster
    *  nodes — used by the radar to show just the filtered compound/area. */
   visibleCompoundCodes?: string[] | null;
+  /** Show interactive Excel units drawer when compound is selected */
+  showExcelDrawer?: boolean;
 }
 
 export default function LiveMap({
@@ -501,13 +514,27 @@ export default function LiveMap({
   showLegend = true,
   showPinCounter = true,
   visibleCompoundCodes = null,
+  showExcelDrawer = true,
 }: LiveMapProps) {
   const isAr = lang === 'ar';
   const [tileStyle, setTileStyle] = useState<MapTileStyle>(mode === 'dark' ? 'dark' : 'light');
   const [zoom, setZoom] = useState(12);
   const [legendOpen, setLegendOpen] = useState(true);
   const [controlsOpen, setControlsOpen] = useState(true);
+  const [activeExcelCompound, setActiveExcelCompound] = useState<CompoundLocation | null>(null);
   const liveCounts = useLiveUnitCounts();
+
+  // Sync external selectedCode changes to the active excel compound
+  useEffect(() => {
+    if (selectedCode) {
+      const match = NEW_CAIRO_COMPOUNDS.find(
+        (c) => c.code.toLowerCase() === selectedCode.toLowerCase()
+      );
+      if (match) {
+        setActiveExcelCompound(match);
+      }
+    }
+  }, [selectedCode]);
 
   const t = useMemo(
     () => ({
@@ -811,7 +838,13 @@ export default function LiveMap({
       >
         <MapController flyToCoords={flyToCoords || (activePlaced ? [activePlaced.renderLat, activePlaced.renderLng] : null)} flyToZoom={flyToZoom} />
         <ZoomWatcher onChange={handleZoomChange} />
-        <TileLayer url={activeTile.url} attribution={activeTile.attrib} maxZoom={20} maxNativeZoom={activeTile.maxNativeZoom} />
+        <TileLayer
+          url={activeTile.url}
+          attribution={activeTile.attrib}
+          maxZoom={20}
+          maxNativeZoom={activeTile.maxNativeZoom}
+          detectRetina={true}
+        />
 
         {/* Proximity Radius Circle */}
         {radiusKm && radiusKm > 0 && (
@@ -847,6 +880,7 @@ export default function LiveMap({
                 icon={createCompoundIcon(compound, isSelected, liveCount, lang, idx)}
                 eventHandlers={{
                   click: () => {
+                    setActiveExcelCompound(compound);
                     onSelectCompound?.(compound);
                     onCenterChange?.([compound.lat, compound.lng]);
                   },
@@ -934,9 +968,11 @@ export default function LiveMap({
                     <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                       <span>{unit.type}</span>
                       <span>·</span>
-                      <span>{unit.beds ? `${unit.beds} ${t.beds}` : `3 ${t.beds}`}</span>
+                      {/* §21 Rule B: unknown beds/area stay visibly unknown ('?') —
+                          never the old invented "3 beds / 160 m²" defaults. */}
+                      <span>{unit.beds ? `${unit.beds} ${t.beds}` : `? ${t.beds}`}</span>
                       <span>·</span>
-                      <span style={{ fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>{unit.area ? `${unit.area} m²` : '160 m²'}</span>
+                      <span style={{ fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>{unit.area ? `${unit.area} m²` : '? m²'}</span>
                       {unit.distanceKm != null && (
                         <span style={{ color: GOLD_LT, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                           · <MapPin size={10} /> {unit.distanceKm.toFixed(1)} km
@@ -1004,6 +1040,17 @@ export default function LiveMap({
             );
           })}
       </MapContainer>
+
+      {/* ── Compound Units Excel HUD Sheet Drawer ── */}
+      {activeExcelCompound && showExcelDrawer && (
+        <CompoundUnitsExcelDrawer
+          compound={activeExcelCompound}
+          units={units}
+          lang={lang}
+          onClose={() => setActiveExcelCompound(null)}
+          onSelectUnit={onSelectUnit}
+        />
+      )}
     </div>
   );
 }

@@ -5,17 +5,24 @@ import { WhatsAppParserService } from '@/lib/services/WhatsAppParserService';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
 import { botMediaDeclineMessage } from '@/lib/server/photo-messages';
 import { mentionsCairoPlaza, withCairoPlazaNotice } from '@/lib/server/cairo-plaza-notice';
+import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
+import {
+  downloadOpenwaMedia,
+  embeddedMediaFromEnvelope,
+} from '@/lib/server/openwa-media-adapter';
 
 /**
  * SIERRA ESTATES WEBHOOK ENTRY POINT
  * Receives real-time streams from Meta WhatsApp Business Cloud API, Twilio, or Automation Bridges.
  *
- * MEDIA POLICY — the bot accepts CONVERSATIONS (text, voice transcripts, image
- * captions) but NOT IMAGES: media is never downloaded, never parsed into a
- * listing, and never stored from the bot. Unit photos reach the system through
- * the admin portal instead (/api/admin/listings/photos), which is also where
- * the team re-requests photos from the owner/broker. A media-only message in
- * a DM gets the polite decline copy; in a group it is skipped silently.
+ * MEDIA POLICY (Phase 2 update):
+ *  - DM conversations remain text-first; a media-only DM still gets the
+ *    polite decline copy (photos are collected through the admin portal
+ *    photo-request flow).
+ *  - OWNER intake groups (August Owners) now ingest real media: embedded
+ *    base64 is stored immediately; otherwise the OpenWA media adapter
+ *    attempts the gateway download and records the exact blocker when the
+ *    deployed gateway does not expose a media endpoint.
  */
 
 /** Message types the conversation layer treats as media (never parsed). */
@@ -111,13 +118,17 @@ export async function POST(req: NextRequest) {
 
     // ── OpenWA gateway adapter (V3.0 wiring) ──
     // The OpenWA gateway on 54.89.162.250 posts event envelopes of the shape
-    //   { event: 'message.received', sessionId, data: { id, chatId, body, type, sender, ... } }
+    //   { event: 'message.received', sessionId, data: { id, chatId, body, type, sender, hasMedia, mimetype, media } }
     // signed with X-OpenWA-Signature. The rest of this route speaks the Meta/
     // bridge shape (from/text/isGroup), so flatten the envelope ONCE here and
     // let the existing pipeline handle it unchanged.
     const openwaEnvelope = body && typeof body === 'object' && (body as any).event === 'message.received'
       ? ((body as any).data ?? null)
       : null;
+    let openwaMessageId: string | undefined;
+    let openwaSessionId: string | undefined;
+    let envelopeMedia: { data: string; mimeType: string }[] = [];
+    let envelopeHasMedia = false;
     if (openwaEnvelope && typeof openwaEnvelope.chatId === 'string') {
       const chatId: string = openwaEnvelope.chatId;
       const isGroupChat = chatId.endsWith('@g.us');
@@ -132,10 +143,37 @@ export async function POST(req: NextRequest) {
       (body as any).type = openwaEnvelope.type || 'chat';
       (body as any).isGroup = isGroupChat;
       if (isGroupChat) (body as any).groupName = openwaEnvelope.chatName || chatId;
+
+      // PHASE 2: message-id idempotency + real media extraction. The old
+      // adapter dropped `data.id` and every media field — only the caption
+      // text survived, so replayed webhooks double-processed and photos were
+      // structurally unreachable.
+      openwaMessageId = typeof openwaEnvelope.id === 'string'
+        ? openwaEnvelope.id
+        : typeof (openwaEnvelope.id as any)?.id === 'string'
+          ? (openwaEnvelope.id as any).id
+          : undefined;
+      openwaSessionId = typeof (body as any).sessionId === 'string' ? (body as any).sessionId : undefined;
+      envelopeHasMedia = openwaEnvelope.hasMedia === true
+        || /image|video|sticker|document/i.test(String(openwaEnvelope.type ?? ''));
+      envelopeMedia = embeddedMediaFromEnvelope(openwaEnvelope);
     }
-    
-    // Log incoming payload for audit
-    console.log("📥 Incoming Webhook Payload:", JSON.stringify(body, null, 2));
+
+    // STRUCTURED, REDACTED AUDIT LOG (Phase 2 PII fix).
+    // The old line printed the ENTIRE raw webhook body (phone numbers,
+    // message text, group names, base64 media) into platform logs. Now only
+    // envelope metadata is logged; the raw content lives in the database
+    // (owner_inbound_events.raw_excerpt, redacted) — never in logs.
+    console.log(JSON.stringify({
+      evt: 'whatsapp_webhook_received',
+      source: openwaEnvelope ? 'openwa' : 'meta/bridge',
+      messageId: openwaMessageId ?? null,
+      isGroup: (body as any).isGroup === true,
+      messageType: (body as any).type ?? null,
+      hasMedia: envelopeHasMedia,
+      embeddedMediaCount: envelopeMedia.length,
+      textLength: typeof (body as any).text === 'string' ? (body as any).text.length : 0,
+    }));
 
     // Update Node Connectivity Heartbeat
     await WhatsAppStatusService.recordHeartbeat('syncing');
@@ -181,6 +219,37 @@ export async function POST(req: NextRequest) {
     // parsed, and (in DMs) answered with the decline copy. Groups are skipped
     // silently — the bot must not spam broker groups with auto-replies.
     if (!message && isMediaMessage) {
+      // ── PHASE 2: OWNER-group media-only messages are no longer dropped ──
+      // Photos for the August owners intake flow through the durable intake
+      // service: embedded base64 is stored; otherwise the OpenWA media
+      // adapter attempts the gateway download and records the exact blocker.
+      if (isGroup && AugustOwnersAgentService.isAugustOwnersGroup(group)) {
+        let media = envelopeMedia;
+        if (media.length === 0 && openwaMessageId) {
+          const download = await downloadOpenwaMedia(openwaMessageId, openwaSessionId);
+          if (download.status === 'ok') media = download.media;
+          // `unsupported` is an honest, recorded blocker — the intake still
+          // persists hasMedia metadata so staff can collect the photo via the
+          // admin portal photo-request path.
+        }
+        const { OwnerListingIntakeService } = await import('@/lib/services/OwnerListingIntakeService');
+        const outcome = await OwnerListingIntakeService.processOwnerMessage({
+          source: 'whatsapp-august-owners',
+          sender,
+          groupId: (body as any).from,
+          messageId: openwaMessageId,
+          text: (body as any).groupName ? `[photo] ${(body as any).text ?? ''}`.trim() : '[photo]',
+          media: media.length > 0 ? media : undefined,
+        });
+        return NextResponse.json({
+          status: 'success',
+          type: 'owner_group_media_ingested',
+          intake: outcome.intakeCode ?? null,
+          action: outcome.action,
+          processed_at: new Date().toISOString(),
+        });
+      }
+
       if (isGroup) {
         return NextResponse.json({ status: 'skipped', reason: 'media_not_supported_in_group' });
       }
@@ -200,7 +269,36 @@ export async function POST(req: NextRequest) {
     let replyText = null;
 
     if (isGroup) {
-      // Trigger AI Neural Processing for Listings
+      // ── PHASE 2: owner intake groups use the DURABLE intake path ──
+      // (August Owners group → OwnerListingIntakeService: durable record
+      // before clarification, reply merging, dedupe, media storage, canonical
+      // listing exactly once, REVIEW_REQUIRED staging.) Broker/other groups
+      // keep the existing parser path.
+      if (AugustOwnersAgentService.isAugustOwnersGroup(group)) {
+        let media = envelopeMedia;
+        if (media.length === 0 && envelopeHasMedia && openwaMessageId) {
+          const download = await downloadOpenwaMedia(openwaMessageId, openwaSessionId);
+          if (download.status === 'ok') media = download.media;
+        }
+        const result = await AugustOwnersAgentService.processGroupMessage({
+          rawMessage: message,
+          sender,
+          group,
+          groupId: (body as any).from,
+          messageId: openwaMessageId,
+          media: media.length > 0 ? { data: media[0].data, mimeType: media[0].mimeType } : undefined,
+        });
+        return NextResponse.json({
+          status: 'success',
+          type: 'owner_group_intake',
+          action: result.action,
+          intake: result.listingCode ?? null,
+          missing_fields: result.missingFields ?? [],
+          processed_at: new Date().toISOString(),
+        });
+      }
+
+      // Trigger AI Neural Processing for Listings (broker groups)
       const result = await WhatsAppParserService.processIncomingMessage(message, sender, group);
       return NextResponse.json({ 
         status: "success", 
