@@ -135,3 +135,30 @@ v0.23.7 was installed and exercised end-to-end during integration (Node 24):
   'session-default' is not active..."` — the route exists and matches the
   app's gateway contract exactly; real dispatch is blocked ONLY on the QR scan
   the owner performs on the gateway host.
+
+---
+
+## 2026-10-11 live verification (master-execution run, read-only)
+
+- Runner `http://54.89.162.250:2786/api/health` → `se-workflow-runner` OK:
+  uptime ≈3.2 days, tz `Africa/Cairo`, Supabase connected, `gateway-sentinel`
+  running. Gateway (via runner) `reachable:true`, **`status:"ready"`**,
+  phone `201031622600`, pushName `Sierra`, `engineLoaded:true`, lastActive
+  live at probe time.
+- Gateway `http://54.89.162.250:2785/api/health` → `{"status":"ok"}`.
+- `/pair` portal reachable (HTTP 200).
+- **Endpoint resolution:** production is `54.89.162.250` (runner 2786,
+  gateway 2785). References to `18.232.148.172` in `infra/aws/*` and older
+  checkpoints are STALE.
+- **App-side media note (Phase 2):** the app's OpenWA media adapter
+  (`apps/sierra-estates-realty/lib/server/openwa-media-adapter.ts`) attempts
+  `GET /api/sessions/{sid}/messages/{id}/media` then
+  `GET /api/sessions/{sid}/messages/{id}` for photo download. If the deployed
+  gateway build exposes neither, the adapter reports `unsupported` (an honest
+  blocker) and photos continue via embedded-base64 payloads, the EC2
+  harvester, or the admin portal photo-request flow. Verify the media
+  endpoint against the deployed version and document it here.
+
+Open security items (operator): gateway/runner URLs are cleartext `http://`
+to a raw IP — API keys transit unencrypted; restrict security groups and
+front the gateway with TLS or an SSH tunnel when operationally possible.
