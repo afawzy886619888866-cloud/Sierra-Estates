@@ -3,9 +3,9 @@
 SIERRA BLU — PHASE 1 MASTER INVENTORY PIPELINE
 ================================================
 Sources:
-  - data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx (sheet: All Master Listings, 11,488 rows)
+  - data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx (sheet: All Master Listings, 12,443 rows)
   - owners_rent_tab_separated.tsv (298 data rows)  [owner-direct rent, with notes]
-  - owners_rent_with_photos.tsv (331 data rows)     [owner-direct rent, with photos]
+  - owners_rent_with_photos.tsv (302 data rows)     [owner-direct rent, with photos]
 
 Pipeline: PARSE -> NORMALIZE -> VALIDATE -> DEDUPLICATE -> CLASSIFY -> QUALITY SCORE -> EMIT
 Outputs:
@@ -568,6 +568,15 @@ def assign_publish_status(r):
         return 'PUBLISHABLE'
     return 'REVIEW_REQUIRED'
 
+def sanitize_for_csv(v):
+    """Flatten CR/LF inside string fields before CSV emit: WhatsApp-forwarded
+    contact_name dumps carry raw newlines that would otherwise split one record
+    across multiple physical lines (13,107 lines for 13,043 records) and break
+    the phase13 line-based parser. One record = one physical line."""
+    if isinstance(v, str):
+        return re.sub(r'[\r\n]+', ' ', v)
+    return v
+
 # ---------------------------------------------------------------- main
 def main():
     print('Parsing sources...')
@@ -617,7 +626,7 @@ def main():
     with open(out_csv, 'w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction='ignore')
         w.writeheader()
-        for r in final: w.writerow(r)
+        for r in final: w.writerow({k: sanitize_for_csv(v) for k, v in r.items()})
     print(f"\nWrote {out_csv} ({len(final)} rows)")
 
     # stash data for report generation

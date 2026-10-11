@@ -3,7 +3,7 @@
  *
  * DATA QA — runs the Phase 1 pipeline's own invariants as a test against the
  * REAL master inventory CSV (data/MASTER_INVENTORY_V1.csv). No fixtures: the
- * audit contract (12,088 sourced rows → 8,486 unique + 3,602 duplicates, 0
+ * audit contract (13,043 sourced rows → 8,835 unique + 4,208 duplicates, 0
  * PUBLISHABLE) is pinned here so any regeneration that changes the shape must
  * be a conscious, reviewed act — not silent drift.
  *
@@ -86,10 +86,10 @@ describe('Phase 13 — master inventory data QA (Phase 1 pipeline invariants)', 
     const duplicates = rows.filter((r) => r.publishStatus === 'DUPLICATE');
     const uniques = rows.filter((r) => r.publishStatus !== 'DUPLICATE');
 
-    it('keeps the audit contract shape: 12,088 rows = 8,486 unique + 3,602 duplicates', () => {
-        expect(rows.length).toBe(12088);
-        expect(uniques.length).toBe(8486);
-        expect(duplicates.length).toBe(3602);
+    it('keeps the audit contract shape: 13,043 rows = 8,835 unique + 4,208 duplicates', () => {
+        expect(rows.length).toBe(13043);
+        expect(uniques.length).toBe(8835);
+        expect(duplicates.length).toBe(4208);
         expect(uniques.length + duplicates.length).toBe(rows.length);
     });
 
@@ -108,7 +108,7 @@ describe('Phase 13 — master inventory data QA (Phase 1 pipeline invariants)', 
     });
 
     it('keeps PUBLISHABLE honestly at zero — publication requires verified data, by rule', () => {
-        // The Phase 1 audit's central finding: 0 of 8,486 units are publishable
+        // The Phase 1 audit's central finding: 0 of 8,835 units are publishable
         // (91.5% never source-verified, only ~36% plausibly-valid prices). If
         // this ever flips, it must be a deliberate, verified data change that
         // updates this contract — never silent pipeline drift.
