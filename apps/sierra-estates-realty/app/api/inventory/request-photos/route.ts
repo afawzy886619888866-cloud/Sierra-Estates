@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     const messageBody = [
       `مرحباً ${contactName ? contactName : 'يا فندم'} 👋`,
-      `معاك المساعد الذكي لشركة Sierra Blu Realty بخصوص الوحدة [${unitCode}]${compoundName ? ` في ${compoundName}` : ''}.`,
+      `معاك المساعد الذكي لشركة Sierra Estates بخصوص الوحدة [${unitCode}]${compoundName ? ` في ${compoundName}` : ''}.`,
       '',
       `يوجد عميل مهتم بالوحدة حالياً عبر الخريطة التفاعلية 📍 ويرغب في معاينة صور إضافية.`,
       `📷 برجاء تزويدنا بصور واضحة للوحدة (واجهة وداخلية) لنتمكن من عرضها ومشاركتها مع المهتمين.`,
