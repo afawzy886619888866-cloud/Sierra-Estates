@@ -8,6 +8,7 @@ import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossG
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import AdminMiniMap from '@/components/admin/AdminMiniMap';
 import { Download, ExternalLink, ArrowRight, ArrowUpRight, Building2, Tag, Send, Bot, Workflow, Sparkles } from 'lucide-react';
+import AdminInventoryTable from '@/components/admin/AdminInventoryTable';
 import { APPS_CATALOG, type AppService } from './AppsDirectoryView';
 
 interface ActivityFeedItem {
@@ -129,6 +130,7 @@ export default function DashboardView({
   const [invHealth, setInvHealth] = useState<InventoryHealth | null>(null);
   const [autoHealth, setAutoHealth] = useState<AutomationHealth | null>(null);
   const [hotLeads, setHotLeads] = useState<DashboardLead[]>(FALLBACK_HOT_LEADS);
+  const [showInventoryTable, setShowInventoryTable] = useState(false);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastFeedback, setBroadcastFeedback] = useState<string | null>(null);
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -959,6 +961,39 @@ export default function DashboardView({
                 </div>
               </a>
             </div>
+          </div>
+
+          {/* ── LIVE ONLINE INVENTORY TABLE (Interactive Dropdowns & Compound Clustering) ── */}
+          <div className="pt-4 border-t border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏢</span>
+                <div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                    {isAr ? 'شيت المخزون الأونلاين المباشر وتجميع الكمبوندات' : 'Online Master Inventory & Compound Clustering'}
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    {isAr
+                      ? 'مربوط مباشرة بـ Google Sheet (gid=341562911) مع معالجة البيانات الناقصة وفلاتر دروب داون'
+                      : 'Live synced with Google Sheet (gid=341562911) featuring graceful fallbacks & smart dropdowns'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowInventoryTable((v) => !v)}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/50 hover:bg-emerald-900/60 text-emerald-300 hover:text-white text-xs font-mono font-bold transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span>{showInventoryTable ? (isAr ? 'إخفاء جدول المخزون ▲' : 'Collapse Table ▲') : (isAr ? 'عرض جدول المخزون الأونلاين ▼' : 'Open Online Table ▼')}</span>
+              </button>
+            </div>
+
+            {showInventoryTable && (
+              <div className="mt-4">
+                <AdminInventoryTable />
+              </div>
+            )}
           </div>
         </div>
 
