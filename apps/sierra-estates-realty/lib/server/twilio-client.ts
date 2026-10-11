@@ -258,8 +258,21 @@ export async function sendViaOpenwaGateway(
   }
 
   try {
-    const rawDigits = toPhone.replace(/\D/g, '');
-    const chatId = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`;
+    // PHASE 2 FIX (group sends): the old normalization
+    //   rawDigits = toPhone.replace(/\D/g, '')
+    //   chatId    = rawDigits.includes('@') ? rawDigits : `${rawDigits}@c.us`
+    // destroyed group destinations — digits can never contain '@', so EVERY
+    // recipient (including the August owners group `…@g.us`) was rewritten to
+    // `…@c.us`, a non-existent user chat. Slot-filling prompts and
+    // confirmations could never reach the group. Group chat ids are now
+    // preserved verbatim.
+    const trimmedDestination = toPhone.trim();
+    let chatId: string;
+    if (trimmedDestination.includes('@')) {
+      chatId = trimmedDestination; // already a chat id (@c.us DM or @g.us group)
+    } else {
+      chatId = `${trimmedDestination.replace(/\D/g, '')}@c.us`;
+    }
     const sendBase = openwaUrl.replace(/\/+$/, '');
     const sendVia = async (sessionId: string) =>
       fetch(`${sendBase}/api/sessions/${sessionId}/messages/send-text`, {

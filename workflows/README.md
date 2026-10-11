@@ -227,3 +227,28 @@ Upgrades shipped with this revision (deployed via `install.sh` / pushdir to `/op
 ### New env vars
 `UNITS_SHEET_ID` (default = owner's sheet), `UNITS_SHEET_GID` (default =
 inventory tab). Uses existing `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
+
+## 2026-10 — KNOWN DEPLOYMENT DRIFT: repo runner vs live VPS runner
+
+The **live** runner on the VPS (`:2786`) serves a **multi-line pairing portal**
+(`GET /pair` renders one card per session; `GET /pair/lines` returns
+`{ok, lines:[{id,name,status,phone,engineLoaded}]}`; `GET /pair/qr?s=<uuid>`
+and `POST /pair/code?s=<uuid>` are session-scoped) — while this repo's
+`runner.js` still carries the earlier **single-session** portal
+(`/pair/qr?t=…`, `/pair/code` without `s=`). The repo copy was pushed from a
+stale local checkout in commit d628d8b (the same sweep that reverted the
+phase13-data-qa pins — see PR #296).
+
+**Action for the operator:** push the LIVE `/opt/se/workflows/` directory
+(runner.js + any lib changes) from the VPS to this repo so the deployed
+artifact matches source, e.g.:
+
+```bash
+# on the VPS
+cd /opt/se/workflows && git -C /opt/se/checkout add -A workflows && git -C /opt/se/checkout commit -m "ops(runner): sync live multi-line runner from VPS"
+```
+
+Until then, treat this file's runner route documentation as the SINGLE-line
+variant and the live portal as authoritative for current behavior
+(verified 2026-10-11: multi-session list with session-scoped QR +
+pairing-code; the operator later removed the phoneless line-3, leaving 2).

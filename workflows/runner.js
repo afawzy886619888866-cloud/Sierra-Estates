@@ -74,6 +74,7 @@ const SCRIPTS = {
 
 const running = new Set(); // slugs currently executing
 const lastFiredMinute = new Map(); // slug → "YYYY-MM-DD HH:MM" already handled
+const lastFiredHour = new Map(); // slug → "YYYY-MM-DD-HH" already handled for hourly active slots
 const manualQueue = new Map(); // slug → trigger origin ('cron' | 'manual' | 'studio')
 const startedAt = Date.now();
 
@@ -185,16 +186,45 @@ function readBody(req, cap) {
 
 /** One scheduler pass. */
 async function schedulerTick() {
-  if (!sb.configured()) {
-    log('supabase not configured — scheduler idle (HTTP manual runs still work)');
-    return;
-  }
   let rows = [];
+  if (sb.configured()) {
+    try {
+      rows = await sb.getWorkflows(SLUGS);
+    } catch (e) {
+      log(`workflows read failed: ${e.message}`);
+    }
+  } else {
+    // Local standalone default rows when Supabase is not configured locally
+    rows = [
+      { slug: 'owner-outreach', status: 'active', schedule: '0 10-20 * * *' },
+      { slug: 'units-sync', status: 'active', schedule: '0 */2 * * *' },
+    ];
+  }
+
+  // Hourly window check (10:00 to 20:00 Cairo time) for owner-outreach:
+  // Whenever the machine is running, send a batch every hour.
   try {
-    rows = await sb.getWorkflows(SLUGS);
-  } catch (e) {
-    log(`workflows read failed: ${e.message}`);
-    return;
+    const cairoFmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo',
+      hour: 'numeric',
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10);
+    const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
+    const hourKey = `${cairoDate}-${cairoHour}`;
+
+    if (cairoHour >= 10 && cairoHour <= 20) {
+      if (!running.has('owner-outreach') && !manualQueue.has('owner-outreach') && lastFiredHour.get('owner-outreach') !== hourKey) {
+        log(`hourly active window match: Cairo hour ${cairoHour}:00 (${hourKey}) — queuing batch`);
+        lastFiredHour.set('owner-outreach', hourKey);
+        manualQueue.set('owner-outreach', 'hourly-window');
+      }
+    }
+  } catch (err) {
+    log(`hourly window check failed: ${err.message}`);
   }
 
   const now = new Date();

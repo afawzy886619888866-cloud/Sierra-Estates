@@ -9,7 +9,12 @@ import * as WhatsAppQueueModule from '../lib/server/whatsapp-queue';
 import * as DBModule from '@sierra-estates/db';
 
 jest.mock('@sierra-estates/db', () => ({
-  insertRecord: jest.fn().mockResolvedValue({ id: 'mock-doc-id-123' }),
+  // Real insertRecord returns the full inserted row — the intake service
+  // reads intakeCode back from it.
+  insertRecord: jest.fn(async (table: string, values: Record<string, unknown>) => ({
+    id: `mock-${table}-${Math.random().toString(36).slice(2, 8)}`,
+    ...values,
+  })),
   getRecord: jest.fn().mockResolvedValue(null),
   listRecords: jest.fn().mockResolvedValue([]),
   updateRecord: jest.fn().mockResolvedValue({}),
@@ -78,6 +83,15 @@ describe('AugustOwnersAgentService', () => {
           body: expect.stringContaining('اسم الكومباوند'),
         })
       );
+
+      // PHASE 2: the durable intake record EXISTS before the owner is asked —
+      // the prompt references its persistent code and replies merge into it.
+      const intakeInserts = (DBModule.insertRecord as jest.Mock).mock.calls.filter(
+        ([table]) => table === 'owner_listing_intakes'
+      );
+      expect(intakeInserts.length).toBeGreaterThanOrEqual(1);
+      expect(intakeInserts[0][1].state).toBe('NEEDS_INFORMATION');
+      expect(result.listingCode).toMatch(/^SE-AUG-/);
     });
   });
 
@@ -108,10 +122,30 @@ describe('AugustOwnersAgentService', () => {
       expect(result.isListing).toBe(true);
       expect(result.action).toBe('unit_recorded_pending_verification');
       expect(result.listingCode).toMatch(/^SE-AUG-/);
-      expect(result.pfReference).toMatch(/^PF-SE-AUG-/);
 
-      // Step 3: Inserted into Supabase
-      expect(DBModule.insertRecord).toHaveBeenCalled();
+      // PHASE 4: no Property Finder reference is EVER fabricated — a PF
+      // reference exists only after the publish gate passes and the remote
+      // API accepts the listing.
+      expect(result.pfReference).toBeUndefined();
+
+      // PHASE 4: the autonomous PF publish call was REMOVED — an unverified
+      // REVIEW_REQUIRED record can never be pushed to Property Finder.
+      const PFAssert = await import('../lib/services/PFIntegrationService');
+      expect((PFAssert.PFIntegrationService as any).publishListing).not.toHaveBeenCalled();
+
+      // Step 3: Inserted into Supabase (exactly ONE canonical row — the old
+      // double insert into listings+COLLECTIONS.units is gone)
+      const listingsInserts = (DBModule.insertRecord as jest.Mock).mock.calls.filter(
+        ([table]) => table === 'listings'
+      );
+      expect(listingsInserts).toHaveLength(1);
+      expect(listingsInserts[0][1]).toEqual(
+        expect.objectContaining({ publishStatus: 'REVIEW_REQUIRED' })
+      );
+      // ownerType is not a live column — it lands in the rawData JSONB blob.
+      expect(listingsInserts[0][1].rawData).toEqual(
+        expect.objectContaining({ ownerType: 'owner' })
+      );
 
       // Step 2: Appended to Excel Master Sheet marked Available
       expect(ExcelService.appendToExcelInventory).toHaveBeenCalledWith(

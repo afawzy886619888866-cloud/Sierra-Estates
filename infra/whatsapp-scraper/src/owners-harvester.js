@@ -356,9 +356,8 @@ function scheduleExcelExport() {
 }
 
 export async function startOwnersHarvester() {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.join(__dirname, "../auth"),
-  );
+  const authDir = process.env.AUTH_DIR || path.join(__dirname, "../auth_line2");
+  const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
   const sock = makeWASocket({
     auth: state,
