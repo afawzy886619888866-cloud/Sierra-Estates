@@ -964,7 +964,7 @@ export default function DashboardView({
 
         {/* Right Column: Small Interactive Map */}
         <div className="xl:col-span-5">
-          <AdminMiniMap isAr={isAr} />
+          <AdminMiniMap isAr={isAr} onNavigateAction={onNavigateAction} />
         </div>
       </div>
 
