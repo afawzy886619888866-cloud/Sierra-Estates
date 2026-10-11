@@ -6,7 +6,8 @@ import {
   MapCommanderAgent,
   calculateDistanceKm,
 } from '../lib/services/MapCommanderAgent';
-import { NEW_CAIRO_COMPOUNDS, type MapUnitPin } from '../components/Maps/LiveMap';
+import { NEW_CAIRO_COMPOUNDS } from '../components/Maps/compounds-data';
+import type { MapUnitPin } from '../components/Maps/LiveMap';
 
 describe('MapCommanderAgent', () => {
   describe('calculateDistanceKm', () => {

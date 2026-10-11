@@ -12,6 +12,7 @@ export interface CompoundLocation {
   lng: number;
   unitsCount: number;
   isGpsVerified: boolean;
+  zone?: string;
   notes?: string;
 }
 
