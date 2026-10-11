@@ -15,30 +15,58 @@
 import type { InventoryUnit, InventoryStatus, InventoryMode } from './types';
 import type { ResolvedLocation } from './gazetteer';
 
-/** Column headers as they appear in the sheet (note the trailing spaces). */
-const COL = {
-  no: 'NO',
-  updated: 'تاريخ اخر تحديث ',
-  availability: 'Availablty',
-  bedrooms: 'bedrooms',
-  location: 'Location ',
-  price: 'Unit Price',
-  furnished: 'Furnished or not',
-  mode: 'Type',
-  propertyType: 'Property Tybe',
-  code: 'Code',
-  garden: 'Garden',
-  space: 'Space',
-  pool: 'Pool',
-  comment: 'Comment',
+/** Column synonyms across Google Sheet revisions (English & Arabic headers). */
+const FIELD_ALIASES: Record<string, string[]> = {
+  no: ['NO', 'م', 'no', '#', 'رقم'],
+  updated: ['تاريخ اخر تحديث ', 'تاريخ اخر تحديث', 'التاريخ', 'تاريخ', 'date', 'updated', 'last update'],
+  availability: ['Availablty', 'availability', 'الحالة', 'status'],
+  bedrooms: ['bedrooms', 'الغرف', 'غرف', 'beds', 'rooms'],
+  location: ['Location ', 'Location', 'الموقع (الكمبوند)', 'الموقع', 'الكمبوند', 'compound', 'location'],
+  price: ['Unit Price', 'السعر (EGP)', 'السعر', 'price', 'unit price'],
+  furnished: ['Furnished or not', 'الفرش', 'مفروش', 'furnished'],
+  mode: ['Type', 'العملية', 'نوع العملية', 'deal', 'deal type', 'mode'],
+  propertyType: ['Property Tybe', 'Property Type', 'نوع العقار', 'النوع', 'asset type', 'property type'],
+  code: ['Code', 'كود', 'الكود', 'code', 'id'],
+  garden: ['Garden', 'حديقة', 'جاردن'],
+  space: ['Space', 'المساحة', 'مساحة', 'area', 'size'],
+  bathrooms: ['الحمامات', 'حمامات', 'bathrooms', 'baths', 'bath'],
+  pool: ['Pool', 'حمام سباحة', 'مسبح'],
+  comment: ['Comment', 'ملاحظات', 'تعليق'],
+  sender: ['المرسل', 'sender'],
+  groupName: ['اسم الجروب', 'group name', 'source'],
 };
 
-/** Read a column tolerantly (exact header, then trimmed-key fallback). */
+function isPlaceholderText(val: string): boolean {
+  const v = val.trim().toLowerCase();
+  return (
+    v === '(غير مذكور)' ||
+    v === 'غير مذكور' ||
+    v === '(غير محدد)' ||
+    v === 'غير محدد' ||
+    v === 'لا يوجد' ||
+    v === 'n/a' ||
+    v === 'none' ||
+    v === '-' ||
+    v === '—'
+  );
+}
+
+/** Read a column tolerantly (checking aliases, exact match, case-insensitive, trimming). */
 function cell(row: Record<string, unknown>, key: string): string {
-  if (row[key] != null) return String(row[key]).trim();
-  const want = key.trim().toLowerCase();
-  for (const k of Object.keys(row)) {
-    if (k.trim().toLowerCase() === want) return String(row[k] ?? '').trim();
+  if (row[key] != null) {
+    const s = String(row[key]).trim();
+    return isPlaceholderText(s) ? '' : s;
+  }
+  const aliases = FIELD_ALIASES[key] || [key];
+  const rowKeys = Object.keys(row);
+  for (const alias of aliases) {
+    const want = alias.trim().toLowerCase();
+    for (const rk of rowKeys) {
+      if (rk.trim().toLowerCase() === want && row[rk] != null) {
+        const s = String(row[rk]).trim();
+        return isPlaceholderText(s) ? '' : s;
+      }
+    }
   }
   return '';
 }
@@ -155,13 +183,14 @@ function classifyMode(rawMode: string, price: number): InventoryMode {
  */
 function classifyStatus(rawAvail: string, rawMode: string): InventoryStatus {
   const a = String(rawAvail || '').toLowerCase();
-  const m = String(rawMode || '');
-  if (/اتباعت|تم الايجار|تم البيع/.test(m)) return 'unavailable';
+  const m = String(rawMode || '').toLowerCase();
+  if (/اتباعت|تم الايجار|تم البيع|sold|rented/.test(m) || /sold|rented|اتباعت|تم الايجار/.test(a)) return 'unavailable';
   if (a.includes('available') && !a.includes('not')) return 'available';
-  if (a.includes('follow')) return 'follow_up';
-  if (a.includes('no answer')) return 'no_answer';
-  if (a.includes('not available')) return 'unavailable';
-  return 'no_answer';
+  if (a.includes('follow') || /متابعة|متابعه/.test(a)) return 'follow_up';
+  if (a.includes('no answer') || /لا يرد|مغلق/.test(a)) return 'no_answer';
+  if (a.includes('not available') || a.includes('unavailable') || /غير متاح/.test(a)) return 'unavailable';
+  // Default to available for live intake rows from trusted broker/owner channels
+  return 'available';
 }
 
 const STATUS_LABEL: Record<InventoryStatus, string> = {
@@ -214,19 +243,32 @@ export function hasPendingPhoto(img: string | null | undefined): boolean {
 /** Title-case + tidy the property-type free text. */
 function normalizeType(raw: string): string | null {
   const t = String(raw || '').trim();
-  if (!t) return null;
+  if (!t || isPlaceholderText(t)) return null;
   const lower = t.toLowerCase();
   const map: Record<string, string> = {
     apartment: 'Apartment',
+    'شقة': 'Apartment',
+    'شقه': 'Apartment',
     villa: 'Villa',
+    'فيلا': 'Villa',
     'standalone villa': 'Standalone Villa',
+    'فيلا مستقلة': 'Standalone Villa',
     'town house': 'Townhouse',
     townhouse: 'Townhouse',
+    'تاون هاوس': 'Townhouse',
     'twin house': 'Twin House',
+    'توين هاوس': 'Twin House',
     duplex: 'Duplex',
-    'duplex + garden': 'Duplex',
+    'دوبلكس': 'Duplex',
+    'duplex + garden': 'Duplex with Garden',
+    'وحدة بجاردن (ground unit with garden)': 'Ground Unit with Garden',
+    'وحدة بجاردن': 'Ground Unit with Garden',
+    'ارضي بجاردن': 'Ground Unit with Garden',
+    'أرضي بجاردن': 'Ground Unit with Garden',
     studio: 'Studio',
+    'استوديو': 'Studio',
     penthouse: 'Penthouse',
+    'بنتهاوس': 'Penthouse',
     'floor with garden': 'Floor with Garden',
     'admin apartment': 'Admin Apartment',
     admin: 'Admin',
@@ -243,16 +285,16 @@ export function normalizeRow(
   index: number,
   deps: { resolveLocation: (raw: string) => ResolvedLocation },
 ): InventoryUnit | null {
-  const rawMode = cell(row, COL.mode);
+  const rawMode = cell(row, 'mode');
   if (/لا يوجد وحدات/.test(rawMode)) return null;
-  const rawType = cell(row, COL.propertyType);
-  if (rawType === 'Property Tybe') return null;
+  const rawType = cell(row, 'propertyType');
+  if (rawType === 'Property Tybe' || rawType === 'نوع العقار') return null;
 
-  const rawLocation = cell(row, COL.location);
-  const rawPriceStr = cell(row, COL.price);
-  const rawBeds = cell(row, COL.bedrooms);
-  const code = cell(row, COL.code);
-  // rawType already declared above (line 248); reuse it for price inference
+  const rawLocation = cell(row, 'location');
+  const rawPriceStr = cell(row, 'price');
+  const rawBeds = cell(row, 'bedrooms');
+  const rawBaths = cell(row, 'bathrooms');
+  const code = cell(row, 'code');
   // Mode is needed for price inference — do a quick early pass
   const earlyMode: InventoryMode = /sale|بيع/.test(rawMode.toLowerCase()) ? 'sale' : 'rent';
   // Smart price: first infer scale (e.g. 3 → 3M), then clamp outliers
@@ -262,17 +304,23 @@ export function normalizeRow(
   if (!rawLocation && !price && !rawType && !code) return null;
 
   const mode = classifyMode(rawMode, price);
-  const status = classifyStatus(cell(row, COL.availability), rawMode);
+  const status = classifyStatus(cell(row, 'availability'), rawMode);
   const geo = deps.resolveLocation(rawLocation);
   const beds = toInt(rawBeds) || null;
-  const area = toInt(cell(row, COL.space)) || null;
-  const garden = toInt(cell(row, COL.garden)) || null;
-  const poolRaw = cell(row, COL.pool);
-  const no = toInt(cell(row, COL.no));
+  const bath = toInt(rawBaths) || null;
+  const area = toInt(cell(row, 'space')) || null;
+  const garden = toInt(cell(row, 'garden')) || null;
+  const poolRaw = cell(row, 'pool');
+  const no = toInt(cell(row, 'no'));
+
+  const sender = cell(row, 'sender');
+  const groupName = cell(row, 'groupName');
+  const baseComment = scrubText(cell(row, 'comment'));
+  const comment = baseComment || (sender || groupName ? `${sender ? 'Sender: ' + sender : ''}${groupName ? (sender ? ' · ' : '') + 'Group: ' + groupName : ''}` : null);
 
   return {
     id: code || `row-${no || index + 1}`,
-    code: code || null,
+    code: code || `SE-ONL-${index + 1}`,
     mode,
     status,
     statusLabel: STATUS_LABEL[status],
@@ -284,14 +332,15 @@ export function normalizeRow(
     approxLocation: geo.approx,
     propertyType: normalizeType(rawType),
     beds,
+    bath,
     area,
     garden,
     pool: /yes|نعم|pool|مسبح|حمام سباحه|حمام سباحة/i.test(poolRaw) || (!!poolRaw && poolRaw !== '0'),
-    furnished: cell(row, COL.furnished) || null,
+    furnished: cell(row, 'furnished') || null,
     price,
     priceLabel: priceLabel(price, mode),
-    comment: scrubText(cell(row, COL.comment)),
-    updatedAt: cell(row, COL.updated) || null,
+    comment,
+    updatedAt: cell(row, 'updated') || null,
   };
 }
 
