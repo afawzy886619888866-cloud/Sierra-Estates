@@ -1396,14 +1396,14 @@ export default function DashboardView({
             <span>↗</span>
           </a>
           <a
-            href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit#gid=1127958606"
+            href="https://docs.google.com/spreadsheets/d/1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk/edit?gid=341562911#gid=341562911"
             target="_blank"
             rel="noopener noreferrer"
             className="clay-btn-emerald px-3.5 py-2 text-xs font-mono gap-1.5"
-            title="Open Master Google Sheet"
+            title="Open Master Google Sheet (gid=341562911)"
             aria-label="Open Master Google Sheet"
           >
-            <span>📊 {isAr ? 'الشيت الرئيسي' : 'Master Sheet'}</span>
+            <span>📊 {isAr ? 'الشيت الرئيسي المباشر' : 'Master Online Sheet'}</span>
             <span>↗</span>
           </a>
           <a
