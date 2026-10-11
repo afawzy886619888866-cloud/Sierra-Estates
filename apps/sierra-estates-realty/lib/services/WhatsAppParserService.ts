@@ -215,7 +215,7 @@ export class WhatsAppParserService {
         if (extractedData.isListing && !duplicateId) {
           GoogleSheetBridge.pushUnitToSheet({
             code: extractedData.sierraCode,
-            compound: extractedData.compound || 'New Cairo',
+            compound: extractedData.compound || '',
             propertyType: extractedData.type || 'apartment',
             mode: /rent|إيجار|ايجار/i.test(content) ? 'Rent' : 'Sale',
             price: extractedData.price || 0,
