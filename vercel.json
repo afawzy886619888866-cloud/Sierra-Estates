@@ -9,8 +9,8 @@
   "regions": ["fra1"],
   "crons": [
     {
-      "path": "/api/cron/dispatch/night",
-      "schedule": "45 2 * * *"
+      "path": "/api/cron/apply-migrations",
+      "schedule": "25 10 * * *"
     },
     {
       "path": "/api/cron/dispatch/morning",
