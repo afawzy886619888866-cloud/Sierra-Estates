@@ -968,9 +968,11 @@ export default function LiveMap({
                     <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                       <span>{unit.type}</span>
                       <span>·</span>
-                      <span>{unit.beds ? `${unit.beds} ${t.beds}` : `3 ${t.beds}`}</span>
+                      {/* §21 Rule B: unknown beds/area stay visibly unknown ('?') —
+                          never the old invented "3 beds / 160 m²" defaults. */}
+                      <span>{unit.beds ? `${unit.beds} ${t.beds}` : `? ${t.beds}`}</span>
                       <span>·</span>
-                      <span style={{ fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>{unit.area ? `${unit.area} m²` : '160 m²'}</span>
+                      <span style={{ fontFamily: "var(--font-mono, 'JetBrains Mono'), monospace" }}>{unit.area ? `${unit.area} m²` : '? m²'}</span>
                       {unit.distanceKm != null && (
                         <span style={{ color: GOLD_LT, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                           · <MapPin size={10} /> {unit.distanceKm.toFixed(1)} km
