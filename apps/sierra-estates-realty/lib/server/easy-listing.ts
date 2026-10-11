@@ -387,7 +387,7 @@ export function generateAds(
     `🔖 كود الوحدة: ${internalCode}`,
     '',
     `📞 ${name} — ${phone}`,
-    'Sierra Blu Realty',
+    'Sierra Estates',
   ]
     .filter((l) => l !== null)
     .join('\n');
@@ -396,7 +396,7 @@ export function generateAds(
     `${d.unit_type ?? 'Unit'} ${dealWord} — ${where || ''}`.trim(),
     specs,
     `Price: ${d.price_egp ? d.price_egp.toLocaleString('en-US') + ' EGP' : 'on request'}`,
-    `Contact: ${name} (${phone}) — Sierra Blu Realty`,
+    `Contact: ${name} (${phone}) — Sierra Estates`,
     `Ref: ${internalCode}`,
   ].join('\n');
 
