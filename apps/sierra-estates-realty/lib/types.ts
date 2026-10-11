@@ -12,7 +12,19 @@ export type Role =
   | "partner"
   | "manager"
   | "admin"
-  | "superadmin";
+  | "superadmin"
+  // PHASE 7 — canonical role vocabulary extension (master execution
+  // command). These map onto the SAME profiles.role column via migration
+  // 20261011_028_role_check_extension.sql; they are not a disconnected
+  // vocabulary. Existing roles are preserved.
+  | "operations_manager"
+  | "inventory_manager"
+  | "marketing_manager"
+  | "sales_manager"
+  | "sales_agent"
+  | "auditor"
+  | "broker"
+  | "client";
 
 /** Roles that may enter the staff admin portal after Firebase authentication. */
 export const ADMIN_PORTAL_ROLES = [
@@ -22,12 +34,81 @@ export const ADMIN_PORTAL_ROLES = [
   "manager",
   "admin",
   "superadmin",
+  "operations_manager",
+  "inventory_manager",
+  "marketing_manager",
+  "sales_manager",
+  "sales_agent",
+  "auditor",
+  "broker",
 ] as const;
 
 export function isAdminPortalRole(role: unknown): boolean {
   return typeof role === "string" && ADMIN_PORTAL_ROLES.includes(role.trim().toLowerCase() as (typeof ADMIN_PORTAL_ROLES)[number]);
 }
-export type UserStatus = "active" | "suspended" | "deleted";
+
+// ── PHASE 7: one canonical role → permission map ─────────────────────
+// Single source of truth for server guards, background tasks, lead/partner
+// scope filters, UI navigation and audit logs. Default-deny: a permission
+// not listed for a role is denied.
+export const ROLE_PERMISSIONS: Record<Role, readonly string[]> = {
+  superadmin: [
+    "users:read", "users:write", "roles:elevate", "access:approve",
+    "inventory:read", "inventory:write", "verification:perform",
+    "publish:gate:override-proof", "leads:read:all", "leads:write:all",
+    "campaigns:read", "campaigns:write", "audit:read", "settings:write",
+    "automation:read", "automation:retry", "partners:read", "partners:write",
+  ],
+  admin: [
+    "users:read", "users:write", "inventory:read", "inventory:write",
+    "verification:perform", "leads:read:all", "leads:write:all",
+    "campaigns:read", "campaigns:write", "audit:read", "settings:write",
+    "automation:read", "automation:retry", "partners:read", "partners:write",
+  ],
+  operations_manager: [
+    "users:read", "inventory:read", "inventory:write", "verification:perform",
+    "leads:read:all", "leads:write:all", "campaigns:read", "audit:read",
+    "automation:read", "automation:retry", "partners:read",
+  ],
+  inventory_manager: [
+    "inventory:read", "inventory:write", "verification:perform",
+    "campaigns:read", "audit:read", "automation:read",
+  ],
+  marketing_manager: [
+    "campaigns:read", "campaigns:write", "inventory:read", "leads:read:all",
+    "audit:read",
+  ],
+  sales_manager: [
+    "leads:read:all", "leads:write:all", "inventory:read", "campaigns:read",
+    "audit:read",
+  ],
+  sales_agent: ["leads:read:assigned", "leads:write:assigned", "inventory:read"],
+  auditor: ["audit:read", "inventory:read", "leads:read:all", "automation:read"],
+  partner: ["inventory:read:scoped", "leads:read:scoped"],
+  manager: [
+    "users:read", "inventory:read", "inventory:write", "leads:read:all",
+    "leads:write:all", "campaigns:read", "audit:read", "automation:read",
+  ],
+  agent: ["leads:read:assigned", "leads:write:assigned", "inventory:read"],
+  broker: ["leads:read:assigned", "inventory:read"],
+  owner: ["inventory:read", "leads:read:assigned"],
+  viewer: ["inventory:read"],
+  client: [],
+};
+
+/** Default-deny permission check against the canonical map. */
+export function roleHasPermission(role: unknown, permission: string): boolean {
+  if (typeof role !== "string") return false;
+  const perms = ROLE_PERMISSIONS[role.trim().toLowerCase() as Role];
+  return Array.isArray(perms) && perms.includes(permission);
+}
+
+/** Only a super admin may elevate roles or approve elevated access. */
+export function canElevateRoles(role: unknown): boolean {
+  return roleHasPermission(role, "roles:elevate");
+}
+
+export type UserStatus = "pending" | "active" | "suspended" | "deleted";
 export type ListingMode = "sale" | "rent";
 export type ListingStatus = "available" | "reserved" | "sold" | "archived";
 export type InquiryStatus = "new" | "contacted" | "toured" | "offer" | "closed" | "lost";

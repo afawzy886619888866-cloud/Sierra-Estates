@@ -20,9 +20,13 @@ import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
+// PHASE 8/9 FIX: the runner endpoint must come from environment
+// configuration ONLY. The hardcoded `http://54.89.162.250:2786` fallback
+// baked a raw public IP into source (endpoint drift risk, cleartext HTTP,
+// and a stale address the moment the instance changes). Unset env now
+// yields an explicit configuration error instead of silently dialing an IP.
 const OPS_BASE = (process.env.WORKFLOW_OPS_URL
-  || (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.RUNNER_PORT || '2786'}` : '')
-  || 'http://54.89.162.250:2786').replace(/\/+$/, '');
+  || (process.env.OPENWA_HOST ? `http://${process.env.OPENWA_HOST}:${process.env.RUNNER_PORT || '2786'}` : '')).replace(/\/+$/, '');
 const OPS_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
 
 const actionSchema = z.discriminatedUnion('action', [
@@ -35,6 +39,14 @@ function opsHeaders(): Record<string, string> {
 }
 
 async function proxy(pathname: string, init?: RequestInit): Promise<NextResponse> {
+  // PHASE 8/9: no configured runner endpoint → explicit 503 configuration
+  // error, never a silent dial to a baked-in IP.
+  if (!OPS_BASE) {
+    return NextResponse.json(
+      { ok: false, error: 'runner_not_configured', detail: 'Set WORKFLOW_OPS_URL or OPENWA_HOST (+ RUNNER_PORT) to reach the workflow runner.' },
+      { status: 503 }
+    );
+  }
   try {
     const res = await fetch(`${OPS_BASE}${pathname}`, {
       ...init,
