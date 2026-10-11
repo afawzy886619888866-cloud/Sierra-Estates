@@ -7,7 +7,7 @@ import DatabaseHealthCard from '@/components/admin/DatabaseHealthCard';
 import AccidentalDataLossGuardModal from '@/components/admin/AccidentalDataLossGuardModal';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import AdminMiniMap from '@/components/admin/AdminMiniMap';
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink, ArrowRight, ArrowUpRight, Building2, Tag, Send, Bot, Workflow, Sparkles } from 'lucide-react';
 import { APPS_CATALOG, type AppService } from './AppsDirectoryView';
 
 interface ActivityFeedItem {
@@ -495,6 +495,307 @@ export default function DashboardView({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── ACTIVE COMMAND LAUNCHPAD: MOST USED APPS ── */}
+      <div className="clay-card p-6 space-y-6 border border-[#C8961A]/30 bg-linear-to-b from-slate-900/90 via-[#0c1828] to-[#081220] shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-[#C8961A]/15 text-[#E9C176] border border-[#C8961A]/30">
+                <Sparkles className="w-4 h-4" />
+              </span>
+              <h3 className="text-lg font-bold text-white tracking-wide font-mono">
+                {isAr ? 'مركز العمليات السريع · التطبيقات الأكثر استخداماً' : 'Mission Control · Most Used Applications'}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              {isAr
+                ? 'واجهة الإطلاق التشغيلية مرتبة حسب الأولوية: العمليات المباشرة (المرحلة 1)، تليها منظومة الذكاء والأتمتة (المرحلة 2).'
+                : 'Prioritized operational launchpad: Live Real Estate Operations (Stage 1), followed by Autonomous AI & Workflows (Stage 2).'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 text-[11px] font-mono font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              5 Core Engines Operational
+            </span>
+          </div>
+        </div>
+
+        {/* ── STAGE 1: CORE REAL ESTATE OPERATIONS ── */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold text-[#E9C176] uppercase tracking-wider flex items-center gap-1.5">
+              <span className="px-1.5 py-0.5 rounded bg-[#C8961A]/20 border border-[#C8961A]/40 text-[#F5D78E] text-[10px]">STAGE 1</span>
+              <span>{isAr ? 'المرحلة الأولى: إدارة المخزون والمراسلات الحية' : 'Stage 1 · Core Real Estate Operations (Daily Drivers)'}</span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-400">High Frequency</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* App 1: Inventory Hub */}
+            <div className="clay-card p-5 flex flex-col justify-between border border-emerald-900/40 hover:border-emerald-500/60 transition-all group bg-emerald-950/15">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-900/30 border border-emerald-700/40 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform text-emerald-400">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 text-[10px] font-mono font-bold">
+                    12,088 Units
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-mono group-hover:text-emerald-300 transition-colors">
+                  {isAr ? 'المخزون العقاري الموحد' : 'Master Inventory Hub'}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {isAr
+                    ? 'قاعدة البيانات الموحدة لـ 12,088 وحدة، مع فلاتر الإيجار والبيع والتحقق من التكرارات.'
+                    : '12,088 consolidated & deduplicated units across New Cairo, direct owners & brokers.'}
+                </p>
+                <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Unique Units</span>
+                    <span className="text-white font-bold">8,486</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Direct Rent</span>
+                    <span className="text-emerald-400 font-bold">1,831</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => navigate && navigate('inventory_command')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-900/40 hover:bg-emerald-800/60 border border-emerald-700/60 text-emerald-200 text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  <span>{isAr ? 'فتح قيادة المخزون' : 'Inventory Command'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate && navigate('inventory_os')}
+                  title={isAr ? 'نظام المخزون v2' : 'Inventory OS v2'}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* App 2: Easy Listing Studio */}
+            <div className="clay-card p-5 flex flex-col justify-between border border-[#C8961A]/40 hover:border-[#C8961A] transition-all group bg-[#211A0D]/20">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#C8961A]/20 border border-[#C8961A]/40 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform text-[#E9C176]">
+                    <Tag className="w-5 h-5" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-[#211A0D] border border-[#C8961A]/50 text-[#F5D78E] text-[10px] font-mono font-bold">
+                    The Scribe AI
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-mono group-hover:text-[#E9C176] transition-colors">
+                  {isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio'}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {isAr
+                    ? 'تحويل نصوص ورسائل واتساب غير المنظمة إلى عقارات مفحوصة مع كود سييرا ومطابقة الأسعار.'
+                    : '1-click unstructured WhatsApp message parsing into verified luxury specs & SBR codes.'}
+                </p>
+                <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Parser Engine</span>
+                    <span className="text-[#E9C176] font-bold">Bilingual AI</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Gate Stage</span>
+                    <span className="text-blue-400 font-bold">Pending Review</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => navigate && navigate('easy_listing')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-[#C8961A]/30 hover:bg-[#C8961A]/50 border border-[#C8961A]/60 text-[#F5D78E] text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  <span>{isAr ? 'فتح استوديو الإدراج' : 'Launch Studio'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate && navigate('listings')}
+                  title={isAr ? 'سجل العقارات والمراجعة' : 'Review Listings Queue'}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* App 3: WhatsApp Sender */}
+            <div className="clay-card p-5 flex flex-col justify-between border border-blue-900/40 hover:border-blue-500/60 transition-all group bg-blue-950/15">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-900/30 border border-blue-700/40 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform text-blue-400">
+                    <Send className="w-5 h-5" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-950 border border-blue-800 text-blue-300 text-[10px] font-mono font-bold">
+                    15 Groups Live
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-mono group-hover:text-blue-300 transition-colors">
+                  {isAr ? 'مرسل الواتساب المجدول' : 'WhatsApp Outreach & Sender'}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {isAr
+                    ? 'إرسال العروض الفاخرة وجدولة الحملات وإرسال ملفات PDF مع تنظيم فترات الإرسال.'
+                    : 'Scheduled client outreach, PDF proposal broadcasts, and automated broker photo collection.'}
+                </p>
+                <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Gateway Device</span>
+                    <span className="text-white font-bold">54.89.162.250</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Delivery Engine</span>
+                    <span className="text-blue-400 font-bold">OpenWA + Fallback</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => navigate && navigate('whatsapp_outreach')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 border border-blue-700/60 text-blue-200 text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  <span>{isAr ? 'فتح مرسل الواتساب' : 'Open WhatsApp Sender'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate && navigate('whatsapp_chat_import')}
+                  title={isAr ? 'استيراد المحادثات' : 'Import WA Chats'}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── STAGE 2: AI AGENTS & AUTOMATION WORKFLOWS ── */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="px-1.5 py-0.5 rounded bg-purple-950 border border-purple-700 text-purple-300 text-[10px]">STAGE 2</span>
+              <span>{isAr ? 'المرحلة الثانية: أسطول الوكلاء ومحرك الأتمتة' : 'Stage 2 · Autonomous AI Agents & Workflows Engine'}</span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-400">Cognitive & Automated Fleet</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* App 4: Bots & Agents */}
+            <div className="clay-card p-5 flex flex-col justify-between border border-purple-900/40 hover:border-purple-500/60 transition-all group bg-purple-950/15">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-900/30 border border-purple-700/40 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform text-purple-400">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-950 border border-purple-800 text-purple-300 text-[10px] font-mono font-bold">
+                    10 Agents Online
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-mono group-hover:text-purple-300 transition-colors">
+                  {isAr ? 'أسطول الوكلاء الأذكياء (ليلى وسييرا)' : 'Autonomous Bots & Agent Fleet'}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {isAr
+                    ? 'التحكم المباشر في أسطول الذكاء الاصطناعي: ليلى (التفاوض العربي)، وسييرا بوت، ومغلق الصفقات Stage-9، وماسح الصور Vertex.'
+                    : 'Bilingual autonomous agents: Leila (Arabic negotiation), Sierra Bot (concierge), Stage-9 Closer, and Vertex Omni vision.'}
+                </p>
+                <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Concierge</span>
+                    <span className="text-emerald-400 font-bold">Sierra Bot</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Arabic Lead</span>
+                    <span className="text-purple-300 font-bold">Laila / Lola</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Closer Bot</span>
+                    <span className="text-blue-400 font-bold">Stage-9</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => navigate && navigate('agents')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-700/60 text-purple-200 text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  <span>{isAr ? 'فتح أسطول الوكلاء' : 'Open Agents Console'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate && navigate('intelligence')}
+                  title={isAr ? 'ذكاء ليلى المركزية' : 'Leila Intelligence OS'}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* App 5: Workflows & Ops Engine */}
+            <div className="clay-card p-5 flex flex-col justify-between border border-amber-900/40 hover:border-amber-500/60 transition-all group bg-amber-950/15">
+              <div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform text-amber-400">
+                    <Workflow className="w-5 h-5" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-950 border border-amber-800 text-amber-300 text-[10px] font-mono font-bold">
+                    8 Workflows Active
+                  </span>
+                </div>
+                <h4 className="text-base font-bold text-white font-mono group-hover:text-amber-300 transition-colors">
+                  {isAr ? 'محرك الأتمتة وسير العمل والعمليات' : 'Workflows & Operations Orchestrator'}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                  {isAr
+                    ? 'إدارة المهام المجدولة وخطوط البيانات: مزامنة الأسعار AVM، واستيراد المجموعات، وبث بروبرتي فايندر وتنبيهات تلغرام.'
+                    : 'Automated crons & event pipelines: AVM pricing sync, scraper runner, Property Finder feed syndication, and DLQ tracking.'}
+                </p>
+                <div className="grid grid-cols-3 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Scheduler</span>
+                    <span className="text-white font-bold">Vercel Cron</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">EC2 Runner</span>
+                    <span className="text-amber-400 font-bold">Port 2786</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">DLQ Queue</span>
+                    <span className="text-emerald-400 font-bold">0 Pending</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                <button
+                  onClick={() => navigate && navigate('workflow_studio')}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-amber-900/40 hover:bg-amber-800/60 border border-amber-700/60 text-amber-200 text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  <span>{isAr ? 'فتح استوديو الأتمتة' : 'Open Workflow Studio'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => navigate && navigate('workflow_ops')}
+                  title={isAr ? 'لوحة تحكم خادم EC2' : 'EC2 Runner Ops'}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── CONSOLIDATED MASTER INVENTORY & CARTOGRAPHY RADAR ── */}
