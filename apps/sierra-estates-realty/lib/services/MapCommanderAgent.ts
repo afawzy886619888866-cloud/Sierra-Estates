@@ -5,7 +5,8 @@
  * and automated photo harvesting campaigns across New Cairo assets.
  */
 
-import { NEW_CAIRO_COMPOUNDS, NEW_CAIRO_ZONES, type CompoundLocation, type MapUnitPin } from '@/components/Maps/LiveMap';
+import { NEW_CAIRO_COMPOUNDS, type CompoundLocation } from '@/components/Maps/compounds-data';
+import type { MapUnitPin } from '@/components/Maps/LiveMap';
 import { hasPendingPhoto } from '@/lib/inventory/normalize';
 import { logger } from '@/lib/logger';
 
@@ -97,7 +98,7 @@ export class MapCommanderAgent {
         lat: c.lat,
         lng: c.lng,
         isGpsVerified: Boolean(c.isGpsVerified),
-        zone: c.zone,
+        zone: c.zone || 'New Cairo',
         withinExpectedBounds,
         distanceFromCairoCenterKm,
       };
