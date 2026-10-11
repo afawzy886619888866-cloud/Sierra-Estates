@@ -16,7 +16,8 @@ export interface GisAuditResult {
   lat: number;
   lng: number;
   isGpsVerified: boolean;
-  zone: string;
+  /** §21: absent when the source compound carries no zone — never defaulted. */
+  zone?: string;
   withinExpectedBounds: boolean;
   distanceFromCairoCenterKm: number;
 }
@@ -98,7 +99,10 @@ export class MapCommanderAgent {
         lat: c.lat,
         lng: c.lng,
         isGpsVerified: Boolean(c.isGpsVerified),
-        zone: c.zone || 'New Cairo',
+        // §21 no-fabrication: an absent zone stays absent — the old fallback
+        // invented a New Cairo location for every compound missing one
+        // (flagged by the Phase 13 security sweep).
+        zone: c.zone,
         withinExpectedBounds,
         distanceFromCairoCenterKm,
       };
