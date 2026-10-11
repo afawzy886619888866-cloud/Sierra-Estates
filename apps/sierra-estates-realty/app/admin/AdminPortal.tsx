@@ -2667,8 +2667,16 @@ function AdminApp() {
                   onClick={() => setIsAppSwitcherOpen(false)}
                 >
                   {[
-                    { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
+                    // Stage 1 · Most Used Real Estate Operations
+                    { id: 'inventory_command', label: isAr ? 'المخزون العقاري الموحد' : 'Inventory Command & OS', icon: '🏢' },
+                    { id: 'easy_listing', label: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio', icon: '🏷️' },
+                    { id: 'whatsapp_outreach', label: isAr ? 'مرسل الواتساب المجدول' : 'WhatsApp Sender & Outreach', icon: '💬' },
+                    // Stage 2 · Autonomous AI & Workflows
+                    { id: 'agents', label: isAr ? 'أسطول الوكلاء الذكي' : 'Autonomous Agents Fleet', icon: '🤖' },
+                    { id: 'workflows', label: isAr ? 'محرك الأتمتة وسير العمل' : 'Workflows & Orchestrator', icon: '⚡' },
+                    // Operations & Platform
                     { id: 'overview', label: isAr ? 'لوحة القيادة الرئيسية' : 'Operations Dashboard', icon: '🏠' },
+                    { id: 'all_apps', label: isAr ? 'دليل المنظومة المتكامل' : 'All Apps Hub', icon: '✨' },
                     { id: 'cairo_plaza', label: isAr ? 'مشروع كايرو بلازا والتسويق' : 'Cairo Plaza Media Hub', icon: '🏢' },
                     { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️' },
                     { id: 'intelligence', label: isAr ? 'أسطول الذكاء الاصطناعي' : 'Agent Fleet (Leila)', icon: '🧠' },
@@ -2677,7 +2685,6 @@ function AdminApp() {
                     { id: 'notebookllm', label: isAr ? 'استوديو الملخصات الصوتية' : 'NotebookLM Audio Studio', icon: '🎙️' },
                     { id: 'contracts', label: isAr ? 'العقود الإلكترونية' : 'Digital Contracts Desk', icon: '📜' },
                     { id: 'excel_merger', label: isAr ? 'أداة دمج الإكسل' : 'Excel & CSV Merger', icon: '🗂️' },
-                    { id: 'inventory_command', label: isAr ? 'قيادة المخزون' : 'Inventory Command', icon: '🏢' },
                     { id: 'deployment', label: isAr ? 'خطوط النشر والإنتاج' : 'CI/CD Deployment Console', icon: '🚀' },
                     { id: 'api_gateway', label: isAr ? 'بوابة واجهات البرمجة' : 'RESTful API Gateway', icon: '🌐' },
                   ].map((app) => (
