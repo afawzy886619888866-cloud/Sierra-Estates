@@ -147,14 +147,19 @@ describe('AugustOwnersAgentService', () => {
         expect.objectContaining({ ownerType: 'owner' })
       );
 
-      // Step 2: Appended to Excel Master Sheet marked Available
+      // Step 2: Appended to Excel Master Sheet — P0 §4: an unverified
+      // REVIEW_REQUIRED unit is NEVER projected as 'Available'; the sheet
+      // row carries the honest review status, and the canonical unit id is
+      // passed so the Excel append stays a pure sheet PROJECTION (no second
+      // Supabase listings row).
       expect(ExcelService.appendToExcelInventory).toHaveBeenCalledWith(
         expect.objectContaining({
           compound: 'Mivida',
           price: 12500000,
-          inventoryStatus: 'Available',
+          inventoryStatus: 'Review Required',
           operation: 'Sale',
           contactPhone: '01012345678',
+          canonicalUnitId: expect.any(String),
         })
       );
 

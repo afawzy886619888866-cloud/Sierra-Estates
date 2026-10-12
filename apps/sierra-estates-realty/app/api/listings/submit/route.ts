@@ -128,10 +128,13 @@ export async function POST(request: Request) {
     }
 
     // Append newly submitted unit to the Master Excel Inventory workbook
+    // (canonicalUnitId set: the Supabase row was already inserted above —
+    // the Excel append is a sheet PROJECTION, never a second DB row).
     try {
       await appendToExcelInventory({
         recordId: listingCode,
         code: listingCode,
+        canonicalUnitId: id,
         compound: data.compound,
         propertyType: data.propertyType,
         operation: data.mode === 'rent' ? 'Rent' : 'Sale',

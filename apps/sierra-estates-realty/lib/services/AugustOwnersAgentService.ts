@@ -32,6 +32,8 @@ export interface ProcessGroupMessageParams {
   groupId?: string;
   /** Provider message id — the idempotency key for replayed webhooks. */
   messageId?: string;
+  /** Provider reply/quoted-message context — intake correlation key #2. */
+  quotedMessageId?: string;
   /** base64-encoded image data forwarded by owners-harvester */
   media?: { data: string; mimeType: string; photoCode?: string };
 }
@@ -39,7 +41,14 @@ export interface ProcessGroupMessageParams {
 export interface AugustAgentResult {
   handled: boolean;
   isListing: boolean;
-  action: 'missing_info_requested' | 'unit_recorded_pending_verification' | 'not_a_listing' | 'error';
+  action:
+    | 'missing_info_requested'
+    | 'unit_recorded_pending_verification'
+    | 'media_attached'
+    | 'unassigned_media'
+    | 'ambiguous_reply'
+    | 'not_a_listing'
+    | 'error';
   listingCode?: string;
   unitId?: string;
   pfReference?: string;
@@ -96,7 +105,7 @@ export class AugustOwnersAgentService {
    * confirmation message.
    */
   static async processGroupMessage(params: ProcessGroupMessageParams): Promise<AugustAgentResult> {
-    const { rawMessage, sender, group, groupId, media, messageId } = params;
+    const { rawMessage, sender, group, groupId, media, messageId, quotedMessageId } = params;
     const targetGroupId = groupId || (this.isAugustOwnersGroup(group) ? AUGUST_OWNERS_GROUP_ID : group);
 
     logger.info(
@@ -109,6 +118,7 @@ export class AugustOwnersAgentService {
       sender,
       groupId: targetGroupId,
       messageId,
+      quotedMessageId,
       text: rawMessage,
       media: media ? [{ data: media.data, mimeType: media.mimeType }] : undefined,
     });
@@ -128,6 +138,30 @@ export class AugustOwnersAgentService {
           action: 'not_a_listing',
           listingCode: outcome.intakeCode,
           unitId: outcome.unitId,
+        };
+
+      case 'media_attached':
+        // Media-only message correlated to an existing intake (code, quoted
+        // context or a single unambiguous open intake) — photos attached.
+        return {
+          handled: true,
+          isListing: true,
+          action: 'media_attached',
+          listingCode: outcome.intakeCode,
+          unitId: outcome.unitId,
+        };
+
+      case 'unassigned_media':
+      case 'ambiguous_reply':
+        // Durable staff-review state — nothing guessed, nothing lost. The
+        // owner received a clarification prompt with the unit code(s).
+        return {
+          handled: true,
+          isListing: true,
+          action: outcome.action,
+          listingCode: outcome.intakeCode,
+          missingFields: outcome.missingFields ?? [],
+          replyMessage: outcome.replyMessage,
         };
 
       case 'needs_information':
@@ -186,6 +220,7 @@ export class AugustOwnersAgentService {
   private static async augustExtras(
     outcome: {
       intakeCode?: string;
+      listingCode?: string;
       unitId?: string;
       extracted?: Record<string, unknown>;
       mediaUrls?: string[];
@@ -196,7 +231,9 @@ export class AugustOwnersAgentService {
     const extracted = outcome.extracted ?? {};
     const compound = String(extracted.compound ?? '');
     const propertyType = String(extracted.type ?? '');
-    const mode = String(extracted.mode ?? 'sale') === 'rent' ? 'rent' : 'sale';
+    // Strict mode: an unknown sale/rent mode is never defaulted to 'sale'.
+    const rawMode = String(extracted.mode ?? '').trim().toLowerCase();
+    const mode = rawMode === 'rent' || rawMode === 'sale' ? rawMode : null;
     const price = Number(extracted.price) > 0 ? Number(extracted.price) : 0;
     const bedrooms = extracted.bedrooms == null ? undefined : Number(extracted.bedrooms);
     const bathrooms = extracted.bathrooms == null ? undefined : Number(extracted.bathrooms);
@@ -205,14 +242,20 @@ export class AugustOwnersAgentService {
     const specStr = `${bedrooms ?? '?'} Beds · ${bathrooms ?? '?'} Baths · ${area ?? '?'} m²`;
     const listingCode = outcome.intakeCode ?? '';
 
-    // Step 2: Append to Master Excel Inventory Sheet and mark Available
+    // Step 2: Append to Master Excel Inventory Sheet.
+    // P0 §4: a newly submitted (unverified, REVIEW_REQUIRED) owner unit must
+    // NOT be projected into the master sheet as 'Available' — that is an
+    // availability fact only human verification can confirm. The sheet row
+    // carries the honest review status; the owner's CLAIM stays in Supabase
+    // (listings.rawData.ownerAvailabilityClaim).
     try {
       await appendToExcelInventory({
         recordId: listingCode,
-        code: listingCode,
+        code: outcome.listingCode ?? listingCode,
+        canonicalUnitId: outcome.unitId,
         compound,
         propertyType,
-        operation: mode === 'rent' ? 'Rent' : 'Sale',
+        operation: mode === 'rent' ? 'Rent' : mode === 'sale' ? 'Sale' : undefined,
         price,
         areaSqm: area,
         bedrooms,
@@ -220,11 +263,11 @@ export class AugustOwnersAgentService {
         furnishing: extracted.finishing ? String(extracted.finishing) : undefined,
         contactName: extracted.ownerName ? String(extracted.ownerName) : sender,
         contactPhone,
-        inventoryStatus: 'Available',
+        inventoryStatus: 'Review Required',
         sourceType: 'owner',
         description: '',
       });
-      logger.info(`[AugustOwnersAgent] Appended unit ${listingCode} to Excel Master Inventory (Available)`);
+      logger.info(`[AugustOwnersAgent] Appended unit ${listingCode} to Excel Master Inventory (Review Required)`);
     } catch (excelErr: any) {
       logger.warn(`[AugustOwnersAgent] Excel append error (non-fatal): ${excelErr?.message}`);
     }
@@ -234,7 +277,7 @@ export class AugustOwnersAgentService {
       const telegramAlert = `
 🚀 <b>New August Owner Unit Recorded!</b>
 <b>Compound:</b> ${escapeTelegramHtml(compound)}
-<b>Type:</b> ${escapeTelegramHtml(propertyType)} (${mode.toUpperCase()})
+<b>Type:</b> ${escapeTelegramHtml(propertyType)} (${mode ? mode.toUpperCase() : 'MODE UNKNOWN'})
 <b>Price:</b> EGP ${price.toLocaleString('en-US')}
 <b>Specs:</b> ${specStr}
 <b>Contact:</b> ${escapeTelegramHtml(contactPhone)}
@@ -283,7 +326,8 @@ export class AugustOwnersAgentService {
     const extracted = outcome.extracted ?? {};
     const compound = String(extracted.compound ?? '');
     const propertyType = String(extracted.type ?? '');
-    const mode = String(extracted.mode ?? 'sale') === 'rent' ? 'rent' : 'sale';
+    const rawMode = String(extracted.mode ?? '').trim().toLowerCase();
+    const mode = rawMode === 'rent' || rawMode === 'sale' ? rawMode : null;
     const price = Number(extracted.price) > 0 ? Number(extracted.price) : 0;
     const bedrooms = extracted.bedrooms == null ? '?' : String(extracted.bedrooms);
     const bathrooms = extracted.bathrooms == null ? '?' : String(extracted.bathrooms);
@@ -294,11 +338,11 @@ export class AugustOwnersAgentService {
     return (
       `✅ *تم تسجيل الوحدة بنجاح!* (Sierra Estates Agent)\n\n` +
       `📍 *الكومباوند:* ${compound}\n` +
-      `🏠 *النوع:* ${propertyType} (${mode === 'rent' ? 'إيجار' : 'بيع'})\n` +
+      `🏠 *النوع:* ${propertyType} (${mode === 'rent' ? 'إيجار' : mode === 'sale' ? 'بيع' : 'غير محدد'})\n` +
       `💰 *السعر:* ${price.toLocaleString('en-US')} ج.م\n` +
       `📐 *المواصفات:* ${specStrAr}\n` +
       `🔖 *كود الوحدة:* ${listingCode}\n` +
-      `📊 *شيت المخزون:* تم القيد بالحالة (Available)\n` +
+      `📊 *شيت المخزون:* تم القيد بحالة (تحت المراجعة — ليست متاحة للبيع بعد)\n` +
       `🏢 *بروبيرتي فايندر:* سيتم إنشاء الإعلان بعد التحقق والمراجعة من فريق سييرا\n` +
       `⏳ *الحالة:* الوحدة تحت المراجعة والتحقق — سيتم عرضها للعملاء بعد التأكيد.\n` +
       `🌐 https://sierra-estates.net/properties`
