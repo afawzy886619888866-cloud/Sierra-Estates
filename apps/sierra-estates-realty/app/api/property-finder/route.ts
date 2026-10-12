@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pfClient } from '@/lib/property-finder-client';
 import { verifyAdminRequest, unauthorizedResponse } from '@/lib/server/auth-guard';
+import { PFIntegrationService } from '@/lib/services/PFIntegrationService';
+import { PublishGateError } from '@/lib/services/publish-gate';
 
 export async function GET(request: NextRequest) {
   const auth = await verifyAdminRequest(request);
@@ -61,13 +63,50 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create-listing': {
-        const result = await pfClient.createListing(body);
+        // P0-6 GATE BYPASS CLOSED: the old handler passed the raw body
+        // straight to pfClient.createListing() — a full bypass of the
+        // 8-condition PublishGate (any admin payload became a remote
+        // listing). The ONLY publication path is
+        // PFIntegrationService.publishListing(), which enforces the gate,
+        // provider validation, dry-run and idempotency for EVERY caller.
+        const unitId = typeof body.unitId === 'string' ? body.unitId : '';
+        if (!unitId) {
+          return NextResponse.json(
+            {
+              error:
+                'unitId is required. Listing creation is gated: pass unitId (and optionally dryRun) — the publish gate evaluates the canonical unit record; raw provider payloads are not accepted.',
+            },
+            { status: 400 },
+          );
+        }
+        const result = await PFIntegrationService.publishListing(unitId, {
+          dryRun: body.dryRun === true,
+        });
         return NextResponse.json(result, { status: 201 });
       }
       case 'publish': {
-        if (!body.id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+        // Same rule: publishing an existing unit goes through the gated
+        // service (idempotent — an already-published unit returns
+        // alreadyPublished instead of a second remote listing).
+        const unitId = typeof body.unitId === 'string' ? body.unitId : '';
+        const remoteId = typeof body.id === 'string' || typeof body.id === 'number' ? String(body.id) : '';
+        if (!unitId && !remoteId) {
+          return NextResponse.json(
+            {
+              error:
+                'unitId (gated publication) or id (re-publish of a remote listing id previously accepted for this account) is required.',
+            },
+            { status: 400 },
+          );
+        }
+        if (unitId) {
+          const result = await PFIntegrationService.publishListing(unitId);
+          return NextResponse.json({ success: true, gated: true, result });
+        }
+        // Re-publishing a remote id the provider already accepted: no unit
+        // record is created or mutated by this call.
         await pfClient.publishListing(body.id);
-        return NextResponse.json({ success: true, message: `Listing ${body.id} publish requested` });
+        return NextResponse.json({ success: true, message: `Listing ${remoteId} publish requested` });
       }
       case 'unpublish': {
         if (!body.id) return NextResponse.json({ error: 'id required' }, { status: 400 });
@@ -83,6 +122,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unknown action. Use: create-listing, publish, unpublish, subscribe-webhook' }, { status: 400 });
     }
   } catch (error: any) {
+    // A gate rejection is a 422 with the check-by-check evidence — the
+    // caller learns exactly which condition failed instead of a raw 500.
+    if (error instanceof PublishGateError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          gate: { eligible: error.gate.eligible, failures: error.gate.failures, checks: error.gate.checks },
+        },
+        { status: 422 },
+      );
+    }
     console.error('[PF API POST]', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

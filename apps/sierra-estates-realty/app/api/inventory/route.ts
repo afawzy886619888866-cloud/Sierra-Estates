@@ -413,7 +413,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await appendToExcelInventory(body);
+    // persistToSupabase: this route has no canonical writer of its own, so the
+    // append's DB persistence stays enabled — as an HONEST unverified insert
+    // (REVIEW_REQUIRED / status 'pending' / deal_type from explicit operation).
+    const result = await appendToExcelInventory({ ...body, persistToSupabase: true });
     if (!result.success) {
       return NextResponse.json(
         { error: result.error || "Failed to append unit to Excel inventory workbook" },

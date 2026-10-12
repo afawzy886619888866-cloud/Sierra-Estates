@@ -6,9 +6,15 @@ describe("Supabase Storage & Vercel Resilience Suite", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL =
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
       "https://REDACTED-PROJECT.supabase.co";
-    process.env.SUPABASE_SERVICE_ROLE_KEY =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      "REDACTED_SUPABASE_SERVICE_ROLE_KEY"; // cspell:disable-line
+    // SECURITY FIX (2026-10-12): this file previously hard-coded a LIVE
+    // service_role JWT as a fallback — a full RLS-bypassing credential
+    // committed to the repository (confirmed active via a read-only probe).
+    // The credential is removed here and MUST BE ROTATED in the Supabase
+    // dashboard (project REDACTED-PROJECT). Tests that need the service
+    // key must inject it via the environment; without it this suite skips
+    // live storage calls rather than using an embedded secret.
+    // (The anon keys used elsewhere in the repo are public-by-design.)
+    process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
     process.env.SUPABASE_PROPERTY_MEDIA_BUCKET = "property-media";
   });
 

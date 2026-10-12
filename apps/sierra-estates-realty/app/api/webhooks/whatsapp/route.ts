@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
       : null;
     let openwaMessageId: string | undefined;
     let openwaSessionId: string | undefined;
+    let openwaQuotedMessageId: string | undefined;
     let envelopeMedia: { data: string; mimeType: string }[] = [];
     let envelopeHasMedia = false;
     if (openwaEnvelope && typeof openwaEnvelope.chatId === 'string') {
@@ -153,6 +154,15 @@ export async function POST(req: NextRequest) {
         : typeof (openwaEnvelope.id as any)?.id === 'string'
           ? (openwaEnvelope.id as any).id
           : undefined;
+      // P0 3B correlation key #2: a reply that QUOTES an earlier message
+      // resolves to the intake that earlier message produced.
+      openwaQuotedMessageId = typeof openwaEnvelope.quotedMsgId === 'string'
+        ? openwaEnvelope.quotedMsgId
+        : typeof (openwaEnvelope.quotedMsg as any)?.id?.id === 'string'
+          ? (openwaEnvelope.quotedMsg as any).id.id
+          : typeof openwaEnvelope.quotedMsgId?.id === 'string'
+            ? openwaEnvelope.quotedMsgId.id
+            : undefined;
       openwaSessionId = typeof (body as any).sessionId === 'string' ? (body as any).sessionId : undefined;
       envelopeHasMedia = openwaEnvelope.hasMedia === true
         || /image|video|sticker|document/i.test(String(openwaEnvelope.type ?? ''));
@@ -238,9 +248,15 @@ export async function POST(req: NextRequest) {
           sender,
           groupId: (body as any).from,
           messageId: openwaMessageId,
+          quotedMessageId: openwaQuotedMessageId,
           text: (body as any).groupName ? `[photo] ${(body as any).text ?? ''}`.trim() : '[photo]',
           media: media.length > 0 ? media : undefined,
         });
+        // FAIL-CLOSED surface: an intake error must return 5xx so the
+        // provider retries the event (the ledger keeps it retryable).
+        if (outcome.action === 'error') {
+          return NextResponse.json({ status: 'error', error: outcome.error }, { status: 503 });
+        }
         return NextResponse.json({
           status: 'success',
           type: 'owner_group_media_ingested',
@@ -286,8 +302,13 @@ export async function POST(req: NextRequest) {
           group,
           groupId: (body as any).from,
           messageId: openwaMessageId,
+          quotedMessageId: openwaQuotedMessageId,
           media: media.length > 0 ? { data: media[0].data, mimeType: media[0].mimeType } : undefined,
         });
+        // FAIL-CLOSED surface: intake errors return 5xx so the provider retries.
+        if (result.action === 'error') {
+          return NextResponse.json({ status: 'error', error: 'intake processing failed' }, { status: 503 });
+        }
         return NextResponse.json({
           status: 'success',
           type: 'owner_group_intake',

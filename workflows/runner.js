@@ -91,6 +91,28 @@ async function runWorkflow(slug, trigger = 'cron') {
   const scriptRel = SCRIPTS[slug];
   if (!scriptRel) return { skipped: true, reason: 'unknown_slug' };
 
+  // P0-9 STATUS RECHECK immediately before execution. Automatic triggers
+  // (cron / hourly-window / studio run-request) must never run a workflow
+  // whose persisted status is not 'active' — a paused/draft workflow can only
+  // be executed through the authenticated explicit POST /run endpoint by a
+  // human operator (deliberate emergency action, honestly labelled).
+  const AUTOMATIC_TRIGGERS = new Set(['cron', 'hourly-window', 'studio', 'run-requested']);
+  if (AUTOMATIC_TRIGGERS.has(trigger) && sb.configured()) {
+    try {
+      const current = await sb.getWorkflows([slug]);
+      const status = current.length ? String(current[0].status || '').toLowerCase() : '';
+      if (!current.length || status !== 'active') {
+        log(`${slug}: dispatch refused — persisted status '${status || '(no row)'}' (trigger ${trigger})`);
+        return { skipped: true, reason: 'not_active', status: status || '(no row)' };
+      }
+    } catch (e) {
+      // Fail-closed: the authoritative status could not be read, so the
+      // automatic dispatch does not happen.
+      log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
+      return { skipped: true, reason: 'status_check_failed' };
+    }
+  }
+
   running.add(slug);
   const started = Date.now();
   log(`${slug}: ${trigger} run started`);
@@ -186,23 +208,28 @@ function readBody(req, cap) {
 
 /** One scheduler pass. */
 async function schedulerTick() {
-  let rows = [];
-  if (sb.configured()) {
-    try {
-      rows = await sb.getWorkflows(SLUGS);
-    } catch (e) {
-      log(`workflows read failed: ${e.message}`);
-    }
-  } else {
-    // Local standalone default rows when Supabase is not configured locally
-    rows = [
-      { slug: 'owner-outreach', status: 'active', schedule: '0 10-20 * * *' },
-      { slug: 'units-sync', status: 'active', schedule: '0 */2 * * *' },
-    ];
+  // FAIL-CLOSED (P0-9): when Supabase is not configured (or the read fails)
+  // there are NO authoritative workflow rows — the runner must stay idle
+  // instead of inventing active scheduled rows. HTTP manual runs of explicit
+  // human operators remain available; automatic dispatch requires live rows.
+  if (!sb.configured()) {
+    log('supabase not configured — scheduler idle, no dispatch (fail-closed)');
+    return;
   }
+  let rows = [];
+  try {
+    rows = await sb.getWorkflows(SLUGS);
+  } catch (e) {
+    log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
+    return;
+  }
+  const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00 to 20:00 Cairo time) for owner-outreach:
-  // Whenever the machine is running, send a batch every hour.
+  // Hourly window check (10:00 to 20:00 Cairo time) for owner-outreach.
+  // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
+  // A paused/draft workflow must never execute from a local timer, and the
+  // status is re-verified again inside runWorkflow() immediately before the
+  // child is spawned (guard against a mid-minute pause).
   try {
     const cairoFmt = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo',
@@ -216,12 +243,16 @@ async function schedulerTick() {
     const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
     const hourKey = `${cairoDate}-${cairoHour}`;
 
-    if (cairoHour >= 10 && cairoHour <= 20) {
-      if (!running.has('owner-outreach') && !manualQueue.has('owner-outreach') && lastFiredHour.get('owner-outreach') !== hourKey) {
-        log(`hourly active window match: Cairo hour ${cairoHour}:00 (${hourKey}) — queuing batch`);
-        lastFiredHour.set('owner-outreach', hourKey);
-        manualQueue.set('owner-outreach', 'hourly-window');
-      }
+    const outreachRow = rowBySlug.get('owner-outreach');
+    if (
+      cairoHour >= 10 && cairoHour <= 20 &&
+      outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
+      !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
+      lastFiredHour.get('owner-outreach') !== hourKey
+    ) {
+      log(`hourly active window match: Cairo hour ${cairoHour}:00 (${hourKey}) — queuing batch`);
+      lastFiredHour.set('owner-outreach', hourKey);
+      manualQueue.set('owner-outreach', 'hourly-window');
     }
   } catch (err) {
     log(`hourly window check failed: ${err.message}`);
