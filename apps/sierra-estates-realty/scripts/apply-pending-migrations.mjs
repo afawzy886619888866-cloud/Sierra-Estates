@@ -85,6 +85,19 @@ if (files.length === 0) {
   process.exit(0);
 }
 
+/** pg lets sslmode/channel_binding URL params override programmatic ssl config
+ * (pg-connection-string maps 'prefer'/'require'/'verify-ca' to 'verify-full',
+ * which fails against Supabase's own CA with SELF_SIGNED_CERT_IN_CHAIN).
+ * Strip them so the explicit `ssl: { rejectUnauthorized: false }` below is
+ * authoritative — exact parity with the runtime applier route's cleanUrl(). */
+function cleanUrl(url) {
+  return url
+    .replace(/[?&]sslmode=[^&]*/g, '')
+    .replace(/[?&]channel_binding=[^&]*/g, '')
+    .replace(/[?&]sslrootcert=[^&]*/g, '')
+    .replace(/\?$/, '');
+}
+
 /** Returns ssl options that match the runtime route's behaviour —
  * accept self-signed certs in chain (corporate proxies / Vercel SSL inspection).
  * Localhost gets no SSL so local dev doesn't trip over a missing CA bundle.
@@ -102,7 +115,8 @@ function sslFor(url) {
 async function connect() {
   let lastErr;
   for (let attempt = 1; attempt <= 3; attempt++) {
-    for (const url of candidates) {
+    for (const rawUrl of candidates) {
+      const url = cleanUrl(rawUrl);
       const client = new Client({
         connectionString: url,
         statement_timeout: STATEMENT_TIMEOUT_MS,
