@@ -86,3 +86,48 @@ REVIEW_REQUIRED means private staging — the public website/map/feeds gate
 - OpenWA media download endpoint unverified against the deployed gateway build.
 - `automation_runs` last live rows predate the GCP design (Vercel-cron era).
 - Two applied migrations share ledger number `026` (tolerated; do not rename applied files).
+
+## 2026-10-12 — EC2 runner hardening (P0-9)
+
+The `future-plan/sprint-2` merge (#306, commit cb42ef8) reintroduced two
+scheduler regressions; both are closed on `agents/p0-intake-gate-fixes`:
+
+1. **Hardcoded local fallback rows removed.** The runner briefly shipped
+   `rows = [{ slug:'owner-outreach', status:'active' }, { slug:'units-sync', ... }]`
+   as a local default when Supabase was unconfigured — inventing active
+   scheduled work with no persisted authority. Now: Supabase unconfigured OR
+   a workflows-read failure → the scheduler stays IDLE for that pass
+   (fail-closed). HTTP manual runs by authenticated operators still work.
+2. **Hourly owner-outreach window is status-gated.** The 10:00–20:00 Cairo
+   hourly batch now queues only when the PERSISTED `owner-outreach` row is
+   `active`, and `runWorkflow()` re-checks the row status immediately before
+   spawning the child for every automatic trigger (cron / hourly-window /
+   studio run-request). A paused or draft workflow can no longer be fired by
+   a local timer, and a failed status read also fails CLOSED.
+   Explicit `POST /api/workflows/:slug/run` by an authenticated operator is
+   the only manual override (honestly labelled `trigger: manual`).
+
+## 2026-10-12 — Intake correlation + event state machine (P0 3A/3B/3C)
+
+Migration `20261012_029_intake_correlation_event_states.sql` (additive):
+
+- `owner_inbound_events` gains `state / attempts / last_error / lease_until /
+  processed_at / result / unit_id` — a durable
+  `RECEIVED → PROCESSING → COMPLETED | FAILED` machine. COMPLETED replays
+  return the stored result; FAILED replays RESUME the pinned intake; the
+  claim is an atomic conditional PATCH (service-role client) with a 10-minute
+  lease; a ledger OUTAGE fails closed (no side effects).
+- The partial unique index "one open intake per sender" is DROPPED and
+  replaced by service-level correlation:
+  explicit intake code → quoted-message context (event.intake_id) → single
+  unambiguous open intake → durable `AMBIGUOUS_REPLY` staff queue.
+  A clearly-different compound opens a NEW intake for the same owner.
+  Dedupe protection is preserved by the event ledger + unique intake codes +
+  fingerprint hashes.
+- New durable states: `UNASSIGNED_MEDIA` (media-only message with no
+  unambiguous target — the image is never discarded) and `AMBIGUOUS_REPLY`.
+
+Canonical codes (P0 3F): intake codes stay `SE-<SRC>-<stamp>-<rand>` (stable
+owner-facing references), while the LISTING code derives from the established
+Sierra coding scheme (`generateSierraCode` — deterministic on retries) when
+compound/rooms/price evidence exists, else `NEEDS_CODE` for staff assignment.

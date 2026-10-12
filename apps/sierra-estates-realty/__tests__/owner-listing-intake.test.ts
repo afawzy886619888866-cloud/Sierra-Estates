@@ -222,7 +222,9 @@ describe('OwnerListingIntakeService — durable lifecycle', () => {
     expect(outcome.action).toBe('unit_recorded');
     const listing = tables.listings[0];
     expect(listing.publishStatus).toBe('REVIEW_REQUIRED');
-    expect(listing.status).toBe('available');
+    // P0 3D: an unverified owner submission is NOT a confirmed available
+    // fact — the unit stages as 'pending' until human verification.
+    expect(listing.status).toBe('pending');
     // Owner intake is NOT human verification.
     expect(listing.verifiedAt).toBeUndefined();
     expect(listing.verifiedBy).toBeUndefined();

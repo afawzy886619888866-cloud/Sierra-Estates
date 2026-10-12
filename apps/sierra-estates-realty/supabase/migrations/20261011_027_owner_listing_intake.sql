@@ -31,7 +31,12 @@ CREATE TABLE IF NOT EXISTS public.owner_listing_intakes (
   media_urls      TEXT[] NOT NULL DEFAULT '{}',
   raw_text        TEXT,
   -- Canonical inventory linkage (written exactly once).
-  unit_id         UUID REFERENCES public.listings (id) ON DELETE SET NULL,
+  -- NOTE: public.listings.id is TEXT in the live schema (see migration 011's
+  -- header note — the inventory tables predate the migration ledger and use
+  -- TEXT primary keys), so the FK column is TEXT to match. A UUID column here
+  -- makes CREATE TABLE fail with "foreign key constraint ... cannot be
+  -- implemented" on first real apply.
+  unit_id         TEXT REFERENCES public.listings (id) ON DELETE SET NULL,
   listing_code    TEXT,
   dupe_check_hash TEXT,
   -- Duplicate linkage.
