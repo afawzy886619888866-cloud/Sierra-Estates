@@ -7,7 +7,7 @@ Vercel (`/api/cron/dispatch/{target}`).
 This replaces GitHub Actions as the scheduled driver (GHA keeps `ci.yml` plus
 the **manual emergency dispatch** in `automations.yml`) and keeps Vercel as
 hosting + the **two daily fallback crons** (`:45` offsets — see
-[Scheduling topology](#scheduling-topology)).
+[Scheduling topology][def]).
 
 ```
                     ┌─────────────────────────┐
@@ -44,13 +44,13 @@ hosting + the **two daily fallback crons** (`:45` offsets — see
 
 ## Why GCP
 
-| Before (Phase 11) | After (this layer) |
-|---|---|
-| GitHub Actions = canonical scheduler | GCP Cloud Scheduler = canonical (free tier: 5 jobs here, 3 free… see [Costs](#costs)) |
-| GHA minutes burn on every cron fire | GHP Scheduler + Workflows are effectively free at this volume |
-| Vercel Hobby: only 2 daily crons possible | GCP gives hourly (`whatsapp`) + 3-hourly (`timers`) granularity |
-| Schedule list lived in YAML | Same single dispatcher; schedules live here + `automation-jobs.ts` registry |
-| Emergency = GHA manual dispatch | Same, retained (plus `gcloud workflows run`) |
+| Before (Phase 11)                         | After (this layer)                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| GitHub Actions = canonical scheduler      | GCP Cloud Scheduler = canonical (free tier: 5 jobs here, 3 free… see [Costs](#costs)) |
+| GHA minutes burn on every cron fire       | GHP Scheduler + Workflows are effectively free at this volume                         |
+| Vercel Hobby: only 2 daily crons possible | GCP gives hourly (`whatsapp`) + 3-hourly (`timers`) granularity                       |
+| Schedule list lived in YAML               | Same single dispatcher; schedules live here + `automation-jobs.ts` registry           |
+| Emergency = GHA manual dispatch           | Same, retained (plus `gcloud workflows run`)                                          |
 
 Everything the dispatcher already guarantees still applies: per-job
 `automation_runs` ledger rows, dedupe windows, failure isolation, the
@@ -58,11 +58,11 @@ Everything the dispatcher already guarantees still applies: per-job
 
 ## Files
 
-| Path | Purpose |
-|---|---|
-| `workflows/dispatch.yaml` | The parameterized Workflow: targets → dispatcher calls, secret read, retry |
-| `scripts/create-scheduler-jobs.sh` | Idempotent create/update of the 5 scheduler jobs |
-| `GO_LIVE_CHECKLIST.md` | The 6-stage bring-up checklist |
+| Path                               | Purpose                                                                    |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| `workflows/dispatch.yaml`          | The parameterized Workflow: targets → dispatcher calls, secret read, retry |
+| `scripts/create-scheduler-jobs.sh` | Idempotent create/update of the 5 scheduler jobs                           |
+| `GO_LIVE_CHECKLIST.md`             | The 6-stage bring-up checklist                                             |
 
 ## One-time setup (≈15 minutes, once, from any machine with `gcloud`)
 
@@ -161,13 +161,13 @@ Green when you see fresh rows with `trigger_source = 'gcp-scheduler'`.
 
 ## Scheduling topology (single source of truth: `apps/sierra-estates-realty/lib/server/automation-jobs.ts`)
 
-| Job / window | GCP cron (UTC) | Contents |
-|---|---|---|
-| `night` | `10 2 * * *` | maintenance, expire-reservations, lead-timers, check-availability-sla |
-| `morning` | `10 6 * * *` | sync-listings, sync-master-sheet, ingest-from-sheets, sync-leads |
-| `whatsapp-dispatch` | `10 * * * *` | WhatsApp queue drain (hourly) |
-| timers | `25 */3 * * *` | lead-timers + check-availability-sla |
-| `sync-leads` | `10 10 * * *` | Lead sources sync (daily) |
+| Job / window        | GCP cron (UTC) | Contents                                                              |
+| ------------------- | -------------- | --------------------------------------------------------------------- |
+| `night`             | `10 2 * * *`   | maintenance, expire-reservations, lead-timers, check-availability-sla |
+| `morning`           | `10 6 * * *`   | sync-listings, sync-master-sheet, ingest-from-sheets, sync-leads      |
+| `whatsapp-dispatch` | `10 * * * *`   | WhatsApp queue drain (hourly)                                         |
+| timers              | `25 */3 * * *` | lead-timers + check-availability-sla                                  |
+| `sync-leads`        | `10 10 * * *`  | Lead sources sync (daily)                                             |
 
 **Deliberately unscheduled:**
 
@@ -188,16 +188,16 @@ they are GCP-only by design.
 
 ## Operating
 
-| Action | Command |
-|---|---|
-| List jobs | `gcloud scheduler jobs list --location=$REGION` |
-| Pause everything | `gcloud scheduler jobs pause <job> --location=$REGION` (per job) |
-| Resume | `gcloud scheduler jobs resume <job> --location=$REGION` |
-| Force-run a target now | `gcloud workflows run se-automation-dispatch --location=$REGION --data='{"argument": "{\"targets\": \"night\", \"force\": true}"}'` |
-| Emergency dispatch without GCP | GitHub → Actions → **Automations** → Run workflow (uses `CRON_SECRET` secret) |
-| Run history | `gcloud workflows executions list se-automation-dispatch --location=$REGION` |
-| Run logs | `gcloud workflows executions describe <execution-id> --location=$REGION` |
-| Rotate the secret | Create a new Secret Manager version; Vercel + GHA secret must be rotated to match |
+| Action                         | Command                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| List jobs                      | `gcloud scheduler jobs list --location=$REGION`                                                                                     |
+| Pause everything               | `gcloud scheduler jobs pause <job> --location=$REGION` (per job)                                                                    |
+| Resume                         | `gcloud scheduler jobs resume <job> --location=$REGION`                                                                             |
+| Force-run a target now         | `gcloud workflows run se-automation-dispatch --location=$REGION --data='{"argument": "{\"targets\": \"night\", \"force\": true}"}'` |
+| Emergency dispatch without GCP | GitHub → Actions → **Automations** → Run workflow (uses `CRON_SECRET` secret)                                                       |
+| Run history                    | `gcloud workflows executions list se-automation-dispatch --location=$REGION`                                                        |
+| Run logs                       | `gcloud workflows executions describe <execution-id> --location=$REGION`                                                            |
+| Rotate the secret              | Create a new Secret Manager version; Vercel + GHA secret must be rotated to match                                                   |
 
 ### Known failures to expect (pre-existing on main, NOT caused by this layer)
 
@@ -239,3 +239,5 @@ gcloud secrets delete cron_secret --quiet
 Rolling back to GHA scheduling only means re-adding the `schedule:` block to
 `.github/workflows/automations.yml` (the case-mapping is preserved for
 exactly this reason). The Vercel `:45` fallbacks keep working throughout.
+
+[def]: #scheduling-topology
