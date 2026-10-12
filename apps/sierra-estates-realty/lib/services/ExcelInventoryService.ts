@@ -58,6 +58,20 @@ export interface NewExcelListingInput {
   description?: string;
   source?: string;
   sourceType?: 'owner' | 'broker';
+  /**
+   * Canonical Supabase listing id when the caller ALREADY created the
+   * canonical row (owner-intake path, /api/listings/submit). When set, the
+   * append is a pure sheet PROJECTION — no second Supabase row is written
+   * (P0 §4: the old mirror upserted a duplicate row keyed by the intake
+   * code next to the canonical UUID row).
+   */
+  canonicalUnitId?: string;
+  /**
+   * Opt-in for callers that have NOT written Supabase themselves and rely
+   * on this append for persistence (/api/inventory POST). Default: false —
+   * the sheet append never invents inventory state on its own.
+   */
+  persistToSupabase?: boolean;
 }
 
 /**
@@ -587,35 +601,47 @@ export async function appendToExcelInventory(
     fs.writeFileSync(filePath, outBuf);
     logger.info(`[ExcelInventory] Successfully appended unit ${recordId} to sheet "${sheetName}" in ${filePath}`);
 
-    // Synchronize to Supabase database (fire and forget / graceful fallback)
-    try {
-      const supabase = getSupabaseAdmin();
-      const primaryPhoto = photoUrlsStr.split(/[\n,;]+/)[0]?.trim() || null;
-      await supabase.from('listings').upsert(
-        {
-          id: recordId,
-          code: unitCode,
-          ref_id: recordId,
-          compound: input.compound || '',
-          location_area: input.location || '',
-          property_type: input.propertyType || '',
-          deal_type: isRent ? 'rent' : 'sale',
-          price: input.price,
-          price_currency: 'EGP',
-          bedrooms: input.bedrooms ? Number(input.bedrooms) : null,
-          bathrooms: input.bathrooms ? Number(input.bathrooms) : null,
-          area_sqm: input.areaSqm ? Number(input.areaSqm) : null,
-          status: 'active',
-          publish_status: 'REVIEW_REQUIRED',
-          description: input.description || null,
-          img: primaryPhoto,
-          photos: photoUrlsStr ? photoUrlsStr.split(/[\n,;]+/).map((s) => s.trim()) : [],
-          updated_at: timestamp,
-        },
-        { onConflict: 'id' }
-      );
-    } catch (dbErr) {
-      logger.warn(`[ExcelInventory] Supabase secondary mirror write failed (non-fatal): ${(dbErr as Error).message}`);
+    // Synchronize to Supabase — ONLY when the caller has not already
+    // written the canonical row. Two rules (P0 §4):
+    //   1. `canonicalUnitId` set (owner intake / submit route already created
+    //      the row) → this append is a sheet projection, nothing is written —
+    //      the old mirror created a DUPLICATE listings row keyed by the
+    //      intake code next to the canonical UUID row.
+    //   2. `persistToSupabase` opted in (no canonical writer) → an honest,
+    //      unverified insert: REVIEW_REQUIRED, status 'pending', deal_type
+    //      from the EXPLICIT operation only (the old code asserted
+    //      status:'active' and inferred rent/sale from a price heuristic).
+    if (input.persistToSupabase === true && !input.canonicalUnitId) {
+      try {
+        const supabase = getSupabaseAdmin();
+        const primaryPhoto = photoUrlsStr.split(/[\n,;]+/)[0]?.trim() || null;
+        const explicitRent = String(input.operation ?? '').toLowerCase() === 'rent';
+        const explicitSale = String(input.operation ?? '').toLowerCase() === 'sale';
+        await supabase.from('listings').insert(
+          {
+            code: unitCode,
+            ref_id: recordId,
+            compound: input.compound || '',
+            location_area: input.location || '',
+            property_type: input.propertyType || '',
+            deal_type: explicitRent ? 'rent' : explicitSale ? 'sale' : null,
+            price: input.price,
+            price_currency: 'EGP',
+            bedrooms: input.bedrooms ? Number(input.bedrooms) : null,
+            bathrooms: input.bathrooms ? Number(input.bathrooms) : null,
+            area_sqm: input.areaSqm ? Number(input.areaSqm) : null,
+            // Honest unverified staging — never an availability fact.
+            status: 'pending',
+            publish_status: 'REVIEW_REQUIRED',
+            description: input.description || null,
+            img: primaryPhoto,
+            photos: photoUrlsStr ? photoUrlsStr.split(/[\n,;]+/).map((s) => s.trim()) : [],
+            updated_at: timestamp,
+          }
+        );
+      } catch (dbErr) {
+        logger.warn(`[ExcelInventory] Supabase canonical write failed (non-fatal — sheet append stands): ${(dbErr as Error).message}`);
+      }
     }
 
     return {
