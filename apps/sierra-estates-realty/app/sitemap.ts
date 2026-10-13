@@ -48,6 +48,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/ai-engine`, changeFrequency: 'weekly', priority: 0.5, lastModified: now },
     { url: `${SITE_URL}/virtual-tour`, changeFrequency: 'monthly', priority: 0.4, lastModified: now },
     { url: `${SITE_URL}/explore`, changeFrequency: 'monthly', priority: 0.4, lastModified: now },
+    { url: `${SITE_URL}/masterplan`, changeFrequency: 'weekly', priority: 0.8, lastModified: now },
     { url: `${SITE_URL}/cairo-plaza`, changeFrequency: 'weekly', priority: 0.7, lastModified: now },
     { url: `${SITE_URL}/career`, changeFrequency: 'weekly', priority: 0.4, lastModified: now },
     { url: `${SITE_URL}/add-listing`, changeFrequency: 'monthly', priority: 0.5, lastModified: now },

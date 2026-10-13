@@ -122,6 +122,26 @@ export default function ExplorePortal() {
                 ? 'كل برج هو كمبوند — ارتفاعه ولونه يعكسان السعر. اسحب للتدوير، واضغط على أي برج لعرض وحداته.'
                 : 'Every tower is a compound — its height and colour track the price. Drag to orbit, click a tower to see its units.'}
             </p>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+              <Link
+                href="/masterplan"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: '#094cb2',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                <span>{isAr ? 'عرض المخطط التفاعلي ثلاثي الأبعاد GIS ↗' : 'Switch to 3D GIS Masterplan ↗'}</span>
+              </Link>
+            </div>
           </Reveal>
         </section>
 
