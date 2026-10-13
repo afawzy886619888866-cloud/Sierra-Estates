@@ -2503,6 +2503,51 @@ function AdminApp() {
       case 'automations':return <AutomationsPage T={T}/>;
       case 'inventory_command':return <InventoryCommandView lang={langKey}/>;
       case 'inventory_os':return <InventoryOsView lang={langKey}/>;
+      case 'masterplan_gis':
+        return (
+          <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="card" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>
+                  🧭 {ar ? 'المخطط التفاعلي ثلاثي الأبعاد GIS' : '3D GIS Masterplan & Cadastral Cartography'}
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: 12.5, opacity: 0.7 }}>
+                  {ar
+                    ? 'استكشاف الأراضي والمخططات وربط المخزون المباشر عبر محرك GIS الفضائي'
+                    : 'Interactive 3D Cadastral Cartography wired with live inventory & compound polygons.'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <a
+                  href="/masterplan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'var(--gold-luxury, #D4AF37)',
+                    color: '#07111E',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                  }}
+                >
+                  <span>{ar ? 'فتح في علامة تبويب جديدة ↗' : 'Launch Full 3D Map ↗'}</span>
+                </a>
+              </div>
+            </div>
+            <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid var(--bd)', height: '75vh', background: '#faf9fa' }}>
+              <iframe
+                src="/masterplan"
+                title="3D GIS Masterplan"
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            </div>
+          </div>
+        );
       case 'cairo_plaza':return <CairoPlazaAdminView lang={langKey} onNavigate={guardedSetTab}/>;
       case 'listings':return <ListingsView lang={langKey} restricted={isPartner}/>;
       case 'viewings':return <ViewingsView lang={langKey}/>;
