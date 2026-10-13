@@ -51,11 +51,11 @@ fi
 
 if [ -s "$INV" ]; then
   # --- 7: inventory source is the live database ------------------------------
-  src=$(python3 -c "import json;print(json.load(open('$INV')).get('source',''))" 2>/dev/null)
+  src=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('source',''))" "$INV" 2>/dev/null)
   [ "$src" = "supabase" ] && ok "inventory.source == 'supabase'" || bad "inventory.source == '$src' (want supabase)"
 
   # --- 8: live pin count ------------------------------------------------------
-  cnt=$(python3 -c "import json;print(json.load(open('$INV')).get('count',0))" 2>/dev/null)
+  cnt=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('count',0))" "$INV" 2>/dev/null)
   if [ "${cnt:-0}" -ge 4000 ] 2>/dev/null; then ok "live pins on map: $cnt (>= 4000)"; else bad "live pins: $cnt (< 4000)"; fi
 
   # --- 9-11: data-quality gates (P1: items under units[], coords lat/lng) -----
@@ -81,7 +81,7 @@ PY
   fi
 
   # --- 5 (deferred): property detail page -------------------------------------
-  pid=$(python3 -c "import json;us=json.load(open('$INV')).get('units') or [];print(us[0]['id'] if us else '')" 2>/dev/null)
+  pid=$(python3 -c "import json,sys;us=json.load(open(sys.argv[1])).get('units') or [];print(us[0]['id'] if us else '')" "$INV" 2>/dev/null)
   if [ -n "$pid" ]; then
     code=$(http_code "$BASE_URL/property/$pid" "$TMP/detail.html")
     [ "$code" = "200" ] && ok "GET /property/<live-id> → 200" || bad "GET /property/$pid → $code"
