@@ -521,6 +521,12 @@
     "pipefail",
     "salecheap",
     "urlset",
-    "noqa"
+    "noqa",
+    "subzone",
+    "mountainview",
+    "faldo",
+    "epsg",
+    "metas",
+    "isoformat"
   ]
 }
