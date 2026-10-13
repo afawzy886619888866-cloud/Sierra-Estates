@@ -21,6 +21,11 @@
     "**/.vercelignore",
     "**/.gitignore",
     "**/*.toml",
+    "**/coverage/**",
+    "**/data/**/*.json",
+    "**/.amphion/command-deck/data/**",
+    "**/*.sqlite*",
+    "**/*.db*",
     "tools/**"
   ],
   "ignoreRegExpList": [

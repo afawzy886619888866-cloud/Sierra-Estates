@@ -8,7 +8,7 @@ description: "Provide MCD and AmphionAgent help using .amphion/control-plane/MCD
 This workflow invokes the canonical MCD HELP command.
 
 1. Read the command instructions:
-[HELP.md](file:///${projectRoot}/.amphion/control-plane/mcd/HELP.md)
+[HELP.md](../../.amphion/control-plane/mcd/HELP.md)
 
 2. Follow the step-by-step instructions in the file to complete the phase.
 

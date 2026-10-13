@@ -21,7 +21,7 @@ Before performing any task, the agent must identify the current phase and load t
 ## Utility Commands
 
 - **Help** via the Help command (`/help`): [HELP.md](.amphion/control-plane/mcd/HELP.md) (authority: `.amphion/control-plane/MCD_HELP_SOURCE.md`).
-- **Remember** via the Remember command (`/remember`) for non-phase memory checkpoints.
+- **Remember** via the Remember command (`/remember`): [REMEMBER.md](.amphion/control-plane/mcd/REMEMBER.md) for non-phase memory checkpoints.
 
 **Important**: Never chain MCD phases. If you complete an EVALUATE phase, you MUST halt tool execution, present your findings and ask the user to authorize `/contract`, which must be authored as milestone-bound board cards via DB/API. Once you complete a CONTRACT phase, you MUST halt tool execution and explicitly wait for the user to authorize the next phase.
 
