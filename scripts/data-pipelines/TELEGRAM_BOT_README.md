@@ -26,5 +26,10 @@
 - `/listings` - View recent property inventory
 - `/start` - Get system link instructions
 
-**Note**: To use interactive commands while running locally, you must use a tunnel (like `ngrok`) and visit:
+**Note**: To use interactive commands while running locally, run the built-in tunnel:
+```bash
+pnpm tunnel
+```
+This automatically starts a public Cloudflare tunnel to `localhost:3000` (no account/authtoken required) and prints your unique registration URL:
 `[YOUR_TUNNEL_URL]/api/telegram/setup?url=[YOUR_TUNNEL_URL]`
+
