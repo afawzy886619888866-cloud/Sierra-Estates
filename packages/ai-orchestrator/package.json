@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@google-cloud/pubsub": "^6.1.0",
+    "@google-cloud/pubsub": "^6.2.0",
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/memory-engine": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
