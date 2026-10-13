@@ -3,14 +3,12 @@
 
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Nav, Footer, useT } from './ui';
+import { Nav, Footer } from './ui';
 import {
   Compass,
   Layers,
   MapPin,
   RotateCcw,
-  Maximize2,
-  Minimize2,
   ZoomIn,
   ZoomOut,
   Building,
@@ -270,7 +268,6 @@ const COMPOUND_REGISTRY: Record<string, CompoundData> = {
 };
 
 export default function MasterplanPortal() {
-  const { t } = useT();
   const [is3D, setIs3D] = useState(true);
   const [zoom, setZoom] = useState(0.96);
   const [pitchToggled, setPitchToggled] = useState(false);
@@ -345,7 +342,7 @@ export default function MasterplanPortal() {
                     85,000 <span className="text-xs text-[#094cb2] font-normal">EGP/m²</span>
                   </div>
                 </div>
-                <div className="h-7 w-[1px] bg-[#e3e2e3]" />
+                <div className="h-7 w-px bg-[#e3e2e3]" />
                 <div>
                   <div className="text-[10px] uppercase text-[#737784] font-semibold tracking-wider">
                     Active Inventory
@@ -354,7 +351,7 @@ export default function MasterplanPortal() {
                     9,534 <span className="text-xs text-[#6d5e00] font-normal">Units</span>
                   </div>
                 </div>
-                <div className="h-7 w-[1px] bg-[#e3e2e3]" />
+                <div className="h-7 w-px bg-[#e3e2e3]" />
                 <div>
                   <div className="text-[10px] uppercase text-[#737784] font-semibold tracking-wider">
                     Portfolio Parity
@@ -407,7 +404,7 @@ export default function MasterplanPortal() {
           <div className="max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6 relative">
             {/* Primary Map/Viewport Stage (Span 8 / 12) */}
             <div className="xl:col-span-8 2xl:col-span-9 flex flex-col gap-4">
-              <div className="relative w-full rounded-2xl overflow-hidden bg-white border border-[#e3e2e3] shadow-md min-h-[620px] lg:min-h-[720px] flex items-center justify-center p-2 lg:p-4 group">
+              <div className="relative w-full rounded-2xl overflow-hidden bg-white border border-[#e3e2e3] shadow-md min-h-155 lg:min-h-180 flex items-center justify-center p-2 lg:p-4 group">
                 {/* Layer Filter Floater (Top-Left within canvas) */}
                 <div className="absolute top-6 left-6 z-30 bg-white/95 backdrop-blur-md p-2 rounded-xl shadow-md border border-[#e3e2e3] flex flex-wrap gap-2 text-xs">
                   <span className="text-[11px] font-semibold text-[#6d5e00] uppercase tracking-wider self-center px-2">
@@ -430,7 +427,7 @@ export default function MasterplanPortal() {
 
                 {/* Masterplan Stage Container with 3D Perspective */}
                 <div
-                  className="relative w-full h-[580px] lg:h-[680px] rounded-xl overflow-hidden transition-all duration-700 ease-out flex items-center justify-center bg-[#171c20]"
+                  className="relative w-full h-145 lg:h-170 rounded-xl overflow-hidden transition-all duration-700 ease-out flex items-center justify-center bg-[#171c20]"
                   style={{
                     transform: stageTransform,
                     transformStyle: 'preserve-3d',
@@ -613,7 +610,7 @@ export default function MasterplanPortal() {
                         Lat: <strong>30.0131° N</strong>, Lon: <strong>31.4989° E</strong>
                       </span>
                     </div>
-                    <div className="hidden sm:block h-4 w-[1px] bg-[#e3e2e3]" />
+                    <div className="hidden sm:block h-4 w-px bg-[#e3e2e3]" />
                     <div className="hidden sm:flex items-center gap-1 text-[#434653]">
                       <span>Elevation: 320m ASL</span>
                     </div>
@@ -747,7 +744,7 @@ export default function MasterplanPortal() {
                 </div>
 
                 {/* Active Units Catalog Feed */}
-                <div className="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1">
+                <div className="flex flex-col gap-3 max-h-115 overflow-y-auto pr-1">
                   {filteredUnits.map((unit) => (
                     <div
                       key={unit.id}
@@ -934,7 +931,7 @@ export default function MasterplanPortal() {
                 alt={modalUnit.name}
                 className="absolute inset-0 w-full h-full object-cover opacity-80"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
               <div className="relative z-10 text-center flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md text-[#094cb2] flex items-center justify-center shadow-lg mb-2">
                   <Compass className="w-6 h-6 animate-spin" style={{ animationDuration: '8s' }} />
