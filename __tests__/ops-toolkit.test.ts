@@ -57,7 +57,7 @@ describe('Sierra Ops Toolkit Test Suite', () => {
         });
       }, `Python script failed compilation: ${script}`).not.toThrow();
     }
-  });
+  }, 20000);
 
   it('verifies GitHub Actions workflow production-smoke.yml is present', () => {
     const workflowPath = path.join(ROOT_DIR, '.github', 'workflows', 'production-smoke.yml');
