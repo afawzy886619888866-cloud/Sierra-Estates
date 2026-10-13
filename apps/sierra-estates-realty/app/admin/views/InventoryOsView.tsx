@@ -139,6 +139,21 @@ export default function InventoryOsView({ lang = 'en' }: { lang?: string }) {
             <button className="btn" onClick={load} disabled={loading} style={{ fontWeight: 800 }}>
               ⟳ {loading ? t('Loading…', 'جارٍ التحميل…') : t('Refresh', 'تحديث')}
             </button>
+            <a
+              href="/masterplan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn"
+              style={{
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                textDecoration: 'none',
+              }}
+            >
+              🧭 {t('3D GIS Masterplan', 'المخطط 3D')} ↗
+            </a>
           </div>
         </div>
 

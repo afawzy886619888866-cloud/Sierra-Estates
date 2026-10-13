@@ -160,6 +160,7 @@ export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
   {id:'pipeline',label:T('lang')==='ar'?'الصفقات':'Pipeline',icon:'💼',section:T('operations')},
   {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
   {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
+  {id:'masterplan_gis',label:T('lang')==='ar'?'المخطط التفاعلي 3D GIS':'3D GIS Masterplan',icon:'🧭',section:T('operations'),badge:'3D GIS',badgeCls:'nb-green'},
   {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
   {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
   {id:'viewings',label:T('lang')==='ar'?'المعاينات والتقييم':'Viewings & Feedback',icon:'👁️',section:T('operations'),badge:'P9',badgeCls:'nb-green'},

@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Nav, Footer } from './ui';
 import {
@@ -275,10 +275,79 @@ export default function MasterplanPortal() {
   const [typologyFilter, setTypologyFilter] = useState<'all' | 'villa' | 'twin' | 'penthouse'>('all');
   const [activeCorridor, setActiveCorridor] = useState<string>('North 90th St');
   const [modalUnit, setModalUnit] = useState<UnitListing | null>(null);
+  const [liveInventory, setLiveInventory] = useState<any[]>([]);
+  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(11017);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const res = await fetch('/api/inventory?limit=300');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && Array.isArray(data.units) && data.units.length > 0) {
+          setLiveInventory(data.units);
+          if (data.count) setTotalCatalogCount(data.count);
+        }
+      } catch {
+        // graceful fallback to curated registry
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedCompound = COMPOUND_REGISTRY[selectedCompoundId] || COMPOUND_REGISTRY.villette;
 
-  const filteredUnits = selectedCompound.unitsList.filter((unit) => {
+  const displayUnits = useMemo(() => {
+    if (!liveInventory.length) return selectedCompound.unitsList;
+    const id = selectedCompoundId.toLowerCase();
+    const matched = liveInventory.filter((u: any) => {
+      const cmp = (u.compound || u.cmp || '').toLowerCase();
+      if (id === 'villette') return cmp.includes('villette');
+      if (id === 'mivida') return cmp.includes('mivida');
+      if (id === 'auc') return cmp.includes('auc');
+      if (id === 'cfc') return cmp.includes('festival') || cmp.includes('cfc');
+      if (id === 'mountainview') return cmp.includes('mountain view');
+      if (id === 'katameya') return cmp.includes('katameya');
+      return false;
+    });
+
+    if (matched.length > 0) {
+      return matched.map((u: any, idx: number): UnitListing => {
+        const rawType = (u.type || u.propertyType || '').toLowerCase();
+        const type: 'villa' | 'twin' | 'penthouse' = rawType.includes('twin')
+          ? 'twin'
+          : rawType.includes('penthouse') || rawType.includes('roof') || rawType.includes('apt')
+          ? 'penthouse'
+          : 'villa';
+        const priceNum = Number(u.price || (u.egpM ? u.egpM * 1e6 : 0) || 0);
+        const usdNum = Math.round(priceNum / 49);
+        return {
+          id: String(u.code || u.id || `live-${idx}`),
+          type,
+          name: u.title || `${selectedCompound.title} Unit ${u.code || idx + 1}`,
+          specs: `${u.beds || 3} Bedrooms • ${u.baths || u.bath || 2} Bathrooms • ${u.area ? `${u.area} m²` : 'Spacious'}`,
+          priceEgp: priceNum ? `${priceNum.toLocaleString()} EGP` : 'Price on request',
+          priceUsd: usdNum ? `≈ $${usdNum.toLocaleString()} USD` : '',
+          bua: u.area ? `${u.area} m²` : '350 m²',
+          status: 'Verified Live',
+          statusColor: 'bg-emerald-600',
+          imageUrl:
+            u.img ||
+            u.image ||
+            selectedCompound.unitsList[idx % selectedCompound.unitsList.length]?.imageUrl ||
+            'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80',
+        };
+      });
+    }
+
+    return selectedCompound.unitsList;
+  }, [liveInventory, selectedCompoundId, selectedCompound]);
+
+  const filteredUnits = displayUnits.filter((unit) => {
     if (typologyFilter === 'all') return true;
     return unit.type === typologyFilter;
   });
@@ -345,10 +414,10 @@ export default function MasterplanPortal() {
                 <div className="h-7 w-px bg-[#e3e2e3]" />
                 <div>
                   <div className="text-[10px] uppercase text-[#737784] font-semibold tracking-wider">
-                    Active Inventory
+                    Active Catalog
                   </div>
                   <div className="text-sm font-semibold text-[#1b1c1d]">
-                    9,534 <span className="text-xs text-[#6d5e00] font-normal">Units</span>
+                    {totalCatalogCount.toLocaleString()} <span className="text-xs text-[#6d5e00] font-normal">Units</span>
                   </div>
                 </div>
                 <div className="h-7 w-px bg-[#e3e2e3]" />
@@ -665,6 +734,24 @@ export default function MasterplanPortal() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                  <a
+                    href="/admin?tab=inventory_os"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-1.5 rounded-lg bg-[#efedee] hover:bg-[#e3e2e3] text-xs font-semibold text-[#1b1c1d] flex items-center gap-1.5 transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#094cb2]" />
+                    <span>Inventory OS</span>
+                  </a>
+                  <a
+                    href="/admin?tab=workflow_ops"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-1.5 rounded-lg bg-[#efedee] hover:bg-[#e3e2e3] text-xs font-semibold text-[#1b1c1d] flex items-center gap-1.5 transition-colors"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-[#6d5e00]" />
+                    <span>Workflow Ops</span>
+                  </a>
                   <Link
                     href="/explore"
                     className="px-3.5 py-1.5 rounded-lg bg-[#efedee] hover:bg-[#e3e2e3] text-xs font-semibold text-[#1b1c1d] flex items-center gap-1.5 transition-colors"
@@ -776,16 +863,39 @@ export default function MasterplanPortal() {
                           <div className="text-xs font-bold text-[#1b1c1d]">{unit.priceEgp}</div>
                           <div className="text-[10px] text-[#737784]">{unit.priceUsd}</div>
                         </div>
-                        <button
-                          onClick={() => setModalUnit(unit)}
-                          className="px-2.5 py-1 rounded bg-[#094cb2] text-white text-[11px] font-semibold hover:bg-[#3366cc] transition-colors flex items-center gap-1"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>Details & 360°</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/property/${encodeURIComponent(unit.id)}`}
+                            className="px-2 py-1 rounded bg-white border border-[#e3e2e3] text-[#1b1c1d] text-[11px] font-semibold hover:bg-[#efedee] transition-colors flex items-center gap-1"
+                          >
+                            <span>Page</span>
+                            <ExternalLink className="w-2.5 h-2.5 text-[#094cb2]" />
+                          </Link>
+                          <button
+                            onClick={() => setModalUnit(unit)}
+                            className="px-2.5 py-1 rounded bg-[#094cb2] text-white text-[11px] font-semibold hover:bg-[#3366cc] transition-colors flex items-center gap-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Details & 360°</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Admin Workflow Quick Link */}
+                <div className="flex items-center justify-between text-xs pt-2 pb-1 border-t border-[#e3e2e3]">
+                  <span className="text-[#737784] text-[11px]">Workflow Lifecycle</span>
+                  <a
+                    href="/admin?tab=inventory_os"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#094cb2] font-semibold hover:underline flex items-center gap-1"
+                  >
+                    <span>Manage in Admin OS</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
 
                 {/* Concierge WhatsApp Quick Dispatch Button */}
@@ -961,21 +1071,28 @@ export default function MasterplanPortal() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <Link
+                href={`/property/${encodeURIComponent(modalUnit.id)}`}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#efedee] text-[#1b1c1d] text-xs font-semibold hover:bg-[#e3e2e3] transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>View Property</span>
+                <ExternalLink className="w-3 h-3 text-[#094cb2]" />
+              </Link>
               <a
                 href={`https://wa.me/201092048333?text=${encodeURIComponent(
                   `Hello Sierra Estates VIP Desk, I want to reserve a private inspection for ${modalUnit.name} in ${selectedCompound.title} (${modalUnit.priceEgp})`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 py-2.5 px-4 rounded-xl bg-[#094cb2] text-white text-xs font-semibold text-center hover:bg-[#3366cc] transition-colors shadow-sm flex items-center justify-center gap-2"
+                className="flex-1 w-full py-2.5 px-4 rounded-xl bg-[#094cb2] text-white text-xs font-semibold text-center hover:bg-[#3366cc] transition-colors shadow-sm flex items-center justify-center gap-2"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Reserve Unit via VIP Broker</span>
               </a>
               <button
                 onClick={() => setModalUnit(null)}
-                className="py-2.5 px-4 rounded-xl bg-[#efedee] text-[#1b1c1d] text-xs font-medium hover:bg-[#e3e2e3] transition-colors"
+                className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-[#efedee] text-[#1b1c1d] text-xs font-medium hover:bg-[#e3e2e3] transition-colors"
               >
                 Dismiss
               </button>
