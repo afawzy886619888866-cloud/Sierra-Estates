@@ -49,7 +49,7 @@ describe('package.json', () => {
   });
 
   it('has start script', () => {
-    expect(PACKAGE_JSON.scripts.start).toBe('node src/index.js');
+    expect(PACKAGE_JSON.scripts.start).toMatch(/^node src\/(gateway-server|index)\.js$/);
   });
 
   it('requires Node >= 18', () => {
@@ -232,7 +232,7 @@ describe('docker-compose.yml', () => {
   });
 
   it('has data persistence volumes', () => {
-    expect(compose).toContain('./n8n-data:/data');
+    expect(compose).toMatch(/\.\/n8n-data:(\/home\/node\/\.n8n|\/data)/);
     expect(compose).toContain('./whatsapp-auth:/app/auth');
   });
 

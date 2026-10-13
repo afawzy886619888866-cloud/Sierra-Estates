@@ -156,11 +156,12 @@ describe('packages/agents-core', () => {
       expect(results[1].agentName).toBe('security-auditor');
     });
 
-    it('runAuditWorkflow executes quality-inspector and qa-automation-engineer', async () => {
+    it('runAuditWorkflow executes arc3-auditor, quality-inspector and qa-automation-engineer', async () => {
       const results = await workflows.runAuditWorkflow('Check code style');
-      expect(results).toHaveLength(2);
-      expect(results[0].agentName).toBe('quality-inspector');
-      expect(results[1].agentName).toBe('qa-automation-engineer');
+      expect(results).toHaveLength(3);
+      expect(results[0].agentName).toBe('arc3-auditor');
+      expect(results[1].agentName).toBe('quality-inspector');
+      expect(results[2].agentName).toBe('qa-automation-engineer');
     });
 
     it('runUiUxWorkflow executes product-manager, frontend-specialist and performance-optimizer', async () => {
