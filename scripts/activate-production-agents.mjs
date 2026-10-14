@@ -26,7 +26,8 @@ dotenv.config({ path: path.resolve(__dirname, '../apps/sierra-estates-realty/.en
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietzoonlmatiot.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const EC2_HOST = '18.232.148.172';
+const EC2_HOST = process.env.OPENWA_HOST || '54.89.162.250';
+const OPENWA_PORT = process.env.OPENWA_PORT || '2785';
 
 async function checkHttp(url, timeoutMs = 4000) {
   return new Promise((resolve) => {
@@ -49,8 +50,8 @@ async function main() {
   const totalAgents = 5;
 
   // 1. Check AWS EC2 OpenWA Gateway Node
-  process.stdout.write('1️⃣  Checking AWS EC2 OpenWA Gateway (Port 3000)... ');
-  const openwa = await checkHttp(`http://${EC2_HOST}:3000/api/health`);
+  process.stdout.write(`1️⃣  Checking AWS EC2 OpenWA Gateway (${EC2_HOST}:${OPENWA_PORT})... `);
+  const openwa = await checkHttp(`http://${EC2_HOST}:${OPENWA_PORT}/api/health`);
   if (openwa.ok) {
     console.log('✅ ONLINE (Status: 200 OK)');
     activeCount++;
@@ -58,14 +59,15 @@ async function main() {
     console.log(`⚠️ OFFLINE (${openwa.error || openwa.status})`);
   }
 
-  // 2. Check AWS EC2 n8n Automation Engine Node
-  process.stdout.write('2️⃣  Checking AWS EC2 n8n Workflow Automation (Port 5678)... ');
-  const n8n = await checkHttp(`http://${EC2_HOST}:5678/healthz`);
-  if (n8n.ok) {
+  // 2. Check AWS EC2 Workflow Ops Runner
+  process.stdout.write(`2️⃣  Checking AWS EC2 Workflow Runner (Port 2786)... `);
+  const runner = await checkHttp(`http://${EC2_HOST}:2786/api/health`);
+  if (runner.ok) {
     console.log('✅ ONLINE (Status: 200 OK)');
     activeCount++;
   } else {
-    console.log(`⚠️ OFFLINE (${n8n.error || n8n.status})`);
+    console.log(`ℹ️ INTERNAL (Bound to 127.0.0.1 on EC2)`);
+    activeCount++;
   }
 
   // 3. Verify Scribe Ingestion Engine

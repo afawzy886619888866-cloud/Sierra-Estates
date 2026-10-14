@@ -329,10 +329,14 @@ export default function MasterplanPortal() {
           id: String(u.code || u.id || `live-${idx}`),
           type,
           name: u.title || `${selectedCompound.title} Unit ${u.code || idx + 1}`,
-          specs: `${u.beds || 3} Bedrooms • ${u.baths || u.bath || 2} Bathrooms • ${u.area ? `${u.area} m²` : 'Spacious'}`,
+          specs: [
+            u.beds ? `${u.beds} Bedrooms` : null,
+            (u.baths || u.bath) ? `${u.baths || u.bath} Bathrooms` : null,
+            u.area ? `${u.area} m²` : null,
+          ].filter(Boolean).join(' • ') || 'Specifications on request',
           priceEgp: priceNum ? `${priceNum.toLocaleString()} EGP` : 'Price on request',
           priceUsd: usdNum ? `≈ $${usdNum.toLocaleString()} USD` : '',
-          bua: u.area ? `${u.area} m²` : '350 m²',
+          bua: u.area ? `${u.area} m²` : '—',
           status: 'Verified Live',
           statusColor: 'bg-emerald-600',
           imageUrl:
