@@ -26,6 +26,7 @@
     "**/.amphion/command-deck/data/**",
     "**/*.sqlite*",
     "**/*.db*",
+    "**/*.pdf",
     "tools/**"
   ],
   "ignoreRegExpList": [
@@ -532,6 +533,10 @@
     "faldo",
     "epsg",
     "metas",
-    "isoformat"
+    "isoformat",
+    "tajawal",
+    "refetches",
+    "prefs",
+    "skycondos"
   ]
 }
