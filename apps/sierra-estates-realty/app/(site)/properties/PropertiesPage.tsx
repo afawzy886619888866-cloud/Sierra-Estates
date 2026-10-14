@@ -392,17 +392,37 @@ export default function PropertiesPage() {
   }, [radiusKm, centerCoords]);
 
   // Filtering Logic
+  const normalizedListings = useMemo<
+    Array<RealListing & {
+      _compound: string;
+      _type: string;
+      _zone: string;
+      _description: string;
+      _searchText: string;
+    }>
+  >(() => {
+    return allUnits.map((item) => {
+      const compound = (item.compound || item.cmp || item.location || '').toLowerCase();
+      const type = (item.type || '').toLowerCase();
+      const zone = (item.zone || '').toLowerCase();
+      const description = (item.description || '').toLowerCase();
+      return {
+        ...item,
+        _compound: compound,
+        _type: type,
+        _zone: zone,
+        _description: description,
+        _searchText: `${item.code || ''} ${compound} ${zone} ${type} ${description}`.toLowerCase(),
+      };
+    });
+  }, [allUnits]);
+
   const filteredListings = useMemo(() => {
-    return allUnits.filter((item) => {
+    const q = searchQuery.trim().toLowerCase();
+    return normalizedListings.filter((item) => {
       // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const codeMatch = (item.code || '').toLowerCase().includes(q);
-        const compoundMatch = (item.compound || item.cmp || '').toLowerCase().includes(q);
-        const zoneMatch = (item.zone || '').toLowerCase().includes(q);
-        const typeMatch = (item.type || '').toLowerCase().includes(q);
-        const descMatch = (item.description || '').toLowerCase().includes(q);
-        if (!codeMatch && !compoundMatch && !zoneMatch && !typeMatch && !descMatch) return false;
+      if (q) {
+        if (!item._searchText.includes(q)) return false;
       }
 
       // Deal Mode
@@ -412,7 +432,7 @@ export default function PropertiesPage() {
 
       // Property Type
       if (selectedType !== 'All Types') {
-        const itemType = (item.type || '').toLowerCase();
+        const itemType = item._type;
         const targetType = selectedType.toLowerCase();
         if (targetType === 'villa') {
           if (!itemType.includes('villa') && !itemType.includes('فيلا')) return false;
@@ -427,7 +447,7 @@ export default function PropertiesPage() {
 
       // Compound
       if (selectedCompound !== 'All Compounds') {
-        const itemCompound = (item.compound || item.cmp || item.location || '').toLowerCase();
+        const itemCompound = item._compound;
         const target = selectedCompound.toLowerCase().replace(/\(.*?\)/g, '').trim();
         if (!itemCompound.includes(target) && !target.includes(itemCompound)) {
           return false;
@@ -465,7 +485,7 @@ export default function PropertiesPage() {
 
       return true;
     });
-  }, [allUnits, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition]);
+  }, [normalizedListings, searchQuery, selectedMode, selectedType, selectedCompound, selectedBeds, selectedPriceRange, selectedCondition]);
 
   // Sorting
   const sortedListings = useMemo(() => {
