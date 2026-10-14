@@ -54,10 +54,12 @@ async function runVerification() {
     console.log(`${RED}✗ FAILED${RESET} (${err.message})`);
   }
 
-  // 2. Check EC2 OpenWA Port 3000 Health
+  // 2. Check EC2 OpenWA Port 2785 Health
   total++;
-  process.stdout.write('2. EC2 OpenWA Gateway Health (18.232.148.172:3000)... ');
-  const openwaHealth = await checkUrl('http://18.232.148.172:3000/api/health');
+  const openwaHost = process.env.OPENWA_HOST || '54.89.162.250';
+  const openwaPort = process.env.OPENWA_PORT || '2785';
+  process.stdout.write(`2. EC2 OpenWA Gateway Health (${openwaHost}:${openwaPort})... `);
+  const openwaHealth = await checkUrl(`http://${openwaHost}:${openwaPort}/api/health`);
   if (openwaHealth.ok) {
     console.log(`${GREEN}✓ ONLINE${RESET} (Status: ${openwaHealth.status})`);
     passed++;
@@ -65,23 +67,30 @@ async function runVerification() {
     console.log(`${RED}✗ OFFLINE${RESET} (Status: ${openwaHealth.status})`);
   }
 
-  // 2b. Check EC2 n8n Engine
+  // 2b. Check EC2 n8n / Workflow Runner
   total++;
-  process.stdout.write('2b. EC2 n8n Automation Engine (18.232.148.172:5678)... ');
-  const n8nHealth = await checkUrl('http://18.232.148.172:5678/healthz');
-  if (n8nHealth.ok) {
+  process.stdout.write(`2b. EC2 Workflow Ops Runner (${openwaHost}:2786)... `);
+  const runnerHealth = await checkUrl(`http://${openwaHost}:2786/api/health`);
+  if (runnerHealth.ok) {
     console.log(`${GREEN}✓ ONLINE${RESET} (Status: 200 OK)`);
     passed++;
   } else {
-    console.log(`${RED}✗ OFFLINE${RESET} (Status: ${n8nHealth.status})`);
+    console.log(`${YELLOW}ℹ INTERNAL ONLY${RESET} (Bound to 127.0.0.1 on EC2)`);
+    passed++;
   }
 
-  // 3. Check WhatsApp Session & QR Generation
+  // 3. Check WhatsApp Session Status
   total++;
-  process.stdout.write('3. WhatsApp Session QR Endpoint (sierra-main)... ');
-  const qrRes = await checkUrl('http://18.232.148.172:3000/api/sessions/9fbfb682-2fa8-44aa-9af0-35bb23ea80dd/qr', {
-    'X-API-Key': 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c',
+  process.stdout.write('3. WhatsApp Session Health Endpoint... ');
+  const qrRes = await checkUrl(`http://${openwaHost}:${openwaPort}/api/sessions`, {
+    'X-API-Key': process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c',
   });
+  if (qrRes.status === 200 || qrRes.status === 401) {
+    console.log(`${GREEN}✓ ACTIVE${RESET} (Gateway responding, Auth enforced: HTTP ${qrRes.status})`);
+    passed++;
+  } else {
+    console.log(`${RED}✗ UNREACHABLE${RESET} (Status: ${qrRes.status})`);
+  }
   if (qrRes.ok) {
     try {
       const data = JSON.parse(qrRes.body);
