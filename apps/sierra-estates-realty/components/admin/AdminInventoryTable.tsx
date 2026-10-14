@@ -7,17 +7,10 @@ import {
   Download,
   RefreshCw,
   Building,
-  Layers,
-  ChevronDown,
-  Sparkles,
   Phone,
   Calendar,
   MapPin,
   SlidersHorizontal,
-  CheckCircle2,
-  Tag,
-  Home,
-  Check,
   X,
 } from 'lucide-react';
 import defaultOnlineUnits from '@/data/online-sheet-units.json';
@@ -470,7 +463,7 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
             <button
               type="button"
               onClick={handleExportExcel}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#C9A84C] to-[#E9C176] hover:brightness-110 text-[#07111E] text-xs font-bold transition cursor-pointer shadow-md"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-linear-to-r from-[#C9A84C] to-[#E9C176] hover:brightness-110 text-[#07111E] text-xs font-bold transition cursor-pointer shadow-md"
             >
               <Download className="w-3.5 h-3.5" />
               <span>تصدير Excel</span>
@@ -679,7 +672,7 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                       <td className="py-3 px-3.5">
                         <div className="font-semibold text-white flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
-                          <span className="truncate max-w-[180px]">{row.compound}</span>
+                          <span className="truncate max-w-45">{row.compound}</span>
                         </div>
                         {row.compoundCluster && (
                           <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700/60 mt-1">
@@ -783,7 +776,7 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
 
                       {/* Sender & Contact Phone */}
                       <td className="py-3 px-3.5 whitespace-nowrap">
-                        <div className="text-slate-300 font-medium text-[11px] truncate max-w-[150px]">
+                        <div className="text-slate-300 font-medium text-[11px] truncate max-w-37.5">
                           {row.sender || 'وسيط معتمد'}
                         </div>
                         {row.phone ? (
