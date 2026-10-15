@@ -10,7 +10,7 @@ const sessions = [
     name: 'session-default',
     status: 'ready',
     phone: '201031622600',
-    pushName: 'Sierra Estates Client Line',
+    pushName: 'Sierra Estates Line 1 (01031622600)',
     engineLoaded: true,
   },
   {
@@ -18,7 +18,23 @@ const sessions = [
     name: 'line-2',
     status: 'ready',
     phone: '201092048333',
-    pushName: 'Sierra Estates Outreach Line',
+    pushName: 'Sierra Estates Line 2 (01092048333)',
+    engineLoaded: true,
+  },
+  {
+    id: 'c3f7a012-9b24-4f81-a6b1-987654321003',
+    name: 'line-3',
+    status: 'ready',
+    phone: '201061399688',
+    pushName: 'Sierra Estates Line 3 (01061399688)',
+    engineLoaded: true,
+  },
+  {
+    id: 'c4f7a012-9b24-4f81-a6b1-987654321004',
+    name: 'line-4',
+    status: 'ready',
+    phone: '201032206443',
+    pushName: 'Sierra Estates Line 4 (01032206443)',
     engineLoaded: true,
   },
 ];
