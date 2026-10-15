@@ -97,6 +97,34 @@ async function loadRecords() {
   return Array.from(records.values());
 }
 
+async function resolveSheetPhoneMap() {
+  const map = new Map(); // last9 -> raw sheet mobile
+  try {
+    const sheetId = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
+    const gid = process.env.UNITS_SHEET_GID || '1127958606';
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`);
+    if (res.ok) {
+      const txt = await res.text();
+      const lines = txt.split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+      const mobIdx = headers.findIndex(h => h.toLowerCase() === 'mobile');
+      if (mobIdx >= 0) {
+        for (let i = 1; i < lines.length; i++) {
+          const cells = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+          const rawMob = cells[mobIdx];
+          const clean = String(rawMob || '').replace(/\D/g, '');
+          if (clean.length >= 7) {
+            map.set(clean.slice(-9), rawMob);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    logBoth(`[backfill] Sheet fetch for phone resolution skipped: ${err.message}`);
+  }
+  return map;
+}
+
 async function main() {
   fs.writeFileSync(LOG_FILE, `=== Sierra Backfill Run: ${new Date().toISOString()} ===\n`);
 
@@ -112,6 +140,9 @@ async function main() {
   logBoth(`[backfill] Target EXEC_URL: ${EXEC_URL.slice(0, 40)}...`);
   logBoth(`[backfill] Secret present: true`);
 
+  const sheetPhoneMap = await resolveSheetPhoneMap();
+  logBoth(`[backfill] Resolved ${sheetPhoneMap.size} phone mappings from target sheet`);
+
   const records = await loadRecords();
   const total = records.length;
   if (total === 0) {
@@ -126,9 +157,21 @@ async function main() {
   const CHUNK_SIZE = 40;
   for (let i = 0; i < total; i += CHUNK_SIZE) {
     const chunk = records.slice(i, i + CHUNK_SIZE);
+    const resolvedRows = [];
+    for (const r of chunk) {
+      const clean = String(r.phone || '').replace(/\D/g, '');
+      const p9 = clean.slice(-9);
+      const matchedRaw = sheetPhoneMap.get(p9);
+      if (matchedRaw) {
+        resolvedRows.push({ phone: matchedRaw, date: r.date, code: r.code });
+      } else {
+        resolvedRows.push({ phone: r.phone, date: r.date, code: r.code });
+      }
+    }
+
     const payload = {
       secret: SECRET,
-      rows: chunk.map(r => ({ phone: r.phone, date: r.date, code: r.code }))
+      rows: resolvedRows
     };
 
     try {
