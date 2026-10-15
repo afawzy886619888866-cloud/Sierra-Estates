@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleSheetBridge } from '@/lib/services/GoogleSheetBridge';
+import { verifyAdminRequest } from '@/lib/server/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  // P0 7.3: admin route — authenticated staff only (previously unguarded,
+  // flagged by the action-routing governance suite).
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const webhookUrl = process.env.GOOGLE_APPS_SCRIPT_WEBHOOK_URL || process.env.INVENTORY_SHEET_WEBHOOK_URL;
     
@@ -40,6 +46,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // P0 7.3: admin route — authenticated staff only.
+  const auth = await verifyAdminRequest(req);
+  if (!auth.authenticated) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const body = await req.json().catch(() => ({}));
     
