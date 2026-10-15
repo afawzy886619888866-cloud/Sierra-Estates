@@ -165,5 +165,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[Sierra WhatsApp Gateway] Listening on http://127.0.0.1:${PORT}`);
-  console.log(`[Sierra WhatsApp Gateway] Sessions active: session-default (201031622600), line-2 (201092048333)`);
+  console.log(`[Sierra WhatsApp Gateway] Sessions active (${sessions.length}): ` + sessions.map(s => `${s.name} (${s.phone})`).join(', '));
 });
