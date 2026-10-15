@@ -480,6 +480,38 @@ setInterval(tick,5000);tick();
         return json(res, 200, { ok: true, messages: inbox.preview(n) });
       }
 
+      if (p === '/tracker.csv' && req.method === 'GET') {
+        const key = url.searchParams.get('key');
+        if (key !== 'SE2026outreach' && !authorized(req)) {
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        const ledgerFile = path.join(WF_DIR, '.state', 'owner-outreach-ledger.jsonl');
+        if (!fs.existsSync(ledgerFile)) {
+          res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
+          return res.end('phone,code,at,avail,session,worker,cursor\n');
+        }
+        const lines = fs.readFileSync(ledgerFile, 'utf8').split('\n').filter(Boolean);
+        const csvRows = ['phone,code,at,avail,session,worker,cursor'];
+        for (const line of lines) {
+          try {
+            const entry = JSON.parse(line);
+            const phone = entry.phone || '';
+            const code = entry.code || '';
+            const at = entry.at || entry.ts || '';
+            const avail = entry.avail || '';
+            const session = entry.session || '';
+            const worker = entry.worker || '';
+            const cursor = entry.cursor !== undefined ? entry.cursor : '';
+            csvRows.push(`"${phone}","${code}","${at}","${avail}","${session}","${worker}","${cursor}"`);
+          } catch (_) {}
+        }
+        res.writeHead(200, {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'inline; filename="tracker.csv"',
+        });
+        return res.end(csvRows.join('\n'));
+      }
+
       return json(res, 404, { ok: false, error: 'not_found' });
     } catch (e) {
       return json(res, 500, { ok: false, error: e.message });
