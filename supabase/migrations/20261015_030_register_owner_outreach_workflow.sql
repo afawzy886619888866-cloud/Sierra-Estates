@@ -32,7 +32,7 @@ INSERT INTO public.workflows
      last_run_at, last_run_ms, last_run_label, color, enabled, updated_at)
 VALUES
     ('owner-outreach', 'Owner Outreach Engine', 'محرك التواصل مع الملاك',
-     'Hourly sheet-driven owner outreach: two cursor workers (top-down + bottom-up) send personalized Arabic intro messages through the OpenWA line pool inside the 10:00-20:00 Cairo window, with a per-line daily cap, permanent ledger dedupe (a phone is contacted at most once ever), and Google Sheet write-back of the contact date. EC2/local runner workflow 09; dispatched by the runner's hourly active-window timer.',
+     'Hourly sheet-driven owner outreach: two cursor workers (top-down + bottom-up) send personalized Arabic intro messages through the OpenWA line pool inside the 10:00-20:00 Cairo window, with a per-line daily cap, permanent ledger dedupe (a phone is contacted at most once ever), and Google Sheet write-back of the contact date. EC2/local runner workflow 09; dispatched by the runner hourly active-window timer.',
      'مراسلة الملاك كل ساعة من الجدول: عاملان بالتناوب من الأعلى والأسفل، رسالة تعريفية بالعربية عبر خطوط الواتساب، ضمن نافذة ١٠ صباحاً - ٨ مساءً بتوقيت القاهرة.',
      'outreach', 'active', '0 10-20 * * *', 'cron',
      $wfsrc$'use strict';
@@ -151,22 +151,28 @@ const summary = {
 function loadCheckpoint(totalCount) {
   try {
     const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
-    if (typeof cp.topCursor === 'number' && typeof cp.bottomCursor === 'number') {
+    if (typeof cp.cursor === 'number' || typeof cp.topCursor === 'number') {
+      if (typeof cp.cursor !== 'number') {
+        cp.cursor = cp.topCursor || 0;
+      }
+      if (typeof cp.activeLineIndex !== 'number') {
+        cp.activeLineIndex = 0;
+      }
       if (totalCount > (cp.totalCount || 0)) {
-        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows — extending bottomCursor to ${totalCount - 1}`);
-        cp.bottomCursor = totalCount - 1;
+        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
         cp.totalCount = totalCount;
-        cp.metInTheMiddle = false;
+        cp.completed = false;
         saveCheckpoint(cp);
       }
       return cp;
     }
   } catch { /* first run */ }
   return {
+    cursor: 0,
     topCursor: 0,
-    bottomCursor: Math.max(0, totalCount - 1),
     totalCount,
-    metInTheMiddle: false,
+    activeLineIndex: 0,
+    completed: false,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -357,146 +363,89 @@ async function main() {
       propertyType: (iType >= 0 ? (r[iType] || '') : '').trim(),
     });
   }
-  const topSession = poolEntries.length > 0 ? poolEntries[0] : { name: 'line1', uuid: gw.sessionId };
-  const bottomSession = poolEntries.length > 1 ? poolEntries[1] : (poolEntries.length > 0 ? poolEntries[0] : { name: 'line2', uuid: gw.sessionId });
-  console.log(`Top Worker Line: ${topSession.name} | Bottom Worker Line: ${bottomSession.name}`);
-
   summary.candidates = candidates.length;
   console.log(`candidates: ${candidates.length} valid rows in sheet | already-contacted ledger: ${contacted.size}`);
 
   const checkpoint = loadCheckpoint(candidates.length);
-  console.log(`checkpoint: topCursor=${checkpoint.topCursor}, bottomCursor=${checkpoint.bottomCursor}, metInTheMiddle=${checkpoint.metInTheMiddle}`);
+  const totalPool = poolEntries.length > 0 ? poolEntries : [{ name: 'session-default', uuid: gw.sessionId }];
+  const lineIdx = (checkpoint.activeLineIndex || 0) % totalPool.length;
+  const activeSession = totalPool[lineIdx];
 
-  if (checkpoint.topCursor > checkpoint.bottomCursor || checkpoint.metInTheMiddle) {
-    summary.metInTheMiddle = true;
-    console.log('🏁 All candidates in the sheet have already been covered (Top and Bottom met in the middle)!');
+  console.log(`\n======================================================`);
+  console.log(`[outreach] 30-MIN SLOT ACTIVE LINE: ${activeSession.name} (${activeSession.phone || activeSession.uuid}) [Line ${lineIdx + 1}/${totalPool.length}]`);
+  console.log(`[outreach] Slot batch target: ${BATCH_CAP} msgs | Cursor: ${checkpoint.cursor}/${candidates.length}`);
+  console.log(`======================================================\n`);
+
+  if (checkpoint.cursor >= candidates.length || checkpoint.completed) {
+    summary.completed = true;
+    console.log('🏁 All candidates in the sheet have already been contacted!');
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
     return;
   }
 
-  while (checkpoint.topCursor <= checkpoint.bottomCursor) {
+  while (checkpoint.cursor < candidates.length) {
     if (summary.sent >= BATCH_CAP) {
-      console.log(`hourly slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next hour`);
+      console.log(`\n[outreach] Slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next 30m slot`);
       break;
     }
     if (daily.sent >= DAILY_CAP) {
       summary.skippedCap++;
-      console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next window`);
+      console.log(`\n[outreach] Daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next active window`);
       break;
     }
 
-    // ── 1. TOP-DOWN WORKER (Line 1) ──────────────────────────────
-    if (checkpoint.topCursor <= checkpoint.bottomCursor) {
-      const topCand = candidates[checkpoint.topCursor];
-      const phone = topCand.phone;
+    const cand = candidates[checkpoint.cursor];
+    const phone = cand.phone;
 
-      if (!contacted.has(phone)) {
-        const text = buildMessage(topCand);
-        if (DRY_RUN) {
-          console.log(`[dry-run][TOP #${checkpoint.topCursor}] would send → ${phone} (${topCand.code}) via ${topSession.name}`);
+    if (!contacted.has(phone)) {
+      const text = buildMessage(cand);
+      if (DRY_RUN) {
+        console.log(`[dry-run][#${checkpoint.cursor}] would send → ${phone} (${cand.code}) via ${activeSession.name}`);
+        summary.sent++;
+        summary.bySession[activeSession.name] = (summary.bySession[activeSession.name] || 0) + 1;
+      } else {
+        try {
+          const sendRes = await gw.sendText(phone, text, { sessionId: activeSession.uuid, retries: 2 });
+          const usedSession = sendRes.session || activeSession.name;
           summary.sent++;
-          summary.topSent++;
-          summary.bySession[topSession.name] = (summary.bySession[topSession.name] || 0) + 1;
-        } else {
-          try {
-            const sendRes = await gw.sendText(phone, text, { sessionId: topSession.uuid, retries: 2 });
-            const usedSession = sendRes.session || topSession.name;
-            summary.sent++;
-            summary.topSent++;
-            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
-            daily.sent++;
-            saveDaily(daily);
-            appendLedger({ phone, code: topCand.code, at: new Date().toISOString(), avail: topCand.avail, session: usedSession, worker: 'top', cursor: checkpoint.topCursor });
-            console.log(`sent [TOP #${checkpoint.topCursor}] → ${phone} (${topCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-            await writeSheetDate(phone, topCand.rawMobile, formatCairoDate());
-          } catch (err) {
-            summary.failed++;
-            console.error(`TOP send failed for ${phone}: ${err.message}`);
-            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-              console.error('permanent failure on TOP session — aborting batch');
-              break;
-            }
+          summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
+          daily.sent++;
+          saveDaily(daily);
+          appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, cursor: checkpoint.cursor });
+          console.log(`sent [#${checkpoint.cursor}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+          await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
+        } catch (err) {
+          summary.failed++;
+          console.error(`Send failed for ${phone}: ${err.message}`);
+          if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
+            console.error('permanent failure on active session — aborting batch');
+            break;
           }
         }
-        contacted.add(phone);
-        await sleep(3000 + Math.floor(Math.random() * 3000));
-      } else {
-        summary.skippedDup++;
       }
-
-      checkpoint.topCursor++;
-      saveCheckpoint(checkpoint);
+      contacted.add(phone);
+      // Human anti-ban pacing: 45-55s (100ms in dry-run)
+      const paceMs = DRY_RUN ? 100 : 45000 + Math.floor(Math.random() * 10000);
+      await sleep(paceMs);
+    } else {
+      summary.skippedDup++;
     }
 
-    if (checkpoint.topCursor > checkpoint.bottomCursor) {
-      checkpoint.metInTheMiddle = true;
-      summary.metInTheMiddle = true;
-      saveCheckpoint(checkpoint);
-      console.log('🤝 Top and Bottom workers have MET IN THE MIDDLE! Full sheet completed.');
-      break;
-    }
-
-    if (summary.sent >= BATCH_CAP) {
-      console.log(`hourly slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next hour`);
-      break;
-    }
-    if (daily.sent >= DAILY_CAP) {
-      summary.skippedCap++;
-      console.log(`daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing`);
-      break;
-    }
-
-    // ── 2. BOTTOM-UP WORKER (Line 2) ───────────────────────────
-    if (checkpoint.bottomCursor >= checkpoint.topCursor) {
-      const bottomCand = candidates[checkpoint.bottomCursor];
-      const phone = bottomCand.phone;
-
-      if (!contacted.has(phone)) {
-        const text = buildMessage(bottomCand);
-        if (DRY_RUN) {
-          console.log(`[dry-run][BOTTOM #${checkpoint.bottomCursor}] would send → ${phone} (${bottomCand.code}) via ${bottomSession.name}`);
-          summary.sent++;
-          summary.bottomSent++;
-          summary.bySession[bottomSession.name] = (summary.bySession[bottomSession.name] || 0) + 1;
-        } else {
-          try {
-            const sendRes = await gw.sendText(phone, text, { sessionId: bottomSession.uuid, retries: 2 });
-            const usedSession = sendRes.session || bottomSession.name;
-            summary.sent++;
-            summary.bottomSent++;
-            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
-            daily.sent++;
-            saveDaily(daily);
-            appendLedger({ phone, code: bottomCand.code, at: new Date().toISOString(), avail: bottomCand.avail, session: usedSession, worker: 'bottom', cursor: checkpoint.bottomCursor });
-            console.log(`sent [BOTTOM #${checkpoint.bottomCursor}] → ${phone} (${bottomCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-            await writeSheetDate(phone, bottomCand.rawMobile, formatCairoDate());
-          } catch (err) {
-            summary.failed++;
-            console.error(`BOTTOM send failed for ${phone}: ${err.message}`);
-            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-              console.error('permanent failure on BOTTOM session — aborting batch');
-              break;
-            }
-          }
-        }
-        contacted.add(phone);
-        await sleep(3000 + Math.floor(Math.random() * 3000));
-      } else {
-        summary.skippedDup++;
-      }
-
-      checkpoint.bottomCursor--;
-      saveCheckpoint(checkpoint);
-    }
-
-    if (checkpoint.topCursor > checkpoint.bottomCursor) {
-      checkpoint.metInTheMiddle = true;
-      summary.metInTheMiddle = true;
-      saveCheckpoint(checkpoint);
-      console.log('🤝 Top and Bottom workers have MET IN THE MIDDLE! Full sheet completed.');
-      break;
-    }
+    checkpoint.cursor++;
+    checkpoint.topCursor = checkpoint.cursor;
+    saveCheckpoint(checkpoint);
   }
+
+  if (checkpoint.cursor >= candidates.length) {
+    checkpoint.completed = true;
+    summary.completed = true;
+    console.log('🎉 Reached the end of all sheet candidates!');
+  }
+
+  // Rotate to the next line for the next 30-min slot
+  checkpoint.activeLineIndex = (lineIdx + 1) % totalPool.length;
+  saveCheckpoint(checkpoint);
+  console.log(`[outreach] Completed slot. Next 30m slot will rotate to Line ${checkpoint.activeLineIndex + 1} (${totalPool[checkpoint.activeLineIndex].name})`);
 
   console.log(`SUMMARY ${JSON.stringify(summary)}`);
   console.log('owner-outreach: done');
