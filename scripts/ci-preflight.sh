@@ -39,9 +39,16 @@ command -v pnpm >/dev/null 2>&1 || {
 
 # Same env contract as ci.yml: real Vercel values when present, placeholder
 # values otherwise — the backend-policy stage is presence-only.
+# PLACEHOLDER CONTRACT: the service-role placeholder MUST stay exactly
+# 'test-service-role-key' (and the anon key 'test-anon-key') —
+# OwnerListingIntakeService.usableEnv() filters those literal values so unit
+# tests stay hermetic (record-layer path). The earlier 'ci-test-*' spellings
+# leaked past the filter, built a real Supabase client inside jest, and
+# fail-closed every intake test with "TypeError: fetch failed" in the
+# Vercel build container.
 : "${NEXT_PUBLIC_SUPABASE_URL:=https://example.supabase.co}"
-: "${NEXT_PUBLIC_SUPABASE_ANON_KEY:=ci-test-anon-key}"
-: "${SUPABASE_SERVICE_ROLE_KEY:=ci-test-service-role-key}"
+: "${NEXT_PUBLIC_SUPABASE_ANON_KEY:=test-anon-key}"
+: "${SUPABASE_SERVICE_ROLE_KEY:=test-service-role-key}"
 export NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 export PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export NODE_OPTIONS="--max-old-space-size=7168"
