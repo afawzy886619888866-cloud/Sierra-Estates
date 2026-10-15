@@ -8,17 +8,21 @@
 # (workflow_dispatch) fallback after the Free-plan minute quota was exhausted
 # — see docs/GITHUB_ACTIONS_SPENDING_LIMIT_GUIDE.md section 0.
 #
-# Gates (mirror ci.yml 1:1, same order) plus gate 0, which regenerates the
-# master-inventory CSV the phase13-data-qa suite pins against:
-#   0. master inventory regeneration (python3, openpyxl bootstrapped if needed)
-#   1. build workspace packages
-#   2. type-check workspace packages
-#   3. type-check the realty app
-#   4. canonical backend policy
-#   5. public environment safety
-#   6. legacy runtime boundary
-#   7. lint the realty app
-#   8. unit tests (realty app test:ci)
+# Gates (mirror ci.yml 1:1, same order) — NINE gates, numbered 1/9 .. 9/9
+# (the earlier "gate 0/8 .. 8/8" labels were nine checks reported as eight;
+#  numbering and the final tally now match the executed reality):
+#   1. master inventory regeneration (python3, openpyxl bootstrapped if needed)
+#      — still necessary: the generated CSV feeds the phase13-data-qa suite
+#      pinned by gate 9 (the removed owner TSVs are skipped loudly; canonical
+#      owner data lives in Supabase)
+#   2. build workspace packages
+#   3. type-check workspace packages
+#   4. type-check the realty app
+#   5. canonical backend policy
+#   6. public environment safety
+#   7. legacy runtime boundary
+#   8. lint the realty app
+#   9. unit tests (realty app test:ci)
 # The app production build itself follows as the buildCommand tail.
 #
 # Requires node + pnpm with dependencies already installed (Vercel runs
@@ -43,9 +47,9 @@ export PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export NODE_OPTIONS="--max-old-space-size=7168"
 
 T0="$SECONDS"
-gate() { echo; echo "════════ gate $1/8: $2 ════════"; }
+gate() { echo; echo "════════ gate $1/9: $2 ════════"; }
 
-gate 0 'master inventory regeneration (phase13 data source)'
+gate 1 'master inventory regeneration (phase13 data source)'
 SE_PY=python3
 if ! python3 -c 'import openpyxl' >/dev/null 2>&1; then
   echo 'openpyxl missing — bootstrapping (PEP 668-safe cascade)'
@@ -69,29 +73,29 @@ if ! python3 -c 'import openpyxl' >/dev/null 2>&1; then
 fi
 "$SE_PY" scripts/data-audit/build_master_inventory.py
 
-gate 1 'build workspace packages'
+gate 2 'build workspace packages'
 pnpm --filter "./packages/*" run build
 
-gate 2 'type-check workspace packages'
+gate 3 'type-check workspace packages'
 pnpm --filter "./packages/*" run type-check
 
-gate 3 'type-check the realty app'
+gate 4 'type-check the realty app'
 pnpm --filter sierra-estates-client-page type-check
 
-gate 4 'canonical backend policy'
+gate 5 'canonical backend policy'
 pnpm check:backend
 
-gate 5 'public environment safety'
+gate 6 'public environment safety'
 pnpm check:public-env
 
-gate 6 'legacy runtime boundary'
+gate 7 'legacy runtime boundary'
 pnpm check:legacy-runtime
 
-gate 7 'lint the realty app'
+gate 8 'lint the realty app'
 pnpm --filter sierra-estates-client-page lint
 
-gate 8 'unit tests (realty app)'
+gate 9 'unit tests (realty app)'
 pnpm --filter sierra-estates-client-page test:ci
 
 echo
-echo "════════ PREFLIGHT PASSED — 8/8 gates green in $((SECONDS - T0))s ════════"
+echo "════════ PREFLIGHT PASSED — 9/9 gates green in $((SECONDS - T0))s ════════"

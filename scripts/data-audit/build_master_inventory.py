@@ -382,7 +382,7 @@ def parse_tsv_optional(path, src_id):
     (commit 49242e8f — sensitive owner PII; the canonical copy lives in
     Supabase). Fresh checkouts (incl. Vercel build containers) therefore no
     longer carry them, so we skip those sources LOUDLY instead of crashing
-    ci-preflight gate 0 with a FileNotFoundError. When the files are present
+    ci-preflight gate 1 with a FileNotFoundError. When the files are present
     (local dev with restored working copies) behavior is unchanged.
     """
     if not os.path.exists(path):

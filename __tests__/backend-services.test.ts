@@ -44,10 +44,30 @@ describe('Backend Services, Cloud Functions & APIs Test Suite', () => {
       const vercelJson = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'vercel.json'), 'utf-8'));
       const cronPaths = vercelJson.crons.map((c: any) => c.path);
 
-      expect(cronPaths).toContain('/api/cron/sync-leads');
-      expect(cronPaths).toContain('/api/cron/ingest-from-sheets');
-      expect(cronPaths).toContain('/api/cron/sync-listings');
-      expect(cronPaths).toContain('/api/cron/maintenance');
+      // 2026-10: Vercel Hobby allows only TWO cron slots, so all scheduled
+      // jobs run through the Phase 11 dispatcher (see
+      // apps/sierra-estates-realty/app/api/cron/dispatch/[job]/route.ts):
+      //   night @ 02:45 UTC + morning @ 06:45 UTC windows over the job
+      //   registry in lib/server/automation-jobs.ts. The contract pinned
+      //   here: both windows are scheduled AND the legacy per-job endpoints
+      //   still exist as dispatcher-invocable routes.
+      expect(cronPaths).toContain('/api/cron/dispatch/night');
+      expect(cronPaths).toContain('/api/cron/dispatch/morning');
+
+      const registry = fs.readFileSync(
+        path.join(ROOT_DIR, 'apps/sierra-estates-realty/lib/server/automation-jobs.ts'),
+        'utf-8'
+      );
+      for (const job of ['sync-leads', 'ingest-from-sheets', 'sync-listings', 'maintenance']) {
+        expect(
+          registry.includes(`'${job}'`) || registry.includes(`"${job}"`),
+          `job '${job}' must be registered in the automation-jobs registry`
+        ).toBe(true);
+        expect(
+          fs.existsSync(path.join(ROOT_DIR, 'apps/sierra-estates-realty/app/api/cron', job)),
+          `job route /api/cron/${job} must still exist as a dispatcher-invocable endpoint`
+        ).toBe(true);
+      }
     });
   });
 });

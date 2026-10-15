@@ -185,21 +185,58 @@ describe('Action Routing & Deployment Dispatch Test Suite', () => {
       const config = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf-8'));
       expect(config.crons).toBeDefined();
 
-      for (const cron of config.crons) {
-        const routeRelPath = cron.path.replace(/^\/api\//, '');
-        const expectedFile = path.join(
-          CLIENT_APP_DIR,
-          'app',
-          'api',
-          ...routeRelPath.split('/'),
-          'route.ts'
+      // Collect every implemented route under app/api as a segment list where
+      // dynamic directories ([job]) match any single URL segment.
+      const routes: string[][] = [];
+      const walk = (dir: string, acc: string[]) => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.isDirectory()) {
+            walk(path.join(dir, entry.name), [...acc, entry.name]);
+          } else if (entry.name === 'route.ts') {
+            routes.push(acc);
+          }
+        }
+      };
+      walk(path.join(CLIENT_APP_DIR, 'app', 'api'), []);
+
+      const routeMatches = (urlSegments: string[]) =>
+        routes.some(
+          (route) =>
+            route.length === urlSegments.length &&
+            route.every((seg, i) => seg.startsWith('[') || seg === urlSegments[i])
         );
+
+      for (const cron of config.crons) {
+        const urlSegments = cron.path.replace(/^\/api\//, '').split('/');
         expect(
-          fs.existsSync(expectedFile),
-          `Cron route ${cron.path} must exist at ${expectedFile}`
+          routeMatches(urlSegments),
+          `Cron route ${cron.path} must map to an implemented Next.js route (static or dynamic)`
         ).toBe(true);
 
-        const routeContent = fs.readFileSync(expectedFile, 'utf-8');
+        // The matched route file must verify authorization. For dynamic
+        // dispatchers, assert against the dispatcher file itself.
+        const staticPath = path.join(CLIENT_APP_DIR, 'app', 'api', ...urlSegments, 'route.ts');
+        let routeContent: string;
+        if (fs.existsSync(staticPath)) {
+          routeContent = fs.readFileSync(staticPath, 'utf-8');
+        } else {
+          // dynamic: walk the concrete directories
+          let dir = path.join(CLIENT_APP_DIR, 'app', 'api');
+          let matched = true;
+          for (const seg of urlSegments) {
+            const entries = fs.existsSync(dir)
+              ? fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory())
+              : [];
+            const next = entries.find((e) => e.name === seg || e.name.startsWith('['));
+            if (!next) { matched = false; break; }
+            dir = path.join(dir, next.name);
+          }
+          expect(matched, `Cron route ${cron.path} must resolve to a route.ts`).toBe(true);
+          const file = path.join(dir, 'route.ts');
+          expect(fs.existsSync(file), `Cron route ${cron.path} must resolve to a route.ts`).toBe(true);
+          routeContent = fs.readFileSync(file, 'utf-8');
+        }
         expect(
           routeContent.includes('CRON_SECRET') || routeContent.includes('verifyAdminRequest') || routeContent.includes('auth'),
           `Cron endpoint ${cron.path} must verify authorization`
