@@ -32,7 +32,47 @@
  */
 const fs = require('fs');
 const path = require('path');
+try { require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); } catch {}
 const { GatewayClient } = require('../lib/gateway-client');
+
+const WRITE_URL = process.env.WF_SHEET_WRITE_URL;
+const WRITE_SECRET = process.env.WF_SHEET_WRITE_SECRET;
+
+function formatCairoDate(d = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Cairo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(d);
+  } catch {
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  }
+}
+
+async function writeSheetDate(phone, dateStr) {
+  if (!WRITE_URL || !WRITE_SECRET || DRY_RUN) return;
+  try {
+    const res = await fetch(WRITE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: WRITE_SECRET,
+        rows: [{ phone, date: dateStr }]
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (json.ok) {
+      console.log(`[outreach] sheet write-back ok for ${phone} (updated: ${json.updated || 0})`);
+    } else {
+      console.warn(`[outreach] sheet write-back non-ok for ${phone}: ${json.error || res.status}`);
+    }
+  } catch (err) {
+    console.warn(`[outreach] sheet write-back failed for ${phone}: ${err.message}`);
+  }
+}
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const SHEET_GID = process.env.UNITS_SHEET_GID || '341562911';
@@ -319,6 +359,7 @@ async function main() {
             saveDaily(daily);
             appendLedger({ phone, code: topCand.code, at: new Date().toISOString(), avail: topCand.avail, session: usedSession, worker: 'top', cursor: checkpoint.topCursor });
             console.log(`sent [TOP #${checkpoint.topCursor}] → ${phone} (${topCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+            await writeSheetDate(phone, formatCairoDate());
           } catch (err) {
             summary.failed++;
             console.error(`TOP send failed for ${phone}: ${err.message}`);
@@ -379,6 +420,7 @@ async function main() {
             saveDaily(daily);
             appendLedger({ phone, code: bottomCand.code, at: new Date().toISOString(), avail: bottomCand.avail, session: usedSession, worker: 'bottom', cursor: checkpoint.bottomCursor });
             console.log(`sent [BOTTOM #${checkpoint.bottomCursor}] → ${phone} (${bottomCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+            await writeSheetDate(phone, formatCairoDate());
           } catch (err) {
             summary.failed++;
             console.error(`BOTTOM send failed for ${phone}: ${err.message}`);

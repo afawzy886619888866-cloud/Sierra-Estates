@@ -35,6 +35,7 @@ const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch {}
 const { isDue } = require('./lib/crone');
 const state = require('./lib/state');
 const sb = require('./lib/supabase-sync');
