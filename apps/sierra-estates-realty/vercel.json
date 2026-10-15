@@ -10,6 +10,14 @@
     {
       "path": "/api/cron/dispatch/morning",
       "schedule": "45 6 * * *"
+    },
+    {
+      "path": "/api/cron/redeploy-static-portal",
+      "schedule": "0 0 * * 0"
+    },
+    {
+      "path": "/api/cron/uptime-check",
+      "schedule": "*/5 * * * *"
     }
   ],
   "regions": ["fra1"]
