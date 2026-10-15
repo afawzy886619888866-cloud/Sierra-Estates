@@ -17,8 +17,25 @@ const TRANSITIONS: Record<ListingStatus, ListingStatus[]> = {
   archived: [],
 };
 
-export function canTransition(from: ListingStatus, to: ListingStatus): boolean {
-  return TRANSITIONS[from]?.includes(to) ?? false;
+export function normalizeListingStatus(raw?: string | null): ListingStatus {
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (s === '') return 'draft';
+  if (['available', 'active', 'verified'].includes(s)) return 'published';
+  if (['pending', 'pending review', 'pending_review', 'pending_verification'].includes(s)) return 'pending_verification';
+  if (s === 'sold') return 'sold';
+  if (s === 'rented') return 'rented';
+  if (s === 'reserved') return 'reserved';
+  if (s === 'off-market' || s === 'off_market') return 'archived';
+  if (s === 'expired') return 'expired';
+  if (s === 'archived') return 'archived';
+  return 'draft';
+}
+
+export function canTransition(from: string | ListingStatus, to: string | ListingStatus): boolean {
+  const f = normalizeListingStatus(from);
+  const t = normalizeListingStatus(to);
+  if (f === t) return true;
+  return TRANSITIONS[f]?.includes(t) ?? false;
 }
 
 export interface VerificationMetadata {

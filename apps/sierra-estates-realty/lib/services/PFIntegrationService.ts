@@ -15,6 +15,7 @@ import {
   PublishGateResult,
   PublishGateUnit,
 } from './publish-gate';
+import { canTransition } from './inventory/lifecycle';
 import { EgyptListingValidator } from '../property-finder/validation';
 
 export interface PFLeadSyncSummary {
@@ -99,9 +100,9 @@ export class PFIntegrationService {
 
     for (const listing of listings) {
       const ref = listing.reference || String(listing.id);
-      const existing = await listRecords<{ id: string }>(COLLECTIONS.units, {
+      const existing = await listRecords<{ id: string; status?: string }>(COLLECTIONS.units, {
         where: [{ column: 'pfReferenceNumber', value: ref }],
-        select: 'id',
+        select: 'id, status',
         limit: 1,
       });
 
@@ -158,6 +159,12 @@ export class PFIntegrationService {
       } else {
         // ANTI-OVERWRITE: Do not touch human verification fields on automated update
         const { publishStatus, verifiedAt, verifiedBy, ...updatePayload } = columnPayload;
+        // LIFECYCLE GUARD: If transitioning from stored status to incoming status is illegal
+        // (e.g. unit was archived or sold), retain stored status so the database trigger is not violated.
+        const storedStatus = existing[0]?.status;
+        if (storedStatus && updatePayload.status && !canTransition(storedStatus, updatePayload.status as string)) {
+          delete (updatePayload as any).status;
+        }
         await updateRecord(COLLECTIONS.units, existing[0].id, updatePayload);
         updated++;
       }
