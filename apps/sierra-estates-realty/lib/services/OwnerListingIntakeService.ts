@@ -104,6 +104,14 @@ export interface IntakeOutcome {
   /** Present on duplicate_event replays of COMPLETED events: the prior action. */
   priorAction?: string;
   error?: string;
+  /**
+   * P0 6.3: TRUE when the processing side effects ran but the event-ledger
+   * COMPLETION/FAILURE write could not be persisted. The outcome above is
+   * what happened; the ledger may still show PROCESSING until the lease
+   * expires and a replay resumes the pinned intake. Consumers must NOT
+   * treat an uncertain outcome as a clean success — surface it for review.
+   */
+  uncertain?: boolean;
 }
 
 interface IntakeRow {
@@ -214,7 +222,6 @@ function computeIntakeFingerprint(extracted: Record<string, unknown>): string | 
 }
 
 type LedgerStatus =
-  | { kind: 'no_ledger' }
   | { kind: 'new'; event: EventRow }
   | { kind: 'resume'; event: EventRow }
   | { kind: 'replay_completed'; event: EventRow }
@@ -236,9 +243,19 @@ export class OwnerListingIntakeService {
 
   // ── Step 2 + 3C: persist the event; claim it for processing ──
   private static async claimEvent(msg: OwnerIntakeMessage): Promise<LedgerStatus> {
+    // P0 6.1: an event WITHOUT a provider message id can never be deduplicated —
+    // there is no stable identity to replay against, and OwnerIntakeMessage
+    // carries no provider timestamp from which a trustworthy deterministic
+    // replacement could be derived (a content hash would wrongly collapse two
+    // genuinely-distinct messages). The old `no_ledger` bypass continued
+    // WITHOUT idempotency; now the event is rejected into manual review —
+    // no listing, no external message, no side effects.
     if (!msg.messageId) {
-      logger.warn('[OwnerIntake] event without provider message id — proceeding without ledger dedupe');
-      return { kind: 'no_ledger' };
+      logger.warn('[OwnerIntake] event without provider message id — REJECTED to manual review (no idempotency guarantee; fix the adapter to forward the provider event id)');
+      return {
+        kind: 'ledger_error',
+        error: 'missing provider message id — cannot guarantee idempotency; event rejected to manual review (no side effects performed)',
+      };
     }
     const source = msg.source.split('-')[0];
     let inserted: EventRow;
@@ -280,8 +297,12 @@ export class OwnerListingIntakeService {
         }
         // RECEIVED without a live lease, stale PROCESSING or FAILED → resume.
         const claimed = await this.transitionToProcessing(existing);
-        if (!claimed) return { kind: 'in_flight' };
-        return { kind: 'resume', event: claimed };
+        if (!claimed.ok) {
+          return claimed.reason === 'error'
+            ? { kind: 'ledger_error', error: `event claim failed (fail-closed): ${claimed.error ?? 'unknown'}` }
+            : { kind: 'in_flight' };
+        }
+        return { kind: 'resume', event: claimed.event };
       }
       // Unknown ledger failure — FAIL CLOSED: no side effects (P0 3C).
       logger.warn(`[OwnerIntake] event ledger unavailable — failing closed: ${msgText}`);
@@ -290,8 +311,12 @@ export class OwnerListingIntakeService {
 
     // Fresh row: claim it (RECEIVED → PROCESSING, attempts +1, lease).
     const claimed = await this.transitionToProcessing(inserted);
-    if (!claimed) return { kind: 'in_flight' };
-    return { kind: 'new', event: claimed };
+    if (!claimed.ok) {
+      return claimed.reason === 'error'
+        ? { kind: 'ledger_error', error: `event claim failed (fail-closed): ${claimed.error ?? 'unknown'}` }
+        : { kind: 'in_flight' };
+    }
+    return { kind: 'new', event: claimed.event };
   }
 
   /**
@@ -299,8 +324,18 @@ export class OwnerListingIntakeService {
    * PATCH when the service-role client is available (concurrent replays are
    * safe at the database level); falls back to the record layer otherwise
    * (unit-test path — single-writer by construction).
+   *
+   * P0 6.2: the claim is only reported as won when the persistence operation
+   * SUCCEEDED. The previous fallback logged an update failure and still
+   * returned the event as claimed — a failed state update now blocks all
+   * side effects (fail-closed) instead of proceeding unclaimed.
    */
-  private static async transitionToProcessing(event: EventRow): Promise<EventRow | null> {
+  private static async transitionToProcessing(
+    event: EventRow,
+  ): Promise<
+    | { ok: true; event: EventRow }
+    | { ok: false; reason: 'concurrent' | 'error'; error?: string }
+  > {
     const leaseUntil = new Date(Date.now() + EVENT_LEASE_MS).toISOString();
     const attempts = Number(event.attempts ?? 0) + 1;
     const admin = this.adminClient();
@@ -312,55 +347,87 @@ export class OwnerListingIntakeService {
         .in('state', ['RECEIVED', 'FAILED'])
         .select('id')
         .maybeSingle();
-      if (error || !data) {
-        logger.warn(`[OwnerIntake] event claim lost (concurrent worker or state moved): ${error?.message ?? 'no row'}`);
-        return null;
+      if (error) {
+        // A database ERROR is a failed claim — never "another worker won".
+        logger.warn(`[OwnerIntake] event claim UPDATE FAILED (fail-closed, no side effects): ${error.message}`);
+        return { ok: false, reason: 'error', error: error.message };
       }
-      return { ...event, state: 'PROCESSING', attempts, leaseUntil };
+      if (!data) {
+        // Condition matched zero rows: a concurrent worker holds the claim.
+        logger.warn('[OwnerIntake] event claim lost (concurrent worker or state moved)');
+        return { ok: false, reason: 'concurrent' };
+      }
+      return { ok: true, event: { ...event, state: 'PROCESSING', attempts, leaseUntil } };
     }
-    await updateRecord('owner_inbound_events', event.id, {
-      state: 'PROCESSING',
-      attempts,
-      leaseUntil,
-    }).catch((err: any) => {
-      logger.warn(`[OwnerIntake] event claim update failed: ${err?.message}`);
-    });
-    return { ...event, state: 'PROCESSING', attempts, leaseUntil };
+    // Record-layer fallback: await the update; failure ⇒ NOT claimed.
+    try {
+      await updateRecord('owner_inbound_events', event.id, {
+        state: 'PROCESSING',
+        attempts,
+        leaseUntil,
+      });
+    } catch (err: any) {
+      logger.warn(`[OwnerIntake] event claim update FAILED (fail-closed, no side effects): ${err?.message}`);
+      return { ok: false, reason: 'error', error: String(err?.message ?? err) };
+    }
+    return { ok: true, event: { ...event, state: 'PROCESSING', attempts, leaseUntil } };
   }
 
+  /**
+   * P0 6.3: completion write with HONEST persistence reporting. Returns
+   * whether the ledger row actually reached COMPLETED. A `false` return means
+   * side effects may exist while the ledger still shows PROCESSING — the
+   * caller marks the outcome `uncertain` and the lease expiry lets a replay
+   * resume the pinned intake instead of duplicating work.
+   */
   private static async completeEvent(
     eventId: string | undefined,
     outcome: IntakeOutcome,
-  ): Promise<void> {
-    if (!eventId) return;
-    await updateRecord('owner_inbound_events', eventId, {
-      state: 'COMPLETED',
-      processedAt: new Date().toISOString(),
-      leaseUntil: null,
-      lastError: null,
-      intakeId: outcome.intakeId ?? null,
-      unitId: outcome.unitId ?? null,
-      result: {
-        action: outcome.action,
+  ): Promise<boolean> {
+    if (!eventId) return true; // nothing to persist — the outcome is the truth
+    try {
+      await updateRecord('owner_inbound_events', eventId, {
+        state: 'COMPLETED',
+        processedAt: new Date().toISOString(),
+        leaseUntil: null,
+        lastError: null,
         intakeId: outcome.intakeId ?? null,
-        intakeCode: outcome.intakeCode ?? null,
         unitId: outcome.unitId ?? null,
-      },
-    }).catch((err: any) => {
-      logger.warn(`[OwnerIntake] event completion write failed: ${err?.message}`);
-    });
+        result: {
+          action: outcome.action,
+          intakeId: outcome.intakeId ?? null,
+          intakeCode: outcome.intakeCode ?? null,
+          unitId: outcome.unitId ?? null,
+        },
+      });
+      return true;
+    } catch (err: any) {
+      logger.error(
+        `[OwnerIntake] event completion write FAILED — outcome is UNCERTAIN (side effects may exist, ledger still PROCESSING; lease expires in ${EVENT_LEASE_MS}ms and replay resumes the pinned intake): ${err?.message}`,
+      );
+      return false;
+    }
   }
 
-  private static async failEvent(eventId: string | undefined, error: string, intakeId?: string): Promise<void> {
-    if (!eventId) return;
-    await updateRecord('owner_inbound_events', eventId, {
-      state: 'FAILED',
-      lastError: error.slice(0, 500),
-      leaseUntil: null,
-      // Persist the intake linkage so a replay RESUMES this intake
-      // instead of re-creating it (P0 3C retry-without-duplicate).
-      ...(intakeId ? { intakeId } : {}),
-    }).catch(() => undefined);
+  /** P0 6.3: failure write with honest persistence reporting (see completeEvent). */
+  private static async failEvent(eventId: string | undefined, error: string, intakeId?: string): Promise<boolean> {
+    if (!eventId) return true;
+    try {
+      await updateRecord('owner_inbound_events', eventId, {
+        state: 'FAILED',
+        lastError: error.slice(0, 500),
+        leaseUntil: null,
+        // Persist the intake linkage so a replay RESUMES this intake
+        // instead of re-creating it (P0 3C retry-without-duplicate).
+        ...(intakeId ? { intakeId } : {}),
+      });
+      return true;
+    } catch (err: any) {
+      logger.error(
+        `[OwnerIntake] event FAILURE write also failed — outcome is UNCERTAIN (ledger still PROCESSING; lease expiry enables retry): ${err?.message}`,
+      );
+      return false;
+    }
   }
 
   // ── The single entry point every intake source calls ──
@@ -389,7 +456,7 @@ export class OwnerListingIntakeService {
       return { action: 'error', error: 'event is currently being processed by another worker' };
     }
 
-    const eventId = ledger.kind === 'no_ledger' ? undefined : ledger.event.id;
+    const eventId = ledger.event.id;
     // A resumed event pins the intake it already produced (P0 3C: retries
     // resume the same work instead of creating a second intake).
     const pinnedIntakeId =
@@ -399,17 +466,20 @@ export class OwnerListingIntakeService {
       const outcome = await this.process(msg, senderPhone, pinnedIntakeId);
       // An 'error' outcome (caught internal failure) is FAILED — retryable
       // — never COMPLETED: the provider's replay resumes the pinned intake.
+      // P0 6.3: the persisted flag tells the caller whether the ledger
+      // actually reflects the outcome; an unpersisted success/failure is
+      // reported back as UNCERTAIN, never silently upgraded.
       if (outcome.action === 'error') {
-        await this.failEvent(eventId, outcome.error ?? 'processing failed', outcome.intakeId);
-      } else {
-        await this.completeEvent(eventId, outcome);
+        const persisted = await this.failEvent(eventId, outcome.error ?? 'processing failed', outcome.intakeId);
+        return persisted ? outcome : { ...outcome, uncertain: true };
       }
-      return outcome;
+      const persisted = await this.completeEvent(eventId, outcome);
+      return persisted ? outcome : { ...outcome, uncertain: true };
     } catch (err: any) {
       const message = String(err?.message ?? err);
-      await this.failEvent(eventId, message, typeof err?.intakeId === 'string' ? err.intakeId : undefined);
-      logger.warn(`[OwnerIntake] processing failed (event FAILED, retryable): ${message}`);
-      return { action: 'error', error: message };
+      const persisted = await this.failEvent(eventId, message, typeof err?.intakeId === 'string' ? err.intakeId : undefined);
+      logger.warn(`[OwnerIntake] processing failed (event ${persisted ? 'FAILED, retryable' : 'UNCERTAIN — ledger write also failed; lease expiry enables retry'}): ${message}`);
+      return { action: 'error', error: message, ...(persisted ? {} : { uncertain: true }) };
     }
   }
 
@@ -462,13 +532,17 @@ export class OwnerListingIntakeService {
     // 6: cross-source duplicate detection (before creating anything).
     // The PINNED intake (a retried event resuming its own work) is never a
     // "duplicate" of itself — it is the work unit being resumed.
+    // P0 6.4: lookups are NOT wrapped in `.catch(() => [])` — a database
+    // outage must NEVER be interpreted as "no duplicate exists". A failed
+    // check propagates, marks the event FAILED (retryable) and the provider
+    // replay re-runs the whole dedupe pass.
     const fingerprint = computeIntakeFingerprint(extracted);
     if (fingerprint) {
       const existingIntakeRows = await listRecords<{ id: string; intakeCode: string }>('owner_listing_intakes', {
         where: [{ column: 'dupeCheckHash', value: fingerprint }],
         select: 'id,intakeCode',
         limit: 5,
-      }).catch(() => [] as { id: string; intakeCode: string }[]);
+      });
       const existingIntake = existingIntakeRows.find((r) => r.id !== pinnedIntakeId);
       if (existingIntake) {
         // Media still counts: attach any new photos to the existing intake.
@@ -486,7 +560,7 @@ export class OwnerListingIntakeService {
         where: [{ column: 'dupeCheckHash', value: fingerprint }],
         select: 'id,code',
         limit: 1,
-      }).catch(() => [] as { id: string; code: string | null }[]);
+      });
       if (existingUnit.length > 0) {
         return await this.recordDuplicateAgainstListing(
           msg, senderPhone, extracted, fingerprint, existingUnit[0].id, existingUnit[0].code ?? undefined,
@@ -652,7 +726,7 @@ export class OwnerListingIntakeService {
       const rows = await listRecords<IntakeRow>('owner_listing_intakes', {
         where: [{ column: 'id', value: pinnedIntakeId }],
         limit: 1,
-      }).catch(() => [] as IntakeRow[]);
+      });
       if (rows[0]) return rows[0];
     }
 
@@ -663,7 +737,7 @@ export class OwnerListingIntakeService {
       const rows = await listRecords<IntakeRow>('owner_listing_intakes', {
         where: [{ column: 'intakeCode', value: code }],
         limit: 1,
-      }).catch(() => [] as IntakeRow[]);
+      });
       if (rows[0]) return rows[0];
     }
 
@@ -678,13 +752,13 @@ export class OwnerListingIntakeService {
         ],
         select: 'intakeId',
         limit: 1,
-      }).catch(() => [] as { intakeId: string | null }[]);
+      });
       const targetIntakeId = events[0]?.intakeId;
       if (targetIntakeId) {
         const rows = await listRecords<IntakeRow>('owner_listing_intakes', {
           where: [{ column: 'id', value: targetIntakeId }],
           limit: 1,
-        }).catch(() => [] as IntakeRow[]);
+        });
         if (rows[0]) return rows[0];
       }
     }
@@ -932,7 +1006,7 @@ export class OwnerListingIntakeService {
     const rows = await listRecords<{ id: string; code: string | null; price: number | null; areaSqm: number | null }>(
       'listings',
       { where, select: 'id,code,price,areaSqm', limit: 50 },
-    ).catch(() => [] as { id: string; code: string | null; price: number | null; areaSqm: number | null }[]);
+    );
 
     const price = Number(extracted.price);
     const area = Number(extracted.area);
@@ -1204,17 +1278,15 @@ export class OwnerListingIntakeService {
    * P0 3B: ALL open intakes for a sender (code/context correlation happens
    * before this is consulted; ambiguity is handled by recordAmbiguousReply).
    */
+  // P0 6.4: open-intake lookup fails CLOSED — a database outage during
+  // correlation must produce a retryable error, never an empty candidate list
+  // that would silently start a duplicate intake.
   private static async findOpenIntakes(senderPhone: string): Promise<IntakeRow[]> {
-    try {
-      const rows = await listRecords<IntakeRow>('owner_listing_intakes', {
-        where: [{ column: 'senderPhone', value: senderPhone }],
-        orderBy: { column: 'createdAt', ascending: false },
-        limit: 20,
-      });
-      return rows.filter((r) => (OPEN_INTAKE_STATES as readonly string[]).includes(r.state));
-    } catch (err: any) {
-      logger.warn(`[OwnerIntake] open-intake lookup failed: ${err?.message}`);
-      return [];
-    }
+    const rows = await listRecords<IntakeRow>('owner_listing_intakes', {
+      where: [{ column: 'senderPhone', value: senderPhone }],
+      orderBy: { column: 'createdAt', ascending: false },
+      limit: 20,
+    });
+    return rows.filter((r) => (OPEN_INTAKE_STATES as readonly string[]).includes(r.state));
   }
 }
