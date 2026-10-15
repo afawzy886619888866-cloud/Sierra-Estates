@@ -57,6 +57,22 @@ describe('lifecycle state machine', () => {
     expect(canTransition('sold', 'published')).toBe(false);
   });
 
+  it('maps external feed labels without corrupting canonical statuses', () => {
+    // External labels (Property Finder / sheets) still map onto internal states.
+    expect(canTransition('published', 'available')).toBe(true); // same state after mapping
+    expect(canTransition('archived', 'available')).toBe(false); // guard: archived stays archived
+    expect(canTransition('draft', 'active')).toBe(false);       // no draft → published jump
+    expect(canTransition('sold', 'pending')).toBe(false);       // terminal state stays terminal
+    // Canonical statuses are identity-mapped (2026-10-15 regression pins:
+    // 'verified' was re-mapped to 'published' and 'published' fell through
+    // to 'draft', breaking pending_verification → verified, verified →
+    // published, rented → published while legalizing draft → published).
+    expect(canTransition('pending_verification', 'verified')).toBe(true);
+    expect(canTransition('verified', 'published')).toBe(true);
+    expect(canTransition('draft', 'published')).toBe(false);
+    expect(canTransition('rented', 'published')).toBe(true);
+  });
+
   it('isStale respects the SLA', () => {
     const now = new Date('2026-07-20T00:00:00Z');
     expect(isStale(undefined, now)).toBe(true);

@@ -17,17 +17,27 @@ const TRANSITIONS: Record<ListingStatus, ListingStatus[]> = {
   archived: [],
 };
 
+/** Canonical internal statuses — identity-mapped, never re-mapped. */
+const CANONICAL_STATUSES: readonly ListingStatus[] = [
+  'draft', 'pending_verification', 'verified', 'published',
+  'reserved', 'sold', 'rented', 'expired', 'archived',
+];
+
 export function normalizeListingStatus(raw?: string | null): ListingStatus {
   const s = String(raw ?? '').trim().toLowerCase();
+  // Canonical internal statuses must pass through UNCHANGED. Re-mapping them
+  // corrupts the state machine (the 2026-10-15 regression: 'verified' →
+  // 'published' made pending_verification → verified illegal, and the missing
+  // 'published' case fell through to 'draft', making rented → published
+  // illegal while legalizing draft → published as a self-transition).
+  if ((CANONICAL_STATUSES as readonly string[]).includes(s)) {
+    return s as ListingStatus;
+  }
   if (s === '') return 'draft';
-  if (['available', 'active', 'verified'].includes(s)) return 'published';
-  if (['pending', 'pending review', 'pending_review', 'pending_verification'].includes(s)) return 'pending_verification';
-  if (s === 'sold') return 'sold';
-  if (s === 'rented') return 'rented';
-  if (s === 'reserved') return 'reserved';
+  // External feed labels (Property Finder / sheets) map onto internal states.
+  if (['available', 'active'].includes(s)) return 'published';
+  if (['pending', 'pending review', 'pending_review'].includes(s)) return 'pending_verification';
   if (s === 'off-market' || s === 'off_market') return 'archived';
-  if (s === 'expired') return 'expired';
-  if (s === 'archived') return 'archived';
   return 'draft';
 }
 

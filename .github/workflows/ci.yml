@@ -61,8 +61,8 @@ jobs:
         run: pnpm check:backend
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
 
       - name: Public environment safety
         run: pnpm check:public-env
@@ -77,12 +77,12 @@ jobs:
         run: pnpm --filter sierra-estates-client-page test:ci
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
 
       - name: Build realty app
         run: pnpm --filter sierra-estates-client-page build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: test-service-role-key

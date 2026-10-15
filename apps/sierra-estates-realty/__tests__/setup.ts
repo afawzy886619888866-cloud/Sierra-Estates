@@ -5,9 +5,15 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
 if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 }
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
-}
+// FORCE the filtered service-key placeholder, unconditionally. CI wrappers
+// (scripts/ci-preflight.sh, .github/workflows/ci.yml) export placeholder
+// credentials so the presence-only backend-policy gate passes. Any value
+// other than the exact literals OwnerListingIntakeService.usableEnv() filters
+// builds a REAL Supabase client inside jest — intake tests then attempt real
+// network calls and fail closed ("TypeError: fetch failed") in the Vercel
+// build container. Overwriting here keeps every suite hermetic regardless of
+// what the wrapper exported; suites that manage their own env do so on top.
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 
 // Neutralize Next.js `server-only` guard so server modules can be unit-tested
 // under the jest node environment (outside the Next server runtime).
