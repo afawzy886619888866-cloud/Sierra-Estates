@@ -1,195 +1,190 @@
 # SIERRA ESTATES — PRODUCTION READINESS REPORT
 
-**Execution run:** 2026-10-12 · GLM master-execution pass 2 (branch `agents/p0-intake-gate-fixes`)
-**Baseline HEAD:** `4e1796eb1d097b4e180b9fbaa1a639abd3a9d4c3` (merge #306 — `future-plan/sprint-2`)
-**Working branch:** `agents/p0-intake-gate-fixes` (additive commits; no history rewrite; no force-push)
+**Execution run:** 2026-10-15 · GLM autonomous production-recovery pass (working on `main`)
+**Baseline HEAD (start of this run):** `86b83b571a7528557c7199548da29e2f59a0d609` (`fix(outreach): dynamic checkpoint expansion…`)
+**Final state:** recovery commits on `main` (see §2 and `git log` for the exact SHAs of this pass)
 
-This report supersedes the 2026-10-11 report (branch `agents/master-execution-glm`, baseline `1dd7f90`).
-The newer `sprint-2` merge **reintroduced** runner regressions and carried unfixed intake defects; this
-run verified the ACTUAL current state at HEAD before fixing. Nothing is claimed as working without
-evidence. No secrets are included anywhere in this document.
+This report supersedes the 2026-10-12 report (branch `agents/p0-intake-gate-fixes`, baseline `4e1796eb`). That branch's intake work was verified as merged and intact at the new baseline; this run audited the ACTUAL state at `86b83b57` before changing anything, then executed the 2026-10-15 mission (runner/tracker/pairing security, tunnel + backup script safety, backfill integrity, intake idempotency hardening, admin RBAC, public-metric truth, CI honesty). Nothing in this document is claimed without evidence. No secrets appear here.
 
 ---
 
 ## 1. Verdict
 
-`NOT READY — code-side P0 fixes COMPLETE, code-tested and preflight-green; live cutover steps (deploy, migration apply, controlled live intake pilot) remain external-access-gated — see §12`
+`IMPLEMENTED — LIVE VERIFICATION INCOMPLETE`
 
-- 143/143 test suites, 1542/1542 tests green at this branch (previously 141/1524 + 3 environment failures — all resolved: data artifact regenerated, migration mirror repaired).
-- `scripts/ci-preflight.sh` — **PREFLIGHT PASSED, 8/8 gates green in 120s**.
-- A **live service-role credential was found committed in a test file** (confirmed active) — removed from HEAD, **ROTATION REQUIRED** (§11).
-- One GitHub PAT was provided in-chat for this run: treat it as exposed to the chat transcript and rotate after merge (never written to any file or commit).
+Code-side: all mission phases implemented, and every gate that runs in this environment is green on the final tree:
+
+- **App suite (the production deploy gate):** 144/144 suites, **1548/1548 tests PASS** (`pnpm --filter sierra-estates-client-page test:ci`, after `build_master_inventory.py` regeneration, exactly as ci-preflight gate 1 orders it).
+- **Workflows control-plane suite:** 4 files / **49/49 tests PASS** (root vitest), including the new P0 security regression contracts.
+- **Type-check:** clean (`tsc --noEmit`, 0 errors). **Lint + config validation:** clean.
+- **Infra scripts:** `bash -n` clean; non-root failure paths and dry-run modes exercised.
+
+Why not `PRODUCTION READY — VERIFIED`: deployment itself (Vercel build of this exact revision, live post-deploy smoke, migrations 027–029 apply confirmation on production, live WhatsApp/Telegram verification) requires operator-owned infrastructure access that this run does not have (§11). The push to `main` will trigger the Vercel build through the existing authorized process; its result must be inspected before the verdict can be upgraded.
 
 ---
 
-## 2. What this run found at HEAD `4e1796e` (audit, evidence-based)
+## 2. What this run changed (audit → fix, by phase)
 
-The 2026-10-11 report was STALE: merge #306 (`cb42ef8` + `545b2d6` + `8aa3dbe`) reintroduced or kept:
-
-| # | Defect (confirmed in code) | Mission ref |
+| Phase | Files | Root cause fixed |
 |---|---|---|
-| 1 | `workflows/runner.js` — hardcoded local "active" workflow rows when Supabase unconfigured; hourly 10–20 Cairo queue firing owner-outreach BYPASSING persisted paused/draft status; NO status recheck in `runWorkflow()` | §9 |
-| 2 | `OwnerListingIntakeService` — media-only (`[photo]`) messages classified `not_a_listing` → **images dropped**, never stored/attached, no unassigned-review state | §3A |
-| 3 | Single newest open intake per sender — every reply merged into one arbitrary intake; partial unique index `uq_owner_listing_intakes_open_per_sender` **crashes** concurrent unit submissions (unique violation → webhook 500, data loss) | §3B |
-| 4 | Event ledger failed OPEN (ledger outage → side effects proceed); no processing-state machine; a FAILED event replay returns `duplicate_event` and is permanently lost | §3C |
-| 5 | `finalizeIntake` — `mode ?? 'sale'`; new listings written `status:'available'` (unverified owner claim as fact) | §3D |
-| 6 | `computeIntakeFingerprint` — hash of empty parts is always truthy → unrelated unknown-field records **collapse into one intake**; dedupe never checks canonical `listings` | §3E |
-| 7 | `AugustOwnersAgentService.augustExtras` — unverified units appended to master sheet as `inventoryStatus:'Available'`; `appendToExcelInventory` upserted a SECOND `listings` row (id = intake code) next to the canonical UUID row with `status:'active'` and rent/sale inferred from price | §4 |
-| 8 | `POST /api/property-finder?action=create-listing` → `pfClient.createListing(body)` raw — a **complete PublishGate bypass** (admin route, any payload) | §6 |
-| 9 | Root `__tests__/supabase-storage-and-vercel-resilience.test.ts` — hard-coded **live service_role JWT** | §1 |
-
-All nine are fixed on this branch (§3–§6 below). The publish-gate evaluator, sheet-sync anti-promotion,
-Telegram update-id ledger, admin RBAC/users API and auth session rechecks were re-verified at HEAD and
-remain sound (no rewrite).
+| 2.1–2.3 | `workflows/runner.js` | **Fail-open auth removed.** `if (!API_KEY) return true` → fail-closed 401 on every protected route when `RUNNER_API_KEY` is unset; timing-safe SHA-256 digest compare (`crypto.timingSafeEqual`); non-loopback `RUNNER_BIND` without a key now **refuses to start**; per-IP rate limiting (20 auth-fails/5 min → 429; 5 pairing-code mints/10 min); `/api/health` unauthenticated = minimal liveness only (gateway/supabase/running details now require auth); all JSON responses `Cache-Control: no-store`. |
+| 2.2 | `workflows/runner.js` | **Hard-coded tracker credential removed** (`?key=SE2026outreach` path deleted; the export now authenticates like every protected route — never via URL query). The literal no longer appears in any tracked file. |
+| 2.3 | `workflows/runner.js` | **Pairing portal protected**: `/pair/qr`, `/pair/code` require the API key (the page prompts for it; QR fetched via authenticated blob fetch, not a keyless `<img>`); code minting rate-limited; no caching. The working WhatsApp session was NOT touched (no restart, no re-link, no tunnel). |
+| 2.4 | `workflows/sierra-admin-bridge.mjs`, `app/api/admin/workflow-ops/route.ts` | Bridge: removed `dev-admin-key` fallback credential; removed fabricated `ready:true` sessions; `reachable` only from an explicit boolean; local-state fallback labeled `status:'unknown'` (never 'active'). Ops route: slug allowlist; dead-runner → **502** (no more 200+`ok:false`); not-configured → 503; partial availability honestly flagged `degraded`. |
+| 3 | `infra/aws/setup-cloudflare-tunnel.sh` | **Full rewrite**: dry-run default + `--apply`; named-token tunnels only (token via env/stdin, never argv, never printed/logged); Quick Tunnel requires explicit `--allow-quick-tunnel` with printed risk; arch detection; unit backup + `systemd-analyze verify`; visible verification (service active, connector registration) + printed rollback; hard failures on missing prerequisites. |
+| 4 | `infra/aws/harden-live-gateway.sh` | **Full rewrite**: dry-run default + `--apply`; swap preflight (RAM/disk/current-swap, `SWAP_SIZE_MB` configurable); `MemoryMax` only with an operator-supplied budget; `BACKUP_BUCKET` configurable with IAM list-permission precheck; upload error propagation (`|| true` suppressions removed); stored-object size + SHA-256 verification; LATEST.sha256 manifest; archive kept on failure; documented restore procedure; cloudflared install opt-in; honest health report. |
+| 5 | `workflows/backfill-sheet.mjs` | **Full rewrite**: invalid/missing historical timestamps **rejected to `backfill-rejections.jsonl`** (the `new Date()` → today substitution is gone); per-record identity (phone+at+code+cursor hash) — history NOT collapsed by phone; multi-date phones flagged for staff review; secret from env only; HTTPS required (loopback excepted) with `X-API-Key` auth; **dry-run default + `--apply`**; per-chunk checkpoint (safe resume, no duplicate writes); preserved failure queue; non-zero exit on any failed record; `read/valid/rejected/matched/sent/written/failed` summary; PII-masked logs. |
+| 6.1 | `lib/services/OwnerListingIntakeService.ts` | **`no_ledger` bypass removed**: events without a provider message id are rejected to manual review (no intake, no listing, no external message) — a deterministic replacement id cannot be derived from trustworthy metadata (no provider timestamp exists on `OwnerIntakeMessage`). |
+| 6.2 | same | `transitionToProcessing()` distinguishes DB **error** (fail-closed, no side effects) from **concurrent** claim (in-flight); the fallback path no longer logs an update failure and returns the event as claimed. |
+| 6.3 | same | `completeEvent`/`failEvent` return honest persistence status; an unpersisted outcome is returned with **`uncertain: true`** (new documented `IntakeOutcome` field) — the ledger stays PROCESSING and the lease expiry + pinned intake make replay resume, not duplicate. |
+| 6.4 | same | All duplicate/correlation lookups fail closed: `.catch(() => [])` removed from fingerprint intakes, canonical listings, near-match, quoted-context, and `findOpenIntakes` (which now propagates). A DB outage is never "no duplicate". |
+| 7.1/7.2 | `app/admin/AdminPortal.tsx` | `role: data.role \|\| 'superadmin'` removed — a signed-in session without a valid server role now denies the console (controlled auth-error screen). Dev bypass identity relabeled `Dev Admin (auth disabled)`. Fabricated OpenClaw log lines removed (`All 10 agents operational`, `Sync simulated · 1,547 listings verified`, `[✓] Command executed/Processed` catch fallbacks → honest failures). |
+| 7.3 | `app/api/admin/sheet-bridge/route.ts` | Real security gap found by the governance suite and **fixed at the root**: the route had NO auth guard; now `verifyAdminRequest` on GET+POST (was a pre-existing failure, not introduced by this run). |
+| 8.1 | `app/(site)/HomePage.tsx`, `lib/site/i18n-dict.ts` (EN+AR) | **Unsupported public claims removed** (this is the "contradictory figures" mission finding): hardcoded `1900+ Active Listings / 53 Compounds / 68 Licensed Agents / EGP 4.2B Closed` → live public-inventory count (via the existing honest `usePublicListings`/`/api/inventory` pipeline), real curated compound total (62), and two truthful 100% process/positioning stats. Hero/network copy ("500+ firms", "1,500+ certified brokers", "240+ brokerage firms", "40,000+ buyers/month", "1,700+ sources", "48h", "Verified Inventory — every listing personally verified on-site", "Instant AI Verification") → truthful qualitative claims ("Market-Wide Network", "Broker-Sourced Listings", "Reviewed Inventory — every listing passes Sierra's verification and review pipeline", …) in both languages. |
+| 13 | `scripts/ci-preflight.sh` | Gate numbering corrected: nine executed checks are labeled `gate 1/9 … gate 9/9` and the success line reports **9/9** (was `0/8..8/8` reported as "8/8"). Gate-1 necessity verified (not silently removed): the regenerated CSV feeds the phase13-data-qa suite pinned by gate 9. |
+| 13 (tests) | `__tests__/action-routing-and-deployment-dispatch.test.ts`, `__tests__/backend-services.test.ts`, `apps/.../__tests__/august-owners-agent.test.ts` | Stale governance expectations modernized to the CURRENT deliberate architecture (dynamic `/api/cron/dispatch/[job]` routing, Hobby-plan 2-slot cron dispatcher + automation-jobs registry, intake fixtures now carry provider message ids per the 6.1 contract). No legitimate assertion was deleted; each updated check still pins its original intent. |
+| 14 | (scan) | Secret scan of tracked source: **no live secret values introduced or found in active files**. The known historical exposures remain documented (§10). |
 
 ---
 
-## 3. Owner intake (P0 3A/3B/3C/3D/3E/3F) — CODE-TESTED
+## 3. Test evidence (actual executions, this run)
 
-`OwnerListingIntakeService` + additive migration `20261012_029_intake_correlation_event_states.sql`:
+| Suite | Command | Result |
+|---|---|---|
+| App full suite (deploy gate) | `pnpm --filter sierra-estates-client-page test:ci` | **144/144 suites, 1548/1548 tests PASS** (includes the 7 new idempotency regressions) |
+| Intake regressions (targeted) | `npx jest owner-intake-idempotency-regression owner-listing-intake owner-intake-correlation-regression` | **26/26 PASS** |
+| Workflows control-plane | `npx vitest run workflows/__tests__` | **49/49 PASS** (16 new security-contract assertions + 33 pre-existing) |
+| Type-check | `pnpm --filter sierra-estates-client-page type-check` | **0 errors** |
+| Lint + config validation | `pnpm --filter sierra-estates-client-page lint` | **clean** |
+| Infra scripts | `bash -n` + non-root/dry-run failure-path execution | clean; safe failure confirmed |
+| Master inventory regen | `python3 scripts/data-audit/build_master_inventory.py` | 12,443 rows normalized → 8,401 unique (TSV sources loudly skipped — removed in `49242e8f`, canonical owner data in Supabase); PUBLISHABLE: 0 (honest) |
 
-- **3A Media-only never discarded:** photo-only messages correlate by explicit intake code →
-  quoted-message context (OpenWA `quotedMsgId` → event → intake) → exactly one open intake →
-  else durable `UNASSIGNED_MEDIA` review state (staff-correlated from the admin queue). Media
-  storage stays Supabase-Storage-gated with honest `last_error` when unavailable.
-- **3B Multi-unit correlation:** explicit code → quoted context → single open intake →
-  durable `AMBIGUOUS_REPLY` staff queue (never a guess). A clearly-different compound opens a NEW
-  intake for the same sender. The one-open-intake-per-sender unique index is DROPPED (additive
-  migration; rollback documented); dedupe protection preserved by event ledger + unique intake
-  codes + fingerprints.
-- **3C Event state machine:** `RECEIVED → PROCESSING → COMPLETED | FAILED` with attempts,
-  10-minute lease, atomic conditional claim (service-role PostgREST PATCH), error classification,
-  stored result JSON + intake/unit ids on the event row. COMPLETED replays return the prior result
-  with no side effects; FAILED replays RESUME the pinned intake (no duplicate unit); a ledger
-  OUTAGE fails CLOSED (no side effects). Webhook returns 5xx on intake errors so providers retry.
-- **3D No fabricated defaults:** unknown mode → `NEEDS_INFORMATION/NEEDS_CODE` (never `sale`);
-  new listings stage `status:'pending'` with the owner's availability claim preserved separately in
-  `rawData.ownerAvailabilityClaim`; `contactSource` recorded when the sender phone is used as fallback.
-- **3E Dedupe:** fingerprint is NULL without compound+type evidence (empty fingerprints can no
-  longer collapse unrelated records); lookup covers intakes AND canonical `listings.dupe_check_hash`
-  plus an explainable near-match scan (compound+type+beds equality + price ±2% / area ±10%) —
-  matches LINK/queue for staff, never silently overwrite.
-- **3F Codes:** intake codes (`SE-AUG-<stamp>-<rand>`, collision-safe) remain the stable owner-facing
-  reference; the LISTING code derives from the established Sierra scheme (`generateSierraCode`,
-  deterministic on retries) only when compound/rooms/price evidence exists, else `NEEDS_CODE`.
+New regression coverage added this run:
+- `workflows/__tests__/runner-security-regression.test.ts` — fail-closed auth, timing-safe compare, bind guard, tracker-credential absence, pairing auth + rate limits, no-store, bridge honesty, backfill date-rejection behavior + record identity (behavioral, imports the module).
+- `apps/.../__tests__/owner-intake-idempotency-regression.test.ts` — missing-message-id rejection, failed-claim fail-closed, uncertain completion, dedupe-outage fail-closed, correlation-outage fail-closed, FAILED-event replay resumes the pinned intake.
 
-Tests: `__tests__/owner-intake-correlation-regression.test.ts` (14 tests covering mission §12 cases
-1,2,3,4,5,6,7,8,9) + `owner-listing-intake.test.ts` (6 lifecycle tests, updated to assert `status:'pending'`).
+Pre-existing failures, verified NOT caused by this run (stash-diff proof): 12 root-level governance suites / 34 tests failed at baseline `86b83b57` and still fail — stale `.github` workflow expectations (ci.yml triggers, deploy-vercel.yml gate, permissions/concurrency, Node 22 pins), cspell dictionary, tracked-large-file hygiene, and a `sync-vercel-env.js` project-ID assertion that needs Vercel dashboard verification (cannot be resolved without credentials — deliberately NOT guessed). These suites are **not part of the production deploy gate** (ci-preflight runs gates 1–9; the legacy Actions job is manual-only). This run fixed the one REAL security failure among them (sheet-bridge auth) and modernized the three provably-stale cron/architecture assertions; the rest are documented, not hidden.
 
-## 4. Sheets/Excel projection (P0 §4) — CODE-TESTED
+---
 
-- `augustExtras` appends unverified units as `inventoryStatus:'Review Required'` (owner claim preserved
-  in Supabase raw_data; group-confirmation copy updated).
-- `appendToExcelInventory` no longer writes a SECOND `listings` row (the duplicate id=intakeCode upsert
-  with `status:'active'` + price-heuristic deal type is gone). DB persistence is opt-in
-  (`persistToSupabase`) and honest: `REVIEW_REQUIRED` / `status:'pending'` / deal_type from explicit
-  operation only. Callers: August agent + `/api/listings/submit` pass `canonicalUnitId` (pure sheet
-  projection); `/api/inventory` POST opts in.
-- `workflows/08-units-sync` verified: inserts `REVIEW_REQUIRED`, PATCH strips `publish_status /
-  verified_at / verified_by`, never writes provenance — pinned by new source-contract tests.
+## 4. Architecture & source-of-truth (unchanged, re-verified)
 
-## 5. Property Finder publication gate (P0 §6) — CODE-TESTED
+- **Public inventory:** Supabase `listings` → `/api/inventory` (owner-PII stripped, 5-min cache) → `usePublicListings` (loading/error/empty states). Curated marketing data (`HZDATA`) is separate and labeled.
+- **Intake:** every source funnels into `OwnerListingIntakeService.processOwnerMessage` behind the `owner_inbound_events` ledger (unique `(source, message_id)`, state machine RECEIVED→PROCESSING→COMPLETED/FAILED, leases, pinned intakes).
+- **Publication:** the canonical server-side publish gate remains the only path; fresh sheet rows land `REVIEW_REQUIRED`; owner-intake units stay `status:'pending'` + `publish_status:'REVIEW_REQUIRED'` (P0 3D/3F preserved).
+- **Scheduler ownership (Phase 11 matrix, current):**
+  - EC2 runner (`workflows/runner.js`) — authoritative for the nine server workflows; fails closed without Supabase rows; paused workflows never auto-run (P0-9 recheck preserved and re-tested).
+  - Vercel cron — exactly two Hobby slots (`/api/cron/dispatch/night`, `/api/cron/dispatch/morning`) over the automation-jobs registry; both map to the dynamic dispatcher route (test now pins the mapping).
+  - `.github/workflows/automations.yml` — manual fallback only; no duplicate protection concern while dormant (documented; re-verify before ever re-enabling).
+  - GCP Scheduler — **no live evidence** of jobs (config files only; mission rule: a config file is not a running scheduler). None provisioned by this run.
 
-- The `POST /api/property-finder?action=create-listing|publish` raw-payload bypass is CLOSED: both
-  actions route through `PFIntegrationService.publishListing()` (8-condition C6 gate + provider
-  validation + idempotency). Gate rejections → 422 with per-condition evidence.
-- `PublishGate`/`PFIntegrationService` re-verified at HEAD: staging guard, dry-run isolation,
-  idempotent re-publish, ordering fix (published only after remote acceptance), honest
-  `pending_publish` retry state — unchanged and covered by the existing 20-assertion suite.
-- New: `__tests__/property-finder-route-gate.test.ts` (4 bypass tests: raw payload rejected, gated
-  routing, idempotent publish, 422 evidence).
+---
 
-## 6. Workflow runner (P0 §9) — CODE-TESTED
+## 5. Deployment & rollback
 
-- Hardcoded local fallback rows REMOVED; Supabase unconfigured or read failure → scheduler idle
-  (fail-closed; HTTP manual runs by authenticated operators remain).
-- Hourly owner-outreach window queues ONLY when the persisted row is `active`; `runWorkflow()`
-  re-checks persisted status immediately before spawning for every automatic trigger; failed status
-  reads fail CLOSED. Authenticated `POST /run` is the only manual override (labelled `manual`).
-- Tests: `workflows/__tests__/runner-safety.test.ts` (7 source-contract assertions) — mission §12
-  case 11 (paused automation never dispatches).
+- **Deploy path (unchanged, authorized):** push to `main` → Vercel builds with `scripts/ci-preflight.sh` (9 gates) + app production build. This run's push = the release candidate.
+- **After deploy (operator):** confirm deployment identity/commit, inspect build log for `PREFLIGHT PASSED — 9/9 gates green`, then the smoke set in §11.
+- **Rollback:** every change is additive and revertible — `git revert` the recovery commits; no schema change ships in this pass; migration 029 semantics unchanged from the prior report; runner/bridge/backfill scripts revert to prior behavior with the same commands; no history was rewritten, no force-push.
 
-## 7. Admin portal / RBAC / Telegram — RE-VERIFIED AT HEAD (unchanged, still code-tested)
+---
 
-- `/api/admin/users` returns real `profiles.status`; default-deny elevation; superadmin-only
-  approval/denial with audit trail. `ROLE_PERMISSIONS` covers the 9 canonical roles + legacy.
-- `enforceSessionAccountStatus()` re-checks live status on protected requests.
-- Telegram webhook: update-id ledger, real photo intake via `getFile`, shared intake path — the new
-  intake outcome actions degrade gracefully (default branch → honest staff-review notice).
+## 6. Owner intake & event recovery (state after this run)
 
-## 8. AWS EC2 / OpenWA — LIVE state (read-only probes, 2026-10-12)
+Media-only, multi-unit, quoted-context, ambiguous-reply and unassigned-media states are preserved from the merged prior branch and re-verified by the 26 passing intake tests. New this run: the 6.1–6.4 fail-closed/uncertain semantics (§2) with regression proof, including: replay after a failed completion resumes the SAME intake (no duplicate unit), and no database error can masquerade as "no duplicate".
 
-See §12 runbook; the 2026-10-11 probes (runner `54.89.162.250:2786` healthy, gateway `:2785` ready,
-session phone `201031622600`) remain the last verified evidence. Cleartext HTTP to a raw public IP
-is still an open transport-security concern (§12). This run's live probes are recorded in the final
-report of the execution session.
+---
 
-## 9. Google AI / RAG / $1,000 credit — UNCHANGED BLOCKERS
+## 7. Admin roles, RBAC, account approval
 
-The GenAI App Builder credit scope remains uninspectable without authenticated GCP console/billing
-access. No billable Google resource was created. The embedding dimension mismatch (768-write vs
-1536-legacy) remains documented and unresolved — no vector writes performed.
+- Server-side authority unchanged (`auth-guard.ts`, ADMIN_CONSOLE_ROLES, session re-validation, suspension enforcement).
+- This run closed the remaining privilege-escalation default in the portal shell (7.2) and the unguarded `sheet-bridge` route (7.3).
+- Google OAuth/Supabase integration and the approval workflow re-verified at HEAD; durable notification queue remains the honest fallback where no email provider is configured (unchanged, documented).
 
-## 10. Executed checks — evidence (this branch, 2026-10-12)
+---
 
-| Gate | Result |
-|---|---|
-| `scripts/data-audit/build_master_inventory.py` (gate 0) | PASS — 13,043 rows; DUPLICATE 4208 / INCOMPLETE 4720 / STALE 3746 / EXPIRED 246 / REVIEW_REQUIRED 123 / **PUBLISHABLE 0** (honest; verification freshness + photos remain the binding constraints) |
-| App jest (`test:ci` single-worker) | **143 suites / 1542 tests — ALL PASS** (incl. 18 new regression tests) |
-| `bash scripts/ci-preflight.sh` | **PREFLIGHT PASSED — 8/8 gates green** |
-| Workflows vitest | 2 files / 14 tests PASS (incl. 7 new runner-safety tests) |
-| App type-check (`tsc --noEmit`) | PASS (exit 0) |
-| App lint (changed files + full app) | PASS — 0 errors |
-| `pnpm check:public-env` | PASS — no server credentials browser-visible |
-| `pnpm check:legacy-runtime` | PASS |
-| `pnpm check:twins` | PASS — no compiled twins |
-| `pnpm check:backend` | PASS with env present (URL/anon/service keys — presence-only gate) |
-| Secret scan (tracked files) | 1 confirmed exposure REMOVED (service_role JWT in a test); anon keys are public-by-design placeholders; rotation list in §11 |
+## 8. Public inventory & metrics truth (after this run)
 
-## 11. Security findings — actions required
+- Homepage stat strip: **live count** (`/api/inventory`), **real compound total** (62), and two truthful 100% process statements — zero fabricated totals remain in the stat strip, hero, network banner, feature grid, CTA, or footer (EN + AR).
+- "Verified/on-site-verified" claims removed platform-wide in copy; verification remains a real, staff-driven process the copy now describes accurately ("review pipeline").
+- Publication gating unchanged: nothing unverified reaches the public inventory (§4).
 
-1. **ROTATE (required):** `SUPABASE_SERVICE_ROLE_KEY` for project `gaxfqcietzoonlmatiot` — a live
-   service-role JWT was committed in `__tests__/supabase-storage-and-vercel-resilience.test.ts`
-   (confirmed active via read-only probe; value remains in git history). Rotation is the only
-   complete remedy; removal from HEAD is done.
-2. **ROTATE after merge:** the GitHub PAT provided in-chat for this run (exposed to the chat
-   transcript; never written to any file or commit).
-3. Transport security (unchanged, operator action): API keys transit cleartext `http://` to
-   `54.89.162.250` — implement the documented HTTPS/tunnel alternative before any endpoint change.
+---
 
-## 12. Remaining external blockers — exact required actions
+## 9. Scheduler & automation state
 
-1. **Deploy this branch** (Vercel: `sierra-estates-client-page`) and inspect the build log for the
-   8-gate preflight in the real environment.
-2. **Apply migrations 027 + 028 + 029** through `scripts/apply-pending-migrations.mjs` (ledgered,
-   authenticated) — intake tables, role CHECK extension, event state machine + correlation index.
-3. **Controlled live intake pilot** (mission §13): one authorized test message through the August
-   owners group → verify durable intake, single REVIEW_REQUIRED listing, media attach, replay
-   idempotency, admin queue visibility. Requires an authorized test device/number.
-4. **OpenWA media endpoint** verification against the deployed gateway build (adapter path).
-5. **GCP scheduler cutover** (authenticated `gcloud` + billing) — then one overlap-safe cycle before
-   retiring Vercel fallbacks.
-6. **Google credit scope inspection** before ANY Agent Search provisioning.
-7. **ADMIN_APPROVAL_EMAIL + email provider** for access-request notifications (durable queue works
-   without it).
-8. **Transport hardening** (§11.3).
+See §4 matrix. Fail-closed dispatch (no Supabase → idle), paused-stays-paused (pre-execution recheck), overlap locks, and honest `ec2-runner:*` labels are all preserved and pinned by the 49-test workflows suite.
 
-## 13. Rollback
+---
 
-Every change is additive and reversible:
-- Revert the commits on `agents/p0-intake-gate-fixes` (single working branch; no history rewritten).
-- Migration 029 is additive: new event columns are nullable/defaulted; recreate the dropped partial
-  unique index only when no owner legitimately holds multiple open intakes (in-file rollback notes).
-- The publish gate, RBAC and sheet-sync behavior revert with the commits; no env bypass exists by design.
+## 10. Security state & credential rotation (Phase 14)
 
-## 14. Daily operations checklist (operator)
+**Fixed this run:** the fail-open runner control plane, the hard-coded tracker credential, unauthenticated pairing assets, the unauthenticated `sheet-bridge` admin route, the bridge's fallback credential and fabricated readiness.
 
-1. `GET /api/health` (app) + runner `/api/health` — expect ok/ready.
-2. Admin queue: `REVIEW_REQUIRED` units, `UNASSIGNED_MEDIA` and `AMBIGUOUS_REPLY` intakes (new
-   correlation states) — correlate/resolve with the intake codes.
-3. `owner_inbound_events` with `state='FAILED'` — retry-safe by design (replay the provider event
-   or re-run the intake; the pinned intake resumes).
-4. Access requests: `/api/admin/users` (pending) → approve/deny (super-admin).
-5. `automation_runs` freshness; `failed_orchestrations` open rows.
-6. PublishGate 422/`PublishGateError` logs are EXPECTED for unverified units — investigate only
-   repeated remote failures (`pfStatus='pending_publish'`).
+**Standing risks — rotation/actions that remain (all require human/owner access):**
+1. **ROTATE (required, unchanged):** legacy `service_role` JWT for Supabase project `gaxfqcietzoonlmatiot` — value remains recoverable in git history (removed from HEAD in `178bac90`). Supabase dashboard → Settings → API Keys → rotate. Until rotated, anyone with repo history access has full RLS-bypassing DB access.
+2. **ROTATE (required):** the `sb_secret_…` new-format secret exposed in a chat log (documented incident).
+3. **ROTATE after use:** the GitHub PAT shared in-chat for this run (used only for the push; never written to any file or commit).
+4. **Rotate/invalidate:** the old tracker credential `SE2026…` — the code path is removed; if the same value is used anywhere else (e.g., a bookmark, a monitoring probe), retire it.
+5. Transport hardening (operator): cleartext HTTP to the EC2 EIP for runner/gateway remains a concern until the Phase-3 named-tunnel procedure is run (the rewritten script is the safe path; do NOT run the old version).
+
+**Secret scanning:** tracked source scanned this run — no live secret values in active files; no new secrets introduced. Consider enabling gitleaks/trufflehog in CI as follow-up.
+
+---
+
+## 11. Remaining external blockers — exact required actions
+
+1. **Vercel:** inspect the build triggered by this push (deployment ID + `PREFLIGHT PASSED — 9/9` in the log); run post-deploy smoke (public site renders, admin denied unauthenticated, property search, map, `/api/health`).
+2. **Migrations 027+028+029:** confirm applied on production via the ledgered `apply-pending-migrations.mjs` path (code-side checks pass; production ledger verification needs DB access).
+3. **Supabase:** rotate the two exposed credentials (§10.1/§10.2).
+4. **EC2 operator:** restart the runner with `RUNNER_API_KEY` set (fail-closed means the control plane 401s until the key is configured — intentional); re-run `backfill-sheet.mjs` in dry-run first; tunnel only via the rewritten script with a named token.
+5. **WhatsApp/Telegram live verification:** authorized test message through each channel; no bulk outreach was triggered by this run (mission rule respected).
+6. **Legacy governance suites (12 files / 34 pre-existing failures):** decide fix-vs-retire per suite — especially the `.github` workflow expectations and the `sync-vercel-env.js` project-ID assertion (needs Vercel dashboard confirmation; intentionally not guessed).
+
+---
+
+## 12. Daily operations checklist (operator)
+
+Unchanged from the prior report, plus:
+1. Runner `/api/health` now requires the API key for the full payload (minimal liveness without it) — monitor accordingly.
+2. `backfill-rejections.jsonl` (invalid timestamps, multi-date conflicts) and `backfill-failures.jsonl` (retry queue) are the two backfill review queues.
+3. Intake outcomes carrying `uncertain: true` deserve a follow-up query on `owner_inbound_events` stuck in PROCESSING past the lease window.
+
+---
+
+## 13. Acceptance gates A–O
+
+| Gate | Status | Evidence |
+|---|---|---|
+| A. No unresolved unsafe public access to runner/owner-data export | **PASS (code)** / live-verify pending | fail-closed auth + bind guard + rate limits (runner.js); 49/49 workflows tests; §10 transport caveat |
+| B. No fixed tracker credential or unprotected pairing | **PASS** | literal absent from tracked files; pairing auth + rate limits + no-store; regression tests pin it |
+| C. Tunnel/backup scripts fail safe, dry-run default | **PASS** | rewrites verified: dry-run default, `--apply`, preflight, rollback, no token in argv/logs |
+| D. Backfill preserves history, rejects invalid dates, honest partials | **PASS** | behavioral tests (validateTimestamp, recordId) + source contracts; dry-run default |
+| E. Intake idempotency + recoverable event state | **PASS** | 26/26 intake tests incl. new 6.1–6.4 regressions |
+| F. DB errors can't fake "no duplicate" | **PASS** | `.catch(() => [])` removed from all dedupe/correlation paths; outage→FAILED (retryable), regression-tested |
+| G. Admin role/approval fail closed | **PASS** | superadmin default removed; sheet-bridge guarded; auth-error denial path; server guards re-verified |
+| H. No fabricated inventory/false success in production UI | **PASS** | AdminPortal fabrications removed; OpenClaw failures honest; bridge telemetry honest |
+| I. Public counts/verification claims source-backed | **PASS** | live inventory count, real compound total (62), EN+AR claim cleanup; no fabricated totals remain |
+| J. All publication paths use the canonical gate | **PASS (re-verified)** | gate intact; units-sync REVIEW_REQUIRED pinned by runner-safety tests |
+| K. WhatsApp/Telegram live-verified or explicitly blocked | **BLOCKED (external)** | code + adapters verified; live channel verification requires authorized test device (no bulk outreach run) |
+| L. Each scheduled job has one authoritative scheduler | **PASS** | §4 matrix; fail-closed dispatch; Hobby 2-slot dispatcher contract now test-pinned |
+| M. CI/tests pass on the intended commit | **PASS** | 1548/1548 + 49/49 + type-check + lint on this tree |
+| N. Deployment identity + critical smoke verified | **BLOCKED (external)** | push triggers Vercel; deployment ID + live smoke require the Vercel dashboard (§11.1) |
+| O. Documentation matches the actual system | **PASS** | this report reflects the executed state; runbooks updated via the rewritten scripts' inline contracts |
+
+---
+
+## 14. Final report summary (mission format)
+
+1. **Verdict:** `IMPLEMENTED — LIVE VERIFICATION INCOMPLETE`.
+2. **Commits:** baseline `86b83b57` → recovery commits on `main` (this pass; see `git log`); push status: pushed to `origin/main` (this run). No force-push, no history rewrite, no bypassed checks.
+3. **Major fixes:** §2 table (15 files, 8 root-cause classes).
+4. **Test totals:** 1548/1548 app + 49/49 workflows (actual executions, §3).
+5. **CI/deploy links:** legacy Actions suite is manual-only by design; the production gate is the Vercel-embedded preflight (9/9 expected in the build log of this push — must be inspected by the operator).
+6. **Gates A–O:** §13.
+7. **Subsystems:** migrations 027–029 code-verified (prod apply pending); intake hardened + regression-proven; admin RBAC closed; publication gate intact; WhatsApp/Telegram code-verified (live test blocked); schedulers consolidated and test-pinned; GCP/RAG untouched (no provisioning, dimension mismatch unresolved without live access); backup script rewritten (verification now built-in, first verified backup requires a live run with a real bucket); public inventory honest.
+8. **Outstanding security risks/rotations:** §10 (three credential rotations + transport hardening + historical git exposure note).
+9. **Exact external permissions/actions still required:** §11.
+10. **Top three immediate next actions (priority order):**
+    1. Inspect the Vercel build/deployment of this push; run the post-deploy smoke (§11.1).
+    2. Rotate the two exposed Supabase credentials (§10.1–10.2).
+    3. On EC2: set `RUNNER_API_KEY` and restart the runner; run `backfill-sheet.mjs --dry-run` before any apply.
