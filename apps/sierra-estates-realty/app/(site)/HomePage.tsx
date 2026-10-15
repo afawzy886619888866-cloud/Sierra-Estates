@@ -25,6 +25,7 @@ import VirtualTourBanner from '@/components/site/VirtualTourBanner';
 import { AI_ICONS } from '@/components/site/AiIcons';
 import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
+import { usePublicListings } from '@/lib/site/usePublicListings';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
 import type { MapCompound } from '@/components/site/CompoundsMap';
 
@@ -75,6 +76,12 @@ export default function HomePage() {
   const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const allCompounds = HZDATA.compounds as MapCompound[];
   const featuredCompounds = HZDATA.featured as string[];
+  // §21 / Phase 8.1: the public stat strip shows REAL, derivable numbers only —
+  // live public-inventory count + the actual curated compound total. The old
+  // hardcoded 1900+/53/68/EGP 4.2B figures were unsupported claims.
+  const { units: publicUnits, loading: publicUnitsLoading } = usePublicListings(500);
+  const publicUnitCount = publicUnits.length;
+  const compoundCount = allCompounds.length;
 
   // Fetch real inventory from /api/inventory (Supabase + master Excel inventory) on mount
   useEffect(() => {
@@ -819,8 +826,10 @@ export default function HomePage() {
               <p>{t('netBody')}</p>
             </div>
             <div className="nb-stats">
-              <div className="nb-stat"><b data-count="1500" data-suffix="+">0</b><span>{t('netS1L')}</span></div>
-              <div className="nb-stat"><b data-count="240" data-suffix="+">0</b><span>{t('netS2L')}</span></div>
+              {/* Phase 8.1: the unsupported 1,500+/240+ network-size counters
+                  are removed — qualitative, truthful capability statements only. */}
+              <div className="nb-stat"><b>Market-Wide</b><span>{t('netS1L')}</span></div>
+              <div className="nb-stat"><b>AI-Benchmarked</b><span>{t('netS2L')}</span></div>
               <div className="nb-stat"><b data-count="100" data-suffix="%">0</b><span>{t('netS3L')}</span></div>
             </div>
           </div>
@@ -897,13 +906,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* STATS — Phase 8.1: every figure here is DERIVED, not asserted:
+          live public-inventory count, real curated compound total, and two
+          100% process/positioning statements (review pipeline + market focus).
+          The removed hardcoded claims (1900+ listings, 53 compounds, 68 licensed
+          agents, EGP 4.2B closed) had no data source. */}
       <section className="stats">
         <div className="wrap">
-          <div className="stat rv"><b data-count="1900" data-suffix="+">0</b><span>{t('stat1')}</span></div>
-          <div className="stat rv d1"><b data-count="53">0</b><span>{t('stat2')}</span></div>
-          <div className="stat rv d2"><b data-count="68">0</b><span>{t('stat3')}</span></div>
-          <div className="stat rv d3"><b data-count="4.2" data-prefix="EGP " data-suffix="B">0</b><span>{t('stat4')}</span></div>
+          <div className="stat rv"><b>{publicUnitsLoading ? '…' : publicUnitCount > 0 ? publicUnitCount.toLocaleString() : '—'}</b><span>{t('stat1')}</span></div>
+          <div className="stat rv d1"><b data-count={compoundCount}>0</b><span>{t('stat2')}</span></div>
+          <div className="stat rv d2"><b data-count="100" data-suffix="%">0</b><span>{t('stat3')}</span></div>
+          <div className="stat rv d3"><b data-count="100" data-suffix="%">0</b><span>{t('stat4')}</span></div>
         </div>
       </section>
 
