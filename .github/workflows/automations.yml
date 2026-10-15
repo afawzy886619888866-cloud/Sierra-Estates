@@ -93,9 +93,13 @@ jobs:
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           TARGETS: ${{ steps.target.outputs.targets }}
-          FORCE: ${{ inputs.force && '1' || '0' }}
+          INPUT_FORCE: ${{ inputs.force }}
         run: |
           set -euo pipefail
+          FORCE="0"
+          if [ "${INPUT_FORCE:-false}" = "true" ]; then
+            FORCE="1"
+          fi
           if [ -z "${CRON_SECRET}" ]; then
             echo "::error::CRON_SECRET is not configured in repository secrets — scheduled work cannot authenticate."
             exit 1

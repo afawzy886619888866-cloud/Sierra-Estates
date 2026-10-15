@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'node:fs';
 import { google } from 'googleapis';
 import { insertRecord } from '@sierra-estates/db';
 import { buildSierraCodeMetadata } from '@/lib/services/coding-algorithm';
@@ -115,6 +116,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { error: 'BROKER_INBOX_SHEET_ID is not configured.' },
       { status: 500 }
+    );
+  }
+
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY && !fs.existsSync('./config/service_account.json')) {
+    logger.warn('[CRON:ingest-from-sheets] GOOGLE_SERVICE_ACCOUNT_KEY is not configured — skipping sheets ingest.');
+    return NextResponse.json(
+      { skipped: true, reason: 'unconfigured', message: 'GOOGLE_SERVICE_ACCOUNT_KEY is not configured' },
+      { status: 200 }
     );
   }
 
