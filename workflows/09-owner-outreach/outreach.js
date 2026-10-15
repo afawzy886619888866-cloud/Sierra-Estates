@@ -115,6 +115,13 @@ function loadCheckpoint(totalCount) {
   try {
     const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
     if (typeof cp.topCursor === 'number' && typeof cp.bottomCursor === 'number') {
+      if (totalCount > (cp.totalCount || 0)) {
+        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows — extending bottomCursor to ${totalCount - 1}`);
+        cp.bottomCursor = totalCount - 1;
+        cp.totalCount = totalCount;
+        cp.metInTheMiddle = false;
+        saveCheckpoint(cp);
+      }
       return cp;
     }
   } catch { /* first run */ }
@@ -128,6 +135,7 @@ function loadCheckpoint(totalCount) {
 }
 
 function saveCheckpoint(cp) {
+  if (DRY_RUN) return;
   try {
     fs.mkdirSync(STATE_DIR, { recursive: true });
     cp.updatedAt = new Date().toISOString();
