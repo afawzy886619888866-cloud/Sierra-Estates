@@ -599,7 +599,7 @@ export default function MasterplanPortal() {
         </div>
 
         {/* Interactive Map Stage & HUD Overlays */}
-        <section className="relative w-full h-[720px] lg:h-[820px] overflow-hidden bg-[#171c20] select-none">
+        <section className="relative w-full h-180 lg:h-205 overflow-hidden bg-[#171c20] select-none">
           {/* Background Cadastral Base Maps (Stacked and Switched via JS) */}
           <div
             className="absolute inset-0 w-full h-full origin-center transition-transform duration-700 ease-out flex items-center justify-center"
@@ -1241,7 +1241,7 @@ export default function MasterplanPortal() {
                   alt={selectedCompound.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-[#dcc661]">
                     {selectedCompound.subzone} • {selectedCompound.cadastralId}
                   </span>
