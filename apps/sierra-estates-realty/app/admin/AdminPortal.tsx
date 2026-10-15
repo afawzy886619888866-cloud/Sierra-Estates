@@ -632,7 +632,16 @@ function OpenClawPage({ T }) {
 
     if(c==='clear'){setLogs([]);return;}
     if(c==='status'){
-      setLogs(l=>[...l,{t:'green',l:'[✓] All 10 agents operational · WABA dispatchers active'}]);
+      // P0 7.1: no fabricated agent telemetry — report the honest API answer.
+      setLogs(l=>[...l,{t:'blue',l:'[~] Checking live gateway status...'}]);
+      try {
+        const r = await fetch('/api/health');
+        if (!r.ok) throw new Error(`health check returned ${r.status}`);
+        const health = await r.json();
+        setLogs(l=>[...l,{t:'green',l:`[✓] Gateway reachable · status: ${health?.status ?? 'ok'}`}]);
+      } catch (e:any) {
+        setLogs(l=>[...l,{t:'red',l:`[!] Status unavailable (${e?.message ?? 'API unreachable'}) — no fabricated agent counts shown.`}]);
+      }
       return;
     }
     if(c==='sync'){
@@ -640,8 +649,10 @@ function OpenClawPage({ T }) {
       try {
         const r = await fetch('/api/sync', { method: 'POST' });
         setLogs(l=>[...l,{t: r.ok ? 'green' : 'red', l: r.ok ? '[✓] Sync complete · Firestore synced' : '[!] Sync returned error'}]);
-      } catch {
-        setLogs(l=>[...l,{t:'green',l:'[✓] Sync simulated · 1,547 listings verified'}]);
+      } catch (e:any) {
+        // P0 7.1: the fabricated '[✓] Sync simulated · 1,547 listings verified'
+        // fallback is REMOVED — a failed call is reported as failed.
+        setLogs(l=>[...l,{t:'red',l:`[!] Sync request failed (${e?.message ?? 'network error'}) — nothing was verified.`}]);
       }
       return;
     }
@@ -676,11 +687,15 @@ function OpenClawPage({ T }) {
         if (data.diff) {
           setLogs(l=>[...l,{t:'blue',l:data.diff}]);
         }
-      } else {
+      } else if (res.ok) {
         setLogs(l=>[...l.filter(x=>x.l!=='[~] OpenClaw AI reasoning...'),{t:'green',l:`[✓] Command executed: ${c}`}]);
+      } else {
+        // P0 7.1: a failed/empty response is reported as such — the old catch
+        // fallbacks ('[✓] Command executed' / '[✓] Processed') invented success.
+        setLogs(l=>[...l.filter(x=>x.l!=='[~] OpenClaw AI reasoning...'),{t:'red',l:`[!] Command failed (HTTP ${res.status}) — no action was taken.`}]);
       }
-    } catch {
-      setLogs(l=>[...l.filter(x=>x.l!=='[~] OpenClaw AI reasoning...'),{t:'green',l:`[✓] Processed: ${c}`}]);
+    } catch (e:any) {
+      setLogs(l=>[...l.filter(x=>x.l!=='[~] OpenClaw AI reasoning...'),{t:'red',l:`[!] OpenClaw unreachable (${e?.message ?? 'network error'}) — no action was taken.`}]);
     } finally {
       setRunning(false);
     }
@@ -2246,19 +2261,30 @@ function AdminApp() {
       .then(res => res.json())
       .then(data => {
         if (data?.signedIn) {
+          // P0 7.2: role comes from the SERVER session or the request FAILS.
+          // The previous `data.role || 'superadmin'` default minted the
+          // highest privilege from MISSING data — a profile without a valid
+          // role is now denied with a controlled account error instead.
+          const role = typeof data.role === 'string' && data.role.trim() ? data.role.trim() : null;
+          if (!role) {
+            setAuthError(true);
+            return;
+          }
           setCurrentUser({
             email: data.email || 'admin@sierra-estates.net',
-            role: data.role || 'superadmin',
+            role,
             name: data.name || 'Executive Admin',
             ...(data.scope ? { scope: data.scope } : {}),
           });
         } else if (data?.authDisabled) {
-          // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false.
-          // Data APIs enforce the same rule server-side (auth-guard.ts).
+          // Dev-only bypass, explicitly enabled via ENABLE_AUTHENTICATION=false
+          // (server-confirmed signal — NOT an inferred role). Data APIs enforce
+          // the same rule server-side (auth-guard.ts). Clearly labelled dev
+          // identity so it can never masquerade as a production superadmin.
           setCurrentUser({
             email: 'dev@sierra-estates.net',
             role: 'superadmin',
-            name: 'Dev Admin',
+            name: 'Dev Admin (auth disabled)',
           });
         } else {
           window.location.href = '/admin/login';
