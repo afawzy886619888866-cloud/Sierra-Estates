@@ -19,11 +19,18 @@
  *      :unconfigured" so the Studio never dresses up a blocked run as a
  *      healthy one (2026-10 improvement).
  *   4. Exposes an HTTP control API (default 127.0.0.1:2786) guarded by
- *      X-API-Key / Bearer RUNNER_API_KEY:
- *        GET  /api/health                    runner + gateway heartbeat
+ *      X-API-Key / Bearer RUNNER_API_KEY (timing-safe compare, fail-closed
+ *      when the key is not configured):
+ *        GET  /api/health      minimal public liveness; FULL payload only
+ *                              with a valid API key (gateway/supabase/running
+ *                              details are operational information)
  *        GET  /api/workflows                 DB rows + local run state
  *        POST /api/workflows/:slug/run       manual trigger (locked)
  *        GET  /api/workflows/:slug/logs?n=10 run history tails
+ *        POST /pair/code                     pairing-code mint (auth + rate-limited)
+ *        GET  /pair/qr                       pairing QR (auth)
+ *        GET  /tracker.csv                   outreach ledger export (auth ONLY —
+ *                              the legacy hard-coded query key was removed)
  *
  * Manual runs are what the (prepared) admin patch
  * `/api/admin/workflow-ops` + WorkflowStudio "Run now" button calls.
@@ -33,6 +40,7 @@
  */
 const { spawn } = require('child_process');
 const http = require('http');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 try { require('dotenv').config({ path: path.join(__dirname, '.env') }); } catch {}
@@ -81,6 +89,59 @@ const startedAt = Date.now();
 
 function log(...args) {
   console.log(new Date().toISOString(), '[runner]', ...args);
+}
+
+// ── P0 2.1: fail-closed authentication + timing-safe comparison ──────────
+// A missing RUNNER_API_KEY means the control plane is NOT authenticated:
+// every protected route must refuse (401) instead of opening up. The old
+// "missing key = allow everything" interpretation is gone.
+function authorized(req) {
+  if (!API_KEY) return false;
+  const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!h) return false;
+  // Compare fixed-length SHA-256 digests so both length and content checks
+  // are timing-safe (no early return on the first mismatching byte).
+  const a = crypto.createHash('sha256').update(String(h)).digest();
+  const b = crypto.createHash('sha256').update(String(API_KEY)).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
+function isLoopbackHost(host) {
+  return host === '127.0.0.1' || host === 'localhost' || host === '::1' || host === '[::1]';
+}
+
+// ── P0 2.1/2.3: in-memory per-IP abuse protection for sensitive actions ──
+// Buckets: failed authentications and pairing-code mints. Best-effort (an
+// attacker spoofing source IPs can bypass it), but stops trivial abuse of a
+// loopback/tunnel-exposed runner.
+const RATE_BUCKETS = new Map(); // bucketKey:ip → { count, resetAt }
+function rateLimited(bucket, ip, max, windowMs) {
+  const now = Date.now();
+  const key = `${bucket}:${ip}`;
+  const entry = RATE_BUCKETS.get(key);
+  if (!entry || entry.resetAt <= now) {
+    RATE_BUCKETS.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  entry.count += 1;
+  if (RATE_BUCKETS.size > 10000) { // keep the map bounded
+    for (const [k, v] of RATE_BUCKETS) if (v.resetAt <= now) RATE_BUCKETS.delete(k);
+  }
+  return entry.count > max;
+}
+
+function clientIp(req) {
+  return String(req.socket?.remoteAddress || 'unknown');
+}
+
+/** Uniform 401/429 denial for protected routes (fail-closed + abuse guard). */
+function deny(res, req) {
+  if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+    json(res, 429, { ok: false, error: 'rate_limited' });
+    return true;
+  }
+  json(res, 401, { ok: false, error: 'unauthorized' });
+  return true;
 }
 
 /** Run one workflow to completion; update local state + Supabase telemetry. */
@@ -302,14 +363,12 @@ function server() {
 
   const json = (res, code, obj) => {
     const body = JSON.stringify(obj, null, 1);
-    res.writeHead(code, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) });
+    res.writeHead(code, {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+      'Cache-Control': 'no-store', // pairing/health responses must never be cached
+    });
     res.end(body);
-  };
-
-  const authorized = (req) => {
-    if (!API_KEY) return true; // loopback-only default; explicit key when bound wider
-    const h = req.headers['x-api-key'] || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    return h === API_KEY;
   };
 
   return http.createServer(async (req, res) => {
@@ -318,6 +377,12 @@ function server() {
 
     try {
       if (p === '/api/health' && req.method === 'GET') {
+        // P0 2.1: unauthenticated callers get MINIMAL liveness only — uptime is
+        // not sensitive, but gateway/session/supabase details are operational
+        // information and are reserved for authenticated operators.
+        if (!authorized(req)) {
+          return json(res, 200, { ok: true, service: 'se-workflow-runner' });
+        }
         let gateway = { reachable: false };
         try { gateway = await gw.status(); } catch (e) { gateway = { reachable: false, error: e.message }; }
         let gh = null;
@@ -335,6 +400,9 @@ function server() {
       }
 
       // ── Pairing portal: always-fresh QR so the owner can re-link anytime ──
+      // P0 2.3: the portal page itself carries no secrets, but every pairing
+      // ASSET (QR image, pairing code, gateway status) is fetched with the
+      // operator's API key — unauthenticated callers get nothing.
       if (p === '/pair' && req.method === 'GET') {
         const html = `<!doctype html><html lang="ar"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Sierra Estates — WhatsApp Link</title>
@@ -348,49 +416,89 @@ img{width:270px;height:270px;border-radius:10px;background:#fff;padding:8px}
 .code.show{display:block}
 .btn{background:#00a884;color:#0b141a;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
 .btn:disabled{opacity:.5}
+.key{background:#111b21;color:#e9edef;border:1px solid #2a3942;border-radius:8px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;margin:6px 0 2px}
 .divider{display:flex;align-items:center;gap:10px;color:#8696a0;font-size:12px;margin:14px 0 0}
 .divider:before,.divider:after{content:'';flex:1;height:1px;background:#2a3942}
 b{color:#e9edef}</style></head><body><div class="card">
 <h1>Sierra Estates — ربط الواتساب</h1>
+<p>أدخل مفتاح الوصول (Access Key) للمتابعة — صفحة الربط محمية.</p>
+<input class="key" id="key" type="password" placeholder="Access key" autocomplete="off">
+<button class="btn" id="save" onclick="saveKey()">فتح صفحة الربط</button>
+<div id="portal" style="display:none">
 <p>1) افتح واتساب على جوالك <b>+20 106 139 9688</b><br>2) الإعدادات ← الأجهزة المرتبطة ← ربط جهاز<br>3) وجّه الكاميرا على المربع التالي (يتم تحديثه تلقائياً كل 5 ثوانٍ)</p>
-<img id="qr" src="/pair/qr?t=0" alt="QR">
+<img id="qr" alt="QR">
 <p class="st bad" id="st">…</p>
 <p dir="ltr" style="font-size:11px">This QR refreshes automatically. If scanning fails, wait 5s and try again.</p>
 <div class="divider">أو بدون كاميرا</div>
 <button class="btn" id="mint" onclick="mintCode()">🔗 إنشاء رمز ربط برقم الهاتف</button>
 <div class="code" id="code"></div>
 <p id="codehint" style="display:none">1) واتساب ← الأجهزة المرتبطة ← ربط جهاز<br>2) اختر «الربط برقم الهاتف بدلاً من ذلك»<br>3) أدخل الرمز أعلاه (صالح لعدة دقائق فقط)</p>
+</div>
 </div><script>
+const KEY_STORE='se_pair_access_key';
+let KEY='';
+function hdrs(){return {'X-API-Key':KEY}}
+function saveKey(){
+  KEY=document.getElementById('key').value.trim();
+  if(!KEY){alert('أدخل مفتاح الوصول أولاً');return}
+  try{sessionStorage.setItem(KEY_STORE,KEY)}catch(e){}
+  document.getElementById('portal').style.display='block';
+  document.getElementById('save').style.display='none';
+  document.getElementById('key').style.display='none';
+  tick();
+}
 const img=document.getElementById('qr'), st=document.getElementById('st');
 async function mintCode(){
   const b=document.getElementById('mint'), c=document.getElementById('code'), h=document.getElementById('codehint');
   b.disabled=true; b.textContent='… جاري إنشاء الرمز';
   c.className='code show'; c.textContent='…';
   try{
-    const r=await fetch('/pair/code',{method:'POST'}); const j=await r.json();
-    if(j&&j.ok&&j.code){ c.textContent=String(j.code).replace(/[^A-Z0-9]/gi,'').toUpperCase(); h.style.display='block'; }
-    else{ c.className='code show'; c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
+    const r=await fetch('/pair/code',{method:'POST',headers:hdrs()}); const j=await r.json();
+    if(r.ok&&j&&j.ok&&j.code){ c.textContent=String(j.code).replace(/[^A-Z0-9]/gi,'').toUpperCase(); h.style.display='block'; }
+    else if(r.status===429){ c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
+      c.textContent='تم تجاوز الحد المسموح من المحاولات — انتظر عشر دقائق ثم حاول مجدداً.'; h.style.display='none'; }
+    else{ c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit';
       c.textContent='تعذر إنشاء رمز الآن — واتساب يفرض حظراً مؤقتاً على الرموز لهذا الرقم. استخدم مسح QR أعلاه، أو حاول بعد ٣٠ دقيقة.'; h.style.display='none'; }
   }catch(e){ c.className='code show'; c.style.cssText='display:block;color:#ffc861;background:#3d2b0b;font-size:13px;letter-spacing:0;font-family:inherit'; c.textContent='خطأ في الاتصال — حاول مرة أخرى'; h.style.display='none'; }
   b.disabled=false; b.textContent='🔗 إنشاء رمز ربط برقم الهاتف';
 }
+let lastObj=null;
 async function tick(){
-  img.src='/pair/qr?t='+Date.now();
-  try{const h=await fetch('/api/health');const j=await h.json();
+  if(!KEY)return;
+  try{
+    const r=await fetch('/pair/qr?t='+Date.now(),{headers:hdrs(),cache:'no-store'});
+    if(r.status===401){st.className='st bad';st.textContent='مفتاح الوصول غير صحيح';return}
+    if(!r.ok){st.className='st bad';st.textContent='لا يوجد رمز QR متاح حالياً';return}
+    const blob=await r.blob();
+    if(lastObj)URL.revokeObjectURL(lastObj);
+    lastObj=URL.createObjectURL(blob); img.src=lastObj;
+  }catch(e){st.className='st bad';st.textContent='تعذر الاتصال بالخادم';return}
+  try{const h=await fetch('/api/health',{headers:hdrs(),cache:'no-store'});const j=await h.json();
   const s=j.gateway&&j.gateway.status;
   if(s==='ready'){st.className='st ok';st.textContent='تم الربط بنجاح ✓ — يمكنك إغلاق الصفحة';}
   else{st.className='st bad';st.textContent='بانتظار الربط… ('+(s||'offline')+')';}
   }catch(e){st.className='st bad';st.textContent='تعذر الاتصال بالخادم';}
 }
-setInterval(tick,5000);tick();
+try{const k=sessionStorage.getItem(KEY_STORE);if(k){KEY=k;saveKey()}}catch(e){}
+setInterval(tick,5000);
 </script></body></html>`;
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
         return res.end(html);
       }
 
-      // On-demand pairing code (phone-number link, no camera needed). Safe to expose:
-      // a minted code is useless unless typed by the phone owner on the business number.
+      // On-demand pairing code (phone-number link, no camera needed).
+      // P0 2.3: authenticated + rate-limited (5 mints / 10 min / IP) — a minted
+      // code is a sensitive linking capability, not a public endpoint.
       if (p === '/pair/code' && req.method === 'POST') {
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
+        if (rateLimited('paircode', clientIp(req), 5, 10 * 60 * 1000)) {
+          return json(res, 429, { ok: false, error: 'rate_limited', retryAfterMin: 10 });
+        }
         try {
           const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
           const sid = process.env.OPENWA_SESSION_ID || '';
@@ -414,6 +522,13 @@ setInterval(tick,5000);tick();
       }
 
       if (p === '/pair/qr' && req.method === 'GET') {
+        // P0 2.3: pairing QR is a sensitive linking capability — auth required.
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
+          return json(res, 401, { ok: false, error: 'unauthorized' });
+        }
         try {
           const base = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
           const sid = process.env.OPENWA_SESSION_ID || '';
@@ -433,7 +548,7 @@ setInterval(tick,5000);tick();
       }
 
       if (p === '/api/workflows' && req.method === 'GET') {
-        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
+        if (!authorized(req)) { deny(res, req); return; }
         const [rows, local] = await Promise.all([
           sb.configured() ? sb.getWorkflows(SLUGS) : Promise.resolve([]),
           Promise.resolve(state.all()),
@@ -447,7 +562,7 @@ setInterval(tick,5000);tick();
 
       const runMatch = p.match(/^\/api\/workflows\/([\w-]+)\/run$/);
       if (runMatch && req.method === 'POST') {
-        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
+        if (!authorized(req)) { deny(res, req); return; }
         const slug = runMatch[1];
         if (!SCRIPTS[slug]) return json(res, 404, { ok: false, error: 'unknown workflow' });
         if (running.has(slug)) return json(res, 409, { ok: false, error: 'already_running' });
@@ -460,14 +575,14 @@ setInterval(tick,5000);tick();
 
       const logsMatch = p.match(/^\/api\/workflows\/([\w-]+)\/logs$/);
       if (logsMatch && req.method === 'GET') {
-        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
+        if (!authorized(req)) { deny(res, req); return; }
         const n = Math.min(parseInt(url.searchParams.get('n') || '10', 10) || 10, 20);
         return json(res, 200, { ok: true, slug: logsMatch[1], history: state.tail(logsMatch[1], n) });
       }
 
       // ── Inbound WhatsApp webhook target (gateway → runner, same box) ──
       if (p === '/api/inbound' && req.method === 'POST') {
-        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
+        if (!authorized(req)) { deny(res, req); return; }
         const raw = await readBody(req, 256 * 1024);
         let body = null;
         try { body = JSON.parse(raw); } catch (_) { body = { raw: String(raw).slice(0, 2000) } }
@@ -476,14 +591,22 @@ setInterval(tick,5000);tick();
       }
 
       if (p === '/api/inbound/preview' && req.method === 'GET') {
-        if (!authorized(req)) return json(res, 401, { ok: false, error: 'unauthorized' });
+        if (!authorized(req)) { deny(res, req); return; }
         const n = Math.min(parseInt(url.searchParams.get('n') || '20', 10) || 20, 100);
         return json(res, 200, { ok: true, messages: inbox.preview(n) });
       }
 
       if (p === '/tracker.csv' && req.method === 'GET') {
-        const key = url.searchParams.get('key');
-        if (key !== 'SE2026outreach' && !authorized(req)) {
+        // P0 2.2: the hard-coded query-key bypass (static shared secret in a
+        // URL parameter) is REMOVED. Outreach ledgers contain owner phone
+        // numbers, outreach codes and session details — the export is
+        // authenticated exactly like every other protected route, and never
+        // via a URL query parameter (URLs persist in proxy logs, browser
+        // history and monitoring systems).
+        if (!authorized(req)) {
+          if (rateLimited('authfail', clientIp(req), 20, 5 * 60 * 1000)) {
+            return json(res, 429, { ok: false, error: 'rate_limited' });
+          }
           return json(res, 401, { ok: false, error: 'unauthorized' });
         }
         const ledgerFile = path.join(WF_DIR, '.state', 'owner-outreach-ledger.jsonl');
@@ -522,6 +645,18 @@ setInterval(tick,5000);tick();
 
 async function main() {
   log(`workflow runner starting — bind=${BIND}:${PORT} poll=${POLL_MS / 1000}s tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+
+  // P0 2.1: a non-loopback bind WITHOUT an API key would expose an
+  // unauthenticated control plane (run triggers, owner ledger export,
+  // inbound webhook) to the network — refuse to start instead.
+  if (!isLoopbackHost(BIND) && !API_KEY) {
+    console.error(`runner fatal: RUNNER_BIND=${BIND} is not loopback and RUNNER_API_KEY is not set — refusing to expose an unauthenticated control plane. Set RUNNER_API_KEY (or bind to 127.0.0.1).`);
+    process.exit(1);
+  }
+  if (!API_KEY) {
+    log('WARNING: RUNNER_API_KEY is not set — every protected route will fail closed (401) until it is configured');
+  }
+
   // ensure one-shot seeding of the sentinel row (idempotent)
   try {
     const seeded = await sb.upsertWorkflowRow({

@@ -34,6 +34,13 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('request'), slug: z.string().min(1).max(64) }),
 ]);
 
+// P0 2.4: valid workflow-slug allowlist — mirrors the runner's SCRIPTS map.
+// An authenticated operator may trigger one of THESE workflows, nothing else.
+const RUNNER_SLUGS = new Set([
+  'whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender',
+  'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach',
+]);
+
 function opsHeaders(): Record<string, string> {
   return OPS_KEY ? { 'X-API-Key': OPS_KEY } : {};
 }
@@ -77,7 +84,20 @@ export async function GET(req: NextRequest) {
   }
 
   // Merge runner health + workflow registry into one payload.
+  //
+  // Honest status contract (P0 2.4):
+  //   - runner unreachable (BOTH probes failed) → 502 runner_unreachable;
+  //     a 200 + ok:false here would let consumers treat a dead control plane
+  //     as "degraded but ready".
+  //   - partially reachable (one probe answered) → 200 with the merged truth;
+  //     `ok` mirrors the runner's own health verdict, never the proxy's mood.
   try {
+    if (!OPS_BASE) {
+      return NextResponse.json(
+        { ok: false, error: 'runner_not_configured', detail: 'Set WORKFLOW_OPS_URL or OPENWA_HOST (+ RUNNER_PORT) to reach the workflow runner.' },
+        { status: 503 }
+      );
+    }
     const [healthRes, wfRes] = await Promise.all([
       fetch(`${OPS_BASE}/api/health`, {
         headers: opsHeaders(), signal: AbortSignal.timeout(8000), cache: 'no-store',
@@ -86,12 +106,26 @@ export async function GET(req: NextRequest) {
         headers: opsHeaders(), signal: AbortSignal.timeout(8000), cache: 'no-store',
       }).catch(() => null),
     ]);
+    if (!healthRes && !wfRes) {
+      return NextResponse.json(
+        { ok: false, error: 'runner_unreachable', health: { ok: false }, workflows: [] },
+        { status: 502 }
+      );
+    }
     const health = healthRes && healthRes.ok ? await healthRes.json().catch(() => null) : { ok: false };
     const workflows = wfRes && wfRes.ok ? (await wfRes.json().catch(() => ({})))?.workflows ?? [] : [];
-    return NextResponse.json({ ok: Boolean(health?.ok), health, workflows });
+    return NextResponse.json({
+      ok: Boolean(health?.ok),
+      health,
+      workflows,
+      ...(workflows.length === 0 ? { degraded: true } : {}),
+    });
   } catch (err: any) {
     logger.error('workflow-ops merge failed:', err?.message || err);
-    return NextResponse.json({ ok: false, health: { ok: false }, workflows: [] }, { status: 200 });
+    return NextResponse.json(
+      { ok: false, error: 'runner_unreachable', health: { ok: false }, workflows: [] },
+      { status: 502 }
+    );
   }
 }
 
@@ -104,6 +138,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 });
   }
   const { action, slug } = parsed.data;
+
+  // P0 2.4: allowlist — an authorized operator still cannot point the runner
+  // at an arbitrary slug; only the known workflow registry is triggerable.
+  if (!RUNNER_SLUGS.has(slug)) {
+    return NextResponse.json(
+      { ok: false, error: 'unknown_workflow', detail: `slug '${slug}' is not a registered runner workflow` },
+      { status: 400 }
+    );
+  }
 
   // 'request' path: DB marker the runner picks up within its 60s poll —
   // resilient when the control plane is unreachable from Vercel egress.

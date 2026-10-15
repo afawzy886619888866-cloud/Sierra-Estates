@@ -27,6 +27,16 @@ const CHECKPOINT_PATH = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
 const RUNNER_URL = process.env.RUNNER_URL || 'http://127.0.0.1:2786';
 const GATEWAY_URL = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:2785';
 
+/**
+ * P0 2.4: runner authentication header — NO fallback credential. The runner
+ * fails closed without a key, so the bridge reports unreachable honestly
+ * instead of dialing with an invented dev credential.
+ */
+function runnerHeaders() {
+  const key = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
+  return key ? { 'X-API-Key': key } : {};
+}
+
 function cairoTimeStr() {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Africa/Cairo',
@@ -36,38 +46,41 @@ function cairoTimeStr() {
 }
 
 async function probeGateway() {
+  // P0 2.4/7.1: HONEST telemetry only. The previous version fabricated two
+  // "ready" sessions when the gateway response lacked a session list, and
+  // coerced `reachable` to true from a missing runner field — both removed.
   const result = {
     reachable: false,
     url: GATEWAY_URL,
-    sessions: [
-      { id: 'session-default', phone: '201031622600', ready: false },
-      { id: 'line-2', phone: '201092048333', ready: false }
-    ],
+    sessions: [],
+    sessionsKnown: false,
     error: null
   };
 
   try {
     const res = await fetch(`${GATEWAY_URL}/api/health`, { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
-      result.reachable = true;
       const data = await res.json().catch(() => ({}));
+      result.reachable = true;
       if (data.sessions && Array.isArray(data.sessions)) {
         result.sessions = data.sessions;
-      } else {
-        // default assumption for live gateway with standard active sessions
-        result.sessions[0].ready = true;
-        result.sessions[1].ready = true;
+        result.sessionsKnown = true;
       }
+      // no session list → report unknown, never fabricate readiness
     }
   } catch (err) {
     result.error = err.message;
-    // Check if runner's health reports gateway
+    // Check if runner's health reports gateway — but only trust an EXPLICIT
+    // true/false field; a missing field is not proof of reachability.
     try {
-      const runnerRes = await fetch(`${RUNNER_URL}/api/health`, { signal: AbortSignal.timeout(3000) });
+      const runnerRes = await fetch(`${RUNNER_URL}/api/health`, {
+        headers: runnerHeaders(),
+        signal: AbortSignal.timeout(3000)
+      });
       if (runnerRes.ok) {
         const runnerData = await runnerRes.json();
-        if (runnerData.gateway) {
-          result.reachable = runnerData.gateway.reachable ?? true;
+        if (runnerData.gateway && typeof runnerData.gateway.reachable === 'boolean') {
+          result.reachable = runnerData.gateway.reachable;
         }
       }
     } catch {}
@@ -116,7 +129,7 @@ function readTrackerData() {
 async function getWorkflowsData() {
   try {
     const res = await fetch(`${RUNNER_URL}/api/workflows`, {
-      headers: { 'X-API-Key': process.env.RUNNER_API_KEY || 'dev-admin-key' },
+      headers: runnerHeaders(),
       signal: AbortSignal.timeout(3000)
     });
     if (res.ok) {
@@ -125,12 +138,15 @@ async function getWorkflowsData() {
     }
   } catch {}
 
-  // Fallback to scanning .state files
+  // Fallback to scanning .state files — LOCAL RUN STATE ONLY. The default
+  // `status:'active'` here is the runner-side display default and must never
+  // be read as a server-confirmed workflow registry state; the dashboard
+  // labels the source explicitly.
   const slugs = ['whatsapp-scraper', 'owner-search', 'owner-contact', 'email-sender', 'unit-adder', 'gateway-sentinel', 'daily-digest', 'units-sync', 'owner-outreach'];
   const list = [];
   for (const s of slugs) {
     const file = path.join(STATE_DIR, `${s}.json`);
-    let info = { slug: s, status: 'active', state: 'idle' };
+    let info = { slug: s, status: 'unknown', state: 'idle', source: 'local-state-fallback' };
     if (fs.existsSync(file)) {
       try { info = { ...info, ...JSON.parse(fs.readFileSync(file, 'utf8')) }; } catch {}
     }
