@@ -87,7 +87,15 @@ describe('Phase 13 — master inventory data QA (Phase 1 pipeline invariants)', 
     const uniques = rows.filter((r) => r.publishStatus !== 'DUPLICATE');
 
     it('keeps the audit contract shape: master inventory rows = uniques + duplicates', () => {
-        expect([12088, 13043]).toContain(rows.length);
+        // Known-good row-count shapes, pinned deliberately:
+        //   12443 — xlsx-only regeneration after the owner-direct TSVs were
+        //           removed from the repo root (49242e8f, sensitive owner
+        //           PII; canonical copy lives in Supabase). This is the
+        //           fresh-checkout / Vercel-build shape (gate 0 output).
+        //   13043 — local dev shape with both owner TSVs restored.
+        // 49242e8f was a deliberate, verified data change, so the pin moved
+        // with it — never silent pipeline drift.
+        expect([12443, 13043]).toContain(rows.length);
         expect(uniques.length + duplicates.length).toBe(rows.length);
     });
 
