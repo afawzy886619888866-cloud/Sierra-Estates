@@ -4,7 +4,7 @@
 
 ## Scheduling topology (target state)
 
-```
+```text
 Google Cloud Scheduler (5 jobs, europe-west1)
   └─> Google Cloud Workflow  se-automation-dispatch  (infra/google-cloud/workflows/dispatch.yaml)
         └─> HTTPS  {SITE_URL}/api/cron/dispatch/{target}?source=gcp-scheduler  (Bearer cron_secret)
@@ -31,7 +31,7 @@ GitHub Actions (manual only)       workflow_dispatch   12-target matrix
 
 ## Owner-intake automation path (Phase 2 rework)
 
-```
+```text
 OpenWA gateway (54.89.162.250:2785, session ready)
   ├─ global webhook → POST /api/webhooks/whatsapp  (X-SBR-Secret-Key, fail-closed)
   │     ├─ redacted structured log (no raw PII)
@@ -64,7 +64,7 @@ OwnerListingIntakeService (the ONE intake path)
 
 ## Publish pipeline (Phase 4)
 
-```
+```text
 Any caller (admin UI, sync route, cron import, intake completion)
   └─ PFIntegrationService.publishListing(unitId, { dryRun? })
         ├─ PublishGate.evaluate(unit)  — 8 C6 conditions + PUBLISHABLE classification

@@ -5,27 +5,19 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Nav, Footer } from './ui';
 import {
-  Compass,
   Layers,
   MapPin,
   RotateCcw,
   ZoomIn,
   ZoomOut,
   Building,
-  Home,
   CheckCircle,
-  ExternalLink,
   MessageCircle,
   X,
   Eye,
-  GitBranch,
   ShieldCheck,
-  Cpu,
-  Radio,
   Maximize2,
-  TrendingUp,
   Sparkles,
-  Download,
   Copy,
   Check,
   Navigation,
@@ -860,6 +852,23 @@ export default function MasterplanPortal() {
                   {selectedCompound.cadastralId}
                 </span>
               </div>
+            </div>
+
+            {/* Typology Filter Segmented Controls */}
+            <div className="flex items-center gap-1 bg-[#f5f3f4] p-1 rounded-xl text-xs font-medium mb-3 border border-[#e3e2e3]">
+              {(['all', 'villa', 'twin', 'penthouse'] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setTypologyFilter(type)}
+                  className={`flex-1 py-1 rounded-lg transition-all text-center capitalize ${
+                    typologyFilter === type
+                      ? 'bg-white text-[#094cb2] font-semibold shadow-sm'
+                      : 'text-[#434653] hover:text-[#1b1c1d]'
+                  }`}
+                >
+                  {type === 'all' ? 'All' : type === 'villa' ? 'Villas' : type === 'twin' ? 'Twins' : 'Penthouses'}
+                </button>
+              ))}
             </div>
 
             {/* Live Inventory Listing Table */}
