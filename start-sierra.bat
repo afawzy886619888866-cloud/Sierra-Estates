@@ -23,6 +23,8 @@ set WF_OPERATOR_WHATSAPP=201061399688
 set OPENWA_SESSION_IDS=session-default,line-2
 set UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk
 set UNITS_SHEET_GID=1127958606
+set WF_SHEET_WRITE_URL=https://script.google.com/macros/s/AKfycbzsP2fwASxIVu_r0_rHVyzfVfGii3zHJaEtc29-l3K_IvBG7bmTdWaLngCmyLTG2GnY/exec
+set WF_SHEET_WRITE_SECRET=SE_OUTREACH_SECRET_2026_CAIRO
 
 echo [1/2] Starting WhatsApp Gateway on Port 2785...
 start "Sierra Gateway" /d "%~dp0infra\whatsapp-scraper" cmd /k "npm start"
