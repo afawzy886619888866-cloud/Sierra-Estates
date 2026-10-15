@@ -64,6 +64,7 @@ describe('AugustOwnersAgentService', () => {
       });
 
       const result = await AugustOwnersAgentService.processGroupMessage({
+        messageId: 'aug-msg-slotfill-1',
         rawMessage: 'شقة للبيع 3 غرف في التجمع الخامس',
         sender: '201099887766@c.us',
         group: 'Owners August 2026',
@@ -112,6 +113,7 @@ describe('AugustOwnersAgentService', () => {
       });
 
       const result = await AugustOwnersAgentService.processGroupMessage({
+        messageId: 'aug-msg-complete-1',
         rawMessage: 'شقة للبيع في ميفيدا مساحة 210م تشطيب كامل 3 غرف 3 حمام بسعر 12.5 مليون تواصل 01012345678',
         sender: '01012345678@c.us',
         group: 'Owners August 2026',
@@ -200,6 +202,7 @@ describe('AugustOwnersAgentService', () => {
       });
 
       const result = await AugustOwnersAgentService.processGroupMessage({
+        messageId: 'aug-msg-nofabrication-1',
         rawMessage: 'وحدة في ميفيدا 3 غرف 180م بسعر 9 مليون',
         sender: '01012345678@c.us',
         group: 'Owners August 2026',
