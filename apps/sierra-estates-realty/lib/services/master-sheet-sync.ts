@@ -32,7 +32,40 @@ export interface RawOwnerSheetRow {
   comment?: string;
 }
 
-function getSheetsClient() {
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n') {
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else if (c === '\r') {
+      // skip carriage return
+    } else {
+      field += c;
+    }
+  }
+  if (field !== '' || row.length) {
+    row.push(field);
+    if (row.length > 1 || row[0] !== '') rows.push(row);
+  }
+  return rows;
+}
+
+async function fetchSheetValues(spreadsheetId: string): Promise<string[][]> {
   const keyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (keyRaw) {
     try {
@@ -41,15 +74,32 @@ function getSheetsClient() {
         credentials,
         scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
       });
-      return google.sheets({ version: 'v4', auth });
-    } catch (_err: any) {
-      logger.warn('[MasterSheetSync] Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY credentials, falling back to API key');
+      const sheets = google.sheets({ version: 'v4', auth });
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'A:R',
+      });
+      if (res.data.values && res.data.values.length > 0) {
+        return res.data.values as string[][];
+      }
+    } catch (err: any) {
+      logger.warn(`[MasterSheetSync] Google Sheets API auth failed (${err?.message}), falling back to public gviz CSV`);
     }
   }
 
-  // Fallback to unauthenticated / API key if available
-  const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
-  return google.sheets({ version: 'v4', auth: apiKey });
+  // Fallback to public gviz CSV export (tab 1127958606 is the canonical owner units tab)
+  const gid = process.env.MASTER_SHEET_GID || '1127958606';
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+  logger.info(`[MasterSheetSync] Fetching owner sheet via gviz CSV export (gid=${gid})`);
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) {
+    throw new Error(`Google Sheets gviz fetch failed with HTTP ${res.status}`);
+  }
+  const csv = await res.text();
+  if (!csv || csv.length < 20) {
+    throw new Error('Google Sheets gviz fetch returned empty CSV');
+  }
+  return parseCsv(csv);
 }
 
 function convertArabicNumerals(str: string): string {
@@ -179,13 +229,7 @@ export async function syncMasterOwnerSheet(sheetId?: string) {
   logger.info(`[MasterSheetSync] Starting sync for sheet ID: ${spreadsheetId}`);
 
   try {
-    const sheets = getSheetsClient();
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'A:R', // All 18 columns
-    });
-
-    const rows = res.data.values || [];
+    const rows = await fetchSheetValues(spreadsheetId);
     if (rows.length <= 1) {
       logger.warn('[MasterSheetSync] Sheet is empty or header only.');
       return { success: true, count: 0, units: [] };
