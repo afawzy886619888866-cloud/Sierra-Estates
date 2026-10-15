@@ -1,5 +1,5 @@
 @echo off
-title Sierra Estates - Dual WhatsApp & Workflow Engine
+title Sierra Estates - Dual WhatsApp and Workflow Engine
 echo ========================================================
 echo Starting Sierra Estates Control Plane
 echo Mode: Hourly Batches (10:00 AM - 8:00 PM Cairo)
