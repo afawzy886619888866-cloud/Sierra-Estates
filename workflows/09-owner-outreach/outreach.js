@@ -51,15 +51,19 @@ function formatCairoDate(d = new Date()) {
   }
 }
 
-async function writeSheetDate(phone, dateStr) {
+async function writeSheetDate(phone, rawMobile, dateStr) {
   if (!WRITE_URL || !WRITE_SECRET || DRY_RUN) return;
+  const rows = [];
+  if (rawMobile) rows.push({ phone: rawMobile, date: dateStr });
+  if (phone && phone !== rawMobile) rows.push({ phone, date: dateStr });
+  if (!rows.length) return;
   try {
     const res = await fetch(WRITE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret: WRITE_SECRET,
-        rows: [{ phone, date: dateStr }]
+        rows
       }),
       signal: AbortSignal.timeout(10000),
     });
@@ -301,7 +305,7 @@ async function main() {
     if (!phone) continue; // no usable mobile
     if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
     candidates.push({
-      code, name, phone, avail,
+      code, name, phone, rawMobile: (iMob >= 0 ? (r[iMob] || '') : '').trim(), avail,
       location: (iLoc >= 0 ? (r[iLoc] || '') : '').trim(),
       price: (iPrice >= 0 ? (r[iPrice] || '') : '').trim().replace(/[^\d]/g, ''),
       bedrooms: (iBed >= 0 ? (r[iBed] || '') : '').trim().replace(/[^\d]/g, ''),
@@ -359,7 +363,7 @@ async function main() {
             saveDaily(daily);
             appendLedger({ phone, code: topCand.code, at: new Date().toISOString(), avail: topCand.avail, session: usedSession, worker: 'top', cursor: checkpoint.topCursor });
             console.log(`sent [TOP #${checkpoint.topCursor}] → ${phone} (${topCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-            await writeSheetDate(phone, formatCairoDate());
+            await writeSheetDate(phone, topCand.rawMobile, formatCairoDate());
           } catch (err) {
             summary.failed++;
             console.error(`TOP send failed for ${phone}: ${err.message}`);
@@ -420,7 +424,7 @@ async function main() {
             saveDaily(daily);
             appendLedger({ phone, code: bottomCand.code, at: new Date().toISOString(), avail: bottomCand.avail, session: usedSession, worker: 'bottom', cursor: checkpoint.bottomCursor });
             console.log(`sent [BOTTOM #${checkpoint.bottomCursor}] → ${phone} (${bottomCand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-            await writeSheetDate(phone, formatCairoDate());
+            await writeSheetDate(phone, bottomCand.rawMobile, formatCairoDate());
           } catch (err) {
             summary.failed++;
             console.error(`BOTTOM send failed for ${phone}: ${err.message}`);
