@@ -108,3 +108,22 @@ __tests__/
 !data/Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx
 !owners_rent_tab_separated.tsv
 !owners_rent_with_photos.tsv
+
+# ============================================================================
+# 2026-10-15 gate-8 contract inputs (fixes sierra-estates-static-portal ERRORs)
+# ============================================================================
+# The realty jest suite runs INSIDE the Vercel build (ci-preflight gate 8) and
+# asserts these repo-root inputs, so they must upload past the catch-all
+# .agents / .vscode/ exclusions above:
+#   - __tests__/mcd-workflow-extended.test.ts    -> .agents/workflows/*.md
+#   - __tests__/regression-hardening.test.ts     -> .vscode/*.json
+# gitignore semantics: a re-included file needs every excluded parent
+# negated first, then the sibling children are re-excluded to keep the
+# upload minimal (.agents/workflows is 36KB of .md contract files; the rest
+# of .agents stays local-only, as do non-JSON .vscode artifacts).
+!.agents
+.agents/*
+!.agents/workflows
+!.agents/workflows/**
+!.vscode
+!.vscode/*.json
