@@ -375,6 +375,21 @@ def parse_tsv(path, src_id):
             })
     return recs, stats
 
+def parse_tsv_optional(path, src_id):
+    """Skip-absent wrapper around parse_tsv.
+
+    The owner-direct TSVs were intentionally removed from the repo root
+    (commit 49242e8f — sensitive owner PII; the canonical copy lives in
+    Supabase). Fresh checkouts (incl. Vercel build containers) therefore no
+    longer carry them, so we skip those sources LOUDLY instead of crashing
+    ci-preflight gate 0 with a FileNotFoundError. When the files are present
+    (local dev with restored working copies) behavior is unchanged.
+    """
+    if not os.path.exists(path):
+        print(f'  {src_id}: {path} not present — skipping (removed in 49242e8f; canonical owner data lives in Supabase)')
+        return [], Counter()
+    return parse_tsv(path, src_id)
+
 # ---------------------------------------------------------------- pipeline
 def norm_int(v):
     if v is None: return None
@@ -581,8 +596,8 @@ def sanitize_for_csv(v):
 def main():
     print('Parsing sources...')
     xlsx_recs, xlsx_stats = parse_master_xlsx()
-    tsv1_recs, tsv1_stats = parse_tsv(TSV1, 'owners_tsv1')
-    tsv2_recs, tsv2_stats = parse_tsv(TSV2, 'owners_tsv2')
+    tsv1_recs, tsv1_stats = parse_tsv_optional(TSV1, 'owners_tsv1')
+    tsv2_recs, tsv2_stats = parse_tsv_optional(TSV2, 'owners_tsv2')
     print(f"  master_xlsx: {xlsx_stats['seen']} seen, {len(xlsx_recs)} records ({xlsx_stats['empty_rows']} empty)")
     print(f"  owners_tsv1: {tsv1_stats['seen']} seen, {len(tsv1_recs)} records")
     print(f"  owners_tsv2: {tsv2_stats['seen']} seen, {len(tsv2_recs)} records")
