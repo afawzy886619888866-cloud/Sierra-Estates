@@ -91,7 +91,7 @@ describe('Phase 13 — master inventory data QA (Phase 1 pipeline invariants)', 
         //   12443 — xlsx-only regeneration after the owner-direct TSVs were
         //           removed from the repo root (49242e8f, sensitive owner
         //           PII; canonical copy lives in Supabase). This is the
-        //           fresh-checkout / Vercel-build shape (gate 0 output).
+        //           fresh-checkout / Vercel-build shape (ci-preflight gate 1 output).
         //   13043 — local dev shape with both owner TSVs restored.
         // 49242e8f was a deliberate, verified data change, so the pin moved
         // with it — never silent pipeline drift.
