@@ -96,7 +96,7 @@ catalog:
   tailwind-merge: ^3.3.1
   tailwindcss: ^4.3.3
   tsx: ^4.21.0
-  typescript: 7.0.2
+  typescript: 6.0.3
   vite: ^8.3.1
   wouter: ^3.3.5
   zod: ^3.25.76
@@ -235,7 +235,7 @@ overrides:
   dompurify: '>=3.4.13'
   nanoid: '>=3.3.17'
   undici: '>=6.28.0 <7'
-  typescript: 7.0.2
+  typescript: 6.0.3
   tar: 7.5.22
   'tar@6': 7.5.22
   'tar@^6': 7.5.22
