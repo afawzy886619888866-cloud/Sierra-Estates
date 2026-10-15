@@ -296,14 +296,17 @@ async function schedulerTick() {
     const cairoFmt = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Cairo',
       hour: 'numeric',
+      minute: 'numeric',
       hour12: false,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
     }).formatToParts(new Date());
     const cairoHour = parseInt(cairoFmt.find((p) => p.type === 'hour')?.value || '0', 10);
+    const cairoMin = parseInt(cairoFmt.find((p) => p.type === 'minute')?.value || '0', 10);
     const cairoDate = `${cairoFmt.find((p) => p.type === 'year')?.value}-${cairoFmt.find((p) => p.type === 'month')?.value}-${cairoFmt.find((p) => p.type === 'day')?.value}`;
-    const hourKey = `${cairoDate}-${cairoHour}`;
+    const slotMin = cairoMin < 30 ? '00' : '30';
+    const hourKey = `${cairoDate}-${cairoHour}:${slotMin}`;
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
@@ -312,12 +315,12 @@ async function schedulerTick() {
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey
     ) {
-      log(`hourly active window match: Cairo hour ${cairoHour}:00 (${hourKey}) — queuing batch`);
+      log(`30-minute active slot match: Cairo time ${cairoHour}:${slotMin} (${hourKey}) — queuing batch`);
       lastFiredHour.set('owner-outreach', hourKey);
-      manualQueue.set('owner-outreach', 'hourly-window');
+      manualQueue.set('owner-outreach', '30m-window');
     }
   } catch (err) {
-    log(`hourly window check failed: ${err.message}`);
+    log(`30m window check failed: ${err.message}`);
   }
 
   const now = new Date();
