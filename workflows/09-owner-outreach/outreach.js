@@ -114,22 +114,28 @@ const summary = {
 function loadCheckpoint(totalCount) {
   try {
     const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
-    if (typeof cp.topCursor === 'number' && typeof cp.bottomCursor === 'number') {
+    if (typeof cp.cursor === 'number' || typeof cp.topCursor === 'number') {
+      if (typeof cp.cursor !== 'number') {
+        cp.cursor = cp.topCursor || 0;
+      }
+      if (typeof cp.activeLineIndex !== 'number') {
+        cp.activeLineIndex = 0;
+      }
       if (totalCount > (cp.totalCount || 0)) {
-        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows — extending bottomCursor to ${totalCount - 1}`);
-        cp.bottomCursor = totalCount - 1;
+        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
         cp.totalCount = totalCount;
-        cp.metInTheMiddle = false;
+        cp.completed = false;
         saveCheckpoint(cp);
       }
       return cp;
     }
   } catch { /* first run */ }
   return {
+    cursor: 0,
     topCursor: 0,
-    bottomCursor: Math.max(0, totalCount - 1),
     totalCount,
-    metInTheMiddle: false,
+    activeLineIndex: 0,
+    completed: false,
     updatedAt: new Date().toISOString(),
   };
 }
