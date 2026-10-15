@@ -42,12 +42,38 @@ const HEADERS = [
 
 function getOrCreateMasterSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(MASTER_TAB_NAME);
-  if (!sheet) {
-    sheet = ss.getActiveSheet();
-    sheet.setName(MASTER_TAB_NAME);
-  }
+  // Look for target tab GID 1127958606 or MASTER_TAB_NAME or active sheet
+  let sheet = ss.getSheets().find(s => s.getSheetId() === 1127958606)
+           || ss.getSheetByName(MASTER_TAB_NAME)
+           || ss.getActiveSheet();
   return sheet;
+}
+
+/**
+ * 1-Click Import of the 1,503 new verified master rows directly from GitHub into the sheet
+ */
+function importNewMasterRows() {
+  const sheet = getOrCreateMasterSheet();
+  const csvUrl = "https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/data/Online_Sheet_New_Rows_Only.csv";
+  const response = UrlFetchApp.fetch(csvUrl);
+  const csvData = Utilities.parseCsv(response.getContentText("UTF-8"));
+  
+  const rowsToAppend = csvData.slice(1);
+  if (!rowsToAppend.length) {
+    Logger.log("No rows to append.");
+    return { ok: false, message: "No rows found in CSV." };
+  }
+  
+  const startRow = sheet.getLastRow() + 1;
+  const numRows = rowsToAppend.length;
+  const numCols = rowsToAppend[0].length;
+  
+  sheet.getRange(startRow, 1, numRows, numCols).setValues(rowsToAppend);
+  // Ensure Mobile column (col 5) is formatted as Plain Text
+  sheet.getRange(startRow, 5, numRows, 1).setNumberFormat("@");
+  
+  Logger.log("Successfully appended " + numRows + " new master rows! Total sheet rows: " + sheet.getLastRow());
+  return { ok: true, appended: numRows, totalRows: sheet.getLastRow() };
 }
 
 /**
