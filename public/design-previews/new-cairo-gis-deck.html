@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sierra Estates — GIS Spatial Intelligence &amp; Command Deck</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@400;500;600&amp;family=Outfit:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-container": "#5b4200",
+            "on-tertiary-fixed": "#001c3b",
+            "on-secondary": "#213146",
+            "on-error": "#690005",
+            "muted-platinum": "#94A3B8",
+            "primary-fixed-dim": "#f3bf4a",
+            "on-primary-fixed": "#261900",
+            "outline": "#9b8f7c",
+            "boundary-hairline": "rgba(223, 173, 58, 0.2)",
+            "error": "#ffb4ab",
+            "surface-container-lowest": "#110e07",
+            "warm-gold-subtle": "#E9C176",
+            "on-tertiary": "#003060",
+            "on-secondary-fixed": "#0a1c30",
+            "primary-container": "#dfad3a",
+            "primary-fixed": "#ffdea1",
+            "surface-variant": "#39342b",
+            "secondary-fixed-dim": "#b6c8e2",
+            "champagne-gold": "#DFAD3A",
+            "inverse-primary": "#795900",
+            "secondary-fixed": "#d2e4ff",
+            "on-surface": "#ebe1d4",
+            "surface-container": "#241f17",
+            "surface-container-low": "#1f1b13",
+            "on-surface-variant": "#d2c5af",
+            "on-secondary-fixed-variant": "#37485e",
+            "secondary": "#b6c8e2",
+            "on-secondary-container": "#a5b6d0",
+            "on-error-container": "#ffdad6",
+            "surface-bright": "#3e382f",
+            "primary": "#fdc853",
+            "on-primary-fixed-variant": "#5c4300",
+            "tertiary": "#b7d1ff",
+            "secondary-container": "#37485e",
+            "tertiary-fixed": "#d5e3ff",
+            "surface": "#17130b",
+            "surface-dim": "#17130b",
+            "error-container": "#93000a",
+            "midnight-foundation": "#071523",
+            "tertiary-container": "#86b6ff",
+            "surface-container-high": "#2e2921",
+            "on-tertiary-fixed-variant": "#004787",
+            "emerald-growth": "#10B981",
+            "background": "#17130b",
+            "tertiary-fixed-dim": "#a7c8ff",
+            "on-background": "#ebe1d4",
+            "on-tertiary-container": "#004686",
+            "surface-container-highest": "#39342b",
+            "inverse-surface": "#ebe1d4",
+            "outline-variant": "#4f4635",
+            "inverse-on-surface": "#353027",
+            "surface-tint": "#f3bf4a",
+            "on-primary": "#402d00",
+            "crisp-snow": "#F8FAFC",
+            "abyssal-surface": "#0D1F33"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "gutter": "1.5rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2.5rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "label-ui": ["Plus Jakarta Sans"],
+            "headline-sm": ["Outfit"],
+            "headline-md": ["Outfit"],
+            "headline-lg": ["Outfit"],
+            "body-md": ["Manrope"],
+            "body-lg": ["Manrope"],
+            "label-mono": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "label-ui": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+      font-size: 19px;
+      line-height: 1;
+      display: inline-block;
+    }
+    /* Subtle GIS radar pulse animations */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      50% { transform: scale(1.4); opacity: 0.2; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .gis-beacon-pulse {
+      animation: pulse-ring 2.8s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+    }
+    /* Custom blueprint grid */
+    .blueprint-grid {
+      background-size: 48px 48px;
+      background-image: 
+        linear-gradient(to right, rgba(223, 173, 58, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(223, 173, 58, 0.04) 1px, transparent 1px);
+    }
+    /* Scrollbar styling for intelligence drawer */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #071523;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(223, 173, 58, 0.25);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="bg-midnight-foundation text-on-surface antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-champagne-gold selection:text-midnight-foundation">
+<!-- ========================================================================= -->
+<!-- TopNavBar (Shared Component JSON Blueprint Compliant)                     -->
+<!-- ========================================================================= -->
+<header class="docked full-width top-0 sticky z-50 flex justify-between items-center w-full px-gutter py-space-sm bg-surface dark:bg-surface border-b border-boundary-hairline shadow-sm dark:shadow-none">
+<!-- Brand / Monogram Anchor -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-sm cursor-pointer group">
+<div class="w-8 h-8 rounded-lg border border-boundary-hairline bg-abyssal-surface flex items-center justify-center transition-all duration-300 ease-out group-hover:border-warm-gold-subtle">
+<svg class="w-5 h-5 text-champagne-gold" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2" stroke-linejoin="round"></polygon>
+<polyline points="2 17 12 22 22 17" stroke-linejoin="round"></polyline>
+<polyline points="2 12 12 17 22 12" stroke-linejoin="round"></polyline>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md tracking-tight uppercase text-primary dark:text-primary leading-none">Sierra Estates</span>
+<span class="text-label-mono font-label-mono text-muted-platinum tracking-widest text-[9px] uppercase mt-0.5">Golden Square Intelligence</span>
+</div>
+</div>
+<!-- Live Coordinates Badge -->
+<div class="hidden xl:flex items-center gap-2 pl-4 ml-2 border-l border-boundary-hairline text-label-mono font-label-mono text-muted-platinum text-[11px]">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-growth animate-pulse"></span>
+<span>NEW CAIRO: 30.0131° N, 31.4989° E</span>
+</div>
+</div>
+<!-- Center Navigation Links -->
+<nav class="hidden md:flex items-center gap-space-lg">
+<!-- Active item: GIS Spatial Map -->
+<a class="text-primary dark:text-primary border-b border-primary pb-1 font-label-ui text-label-ui transition-all duration-300 ease-out active:scale-95" href="#gis-map">
+        GIS Spatial Map
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface transition-colors font-label-ui text-label-ui hover:border-warm-gold-subtle hover:text-primary dark:hover:text-primary transition-all duration-300 ease-out active:scale-95" href="#intelligence">
+        Golden Square Intelligence
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface transition-colors font-label-ui text-label-ui hover:border-warm-gold-subtle hover:text-primary dark:hover:text-primary transition-all duration-300 ease-out active:scale-95" href="#yields">
+        Market Yields
+      </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface transition-colors font-label-ui text-label-ui hover:border-warm-gold-subtle hover:text-primary dark:hover:text-primary transition-all duration-300 ease-out active:scale-95" href="#portfolio">
+        Private Portfolio
+      </a>
+</nav>
+<!-- Trailing Actions Cluster -->
+<div class="flex items-center gap-3">
+<!-- Trailing Icon Actions -->
+<div class="hidden sm:flex items-center gap-1 border-r border-boundary-hairline pr-3 mr-1">
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors transition-all duration-300 ease-out active:scale-95" title="Layers">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors transition-all duration-300 ease-out active:scale-95" title="Radar Alerts">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors transition-all duration-300 ease-out active:scale-95" title="GIS Calibration">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Secondary Action -->
+<button class="hidden lg:inline-flex items-center px-3 py-1.5 rounded-lg border border-boundary-hairline text-label-ui font-label-ui text-on-surface hover:border-warm-gold-subtle hover:text-primary transition-all duration-300 ease-out active:scale-95">
+        Contact Desk
+      </button>
+<!-- Primary Action CTA -->
+<button class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-champagne-gold text-midnight-foundation text-label-ui font-label-ui font-semibold shadow-sm hover:bg-warm-gold-subtle transition-all duration-300 ease-out active:scale-95">
+<span class="material-symbols-outlined text-[17px] font-bold" data-icon="lock">lock</span>
+        Request Private Access
+      </button>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- Main Command Deck Canvas: 58% Map Viewport & 42% Intelligence Drawer      -->
+<!-- ========================================================================= -->
+<main class="flex-1 flex flex-col lg:flex-row w-full h-[calc(100vh-57px)] overflow-hidden bg-midnight-foundation relative">
+<!-- LEFT: GIS Architectural Map Canvas (58%) -->
+<section class="relative w-full lg:w-[58%] h-[512px] lg:h-full bg-midnight-foundation border-r border-boundary-hairline flex flex-col overflow-hidden blueprint-grid"><!-- Masterplan Imagery Viewport with Multi-Edition Layering -->
+<div class="relative w-full h-full flex-1 overflow-hidden select-none bg-midnight-foundation" id="gis-viewport-canvas">
+<!-- Base Map Layer 1: Dark Nocturnal (Arabic Edition) - Default Active -->
+<img alt="Masterplan Map - Dark Nocturnal Arabic Edition" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out z-0 opacity-100" id="map-layer-dark-ar" src="https://lh3.googleusercontent.com/aida/AEtjO1UWDEwHa81LMHPw0ZROKfkCQGhU9L4dyIXlmHMkqjSwb5GIGKcUcgY2wMjoaqnNQxBmqNuQP3sv3SwEUEn9SCA4yGBxmH4XHlqWq_41So5MKjIVTdNTaA8n6OO-c4oo615Z1eTdohElRHMFn4GGQoaG7_AMGqYw0eLao_e2_GtIbYBqlkJ6ChFash14OwDDzHZfR4OgLMQnktxOHH5B9U9VYea7DC3Bdj-neJDCO0N-2bWiS38_QRGejQv6"/>
+<!-- Base Map Layer 2: Dark Nocturnal (English Edition) -->
+<img alt="Masterplan Map - Dark Nocturnal English Edition" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out z-0 opacity-0 pointer-events-none" id="map-layer-dark-en" src="https://lh3.googleusercontent.com/aida/AEtjO1WS13dEZLdxtsVPFsMN-qQCUjeyBD6sPKeJkqtlxIjLxyGmKqg5Sg9QoYXq02mqzzm15RbGHDmmKzVnYAR6AfXkO_XrEjGH4xCPySzMbTUI_JpESpzGKAtKqoiXsRDsxzz6UYc_nKC8L4tgcVCSlzCWr4jjE7gMxt13DFfYcmceNwFPrqq7wVz7oCrp3H1TklN5pxhKEyLBX7GUkVBiqVO6q6WqzcZrWgQK12FHg-QJ1sBPH7TDXuiRMV0"/>
+<!-- Base Map Layer 3: Light Alexandria Editorial Edition -->
+<img alt="Masterplan Map - Light Alexandria Editorial Edition" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out z-0 opacity-0 pointer-events-none" id="map-layer-light" src="https://lh3.googleusercontent.com/aida/AEtjO1XhRLIea1lLVRx1BHUkRJejp5S9XM3r6tf8vaOxbmXKxMCzdG48Ghxw7rYcN-TUptLgmdMXsgrn0VuR-scqMK7YSxXtbQT8pjRpWYzex0DBpE1iq69sx30YESfVdEbGPFBLjfWLcHp3ydWGkvXvOuPlWqtia8VIIOPzvvax2pG6pJackMOsDtC2jziDy5kLhawpFKwtTy0tMlFjRQVS8ul9Syh-RreMUVHo2CcmGVY18pnUOZCXyf32fVbx"/>
+<!-- Subtle Vignette & Hairline Calibration Grid Overlay -->
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-midnight-foundation/80 via-transparent to-midnight-foundation/50 z-10"></div>
+<div class="absolute inset-0 pointer-events-none blueprint-grid opacity-25 z-10"></div>
+<!-- ========================================================================= -->
+<!-- TOP FLOATING HUD TOOLBAR: Edition Switcher, Proximity Zoom & Layer Toggles -->
+<!-- ========================================================================= -->
+<div class="absolute top-3 left-3 right-3 z-30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pointer-events-none">
+<!-- Masterplan Edition Switcher Tabs -->
+<div class="pointer-events-auto flex items-center p-1 rounded-full bg-abyssal-surface/90 backdrop-blur-md border border-boundary-hairline shadow-2xl">
+<button class="px-2.5 sm:px-3 py-1 rounded-full text-label-ui font-label-ui text-xs bg-champagne-gold text-midnight-foundation font-semibold shadow-sm flex items-center gap-1.5 transition-all" onclick="document.getElementById('map-layer-dark-ar').classList.remove('opacity-0','pointer-events-none'); document.getElementById('map-layer-dark-en').classList.add('opacity-0','pointer-events-none'); document.getElementById('map-layer-light').classList.add('opacity-0','pointer-events-none'); this.classList.add('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.classList.remove('text-on-surface-variant'); this.nextElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.nextElementSibling.classList.add('text-on-surface-variant'); this.nextElementSibling.nextElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.nextElementSibling.nextElementSibling.classList.add('text-on-surface-variant');">
+<span class="material-symbols-outlined text-[14px]">dark_mode</span>
+<span>Dark (العربية)</span>
+</button>
+<button class="px-2.5 sm:px-3 py-1 rounded-full text-label-ui font-label-ui text-xs text-on-surface-variant hover:text-primary flex items-center gap-1.5 transition-colors" onclick="document.getElementById('map-layer-dark-en').classList.remove('opacity-0','pointer-events-none'); document.getElementById('map-layer-dark-ar').classList.add('opacity-0','pointer-events-none'); document.getElementById('map-layer-light').classList.add('opacity-0','pointer-events-none'); this.classList.add('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.classList.remove('text-on-surface-variant'); this.previousElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.previousElementSibling.classList.add('text-on-surface-variant'); this.nextElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.nextElementSibling.classList.add('text-on-surface-variant');">
+<span class="material-symbols-outlined text-[14px]">translate</span>
+<span>Dark (English)</span>
+</button>
+<button class="px-2.5 sm:px-3 py-1 rounded-full text-label-ui font-label-ui text-xs text-on-surface-variant hover:text-primary flex items-center gap-1.5 transition-colors" onclick="document.getElementById('map-layer-light').classList.remove('opacity-0','pointer-events-none'); document.getElementById('map-layer-dark-ar').classList.add('opacity-0','pointer-events-none'); document.getElementById('map-layer-dark-en').classList.add('opacity-0','pointer-events-none'); this.classList.add('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.classList.remove('text-on-surface-variant'); this.previousElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.previousElementSibling.classList.add('text-on-surface-variant'); this.previousElementSibling.previousElementSibling.classList.remove('bg-champagne-gold','text-midnight-foundation','font-semibold'); this.previousElementSibling.previousElementSibling.classList.add('text-on-surface-variant');">
+<span class="material-symbols-outlined text-[14px]">wb_sunny</span>
+<span>Light Editorial</span>
+</button>
+</div>
+<!-- Proximity Zoom Level Pills -->
+<div class="pointer-events-auto hidden md:flex items-center p-1 rounded-full bg-abyssal-surface/90 backdrop-blur-md border border-boundary-hairline shadow-lg">
+<button class="px-2.5 py-1 rounded-full text-label-mono font-label-mono text-[11px] text-muted-platinum hover:text-on-surface transition-colors">
+        1x Regional
+      </button>
+<button class="px-2.5 py-1 rounded-full text-label-mono font-label-mono text-[11px] bg-surface-container-high text-champagne-gold font-semibold border border-boundary-hairline shadow-sm">
+        2.5x Golden Square
+      </button>
+<button class="px-2.5 py-1 rounded-full text-label-mono font-label-mono text-[11px] text-muted-platinum hover:text-on-surface transition-colors">
+        5x Cadastral
+      </button>
+</div>
+</div>
+<!-- Secondary Quick Toggles Pill Bar (Left under Top Bar) -->
+<div class="absolute top-16 left-3 z-30 hidden sm:flex items-center gap-1.5 p-1 rounded-full bg-midnight-foundation/80 backdrop-blur-md border border-boundary-hairline text-label-ui text-xs">
+<button class="px-2 py-0.5 rounded-full bg-emerald-growth/20 text-emerald-growth border border-emerald-growth/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-growth animate-pulse"></span>
+<span>Compound Boundaries</span>
+</button>
+<button class="px-2 py-0.5 rounded-full text-muted-platinum hover:text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[13px]">villa</span>
+<span>18 Units Live</span>
+</button>
+<button class="px-2 py-0.5 rounded-full text-muted-platinum hover:text-on-surface flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[13px]">route</span>
+<span>Highways</span>
+</button>
+</div>
+<!-- ========================================================================= -->
+<!-- INTERACTIVE HOTSPOT BEACONS (Aligned with New Cairo Cadastral Coordinates) -->
+<!-- ========================================================================= -->
+<!-- BEACON 1: Swan Lake Residences (Active Focus) -->
+<div class="absolute top-[28%] left-[51%] -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group">
+<div class="absolute inset-0 -m-3 rounded-full bg-champagne-gold/30 gis-beacon-pulse"></div>
+<div class="relative flex flex-col items-center">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-abyssal-surface/95 border-2 border-champagne-gold shadow-2xl backdrop-blur group-hover:scale-105 transition-transform duration-200">
+<span class="w-2 h-2 rounded-full bg-champagne-gold animate-pulse"></span>
+<span class="text-label-mono font-label-mono text-xs font-semibold text-champagne-gold tracking-wider">سوان ليك | Swan Lake</span>
+<span class="px-1 py-0.2 text-[9px] font-bold rounded bg-champagne-gold/20 text-warm-gold-subtle">182k</span>
+</div>
+<div class="w-0.5 h-3 bg-champagne-gold"></div>
+<div class="w-2 h-2 rounded-full bg-champagne-gold ring-4 ring-midnight-foundation"></div>
+</div>
+</div>
+<!-- BEACON 2: SODIC Villette (Highlighted Proximity Anchor) -->
+<div class="absolute top-[58%] left-[58%] -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group">
+<div class="absolute inset-0 -m-2 rounded-full bg-emerald-growth/20 animate-pulse"></div>
+<div class="relative flex flex-col items-center">
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-abyssal-surface/90 border border-emerald-growth/50 group-hover:border-emerald-growth shadow-lg backdrop-blur transition-all">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-growth"></span>
+<span class="text-label-mono font-label-mono text-[11px] font-semibold text-emerald-growth">سوديك فيليت (SODIC)</span>
+<span class="px-1 py-0.2 text-[9px] rounded bg-emerald-growth/20 text-emerald-growth font-bold">18 Units</span>
+</div>
+<div class="w-0.5 h-2.5 bg-emerald-growth"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-growth ring-2 ring-midnight-foundation"></div>
+</div>
+</div>
+<!-- BEACON 3: AUC Central Core (American University in Cairo) -->
+<div class="absolute top-[39%] left-[48%] -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group">
+<div class="flex flex-col items-center">
+<div class="px-2 py-0.5 rounded-full bg-abyssal-surface/90 border border-champagne-gold/40 text-[10px] font-label-mono text-champagne-gold backdrop-blur flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-[13px]">school</span>
+<span>AUC • الجامعة الأمريكية</span>
+</div>
+<div class="w-0.5 h-2 bg-champagne-gold/40"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-champagne-gold ring-2 ring-midnight-foundation"></div>
+</div>
+</div>
+<!-- BEACON 4: Mivida (Emaar) -->
+<div class="absolute top-[46%] left-[62%] -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group">
+<div class="flex flex-col items-center">
+<div class="px-2 py-0.5 rounded-full bg-abyssal-surface/85 border border-boundary-hairline group-hover:border-champagne-gold text-[10px] font-label-mono text-on-surface backdrop-blur shadow-sm">
+<span>ميفيدا | Mivida</span>
+</div>
+<div class="w-0.5 h-2 bg-warm-gold-subtle/50"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-warm-gold-subtle ring-2 ring-midnight-foundation"></div>
+</div>
+</div>
+<!-- BEACON 5: Katameya Dunes & Golf -->
+<div class="absolute top-[72%] left-[68%] -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group hidden sm:block">
+<div class="flex flex-col items-center">
+<div class="px-2 py-0.5 rounded-full bg-abyssal-surface/85 border border-boundary-hairline text-[10px] font-label-mono text-muted-platinum backdrop-blur shadow-sm">
+<span>قطامية ديونز | Dunes</span>
+</div>
+<div class="w-0.5 h-2 bg-secondary/50"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-secondary ring-2 ring-midnight-foundation"></div>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- FLOATING LIVE INVENTORY PREVIEW CARD (SODIC Villette Overlay)             -->
+<!-- ========================================================================= -->
+<div class="absolute bottom-16 right-3 sm:right-4 z-30 w-72 sm:w-80 rounded-xl bg-abyssal-surface/90 backdrop-blur-md border border-boundary-hairline shadow-2xl p-3 flex flex-col gap-2 transition-all hover:border-champagne-gold/60">
+<div class="flex items-center justify-between pb-1.5 border-b border-boundary-hairline/60">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-growth animate-pulse"></span>
+<h4 class="text-label-ui font-label-ui text-xs font-semibold text-on-surface">SODIC VILLETTE — REGISTRY</h4>
+</div>
+<span class="px-1.5 py-0.2 rounded bg-emerald-growth/20 text-emerald-growth font-label-mono text-[9px] font-bold">18 UNITS</span>
+</div>
+<div class="space-y-1 text-label-mono text-[11px]">
+<div class="flex items-center justify-between py-0.5 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-champagne-gold font-medium">VLT-VL-014</span>
+<span>Villa 450m²</span>
+<span class="text-right font-semibold text-on-surface">32.8M EGP</span>
+</div>
+<div class="flex items-center justify-between py-0.5 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-champagne-gold font-medium">VLT-TH-203</span>
+<span>Town 280m²</span>
+<span class="text-right font-semibold text-on-surface">19.8M EGP</span>
+</div>
+<div class="flex items-center justify-between py-0.5 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-champagne-gold font-medium">VLT-SK-108</span>
+<span>Sky Pent 320m²</span>
+<span class="text-right font-semibold text-on-surface">24.2M EGP</span>
+</div>
+</div>
+<div class="pt-1.5 border-t border-boundary-hairline/60 flex items-center justify-between gap-2">
+<button class="flex-1 py-1 rounded bg-midnight-foundation border border-boundary-hairline hover:border-warm-gold-subtle text-label-ui text-[11px] text-muted-platinum hover:text-on-surface transition-all flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[13px]">view_in_ar</span>
+<span>360° Inspection</span>
+</button>
+<button class="flex-1 py-1 rounded bg-champagne-gold text-midnight-foundation font-label-ui text-[11px] font-semibold hover:bg-warm-gold-subtle transition-all flex items-center justify-center gap-1">
+<span>View Units</span>
+<span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- CARTOGRAPHIC TELEMETRY & CONTROLS HUD (Bottom Bar)                        -->
+<!-- ========================================================================= -->
+<!-- Zoom and Projection Controls (Bottom Left) -->
+<div class="absolute bottom-3 left-3 z-30 flex items-center gap-2 pointer-events-none">
+<div class="pointer-events-auto flex items-center bg-abyssal-surface/90 backdrop-blur-md border border-boundary-hairline rounded-lg p-0.5 shadow-lg">
+<button class="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center text-on-surface hover:text-champagne-gold transition-colors" title="Zoom In">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<div class="w-[1px] h-4 bg-boundary-hairline"></div>
+<button class="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center text-on-surface hover:text-champagne-gold transition-colors" title="Zoom Out">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<div class="w-[1px] h-4 bg-boundary-hairline"></div>
+<button class="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center text-champagne-gold transition-colors" title="Center Golden Square">
+<span class="material-symbols-outlined text-[16px]">filter_center_focus</span>
+</button>
+<div class="w-[1px] h-4 bg-boundary-hairline"></div>
+<button class="w-7 h-7 rounded hover:bg-surface-container flex items-center justify-center text-on-surface hover:text-champagne-gold transition-colors" title="Expand Fullscreen">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+</button>
+</div>
+<!-- Metric Datum & Coordinates Telemetry -->
+<div class="pointer-events-auto hidden sm:flex items-center gap-2 px-2.5 py-1 bg-abyssal-surface/85 backdrop-blur-md border border-boundary-hairline rounded-lg text-[10px] font-label-mono text-muted-platinum shadow-md">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-growth animate-pulse"></span>
+<span class="text-champagne-gold font-semibold">GIS 30.0131° N, 31.4989° E</span>
+</div>
+<span class="text-boundary-hairline">|</span>
+<span>SCALE 1:25,000</span>
+<span class="w-6 h-[2px] bg-champagne-gold inline-block"></span>
+<span>500m</span>
+</div>
+</div>
+<!-- Minimalist Compass Rose (Bottom Right corner) -->
+<div class="absolute bottom-3 right-3 z-20 hidden md:flex items-center gap-1 px-2 py-0.5 rounded bg-midnight-foundation/80 backdrop-blur border border-boundary-hairline text-[9px] font-label-mono text-muted-platinum pointer-events-none">
+<span class="text-champagne-gold font-bold">▲ N</span>
+<span>WGS84 CAIRO DATUM</span>
+</div>
+</div></section>
+<!-- RIGHT: Intelligence & Discovery Drawer (42%) -->
+<section class="w-full lg:w-[42%] h-[512px] lg:h-full bg-abyssal-surface flex flex-col overflow-y-auto border-t lg:border-t-0 border-boundary-hairline relative">
+<!-- Sticky Filter & Search Control Panel -->
+<div class="sticky top-0 z-30 bg-abyssal-surface/95 backdrop-blur-md px-gutter pt-space-md pb-space-sm border-b border-boundary-hairline">
+<!-- Live Search Bar -->
+<div class="relative w-full mb-3">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-platinum">
+<span class="material-symbols-outlined text-[19px]" data-icon="search">search</span>
+</span>
+<input class="w-full pl-9 pr-24 py-2 bg-midnight-foundation/90 border border-boundary-hairline rounded-lg text-label-ui font-label-ui text-on-surface placeholder:text-muted-platinum/60 focus:outline-none focus:border-champagne-gold focus:ring-1 focus:ring-champagne-gold transition-all" placeholder="Search compound, developer, or unit ID..." type="text" value="Swan Lake Residences"/>
+<div class="absolute inset-y-0 right-0 flex items-center pr-2">
+<span class="text-label-mono font-label-mono text-[10px] text-muted-platinum bg-abyssal-surface px-1.5 py-0.5 rounded border border-boundary-hairline">⌘K</span>
+</div>
+</div>
+<!-- Zone Pills & Sorting Row -->
+<div class="flex items-center justify-between gap-2">
+<!-- Zone Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+<button class="px-2.5 py-1 rounded-full text-label-ui font-label-ui text-xs text-muted-platinum hover:text-on-surface bg-midnight-foundation/60 border border-boundary-hairline whitespace-nowrap transition-colors">
+              All Zones
+            </button>
+<button class="px-2.5 py-1 rounded-full text-label-ui font-label-ui text-xs bg-champagne-gold text-midnight-foundation font-semibold border border-champagne-gold whitespace-nowrap shadow-sm">
+              Golden Square
+            </button>
+<button class="px-2.5 py-1 rounded-full text-label-ui font-label-ui text-xs text-muted-platinum hover:text-on-surface bg-midnight-foundation/60 border border-boundary-hairline whitespace-nowrap transition-colors">
+              South 90th
+            </button>
+<button class="px-2.5 py-1 rounded-full text-label-ui font-label-ui text-xs text-muted-platinum hover:text-on-surface bg-midnight-foundation/60 border border-boundary-hairline whitespace-nowrap transition-colors">
+              New Capital Link
+            </button>
+</div>
+<!-- Sort Select -->
+<div class="flex items-center gap-1 shrink-0">
+<button class="flex items-center gap-1 px-2 py-1 rounded bg-midnight-foundation/80 border border-boundary-hairline text-label-mono font-label-mono text-xs text-warm-gold-subtle hover:border-warm-gold-subtle transition-all">
+<span>ROI / Yield ↓</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Intelligence Content Stream -->
+<div class="p-gutter space-y-space-md">
+<!-- ========================================================================= -->
+<!-- ACTIVE COMPOUND INSPECTION CARD (Swan Lake Residences)                    -->
+<!-- ========================================================================= -->
+<div class="p-space-md rounded-xl bg-midnight-foundation/80 border border-boundary-hairline shadow-md relative overflow-hidden group">
+<!-- Subtle Top Gradient Highlight -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-champagne-gold to-transparent opacity-75"></div>
+<!-- Compound Header & Status -->
+<div class="flex items-start justify-between gap-3 mb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-mono font-semibold bg-emerald-growth/15 text-emerald-growth border border-emerald-growth/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-growth"></span>
+                  Verified Compound
+                </span>
+<span class="text-label-mono font-label-mono text-[11px] text-muted-platinum">
+                  Hassan Allam Properties
+                </span>
+</div>
+<h2 class="text-headline-md font-headline-md text-on-surface tracking-tight">
+                Swan Lake Residences
+              </h2>
+<p class="text-label-ui font-label-ui text-muted-platinum flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[15px] text-champagne-gold" data-icon="location_on">location_on</span>
+                Golden Square, Fifth Settlement, New Cairo
+              </p>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase tracking-wider">Status</span>
+<span class="text-label-mono font-label-mono text-xs font-semibold text-warm-gold-subtle mt-0.5 text-right">
+                Prime Phase 3 Re-sale &amp; Direct
+              </span>
+</div>
+</div>
+<!-- Masterplan Gallery Showcase Image -->
+<div class="relative w-full h-44 rounded-lg overflow-hidden mb-4 border border-boundary-hairline">
+<img class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 ease-out" data-alt="A striking ultra-luxury modern architectural villa in Swan Lake Residences New Cairo at dusk. The minimalist geometric stone residence features double-height floor-to-ceiling glass facades overlooking a private turquoise infinity pool and immaculate desert landscaped gardens. Warm architectural cove lighting contrasts softly with deep midnight blue twilight skies. Captured in an elegant editorial architectural photography style with rich gold and deep navy ambient tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6o1NYCN7qHu5aYnld5kmqoaNz46wCDZg7yXgFdOgeeLV5V3aohT4TK_59RGXGEnUpX25OayG3gmO_LbNF4YVQz0GeeT3Bmvy552rWH01pisVeblQvIr1MHz2U2vE5uCqRp81GnLwW_ipB7Kqz5xhrIwvH9JKIO5MVDCcvPxDfS_nbkMsqv7fm3ItNWCPTVRCqcQ2fMSOMUMiv06pv-xiTmVB3knLQW9pA0c4ZSS5H_UQv7EHJMuosjZl7Xko5OZLX1S_XiCjAwrBz"/>
+<div class="absolute inset-0 bg-gradient-to-t from-midnight-foundation via-transparent to-transparent opacity-80"></div>
+<!-- Floating Image Badges -->
+<div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded bg-abyssal-surface/80 backdrop-blur border border-boundary-hairline text-[10px] font-label-mono text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-champagne-gold" data-icon="photo_camera">photo_camera</span>
+                18 Architectural Assets
+              </span>
+</div>
+<div class="absolute bottom-2.5 right-2.5">
+<span class="px-2 py-0.5 rounded bg-midnight-foundation/90 backdrop-blur border border-boundary-hairline text-label-mono font-label-mono text-xs text-champagne-gold">
+                Masterplan Area: 438 Acres
+              </span>
+</div>
+</div>
+<!-- Compound Quantitative Metrics Bento -->
+<div class="grid grid-cols-3 gap-2 p-3 rounded-lg bg-abyssal-surface/90 border border-boundary-hairline mb-4">
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">3-Yr Projected ROI</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-emerald-growth" data-icon="trending_up">trending_up</span>
+<span class="text-headline-sm font-headline-sm font-semibold text-emerald-growth">+42.5%</span>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">Annual Rental Yield</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="text-headline-sm font-headline-sm font-semibold text-champagne-gold">8.2%</span>
+<span class="text-[10px] font-label-mono text-muted-platinum">Net</span>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">Avg Compound Benchmark</span>
+<div class="mt-0.5">
+<span class="text-headline-sm font-headline-sm font-semibold text-on-surface">182.5k</span>
+<span class="text-[10px] font-label-mono text-muted-platinum">EGP/m²</span>
+</div>
+</div>
+</div>
+<!-- Key Amenities Bar -->
+<div class="flex items-center justify-between text-[11px] font-label-ui text-muted-platinum border-t border-boundary-hairline pt-3">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warm-gold-subtle" data-icon="pool">pool</span>
+              Swimmable Lagoons
+            </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warm-gold-subtle" data-icon="sports_tennis">sports_tennis</span>
+              Clubhouse &amp; Padel
+            </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warm-gold-subtle" data-icon="shield">shield</span>
+              Tier-1 Surveillance
+            </span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-warm-gold-subtle" data-icon="park">park</span>
+              80% Open Green
+            </span>
+</div>
+</div>
+<!-- Feed Section Header -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<h3 class="text-headline-sm font-headline-sm text-on-surface font-semibold tracking-tight">
+              Verified Private Units
+            </h3>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-champagne-gold text-label-mono font-label-mono text-xs">
+              3 Available
+            </span>
+</div>
+<span class="text-label-mono font-label-mono text-xs text-muted-platinum">
+            Direct Investor Allocation
+          </span>
+</div>
+<!-- ========================================================================= -->
+<!-- UNIT CARD 1: Signature Standalone Villa                                   -->
+<!-- ========================================================================= -->
+<article class="p-space-md rounded-xl bg-midnight-foundation border border-boundary-hairline hover:border-warm-gold-subtle transition-all duration-300 shadow-sm flex flex-col gap-3">
+<div class="flex flex-col sm:flex-row gap-3">
+<!-- Property Image Preview -->
+<div class="relative w-full sm:w-40 h-32 rounded-lg overflow-hidden shrink-0 border border-boundary-hairline">
+<img class="w-full h-full object-cover" data-alt="Modern architectural standalone luxury villa with smooth sand-colored stone facade and expansive bronze-framed glazing in New Cairo Egypt. Sunlit private lagoon courtyard with floating outdoor daybeds and lush desert palms. Quiet Mediterranean modern luxury aesthetic under bright golden hour Egyptian daylight, sharp lines, cinematic architectural rendering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMLNlC5n5nOLNL7n_ROmuNnzY7O7zNJGSoBhZbuitDO9NCtWediAWYX0J4LptwJbP7PaTPoyl86SlvsgqKAENtcmobPUNZgMH1aTjY0CScXseuKKbPiK6ZVKZrNEUCQkq1P6_pjh0u4j_IqiIOjIf0H7VFxZshZxNXNUXKuVx4BoOwCDh-NznOb-esLM-4zUFfIUao8hjgbN7B-IHLZkkyZwoJkAROrg9qxwxe5gd_EkuxVD5Ky_rECCmEkSnvMloqSUtDdhynRyye"/>
+<span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-emerald-growth/90 text-[9px] font-label-mono font-bold text-midnight-foundation uppercase tracking-wider">
+                Title Deed Ready
+              </span>
+</div>
+<!-- Unit Specs & Headline -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-label-mono font-label-mono text-xs text-warm-gold-subtle font-medium">SLR-VIL-902</span>
+<button class="text-muted-platinum hover:text-champagne-gold transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface font-semibold mt-0.5">
+                  Signature Standalone Villa — Type A
+                </h4>
+<p class="text-body-md font-body-md text-muted-platinum text-xs mt-1">
+                  Prime Corner • Unobstructed Lagoon &amp; Clubhouse Vista • Finished by HAP
+                </p>
+</div>
+<!-- Metrics Row -->
+<div class="flex items-center gap-3 text-label-mono font-label-mono text-xs text-on-surface-variant pt-2 border-t border-boundary-hairline/60">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bed">bed</span>
+                  5 Beds
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bathtub">bathtub</span>
+                  6 Baths
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="square_foot">square_foot</span>
+                  520 m² BUA
+                </span>
+</div>
+</div>
+</div>
+<!-- Price & Inspection Action Footer -->
+<div class="flex items-center justify-between pt-2 border-t border-boundary-hairline">
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">Asking Price</span>
+<div class="flex items-baseline gap-1">
+<span class="text-headline-sm font-headline-sm font-bold text-champagne-gold">28,500,000</span>
+<span class="text-label-mono font-label-mono text-xs text-muted-platinum font-semibold">EGP</span>
+</div>
+</div>
+<button class="px-3.5 py-2 rounded-lg bg-champagne-gold text-midnight-foundation font-label-ui text-label-ui font-semibold shadow hover:bg-warm-gold-subtle transition-all duration-300 ease-out active:scale-95 flex items-center gap-1.5">
+<span>Inspect Unit</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- ========================================================================= -->
+<!-- UNIT CARD 2: Sky Penthouse w/ Private Infinity Pool                       -->
+<!-- ========================================================================= -->
+<article class="p-space-md rounded-xl bg-midnight-foundation border border-boundary-hairline hover:border-warm-gold-subtle transition-all duration-300 shadow-sm flex flex-col gap-3">
+<div class="flex flex-col sm:flex-row gap-3">
+<div class="relative w-full sm:w-40 h-32 rounded-lg overflow-hidden shrink-0 border border-boundary-hairline">
+<img class="w-full h-full object-cover" data-alt="A breathtaking luxury penthouse rooftop terrace overlooking New Cairo Golden Square skyline with a glass-edge infinity pool. The terrace features dark granite pavers, minimalist teak outdoor dining furniture, and warm recessed strip lighting along the perimeter. Photographed at golden sunset with warm amber reflections on the water, high architectural fidelity, deep dark shadows and subtle gold tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB3-OMMkFcacdx3xfhdZN4V1n3ZiVw0-asDDs9k-d5CAcM5RsGWuYe4SIejttZi45Hd0Bs8UuSEq8FuegcQdoTvUfaqNQ7Z4UGKCK-COng84YqhSyI2xC8lkLujubC3MjKpe9jZC2pYjnMzfps9BmLDsD2yxesANvHO2uJ8psnbh5TmSLEzlMCOWrqk5qbuOkjCwCbFq8WFNB1PwPbZNgioiwkvY-cNRU2P2RNTgBwuX3OlKuXdjb0lf4_D0nkLiOwEMp7pHE-p-ot"/>
+<span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-abyssal-surface/90 text-champagne-gold text-[9px] font-label-mono font-bold uppercase tracking-wider border border-boundary-hairline">
+                Yield 9.1%
+              </span>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-label-mono font-label-mono text-xs text-warm-gold-subtle font-medium">SLR-PNT-404</span>
+<button class="text-muted-platinum hover:text-champagne-gold transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface font-semibold mt-0.5">
+                  Sky Penthouse w/ Private Infinity Pool
+                </h4>
+<p class="text-body-md font-body-md text-muted-platinum text-xs mt-1">
+                  Double Ceiling Void • 140 m² Private Sky Terrace • Smart Automation
+                </p>
+</div>
+<div class="flex items-center gap-3 text-label-mono font-label-mono text-xs text-on-surface-variant pt-2 border-t border-boundary-hairline/60">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bed">bed</span>
+                  4 Beds
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bathtub">bathtub</span>
+                  4 Baths
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="square_foot">square_foot</span>
+                  340 m² BUA
+                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-boundary-hairline">
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">Asking Price</span>
+<div class="flex items-baseline gap-1">
+<span class="text-headline-sm font-headline-sm font-bold text-champagne-gold">16,800,000</span>
+<span class="text-label-mono font-label-mono text-xs text-muted-platinum font-semibold">EGP</span>
+</div>
+</div>
+<button class="px-3.5 py-2 rounded-lg bg-champagne-gold text-midnight-foundation font-label-ui text-label-ui font-semibold shadow hover:bg-warm-gold-subtle transition-all duration-300 ease-out active:scale-95 flex items-center gap-1.5">
+<span>Inspect Unit</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- ========================================================================= -->
+<!-- UNIT CARD 3: Twin House Garden Suite                                      -->
+<!-- ========================================================================= -->
+<article class="p-space-md rounded-xl bg-midnight-foundation border border-boundary-hairline hover:border-warm-gold-subtle transition-all duration-300 shadow-sm flex flex-col gap-3">
+<div class="flex flex-col sm:flex-row gap-3">
+<div class="relative w-full sm:w-40 h-32 rounded-lg overflow-hidden shrink-0 border border-boundary-hairline">
+<img class="w-full h-full object-cover" data-alt="An elegant modern twin villa with a private manicured Zen garden and outdoor sunken seating area in New Cairo. Large sliding glass doors connect the minimalist interior living area seamlessly to the limestone patio and verdant lawn. Soft ambient dusk illumination with sophisticated warm architectural lighting, high-end residential luxury aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6npoG63Cm5f93b4nWJMIEw3EzhupDIiJsDuYCSqx4DZb2r-ttTgA5dSccim531bCmHrYiH-_nMSfx7fKgLdhwrtdyg-tvZmTvw6jbxKpkBqSHjeY0ehb_jS7ty5_s4tNTxKb7c7TfEGOgpIPVD5vbpS3-1VA2RIS0gtdnoGJ-p1588TKMHfDl70GeSjx0iR9fXib3VwqKHE9Dx36tfPYctoLUkvjaqoivzaJ29ymBYF_OFKJJx7EVR1WTTk2pLctiXcBbPdoSjkc0"/>
+<span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-surface-container-high text-muted-platinum text-[9px] font-label-mono font-semibold uppercase tracking-wider border border-boundary-hairline">
+                Ready to Move
+              </span>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-label-mono font-label-mono text-xs text-warm-gold-subtle font-medium">SLR-TWN-118</span>
+<button class="text-muted-platinum hover:text-champagne-gold transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="bookmark">bookmark</span>
+</button>
+</div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface font-semibold mt-0.5">
+                  Twin House Garden Suite
+                </h4>
+<p class="text-body-md font-body-md text-muted-platinum text-xs mt-1">
+                  180 m² Private Garden • Maid Suite • 2 Underground Covered Garage Slots
+                </p>
+</div>
+<div class="flex items-center gap-3 text-label-mono font-label-mono text-xs text-on-surface-variant pt-2 border-t border-boundary-hairline/60">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bed">bed</span>
+                  3 Beds
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="bathtub">bathtub</span>
+                  4 Baths
+                </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]" data-icon="square_foot">square_foot</span>
+                  280 m² BUA
+                </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-boundary-hairline">
+<div>
+<span class="text-[10px] font-label-mono text-muted-platinum uppercase block">Asking Price</span>
+<div class="flex items-baseline gap-1">
+<span class="text-headline-sm font-headline-sm font-bold text-champagne-gold">14,200,000</span>
+<span class="text-label-mono font-label-mono text-xs text-muted-platinum font-semibold">EGP</span>
+</div>
+</div>
+<button class="px-3.5 py-2 rounded-lg bg-champagne-gold text-midnight-foundation font-label-ui text-label-ui font-semibold shadow hover:bg-warm-gold-subtle transition-all duration-300 ease-out active:scale-95 flex items-center gap-1.5">
+<span>Inspect Unit</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- Command Deck Dossier Request Banner -->
+<div class="p-space-md rounded-xl bg-gradient-to-br from-abyssal-surface to-midnight-foundation border border-champagne-gold/30 flex items-center justify-between gap-3 shadow-lg">
+<div>
+<div class="flex items-center gap-1.5 text-champagne-gold mb-0.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified_user">verified_user</span>
+<span class="text-label-mono font-label-mono text-[11px] font-semibold uppercase tracking-wider">Investor Desk</span>
+</div>
+<p class="text-label-ui font-label-ui text-on-surface text-xs">
+              Request full 28-page Golden Square Yield &amp; Cash Flow Assessment PDF.
+            </p>
+</div>
+<button class="px-3 py-1.5 rounded-lg border border-champagne-gold text-champagne-gold hover:bg-champagne-gold hover:text-midnight-foundation font-label-ui text-label-ui text-xs font-semibold whitespace-nowrap transition-all duration-300 ease-out active:scale-95">
+            Download Dossier
+          </button>
+</div>
+</div>
+<!-- Drawer Sub-Footer / Confidentiality -->
+<footer class="mt-auto px-gutter py-3 bg-midnight-foundation border-t border-boundary-hairline flex items-center justify-between text-muted-platinum text-[11px] font-label-mono">
+<span>© SIERRA ESTATES GIS v4.2</span>
+<span>EGP / USD INDEXED LIVE</span>
+</footer>
+</section>
+</main>
+</body></html>
