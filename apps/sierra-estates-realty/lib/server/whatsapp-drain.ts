@@ -107,7 +107,52 @@ export interface WhatsAppDrainSummary {
   timestamp: string;
 }
 
+export const STALE_SENDING_TIMEOUT_MS = 10 * 60 * 1000;
+
+/**
+ * Recovers jobs stuck in 'sending' state due to container restart, timeout, or crash.
+ * If attempts >= 3, moves to 'failed'; otherwise resets to 'queued' so they can be dispatched.
+ */
+export async function recoverStaleSendingJobs(staleTimeoutMs = STALE_SENDING_TIMEOUT_MS): Promise<number> {
+  const staleThresholdIso = new Date(Date.now() - staleTimeoutMs).toISOString();
+  try {
+    const sendingJobs = await listRecords<Record<string, any>>('whatsapp_queue', {
+      where: [
+        { column: 'status', value: 'sending' },
+        { column: 'updatedAt', op: 'lte', value: staleThresholdIso },
+      ],
+      limit: 50,
+    });
+
+    let recovered = 0;
+    for (const job of sendingJobs) {
+      const attempts = Number(job.attempts || 0);
+      if (attempts >= 3) {
+        await updateRecord('whatsapp_queue', job.id, {
+          status: 'failed',
+          errorMessage: 'Stale sending timeout exceeded (3 attempts reached)',
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        await updateRecord('whatsapp_queue', job.id, {
+          status: 'queued',
+          errorMessage: 'Recovered from stale sending state',
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      recovered++;
+    }
+    return recovered;
+  } catch (err: any) {
+    logger.warn('[whatsapp-drain] Failed to recover stale sending jobs:', err?.message);
+    return 0;
+  }
+}
+
 export async function drainWhatsAppQueue(): Promise<WhatsAppDrainSummary> {
+  // Automatically recover stale in-flight claims before processing new queue items
+  await recoverStaleSendingJobs();
+
   const config = await getOutreachConfig();
   const provider = getConfiguredWhatsAppProvider();
 

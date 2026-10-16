@@ -17,7 +17,7 @@ interface ScheduledJobItem {
 
 export default function WhatsAppScheduledSender({ lang = 'en' }: { lang?: string }) {
   const isAr = lang === 'ar';
-  const [recipientInput, setRecipientInput] = useState('+201001112233, +201012223344');
+  const [recipientInput, setRecipientInput] = useState('');
   const [messageBody, setMessageBody] = useState(
     'عزيزي {{name}}، لدينا عقار حصري جديد في كمبوند ميفيدا بخصم خاص اليوم. هل تود حجز موعد للمعاينة؟\n\nSierra Estates Luxury Concierge'
   );
