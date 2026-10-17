@@ -81,6 +81,7 @@ afterEach(() => {
   __fromMock.mockReset();
   jest.restoreAllMocks();
   delete process.env.VERCEL;
+  delete process.env.VERCEL_ENV;
 });
 
 describe('resolveListingCoordinates', () => {
@@ -167,6 +168,11 @@ describe('triggerPropertyFinderFeed', () => {
   });
 
   it('reports unavailable when the script is not reachable from cwd', () => {
+    // Hermetic: the Vercel BUILD container exports VERCEL_ENV for jest too —
+    // without clearing it here this test takes the serverless branch (note
+    // "…Run locally: …") and fails the 'Run:' assertion on Vercel CI while
+    // passing on a dev machine. VERCEL itself is cleared by afterEach.
+    delete process.env.VERCEL_ENV;
     jest.spyOn(fs, 'existsSync').mockReturnValue(false);
     const result = triggerPropertyFinderFeed();
     expect(result.triggered).toBe(false);
