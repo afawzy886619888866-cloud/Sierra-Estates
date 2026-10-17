@@ -5,6 +5,7 @@ import path from 'path';
 import { getSupabaseAdmin, isSupabaseAdminConfigured } from '@sierra-estates/db';
 import { resolveUnitCode, normalizeDealType } from '@/lib/server/unit-codes';
 import { appendListingToOwnersRentMaster, type MasterCsvAppendResult } from '@/lib/server/master-csv-append';
+import { lookupCompoundCoordinate } from '@/lib/server/compound-gazetteer';
 import type { TelegramBroadcastResult } from '@/lib/server/telegram-broadcaster';
 import type { TelegramListingSpec } from '@/lib/server/telegram-listing-formatter';
 
@@ -33,7 +34,9 @@ export interface CoordinateResolution {
   resolved: boolean;
   lat: number | null;
   lng: number | null;
-  source: 'unit' | 'compounds-table' | null;
+  source: 'unit' | 'compounds-table' | 'static-gazetteer' | null;
+  /** Present when the pin came from the static gazetteer. */
+  gazetteer?: { code: string; name: string; verified: boolean };
   note?: string;
 }
 
@@ -63,49 +66,59 @@ export interface ListingSyndicationResult {
 export async function resolveListingCoordinates(
   unit: TelegramListingSpec,
 ): Promise<CoordinateResolution> {
-  // The unit itself may carry explicit coordinates; otherwise the compound
-  // gazetteer (public.compounds) resolves the map pin.
+  // The unit itself may carry explicit coordinates; otherwise resolution
+  // walks the pin ladder: compounds table → static gazetteer → honest miss.
   if (typeof unit.lat === 'number' && typeof unit.lng === 'number' && (unit.lat !== 0 || unit.lng !== 0)) {
     return { resolved: true, lat: unit.lat, lng: unit.lng, source: 'unit' };
   }
 
-  if (!isSupabaseAdminConfigured()) {
+  // Leg 1 — public.compounds (operator-managed rows).
+  let tableNote = '';
+  if (isSupabaseAdminConfigured()) {
+    try {
+      const { data, error } = await getSupabaseAdmin()
+        .from('compounds')
+        .select('name,lat,lng')
+        .ilike('name', `%${String(unit.compound).trim()}%`)
+        .limit(1);
+      if (error) throw new Error(error.message);
+      const row = (data ?? [])[0] as { name?: string; lat?: number | null; lng?: number | null } | undefined;
+      if (row && Number(row.lat) !== 0 && Number.isFinite(Number(row.lat)) && Number.isFinite(Number(row.lng))) {
+        return { resolved: true, lat: Number(row.lat), lng: Number(row.lng), source: 'compounds-table' };
+      }
+      tableNote = `public.compounds has no coordinate row for "${unit.compound}"`;
+    } catch (err) {
+      tableNote = `compound table lookup failed (${(err as Error)?.message})`;
+    }
+  } else {
+    tableNote = 'SUPABASE_SERVICE_ROLE_KEY not configured — public.compounds unreachable';
+  }
+
+  // Leg 2 — static map-pin gazetteer (GPS-verified compound list shipped with
+  // the app): pins resolve even before public.compounds is populated.
+  const gazetteer = lookupCompoundCoordinate(unit.compound);
+  if (gazetteer) {
     return {
-      resolved: false,
-      lat: null,
-      lng: null,
-      source: null,
-      note: 'Supabase admin client not configured — compound coordinates could not be looked up.',
+      resolved: true,
+      lat: gazetteer.lat,
+      lng: gazetteer.lng,
+      source: 'static-gazetteer',
+      gazetteer: { code: gazetteer.code, name: gazetteer.name, verified: gazetteer.verified },
+      ...(gazetteer.verified
+        ? { note: tableNote ? `${tableNote}; pinned via the static gazetteer.` : undefined }
+        : {
+            note: `District-level approximate centroid (${gazetteer.name}) — refine the compound for an exact pin.`,
+          }),
     };
   }
 
-  try {
-    const { data, error } = await getSupabaseAdmin()
-      .from('compounds')
-      .select('name,lat,lng')
-      .ilike('name', `%${String(unit.compound).trim()}%`)
-      .limit(1);
-    if (error) throw new Error(error.message);
-    const row = (data ?? [])[0] as { name?: string; lat?: number | null; lng?: number | null } | undefined;
-    if (row && Number(row.lat) !== 0 && Number.isFinite(Number(row.lat)) && Number.isFinite(Number(row.lng))) {
-      return { resolved: true, lat: Number(row.lat), lng: Number(row.lng), source: 'compounds-table' };
-    }
-    return {
-      resolved: false,
-      lat: null,
-      lng: null,
-      source: null,
-      note: `No coordinates row for compound "${unit.compound}" in public.compounds — the map pin awaits a gazetteer entry.`,
-    };
-  } catch (err) {
-    return {
-      resolved: false,
-      lat: null,
-      lng: null,
-      source: null,
-      note: `Compound coordinate lookup failed: ${(err as Error)?.message}`,
-    };
-  }
+  return {
+    resolved: false,
+    lat: null,
+    lng: null,
+    source: null,
+    note: `No coordinates for compound "${unit.compound}" in public.compounds or the static gazetteer${tableNote ? ` (${tableNote})` : ''} — the map pin awaits a gazetteer entry (see scripts/sync-compound-gazetteer.ts).`,
+  };
 }
 
 /** Upsert the broadcast unit into public.listings (reference_code keyed). */

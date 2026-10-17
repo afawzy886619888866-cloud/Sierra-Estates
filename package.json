@@ -27,6 +27,8 @@
     "test:prod": "node scripts/test-production.cjs",
     "deploy:supabase": "node scripts/apply-supabase-schema.mjs",
     "embeddings:generate": "tsx scripts/generate-supabase-embeddings.ts",
+    "gazetteer:sync": "tsx scripts/sync-compound-gazetteer.ts",
+    "live:status": "node scripts/check-live-services.mjs",
     "deploy:schema": "node scripts/apply-supabase-schema.mjs",
     "migrate:supabase": "tsx scripts/migrate-data-to-supabase.ts",
     "vertex-agent": "tsx scripts/vertex-agent-runner.ts",

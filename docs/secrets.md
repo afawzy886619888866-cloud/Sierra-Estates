@@ -44,7 +44,15 @@ Firebase web API key should still be restricted in Google Cloud Console).
 | Var | Where | Public? | Notes |
 | --- | --- | --- | --- |
 | `GOOGLE_AI_API_KEY` | V, FB | no | Gemini. Without it, `WhatsAppParserService` throws ("Neural parsing disabled") |
+| `GOOGLE_GENAI_API_KEY` | V | no | Sierra 3.0 pipeline alias for the same Gemini key — read by `gemini-embedding-001` embeddings (`scripts/generate-supabase-embeddings.ts`, `/api/internal/rag-search`) and the Arabic listing formatter. Same value as `GOOGLE_AI_API_KEY`; set both names |
 | `GOOGLE_CLOUD_LOCATION` | V | n/a | Region for Vertex (ADC/Workload Identity auth, no key) |
+
+## Supabase
+
+| Var | Where | Public? | Notes |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | V | yes | Project API URL (host `gaxfqcietzoonlmatiot.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | V | no | **High-value.** Server-only writes (listings upsert, gazetteer sync, embeddings). Without it every write leg reports `unavailable` honestly — nothing silently degrades to a fake success |
 
 ## Rate-limiting
 
@@ -58,14 +66,49 @@ Firebase web API key should still be restricted in Google Cloud Console).
 | Var | Where | Public? | Notes |
 | --- | --- | --- | --- |
 | `PROPERTY_FINDER_API_KEY` | V, GA | no | |
-| `TELEGRAM_BOT_TOKEN` | V, FB, GA | no | High-priority alerts |
-| `TELEGRAM_ALERT_CHAT_ID` | V, FB, GA | no | |
+| `TELEGRAM_BOT_TOKEN` | V, FB, GA | no | High-priority alerts; also arms the Sierra 3.0 listing broadcast (`sendMediaGroup` → `@SierraEstatesNewCairo`) |
+| `TELEGRAM_CHAT_ID` | V | no | **Public listings channel** (`@SierraEstatesNewCairo`). Broadcasts only — never PII |
+| `TELEGRAM_ADMIN_CHAT_ID` | V | no | **Internal ops chat.** Access-request/approval alerts (Sierra 3.0). Must NOT equal `TELEGRAM_CHAT_ID` — staff PII never goes to the public channel |
+| `TELEGRAM_ALERT_CHAT_ID` | V, FB, GA | no | Legacy alert chat (pre-3.0 paths) |
 | `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | V | no | Inbound webhook verification |
 | `TWILIO_ACCOUNT_SID` | V | no | **Pending** — WhatsApp outbound (see TODO.md) |
 | `TWILIO_AUTH_TOKEN` | V | no | **Pending** — High-value |
 | `WABA_NUMBER_1`..`WABA_NUMBER_4` | V | no | **Pending** — the 4 dedicated WhatsApp senders |
 | `N8N_BASE_URL` / `N8N_API_KEY` | V | no | Workflow engine trigger |
 | `GOOGLE_SHEETS_ID` / `GOOGLE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_SERVICE_ACCOUNT_KEY` | V, GA | no | Sheets ingestion |
+
+---
+
+## Arming the Sierra Estates 3.0 live pipeline
+
+The 3.0 pipeline (Gemini RAG memory, Telegram broadcast + syndication,
+access-approval alerts) degrades honestly until three Vercel secrets exist.
+One-time arming:
+
+```bash
+pnpm link:vercel
+vercel env add GOOGLE_GENAI_API_KEY production      # Gemini: embeddings + Arabic formatter
+vercel env add TELEGRAM_BOT_TOKEN production        # @BotFather bot token
+vercel env add SUPABASE_SERVICE_ROLE_KEY production # server-only service role
+vercel env add TELEGRAM_ADMIN_CHAT_ID production    # internal ops chat (approval alerts)
+vercel env add TELEGRAM_CHAT_ID production          # public listings channel @SierraEstatesNewCairo
+pnpm deploy:prod                                   # rebuild with the secrets
+```
+
+Post-arm verification, in order:
+
+```bash
+pnpm live:status                          # per-service ARMED / DEGRADED report (remote probe)
+pnpm embeddings:generate -- --dry-run     # capability pre-flight, zero writes
+pnpm gazetteer:sync                       # arm map pins in public.compounds (35 entries)
+pnpm embeddings:generate -- --continuous  # 768-dim vectors for every listing
+curl -X POST https://sierra-estates.net/api/internal/run-harness \
+  -H "x-sbr-secret-key: $SBR_SECRET_KEY"  # exercise NLP + AVM + RAG benchmarks
+```
+
+Until the secrets are live every service above reports its exact gap — skipped
+broadcasts, `unavailable` upserts, `configured: false` capability flags — and
+never fabricates success (§21).
 
 ---
 

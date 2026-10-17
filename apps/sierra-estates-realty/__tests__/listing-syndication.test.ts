@@ -12,12 +12,16 @@ import fs from 'fs';
 
 jest.mock('@sierra-estates/db', () => {
   const fromMock = jest.fn();
+  let adminConfigured = true;
   const supabaseAdmin = { from: fromMock };
   return {
     getSupabaseAdmin: () => supabaseAdmin,
-    isSupabaseAdminConfigured: () => true,
+    isSupabaseAdminConfigured: () => adminConfigured,
     insertRecord: jest.fn(),
     __fromMock: fromMock,
+    __setAdminConfigured: (v: boolean) => {
+      adminConfigured = v;
+    },
   };
 });
 
@@ -28,7 +32,7 @@ import {
   syndicateListingBroadcast,
 } from '../lib/server/listing-syndication';
 import { appendListingToOwnersRentMaster } from '../lib/server/master-csv-append';
-import { __fromMock } from '@sierra-estates/db';
+import { __fromMock, __setAdminConfigured } from '@sierra-estates/db';
 
 const RENT_UNIT = {
   compound: 'Hyde Park',
@@ -79,6 +83,7 @@ function listingsUpsertCapture() {
 
 afterEach(() => {
   __fromMock.mockReset();
+  __setAdminConfigured(true);
   jest.restoreAllMocks();
   delete process.env.VERCEL;
   delete process.env.VERCEL_ENV;
@@ -98,11 +103,40 @@ describe('resolveListingCoordinates', () => {
     expect(result.lat).toBeCloseTo(30.0355);
   });
 
+  it('falls back to the static map-pin gazetteer when the table has no row', async () => {
+    compoundsTableMock(null);
+    const result = await resolveListingCoordinates(RENT_UNIT); // Hyde Park
+    expect(result.resolved).toBe(true);
+    expect(result.source).toBe('static-gazetteer');
+    expect(result.gazetteer).toMatchObject({ code: 'HP', name: 'Hyde Park', verified: true });
+    expect(result.lat).toBeCloseTo(30.008);
+    expect(result.note).toContain('public.compounds');
+  });
+
+  it('resolves via the static gazetteer even when Supabase admin is unconfigured', async () => {
+    __setAdminConfigured(false);
+    const result = await resolveListingCoordinates(RENT_UNIT);
+    expect(result.resolved).toBe(true);
+    expect(result.source).toBe('static-gazetteer');
+    expect(result.note).toContain('SUPABASE_SERVICE_ROLE_KEY');
+  });
+
+  it('resolves district-level compounds to the approximate centroid, flagged unverified', async () => {
+    compoundsTableMock(null);
+    const result = await resolveListingCoordinates({ ...RENT_UNIT, compound: 'New Cairo' });
+    expect(result.resolved).toBe(true);
+    expect(result.source).toBe('static-gazetteer');
+    expect(result.gazetteer?.verified).toBe(false);
+    expect(result.note).toContain('District-level approximate centroid');
+  });
+
   it('reports unresolved honestly when the compound has no gazetteer row', async () => {
     compoundsTableMock(null);
     const result = await resolveListingCoordinates({ ...RENT_UNIT, compound: 'Unknown Estates' });
     expect(result.resolved).toBe(false);
+    expect(result.source).toBeNull();
     expect(result.note).toContain('Unknown Estates');
+    expect(result.note).toContain('sync-compound-gazetteer');
   });
 });
 
@@ -276,6 +310,9 @@ describe('syndicateListingBroadcast — orchestration', () => {
     expect(result.supabase.ok).toBe(true);
     expect(result.masterCsv.action).toBe('unavailable');
     expect(result.propertyFinder.mode).toBe('unavailable'); // spawn path blocked in test env
-    expect(result.coordinates.resolved).toBe(false); // no compounds row mocked
+    // No compounds-table row in this mock — Hyde Park pins via the static
+    // gazetteer (the Phase 2.4 extension under test).
+    expect(result.coordinates.resolved).toBe(true);
+    expect(result.coordinates.source).toBe('static-gazetteer');
   });
 });

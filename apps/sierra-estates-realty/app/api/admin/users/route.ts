@@ -22,7 +22,8 @@
 import { NextResponse } from "next/server";
 import { listRecords, updateRecord, insertRecord, type RecordData } from "@sierra-estates/db";
 import { requireRole } from "@/lib/auth";
-import { canElevateRoles, roleHasPermission } from "@/lib/types";
+import { canElevateRoles } from "@/lib/types";
+import { notifyAccessRequestDecided } from "@/lib/server/access-request-notifier";
 import type { Role, UserStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -131,7 +132,10 @@ export async function PUT(req: Request) {
  * PHASE 7 — Google OAuth access-request approval/denial.
  * Super-admin only. Approving grants a least-privilege role and activates the
  * pending profile; denying records the decision and leaves the account
- * without staff access. Every decision is a durable audit event.
+ * without staff access. Every decision is a durable audit event AND an admin
+ * chat notification (honestly reported — skipped, not faked, when the
+ * Telegram admin chat is unconfigured). The requester learns the decision at
+ * their next sign-in attempt, where /api/auth reports the real ledger state.
  */
 export async function POST(req: Request) {
   const sess = await requireRole(req, "admin");
@@ -216,7 +220,29 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({ ok: true, email, decision, grantedRole: decision === "approved" ? grantedRole : undefined });
+    // Admin-chat confirmation — honestly reported. `notified` on the row
+    // stays false (no requester-facing delivery channel is wired yet; the
+    // requester sees the real state on their next sign-in attempt).
+    const adminNotification = await notifyAccessRequestDecided({
+      email,
+      decision,
+      grantedRole: decision === "approved" ? grantedRole : null,
+      decidedBy: sess.email,
+      note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      email,
+      decision,
+      grantedRole: decision === "approved" ? grantedRole : undefined,
+      adminNotification: {
+        attempted: adminNotification.attempted,
+        channel: adminNotification.channel,
+        ok: adminNotification.ok,
+        ...(adminNotification.error ? { error: adminNotification.error } : {}),
+      },
+    });
   } catch (err) {
     console.error("[admin/users] approval decision failed:", err);
     return NextResponse.json(

@@ -5,9 +5,10 @@
  * high-precision semantic embeddings for all property listings in Supabase.
  *
  * Usage:
- *   npx tsx scripts/generate-supabase-embeddings.ts
- *   npx tsx scripts/generate-supabase-embeddings.ts --batch=200
- *   npx tsx scripts/generate-supabase-embeddings.ts --continuous
+ *   pnpm embeddings:generate
+ *   pnpm embeddings:generate -- --batch=200
+ *   pnpm embeddings:generate -- --continuous
+ *   pnpm embeddings:generate -- --dry-run   # capability pre-flight, zero writes
  */
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -26,13 +27,38 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gaxfqcietz
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const GEMINI_KEY = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY || '';
 
+const args = process.argv.slice(2);
+const isDryRun = args.includes('--dry-run');
+
+if (isDryRun) {
+    // Capability pre-flight — reports exactly what is armed and what blocks
+    // a live run (§21: honest gaps, zero network calls, zero writes).
+    console.log('═══════════════════════════════════════════════════════════════════════');
+    console.log('  EMBEDDINGS GENERATOR — DRY-RUN CAPABILITY CHECK');
+    console.log('═══════════════════════════════════════════════════════════════════════');
+    console.log(`  Supabase URL:        ${SUPABASE_URL}`);
+    console.log(`  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_KEY ? '✓ present' : '✗ MISSING — vercel env add SUPABASE_SERVICE_ROLE_KEY production'}`);
+    console.log(`  GOOGLE_GENAI_API_KEY:      ${GEMINI_KEY ? '✓ present' : '✗ MISSING — vercel env add GOOGLE_GENAI_API_KEY production'}`);
+    console.log(`  Model:               gemini-embedding-001 (768 dimensions)`);
+    console.log('');
+    if (!SUPABASE_KEY || !GEMINI_KEY) {
+        console.log('  Result: NOT READY — add the missing secret(s), redeploy, re-run this dry-run, then:');
+        console.log('          pnpm embeddings:generate -- --continuous');
+        process.exit(1);
+    }
+    console.log('  Result: READY — run `pnpm embeddings:generate -- --continuous` to embed every pending listing.');
+    process.exit(0);
+}
+
 if (!SUPABASE_KEY) {
     console.error('❌ SUPABASE_SERVICE_ROLE_KEY missing in environment');
+    console.error('   Add it in Vercel (vercel env add SUPABASE_SERVICE_ROLE_KEY production) and redeploy, or export it locally.');
     process.exit(1);
 }
 
 if (!GEMINI_KEY) {
-    console.error('❌ GEMINI_API_KEY missing in environment');
+    console.error('❌ GOOGLE_GENAI_API_KEY missing in environment');
+    console.error('   Add it in Vercel (vercel env add GOOGLE_GENAI_API_KEY production) and redeploy, or export it locally.');
     process.exit(1);
 }
 
@@ -44,7 +70,6 @@ const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 
 // Parse command line arguments
-const args = process.argv.slice(2);
 const batchArg = args.find(a => a.startsWith('--batch='));
 const delayArg = args.find(a => a.startsWith('--delay='));
 const isContinuous = args.includes('--continuous');
