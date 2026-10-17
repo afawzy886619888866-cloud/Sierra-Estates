@@ -24,4 +24,5 @@ export { default as MemoryBrainView } from './MemoryBrainView';
 export { default as WhatsAppChatImportView } from './WhatsAppChatImportView';
 export { default as CairoPlazaAdminView } from './CairoPlazaAdminView';
 export { default as ViewingsView } from './ViewingsView';
+export { default as AccessApprovalsView } from './AccessApprovalsView';
 export { default as AdminInventoryTable } from './AdminInventoryTable';

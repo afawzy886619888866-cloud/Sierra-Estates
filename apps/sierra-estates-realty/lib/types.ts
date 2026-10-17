@@ -26,7 +26,7 @@ export type Role =
   | "broker"
   | "client";
 
-/** Roles that may enter the staff admin portal after Firebase authentication. */
+/** Roles that may enter the staff admin portal after authentication. */
 export const ADMIN_PORTAL_ROLES = [
   "owner",
   "agent",
@@ -41,6 +41,11 @@ export const ADMIN_PORTAL_ROLES = [
   "sales_agent",
   "auditor",
   "broker",
+  // Sierra Estates 3.0 — approved viewer accounts enter the portal in
+  // read-only mode: permission-driven nav filtering (lib/admin-nav-access.ts)
+  // restricts them to dashboards and the public inventory overview, while
+  // every mutating API still rejects them server-side (default-deny).
+  "viewer",
 ] as const;
 
 export function isAdminPortalRole(role: unknown): boolean {
