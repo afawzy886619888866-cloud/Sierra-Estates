@@ -225,6 +225,12 @@ export const GAZETTEER: Record<string, GazetteerEntry> = {
   'madinaty district 8': { lat: 30.102, lng: 31.648, label: 'Madinaty District 8', zone: 'Madinaty' },
   'madinaty executive villas': { lat: 30.115, lng: 31.635, label: 'Madinaty Executive Villas', zone: 'Madinaty' },
   'madinaty lake park': { lat: 30.088, lng: 31.655, label: 'Madinaty Lake Park', zone: 'Madinaty' },
+  // Cairo Plaza (El-Mataria commercial podium) — coordinates sourced from the
+  // GPS-verified compound list in components/Maps/compounds-data.ts; the pin
+  // used to fall back to the generic New Cairo centroid.
+  'cairo plaza': { lat: 30.129, lng: 31.312, label: 'Cairo Plaza', zone: 'El-Mataria' },
+  'cairo plaza mataria': { lat: 30.129, lng: 31.312, label: 'Cairo Plaza', zone: 'El-Mataria' },
+  'كايرو بلازا': { lat: 30.129, lng: 31.312, label: 'Cairo Plaza', zone: 'El-Mataria' },
 };
 
 /**

@@ -20,6 +20,7 @@ import { getSupabaseAdmin, getRecord, updateRecord, insertRecord, listRecords } 
 import { isAdminPortalRole } from "@/lib/types";
 import { isPartnerRole } from "@/lib/partner-access";
 import { scopeFromProfile } from "@/lib/server/partner-scope";
+import { notifyAccessRequestCreated } from "@/lib/server/access-request-notifier";
 import type { Role, User } from "@/lib/types";
 import { logger } from "@/lib/logger";
 
@@ -136,6 +137,20 @@ export async function POST(req: Request) {
           // Pending/suspended/deleted accounts never receive a session.
           const profileStatus = (profile.status ?? "").toString().toLowerCase();
           if (profileStatus === "pending") {
+            // Honest requester notification (the delivery channel that IS
+            // wired): the sign-in attempt itself reports the real ledger
+            // state — a request that was denied says denied, not "pending".
+            const latestState = await latestAccessRequestState(verifiedEmail);
+            if (latestState === "denied") {
+              return NextResponse.json(
+                {
+                  error:
+                    "Your access request was denied by an administrator. " +
+                    "Contact your Sierra Estates account manager to request reconsideration.",
+                },
+                { status: 403, headers: NO_STORE_HEADERS }
+              );
+            }
             return NextResponse.json(
               { error: "Your access request is pending super-admin approval." },
               { status: 403, headers: NO_STORE_HEADERS }
@@ -229,13 +244,36 @@ export async function POST(req: Request) {
 }
 
 /**
+ * Latest real state of the access-request ledger for an email: a pending
+ * request outranks old decisions; otherwise the most recent decided state
+ * wins. Lookup failure returns "pending"-equivalent null so the caller shows
+ * the cautious message (never a fabricated denial).
+ */
+async function latestAccessRequestState(email: string): Promise<"pending" | "approved" | "denied" | null> {
+  try {
+    const rows = await listRecords<{ state: string; requestedAt: string | null; decidedAt: string | null }>(
+      "access_requests",
+      { where: [{ column: "email", value: email }], limit: 50 }
+    );
+    if (rows.length === 0) return null;
+    if (rows.some((r) => (r.state ?? "").toLowerCase() === "pending")) return "pending";
+    const decided = rows
+      .filter((r) => (r.state ?? "").toLowerCase() === "approved" || (r.state ?? "").toLowerCase() === "denied")
+      .sort((a, b) => (b.decidedAt ?? "").localeCompare(a.decidedAt ?? ""));
+    return decided[0] ? (decided[0].state.toLowerCase() as "approved" | "denied") : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * PHASE 7 — durable pending access request for an unprovisioned identity.
  *
  * Creates (idempotently) a pending profile row + access_requests record and
- * notifies ADMIN_APPROVAL_EMAIL through whatever provider is configured.
- * No configured provider → the request is still durable and visible in the
- * admin queue; the notification gap is logged by name, never silently
- * approved (default-deny).
+ * notifies the operations staff through whatever channels are configured
+ * (internal Telegram admin chat today). No configured channel → the request
+ * is still durable and visible in the admin queue; the notification gap is
+ * logged by name, never silently approved (default-deny).
  */
 async function recordPendingAccessRequest(params: {
   authUid: string;
@@ -290,18 +328,27 @@ async function recordPendingAccessRequest(params: {
       });
     }
 
-    // Notification adapter: ADMIN_APPROVAL_EMAIL names the inbox; delivery
-    // depends on a configured provider (none is configured today — exact
-    // blocker recorded, never a silent approval).
+    // Notification adapters, honestly reported:
+    //  1. Telegram internal admin chat (TELEGRAM_ADMIN_CHAT_ID) — armed when
+    //     TELEGRAM_BOT_TOKEN + TELEGRAM_ADMIN_CHAT_ID exist in the runtime.
+    //  2. ADMIN_APPROVAL_EMAIL names the approver inbox for the server log.
+    // Neither is required for durability — the request is already committed
+    // above and stays visible in the super-admin queue either way.
+    const adminAlert = await notifyAccessRequestCreated({
+      email,
+      fullName,
+      provider,
+      requestedAt: new Date().toISOString(),
+    });
     const approvalEmail = process.env.ADMIN_APPROVAL_EMAIL;
-    if (approvalEmail) {
+    if (adminAlert.ok) {
       logger.info(
-        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — pending approval by ${approvalEmail}. ` +
-        `Email provider delivery requires configuration (no provider is wired into this path today); the request is durable in the admin queue regardless.`
+        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — admin chat alerted (message ${adminAlert.messageId ?? 'n/a'}); pending approval${approvalEmail ? ` by ${approvalEmail}` : ''}.`
       );
     } else {
       logger.warn(
-        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — ADMIN_APPROVAL_EMAIL is not configured; request is durable in the admin queue but no notification will be sent.`
+        `[auth] NEW ACCESS REQUEST: ${email} (${provider}) — admin alert not delivered (${adminAlert.error ?? 'unconfigured'}); ` +
+        `the request is durable in the admin queue. Arm TELEGRAM_BOT_TOKEN + TELEGRAM_ADMIN_CHAT_ID in Vercel for live alerts.`
       );
     }
 
