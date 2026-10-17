@@ -24,10 +24,16 @@ const defaultListings: any[] = [];
 
 const DATA: any = {
   slides: [
-    { id: 1, pre: 'FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO', preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
-      main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.', mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
-      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5MNEX4J4DW9KD582MYGDH/02946d1e-a358-4e06-ae53-80ea1a458d23-90c501ae-c777-46c9-8f5f-4cdf5472eac6.png' },
-    { id: 2,
+    {
+      id: 1,
+      pre: 'FIRST & ONLY WEBSITE IN EGYPT DESIGNED FOR NEW CAIRO',
+      preAr: 'الموقع الأول والوحيد في مصر المصمم للقاهرة الجديدة',
+      main: 'The First Exclusive Destination for New Cairo Properties. Rent & Resale.',
+      mainAr: 'الوجهة الحصرية الأولى لعقارات القاهرة الجديدة. إيجار وبيع.',
+      img: '/hero/hero-01.webp'
+    },
+    {
+      id: 2,
       pre: 'INSTITUTIONAL COMMERCIAL OPPORTUNITY',
       preAr: 'فرصة استثمارية وتجارية استراتيجية كبرى',
       main: 'Directly in front of Al-Mataria Metro Station.',
@@ -42,35 +48,71 @@ const DATA: any = {
       cta: 'Explore Cairo Plaza',
       ctaAr: 'استكشف مشروع كايرو بلازا',
     },
-    { id: 3, pre: 'CONTEMPORARY MEDITERRANEAN ESTATES', preAr: 'قصور وفلل البحر المتوسط المعاصرة',
-      main: 'Signature Living with Illuminated Infinity Pools in Mivida', mainAr: 'حياة استثنائية مع مسابح إنفينيتي ساحرة في ميفيدا',
-      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d539110a-ed1e-11ef-9c46-0a0bf5daed27-444bac18-0e72-47ac-9e7c-b8445ddbf6b3.png' },
-    { id: 4, pre: 'ULTRA-MODERN ARCHITECTURAL MARVELS', preAr: 'تحف معمارية عصرية استثنائية',
-      main: 'Cubic Living with Reflective Water Features in Palm Hills', mainAr: 'تصميم تكعيبي متطور بمسطحات مائية في بالم هيلز',
-      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d9354a6b-ed1e-11ef-9c46-0a0bf5daed27-4df385b4-7b6f-402c-84b8-ebded43f4525.png' },
-    { id: 5, pre: 'PALATIAL GOLF COURSE ESTATES', preAr: 'قصور الجولف الفاخرة المرموقة',
-      main: 'Unrivaled Panoramic Golf Fairways in Katameya Heights', mainAr: 'إطلالات بانورامية على ملاعب الجولف في قطامية هايتس',
-      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JNT5G6WQ0X89RGT5KH5THTH9/d796604f-ed1e-11ef-9c46-0a0bf5daed27-28f981b4-652b-4b2a-9f6b-247979184e07.png' },
-    { id: 6, pre: 'CURATED SKYLINE PENTHOUSES', preAr: 'بنتهاوس فاخر بإطلالة الأفق',
-      main: 'Panoramic Living with Private Rooftops Above New Cairo', mainAr: 'رووف خاص بإطلالة بانورامية ساحرة فوق القاهرة الجديدة',
-      img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/8207f019-90ef-450b-b029-06f9e98d5156.jpg' }
+    {
+      id: 3,
+      pre: 'CONTEMPORARY MEDITERRANEAN ESTATES',
+      preAr: 'قصور وفلل البحر المتوسط المعاصرة',
+      main: 'Signature Living with Illuminated Infinity Pools in Mivida',
+      mainAr: 'حياة استثنائية مع مسابح إنفينيتي ساحرة في ميفيدا',
+      img: '/hero/hero-07.webp'
+    },
+    {
+      id: 4,
+      pre: 'ULTRA-MODERN ARCHITECTURAL MARVELS',
+      preAr: 'تحف معمارية عصرية استثنائية',
+      main: 'Cubic Living with Reflective Water Features in Palm Hills',
+      mainAr: 'تصميم تكعيبي متطور بمسطحات مائية في بالم هيلز',
+      img: '/hero/hero-02.webp'
+    },
+    {
+      id: 5,
+      pre: 'PALATIAL GOLF COURSE ESTATES',
+      preAr: 'قصور الجولف الفاخرة المرموقة',
+      main: 'Unrivaled Panoramic Golf Fairways in Katameya Heights',
+      mainAr: 'إطلالات بانورامية على ملاعب الجولف في قطامية هايتس',
+      img: '/hero/hero-04.webp'
+    },
+    {
+      id: 6,
+      pre: 'CURATED SKYLINE PENTHOUSES',
+      preAr: 'بنتهاوس فاخر بإطلالة الأفق',
+      main: 'Panoramic Living with Private Rooftops Above New Cairo',
+      mainAr: 'رووف خاص بإطلالة بانورامية ساحرة فوق القاهرة الجديدة',
+      img: '/hero/hero-10.webp'
+    },
+    {
+      id: 7,
+      pre: 'MONUMENTAL PIVOT ENTRY SANCTUARIES',
+      preAr: 'مداخل معمارية فخمة بتصميمات خشبية فريدة',
+      main: 'Architectural Grandeur & Private Garden Courtyards in Swan Lake',
+      mainAr: 'عظمة معمارية فاخرة ومداخل محورية خاصة في سوان ليك ريزيدنس',
+      img: '/hero/hero-05.webp'
+    },
+    {
+      id: 8,
+      pre: 'EVENING ALFRESCO PATIO & WOOD-FIRED SUITES',
+      preAr: 'جلسات خارجية مسائية ومطابخ حدائق فاخرة',
+      main: 'Alfresco Evening Lounges & Outdoor Culinary Suites in Villette',
+      mainAr: 'جلسات مسائية خارجية مع مطابخ حدائق وأفران بيتزا فاخرة في فيليت',
+      img: '/hero/hero-15.webp'
+    }
   ],
   listings: defaultListings,
   rooms: [
-    { id: 1, name: 'Luxury Living Room', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/9affb65c-ef18-45c2-8531-41910d3075a7.png' },
-    { id: 2, name: 'Master Bedroom Suite', sub: 'Mountain View iCity · Penthouse Level', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/2c95c5fc-df8c-4df8-bace-36a841c7608e.jpg' },
-    { id: 3, name: 'Garden Courtyard', sub: 'Villette · Villa G-Type', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/9b78ec87-c3ea-426d-b077-cf8a4c324b4f.jpg' },
-    { id: 4, name: 'Infinity Pool & Deck', sub: 'Taj City · Signature Villa', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01JPHC83FZAY1KW6V6A2CKS1EY/bd3e7ee1-9546-4794-b1cb-4e05c47487b6.png' },
-    { id: 5, name: 'Rooftop Sky Terrace', sub: 'Uptown Cairo · Penthouse Level', img: 'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/7f683585-1602-4ae5-9001-d71057b1f0b9.jpg' }
+    { id: 1, name: 'Luxury Living Salon', sub: 'Hyde Park · Grand Villa · 5th Settlement', img: '/hero/hero-06.webp' },
+    { id: 2, name: 'Twilight Pool Terrace', sub: 'Mivida · Signature Villa', img: '/hero/hero-08.webp' },
+    { id: 3, name: 'Garden Courtyard & Lounge', sub: 'Villette · Villa G-Type', img: '/hero/hero-09.webp' },
+    { id: 4, name: 'Outdoor Private Cinema', sub: 'Palm Hills · Estate Residence', img: '/hero/hero-11.webp' },
+    { id: 5, name: 'Marble Dining & Kitchen Suite', sub: 'Katameya Dunes · Luxury Villa', img: '/hero/hero-12.webp' }
   ],
   interiors: [
-    'https://static.shared.propertyfinder.eg/media/images/listing/01K221ZHWWCHX9J86BMWBWYCVG/9bac59e7-15ad-4bff-b92b-e9c3e9e52e3a.jpg',
-    'https://static.shared.propertyfinder.eg/media/images/listing/01K7ZDHACWGF5QC81WWK5WNPCZ/d9922c64-ad7f-4658-a127-79261b174d26.jpg',
-    'https://static.shared.propertyfinder.eg/media/images/listing/01K7ZDHACWGF5QC81WWK5WNPCZ/5d674711-45b1-4ed0-bf78-b405ca364eba.jpg',
-    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/4c18786e-a528-4e03-bb9b-82aec6edd556.png',
-    'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/aa6de84b-c6bf-4c5f-91a2-c4c239e7ca36.png'
+    '/hero/hero-01.webp',
+    '/hero/hero-03.webp',
+    '/hero/hero-13.webp',
+    '/hero/hero-14.webp',
+    '/hero/hero-06.webp'
   ],
-  agentImg: 'https://static.shared.propertyfinder.eg/media/images/listing/01JP77GHKVJJ8H7SA2PSZV90ZC/8aead01a-f6d9-44f1-8afa-02b9846ee61b.png',
+  agentImg: '/hero/hero-05.webp',
   compounds: [
     { id: 1, n: 'Katameya Heights', c: [29.99, 31.48], g: '+10%', ai: 9.0, z: 'Katameya', priceM: 26, rent: 5000, dev: 'Katameya Group' },
     { id: 2, n: 'Katameya Dunes', c: [29.985, 31.492], g: '+12%', ai: 8.8, z: 'Katameya', priceM: 18, rent: 3400, dev: 'Katameya Group' },
