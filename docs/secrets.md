@@ -111,6 +111,19 @@ Until the secrets are live every service above reports its exact gap — skipped
 broadcasts, `unavailable` upserts, `configured: false` capability flags — and
 never fabricates success (§21).
 
+`pnpm live:status` deep-probes beyond presence (§21: presence ≠ validity):
+
+- **① RAG** — with `SBR_SECRET_KEY` exported it POSTs a one-word query to
+  `/api/internal/rag-search`; only a 200 round-trip counts as ARMED. A key
+  that is *present but rejected* (e.g. an OAuth `AQ.…` token pasted instead
+  of an AI Studio `AIza…` key) surfaces as DEGRADED with the server's exact
+  401 reason. Fix: `aistudio.google.com/apikey` → create key → replace the
+  value of `GOOGLE_GENAI_API_KEY` in Vercel → redeploy.
+- **② Telegram** — with `TELEGRAM_BOT_TOKEN` present locally it calls
+  `getMe` (token validity) and `getChat` on `TELEGRAM_CHAT_ID` (bot ↔
+  channel visibility). A valid token whose bot was never added to the
+  channel reports DEGRADED with "add the bot as an ADMIN of the channel".
+
 ---
 
 ## Quarterly Rotation Calendar
