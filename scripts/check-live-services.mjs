@@ -16,9 +16,10 @@
  *   LIVE_APP_URL=https://admin.sierra-estates.net node scripts/check-live-services.mjs
  *
  * The remote probe reads the capability report from GET /api/internal/rag-search
- * (read-only, no secret values ever leave the server). Local environment
- * variables are checked presence-only so the same tool doubles as a pre-flight
- * before `vercel --prod`.
+ * (read-only, no secret values ever leave the server). Production gates that
+ * route behind x-sbr-secret-key — set SBR_SECRET_KEY locally to probe
+ * authenticated. Local environment variables are checked presence-only so
+ * the same tool doubles as a pre-flight before `vercel --prod`.
  *
  * §21: nothing here fabricates a status — unreachable endpoints are reported
  * as UNREACHABLE, not degraded.
@@ -62,11 +63,19 @@ function printService(name, { armed, detail, missing }) {
 
 async function probeRemote() {
   const url = `${BASE_URL}/api/internal/rag-search`;
+  // The production middleware default-denies /api/internal/* behind the
+  // x-sbr-secret-key gate (proxy.ts). Probe authenticated when the operator
+  // has SBR_SECRET_KEY locally; otherwise report the 401 honestly as a live
+  // gate rather than a dead endpoint.
+  const headers = { accept: 'application/json' };
+  if (process.env.SBR_SECRET_KEY) {
+    headers['x-sbr-secret-key'] = process.env.SBR_SECRET_KEY;
+  }
   try {
-    const res = await fetch(url, { headers: { accept: 'application/json' } });
+    const res = await fetch(url, { headers });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || typeof body !== 'object' || body === null) {
-      return { ok: false, status: res.status };
+      return { ok: false, status: res.status, gated: res.status === 401 };
     }
     const configured = body.configured ?? {};
     return {
@@ -95,6 +104,7 @@ async function main() {
     TELEGRAM_BOT_TOKEN: Boolean(process.env.TELEGRAM_BOT_TOKEN),
     TELEGRAM_CHAT_ID: Boolean(process.env.TELEGRAM_CHAT_ID),
     TELEGRAM_ADMIN_CHAT_ID: Boolean(process.env.TELEGRAM_ADMIN_CHAT_ID),
+    SBR_SECRET_KEY: Boolean(process.env.SBR_SECRET_KEY),
   };
 
   console.log('─ Local environment (presence only) ─────────────────────────────────');
@@ -115,7 +125,9 @@ async function main() {
       armed: null,
       detail: probe.error
         ? `GET /api/internal/rag-search failed: ${probe.error}`
-        : `GET /api/internal/rag-search returned HTTP ${probe.status}`,
+        : probe.gated
+          ? 'HTTP 401 — the default-deny SBR gate is LIVE (good). Export SBR_SECRET_KEY locally to read the authenticated capability report.'
+          : `GET /api/internal/rag-search returned HTTP ${probe.status}`,
       missing: [],
     });
   } else {
