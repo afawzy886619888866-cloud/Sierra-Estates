@@ -190,7 +190,7 @@ export function triggerPropertyFinderFeed(): PropertyFinderFeedResult {
     return {
       triggered: false,
       mode: 'unavailable',
-      note: `Serverless runtime cannot spawn the file-based feed pipeline. Run locally: ${operatorCommand}`,
+      note: `Serverless runtime cannot spawn the file-based feed pipeline. Run: ${operatorCommand}`,
     };
   }
 

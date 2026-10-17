@@ -159,19 +159,34 @@ describe('upsertListingInSupabase', () => {
 });
 
 describe('triggerPropertyFinderFeed', () => {
+  const origVercel = process.env.VERCEL;
+  const origVercelEnv = process.env.VERCEL_ENV;
+
+  afterEach(() => {
+    if (origVercel !== undefined) {
+      process.env.VERCEL = origVercel;
+    } else {
+      delete process.env.VERCEL;
+    }
+    if (origVercelEnv !== undefined) {
+      process.env.VERCEL_ENV = origVercelEnv;
+    } else {
+      delete process.env.VERCEL_ENV;
+    }
+    jest.restoreAllMocks();
+  });
+
   it('reports the operator command on serverless runtimes', () => {
     process.env.VERCEL = '1';
     const result = triggerPropertyFinderFeed();
     expect(result.triggered).toBe(false);
     expect(result.mode).toBe('unavailable');
     expect(result.note).toContain('generate-photos-propertyfinder-feed.mjs');
+    expect(result.note).toContain('Run:');
   });
 
   it('reports unavailable when the script is not reachable from cwd', () => {
-    // Hermetic: the Vercel BUILD container exports VERCEL_ENV for jest too —
-    // without clearing it here this test takes the serverless branch (note
-    // "…Run locally: …") and fails the 'Run:' assertion on Vercel CI while
-    // passing on a dev machine. VERCEL itself is cleared by afterEach.
+    delete process.env.VERCEL;
     delete process.env.VERCEL_ENV;
     jest.spyOn(fs, 'existsSync').mockReturnValue(false);
     const result = triggerPropertyFinderFeed();
