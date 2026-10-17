@@ -22,11 +22,18 @@ WHATSAPP_API_TOKEN=__OPKEY__
 OPENWA_ADMIN_API_KEY=__ADKEY__
 OPENWA_SESSION_ID=__UUID__
 # 4-line sender pool (overrides OPENWA_SESSION_ID when set):
-# OPENWA_SESSION_IDS=session-default,line-2,line-3,line-4
+OPENWA_SESSION_IDS=line-1,line-2,line-3,line-4
 RUNNER_API_KEY=__ADKEY__
 RUNNER_PORT=2786
 RUNNER_BIND=__BIND__
 WF_OWNER_CONTACT_DAILY_CAP=40
+# Parallel outreach: up to 4 READY lines send simultaneously per slot
+# ("2 lines here + 2 lines on the other side" — split walks the sheet from
+# BOTH ends and meets in the middle; use top/bottom to run two hosts on the
+# same sheet in parallel). Per-line pacing is unchanged.
+WF_PARALLEL_LINES=4
+WF_HOST_SIDE=split
+WF_SLOT_BATCH=20
 # Owner inventory sheet (public gviz read). gid 1127958606 = the owner
 # inventory tab — do NOT use the broker-inbox gid here.
 UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk
