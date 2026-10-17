@@ -52,7 +52,10 @@ const crypto = require('crypto');
 const { requestJson } = require('../lib/gateway-client'); // Supabase REST calls
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
-const SHEET_GID = process.env.UNITS_SHEET_GID || '341562911';
+// gid 1127958606 = the owner inventory tab (docstring contract above). The old
+// 341562911 default pointed at the BROKER INBOX tab (no Code/Mobile columns)
+// so sync silently upserted nothing — fixed 2026-10-17.
+const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
 const SB_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 

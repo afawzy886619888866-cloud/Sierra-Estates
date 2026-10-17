@@ -7,10 +7,17 @@
  * Africa/Cairo time, no external scheduler needed.
  *
  * Data flow (zero-credential, same as 08-units-sync):
- *   Google Sheet (public gviz CSV, owner inventory tab)
+ *   Google Sheet (public gviz CSV, owner inventory tab gid 1127958606 —
+ *   the gid 341562911 default was WRONG: that tab is the broker inbox
+ *   and has no Mobile column, so outreach exited UNCONFIGURED with zero
+ *   sends; fixed 2026-10-17)
  *     → rows with Code + Mobile + outreach-able Availability
  *     → personalized Arabic intro via the OpenWA gateway (same session as the app)
  *     → local JSONL ledger (one line per contacted phone, never re-contacted)
+ *     → sheet contact-date column (تاريخ اخر تواصل) ALSO dedupes: a row
+ *       whose last-contact cell is non-empty is skipped, so a fresh
+ *       runner host never re-texts owners contacted elsewhere
+ *       (WF_SHEET_DEDUPE=0 disables — re-contact campaigns only)
  *
  * Safety rails:
  *   • Daily cap (WF_OWNER_CONTACT_DAILY_CAP, default 40) counted per CAIRO day
@@ -79,7 +86,7 @@ async function writeSheetDate(phone, rawMobile, dateStr) {
 }
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
-const SHEET_GID = process.env.UNITS_SHEET_GID || '341562911';
+const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
 const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 // Pool-aware: recomputed in main() as per-line × pool unless the operator set
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
@@ -109,6 +116,7 @@ const summary = {
   dryRun: DRY_RUN,
   bySession: {},
   metInTheMiddle: false,
+  sheetDeduped: 0,
 };
 
 function loadCheckpoint(totalCount) {
@@ -301,20 +309,32 @@ async function main() {
     iLoc = col(['location', 'الكمبوند', 'الموقع']),
     iPrice = col(['unit price', 'price', 'السعر']),
     iBed = col(['bedrooms', 'غرف', 'الغرف']),
-    iType = col(['property tybe', 'property type', 'نوع العقار', 'النوع']);
+    iType = col(['property tybe', 'property type', 'نوع العقار', 'النوع']),
+    // Last-contact write-back column ("تاريخ اخر تواصل") — the cross-host
+    // dedupe source. 'تواصل' uniquely matches it ("تاريخ اخر تحديث" = update
+    // date does NOT contain 'تواصل').
+    iLastContact = col(['تواصل', 'contacted', 'last_contact', 'last contact']);
   if (iMob < 0) {
     console.log(`UNCONFIGURED: no Mobile column in sheet. Found headers: [${headers.join(', ')}]`);
     process.exit(2);
   }
+  const SHEET_DEDUPE = !/^(0|false|no)$/i.test(process.env.WF_SHEET_DEDUPE || '');
 
   const contacted = loadLedgerPhones();
   const daily = loadDaily();
 
   const candidates = [];
+  const sheetContacted = new Set(); // phones the sheet already shows as contacted
   for (const r of parsed.slice(1)) {
     const code = (iCode >= 0 ? (r[iCode] || '') : '').trim() || `SE-${candidates.length + 1}`;
     const name = (iName >= 0 ? (r[iName] || '') : '').trim() || 'صاحب الإعلان';
     const phone = normalizePhone(iMob >= 0 ? r[iMob] : '');
+    // Cross-host dedupe input: a non-empty last-contact date marks the owner
+    // as already contacted EVEN IF the local ledger is fresh (new runner
+    // host). Collected before the candidate filters so history is never lost.
+    if (phone && iLastContact >= 0 && String(r[iLastContact] || '').trim()) {
+      sheetContacted.add(phone);
+    }
     const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
     if (!phone) continue; // no usable mobile
     if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
@@ -326,8 +346,19 @@ async function main() {
       propertyType: (iType >= 0 ? (r[iType] || '') : '').trim(),
     });
   }
+  // Merge the sheet's contact dates into the ledger set BEFORE any send —
+  // a fresh .state dir on a new host must never re-text the 63 owners the
+  // Windows run already contacted (their dates are in the sheet).
+  if (SHEET_DEDUPE) {
+    for (const p of sheetContacted) {
+      if (!contacted.has(p)) {
+        contacted.add(p);
+        summary.sheetDeduped++;
+      }
+    }
+  }
   summary.candidates = candidates.length;
-  console.log(`candidates: ${candidates.length} valid rows in sheet | already-contacted ledger: ${contacted.size}`);
+  console.log(`candidates: ${candidates.length} valid rows in sheet | already-contacted ledger: ${contacted.size} (local ledger + ${sheetContacted.size} sheet date(s), ${summary.sheetDeduped} newly deduped${SHEET_DEDUPE ? '' : ', sheet dedupe DISABLED'})`);
 
   const checkpoint = loadCheckpoint(candidates.length);
   const totalPool = poolEntries.length > 0 ? poolEntries : [{ name: 'session-default', uuid: gw.sessionId }];
