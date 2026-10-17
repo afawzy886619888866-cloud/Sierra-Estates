@@ -29,11 +29,20 @@ RUNNER_BIND=__BIND__
 WF_OWNER_CONTACT_DAILY_CAP=40
 # Parallel outreach: up to 4 READY lines send simultaneously per slot
 # ("2 lines here + 2 lines on the other side" — split walks the sheet from
-# BOTH ends and meets in the middle; use top/bottom to run two hosts on the
-# same sheet in parallel). Per-line pacing is unchanged.
+# BOTH ends and meets in the middle; top/bottom dedicate this host to one
+# end of a TWO-host setup, see workflows/TWO_HOST_OUTREACH.md). Per-line
+# pacing is unchanged.
 WF_PARALLEL_LINES=4
 WF_HOST_SIDE=split
-WF_SLOT_BATCH=20
+# Messages per 30-min slot (all lanes combined, exact) + graceful deadline:
+# lanes stop claiming new rows after 23 min so the runner's 25-min kill is
+# never reached — batches are never cut mid-send.
+WF_SLOT_BATCH=30
+WF_SLOT_DEADLINE_MS=1380000
+# Host role: comma-separated slugs this runner may dispatch. Unset = all
+# (EC2 control-plane default). A second host (e.g. Windows bottom side)
+# sets RUNNER_WORKFLOWS=owner-outreach so nothing else double-dispatches.
+# RUNNER_WORKFLOWS=owner-outreach
 # Owner inventory sheet (public gviz read). gid 1127958606 = the owner
 # inventory tab — do NOT use the broker-inbox gid here.
 UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk

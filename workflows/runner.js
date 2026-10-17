@@ -78,6 +78,20 @@ const SLUGS = [
   'owner-outreach',
 ];
 
+// Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
+// this runner is ALLOWED to dispatch; unset = all (the EC2 control-plane
+// default). The Windows bottom-side host sets RUNNER_WORKFLOWS=owner-outreach
+// so sentinel/digest/units-sync never double-dispatch across hosts while
+// outreach itself runs on BOTH hosts (each walking its own sheet half).
+const RUNNER_WORKFLOWS = String(process.env.RUNNER_WORKFLOWS || '')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+const DISPATCH_SLUGS = RUNNER_WORKFLOWS.length
+  ? SLUGS.filter((s) => RUNNER_WORKFLOWS.includes(s))
+  : SLUGS;
+for (const requested of RUNNER_WORKFLOWS) {
+  if (!SLUGS.includes(requested)) log(`unknown RUNNER_WORKFLOWS slug '${requested}' — ignored`);
+}
+
 const SCRIPTS = {
   'whatsapp-scraper': '01-whatsapp-scraper/index.js',
   'owner-search': '02-owner-search/search.js',
@@ -290,7 +304,7 @@ async function schedulerTick() {
   }
   let rows = [];
   try {
-    rows = await sb.getWorkflows(SLUGS);
+    rows = await sb.getWorkflows(DISPATCH_SLUGS);
   } catch (e) {
     log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
     return;
@@ -744,6 +758,9 @@ async function main() {
   }
 
   server().listen(PORT, BIND, () => log(`control API listening on http://${BIND}:${PORT}`));
+  log(RUNNER_WORKFLOWS.length
+    ? `host role: dispatching ONLY [${DISPATCH_SLUGS.join(', ')}] (RUNNER_WORKFLOWS)`
+    : 'host role: dispatching ALL workflows');
 
   const tick = async () => {
     try { await schedulerTick(); } catch (e) { log(`tick error: ${e.message}`); }
