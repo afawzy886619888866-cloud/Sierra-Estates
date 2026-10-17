@@ -184,6 +184,7 @@ never deletes files, changes branches, or contacts Vercel/Supabase.
 - The web app is not the place for long-running ingestion or bot work.
 - Worker orchestration is handled by dedicated services.
 - The docs and scripts should reflect this single architecture; stale Firebase commands are intentionally removed from the active contract.
+
 ## Local Excel inventory workflow
 
 Supabase `public.listings` remains the authoritative inventory source. The local workbook is an operational export and must be reviewed before importing changes.

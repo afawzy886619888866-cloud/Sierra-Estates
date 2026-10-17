@@ -68,7 +68,6 @@ The following skills were removed because they had **zero references** in the co
 | `performance-optimizer` | Empty stub (0-byte SKILL.md) |
 | `security-audit` | Empty stub (0-byte SKILL.md) |
 
-
 ---
 
 ## 3. Google Cloud Developer Plugin (Uninstalled)
