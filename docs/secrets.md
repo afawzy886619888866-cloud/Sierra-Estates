@@ -98,7 +98,8 @@ pnpm deploy:prod                                   # rebuild with the secrets
 Post-arm verification, in order:
 
 ```bash
-pnpm live:status                          # per-service ARMED / DEGRADED report (remote probe)
+pnpm live:status                          # ARMED/DEGRADED report; export SBR_SECRET_KEY
+                                          # locally to probe the SBR-gated production route
 pnpm embeddings:generate -- --dry-run     # capability pre-flight, zero writes
 pnpm gazetteer:sync                       # arm map pins in public.compounds (35 entries)
 pnpm embeddings:generate -- --continuous  # 768-dim vectors for every listing
