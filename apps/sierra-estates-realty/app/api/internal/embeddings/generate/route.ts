@@ -89,6 +89,29 @@ function isRateLimitError(err: unknown): boolean {
   return /429|quota|resource.?exhausted|rate.?limit/i.test(message);
 }
 
+/**
+ * Google's 429 body carries the real reset window, e.g.
+ * "Please retry in 13h8m23.413328522s" and RetryInfo "retryDelay":"47303s".
+ * Surfacing it keeps operator tooling truthful — a 10s hint against a 13h
+ * quota wall is a lie by omission (§21). Returns null when unparseable.
+ */
+export function parseRetryAfterMs(message: string): number | null {
+  const human = /Please retry in (?:(\d+)\s*h)?(?:(\d+)\s*m)?([\d.]+)?\s*s/i.exec(message);
+  if (human) {
+    const hours = Number(human[1] ?? 0) * 3_600_000;
+    const minutes = Number(human[2] ?? 0) * 60_000;
+    const seconds = Math.round(Number(human[3] ?? 0) * 1000);
+    const total = hours + minutes + seconds;
+    if (total > 0) return Math.min(total, 24 * 3_600_000);
+  }
+  const retryInfo = /retryDelay"?:\s*"?(\d+)\s*"?s/i.exec(message);
+  if (retryInfo) {
+    const total = Number(retryInfo[1]) * 1000;
+    if (total > 0) return Math.min(total, 24 * 3_600_000);
+  }
+  return null;
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -218,6 +241,7 @@ export async function POST(req: Request) {
   let processed = 0;
   let failed = 0;
   let rateLimited = false;
+  let rateLimitMessage: string | null = null;
   const failures: Array<{ id: string; reason: string }> = [];
 
   for (const listing of rows) {
@@ -250,6 +274,7 @@ export async function POST(req: Request) {
       failures.push({ id: listing.id, reason: (err as Error)?.message ?? 'unknown error' });
       if (isRateLimitError(err)) {
         rateLimited = true;
+        rateLimitMessage = (err as Error)?.message ?? '';
       }
     }
   }
@@ -266,7 +291,14 @@ export async function POST(req: Request) {
     processed,
     failed,
     ...(failures.length > 0 ? { failures: failures.slice(0, 10) } : {}),
-    ...(rateLimited ? { rateLimited: true, retryAfterMs: RATE_LIMIT_RETRY_AFTER_MS } : {}),
+    ...(rateLimited
+      ? {
+          rateLimited: true,
+          // The server's own reset window when Google states it (e.g. 13h),
+          // otherwise a conservative 10s poll hint.
+          retryAfterMs: parseRetryAfterMs(rateLimitMessage ?? '') ?? RATE_LIMIT_RETRY_AFTER_MS,
+        }
+      : {}),
     remaining,
     hasMore: remaining > 0,
     generatedAt: new Date().toISOString(),
