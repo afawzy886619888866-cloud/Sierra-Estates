@@ -12,7 +12,7 @@ import type { InventoryUnit } from '@/lib/inventory/types';
 
 export const SHEET_ID =
   process.env.INVENTORY_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
-export const SHEET_GID = process.env.INVENTORY_SHEET_GID || '341562911';
+export const SHEET_GID = process.env.INVENTORY_SHEET_GID || '1127958606';
 export const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 export const SHEET_EXPORT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
 
