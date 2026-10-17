@@ -58,7 +58,7 @@ function parseCsv(text) {
 
 const SHEET_ID =
   process.env.INVENTORY_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
-const SHEET_GID = process.env.INVENTORY_SHEET_GID || '341562911';
+const SHEET_GID = process.env.INVENTORY_SHEET_GID || '1127958606';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
