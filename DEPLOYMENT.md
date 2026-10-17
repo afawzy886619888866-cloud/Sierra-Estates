@@ -122,8 +122,12 @@ pnpm migrate:supabase
 
 ## 7. Vercel deployment ownership
 
-Vercel Git deployments are enabled in both [`vercel.json`](./vercel.json) and
-[`apps/sierra-estates-realty/vercel.json`](./apps/sierra-estates-realty/vercel.json).
+Vercel Git deployments are enabled in the root [`vercel.json`](./vercel.json) only.
+[`apps/sierra-estates-realty/vercel.json`](./apps/sierra-estates-realty/vercel.json) is a supplementary
+app config and must NOT contain `git.deploymentEnabled` — enabling it there creates a rogue third
+Vercel project. Both files are validated against the Vercel schema at deploy time, so they must
+contain only schema-recognized top-level keys: JSON has no comments, and undocumented keys such as
+`$comment` fail the whole deployment before the build even starts.
 
 **Primary deployment path**: The Vercel GitHub integration automatically deploys on every push
 to `main`. The `buildCommand` in [`vercel.json`](./vercel.json) chains `bash scripts/ci-preflight.sh`
