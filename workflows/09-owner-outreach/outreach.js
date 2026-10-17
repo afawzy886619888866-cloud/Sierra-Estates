@@ -38,10 +38,13 @@
  *     CAIRO day; with a pool the cap becomes per-line × pool size unless set
  *     explicitly (then it is a TOTAL, honored as-is)
  *   • Active hours 10:00–20:00 Cairo only; outside the window the run exits 0
- *   • Slot batch cap WF_SLOT_BATCH (default 20) — exact even with parallel
+ *   • Slot batch cap WF_SLOT_BATCH (default 30) — exact even with parallel
  *     lanes (synchronous ticket reservation; a claimed-but-unsent row is
  *     rewound so no candidate is ever lost)
- *   • 3–6 s… 45–55 s jittered pacing PER LANE between sends
+ *   • Graceful slot deadline WF_SLOT_DEADLINE_MS (default 23 min): lanes stop
+ *     claiming new rows in time to exit cleanly before the runner's kill —
+ *     batches are never cut mid-send again
+ *   • 45–55 s jittered pacing PER LANE between sends
  *   • Permanent-4xx aborts the batch; a benched line's rows are picked up by
  *     the surviving lanes
  *   • Gateway pre-flight: only `ready` lines join the slot; zero ready lines
@@ -55,7 +58,8 @@
  *      WHATSAPP_API_TOKEN, OPENWA_SESSION_ID, WHATSAPP_API_URL,
  *      OPENWA_SESSION_IDS (pool: 'line1,line2,line3,line4' — overrides
  *      OPENWA_SESSION_ID when set), WF_HOST_SIDE (split|top|bottom),
- *      WF_PARALLEL_LINES (4), WF_SLOT_BATCH (20),
+ *      WF_PARALLEL_LINES (4), WF_SLOT_BATCH (30), WF_SLOT_DEADLINE_MS
+ *      (1380000 = 23 min),
  *      WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
  *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (10-20)
  * Exit: 0 ok · 2 unconfigured · 1 error
@@ -115,7 +119,13 @@ const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '4
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
 const CAP_EXPLICIT = process.env.WF_OWNER_CONTACT_DAILY_CAP != null && process.env.WF_OWNER_CONTACT_DAILY_CAP !== '';
 let DAILY_CAP = PER_LINE_DAILY_CAP;
-const BATCH_CAP = parseInt(process.env.WF_SLOT_BATCH || '20', 10);
+const BATCH_CAP = parseInt(process.env.WF_SLOT_BATCH || '30', 10);
+// Graceful slot deadline: lanes stop claiming NEW rows after this many ms so
+// a slot ALWAYS ends cleanly (checkpoint saved, exit 0) well before the
+// runner's SIGKILL backstop — the message cap alone cannot bound slot time
+// when a line degrades to a slow crawl. Default 23 min < the 25-min runner
+// kill < the 30-min slot cadence. Anything already mid-send finishes first.
+const SLOT_DEADLINE_MS = parseInt(process.env.WF_SLOT_DEADLINE_MS || '1380000', 10);
 const DRY_RUN = /^(1|true|yes)$/i.test(process.env.WF_DRY_RUN || '');
 const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,follow up,no answer')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -147,6 +157,8 @@ const summary = {
   metInTheMiddle: false,
   sheetDeduped: 0,
   lanes: 0,
+  slotDeadline: false,
+  skippedDupRow: 0,
 };
 
 /**
@@ -368,6 +380,7 @@ async function main() {
 
   const candidates = [];
   const sheetContacted = new Set(); // phones the sheet already shows as contacted
+  const phoneFirstIdx = new Map();  // phone → index of its FIRST candidate row
   for (const r of parsed.slice(1)) {
     const code = (iCode >= 0 ? (r[iCode] || '') : '').trim() || `SE-${candidates.length + 1}`;
     const name = (iName >= 0 ? (r[iName] || '') : '').trim() || 'صاحب الإعلان';
@@ -381,8 +394,16 @@ async function main() {
     const avail = (iAvail >= 0 ? (r[iAvail] || '') : 'available').trim().toLowerCase();
     if (!phone) continue; // no usable mobile
     if (iAvail >= 0 && !AVAIL_OK.includes(avail)) continue; // Not available / Sold / unknown
+    // FIRST-OCCURRENCE-WINS (two-host parallel, Oct 2026): an owner with
+    // several listings must get ONE intro ever — via their FIRST sheet row.
+    // Later duplicate rows are skipped by BOTH hosts (dupOf marker), so the
+    // top and bottom walkers can never text the same owner in the same slot
+    // through two different rows.
+    const dupOf = phoneFirstIdx.has(phone) ? phoneFirstIdx.get(phone) : null;
+    if (dupOf === null) phoneFirstIdx.set(phone, candidates.length);
     candidates.push({
       code, name, phone, rawMobile: (iMob >= 0 ? (r[iMob] || '') : '').trim(), avail,
+      dupOf,
       location: (iLoc >= 0 ? (r[iLoc] || '') : '').trim(),
       price: (iPrice >= 0 ? (r[iPrice] || '') : '').trim().replace(/[^\d]/g, ''),
       bedrooms: (iBed >= 0 ? (r[iBed] || '') : '').trim().replace(/[^\d]/g, ''),
@@ -510,9 +531,48 @@ async function main() {
   let batchDone = false;
   let abortBatch = false;
   let sendTickets = 0; // synchronous reservation — the slot cap can never overshoot
+  const slotStart = Date.now(); // graceful deadline clock (t0 of the send loop)
+
+  // Mid-slot sheet re-sync: re-fetch the contact-date column every 5 minutes
+  // and merge freshly-marked phones into `contacted`, so the OTHER host's
+  // writes (1–5 min gviz cache lag) are picked up WITHOUT waiting for the
+  // next slot. This is what keeps the meeting-in-the-middle region race-free.
+  let lastSheetSync = Date.now();
+  async function resyncSheetContacted() {
+    if (DRY_RUN) return; // dry-run touches nothing — the sheet cannot change
+    try {
+      const res2 = await fetch(url, { signal: AbortSignal.timeout(25000) });
+      if (!res2.ok) return;
+      const parsed2 = parseCsv(await res2.text());
+      let pickedUp = 0;
+      for (const r of parsed2.slice(1)) {
+        const phone2 = normalizePhone(iMob >= 0 ? r[iMob] : '');
+        if (phone2 && iLastContact >= 0 && String(r[iLastContact] || '').trim()) {
+          if (!contacted.has(phone2)) { contacted.add(phone2); pickedUp++; }
+        }
+      }
+      if (pickedUp) {
+        summary.sheetDeduped += pickedUp;
+        console.log(`[outreach] mid-slot re-sync: ${pickedUp} phone(s) newly marked by the other host — skipped`);
+      }
+    } catch (e) {
+      console.warn(`[outreach] sheet re-sync failed (continuing): ${e.message}`);
+    }
+  }
 
   async function laneLoop(lane) {
     while (!batchDone && !abortBatch) {
+      // Graceful slot deadline — stop claiming NEW rows so the run exits
+      // cleanly (checkpoint saved) instead of being SIGKILLed by the runner.
+      if (Date.now() - slotStart >= SLOT_DEADLINE_MS) {
+        summary.slotDeadline = true;
+        break;
+      }
+      // Mid-slot cross-host re-sync (5-min cadence, single-flight)
+      if (Date.now() - lastSheetSync > 5 * 60_000) {
+        lastSheetSync = Date.now();
+        await resyncSheetContacted();
+      }
       if (summary.sent >= BATCH_CAP) {
         console.log(`\n[outreach] Slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next 30m slot`);
         batchDone = true;
@@ -530,7 +590,11 @@ async function main() {
       const cand = candidates[idx];
       const phone = cand.phone;
 
-      if (!contacted.has(phone)) {
+      if (cand.dupOf !== null && cand.dupOf !== undefined) {
+        // Later duplicate row for an owner already carried by an earlier row —
+        // the first-occurrence row (wherever the walkers reach it) does the send.
+        summary.skippedDupRow++;
+      } else if (!contacted.has(phone)) {
         const text = buildMessage(cand);
         if (DRY_RUN) {
           console.log(`[dry-run][${lane.direction}][#${idx}] would send → ${phone} (${cand.code}) via ${lane.name}`);
@@ -586,6 +650,10 @@ async function main() {
   }
 
   await Promise.all(lanes.map((lane) => laneLoop(lane)));
+
+  if (summary.slotDeadline) {
+    console.log(`[outreach] Slot time budget reached (${Math.round((Date.now() - slotStart) / 60000)} min, ${summary.sent} sent) — resuming at the next 30m slot (checkpoint saved)`);
+  }
 
   if (walkDone()) {
     checkpoint.completed = true;
