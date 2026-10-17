@@ -1,4 +1,5 @@
 # Firebase Retirement Audit & Canonical Backend Verification
+
 **Milestone:** SIE-107 · **Issue:** SIE-107-004  
 **Date:** 2026-10-16  
 **Status:** COMPLETE · Zero Active Firebase Runtimes
@@ -10,6 +11,7 @@
 As mandated by repository governance and GEMINI.md, **Supabase PostgreSQL (`gaxfqcietzoonlmatiot.supabase.co`)** is the sole authoritative backend for Sierra Estates (Database, Auth, `pgvector`, Realtime Queues, Storage).
 
 This audit confirms that:
+
 1. **0 active Firebase dependencies** exist in `package.json`, `pnpm-lock.yaml`, or any monorepo workspace package. Neither `firebase` nor `firebase-admin` is installed.
 2. **Local legacy directories** (`firebase/`, `_unused_archive/`) are untracked and strictly ignored via root `.gitignore`.
 3. **CI Legacy Runtime Boundary Gate** (`pnpm check:legacy-runtime`) runs on every pre-flight and passes with zero active runtime violations.

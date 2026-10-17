@@ -7,6 +7,7 @@ This directory documents the **Sierra Blue AI Sales Architecture**, tracking bot
 ## 1. Architectural Blueprint & Philosophy
 
 The Sierra Blue AI Advisor operates on the philosophy of **"ما وراء الوساطة (Beyond Brokerage)"**:
+
 - **Radical Transparency**: Full honesty regarding live unit availability (`متاحة` vs `مؤجرة` vs `غير متاحة`).
 - **Consultative Discovery**: Shifting the customer conversation from querying a single unit to personalized advisory.
 - **Warm Professional Tone**: Egyptian dialect designed for luxury compound clients in New Cairo / Fifth Settlement.
@@ -29,6 +30,7 @@ The Sierra Blue AI Advisor operates on the philosophy of **"ما وراء الو
 ## 3. The Closed-Loop Inventory Outreach Automation
 
 To keep inventory 100% accurate without manual broker audits:
+
 1. **Unavailable Unit Selection**: Admins query unavailable units (sorted by price ascending) in `InventoryCommandView.tsx`.
 2. **Dispatched WhatsApp Outreach**: Automated polite Arabic messages query the owner if their property is still available or has updated terms.
 3. **Automated Inbound Sync**: When the owner responds via WhatsApp, [`ListingAvailabilitySyncService.ts`](file:///H:/last/Main/SE-Vercel-deploy-main/apps/sierra-estates-realty/lib/services/ListingAvailabilitySyncService.ts) parses the message:
