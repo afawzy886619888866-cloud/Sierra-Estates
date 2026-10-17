@@ -95,6 +95,16 @@ vercel env add TELEGRAM_CHAT_ID production          # public listings channel @S
 pnpm deploy:prod                                   # rebuild with the secrets
 ```
 
+`TELEGRAM_ADMIN_CHAT_ID` must be a chat the bot has actually seen — bots cannot
+enumerate their chats. Open `https://t.me/<bot-username>`, press START (or
+create an ops group and add the bot), then discover the chat id:
+
+```bash
+node scripts/discover-telegram-admin-chat.mjs       # prints the chat id + the
+                                                    # verbatim vercel commands; REFUSES
+                                                    # the public channel (staff PII)
+```
+
 Post-arm verification, in order:
 
 ```bash
@@ -114,11 +124,19 @@ never fabricates success (§21).
 `pnpm live:status` deep-probes beyond presence (§21: presence ≠ validity):
 
 - **① RAG** — with `SBR_SECRET_KEY` exported it POSTs a one-word query to
-  `/api/internal/rag-search`; only a 200 round-trip counts as ARMED. A key
-  that is *present but rejected* (e.g. an OAuth `AQ.…` token pasted instead
-  of an AI Studio `AIza…` key) surfaces as DEGRADED with the server's exact
-  401 reason. Fix: `aistudio.google.com/apikey` → create key → replace the
-  value of `GOOGLE_GENAI_API_KEY` in Vercel → redeploy.
+  `/api/internal/rag-search`; only a 200 round-trip counts as ARMED. Two
+  distinct honest failures:
+  - *present but REJECTED* (e.g. an OAuth access token pasted instead of an
+    API key) surfaces as DEGRADED with the server's exact 401 reason. Fix:
+    `aistudio.google.com/apikey` → create key → replace the value of
+    `GOOGLE_GENAI_API_KEY` in Vercel → redeploy.
+  - *valid but quota-exhausted* — verified live 2026-10-17: the deployed
+    `AQ.…`-format key AUTHENTICATES (new Google key format; it passes auth
+    from Vercel's egress while geo-blocking operator regions) and the probe
+    reported Google's own `[429] Please retry in 10h05m` free-tier window
+    (1000 embeds/day). No key change fixes this — the window is real. Fix:
+    wait for the reset (or move to a paid tier), then keep driving
+    `scripts/drive-embeddings.py`, which surfaces the same window per batch.
 - **② Telegram** — with `TELEGRAM_BOT_TOKEN` present locally it calls
   `getMe` (token validity) and `getChat` on `TELEGRAM_CHAT_ID` (bot ↔
   channel visibility). A valid token whose bot was never added to the
