@@ -9,8 +9,8 @@ import { Layers, Compass, Maximize2, Minimize2, Sparkles, Sun, Moon, MapPin, Che
 
 const SATELLITE_UNDERLAY = '/cairo-plaza/site-satellite.jpg';
 const PANORAMA_TEXTURE = '/cairo-plaza/real-site-panorama.jpg';
-const FACADE_TEXTURE = '/cairo-plaza/alfa-banque-misr-frontage.png';
-const TOWER_TEXTURE = '/cairo-plaza/tower-frontage-detail.png';
+const FACADE_TEXTURE = '/cairo-plaza/site-photos/cp-exterior-banque-misr-frontage.png';
+const TOWER_TEXTURE = '/cairo-plaza/site-photos/cp-tower-metro-elevation.png';
 const ENTRANCE_TEXTURE = '/cairo-plaza/real-entrance-enhanced.png';
 
 type ViewMode = 'model' | 'panorama360';
