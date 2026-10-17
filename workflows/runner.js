@@ -53,6 +53,15 @@ const { GatewayClient } = require('./lib/gateway-client');
 const WF_DIR = __dirname;
 const POLL_MS = parseInt(process.env.RUNNER_POLL_MS || '60000', 10);
 const CHILD_TIMEOUT_MS = parseInt(process.env.RUNNER_CHILD_TIMEOUT_MS || '600000', 10);
+// Per-workflow timeout budget. owner-outreach slots send up to WF_SLOT_BATCH
+// messages with 45–55 s pacing PER LANE — a flat 10-min budget SIGKILLed
+// every full slot mid-batch (the "why it stop a lot" report, Oct 2026).
+// Parallel lanes finish a 20-msg slot in ~5 min; a degraded single line
+// needs ~18 min. Default outreach budget: 25 min — still under the 30-min
+// slot cadence, so a stuck run can never overlap the next slot.
+const CHILD_TIMEOUTS_MS = {
+  'owner-outreach': parseInt(process.env.RUNNER_OUTREACH_TIMEOUT_MS || '1500000', 10),
+};
 const PORT = parseInt(process.env.RUNNER_PORT || '2786', 10);
 const BIND = process.env.RUNNER_BIND || '127.0.0.1';
 const API_KEY = process.env.RUNNER_API_KEY || process.env.OPENWA_ADMIN_API_KEY || '';
@@ -192,10 +201,11 @@ async function runWorkflow(slug, trigger = 'cron') {
     child.stdout.on('data', (d) => { out += d.toString(); if (out.length > 200000) out = out.slice(-100000); });
     child.stderr.on('data', (d) => { errOut += d.toString(); if (errOut.length > 200000) errOut = errOut.slice(-100000); });
 
+    const childTimeoutMs = CHILD_TIMEOUTS_MS[slug] || CHILD_TIMEOUT_MS;
     const killer = setTimeout(() => {
-      log(`${slug}: timeout after ${CHILD_TIMEOUT_MS / 1000}s — killing`);
+      log(`${slug}: timeout after ${childTimeoutMs / 1000}s — killing`);
       child.kill('SIGKILL');
-    }, CHILD_TIMEOUT_MS);
+    }, childTimeoutMs);
 
     child.on('exit', (code, signal) => {
       clearTimeout(killer);
@@ -287,7 +297,8 @@ async function schedulerTick() {
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
-  // Hourly window check (10:00 to 20:00 Cairo time) for owner-outreach.
+  // Hourly window check (10:00–20:00 Cairo time; last slot fires 19:30 —
+  // outreach.js re-gates and never sends at hr >= 20) for owner-outreach.
   // P0-9: the hourly batch only queues when the PERSISTED row is 'active'.
   // A paused/draft workflow must never execute from a local timer, and the
   // status is re-verified again inside runWorkflow() immediately before the
@@ -310,7 +321,7 @@ async function schedulerTick() {
 
     const outreachRow = rowBySlug.get('owner-outreach');
     if (
-      cairoHour >= 10 && cairoHour <= 20 &&
+      cairoHour >= 10 && cairoHour < 20 &&
       outreachRow && String(outreachRow.status || '').toLowerCase() === 'active' &&
       !running.has('owner-outreach') && !manualQueue.has('owner-outreach') &&
       lastFiredHour.get('owner-outreach') !== hourKey

@@ -2,9 +2,23 @@
 /**
  * Workflow 09: Owner Outreach — scheduled owner connection from the inventory sheet
  * ──────────────────────────────────────────────────────────────────────────────────
- * Replaces the GitHub-Actions-based owner contact plan (GH Actions is currently
- * down for this project): everything runs on the EC2 se-workflow-runner cron,
- * Africa/Cairo time, no external scheduler needed.
+ * Runs on the EC2 se-workflow-runner cron, Africa/Cairo time.
+ *
+ * PARALLEL SENDER ("2 lines here + 2 lines on the other side", Oct 2026):
+ *   Up to WF_PARALLEL_LINES (default 4) READY pool lines send SIMULTANEOUSLY,
+ *   each lane with its own 45–55 s pacing clock — the per-LINE rate is
+ *   unchanged (anti-ban), the slot simply finishes in a fraction of the time.
+ *   The sheet is partitioned by direction so lines never collide:
+ *
+ *     WF_HOST_SIDE=split (default)
+ *         lane 1+3 walk the sheet front→back, lane 2+4 walk back→front —
+ *         "2 lines here and 2 lines on the other side" — the cursors meet
+ *         in the middle. With 2 lanes: 1 top + 1 bottom. With 1: top only.
+ *     WF_HOST_SIDE=top      all lanes walk front→back (host A of a 2-host setup)
+ *     WF_HOST_SIDE=bottom   all lanes walk back→front  (host B of a 2-host setup)
+ *
+ *   Two runner hosts can therefore work the SAME sheet in parallel: host A
+ *   (top) + host B (bottom) converge in the middle from opposite ends.
  *
  * Data flow (zero-credential, same as 08-units-sync):
  *   Google Sheet (public gviz CSV, owner inventory tab gid 1127958606 —
@@ -12,7 +26,7 @@
  *   and has no Mobile column, so outreach exited UNCONFIGURED with zero
  *   sends; fixed 2026-10-17)
  *     → rows with Code + Mobile + outreach-able Availability
- *     → personalized Arabic intro via the OpenWA gateway (same session as the app)
+ *     → personalized Arabic intro via the OpenWA gateway (session pool)
  *     → local JSONL ledger (one line per contacted phone, never re-contacted)
  *     → sheet contact-date column (تاريخ اخر تواصل) ALSO dedupes: a row
  *       whose last-contact cell is non-empty is skipped, so a fresh
@@ -20,10 +34,18 @@
  *       (WF_SHEET_DEDUPE=0 disables — re-contact campaigns only)
  *
  * Safety rails:
- *   • Daily cap (WF_OWNER_CONTACT_DAILY_CAP, default 40) counted per CAIRO day
+ *   • Daily cap (WF_OWNER_CONTACT_DAILY_CAP, default 40 PER LINE) counted per
+ *     CAIRO day; with a pool the cap becomes per-line × pool size unless set
+ *     explicitly (then it is a TOTAL, honored as-is)
  *   • Active hours 10:00–20:00 Cairo only; outside the window the run exits 0
- *   • 3–6 s jittered pacing between sends; permanent-4xx aborts the batch
- *   • Gateway pre-flight: session must be `ready` or the run exits 0 (retry next cron)
+ *   • Slot batch cap WF_SLOT_BATCH (default 20) — exact even with parallel
+ *     lanes (synchronous ticket reservation; a claimed-but-unsent row is
+ *     rewound so no candidate is ever lost)
+ *   • 3–6 s… 45–55 s jittered pacing PER LANE between sends
+ *   • Permanent-4xx aborts the batch; a benched line's rows are picked up by
+ *     the surviving lanes
+ *   • Gateway pre-flight: only `ready` lines join the slot; zero ready lines
+ *     exits 0 (retry next cron)
  *   • Skip list: Not available / Sold / rows without Mobile
  *   • Opt-out line in EVERY message (Arabic disclaimer + "إلغاء" unsubscribe)
  *   • Ledger dedupe: a phone is contacted at most once EVER (across reruns)
@@ -31,10 +53,11 @@
  *
  * Env: UNITS_SHEET_ID / UNITS_SHEET_GID (defaults = owner inventory sheet),
  *      WHATSAPP_API_TOKEN, OPENWA_SESSION_ID, WHATSAPP_API_URL,
- *      OPENWA_SESSION_IDS (4-line pool: 'line1,line2,line3,line4' — overrides
- *      OPENWA_SESSION_ID when set; cap becomes per-line × pool unless capped
- *      explicitly), WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
- *      WF_OUTREACH_AVAILABILITIES
+ *      OPENWA_SESSION_IDS (pool: 'line1,line2,line3,line4' — overrides
+ *      OPENWA_SESSION_ID when set), WF_HOST_SIDE (split|top|bottom),
+ *      WF_PARALLEL_LINES (4), WF_SLOT_BATCH (20),
+ *      WF_OWNER_CONTACT_DAILY_CAP (40 per line), WF_DRY_RUN,
+ *      WF_OUTREACH_AVAILABILITIES, WF_OUTREACH_ACTIVE_HOURS (10-20)
  * Exit: 0 ok · 2 unconfigured · 1 error
  */
 const fs = require('fs');
@@ -98,6 +121,13 @@ const AVAIL_OK = String(process.env.WF_OUTREACH_AVAILABILITIES || 'available,fol
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const AH_ENV = String(process.env.WF_OUTREACH_ACTIVE_HOURS || '10-20').split('-');
 const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || AH_ENV[1] === '' || parseInt(AH_ENV[1], 10) > 23 ? 24 : parseInt(AH_ENV[1], 10)];
+// ── Parallel sender configuration ──────────────────────────────────
+// Host side: split (lanes alternate top/bottom — "2 lines here + 2 lines on
+// the other side"), or top/bottom (two-host setup: each host walks one end).
+const HOST_SIDE_RAW = String(process.env.WF_HOST_SIDE || 'split').trim().toLowerCase();
+const HOST_SIDE = (HOST_SIDE_RAW === 'bottom' || HOST_SIDE_RAW === 'b' || HOST_SIDE_RAW === 'other') ? 'bottom'
+  : (HOST_SIDE_RAW === 'top' || HOST_SIDE_RAW === 'a') ? 'top' : 'split';
+const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '4', 10));
 
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
@@ -107,45 +137,58 @@ const CHECKPOINT = path.join(STATE_DIR, 'owner-outreach-checkpoint.json');
 const summary = {
   candidates: 0,
   sent: 0,
-  topSent: 0,
-  bottomSent: 0,
   skippedDup: 0,
   skippedCap: 0,
   skippedHours: false,
   failed: 0,
   dryRun: DRY_RUN,
   bySession: {},
+  byDirection: { top: 0, bottom: 0 },
   metInTheMiddle: false,
   sheetDeduped: 0,
+  lanes: 0,
 };
+
+/**
+ * Checkpoint v2 (direction-aware). Schema:
+ *   split:  { side:'split',  topCursor, bottomCursor, totalCount, completed }
+ *   top:    { side:'top',    cursor (0→n),            totalCount, completed }
+ *   bottom: { side:'bottom', cursor (n-1→0, counts DOWN), totalCount, completed }
+ * A legacy rotation checkpoint (no `side`) or a side change resets the walk —
+ * safe because the sheet contact-date dedupe skips already-contacted rows.
+ */
+function freshCheckpoint(totalCount, side) {
+  return {
+    side,
+    ...(side === 'split'
+      ? { topCursor: 0, bottomCursor: Math.max(0, totalCount - 1) }
+      // top walks UP from 0; bottom walks DOWN from the last row
+      : { cursor: side === 'bottom' ? Math.max(0, totalCount - 1) : 0 }),
+    totalCount,
+    completed: false,
+    updatedAt: new Date().toISOString(),
+  };
+}
 
 function loadCheckpoint(totalCount) {
   try {
     const cp = JSON.parse(fs.readFileSync(CHECKPOINT, 'utf8'));
     if (typeof cp.cursor === 'number' || typeof cp.topCursor === 'number') {
-      if (typeof cp.cursor !== 'number') {
-        cp.cursor = cp.topCursor || 0;
+      if (cp.side && cp.side === HOST_SIDE) {
+        if (totalCount > (cp.totalCount || 0)) {
+          console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
+          cp.totalCount = totalCount;
+          cp.completed = false;
+          if (cp.side === 'split') cp.bottomCursor = Math.max(cp.bottomCursor, totalCount - 1);
+          if (cp.side === 'bottom') cp.cursor = Math.max(cp.cursor, totalCount - 1);
+          saveCheckpoint(cp);
+        }
+        return cp;
       }
-      if (typeof cp.activeLineIndex !== 'number') {
-        cp.activeLineIndex = 0;
-      }
-      if (totalCount > (cp.totalCount || 0)) {
-        console.log(`[outreach] sheet grew from ${cp.totalCount || 0} to ${totalCount} rows`);
-        cp.totalCount = totalCount;
-        cp.completed = false;
-        saveCheckpoint(cp);
-      }
-      return cp;
+      console.log(`[outreach] checkpoint side '${cp.side || '(legacy rotation)'}' ≠ current '${HOST_SIDE}' — resetting walk for this side (sheet dedupe keeps already-contacted rows safe)`);
     }
   } catch { /* first run */ }
-  return {
-    cursor: 0,
-    topCursor: 0,
-    totalCount,
-    activeLineIndex: 0,
-    completed: false,
-    updatedAt: new Date().toISOString(),
-  };
+  return freshCheckpoint(totalCount, HOST_SIDE);
 }
 
 function saveCheckpoint(cp) {
@@ -246,7 +289,7 @@ function buildMessage(r) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  console.log(`owner-outreach: starting (dryRun=${DRY_RUN}, cap=${DAILY_CAP}, window=${ACTIVE_HOURS[0]}-${ACTIVE_HOURS[1]} Cairo)`);
+  console.log(`owner-outreach: starting (dryRun=${DRY_RUN}, cap=${DAILY_CAP}, window=${ACTIVE_HOURS[0]}-${ACTIVE_HOURS[1]} Cairo, side=${HOST_SIDE}, parallelLines=${PARALLEL_LINES})`);
   if (!process.env.WHATSAPP_API_TOKEN && !process.env.WHATSAPP_API_KEY) {
     console.log('UNCONFIGURED: WHATSAPP_API_TOKEN (operator key) missing');
     process.exit(2);
@@ -262,35 +305,35 @@ async function main() {
     process.exit(0);
   }
 
-  // Gateway pre-flight (advisory in dry-run — validation must work without a live session)
+  // Gateway pre-flight — resolve the pool, keep only READY lines for this slot.
   const gw = new GatewayClient();
-  // 4-line pool: resolve names→UUIDs up front and report each line's status.
   const poolEntries = await gw.resolvePool().catch(() => []);
+  const readyEntries = [];
   if (poolEntries.length) {
     DAILY_CAP = CAP_EXPLICIT ? PER_LINE_DAILY_CAP : PER_LINE_DAILY_CAP * poolEntries.length;
-    const ready = [];
     for (const e of poolEntries) {
       try {
         const one = await gw.statusFor(e.uuid);
         console.log(`pool session ${e.name} (${e.uuid.slice(0, 8)}): ${one.status}${one.phone ? ` ${one.phone}` : ''}`);
-        if (one.status === 'ready') ready.push(e);
+        if (one.status === 'ready') readyEntries.push(e);
       } catch (err) {
         console.log(`pool session ${e.name}: unreachable (${err.message})`);
       }
     }
-    if (!ready.length && !DRY_RUN) {
+    if (!readyEntries.length && !DRY_RUN) {
       console.log('no pool session ready — retry at next cron tick');
       console.log(`SUMMARY ${JSON.stringify(summary)}`);
       process.exit(0);
     }
+  } else {
+    const st = await gw.status().catch(() => ({ status: 'offline' }));
+    if (st.status !== 'ready' && !DRY_RUN) {
+      console.log(`gateway session not ready (${st.status}) — retry at next cron tick`);
+      console.log(`SUMMARY ${JSON.stringify(summary)}`);
+      process.exit(0);
+    }
   }
-  const st = await gw.status().catch(() => ({ status: 'offline' }));
-  if (st.status !== 'ready' && !poolEntries.length && !DRY_RUN) {
-    console.log(`gateway session not ready (${st.status}) — retry at next cron tick`);
-    console.log(`SUMMARY ${JSON.stringify(summary)}`);
-    process.exit(0);
-  }
-  console.log(`gateway status: ${st.status} ${st.status === 'ready' ? `(${st.phone || '?'} push=${st.pushName || '?'})` : '(dry-run continues anyway)'} | pool: ${poolEntries.length || 1} line(s), cap ${DAILY_CAP}/day`);
+  console.log(`gateway: ${poolEntries.length ? `${readyEntries.length}/${poolEntries.length} pool line(s) ready` : 'single-session mode'} | cap ${DAILY_CAP}/day | ${HOST_SIDE} walk`);
 
   // Fetch sheet
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
@@ -361,86 +404,207 @@ async function main() {
   console.log(`candidates: ${candidates.length} valid rows in sheet | already-contacted ledger: ${contacted.size} (local ledger + ${sheetContacted.size} sheet date(s), ${summary.sheetDeduped} newly deduped${SHEET_DEDUPE ? '' : ', sheet dedupe DISABLED'})`);
 
   const checkpoint = loadCheckpoint(candidates.length);
-  const totalPool = poolEntries.length > 0 ? poolEntries : [{ name: 'session-default', uuid: gw.sessionId }];
-  const lineIdx = (checkpoint.activeLineIndex || 0) % totalPool.length;
-  const activeSession = totalPool[lineIdx];
+
+  // ── Lane construction ─────────────────────────────────────────────
+  // Lanes = READY pool lines (dry-run without a reachable gateway falls back
+  // to pseudo lanes so the parallel split can be verified offline).
+  let laneEntries = readyEntries.length ? readyEntries : [];
+  if (!laneEntries.length && !poolEntries.length) {
+    // legacy single-session mode: resolve the configured session name → UUID
+    laneEntries = await gw.healthyPool().catch(() => []);
+  }
+  let lanes;
+  if (laneEntries.length) {
+    const count = Math.max(1, Math.min(PARALLEL_LINES, laneEntries.length));
+    lanes = Array.from({ length: count }, (_, i) => {
+      const e = laneEntries[i % laneEntries.length];
+      return { name: e.name, uuid: e.uuid || null };
+    });
+  } else if (DRY_RUN) {
+    const count = Math.max(1, Math.min(PARALLEL_LINES, 4));
+    lanes = Array.from({ length: count }, (_, i) => ({ name: `dry-lane-${i + 1}`, uuid: null }));
+  } else {
+    lanes = [{ name: 'session-default', uuid: null }];
+  }
+  // Direction assignment: split → alternate top/bottom ("2 lines here + 2
+  // lines on the other side"); top/bottom → every lane walks that one end.
+  lanes = lanes.map((lane, i) => ({
+    ...lane,
+    direction: HOST_SIDE === 'split' ? (i % 2 === 0 ? 'top' : 'bottom') : HOST_SIDE,
+  }));
+  summary.lanes = lanes.length;
+
+  const dirCount = { top: 0, bottom: 0 };
+  for (const l of lanes) dirCount[l.direction]++;
 
   console.log(`\n======================================================`);
-  console.log(`[outreach] 30-MIN SLOT ACTIVE LINE: ${activeSession.name} (${activeSession.phone || activeSession.uuid}) [Line ${lineIdx + 1}/${totalPool.length}]`);
-  console.log(`[outreach] Slot batch target: ${BATCH_CAP} msgs | Cursor: ${checkpoint.cursor}/${candidates.length}`);
+  console.log(`[outreach] 30-MIN SLOT — ${lanes.length} PARALLEL LINE(S):`);
+  for (const l of lanes) console.log(`[outreach]   • ${l.name} → walks ${l.direction === 'top' ? 'FRONT→BACK (top)' : 'BACK→FRONT (bottom)'}`);
+  console.log(`[outreach] ${dirCount.top} line(s) on the top end + ${dirCount.bottom} line(s) on the other side | slot batch ${BATCH_CAP} msgs | ${HOST_SIDE === 'split' ? `topCursor ${checkpoint.topCursor} / bottomCursor ${checkpoint.bottomCursor}` : `cursor ${checkpoint.cursor}`}/${candidates.length}`);
   console.log(`======================================================\n`);
 
-  if (checkpoint.cursor >= candidates.length || checkpoint.completed) {
+  const remaining =
+    HOST_SIDE === 'split'
+      ? (checkpoint.bottomCursor - checkpoint.topCursor + 1)
+      : HOST_SIDE === 'bottom'
+        ? (checkpoint.cursor + 1)
+        : (candidates.length - checkpoint.cursor);
+  if (remaining <= 0 || checkpoint.completed) {
     summary.completed = true;
     console.log('🏁 All candidates in the sheet have already been contacted!');
     console.log(`SUMMARY ${JSON.stringify(summary)}`);
     return;
   }
 
-  while (checkpoint.cursor < candidates.length) {
-    if (summary.sent >= BATCH_CAP) {
-      console.log(`\n[outreach] Slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next 30m slot`);
-      break;
-    }
-    if (daily.sent >= DAILY_CAP) {
-      summary.skippedCap++;
-      console.log(`\n[outreach] Daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next active window`);
-      break;
-    }
-
-    const cand = candidates[checkpoint.cursor];
-    const phone = cand.phone;
-
-    if (!contacted.has(phone)) {
-      const text = buildMessage(cand);
-      if (DRY_RUN) {
-        console.log(`[dry-run][#${checkpoint.cursor}] would send → ${phone} (${cand.code}) via ${activeSession.name}`);
-        summary.sent++;
-        summary.bySession[activeSession.name] = (summary.bySession[activeSession.name] || 0) + 1;
-      } else {
-        try {
-          const sendRes = await gw.sendText(phone, text, { sessionId: activeSession.uuid, retries: 2 });
-          const usedSession = sendRes.session || activeSession.name;
-          summary.sent++;
-          summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
-          daily.sent++;
-          saveDaily(daily);
-          appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, cursor: checkpoint.cursor });
-          console.log(`sent [#${checkpoint.cursor}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
-          await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
-        } catch (err) {
-          summary.failed++;
-          console.error(`Send failed for ${phone}: ${err.message}`);
-          if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
-            console.error('permanent failure on active session — aborting batch');
-            break;
-          }
+  // ── Direction-aware atomic claim ───────────────────────────────────
+  // JS runs single-threaded: cursor++ between awaits is atomic, so two lanes
+  // can never hold the same row. A claimed-but-unsent row (cap boundary) is
+  // rewound — candidates are never lost.
+  function claim(direction) {
+    if (HOST_SIDE === 'split') {
+      if (direction === 'bottom') {
+        if (checkpoint.bottomCursor >= checkpoint.topCursor) {
+          const idx = checkpoint.bottomCursor--;
+          return { idx, from: 'bottom' };
         }
+        return null;
       }
-      contacted.add(phone);
-      // Human anti-ban pacing: 45-55s (100ms in dry-run)
-      const paceMs = DRY_RUN ? 100 : 45000 + Math.floor(Math.random() * 10000);
-      await sleep(paceMs);
-    } else {
-      summary.skippedDup++;
+      if (checkpoint.topCursor <= checkpoint.bottomCursor) {
+        const idx = checkpoint.topCursor++;
+        return { idx, from: 'top' };
+      }
+      return null;
     }
+    if (HOST_SIDE === 'bottom') {
+      if (checkpoint.cursor >= 0) {
+        const idx = checkpoint.cursor--;
+        return { idx, from: 'bottom' };
+      }
+      return null;
+    }
+    if (checkpoint.cursor < candidates.length) {
+      const idx = checkpoint.cursor++;
+      return { idx, from: 'top' };
+    }
+    return null;
+  }
 
-    checkpoint.cursor++;
-    checkpoint.topCursor = checkpoint.cursor;
+  function rewind(c) {
+    if (HOST_SIDE === 'split') {
+      if (c.from === 'top') checkpoint.topCursor = Math.min(checkpoint.topCursor, c.idx);
+      else checkpoint.bottomCursor = Math.max(checkpoint.bottomCursor, c.idx);
+    } else if (HOST_SIDE === 'bottom') {
+      checkpoint.cursor = Math.max(checkpoint.cursor, c.idx);
+    } else {
+      checkpoint.cursor = Math.min(checkpoint.cursor, c.idx);
+    }
     saveCheckpoint(checkpoint);
   }
 
-  if (checkpoint.cursor >= candidates.length) {
-    checkpoint.completed = true;
-    summary.completed = true;
-    console.log('🎉 Reached the end of all sheet candidates!');
+  function walkDone() {
+    if (HOST_SIDE === 'split') return checkpoint.topCursor > checkpoint.bottomCursor;
+    if (HOST_SIDE === 'bottom') return checkpoint.cursor < 0;
+    return checkpoint.cursor >= candidates.length;
   }
 
-  // Rotate to the next line for the next 30-min slot
-  checkpoint.activeLineIndex = (lineIdx + 1) % totalPool.length;
-  saveCheckpoint(checkpoint);
-  console.log(`[outreach] Completed slot. Next 30m slot will rotate to Line ${checkpoint.activeLineIndex + 1} (${totalPool[checkpoint.activeLineIndex].name})`);
+  let batchDone = false;
+  let abortBatch = false;
+  let sendTickets = 0; // synchronous reservation — the slot cap can never overshoot
 
+  async function laneLoop(lane) {
+    while (!batchDone && !abortBatch) {
+      if (summary.sent >= BATCH_CAP) {
+        console.log(`\n[outreach] Slot batch cap reached (${summary.sent}/${BATCH_CAP}) — pausing until next 30m slot`);
+        batchDone = true;
+        break;
+      }
+      if (daily.sent >= DAILY_CAP) {
+        summary.skippedCap++;
+        console.log(`\n[outreach] Daily cap reached (${daily.sent}/${DAILY_CAP}) — pausing until next active window`);
+        batchDone = true;
+        break;
+      }
+      const claimed = claim(lane.direction);
+      if (!claimed) break; // this lane's direction is exhausted
+      const { idx } = claimed;
+      const cand = candidates[idx];
+      const phone = cand.phone;
+
+      if (!contacted.has(phone)) {
+        const text = buildMessage(cand);
+        if (DRY_RUN) {
+          console.log(`[dry-run][${lane.direction}][#${idx}] would send → ${phone} (${cand.code}) via ${lane.name}`);
+          summary.sent++;
+          summary.bySession[lane.name] = (summary.bySession[lane.name] || 0) + 1;
+          summary.byDirection[lane.direction]++;
+        } else {
+          const ticket = sendTickets++;
+          if (ticket >= BATCH_CAP || daily.sent >= DAILY_CAP) {
+            // Cap boundary: rewind the claim so the candidate is NOT lost —
+            // the next slot re-claims this row.
+            rewind(claimed);
+            batchDone = true;
+            break;
+          }
+          try {
+            const sendOpts = { retries: 2 };
+            if (lane.uuid) sendOpts.sessionId = lane.uuid;
+            const sendRes = await gw.sendText(phone, text, sendOpts);
+            const usedSession = sendRes.session || lane.name;
+            summary.sent++;
+            summary.bySession[usedSession] = (summary.bySession[usedSession] || 0) + 1;
+            summary.byDirection[lane.direction]++;
+            daily.sent++;
+            saveDaily(daily);
+            appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction });
+            console.log(`sent [${lane.direction}][#${idx}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
+            await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
+          } catch (err) {
+            summary.failed++;
+            console.error(`Send failed for ${phone} via ${lane.name}: ${err.message}`);
+            if (err.permanent || err.httpStatus === 401 || err.httpStatus === 403) {
+              console.error('permanent failure — aborting batch');
+              abortBatch = true;
+              break;
+            }
+            // transient failure on this line: the gateway client benches the
+            // line; this lane keeps claiming (next send picks a healthy line
+            // when uuid is unset, or retries the same line next slot).
+          }
+        }
+        contacted.add(phone);
+        // Human anti-ban pacing per LINE: 45–55 s (100 ms in dry-run). Each
+        // lane has its own clock, so parallel lines keep the SAME per-line
+        // rate — the slot just finishes faster.
+        const paceMs = DRY_RUN ? 100 : 45000 + Math.floor(Math.random() * 10000);
+        await sleep(paceMs);
+      } else {
+        summary.skippedDup++;
+      }
+      saveCheckpoint(checkpoint);
+    }
+  }
+
+  await Promise.all(lanes.map((lane) => laneLoop(lane)));
+
+  if (walkDone()) {
+    checkpoint.completed = true;
+    summary.completed = true;
+    console.log('🎉 Reached the end of all sheet candidates on this side!');
+  }
+  // Halfway flag: this host's cursors crossed the sheet's middle — the walk
+  // is now in territory the other side covers too (sheet dedupe keeps it safe).
+  if (HOST_SIDE === 'split') {
+    summary.metInTheMiddle = checkpoint.topCursor > checkpoint.bottomCursor
+      || checkpoint.topCursor >= Math.ceil(candidates.length / 2);
+  } else if (HOST_SIDE === 'top') {
+    summary.metInTheMiddle = checkpoint.cursor >= Math.ceil(candidates.length / 2);
+  } else {
+    summary.metInTheMiddle = checkpoint.cursor <= Math.floor((candidates.length - 1) / 2);
+  }
+  saveCheckpoint(checkpoint);
+
+  console.log(`[outreach] Completed slot: ${summary.sent} sent, ${summary.failed} failed, ${summary.skippedDup} skipped-dup | byDirection: top ${summary.byDirection.top} / bottom ${summary.byDirection.bottom}`);
   console.log(`SUMMARY ${JSON.stringify(summary)}`);
   console.log('owner-outreach: done');
   return;
