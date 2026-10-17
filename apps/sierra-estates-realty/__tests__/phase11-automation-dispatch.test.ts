@@ -313,6 +313,26 @@ describe('scheduling configuration (Phase 11)', () => {
         }
     });
 
+    it('keeps BOTH vercel.json files free of non-schema keys (e.g. $comment)', () => {
+        // Vercel validates vercel.json against its published schema BEFORE the build
+        // starts; an unknown top-level key (like "$comment", added as an ad-hoc
+        // comment on 2026-10-17) fails the whole deployment with
+        // "should NOT have additional property" — no build log, no CI gate.
+        // This contract catches that class of failure at test time instead.
+        const SCHEMA_KEYS = new Set([
+            '$schema', 'version', 'name', 'scope', 'public', 'framework',
+            'buildCommand', 'devCommand', 'installCommand', 'outputDirectory',
+            'functions', 'builds', 'routes', 'rewrites', 'redirects', 'headers',
+            'cleanUrls', 'trailingSlash', 'github', 'git', 'regions', 'crons',
+            'env', 'exclude', 'live',
+        ]);
+        for (const file of [join(APP_DIR, 'vercel.json'), join(REPO_ROOT, 'vercel.json')]) {
+            const config = JSON.parse(readFileSync(file, 'utf8'));
+            const illegal = Object.keys(config).filter((k) => !SCHEMA_KEYS.has(k));
+            expect(illegal).toEqual([]);
+        }
+    });
+
     it('has the canonical GitHub Actions scheduler with per-target schedules and retries', () => {
         const workflow = readFileSync(join(REPO_ROOT, '.github', 'workflows', 'automations.yml'), 'utf8');
         // Hourly WhatsApp drain, the two daily windows, the daily lead sync.
