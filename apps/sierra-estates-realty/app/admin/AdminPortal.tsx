@@ -39,9 +39,11 @@ import {
   MemoryBrainView,
   CairoPlazaAdminView,
   ViewingsView,
+  AccessApprovalsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
-import { PARTNER_NAV_IDS, isPartnerRole, isTabAllowedForRole, navIdsForRole } from '@/lib/partner-access';
+import { PARTNER_NAV_IDS, isPartnerRole } from '@/lib/partner-access';
+import { isNavTabAllowedForRole, navItemsForRole, navRequiredPermissionsFor } from '@/lib/admin-nav-access';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
 import WhatsAppChatScanner from '@/components/admin/WhatsAppChatScanner';
 import WhatsAppChatImportView from '@/app/admin/views/WhatsAppChatImportView';
@@ -53,15 +55,17 @@ import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import CommandPalette, { CommandItem } from '@/components/admin/CommandPalette';
 import SierraMasterOrchestrator from '@/components/admin/SierraMasterOrchestrator';
-import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn } from './views/data-constants';
+import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn, type NavItem } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
 
 /* ── TRANSLATIONS ─────────────────────────────────────────────────────── */
 
 /* ── SIDEBAR NAV ──────────────────────────────────────────────────────── */
-function SidebarContent({ T, tab, setTab, collapsed, setCollapsed, onClose }) {
-  const navItems = NAV_ITEMS(T);
+function SidebarContent({ T, tab, setTab, collapsed, setCollapsed, onClose, items }: { T: TranslationFn; tab: string; setTab: (id: string) => void; collapsed: boolean; setCollapsed: (fn: (c: boolean) => boolean) => void; onClose: (() => void) | null; items: NavItem[] }) {
+  // `items` arrives pre-filtered by role permissions (AdminApp →
+  // navItemsForRole): a user only ever sees the tabs their role is granted.
+  const navItems = items;
   const sections = [...new Set(navItems.map(n => n.section))];
   return (
     <>
@@ -94,6 +98,50 @@ function SidebarContent({ T, tab, setTab, collapsed, setCollapsed, onClose }) {
       )}
     </>
   );
+}
+
+/* ── 403 ACCESS RESTRICTED (Phase 1 RBAC) ────────────────────────────── */
+function AccessRestrictedCard({ T, tab, role, onBack }: { T: TranslationFn; tab: string; role?: string; onBack: () => void }) {
+  const ar = T('lang') === 'ar';
+  const required = navRequiredPermissionsFor(tab);
+  return (
+    <div className="fade-up" style={{ display: 'grid', placeItems: 'center', minHeight: '55vh' }}>
+      <div className="card" style={{ maxWidth: 520, padding: '34px 38px', textAlign: 'center', borderTop: '3px solid #E63946' }}>
+        <div style={{ fontSize: 40, marginBottom: 10 }}>🛡️</div>
+        <h2 style={{ fontFamily: ar ? "'Cairo',sans-serif" : "'Cormorant Garamond',serif", fontSize: 22, fontWeight: ar ? 800 : 600, margin: '0 0 8px', color: 'var(--tx-s)' }}>
+          {ar ? '403 — الوصول مقيّد' : '403 — Access Restricted'}
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--tx-m)', margin: '0 0 14px', lineHeight: 1.7 }}>
+          {ar
+            ? `مساحة العمل «${pageLabelFor(tab, T)}» غير متاحة لدورك الحالي`
+            : `The “${pageLabelFor(tab, T)}” workspace is not available for your role.`}
+          {' '}
+          {ar
+            ? `(${role || '—'}). طلبات ترقية الصلاحيات تتم عبر المشرف الأعلى.`
+            : `(${role || '—'}). Role elevations are granted by the super administrator.`}
+        </p>
+        {required.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+            {required.map((p) => (
+              <span key={p} className="chip" style={{ fontSize: 10.5, fontFamily: 'JetBrains Mono' }}>{p}</span>
+            ))}
+          </div>
+        )}
+        <div style={{ fontSize: 12, color: 'var(--tx-f)', marginBottom: 18, lineHeight: 1.8 }}>
+          📞 {ar ? 'للتفعيل أو الترقية، تواصل مع' : 'To request access, contact'}:{' '}
+          <a href="mailto:admin@sierra-estates.net" style={{ color: 'var(--gold)', fontWeight: 700 }}>admin@sierra-estates.net</a>
+        </div>
+        <button onClick={onBack} className="btn btn-pri" style={{ padding: '9px 22px', fontSize: 12.5, borderRadius: 10, border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,var(--gold),var(--gold-lt))', color: '#071422', fontWeight: 800 }}>
+          ← {ar ? 'العودة إلى مساحتك المسموحة' : 'Back to your workspace'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function pageLabelFor(tab: string, T: TranslationFn): string {
+  const found = NAV_ITEMS(T).find((n) => n.id === tab);
+  return found?.label ?? tab;
 }
 
 /* ── OVERVIEW PAGE ────────────────────────────────────────────────────── */
@@ -2221,21 +2269,23 @@ function AdminApp() {
   const T = useCallback((key) => LANG[langKey][key] || key, [langKey]);
   const isAr = langKey === 'ar';
 
-  // PARTNER ACCOUNTS: a merged-in property account sees ONLY Inventory,
-  // Ad Listing and CRM — with its own data (server-side scope). Every tab
-  // switch is funneled through guardedSetTab; the nav itself is filtered.
+  // RBAC (Sierra Estates 3.0 — Phase 1): every tab switch is funneled through
+  // guardedSetTab and checked against the permission map
+  // (lib/admin-nav-access.ts → ROLE_PERMISSIONS). Partners additionally keep
+  // their canonical three-workspace scope.
   const isPartner = isPartnerRole(currentUser?.role);
   const guardedSetTab = useCallback((id: string) => {
-    setTab((current) => (isTabAllowedForRole(id, currentUser?.role) ? id : current));
+    setTab((current) => (isNavTabAllowedForRole(id, currentUser?.role) ? id : current));
   }, [currentUser?.role]);
 
-  // When the session resolves to a partner, land on their first allowed tab
-  // ('overview' is a staff dashboard they must never open).
+  // When the session resolves, a role that may not keep the current tab
+  // (stale state, deep link, partner landing on the staff dashboard) is
+  // moved to its first permitted workspace.
   useEffect(() => {
-    if (isPartner && !isTabAllowedForRole(tab, currentUser?.role)) {
-      setTab(PARTNER_NAV_IDS[0]);
+    if (currentUser?.role && !isNavTabAllowedForRole(tab, currentUser.role)) {
+      setTab(isPartner ? PARTNER_NAV_IDS[0] : 'overview');
     }
-  }, [isPartner, tab, currentUser?.role]);
+  }, [tab, currentUser?.role, isPartner]);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -2304,9 +2354,9 @@ function AdminApp() {
   };
 
   const navItems=useMemo(()=>{
-    const all=NAV_ITEMS(T);
-    const allowedIds=navIdsForRole(all.map(n=>n.id), currentUser?.role);
-    return all.filter(n=>allowedIds.includes(n.id));
+    // Permission-driven sidebar: a user only sees the tabs their role is
+    // granted; partners keep their canonical workspace order.
+    return navItemsForRole(NAV_ITEMS(T), currentUser?.role);
   },[T, currentUser?.role]);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
@@ -2506,6 +2556,19 @@ function AdminApp() {
   }
 
   const renderPage=()=>{
+    // RBAC 403 gate (Phase 1): a deep link, stale state or command-palette
+    // jump to a tab the role is not granted renders an elegant fallback
+    // card — never the view itself. Server APIs enforce the same rule.
+    if (!isNavTabAllowedForRole(tab, currentUser?.role)) {
+      return (
+        <AccessRestrictedCard
+          T={T}
+          tab={tab}
+          role={currentUser?.role}
+          onBack={() => setTab(isPartner ? PARTNER_NAV_IDS[0] : 'overview')}
+        />
+      );
+    }
     switch(tab){
       case 'overview':
       case 'dashboard':return <DashboardView lang={langKey} onNavigateAction={guardedSetTab} onNavigate={guardedSetTab}/>;
@@ -2515,7 +2578,7 @@ function AdminApp() {
       case 'recommendations':return <RecommendationsView lang={langKey}/>;
       case 'alerts':return <AlertsView lang={langKey}/>;
       case 'agents':return <AgentsView lang={langKey}/>;
-      case 'workflows':return <WorkflowsPage T={T} onNavigate={setTab} lang={langKey}/>;
+      case 'workflows':return <WorkflowsPage T={T} onNavigate={guardedSetTab} lang={langKey}/>;
       case 'workflow_studio':return <WorkflowStudioView lang={langKey}/>;
       case 'workflow_ops':return <WorkflowOpsView lang={langKey}/>;
       case 'whatsapp_outreach':
@@ -2584,6 +2647,7 @@ function AdminApp() {
       case 'scribe':return <ScribePage T={T}/>;
       case 'closer':return <Stage9CloserPage T={T}/>;
       case 'roles':return <RoleManagerView lang={langKey}/>;
+      case 'access_approvals':return <AccessApprovalsView lang={langKey}/>;
       case 'security':return <SecurityView lang={langKey}/>;
       case 'deployment':return <DeploymentPipelineView lang={langKey}/>;
       case 'api_gateway':return <ApiGatewayView lang={langKey}/>;
@@ -2664,13 +2728,13 @@ function AdminApp() {
       {/* Mobile overlay */}
       <div className={`mobile-overlay ${mobileOpen?'open':''}`} onClick={()=>setMobileOpen(false)}>
         <div className="mobile-sidebar" onClick={e=>e.stopPropagation()}>
-          <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)}/>
+          <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={false} setCollapsed={()=>{}} onClose={()=>setMobileOpen(false)} items={navItems}/>
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <aside id="sidebar" className={collapsed?'collapsed':''}>
-        <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null}/>
+        <SidebarContent T={T} tab={tab} setTab={guardedSetTab} collapsed={collapsed} setCollapsed={setCollapsed} onClose={null} items={navItems}/>
       </aside>
 
       {/* Main */}

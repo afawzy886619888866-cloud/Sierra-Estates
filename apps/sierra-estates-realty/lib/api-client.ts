@@ -94,6 +94,33 @@ export const api = {
       body: JSON.stringify(patch),
     }));
   },
+  /* ── Phase 1: Google OAuth / Magic-Link access approval lifecycle ── */
+  async adminAccessRequests(): Promise<
+    Array<{
+      id: string;
+      email: string;
+      provider: string | null;
+      state: string;
+      requestedAt: string | null;
+      decidedAt: string | null;
+      decidedBy: string | null;
+      grantedRole: string | null;
+      note: string | null;
+    }>
+  > {
+    return json(await fetch("/api/admin/access-requests", { cache: "no-store" }));
+  },
+  async adminDecideAccessRequest(
+    email: string,
+    decision: "approved" | "denied",
+    role?: string,
+  ): Promise<{ ok: true; email: string; decision: string; grantedRole?: string }> {
+    return json(await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, decision, ...(role ? { role } : {}) }),
+    }));
+  },
   async adminReports(): Promise<Reports> {
     return json<Reports>(await fetch("/api/admin/reports", { cache: "no-store" }));
   },
