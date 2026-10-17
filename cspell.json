@@ -27,6 +27,7 @@
     "**/*.sqlite*",
     "**/*.db*",
     "**/*.pdf",
+    "**/*.patch",
     "tools/**"
   ],
   "ignoreRegExpList": [
@@ -251,6 +252,8 @@
     "livesite",
     "lockfiles",
     "loguru",
+    "looker",
+    "lookml",
     "lucide",
     "maadi",
     "madinaty",
