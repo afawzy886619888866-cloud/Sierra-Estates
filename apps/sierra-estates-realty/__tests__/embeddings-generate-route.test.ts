@@ -77,7 +77,7 @@ jest.mock('@/lib/server/gemini-embeddings', () => ({
   GEMINI_EMBEDDING_DIMENSIONS: 768,
 }));
 
-import { POST, GET, buildEmbeddingContext } from '@/app/api/internal/embeddings/generate/route';
+import { POST, GET, buildEmbeddingContext, parseRetryAfterMs } from '@/app/api/internal/embeddings/generate/route';
 
 const postRequest = (body: Record<string, unknown>) =>
   new Request('http://localhost:3000/api/internal/embeddings/generate', {
@@ -148,6 +148,27 @@ describe('buildEmbeddingContext — §21 no-fabrication', () => {
     const context = buildEmbeddingContext({ ...SPARSE_LISTING, title: 'Loft' } as never);
     expect(context).toBe('Title: Loft | Price: Price on request');
     expect(context).not.toMatch(/Compound:|Type:|Deal:|Bedrooms:|Area:|Finishing:/);
+  });
+});
+
+describe('parseRetryAfterMs — truthful quota windows (§21)', () => {
+  it('parses the human-form reset window Google actually sends', () => {
+    expect(parseRetryAfterMs('429 … Please retry in 13h8m23.413328522s [{…}]')).toBe(
+      13 * 3_600_000 + 8 * 60_000 + Math.round(23.413328522 * 1000),
+    );
+  });
+
+  it('parses the RetryInfo retryDelay form', () => {
+    expect(parseRetryAfterMs('…"retryDelay":"47303s"…')).toBe(47_303_000);
+  });
+
+  it('caps the window at 24h so a poisoned value cannot park a driver for days', () => {
+    expect(parseRetryAfterMs('Please retry in 999h0m0s')).toBe(24 * 3_600_000);
+  });
+
+  it('returns null for unparseable messages (caller falls back to the 10s poll hint)', () => {
+    expect(parseRetryAfterMs('429 RESOURCE_EXHAUSTED: quota exceeded')).toBeNull();
+    expect(parseRetryAfterMs('')).toBeNull();
   });
 });
 
@@ -237,15 +258,18 @@ describe('POST /api/internal/embeddings/generate — batch processing', () => {
     expect(updateCalls[0].id).toBe('id-2');
   });
 
-  it('stops the batch early on rate-limit exhaustion with retryAfterMs', async () => {
+  it('stops the batch early on rate-limit exhaustion with the server-stated window', async () => {
     countState.sequence = [2, 2];
     fetchResult.data = [FULL_LISTING, { ...SPARSE_LISTING, title: 'Loft' }];
-    embedQueryMock.mockRejectedValue(new Error('429 RESOURCE_EXHAUSTED: quota exceeded'));
+    embedQueryMock.mockRejectedValue(
+      new Error('429 Too Many Requests … Please retry in 13h8m23.413328522s'),
+    );
     const res = await POST(postRequest({}));
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.rateLimited).toBe(true);
-    expect(body.retryAfterMs).toBe(10000);
+    // The server's own window (13h8m23s ≈ 47,303,414ms), not the 10s default.
+    expect(body.retryAfterMs).toBe(13 * 3_600_000 + 8 * 60_000 + 23_413);
     expect(body.processed).toBe(0);
     expect(body.remaining).toBe(2);
     // Rate-limited row retried once (backoff), then the batch stopped before row 2.
