@@ -14,7 +14,7 @@
     "@sierra-estates/agents": "workspace:*",
     "axios": "^1.19",
     "express": "^5.3",
-    "pino": "^10.3",
+    "pino": "^10.4",
     "twilio": "^6.1",
     "zod": "^4.4.3"
   },
