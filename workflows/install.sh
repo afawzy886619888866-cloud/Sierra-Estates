@@ -21,10 +21,19 @@ WHATSAPP_API_URL=http://127.0.0.1:2785
 WHATSAPP_API_TOKEN=__OPKEY__
 OPENWA_ADMIN_API_KEY=__ADKEY__
 OPENWA_SESSION_ID=__UUID__
+# 4-line sender pool (overrides OPENWA_SESSION_ID when set):
+# OPENWA_SESSION_IDS=session-default,line-2,line-3,line-4
 RUNNER_API_KEY=__ADKEY__
 RUNNER_PORT=2786
 RUNNER_BIND=__BIND__
 WF_OWNER_CONTACT_DAILY_CAP=40
+# Owner inventory sheet (public gviz read). gid 1127958606 = the owner
+# inventory tab — do NOT use the broker-inbox gid here.
+UNITS_SHEET_ID=1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk
+UNITS_SHEET_GID=1127958606
+# Sheet contact-date write-back (Apps Script web app):
+# WF_SHEET_WRITE_URL=https://script.google.com/macros/s/.../exec
+# WF_SHEET_WRITE_SECRET=__WRITE_SECRET__
 ENVEOF
   echo "workflows.env created from template"
 else
