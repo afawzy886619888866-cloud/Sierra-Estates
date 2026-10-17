@@ -161,7 +161,7 @@ repository inspection. Any production resource cleanup requires an
 authenticated provider review, an explicit target, and a reversible backup or
 recovery plan. The repository intentionally contains no deployment-purge
 utility: deleting historical Vercel deployments is a provider-level operation
-and must not be bundled into application deployment.nventory, an approved change card, and a rollback plan.
+and must not be bundled into application deployment.
 
 ---
 
