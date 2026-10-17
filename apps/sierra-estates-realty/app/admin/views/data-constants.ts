@@ -146,59 +146,84 @@ export interface NavItem {
   badgeCls?: string;
 }
 
-export const NAV_ITEMS = (T: TranslationFn): NavItem[] => [
-  {id:'overview',label:T('overview'),icon:'🏠',section:T('main')},
-  // Stage 1 · Most Used Core Real Estate Operations
-  {id:'inventory_command',label:T('inventory_command'),icon:'🏢',section:T('main'),badge:'12.1k',badgeCls:'nb-green'},
-  {id:'easy_listing',label:T('lang')==='ar'?'استوديو الإدراج السريع':'Easy Listing Studio',icon:'🏷️',section:T('main'),badge:'STUDIO',badgeCls:'nb-gold'},
-  {id:'whatsapp_outreach',label:T('lang')==='ar'?'مرسل الواتساب':'WhatsApp Sender',icon:'💬',section:T('main'),badge:'15 CH',badgeCls:'nb-green'},
-  // Stage 2 · Autonomous AI & Workflows
-  {id:'agents',label:T('agents'),icon:'🤖',section:T('main'),badge:'10',badgeCls:'nb-green'},
-  {id:'workflows',label:T('workflows'),icon:'⚡',section:T('main'),badge:'8',badgeCls:'nb-blue'},
-  {id:'all_apps',label:T('all_apps'),icon:'✨',section:T('main'),badge:'APPS',badgeCls:'nb-green'},
+export const NAV_ITEMS = (T: TranslationFn, role?: unknown): NavItem[] => {
+  const isPartner = typeof role === 'string' && role.trim().toLowerCase() === 'partner';
+  const isAr = T('lang') === 'ar';
 
-  // Operations
-  {id:'leads',label:T('leads'),icon:'👥',section:T('operations'),badge:'23',badgeCls:'nb-red'},
-  {id:'pipeline',label:T('lang')==='ar'?'الصفقات':'Pipeline',icon:'💼',section:T('operations')},
-  {id:'tasks',label:T('lang')==='ar'?'المهام':'Tasks',icon:'✅',section:T('operations'),badge:'5',badgeCls:'nb-blue'},
-  {id:'inventory_os',label:T('inventory_os'),icon:'🏛️',section:T('operations'),badge:'v2',badgeCls:'nb-green'},
-  {id:'masterplan_gis',label:T('lang')==='ar'?'المخطط التفاعلي 3D GIS':'3D GIS Masterplan',icon:'🧭',section:T('operations'),badge:'3D GIS',badgeCls:'nb-green'},
-  {id:'cairo_plaza',label:T('cairo_plaza'),icon:'🏢',section:T('operations'),badge:'PHOTOS',badgeCls:'nb-green'},
-  {id:'listings',label:T('listings'),icon:'🏘️',section:T('operations')},
-  {id:'viewings',label:T('lang')==='ar'?'المعاينات والتقييم':'Viewings & Feedback',icon:'👁️',section:T('operations'),badge:'P9',badgeCls:'nb-green'},
-  {id:'excel_merger',label:T('excelMerger'),icon:'🗂️',section:T('operations'),badge:'NEW',badgeCls:'nb-green'},
-  {id:'whatsapp_chat_import',label:T('lang')==='ar'?'استيراد واتساب':'WA Chat Import',icon:'📲',section:T('operations'),badge:'AI',badgeCls:'nb-green'},
-  {id:'real_estate_processor',label:T('processor'),icon:'🏘️',section:T('operations'),badge:'SKILL',badgeCls:'nb-blue'},
-  {id:'curator',label:T('curator'),icon:'🎨',section:T('operations')},
-  {id:'scribe',label:T('scribe'),icon:'✍️',section:T('operations')},
-  {id:'closer',label:T('closer'),icon:'💼',section:T('operations')},
-  {id:'contracts',label:T('lang')==='ar'?'العقود الإلكترونية':'Digital Contracts',icon:'📜',section:T('operations'),badge:'E-SIGN',badgeCls:'nb-green'},
+  if (isPartner) {
+    return [
+      { id: 'inventory_os', label: isAr ? 'المخزون العقاري المخصص' : 'Scoped Inventory OS', icon: '🏛️', section: isAr ? 'العمليات' : 'Operations', badge: 'v2', badgeCls: 'nb-green' },
+      { id: 'listings', label: isAr ? 'قاعدة العقارات والاستوديو' : 'Listings & Studio', icon: '🏘️', section: isAr ? 'العمليات' : 'Operations' },
+      { id: 'leads', label: isAr ? 'إدارة العملاء المهتمين' : 'Leads CRM', icon: '👥', section: isAr ? 'العمليات' : 'Operations', badge: 'Active', badgeCls: 'nb-red' },
+    ];
+  }
 
-  // System & Platform
-  {id:'health',label:T('lang')==='ar'?'صحة النظام':'System Health',icon:'🩺',section:T('system'),badge:'OK',badgeCls:'nb-green'},
-  {id:'monitoring',label:T('lang')==='ar'?'المراقبة المباشرة':'Live Monitoring',icon:'📡',section:T('system'),badge:'LIVE',badgeCls:'nb-blue'},
-  {id:'workflow_studio',label:T('workflow_studio'),icon:'🧩',section:T('system'),badge:'NEW',badgeCls:'nb-green'},
-  {id:'workflow_ops',label:T('workflow_ops'),icon:'🛰️',section:T('system')},
-  {id:'automations',label:T('lang')==='ar'?'الأتمتة':'Automations',icon:'🪄',section:T('system'),badge:'3',badgeCls:'nb-green'},
-  {id:'openclaw',label:T('openclaw'),icon:'⚙️',section:T('system')},
-  {id:'nexus',label:T('nexus'),icon:'📡',section:T('system'),badge:'LIVE',badgeCls:'nb-green'},
-  {id:'roles',label:T('lang')==='ar'?'الصلاحيات':'Role Manager',icon:'🛡️',section:T('system')},
-  {id:'access_approvals',label:T('access_approvals'),icon:'✅',section:T('system'),badge:'P7',badgeCls:'nb-red'},
-  {id:'security',label:T('lang')==='ar'?'الأمان والتدقيق':'Security & Audit',icon:'🔒',section:T('system')},
-  {id:'deployment',label:T('deployment'),icon:'🚀',section:T('system'),badge:'CI/CD',badgeCls:'nb-green'},
-  {id:'api_gateway',label:T('api_gateway'),icon:'🌐',section:T('system'),badge:'REST',badgeCls:'nb-blue'},
-  {id:'settings',label:T('settings'),icon:'🔧',section:T('system')},
-
-  // Analytics & Intelligence
-  {id:'deep_insights',label:T('lang')==='ar'?'الرؤى العميقة':'Deep Insights',icon:'📈',section:T('analytics')},
-  {id:'reports',label:T('reports'),icon:'📊',section:T('analytics')},
-  {id:'intelligence',label:T('intelligence'),icon:'🧠',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
-  {id:'recommendations',label:T('lang')==='ar'?'التوصيات الذكية':'Recommendations',icon:'✨',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
-  {id:'alerts',label:T('lang')==='ar'?'التنبيهات':'Alerts',icon:'🔔',section:T('analytics'),badge:'2',badgeCls:'nb-red'},
-  {id:'memory_brain',label:T('memory_brain'),icon:'🧬',section:T('analytics'),badge:'DEEPSEEK',badgeCls:'nb-green'},
-  {id:'notebookllm',label:T('lang')==='ar'?'NotebookLM Studio':'NotebookLM Studio',icon:'🎙️',section:T('analytics'),badge:'AI',badgeCls:'nb-green'},
-  {id:'heatmap',label:T('lang')==='ar'?'خريطة العوائد':'Yield Heatmap',icon:'🗺️',section:T('analytics'),badge:'NEW',badgeCls:'nb-blue'},
-];
+  return [
+    // 1. Executive Suite (Main command KPIs, revenue pipeline, deals closed, performance)
+    {
+      id: 'overview',
+      label: isAr ? 'القيادة والتحليلات العليا' : 'Executive Suite',
+      icon: '🏛️',
+      section: isAr ? 'القيادة التنفيذية' : 'Executive Command',
+      badge: 'KPIs',
+      badgeCls: 'nb-gold',
+    },
+    // 2. Unified Inventory OS (All Master Units: Rent & Resale, Direct Owners & Brokers, Account Managers, Studio, Excel Sync, 3D Map)
+    {
+      id: 'inventory_command',
+      label: isAr ? 'منظومة المخزون الموحد' : 'Unified Inventory OS',
+      icon: '🏢',
+      section: isAr ? 'العمليات العقارية' : 'Core Real Estate',
+      badge: '21.3k',
+      badgeCls: 'nb-green',
+    },
+    // 3. Sales, CRM & Viewing Ops (Leads, Pipeline S1-S10, Tasks, Viewings & Feedback, Stage-9 Closer, Contracts)
+    {
+      id: 'leads',
+      label: isAr ? 'العملاء والمعاينات والصفقات' : 'Sales, CRM & Viewings',
+      icon: '💼',
+      section: isAr ? 'العمليات العقارية' : 'Core Real Estate',
+      badge: 'Pipeline',
+      badgeCls: 'nb-blue',
+    },
+    // 4. WhatsApp Command & Outreach (Multi-Host Runner, 24h Scheduler, Chat Harvester)
+    {
+      id: 'whatsapp_outreach',
+      label: isAr ? 'غرفة عمليات الواتساب' : 'WhatsApp Operations',
+      icon: '💬',
+      section: isAr ? 'المراسلات والتسويق' : 'Outreach & Comms',
+      badge: 'Multi-Host',
+      badgeCls: 'nb-green',
+    },
+    // 5. AI Intelligence Hub (Autonomous Fleet, Workflows & Studio, Memory Brain, DeepSeek, NotebookLM)
+    {
+      id: 'intelligence',
+      label: isAr ? 'أسطول الذكاء الاصطناعي' : 'AI Intelligence Hub',
+      icon: '🧠',
+      section: isAr ? 'الذكاء والأسطول' : 'AI Fleet & Insights',
+      badge: '10 Agents',
+      badgeCls: 'nb-gold',
+    },
+    // 6. Platform Administration & Governance (Roles & RBAC, Health, Security, Deployment CI/CD, API)
+    {
+      id: 'settings',
+      label: isAr ? 'إدارة النظام والحوكمة' : 'Platform & Governance',
+      icon: '🛡️',
+      section: isAr ? 'الحوكمة والإدارة' : 'Platform Governance',
+      badge: 'RBAC',
+      badgeCls: 'nb-green',
+    },
+    // 7. Access Approvals Queue (Superadmin-only gated queue for elevated role and access requests)
+    {
+      id: 'access_approvals',
+      label: isAr ? 'طلبات وترقيات الوصول' : 'Access Approvals',
+      icon: '✅',
+      section: isAr ? 'الحوكمة والإدارة' : 'Platform Governance',
+      badge: 'P7',
+      badgeCls: 'nb-red',
+    },
+  ];
+};
 
 export const OPENCLAW_LOGS = [
   {t:'dim',l:'OpenClaw v3.2.1 · Sierra Estates Intelligence OS'},
