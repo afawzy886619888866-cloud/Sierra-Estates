@@ -124,23 +124,24 @@ pnpm migrate:supabase
 
 Vercel Git deployments are enabled in both [`vercel.json`](./vercel.json) and
 [`apps/sierra-estates-realty/vercel.json`](./apps/sierra-estates-realty/vercel.json).
-The Vercel GitHub integration is the owner of normal `main` push deployments for
-the client and admin projects. The dispatch-only
-[`.github/workflows/deploy-vercel.yml`](./.github/workflows/deploy-vercel.yml)
-workflow is reserved for audited emergency deployments and environment-variable
-resynchronization.
 
-The workflow must resolve these GitHub configuration values before a production
-deployment:
+**Primary deployment path**: The Vercel GitHub integration automatically deploys on every push
+to `main`. The `buildCommand` in [`vercel.json`](./vercel.json) chains `bash scripts/ci-preflight.sh`
+(9 gates) before `next build`, so every production deployment is gated by the full CI preflight.
+
+**Manual emergency deployment**: Use the [`automations.yml`](./.github/workflows/automations.yml)
+`workflow_dispatch` trigger for manual automation runs. Direct Vercel CLI deployments can be done
+with `vercel --prod` from the repo root using a `VERCEL_TOKEN` secret.
+
+Required GitHub Secrets / Variables for any manual override:
 
 - Secret: `VERCEL_TOKEN`
-- Variables: `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`,
-  `ADMIN_VERCEL_PROJECT_ID`
-- Runtime secrets and Supabase configuration listed in the workflow comments
+- Variables: `VERCEL_ORG_ID`, `CLIENT_VERCEL_PROJECT_ID`, `ADMIN_VERCEL_PROJECT_ID`
+- Runtime secrets: `CRON_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 
-Project-ID fallbacks in the workflow are non-secret emergency defaults. They
-must not be replaced with credentials or copied into environment files. If the
-project IDs change, update the GitHub Variables and this documentation together.
+The `.vercel/project.json` in the repo root is the primary project binding (`sierra-estates-client-portal`).
+The admin surface (`admin.sierra-estates.net`) is configured as a separate Vercel project linked to the same
+repository with a distinct `ADMIN_VERCEL_PROJECT_ID`.
 
 ---
 

@@ -34,16 +34,44 @@ These skills are project-specific, version-controlled in Git, and hold **Priorit
 ### ⚙️ Code Quality & Deployment Ops
 
 - **`code-reviewer`**: Modern AI-powered code reviewer ensuring idiomatic TypeScript, security boundaries, and regression safety.
+- **`clean-code`**: Clean code principles: SOLID, DRY, naming conventions, and refactoring patterns.
+- **`karpathy-guidelines`**: Andrej Karpathy operational guidelines — disciplined analysis, surgical edits, and goal-driven verification.
 - **`database-design`**: PostgreSQL schema design, indexing strategies, relationships, and serverless database optimization.
 - **`supabase`**: Official Supabase agent skill for products (Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues, SSR client integrations, and CLI/MCP).
 - **`supabase-postgres-best-practices`**: Official Postgres best practices maintained by Supabase (schema design, indexing, RLS security, EXPLAIN analysis, migrations, and pgvector).
 - **`nextjs-supabase-auth`**: Session management, middleware security gates, protected routes, and Row Level Security (RLS) policies.
 - **`sierra-deployment-ops`**: Deployment and infrastructure management for Vercel, Supabase PostgreSQL / pgvector schemas, and Cloud Storage.
 - **`full-output-enforcement` (`output-skill`)**: Enforces complete, unabridged code generation and bans placeholder patterns.
+- **`notebookllm-agent`**: Grounded New Cairo real estate information bank, intelligent unit recommendation, and briefing generation.
+- **`openai-agents`**: OpenAI Agents SDK integration for Sierra Estates multi-agent workflows, handoffs, and guardrails.
+- **`sierra-listing-pipeline-agent`**: Autonomous end-to-end listing agent; extracts unit specs from WhatsApp, enforces price rules, and publishes to Property Finder.
+- **`sierra-map-agent`**: GIS boundary verification, compound-to-inventory mapping, and automated WhatsApp media harvesting.
+- **`real-estate-excel-processor`**: End-to-end listing ingestion, bilingual column normalization, deduplication, and Excel workbook regeneration.
+- **`image-to-code-skill`**: Screenshot-to-code conversion for UI replication and design-system alignment.
+- **`SE-Vercel-deploy-main`**: Project conventions, TypeScript patterns, and conventional commits reference for this monorepo.
 
 ---
 
-## 2. Google Cloud Developer Plugin (Uninstalled)
+## 2. Removed Skills (Historical Reference)
+
+The following skills were removed because they had **zero references** in the codebase or were **empty stubs** with no SKILL.md content:
+
+| Skill | Reason Removed |
+|---|---|
+| `lookml-diagnostics` | LookML/Looker BI tool — irrelevant to this real estate PropTech stack |
+| `lookml-liquid-guidelines` | LookML/Looker BI tool — irrelevant to this real estate PropTech stack |
+| `lookml-modeling-guidelines` | LookML/Looker BI tool — irrelevant to this real estate PropTech stack |
+| `lookml-pdt-guidelines` | LookML/Looker BI tool — irrelevant to this real estate PropTech stack |
+| `lookml-pop-guidelines` | LookML/Looker BI tool — irrelevant to this real estate PropTech stack |
+| `debugging-strategies` | Empty stub (0-byte SKILL.md) |
+| `nextjs-best-practices` | Empty stub (0-byte SKILL.md) — superseded by `SE-Vercel-deploy-main` conventions |
+| `performance-optimizer` | Empty stub (0-byte SKILL.md) |
+| `security-audit` | Empty stub (0-byte SKILL.md) |
+
+
+---
+
+## 3. Google Cloud Developer Plugin (Uninstalled)
 
 *Status: Uninstalled via `agy plugin uninstall google-cloud-developer`.*
 
@@ -57,7 +85,7 @@ Previously provided the following 5 catalog/CLI skills:
 
 ---
 
-## 3. Global Data & ML Skills (`~/.gemini/config/skills/`)
+## 4. Global Data & ML Skills (`~/.gemini/config/skills/`)
 
 - **BigQuery Ecosystem**: `bigquery-sql`, `bigquery-ai-ml`, `bigquery-graph`, `bigquery-bigframes`, `bigquery-data-transfer-service`, `dataform-bigquery`, `dbt-bigquery`.
 - **Cloud Pipelines & Spark**: `gcp-data-pipelines`, `gcp-dataflow`, `gcp-spark`, `gcp-composer-troubleshooting`, `gcp-managed-airflow-dag-authoring`, `gcp-pipeline-orchestration`.
@@ -66,7 +94,7 @@ Previously provided the following 5 catalog/CLI skills:
 
 ---
 
-## 4. Built-in Antigravity Skills
+## 5. Built-in Antigravity Skills
 
 Located in `~/.gemini/antigravity-ide/builtin/skills/`:
 
@@ -75,7 +103,7 @@ Located in `~/.gemini/antigravity-ide/builtin/skills/`:
 
 ---
 
-## 5. Active MCP Tool Servers (`agy mcp list`)
+## 6. Active MCP Tool Servers (`agy mcp list`)
 
 | Server Name | Transport | Purpose |
 | :--- | :--- | :--- |
@@ -90,7 +118,7 @@ Located in `~/.gemini/antigravity-ide/builtin/skills/`:
 
 ---
 
-## 6. Antigravity Skill Loading Hierarchy
+## 7. Antigravity Skill Loading Hierarchy
 
 When answering queries or executing tools, Antigravity resolves customizations in strict order:
 

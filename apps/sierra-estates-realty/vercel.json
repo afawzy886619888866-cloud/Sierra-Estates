@@ -1,10 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "$comment": "Supplementary config for the sierra-estates-realty app. Deployments are governed by the root vercel.json + Vercel GitHub integration. Do NOT add git.deploymentEnabled here.",
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
-  "git": {
-    "deploymentEnabled": true
-  },
   "crons": [
     {
       "path": "/api/cron/dispatch/night",
