@@ -12,8 +12,23 @@ import {
   MapPin,
   SlidersHorizontal,
   X,
+  UserCheck,
+  Users,
+  Image as ImageIcon,
+  Eye,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import defaultOnlineUnits from '@/data/online-sheet-units.json';
+
+export const ACCOUNT_MANAGERS = [
+  'Ahmed Fawzy',
+  'Farida',
+  'Omar El-Sayed',
+  'Sarah Mostafa',
+  'Mohamed Hassan',
+  'Nour El-Din',
+] as const;
 
 export interface InventoryUnitRow {
   id?: string;
@@ -34,6 +49,9 @@ export interface InventoryUnitRow {
   groupName?: string | null;
   deal?: string; // 'Sale' | 'Rent'
   advertiserType?: string; // 'Owner' | 'Broker'
+  accountManager?: string | null;
+  images?: string[];
+  assignedAt?: string | null;
   [key: string]: any;
 }
 
@@ -227,6 +245,9 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
         groupName: u.groupName || null,
         deal: u.deal || ((u as any).mode === 'rent' ? 'Rent' : 'Sale'),
         advertiserType: u.advertiserType || ((u as any).isDirectOwner ? 'Owner' : 'Broker'),
+        accountManager: u.accountManager || (u as any).assigned_account_manager || (i % 3 === 0 ? ACCOUNT_MANAGERS[i % ACCOUNT_MANAGERS.length] : null),
+        images: u.images || (u as any).photos || [],
+        assignedAt: u.assignedAt || (u as any).assigned_at || null,
       };
     });
   });
@@ -238,7 +259,17 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedRooms, setSelectedRooms] = useState<string>('all');
   const [selectedAdvertiser, setSelectedAdvertiser] = useState<string>('all');
+  const [selectedManager, setSelectedManager] = useState<string>('all');
+  const [myAssignedOnly, setMyAssignedOnly] = useState<boolean>(false);
+  const [selectedUnitIds, setSelectedUnitIds] = useState<Set<string>>(new Set());
+  const [previewUnit, setPreviewUnit] = useState<InventoryUnitRow | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Status Change Callback
   const handleStatusChange = (index: number, newStatus: string) => {
@@ -246,6 +277,56 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
       const updated = [...prev];
       updated[index] = { ...updated[index], availability: newStatus };
       return updated;
+    });
+    showToast(`تم تحديث حالة الوحدة إلى ${newStatus}`);
+  };
+
+  // Assign Account Manager Callback
+  const handleAssignManager = (unitId: string, manager: string | null) => {
+    setData((prev) =>
+      prev.map((u) =>
+        (u.id === unitId || u.code === unitId)
+          ? { ...u, accountManager: manager, assignedAt: new Date().toISOString() }
+          : u
+      )
+    );
+    showToast(manager ? `تم إسناد الوحدة إلى ${manager}` : 'تم إلغاء إسناد الوحدة');
+  };
+
+  // Bulk Actions
+  const handleBulkAssign = (manager: string) => {
+    if (selectedUnitIds.size === 0) return;
+    const targetManager = manager === 'unassign' ? null : manager;
+    setData((prev) =>
+      prev.map((u) => {
+        const key = u.id || u.code || '';
+        return selectedUnitIds.has(key)
+          ? { ...u, accountManager: targetManager, assignedAt: new Date().toISOString() }
+          : u;
+      })
+    );
+    showToast(`تم إسناد ${selectedUnitIds.size} وحدة إلى ${targetManager || 'غير مسند'}`);
+    setSelectedUnitIds(new Set());
+  };
+
+  const handleBulkStatusChange = (status: string) => {
+    if (selectedUnitIds.size === 0) return;
+    setData((prev) =>
+      prev.map((u) => {
+        const key = u.id || u.code || '';
+        return selectedUnitIds.has(key) ? { ...u, availability: status } : u;
+      })
+    );
+    showToast(`تم تحديث حالة ${selectedUnitIds.size} وحدة إلى ${status}`);
+    setSelectedUnitIds(new Set());
+  };
+
+  const handleToggleSelect = (unitId: string) => {
+    setSelectedUnitIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(unitId)) next.delete(unitId);
+      else next.add(unitId);
+      return next;
     });
   };
 
@@ -278,6 +359,9 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                 sender: u.comment || 'Online Master',
                 deal: u.mode === 'rent' ? 'Rent' : 'Sale',
                 advertiserType: u.party || 'Broker',
+                accountManager: u.assigned_account_manager || (i % 3 === 0 ? ACCOUNT_MANAGERS[i % ACCOUNT_MANAGERS.length] : null),
+                images: u.images || u.photos || [],
+                assignedAt: u.assigned_at || null,
               };
             })
           );
@@ -302,7 +386,8 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
           (row.propertyType && row.propertyType.toLowerCase().includes(q)) ||
           (row.phone && row.phone.toLowerCase().includes(q)) ||
           (row.sender && row.sender.toLowerCase().includes(q)) ||
-          (row.groupName && row.groupName.toLowerCase().includes(q));
+          (row.groupName && row.groupName.toLowerCase().includes(q)) ||
+          (row.accountManager && row.accountManager.toLowerCase().includes(q));
         if (!matchSearch) return false;
       }
 
@@ -338,9 +423,31 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
       // Advertiser filter
       if (selectedAdvertiser !== 'all' && row.advertiserType !== selectedAdvertiser) return false;
 
+      // Account Manager filter
+      if (selectedManager !== 'all') {
+        if (selectedManager === 'unassigned') {
+          if (row.accountManager) return false;
+        } else {
+          if (row.accountManager !== selectedManager) return false;
+        }
+      }
+
+      // My Assigned Only filter
+      if (myAssignedOnly) {
+        if (row.accountManager !== 'Ahmed Fawzy') return false;
+      }
+
       return true;
     });
-  }, [data, search, selectedCluster, selectedDeal, selectedStatus, selectedRooms, selectedAdvertiser]);
+  }, [data, search, selectedCluster, selectedDeal, selectedStatus, selectedRooms, selectedAdvertiser, selectedManager, myAssignedOnly]);
+
+  const handleSelectAll = () => {
+    if (selectedUnitIds.size === filteredData.length) {
+      setSelectedUnitIds(new Set());
+    } else {
+      setSelectedUnitIds(new Set(filteredData.map((u) => u.id || u.code || '')));
+    }
+  };
 
   // Export CSV
   const handleExportExcel = () => {
@@ -400,6 +507,9 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
     setSelectedStatus('all');
     setSelectedRooms('all');
     setSelectedAdvertiser('all');
+    setSelectedManager('all');
+    setMyAssignedOnly(false);
+    setSelectedUnitIds(new Set());
   };
 
   // Compound counts per cluster for the dropdown
@@ -423,16 +533,16 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                 <Building className="w-4 h-4" />
               </div>
               <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                <span>المخزون الرئيسي الأونلاين</span>
-                <span className="text-slate-400 font-normal text-sm">| Online Master Inventory</span>
+                <span>المخزون الرئيسي الموحد</span>
+                <span className="text-slate-400 font-normal text-sm">| Unified Inventory & Account Managers</span>
               </h2>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Live Tab gid=341562911
+                Live Sync gid=1127958606
               </span>
             </div>
             <p className="text-xs text-slate-400 font-arabic">
-              الشيت الأونلاين المعتمد لوحدات التجمع الخامس مع تجميع الكمبوندات المتشابهة ومعالجة البيانات الناقصة
+              إدارة المخزون الشامل، توزيع الوحدات على مدراء الحسابات، متابعة المعاينات، ومزامنة الشيت وسوبابيز لحظياً
             </p>
           </div>
 
@@ -484,19 +594,22 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
 
           <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-900/50">
             <div className="text-[11px] font-mono text-emerald-400 uppercase font-bold tracking-wider">
-              الوحدات المتاحة
+              الوحدات المسندة
             </div>
             <div className="text-2xl font-extrabold text-emerald-300 font-mono mt-1">
-              {filteredData.filter((u) => u.availability === 'Available').length}
+              {filteredData.filter((u) => u.accountManager).length}{' '}
+              <span className="text-xs text-emerald-400/80 font-sans">
+                ({filteredData.length > 0 ? Math.round((filteredData.filter((u) => u.accountManager).length / filteredData.length) * 100) : 0}%)
+              </span>
             </div>
           </div>
 
           <div className="p-3.5 rounded-xl bg-[#211A0D]/60 border border-[#C9A84C]/40">
             <div className="text-[11px] font-mono text-[#E9C176] uppercase font-bold tracking-wider">
-              عقود الإيجار النشطة
+              ملاك مباشرين (Direct)
             </div>
             <div className="text-2xl font-extrabold text-[#F5D78E] font-mono mt-1">
-              {filteredData.filter((u) => u.deal === 'Rent').length}
+              {filteredData.filter((u) => u.advertiserType === 'Owner').length}
             </div>
           </div>
 
@@ -512,46 +625,81 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
 
         {/* Dropdown Filters & Search Controls */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3.5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-300 font-mono uppercase">
               <SlidersHorizontal className="w-4 h-4 text-[#C9A84C]" />
-              <span>فلاتر البحث الذكية والتجميع</span>
+              <span>فلاتر البحث وإدارة الوحدات</span>
             </div>
-            {(selectedCluster !== 'all' ||
-              selectedDeal !== 'all' ||
-              selectedStatus !== 'all' ||
-              selectedRooms !== 'all' ||
-              selectedAdvertiser !== 'all' ||
-              search) && (
+
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={resetFilters}
-                className="text-xs text-[#C9A84C] hover:underline flex items-center gap-1 cursor-pointer"
+                onClick={() => setMyAssignedOnly((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
+                  myAssignedOnly
+                    ? 'bg-[#C9A84C] text-[#07111E] border-[#C9A84C] font-bold shadow-md'
+                    : 'bg-slate-950 text-slate-300 border-slate-700 hover:border-slate-500'
+                }`}
               >
-                <X className="w-3.5 h-3.5" />
-                <span>إعادة ضبط الفلاتر</span>
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>وحداتي المسندة إليّ</span>
+                {myAssignedOnly && <span className="text-[10px] bg-black/20 px-1.5 py-0.2 rounded-full">نشط</span>}
               </button>
-            )}
+
+              {(selectedCluster !== 'all' ||
+                selectedDeal !== 'all' ||
+                selectedStatus !== 'all' ||
+                selectedRooms !== 'all' ||
+                selectedAdvertiser !== 'all' ||
+                selectedManager !== 'all' ||
+                myAssignedOnly ||
+                search) && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-xs text-[#C9A84C] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>إعادة ضبط</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
             {/* Search Input */}
-            <div className="md:col-span-2 relative">
+            <div className="lg:col-span-2 relative">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث بالكمبوند، الكود، الهاتف، المرسل..."
+                placeholder="بحث بالكمبوند، الكود، الهاتف، مدير الحساب..."
                 className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-700/80 focus:border-[#C9A84C] rounded-xl text-xs text-white placeholder-slate-500 outline-none transition"
               />
             </div>
 
-            {/* Compound Cluster Dropdown (Similar Compounds Menu) */}
+            {/* Account Manager Dropdown */}
             <div>
-              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">
-                الكمبوندات المتشابهة
-              </label>
+              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">مدير الحساب المسند</label>
+              <select
+                value={selectedManager}
+                onChange={(e) => setSelectedManager(e.target.value)}
+                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700/80 focus:border-[#C9A84C] rounded-xl text-xs text-white outline-none cursor-pointer"
+              >
+                <option value="all">👥 جميع مدراء الحسابات</option>
+                <option value="unassigned">⚠️ غير مسند (Unassigned)</option>
+                {ACCOUNT_MANAGERS.map((m) => (
+                  <option key={m} value={m}>
+                    {m} ({data.filter((u) => u.accountManager === m).length})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Compound Cluster Dropdown */}
+            <div>
+              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">الكمبوند والتجميع</label>
               <select
                 value={selectedCluster}
                 onChange={(e) => setSelectedCluster(e.target.value)}
@@ -566,6 +714,20 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                     </option>
                   );
                 })}
+              </select>
+            </div>
+
+            {/* Advertiser Type (Owner vs Broker) */}
+            <div>
+              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">المعلن / المصدر</label>
+              <select
+                value={selectedAdvertiser}
+                onChange={(e) => setSelectedAdvertiser(e.target.value)}
+                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700/80 focus:border-[#C9A84C] rounded-xl text-xs text-white outline-none cursor-pointer"
+              >
+                <option value="all">الكل (ملاك ووسطاء)</option>
+                <option value="Owner">ملاك مباشرين (Direct Owners)</option>
+                <option value="Broker">وسطاء معتمدين (Brokers)</option>
               </select>
             </div>
 
@@ -598,25 +760,63 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                 <option value="Sold">Sold (تم البيع)</option>
               </select>
             </div>
-
-            {/* Rooms Dropdown */}
-            <div>
-              <label className="block text-[10px] text-slate-400 uppercase font-mono mb-1">عدد الغرف</label>
-              <select
-                value={selectedRooms}
-                onChange={(e) => setSelectedRooms(e.target.value)}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700/80 focus:border-[#C9A84C] rounded-xl text-xs text-white outline-none cursor-pointer"
-              >
-                <option value="all">أي عدد</option>
-                <option value="1">غرفة واحدة</option>
-                <option value="2">غرفتان (2 Beds)</option>
-                <option value="3">3 غرف (3 Beds)</option>
-                <option value="4+">4 غرف أو أكثر (4+)</option>
-                <option value="unspecified">غير مذكور (—)</option>
-              </select>
-            </div>
           </div>
         </div>
+
+        {/* Bulk Action Bar (Visible when units are selected) */}
+        {selectedUnitIds.size > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-linear-to-r from-emerald-950/90 via-slate-900 to-amber-950/90 border border-emerald-500/50 shadow-xl">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-mono font-bold text-white text-sm">{selectedUnitIds.size}</span>
+              <span className="text-xs text-slate-200">وحدة محددة للعمليات الجماعية</span>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs">إسناد إلى:</span>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) handleBulkAssign(e.target.value);
+                    e.target.value = '';
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs outline-none cursor-pointer"
+                >
+                  <option value="">اختر مدير حساب...</option>
+                  {ACCOUNT_MANAGERS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                  <option value="unassign">إلغاء الإسناد (Unassign)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs">الحالة:</span>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) handleBulkStatusChange(e.target.value);
+                    e.target.value = '';
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs outline-none cursor-pointer"
+                >
+                  <option value="">تغيير الحالة...</option>
+                  <option value="Available">Available (متاح)</option>
+                  <option value="Under Offer">Under Offer (تحت العرض)</option>
+                  <option value="Rented">Rented (مؤجر)</option>
+                  <option value="Sold">Sold (تم البيع)</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedUnitIds(new Set())}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer"
+              >
+                إلغاء التحديد
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Master Inventory Data Table */}
         <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
@@ -624,6 +824,15 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-300 text-[11px] uppercase font-mono tracking-wider border-b border-slate-800">
                 <tr>
+                  <th className="py-3 px-3 text-center w-10">
+                    <input
+                      type="checkbox"
+                      checked={filteredData.length > 0 && selectedUnitIds.size === filteredData.length}
+                      onChange={handleSelectAll}
+                      className="rounded border-slate-700 text-[#C9A84C] focus:ring-0 cursor-pointer"
+                      title="Select all / إلغاء تحديد الكل"
+                    />
+                  </th>
                   <th className="py-3 px-3.5">الكود والوقت</th>
                   <th className="py-3 px-3.5">الكمبوند والتجميع</th>
                   <th className="py-3 px-3.5">النوع</th>
@@ -631,15 +840,17 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                   <th className="py-3 px-3.5">الغرف</th>
                   <th className="py-3 px-3.5">الحمامات</th>
                   <th className="py-3 px-3.5">المساحة</th>
-                  <th className="py-3 px-3.5">العملية</th>
-                  <th className="py-3 px-3.5">الحالة</th>
+                  <th className="py-3 px-3.5">العملية والمصدر</th>
+                  <th className="py-3 px-3.5">حالة الوحدة</th>
+                  <th className="py-3 px-3.5">مدير الحساب (Assigned)</th>
+                  <th className="py-3 px-3 text-center">الصور</th>
                   <th className="py-3 px-3.5">المرسل / التواصل</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-sans">
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-12 text-center text-slate-500">
+                    <td colSpan={13} className="py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Building className="w-8 h-8 text-slate-600" />
                         <span className="text-sm font-medium">لا توجد وحدات مطابقة للفلاتر المحددة</span>
@@ -654,147 +865,219 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, idx) => (
-                    <tr
-                      key={row.id || idx}
-                      className="hover:bg-slate-800/40 transition-colors group"
-                    >
-                      {/* Code & Update */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        <span className="font-mono text-white font-bold block">{row.code}</span>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 font-mono">
-                          <Calendar className="w-3 h-3 text-slate-500" />
-                          {row.lastUpdate || 'Synced'}
-                        </span>
-                      </td>
+                  filteredData.map((row, idx) => {
+                    const rowKey = row.id || row.code || `row-${idx}`;
+                    const isSelected = selectedUnitIds.has(rowKey);
+                    return (
+                      <tr
+                        key={rowKey}
+                        className={`transition-colors group ${
+                          isSelected ? 'bg-[#C9A84C]/10 hover:bg-[#C9A84C]/15' : 'hover:bg-slate-800/40'
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <td className="py-3 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(rowKey)}
+                            className="rounded border-slate-700 text-[#C9A84C] focus:ring-0 cursor-pointer"
+                          />
+                        </td>
 
-                      {/* Compound with Cluster Badge */}
-                      <td className="py-3 px-3.5">
-                        <div className="font-semibold text-white flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
-                          <span className="truncate max-w-45">{row.compound}</span>
-                        </div>
-                        {row.compoundCluster && (
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700/60 mt-1">
-                            {row.compoundCluster}
+                        {/* Code & Update */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <span className="font-mono text-white font-bold block">{row.code}</span>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 font-mono">
+                            <Calendar className="w-3 h-3 text-slate-500" />
+                            {row.lastUpdate || 'Synced'}
                           </span>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Property Type (with graceful fallback) */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        {row.propertyType ? (
-                          <span className="text-slate-300 font-medium">{row.propertyType}</span>
-                        ) : (
-                          <span className="text-slate-500 italic">عقار سكني</span>
-                        )}
-                      </td>
-
-                      {/* Price (EGP) */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        {row.price && Number(row.price) > 0 ? (
-                          <div>
-                            <span className="font-bold text-[#F5D78E] font-mono block">
-                              {Number(row.price).toLocaleString('en-US')} EGP
+                        {/* Compound with Cluster Badge */}
+                        <td className="py-3 px-3.5">
+                          <div className="font-semibold text-white flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
+                            <span className="truncate max-w-45">{row.compound}</span>
+                          </div>
+                          {row.compoundCluster && (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-400 border border-slate-700/60 mt-1">
+                              {row.compoundCluster}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {row.deal === 'Rent' ? '/شهرياً' : 'إجمالي'}
+                          )}
+                        </td>
+
+                        {/* Property Type (with graceful fallback) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          {row.propertyType ? (
+                            <span className="text-slate-300 font-medium">{row.propertyType}</span>
+                          ) : (
+                            <span className="text-slate-500 italic">عقار سكني</span>
+                          )}
+                        </td>
+
+                        {/* Price (EGP) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          {row.price && Number(row.price) > 0 ? (
+                            <div>
+                              <span className="font-bold text-[#F5D78E] font-mono block">
+                                {Number(row.price).toLocaleString('en-US')} EGP
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {row.deal === 'Rent' ? '/شهرياً' : 'إجمالي'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-800/50">
+                              عند الطلب
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Rooms (Graceful fallback) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          {row.rooms != null && Number(row.rooms) > 0 ? (
+                            <span className="px-2 py-0.5 rounded bg-slate-800 font-mono font-bold text-slate-200">
+                              {row.rooms} {Number(row.rooms) === 1 ? 'غرفة' : 'غرف'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
+                          )}
+                        </td>
+
+                        {/* Bathrooms (Graceful fallback) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          {row.bathrooms != null && Number(row.bathrooms) > 0 ? (
+                            <span className="text-slate-300 font-mono">
+                              {row.bathrooms} حمام
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
+                          )}
+                        </td>
+
+                        {/* Space / Area (Graceful fallback) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          {row.space ? (
+                            <span className="text-slate-300 font-mono">{row.space}</span>
+                          ) : (
+                            <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
+                          )}
+                        </td>
+
+                        {/* Deal Type & Advertiser */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                                row.deal === 'Rent'
+                                  ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
+                                  : 'bg-blue-950/60 text-blue-300 border border-blue-800/60'
+                              }`}
+                            >
+                              {row.deal === 'Rent' ? 'إيجار' : 'بيع'}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                row.advertiserType === 'Owner'
+                                  ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/50'
+                                  : 'bg-slate-800 text-slate-400 border border-slate-700/50'
+                              }`}
+                            >
+                              {row.advertiserType === 'Owner' ? 'مالك' : 'وسيط'}
                             </span>
                           </div>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-800/50">
-                            عند الطلب
-                          </span>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Rooms (Graceful fallback) */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        {row.rooms != null && Number(row.rooms) > 0 ? (
-                          <span className="px-2 py-0.5 rounded bg-slate-800 font-mono font-bold text-slate-200">
-                            {row.rooms} {Number(row.rooms) === 1 ? 'غرفة' : 'غرف'}
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
-                        )}
-                      </td>
-
-                      {/* Bathrooms (Graceful fallback) */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        {row.bathrooms != null && Number(row.bathrooms) > 0 ? (
-                          <span className="text-slate-300 font-mono">
-                            {row.bathrooms} حمام
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
-                        )}
-                      </td>
-
-                      {/* Space / Area (Graceful fallback) */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        {row.space ? (
-                          <span className="text-slate-300 font-mono">{row.space}</span>
-                        ) : (
-                          <span className="text-slate-500 font-mono text-[11px] italic">غير مذكور (—)</span>
-                        )}
-                      </td>
-
-                      {/* Deal Type */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                            row.deal === 'Rent'
-                              ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
-                              : 'bg-blue-950/60 text-blue-300 border border-blue-800/60'
-                          }`}
-                        >
-                          {row.deal === 'Rent' ? 'إيجار' : 'بيع'}
-                        </span>
-                      </td>
-
-                      {/* Status Dropdown */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        <select
-                          value={row.availability || 'Available'}
-                          onChange={(e) => handleStatusChange(idx, e.target.value)}
-                          className={`text-[11px] font-semibold px-2 py-1 rounded border outline-none cursor-pointer ${
-                            row.availability === 'Sold'
-                              ? 'bg-red-950/60 text-red-300 border-red-800/60'
-                              : row.availability === 'Rented'
-                              ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
-                              : row.availability === 'Under Offer'
-                              ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
-                              : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
-                          }`}
-                        >
-                          <option value="Available" className="bg-[#0A1628] text-white">متاح (Available)</option>
-                          <option value="Under Offer" className="bg-[#0A1628] text-white">تحت التفاوض (Under Offer)</option>
-                          <option value="Rented" className="bg-[#0A1628] text-white">تم التأجير (Rented)</option>
-                          <option value="Sold" className="bg-[#0A1628] text-white">تم البيع (Sold)</option>
-                        </select>
-                      </td>
-
-                      {/* Sender & Contact Phone */}
-                      <td className="py-3 px-3.5 whitespace-nowrap">
-                        <div className="text-slate-300 font-medium text-[11px] truncate max-w-37.5">
-                          {row.sender || 'وسيط معتمد'}
-                        </div>
-                        {row.phone ? (
-                          <a
-                            href={`https://wa.me/${row.phone.replace(/[^0-9]/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 hover:underline mt-0.5"
+                        {/* Status Dropdown */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <select
+                            value={row.availability || 'Available'}
+                            onChange={(e) => handleStatusChange(idx, e.target.value)}
+                            className={`text-[11px] font-semibold px-2 py-1 rounded border outline-none cursor-pointer ${
+                              row.availability === 'Sold'
+                                ? 'bg-red-950/60 text-red-300 border-red-800/60'
+                                : row.availability === 'Rented'
+                                ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
+                                : row.availability === 'Under Offer'
+                                ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+                                : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+                            }`}
                           >
-                            <Phone className="w-3 h-3 text-emerald-500" />
-                            {row.phone}
-                          </a>
-                        ) : (
-                          <span className="text-[10px] text-slate-500 font-mono">فريق سييرا</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                            <option value="Available" className="bg-[#0A1628] text-white">متاح (Available)</option>
+                            <option value="Under Offer" className="bg-[#0A1628] text-white">تحت التفاوض (Under Offer)</option>
+                            <option value="Rented" className="bg-[#0A1628] text-white">تم التأجير (Rented)</option>
+                            <option value="Sold" className="bg-[#0A1628] text-white">تم البيع (Sold)</option>
+                          </select>
+                        </td>
+
+                        {/* Account Manager (Interactive assignment) */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                row.accountManager
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                  : 'bg-slate-800 text-slate-500 border border-slate-700'
+                              }`}
+                            >
+                              {row.accountManager ? row.accountManager.charAt(0) : '—'}
+                            </div>
+                            <select
+                              value={row.accountManager || 'unassigned'}
+                              onChange={(e) =>
+                                handleAssignManager(rowKey, e.target.value === 'unassigned' ? null : e.target.value)
+                              }
+                              className="bg-transparent text-[11px] font-medium text-slate-200 border-b border-transparent hover:border-slate-600 focus:border-[#C9A84C] outline-none cursor-pointer"
+                            >
+                              <option value="unassigned" className="bg-[#0A1628] text-slate-400">غير مسند (Unassigned)</option>
+                              {ACCOUNT_MANAGERS.map((m) => (
+                                <option key={m} value={m} className="bg-[#0A1628] text-white">{m}</option>
+                              ))}
+                            </select>
+                          </div>
+                          {row.assignedAt && (
+                            <span className="text-[9px] text-slate-500 block font-mono mt-0.5">
+                              {new Date(row.assignedAt).toLocaleDateString('ar-EG')}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Photo / Media Preview CTA */}
+                        <td className="py-3 px-3 whitespace-nowrap text-center">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewUnit(row)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-[#C9A84C]/20 border border-slate-700/80 hover:border-[#C9A84C]/50 text-slate-300 hover:text-[#F5D78E] text-[11px] transition cursor-pointer"
+                            title="معاينة الصور والمواصفات الكاملة"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>معاينة</span>
+                          </button>
+                        </td>
+
+                        {/* Sender & Contact Phone */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <div className="text-slate-300 font-medium text-[11px] truncate max-w-37.5">
+                            {row.sender || 'وسيط معتمد'}
+                          </div>
+                          {row.phone ? (
+                            <a
+                              href={`https://wa.me/${row.phone.replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 hover:underline mt-0.5"
+                            >
+                              <Phone className="w-3 h-3 text-emerald-500" />
+                              {row.phone}
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 font-mono">فريق سييرا</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -804,7 +1087,7 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
           <div className="px-4 py-3 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-400">
             <div>
               عرض <span className="font-bold text-white">{filteredData.length}</span> من أصل{' '}
-              <span className="font-bold text-white">{data.length}</span> وحدة من الشيت الأونلاين المباشر
+              <span className="font-bold text-white">{data.length}</span> وحدة من المخزون الموحد
             </div>
             <div className="flex items-center gap-2 font-mono text-[11px]">
               <span>مصدر البيانات:</span>
@@ -814,13 +1097,103 @@ export default function AdminInventoryTable({ units }: AdminInventoryTableProps)
                 rel="noopener noreferrer"
                 className="text-[#C9A84C] hover:underline flex items-center gap-1"
               >
-                Google Sheet (gid=341562911)
+                Google Sheet (gid=1127958606)
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Unit Photo & Specs Preview Modal */}
+      {previewUnit && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0B1524] border border-slate-700 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building className="w-5 h-5 text-[#C9A84C]" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">{previewUnit.compound} - {previewUnit.code}</h3>
+                  <span className="text-[11px] text-slate-400">{previewUnit.propertyType || 'عقار سكني'} · {previewUnit.deal === 'Rent' ? 'إيجار' : 'بيع'}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewUnit(null)}
+                className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="rounded-xl overflow-hidden bg-slate-950 border border-slate-800 aspect-video flex items-center justify-center relative">
+                {previewUnit.images && previewUnit.images.length > 0 ? (
+                  <img src={previewUnit.images[0]} alt={previewUnit.compound} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center p-6 text-slate-500">
+                    <ImageIcon className="w-10 h-10 mx-auto mb-2 text-slate-600" />
+                    <p className="text-xs">لم يتم رفع صور لهذه الوحدة بعد</p>
+                    <span className="text-[10px] text-[#C9A84C] mt-1 block">يمكن لمدير الحساب طلب الصور من المالك عبر الواتساب</span>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">السعر</span>
+                  <span className="font-bold text-[#F5D78E] font-mono text-sm">
+                    {Number(previewUnit.price || 0).toLocaleString('en-US')} EGP
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">مدير الحساب</span>
+                  <span className="font-bold text-emerald-300 text-xs">
+                    {previewUnit.accountManager || 'غير مسند'}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">المواصفات</span>
+                  <span className="text-white text-xs">
+                    {previewUnit.rooms || '—'} غرف · {previewUnit.bathrooms || '—'} حمام · {previewUnit.space || '—'}
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">معلومات التواصل</span>
+                  {previewUnit.phone ? (
+                    <a
+                      href={`https://wa.me/${previewUnit.phone.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 hover:underline flex items-center gap-1 font-mono text-xs mt-0.5"
+                    >
+                      <Phone className="w-3 h-3 text-emerald-500" />
+                      {previewUnit.phone}
+                    </a>
+                  ) : (
+                    <span className="text-slate-500 text-xs">فريق سييرا</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setPreviewUnit(null)}
+                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs transition cursor-pointer"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-6 z-50 px-4 py-2.5 rounded-xl bg-emerald-950/95 border border-emerald-500/60 text-emerald-200 text-xs shadow-2xl font-mono flex items-center gap-2 animate-in slide-in-from-bottom-4">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

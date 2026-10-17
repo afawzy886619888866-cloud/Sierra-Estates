@@ -141,7 +141,36 @@ function AccessRestrictedCard({ T, tab, role, onBack }: { T: TranslationFn; tab:
 
 function pageLabelFor(tab: string, T: TranslationFn): string {
   const found = NAV_ITEMS(T).find((n) => n.id === tab);
-  return found?.label ?? tab;
+  if (found) return found.label;
+  const isAr = T('lang') === 'ar';
+  const subLabels: Record<string, string> = {
+    easy_listing: isAr ? 'استوديو الإدراج السريع' : 'Easy Listing Studio',
+    excel_merger: isAr ? 'دمج ملفات الإكسل' : 'Excel Merger',
+    masterplan_gis: isAr ? 'المخطط 3D GIS' : '3D GIS Masterplan',
+    cairo_plaza: isAr ? 'مشروع كايرو بلازا' : 'Cairo Plaza Hub',
+    pipeline: isAr ? 'خط الصفقات' : 'Pipeline',
+    tasks: isAr ? 'المهام' : 'Tasks',
+    viewings: isAr ? 'المعاينات والتقييم' : 'Viewings & Feedback',
+    closer: isAr ? 'المغلق الذكي P9' : 'Stage-9 Closer',
+    contracts: isAr ? 'العقود الإلكترونية' : 'Digital Contracts',
+    workflow_studio: isAr ? 'استوديو سير العمل' : 'Workflow Studio',
+    workflow_ops: isAr ? 'تشغيل سير العمل' : 'Workflow Ops',
+    openclaw: isAr ? 'طرفية أوبن كلو' : 'OpenClaw Terminal',
+    nexus: isAr ? 'نيكسوس المباشر' : 'Nexus Telemetry',
+    memory_brain: isAr ? 'الذاكرة المركزية' : 'Memory Brain',
+    notebookllm: 'NotebookLM Studio',
+    deep_insights: isAr ? 'الرؤى العميقة' : 'Deep Insights',
+    reports: isAr ? 'التقارير التحليلية' : 'Reports',
+    heatmap: isAr ? 'خريطة العوائد' : 'Yield Heatmap',
+    roles: isAr ? 'الصلاحيات والأدوار' : 'Role Manager',
+    access_approvals: isAr ? 'طلبات الوصول' : 'Access Approvals',
+    security: isAr ? 'الأمان والتدقيق' : 'Security & Audit',
+    deployment: isAr ? 'خطوط النشر' : 'Deployment CI/CD',
+    api_gateway: isAr ? 'بوابة واجهات الـ API' : 'API Gateway',
+    health: isAr ? 'صحة النظام' : 'System Health',
+    monitoring: isAr ? 'المراقبة المباشرة' : 'Live Monitoring',
+  };
+  return subLabels[tab] ?? tab;
 }
 
 /* ── OVERVIEW PAGE ────────────────────────────────────────────────────── */
@@ -2253,6 +2282,87 @@ function AutomationsPage({ T }) {
   );
 }
 
+interface SubNavItem {
+  id: string;
+  labelEn: string;
+  labelAr: string;
+  icon: string;
+}
+
+const DEPARTMENT_HUBS: Record<string, { parent: string; titleEn: string; titleAr: string; items: SubNavItem[] }> = {
+  executive: {
+    parent: 'overview',
+    titleEn: 'Executive Command',
+    titleAr: 'القيادة التنفيذية',
+    items: [
+      { id: 'overview', labelEn: 'KPIs & Overview', labelAr: 'لوحة القيادة والمؤشرات', icon: '🏛️' },
+      { id: 'deep_insights', labelEn: 'Market Insights', labelAr: 'الرؤى العميقة', icon: '📈' },
+      { id: 'heatmap', labelEn: 'Yield Heatmap', labelAr: 'خريطة العوائد', icon: '🗺️' },
+      { id: 'reports', labelEn: 'Reports & Audits', labelAr: 'التقارير التحليلية', icon: '📊' },
+    ],
+  },
+  inventory: {
+    parent: 'inventory_command',
+    titleEn: 'Unified Inventory',
+    titleAr: 'منظومة المخزون',
+    items: [
+      { id: 'inventory_command', labelEn: 'Master Inventory OS', labelAr: 'المخزون الرئيسي الموحد', icon: '🏢' },
+      { id: 'easy_listing', labelEn: 'Easy Listing Studio', labelAr: 'استوديو الإدراج السريع', icon: '🏷️' },
+      { id: 'excel_merger', labelEn: 'Excel & CSV Sync Hub', labelAr: 'دمج الشيتات والإكسل', icon: '🗂️' },
+      { id: 'masterplan_gis', labelEn: '3D GIS Masterplan', labelAr: 'مخطط 3D GIS', icon: '🧭' },
+      { id: 'cairo_plaza', labelEn: 'Cairo Plaza Media Hub', labelAr: 'مشروع كايرو بلازا', icon: '🏢' },
+    ],
+  },
+  sales: {
+    parent: 'leads',
+    titleEn: 'Sales & Viewings',
+    titleAr: 'المبيعات والمعاينات',
+    items: [
+      { id: 'leads', labelEn: 'CRM Leads', labelAr: 'العملاء والمهتمين', icon: '👥' },
+      { id: 'pipeline', labelEn: 'Deals Pipeline (S1-S10)', labelAr: 'مراحل الصفقات', icon: '💼' },
+      { id: 'viewings', labelEn: 'Viewings & Feedback', labelAr: 'المعاينات والتقييم', icon: '👁️' },
+      { id: 'closer', labelEn: 'Stage-9 Closer Bot', labelAr: 'المغلق الذكي', icon: '🤝' },
+      { id: 'contracts', labelEn: 'Digital Contracts', labelAr: 'العقود الإلكترونية', icon: '📜' },
+    ],
+  },
+  outreach: {
+    parent: 'whatsapp_outreach',
+    titleEn: 'WhatsApp Operations',
+    titleAr: 'عمليات الواتساب',
+    items: [
+      { id: 'whatsapp_outreach', labelEn: 'WhatsApp Command', labelAr: 'مرسل الواتساب المجدول', icon: '💬' },
+      { id: 'whatsapp_chat_import', labelEn: 'Chat Harvester & NLP', labelAr: 'استيراد محادثات الواتساب', icon: '📲' },
+    ],
+  },
+  intelligence: {
+    parent: 'intelligence',
+    titleEn: 'AI Intelligence',
+    titleAr: 'أسطول الذكاء الاصطناعي',
+    items: [
+      { id: 'intelligence', labelEn: 'Agent Fleet Telemetry', labelAr: 'أسطول الوكلاء', icon: '🤖' },
+      { id: 'workflows', labelEn: 'Automations & Engine', labelAr: 'محرك الأتمتة', icon: '⚡' },
+      { id: 'workflow_studio', labelEn: 'Workflow Studio', labelAr: 'استوديو سير العمل', icon: '🧩' },
+      { id: 'memory_brain', labelEn: 'Central Memory & DeepSeek', labelAr: 'الذاكرة المركزية', icon: '🧬' },
+      { id: 'notebookllm', labelEn: 'NotebookLM Audio Studio', labelAr: 'الملخصات الصوتية', icon: '🎙️' },
+    ],
+  },
+  governance: {
+    parent: 'settings',
+    titleEn: 'Platform Governance',
+    titleAr: 'حوكمة المنظومة',
+    items: [
+      { id: 'settings', labelEn: 'Platform Settings', labelAr: 'إعدادات النظام', icon: '🔧' },
+      { id: 'roles', labelEn: 'Role Manager & RBAC', labelAr: 'إدارة الأدوار والصلاحيات', icon: '🛡️' },
+      { id: 'access_approvals', labelEn: 'Access Approvals', labelAr: 'طلبات الوصول', icon: '✅' },
+      { id: 'health', labelEn: 'System Health', labelAr: 'صحة المنظومة', icon: '🩺' },
+      { id: 'monitoring', labelEn: 'Live Telemetry', labelAr: 'المراقبة الحية', icon: '📡' },
+      { id: 'security', labelEn: 'Security & Audit', labelAr: 'سجلات الأمان والتدقيق', icon: '🔒' },
+      { id: 'deployment', labelEn: 'CI/CD Deployment', labelAr: 'خطوط النشر', icon: '🚀' },
+      { id: 'api_gateway', labelEn: 'REST API Gateway', labelAr: 'بوابة الـ API', icon: '🌐' },
+    ],
+  },
+};
+
 function AdminApp() {
   const [tab,setTab]=useState('overview');
   const [theme,setTheme]=useState(()=>(typeof window!=='undefined'&&localStorage.getItem('admin_theme'))||'light');
@@ -2356,7 +2466,7 @@ function AdminApp() {
   const navItems=useMemo(()=>{
     // Permission-driven sidebar: a user only sees the tabs their role is
     // granted; partners keep their canonical workspace order.
-    return navItemsForRole(NAV_ITEMS(T), currentUser?.role);
+    return navItemsForRole(NAV_ITEMS(T, currentUser?.role), currentUser?.role);
   },[T, currentUser?.role]);
   const pageTitles=Object.fromEntries(navItems.map(n=>[n.id,n.label]));
 
@@ -2935,6 +3045,80 @@ function AdminApp() {
         <div id="content">
           {/* Master orchestrator — staff fleet console (admin-only APIs) */}
           {!isPartner && <SierraMasterOrchestrator lang={langKey} onNavigate={guardedSetTab} />}
+
+          {/* Department Executive Sub-Navigation */}
+          {!isPartner && (() => {
+            const activeDept = Object.values(DEPARTMENT_HUBS).find((dept) =>
+              dept.items.some((item) => item.id === tab)
+            );
+            if (!activeDept || activeDept.items.length <= 1) return null;
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  overflowX: 'auto',
+                  padding: '7px 10px',
+                  marginBottom: 14,
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: 12,
+                  border: '1px solid var(--bd)',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--gold)',
+                    paddingRight: isAr ? 0 : 8,
+                    paddingLeft: isAr ? 8 : 0,
+                    borderRight: isAr ? 'none' : '1px solid var(--bd)',
+                    borderLeft: isAr ? '1px solid var(--bd)' : 'none',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                >
+                  <span>✧</span>
+                  <span>{isAr ? activeDept.titleAr : activeDept.titleEn}</span>
+                </div>
+                {activeDept.items.map((sub) => {
+                  const isSubActive = tab === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => guardedSetTab(sub.id)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '5px 11px',
+                        borderRadius: 8,
+                        fontSize: 11.5,
+                        fontWeight: isSubActive ? 700 : 500,
+                        cursor: 'pointer',
+                        border: isSubActive ? '1px solid rgba(200, 150, 26, 0.45)' : '1px solid transparent',
+                        background: isSubActive
+                          ? 'linear-gradient(135deg, rgba(200, 150, 26, 0.22) 0%, rgba(168, 122, 18, 0.12) 100%)'
+                          : 'transparent',
+                        color: isSubActive ? '#E9C176' : 'var(--tx-m)',
+                        transition: 'all 0.15s ease',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <span style={{ fontSize: 13 }}>{sub.icon}</span>
+                      <span>{isAr ? sub.labelAr : sub.labelEn}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {renderPage()}
         </div>
         {!isPartner && (
