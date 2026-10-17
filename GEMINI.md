@@ -28,7 +28,7 @@ For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`]
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 
-# AWS Guidance
+## 5. AWS Guidance
 
 - Where these AWS rules conflict with the project's own instructions, the
   project's instructions take precedence.
@@ -48,7 +48,7 @@ For the full catalog and architecture breakdown, see [`docs/SKILLS_REGISTRY.md`]
 - Do not use em dashes in AWS resource names or descriptions. Use
   hyphens instead.
 
-## Secret Safety
+### Secret Safety
 
 - MUST load the `aws-secrets-manager` skill first for any secret,
 credential, API key, token, or password task. MUST NOT call
