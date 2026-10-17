@@ -1,14 +1,27 @@
 /**
- * Google Apps Script for Sierra Estates Master Online Sheet
- * Target Sheet ID: 1q-dQmbFS9UZkRrL_HmJIxBXQ-ASEPkM7MvFiviojw7A
- * 
+ * Google Apps Script for Sierra Estates Master Online Sheet (LIVE master tab gid 1127958606)
+ *
+ * v2 (2026-10-17) — merge-safe edition:
+ *   • importNewMasterRows() is now IDEMPOTENT: it reads the sheet's existing
+ *     Mobile column first and skips any CSV row whose phone (exact or
+ *     last-9-digits) is already in the sheet. Re-running it can never
+ *     duplicate rows.
+ *   • New web action `appendRows` — POST {secret, action:'appendRows',
+ *     rows: [[19 cells], ...]} — applies the same phone-dedupe guard, so
+ *     remote callers (runners / automation) can push rows safely.
+ *   • New web action `importNewMasterRows` — POST {secret,
+ *     action:'importNewMasterRows'} — runs the idempotent CSV import
+ *     remotely (fetches data/Online_Sheet_New_Rows_Only.csv from GitHub).
+ *   • doGet/doPost write-back contracts are UNCHANGED (outreach.js
+ *     depends on them: rows=[{phone,date}], action:unitReceived).
+ *
  * Instructions:
- * 1. Open the Google Sheet: https://docs.google.com/spreadsheets/d/1q-dQmbFS9UZkRrL_HmJIxBXQ-ASEPkM7MvFiviojw7A/edit
+ * 1. Open the LIVE Google Sheet (the one with the Owners-Rent tab, gid 1127958606)
  * 2. Click "Extensions" > "Apps Script"
  * 3. Replace all existing text with this file
  * 4. Run `setupMasterInventory()` once to format the table, freeze header, and enable filters
  * 5. Click "Deploy" > "New deployment" > Select type: "Web app"
- *    - Description: "Sierra Master Write-Back & Status API"
+ *    - Description: "Sierra Master Write-Back & Status API v2"
  *    - Execute as: "Me"
  *    - Who has access: "Anyone"
  * 6. Copy the new Web App URL and provide it to Antigravity / paste into .env (WF_SHEET_WRITE_URL)
@@ -50,30 +63,94 @@ function getOrCreateMasterSheet() {
 }
 
 /**
- * 1-Click Import of the 1,503 new verified master rows directly from GitHub into the sheet
+ * Read the sheet's Mobile column and build a set of phone identities:
+ * full digits + last-9 (mirrors the doPost matching logic).
+ */
+function readExistingPhoneIdentities(sheet) {
+  const lastRow = sheet.getLastRow();
+  const identities = new Set();
+  if (lastRow < 2) return identities;
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const mobColIdx = headers.indexOf("Mobile") + 1;
+  if (mobColIdx === 0) return identities;
+  const mobValues = sheet.getRange(2, mobColIdx, lastRow - 1, 1).getValues();
+  for (let i = 0; i < mobValues.length; i++) {
+    const raw = String(mobValues[i][0] || "").replace(/\D/g, "");
+    if (raw.length >= 9) {
+      identities.add(raw);
+      identities.add(raw.slice(-9));
+    }
+  }
+  return identities;
+}
+
+/**
+ * Dedupe-guarded bulk append. Accepts an array of row arrays (19 cells each,
+ * matching HEADERS order). Skips rows whose Mobile phone (exact or last-9)
+ * already exists in the sheet or appears earlier in the same batch.
+ * Returns {ok, appended, skipped, totalRows}.
+ */
+function appendRowsDeduped(sheet, rowsToAppend) {
+  const identities = readExistingPhoneIdentities(sheet);
+  const seenInBatch = new Set();
+  const keep = [];
+  let skipped = 0;
+  for (const row of rowsToAppend) {
+    const cells = (row || []).map(function (c) { return c === null || c === undefined ? "" : String(c); });
+    // pad/trim to header width
+    while (cells.length < HEADERS.length) cells.push("");
+    cells.length = HEADERS.length;
+    const raw = String(cells[4] || "").replace(/\D/g, ""); // Mobile = column 5
+    let isDupe = false;
+    if (raw.length >= 9) {
+      if (identities.has(raw) || identities.has(raw.slice(-9)) ||
+          seenInBatch.has(raw) || seenInBatch.has(raw.slice(-9))) {
+        isDupe = true;
+      } else {
+        seenInBatch.add(raw);
+        seenInBatch.add(raw.slice(-9));
+      }
+    }
+    if (isDupe) { skipped++; continue; }
+    keep.push(cells);
+  }
+  if (!keep.length) {
+    return { ok: true, appended: 0, skipped: skipped, totalRows: sheet.getLastRow() - 1 };
+  }
+  // append in chunks of 500 to stay well under Apps Script quota per call
+  const CHUNK = 500;
+  for (let i = 0; i < keep.length; i += CHUNK) {
+    const chunk = keep.slice(i, i + CHUNK);
+    const startRow = sheet.getLastRow() + 1;
+    sheet.getRange(startRow, 1, chunk.length, HEADERS.length).setValues(chunk);
+    // Mobile column as plain text so leading zeros survive
+    sheet.getRange(startRow, 5, chunk.length, 1).setNumberFormat("@");
+  }
+  return { ok: true, appended: keep.length, skipped: skipped, totalRows: sheet.getLastRow() - 1 };
+}
+
+/**
+ * 1-Click Import of the new verified master rows directly from GitHub into the
+ * sheet — IDEMPOTENT (v2): rows whose phone already exists in the sheet are
+ * skipped, so this can be re-run any number of times without duplication.
  */
 function importNewMasterRows() {
   const sheet = getOrCreateMasterSheet();
   const csvUrl = "https://raw.githubusercontent.com/sierrablue8866-droid/SE-Vercel-deploy-main/main/data/Online_Sheet_New_Rows_Only.csv";
   const response = UrlFetchApp.fetch(csvUrl);
   const csvData = Utilities.parseCsv(response.getContentText("UTF-8"));
-  
-  const rowsToAppend = csvData.slice(1);
+
+  const rowsToAppend = csvData.slice(1).filter(function (r) {
+    return r.length > 1 && String(r.join("")).trim().length > 0;
+  });
   if (!rowsToAppend.length) {
     Logger.log("No rows to append.");
     return { ok: false, message: "No rows found in CSV." };
   }
-  
-  const startRow = sheet.getLastRow() + 1;
-  const numRows = rowsToAppend.length;
-  const numCols = rowsToAppend[0].length;
-  
-  sheet.getRange(startRow, 1, numRows, numCols).setValues(rowsToAppend);
-  // Ensure Mobile column (col 5) is formatted as Plain Text
-  sheet.getRange(startRow, 5, numRows, 1).setNumberFormat("@");
-  
-  Logger.log("Successfully appended " + numRows + " new master rows! Total sheet rows: " + sheet.getLastRow());
-  return { ok: true, appended: numRows, totalRows: sheet.getLastRow() };
+
+  const result = appendRowsDeduped(sheet, rowsToAppend);
+  Logger.log("Import done: appended " + result.appended + ", skipped (already present) " + result.skipped + ", total rows now " + result.totalRows);
+  return result;
 }
 
 /**
@@ -146,10 +223,13 @@ function doGet(e) {
   const lastRow = sheet.getLastRow();
   return ContentService.createTextOutput(JSON.stringify({
     ok: true,
-    service: "sierra-master-sheet-api",
+    service: "sierra-sheet-writeback",
+    version: 2,
     sheetName: sheet.getName(),
     tabGid: sheet.getSheetId(),
     totalRows: Math.max(0, lastRow - 1),
+    column: DATE_COL_NAME,
+    actions: ["rows:[{phone,date}]", "unitReceived|updateStatus", "appendRows", "importNewMasterRows"],
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -170,6 +250,20 @@ function doPost(e) {
     }
 
     const sheet = getOrCreateMasterSheet();
+
+    // ── v2 merge actions (dedupe-guarded bulk append) ──────────────────────
+    if (payload.action === "appendRows") {
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      const result = appendRowsDeduped(sheet, rows);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (payload.action === "importNewMasterRows") {
+      const result = importNewMasterRows();
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) {
       return ContentService.createTextOutput(JSON.stringify({ ok: true, updated: 0, message: "No data rows" }))

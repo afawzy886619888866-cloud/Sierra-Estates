@@ -15,12 +15,24 @@ async function test(name, payload) {
   }
 }
 
+async function get() {
+  try {
+    const res = await fetch(EXEC_URL, { redirect: 'follow' });
+    console.log(`[GET] Status: ${res.status} | Response: ${await res.text()}`);
+  } catch (err) {
+    console.error('[GET] Error:', err.message);
+  }
+}
+
 async function main() {
+  await get(); // diagnostics: shows version + supported actions after v2 redeploy
   await test('Empty POST', {});
   await test('Only Secret', { secret: SECRET });
-  await test('Action Append Test', { secret: SECRET, action: 'append', row: ['test'] });
-  await test('Action Upsert Test', { secret: SECRET, action: 'upsert', rows: [{ phone: '01000000000' }] });
-  await test('Normal Rows with unlisted phone', { secret: SECRET, rows: [{ phone: '01099999999', date: '15/10/2026' }] });
+  await test('Normal Rows with unlisted phone', { secret: SECRET, rows: [{ phone: '01099999999', date: '17/10/2026' }] });
+  // v2 merge actions (no-ops until the v2 script is deployed):
+  await test('appendRows empty', { secret: SECRET, action: 'appendRows', rows: [] });
+  await test('importNewMasterRows', { secret: SECRET, action: 'importNewMasterRows' });
+  await test('Wrong Secret', { secret: 'nope' });
 }
 
 main();
