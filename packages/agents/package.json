@@ -10,7 +10,7 @@
     "@sierra-estates/agents-core": "workspace:*",
     "@sierra-estates/db": "workspace:*",
     "@sierra-estates/obsidian": "workspace:*",
-    "pino": "^10.3",
+    "pino": "^10.4",
     "react": "19.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.4.3"
