@@ -4,7 +4,7 @@
 [![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-ef4444?style=flat&logo=turborepo)](https://turbo.build/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20pgvector-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
-[![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)
+[![Tests](https://img.shields.io/badge/Tests-1%2C592%20Passing%20(100%25)-brightgreen)](https://github.com/afawzy886619888866-cloud/Sierra-Estates)
 [![Inventory](https://img.shields.io/badge/Inventory-11%2C488%20Units%20(11%2C017%20Synced)-3ECF8E)](https://sierra-estates.net)
 [![Production](https://img.shields.io/badge/Status-100%25%20Production%20Ready-gold.svg)](https://sierra-estates.net)
 [![Deploy](https://img.shields.io/badge/Deploy%20Gates-9%2F9%20Passed-brightgreen)](https://sierra-estates.net)
@@ -177,8 +177,8 @@ pnpm briefing:daily
 
 ```bash
 # 1. Clone repository (The One and Only Authoritative Repository)
-git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
-cd SE-Vercel-deploy-main
+git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git
+cd Sierra-Estates
 
 # 2. Install workspace dependencies
 pnpm install
@@ -215,5 +215,5 @@ Authoritative documentation:
 
 - **Lead Engineer:** Ahmed Fawzy ([a.fawzy8866@gmail.com](mailto:a.fawzy8866@gmail.com))
 - **Organization:** Sierra Estates Realty
-- **Authoritative Repository:** [https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main](https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main)
+- **Authoritative Repository:** [https://github.com/afawzy886619888866-cloud/Sierra-Estates](https://github.com/afawzy886619888866-cloud/Sierra-Estates)
 - **Proprietary & Confidential:** All rights reserved.

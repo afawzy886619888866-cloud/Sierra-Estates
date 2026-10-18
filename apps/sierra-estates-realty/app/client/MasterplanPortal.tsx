@@ -1177,7 +1177,7 @@ export default function MasterplanPortal() {
                   Component: <code className="font-mono text-sm bg-[#efedee] px-2 py-0.5 rounded text-[#094cb2]">MasterplanPortal.tsx</code>
                 </h3>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs text-[#434653]">
-                  <span>Repo: <strong className="text-[#1b1c1d]">sierrablue8866-droid/SE-Vercel-deploy-main</strong></span>
+                  <span>Repo: <strong className="text-[#1b1c1d]">afawzy886619888866-cloud/Sierra-Estates</strong></span>
                   <span>Commit: <strong className="text-[#1b1c1d]">84658c9 (main)</strong></span>
                   <span>Active Catalog: <strong className="text-[#1b1c1d]">{totalCatalogCount.toLocaleString()} Units</strong></span>
                 </div>
