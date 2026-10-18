@@ -15,8 +15,8 @@ Legacy Firebase deployment instructions are retired and should not be used for a
 ## Local setup
 
 ```bash
-git clone https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git
-cd SE-Vercel-deploy-main
+git clone https://github.com/afawzy886619888866-cloud/Sierra-Estates.git
+cd Sierra-Estates
 pnpm install
 ```
 
