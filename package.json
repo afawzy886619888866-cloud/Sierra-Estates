@@ -65,6 +65,7 @@
     "@anthropic-ai/sdk": "^0.133.0",
     "eslint": "^10",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "tsx": "^4.23.15",
     "turbo": "^2.3.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
