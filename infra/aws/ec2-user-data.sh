@@ -92,7 +92,7 @@ SE_DIR="/opt/sierra-estates"
 mkdir -p /opt
 chown -R "$DEFAULT_USER":"$DEFAULT_USER" /opt
 
-REPO_URL="https://github.com/sierrablue8866-droid/SE-Vercel-deploy-main.git"
+REPO_URL="https://github.com/afawzy886619888866-cloud/Sierra-Estates.git"
 if [ ! -d "$SE_DIR/.git" ]; then
   git clone "$REPO_URL" "$SE_DIR"
 else
