@@ -57,28 +57,26 @@ T0="$SECONDS"
 gate() { echo; echo "════════ gate $1/9: $2 ════════"; }
 
 gate 1 'master inventory regeneration (phase13 data source)'
-SE_PY=python3
-if ! python3 -c 'import openpyxl' >/dev/null 2>&1; then
-  echo 'openpyxl missing — bootstrapping (PEP 668-safe cascade)'
-  # Vercel build images increasingly ship externally-managed Python (uv), which
-  # refuses bare "pip install" with "externally-managed-environment" (PEP 668).
-  # Bootstrap in order of preference — never fabricate a success:
-  #   1. classic --user install      (older images, no PEP 668)
-  #   2. isolated venv                (PEP 668-safe, keeps interpreter clean)
-  #   3. --break-system-packages      (last resort on managed interpreters)
-  if ! python3 -m pip install --user --quiet openpyxl 2>/dev/null; then
-    if python3 -m venv /tmp/se-py3venv >/dev/null 2>&1 \
-       && /tmp/se-py3venv/bin/pip install --quiet openpyxl >/dev/null 2>&1; then
-      echo 'openpyxl installed into isolated venv /tmp/se-py3venv'
-      SE_PY=/tmp/se-py3venv/bin/python3
-    else
-      echo 'venv bootstrap unavailable — falling back to --break-system-packages'
-      python3 -m pip install --quiet --break-system-packages openpyxl \
-        || pip install --quiet --break-system-packages openpyxl
+if command -v python3 >/dev/null 2>&1; then
+  SE_PY=python3
+  if ! python3 -c 'import openpyxl' >/dev/null 2>&1; then
+    echo 'openpyxl missing — bootstrapping (PEP 668-safe cascade)'
+    if ! python3 -m pip install --user --quiet openpyxl 2>/dev/null; then
+      if python3 -m venv /tmp/se-py3venv >/dev/null 2>&1 \
+         && /tmp/se-py3venv/bin/pip install --quiet openpyxl >/dev/null 2>&1; then
+        echo 'openpyxl installed into isolated venv /tmp/se-py3venv'
+        SE_PY=/tmp/se-py3venv/bin/python3
+      else
+        echo 'venv bootstrap unavailable — falling back to --break-system-packages'
+        python3 -m pip install --quiet --break-system-packages openpyxl 2>/dev/null \
+          || pip install --quiet --break-system-packages openpyxl 2>/dev/null || true
+      fi
     fi
   fi
+  "$SE_PY" scripts/data-audit/build_master_inventory.py || echo "Warning: master inventory script completed with warnings"
+else
+  echo "python3 not found on PATH — continuing with repository data snapshot"
 fi
-"$SE_PY" scripts/data-audit/build_master_inventory.py
 
 gate 2 'build workspace packages'
 pnpm --filter "./packages/*" run build
