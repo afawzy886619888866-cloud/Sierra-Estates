@@ -62,6 +62,7 @@
     "checkpointed",
     "claymorphism",
     "CLAYMORPHISM",
+    "findstr",
     "hdrs",
     "ilike",
     "journalctl",

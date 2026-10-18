@@ -51,6 +51,7 @@
     "allam",
     "authfail",
     "checkpointed",
+    "findstr",
     "hdrs",
     "journalctl",
     "paircode",
