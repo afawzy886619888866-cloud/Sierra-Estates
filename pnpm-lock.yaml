@@ -287,8 +287,8 @@ importers:
         specifier: ^0.186.1
         version: 0.186.1
       twilio:
-        specifier: ^6.1.1
-        version: 6.1.2
+        specifier: ^6.2.0
+        version: 6.2.0
       uuid:
         specifier: ^14.0.2
         version: 14.0.2
@@ -582,8 +582,8 @@ importers:
         specifier: ^10.4
         version: 10.4.0
       twilio:
-        specifier: ^6.1
-        version: 6.1.2
+        specifier: ^6.2
+        version: 6.2.0
       zod:
         specifier: ^4.4.3
         version: 4.6.5
@@ -5444,10 +5444,6 @@ packages:
   scheduler@0.28.0:
     resolution: {integrity: sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==}
 
-  scmp@2.1.0:
-    resolution: {integrity: sha512-o/mRQGk9Rcer/jEEw/yw4mwo3EU/NvYvp577/Btqrym9Qy5/MdWGBqipbALgd2lrdWTJ5/gqDusxfnQBxOxT2Q==}
-    deprecated: Just use Node.js's crypto.timingSafeEqual()
-
   secure-json-parse@4.1.1:
     resolution: {integrity: sha512-lnd81MQEZKjhW/Gd2TQqdd4XP6QYNdDW/EP+I7nTrFHP9y2LmaGPIHk9xsnzcOiEr1c39c/e84xFgGviQKBTRw==}
 
@@ -5857,8 +5853,8 @@ packages:
     resolution: {integrity: sha512-qLXheqz3TUvJpHIV6MUBwkNkvwKxMVG/QsimyiKT9DfNWPHJ294G/i5nDaH+fbHJt3UH7orubNNxAqYkbUNGAQ==}
     hasBin: true
 
-  twilio@6.1.2:
-    resolution: {integrity: sha512-jlZTCIo0sUhX9qoap2SDtHgVvYtz5VI+G0bzxb/BoqJxE7awxNoDsQJYaAToedZ3F3dD4ZS2+kT8Bj4RKyImvQ==}
+  twilio@6.2.0:
+    resolution: {integrity: sha512-zuwVhRa8gGIvaTjXIkRNcf7cPPQCeghMukMcG9WnhWmm7SLnregVpdIoYOSrOvlqMUYf6xP9A2ivsJNf6URoSg==}
     engines: {node: '>=20.0.0'}
 
   type-check@0.4.0:
@@ -11459,8 +11455,6 @@ snapshots:
 
   scheduler@0.28.0: {}
 
-  scmp@2.1.0: {}
-
   secure-json-parse@4.1.1: {}
 
   semver-compare@1.0.0: {}
@@ -11948,14 +11942,13 @@ snapshots:
       '@turbo/windows-64': 2.11.5
       '@turbo/windows-arm64': 2.11.5
 
-  twilio@6.1.2:
+  twilio@6.2.0:
     dependencies:
       axios: 1.20.0
       dayjs: 1.11.23
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.3
-      qs: 6.16.0
-      scmp: 2.1.0
+      qs: 6.16.1
       xmlbuilder: 13.0.2
     transitivePeerDependencies:
       - debug
