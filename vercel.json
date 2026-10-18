@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "bash -c 'if [ -f scripts/ci-preflight.sh ]; then bash scripts/ci-preflight.sh; elif [ -f ../../scripts/ci-preflight.sh ]; then (cd ../.. && bash scripts/ci-preflight.sh); else echo \"ci-preflight not found, continuing\"; fi' && NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter sierra-estates-client-page build",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "devCommand": "pnpm --filter sierra-estates-client-page dev",
   "installCommand": "pnpm install",
   "git": {
