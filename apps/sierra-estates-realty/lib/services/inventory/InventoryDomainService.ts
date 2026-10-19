@@ -55,8 +55,19 @@ export class InventoryDomainService {
    * - unseen fingerprint  → create as `draft` (or `pending_verification` for trusted feeds)
    * - known fingerprint   → merge fields, keep lifecycle state, log source
    * Reuses packages/gravity-memory seen() hook.
+   *
+   * `extraColumns` (2026-10-19 G2 wiring): path-specific rich columns
+   * (Property Finder images/agent/raw_data, admin SPA fields …) written
+   * atomically with the domain fields so callers never need a second write.
+   * Identity and dedup keys (`id`, `fingerprint`, `dupeCheckHash`) are
+   * stripped defensively — this service owns them.
    */
-  async upsertFromSource(source: IngestionSource, payload: UpsertPayload, actor = 'system'): Promise<UpsertResult> {
+  async upsertFromSource(
+    source: IngestionSource,
+    payload: UpsertPayload,
+    actor = 'system',
+    extraColumns?: Record<string, unknown>,
+  ): Promise<UpsertResult> {
     assertCanonicalBackendForWrites('inventory-listing-write');
     const { hash: fp, isDuplicate: _isDuplicate } = checkGravityDedupe({
       compound: payload.compound,
@@ -68,6 +79,15 @@ export class InventoryDomainService {
     });
 
     const nowIso = this.now().toISOString();
+    // Identity + dedup keys are service-owned; callers cannot override them.
+    const extras: Record<string, unknown> = {};
+    if (extraColumns) {
+      for (const [k, v] of Object.entries(extraColumns)) {
+        if (k === 'id' || k === 'fingerprint' || k === 'dupeCheckHash') continue;
+        if (v === undefined) continue;
+        extras[k] = v;
+      }
+    }
     const ref = this.db.collection(COLLECTION).doc(fp);
     const snap = await ref.get();
 
@@ -78,6 +98,7 @@ export class InventoryDomainService {
         {
           ...(existing ?? {}),
           ...payload,
+          ...extras,
           pricePerSqm: payload.area > 0 ? Math.round(payload.price / payload.area) : 0,
           updatedAt: nowIso,
           sources: {
@@ -131,6 +152,7 @@ export class InventoryDomainService {
       createdAt: nowIso,
       updatedAt: nowIso,
       statusHistory: [{ from: null, to: initialStatus, at: nowIso, by: actor, note: `ingested via ${source}` }],
+      ...extras,
     };
     await ref.set(listing);
     return { id: fp, action: 'created', fingerprint: fp };
