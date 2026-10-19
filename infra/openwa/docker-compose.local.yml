@@ -17,7 +17,7 @@ services:
       - TZ=Africa/Cairo
       - DATABASE_TYPE=sqlite
       - DATABASE_PATH=/data/openwa.db
-      - ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:-owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c}
+      - ADMIN_API_KEY=${OPENWA_ADMIN_API_KEY:?Set OPENWA_ADMIN_API_KEY}
       - DEFAULT_OPERATOR_KEY=${OPENWA_OPERATOR_KEY:-change-me-operator-key}
       - DEFAULT_ENGINE=wwebjs
       - RATE_LIMIT_WINDOW_MS=60000

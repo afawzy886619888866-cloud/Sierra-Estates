@@ -1,0 +1,128 @@
+name: EC2 WhatsApp and Owner Automations
+
+on:
+  schedule:
+    # End-of-day report at 20:30 Cairo during standard UTC operation.
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: EC2 workflow to run
+        required: true
+        type: choice
+        default: daily-digest
+        options:
+          - daily-digest
+          - owner-outreach
+          - whatsapp-dispatch
+          - gateway-sentinel
+          - whatsapp-scraper
+      dry_run:
+        description: Run outreach without sending messages
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ec2-whatsapp-automation
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  EC2_INSTANCE_ID: ${{ vars.SIERRA_EC2_INSTANCE_ID || 'i-0be8ff8c5cfba7363' }}
+  EC2_WORKFLOW_DIR: /opt/se/workflows
+
+jobs:
+  run-ec2-workflow:
+    name: Run EC2 ${{ inputs.action || 'daily-digest' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATION_SCHEDULER != 'gcp' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Verify EC2 is managed by Systems Manager
+        id: instance
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=${EC2_INSTANCE_ID}" \
+            --query 'InstanceInformationList[0].PingStatus' --output text)
+          if [ "$state" != "Online" ]; then
+            echo "::error::EC2 instance ${EC2_INSTANCE_ID} is not online in Systems Manager (state: ${state})."
+            exit 1
+          fi
+
+      - name: Dispatch workflow on EC2
+        id: command
+        shell: bash
+        env:
+          ACTION: ${{ inputs.action || 'daily-digest' }}
+          DRY_RUN: ${{ inputs.dry_run || 'true' }}
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            daily-digest|owner-outreach|whatsapp-dispatch|gateway-sentinel|whatsapp-scraper) ;;
+            *) echo "::error::Unsupported EC2 workflow: $ACTION"; exit 1 ;;
+          esac
+
+          # The runner owns credentials and safety gates in workflows.env.
+          # Use its authenticated local API so owner outreach, queue sending,
+          # dedupe, rate limits, Cairo hours, and audit logging remain central.
+          if [ "$ACTION" = "whatsapp-scraper" ]; then
+            command="set -a; . ${EC2_WORKFLOW_DIR}/workflows.env; set +a; SCRAPER_ALLOW_OWN_SESSION=\"\${SCRAPER_ALLOW_OWN_SESSION:-0}\" node ${EC2_WORKFLOW_DIR}/01-whatsapp-scraper/index.js"
+          elif [ "$ACTION" = "owner-outreach" ] && [ "$DRY_RUN" = "true" ]; then
+            command="set -a; . ${EC2_WORKFLOW_DIR}/workflows.env; set +a; WF_DRY_RUN=1 node ${EC2_WORKFLOW_DIR}/09-owner-outreach/outreach.js"
+          else
+            command="set -a; . ${EC2_WORKFLOW_DIR}/workflows.env; set +a; curl -fsS -X POST -H \"X-API-Key: \$RUNNER_API_KEY\" http://127.0.0.1:\${RUNNER_PORT:-2786}/api/workflows/${ACTION}/run"
+          fi
+
+          command_id=$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Sierra Estates ${ACTION}" \
+            --parameters commands="$command" \
+            --query 'Command.CommandId' --output text)
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for EC2 workflow result
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            status=$(aws ssm get-command-invocation \
+              --command-id "${{ steps.command.outputs.command_id }}" \
+              --instance-id "$EC2_INSTANCE_ID" \
+              --query 'Status' --output text 2>/dev/null || true)
+            case "$status" in
+              Success)
+                aws ssm get-command-invocation --command-id "${{ steps.command.outputs.command_id }}" --instance-id "$EC2_INSTANCE_ID" --query 'StandardOutputContent' --output text
+                exit 0 ;;
+              Failed|TimedOut|Cancelled|Cancelling)
+                aws ssm get-command-invocation --command-id "${{ steps.command.outputs.command_id }}" --instance-id "$EC2_INSTANCE_ID" --query '[Status,StandardOutputContent,StandardErrorContent]' --output text
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Timed out waiting for EC2 workflow command."
+          exit 1
+
+      - name: Write end-of-day report summary
+        if: always() && (inputs.action == 'daily-digest' || github.event_name == 'schedule')
+        run: |
+          {
+            echo "### Sierra Estates EC2 automation"
+            echo "- Workflow: ${{ inputs.action || 'daily-digest' }}"
+            echo "- Instance: ${EC2_INSTANCE_ID}"
+            echo "- Report delivery: WhatsApp daily digest"
+            echo "- Scraper policy: dedicated-session opt-in only"
+          } >> "$GITHUB_STEP_SUMMARY"
