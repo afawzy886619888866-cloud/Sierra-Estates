@@ -229,9 +229,13 @@ function parseCsv(text) {
   return rows;
 }
 
+function toWesternDigits(str) {
+  return String(str || '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+
 /** Egyptian mobile → 201XXXXXXXXX; null when not a plausible mobile. */
 function normalizePhone(raw) {
-  let d = String(raw || '').replace(/[^\d]/g, '');
+  let d = toWesternDigits(raw).replace(/[^\d]/g, '');
   if (!d) return null;
   if (d.startsWith('0020')) d = d.slice(4);
   else if (d.startsWith('20')) d = d.slice(2);
@@ -275,13 +279,13 @@ function saveDaily(d) {
   fs.writeFileSync(DAILY, JSON.stringify(d));
 }
 
-const TEMPLATE = `السلام عليكم ورحمة الله وبركاته
+const TEMPLATE = `السلام عليكم ورحمة الله وبركاته {_SALUTATION_}
 
-مع حضرتك {_NAME_} — من فريق Sierra Estates للتسويق العقاري.
+مع حضرتك فريق Sierra Estates للتسويق العقاري.
 
 شاهدنا وحدتكم {_UNIT_} ونهتم بتسويقها لمحفظة عملائنا الحصرية بالقاهرة الجديدة.
 {_DETAILS_}
-هل حاضرين للتعاون معنا في التسويق؟
+هل الوحدة ما زالت متاحة ومناسب لحضرتك التعاون معنا في تسويقها؟
 
 إخلاء مسؤولية: هذه رسالة أعمال من Sierra Estates، وإذا لم ترغب في استقبال رسائل أخرى أرسل كلمة "إلغاء" وسنتوقف فوراً.`;
 
@@ -292,8 +296,15 @@ function buildMessage(r) {
   if (r.bedrooms) bits.push(`الغرف: ${r.bedrooms}`);
   if (r.type) bits.push(`النوع: ${r.type}`);
   const unit = [r.code, r.propertyType].filter(Boolean).join(' — ') || 'المعلنة';
+  
+  let salutation = 'يا فندم،';
+  if (r.name && r.name.trim()) {
+    const cleanName = r.name.trim().replace(/^أ[\.\/]\s*/, '');
+    salutation = `أ/ ${cleanName}،`;
+  }
+
   return TEMPLATE
-    .replace('{_NAME_}', r.name || 'سيادتكم')
+    .replace('{_SALUTATION_}', salutation)
     .replace('{_UNIT_}', unit)
     .replace('{_DETAILS_}', bits.length ? bits.join('\n') + '\n' : '');
 }
@@ -678,7 +689,11 @@ async function main() {
   return;
 }
 
-main().catch((err) => {
-  console.error(`owner-outreach FAILED: ${err.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(`owner-outreach FAILED: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = { main, buildMessage, normalizePhone, toWesternDigits };

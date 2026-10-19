@@ -30,7 +30,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 function normalizeChatId(phone) {
   if (!phone) return '';
-  let p = String(phone).trim();
+  let p = String(phone).trim().replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
   if (p.includes('@')) return p; // already a chatId
   p = p.replace(/[^\d+]/g, '');
   if (p.startsWith('+')) p = p.slice(1);
