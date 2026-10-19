@@ -4,7 +4,7 @@ import {
   generateSierraCode,
   parseSierraCode,
   normalizeLocationCode,
-  SierraCodeParams,
+  type PropertyCodeInput,
 } from '@sierra-estates/agents';
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const params: SierraCodeParams = {
+    const params: PropertyCodeInput = {
       compound: body.compound || body.locationArea || 'New Cairo',
       rooms: Number(body.rooms || body.beds || 0),
       furnishingStatus: body.furnishingStatus || body.furnishing || 'unfurnished',
