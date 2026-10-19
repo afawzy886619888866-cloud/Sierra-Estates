@@ -206,7 +206,7 @@ const ACTIVE_HOURS = [parseInt(AH_ENV[0], 10) || 0, AH_ENV[1] === undefined || A
 const HOST_SIDE_RAW = String(process.env.WF_HOST_SIDE || 'split').trim().toLowerCase();
 const HOST_SIDE = (HOST_SIDE_RAW === 'bottom' || HOST_SIDE_RAW === 'b' || HOST_SIDE_RAW === 'other') ? 'bottom'
   : (HOST_SIDE_RAW === 'top' || HOST_SIDE_RAW === 'a') ? 'top' : 'split';
-const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '4', 10));
+const PARALLEL_LINES = Math.max(1, parseInt(process.env.WF_PARALLEL_LINES || '2', 10));
 
 const STATE_DIR = process.env.WF_STATE_DIR || path.join(__dirname, '..', '.state');
 const LEDGER = path.join(STATE_DIR, 'owner-outreach-ledger.jsonl');
