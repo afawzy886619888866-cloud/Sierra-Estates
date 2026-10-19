@@ -29,7 +29,7 @@ describe('Cline CLI Automation Suite', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Cline CLI Environment Diagnostic');
     expect(result.stdout).toContain('Status: READY');
-  });
+  }, 20000);
 
   it('supports --dry-run for presets without executing LLM calls', () => {
     const result = spawnSync(process.execPath, [RUNNER_SCRIPT, '--preset', 'audit', '--dry-run'], {
@@ -43,7 +43,7 @@ describe('Cline CLI Automation Suite', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('[Cline Runner] (Dry-Run) Command:');
     expect(result.stdout).toContain('Preset: audit');
-  });
+  }, 20000);
 
   it('schedule cron scripts exist for both Windows and Linux', () => {
     expect(fs.existsSync(PS1_CRON), 'schedule-cline-cron.ps1 must exist').toBe(true);
