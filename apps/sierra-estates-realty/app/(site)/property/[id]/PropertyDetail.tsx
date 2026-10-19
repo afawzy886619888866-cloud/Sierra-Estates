@@ -72,7 +72,6 @@ export default function PropertyDetail({ id }: { id: string }) {
     ((HZDATA as any).findListing?.(id) ||
       listings.find((x) => String(x.id) === String(id) || String(x.code).toLowerCase() === String(id).toLowerCase()));
 
-  const gallery = (HZDATA.interiors as string[]) || [];
   const [photo, setPhoto] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
