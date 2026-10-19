@@ -14,6 +14,7 @@ import { useSite } from '@/lib/site/SiteContext';
 import { HZDATA } from '@/lib/site/data';
 import { CurrencyGoldSelector } from '@/components/site/CurrencyGoldSelector';
 import { getCuratedListingImage } from '@/lib/site/luxury-images';
+import PropertyIntelligenceDossier from '@/components/site/PropertyIntelligenceDossier';
 
 export default function PropertyDetail({ id }: { id: string }) {
   const { t, isAr } = useSite();
