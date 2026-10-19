@@ -8,8 +8,8 @@ import {
   calcAppraisedValue,
   computeFullMetrics,
   formatCompactEGP,
-  type FinancialMetricsInputs,
-  type ValuationCoefficients,
+  type UnitFinancials,
+  type UnitIntelligenceFactors,
 } from '@sierra-estates/agents';
 
 export async function POST(req: NextRequest) {
@@ -22,16 +22,14 @@ export async function POST(req: NextRequest) {
     const annualServiceCharge = Number(body.annualServiceCharge || (purchasePrice > 0 ? purchasePrice * 0.01 : 0));
     const currentMarketValue = Number(body.currentMarketValue || purchasePrice);
 
-    const inputs: FinancialMetricsInputs = {
+    const inputs: UnitFinancials = {
       purchasePrice,
       currentMarketValue,
       monthlyRent,
       annualServiceCharge,
-      purchaseDate: body.purchaseDate,
-      currentDate: body.currentDate,
     };
 
-    const coefficients: ValuationCoefficients = {
+    const coefficients: UnitIntelligenceFactors = {
       standard: body.standard || 'luxury',
       condition: body.condition || 'good',
       localityScore: Number(body.localityScore || 4),
