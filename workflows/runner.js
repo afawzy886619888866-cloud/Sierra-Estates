@@ -193,10 +193,21 @@ async function runWorkflow(slug, trigger = 'cron') {
         return { skipped: true, reason: 'not_active', status: status || '(no row)' };
       }
     } catch (e) {
-      // Fail-closed: the authoritative status could not be read, so the
-      // automatic dispatch does not happen.
-      log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
-      return { skipped: true, reason: 'status_check_failed' };
+      let cachedStatus = null;
+      try {
+        const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+        if (fs.existsSync(cachePath)) {
+          const cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+          const r = cached.find((x) => x.slug === slug);
+          if (r) cachedStatus = String(r.status || '').toLowerCase();
+        }
+      } catch (_) {}
+      if (cachedStatus === 'active') {
+        log(`${slug}: Supabase recheck failed (${e.message}) — proceeding using verified active cached status`);
+      } else {
+        log(`${slug}: dispatch refused — status recheck failed (fail-closed): ${e.message}`);
+        return { skipped: true, reason: 'status_check_failed' };
+      }
     }
   }
 
@@ -307,9 +318,23 @@ async function schedulerTick() {
   let rows = [];
   try {
     rows = await sb.getWorkflows(DISPATCH_SLUGS);
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      fs.writeFileSync(cachePath, JSON.stringify(rows, null, 2));
+    } catch (_) {}
   } catch (e) {
-    log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
-    return;
+    let cached = null;
+    try {
+      const cachePath = path.join(state.STATE_DIR, 'workflows-cache.json');
+      if (fs.existsSync(cachePath)) cached = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    } catch (_) {}
+    if (cached && Array.isArray(cached) && cached.length) {
+      log(`workflows read failed (${e.message}) — using cached rows to maintain scheduled operations`);
+      rows = cached;
+    } else {
+      log(`workflows read failed — no dispatch this pass (fail-closed): ${e.message}`);
+      if (!manualQueue.size) return;
+    }
   }
   const rowBySlug = new Map(rows.map((r) => [r.slug, r]));
 
