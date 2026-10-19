@@ -81,7 +81,7 @@ const CACHE_TTL_MS = 60 * 1000; // 60 seconds
  * graceful degradation as any other Supabase failure.
  */
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
-  if (cachedSupabaseListings && Date.now() < cachedSupabaseListings.expiresAt) {
+  if (process.env.NODE_ENV !== "test" && cachedSupabaseListings && Date.now() < cachedSupabaseListings.expiresAt) {
     return cachedSupabaseListings.data;
   }
   try {
