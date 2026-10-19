@@ -173,7 +173,6 @@ The following changes remove every code path that could present invented propert
 - **Risk:** low — verified post-merge: app==root content identity for all 6 migration files (blob-level), tsc 0 errors, Jest 106/106 suites 1,126/1,126 tests.
 - **Rollback:** git revert of the merge commit.
 
-
 ---
 
 ## 2026-09-29 — Phase 4 completion (admin honesty + CRM persistence + least privilege)
