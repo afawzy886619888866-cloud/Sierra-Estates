@@ -58,6 +58,9 @@ jobs:
           pnpm check:legacy-runtime
 
       - name: Run explicitly selected fleet tasks
+        env:
+          CLINE_API_KEY: ${{ secrets.CLINE_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           TASKS="${{ inputs.tasks || 'briefing:daily' }}"
           echo "Fleet tasks requested: $TASKS"
@@ -71,7 +74,7 @@ jobs:
               for task in "${task_list[@]}"; do
                 task=$(echo "$task" | xargs)
                 case "$task" in
-                  briefing:daily|sync-propertyfinder|vertex-agent|run-harness|check-thresholds|openclaw:task)
+                  briefing:daily|sync-propertyfinder|vertex-agent|run-harness|check-thresholds|openclaw:task|cline:audit|cline:hygiene|cline:docs-sync|cline:check)
                     echo "→ pnpm $task"
                     pnpm "$task"
                     ;;
