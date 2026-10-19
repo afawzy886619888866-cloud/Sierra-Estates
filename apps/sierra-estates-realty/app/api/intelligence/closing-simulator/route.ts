@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      simulation,
+      simulation: {
+        ...simulation,
+        breakdown: simulation.settlement,
+      },
       timeline: simulation.timeline,
       timestamp: new Date().toISOString(),
     });

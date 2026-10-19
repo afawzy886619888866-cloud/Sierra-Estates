@@ -36,10 +36,12 @@ export interface CandidateProperty {
   projectedAppreciationPct?: number;
   features?: string[];
   finishing?: string;
+  description?: string;
 }
 
 export interface PropertyMatchResult {
   propertyId: string | number;
+  property?: CandidateProperty;
   title: string;
   overallScore: number; // 0-100
   breakdown: {
@@ -76,7 +78,7 @@ export function rankPropertiesForStakeholder(
 
   for (const property of properties) {
     const negativeFlags: string[] = [];
-    const searchContext = `${property.title} ${property.compound || ''} ${property.location || ''} ${property.finishing || ''} ${(property.features || []).join(' ')}`.toLowerCase();
+    const searchContext = `${property.title} ${property.compound || ''} ${property.location || ''} ${property.finishing || ''} ${property.description || ''} ${(property.features || []).join(' ')}`.toLowerCase();
 
     // 1. Negative Signal Filtering
     if (stakeholder.negativeSignals && stakeholder.negativeSignals.length > 0) {
@@ -160,6 +162,7 @@ export function rankPropertiesForStakeholder(
 
     results.push({
       propertyId: property.id,
+      property,
       title: property.title,
       overallScore,
       breakdown: {
