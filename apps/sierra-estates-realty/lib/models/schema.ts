@@ -276,7 +276,7 @@ export interface MediaAsset extends BaseDocument {
   sizeBytes: number;
 
   // Storage
-  storagePath: string;      // Firebase Storage path
+  storagePath: string;      // Supabase Storage path
   downloadUrl: string;      // Public download URL
   thumbnailUrl?: string;
 
