@@ -45,6 +45,8 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
 
   const act = (k: ActiveNav) => (active === k ? 'active' : undefined);
   const isAr = lang === 'ar';
+  // Info Bank deep link — same convention as SiteFooter (bilingual route).
+  const infoBankHref = isAr ? '/ar/notebookllm' : '/notebookllm';
 
   return (
     <>
@@ -167,6 +169,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
                 <Radar className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{isAr ? 'الخريطة والرادار' : 'Map & Radar'}</span>
               </Link>
+              <Link href="/properties" className={`mobile-drawer-link${active === 'properties' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
+                <span>{isAr ? 'الوحدات' : 'Properties'}</span>
+              </Link>
               <Link href="/compounds" className={`mobile-drawer-link${active === 'cpds' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Map className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
                 <span>{t('navCpds')}</span>
@@ -174,6 +180,10 @@ export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
               <Link href="/add-listing" className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
                 <PlusCircle className="i" style={{ width: 18, height: 18, color: '#10b981' }} />
                 <span>{t('addListing')}</span>
+              </Link>
+              <Link href={infoBankHref} className="mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>
+                <Building2 className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />
+                <span>{isAr ? 'بنك المعلومات' : 'Info Bank'}</span>
               </Link>
               <Link href="/#contact" className={`mobile-drawer-link${active === 'contact' ? ' active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
                 <Phone className="i" style={{ width: 18, height: 18, color: '#e9c176' }} />

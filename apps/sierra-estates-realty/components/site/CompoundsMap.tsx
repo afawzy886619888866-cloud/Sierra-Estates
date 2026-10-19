@@ -552,6 +552,10 @@ export const NEW_CAIRO_ZONES: ZonePreset[] = [
   { key: 'Mostakbal', label: 'Mostakbal City', center: [30.065, 31.65], zoom: 1.65, bounds: [[30.01, 31.60], [30.12, 31.71]], panX: -28, panY: 5 },
   { key: 'Madinaty', label: 'Madinaty & Shorouk', center: [30.105, 31.64], zoom: 1.7, bounds: [[30.04, 31.57], [30.18, 31.72]], panX: -32, panY: 30 },
   { key: 'Uptown', label: 'Uptown Cairo', center: [30.026, 31.307], zoom: 1.75, bounds: [[29.99, 31.27], [30.06, 31.35]], panX: 35, panY: -10 },
+  // Cairo Plaza El-Mataria commercial/transit cluster — same coordinates as
+  // the HZDATA compound entry and the CairoPlaza route family
+  // (center [30.129, 31.312]). Pinned by __tests__/map-filters-sync.test.ts.
+  { key: 'Transit', label: 'Cairo Plaza Metro Transit', center: [30.129, 31.312], zoom: 1.7, bounds: [[30.09, 31.26], [30.17, 31.36]], panX: 0, panY: 0 },
 ];
 
 export interface MapPricePreset {
