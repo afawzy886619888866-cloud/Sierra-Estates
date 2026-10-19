@@ -193,6 +193,121 @@ export async function GET(req: Request) {
     console.error("[dashboard] automation_runs read failed (017 applied?):", err);
   }
 
+  // ── CRM pipeline: real leads + deals KPIs (guarded independently) ────────
+  // The overview KPI cards used to render "Awaiting dashboard sync" for
+  // every metric the core KPI read does not cover (avg deal, weighted
+  // forecast, elite brokers, the true active-lead count and the S1→S10
+  // funnel). Everything here is computed from the live tables — an empty
+  // pipeline yields truthful zeros/nulls, never fabricated figures.
+  let crmPipeline: DashboardKPIs["crmPipeline"] = null;
+  try {
+    const [leadAggRows, dealRows, agentCount, archivedLeads] = await Promise.all([
+      listRecords<{ id: string; source: string | null; createdAt: string; stage: string | null }>(
+        "leads",
+        { select: "id,source,created_at,stage", limit: 5000 }
+      ),
+      listRecords<{
+        id: string; stage: string | null; dealValue: string | number; closingProbability: number | null;
+        commissionAmount: string | number | null; updatedAt: string;
+      }>("deals", { select: "id,stage,deal_value,closing_probability,commission_amount,updated_at", limit: 500 }),
+      countRecords("agents_registry"),
+      countRecords("leads", [{ column: "archived", op: "eq", value: true }]),
+    ]);
+
+    const num = (v: unknown): number => {
+      const n = typeof v === "string" ? parseFloat(v) : (v as number);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const nowMs = Date.now();
+    const weekAgoMs = nowMs - 7 * DAY_MS;
+
+    // Lead-side stats — the real lead count, weekly inflow and per-source mix.
+    const sourceCounts: Record<string, number> = {};
+    let leadsNew7d = 0;
+    for (const row of leadAggRows) {
+      const src = row.source || "other";
+      sourceCounts[src] = (sourceCounts[src] ?? 0) + 1;
+      const created = row.createdAt ? new Date(row.createdAt).getTime() : NaN;
+      if (Number.isFinite(created) && created > weekAgoMs) leadsNew7d++;
+    }
+    const activeLeadsCount = Math.max(0, leadAggRows.length - archivedLeads);
+
+    // Deal-side stats — stage totals over the public.deals CHECK stages.
+    const CLOSED_STAGES = new Set(["closed_won", "closed_lost"]);
+    let pipelineValue = 0; // Σ deal_value of open (not closed) deals
+    let weightedPipeline = 0; // Σ deal_value × closing_probability / 100
+    let commissionPipeline = 0;
+    let dealsClosed = 0;
+    let dealsLost = 0;
+    let dealsClosedThisMonth = 0;
+    let dealValueSum = 0;
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthStartMs = monthStart.getTime();
+    for (const row of dealRows) {
+      const value = num(row.dealValue);
+      dealValueSum += value;
+      if (row.stage === "closed_won") {
+        dealsClosed++;
+        const updated = row.updatedAt ? new Date(row.updatedAt).getTime() : NaN;
+        // public.deals has no closed_at column; for a closed_won row the last
+        // update is the moment the stage landed, so "this month" reads it.
+        if (Number.isFinite(updated) && updated >= monthStartMs) dealsClosedThisMonth++;
+      } else if (row.stage === "closed_lost") {
+        dealsLost++;
+      } else {
+        pipelineValue += value;
+        weightedPipeline += (value * num(row.closingProbability)) / 100;
+        commissionPipeline += num(row.commissionAmount);
+      }
+    }
+
+    // S1→S10 funnel — counts per canonical PipelineStage
+    // (lib/models/schema.ts). Legacy writer spellings are folded in
+    // ('qualification'→qualify, 'negotiation'→negotiate) so the bars never
+    // silently drop rows.
+    const FUNNEL: Array<{ stage: string; aliases: string[] }> = [
+      { stage: "inbound", aliases: ["inbound", "new"] },
+      { stage: "qualify", aliases: ["qualify", "qualification"] },
+      { stage: "engage", aliases: ["engage", "engaged"] },
+      { stage: "proposal", aliases: ["proposal"] },
+      { stage: "viewing", aliases: ["viewing", "viewing_scheduled"] },
+      { stage: "negotiate", aliases: ["negotiate", "negotiation"] },
+      { stage: "reserve", aliases: ["reserve", "reserved"] },
+      { stage: "contract", aliases: ["contract", "under_contract"] },
+      { stage: "handover", aliases: ["handover"] },
+      { stage: "closed-won", aliases: ["closed-won", "closed_won"] },
+    ];
+    const funnelCounts = new Map<string, number>(FUNNEL.map((f) => [f.stage, 0]));
+    for (const row of leadAggRows) {
+      const st = (row.stage ?? "").toLowerCase().trim();
+      if (!st) continue;
+      const bucket = FUNNEL.find((f) => f.aliases.includes(st));
+      if (bucket) funnelCounts.set(bucket.stage, (funnelCounts.get(bucket.stage) ?? 0) + 1);
+    }
+
+    crmPipeline = {
+      activeLeadsCount,
+      leadsNew7d,
+      leadSources: sourceCounts,
+      dealsTotal: dealRows.length,
+      dealsActive: dealRows.filter((d) => !CLOSED_STAGES.has(String(d.stage))).length,
+      dealsClosed,
+      dealsLost,
+      dealsClosedThisMonth,
+      pipelineValue,
+      weightedPipeline,
+      avgDealValue: dealRows.length ? dealValueSum / dealRows.length : null,
+      commissionPipeline,
+      eliteBrokers: agentCount,
+      pipelineFunnel: FUNNEL.map((f) => ({ stage: f.stage, count: funnelCounts.get(f.stage) ?? 0 })),
+    };
+  } catch (err) {
+    console.error("[dashboard] CRM pipeline read failed:", err);
+  }
+
   const activeListings = listings.filter((l) => l.status === "available" || (l.status as string) === "active");
   const weekAgo = now - 7 * DAY_MS;
   const newInquiries7d = inquiries.filter(
@@ -260,5 +375,6 @@ export async function GET(req: Request) {
     topAgents,
     inventoryHealth,
     automationHealth,
+    crmPipeline,
   });
 }

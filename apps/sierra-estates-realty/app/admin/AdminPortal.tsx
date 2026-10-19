@@ -44,6 +44,7 @@ import {
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
 import FollowupsQueue from './FollowupsQueue';
+import DealsKanban from './DealsKanban';
 import { PARTNER_NAV_IDS, isPartnerRole } from '@/lib/partner-access';
 import { isNavTabAllowedForRole, navItemsForRole, navRequiredPermissionsFor } from '@/lib/admin-nav-access';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -57,7 +58,7 @@ import NotebookLMStudio from '@/components/client/NotebookLMStudio';
 import AdminCopilotDrawer from '@/components/admin/AdminCopilotDrawer';
 import CommandPalette, { CommandItem } from '@/components/admin/CommandPalette';
 import SierraMasterOrchestrator from '@/components/admin/SierraMasterOrchestrator';
-import { LANG, KPI_DATA, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn, type NavItem } from './views/data-constants';
+import { LANG, AGENTS_DATA, WORKFLOWS_DATA, LEADS_DATA, COMPOUNDS_DATA, NAV_ITEMS, OPENCLAW_LOGS, NEXUS_INIT, type TranslationFn, type NavItem } from './views/data-constants';
 import { Ic, ShieldLogo, Sparkline, exportCSV } from './views/admin-shared';
 
 
@@ -174,104 +175,6 @@ function pageLabelFor(tab: string, T: TranslationFn): string {
     monitoring: isAr ? 'المراقبة المباشرة' : 'Live Monitoring',
   };
   return subLabels[tab] ?? tab;
-}
-
-/* ── OVERVIEW PAGE ────────────────────────────────────────────────────── */
-function OverviewPage({ T }) {
-  const [liveKpis, setLiveKpis] = useState(null);
-  const ar = T('lang')==='ar';
-
-  useEffect(() => {
-    fetch('/api/admin/dashboard')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setLiveKpis(d); })
-      .catch((err) => console.warn('[AdminPortal] Dashboard fetch failed:', err));
-  }, []);
-
-  const kpis = useMemo(() => {
-    const base = KPI_DATA(T);
-    if (!liveKpis) return base;
-    return [
-      { ...base[0], val: liveKpis.totalListings ? liveKpis.totalListings.toLocaleString() : base[0].val },
-      { ...base[1], val: liveKpis.activeListings ? liveKpis.activeListings.toLocaleString() : base[1].val },
-      base[2],
-      { ...base[3], val: liveKpis.newInquiries7d !== undefined ? liveKpis.newInquiries7d.toLocaleString() : base[3].val },
-      base[4],
-      { ...base[5], val: liveKpis.conversionRate ? `${liveKpis.conversionRate.toFixed(1)}%` : base[5].val },
-      { ...base[6], val: liveKpis.pendingApprovals !== undefined ? liveKpis.pendingApprovals.toString() : base[6].val },
-      base[7],
-    ];
-  }, [T, liveKpis]);
-
-  const chips = ar?['لخّص الصفقات الجارية','ما أولويات اليوم؟','اكتب رسالة متابعة','الصفقات المعرّضة للخطر']:['Summarize my pipeline','What should I focus on today?','Draft a follow-up (AR/EN)','Find deals at risk'];
-  return (
-    <div className="fade-up">
-      <div className="ai-hero">
-        <div style={{fontFamily:'JetBrains Mono',fontSize:9,letterSpacing:'.18em',textTransform:'uppercase',color:'var(--gold)',marginBottom:8}}>{(ar?'مساعد سييرا · ':'Sierra Copilot · ')+new Date().toLocaleDateString(ar?'ar-EG':'en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
-        <h2 style={{fontFamily:ar?"'Cairo',sans-serif":"'Cormorant Garamond',serif",fontSize:'1.9rem',fontWeight:ar?700:500,color:'var(--tx-s)',lineHeight:1.15,marginBottom:6}}>{ar?'كيف تساعدك سييرا في الإغلاق اليوم؟':'How can Sierra help you close today?'}</h2>
-        <p style={{fontSize:12.5,color:'var(--tx-m)',maxWidth:520,marginBottom:14}}>{ar?'مساعد المبيعات الذكي يدير خط الصفقات، يصيغ الرسائل، ويبرز ما يحتاج انتباهك — اسأل فقط.':'Your AI sales copilot runs the pipeline, drafts bilingual outreach, and surfaces what needs attention — just ask.'}</p>
-        <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14}}>
-          {chips.map((c,i)=><button key={i} className="ai-chip">{c}</button>)}
-        </div>
-        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
-          <button style={{padding:'10px 20px',border:'none',borderRadius:11,background:'linear-gradient(135deg,var(--gold),var(--gold-lt))',color:'#071422',fontSize:12,fontWeight:800,cursor:'pointer'}}>✦ {ar?'تحدث مع سييرا':'Chat with Sierra'} →</button>
-          <button style={{padding:'10px 18px',borderRadius:11,border:'1px solid var(--bd-s)',background:'var(--bg-e)',color:'var(--tx)',fontSize:12,fontWeight:600,cursor:'pointer'}}>⚡ {ar?'تصرّف الآن':'Act Now'}</button>
-          <span style={{alignSelf:'center',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)'}}>● {liveKpis?.newInquiries7d ?? 23} {ar?'عميل جديد اليوم':'new leads today'}</span>
-        </div>
-      </div>
-      <div className="kpi-grid">
-        {kpis.map((k,i) => (
-          <div key={i} className="kpi-card" style={{'--accent':k.color}}>
-            <div style={{position:'absolute',top:0,left:0,width:3,height:'100%',background:k.color,borderRadius:'16px 0 0 16px'}}/>
-            <div className="kpi-val gold-text">{k.val}</div>
-            <div className="kpi-lbl">{k.lbl}</div>
-            <div className={`kpi-delta ${k.up?'up':'dn'}`}>{k.up?'↑':'↓'} {k.delta}</div>
-            <Sparkline data={k.spark} color={k.color}/>
-          </div>
-        ))}
-      </div>
-      <div className="grid-3">
-        <div className="card">
-          <div className="card-hd"><span className="card-title">{T('pipelineTitle')}</span></div>
-          <div className="card-body">
-            <div className="bar-chart">
-              {['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10'].map((s,i) => {
-                const h=[95,88,82,79,74,68,61,55,42,28][i];
-                const c=['#C8961A','#E9C176','#1E88D9','#34D399','#7C3AED','#E63946','#C8961A','#1E88D9','#34D399','#C8961A'][i];
-                return (<div key={s} className="bar-col"><div className="bar-fill" style={{height:`${h}%`,background:`linear-gradient(180deg,${c},${c}44)`}}/><span className="bar-lbl">{s}</span></div>);
-              })}
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-hd"><span className="card-title">{T('hotLeads')}</span><span className="chip chip-amber">Live CRM</span></div>
-          <div style={{maxHeight:160,overflowY:'auto'}}>
-            {/* ANTI-FABRICATION: hot leads render only from live /api/admin/leads data. */}
-            <div style={{fontSize:11,color:'var(--tx-m)',padding:'12px 0',textAlign:'center'}}>
-              Hot leads appear here once the CRM loads — no sample contacts shown.
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-hd"><span className="card-title">{T('agentStatus')}</span></div>
-          <div className="card-body" style={{display:'flex',flexDirection:'column',gap:8}}>
-            {AGENTS_DATA(T).slice(0,4).map((a,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:8}}>
-                <span style={{fontSize:16}}>{a.emoji}</span>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                    <span style={{fontSize:11,fontWeight:600,color:'var(--tx)'}}>{a.name}</span>
-                    <span style={{fontFamily:'JetBrains Mono',fontSize:9,color:a.status==='Idle'?'var(--tx-f)':'var(--emerald)'}}>{a.status}</span>
-                  </div>
-                  <div className="progress-bar"><div className="progress-fill" style={{width:`${a.load}%`,background:a.color}}/></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 /* ── AGENTS PAGE ──────────────────────────────────────────────────────── */
@@ -1726,167 +1629,14 @@ function Stage9CloserPage({T}){
 /* ── PLACEHOLDER ──────────────────────────────────────────────────────── */
 function PlaceholderPage({title,emoji}){return <div className="fade-up" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'60vh',opacity:.5}}><div style={{fontSize:48,marginBottom:12}}>{emoji}</div><h2 style={{fontFamily:'Cormorant Garamond',fontWeight:300,fontSize:'1.8rem',color:'var(--tx)',marginBottom:6}}>{title}</h2><p style={{color:'var(--tx-f)',fontSize:12}}>Module active · Data loading from Firestore…</p></div>;}
 
-/* ── MAIN APP ─────────────────────────────────────────────────────────── */
-const PIPE_STAGES = [
-  {k:'New',ar:'جديد',c:'#1E88D9'},
-  {k:'Qualifying',ar:'تأهيل',c:'#7C3AED'},
-  {k:'Viewing',ar:'معاينة',c:'#f59e0b'},
-  {k:'Negotiation',ar:'تفاوض',c:'#C8961A'},
-  {k:'Closed Won',ar:'مغلقة ـ فوز',c:'#34D399'},
-  {k:'Closed Lost',ar:'مغلقة ـ خسارة',c:'#E63946'},
-];
-
-interface PipeDeal {
-  id: string;
-  n: string;
-  d: string;
-  v: string;
-  s: string;
-  ai: number;
-  src: 'Property Finder' | 'WhatsApp' | 'Website' | 'Direct';
-  phone: string;
-}
-
-const INITIAL_PIPE_DEALS: PipeDeal[] = [];
-// §21 no-fabrication: the kanban previously shipped nine hardcoded demo
-// deals (DL-01…DL-09 — fake clients, fake ★ai scores, fake values) plus a
-// hardcoded "EGP 102.4M" pipeline total that was never even computed. Real
-// pipeline rows come from lead-intake wiring; until then the board stays
-// honestly EMPTY.
-
+/* ── DEALS PIPELINE (live kanban on public.deals) ────────────────────── */
+// The board used to be a hardcoded, honestly-empty local array whose moves
+// never left the browser. The live kanban (DealsKanban) is wired to the
+// deals table via /api/admin/deals: drag & drop + prev/next moves PATCH and
+// persist, cards carry real clients (leads) and units (listings), and the
+// KPI strip is computed from the loaded rows only.
 function PipelinePage({ T }: { T: any }) {
-  const ar = T('lang')==='ar';
-  const [filter, setFilter] = useState('all');
-  const [sourceFilter, setSourceFilter] = useState('all');
-  const [deals, setDeals] = useState<PipeDeal[]>(INITIAL_PIPE_DEALS);
-
-  const stageKeys = PIPE_STAGES.map(s => s.k);
-
-  const moveDeal = (dealId: string, direction: 'next' | 'prev') => {
-    setDeals(prev => prev.map(d => {
-      if (d.id !== dealId) return d;
-      const curIdx = stageKeys.indexOf(d.s);
-      if (curIdx === -1) return d;
-      const targetIdx = direction === 'next' ? Math.min(curIdx + 1, stageKeys.length - 1) : Math.max(curIdx - 1, 0);
-      return { ...d, s: stageKeys[targetIdx] };
-    }));
-  };
-
-  const handleOpenWhatsApp = (d: PipeDeal) => {
-    const clean = d.phone.replace(/[^0-9]/g, '');
-    const msg = encodeURIComponent(`مرحباً ${d.n}، مستشار سييرا معك بخصوص صفقة ${d.d} في مرحلة (${d.s}).`);
-    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank', 'noopener,noreferrer');
-  };
-
-  const filteredDeals = deals.filter(d => {
-    if (sourceFilter !== 'all' && d.src !== sourceFilter) return false;
-    return true;
-  });
-
-  // §21: pipeline value is COMPUTED from the rows on the board — never a
-  // hardcoded marketing number (was: a literal "EGP 102.4M" string).
-  const pipelineTotalM = filteredDeals.reduce((s, d) => s + parseFloat(d.v.replace(/[^\d.]/g, '')) || s, 0);
-
-  const totals = {
-    all: filteredDeals.length,
-    active: filteredDeals.filter(d => !d.s.startsWith('Closed')).length,
-    won: filteredDeals.filter(d => d.s === 'Closed Won').length
-  };
-
-  const stages = filter === 'active' ? PIPE_STAGES.filter(s => !s.k.startsWith('Closed')) : filter === 'won' ? PIPE_STAGES.filter(s => s.k === 'Closed Won') : PIPE_STAGES;
-
-  return (
-    <div className="fade-up">
-      {/* Top Controls & Source Filters */}
-      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-        {[['all',ar?'كل الصفقات':'All Deals'],['active',ar?'النشطة':'Active Pipeline'],['won',ar?'المكسوبة':'Closed Won']].map(([k,l])=>(
-          <button key={k} onClick={()=>setFilter(k)} className="topbar-pill" style={filter===k?{background:'var(--tx-s)',color:'var(--bg-e)',borderColor:'var(--tx-s)'}:{}}>{l}</button>
-        ))}
-
-        <div style={{display:'flex',gap:6,marginInlineStart:8}}>
-          <button onClick={()=>setSourceFilter('all')} className="topbar-pill" style={sourceFilter==='all'?{background:'var(--gold)',color:'#071422'}:{}}>All Sources</button>
-          <button onClick={()=>setSourceFilter('Property Finder')} className="topbar-pill" style={sourceFilter==='Property Finder'?{background:'#C8961A',color:'#fff'}:{borderColor:'rgba(0,174,255,.3)',color:'#C8961A'}}>🏢 Property Finder</button>
-          <button onClick={()=>setSourceFilter('WhatsApp')} className="topbar-pill" style={sourceFilter==='WhatsApp'?{background:'#34D399',color:'#071422'}:{borderColor:'rgba(52,211,153,.3)',color:'#34D399'}}>💬 WhatsApp</button>
-        </div>
-
-        <span style={{marginInlineStart:'auto',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--tx-f)',alignSelf:'center'}}>
-          {ar?'قيمة الخط':'Pipeline value'}: <b style={{color:'var(--gold)'}}>EGP {pipelineTotalM.toFixed(1)}M</b> · {totals.active} {ar?'نشطة':'active'} · {totals.won} {ar?'مكسوبة':'won'}
-        </span>
-      </div>
-
-      {/* §21 honest empty state — no demo deals, no invented kanban rows */}
-      {filteredDeals.length === 0 && (
-        <div className="card" style={{padding:'24px 18px',textAlign:'center',marginBottom:14}}>
-          <div style={{fontSize:30,marginBottom:6,opacity:.6}}>📋</div>
-          <div style={{fontWeight:700,fontSize:13,color:'var(--tx)',marginBottom:4}}>{ar?'لا توجد صفقات مسجلة':'No deals on file'}</div>
-          <div style={{fontSize:11,color:'var(--tx-m)',maxWidth:480,margin:'0 auto'}}>{ar?'خط الصفقات فارغ حتى إدخال بيانات عملاء حقيقية — لا يتم عرض صفقات تجريبية أو قيمة وهمية.':'The pipeline is empty until real client data is ingested — Sierra never displays demo deals, invented ai scores, or fabricated pipeline value.'}</div>
-        </div>
-      )}
-
-      <div className="kanban">
-        {stages.map(st=>{
-          const stageDeals = filteredDeals.filter(d => d.s === st.k);
-          return (
-            <div key={st.k} className="kb-col" style={{'--kbc':st.c} as any}>
-              <div className="kb-hd">
-                <span className="kb-name" style={{background:st.c+'1c',color:st.c}}>{ar?st.ar:st.k}</span>
-                <span className="kb-count">{stageDeals.length}</span>
-              </div>
-              {stageDeals.map((d)=>(
-                <div key={d.id} className="kb-card">
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                    <span style={{fontSize:12,fontWeight:700,color:'var(--tx)'}}>{d.n}</span>
-                    <span style={{fontFamily:'JetBrains Mono',fontSize:8.5,color:'var(--gold)'}}>★ {d.ai}</span>
-                  </div>
-                  <div style={{fontSize:10.5,color:'var(--tx-m)',marginBottom:5}}>{d.d}</div>
-                  
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                    <span style={{fontFamily:'JetBrains Mono',fontSize:11,fontWeight:700,color:'var(--tx-s)'}}>{d.v}</span>
-                    <span className={`chip ${d.src === 'Property Finder' ? 'chip-amber' : d.src === 'WhatsApp' ? 'chip-green' : 'chip-blue'}`} style={{fontSize:8,padding:'2px 5px'}}>
-                      {d.src === 'Property Finder' ? '🏢 PF' : d.src === 'WhatsApp' ? '💬 WA' : d.src}
-                    </span>
-                  </div>
-
-                  {/* Interactive pipeline step buttons */}
-                  <div style={{display:'flex',gap:4,borderTop:'1px solid var(--bd)',paddingTop:6,alignItems:'center',justifyContent:'space-between'}}>
-                    <div style={{display:'flex',gap:4}}>
-                      <button 
-                        className="btn btn-ghost" 
-                        style={{padding:'2px 6px',fontSize:9}}
-                        disabled={stageKeys.indexOf(d.s) === 0}
-                        onClick={() => moveDeal(d.id, 'prev')}
-                        title="Move to previous stage"
-                      >
-                        ◀
-                      </button>
-                      <button 
-                        className="btn btn-ghost" 
-                        style={{padding:'2px 6px',fontSize:9,color:'var(--gold)',borderColor:'var(--bd-s)'}}
-                        disabled={stageKeys.indexOf(d.s) >= stageKeys.length - 2}
-                        onClick={() => moveDeal(d.id, 'next')}
-                        title="Advance to next stage"
-                      >
-                        Next ▶
-                      </button>
-                    </div>
-                    <button 
-                      className="btn btn-green" 
-                      onClick={() => handleOpenWhatsApp(d)} 
-                      style={{padding:'2px 6px',fontSize:9}}
-                      title="Open WhatsApp chat"
-                    >
-                      💬 WA
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {stageDeals.length===0&&<div style={{padding:'22px 12px',textAlign:'center',fontSize:10.5,color:'var(--tx-f)'}}>{ar?'لا صفقات':'No deals'}</div>}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  return <DealsKanban T={T} />;
 }
 
 interface TaskItem {
