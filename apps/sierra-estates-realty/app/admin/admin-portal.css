@@ -531,6 +531,8 @@ table, th, td {
 
 .kpi-delta.up { color: var(--emerald); }
 .kpi-delta.dn { color: var(--red); }
+/* neutral tone for live source-descriptor deltas (neither gain nor loss) */
+.kpi-delta.flat { color: var(--tx-f); }
 
 .sparkline {
   margin-top: 10px;

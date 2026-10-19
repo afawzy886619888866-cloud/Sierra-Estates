@@ -43,6 +43,50 @@ export async function POST(request: Request) {
 
   try {
     const created = await insertRecord<{ id: string }>('inquiries', payload);
+
+    // CRM projection: the admin CRM board reads public.leads, not
+    // public.inquiries — without this mirror a website inquiry would land in
+    // the inquiries inbox but never on the CRM Leads tab. The inquiry row
+    // above remains the system of record; this insert is a best-effort
+    // projection (its failure never breaks the visitor's submit, but it IS
+    // logged for the ops queue + the backfill script picks up stragglers).
+    try {
+      const now = new Date().toISOString();
+      const structuredPrefix = [
+        `[Intent: ${rest.mode.toUpperCase()}]`,
+        rest.zone ? `[Preferred Zone: ${rest.zone}]` : null,
+        type ? `[Property Type: ${type}]` : null,
+        rest.budget ? `[Budget: ${rest.budget} EGP]` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      await insertRecord('leads', {
+        fullName: rest.name,
+        phone: rest.phone,
+        email: rest.email || undefined,
+        channel: 'web',
+        mode: rest.mode,
+        source: 'website',
+        originChannel: 'website_inquiry_form',
+        status: 'new',
+        stage: 'inbound',
+        phase: 'acquisition',
+        priority: 'warm',
+        via: 'Website',
+        zone: rest.zone || undefined,
+        interest: type || 'General Inquiry',
+        capitalAllocation: rest.budget || 'To be determined',
+        summaryNotes: `${structuredPrefix}${rest.notes ? ` | ${rest.notes}` : ''}`,
+        metadata: { inquiryId: created.id, mirroredFrom: 'public.inquiries' },
+        automation: { followupReminderEnabled: true, interactionFrequency: 'medium' },
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch (mirrorErr) {
+      // Inquiry persisted — the mirror is repairable by the backfill script.
+      console.error('[inquiries] CRM leads mirror failed:', mirrorErr);
+    }
+
     return NextResponse.json({ id: created.id, status: 'received' });
   } catch (error) {
     console.error('[inquiries] Supabase write failed:', error);

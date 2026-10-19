@@ -21,7 +21,7 @@ export const LANG: Record<string, Record<string, string>> = {
     collapse:'Collapse', livesite:'Live Site', theme:'Theme', lang:'Language',
     addLead:'+ Add Lead', exportCSV:'Export CSV', importCSV:'Import CSV',
     search:'Search…', totalListings:'Total Listings', activeLeads:'Active Leads',
-    avgDeal:'Avg Deal Value', dealsClosed:'Deals Closed', avgResponse:'Avg Response',
+    avgDeal:'Avg Deal Value', dealsClosed:'Deals Closed', avgResponse:'Weighted Forecast',
     aiMatch:'AI Match Rate', pending:'Pending Reviews', eliteBrokers:'Elite Brokers',
     pipelineTitle:'Pipeline · S1→S10', hotLeads:'🔥 Hot Leads', agentStatus:'Agent Status',
     viewingScheduled:'Viewing Scheduled', aiMatched:'AI Matched', contractDraft:'Contract Draft',
@@ -61,7 +61,7 @@ export const LANG: Record<string, Record<string, string>> = {
     collapse:'طي القائمة', livesite:'الموقع المباشر', theme:'المظهر', lang:'اللغة',
     addLead:'+ إضافة عميل', exportCSV:'تصدير CSV', importCSV:'استيراد CSV',
     search:'بحث…', totalListings:'إجمالي الوحدات', activeLeads:'العملاء المهتمين',
-    avgDeal:'متوسط قيمة الصفقة', dealsClosed:'الصفقات المغلقة', avgResponse:'متوسط وقت الرد',
+    avgDeal:'متوسط قيمة الصفقة', dealsClosed:'الصفقات المغلقة', avgResponse:'التوقع المرجّح',
     aiMatch:'دقة المطابقة الذكية', pending:'قيد المراجعة', eliteBrokers:'الوسطاء المعتمدون',
     pipelineTitle:'مراحل الصفقات · S1→S10', hotLeads:'🔥 العملاء الأكثر جاهزية', agentStatus:'حالة الوكلاء',
     viewingScheduled:'معاينة مجدولة', aiMatched:'مطابقة ذكية بالـ AI', contractDraft:'مسودة عقد',
@@ -98,6 +98,11 @@ export const KPI_DATA = (T: TranslationFn) => [
   {val:'—',lbl:T('pending'),delta:'Awaiting dashboard sync',up:null,color:'#E63946',spark:[0,0,0,0,0,0,0]},
   {val:'—',lbl:T('eliteBrokers'),delta:'Awaiting dashboard sync',up:null,color:'#E9C176',spark:[0,0,0,0,0,0,0]},
 ];
+// NOTE on KPI_DATA labels: the fifth card historically read "Avg Response",
+// but no message/response timestamps exist anywhere in the live schema to
+// compute such a figure — so it was rewired to the "Weighted Forecast"
+// (Σ deal_value × closing_probability over open public.deals rows), a real
+// pipeline metric served by /api/admin/dashboard → crmPipeline.
 
 export const AGENTS_DATA = (T: TranslationFn) => [
   {name:'Sierra Bot',desc:T('lang')==='ar'?'الوكيل الرئيسي للذكاء الاصطناعي — يتعامل مع استفسارات العملاء':'Primary AI concierge — handles client queries & property recommendations.',emoji:'🤖',color:'#C8961A',status:'Online',load:94,tasks:1203},
@@ -187,6 +192,18 @@ export const NAV_ITEMS = (T: TranslationFn, role?: unknown): NavItem[] => {
       section: isAr ? 'العمليات العقارية' : 'Core Real Estate',
       badge: 'Pipeline',
       badgeCls: 'nb-blue',
+    },
+    // 3b. Deals Pipeline — the live kanban on public.deals (GET/PATCH
+    // /api/admin/deals). Previously this board hid inside the app-switcher
+    // flyout; the sales team gets a first-class sidebar slot. Permission-gated
+    // by NAV_REQUIRED_PERMISSIONS.pipeline = ['leads:read:all'].
+    {
+      id: 'pipeline',
+      label: isAr ? 'مراحل الصفقات (لوحة مباشرة)' : 'Deals Pipeline',
+      icon: '📋',
+      section: isAr ? 'العمليات العقارية' : 'Core Real Estate',
+      badge: 'Live',
+      badgeCls: 'nb-green',
     },
     // 4. WhatsApp Command & Outreach (Multi-Host Runner, 24h Scheduler, Chat Harvester)
     {
