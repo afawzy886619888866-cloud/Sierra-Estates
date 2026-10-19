@@ -381,9 +381,12 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
+import realPhotosBank from '../inventory/compound-real-photos.json';
+
 /**
  * Resolves a unique, high-quality photograph matching the unit's compound and type.
- * Avoids repetition by combining unit ID, code, compound hash, and optional index offset.
+ * Avoids repetition by combining unit ID, code, compound hash, and optional index offset,
+ * drawing from our 900+ real property photos and curated catalog.
  */
 export function getCuratedListingImage(
   unit: {
@@ -395,14 +398,18 @@ export function getCuratedListingImage(
   },
   indexOffset = 0
 ): string {
-  // If unit already carries a valid verified external photo that isn't the old placeholder
+  // If unit already carries a valid verified external photo that isn't stock/placeholder
   if (
     unit.img &&
     typeof unit.img === 'string' &&
     unit.img.startsWith('http') &&
     !unit.img.includes('default') &&
     !unit.img.includes('placeholder') &&
-    !unit.img.includes('photo-1600596542815-ffad4c1539a9') // avoid old generic single photo
+    !unit.img.includes('stock') &&
+    !unit.img.includes('unsplash.com') &&
+    !unit.img.includes('pexels.com') &&
+    !unit.img.includes('pixabay.com') &&
+    !unit.img.includes('dummyimage')
   ) {
     return unit.img;
   }
@@ -410,25 +417,42 @@ export function getCuratedListingImage(
   const category = normalizePropertyType(unit.type);
   const compound = (unit.compound || '').trim();
 
-  // First priority: Match category AND compound tag
-  const matchingCompoundPhotos = LUXURY_CATALOG.filter(
-    (p) => p.type === category && p.compoundTag && compound.toLowerCase().includes(p.compoundTag.toLowerCase())
-  );
+  // Find matching real photos from the 900+ photo bank
+  const bankCompounds: Record<string, string[]> = (realPhotosBank as any).compounds || {};
+  const bankTypes: Record<string, string[]> = (realPhotosBank as any).types || {};
 
-  const identifier = `${unit.id ?? ''}-${unit.code ?? ''}-${compound}-${category}-${indexOffset}`;
+  // Check compound matches (e.g. "Eastown", "Hyde Park", "Mivida", "Madinaty", "Al Rehab")
+  let compoundPhotos: string[] = [];
+  for (const [key, photos] of Object.entries(bankCompounds)) {
+    if (key.length >= 3 && (compound.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(compound.toLowerCase()))) {
+      compoundPhotos = photos;
+      break;
+    }
+  }
+
+  const identifier = `${unit.id ?? ''}-${unit.code ?? ''}-${compound}-${category}`;
   const hash = hashString(identifier);
 
-  if (matchingCompoundPhotos.length > 0) {
-    return matchingCompoundPhotos[hash % matchingCompoundPhotos.length].url;
+  // If compound has photos in the bank, use them with non-repeating stride
+  if (compoundPhotos.length > 0) {
+    const pickIndex = (hash + indexOffset * 7) % compoundPhotos.length;
+    return compoundPhotos[pickIndex];
   }
 
-  // Second priority: Match category
+  // Next: Property type real photos from bank
+  const typePhotos = bankTypes[category] || [];
+  if (typePhotos.length > 0) {
+    const pickIndex = (hash + indexOffset * 5) % typePhotos.length;
+    return typePhotos[pickIndex];
+  }
+
+  // Fallback: LUXURY_CATALOG matching category
   const matchingCategoryPhotos = LUXURY_CATALOG.filter((p) => p.type === category);
   if (matchingCategoryPhotos.length > 0) {
-    return matchingCategoryPhotos[(hash + indexOffset) % matchingCategoryPhotos.length].url;
+    return matchingCategoryPhotos[(hash + indexOffset * 3) % matchingCategoryPhotos.length].url;
   }
 
-  // Fallback to general catalog with offset to ensure variance
+  // Universal Fallback
   return LUXURY_CATALOG[(hash + indexOffset) % LUXURY_CATALOG.length].url;
 }
 
