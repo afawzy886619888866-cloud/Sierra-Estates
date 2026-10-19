@@ -54,14 +54,23 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const limit = parseInt(new URL(req.url).searchParams.get('limit') || '500', 10);
+    const params = new URL(req.url).searchParams;
+    const limit = Math.min(Math.max(parseInt(params.get('limit') || '500', 10) || 500, 1), 500);
+    // ?order=recent — newest-first window. The CRM board loads 500 rows in
+    // natural order, but pickers (e.g. the Deals kanban "New Deal" modal)
+    // need the FRESHEST leads: with 556+ rows the unsorted window truncates
+    // the newest intake exactly when a deal is being opened for them.
+    const orderRecent = params.get('order') === 'recent';
 
     // COLLECTIONS.stakeholders resolved to the Firestore collection 'leads',
     // which is now public.leads. This used to fetch the same collection twice
     // (once as 'stakeholders', once as 'leads') and merge the results: every
     // intake path (website, Property Finder, WhatsApp, ...) already writes
     // into the one table, distinguished by `source`.
-    let rows = await listRecords('leads', { limit });
+    let rows = await listRecords('leads', {
+      limit,
+      ...(orderRecent ? { orderBy: { column: 'createdAt', ascending: false } } : {}),
+    });
 
     // Partner accounts see only leads targeting their own compounds —
     // a merged-in property account's CRM board is its own demand.

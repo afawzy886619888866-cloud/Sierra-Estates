@@ -151,6 +151,7 @@ export default function HomePage() {
   const [search, setSearch] = useState({ compound: '', type: '', beds: '0', price: '', condition: '' });
   const [selectedMapCompound, setSelectedMapCompound] = useState<string | null>('Mivida');
   const [sent, setSent] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', zone: '', type: '', budget: '',
   });
@@ -365,11 +366,20 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, intent: inqMode, source: 'portal_home_inquiry' }),
       });
-      if (!res.ok) console.warn('[HomePage] Lead submission returned', res.status);
+      // Honesty fix: the success card previously rendered even when the
+      // POST failed (a 422 from the old required-email schema was shown to
+      // the visitor as "your inquiry has been received" — the lead was
+      // silently dropped). The confirmation now appears only on a real 2xx.
+      if (res.ok) {
+        setSent(true);
+      } else {
+        console.warn('[HomePage] Lead submission returned', res.status);
+        setSubmitFailed(true);
+      }
     } catch (err) {
-      console.warn('[HomePage] Lead submission failed (will be retried by CRM sync):', err);
+      console.warn('[HomePage] Lead submission failed:', err);
+      setSubmitFailed(true);
     }
-    setSent(true);
   }
 
   return (
@@ -1069,6 +1079,11 @@ export default function HomePage() {
                 <div id="inq-success" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#10b981' }}>
                   <CheckCircle style={{ width: 18, height: 18 }} />
                   <span>Thank you! Your inquiry has been received. Our team will contact you within 24 hours.</span>
+                </div>
+              )}
+              {submitFailed && (
+                <div id="inq-error" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, color: '#f59e0b' }} role="alert">
+                  <span>Something went wrong sending your inquiry — please try again or reach us on WhatsApp.</span>
                 </div>
               )}
             </form>
