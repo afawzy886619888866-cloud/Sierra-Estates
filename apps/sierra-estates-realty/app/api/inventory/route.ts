@@ -243,13 +243,15 @@ async function fetchDomain(): Promise<InventoryResponse | null> {
   } catch (err) {
     logger.warn(
       `[inventory] domain read failed: ${(err as Error).message}`,
+      { error: err }
     );
     return null;
   }
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const { searchParams } = new URL(request.url);
   const filterCompound =
     searchParams.get("compound")?.trim().toLowerCase() || "";
   const filterSegment = searchParams.get("segment")?.trim().toLowerCase() || "";
@@ -391,11 +393,21 @@ export async function GET(request: Request) {
     units: filteredUnits,
   };
 
-  return NextResponse.json(payload, {
-    headers: {
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-    },
-  });
+    return NextResponse.json(payload, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
+  } catch (err) {
+    logger.error("[inventory:GET] Unexpected error processing inventory request", {
+      error: (err as Error).message,
+      stack: (err as Error).stack,
+    });
+    return NextResponse.json(
+      { error: "Internal server error fetching inventory" },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -429,6 +441,10 @@ export async function POST(request: Request) {
       sheetName: result.sheetName,
     });
   } catch (err) {
+    logger.error("[inventory:POST] Failed to process inventory submission", {
+      error: (err as Error).message,
+      stack: (err as Error).stack,
+    });
     return NextResponse.json(
       { error: (err as Error).message },
       { status: 500 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, createHash } from 'node:crypto';
+import { logger } from '@/lib/logger';
 
 /**
  * Security Attestation Guard
@@ -14,14 +15,9 @@ import { timingSafeEqual } from 'node:crypto';
  *    CLOSED — never open.
  */
 function constantTimeMatch(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    // Compare against self to keep timing uniform, then report mismatch.
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
+  const hashA = createHash('sha256').update(a).digest();
+  const hashB = createHash('sha256').update(b).digest();
+  return timingSafeEqual(hashA, hashB);
 }
 
 export async function verifyAppCheck(req: NextRequest) {
@@ -32,7 +28,8 @@ export async function verifyAppCheck(req: NextRequest) {
 
   const secret = process.env.APP_CHECK_SECRET;
   if (!secret) {
-    // Fail closed: no secret configured in production → deny everything.
+    // Fail closed: no secret configured in production → deny everything and record error.
+    logger.error('[app-check] Server attestation is not configured: APP_CHECK_SECRET is unset in production.');
     return {
       isValid: false,
       errorResponse: NextResponse.json(
@@ -51,6 +48,10 @@ export async function verifyAppCheck(req: NextRequest) {
 
   const token = rawHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
+    logger.warn('[app-check] Request rejected: missing security attestation token', {
+      path: req.nextUrl?.pathname || req.url,
+      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+    });
     return {
       isValid: false,
       errorResponse: NextResponse.json(
@@ -61,6 +62,10 @@ export async function verifyAppCheck(req: NextRequest) {
   }
 
   if (!constantTimeMatch(token, secret)) {
+    logger.warn('[app-check] Request rejected: invalid security attestation token', {
+      path: req.nextUrl?.pathname || req.url,
+      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+    });
     return {
       isValid: false,
       errorResponse: NextResponse.json(
