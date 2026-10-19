@@ -61,6 +61,11 @@ function deriveSegment(
   return undefined;
 }
 
+// In-memory cache for Supabase listings to ensure ultra-fast responses (1-2ms)
+// and avoid hitting Supabase rate limits or cold-start timeouts.
+let cachedSupabaseListings: { data: InventoryResponse; expiresAt: number } | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
 /** Canonical Supabase listings, mapped to the public-safe map shape.
  *
  * Least privilege (was service-role): this is a public, unauthenticated
@@ -76,6 +81,9 @@ function deriveSegment(
  * graceful degradation as any other Supabase failure.
  */
 async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
+  if (cachedSupabaseListings && Date.now() < cachedSupabaseListings.expiresAt) {
+    return cachedSupabaseListings.data;
+  }
   try {
     const supabase = getSupabase();
     // PAGINATION (2026-10-11): the project's PostgREST max-rows (default
@@ -208,14 +216,20 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       };
     });
 
-    return units.length
-      ? {
-          generatedAt: new Date().toISOString(),
-          source: "supabase",
-          count: units.length,
-          units,
-        }
-      : null;
+    if (units.length) {
+      const res: InventoryResponse = {
+        generatedAt: new Date().toISOString(),
+        source: "supabase",
+        count: units.length,
+        units,
+      };
+      cachedSupabaseListings = {
+        data: res,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      };
+      return res;
+    }
+    return null;
   } catch (err) {
     logger.warn(
       `[inventory] Supabase listings read failed, falling back: ${(err as Error).message}`,
