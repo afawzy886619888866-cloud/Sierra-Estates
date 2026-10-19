@@ -60,6 +60,11 @@
     "deploy:check:env": "node scripts/verify-env-readiness.mjs",
     "env:sync": "node scripts/sync-vercel-env.js",
     "env:push": "node scripts/setup-github-secrets.js",
+    "cline:check": "node scripts/run-cline-task.mjs --check",
+    "cline:run": "node scripts/run-cline-task.mjs",
+    "cline:audit": "node scripts/run-cline-task.mjs --preset audit",
+    "cline:hygiene": "node scripts/run-cline-task.mjs --preset hygiene",
+    "cline:docs-sync": "node scripts/run-cline-task.mjs --preset docs-sync",
     "fleet:run-all": "pnpm openclaw:task \"ingest:sample\" && pnpm sync-propertyfinder && pnpm vertex-agent && pnpm run-harness && pnpm check-thresholds"
   },
   "devDependencies": {
