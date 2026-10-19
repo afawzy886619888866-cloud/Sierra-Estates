@@ -4,15 +4,11 @@ import React, { useState } from 'react';
 import {
   computeFullMetrics,
   formatCompactEGP,
-} from '@sierra-estates/agents/financial-metrics-engine';
-import {
   assessLegalRisk,
   type PropertyLegalContext,
-} from '@sierra-estates/agents/legal-risk-engine';
-import {
   runClosingSimulation,
   type StakeholderProfile,
-} from '@sierra-estates/agents/closing-simulator-engine';
+} from '@sierra-estates/agents';
 import {
   ShieldCheck,
   TrendingUp,

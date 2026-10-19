@@ -19,8 +19,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // §21 no-fabrication: a property code encodes the compound — inventing a
+    // default compound would fabricate listing data. Require the caller to
+    // state it explicitly.
+    const compound = body.compound || body.locationArea;
+    if (!compound || typeof compound !== 'string' || !compound.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'compound or locationArea is required to generate a property code — no default compound is invented (§21 no-fabrication policy)',
+        },
+        { status: 400 }
+      );
+    }
+
     const params: PropertyCodeInput = {
-      compound: body.compound || body.locationArea || 'New Cairo',
+      compound,
       rooms: Number(body.rooms || body.beds || 0),
       furnishingStatus: body.furnishingStatus || body.furnishing || 'unfurnished',
       price: Number(body.price || 0),
