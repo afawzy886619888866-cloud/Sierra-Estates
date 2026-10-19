@@ -72,17 +72,33 @@ acceptance gate.
 
 **Verified end state**: turbo 6/6 tasks · app jest 1698 passed (+13 data-skipped) · root vitest 696/696 · memory-engine 23/23.
 
-## ⏭️ Next in queue (ordered)
+## ⏭️ Next in queue (ordered) — status after session 2 (2026-10-19)
 
-1. Apply migration 031 to the live project (`pnpm deploy:supabase`) —
-   owner-gated, requires credentials.
-2. Wire `InventoryDomainService.upsertFromSource` into the remaining ingest
-   routes (per its README integration list) so every path is fingerprinted.
-3. Wire the `workflows/` package's three test files into CI (no `test` script
-   exists there today).
-4. Add a Supabase audit row per outreach contact (today: local JSONL ledger +
-   sheet column only).
-5. RAG strategic-goal resolver test pinning this note as the first recall.
+1. Apply migration 031 (+032/033) to the live project — **TOOLING READY,
+   CREDENTIAL-BLOCKED**: every stored credential is stale (Vercel
+   `SUPABASE_ACCESS_TOKEN` → 401 Revoked; `POSTGRES_PASSWORD` empty on both
+   projects; Vercel AWS keys → UnrecognizedClientException). Owner supplies a
+   fresh sbp_ token / DB password, or runs
+   `scripts/apply-live-migrations.mjs` (pre-flight → apply → post-flight) on
+   the operator host. **App deploy is hard-gated behind 031+032.**
+2. ~~Wire `InventoryDomainService.upsertFromSource` into the remaining ingest
+   routes~~ — **DONE (session 2)**: ingest-bridge connects
+   `/api/ingest/whatsapp`, `/api/cron/ingest-from-sheets`,
+   `/api/properties/sync`, `/api/admin/listings` POST, plus `sweepStale` in
+   `/api/cron/maintenance`; db-adapter column mapping completed (P1);
+   cross-path duplicate merge handles the unique-index conflict. See
+   [[Active Execution Plan]] §G2.
+3. ~~Wire the `workflows/` package's tests into CI~~ — **satisfied via
+   `pnpm test:root`** (root vitest already includes `workflows/__tests__/**`
+   and ci.yml runs it).
+4. ~~Add a Supabase audit row per outreach contact~~ — **DONE (session 2)**:
+   migration 033 `owner_outreach_log` + fire-and-forget audit write in
+   workflows/09 (real sends only; dry-run never fabricates; fail-open with
+   counted audit failures). Contract pins:
+   `workflows/__tests__/outreach-audit-contract.test.ts`.
+5. ~~RAG strategic-goal resolver test~~ — **verified already present** in
+   `packages/memory-engine/src/__tests__/brain-rag-engine.test.ts` (ACTIVE
+   gating, override precedence, vault persistence).
 
 ## 🔗 Linked Nodes
 

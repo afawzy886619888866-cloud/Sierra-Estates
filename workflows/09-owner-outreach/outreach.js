@@ -114,6 +114,75 @@ async function writeSheetDate(phone, rawMobile, dateStr) {
 
 const SHEET_ID = process.env.UNITS_SHEET_ID || '1g9GIcCM0slC5QplgzatZRxU46O_N4CR2jgDp9DeMYZk';
 const SHEET_GID = process.env.UNITS_SHEET_GID || '1127958606';
+
+// ── Supabase audit trail (G2 queue item 4, 2026-10-19) ─────────────────────
+// One row per REAL send in public.owner_outreach_log (migration 033) — the
+// canonical, queryable record for compliance + analytics. Fail-open by
+// design: the operational dedupe stays in the JSONL ledger + sheet column
+// and a send is NEVER blocked or retried because the audit DB is unhealthy.
+// DRY-RUN sends never write audit rows (§21 no-fabrication).
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseAuditClient = null;
+let auditDisabledNoted = false;
+function getAuditClient() {
+  if (supabaseAuditClient) return supabaseAuditClient;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    if (!auditDisabledNoted) {
+      auditDisabledNoted = true;
+      console.log('[outreach] Supabase audit DISABLED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing (ledger + sheet remain the record)');
+    }
+    return null;
+  }
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    supabaseAuditClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  } catch (err) {
+    console.error(`[outreach] Supabase audit client init failed: ${err.message}`);
+    return null;
+  }
+  return supabaseAuditClient;
+}
+
+/**
+ * Fire-and-forget audit write. Owns its own failure accounting
+ * (summary.auditFailed) — never throws into the send path.
+ */
+function auditContact(entry) {
+  const db = getAuditClient();
+  if (!db) { summary.auditSkipped++; return Promise.resolve(false); }
+  return db
+    .from('owner_outreach_log')
+    .insert({
+      phone: entry.phone,
+      listing_code: entry.code || null,
+      session_name: entry.session || null,
+      direction: entry.direction || null,
+      host_side: HOST_SIDE,
+      sheet_row_idx: typeof entry.idx === 'number' ? entry.idx : null,
+      availability: entry.avail || null,
+      message_text: entry.text || null,
+      dry_run: false, // callers only invoke this for REAL sends
+      sent_at: entry.at || new Date().toISOString(),
+    })
+    .then(({ error }) => {
+      if (error) {
+        summary.auditFailed++;
+        console.error(`[outreach] Supabase audit INSERT failed for ${entry.phone}: ${error.message}`);
+        return false;
+      }
+      summary.auditWritten++;
+      return true;
+    })
+    .catch((err) => {
+      summary.auditFailed++;
+      console.error(`[outreach] Supabase audit write failed for ${entry.phone}: ${err.message}`);
+      return false;
+    });
+}
+
 const PER_LINE_DAILY_CAP = parseInt(process.env.WF_OWNER_CONTACT_DAILY_CAP || '40', 10);
 // Pool-aware: recomputed in main() as per-line × pool unless the operator set
 // WF_OWNER_CONTACT_DAILY_CAP explicitly (then it is a TOTAL, honored as-is).
@@ -159,6 +228,9 @@ const summary = {
   lanes: 0,
   slotDeadline: false,
   skippedDupRow: 0,
+  auditWritten: 0,
+  auditFailed: 0,
+  auditSkipped: 0,
 };
 
 /**
@@ -632,6 +704,9 @@ async function main() {
             daily.sent++;
             saveDaily(daily);
             appendLedger({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction });
+            // Canonical audit row (migration 033) — fire-and-forget, REAL
+            // sends only (dry-run never fabricates contact records, §21).
+            void auditContact({ phone, code: cand.code, at: new Date().toISOString(), avail: cand.avail, session: usedSession, idx, direction: lane.direction, text });
             console.log(`sent [${lane.direction}][#${idx}] → ${phone} (${cand.code}) via ${usedSession} [${daily.sent}/${DAILY_CAP} today]`);
             await writeSheetDate(phone, cand.rawMobile, formatCairoDate());
           } catch (err) {

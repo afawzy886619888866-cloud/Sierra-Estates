@@ -22,25 +22,55 @@ import type { FirestoreLike } from './InventoryDomainService';
  *                                    partial index uq_listings_dupe_check_hash
  *                                    from migration 013 then protects this
  *                                    path at the DATABASE level, not just in app code)
- *   statusHistory → status_history   (jsonb, migration 031)
- *   sources       → sources          (jsonb, migration 031)
- *   ownershipDocRef → ownership_doc_ref (TEXT, migration 031)
- *   reservationRef → reservation_ref (TEXT, migration 031)
+ *   location      → location_area    (real column name; `location` does not exist)
+ *   area          → area_sqm         (real column name; `area` does not exist)
+ *   currency      → price_currency   (real column name; `currency` does not exist)
+ *   source        → sync_source      (real column name; `source` does not exist)
+ *   statusHistory → status_history   (jsonb, migration 032)
+ *   sources       → sources          (jsonb, migration 032)
+ *   ownershipDocRef → ownership_doc_ref (TEXT, migration 032)
+ *   reservationRef → reservation_ref (TEXT, migration 032)
+ *   coordinates   → latitude + longitude  (decomposed; no `coordinates` column)
  * Reads map the columns back so the domain service sees its own shape.
+ *
+ * 2026-10-19 (G2 wiring pass): the P0 fix only mapped `fingerprint`; the
+ * domain document also carries location/area/currency/source/coordinates,
+ * none of which are real columns on public.listings. Without this mapping
+ * every production write from InventoryDomainService would fail PostgREST
+ * schema validation (PGRST204). `sourceRef` and `tags` have no dedicated
+ * column — sourceRef is preserved inside the `sources` jsonb provenance
+ * object (migration 032 design) and is intentionally dropped from the row.
  */
 
 /** Firestore-shaped field → real Postgres column. */
 const FIELD_TO_COLUMN: Record<string, string> = {
   fingerprint: 'dupeCheckHash', // records.ts snake-cases to dupe_check_hash
+  location: 'locationArea',     // → location_area
+  area: 'areaSqm',              // → area_sqm
+  currency: 'priceCurrency',    // → price_currency
+  source: 'syncSource',         // → sync_source
   statusHistory: 'statusHistory',
   ownershipDocRef: 'ownershipDocRef',
   reservationRef: 'reservationRef',
 };
 
+/** Doc fields with no backing column — never sent to PostgREST. */
+const DROPPED_DOC_FIELDS = new Set(['sourceRef', 'tags']);
+
 function toRow(data: unknown): Record<string, unknown> {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+    if (DROPPED_DOC_FIELDS.has(k)) continue;
+    if (k === 'coordinates') {
+      // Decompose {lat,lng} onto the real latitude/longitude columns.
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        const c = v as { lat?: unknown; lng?: unknown };
+        if (typeof c.lat === 'number') out.latitude = c.lat;
+        if (typeof c.lng === 'number') out.longitude = c.lng;
+      }
+      continue;
+    }
     out[FIELD_TO_COLUMN[k] ?? k] = v;
   }
   return out;
@@ -54,6 +84,25 @@ function toDoc(data: unknown): unknown {
   if ('dupeCheckHash' in row) {
     out.fingerprint = row.dupeCheckHash;
     delete out.dupeCheckHash;
+  }
+  if ('locationArea' in row) {
+    out.location = row.locationArea;
+    delete out.locationArea;
+  }
+  if ('areaSqm' in row) {
+    out.area = row.areaSqm;
+    delete out.areaSqm;
+  }
+  if ('priceCurrency' in row) {
+    out.currency = row.priceCurrency;
+    delete out.priceCurrency;
+  }
+  if ('syncSource' in row) {
+    out.source = row.syncSource;
+    delete out.syncSource;
+  }
+  if (typeof row.latitude === 'number' && typeof row.longitude === 'number') {
+    out.coordinates = { lat: row.latitude, lng: row.longitude };
   }
   return out;
 }

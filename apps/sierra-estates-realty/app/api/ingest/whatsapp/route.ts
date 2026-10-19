@@ -10,6 +10,11 @@ import { GoogleAIService } from '@/lib/server/google-ai';
 import { LEILA_PROMPT } from '@/lib/prompts';
 import { logger } from '@/lib/logger';
 import { verifySharedSecret } from '@/lib/server/webhook-auth';
+import {
+  buildCanonicalPayloadFromParsed,
+  upsertCanonicalListing,
+  type UpsertResult,
+} from '@/lib/services/inventory/ingest-bridge';
 
 import { AugustOwnersAgentService } from '@/lib/services/AugustOwnersAgentService';
 
@@ -164,6 +169,25 @@ export async function POST(req: NextRequest) {
     }
 
     const parsed = await WhatsAppParserService.parseMessage(rawMessage);
+
+    // ── Canonical inventory (G2 wiring, 2026-10-19) ─────────────────────────────
+    // Every parsed listing whose §21 mandatory fields are complete enters the
+    // canonical `listings` table through InventoryDomainService — fingerprinted
+    // (dupe_check_hash), lifecycle-tracked (draft for scrapes) and DB-minted
+    // code (migration 031 trigger). Runs BEFORE the staging insert so a DB
+    // failure here fails the request (500 → provider retry) instead of leaving
+    // canonical inventory silently missing. Incomplete listings are skipped
+    // honestly: the broker_listings staging row below keeps the raw evidence.
+    let canonical: UpsertResult | null = null;
+    if (parsed?.isListing === true) {
+      const payload = buildCanonicalPayloadFromParsed(parsed, rawMessage, `whatsapp:${sender}`);
+      if (payload) {
+        canonical = await upsertCanonicalListing('whatsapp_scrape', payload);
+        logger.info(
+          `[WhatsApp Ingest] Canonical ${canonical.action} for fingerprint ${canonical.fingerprint}`,
+        );
+      }
+    }
     
     let leilaReply = null;
     if (parsed && !parsed.isListing) {
@@ -222,6 +246,7 @@ export async function POST(req: NextRequest) {
       id: docRef.id,
       isListing: parsed?.isListing === true,
       sierraCode: listing.extractedData?.sierraCode || null,
+      canonical: canonical ? { id: canonical.id, action: canonical.action, fingerprint: canonical.fingerprint } : null,
       orchestration: parsed?.isListing === true ? 'S1-S2 completed' : 'Stored for manual review',
       leilaReply
     });
