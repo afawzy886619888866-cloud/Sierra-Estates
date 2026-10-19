@@ -60,6 +60,19 @@ first; the pre-repair state was 158/160 suites passing with 2 honest data-guard 
 
 ## 5. Honest-environment summary
 
+**Pre-existing root-vitest failures (found by this audit, NOT introduced by the
+repair run):** `npx vitest run` at the repo root fails **12 files / 36 tests** on
+pristine `main@90260d2` (verified by stashing all changes and re-running — identical
+failure set; the repair run adds +17 passing tests and zero new failures). These
+cover GitHub-workflow config assertions, hero-slider content, cspell dictionary,
+RBAC contracts, deployment config, and data-hygiene rules. Root cause: `pnpm
+test:ci` (turbo) only runs **package-level** jest suites — the root vitest suites
+are outside the CI gate, so the readiness claims never counted them. **Recommended
+fix:** add a root-level `test:ci` turbo task (or fold the root suites into a
+workspace package) so the 36 failures enter the gate; then repair them file-by-file.
+Stash-verification evidence: `12 failed | 64 passed (76)` pristine vs
+`12 failed | 65 passed (77)` repaired — same 12 failing files.
+
 | Blocker | Impact | Owner action |
 |---|---|---|
 | Command Deck API down (sandbox) | No board cards; progress lives in `docs/obsidian-vault/Active Execution Plan.md` + worklog | Start deck on operator host; backfill cards via REST |
