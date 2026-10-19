@@ -47,8 +47,10 @@ const CORE_SKILLS = [
     id: 'inventree-rag-query',
     name: 'InvenTree RAG Query',
     description: 'Semantic vector-grounded search across hierarchical stock locations, units, and custom specs',
-    execute: async (params: { query: string; limit?: number }) => {
-      return await InvenTreeInventoryHub.queryRAG(params?.query || '', params?.limit || 5);
+    execute: async (_context: any, args?: any) => {
+      const q = typeof args === 'string' ? args : args?.query || '';
+      const limit = typeof args === 'object' && args?.limit ? args.limit : 5;
+      return await InvenTreeInventoryHub.queryRAG(q, limit);
     }
   },
   {
