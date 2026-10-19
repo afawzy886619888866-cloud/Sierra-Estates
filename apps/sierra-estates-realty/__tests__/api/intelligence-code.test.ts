@@ -1,5 +1,26 @@
+import { describe, it, expect } from '@jest/globals';
 import { NextRequest } from 'next/server';
 import { POST, GET } from '@/app/api/intelligence/code/route';
+
+interface ApiResponse {
+  success: boolean;
+  action?: string;
+  code?: string;
+  error?: string;
+  metadata?: {
+    locationCode?: string;
+    compoundCode?: string;
+    rooms?: number;
+    furnishingStatus?: string;
+  };
+  parsed?: {
+    location?: string;
+    rooms?: number;
+    furnishingStatus?: string;
+    priceToken?: string;
+    features?: string[];
+  };
+}
 
 describe('/api/intelligence/code route contract & resilience', () => {
   describe('POST /api/intelligence/code', () => {
@@ -18,12 +39,12 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
       const res = await POST(req);
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(true);
       expect(json.action).toBe('generate');
       expect(json.code).toBe('MVD-3F-75K+G');
       expect(json.metadata).toBeDefined();
-      expect(json.metadata.locationCode).toBe('MVD');
+      expect(json.metadata?.locationCode).toBe('MVD');
     });
 
     it('rejects code generation without a compound or locationArea (§21 no-fabrication)', async () => {
@@ -37,7 +58,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
       const res = await POST(req);
       expect(res.status).toBe(400);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(false);
       expect(json.error).toContain('compound or locationArea is required');
     });
@@ -53,7 +74,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
       const res = await POST(req);
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(true);
       expect(json.action).toBe('parse');
       expect(json.parsed).toEqual({
@@ -76,7 +97,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
 
       const res = await POST(req);
       expect(res.status).toBe(400);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(false);
       expect(json.error).toContain('Property code is required');
     });
@@ -86,13 +107,13 @@ describe('/api/intelligence/code route contract & resilience', () => {
         method: 'POST',
         body: JSON.stringify({
           action: 'parse',
-          code: 'INVALIDCODE',
+          code: 'INVALID_CODE_SAMPLE',
         }),
       });
 
       const res = await POST(req);
       expect(res.status).toBe(422);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(false);
       expect(json.error).toContain('Invalid Sierra property code');
     });
@@ -103,7 +124,7 @@ describe('/api/intelligence/code route contract & resilience', () => {
       const req = new NextRequest('http://localhost/api/intelligence/code');
       const res = await GET(req);
       expect(res.status).toBe(400);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(false);
       expect(json.error).toContain('Code parameter is required');
     });
@@ -113,18 +134,18 @@ describe('/api/intelligence/code route contract & resilience', () => {
       const req = new NextRequest(`http://localhost/api/intelligence/code?code=${encodeURIComponent(code)}`);
       const res = await GET(req);
       expect(res.status).toBe(200);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(true);
       expect(json.code).toBe(code);
-      expect(json.parsed.location).toBe('MVD');
-      expect(json.parsed.rooms).toBe(3);
+      expect(json.parsed?.location).toBe('MVD');
+      expect(json.parsed?.rooms).toBe(3);
     });
 
     it('returns 422 when code query parameter is unparseable', async () => {
       const req = new NextRequest('http://localhost/api/intelligence/code?code=BAD');
       const res = await GET(req);
       expect(res.status).toBe(422);
-      const json = await res.json();
+      const json = (await res.json()) as ApiResponse;
       expect(json.success).toBe(false);
       expect(json.error).toContain('Invalid Sierra property code');
     });
