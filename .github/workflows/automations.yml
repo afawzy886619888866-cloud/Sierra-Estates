@@ -102,7 +102,7 @@ jobs:
 
       - name: Call the dispatcher for each target
         env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          CRON_SECRET: ${{ secrets['CRON_SECRET'] }}
           TARGETS: ${{ steps.target.outputs.targets }}
           INPUT_FORCE: ${{ inputs.force }}
         run: |
