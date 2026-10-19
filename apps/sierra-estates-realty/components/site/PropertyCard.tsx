@@ -55,8 +55,10 @@ export interface CardListing {
   tag: string | null;
   mode: string;
   agent: string;
-  ago: string;
+  ago?: string;
   img: string;
+  whatsapp?: string;
+  segment?: string;
   yield?: number;
   finishing?: string;
   availability?: string;
