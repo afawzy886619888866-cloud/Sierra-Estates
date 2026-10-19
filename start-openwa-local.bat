@@ -24,7 +24,7 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo Once paired with WhatsApp:
     echo - Your local apps and runner can use: http://127.0.0.1:2785
-    echo - Admin API Key: owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
+    echo - Admin API Key: loaded from SIERRA_OPENWA_ADMIN_API_KEY
     echo ========================================================
     start http://localhost:2785
     pause
@@ -56,7 +56,8 @@ if not exist "node_modules" (
 set PORT=2785
 set NODE_ENV=production
 set TZ=Africa/Cairo
-set ADMIN_API_KEY=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
+if not defined SIERRA_OPENWA_ADMIN_API_KEY exit /b 1
+set ADMIN_API_KEY=%SIERRA_OPENWA_ADMIN_API_KEY%
 
 echo.
 echo ========================================================

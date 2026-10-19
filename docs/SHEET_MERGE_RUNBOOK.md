@@ -54,7 +54,7 @@ After pasting the v2 script:
 ```bash
 curl -s -X POST "$WF_SHEET_WRITE_URL" \
   -H 'Content-Type: application/json' \
-  -d '{"secret":"SE_OUTREACH_SECRET_2026_CAIRO","action":"importNewMasterRows"}'
+  -d '{"secret":"$SIERRA_SHEET_WRITE_SECRET","action":"importNewMasterRows"}'
 # → {"ok":true,"appended":0,"skipped":1503,"totalRows":1826}  (idempotent re-run)
 ```
 

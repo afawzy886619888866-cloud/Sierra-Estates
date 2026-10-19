@@ -19,9 +19,12 @@ REM http://127.0.0.1:2785 if you run a LOCAL gateway on this PC
 REM (then also start it below).
 REM ────────────────────────────────────────────────────────────────
 set WHATSAPP_API_URL=http://54.89.162.250:2785
-set WHATSAPP_API_TOKEN=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
-set OPENWA_ADMIN_API_KEY=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
-set RUNNER_API_KEY=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
+if not defined SIERRA_WHATSAPP_API_TOKEN exit /b 1
+set WHATSAPP_API_TOKEN=%SIERRA_WHATSAPP_API_TOKEN%
+if not defined SIERRA_OPENWA_ADMIN_API_KEY exit /b 1
+set OPENWA_ADMIN_API_KEY=%SIERRA_OPENWA_ADMIN_API_KEY%
+if not defined SIERRA_RUNNER_API_KEY exit /b 1
+set RUNNER_API_KEY=%SIERRA_RUNNER_API_KEY%
 set RUNNER_PORT=2786
 
 REM ────────────────────────────────────────────────────────────────
@@ -49,8 +52,10 @@ set UNITS_SHEET_GID=1127958606
 
 REM Sheet contact-date write-back — REQUIRED on BOTH hosts: this is
 REM what makes each host skip owners the other host already texted.
-set WF_SHEET_WRITE_URL=https://script.google.com/macros/s/AKfycbzsP2fwASxIVu_r0_rHVyzfVfGii3zHJaEtc29-l3K_IvBG7bmTdWaLngCmyLTG2GnY/exec
-set WF_SHEET_WRITE_SECRET=SE_OUTREACH_SECRET_2026_CAIRO
+if not defined SIERRA_SHEET_WRITE_URL exit /b 1
+set WF_SHEET_WRITE_URL=%SIERRA_SHEET_WRITE_URL%
+if not defined SIERRA_SHEET_WRITE_SECRET exit /b 1
+set WF_SHEET_WRITE_SECRET=%SIERRA_SHEET_WRITE_SECRET%
 
 REM Legacy knobs (kept for reference — not read by outreach.js)
 set WF_OUTREACH_SLOTS=10,11,12,13,14,15,16,17,18,19,20
