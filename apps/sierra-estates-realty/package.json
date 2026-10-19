@@ -13,8 +13,8 @@
     "check-node": "node scripts/diagnostic.mjs",
     "seed:admin": "node scripts/seed-admin.mjs",
     "inventory:snapshot": "node scripts/generate-inventory-snapshot.mjs",
-    "test": "jest --testPathPatterns=__tests__",
-    "test:ci": "jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
+    "test": "node scripts/ensure-snapshot.mjs && jest --testPathPatterns=__tests__",
+    "test:ci": "node scripts/ensure-snapshot.mjs && jest --ci --coverage --forceExit --maxWorkers=2 --testPathPatterns=__tests__"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^4.0.62",
