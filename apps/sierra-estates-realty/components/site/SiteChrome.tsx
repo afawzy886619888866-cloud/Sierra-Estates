@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useSite } from '@/lib/site/SiteContext';
 
-export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'contact' | 'projects' | 'career' | null;
+export type ActiveNav = 'home' | 'cpds' | 'best' | 'net' | 'properties' | 'contact' | 'projects' | 'career' | null;
 
 export default function SiteChrome({ active = null }: { active?: ActiveNav }) {
   const { t, theme, toggleTheme, toggleLang, lang } = useSite();
