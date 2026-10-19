@@ -20,6 +20,8 @@ export interface UnitFinancials {
   holdingPeriodYears?: number;
 }
 
+export type UnitFinancial = UnitFinancials;
+
 export interface UnitIntelligenceFactors {
   standard: 'luxury' | 'normal' | 'simple';
   condition: 'new' | 'good' | 'fair' | 'poor';
