@@ -83,7 +83,8 @@ async function runVerification() {
   total++;
   process.stdout.write('3. WhatsApp Session Health Endpoint... ');
   const qrRes = await checkUrl(`http://${openwaHost}:${openwaPort}/api/sessions`, {
-    'X-API-Key': process.env.OPENWA_ADMIN_API_KEY || 'owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c',
+    'X-API-Key': process.env.OPENWA_ADMIN_API_KEY,
+    ...(process.env.OPENWA_ADMIN_API_KEY ? {} : (() => { throw new Error('OPENWA_ADMIN_API_KEY is required'); })()),
   });
   if (qrRes.status === 200 || qrRes.status === 401) {
     console.log(`${GREEN}✓ ACTIVE${RESET} (Gateway responding, Auth enforced: HTTP ${qrRes.status})`);

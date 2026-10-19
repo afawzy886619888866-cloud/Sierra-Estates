@@ -1,5 +1,7 @@
-const EXEC_URL = 'https://script.google.com/macros/s/AKfycbzsP2fwASxIVu_r0_rHVyzfVfGii3zHJaEtc29-l3K_IvBG7bmTdWaLngCmyLTG2GnY/exec';
-const SECRET = 'SE_OUTREACH_SECRET_2026_CAIRO';
+const EXEC_URL = process.env.SIERRA_SHEET_WRITE_URL;
+if (!EXEC_URL) throw new Error('SIERRA_SHEET_WRITE_URL is required');
+const SECRET = process.env.SIERRA_SHEET_WRITE_SECRET;
+if (!SECRET) throw new Error('SIERRA_SHEET_WRITE_SECRET is required');
 
 async function test(name, payload) {
   try {
