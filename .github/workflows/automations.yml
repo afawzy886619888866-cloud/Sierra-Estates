@@ -65,6 +65,11 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    secrets:
+      CRON_SECRET:
+        description: Bearer token for /api/cron/dispatch authentication
+        required: false
 
 concurrency:
   group: automations
@@ -102,7 +107,7 @@ jobs:
 
       - name: Call the dispatcher for each target
         env:
-          CRON_SECRET: ${{ secrets[format('{0}', 'CRON_SECRET')] }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           TARGETS: ${{ steps.target.outputs.targets }}
           INPUT_FORCE: ${{ inputs.force }}
         run: |
