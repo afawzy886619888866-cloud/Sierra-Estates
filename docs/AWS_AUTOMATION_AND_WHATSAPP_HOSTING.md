@@ -87,7 +87,6 @@ For bulk historic chats, WhatsApp Mobile contains significantly more message his
 
 The **WhatsApp Mobile Chat Harvester** is integrated directly into the Admin Portal (`/admin` → **All Listings** → **Mobile Harvester**):
 
-
 1. **Export Chat**: On your mobile phone, open any target WhatsApp owner group (e.g. _Owners August 2026_, _Owners Units_, _Group Data Owner_).
 2. **Without Media**: Tap the group header → _Export Chat_ → Select _Without Media_.
 3. **Upload or Paste**: Upload the `.txt` file into the Admin Studio or paste the text directly.
