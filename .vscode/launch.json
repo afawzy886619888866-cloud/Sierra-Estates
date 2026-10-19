@@ -12,7 +12,7 @@
       },
       "api": {
         "path": "Path",
-        "httpMethod": "Method",
+        "httpMethod": "get",
         "payload": {
           "json": {}
         }

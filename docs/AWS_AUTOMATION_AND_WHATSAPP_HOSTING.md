@@ -1,6 +1,7 @@
 # AWS EC2 & Cloud Automation Guide for Sierra Estates
 
 ## 1. Overview & Architecture
+
 Because GitHub Actions enforces runner minute quotas and $0 spending limits on free tier accounts, mission-critical background automations—such as the **WhatsApp Concierge Bot**, **Scheduled WhatsApp Outreaches**, and **Continuous Agent Fleets**—should be hosted on a dedicated cloud instance (AWS EC2 / AWS Lightsail or Docker VPS) rather than ephemeral CI/CD runners.
 
 ```
@@ -27,6 +28,7 @@ Because GitHub Actions enforces runner minute quotas and $0 spending limits on f
 The repository includes an automated launch script at [scripts/launch-aws-ec2.sh](file:///h:/last/Main/SE-Vercel-deploy-main/.amazonq/SE-Vercel-deploy-main/scripts/launch-aws-ec2.sh).
 
 ### Prerequisites
+
 1. Install AWS CLI:
    ```bash
    pip install awscli
@@ -42,6 +44,7 @@ The repository includes an automated launch script at [scripts/launch-aws-ec2.sh
    - `eu-central-1` (Frankfurt) or `me-south-1` (Bahrain) for lowest latency to Egypt.
 
 ### Launch Command
+
 ```bash
 bash scripts/launch-aws-ec2.sh
 ```
@@ -65,7 +68,9 @@ docker compose -f docker-compose.n8n.prod.yml up -d
 ```
 
 ### Viewing WhatsApp QR Code
+
 When the WhatsApp bot starts, view the QR code in the container logs to link your mobile phone:
+
 ```bash
 docker compose -f infra/docker-compose.yml logs whatsapp-scraper | grep -A 25 "Scan"
 ```
@@ -77,8 +82,9 @@ docker compose -f infra/docker-compose.yml logs whatsapp-scraper | grep -A 25 "S
 For bulk historic chats, WhatsApp Mobile contains significantly more message history than desktop browser sessions.
 
 The **WhatsApp Mobile Chat Harvester** is integrated directly into the Admin Portal (`/admin` → **All Listings** → **Mobile Harvester**):
-1. **Export Chat**: On your mobile phone, open any target WhatsApp owner group (e.g. *Owners August 2026*, *Owners Units*, *Group Data Owner*).
-2. **Without Media**: Tap the group header → *Export Chat* → Select *Without Media*.
+
+1. **Export Chat**: On your mobile phone, open any target WhatsApp owner group (e.g. _Owners August 2026_, _Owners Units_, _Group Data Owner_).
+2. **Without Media**: Tap the group header → _Export Chat_ → Select _Without Media_.
 3. **Upload or Paste**: Upload the `.txt` file into the Admin Studio or paste the text directly.
 4. **Scan & Analyze**: The system runs AI & regex extraction to detect compounds, pricing, bedroom count, and classifies direct owners.
 5. **Approve & Ingest**: With 1 click, verified direct owner units are ingested into the live Supabase inventory and deduplicated against existing records.
