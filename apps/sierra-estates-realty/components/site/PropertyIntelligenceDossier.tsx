@@ -1,14 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+// Client-safe engine subpaths only — the `@sierra-estates/agents` barrel also
+// re-exports the openclaw agent (fs / obsidian), which cannot be bundled for
+// the browser and broke the production build. Import the pure computation
+// engines directly so the client graph never reaches server-only modules.
 import {
   computeFullMetrics,
   formatCompactEGP,
+} from '@sierra-estates/agents/src/financial-metrics-engine';
+import {
   assessLegalRisk,
   type PropertyLegalContext,
+} from '@sierra-estates/agents/src/legal-risk-engine';
+import {
   runClosingSimulation,
   type StakeholderProfile,
-} from '@sierra-estates/agents';
+} from '@sierra-estates/agents/src/closing-simulator-engine';
 import {
   ShieldCheck,
   TrendingUp,
