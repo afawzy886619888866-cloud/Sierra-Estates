@@ -19,9 +19,9 @@ REM http://127.0.0.1:2785 if you run a LOCAL gateway on this PC
 REM (then also start it below).
 REM ────────────────────────────────────────────────────────────────
 set WHATSAPP_API_URL=http://54.89.162.250:2785
-set WHATSAPP_API_TOKEN=dev-admin-key
-set OPENWA_ADMIN_API_KEY=dev-admin-key
-set RUNNER_API_KEY=dev-admin-key
+set WHATSAPP_API_TOKEN=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
+set OPENWA_ADMIN_API_KEY=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
+set RUNNER_API_KEY=owa_k1_f269866c139dd31a3afca1809d6a86f90cb349654e41c82e585ceff327c1c77c
 set RUNNER_PORT=2786
 
 REM ────────────────────────────────────────────────────────────────

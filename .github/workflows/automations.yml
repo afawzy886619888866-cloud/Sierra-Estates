@@ -29,6 +29,17 @@ name: Automations
 # fail auth and the workflow exits non-zero — visible, not silent.
 
 on:
+  schedule:
+    # Hourly WhatsApp dispatch during outreach windows
+    - cron: '10 * * * *'
+    # Lead timers & SLA verification every 3 hours
+    - cron: '25 */3 * * *'
+    # Night window maintenance (02:10 UTC)
+    - cron: '10 2 * * *'
+    # Morning window sync (06:10 UTC)
+    - cron: '10 6 * * *'
+    # Dedicated lead sync (10:10 UTC)
+    - cron: '10 10 * * *'
   workflow_dispatch:
     inputs:
       target:

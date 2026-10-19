@@ -76,6 +76,7 @@ const SLUGS = [
   'daily-digest',
   'units-sync',
   'owner-outreach',
+  'whatsapp-dispatch',
 ];
 
 // Host role — two-host parallel outreach (Oct 2026). Comma-separated slugs
@@ -102,6 +103,7 @@ const SCRIPTS = {
   'daily-digest': '07-daily-digest/digest.js',
   'units-sync': '08-units-sync/sync.js',
   'owner-outreach': '09-owner-outreach/outreach.js',
+  'whatsapp-dispatch': '10-whatsapp-dispatch/dispatch.js',
 };
 
 const running = new Set(); // slugs currently executing
