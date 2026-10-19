@@ -45,7 +45,7 @@ id_ed25519*
 *aws_credentials*
 
 # WhatsApp, OpenWA & Container runtime data
-openwa/
+/openwa/
 **/openwa-data/
 **/whatsapp-auth/
 **/n8n-data/
