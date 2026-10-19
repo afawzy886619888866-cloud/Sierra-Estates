@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { listRecords, updateRecord, type WhereClause } from '@sierra-estates/db';
 
