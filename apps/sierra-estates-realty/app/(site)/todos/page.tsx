@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import TodosBoard from './TodosBoard';
 
 export const metadata: Metadata = {
-  title: 'Team Tasks — Live Supabase Quickstart',
+  title: 'Team Tasks — Supabase Auth + RLS Quickstart',
   description:
-    'Sierra Estates team task board — the end-to-end Supabase quickstart. Create, toggle, and delete tasks synced live to the public.todos Postgres table under row-level security.',
+    'Sierra Estates team task board — a per-user Supabase quickstart behind Supabase Auth and row-level security: every task is scoped to its owner in Postgres.',
   robots: { index: false, follow: false },
 };
 
