@@ -21,7 +21,6 @@
 import { logger } from "@/lib/logger";
 import { resolveLocation } from "@/lib/inventory/gazetteer";
 import { eccMemory } from "@/lib/eccMemoryEngine";
-import { brainRAG } from "@sierra-estates/memory-engine";
 import consolidatedRaw from "@/data/consolidated-master-inventory.json";
 import { formatEGP } from "@/app/admin/views/InventoryPaymentLab";
 
@@ -446,6 +445,7 @@ class InvenTreeInventoryHubService {
             priceEgp: item.parameters.totalPriceEgp,
             mode: item.mode,
             status: item.status,
+            dossier: ragDocument,
           },
         });
 
