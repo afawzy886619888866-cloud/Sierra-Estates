@@ -332,10 +332,14 @@ export default function PropertyIntelligenceDossier({
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <ShieldCheck style={{ width: 16, height: 16, color: '#10B981' }} />
               <span style={{ color: '#E2E8F0', fontWeight: 600 }}>
-                {isAr ? 'مستوى المخاطر القانونية: منخفض جداً (معتمدة للتعاقد)' : 'Legal Risk Level: Low (Cleared for Closing & Contract)'}
+                {isAr
+                  ? `مستوى المخاطر القانونية: ${legalAudit.riskLevel === 'low' ? 'منخفض جداً (معتمدة للتعاقد)' : legalAudit.riskLevel}`
+                  : `Legal Risk Level: ${legalAudit.riskLevel.toUpperCase()} (Cleared for Closing)`}
               </span>
             </div>
-            <span style={{ color: '#10B981', fontWeight: 700, fontFamily: 'var(--mono)' }}>100/100 SAFETY</span>
+            <span style={{ color: '#10B981', fontWeight: 700, fontFamily: 'var(--mono)' }}>
+              {Math.max(0, 100 - legalAudit.riskScore)}/100 {isAr ? 'مؤشر الأمان' : 'SAFETY SCORE'}
+            </span>
           </div>
         </div>
       )}
