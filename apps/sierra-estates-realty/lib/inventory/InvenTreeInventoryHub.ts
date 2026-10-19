@@ -187,14 +187,14 @@ class InvenTreeInventoryHubService {
 
     for (const raw of rawUnits) {
       const code = String(raw.code || raw.id || `SE-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
-      const compound = String(raw.compound || raw.location || "New Cairo");
+      const compound = String(raw.compound || raw.location || "").trim();
       const resolvedGeo = resolveLocation(compound);
       const district = getDistrictForCompound(compound);
       const { category, categoryPath } = normalizeCategory(String(raw.type || raw.propertyType || ""));
       const priceEgp = Number(raw.price || raw.totalPrice || 0);
-      const areaM2 = Number(raw.area || raw.bua || 180);
-      const beds = Number(raw.beds || raw.bedrooms || 3);
-      const baths = Number(raw.baths || raw.bathrooms || 2);
+      const areaM2 = Number(raw.area || raw.bua || 0);
+      const beds = Number(raw.beds || raw.bedrooms || 0);
+      const baths = Number(raw.baths || raw.bathrooms || 0);
       const isRent = String(raw.mode || "").toLowerCase() === "rent" || String(raw.dealType || "").toLowerCase() === "rent";
 
       const pricePerM2 = areaM2 > 0 && priceEgp > 0 ? Math.round(priceEgp / areaM2) : undefined;
