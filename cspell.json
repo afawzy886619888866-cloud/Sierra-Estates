@@ -28,6 +28,7 @@
     "**/*.db*",
     "**/*.pdf",
     "**/*.patch",
+    "**/lib/seed.ts",
     "tools/**"
   ],
   "ignoreRegExpList": [
@@ -105,6 +106,7 @@
     "carto",
     "cazar",
     "changeme",
+    "chatids",
     "chev",
     "choueifat",
     "cinzel",
@@ -332,6 +334,7 @@
     "pgcrypto",
     "pgdata",
     "pgvector",
+    "phoneless",
     "picsum",
     "pinwrap",
     "pipefail",
@@ -352,6 +355,7 @@
     "protobufjs",
     "psql",
     "ptype",
+    "pushdir",
     "publishability",
     "pycache",
     "pycodestyle",
@@ -559,6 +563,7 @@
     "sched",
     "sedra",
     "segoe",
-    "tahoma"
+    "tahoma",
+    "userinfobot"
   ]
 }
