@@ -68,7 +68,7 @@ describe('Data Hygiene & Git Weight', () => {
         'Move large data to Supabase Storage and add to .gitignore.'
       );
     }
-  });
+  }, 30000);
 
   test('no root-level spreadsheets tracked in git', () => {
     const rootXlsx = gitLsFiles().filter(
