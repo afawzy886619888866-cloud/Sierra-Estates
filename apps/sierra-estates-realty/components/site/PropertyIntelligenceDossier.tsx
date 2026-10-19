@@ -355,28 +355,28 @@ export default function PropertyIntelligenceDossier({
             <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'السعر المستهدف بالتفاوض (-5%)' : 'Negotiated Target (-5%)'}</span>
               <strong style={{ fontSize: 14, color: '#5FC9FF', fontFamily: 'var(--mono)' }}>
-                {formatCompactEGP(simulation.breakdown.negotiatedPrice)}
+                {formatCompactEGP(simulation.settlement.negotiatedPrice)}
               </strong>
             </div>
 
             <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'ضريبة التصرفات العقارية (2.5%)' : 'Real Estate Disposal Tax (2.5%)'}</span>
               <strong style={{ fontSize: 14, color: '#FCD34D', fontFamily: 'var(--mono)' }}>
-                {formatCompactEGP(simulation.breakdown.registrationFees)}
+                {formatCompactEGP(simulation.settlement.registrationFees)}
               </strong>
             </div>
 
             <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'مصاريف تنازل المطور NOC' : 'Developer NOC Fee (~1.5%)'}</span>
               <strong style={{ fontSize: 14, color: '#FCD34D', fontFamily: 'var(--mono)' }}>
-                {formatCompactEGP(simulation.breakdown.developerTransferFee)}
+                {formatCompactEGP(simulation.settlement.developerTransferFee)}
               </strong>
             </div>
 
             <div style={{ padding: 12, borderRadius: 10, background: 'rgba(2, 6, 23, 0.6)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <span style={{ color: 'var(--muted)', display: 'block', fontSize: 11 }}>{isAr ? 'إجمالي السيولة المطلوبة للتملك' : 'Total Settlement Capital'}</span>
               <strong style={{ fontSize: 14, color: '#10B981', fontFamily: 'var(--mono)' }}>
-                {formatCompactEGP(simulation.breakdown.totalCapitalRequired)}
+                {formatCompactEGP(simulation.settlement.totalCapitalRequired)}
               </strong>
             </div>
           </div>
