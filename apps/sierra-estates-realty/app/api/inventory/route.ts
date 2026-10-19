@@ -165,10 +165,8 @@ async function fetchSupabaseListings(): Promise<InventoryResponse | null> {
       const primaryImg =
         (raw.img && !hasPendingPhoto(raw.img as string) ? raw.img as string : null) ||
         imagesArr.find((u) => !hasPendingPhoto(u)) ||
-        raw.img as string ||
-        imagesArr[0] ||
         null;
-      const hasPhoto = !hasPendingPhoto(primaryImg as string | null);
+      const hasPhoto = Boolean(primaryImg);
 
       return {
         id: listing.id,
