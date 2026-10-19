@@ -10,7 +10,7 @@
  * - Deal timeline milestones (MOU -> Developer NOC -> Trustee Transfer)
  */
 
-import { assessLegalRisk, type LegalRiskResult, type PropertyLegalContext } from './legal-risk-engine.ts';
+import { assessLegalRisk, type LegalRiskResult, type PropertyLegalContext } from './legal-risk-engine';
 
 export interface StakeholderProfile {
   id: string;
