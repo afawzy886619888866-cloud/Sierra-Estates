@@ -43,6 +43,7 @@ import {
   AccessApprovalsView,
 } from './views';
 import EasyListingStudio from '@/components/admin/EasyListingStudio';
+import FollowupsQueue from './FollowupsQueue';
 import { PARTNER_NAV_IDS, isPartnerRole } from '@/lib/partner-access';
 import { isNavTabAllowedForRole, navItemsForRole, navRequiredPermissionsFor } from '@/lib/admin-nav-access';
 import WhatsAppScheduledSender from '@/components/admin/WhatsAppScheduledSender';
@@ -845,7 +846,9 @@ export function LeadsPage({ T }: { T: any }) {
 
   const fetchLeads = useCallback(() => {
     setLoading(true);
-    fetch('/api/admin/leads?limit=200')
+    // 500 = API default ceiling; 556+ live leads means the old 200-row
+    // window silently hid two thirds of the CRM board.
+    fetch('/api/admin/leads?limit=500')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.leads && data.leads.length > 0) {
@@ -1003,6 +1006,11 @@ export function LeadsPage({ T }: { T: any }) {
           <span className="pulse-dot" style={{color:'var(--gold)'}}>●</span> Loading leads from Supabase…
         </div>
       )}
+
+      {/* Follow-ups work queue — the API existed since the Supabase migration
+          but had no consumer; this surfaces the open backlog (overdue/today/
+          upcoming) with complete/snooze/WhatsApp actions. */}
+      <FollowupsQueue leads={leads} T={T} />
 
       {/* Quick Source Pill Filters */}
       <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
