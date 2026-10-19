@@ -128,7 +128,7 @@
 
 ## 9. DEPENDENCIES (blocking chain)
 
-```
+```text
 CI fix (B5 triggers) ─────────────────┐
 Schema consolidation (011/012/broker) ──┼→ Safe re-import of master inventory
 Dedupe/fingerprint standardization ────┘        │

@@ -4,7 +4,7 @@
 
 Because GitHub Actions enforces runner minute quotas and $0 spending limits on free tier accounts, mission-critical background automations—such as the **WhatsApp Concierge Bot**, **Scheduled WhatsApp Outreaches**, and **Continuous Agent Fleets**—should be hosted on a dedicated cloud instance (AWS EC2 / AWS Lightsail or Docker VPS) rather than ephemeral CI/CD runners.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    AWS Cloud Host (EC2)                     │
 │                                                             │
@@ -30,13 +30,17 @@ The repository includes an automated launch script at [scripts/launch-aws-ec2.sh
 ### Prerequisites
 
 1. Install AWS CLI:
+
    ```bash
    pip install awscli
    ```
+
 2. Configure credentials with appropriate permissions:
+
    ```bash
    aws configure
    ```
+
 3. Recommended Instance Type:
    - **`t3.small`** (~$15/month, 2GB RAM): Recommended for running Chromium/Puppeteer for WhatsApp Web + n8n workflows smoothly.
    - **`t3.micro`** (Free Tier eligible for 12 months): 1GB RAM + 2GB swap.
@@ -82,6 +86,7 @@ docker compose -f infra/docker-compose.yml logs whatsapp-scraper | grep -A 25 "S
 For bulk historic chats, WhatsApp Mobile contains significantly more message history than desktop browser sessions.
 
 The **WhatsApp Mobile Chat Harvester** is integrated directly into the Admin Portal (`/admin` → **All Listings** → **Mobile Harvester**):
+
 
 1. **Export Chat**: On your mobile phone, open any target WhatsApp owner group (e.g. _Owners August 2026_, _Owners Units_, _Group Data Owner_).
 2. **Without Media**: Tap the group header → _Export Chat_ → Select _Without Media_.

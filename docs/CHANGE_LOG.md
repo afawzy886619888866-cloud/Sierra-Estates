@@ -157,7 +157,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `v12-quiet-luxury.test.ts` PropertyDetail case now asserts the honest pre-fetch state (renders "Loading listing", contains NO fabricated compound/spec data) instead of asserting the deleted static-catalog fallback.
 - **Reason:** The old assertion required the fabrication path to keep working.
-- **Files:** __tests__/v12-quiet-luxury.test.ts.
+- **Files:** `__tests__/v12-quiet-luxury.test.ts`.
 - **Verification:** tsc 0 errors (needs --max-old-space-size=6144; default heap OOMs); Jest 106/106 suites, 1,126/1,126 tests.
 
 ---
@@ -209,7 +209,7 @@ The following changes remove every code path that could present invented propert
 ### Change 5 — tests updated to the honest contract
 
 - **Change:** `admin-views.test.tsx` + `admin-views-enhanced.test.tsx` previously asserted the fabrications ('585', '98.4%', '19 Channels Live') — updated to assert Conversion Rate card, honest '—'/empty states, and the registry-derived 15-channel count.
-- **Files:** __tests__/admin-views.test.tsx, __tests__/admin-views-enhanced.test.tsx.
+- **Files:** `__tests__/admin-views.test.tsx`, `__tests__/admin-views-enhanced.test.tsx`.
 - **Verification:** tsc 0 errors (NODE_OPTIONS max-old-space 6144); Jest 106/106 suites, 1,126/1,126 tests (--maxWorkers=2).
 
 ---
@@ -239,7 +239,7 @@ The following changes remove every code path that could present invented propert
 ### Change 4 — Phase 7 first real client test (personas A–E)
 
 - **Change:** new suite `__tests__/client-journey-personas.test.ts` runs the five scripted personas (exact / vague / international-EN / no-match / contradictory 4BR-villa-Madinaty-≤50k) through the REAL engine against the REAL 8,486-unit master inventory CSV — zero invented fixtures. Asserts: compliant results satisfy budget cap + bedroom floor; violators only ever appear flagged; the client-facing set (PUBLISHABLE = 0 today) is represented honestly. Findings + acceptance recorded in `docs/CLIENT_TEST_REPORT.md` and `tests/client-journey/README.md`.
-- **Files:** __tests__/client-journey-personas.test.ts (new), __tests__/match-scoring.test.ts (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
+- **Files:** `__tests__/client-journey-personas.test.ts` (new), `__tests__/match-scoring.test.ts` (new, 8 tests), docs/CLIENT_TEST_REPORT.md (new), tests/client-journey/README.md (new).
 - **DB impact:** none. **Risk:** none (tests). **Rollback:** delete files.
 - **Verification:** tsc 0 errors; Jest 108/108 suites, 1,143/1,143 tests.
 
@@ -261,7 +261,7 @@ The following changes remove every code path that could present invented propert
 - **Reason:** Master-spec journey stage VIEWING had no entry point: the property page could not create a DB record at all, and the only public viewing route required an existing leadId (concierge-only).
 - **Files:** app/api/viewing-requests/route.ts (rewritten), app/(site)/property/[id]/PropertyDetail.tsx.
 - **DB impact:** new rows in `viewings` + `leads` only. **Risk:** low. **Rollback:** git revert.
-- **Verification:** __tests__/viewing-request-public.test.ts 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.
+- **Verification:** `__tests__/viewing-request-public.test.ts` 7/7 (lead upsert, canonical row, real-date links, existing-lead reuse, past-date/name/phone validation, lookup-failure resilience, admin GET guard). tsc 0 errors; Jest 109/109 suites, 1,150/1,150 tests.
 
 ---
 
