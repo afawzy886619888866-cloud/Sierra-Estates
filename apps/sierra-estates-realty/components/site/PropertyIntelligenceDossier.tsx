@@ -17,7 +17,6 @@ import {
 } from '@sierra-estates/agents/legal-risk-engine';
 import {
   runClosingSimulation,
-  generateTimelineSummary,
   type StakeholderProfile,
 } from '@sierra-estates/agents/closing-simulator-engine';
 import {
@@ -91,7 +90,7 @@ export default function PropertyIntelligenceDossier({
     capitalBudget: Math.round(priceEGP * 1.05),
     negotiationLeverage: 0.95,
   };
-  const simulation = runClosingSimulation(legalContext, stakeholder);
+  const simulation = runClosingSimulation(stakeholder, legalContext);
 
   if (!hasPrice) {
     return (
