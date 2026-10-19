@@ -158,7 +158,7 @@ export interface Unit extends BaseDocument {
 
   // Media
   featuredImage?: string;
-  images?: string[];        // Firebase Storage URLs
+  images?: string[];        // Supabase Storage URLs
   videoUrl?: string;
   virtualTourUrl?: string;
   floorPlanUrl?: string;
