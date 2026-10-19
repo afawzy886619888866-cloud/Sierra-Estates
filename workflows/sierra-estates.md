@@ -6,85 +6,86 @@ description: How to develop, test, and deploy the Sierra Estates Realty platform
 
 ## Project Overview
 
-- **Location**: `c:\OpenClaw\my-app`
-- **Stack**: Next.js 16, React 19, TypeScript, Firebase 12 (Auth + Firestore + Hosting + Storage), Framer Motion, Tailwind CSS v4
+- **Location**: `H:\Sierra Estates` (Monorepo root)
+- **Client Application**: `apps/sierra-estates-realty`
+- **Stack**: Next.js 16, React 19, TypeScript, Supabase (PostgreSQL + pgvector + Auth + Storage), Vercel, Tailwind CSS v4, Framer Motion
+- **Authoritative Backend**: **Supabase** (`https://gaxfqcietzoonlmatiot.supabase.co`). Firebase is permanently decommissioned.
 - **Brand Mandate**: Always use "Investment Stakeholders" (not leads), "Strategic Pipeline" (not CRM), "Portfolio Assets" (not listings), in all UI + code comments
 - **Aesthetic**: Cinematic Luxury — Navy `#0A1A3A`, Gold `#C9A24A`, Silver `#E2E8F0`, glassmorphism, micro-animations
-- **Admin UID**: `dbqHmlScyOV8KVZD5cbfnnD4YIX2` (has `admin` custom claim + Firestore `users/<UID>` doc with `{role:'admin'}`)
+- **Unified Inventory**: 12,333 curated units synced across Local Master Excel, Supabase `public.listings`, Supabase Storage `inventory-snapshots/snapshot.json`, Client Interactive Map, and the RAG Memory Engine.
 
 ---
 
 ## Architecture Map
 
 ```
-app/
-  layout.tsx          ← Providers: AuthContext, I18nContext
-  page.tsx            ← Root SPA orchestrator (screen router)
-  globals.css         ← All design tokens, glassmorphism, animations
-  landing/            ← Public landing page
-  api/
-    openclaw/         ← Gemini 2.5 Flash AI insights endpoint
-    leads/            ← Lead CRUD API
-    property-finder/  ← Property Finder feed ingest
-    sync/             ← PF ↔ Firestore sync trigger
-    telegram/
-      setup/          ← Register Telegram webhook
-      webhook/        ← Telegram bot message handler
+apps/sierra-estates-realty/
+  app/
+    layout.tsx          ← Root Providers: AuthContext, I18nContext, Theme
+    page.tsx            ← Root SPA orchestrator (screen router)
+    globals.css         ← All design tokens, glassmorphism, animations
+    api/
+      openclaw/         ← Gemini AI insights endpoint
+      leads/            ← Stakeholder CRUD API (Supabase backed)
+      property-finder/  ← Property Finder feed ingest
+      sync/             ← PF ↔ Supabase sync trigger
+      telegram/
+        setup/          ← Register Telegram webhook
+        webhook/        ← Telegram bot message handler
+      map/              ← Compound and listing GIS endpoints
 
-components/
-  Auth/               ← LoginScreen
-  UI/                 ← Topbar, Sidebar, BrandLogo, LanguageToggle
-  Dashboard/          ← DashboardScreen, KPIGrid, ActivityList, AIPanel, ReportsScreen, TeamScreen, AdvisorProfile
-  CRM/                ← CRMKanban, LeadsFlow, ClientsScreen
-  Listings/           ← ListingsHub
-  Operations/         ← EasyListing, ActionProtocols, SiteExperiences, CommissionLedger, VoucherSystem
-  Admin/              ← DedupeReviewQueue, MediaHub
+  components/
+    Auth/               ← Supabase Auth LoginScreen
+    UI/                 ← Topbar, Sidebar, BrandLogo, LanguageToggle
+    Dashboard/          ← DashboardScreen, KPIGrid, ActivityList, AIPanel, ReportsScreen
+    CRM/                ← CRMKanban, LeadsFlow, ClientsScreen
+    Listings/           ← ListingsHub, InventoryOS
+    Operations/         ← EasyListing, ActionProtocols, SiteExperiences, CommissionLedger
+    Admin/              ← DedupeReviewQueue, MediaHub, InventoryAdmin
+    Map/                ← Interactive Compound GIS Map with vector overlays
 
-lib/
-  AuthContext.tsx     ← Firebase Auth session (30-min inactivity timeout + guest mode)
-  I18nContext.tsx     ← AR/EN locale switching
-  firebase.ts         ← Firebase client SDK init
-  financial-engine.ts ← ROI, GrossYield, CommissionCalculator
-  property-finder-client.ts ← PF API wrapper
-  models/             ← TypeScript data models
-  services/
-    firestore-service.ts    ← CRUD helpers for all collections
-    PropertyFinderService.ts← PF listing normalizer
-    sync-engine.ts          ← PF↔Firestore fuzzy-match + dedup logic
-  audit.ts            ← Audit log writer
-  config.ts           ← Centralised env/config constants
-  telegram.ts         ← Telegram Bot API helper
-  i18n.ts             ← next-intl setup
+  lib/
+    auth/               ← Supabase client & server session helpers
+    inventory/          ← snapshot.json (12,333 units) & compound-stats.json (140 compounds)
+    supabase/           ← Supabase client, admin clients, and query builders
+    models/             ← TypeScript data models
+    services/           ← Supabase CRUD helpers for all tables
+    financial-engine.ts ← ROI, GrossYield, CommissionCalculator
+    audit.ts            ← Audit log writer
+    config.ts           ← Centralised env/config constants
 
-messages/
-  en.json             ← English i18n strings
-  ar.json             ← Arabic i18n strings
+packages/
+  memory-engine/        ← RAG Memory Engine & ECC (Episodic Context Cache)
+  db/                   ← Supabase database types and schema helpers
+  whatsapp-shared/      ← WhatsApp and lead harvester shared utilities
 
-firebase.json         ← Hosting (frameworksBackend us-central1), Firestore rules, Storage rules
-firestore.rules       ← Security rules
-storage.rules         ← Storage security rules
+data/
+  Sierra_Estates_Consolidated_Master_Inventory_All_Sheets.xlsx ← Canonical master sheet (12,443 rows)
 ```
 
 ---
 
-## Firestore Collections
+## Supabase Tables & Storage
 
-| Collection    | Purpose                                |
-|---------------|----------------------------------------|
-| `listings`    | Portfolio Assets (properties)          |
-| `leads`       | Investment Stakeholders                |
-| `sales`       | Closed transactions                    |
-| `activities`  | Audit trail / activity feed            |
-| `users`       | User profiles + role claims            |
-| `vouchers`    | Stage 7 incentive vouchers             |
+| Table / Bucket     | Purpose                                |
+|--------------------|----------------------------------------|
+| `listings`         | Portfolio Assets (12,333+ units with pgvector embeddings) |
+| `compounds`        | Master compound GIS coordinates & analytics |
+| `leads`            | Investment Stakeholders                |
+| `sales`            | Closed transactions                    |
+| `activities`       | Audit trail / activity feed            |
+| `users`            | User profiles + role claims            |
+| `inventory-snapshots` (bucket) | Stored `snapshot.json` for edge caching & builds |
 
 ---
 
 ## 1. Start Local Dev Server
 
 ```bash
-cd c:\OpenClaw\my-app
-npm run dev
+pnpm install
+pnpm dev
+# Or for the client app specifically:
+pnpm --filter sierra-estates-client-page dev
 ```
 
 Open: <http://localhost:3000>
@@ -94,136 +95,80 @@ Open: <http://localhost:3000>
 ## 2. Lint & Type Check
 
 ```bash
-cd c:\OpenClaw\my-app
-npm run lint
-npx tsc --noEmit
+pnpm --filter sierra-estates-client-page type-check
+pnpm test:ci
 ```
 
-Both must exit with code 0 before deploying.
+Both must exit with code 0 before pushing or deploying.
 
 ---
 
 ## 3. Production Build (Verify)
 
 ```bash
-cd c:\OpenClaw\my-app
-npm run build
+pnpm --filter sierra-estates-client-page build
 ```
 
-Expect: `✓ Compiled successfully` and `✓ Finished TypeScript`
+Expect: `✓ Compiled successfully` and `✓ Generating static pages`
 
 ---
 
-## 4. Deploy to Firebase Hosting
+## 4. Deploy to Vercel
+
+Deploys automatically via Vercel GitHub integration upon push to `origin main`.
+Build script uses `scripts/vercel-build.sh` which automatically pulls the fresh `snapshot.json` from Supabase Storage and verifies type safety.
+
+---
+
+## 5. Unified Inventory & Map Sync
+
+To synchronize changes between Local Excel, Supabase, and the Interactive Map:
 
 ```bash
-cd c:\OpenClaw\my-app
-npx firebase-tools deploy --only hosting
+node scripts/sync-all-to-supabase-and-map.mjs
 ```
 
-To also deploy Firestore/Storage rule changes:
+This updates:
+1. `apps/sierra-estates-realty/lib/inventory/snapshot.json`
+2. `apps/sierra-estates-realty/public/data/snapshot.json`
+3. `apps/sierra-estates-realty/lib/inventory/compound-stats.json`
+4. Supabase `public.listings` (upsert 12,333 rows)
+5. Supabase Storage bucket `inventory-snapshots/snapshot.json`
+
+---
+
+## 6. RAG Memory Engine
+
+The RAG memory engine unifies domain knowledge and unit embeddings:
 
 ```bash
-npx firebase-tools deploy --only firestore:rules,storage:rules
-```
+# Generate Supabase pgvector embeddings (Gemini embedding-001, 768 dims)
+pnpm tsx scripts/generate-supabase-embeddings.ts
 
-Full deploy:
-
-```bash
-npx firebase-tools deploy
-```
-
----
-
-## 5. Register / Refresh Telegram Webhook
-
-After deploying, hit the setup endpoint once to register the bot webhook:
-
-```
-POST https://<your-firebase-hosting-url>/api/telegram/setup
-```
-
-Or via curl:
-
-```bash
-curl -X POST https://<hosting-url>/api/telegram/setup
-```
-
-Bot token is stored in `.env.local` as `TELEGRAM_BOT_TOKEN`.
-
----
-
-## 6. Seed / Sync Property Finder Data
-
-Trigger a PF sync via the API:
-
-```bash
-curl -X POST http://localhost:3000/api/sync
-```
-
-Review fuzzy-matched dedup candidates at:
-`app → Admin → Sync Review Queue` (screen: `sync`)
-
----
-
-## 7. AI Insights (OpenClaw)
-
-The `AIPanel` auto-calls `/api/openclaw` on dashboard load.
-To test manually:
-
-```bash
-curl http://localhost:3000/api/openclaw
-```
-
-Model: `gemini-2.5-flash`. Returns structured JSON `{ opportunities, warnings, tips }`.
-
----
-
-## 8. Adding a New Screen
-
-1. Create component in relevant `components/<Category>/MyScreen.tsx`
-2. Add screen ID to the `Screen` type union in `app/page.tsx`
-3. Add nav entry to `components/UI/Sidebar.tsx`
-4. Wire it in `app/page.tsx`: `{activeScreen === 'myscreen' && <MyScreen />}`
-5. Add i18n strings to `messages/en.json` and `messages/ar.json`
-
----
-
-## 9. Environment Variables (`.env.local`)
-
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=sierra-estates
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-GOOGLE_GENAI_API_KEY=         ← OpenClaw AI
-PROPERTY_FINDER_API_KEY=      ← Property Finder feed
-TELEGRAM_BOT_TOKEN=          ← Telegram lead alerts (get from @BotFather)
+# Seed OpenClaw memory graph
+pnpm tsx scripts/seed-openclaw-memory.ts
 ```
 
 ---
 
-## 10. Key Coding Rules
+## 7. Environment Variables (`.env.local`)
 
-- **No explicit `any`** except where ESLint is suppressed with a comment (rare)
-- **Bilingual**: All user-facing strings go through `messages/` — never hardcode EN/AR text
-- **RTL**: Use `dir` and `textAlign` based on locale from `I18nContext`
-- **CSS**: All styles in `app/globals.css` using CSS custom properties — no inline styles except dynamic values (mouse parallax)
-- **Firebase Admin SDK**: Only used server-side in `app/api/**` routes — never imported in client components
-- **Semantic screens**: Use window-exposed `setActiveScreen()` for cross-component navigation when prop drilling is not feasible
+```
+NEXT_PUBLIC_SUPABASE_URL=https://gaxfqcietzoonlmatiot.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+GEMINI_API_KEY=...
+GOOGLE_GENAI_API_KEY=...
+PROPERTY_FINDER_API_KEY=...
+TELEGRAM_BOT_TOKEN=...
+```
 
 ---
 
-## 11. Git Workflow
+## 8. Key Coding Rules
 
-```bash
-# Stage only source files (never node_modules, .next, .firebase cache)
-git add my-app/app my-app/components my-app/lib my-app/messages my-app/public
-git add my-app/package.json my-app/next.config.ts my-app/firebase.json my-app/firestore.rules my-app/storage.rules
-git commit -m "feat: <description>"
-git push
-```
-
-`.next/`, `node_modules/`, `*.tsbuildinfo`, `.firebase/*.cache` are all excluded per `.gitignore`.
+- **Authoritative Backend**: Strictly Supabase. Never import or use Firebase.
+- **Type Safety**: Strictly avoid `any`. All schemas and RPC calls must be typed against Supabase definitions or Zod models.
+- **No Secrets Client-Side**: Never expose service role keys or database credentials in client bundles.
+- **Bilingual**: All user-facing strings go through `messages/` — never hardcode EN/AR text.
+- **RTL**: Use `dir` and `textAlign` based on locale from `I18nContext`.

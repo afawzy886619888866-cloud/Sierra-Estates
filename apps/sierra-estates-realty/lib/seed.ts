@@ -1,8 +1,8 @@
 /**
- * Seed data — fallback when Firebase is not configured.
- * Ported verbatim from the existing static site's data.js so the new
+ * Seed data — fallback when Supabase is not configured or offline.
+ * Ported verbatim from the existing static site's data.js so the
  * single-page client + admin render with real New Cairo compound data
- * on first deploy, before Firestore is wired.
+ * on first deploy, before Supabase database queries resolve.
  */
 import type { Compound, Listing, Agent } from "./types";
 
