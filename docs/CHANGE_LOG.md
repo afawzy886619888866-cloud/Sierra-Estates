@@ -301,7 +301,7 @@ The following changes remove every code path that could present invented propert
 ### Change 2 — canonical writers + actor-context audit
 
 - **Change:** all 3 writers of the legacy value (`/api/viewing-requests`, `/api/leads/request-viewing` ×2) now write `'viewing_scheduled'`. Lead PATCH handler records `lead.stage_change` in audit_logs with the ACTING ADMIN as actor (complements the DB trigger's row-level record with actor context). `WhatsAppMessagePurpose` extended with 'viewing-followup'.
-- **Files:** app/api/viewing-requests/route.ts, app/api/leads/request-viewing/route.ts, app/api/admin/leads/[id]/route.ts, lib/models/schema.ts, __tests__/viewing-request-public.test.ts (assertion updated to the canonical contract).
+- **Files:** app/api/viewing-requests/route.ts, app/api/leads/request-viewing/route.ts, app/api/admin/leads/[id]/route.ts, lib/models/schema.ts, `__tests__/viewing-request-public.test.ts` (assertion updated to the canonical contract).
 - **DB impact:** none (values). **Risk:** low. **Rollback:** git revert.
 
 ### Change 3 — lead automation timers (cron)
@@ -369,7 +369,7 @@ The following changes remove every code path that could present invented propert
 
 - **Change:** `phase13-data-qa.test.ts` runs the Phase 1 pipeline's own invariants against the REAL master inventory CSV: 12,088 rows = 8,486 unique + 3,602 duplicates (audit contract pinned), globally unique unit_ids, 0 self-referencing / 0 dangling duplicate_of chains, PUBLISHABLE honestly zero, price-validity share in the audit's ~36% band (3,081/8,486 = 0.363 via the pipeline's own price_validity column). Bot QA matrix at contract level (Gemini E2E remains blocked on the API key — documented): hard/soft split, no-invention rule, all 5 Phase 5 gap-fill fields present in the extraction prompt; lead mapping preserves unknowns as null (`?? null`, no invented defaults) — AR/EN/mixed/vague/contradictory inputs all flow through this same contract. `phase13-security-sweep.test.ts`: B12 regression scans, sync-pf proxy behavior (401 / in-process auth propagation / 502 upstream), HMAC matrix (forged 403, unverifiable 403, correct 200, unsigned allowed), service-role least-privilege pin (public /api/inventory stays on the anon client under RLS), and a secrets scan (no credential-shaped literals — sk-/ghp_/AKIA/AIza/xoxb-/Supabase-JWT — in committed source, fixtures excluded).
 - **Reason:** Roadmap Phase 13 "Data QA suite, bot QA matrix, matching QA (covered by Phase 6 suites + personas), integration QA (113 existing suites), security sweep".
-- **Files:** __tests__/phase13-data-qa.test.ts, __tests__/phase13-security-sweep.test.ts (new).
+- **Files:** `__tests__/phase13-data-qa.test.ts`, `__tests__/phase13-security-sweep.test.ts` (new).
 - **DB impact:** none. **Risk:** low. **Rollback:** git revert / delete files.
 
 - **Verification (Phase 13):** tsc 0 errors; Jest 115/115 suites, 1,239/1,239 tests (+22). Two real defects found and fixed while building the suites: the secrets-scan walk initially passed a string where the walker expects an array (iterated path characters → walked the whole filesystem → hang; fixed + guarded with a comment), and the CSV parser transcription had dropped the character-accumulate branch (all columns parsed empty; fixed to match the personas suite's parser).
