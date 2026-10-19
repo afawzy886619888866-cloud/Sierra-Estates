@@ -157,7 +157,7 @@ jobs:
           PROPERTY_FINDER_JWT_TOKEN: ${{ secrets.PF_JWT }}
           WHATSAPP_API_TOKEN: ${{ secrets.WA_TOKEN }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_KEY }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SA }}
           BROKER_INBOX_SHEET_ID: ${{ secrets.SHEET_ID }}
 ```
